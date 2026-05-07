@@ -1,0 +1,9 @@
+# Visual Studio local files
+.vs/
+
+# Build output
+bin/
+obj/
+
+# Or specifically, if you only want this path
+PlantProcess.Api/bin/Debug/

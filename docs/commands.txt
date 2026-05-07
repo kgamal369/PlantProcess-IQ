@@ -1,0 +1,12 @@
+new migration:
+
+dotnet ef migrations add AddPlantLayoutAndIntegrationMasterData `
+  --project PlantProcess.Infrastructure `
+  --startup-project PlantProcess.Api `
+  --context PlantProcessDbContext
+
+  Update DB
+  dotnet ef database update `
+  --project PlantProcess.Infrastructure `
+  --startup-project PlantProcess.Api `
+  --context PlantProcessDbContext
