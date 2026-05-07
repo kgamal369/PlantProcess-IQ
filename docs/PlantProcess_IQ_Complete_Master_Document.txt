@@ -1,0 +1,1230 @@
+PlantProcess IQ - Complete Master TXT Document
+Merged from the three generated documents and expanded with Karim's full requirements, flat-steel example, generic-manufacturing strategy, technical implementation details, sales/proposal content and Jira-style planning.
+Generated: 2026-05-06 13:01
+
+IMPORTANT NOTE
+This is a plain text master file. It includes the complete extracted text content of the three Word documents, readable descriptions of the embedded visuals/figures, and an expanded master specification. The .txt format cannot embed the original pictures, so all diagrams are described in text.
+
+SOURCE DOCUMENTS MERGED
+1. PlantProcess_IQ_Technical_Blueprint.docx
+2. PlantProcess_IQ_Customer_Proposal.docx
+3. PlantProcess_IQ_Product_Plan_and_Backlog.docx
+
+USER REQUIREMENT CONSOLIDATED
+Karim wants a generic product/diagnostic platform, not limited to flat steel and not limited to steel. It should work for several manufacturing domains such as steel, aluminum, pharma, tire, paper, automotive, food and chemicals. The platform should query/process production and process parameters from all plant databases and quality/inspection/measurement devices, use AI/ML/correlation to discover relationships between process parameters and defects/quality outcomes, predict quality risk, and show results in dashboards like Qlik Sense or a custom software frontend. Karim's detailed flat-steel example includes querying EAF, Ladle Furnace, Caster and Hot Strip Mill databases for chemistry samples, additives, grades, stirring/heating duration, ladle/tundish/mould IDs, mould size, powder, crew ID, casting speed, downtime, delays, caster cracks, breakout events, non-metallic inclusions, center buckle, piece/material IDs and quality results; then correlating these with defects and predicting whether a material in caster will later create a problem in the hot strip mill, with recommendations for adjustment or additional inspection.
+
+
+================================================================================
+FIGURE / VISUAL INVENTORY FROM THE THREE DOCUMENTS
+================================================================================
+The original Word documents include visual diagrams. Because this master file is plain .txt, the visuals are described textually below so their meaning is not lost.
+
+Technical Blueprint figures:
+1. Figure 1 - Generic Reference Architecture: shows source systems feeding connector/integration, canonical data layer, analytics/AI, and decision/dashboard layer. Source systems include MES/ERP, L2/SCADA, PLC/OPC, historian, quality/lab, inspection/NDT and downtime/CMMS. Outputs include Qlik/BI, risk web app, alerts, AI assistant, PDF reports and API output.
+2. Figure 2 - Generic Manufacturing Canonical Model: shows work order/batch, material unit, process step, equipment, parameter observation, quality/lab sample, inspection result, defect/event/downtime, risk score and recommendation/action connected in a reusable model.
+3. Figure 3 - One Generic Core / Many Manufacturing Domains: PlantProcess IQ core in the center, connected to steel, chemicals, food, aluminum, automotive, paper, tire and pharma. The visual emphasizes reusable entities such as batch/material/operation/equipment/parameter/quality event/prediction/recommendation.
+4. Figure 4 - Quality Risk Dashboard: mock dashboard with defect rate 3.8%, high-risk materials 128, prediction AUC 0.86, defect trend chart, top risk contributors bar chart and parameter risk matrix heatmap.
+5. Figure 5 - Machine Learning Lifecycle: raw data -> data quality checks -> feature engineering -> model training -> validation -> deployment -> monitoring.
+6. Figure 6 - Deployment Options: local laptop demo -> customer on-prem pilot -> plant private cloud -> hybrid analytics -> enterprise multi-site.
+
+Customer Proposal figures:
+1. Figure 1 / Cover Visual - PlantProcess IQ: AI-based process-to-quality intelligence for manufacturing, with a flow from MES/L2 -> Process DB -> Quality/Lab -> AI Engine -> Risk Dashboard.
+2. Figure 2 - From Data Silos to Quality Intelligence: fragmented systems such as MES, L2, SCADA, lab, historian, inspection, ERP, downtime and BI feed PlantProcess IQ, producing root-cause investigation, high-risk material detection, process-window insights and quality-risk prediction.
+3. Figure 3 - Generic Reference Architecture: same architecture as the technical document but positioned for customers.
+4. Figure 4 - One Generic Core / Many Manufacturing Domains: same cross-industry visual with steel, chemicals, food, aluminum, automotive, paper, tire and pharma.
+5. Figure 5 - Quality Risk Dashboard: mock customer dashboard with defect rate, high-risk materials, prediction AUC, trend, contributors and heatmap.
+6. Figure 6 - Flat Steel Example from EAF Parameters to HSM Quality Prediction: flow EAF/LF -> Caster -> Hot Strip Mill -> Inspection/Quality -> AI Assistant. It lists chemistry, superheat, stirring, ladle, crew, casting speed, mould ID, powder, tundish, reheating temp, rolling force, speed, flatness, surface defects, inclusions, center buckle, reject status and claims, ending with AI assistant risk score, suspected contributors and recommended action.
+7. Figure 7 - Customer Pilot Delivery Flow: data readiness assessment -> data mapping workshop -> connector setup -> correlation analysis -> risk model prototype -> dashboard/report -> go/no-go roadmap.
+
+Product Plan figure:
+1. Figure 1 - Roadmap from Synthetic Demo to Full Product: Gantt-style roadmap covering product definition, canonical model, synthetic data generator, correlation engine, prediction prototype, dashboard demo, customer pilot pack, connector framework, security/packaging and full data release with demo/pilot/beta/V1 milestones.
+
+
+
+================================================================================
+EXPANDED MASTER SPECIFICATION - PLANTPROCESS IQ
+================================================================================
+
+0. MASTER INTENT
+----------------
+PlantProcess IQ is a generic manufacturing quality-intelligence and prediction platform. It is not only a BI dashboard and not a replacement for MES, Level 2, SCADA, PLC, ERP, QMS or historian systems. It is an intelligence layer that reads from existing systems, connects fragmented production/process/inspection/quality data, builds product or batch genealogy, identifies correlations between process parameters and quality defects, predicts quality risk, and supports engineers with evidence-based investigation and recommendations.
+
+Karim's original example is the steel route:
+EAF / Ladle Furnace -> Caster -> Hot Strip Mill -> Inspection / Quality -> Final Decision.
+The same design must also work for aluminum, pharma, tire, paper, automotive, chemicals, food and other manufacturing industries by using a domain-neutral canonical data model and industry-specific configuration templates.
+
+Core rule:
+Build the generic manufacturing core first. Steel-specific terms such as Heat, Ladle, Cast, Slab, Coil, Rail, Section, Mould, Tundish or Powder must be configured metadata, not hard-coded architecture.
+
+1. PRODUCT POSITIONING
+----------------------
+Recommended product name: PlantProcess IQ.
+Alternative names:
+- SteelProcess IQ for steel-focused demonstration.
+- PlantQuality IQ for cross-industry positioning.
+- Quality Genealogy AI for traceability-focused positioning.
+- Process-to-Quality AI for analytics-focused positioning.
+
+Recommended product statement:
+PlantProcess IQ connects production, process, inspection and quality data from existing MES, Level 2, SCADA/PLC/OPC, historian, laboratory, inspection, downtime and ERP systems. It builds material or batch genealogy, detects data-quality problems, identifies process-to-defect correlations, predicts quality-risk probability, and provides dashboards, investigation reports and AI-assisted explanations for production, quality and process teams.
+
+Recommended commercial statement:
+Many plants already collect huge amounts of data, but the data is fragmented and difficult to use for root-cause analysis. PlantProcess IQ converts fragmented data into connected quality intelligence so teams can investigate defects faster, predict quality risk earlier, and reduce scrap, rework, downgrade, claims and manual analysis time.
+
+2. NON-GOALS AND BOUNDARIES
+---------------------------
+The product should not start as:
+- a full MES replacement;
+- a Level 2 replacement;
+- a SCADA replacement;
+- a production-control system that writes setpoints back to PLC in the MVP;
+- a generic BI dashboard only;
+- a black-box AI tool claiming guaranteed root cause;
+- a product that requires modification of existing customer MES/L2 databases;
+- a product that stores or exposes confidential plant information without permission.
+
+The product should start as:
+- a read-only intelligence layer;
+- a diagnostic and correlation engine;
+- a material/batch genealogy builder;
+- a production and quality data-health checker;
+- a risk prediction and explanation tool;
+- a dashboard/reporting layer;
+- a customer pilot that can run with exported historical data before direct plant connection.
+
+3. TARGET USERS AND BUYERS
+--------------------------
+Primary users:
+- Quality engineers.
+- Process engineers.
+- MES / Manufacturing IT teams.
+- Level 2 / automation engineers.
+- Production managers.
+- Continuous improvement teams.
+- Data/BI teams.
+- Maintenance and reliability teams for downtime/process-event analysis.
+
+Economic buyers:
+- Plant manager.
+- Head of Quality.
+- Head of Manufacturing IT / OT.
+- Head of Digitalization / Industry 4.0.
+- Operations director.
+- CIO/CTO for industrial IT.
+- MES vendor or system integrator project owner.
+
+4. CROSS-INDUSTRY GENERIC MODEL STRATEGY
+----------------------------------------
+The product must support multiple manufacturing styles:
+- Process manufacturing: steel, aluminum, chemicals, pharma, food, paper.
+- Discrete manufacturing: automotive, assembly, components.
+- Hybrid manufacturing: tire, metals finishing, packaging.
+
+Generic concept mapping:
+- Steel heat, pharma batch, tire batch, paper roll, aluminum cast, car VIN/order, food lot -> Material Unit / Batch / Lot.
+- EAF/LF/Caster/HSM/Cold Rolling, mixer/curing press, paper machine, filling line, coating line, assembly station -> Operation / Process Step.
+- Ladle, tundish, mould, furnace, mill stand, curing press, reactor, coating machine, inspection station -> Equipment.
+- Chemistry result, temperature, speed, pressure, force, torque, humidity, moisture, pH, viscosity, additives, recipe values -> Parameter Observation.
+- Crack, inclusion, center buckle, flatness issue, contamination, out-of-spec, dimensional defect, web break, curing defect, coating defect -> Quality Event / Defect Event.
+- Quality release, rejection, downgrade, rework, claim, batch hold -> Quality Decision.
+
+Generic design principle:
+Use configuration tables and templates for industry-specific names, source mappings, units, parameter groups, defect catalogs and route definitions. Do not hard-code the steel route into the core database or backend logic.
+
+5. CANONICAL DATA MODEL - DETAILED ENTITIES
+-------------------------------------------
+The following entities should form the generic product core.
+
+5.1 Plant and structure
+- Tenant: customer/company boundary.
+- Site: plant or factory.
+- Area: production area such as melt shop, caster, rolling, finishing, lab.
+- Line: specific production line.
+- Operation: process operation such as melting, refining, casting, rolling, curing, coating, filling.
+- Equipment: physical equipment such as furnace, ladle, mould, mill stand, reactor, press, machine, inspection device.
+- EquipmentGroup: group of similar assets for comparison.
+- Crew/Shift: operational shift and crew metadata.
+
+5.2 Production and material
+- WorkOrder: customer/production order or batch order.
+- ProductFamily: steel grade family, pharma product, tire type, paper grade, component family.
+- MaterialUnit: any traceable physical unit: heat, batch, cast, slab, billet, bloom, coil, rail, section, roll, lot, tire, part.
+- MaterialAlias: source-system-specific IDs, because one material can have multiple IDs across MES/L2/ERP/QMS.
+- GenealogyEdge: parent-child relationship between material units.
+- ProcessStepExecution: actual execution of a process step for a material unit.
+- Route: expected process path.
+- RouteStep: expected sequence of operations.
+
+5.3 Process parameters
+- ParameterDefinition: parameter metadata: name, code, unit, type, min/max, category, industry alias.
+- ParameterObservation: actual measured or calculated value with timestamp, material, equipment, source and quality flag.
+- ParameterWindow: expected/safe range by product family, route, operation and equipment.
+- AggregatedFeature: engineered feature such as average casting speed, max temperature, duration above limit, standard deviation, fluctuation index.
+
+5.4 Quality and inspection
+- QualityEvent: defect, deviation, rejection, downgrade, claim, hold, warning.
+- DefectCatalog: standardized defect type and category.
+- InspectionResult: result from visual, NDT, lab, automatic measurement, camera, manual test.
+- Sample: physical or laboratory sample linked to material and process step.
+- SampleResult: chemistry, mechanical, dimensional or quality result.
+- QualityDecision: accepted, downgraded, rejected, reworked, on hold, customer claim.
+
+5.5 Time loss and events
+- DowntimeEvent: downtime, delay, breakout, crack, stoppage, maintenance stop.
+- ProcessEvent: notable event such as breakout, caster crack, speed drop, roll change, mold powder change, furnace delay.
+- EventCause: operator-entered or system-derived cause.
+
+5.6 Analytics and ML
+- DataQualityIssue: missing data, duplicate event, invalid timestamp, broken genealogy, suspicious value.
+- CorrelationResult: correlation/risk relationship found between features and quality outcome.
+- ModelRun: metadata for trained ML model.
+- RiskScore: predicted probability and classification for material/batch.
+- Explanation: feature importance / SHAP-style explanation / natural-language reason.
+- Recommendation: action or investigation suggestion.
+- InvestigationReport: generated report for quality/process review.
+
+6. DATA SOURCES TO SUPPORT
+--------------------------
+Initial source systems:
+- Microsoft SQL Server.
+- Oracle / PL/SQL.
+- PostgreSQL.
+- MySQL / MariaDB if needed.
+- CSV / Excel export.
+- REST API sources.
+- OPC UA snapshots or exported historian data where allowed.
+- QMS / lab / inspection database exports.
+- Downtime/event management system exports.
+- MES and Level 2 historical databases.
+
+Later source systems:
+- OSIsoft PI / AVEVA PI historian.
+- Kafka/RabbitMQ/event streams for near-real-time ingestion.
+- SAP / ERP exports.
+- Cloud object storage.
+- Parquet files and data-lake integration.
+
+Safety rule:
+Use read-only database users. Never write to production MES/L2/PLC systems in the MVP. For early pilots, support file-based exports to avoid customer security delays.
+
+7. DATABASE STRATEGY
+--------------------
+Recommended MVP storage:
+- PostgreSQL as the central product database.
+Why:
+- strong relational modeling;
+- good open-source ecosystem;
+- JSONB support for plant-specific flexible attributes;
+- partitioning for high-volume time-series/process observations;
+- good compatibility with Python, .NET, BI tools and Docker.
+
+Optional additions:
+- TimescaleDB extension for heavy time-series process data.
+- DuckDB for local/offline demos, fast analytics and portable proof-of-concept work.
+- Parquet files for large raw/staging datasets.
+- MinIO/S3-compatible object storage for raw files, exports, model artifacts and reports.
+
+Enterprise compatibility:
+- SQL Server and Oracle should be supported as source connectors.
+- Customer may request SQL Server as deployment DB; support later if needed.
+- Do not force a customer to migrate existing databases.
+
+Database layers:
+1. Raw/Staging schema:
+   Store source extracts exactly as received, with load_id, source_system, extraction_time and checksum.
+2. Canonical schema:
+   Store normalized generic manufacturing model.
+3. Analytics schema:
+   Store engineered features, correlation results, risk scores and dashboard-ready aggregates.
+4. Audit schema:
+   Store mapping versions, model versions, data-quality issues and report history.
+
+8. BACKEND STRATEGY
+-------------------
+Recommended backend design:
+- .NET Web API as the main product backend because Karim's strength is C#/.NET, industrial backend, SQL and enterprise integration.
+- Python service for ML/analytics because Python has the strongest ML ecosystem.
+- Optional FastAPI for ML inference and analytic endpoints.
+- Optional ONNX Runtime later to serve trained models from different frameworks in a standard way.
+
+Backend services:
+- Connector Service: reads from source systems and files.
+- Mapping Service: maps source fields to canonical entities.
+- Data Quality Service: validates missing/duplicate/inconsistent data.
+- Genealogy Service: builds material/batch relationships.
+- Feature Engineering Service: calculates aggregated features.
+- Correlation Service: calculates statistical relationships.
+- Prediction Service: serves ML risk scores.
+- Explanation Service: produces feature importance and natural-language reasoning.
+- Report Service: creates PDF/Excel/HTML investigation reports.
+- Dashboard API: provides dashboard-ready datasets.
+- Admin/Configuration Service: manages industry templates, mappings, catalogs and users.
+
+API style:
+- REST API for MVP.
+- Internal background jobs for ingestion and analytics.
+- Later: event-driven pipelines with RabbitMQ/Kafka if near-real-time processing is required.
+
+9. FRONTEND / DASHBOARD STRATEGY
+--------------------------------
+Best practical approach:
+Use a hybrid dashboard strategy.
+
+Stage 1 - Qlik Sense / Power BI dashboard for MVP:
+- fastest way to show visual value;
+- good for customer demos;
+- good for proof of concept;
+- useful because many plants already use BI tools;
+- lower frontend development effort.
+
+Stage 2 - React web application for product:
+- needed for product configuration;
+- needed for user workflow, login, mapping UI, investigation workflow, model management;
+- better for multi-customer SaaS/on-prem product;
+- better for custom AI assistant and recommendation interface.
+
+Recommended frontend stack:
+- React + TypeScript.
+- Component library such as MUI, Ant Design or shadcn/Tailwind.
+- Charting: Apache ECharts, Plotly, Recharts or Highcharts.
+- Authentication UI integrated with backend auth.
+- Dashboard pages can initially be embedded or replicated from Qlik/Power BI.
+
+Qlik vs React decision:
+- Use Qlik for demo dashboards and quick pilot visuals.
+- Use .NET + Python as the engine/core.
+- Use React for the final product portal.
+- Do not build the entire product logic inside Qlik, because this would make the system less portable and harder to package as a product.
+
+10. MACHINE LEARNING AND CORRELATION STRATEGY
+---------------------------------------------
+The ML path should mature in stages.
+
+Stage A - Data readiness and quality:
+- check missing values;
+- check duplicate records;
+- validate timestamps;
+- validate genealogy links;
+- standardize defect labels;
+- normalize units;
+- compare source systems.
+
+Stage B - Descriptive analytics:
+- defect rate by grade/product family;
+- defect rate by equipment;
+- defect rate by route;
+- defect rate by crew/shift;
+- defect rate by parameter ranges;
+- downtime/delay impact on quality;
+- trend analysis by time.
+
+Stage C - Correlation / association:
+- Pearson/Spearman correlation for numeric values;
+- Cramer's V / Chi-square for categorical associations;
+- ANOVA/Kruskal-Wallis for group differences;
+- lift analysis for defect probability by parameter range;
+- mutual information for nonlinear relationships.
+
+Stage D - Baseline prediction:
+- logistic regression for simple interpretable classification;
+- decision tree for simple rules;
+- random forest for robust baseline;
+- gradient boosting / XGBoost / LightGBM later for higher performance;
+- isolation forest or one-class models for anomaly detection;
+- clustering for process pattern grouping.
+
+Stage E - Explainability:
+- feature importance;
+- permutation importance;
+- SHAP-style explanations later;
+- natural-language explanation templates;
+- confidence score and warning that correlation does not prove root cause.
+
+Stage F - Recommendation assistant:
+- first version: rule-based recommendations from process engineers and correlation findings;
+- second version: model-driven risk contributors;
+- third version: AI assistant summarizing likely contributors and suggested investigation steps;
+- do not automatically send control commands to process equipment.
+
+Important scientific rule:
+The product must say "correlated with", "risk indicator", "suspected contributor" or "recommended investigation", not "guaranteed root cause", unless validated by process experts.
+
+11. STEEL EXAMPLE - FULL ROUTE
+------------------------------
+The steel demo should simulate data from:
+
+EAF / Ladle Furnace:
+- heat ID;
+- steel grade;
+- chemistry sample results;
+- additives and amount of additives;
+- stirring duration;
+- heating duration;
+- ladle ID;
+- treatment route;
+- crew ID;
+- energy consumption;
+- temperature history;
+- delay or waiting time.
+
+Caster:
+- cast ID;
+- strand;
+- casting speed;
+- speed fluctuation;
+- tundish ID;
+- mould ID;
+- mould size;
+- powder type;
+- superheat;
+- cooling water parameters;
+- breakout event;
+- crack event;
+- sequence position;
+- crew ID;
+- downtime/delay.
+
+Hot Strip Mill:
+- slab ID / coil ID;
+- reheating furnace time;
+- reheating temperature;
+- descaling parameters;
+- rolling speed;
+- rolling force;
+- stand parameters;
+- finishing temperature;
+- coiling temperature;
+- profile and flatness values;
+- center buckle events;
+- surface inspection result.
+
+Quality / Inspection:
+- defect type;
+- defect location;
+- defect severity;
+- non-metallic inclusion event;
+- surface crack;
+- center buckle;
+- rejection/downgrade;
+- lab/sample results;
+- customer claim if available.
+
+Target questions:
+- Which steel grades have higher defect risk?
+- Which ladle, tundish or mould IDs are repeatedly linked to defects?
+- Which powder type or mould size is associated with caster cracks?
+- Which casting speed range increases risk?
+- Which crew/shift appears more frequently in high-defect cases, after controlling for grade/equipment/product mix?
+- Which caster conditions predict HSM defects?
+- Which HSM parameters may reduce or increase risk for a high-risk slab?
+- Which materials should be held, inspected or routed differently?
+
+12. CUSTOMER PILOT DESIGN
+-------------------------
+Pilot 1 - Data Readiness Assessment:
+Duration: 1-2 weeks.
+Inputs:
+- system list;
+- sample table exports;
+- interface documents if available;
+- defect catalog;
+- sample quality data;
+- process parameter list.
+Outputs:
+- data source map;
+- data availability report;
+- missing/duplicate/inconsistent data findings;
+- feasibility score;
+- pilot recommendation.
+Price direction: EUR 3k-7k.
+
+Pilot 2 - Quality Correlation Diagnostic:
+Duration: 3-6 weeks.
+Scope:
+- one plant route;
+- one product family or process family;
+- one defect group or quality KPI.
+Outputs:
+- canonical data mapping;
+- genealogy build;
+- correlation dashboard;
+- top suspected contributors;
+- investigation report;
+- next-step prediction plan.
+Price direction: EUR 10k-25k.
+
+Pilot 3 - Quality Risk Prediction:
+Duration: 6-10 weeks.
+Scope:
+- historical data;
+- baseline ML model;
+- risk score dashboard;
+- explanation of high-risk materials.
+Outputs:
+- prediction prototype;
+- model validation report;
+- dashboard;
+- recommendation approach;
+- production deployment roadmap.
+Price direction: EUR 25k-60k.
+
+13. DASHBOARD PAGES
+-------------------
+Minimum demo dashboard pages:
+1. Quality overview:
+   defect rate, rejection rate, downgrade rate, production volume, high-risk count, trend by month/week.
+2. Defect correlation:
+   defect rate by process parameter range, equipment, crew/shift, grade/product family, route and delay.
+3. Material genealogy:
+   searchable lineage from raw material/batch/order through process steps to final product and quality decision.
+4. High-risk materials:
+   risk score, predicted defect category, top contributing parameters, recommended investigation.
+5. Process window:
+   safe/risky parameter ranges by product family and route.
+6. Data quality:
+   missing data, duplicate events, broken genealogy, timestamp gaps and source-system mismatches.
+7. AI explanation:
+   plain-language explanation of why one material/batch is high risk.
+8. Pilot report export:
+   PDF/Excel report for quality/process management.
+
+14. DEMO DATA STRATEGY
+----------------------
+Because employer/customer data must not be used, the first version must use synthetic data.
+
+Synthetic data generator should create:
+- 100k+ material/process/quality rows;
+- realistic material genealogy;
+- multiple process routes;
+- equipment and crew variation;
+- hidden defect patterns;
+- random noise and missing data;
+- defects with unbalanced frequency;
+- source-system-specific IDs to simulate real mapping difficulty;
+- delay/downtime events;
+- inspection and lab results.
+
+Hidden patterns for demo:
+- surface crack risk increases when casting speed fluctuation is high and superheat is low;
+- inclusion risk increases with certain chemistry/additive/stirring patterns;
+- center buckle risk increases with certain HSM temperature/force/flatness patterns;
+- mold/powder combination creates higher surface defect risk for selected product family;
+- delays before next process step increase quality risk.
+
+15. SECURITY, IP AND EMPLOYMENT GUARDRAILS
+------------------------------------------
+Because Karim is employed at SMS and side activities require written approval, the product must be built carefully.
+
+Rules:
+- no SMS code;
+- no SMS screenshots;
+- no SMS diagrams;
+- no SMS/client data;
+- no confidential project names in public assets;
+- no direct competitor activity without legal review;
+- all examples synthetic/anonymized;
+- get written approval before paid side activity;
+- use personal laptop/account/repository;
+- do not build during employer working hours;
+- do not use employer tools or documents.
+
+16. PRODUCT ROADMAP - PRACTICAL BUILD ORDER
+-------------------------------------------
+Phase 0 - Product definition:
+- choose product name;
+- write one-page value proposition;
+- define first demo route;
+- define non-goals;
+- define target industries and personas.
+
+Phase 1 - Technical foundation:
+- create Git repository;
+- define architecture;
+- create database schema;
+- create synthetic data generator;
+- create first ETL pipeline;
+- create initial ERD and architecture diagrams.
+
+Phase 2 - Generic model:
+- create canonical entities;
+- create industry template system;
+- implement steel template as example;
+- implement mapping config files;
+- implement parameter and defect catalogs.
+
+Phase 3 - Data quality and genealogy:
+- implement missing/duplicate/timestamp checks;
+- implement material genealogy builder;
+- implement source ID alias mapping;
+- create genealogy dashboard view.
+
+Phase 4 - Analytics:
+- implement descriptive analytics;
+- implement correlation analysis;
+- implement feature engineering;
+- create correlation dashboard.
+
+Phase 5 - ML:
+- train baseline model;
+- evaluate model;
+- generate risk score;
+- implement explanation output;
+- create high-risk materials dashboard.
+
+Phase 6 - Customer demo:
+- create sales deck/proposal;
+- create one-page offer;
+- create sample PDF report;
+- create demo video/screenshots;
+- create discovery-call script.
+
+Phase 7 - Pilot readiness:
+- allow import of customer CSV/Excel exports;
+- create mapping wizard/config;
+- create security checklist;
+- create pilot SOW template;
+- test end-to-end with new synthetic industry template.
+
+17. CUSTOMER SALES OFFER STRUCTURE
+----------------------------------
+Do not sell the full product first. Sell the diagnostic pain.
+
+Offer ladder:
+1. 2-hour expert discovery session.
+2. Data readiness assessment.
+3. Correlation diagnostic pilot.
+4. Quality risk prediction pilot.
+5. Dashboard/reporting pack.
+6. Annual license/support.
+
+Customer promise:
+- connect plant data;
+- discover defect correlations;
+- predict quality risk;
+- explain suspected causes;
+- act earlier.
+
+18. MAIN RISKS AND MITIGATION
+-----------------------------
+Risk: customer data is too messy.
+Mitigation: start with data readiness assessment and data-quality report.
+
+Risk: customer expects guaranteed root cause.
+Mitigation: position as correlation, risk and investigation support; require process engineer validation.
+
+Risk: too much industry-specific logic.
+Mitigation: build canonical model and metadata templates.
+
+Risk: AI model performs badly because defect data is rare.
+Mitigation: start with correlation and descriptive analytics; use imbalance-aware metrics; gather more data.
+
+Risk: customers cannot allow direct database access.
+Mitigation: support CSV/Excel/SQL export and on-prem deployment.
+
+Risk: product becomes too big.
+Mitigation: one route, one defect group, one dashboard, one model first.
+
+Risk: SMS employment conflict.
+Mitigation: synthetic data only and written approval before paid work.
+
+19. SUCCESS CRITERIA
+--------------------
+Technical success:
+- synthetic demo works end-to-end;
+- generic model supports at least steel plus one non-steel template;
+- data-quality checks detect known injected issues;
+- correlation engine discovers injected hidden patterns;
+- ML model predicts risk better than baseline;
+- dashboard tells a clear story.
+
+Commercial success:
+- 10-20 discovery calls completed;
+- at least 3 companies confirm the problem is real;
+- one paid data-readiness assessment sold;
+- one paid correlation pilot sold;
+- customer asks for expansion or license/support.
+
+Personal/career success:
+- no risk to SMS job;
+- no confidential data used;
+- product increases Karim's positioning as industrial AI/MES specialist;
+- product can become a premium consulting/productized business path.
+
+
+================================================================================
+EXACT EXTRACTED CONTENT FROM SOURCE DOCUMENT: TECHNICAL BLUEPRINT
+SOURCE FILE: PlantProcess_IQ_Technical_Blueprint.docx
+================================================================================
+
+PlantProcess IQ
+
+Technical Blueprint for a Generic Manufacturing Quality Intelligence & Prediction Platform
+
+Prepared for: Karim Gamal Elsayed
+Version 1.0 | 2026
+
+1. Executive Technical Summary
+
+PlantProcess IQ is designed as a generic intelligence layer above existing MES, Level 2, historian, quality, laboratory, inspection, downtime and ERP systems. It does not replace MES, SCADA or BI. It connects process and production data end-to-end, builds material genealogy, identifies correlations between process parameters and quality outcomes, predicts quality risk, and explains suspected contributors in a dashboard and AI-assisted report.
+
+Core design principle Build a domain-neutral manufacturing data model first. Industry-specific wording such as heat, coil, batch, tire, roll, lot, paper reel or aluminum billet must be configured as metadata, not hard-coded logic.
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+2. Product Objectives
+
+Connect fragmented production, process, inspection and quality data across the plant.
+
+Normalize data into a canonical manufacturing model that works for process and discrete manufacturing.
+
+Build genealogy from raw material, batch or order through process steps to final product and quality decision.
+
+Detect missing, duplicated, delayed or inconsistent production/quality records.
+
+Run statistical correlation and machine-learning models to identify risk contributors.
+
+Predict quality risk before the next process step and provide explainable recommendations.
+
+Offer dashboards in Qlik/Power BI for early MVP, and a React-based web application for a scalable product.
+
+3. Recommended Product Architecture
+
+Figure 1 - Reference architecture for a generic manufacturing quality intelligence platform.
+
+The architecture should separate the product into layers. This avoids building a tool that only works for one plant or one industry. Each layer has a clear responsibility and can be replaced or extended later.
+
+Layer                | Purpose                                                                                                                             | Recommended Technology                                                                                                 
+-------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | -----------------------------------------------------------------------------------------------------------------------
+Data connector layer | Read from MES, L2, PLC/OPC exports, historian, lab, inspection, downtime, ERP and BI data sources.                                  | C#/.NET connectors, Python ingestion scripts, ODBC/JDBC, REST APIs, CSV/Excel import, OPC UA snapshots where permitted.
+Staging layer        | Store raw snapshots exactly as received for auditability and repeatable testing.                                                    | PostgreSQL or SQL Server; object storage/parquet later for large data.                                                 
+Canonical data layer | Transform plant-specific source data into generic entities: material, operation, equipment, parameter, quality event and genealogy. | PostgreSQL/SQL Server relational model with JSONB/JSON columns for flexible attributes.                                
+Analytics layer      | Run data quality rules, correlation, anomaly detection and feature engineering.                                                     | Python/scikit-learn, SQL analytics, optional ML.NET for .NET-native models.                                            
+Prediction service   | Serve trained models and calculate material risk scores.                                                                            | Python FastAPI or .NET API; ONNX Runtime for framework-neutral inference later.                                        
+Decision layer       | Dashboards, AI explanations, reports, recommendations and APIs.                                                                     | React + .NET API for product; Qlik/Power BI for pilot dashboards.                                                      
+
+4. Database Strategy
+
+4.1 Recommended MVP database
+
+For the first version, use PostgreSQL as the product database because it is open, strong for relational modeling, supports declarative table partitioning, and provides JSON/JSONB types for flexible attributes. PostgreSQL partitioning is useful for large time-based observation tables, and JSONB is useful for plant-specific parameters while the canonical model is still evolving.
+
+4.2 Enterprise customer database support
+
+Support Microsoft SQL Server and Oracle as source systems because many MES/L2 environments already use them.
+
+Keep source connectors separate from the product storage layer.
+
+Never force a plant to change its existing MES/L2 databases.
+
+For pilots, accept database exports if direct connection is politically or technically difficult.
+
+For production, prefer read-only database users, API exports, or scheduled extracts approved by the customer IT/security team.
+
+4.3 Core database schema
+
+Figure 2 - Generic canonical model that supports multiple manufacturing domains.
+
+Entity                | Generic Meaning                 | Steel Example                  | Other Industry Example                  
+--------------------- | ------------------------------- | ------------------------------ | ----------------------------------------
+Plant                 | Manufacturing site              | Flat steel plant               | Pharma factory / paper mill             
+Area / Line           | Production area or process line | Caster, HSM, Cold Mill         | Filling line, tire curing, paper machine
+Work order / Batch    | Planned production unit         | Heat/order                     | Batch, lot, work order                  
+Material unit         | Traceable physical material     | Slab, coil, rail, section      | Tablet batch, tire, roll, car part      
+Operation             | Manufacturing step              | LF treatment, casting, rolling | Mixing, curing, coating, assembly       
+Parameter observation | Measured process value          | Casting speed, temperature     | Pressure, humidity, torque              
+Quality event         | Defect/result/status            | Crack, inclusion, flatness     | Contamination, blister, dimension defect
+Equipment context     | Machine/tool/asset identity     | Mould, tundish, stand          | Mold, press, reactor, cutter            
+Crew/shift context    | Operational context             | Shift A / crew ID              | Operator group / line team              
+Prediction            | Risk model output               | Surface defect risk            | Reject probability / quality class      
+
+5. Generic Data Model Strategy
+
+To make the platform generic across steel, pharma, tire, paper, automotive and aluminum, the product should use a graph-like genealogy model on top of a relational database. The central concept is not “coil” or “heat”; the central concept is a traceable material or batch unit that moves through operations and accumulates parameters, events and quality outcomes.
+
+Figure 3 - Domain-neutral core with industry-specific configuration packs.
+
+Generic Concept       | Configuration Examples                                                                   
+--------------------- | -----------------------------------------------------------------------------------------
+Material unit types   | Heat, slab, coil, rail, batch, tire, paper roll, aluminum billet, car component          
+Operation types       | Melting, casting, rolling, coating, mixing, curing, assembly, inspection, packaging      
+Parameter catalog     | Temperature, pressure, speed, force, chemistry, humidity, composition, delay duration    
+Quality event catalog | Crack, inclusion, center buckle, contamination, blister, dimension defect, surface defect
+Equipment catalog     | Furnace, ladle, mould, mill stand, reactor, press, cutter, inspection device             
+Domain rules          | Steel grade rules, pharma batch release rules, tire curing rules, paper moisture rules   
+
+6. Data Ingestion and Integration
+
+Start with offline data import for MVP: CSV, Excel, SQL export, and synthetic datasets.
+
+Add read-only SQL connectors for pilot: SQL Server, Oracle, PostgreSQL.
+
+Add scheduled extraction jobs for production: nightly batch, shift-based load, or near-real-time incremental load.
+
+Add optional OPC/historian integration only when the customer has a secure approved method and clear data ownership.
+
+Use a source-system registry to track where each parameter came from and when it was loaded.
+
+Store raw data snapshots before transformations to make analysis reproducible.
+
+Integration Mode     | Use When                                         | Risk Level | Recommendation                              
+-------------------- | ------------------------------------------------ | ---------- | --------------------------------------------
+CSV/Excel import     | First demo or customer data readiness assessment | Low        | Best first step. Fast and safe.             
+Direct SQL read-only | Pilot with IT approval                           | Medium     | Use read-only credentials and limit queries.
+API/REST extraction  | Modern MES/QMS/ERP systems                       | Medium     | Good for controlled access.                 
+CDC/replication      | Large production deployment                      | High       | Only after strong customer IT involvement.  
+OPC/historian stream | Near-real-time risk scoring                      | High       | Later phase, not first MVP.                 
+
+7. Backend and Service Design
+
+Use a modular monolith first. Avoid microservices too early. The product needs fast iteration, a clean domain model and clear module boundaries more than distributed complexity. Later, the ML service, connector service and reporting service can be separated.
+
+Module                   | Responsibility                                                | Suggested Stack                                         
+------------------------ | ------------------------------------------------------------- | --------------------------------------------------------
+Identity & tenant module | Users, roles, plant/site isolation, permissions               | .NET API + PostgreSQL/SQL Server                        
+Connector module         | Source registrations, import jobs, mapping definitions        | .NET workers + Python scripts where useful              
+Canonical model module   | Material genealogy, operations, parameters and quality events | .NET domain model + EF Core                             
+Analytics module         | Data-quality checks, correlations, statistics                 | Python + SQL + background jobs                          
+ML module                | Training, validation, model registry, prediction              | Python/scikit-learn first; ML.NET/ONNX for serving later
+Dashboard API module     | Expose KPIs, risk scores, genealogy and correlation outputs   | ASP.NET Core Web API                                    
+Report module            | PDF/Excel export and investigation reports                    | .NET document generation + templates                    
+
+8. Frontend and Dashboard Strategy
+
+Do not build everything in Qlik Sense only. Qlik is excellent for fast BI dashboards and first customer pilots, but the core product should remain independent. Build the data intelligence engine and expose it through APIs. Then offer multiple visualization options.
+
+Option                      | Best Use                                       | Advantages                                                                                                    | Limitations                                                        
+--------------------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------
+Qlik Sense dashboard        | Fast pilot, business users, strong visual demo | Very fast dashboard delivery; good associative exploration; can connect to external analytic engines via SSE. | Not ideal as the full product core or complex workflow application.
+Power BI dashboard          | Customers already using Microsoft BI           | Good adoption in many companies; strong enterprise reporting.                                                 | Can become report-heavy without product workflow.                  
+React web application       | Full product experience and workflows          | Full control: genealogy search, risk review, approvals, AI explanations, reports.                             | More development effort than BI tools.                             
+Hybrid: React + embedded BI | Best long-term strategy                        | Product controls the workflow; BI tools handle rich dashboards.                                               | Needs clean API and licensing strategy.                            
+
+Figure 4 - Example dashboard mockup for quality risk and parameter correlation.
+
+9. Qlik, Python, R, C# and React: Recommended Decision
+
+Recommended stack decision Use C#/.NET + React for the product platform, Python for machine learning, PostgreSQL/SQL Server for storage, and Qlik Sense/Power BI as optional dashboard layers. Do not make Qlik the core product database or workflow engine.
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Capability       | Recommended Tool                                           | Why                                                                                    
+---------------- | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------
+Core backend     | .NET 10 LTS or current enterprise LTS                      | Matches Karim’s C# strength and enterprise industrial environments.                    
+Frontend product | React + TypeScript                                         | Good for interactive product UI, genealogy search, risk review and admin tools.        
+Pilot dashboards | Qlik Sense first, Power BI optional                        | Fast visual delivery and customer-friendly analytics.                                  
+ML training      | Python / scikit-learn                                      | Strong ecosystem for correlation, preprocessing, classification and explainable models.
+.NET-native ML   | ML.NET                                                     | Useful when models need to run inside .NET environments or edge/server applications.   
+Model serving    | FastAPI or .NET API; ONNX Runtime later                    | Keeps models accessible to the product and can support multiple frameworks.            
+Data storage     | PostgreSQL for MVP; SQL Server for Windows-heavy customers | PostgreSQL is flexible; SQL Server may fit enterprise customers using Microsoft stack. 
+
+Qlik Sense can call external calculation engines through analytic connections / server-side extensions. This makes Qlik useful for advanced analytics pilots where Python or R performs calculations and Qlik presents the results. However, the product should keep the AI logic in a separate service so that the same intelligence can be consumed by Qlik, Power BI, React UI, APIs, and reports.
+
+10. Analytics and Machine Learning Design
+
+Figure 5 - ML lifecycle: start with correlation and explainability before advanced prediction.
+
+Stage                | Method                                                                             | Purpose                                                                   | Output                                   
+-------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------- | -----------------------------------------
+Data profiling       | Missing values, duplicates, timestamp gaps, distribution checks                    | Know if the customer data is usable.                                      | Data readiness report.                   
+Correlation analysis | Pearson/Spearman, chi-square, group defect rates, parameter bins                   | Identify candidate relationships between parameters and quality outcomes. | Correlation matrix and risk contributors.
+Feature engineering  | Rolling windows, lag features, process-route aggregation, grade/equipment encoding | Convert raw process data into model-ready features.                       | Feature table per material/batch.        
+Baseline prediction  | Logistic regression, random forest, gradient boosting                              | Predict probability of defect/rejection/high-risk quality event.          | Risk score + feature importance.         
+Anomaly detection    | Isolation Forest, robust z-score, clustering                                       | Detect unusual process patterns even without labeled defects.             | Anomaly score and abnormal cases.        
+Explainability       | Feature importance, SHAP later, rule-based explanation templates                   | Make model output acceptable to process engineers.                        | Reason summary per material.             
+Recommendation       | Rule engine + process windows + expert validation                                  | Suggest action without pretending the model is process authority.         | Recommended investigation/action list.   
+
+Important technical rule: the product should distinguish correlation from root cause. The dashboard should say “suspected contributor” or “risk indicator” unless process experts validate causality.
+
+11. Security, Legal and Deployment Requirements
+
+For the MVP, use synthetic data only.
+
+For customer pilots, sign NDA and use customer-approved sample exports or read-only access.
+
+Never collect personal data such as operator names unless legally approved; prefer crew/shift codes and anonymized IDs.
+
+Prefer on-prem deployment for sensitive manufacturing customers.
+
+Add role-based access control, audit logs, encryption at rest/in transit, and clear data-retention rules.
+
+Create data-processing agreements and clarify ownership of trained models and derived insights.
+
+Avoid any use of SMS/client confidential data, internal documents, code or screenshots.
+
+Figure 6 - Deployment options from demo to enterprise rollout.
+
+12. MVP Implementation Steps
+
+Define one generic use case: process-to-quality correlation for one route and one defect family.
+
+Design canonical schema: material, operation, parameter observation, quality event, equipment, crew/shift, downtime and prediction.
+
+Build synthetic data generator with 100,000+ rows across multiple process steps.
+
+Implement PostgreSQL/SQL Server schema and import pipeline.
+
+Build ETL mapping layer from synthetic source tables to canonical model.
+
+Create data quality rules for missing IDs, duplicate events, missing timestamps and broken genealogy.
+
+Build correlation engine and first feature-importance report.
+
+Train baseline defect-risk model and validate with synthetic hidden patterns.
+
+Create dashboard in Qlik Sense or Power BI first, and later React UI for product workflow.
+
+Prepare customer pilot package: one-page offer, sample report, architecture diagram and demo dashboard.
+
+13. References
+
+Microsoft .NET support policy and release lifecycle: https://dotnet.microsoft.com/en-us/platform/support/policy
+
+ML.NET documentation: https://learn.microsoft.com/en-us/dotnet/machine-learning/
+
+scikit-learn documentation: https://scikit-learn.org/
+
+Qlik Sense analytic connections / Server-Side Extension: https://help.qlik.com/en-US/sense-developer/November2025/Content/Sense_Helpsites/AnalyticConnections.htm
+
+PostgreSQL declarative partitioning: https://www.postgresql.org/docs/current/ddl-partitioning.html
+
+PostgreSQL JSON/JSONB types: https://www.postgresql.org/docs/current/datatype-json.html
+
+ONNX Runtime documentation: https://onnxruntime.ai/docs/
+
+================================================================================
+EXACT EXTRACTED CONTENT FROM SOURCE DOCUMENT: CUSTOMER PROPOSAL / SALES DOCUMENT
+SOURCE FILE: PlantProcess_IQ_Customer_Proposal.docx
+================================================================================
+
+PlantProcess IQ
+
+Customer Proposal: AI-Based Process-to-Quality Intelligence for Manufacturing
+
+Prepared for: Karim Gamal Elsayed
+Version 1.0 | 2026
+
+1. Proposal Summary
+
+PlantProcess IQ helps manufacturing companies connect production, process, inspection and quality data across the plant to understand why defects happen, predict quality risk earlier, and reduce manual investigation time. The solution is generic by design and can be configured for steel, aluminum, pharma, tire, paper, automotive, food, chemicals and other manufacturing domains.
+
+Customer promise Connect your plant data. Discover defect correlations. Predict quality risk. Explain suspected causes. Act earlier.
+------------------------------------------------------------------------------------------------------------------------------------
+
+2. The Problem We Solve
+
+Figure 1 - Moving from fragmented data silos to connected quality intelligence.
+
+Plant data is spread across MES, Level 2, SCADA/PLC/OPC, historian, lab, inspection, downtime and ERP systems.
+
+Quality teams often investigate defects manually using Excel, screenshots, SQL queries and tribal process knowledge.
+
+Dashboards show what happened, but often do not explain which process parameters are linked to defects.
+
+Production teams need earlier warning when a material/batch is likely to create quality issues in the next process step.
+
+Management needs a repeatable method to learn from historical data and reduce scrap, rework, downgrade and claims.
+
+3. What We Offer
+
+Offer                           | Customer Outcome                                                                                         | Typical Duration
+------------------------------- | -------------------------------------------------------------------------------------------------------- | ----------------
+Data Readiness Assessment       | Understand available data, gaps, quality, source systems and feasibility.                                | 1-2 weeks       
+Quality Correlation Diagnostic  | Identify which process parameters, equipment, route, shift or material conditions are linked to defects. | 3-6 weeks       
+Quality Risk Prediction Pilot   | Build an MVP model that predicts risk for a selected defect or quality KPI.                              | 6-10 weeks      
+Dashboard & AI Explanation Pack | Provide dashboards, risk views, material genealogy and AI-assisted explanations.                         | 2-6 weeks       
+Production Deployment           | Install on-prem or private cloud with connectors, security, reports and support.                         | 3-6 months      
+
+4. Solution Overview
+
+Figure 2 - High-level solution architecture.
+
+Capability            | Description                                                                                                    
+--------------------- | ---------------------------------------------------------------------------------------------------------------
+Data connectors       | Connect to SQL Server, Oracle, PostgreSQL, CSV/Excel exports, MES/L2, inspection, quality and downtime sources.
+Genealogy engine      | Trace product/batch/material across process steps and link it to process and quality history.                  
+Data quality checks   | Find missing, duplicated, delayed or inconsistent production and quality records.                              
+Correlation engine    | Discover parameter ranges, equipment, routes or operating patterns linked to defects.                          
+Prediction models     | Score active or historical materials by quality-risk probability.                                              
+Dashboard and reports | Visualize quality KPIs, risk drivers, high-risk materials, process windows and investigation reports.          
+
+5. Generic Across Manufacturing Industries
+
+Figure 3 - The same platform core can be configured for multiple industries.
+
+Industry         | Example Data Sources                                                       | Example Quality Outcomes                                        
+---------------- | -------------------------------------------------------------------------- | ----------------------------------------------------------------
+Steel / Aluminum | EAF, LF, caster, rolling, inspection, quality lab                          | Cracks, inclusions, surface defects, profile/flatness, downgrade
+Pharma           | Batch records, lab results, equipment parameters, environmental monitoring | Out-of-specification, contamination risk, batch release delay   
+Tire             | Mixing, curing, temperature/pressure, inspection                           | Uniformity issues, curing defects, dimensional defects          
+Paper            | Machine speed, moisture, coating, web breaks, lab tests                    | Breaks, coating defects, moisture issues, roll defects          
+Automotive       | Assembly parameters, torque, inspection, rework, supplier lot data         | Rework, dimensional defects, warranty risk                      
+Food / Chemicals | Batch process, temperature, pressure, recipe, lab/QA                       | Quality deviation, contamination risk, process instability      
+
+6. Example Dashboard Experience
+
+Figure 4 - Example quality-risk dashboard mockup.
+
+Quality overview: production volume, defect rate, rejection/downgrade and trend over time.
+
+Correlation analysis: defect rate by parameter range, equipment, route, grade, shift and material family.
+
+Material genealogy: search one product/batch and see its full process history.
+
+High-risk materials: list of products/batches with risk score and suspected contributors.
+
+AI explanation: plain-language answer to “why is this material high risk?”
+
+Recommended action: investigation or process-window suggestions validated by process experts.
+
+7. Pilot Packages and Pricing Direction
+
+Package                      | Scope                                                                           | Output                                                   | Indicative Price  
+---------------------------- | ------------------------------------------------------------------------------- | -------------------------------------------------------- | ------------------
+Data Readiness Assessment    | Review data availability, sample tables, quality labels, genealogy feasibility. | Data readiness report + pilot scope.                     | EUR 3k-7k         
+Correlation Diagnostic Pilot | One process route + one quality topic using historical data.                    | Dashboard + correlation report + suspected contributors. | EUR 10k-25k       
+Prediction Model Pilot       | Feature engineering + baseline ML model + risk dashboard.                       | Risk model + validation + dashboard + report.            | EUR 25k-60k       
+Annual License / Support     | Repeatable tool, connectors, dashboards, model updates and support.             | On-prem or private-cloud product package.                | EUR 50k-150k+/year
+
+Final pricing depends on scope, number of data sources, data quality, deployment model, number of users, security requirements and support expectations.
+
+8. Why This Is Different from a Normal BI Dashboard
+
+Normal Dashboard                          | PlantProcess IQ                                                  
+----------------------------------------- | -----------------------------------------------------------------
+Shows KPIs after the fact.                | Connects process history with quality outcomes and predicts risk.
+Usually depends on manual interpretation. | Ranks suspected contributors and explains high-risk cases.       
+Often works per system or report.         | Builds cross-system material/batch genealogy.                    
+Shows defect count and trend.             | Finds parameter windows and operating patterns linked to defects.
+Designed mainly for reporting.            | Designed for diagnosis, learning, prediction and prevention.     
+
+9. Steel Plant Example - End-to-End Quality Intelligence
+
+Figure 5 - Flat steel example from EAF/LF to Caster, HSM and Quality.
+
+In a flat steel scenario, the system can combine EAF/LF chemistry, additives, heating and stirring time with caster speed, powder, mould, tundish and breakout/crack events, then link them to hot rolling parameters and final quality outcomes. The result is a risk model that can detect high-risk slabs or coils and recommend investigation or process adjustments before the defect becomes expensive.
+
+10. Final Visual Sales Pages
+
+Figure 6 - Customer pilot delivery flow.
+
+Page 1 - Start small, prove value fast A pilot does not require replacing MES or connecting the whole plant. Start with one route, one defect family and one historical dataset. The first deliverable is business insight: what parameters appear linked to quality risk?
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Page 2 - From historical learning to active prediction Once historical correlation is proven, the same model can score active materials or batches before the next process step. This creates early warning for quality teams and process engineers.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Page 3 - Generic platform, industry-specific value The same platform works across industries because the core model is generic: material/batch, operation, equipment, parameter, quality event and prediction. Each industry gets its own configuration pack.
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+11. Next Step
+
+Recommended next step is a data readiness workshop. The workshop identifies available source systems, data quality, material genealogy feasibility, target quality topic, and the best pilot scope. After the workshop, the customer receives a fixed-scope proposal for the first correlation diagnostic pilot.
+
+12. References
+
+Microsoft .NET support policy and release lifecycle: https://dotnet.microsoft.com/en-us/platform/support/policy
+
+ML.NET documentation: https://learn.microsoft.com/en-us/dotnet/machine-learning/
+
+scikit-learn documentation: https://scikit-learn.org/
+
+Qlik Sense analytic connections / Server-Side Extension: https://help.qlik.com/en-US/sense-developer/November2025/Content/Sense_Helpsites/AnalyticConnections.htm
+
+PostgreSQL declarative partitioning: https://www.postgresql.org/docs/current/ddl-partitioning.html
+
+PostgreSQL JSON/JSONB types: https://www.postgresql.org/docs/current/datatype-json.html
+
+ONNX Runtime documentation: https://onnxruntime.ai/docs/
+
+================================================================================
+EXACT EXTRACTED CONTENT FROM SOURCE DOCUMENT: PRODUCT PLAN + JIRA-STYLE BACKLOG
+SOURCE FILE: PlantProcess_IQ_Product_Plan_and_Backlog.docx
+================================================================================
+
+PlantProcess IQ
+
+Full Product Plan: From Scratch to Demo, Pilot and V1
+
+Prepared for: Karim Gamal Elsayed
+Version 1.0 | 2026
+
+1. Planning Objective
+
+This plan converts the PlantProcess IQ concept into a practical roadmap. The goal is to build a demo and pilot-ready product without using any confidential employer/customer data. The first 12 months should focus on synthetic data, a generic model, one strong steel-inspired example, and customer validation before any full product commitment.
+
+Planning rule Do not build the full platform before selling the problem. Build a credible synthetic demo, run discovery calls, sell a data readiness assessment, then sell a pilot.
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+2. Roadmap Overview
+
+Figure 1 - Roadmap from product definition to V1 launch.
+
+3. Milestones
+
+Milestone                           | Target Timing | Definition of Done                                                                     
+----------------------------------- | ------------- | ---------------------------------------------------------------------------------------
+M0 - Concept locked                 | Week 1        | Product name, target customer, first use case, value proposition and non-goals defined.
+M1 - Technical blueprint ready      | Week 2        | Architecture, data model, stack, MVP scope and demo story finalized.                   
+M2 - Synthetic data generator ready | Week 4-6      | 100k+ synthetic records generated for process, quality, defects and genealogy.         
+M3 - Data model and ETL ready       | Week 6-8      | Canonical schema implemented and synthetic source data mapped into it.                 
+M4 - Correlation demo ready         | Week 10-12    | Dashboard shows top risk contributors and defect correlations.                         
+M5 - Prediction demo ready          | Month 4       | Baseline ML model predicts risk on synthetic test set and explains top drivers.        
+M6 - Customer demo pack ready       | Month 5-6     | Proposal, demo script, sample report and dashboard screenshots ready.                  
+M7 - First discovery calls          | Month 6-7     | 10-20 customer/recruiter/domain conversations completed.                               
+M8 - Pilot-ready product            | Month 8-9     | Can accept customer sample data and run data readiness/correlation pilot.              
+M9 - Beta V1                        | Month 10-12   | Connector framework, security baseline, reporting and deployment package ready.        
+
+4. Epic Map
+
+Epic ID | Epic Name                          | Goal                                                                        
+------- | ---------------------------------- | ----------------------------------------------------------------------------
+E1      | Product Definition & Positioning   | Define product boundary, target industries, target personas and first offer.
+E2      | Generic Manufacturing Data Model   | Build domain-neutral entities and configuration strategy.                   
+E3      | Synthetic Data Generator           | Generate realistic manufacturing data without confidential information.     
+E4      | Data Ingestion & Mapping           | Load source tables and map them to canonical entities.                      
+E5      | Data Quality & Genealogy Engine    | Detect broken data and build material/batch genealogy.                      
+E6      | Correlation & Analytics Engine     | Find relationships between process parameters and quality outcomes.         
+E7      | Prediction & Explainability        | Train baseline ML models and explain high-risk cases.                       
+E8      | Dashboard & Frontend               | Create Qlik/Power BI dashboard and later React product UI.                  
+E9      | Reporting & AI Assistant           | Generate investigation reports and natural-language explanations.           
+E10     | Security, Packaging & Deployment   | Prepare on-prem/private deployment and customer data controls.              
+E11     | Sales Assets & Customer Validation | Create proposal, demo script, one-page offer and discovery process.         
+
+5. Jira-Style Backlog
+
+Ticket | Area           | Task                                                                                      | Priority | Estimate
+------ | -------------- | ----------------------------------------------------------------------------------------- | -------- | --------
+E1-01  | Product        | Define product name and positioning statement                                             | High     | 1 day   
+E1-02  | Product        | Define first industry-neutral use case and steel-specific demo story                      | High     | 2 days  
+E1-03  | Product        | Define non-goals: no MES replacement, no full Level 2, no confidential data               | High     | 1 day   
+E2-01  | Data Model     | Create ERD for plant, line, operation, material unit, equipment, parameter, quality event | High     | 3 days  
+E2-02  | Data Model     | Design material genealogy table and parent-child relationships                            | High     | 3 days  
+E2-03  | Data Model     | Design configurable parameter catalog and defect catalog                                  | High     | 2 days  
+E3-01  | Synthetic Data | Generate steel route: EAF/LF -> Caster -> HSM -> Quality                                  | High     | 5 days  
+E3-02  | Synthetic Data | Add hidden defect patterns for ML validation                                              | High     | 3 days  
+E3-03  | Synthetic Data | Add generic manufacturing examples: batch, equipment, quality result                      | Medium   | 3 days  
+E4-01  | Ingestion      | Create source import format for CSV/Excel/SQL export                                      | High     | 4 days  
+E4-02  | Ingestion      | Implement mapping configuration from source columns to canonical model                    | High     | 5 days  
+E5-01  | Data Quality   | Implement missing ID, duplicate event and timestamp gap checks                            | High     | 4 days  
+E5-02  | Genealogy      | Build material genealogy search API                                                       | High     | 5 days  
+E6-01  | Analytics      | Build correlation matrix by defect and parameter                                          | High     | 4 days  
+E6-02  | Analytics      | Build defect-rate-by-parameter-bin analysis                                               | High     | 3 days  
+E7-01  | ML             | Train baseline random forest/gradient boosting model                                      | High     | 5 days  
+E7-02  | ML             | Add feature importance and explanation text                                               | High     | 4 days  
+E8-01  | Dashboard      | Create Qlik/Power BI dashboard mockup                                                     | High     | 5 days  
+E8-02  | Frontend       | Create React UI skeleton for material risk and genealogy                                  | Medium   | 7 days  
+E9-01  | Reports        | Generate PDF investigation report                                                         | Medium   | 4 days  
+E10-01 | Security       | Define roles, permissions, audit logs and on-prem deployment assumptions                  | High     | 4 days  
+E11-01 | Sales          | Create one-page offer and sales deck/doc                                                  | High     | 3 days  
+E11-02 | Validation     | Prepare 20 discovery questions and outreach target list                                   | High     | 2 days  
+
+6. Sprint Plan
+
+Sprint   | Duration | Goal                                    | Demo Output                                
+-------- | -------- | --------------------------------------- | -------------------------------------------
+Sprint 1 | 2 weeks  | Product scope, architecture, data model | Technical blueprint and ERD draft          
+Sprint 2 | 2 weeks  | Synthetic data generator                | Generated process/quality/genealogy dataset
+Sprint 3 | 2 weeks  | Database schema and ingestion           | Data loaded into canonical model           
+Sprint 4 | 2 weeks  | Data quality and genealogy              | Search material and show process history   
+Sprint 5 | 2 weeks  | Correlation engine                      | Correlation dashboard and top contributors 
+Sprint 6 | 2 weeks  | Prediction model                        | Risk scoring and feature importance        
+Sprint 7 | 2 weeks  | Dashboard/report pack                   | Demo dashboard and sample customer report  
+Sprint 8 | 2 weeks  | Sales demo readiness                    | Recorded demo, proposal, discovery script  
+
+7. When Can You Show a Demo?
+
+Earliest credible demo After 8-12 weeks, you can show a synthetic demo: generated plant data, genealogy, defect correlation, risk dashboard and sample explanation. This is enough for discovery calls, not yet for a paid production pilot.
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Demo Level          | Timing      | What It Includes                                 | Can Show To                 
+------------------- | ----------- | ------------------------------------------------ | ----------------------------
+Concept demo        | Week 2      | Architecture, mockups, value proposition         | Trusted contacts / advisors 
+Synthetic data demo | Week 6      | Generated data and basic genealogy               | Technical peers / recruiters
+Analytics demo      | Week 10-12  | Correlation dashboard and defect patterns        | Potential customers         
+Prediction demo     | Month 4     | Risk model and explanation                       | Potential pilot customers   
+Pilot-ready demo    | Month 6-8   | Data readiness workflow and import template      | Paying pilot prospects      
+Beta product        | Month 10-12 | Connector framework, reports, deployment package | First paying customer       
+
+8. Customer Validation Plan
+
+Prepare a one-page offer: Process-to-Quality Correlation Diagnostic.
+
+Identify target personas: plant quality manager, MES manager, process engineer, manufacturing IT lead, digital manufacturing manager, system integrator.
+
+Send 50 focused outreach messages with one simple question: “Do you have difficulty linking process data to quality defects?”
+
+Run discovery calls without selling the full product.
+
+Ask for examples of their defect investigation process, data sources and pain points.
+
+Refine the product around repeated pain, not around personal assumptions.
+
+Only then offer a paid data readiness assessment or diagnostic pilot.
+
+9. Risk Register
+
+Risk                                        | Impact                         | Mitigation                                                                    
+------------------------------------------- | ------------------------------ | ------------------------------------------------------------------------------
+Scope becomes too broad                     | Product never finishes         | Start with one route, one defect family, one dashboard.                       
+No real customer data                       | Model cannot prove value       | Use synthetic demo first, then sell data readiness assessment.                
+False correlation interpreted as root cause | Loss of trust                  | Use careful wording: suspected contributor, not guaranteed cause.             
+Security restrictions block access          | Pilot delayed                  | Offer CSV/SQL export first, on-prem later.                                    
+Too much Qlik dependency                    | Product becomes only dashboard | Keep intelligence engine separate from BI layer.                              
+Too much ML complexity                      | Hard to explain                | Start with correlation and interpretable models.                              
+Conflict with employer/client data          | Legal risk                     | Use only synthetic data and customer-approved data; keep all work independent.
+Customer expects full MES                   | Wrong expectation              | Position as intelligence layer, not MES replacement.                          
+
+10. Definition of Full Version
+
+Multi-source data ingestion: CSV/Excel, SQL Server, Oracle, PostgreSQL and API-based import.
+
+Configurable canonical model for different industries and material/batch types.
+
+Genealogy viewer for material/batch/product traceability.
+
+Data quality engine with reusable rules and issue reporting.
+
+Correlation engine for parameter-to-defect analysis.
+
+Prediction engine with model registry, validation, risk scoring and explainability.
+
+Dashboard layer with Qlik/Power BI export and React product UI.
+
+Investigation report generator with evidence, charts, suspected contributors and next actions.
+
+On-prem/private cloud deployment package with RBAC, audit logs and secure configuration.
+
+Sales/pilot kit: proposal, demo script, data readiness checklist and sample report.
+
+11. Suggested First Repository Structure
+
+Folder / Project                | Purpose                                                                         
+------------------------------- | --------------------------------------------------------------------------------
+src/PlantProcess.Api            | .NET backend API for dashboard and product workflows                            
+src/PlantProcess.Domain         | Canonical domain model and business rules                                       
+src/PlantProcess.Infrastructure | Database, connectors, import jobs and external integrations                     
+src/PlantProcess.Workers        | Background ingestion, analytics and report jobs                                 
+ml/                             | Python notebooks/scripts for correlation, feature engineering and model training
+ui/                             | React frontend product UI                                                       
+dashboards/                     | Qlik/Power BI dashboard prototypes and exported screenshots                     
+data/synthetic/                 | Generated synthetic datasets only                                               
+docs/                           | Architecture, data dictionary, product proposal, pilot reports                  
+deploy/                         | Docker compose, local deployment and customer pilot setup                       
+
+12. References
+
+Microsoft .NET support policy and release lifecycle: https://dotnet.microsoft.com/en-us/platform/support/policy
+
+ML.NET documentation: https://learn.microsoft.com/en-us/dotnet/machine-learning/
+
+scikit-learn documentation: https://scikit-learn.org/
+
+Qlik Sense analytic connections / Server-Side Extension: https://help.qlik.com/en-US/sense-developer/November2025/Content/Sense_Helpsites/AnalyticConnections.htm
+
+PostgreSQL declarative partitioning: https://www.postgresql.org/docs/current/ddl-partitioning.html
+
+PostgreSQL JSON/JSONB types: https://www.postgresql.org/docs/current/datatype-json.html
+
+ONNX Runtime documentation: https://onnxruntime.ai/docs/
+
+================================================================================
+END OF MASTER DOCUMENT
+================================================================================

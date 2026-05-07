@@ -1,0 +1,6 @@
+@PlantProcess.Api_HostAddress = http://localhost:5063
+
+GET {{PlantProcess.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
