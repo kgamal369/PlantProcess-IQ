@@ -1,64 +1,100 @@
-using Microsoft.EntityFrameworkCore;
+using PlantProcess.Api.Endpoints.Analytics;
+using PlantProcess.Api.Endpoints.Configuration;
+using PlantProcess.Api.Endpoints.DataQuality;
+using PlantProcess.Api.Endpoints.Development;
+using PlantProcess.Api.Endpoints.Health;
+using PlantProcess.Api.Endpoints.Integration;
+using PlantProcess.Api.Endpoints.Materials;
+using PlantProcess.Api.Endpoints.PlantLayout;
+using PlantProcess.Api.Endpoints.Process;
+using PlantProcess.Api.Endpoints.Quality;
+using PlantProcess.Api.Endpoints.Validation;
+using PlantProcess.Api.Endpoints.Workflow;
+using PlantProcess.Api.Middleware;
 using PlantProcess.Infrastructure;
-using PlantProcess.Infrastructure.Persistence;
+using Serilog;
+using Serilog.Events;
+using Serilog.Exceptions;
 
-using PlantProcess.Api.Endpoints;
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Verbose()
+    .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
+    .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
+    .MinimumLevel.Override("Microsoft.EntityFrameworkCore.Database.Command", LogEventLevel.Warning)
+    .Enrich.FromLogContext()
+    .Enrich.WithMachineName()
+    .Enrich.WithEnvironmentName()
+    .Enrich.WithExceptionDetails()
+    .WriteTo.Console()
+    .WriteTo.File(
+        path: "logs/plantprocess-api-.log",
+        rollingInterval: RollingInterval.Day,
+        retainedFileCountLimit: 30,
+        shared: true,
+        restrictedToMinimumLevel: LogEventLevel.Verbose)
+    .CreateLogger();
 
-var builder = WebApplication.CreateBuilder(args);
-
-builder.Services.AddOpenApi();
-builder.Services.AddInfrastructure(builder.Configuration);
-
-var app = builder.Build();
-
-if (app.Environment.IsDevelopment())
+try
 {
-    app.MapOpenApi();
-}
+    Log.Information("Starting PlantProcess IQ API.");
 
-app.UseHttpsRedirection();
+    var builder = WebApplication.CreateBuilder(args);
 
-app.MapGet("/health", () => Results.Ok(new
-{
-    service = "PlantProcess IQ API",
-    status = "Healthy",
-    utc = DateTime.UtcNow
-}));
+    builder.Host.UseSerilog();
 
-app.MapGet("/db-health", async (PlantProcessDbContext dbContext) =>
-{
-    var canConnect = await dbContext.Database.CanConnectAsync();
+    builder.Services.AddOpenApi();
+    builder.Services.AddEndpointsApiExplorer();
+    builder.Services.AddSwaggerGen();
 
-    return Results.Ok(new
+    builder.Services.AddInfrastructure(builder.Configuration);
+
+    var app = builder.Build();
+
+    app.UseMiddleware<RequestResponseLoggingMiddleware>();
+
+    if (app.Environment.IsDevelopment())
     {
-        database = "plantprocessiq",
-        canConnect,
-        utc = DateTime.UtcNow
-    });
-});
+        app.MapOpenApi();
 
-app.MapGet("/materials", async (PlantProcessDbContext dbContext) =>
-{
-    var materials = await dbContext.MaterialUnits
-        .AsNoTracking()
-        .OrderBy(x => x.MaterialCode)
-        .Take(50)
-        .Select(x => new
+        app.UseSwagger();
+        app.UseSwaggerUI(options =>
         {
-            x.Id,
-            x.MaterialCode,
-            x.MaterialUnitType,
-            x.ProductFamily,
-            x.GradeOrRecipe,
-            x.ProductionStartUtc,
-            x.ProductionEndUtc,
-            x.IsSynthetic
-        })
-        .ToListAsync();
+            options.SwaggerEndpoint("/swagger/v1/swagger.json", "PlantProcess IQ API v1");
+            options.RoutePrefix = "swagger";
+        });
+    }
 
-    return Results.Ok(materials);
-});
+    app.UseHttpsRedirection();
 
-app.MapDevSeedEndpoints();
+    app.MapHealthEndpoints();
+    app.MapPlantLayoutEndpoints();
+    app.MapConfigurationEndpoints();
+    app.MapIntegrationEndpoints();
+    app.MapMaterialEndpoints();
+    app.MapMaterialInvestigationEndpoints();
+    app.MapProcessEndpoints();
+    app.MapQualityEndpoints();
+    app.MapRiskScoreEndpoints();
+    app.MapDataQualityEndpoints();
+    app.MapDataQualityScanEndpoints();
+    app.MapWorkflowEndpoints();
+    app.MapValidationEndpoints();
+    app.MapDevSeedEndpoints();
 
-app.Run();
+    app.Run();
+}
+catch (Exception ex) when (ex.GetType().Name == "HostAbortedException")
+{
+    // EF Core design-time tools intentionally abort the host after discovering services.
+    // This is not a real runtime crash.
+    Log.Debug(ex, "Host aborted during EF Core design-time operation.");
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "PlantProcess IQ API terminated unexpectedly.");
+}
+finally
+{
+    Log.Information("PlantProcess IQ API stopped.");
+    Log.CloseAndFlush();
+}

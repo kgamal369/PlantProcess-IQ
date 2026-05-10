@@ -1,5 +1,4 @@
 ﻿using PlantProcess.Domain.Common;
-using PlantProcess.Domain.Entities.PlantLayout;
 
 namespace PlantProcess.Domain.Entities.Process;
 
@@ -10,9 +9,9 @@ public class ProcessStepExecution : BaseEntity
     public Guid? EquipmentId { get; private set; }
 
     public string OperationType { get; private set; } = null!;
-    // Steel: EAF_Melting, LF_Treatment, Continuous_Casting, Hot_Rolling
-    // Pharma: Mixing, Filling, Packaging
-    // Tire: Mixing, Curing, Inspection
+    // Generic operation type stored as configuration value, not as a steel-only table.
+    // Examples by template: EAF_Melting, LF_Treatment, Continuous_Casting, Hot_Rolling,
+    // Mixing, Curing, Filling, Inspection, Packaging, Assembly.
 
     public string? OperationCode { get; private set; }
 
@@ -45,7 +44,6 @@ public class ProcessStepExecution : BaseEntity
         bool isSynthetic,
         Guid? equipmentId = null,
         string? operationCode = null,
-        Guid? productionLineId = null,
         string? crewCode = null,
         string? executionStatus = null,
         string? sourceSystem = null,

@@ -10,3 +10,14 @@ dotnet ef migrations add AddPlantLayoutAndIntegrationMasterData `
   --project PlantProcess.Infrastructure `
   --startup-project PlantProcess.Api `
   --context PlantProcessDbContext
+
+
+dotnet ef migrations list `
+  --project PlantProcess.Infrastructure `
+  --startup-project PlantProcess.Api `
+  --context PlantProcessDbContext
+
+  & "C:\Program Files\PostgreSQL\16\bin\psql.exe" -U plantprocess -h localhost -d plantprocessiq -f "C:\Workspace\PlantProcess-IQ\db\seed\001_basic_genealogy_seed.sql"
+
+
+dotnet run --project PlantProcess.Api
