@@ -37,8 +37,11 @@ param(
     [string]$RootPath,
     [string]$OutputFolder,
 
-    # Keep default as .cs because the main purpose is full C# source documentation.
-    [string[]]$IncludeExtensions = @(".cs"),
+	# Default documentation files.
+	# .cs     = C# source code
+	# .csproj = .NET project definitions and package references
+	# .json   = appsettings, launchSettings and configuration files
+	[string[]]$IncludeExtensions = @(".cs", ".csproj", ".json"),
 
     # Optional switches.
     [switch]$IncludeHidden,
@@ -264,6 +267,32 @@ function Get-FileClassification {
         [AllowNull()][string]$Content
     )
 
+    $extension = $File.Extension.ToLowerInvariant()
+
+    # ------------------------------------------------------------
+    # Non-C# project/config files
+    # ------------------------------------------------------------
+
+    if ($extension -eq ".csproj") {
+        return ".NET Project File"
+    }
+
+    if ($extension -eq ".json") {
+        if ($File.Name -eq "appsettings.json" -or $File.Name -like "appsettings.*.json") {
+            return "Application Settings JSON"
+        }
+
+        if ($File.Name -eq "launchSettings.json") {
+            return "Launch Settings JSON"
+        }
+
+        return "JSON Configuration File"
+    }
+
+    # ------------------------------------------------------------
+    # C# source classifications
+    # ------------------------------------------------------------
+
     if ($File.FullName -like "*\Migrations\*") {
         return "EF Migration / Generated Database Code"
     }
@@ -294,6 +323,22 @@ function Get-FileClassification {
 
     if ($File.FullName -like "*\Bulk\*") {
         return "Bulk / Ingestion Support"
+    }
+
+    if ($File.FullName -like "*\Contracts\*") {
+        return "Application Contract / DTO"
+    }
+
+    if ($File.FullName -like "*\Services\*") {
+        return "Application Service"
+    }
+
+    if ($File.FullName -like "*\Middleware\*") {
+        return "API Middleware"
+    }
+
+    if ($File.FullName -like "*\Extensions\*") {
+        return "Extension Method / API Helper"
     }
 
     return "C# Source File"
@@ -471,10 +516,10 @@ try {
     Add-Line "Documentation Level : Advanced / Professional / Full Source Snapshot"
     Add-Line "Output File         : $outputFilePath"
     Add-Line "Included Extensions : $($normalizedExtensions -join ', ')"
-    Add-Line "Total Source Files  : $($fileMetadata.Count)"
-    Add-Line "Total Source Lines  : $totalLines"
-    Add-Line "Total Source Size   : $(Convert-BytesToReadable -Bytes $totalBytes)"
-    Add-Line "PowerShell Version  : $($PSVersionTable.PSVersion)"
+    Add-Line "Total Included Files: $($fileMetadata.Count)"
+	Add-Line "Total Included Lines: $totalLines"
+	Add-Line "Total Included Size : $(Convert-BytesToReadable -Bytes $totalBytes)"
+	Add-Line "PowerShell Version  : $($PSVersionTable.PSVersion)"
     Add-Line "Machine Name        : $env:COMPUTERNAME"
     Add-Line "User Name           : $env:USERNAME"
     Add-Separator
@@ -559,8 +604,8 @@ try {
         Add-Line ("{0,-12} {1,-30} {2,-45} {3,8} {4,12}" -f $meta.Number, $meta.ProjectName, $meta.FileName, $meta.LineCount, $meta.SizeReadable)
     }
 
-    # Full source code
-    Add-Section "7. FULL SOURCE CODE APPENDIX"
+    # Full file contents
+	Add-Section "7. FULL FILE CONTENT APPENDIX"
 
     foreach ($meta in ($fileMetadata | Sort-Object RelativePath)) {
         Add-Line ""
@@ -621,8 +666,8 @@ Write-Host "Advanced documentation generated successfully." -ForegroundColor Gre
 Write-Host "Output file:" -ForegroundColor Cyan
 Write-Host $outputFilePath
 Write-Host ""
-Write-Host "Included source files: $($fileMetadata.Count)" -ForegroundColor Yellow
-Write-Host "Total source lines   : $totalLines" -ForegroundColor Yellow
+Write-Host "Included files       : $($fileMetadata.Count)" -ForegroundColor Yellow
+Write-Host "Total included lines : $totalLines" -ForegroundColor Yellow
 Write-Host ""
 
 if ($OpenAfterGeneration) {
