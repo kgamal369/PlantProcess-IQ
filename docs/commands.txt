@@ -21,3 +21,4 @@ dotnet ef migrations list `
 
 
 dotnet run --project PlantProcess.Api
+dotnet run --project .\PlantProcess.Api\PlantProcess.Api.csproj

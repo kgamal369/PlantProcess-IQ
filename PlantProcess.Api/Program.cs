@@ -42,9 +42,15 @@ try
 
     builder.Host.UseSerilog();
 
-    builder.Services.AddOpenApi();
     builder.Services.AddEndpointsApiExplorer();
-    builder.Services.AddSwaggerGen();
+
+    builder.Services.AddSwaggerGen(options =>
+    {
+        options.CustomSchemaIds(type =>
+            type.FullName!
+                .Replace("+", "_")
+                .Replace(".", "_"));
+    });
 
     builder.Services.AddInfrastructure(builder.Configuration);
 
@@ -54,8 +60,6 @@ try
 
     if (app.Environment.IsDevelopment())
     {
-        app.MapOpenApi();
-
         app.UseSwagger();
         app.UseSwaggerUI(options =>
         {
@@ -64,7 +68,12 @@ try
         });
     }
 
-    app.UseHttpsRedirection();
+    app.MapGet("/", () => Results.Redirect("/swagger"));
+
+    if (!app.Environment.IsDevelopment())
+    {
+        app.UseHttpsRedirection();
+    }
 
     app.MapHealthEndpoints();
     app.MapPlantLayoutEndpoints();
