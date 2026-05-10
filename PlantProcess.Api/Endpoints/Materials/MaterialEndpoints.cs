@@ -89,7 +89,10 @@ public static class MaterialEndpoints
                 return Results.BadRequest(new { message = "Site does not exist." });
 
             var exists = await dbContext.MaterialUnits
-                .AnyAsync(x => x.MaterialCode == request.MaterialCode, cancellationToken);
+             .AnyAsync(x =>
+                 x.SiteId == request.SiteId &&
+                 x.MaterialCode == request.MaterialCode,
+                 cancellationToken);
 
             if (exists)
                 return Results.Conflict(new { message = "Material code already exists." });

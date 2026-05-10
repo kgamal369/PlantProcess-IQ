@@ -30,8 +30,8 @@ public class ParameterDefinitionConfiguration : IEntityTypeConfiguration<Paramet
         builder.Property(x => x.ExpectedMinValue).HasPrecision(18, 6);
         builder.Property(x => x.ExpectedMaxValue).HasPrecision(18, 6);
 
-        builder.HasIndex(x => x.ParameterCode).IsUnique();
-        builder.HasIndex(x => x.ParameterCategory);
+        builder.HasIndex(x => new { x.IndustryTemplate, x.ParameterCode }).IsUnique(); builder.HasIndex(x => x.ParameterCategory);
+       
         builder.HasIndex(x => x.IndustryTemplate);
 
         builder.UsePostgresXminConcurrencyToken();

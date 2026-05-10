@@ -1,9 +1,18 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using PlantProcess.Domain.Entities.Analytics;
-using PlantProcess.Domain.Entities.Integration;
-using PlantProcess.Domain.Entities.Materials;
-using PlantProcess.Domain.Entities.Process;
-using PlantProcess.Domain.Entities.Quality;
+using PlantProcess.Api.Extensions;
+using PlantProcess.Application.Contracts.Analytics;
+using PlantProcess.Application.Contracts.Common;
+using PlantProcess.Application.Contracts.DataQuality;
+using PlantProcess.Application.Contracts.Integration;
+using PlantProcess.Application.Contracts.Materials;
+using PlantProcess.Application.Contracts.Process;
+using PlantProcess.Application.Contracts.Quality;
+using PlantProcess.Application.Services.Analytics;
+using PlantProcess.Application.Services.DataQuality;
+using PlantProcess.Application.Services.Integration;
+using PlantProcess.Application.Services.Materials;
+using PlantProcess.Application.Services.Process;
+using PlantProcess.Application.Services.Quality;
 using PlantProcess.Infrastructure.Persistence;
 
 namespace PlantProcess.Api.Endpoints.Workflow;
@@ -32,6 +41,7 @@ public static class WorkflowEndpoints
 
         group.MapPost("/process-events", AddProcessEventAsync);
         group.MapPost("/downtime-events", AddDowntimeEventAsync);
+
         group.MapPost("/defects", AddDefectCatalogAsync);
         group.MapPost("/quality-events", AddQualityEventAsync);
 
@@ -50,17 +60,19 @@ public static class WorkflowEndpoints
             product = "PlantProcess IQ",
             purpose = "Generic manufacturing process-to-quality intelligence workflow.",
             rule = "API contains no demo data. Demo/sample data must be inserted into the database through SQL scripts, imports, or synthetic generators.",
+            architectureRule = "Workflow endpoints are thin API facades. Business/process logic belongs to PlantProcess.Application services.",
             workflow = new[]
             {
                 "1. Register source system",
                 "2. Create import batch",
-                "3. Apply mapping definition",
-                "4. Create canonical material and genealogy",
-                "5. Add process steps and parameter observations",
-                "6. Add process events, downtime events and quality events",
-                "7. Raise data-quality issues",
-                "8. Store risk scores",
-                "9. Investigate one material from genealogy to risk"
+                "3. Create mapping definition",
+                "4. Create canonical material and material aliases",
+                "5. Create genealogy edges",
+                "6. Add process steps and parameter observations",
+                "7. Add process events, downtime events and quality events",
+                "8. Raise data-quality issues",
+                "9. Store risk scores",
+                "10. Investigate one material from genealogy to risk"
             }
         });
     }
@@ -85,6 +97,7 @@ public static class WorkflowEndpoints
 
             processEvents = await dbContext.ProcessEvents.CountAsync(cancellationToken),
             downtimeEvents = await dbContext.DowntimeEvents.CountAsync(cancellationToken),
+
             defectCatalogs = await dbContext.DefectCatalogs.CountAsync(cancellationToken),
             qualityEvents = await dbContext.QualityEvents.CountAsync(cancellationToken),
 
@@ -96,671 +109,554 @@ public static class WorkflowEndpoints
     }
 
     // ---------------------------------------------------------------------
-    // 1. Register source system
+    // 1. Source system / import / mapping workflow
     // ---------------------------------------------------------------------
+
     private static async Task<IResult> RegisterSourceSystemAsync(
         RegisterSourceSystemRequest request,
-        PlantProcessDbContext dbContext,
+        ISourceSystemService service,
+        HttpContext httpContext,
         CancellationToken cancellationToken)
     {
-        var exists = await dbContext.SourceSystemDefinitions
-            .AnyAsync(x => x.SourceSystemCode == request.SourceSystemCode, cancellationToken);
+        var command = new RegisterSourceSystemCommand(
+            SourceSystemCode: request.SourceSystemCode,
+            SourceSystemName: request.SourceSystemName,
+            SourceSystemType: request.SourceSystemType,
+            IsReadOnlySource: request.IsReadOnlySource,
+            Description: request.Description,
+            Metadata: ToMetadata(
+                request.IsSynthetic,
+                request.SourceSystem,
+                request.SourceRecordId,
+                httpContext));
 
-        if (exists)
-            return Results.Conflict(new { message = "Source system code already exists." });
+        var result = await service.RegisterAsync(command, cancellationToken);
 
-        var sourceSystem = new SourceSystemDefinition(
-            sourceSystemCode: request.SourceSystemCode,
-            sourceSystemName: request.SourceSystemName,
-            sourceSystemType: request.SourceSystemType,
-            isSynthetic: request.IsSynthetic,
-            description: request.Description,
-            isReadOnlySource: request.IsReadOnlySource,
-            sourceSystem: request.SourceSystem,
-            sourceRecordId: request.SourceRecordId);
-
-        dbContext.SourceSystemDefinitions.Add(sourceSystem);
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        return Results.Created($"/workflow/source-systems/{sourceSystem.Id}", new
-        {
-            sourceSystem.Id,
-            sourceSystem.SourceSystemCode,
-            sourceSystem.SourceSystemName,
-            sourceSystem.SourceSystemType
-        });
+        return result.ToHttpResult(id =>
+            Results.Created($"/workflow/source-systems/{id}", new
+            {
+                id,
+                request.SourceSystemCode,
+                request.SourceSystemName,
+                request.SourceSystemType,
+                request.IsReadOnlySource
+            }));
     }
 
-    // ---------------------------------------------------------------------
-    // 2. Create import batch
-    // ---------------------------------------------------------------------
     private static async Task<IResult> CreateImportBatchAsync(
         CreateImportBatchRequest request,
-        PlantProcessDbContext dbContext,
+        IImportBatchService service,
+        HttpContext httpContext,
         CancellationToken cancellationToken)
     {
-        var sourceExists = await dbContext.SourceSystemDefinitions
-            .AnyAsync(x => x.Id == request.SourceSystemDefinitionId, cancellationToken);
+        var command = new CreateImportBatchCommand(
+            SourceSystemDefinitionId: request.SourceSystemDefinitionId,
+            ImportBatchCode: request.ImportBatchCode,
+            ImportType: request.ImportType,
+            SourceObjectName: request.SourceObjectName,
+            FileName: request.FileName,
+            Checksum: request.Checksum,
+            Metadata: ToMetadata(
+                request.IsSynthetic,
+                request.SourceSystem,
+                request.SourceRecordId,
+                httpContext));
 
-        if (!sourceExists)
-            return Results.BadRequest(new { message = "Source system definition does not exist." });
+        var result = await service.CreateAsync(command, cancellationToken);
 
-        var exists = await dbContext.ImportBatches
-            .AnyAsync(x => x.ImportBatchCode == request.ImportBatchCode, cancellationToken);
-
-        if (exists)
-            return Results.Conflict(new { message = "Import batch code already exists." });
-
-        var importBatch = new ImportBatch(
-            sourceSystemDefinitionId: request.SourceSystemDefinitionId,
-            importBatchCode: request.ImportBatchCode,
-            importType: request.ImportType,
-            isSynthetic: request.IsSynthetic,
-            sourceObjectName: request.SourceObjectName,
-            fileName: request.FileName,
-            checksum: request.Checksum,
-            sourceSystem: request.SourceSystem,
-            sourceRecordId: request.SourceRecordId);
-
-        dbContext.ImportBatches.Add(importBatch);
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        return Results.Created($"/workflow/import-batches/{importBatch.Id}", new
-        {
-            importBatch.Id,
-            importBatch.ImportBatchCode,
-            importBatch.ImportType,
-            importBatch.Status
-        });
+        return result.ToHttpResult(id =>
+            Results.Created($"/workflow/import-batches/{id}", new
+            {
+                id,
+                request.ImportBatchCode,
+                request.ImportType,
+                request.SourceSystemDefinitionId
+            }));
     }
 
-    // ---------------------------------------------------------------------
-    // 3. Apply mapping definition
-    // ---------------------------------------------------------------------
     private static async Task<IResult> CreateMappingDefinitionAsync(
         CreateMappingDefinitionRequest request,
-        PlantProcessDbContext dbContext,
+        IMappingDefinitionService service,
+        HttpContext httpContext,
         CancellationToken cancellationToken)
     {
-        var sourceExists = await dbContext.SourceSystemDefinitions
-            .AnyAsync(x => x.Id == request.SourceSystemDefinitionId, cancellationToken);
+        var command = new CreateMappingDefinitionCommand(
+            SourceSystemDefinitionId: request.SourceSystemDefinitionId,
+            MappingCode: request.MappingCode,
+            MappingName: request.MappingName,
+            SourceObjectName: request.SourceObjectName,
+            TargetEntityName: request.TargetEntityName,
+            MappingJson: request.MappingJson,
+            MappingVersion: request.MappingVersion,
+            Description: request.Description,
+            Metadata: ToMetadata(
+                request.IsSynthetic,
+                request.SourceSystem,
+                request.SourceRecordId,
+                httpContext));
 
-        if (!sourceExists)
-            return Results.BadRequest(new { message = "Source system definition does not exist." });
+        var result = await service.CreateAsync(command, cancellationToken);
 
-        var exists = await dbContext.MappingDefinitions
-            .AnyAsync(x => x.MappingCode == request.MappingCode, cancellationToken);
-
-        if (exists)
-            return Results.Conflict(new { message = "Mapping code already exists." });
-
-        var mapping = new MappingDefinition(
-            sourceSystemDefinitionId: request.SourceSystemDefinitionId,
-            mappingCode: request.MappingCode,
-            mappingName: request.MappingName,
-            sourceObjectName: request.SourceObjectName,
-            targetEntityName: request.TargetEntityName,
-            mappingJson: request.MappingJson,
-            isSynthetic: request.IsSynthetic,
-            mappingVersion: request.MappingVersion,
-            description: request.Description,
-            sourceSystem: request.SourceSystem,
-            sourceRecordId: request.SourceRecordId);
-
-        dbContext.MappingDefinitions.Add(mapping);
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        return Results.Created($"/workflow/mapping-definitions/{mapping.Id}", new
-        {
-            mapping.Id,
-            mapping.MappingCode,
-            mapping.TargetEntityName,
-            mapping.MappingVersion
-        });
+        return result.ToHttpResult(id =>
+            Results.Created($"/workflow/mapping-definitions/{id}", new
+            {
+                id,
+                request.MappingCode,
+                request.MappingName,
+                request.SourceObjectName,
+                request.TargetEntityName,
+                mappingVersion = request.MappingVersion ?? "v1"
+            }));
     }
 
     // ---------------------------------------------------------------------
-    // 4. Create canonical material
+    // 2. Material and genealogy workflow
     // ---------------------------------------------------------------------
+
     private static async Task<IResult> CreateMaterialAsync(
         CreateWorkflowMaterialRequest request,
-        PlantProcessDbContext dbContext,
+        IMaterialService service,
+        HttpContext httpContext,
         CancellationToken cancellationToken)
     {
-        var siteExists = await dbContext.Sites
-            .AnyAsync(x => x.Id == request.SiteId, cancellationToken);
+        var command = new CreateMaterialCommand(
+            MaterialCode: request.MaterialCode,
+            MaterialUnitType: request.MaterialUnitType,
+            SiteId: request.SiteId,
+            ProductFamily: request.ProductFamily,
+            GradeOrRecipe: request.GradeOrRecipe,
+            ProductionStartUtc: request.ProductionStartUtc,
+            ProductionEndUtc: request.ProductionEndUtc,
+            PlantTimeZoneId: request.PlantTimeZoneId,
+            PlantUtcOffsetMinutes: request.PlantUtcOffsetMinutes,
+            Metadata: ToMetadata(
+                request.IsSynthetic,
+                request.SourceSystem,
+                request.SourceRecordId,
+                httpContext));
 
-        if (!siteExists)
-            return Results.BadRequest(new { message = "Site does not exist." });
+        var result = await service.CreateAsync(command, cancellationToken);
 
-        var exists = await dbContext.MaterialUnits
-            .AnyAsync(x => x.MaterialCode == request.MaterialCode, cancellationToken);
-
-        if (exists)
-            return Results.Conflict(new { message = "Material code already exists." });
-
-        var material = new MaterialUnit(
-            materialCode: request.MaterialCode,
-            materialUnitType: request.MaterialUnitType,
-            siteId: request.SiteId,
-            productFamily: request.ProductFamily,
-            gradeOrRecipe: request.GradeOrRecipe,
-            isSynthetic: request.IsSynthetic,
-            sourceSystem: request.SourceSystem,
-            sourceRecordId: request.SourceRecordId);
-
-        if (request.ProductionStartUtc.HasValue)
-        {
-            material.SetProductionWindow(
-                request.ProductionStartUtc.Value,
-                request.ProductionEndUtc,
-                TimeSpan.FromMinutes(request.PlantUtcOffsetMinutes ?? 60),
-                request.PlantTimeZoneId ?? "Europe/Berlin");
-        }
-
-        dbContext.MaterialUnits.Add(material);
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        return Results.Created($"/workflow/materials/{material.Id}", new
-        {
-            material.Id,
-            material.MaterialCode,
-            material.MaterialUnitType
-        });
+        return result.ToHttpResult(id =>
+            Results.Created($"/workflow/materials/{id}", new
+            {
+                id,
+                request.MaterialCode,
+                request.MaterialUnitType,
+                request.SiteId,
+                request.ProductFamily,
+                request.GradeOrRecipe
+            }));
     }
 
     private static async Task<IResult> AddMaterialAliasAsync(
         Guid materialUnitId,
         AddWorkflowMaterialAliasRequest request,
-        PlantProcessDbContext dbContext,
+        IMaterialService service,
+        HttpContext httpContext,
         CancellationToken cancellationToken)
     {
-        var material = await dbContext.MaterialUnits
-            .FirstOrDefaultAsync(x => x.Id == materialUnitId, cancellationToken);
+        var command = new AddMaterialAliasCommand(
+            MaterialUnitId: materialUnitId,
+            AliasCode: request.AliasCode,
+            SourceSystem: request.SourceSystem,
+            AliasType: request.AliasType,
+            Metadata: ToMetadata(
+                request.IsSynthetic,
+                request.SourceSystem,
+                request.SourceRecordId,
+                httpContext));
 
-        if (material is null)
-            return Results.NotFound(new { message = "Material unit not found." });
+        var result = await service.AddAliasAsync(command, cancellationToken);
 
-        material.AddAlias(
-            aliasCode: request.AliasCode,
-            sourceSystem: request.SourceSystem,
-            aliasType: request.AliasType);
-
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        return Results.Ok(new
-        {
-            material.Id,
-            request.AliasCode,
-            request.AliasType,
-            request.SourceSystem
-        });
+        return result.ToHttpResult(id =>
+            Results.Created($"/workflow/materials/{materialUnitId}/aliases/{id}", new
+            {
+                id,
+                materialUnitId,
+                request.AliasCode,
+                request.AliasType,
+                request.SourceSystem
+            }));
     }
 
     private static async Task<IResult> CreateGenealogyEdgeAsync(
         CreateWorkflowGenealogyEdgeRequest request,
-        PlantProcessDbContext dbContext,
+        IGenealogyService service,
+        HttpContext httpContext,
         CancellationToken cancellationToken)
     {
-        if (request.ParentMaterialUnitId == request.ChildMaterialUnitId)
-            return Results.BadRequest(new { message = "Parent and child material cannot be the same." });
+        var command = new CreateGenealogyEdgeCommand(
+            ParentMaterialUnitId: request.ParentMaterialUnitId,
+            ChildMaterialUnitId: request.ChildMaterialUnitId,
+            RelationshipType: request.RelationshipType,
+            EffectiveFromUtc: request.EffectiveFromUtc,
+            EffectiveToUtc: request.EffectiveToUtc,
+            Quantity: request.Quantity,
+            UnitOfMeasure: request.UnitOfMeasure,
+            Metadata: ToMetadata(
+                request.IsSynthetic,
+                request.SourceSystem,
+                request.SourceRecordId,
+                httpContext));
 
-        var parentExists = await dbContext.MaterialUnits
-            .AnyAsync(x => x.Id == request.ParentMaterialUnitId, cancellationToken);
+        var result = await service.CreateEdgeAsync(command, cancellationToken);
 
-        var childExists = await dbContext.MaterialUnits
-            .AnyAsync(x => x.Id == request.ChildMaterialUnitId, cancellationToken);
-
-        if (!parentExists || !childExists)
-            return Results.BadRequest(new { message = "Parent or child material does not exist." });
-
-        var edge = new GenealogyEdge(
-            parentMaterialUnitId: request.ParentMaterialUnitId,
-            childMaterialUnitId: request.ChildMaterialUnitId,
-            relationshipType: request.RelationshipType,
-            isSynthetic: request.IsSynthetic,
-            sourceSystem: request.SourceSystem,
-            sourceRecordId: request.SourceRecordId);
-
-        if (request.EffectiveFromUtc.HasValue || request.EffectiveToUtc.HasValue)
-        {
-            edge.SetEffectiveWindow(
+        return result.ToHttpResult(id =>
+            Results.Created($"/workflow/genealogy-edges/{id}", new
+            {
+                id,
+                request.ParentMaterialUnitId,
+                request.ChildMaterialUnitId,
+                request.RelationshipType,
                 request.EffectiveFromUtc,
-                request.EffectiveToUtc);
-        }
-
-        dbContext.GenealogyEdges.Add(edge);
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        return Results.Created($"/workflow/genealogy-edges/{edge.Id}", new
-        {
-            edge.Id,
-            edge.ParentMaterialUnitId,
-            edge.ChildMaterialUnitId,
-            edge.RelationshipType
-        });
+                request.EffectiveToUtc
+            }));
     }
 
     // ---------------------------------------------------------------------
-    // 5. Add process steps and parameters
+    // 3. Process workflow
     // ---------------------------------------------------------------------
+
     private static async Task<IResult> AddProcessStepAsync(
         AddWorkflowProcessStepRequest request,
-        PlantProcessDbContext dbContext,
+        IProcessDataService service,
+        HttpContext httpContext,
         CancellationToken cancellationToken)
     {
-        var materialExists = await dbContext.MaterialUnits
-            .AnyAsync(x => x.Id == request.MaterialUnitId, cancellationToken);
+        var command = new AddProcessStepCommand(
+            MaterialUnitId: request.MaterialUnitId,
+            EquipmentId: request.EquipmentId,
+            OperationDefinitionId: request.OperationDefinitionId,
+            OperationType: request.OperationType,
+            OperationCode: request.OperationCode,
+            CrewCode: request.CrewCode,
+            StartedAtUtc: request.StartedAtUtc,
+            EndedAtUtc: request.EndedAtUtc,
+            ExecutionStatus: request.ExecutionStatus,
+            PlantTimeZoneId: request.PlantTimeZoneId,
+            PlantUtcOffsetMinutes: request.PlantUtcOffsetMinutes,
+            Metadata: ToMetadata(
+                request.IsSynthetic,
+                request.SourceSystem,
+                request.SourceRecordId,
+                httpContext));
 
-        if (!materialExists)
-            return Results.BadRequest(new { message = "Material unit does not exist." });
+        var result = await service.AddProcessStepAsync(command, cancellationToken);
 
-        if (request.EquipmentId.HasValue)
-        {
-            var equipmentExists = await dbContext.Equipment
-                .AnyAsync(x => x.Id == request.EquipmentId.Value, cancellationToken);
-
-            if (!equipmentExists)
-                return Results.BadRequest(new { message = "Equipment does not exist." });
-        }
-
-        var step = new ProcessStepExecution(
-            materialUnitId: request.MaterialUnitId,
-            operationType: request.OperationType,
-            startedAtUtc: request.StartedAtUtc,
-            endedAtUtc: request.EndedAtUtc,
-            isSynthetic: request.IsSynthetic,
-            equipmentId: request.EquipmentId,
-            operationCode: request.OperationCode,
-            crewCode: request.CrewCode,
-            executionStatus: request.ExecutionStatus,
-            sourceSystem: request.SourceSystem,
-            sourceRecordId: request.SourceRecordId,
-            plantTimeZoneId: request.PlantTimeZoneId ?? "Europe/Berlin",
-            plantUtcOffsetMinutes: request.PlantUtcOffsetMinutes ?? 60);
-
-        dbContext.ProcessStepExecutions.Add(step);
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        return Results.Created($"/workflow/process-steps/{step.Id}", new
-        {
-            step.Id,
-            step.MaterialUnitId,
-            step.OperationType,
-            step.ExecutionStatus
-        });
+        return result.ToHttpResult(id =>
+            Results.Created($"/workflow/process-steps/{id}", new
+            {
+                id,
+                request.MaterialUnitId,
+                request.EquipmentId,
+                request.OperationDefinitionId,
+                request.OperationType,
+                request.OperationCode,
+                request.ExecutionStatus
+            }));
     }
 
     private static async Task<IResult> AddParameterDefinitionAsync(
         AddWorkflowParameterDefinitionRequest request,
-        PlantProcessDbContext dbContext,
+        IProcessDataService service,
+        HttpContext httpContext,
         CancellationToken cancellationToken)
     {
-        var exists = await dbContext.ParameterDefinitions
-            .AnyAsync(x => x.ParameterCode == request.ParameterCode, cancellationToken);
+        var command = new AddParameterDefinitionCommand(
+            ParameterCode: request.ParameterCode,
+            ParameterName: request.ParameterName,
+            ValueType: request.ValueType,
+            UnitOfMeasure: request.UnitOfMeasure,
+            ParameterCategory: request.ParameterCategory,
+            IndustryTemplate: request.IndustryTemplate,
+            ExpectedMinValue: request.ExpectedMinValue,
+            ExpectedMaxValue: request.ExpectedMaxValue,
+            Metadata: ToMetadata(
+                request.IsSynthetic,
+                request.SourceSystem,
+                request.SourceRecordId,
+                httpContext));
 
-        if (exists)
-            return Results.Conflict(new { message = "Parameter code already exists." });
+        var result = await service.AddParameterDefinitionAsync(command, cancellationToken);
 
-        var definition = new ParameterDefinition(
-            parameterCode: request.ParameterCode,
-            parameterName: request.ParameterName,
-            valueType: request.ValueType,
-            unitOfMeasure: request.UnitOfMeasure,
-            parameterCategory: request.ParameterCategory,
-            industryTemplate: request.IndustryTemplate,
-            isSynthetic: request.IsSynthetic,
-            sourceSystem: request.SourceSystem,
-            sourceRecordId: request.SourceRecordId);
-
-        if (request.ExpectedMinValue.HasValue || request.ExpectedMaxValue.HasValue)
-        {
-            definition.SetExpectedRange(
-                request.ExpectedMinValue,
-                request.ExpectedMaxValue);
-        }
-
-        dbContext.ParameterDefinitions.Add(definition);
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        return Results.Created($"/workflow/parameter-definitions/{definition.Id}", new
-        {
-            definition.Id,
-            definition.ParameterCode,
-            definition.ParameterName
-        });
+        return result.ToHttpResult(id =>
+            Results.Created($"/workflow/parameter-definitions/{id}", new
+            {
+                id,
+                request.ParameterCode,
+                request.ParameterName,
+                request.ValueType,
+                request.UnitOfMeasure,
+                request.ParameterCategory,
+                request.IndustryTemplate
+            }));
     }
 
     private static async Task<IResult> AddParameterObservationAsync(
         AddWorkflowParameterObservationRequest request,
-        PlantProcessDbContext dbContext,
+        IProcessDataService service,
+        HttpContext httpContext,
         CancellationToken cancellationToken)
     {
-        var materialExists = await dbContext.MaterialUnits
-            .AnyAsync(x => x.Id == request.MaterialUnitId, cancellationToken);
+        var command = new AddParameterObservationCommand(
+            MaterialUnitId: request.MaterialUnitId,
+            ProcessStepExecutionId: request.ProcessStepExecutionId,
+            ParameterDefinitionId: request.ParameterDefinitionId,
+            EquipmentId: request.EquipmentId,
+            ObservedAtUtc: request.ObservedAtUtc,
+            NumericValue: request.NumericValue,
+            TextValue: request.TextValue,
+            BooleanValue: request.BooleanValue,
+            UnitOfMeasure: request.UnitOfMeasure,
+            QualityFlag: request.QualityFlag,
+            RawValue: request.RawValue,
+            PlantTimeZoneId: request.PlantTimeZoneId,
+            PlantUtcOffsetMinutes: request.PlantUtcOffsetMinutes,
+            Metadata: ToMetadata(
+                request.IsSynthetic,
+                request.SourceSystem,
+                request.SourceRecordId,
+                httpContext));
 
-        if (!materialExists)
-            return Results.BadRequest(new { message = "Material unit does not exist." });
+        var result = await service.AddParameterObservationAsync(command, cancellationToken);
 
-        var definitionExists = await dbContext.ParameterDefinitions
-            .AnyAsync(x => x.Id == request.ParameterDefinitionId, cancellationToken);
-
-        if (!definitionExists)
-            return Results.BadRequest(new { message = "Parameter definition does not exist." });
-
-        if (request.ProcessStepExecutionId.HasValue)
-        {
-            var stepExists = await dbContext.ProcessStepExecutions
-                .AnyAsync(x => x.Id == request.ProcessStepExecutionId.Value, cancellationToken);
-
-            if (!stepExists)
-                return Results.BadRequest(new { message = "Process step does not exist." });
-        }
-
-        if (request.EquipmentId.HasValue)
-        {
-            var equipmentExists = await dbContext.Equipment
-                .AnyAsync(x => x.Id == request.EquipmentId.Value, cancellationToken);
-
-            if (!equipmentExists)
-                return Results.BadRequest(new { message = "Equipment does not exist." });
-        }
-
-        var observation = new ParameterObservation(
-            materialUnitId: request.MaterialUnitId,
-            parameterDefinitionId: request.ParameterDefinitionId,
-            observedAtUtc: request.ObservedAtUtc,
-            isSynthetic: request.IsSynthetic,
-            numericValue: request.NumericValue,
-            textValue: request.TextValue,
-            booleanValue: request.BooleanValue,
-            unitOfMeasure: request.UnitOfMeasure,
-            processStepExecutionId: request.ProcessStepExecutionId,
-            equipmentId: request.EquipmentId,
-            qualityFlag: request.QualityFlag,
-            rawValue: request.RawValue,
-            sourceSystem: request.SourceSystem,
-            sourceRecordId: request.SourceRecordId,
-            plantTimeZoneId: request.PlantTimeZoneId ?? "Europe/Berlin",
-            plantUtcOffsetMinutes: request.PlantUtcOffsetMinutes ?? 60);
-
-        dbContext.ParameterObservations.Add(observation);
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        return Results.Created($"/workflow/parameter-observations/{observation.Id}", new
-        {
-            observation.Id,
-            observation.MaterialUnitId,
-            observation.ParameterDefinitionId,
-            observation.ObservedAtUtc
-        });
+        return result.ToHttpResult(id =>
+            Results.Created($"/workflow/parameter-observations/{id}", new
+            {
+                id,
+                request.MaterialUnitId,
+                request.ProcessStepExecutionId,
+                request.ParameterDefinitionId,
+                request.EquipmentId,
+                request.ObservedAtUtc,
+                request.NumericValue,
+                request.TextValue,
+                request.BooleanValue
+            }));
     }
 
-    // ---------------------------------------------------------------------
-    // 6. Add process events / downtime / quality events
-    // ---------------------------------------------------------------------
     private static async Task<IResult> AddProcessEventAsync(
         AddWorkflowProcessEventRequest request,
-        PlantProcessDbContext dbContext,
+        IProcessDataService service,
+        HttpContext httpContext,
         CancellationToken cancellationToken)
     {
-        var validationResult = await ValidateOptionalProcessReferencesAsync(
-            dbContext,
-            request.MaterialUnitId,
-            request.ProcessStepExecutionId,
-            request.EquipmentId,
-            cancellationToken);
+        var command = new AddProcessEventCommand(
+            MaterialUnitId: request.MaterialUnitId,
+            ProcessStepExecutionId: request.ProcessStepExecutionId,
+            EquipmentId: request.EquipmentId,
+            EventType: request.EventType,
+            EventAtUtc: request.EventAtUtc,
+            EventValue: request.EventValue,
+            Description: request.Description,
+            PlantTimeZoneId: request.PlantTimeZoneId,
+            PlantUtcOffsetMinutes: request.PlantUtcOffsetMinutes,
+            Metadata: ToMetadata(
+                request.IsSynthetic,
+                request.SourceSystem,
+                request.SourceRecordId,
+                httpContext));
 
-        if (validationResult is not null)
-            return validationResult;
+        var result = await service.AddProcessEventAsync(command, cancellationToken);
 
-        if (!request.MaterialUnitId.HasValue &&
-            !request.ProcessStepExecutionId.HasValue &&
-            !request.EquipmentId.HasValue)
-        {
-            return Results.BadRequest(new
+        return result.ToHttpResult(id =>
+            Results.Created($"/workflow/process-events/{id}", new
             {
-                message = "Process event must be linked to at least one material, process step or equipment record."
-            });
-        }
-
-        var processEvent = new ProcessEvent(
-            eventType: request.EventType,
-            eventAtUtc: request.EventAtUtc,
-            isSynthetic: request.IsSynthetic,
-            materialUnitId: request.MaterialUnitId,
-            processStepExecutionId: request.ProcessStepExecutionId,
-            equipmentId: request.EquipmentId,
-            eventValue: request.EventValue,
-            description: request.Description,
-            sourceSystem: request.SourceSystem,
-            sourceRecordId: request.SourceRecordId,
-            plantTimeZoneId: request.PlantTimeZoneId ?? "Europe/Berlin",
-            plantUtcOffsetMinutes: request.PlantUtcOffsetMinutes ?? 60);
-
-        dbContext.ProcessEvents.Add(processEvent);
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        return Results.Created($"/workflow/process-events/{processEvent.Id}", new
-        {
-            processEvent.Id,
-            processEvent.EventType,
-            processEvent.EventAtUtc
-        });
+                id,
+                request.MaterialUnitId,
+                request.ProcessStepExecutionId,
+                request.EquipmentId,
+                request.EventType,
+                request.EventAtUtc
+            }));
     }
 
     private static async Task<IResult> AddDowntimeEventAsync(
         AddWorkflowDowntimeEventRequest request,
-        PlantProcessDbContext dbContext,
+        IProcessDataService service,
+        HttpContext httpContext,
         CancellationToken cancellationToken)
     {
-        var validationResult = await ValidateOptionalProcessReferencesAsync(
-            dbContext,
-            request.MaterialUnitId,
-            request.ProcessStepExecutionId,
-            request.EquipmentId,
-            cancellationToken);
+        var command = new AddDowntimeEventCommand(
+            MaterialUnitId: request.MaterialUnitId,
+            ProcessStepExecutionId: request.ProcessStepExecutionId,
+            EquipmentId: request.EquipmentId,
+            StartedAtUtc: request.StartedAtUtc,
+            EndedAtUtc: request.EndedAtUtc,
+            DowntimeType: request.DowntimeType,
+            ReasonCode: request.ReasonCode,
+            Description: request.Description,
+            PlantTimeZoneId: request.PlantTimeZoneId,
+            PlantUtcOffsetMinutes: request.PlantUtcOffsetMinutes,
+            Metadata: ToMetadata(
+                request.IsSynthetic,
+                request.SourceSystem,
+                request.SourceRecordId,
+                httpContext));
 
-        if (validationResult is not null)
-            return validationResult;
+        var result = await service.AddDowntimeEventAsync(command, cancellationToken);
 
-        if (!request.MaterialUnitId.HasValue &&
-            !request.ProcessStepExecutionId.HasValue &&
-            !request.EquipmentId.HasValue)
-        {
-            return Results.BadRequest(new
+        return result.ToHttpResult(id =>
+            Results.Created($"/workflow/downtime-events/{id}", new
             {
-                message = "Downtime event must be linked to at least one material, process step or equipment record."
-            });
-        }
-
-        var downtimeEvent = new DowntimeEvent(
-            startedAtUtc: request.StartedAtUtc,
-            downtimeType: request.DowntimeType,
-            isSynthetic: request.IsSynthetic,
-            endedAtUtc: request.EndedAtUtc,
-            materialUnitId: request.MaterialUnitId,
-            processStepExecutionId: request.ProcessStepExecutionId,
-            equipmentId: request.EquipmentId,
-            reasonCode: request.ReasonCode,
-            description: request.Description,
-            sourceSystem: request.SourceSystem,
-            sourceRecordId: request.SourceRecordId,
-            plantTimeZoneId: request.PlantTimeZoneId ?? "Europe/Berlin",
-            plantUtcOffsetMinutes: request.PlantUtcOffsetMinutes ?? 60);
-
-        dbContext.DowntimeEvents.Add(downtimeEvent);
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        return Results.Created($"/workflow/downtime-events/{downtimeEvent.Id}", new
-        {
-            downtimeEvent.Id,
-            downtimeEvent.DowntimeType,
-            downtimeEvent.StartedAtUtc,
-            downtimeEvent.EndedAtUtc
-        });
+                id,
+                request.MaterialUnitId,
+                request.ProcessStepExecutionId,
+                request.EquipmentId,
+                request.StartedAtUtc,
+                request.EndedAtUtc,
+                request.DowntimeType,
+                request.ReasonCode
+            }));
     }
+
+    // ---------------------------------------------------------------------
+    // 4. Quality workflow
+    // ---------------------------------------------------------------------
 
     private static async Task<IResult> AddDefectCatalogAsync(
         AddWorkflowDefectCatalogRequest request,
-        PlantProcessDbContext dbContext,
+        IQualityService service,
+        HttpContext httpContext,
         CancellationToken cancellationToken)
     {
-        var exists = await dbContext.DefectCatalogs
-            .AnyAsync(x => x.DefectCode == request.DefectCode, cancellationToken);
+        var command = new AddDefectCatalogCommand(
+            DefectCode: request.DefectCode,
+            DefectName: request.DefectName,
+            DefectCategory: request.DefectCategory,
+            IndustryTemplate: request.IndustryTemplate,
+            Metadata: ToMetadata(
+                request.IsSynthetic,
+                request.SourceSystem,
+                request.SourceRecordId,
+                httpContext));
 
-        if (exists)
-            return Results.Conflict(new { message = "Defect code already exists." });
+        var result = await service.AddDefectCatalogAsync(command, cancellationToken);
 
-        var defect = new DefectCatalog(
-            defectCode: request.DefectCode,
-            defectName: request.DefectName,
-            defectCategory: request.DefectCategory,
-            industryTemplate: request.IndustryTemplate,
-            isSynthetic: request.IsSynthetic,
-            sourceSystem: request.SourceSystem,
-            sourceRecordId: request.SourceRecordId);
-
-        dbContext.DefectCatalogs.Add(defect);
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        return Results.Created($"/workflow/defects/{defect.Id}", new
-        {
-            defect.Id,
-            defect.DefectCode,
-            defect.DefectName
-        });
+        return result.ToHttpResult(id =>
+            Results.Created($"/workflow/defects/{id}", new
+            {
+                id,
+                request.DefectCode,
+                request.DefectName,
+                request.DefectCategory,
+                request.IndustryTemplate
+            }));
     }
 
     private static async Task<IResult> AddQualityEventAsync(
         AddWorkflowQualityEventRequest request,
-        PlantProcessDbContext dbContext,
+        IQualityService service,
+        HttpContext httpContext,
         CancellationToken cancellationToken)
     {
-        var materialExists = await dbContext.MaterialUnits
-            .AnyAsync(x => x.Id == request.MaterialUnitId, cancellationToken);
+        var command = new AddQualityEventCommand(
+            MaterialUnitId: request.MaterialUnitId,
+            DefectCatalogId: request.DefectCatalogId,
+            EventType: request.EventType,
+            EventAtUtc: request.EventAtUtc,
+            Severity: request.Severity,
+            Decision: request.Decision,
+            Description: request.Description,
+            PlantTimeZoneId: request.PlantTimeZoneId,
+            PlantUtcOffsetMinutes: request.PlantUtcOffsetMinutes,
+            Metadata: ToMetadata(
+                request.IsSynthetic,
+                request.SourceSystem,
+                request.SourceRecordId,
+                httpContext));
 
-        if (!materialExists)
-            return Results.BadRequest(new { message = "Material unit does not exist." });
+        var result = await service.AddQualityEventAsync(command, cancellationToken);
 
-        if (request.DefectCatalogId.HasValue)
-        {
-            var defectExists = await dbContext.DefectCatalogs
-                .AnyAsync(x => x.Id == request.DefectCatalogId.Value, cancellationToken);
-
-            if (!defectExists)
-                return Results.BadRequest(new { message = "Defect catalog does not exist." });
-        }
-
-        var qualityEvent = new QualityEvent(
-            materialUnitId: request.MaterialUnitId,
-            eventType: request.EventType,
-            eventAtUtc: request.EventAtUtc,
-            isSynthetic: request.IsSynthetic,
-            defectCatalogId: request.DefectCatalogId,
-            severity: request.Severity,
-            decision: request.Decision,
-            description: request.Description,
-            sourceSystem: request.SourceSystem,
-            sourceRecordId: request.SourceRecordId,
-            plantTimeZoneId: request.PlantTimeZoneId ?? "Europe/Berlin",
-            plantUtcOffsetMinutes: request.PlantUtcOffsetMinutes ?? 60);
-
-        dbContext.QualityEvents.Add(qualityEvent);
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        return Results.Created($"/workflow/quality-events/{qualityEvent.Id}", new
-        {
-            qualityEvent.Id,
-            qualityEvent.MaterialUnitId,
-            qualityEvent.EventType,
-            qualityEvent.Decision
-        });
+        return result.ToHttpResult(id =>
+            Results.Created($"/workflow/quality-events/{id}", new
+            {
+                id,
+                request.MaterialUnitId,
+                request.DefectCatalogId,
+                request.EventType,
+                request.EventAtUtc,
+                request.Severity,
+                request.Decision
+            }));
     }
 
     // ---------------------------------------------------------------------
-    // 7. Raise data-quality issues
+    // 5. Data quality and risk workflow
     // ---------------------------------------------------------------------
+
     private static async Task<IResult> RaiseDataQualityIssueAsync(
         RaiseWorkflowDataQualityIssueRequest request,
-        PlantProcessDbContext dbContext,
+        IDataQualityService service,
+        HttpContext httpContext,
         CancellationToken cancellationToken)
     {
-        if (request.MaterialUnitId.HasValue)
-        {
-            var materialExists = await dbContext.MaterialUnits
-                .AnyAsync(x => x.Id == request.MaterialUnitId.Value, cancellationToken);
+        var command = new RaiseDataQualityIssueCommand(
+            MaterialUnitId: request.MaterialUnitId,
+            IssueType: request.IssueType,
+            Severity: request.Severity,
+            Description: request.Description,
+            AffectedEntityName: request.AffectedEntityName,
+            AffectedEntityId: request.AffectedEntityId,
+            Metadata: ToMetadata(
+                request.IsSynthetic,
+                request.SourceSystem,
+                request.SourceRecordId,
+                httpContext));
 
-            if (!materialExists)
-                return Results.BadRequest(new { message = "Material unit does not exist." });
-        }
+        var result = await service.RaiseIssueAsync(command, cancellationToken);
 
-        var issue = new DataQualityIssue(
-            issueType: request.IssueType,
-            description: request.Description,
-            isSynthetic: request.IsSynthetic,
-            materialUnitId: request.MaterialUnitId,
-            severity: request.Severity ?? "Warning",
-            affectedEntityName: request.AffectedEntityName,
-            affectedEntityId: request.AffectedEntityId,
-            sourceSystem: request.SourceSystem,
-            sourceRecordId: request.SourceRecordId);
-
-        dbContext.DataQualityIssues.Add(issue);
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        return Results.Created($"/workflow/data-quality-issues/{issue.Id}", new
-        {
-            issue.Id,
-            issue.IssueType,
-            issue.Severity,
-            issue.MaterialUnitId
-        });
+        return result.ToHttpResult(id =>
+            Results.Created($"/workflow/data-quality-issues/{id}", new
+            {
+                id,
+                request.MaterialUnitId,
+                request.IssueType,
+                severity = request.Severity ?? "Warning",
+                request.AffectedEntityName,
+                request.AffectedEntityId
+            }));
     }
 
-    // ---------------------------------------------------------------------
-    // 8. Store risk scores
-    // ---------------------------------------------------------------------
     private static async Task<IResult> StoreRiskScoreAsync(
         StoreWorkflowRiskScoreRequest request,
-        PlantProcessDbContext dbContext,
+        IRiskScoreService service,
+        HttpContext httpContext,
         CancellationToken cancellationToken)
     {
-        var materialExists = await dbContext.MaterialUnits
-            .AnyAsync(x => x.Id == request.MaterialUnitId, cancellationToken);
+        var command = new StoreRiskScoreCommand(
+            MaterialUnitId: request.MaterialUnitId,
+            RiskType: request.RiskType,
+            Score: request.Score,
+            RiskClass: request.RiskClass,
+            MainContributorsJson: request.MainContributorsJson,
+            ModelVersion: request.ModelVersion,
+            PlantTimeZoneId: request.PlantTimeZoneId,
+            PlantUtcOffsetMinutes: request.PlantUtcOffsetMinutes,
+            Metadata: ToMetadata(
+                request.IsSynthetic,
+                request.SourceSystem,
+                request.SourceRecordId,
+                httpContext));
 
-        if (!materialExists)
-            return Results.BadRequest(new { message = "Material unit does not exist." });
+        var result = await service.StoreAsync(command, cancellationToken);
 
-        var riskScore = new RiskScore(
-            materialUnitId: request.MaterialUnitId,
-            riskType: request.RiskType,
-            score: request.Score,
-            isSynthetic: request.IsSynthetic,
-            riskClass: request.RiskClass,
-            mainContributorsJson: request.MainContributorsJson,
-            modelVersion: request.ModelVersion,
-            sourceSystem: request.SourceSystem,
-            sourceRecordId: request.SourceRecordId,
-            plantTimeZoneId: request.PlantTimeZoneId ?? "Europe/Berlin",
-            plantUtcOffsetMinutes: request.PlantUtcOffsetMinutes ?? 60);
-
-        dbContext.RiskScores.Add(riskScore);
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        return Results.Created($"/workflow/risk-scores/{riskScore.Id}", new
-        {
-            riskScore.Id,
-            riskScore.MaterialUnitId,
-            riskScore.RiskType,
-            riskScore.Score,
-            riskScore.RiskClass
-        });
+        return result.ToHttpResult(id =>
+            Results.Created($"/workflow/risk-scores/{id}", new
+            {
+                id,
+                request.MaterialUnitId,
+                request.RiskType,
+                request.Score,
+                riskClass = request.RiskClass
+            }));
     }
 
     // ---------------------------------------------------------------------
-    // 9. Investigate one material from genealogy to risk
+    // 6. Investigation read model
     // ---------------------------------------------------------------------
+
     private static async Task<IResult> InvestigateMaterialAsync(
         Guid materialUnitId,
         PlantProcessDbContext dbContext,
@@ -784,7 +680,8 @@ public static class WorkflowEndpoints
                 x.PlantTimeZoneId,
                 x.PlantUtcOffsetMinutes,
                 x.SourceSystem,
-                x.SourceRecordId
+                x.SourceRecordId,
+                x.IsSynthetic
             })
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -794,19 +691,23 @@ public static class WorkflowEndpoints
         var aliases = await dbContext.MaterialAliases
             .AsNoTracking()
             .Where(x => x.MaterialUnitId == materialUnitId)
+            .OrderBy(x => x.SourceSystem)
+            .ThenBy(x => x.AliasCode)
             .Select(x => new
             {
                 x.Id,
+                x.MaterialUnitId,
                 x.AliasCode,
                 x.AliasType,
                 x.SourceSystem,
-                x.SourceRecordId
+                x.IsSynthetic
             })
             .ToListAsync(cancellationToken);
 
-        var genealogyEdges = await dbContext.GenealogyEdges
+        var parentEdges = await dbContext.GenealogyEdges
             .AsNoTracking()
-            .Where(x => x.ParentMaterialUnitId == materialUnitId || x.ChildMaterialUnitId == materialUnitId)
+            .Where(x => x.ChildMaterialUnitId == materialUnitId)
+            .OrderBy(x => x.EffectiveFromUtc)
             .Select(x => new
             {
                 x.Id,
@@ -816,7 +717,26 @@ public static class WorkflowEndpoints
                 x.EffectiveFromUtc,
                 x.EffectiveToUtc,
                 x.SourceSystem,
-                x.SourceRecordId
+                x.SourceRecordId,
+                x.IsSynthetic
+            })
+            .ToListAsync(cancellationToken);
+
+        var childEdges = await dbContext.GenealogyEdges
+            .AsNoTracking()
+            .Where(x => x.ParentMaterialUnitId == materialUnitId)
+            .OrderBy(x => x.EffectiveFromUtc)
+            .Select(x => new
+            {
+                x.Id,
+                x.ParentMaterialUnitId,
+                x.ChildMaterialUnitId,
+                x.RelationshipType,
+                x.EffectiveFromUtc,
+                x.EffectiveToUtc,
+                x.SourceSystem,
+                x.SourceRecordId,
+                x.IsSynthetic
             })
             .ToListAsync(cancellationToken);
 
@@ -827,7 +747,9 @@ public static class WorkflowEndpoints
             .Select(x => new
             {
                 x.Id,
+                x.MaterialUnitId,
                 x.EquipmentId,
+                x.OperationDefinitionId,
                 x.OperationType,
                 x.OperationCode,
                 x.CrewCode,
@@ -835,23 +757,23 @@ public static class WorkflowEndpoints
                 x.EndedAtUtc,
                 x.StartedAtLocal,
                 x.EndedAtLocal,
+                x.PlantTimeZoneId,
+                x.PlantUtcOffsetMinutes,
                 x.ExecutionStatus,
                 x.SourceSystem,
-                x.SourceRecordId
+                x.SourceRecordId,
+                x.IsSynthetic
             })
             .ToListAsync(cancellationToken);
 
-        var stepIds = processSteps.Select(x => x.Id).ToList();
-
         var parameterObservations = await dbContext.ParameterObservations
             .AsNoTracking()
-            .Where(x =>
-                x.MaterialUnitId == materialUnitId ||
-                (x.ProcessStepExecutionId.HasValue && stepIds.Contains(x.ProcessStepExecutionId.Value)))
+            .Where(x => x.MaterialUnitId == materialUnitId)
             .OrderBy(x => x.ObservedAtUtc)
             .Select(x => new
             {
                 x.Id,
+                x.MaterialUnitId,
                 x.ProcessStepExecutionId,
                 x.ParameterDefinitionId,
                 x.EquipmentId,
@@ -864,19 +786,19 @@ public static class WorkflowEndpoints
                 x.QualityFlag,
                 x.RawValue,
                 x.SourceSystem,
-                x.SourceRecordId
+                x.SourceRecordId,
+                x.IsSynthetic
             })
             .ToListAsync(cancellationToken);
 
         var processEvents = await dbContext.ProcessEvents
             .AsNoTracking()
-            .Where(x =>
-                x.MaterialUnitId == materialUnitId ||
-                (x.ProcessStepExecutionId.HasValue && stepIds.Contains(x.ProcessStepExecutionId.Value)))
+            .Where(x => x.MaterialUnitId == materialUnitId)
             .OrderBy(x => x.EventAtUtc)
             .Select(x => new
             {
                 x.Id,
+                x.MaterialUnitId,
                 x.ProcessStepExecutionId,
                 x.EquipmentId,
                 x.EventType,
@@ -885,19 +807,19 @@ public static class WorkflowEndpoints
                 x.EventValue,
                 x.Description,
                 x.SourceSystem,
-                x.SourceRecordId
+                x.SourceRecordId,
+                x.IsSynthetic
             })
             .ToListAsync(cancellationToken);
 
         var downtimeEvents = await dbContext.DowntimeEvents
             .AsNoTracking()
-            .Where(x =>
-                x.MaterialUnitId == materialUnitId ||
-                (x.ProcessStepExecutionId.HasValue && stepIds.Contains(x.ProcessStepExecutionId.Value)))
+            .Where(x => x.MaterialUnitId == materialUnitId)
             .OrderBy(x => x.StartedAtUtc)
             .Select(x => new
             {
                 x.Id,
+                x.MaterialUnitId,
                 x.ProcessStepExecutionId,
                 x.EquipmentId,
                 x.StartedAtUtc,
@@ -908,7 +830,8 @@ public static class WorkflowEndpoints
                 x.ReasonCode,
                 x.Description,
                 x.SourceSystem,
-                x.SourceRecordId
+                x.SourceRecordId,
+                x.IsSynthetic
             })
             .ToListAsync(cancellationToken);
 
@@ -919,6 +842,7 @@ public static class WorkflowEndpoints
             .Select(x => new
             {
                 x.Id,
+                x.MaterialUnitId,
                 x.DefectCatalogId,
                 x.EventType,
                 x.EventAtUtc,
@@ -927,26 +851,8 @@ public static class WorkflowEndpoints
                 x.Decision,
                 x.Description,
                 x.SourceSystem,
-                x.SourceRecordId
-            })
-            .ToListAsync(cancellationToken);
-
-        var riskScores = await dbContext.RiskScores
-            .AsNoTracking()
-            .Where(x => x.MaterialUnitId == materialUnitId)
-            .OrderByDescending(x => x.ScoredAtUtc)
-            .Select(x => new
-            {
-                x.Id,
-                x.RiskType,
-                x.Score,
-                x.RiskClass,
-                x.MainContributorsJson,
-                x.ModelVersion,
-                x.ScoredAtUtc,
-                x.ScoredAtLocal,
-                x.SourceSystem,
-                x.SourceRecordId
+                x.SourceRecordId,
+                x.IsSynthetic
             })
             .ToListAsync(cancellationToken);
 
@@ -957,6 +863,7 @@ public static class WorkflowEndpoints
             .Select(x => new
             {
                 x.Id,
+                x.MaterialUnitId,
                 x.IssueType,
                 x.Severity,
                 x.Description,
@@ -964,7 +871,31 @@ public static class WorkflowEndpoints
                 x.AffectedEntityId,
                 x.SourceSystem,
                 x.SourceRecordId,
-                x.CreatedAtUtc
+                x.CreatedAtUtc,
+                x.IsSynthetic
+            })
+            .ToListAsync(cancellationToken);
+
+        var riskScores = await dbContext.RiskScores
+            .AsNoTracking()
+            .Where(x => x.MaterialUnitId == materialUnitId)
+            .OrderByDescending(x => x.ScoredAtUtc)
+            .Select(x => new
+            {
+                x.Id,
+                x.MaterialUnitId,
+                x.RiskType,
+                x.Score,
+                x.RiskClass,
+                x.MainContributorsJson,
+                x.ModelVersion,
+                x.ScoredAtUtc,
+                x.ScoredAtLocal,
+                x.PlantTimeZoneId,
+                x.PlantUtcOffsetMinutes,
+                x.SourceSystem,
+                x.SourceRecordId,
+                x.IsSynthetic
             })
             .ToListAsync(cancellationToken);
 
@@ -972,53 +903,52 @@ public static class WorkflowEndpoints
         {
             material,
             aliases,
-            genealogyEdges,
-            processSteps,
-            parameterObservations,
-            processEvents,
-            downtimeEvents,
-            qualityEvents,
-            riskScores,
-            dataQualityIssues
+            genealogy = new
+            {
+                parents = parentEdges,
+                children = childEdges
+            },
+            process = new
+            {
+                processSteps,
+                parameterObservations,
+                processEvents,
+                downtimeEvents
+            },
+            quality = new
+            {
+                qualityEvents
+            },
+            dataQualityIssues,
+            riskScores
         });
     }
 
-    private static async Task<IResult?> ValidateOptionalProcessReferencesAsync(
-        PlantProcessDbContext dbContext,
-        Guid? materialUnitId,
-        Guid? processStepExecutionId,
-        Guid? equipmentId,
-        CancellationToken cancellationToken)
+    // ---------------------------------------------------------------------
+    // Helpers
+    // ---------------------------------------------------------------------
+
+    private static CommandMetadata ToMetadata(
+        bool isSynthetic,
+        string? sourceSystem,
+        string? sourceRecordId,
+        HttpContext httpContext)
     {
-        if (materialUnitId.HasValue)
-        {
-            var materialExists = await dbContext.MaterialUnits
-                .AnyAsync(x => x.Id == materialUnitId.Value, cancellationToken);
+        var correlationId = httpContext.Request.Headers.TryGetValue("X-Correlation-Id", out var value)
+            ? value.ToString()
+            : httpContext.TraceIdentifier;
 
-            if (!materialExists)
-                return Results.BadRequest(new { message = "Material unit does not exist." });
-        }
-
-        if (processStepExecutionId.HasValue)
-        {
-            var stepExists = await dbContext.ProcessStepExecutions
-                .AnyAsync(x => x.Id == processStepExecutionId.Value, cancellationToken);
-
-            if (!stepExists)
-                return Results.BadRequest(new { message = "Process step does not exist." });
-        }
-
-        if (equipmentId.HasValue)
-        {
-            var equipmentExists = await dbContext.Equipment
-                .AnyAsync(x => x.Id == equipmentId.Value, cancellationToken);
-
-            if (!equipmentExists)
-                return Results.BadRequest(new { message = "Equipment does not exist." });
-        }
-
-        return null;
+        return new CommandMetadata(
+            IsSynthetic: isSynthetic,
+            SourceSystem: sourceSystem,
+            SourceRecordId: sourceRecordId,
+            RequestedBy: httpContext.User?.Identity?.Name,
+            CorrelationId: correlationId);
     }
+
+    // ---------------------------------------------------------------------
+    // Request DTOs
+    // ---------------------------------------------------------------------
 
     public sealed record RegisterSourceSystemRequest(
         string SourceSystemCode,
@@ -1048,7 +978,7 @@ public static class WorkflowEndpoints
         string SourceObjectName,
         string TargetEntityName,
         string MappingJson,
-        string MappingVersion,
+        string? MappingVersion,
         string? Description,
         bool IsSynthetic,
         string? SourceSystem,
@@ -1070,8 +1000,10 @@ public static class WorkflowEndpoints
 
     public sealed record AddWorkflowMaterialAliasRequest(
         string AliasCode,
-        string AliasType,
-        string SourceSystem);
+        string? AliasType,
+        string SourceSystem,
+        bool IsSynthetic,
+        string? SourceRecordId);
 
     public sealed record CreateWorkflowGenealogyEdgeRequest(
         Guid ParentMaterialUnitId,
@@ -1079,6 +1011,8 @@ public static class WorkflowEndpoints
         string RelationshipType,
         DateTime? EffectiveFromUtc,
         DateTime? EffectiveToUtc,
+        decimal? Quantity,
+        string? UnitOfMeasure,
         bool IsSynthetic,
         string? SourceSystem,
         string? SourceRecordId);
@@ -1086,6 +1020,7 @@ public static class WorkflowEndpoints
     public sealed record AddWorkflowProcessStepRequest(
         Guid MaterialUnitId,
         Guid? EquipmentId,
+        Guid? OperationDefinitionId,
         string OperationType,
         string? OperationCode,
         string? CrewCode,

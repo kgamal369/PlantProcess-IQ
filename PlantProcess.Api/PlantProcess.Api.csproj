@@ -26,6 +26,7 @@
     <ProjectReference Include="..\PlantProcess.Domain\PlantProcess.Domain.csproj" />
     <ProjectReference Include="..\PlantProcess.Infrastructure\PlantProcess.Infrastructure.csproj" />
     <ProjectReference Include="..\PlantProcess.Workers\PlantProcess.Workers.csproj" />
+    <ProjectReference Include="..\PlantProcess.Application\PlantProcess.Application.csproj" />
   </ItemGroup>
 
 </Project>

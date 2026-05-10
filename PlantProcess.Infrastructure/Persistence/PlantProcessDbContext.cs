@@ -10,10 +10,11 @@ using PlantProcess.Domain.Entities.Materials;
 using PlantProcess.Domain.Entities.PlantLayout;
 using PlantProcess.Domain.Entities.Process;
 using PlantProcess.Domain.Entities.Quality;
+using PlantProcess.Application.Common.Persistence;
 
 namespace PlantProcess.Infrastructure.Persistence;
 
-public class PlantProcessDbContext : DbContext
+public class PlantProcessDbContext : DbContext, IPlantProcessDbContext
 {
     // ----------------------------
     // Plant Layout

@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
+using PlantProcess.Application.Common.Persistence;
 using PlantProcess.Infrastructure.Persistence;
 
 namespace PlantProcess.Infrastructure;
@@ -29,6 +30,9 @@ public static class DependencyInjection
                     })
                 .UseSnakeCaseNamingConvention();
         });
+
+        services.AddScoped<IPlantProcessDbContext>(
+            provider => provider.GetRequiredService<PlantProcessDbContext>());
 
         services.AddSingleton(_ => NpgsqlDataSource.Create(connectionString));
 

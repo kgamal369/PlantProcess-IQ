@@ -1213,10 +1213,6 @@ namespace PlantProcess.Infrastructure.Migrations
                     b.HasKey("Id")
                         .HasName("pk_material_units");
 
-                    b.HasIndex("MaterialCode")
-                        .IsUnique()
-                        .HasDatabaseName("ix_material_units_material_code");
-
                     b.HasIndex("MaterialUnitType")
                         .HasDatabaseName("ix_material_units_material_unit_type");
 
@@ -1226,8 +1222,17 @@ namespace PlantProcess.Infrastructure.Migrations
                     b.HasIndex("MaterialUnitType", "GradeOrRecipe")
                         .HasDatabaseName("ix_material_units_material_unit_type_grade_or_recipe");
 
+                    b.HasIndex("SiteId", "MaterialCode")
+                        .IsUnique()
+                        .HasDatabaseName("ix_material_units_site_id_material_code");
+
                     b.HasIndex("SiteId", "MaterialUnitType")
                         .HasDatabaseName("ix_material_units_site_id_material_unit_type");
+
+                    b.HasIndex("SourceSystem", "SourceRecordId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_material_units_source_system_source_record_id")
+                        .HasFilter("source_system IS NOT NULL AND source_record_id IS NOT NULL");
 
                     b.ToTable("material_units", (string)null);
                 });
@@ -1759,9 +1764,9 @@ namespace PlantProcess.Infrastructure.Migrations
                     b.HasIndex("ParameterCategory")
                         .HasDatabaseName("ix_parameter_definitions_parameter_category");
 
-                    b.HasIndex("ParameterCode")
+                    b.HasIndex("IndustryTemplate", "ParameterCode")
                         .IsUnique()
-                        .HasDatabaseName("ix_parameter_definitions_parameter_code");
+                        .HasDatabaseName("ix_parameter_definitions_industry_template_parameter_code");
 
                     b.ToTable("parameter_definitions", (string)null);
                 });
@@ -2083,6 +2088,10 @@ namespace PlantProcess.Infrastructure.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("operation_code");
 
+                    b.Property<Guid?>("OperationDefinitionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("operation_definition_id");
+
                     b.Property<string>("OperationType")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -2135,6 +2144,12 @@ namespace PlantProcess.Infrastructure.Migrations
 
                     b.HasIndex("MaterialUnitId")
                         .HasDatabaseName("ix_process_step_executions_material_unit_id");
+
+                    b.HasIndex("OperationCode")
+                        .HasDatabaseName("ix_process_step_executions_operation_code");
+
+                    b.HasIndex("OperationDefinitionId")
+                        .HasDatabaseName("ix_process_step_executions_operation_definition_id");
 
                     b.HasIndex("OperationType")
                         .HasDatabaseName("ix_process_step_executions_operation_type");
@@ -2672,6 +2687,12 @@ namespace PlantProcess.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_process_step_executions_material_units_material_unit_id");
+
+                    b.HasOne("PlantProcess.Domain.Entities.Configuration.OperationDefinition", null)
+                        .WithMany()
+                        .HasForeignKey("OperationDefinitionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_process_step_executions_operation_definitions_operation_def");
                 });
 
             modelBuilder.Entity("PlantProcess.Domain.Entities.Quality.DataQualityIssue", b =>

@@ -184,7 +184,10 @@ public static class ProcessEndpoints
             CancellationToken cancellationToken) =>
         {
             var exists = await dbContext.ParameterDefinitions
-                .AnyAsync(x => x.ParameterCode == request.ParameterCode, cancellationToken);
+                .AnyAsync(x =>
+                    x.ParameterCode == request.ParameterCode &&
+                    x.IndustryTemplate == request.IndustryTemplate,
+                    cancellationToken);
 
             if (exists)
                 return Results.Conflict(new { message = "Parameter code already exists." });

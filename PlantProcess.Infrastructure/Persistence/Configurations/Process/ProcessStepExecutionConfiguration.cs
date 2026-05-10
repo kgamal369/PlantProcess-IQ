@@ -1,8 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using PlantProcess.Domain.Entities.Configuration;
 using PlantProcess.Domain.Entities.Materials;
 using PlantProcess.Domain.Entities.Process;
-
 
 namespace PlantProcess.Infrastructure.Persistence.Configurations.Process;
 
@@ -37,9 +37,16 @@ public class ProcessStepExecutionConfiguration : IEntityTypeConfiguration<Proces
             .HasForeignKey(x => x.MaterialUnitId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.HasOne<OperationDefinition>()
+            .WithMany()
+            .HasForeignKey(x => x.OperationDefinitionId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasIndex(x => x.MaterialUnitId);
         builder.HasIndex(x => x.EquipmentId);
+        builder.HasIndex(x => x.OperationDefinitionId);
         builder.HasIndex(x => x.OperationType);
+        builder.HasIndex(x => x.OperationCode);
         builder.HasIndex(x => x.StartedAtUtc);
         builder.HasIndex(x => x.StartedAtLocal);
         builder.HasIndex(x => new { x.MaterialUnitId, x.OperationType, x.StartedAtUtc });

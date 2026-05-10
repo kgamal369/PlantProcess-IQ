@@ -39,7 +39,12 @@ public class MaterialUnitConfiguration : IEntityTypeConfiguration<MaterialUnit>
         builder.Navigation(x => x.Aliases)
              .UsePropertyAccessMode(PropertyAccessMode.Field);
 
-        builder.HasIndex(x => x.MaterialCode).IsUnique();
+        builder.HasIndex(x => new { x.SiteId, x.MaterialCode }).IsUnique();
+
+        builder.HasIndex(x => new { x.SourceSystem, x.SourceRecordId })
+            .IsUnique()
+            .HasFilter("source_system IS NOT NULL AND source_record_id IS NOT NULL");
+        
         builder.HasIndex(x => x.SiteId);
         builder.HasIndex(x => x.MaterialUnitType);
         builder.HasIndex(x => new { x.SiteId, x.MaterialUnitType });

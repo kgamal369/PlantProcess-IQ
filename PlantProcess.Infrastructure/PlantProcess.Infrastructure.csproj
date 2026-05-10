@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <ProjectReference Include="..\PlantProcess.Application\PlantProcess.Application.csproj" />
     <ProjectReference Include="..\PlantProcess.Domain\PlantProcess.Domain.csproj" />
   </ItemGroup>
 

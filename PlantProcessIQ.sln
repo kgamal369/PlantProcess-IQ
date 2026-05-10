@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlantProcess.Workers", "Pla
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlantProcess.Api", "PlantProcess.Api\PlantProcess.Api.csproj", "{D5EB1FC6-A370-45DB-8AEA-FD3757735BDF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlantProcess.Application", "PlantProcess.Application\PlantProcess.Application.csproj", "{3EE9AE75-EC05-496D-8604-F4E75026ADBD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -69,6 +71,18 @@ Global
 		{D5EB1FC6-A370-45DB-8AEA-FD3757735BDF}.Release|x64.Build.0 = Release|Any CPU
 		{D5EB1FC6-A370-45DB-8AEA-FD3757735BDF}.Release|x86.ActiveCfg = Release|Any CPU
 		{D5EB1FC6-A370-45DB-8AEA-FD3757735BDF}.Release|x86.Build.0 = Release|Any CPU
+		{3EE9AE75-EC05-496D-8604-F4E75026ADBD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3EE9AE75-EC05-496D-8604-F4E75026ADBD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3EE9AE75-EC05-496D-8604-F4E75026ADBD}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{3EE9AE75-EC05-496D-8604-F4E75026ADBD}.Debug|x64.Build.0 = Debug|Any CPU
+		{3EE9AE75-EC05-496D-8604-F4E75026ADBD}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{3EE9AE75-EC05-496D-8604-F4E75026ADBD}.Debug|x86.Build.0 = Debug|Any CPU
+		{3EE9AE75-EC05-496D-8604-F4E75026ADBD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3EE9AE75-EC05-496D-8604-F4E75026ADBD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3EE9AE75-EC05-496D-8604-F4E75026ADBD}.Release|x64.ActiveCfg = Release|Any CPU
+		{3EE9AE75-EC05-496D-8604-F4E75026ADBD}.Release|x64.Build.0 = Release|Any CPU
+		{3EE9AE75-EC05-496D-8604-F4E75026ADBD}.Release|x86.ActiveCfg = Release|Any CPU
+		{3EE9AE75-EC05-496D-8604-F4E75026ADBD}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

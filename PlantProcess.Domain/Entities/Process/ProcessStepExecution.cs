@@ -8,10 +8,9 @@ public class ProcessStepExecution : BaseEntity
 
     public Guid? EquipmentId { get; private set; }
 
+    public Guid? OperationDefinitionId { get; private set; }
+
     public string OperationType { get; private set; } = null!;
-    // Generic operation type stored as configuration value, not as a steel-only table.
-    // Examples by template: EAF_Melting, LF_Treatment, Continuous_Casting, Hot_Rolling,
-    // Mixing, Curing, Filling, Inspection, Packaging, Assembly.
 
     public string? OperationCode { get; private set; }
 
@@ -25,12 +24,11 @@ public class ProcessStepExecution : BaseEntity
 
     public DateTime? EndedAtLocal { get; private set; }
 
-    public string PlantTimeZoneId { get; private set; } = "Europe/Berlin";
+    public string PlantTimeZoneId { get; private set; } = "UTC";
 
     public int PlantUtcOffsetMinutes { get; private set; }
 
     public string ExecutionStatus { get; private set; } = "Completed";
-    // Planned, Running, Completed, Failed, Cancelled, Unknown
 
     private ProcessStepExecution()
     {
@@ -44,12 +42,13 @@ public class ProcessStepExecution : BaseEntity
         bool isSynthetic,
         Guid? equipmentId = null,
         string? operationCode = null,
+        Guid? operationDefinitionId = null,
         string? crewCode = null,
         string? executionStatus = null,
         string? sourceSystem = null,
         string? sourceRecordId = null,
-        string plantTimeZoneId = "Europe/Berlin",
-        int plantUtcOffsetMinutes = 60)
+        string plantTimeZoneId = "UTC",
+        int plantUtcOffsetMinutes = 0)
     {
         if (materialUnitId == Guid.Empty)
             throw new ArgumentException("Material unit ID is required.", nameof(materialUnitId));
@@ -57,17 +56,22 @@ public class ProcessStepExecution : BaseEntity
         if (string.IsNullOrWhiteSpace(operationType))
             throw new ArgumentException("Operation type is required.", nameof(operationType));
 
-        StartedAtUtc = EnsureUtc(startedAtUtc);
-        EndedAtUtc = endedAtUtc.HasValue ? EnsureUtc(endedAtUtc.Value) : null;
+        if (operationDefinitionId.HasValue && operationDefinitionId.Value == Guid.Empty)
+            throw new ArgumentException("Operation definition ID cannot be empty.", nameof(operationDefinitionId));
+
+        StartedAtUtc = EnsureUtcStrict(startedAtUtc);
+        EndedAtUtc = endedAtUtc.HasValue ? EnsureUtcStrict(endedAtUtc.Value) : null;
 
         if (EndedAtUtc.HasValue && EndedAtUtc.Value < StartedAtUtc)
             throw new InvalidOperationException("Process step end time cannot be before start time.");
 
         MaterialUnitId = materialUnitId;
-        OperationType = operationType.Trim();
         EquipmentId = equipmentId;
+        OperationDefinitionId = operationDefinitionId;
+        OperationType = operationType.Trim();
         OperationCode = operationCode?.Trim();
         CrewCode = crewCode?.Trim();
+
         ExecutionStatus = string.IsNullOrWhiteSpace(executionStatus)
             ? "Completed"
             : executionStatus.Trim();
@@ -95,7 +99,7 @@ public class ProcessStepExecution : BaseEntity
             : null;
 
         PlantTimeZoneId = string.IsNullOrWhiteSpace(timeZoneId)
-            ? "Europe/Berlin"
+            ? "UTC"
             : timeZoneId.Trim();
 
         PlantUtcOffsetMinutes = utcOffsetMinutes;
@@ -104,7 +108,7 @@ public class ProcessStepExecution : BaseEntity
 
     public void Complete(DateTime endedAtUtc)
     {
-        var normalizedEnd = EnsureUtc(endedAtUtc);
+        var normalizedEnd = EnsureUtcStrict(endedAtUtc);
 
         if (normalizedEnd < StartedAtUtc)
             throw new InvalidOperationException("Process step end time cannot be before start time.");
@@ -125,10 +129,11 @@ public class ProcessStepExecution : BaseEntity
         MarkAsUpdated();
     }
 
-    private static DateTime EnsureUtc(DateTime value)
+    private static DateTime EnsureUtcStrict(DateTime value)
     {
-        return value.Kind == DateTimeKind.Utc
-            ? value
-            : DateTime.SpecifyKind(value, DateTimeKind.Utc);
+        if (value.Kind != DateTimeKind.Utc)
+            throw new ArgumentException("DateTime value must be UTC.");
+
+        return value;
     }
 }

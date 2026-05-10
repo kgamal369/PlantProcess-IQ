@@ -11,6 +11,7 @@ using PlantProcess.Api.Endpoints.Quality;
 using PlantProcess.Api.Endpoints.Validation;
 using PlantProcess.Api.Endpoints.Workflow;
 using PlantProcess.Api.Middleware;
+using PlantProcess.Application;
 using PlantProcess.Infrastructure;
 using Serilog;
 using Serilog.Events;
@@ -42,6 +43,9 @@ try
 
     builder.Host.UseSerilog();
 
+    builder.Services.AddApplication();
+    builder.Services.AddInfrastructure(builder.Configuration);
+
     builder.Services.AddEndpointsApiExplorer();
 
     builder.Services.AddSwaggerGen(options =>
@@ -51,8 +55,6 @@ try
                 .Replace("+", "_")
                 .Replace(".", "_"));
     });
-
-    builder.Services.AddInfrastructure(builder.Configuration);
 
     var app = builder.Build();
 
