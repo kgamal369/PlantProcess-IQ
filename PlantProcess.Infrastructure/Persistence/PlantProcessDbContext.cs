@@ -71,6 +71,7 @@ public class PlantProcessDbContext : DbContext, IPlantProcessDbContext
     // ----------------------------
     public DbSet<RiskScore> RiskScores => Set<RiskScore>();
     public DbSet<CorrelationResult> CorrelationResults => Set<CorrelationResult>();
+    public DbSet<ModelRegistry> ModelRegistries => Set<ModelRegistry>();
 
     public PlantProcessDbContext(DbContextOptions<PlantProcessDbContext> options)
         : base(options)

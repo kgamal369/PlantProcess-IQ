@@ -201,19 +201,31 @@ public static class QualityEndpoints
 
     private static async Task<IResult> SoftDeleteQualityEventAsync(
         Guid id,
-        SoftDeleteQualityEventRequest? request,
+        string? reason,
         PlantProcessDbContext dbContext,
         CancellationToken cancellationToken)
     {
-        var qualityEvent = await dbContext.QualityEvents.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        var qualityEvent = await dbContext.QualityEvents
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
         if (qualityEvent is null)
             return Results.NotFound(new { message = "QualityEvent not found." });
 
-        qualityEvent.SoftDelete(request?.Reason ?? "Soft-deleted via API.");
+        qualityEvent.SoftDelete(
+            string.IsNullOrWhiteSpace(reason)
+                ? "Soft-deleted via API."
+                : reason.Trim());
+
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return Results.Ok(new { qualityEvent.Id, qualityEvent.MaterialUnitId, qualityEvent.IsDeleted, qualityEvent.DeletedAtUtc });
+        return Results.Ok(new
+        {
+            qualityEvent.Id,
+            qualityEvent.MaterialUnitId,
+            qualityEvent.IsDeleted,
+            qualityEvent.DeletedAtUtc,
+            qualityEvent.DeletedReason
+        });
     }
 
     public sealed record SoftDeleteQualityEventRequest(string? Reason);

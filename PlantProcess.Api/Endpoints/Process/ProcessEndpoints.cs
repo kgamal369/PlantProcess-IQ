@@ -200,22 +200,33 @@ public static class ProcessEndpoints
         });
 
         group.MapDelete("/steps/{id:guid}", async (
-            Guid id,
-            SoftDeleteProcessRequest? request,
-            PlantProcessDbContext dbContext,
-            CancellationToken cancellationToken) =>
+             Guid id,
+             string? reason,
+             PlantProcessDbContext dbContext,
+             CancellationToken cancellationToken) =>
         {
-            var step = await dbContext.ProcessStepExecutions.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+            var step = await dbContext.ProcessStepExecutions
+                .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
             if (step is null)
                 return Results.NotFound(new { message = "ProcessStepExecution not found." });
 
-            step.SoftDelete(request?.Reason ?? "Soft-deleted via API.");
+            step.SoftDelete(
+                string.IsNullOrWhiteSpace(reason)
+                    ? "Soft-deleted via API."
+                    : reason.Trim());
+
             await dbContext.SaveChangesAsync(cancellationToken);
 
-            return Results.Ok(new { step.Id, step.MaterialUnitId, step.IsDeleted, step.DeletedAtUtc });
+            return Results.Ok(new
+            {
+                step.Id,
+                step.MaterialUnitId,
+                step.IsDeleted,
+                step.DeletedAtUtc,
+                step.DeletedReason
+            });
         });
-
         // ------------------------------------------------------------
         // Parameter Definitions
         // ------------------------------------------------------------

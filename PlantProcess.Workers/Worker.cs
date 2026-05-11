@@ -4,6 +4,8 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using PlantProcess.Application.Services.DataQuality;
 using PlantProcess.Application.Services.Integration;
+using PlantProcess.Application.Contracts.Analytics;
+using PlantProcess.Application.Services.Analytics;
 
 namespace PlantProcess.Workers;
 
@@ -13,6 +15,7 @@ namespace PlantProcess.Workers;
 /// Active jobs:
 ///   1. ImportQueueProcessorJob — processes Created/Running import batches with pending staging rows.
 ///   2. DataQualityScanJob     — runs the automated full data-quality scan and persists findings.
+///   3. RiskScoringJob         — calculates/stores rule-based risk scores for recent materials.
 ///
 /// Design rule: Worker.cs only schedules jobs. Business logic stays in PlantProcess.Application services.
 /// </summary>
@@ -34,7 +37,7 @@ public class Worker : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("PlantProcess IQ Worker started. Jobs: ImportQueueProcessorJob, DataQualityScanJob.");
+        _logger.LogInformation("PlantProcess IQ Worker started. Jobs: ImportQueueProcessorJob, DataQualityScanJob, RiskScoringJob.");
 
         var importEnabled = _configuration.GetValue("PlantProcess:Workers:EnableImportQueueProcessorJob", true);
         var importIntervalSeconds = Math.Max(30, _configuration.GetValue("PlantProcess:Workers:ImportQueueProcessorIntervalSeconds", 120));
@@ -45,8 +48,14 @@ public class Worker : BackgroundService
         var scanIntervalSeconds = Math.Max(60, _configuration.GetValue("PlantProcess:Workers:DataQualityScanIntervalSeconds", 3600));
         var scanMaxCandidatesPerRule = Math.Clamp(_configuration.GetValue("PlantProcess:Workers:DataQualityMaxCandidatesPerRule", 500), 1, 5000);
 
+        var riskEnabled = _configuration.GetValue("PlantProcess:Workers:EnableRiskScoringJob", true);
+        var riskIntervalSeconds = Math.Max(300, _configuration.GetValue("PlantProcess:Workers:RiskScoringIntervalSeconds", 7200));
+        var riskMaxMaterials = Math.Clamp(_configuration.GetValue("PlantProcess:Workers:RiskScoringMaxMaterials", 100), 1, 5000);
+        var riskType = _configuration.GetValue("PlantProcess:Workers:RiskScoringRiskType", RiskScoreService.DefaultRiskType) ?? RiskScoreService.DefaultRiskType;
+
         var nextImportRun = DateTimeOffset.UtcNow.AddSeconds(10);
         var nextScanRun = DateTimeOffset.UtcNow.AddSeconds(30);
+        var nextRiskRun = DateTimeOffset.UtcNow.AddSeconds(60);
 
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -62,6 +71,12 @@ public class Worker : BackgroundService
             {
                 await RunDataQualityScanJobAsync(scanMaxCandidatesPerRule, stoppingToken);
                 nextScanRun = DateTimeOffset.UtcNow.AddSeconds(scanIntervalSeconds);
+            }
+
+            if (riskEnabled && now >= nextRiskRun)
+            {
+                await RunRiskScoringJobAsync(riskType, riskMaxMaterials, stoppingToken);
+                nextRiskRun = DateTimeOffset.UtcNow.AddSeconds(riskIntervalSeconds);
             }
 
             await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
@@ -168,4 +183,58 @@ public class Worker : BackgroundService
             _logger.LogError(ex, "DataQualityScanJob: unhandled exception. Will retry on next interval.");
         }
     }
+
+    private async Task RunRiskScoringJobAsync(
+        string riskType,
+        int maxMaterials,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogInformation(
+            "RiskScoringJob: starting. RiskType={RiskType}, MaxMaterials={MaxMaterials}",
+            riskType,
+            maxMaterials);
+
+        try
+        {
+            await using var scope = _scopeFactory.CreateAsyncScope();
+            var service = scope.ServiceProvider.GetRequiredService<IRiskScoreService>();
+
+            var result = await service.CalculateBatchAsync(
+                new CalculateRiskScoresBatchCommand(
+                    SiteId: null,
+                    RiskType: riskType,
+                    MaxMaterials: maxMaterials,
+                    StoreResult: true,
+                    RequestedBy: "PlantProcess.Worker",
+                    CorrelationId: Guid.NewGuid().ToString("N")),
+                cancellationToken);
+
+            if (result.IsSuccess && result.Value is not null)
+            {
+                _logger.LogInformation(
+                    "RiskScoringJob: completed. Candidates={Candidates}, Calculated={Calculated}, Stored={Stored}, Skipped={Skipped}, DurationMs={DurationMs}",
+                    result.Value.CandidatesScanned,
+                    result.Value.ScoresCalculated,
+                    result.Value.ScoresStored,
+                    result.Value.Skipped,
+                    (long)result.Value.Duration.TotalMilliseconds);
+            }
+            else
+            {
+                _logger.LogError(
+                    "RiskScoringJob: failed. Error={ErrorCode} — {ErrorMessage}",
+                    result.Error?.Code,
+                    result.Error?.Message);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogWarning("RiskScoringJob: cancelled during shutdown.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "RiskScoringJob: unhandled exception. Will retry on next interval.");
+        }
+    }
+
 }

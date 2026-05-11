@@ -9,6 +9,7 @@ using PlantProcess.Api.Endpoints.Materials;
 using PlantProcess.Api.Endpoints.PlantLayout;
 using PlantProcess.Api.Endpoints.Process;
 using PlantProcess.Api.Endpoints.Quality;
+using PlantProcess.Api.Endpoints.Reporting;
 using PlantProcess.Api.Endpoints.Validation;
 using PlantProcess.Api.Endpoints.Workflow;
 using PlantProcess.Api.Middleware;
@@ -132,6 +133,9 @@ try
     app.MapQualityEndpoints();
     app.MapRiskScoreEndpoints();
     app.MapCorrelationEndpoints();
+    app.MapFeatureEngineeringEndpoints();
+    app.MapDashboardEndpoints();
+    app.MapReportingEndpoints();
     app.MapDataQualityEndpoints();
     app.MapDataQualityScanEndpoints();
     app.MapWorkflowEndpoints();

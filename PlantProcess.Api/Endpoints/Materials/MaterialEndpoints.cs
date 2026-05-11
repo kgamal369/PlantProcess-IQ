@@ -79,19 +79,31 @@ public static class MaterialEndpoints
 
         group.MapDelete("/{id:guid}", async (
             Guid id,
-            SoftDeleteRequest? request,
+            string? reason,
             PlantProcessDbContext dbContext,
             CancellationToken cancellationToken) =>
         {
-            var material = await dbContext.MaterialUnits.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+            var material = await dbContext.MaterialUnits
+                .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
             if (material is null)
                 return Results.NotFound(new { message = "MaterialUnit not found." });
 
-            material.SoftDelete(request?.Reason ?? "Soft-deleted via API.");
+            material.SoftDelete(
+                string.IsNullOrWhiteSpace(reason)
+                    ? "Soft-deleted via API."
+                    : reason.Trim());
+
             await dbContext.SaveChangesAsync(cancellationToken);
 
-            return Results.Ok(new { material.Id, material.MaterialCode, material.IsDeleted, material.DeletedAtUtc });
+            return Results.Ok(new
+            {
+                material.Id,
+                material.MaterialCode,
+                material.IsDeleted,
+                material.DeletedAtUtc,
+                material.DeletedReason
+            });
         });
 
         group.MapPost("", async (

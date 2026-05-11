@@ -1,0 +1,56 @@
+@host = https://localhost:7001
+@materialUnitId = 00000000-0000-0000-0000-000000000000
+
+### Health
+GET {{host}}/health
+
+### Database summary
+GET {{host}}/dev/database-summary
+
+### Pick a real material first, then copy the id into @materialUnitId
+GET {{host}}/dev/material-sample?take=10
+
+### Feature vector
+GET {{host}}/analytics/features/{{materialUnitId}}
+
+### Calculate and store risk score
+POST {{host}}/risk-scores/materials/{{materialUnitId}}/calculate
+Content-Type: application/json
+
+{
+  "riskType": "OverallQualityRisk",
+  "modelVersion": "rule-risk-v1.0",
+  "storeResult": true
+}
+
+### Calculate risk for recent materials
+POST {{host}}/risk-scores/calculate-all
+Content-Type: application/json
+
+{
+  "siteId": null,
+  "riskType": "OverallQualityRisk",
+  "maxMaterials": 50,
+  "storeResult": true
+}
+
+### Risk models
+GET {{host}}/risk-scores/models?activeOnly=true
+
+### Dashboards
+GET {{host}}/analytics/dashboard/overview
+
+### Quality dashboard
+GET {{host}}/analytics/dashboard/quality
+
+### Risk dashboard
+GET {{host}}/analytics/dashboard/risk?highRiskTake=20
+
+### Data-quality dashboard
+GET {{host}}/analytics/dashboard/data-quality
+
+### Report JSON
+GET {{host}}/reports/materials/{{materialUnitId}}/investigation
+
+### Report PDF
+GET {{host}}/reports/materials/{{materialUnitId}}/investigation/pdf

@@ -8,6 +8,7 @@ using PlantProcess.Application.Services.PlantLayout;
 using PlantProcess.Application.Services.Process;
 using PlantProcess.Application.Services.Quality;
 using PlantProcess.Application.Services.Readiness;
+using PlantProcess.Application.Services.Reporting;
 
 namespace PlantProcess.Application;
 
@@ -45,8 +46,13 @@ public static class DependencyInjection
 
         // Data quality and analytics
         services.AddScoped<IDataQualityService, DataQualityService>();
+        services.AddScoped<IFeatureEngineeringService, FeatureEngineeringService>();
         services.AddScoped<IRiskScoreService, RiskScoreService>();
         services.AddScoped<ICorrelationService, CorrelationService>();
+        services.AddScoped<IDashboardQueryService, DashboardQueryService>();
+
+        // Reporting / customer demo pack
+        services.AddScoped<IInvestigationReportService, InvestigationReportService>();
 
         return services;
     }

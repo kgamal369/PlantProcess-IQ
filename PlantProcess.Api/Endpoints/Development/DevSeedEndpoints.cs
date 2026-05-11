@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using PlantProcess.Infrastructure.Persistence;
 
 namespace PlantProcess.Api.Endpoints.Development;
@@ -50,7 +50,10 @@ public static class DevSeedEndpoints
             qualityEvents = await dbContext.QualityEvents.CountAsync(cancellationToken),
             dataQualityIssues = await dbContext.DataQualityIssues.CountAsync(cancellationToken),
 
-            riskScores = await dbContext.RiskScores.CountAsync(cancellationToken)
+            riskScores = await dbContext.RiskScores.CountAsync(cancellationToken),
+            correlationResults = await dbContext.CorrelationResults.CountAsync(cancellationToken),
+            modelRegistries = await dbContext.ModelRegistries.CountAsync(cancellationToken),
+            stagingRecords = await dbContext.StagingRecords.CountAsync(cancellationToken)
         };
 
         return Results.Ok(summary);

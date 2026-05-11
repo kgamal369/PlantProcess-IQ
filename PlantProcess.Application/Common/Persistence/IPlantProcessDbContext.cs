@@ -44,6 +44,7 @@ public interface IPlantProcessDbContext
 
     DbSet<RiskScore> RiskScores { get; }
     DbSet<CorrelationResult> CorrelationResults { get; }
+    DbSet<ModelRegistry> ModelRegistries { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }
