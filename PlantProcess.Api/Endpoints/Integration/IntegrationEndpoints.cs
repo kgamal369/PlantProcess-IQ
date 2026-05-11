@@ -1,4 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using PlantProcess.Api.Extensions;
+using PlantProcess.Application.Common.Results;
+using PlantProcess.Application.Contracts.Common;
+using PlantProcess.Application.Contracts.Integration;
+using PlantProcess.Application.Services.Integration;
 using PlantProcess.Domain.Entities.Integration;
 using PlantProcess.Infrastructure.Persistence;
 
@@ -27,9 +32,14 @@ public static class IntegrationEndpoints
         group.MapGet("/mapping-definitions", GetMappingDefinitionsAsync);
         group.MapGet("/mapping-definitions/{id:guid}", GetMappingDefinitionByIdAsync);
         group.MapPost("/mapping-definitions", CreateMappingDefinitionAsync);
+        group.MapPatch("/mapping-definitions/{id:guid}/mapping-json", UpdateMappingDefinitionJsonAsync);
 
         return app;
     }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // Summary
+    // ────────────────────────────────────────────────────────────────────────
 
     private static async Task<IResult> GetIntegrationSummaryAsync(
         PlantProcessDbContext dbContext,
@@ -42,6 +52,10 @@ public static class IntegrationEndpoints
             mappingDefinitions = await dbContext.MappingDefinitions.CountAsync(cancellationToken)
         });
     }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // Source Systems
+    // ────────────────────────────────────────────────────────────────────────
 
     private static async Task<IResult> GetSourceSystemsAsync(
         string? type,
@@ -133,6 +147,10 @@ public static class IntegrationEndpoints
             sourceSystem.SourceSystemType
         });
     }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // Import Batches
+    // ────────────────────────────────────────────────────────────────────────
 
     private static async Task<IResult> GetImportBatchesAsync(
         Guid? sourceSystemDefinitionId,
@@ -251,7 +269,8 @@ public static class IntegrationEndpoints
         PlantProcessDbContext dbContext,
         CancellationToken cancellationToken)
     {
-        var batch = await dbContext.ImportBatches.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        var batch = await dbContext.ImportBatches
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
         if (batch is null)
             return Results.NotFound(new { message = "Import batch not found." });
@@ -271,7 +290,8 @@ public static class IntegrationEndpoints
         if (request.RowCount < 0)
             return Results.BadRequest(new { message = "Row count cannot be negative." });
 
-        var batch = await dbContext.ImportBatches.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        var batch = await dbContext.ImportBatches
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
         if (batch is null)
             return Results.NotFound(new { message = "Import batch not found." });
@@ -279,7 +299,14 @@ public static class IntegrationEndpoints
         batch.MarkCompleted(request.RowCount);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return Results.Ok(new { batch.Id, batch.ImportBatchCode, batch.Status, batch.RowCount, batch.CompletedAtUtc });
+        return Results.Ok(new
+        {
+            batch.Id,
+            batch.ImportBatchCode,
+            batch.Status,
+            batch.RowCount,
+            batch.CompletedAtUtc
+        });
     }
 
     private static async Task<IResult> MarkImportBatchFailedAsync(
@@ -288,7 +315,8 @@ public static class IntegrationEndpoints
         PlantProcessDbContext dbContext,
         CancellationToken cancellationToken)
     {
-        var batch = await dbContext.ImportBatches.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        var batch = await dbContext.ImportBatches
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
         if (batch is null)
             return Results.NotFound(new { message = "Import batch not found." });
@@ -296,8 +324,19 @@ public static class IntegrationEndpoints
         batch.MarkFailed(request.ErrorMessage);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return Results.Ok(new { batch.Id, batch.ImportBatchCode, batch.Status, batch.ErrorMessage, batch.CompletedAtUtc });
+        return Results.Ok(new
+        {
+            batch.Id,
+            batch.ImportBatchCode,
+            batch.Status,
+            batch.ErrorMessage,
+            batch.CompletedAtUtc
+        });
     }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // Mapping Definitions — routed through IMappingDefinitionService (T-06)
+    // ────────────────────────────────────────────────────────────────────────
 
     private static async Task<IResult> GetMappingDefinitionsAsync(
         Guid? sourceSystemDefinitionId,
@@ -369,48 +408,73 @@ public static class IntegrationEndpoints
         return mapping is null ? Results.NotFound() : Results.Ok(mapping);
     }
 
+    /// <summary>
+    /// POST /integration/mapping-definitions
+    /// Routes through IMappingDefinitionService — no direct DbContext writes.
+    /// </summary>
     private static async Task<IResult> CreateMappingDefinitionAsync(
         CreateMappingDefinitionRequest request,
-        PlantProcessDbContext dbContext,
+        IMappingDefinitionService service,
+        HttpContext httpContext,
         CancellationToken cancellationToken)
     {
-        var sourceExists = await dbContext.SourceSystemDefinitions
-            .AnyAsync(x => x.Id == request.SourceSystemDefinitionId, cancellationToken);
+        var correlationId = httpContext.Items["CorrelationId"]?.ToString() ?? Guid.NewGuid().ToString("N");
 
-        if (!sourceExists)
-            return Results.BadRequest(new { message = "Source system definition does not exist." });
+        var command = new CreateMappingDefinitionCommand(
+            SourceSystemDefinitionId: request.SourceSystemDefinitionId,
+            MappingCode: request.MappingCode,
+            MappingName: request.MappingName,
+            SourceObjectName: request.SourceObjectName,
+            TargetEntityName: request.TargetEntityName,
+            MappingJson: request.MappingJson,
+            MappingVersion: request.MappingVersion,
+            Description: request.Description,
+            Metadata: new CommandMetadata(
+                IsSynthetic: request.IsSynthetic,
+                SourceSystem: request.SourceSystem,
+                SourceRecordId: request.SourceRecordId,
+                CorrelationId: correlationId));
 
-        var exists = await dbContext.MappingDefinitions
-            .AnyAsync(x => x.MappingCode == request.MappingCode, cancellationToken);
+        var result = await service.CreateAsync(command, cancellationToken);
 
-        if (exists)
-            return Results.Conflict(new { message = "Mapping code already exists." });
-
-        var mapping = new MappingDefinition(
-            sourceSystemDefinitionId: request.SourceSystemDefinitionId,
-            mappingCode: request.MappingCode,
-            mappingName: request.MappingName,
-            sourceObjectName: request.SourceObjectName,
-            targetEntityName: request.TargetEntityName,
-            mappingJson: request.MappingJson,
-            isSynthetic: request.IsSynthetic,
-            mappingVersion: request.MappingVersion ?? "v1",
-            description: request.Description,
-            sourceSystem: request.SourceSystem,
-            sourceRecordId: request.SourceRecordId);
-
-        dbContext.MappingDefinitions.Add(mapping);
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        return Results.Created($"/integration/mapping-definitions/{mapping.Id}", new
-        {
-            mapping.Id,
-            mapping.MappingCode,
-            mapping.MappingName,
-            mapping.TargetEntityName,
-            mapping.MappingVersion
-        });
+        return result.ToHttpResult(id =>
+            Results.Created($"/integration/mapping-definitions/{id}", new
+            {
+                id,
+                request.MappingCode,
+                request.MappingName,
+                request.TargetEntityName,
+                mappingVersion = request.MappingVersion ?? "v1"
+            }));
     }
+
+    /// <summary>
+    /// PATCH /integration/mapping-definitions/{id}/mapping-json
+    /// Updates the field-map JSON on an existing mapping definition.
+    /// </summary>
+    private static async Task<IResult> UpdateMappingDefinitionJsonAsync(
+        Guid id,
+        UpdateMappingJsonRequest request,
+        IMappingDefinitionService service,
+        CancellationToken cancellationToken)
+    {
+        var result = await service.UpdateMappingJsonAsync(
+            id,
+            request.MappingJson,
+            request.MappingVersion ?? "v1",
+            cancellationToken);
+
+        return result.ToHttpResult(() => Results.Ok(new
+        {
+            mappingDefinitionId = id,
+            request.MappingVersion,
+            updatedAt = DateTime.UtcNow
+        }));
+    }
+
+    // ────────────────────────────────────────────────────────────────────────
+    // Request records
+    // ────────────────────────────────────────────────────────────────────────
 
     public sealed record CreateSourceSystemRequest(
         string SourceSystemCode,
@@ -449,4 +513,8 @@ public static class IntegrationEndpoints
         bool IsSynthetic,
         string? SourceSystem,
         string? SourceRecordId);
+
+    public sealed record UpdateMappingJsonRequest(
+        string MappingJson,
+        string? MappingVersion);
 }

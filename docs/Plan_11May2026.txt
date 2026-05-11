@@ -1,0 +1,536 @@
+So from now on, the plan becomes:
+
+# PlantProcess IQ Unified Master Orchestration Plan v2
+
+## Main Strategy
+
+We will build PlantProcess IQ like this:
+
+```text
+Source Systems / CSV / SQL / Historian / Lab / QMS
+        ↓
+Import Batch
+        ↓
+Raw / Staging Records
+        ↓
+Mapping Execution
+        ↓
+Canonical Model
+        ↓
+Data Quality + Genealogy Validation
+        ↓
+Correlation Engine
+        ↓
+Feature Engineering
+        ↓
+Risk Prediction
+        ↓
+Investigation + Dashboard + PDF Report
+```
+
+This is the correct architecture because the master document defines PlantProcess IQ as an intelligence layer that reads from plant systems, connects fragmented process/quality data, builds genealogy, detects quality issues, identifies correlations, predicts risk, and provides dashboards/reports — while keeping the model generic across industries. 
+
+---
+
+# 1. Golden Rule for the Merged Plan
+
+We will not follow Sprint numbers blindly anymore.
+
+Instead, we follow **dependency order**.
+
+Your TaskList has tasks grouped as Sprint 2 → Sprint 6, but to build the strongest application, some tasks must be slightly re-orchestrated. For example, correlation is CRITICAL, but correlation cannot be strong unless import, staging, canonical data, and mapping are stable first.
+
+So the new rule is:
+
+> **Foundation first. Orchestration second. Intelligence third. Prediction fourth. Product/demo polish fifth.**
+
+---
+
+# 2. Final Merged Implementation Phases
+
+## Phase A — Stability, Logging, and Baseline Control
+
+Purpose: make the application traceable, clean, buildable, and safe before bigger logic.
+
+| Order | Merged Task                                                                    | Source                      |
+| ----: | ------------------------------------------------------------------------------ | --------------------------- |
+|    A1 | Run full build, migration validation, seed validation, API baseline validation | My previous plan            |
+|    A2 | T-01 Add Correlation ID Middleware                                             | Your TaskList               |
+|    A3 | T-02 Fix Serilog API log path to absolute                                      | Your TaskList               |
+|    A4 | T-03 Add Serilog to Workers                                                    | Your TaskList               |
+|    A5 | T-04 Remove all `NotImplemented` stub classes                                  | Your TaskList / Deep Review |
+|    A6 | T-05 Add GET `/integration/import-batches` endpoints                           | Your TaskList               |
+|    A7 | T-06 Route `MappingDefinitionService` through Application layer                | Your TaskList               |
+|    A8 | Add docs/current-status file after validation                                  | My previous plan            |
+
+### Definition of Done
+
+```text
+dotnet build = clean
+migrations apply = clean
+seed runs = clean
+API baseline works
+logs contain CorrelationId
+API and Worker have structured logs
+no dead NotImplemented classes
+import batches can be listed and opened
+mapping definition creation uses Application service
+```
+
+This phase directly addresses Deep Review issues around relative log path, missing correlation ID, workers logging, NotImplemented stubs, and endpoints bypassing the Application layer. 
+
+---
+
+## Phase B — Domain and API Consistency Fixes
+
+Purpose: make the model consistent before importing real data.
+
+| Order | Merged Task                                                   | Source                      |
+| ----: | ------------------------------------------------------------- | --------------------------- |
+|    B1 | T-07 Add `OperationDefinitionId` FK to `ProcessStepExecution` | Your TaskList / Deep Review |
+|    B2 | T-08 Add activate/deactivate to `SourceSystemDefinition`      | Your TaskList               |
+|    B3 | T-10 Add soft-delete DELETE endpoints                         | Your TaskList               |
+|    B4 | T-11 Add PATCH process step complete/abort                    | Your TaskList               |
+|    B5 | T-12 Add activate/deactivate PATCH endpoints for config       | Your TaskList               |
+|    B6 | T-13 Add `EffectiveFrom/EffectiveTo` to genealogy command/API | Your TaskList               |
+|    B7 | T-14 Add `RiskScore` range guard 0–1                          | Your TaskList               |
+|    B8 | T-17 Add execution-status validation                          | Your TaskList               |
+|    B9 | Add severity validation for `DataQualityIssue`                | Deep Review extra           |
+|   B10 | Add domain guard for `ImportBatch.MarkCompleted(rowCount)`    | Deep Review extra           |
+
+### Definition of Done
+
+```text
+Process steps link to OperationDefinition
+Source systems can be activated/deactivated
+Materials/process steps/quality events can be soft-deleted
+Running process steps can be completed or aborted
+Genealogy effective windows can be created from API
+Risk score cannot be < 0 or > 1 through domain/API
+ExecutionStatus is controlled
+DataQuality severity is controlled
+```
+
+This phase closes the inconsistencies found in `SourceSystemDefinition`, `ProcessStepExecution`, `GenealogyEdge`, `RiskScore`, `ImportBatch`, and execution status. 
+
+---
+
+## Phase C — Raw/Staging + Mapping Engine
+
+Purpose: move from CRUD API to a real industrial data-processing product.
+
+This is the heart of Sprint 4.
+
+| Order | Merged Task                                                  | Source                           |
+| ----: | ------------------------------------------------------------ | -------------------------------- |
+|    C1 | T-19 Add `StagingRecord` entity for raw data retention       | Your TaskList                    |
+|    C2 | Add `StagingRecordConfiguration`, DbSet, migration           | My previous plan + Your TaskList |
+|    C3 | Add POST bulk staging-record ingestion endpoint              | My previous plan                 |
+|    C4 | Add GET staging-records by import batch/status               | My previous plan                 |
+|    C5 | Define `MappingJsonStandard.md`                              | My previous plan                 |
+|    C6 | Create `MappingExecutionService`                             | My previous plan                 |
+|    C7 | Add `MappingExecutionResult`                                 | My previous plan                 |
+|    C8 | Support mapping to `MaterialUnit` + `MaterialAlias`          | My previous plan                 |
+|    C9 | Support mapping to `ProcessStepExecution`                    | My previous plan                 |
+|   C10 | Support mapping to `ParameterObservation`                    | My previous plan                 |
+|   C11 | Support mapping to `QualityEvent`                            | My previous plan                 |
+|   C12 | Support mapping to `GenealogyEdge`                           | My previous plan                 |
+|   C13 | Add lookup by material alias, equipment code, parameter code | My previous plan                 |
+|   C14 | Add mapping preview endpoint                                 | My previous plan                 |
+|   C15 | Add mapping execute endpoint                                 | My previous plan                 |
+
+### Definition of Done
+
+```text
+Raw source rows are stored before transformation
+Each raw row has status: Pending / Mapped / Failed / Skipped
+Mapping JSON has a documented standard
+Mapping can preview without saving
+Mapping can execute and create canonical records
+Failed rows keep error details
+Mapping can resolve aliases/equipment/parameters
+```
+
+This phase is non-negotiable. The master document explicitly requires raw/staging retention before canonical transformation for replayability and auditability, and the Deep Review flags the absence of raw/staging as a key gap. 
+
+---
+
+## Phase D — Import Workflow Orchestration Engine
+
+Purpose: create one professional end-to-end process instead of manual API calls.
+
+| Order | Merged Task                                       | Source                         |
+| ----: | ------------------------------------------------- | ------------------------------ |
+|    D1 | Create `ImportWorkflowService`                    | My previous plan               |
+|    D2 | Create `RunImportWorkflowCommand`                 | My previous plan               |
+|    D3 | Mark batch Running before processing              | My previous plan               |
+|    D4 | Insert raw/staging records                        | My previous plan               |
+|    D5 | Execute mapping                                   | My previous plan               |
+|    D6 | Trigger targeted data-quality scan                | My previous plan               |
+|    D7 | Mark batch Completed/Failed                       | My previous plan               |
+|    D8 | Add transaction/chunk boundary                    | My previous plan               |
+|    D9 | Add POST `/workflow/import/run`                   | My previous plan               |
+|   D10 | Add import workflow summary endpoint              | My previous plan               |
+|   D11 | T-09 Persist automated data-quality scan findings | Your TaskList                  |
+|   D12 | Worker job: scheduled data-quality scan           | Your TaskList                  |
+|   D13 | Worker job: queued import workflow processor      | Deep Review + My previous plan |
+
+### Definition of Done
+
+```text
+One API call can run:
+source → batch → staging → mapping → canonical → DQ scan → result summary
+
+Import batch status changes automatically
+Data-quality findings are persisted
+Failed import rows are inspectable
+Worker can run scheduled scans
+Worker can process import jobs
+```
+
+This is the phase that makes PlantProcess IQ feel like a **real product**, not just endpoints.
+
+---
+
+## Phase E — Application Layer Completion
+
+Purpose: make the backend clean, maintainable, and enterprise-grade.
+
+| Order | Merged Task                                               | Source            |
+| ----: | --------------------------------------------------------- | ----------------- |
+|    E1 | T-20 Migrate PlantLayout endpoints to Application layer   | Your TaskList     |
+|    E2 | T-20 Migrate Process endpoints to Application layer       | Your TaskList     |
+|    E3 | T-20 Migrate Quality endpoints to Application layer       | Your TaskList     |
+|    E4 | T-20 Migrate RiskScore endpoints to Application layer     | Your TaskList     |
+|    E5 | T-20 Migrate Configuration endpoints to Application layer | Your TaskList     |
+|    E6 | T-21 Add `DefectCatalog` navigation property              | Your TaskList     |
+|    E7 | Add enriched quality query with defect detail             | Your TaskList     |
+|    E8 | T-16 Add proper page/pageSize pagination                  | Your TaskList     |
+|    E9 | Add area/equipment hierarchy traversal endpoints          | Deep Review extra |
+|   E10 | Add material-by-equipment reverse lookup                  | Deep Review extra |
+
+### Definition of Done
+
+```text
+Endpoints are thin
+Application services own orchestration/business logic
+DbContext direct usage is minimized in API layer
+GET lists support page/pageSize
+Quality events can include defect catalog details
+Equipment/material reverse investigations are possible
+```
+
+This fixes the Deep Review issue that several endpoints still bypass the Application layer and directly call DbContext. 
+
+---
+
+## Phase F — Synthetic Dataset and Demo Data Expansion
+
+Purpose: make the product demonstrable, testable, and credible.
+
+| Order | Merged Task                                      | Source                                   |
+| ----: | ------------------------------------------------ | ---------------------------------------- |
+|    F1 | T-18 Add second site                             | Your TaskList                            |
+|    F2 | T-18 Add deep 5-level genealogy                  | Your TaskList                            |
+|    F3 | T-18 Add Aluminum template                       | Your TaskList                            |
+|    F4 | Add aborted process step                         | Your TaskList                            |
+|    F5 | Add boolean parameter observation                | Your TaskList                            |
+|    F6 | Build 100k+ synthetic generator                  | Original product plan + My previous plan |
+|    F7 | Add hidden defect patterns                       | Original product plan                    |
+|    F8 | Add multi-source alias complexity                | My previous plan                         |
+|    F9 | Add generated CSV files for import workflow demo | Merged addition                          |
+
+### Definition of Done
+
+```text
+Demo has at least 2 sites
+Demo has steel + one non-steel industry
+Demo has deep genealogy
+Demo has intentional good and bad data
+Synthetic generator can create 100k+ rows
+Hidden patterns exist for correlation/ML validation
+CSV files can be imported through the real workflow
+```
+
+The original product plan expects a 100k+ synthetic dataset for process, quality, defects, and genealogy, and the master document says the first version must use synthetic data with realistic genealogy, hidden defect patterns, noise, missing data, and source-specific IDs. 
+
+---
+
+## Phase G — Correlation Engine: Core Customer Value
+
+Purpose: answer the customer’s most important question: **“Which process conditions are linked to defects?”**
+
+| Order | Merged Task                                              | Source                      |
+| ----: | -------------------------------------------------------- | --------------------------- |
+|    G1 | T-23 Create `ICorrelationService` / `CorrelationService` | Your TaskList               |
+|    G2 | T-23 Parameter-defect binning analysis                   | Your TaskList               |
+|    G3 | T-24 Equipment defect-rate analysis                      | Your TaskList               |
+|    G4 | Add route defect-rate analysis                           | Your TaskList / Deep Review |
+|    G5 | Add crew/shift defect-rate analysis                      | Deep Review                 |
+|    G6 | Add grade/product-family defect-rate analysis            | Master Plan                 |
+|    G7 | T-25 Add material correlation context to investigation   | Your TaskList               |
+|    G8 | Add correlation result persistence table                 | My addition                 |
+|    G9 | Add dashboard-ready correlation summary endpoint         | My addition                 |
+
+### Definition of Done
+
+```text
+Can answer:
+- Which parameter ranges increase defect rate?
+- Which equipment has higher defect rate?
+- Which route/shift/crew/product family is suspicious?
+- Which contributors are relevant for this material?
+- Investigation endpoint can include correlation context
+```
+
+The Deep Review is very clear: correlation analytics is completely absent and is the core customer-facing value because the product must calculate defect rate by parameter range, equipment, route, grade/product family, shift, crew, and process window. 
+
+---
+
+## Phase H — Feature Engineering + Risk Prediction
+
+Purpose: move from “correlated with” to “predicted risk.”
+
+| Order | Merged Task                                     | Source        |
+| ----: | ----------------------------------------------- | ------------- |
+|    H1 | T-27 Create `IFeatureEngineeringService`        | Your TaskList |
+|    H2 | Build material feature vector                   | Your TaskList |
+|    H3 | Add GET `/analytics/features/{materialUnitId}`  | Your TaskList |
+|    H4 | T-28 Add `RiskScoreService.CalculateAsync`      | Your TaskList |
+|    H5 | Add POST risk-score calculate for one material  | Your TaskList |
+|    H6 | Add POST calculate-all by site/recent materials | Your TaskList |
+|    H7 | Add rule-based scorer first                     | Your TaskList |
+|    H8 | Add model registry table                        | My addition   |
+|    H9 | Add Python/ML.NET/ONNX integration later        | Master Plan   |
+|   H10 | Worker job for periodic risk scoring            | Your TaskList |
+
+### Definition of Done
+
+```text
+Feature vector can be inspected
+Risk can be calculated, not only manually posted
+RiskScore is stored with model/rule version
+Risk contributors are stored
+Worker can score new completed materials
+Initial heuristic works before full ML
+```
+
+This follows the master document’s ML stages: data quality first, descriptive analytics, correlation, baseline prediction, explainability, then recommendation assistant. 
+
+---
+
+## Phase I — Reporting, Dashboard, and Customer Demo Pack
+
+Purpose: turn the engine into a product someone can understand and buy.
+
+| Order | Merged Task                                  | Source           |
+| ----: | -------------------------------------------- | ---------------- |
+|    I1 | T-29 Generate PDF investigation report       | Your TaskList    |
+|    I2 | Add Excel investigation export later         | Master Plan      |
+|    I3 | Add dashboard API endpoints                  | Master Plan      |
+|    I4 | Create Qlik/Power BI dashboard dataset views | Master Plan      |
+|    I5 | Add React UI skeleton later                  | Master Plan      |
+|    I6 | Create demo script                           | My previous plan |
+|    I7 | Create API testing `.http` file              | My previous plan |
+|    I8 | Create sample customer report                | Master Plan      |
+|    I9 | Create one-page pilot offer                  | Master Plan      |
+
+### Definition of Done
+
+```text
+One material can be investigated as JSON
+Same investigation can be exported as PDF
+Dashboard can show quality overview, genealogy, correlations, risk, DQ issues
+Demo can be repeated step-by-step
+Customer report looks professional
+```
+
+The master document expects dashboard pages for quality overview, defect correlation, genealogy, high-risk materials, process windows, data quality, AI explanation, and pilot report export. 
+
+---
+
+## Phase J — Pilot Hardening
+
+Purpose: make it usable in a real customer pilot.
+
+| Order | Task                                   | Source                         |
+| ----: | -------------------------------------- | ------------------------------ |
+|    J1 | Add Tenant / customer boundary         | My previous plan + Master Plan |
+|    J2 | Add User / Role / Permission           | Master Plan                    |
+|    J3 | Add AuditLog                           | My previous plan               |
+|    J4 | Add security baseline                  | Master Plan                    |
+|    J5 | Add connector run history              | My addition                    |
+|    J6 | Add report history                     | Master Plan                    |
+|    J7 | Add deployment checklist               | Master Plan                    |
+|    J8 | Add data readiness assessment workflow | Master Plan                    |
+
+### Definition of Done
+
+```text
+Can separate customer/site data
+Can audit important actions
+Can run pilot using CSV/Excel export
+Can explain data quality and feasibility
+Can package product for on-prem/private cloud pilot
+```
+
+---
+
+# 3. Final Orchestrated Build Order
+
+This is the order we should actually follow.
+
+```text
+1. Baseline validation
+2. Logging / correlation ID / worker Serilog
+3. Remove stubs and route mapping through Application service
+4. Import batch query endpoints
+5. Domain consistency fixes
+6. PATCH / DELETE / activate/deactivate endpoints
+7. RiskScore / status / severity validation
+8. StagingRecord raw-data layer
+9. Mapping JSON standard
+10. MappingExecutionService
+11. Mapping preview + execute endpoints
+12. ImportWorkflowService
+13. Persisted data-quality scan
+14. Worker jobs for scan/import
+15. Application-layer migration for remaining endpoints
+16. Pagination and enriched query endpoints
+17. Synthetic dataset expansion + generator
+18. Correlation engine
+19. Correlation context in investigation
+20. CSV/Excel connector
+21. Feature engineering
+22. Risk score calculation API
+23. Worker risk scoring
+24. PDF investigation export
+25. Dashboard/report/demo pack
+26. Security/audit/tenant hardening
+```
+
+This is stronger than both separate plans because it combines your task list with the missing dependency chain from my process-engine plan.
+
+---
+
+# 4. The New “Strongest Application” Architecture
+
+The backend should now be organized as:
+
+```text
+PlantProcess.Api
+    Thin endpoint layer only
+    No business logic
+    No direct complex DbContext orchestration
+
+PlantProcess.Application
+    Contracts
+    Services
+    Orchestration
+    Mapping
+    Ingestion
+    DataQuality
+    Analytics
+    FeatureEngineering
+    Reporting
+
+PlantProcess.Domain
+    Pure entities
+    Guard clauses
+    Domain rules
+    No EF logic
+    No API logic
+
+PlantProcess.Infrastructure
+    EF Core
+    PostgreSQL
+    Bulk insert
+    File storage
+    External connectors later
+    Report generation infrastructure later
+
+PlantProcess.Workers
+    Scheduled data-quality scan
+    Import orchestration jobs
+    Risk scoring jobs
+    Synthetic generation jobs
+```
+
+---
+
+# 5. What We Must Not Do
+
+To keep the application strong, we must avoid these traps:
+
+| Trap                               | Why Dangerous                                       |
+| ---------------------------------- | --------------------------------------------------- |
+| Jumping to ML now                  | No stable import/mapping/correlation foundation yet |
+| Building only dashboards           | Product becomes BI-only, against vision             |
+| Hard-coding steel route            | Breaks generic manufacturing strategy               |
+| Keeping endpoint business logic    | Hard to maintain and test                           |
+| Skipping raw/staging               | No audit, no replay, no customer trust              |
+| Creating risk scores manually only | Not real prediction                                 |
+| Correlation only in frontend/Qlik  | Intelligence must stay in backend/API               |
+| Building microservices too early   | Slows you down before product-market proof          |
+
+---
+
+# 6. The Immediate Next Coding Sequence
+
+We start here:
+
+```text
+T-01 Add Correlation ID Middleware
+T-02 Fix Serilog API log path
+T-03 Add Serilog to Workers
+T-04 Remove NotImplemented stubs
+T-05 Add GET import-batches endpoints
+T-06 Route MappingDefinitionService through Application layer
+```
+
+After those compile cleanly, we move to:
+
+```text
+T-07 OperationDefinitionId FK
+T-08 SourceSystemDefinition activate/deactivate
+T-09 Data-quality scan persistence
+T-10 Soft-delete endpoints
+T-11 Process step complete/abort
+```
+
+Then the real Sprint 4 core begins:
+
+```text
+T-19 StagingRecord
+MappingExecutionService
+ImportWorkflowService
+Persisted DQ scan per import
+Worker import/scan jobs
+```
+
+---
+
+# Final Decision
+
+Yes — we can make this a very strong application, but not by adding random features.
+
+We make it strong by building it like an industrial product:
+
+```text
+Traceable
+Auditable
+Generic
+Configurable
+Import-driven
+Workflow-driven
+Correlation-ready
+Prediction-ready
+Report-ready
+Pilot-ready
+```
+
+From now on, the merged plan is the single source of truth. The first task to implement is:
+
+```text
+T-01 — Add Correlation ID Middleware
+```

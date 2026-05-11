@@ -47,4 +47,8 @@ public sealed record ParameterObservationInsertRow
     public string QualityFlag { get; init; } = "Valid";
 
     public string? RawValue { get; init; }
+    public object CreatedBy { get; internal set; }
+    public object SourceSystemId { get; internal set; }
+    public object TimestampUtc { get; internal set; }
+    public object TimestampLocal { get; internal set; }
 }

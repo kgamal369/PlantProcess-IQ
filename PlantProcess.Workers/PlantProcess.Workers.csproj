@@ -7,13 +7,25 @@
     <UserSecretsId>dotnet-PlantProcess.Workers-de46903e-248b-4ec4-b980-f99f19d784b5</UserSecretsId>
   </PropertyGroup>
 
+  <!-- Core hosting -->
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.8" />
   </ItemGroup>
 
+  <!-- Serilog structured logging — must mirror PlantProcess.Api configuration -->
+  <ItemGroup>
+    <PackageReference Include="Serilog.Extensions.Hosting"       Version="9.0.0" />
+    <PackageReference Include="Serilog.Sinks.Console"            Version="6.0.0" />
+    <PackageReference Include="Serilog.Sinks.File"               Version="7.0.0" />
+    <PackageReference Include="Serilog.Enrichers.Environment"    Version="3.0.1" />
+    <PackageReference Include="Serilog.Exceptions"               Version="8.4.0" />
+  </ItemGroup>
+
+  <!-- Internal project references -->
   <ItemGroup>
     <ProjectReference Include="..\PlantProcess.Domain\PlantProcess.Domain.csproj" />
     <ProjectReference Include="..\PlantProcess.Infrastructure\PlantProcess.Infrastructure.csproj" />
     <ProjectReference Include="..\PlantProcess.Application\PlantProcess.Application.csproj" />
   </ItemGroup>
+
 </Project>

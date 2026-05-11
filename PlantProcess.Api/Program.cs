@@ -1,3 +1,4 @@
+﻿using System.Reflection;
 using PlantProcess.Api.Endpoints.Analytics;
 using PlantProcess.Api.Endpoints.Configuration;
 using PlantProcess.Api.Endpoints.DataQuality;
@@ -17,39 +18,72 @@ using Serilog;
 using Serilog.Events;
 using Serilog.Exceptions;
 
+// ── Resolve a stable absolute log path regardless of working directory ──────
+var logDirectory = Path.Combine(AppContext.BaseDirectory, "logs");
+var logFilePath = Path.Combine(logDirectory, "plantprocess-api-.log");
+
+// ── Bootstrap logger (used before host is built) ─────────────────────────────
+// AppVersion enricher: reads from AssemblyInformationalVersion or falls back to "dev".
+var appVersion = Assembly
+    .GetEntryAssembly()
+    ?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()
+    ?.InformationalVersion
+    ?? Assembly.GetEntryAssembly()?.GetName().Version?.ToString(3)
+    ?? "dev";
+
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Verbose()
     .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
     .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
     .MinimumLevel.Override("Microsoft.EntityFrameworkCore.Database.Command", LogEventLevel.Warning)
+    // Keep all PlantProcess namespaces fully verbose for detailed diagnostics
+    .MinimumLevel.Override("PlantProcess", LogEventLevel.Verbose)
     .Enrich.FromLogContext()
     .Enrich.WithMachineName()
     .Enrich.WithEnvironmentName()
     .Enrich.WithExceptionDetails()
-    .WriteTo.Console()
+    // AppVersion on every log entry – critical for multi-version deployments
+    .Enrich.WithProperty("AppVersion", appVersion)
+    .WriteTo.Console(
+        outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {CorrelationId,-32} {Message:lj}{NewLine}{Exception}")
     .WriteTo.File(
-        path: "logs/plantprocess-api-.log",
+        path: logFilePath,
         rollingInterval: RollingInterval.Day,
         retainedFileCountLimit: 30,
         shared: true,
+        outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} {Level:u3}] [{MachineName}] [{AppVersion}] [{EnvironmentName}] {CorrelationId,-32} {Message:lj}{NewLine}{Properties:j}{NewLine}{Exception}",
         restrictedToMinimumLevel: LogEventLevel.Verbose)
     .CreateLogger();
 
 try
 {
-    Log.Information("Starting PlantProcess IQ API.");
+    Log.Information(
+        "Starting PlantProcess IQ API. Version={AppVersion}, LogPath={LogPath}",
+        appVersion,
+        logFilePath);
 
     var builder = WebApplication.CreateBuilder(args);
 
+    // ── Replace default .NET logging with Serilog ─────────────────────────
     builder.Host.UseSerilog();
 
+    // ── Application and Infrastructure DI ────────────────────────────────
     builder.Services.AddApplication();
     builder.Services.AddInfrastructure(builder.Configuration);
 
+    // ── Swagger ───────────────────────────────────────────────────────────
     builder.Services.AddEndpointsApiExplorer();
-
     builder.Services.AddSwaggerGen(options =>
     {
+        options.SwaggerDoc("v1", new()
+        {
+            Title = "PlantProcess IQ API",
+            Version = "v1",
+            Description =
+                "Generic manufacturing process-to-quality intelligence platform. " +
+                $"Version: {appVersion}"
+        });
+
         options.CustomSchemaIds(type =>
             type.FullName!
                 .Replace("+", "_")
@@ -58,25 +92,35 @@ try
 
     var app = builder.Build();
 
+    // ── Middleware pipeline (ORDER MATTERS) ───────────────────────────────
+    // 1. Correlation ID first — all subsequent middleware and endpoints get CorrelationId in scope.
+    app.UseMiddleware<CorrelationIdMiddleware>();
+
+    // 2. Request/response logging — logs method, path, status code, elapsed.
     app.UseMiddleware<RequestResponseLoggingMiddleware>();
 
+    // ── Swagger (Development only) ────────────────────────────────────────
     if (app.Environment.IsDevelopment())
     {
         app.UseSwagger();
         app.UseSwaggerUI(options =>
         {
-            options.SwaggerEndpoint("/swagger/v1/swagger.json", "PlantProcess IQ API v1");
+            options.SwaggerEndpoint("/swagger/v1/swagger.json", $"PlantProcess IQ API v1 ({appVersion})");
             options.RoutePrefix = "swagger";
+            options.DocumentTitle = "PlantProcess IQ API";
         });
     }
 
+    // ── Root redirect ─────────────────────────────────────────────────────
     app.MapGet("/", () => Results.Redirect("/swagger"));
 
+    // ── HTTPS (Production only) ───────────────────────────────────────────
     if (!app.Environment.IsDevelopment())
     {
         app.UseHttpsRedirection();
     }
 
+    // ── Endpoint registration ─────────────────────────────────────────────
     app.MapHealthEndpoints();
     app.MapPlantLayoutEndpoints();
     app.MapConfigurationEndpoints();
@@ -96,16 +140,16 @@ try
 }
 catch (Exception ex) when (ex.GetType().Name == "HostAbortedException")
 {
-    // EF Core design-time tools intentionally abort the host after discovering services.
-    // This is not a real runtime crash.
-    Log.Debug(ex, "Host aborted during EF Core design-time operation.");
+    // EF Core design-time tools intentionally abort the host.
+    // This is not a real runtime crash — suppress it.
+    Log.Debug(ex, "Host aborted during EF Core design-time operation (expected, not an error).");
 }
 catch (Exception ex)
 {
-    Log.Fatal(ex, "PlantProcess IQ API terminated unexpectedly.");
+    Log.Fatal(ex, "PlantProcess IQ API terminated unexpectedly. Version={AppVersion}", appVersion);
 }
 finally
 {
-    Log.Information("PlantProcess IQ API stopped.");
+    Log.Information("PlantProcess IQ API stopped. Version={AppVersion}", appVersion);
     Log.CloseAndFlush();
 }
