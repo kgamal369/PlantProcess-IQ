@@ -77,6 +77,23 @@ public static class MaterialEndpoints
             return material is null ? Results.NotFound() : Results.Ok(material);
         });
 
+        group.MapDelete("/{id:guid}", async (
+            Guid id,
+            SoftDeleteRequest? request,
+            PlantProcessDbContext dbContext,
+            CancellationToken cancellationToken) =>
+        {
+            var material = await dbContext.MaterialUnits.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+            if (material is null)
+                return Results.NotFound(new { message = "MaterialUnit not found." });
+
+            material.SoftDelete(request?.Reason ?? "Soft-deleted via API.");
+            await dbContext.SaveChangesAsync(cancellationToken);
+
+            return Results.Ok(new { material.Id, material.MaterialCode, material.IsDeleted, material.DeletedAtUtc });
+        });
+
         group.MapPost("", async (
             CreateMaterialRequest request,
             PlantProcessDbContext dbContext,
@@ -174,6 +191,8 @@ public static class MaterialEndpoints
                 sourceSystem: request.SourceSystem,
                 sourceRecordId: request.SourceRecordId);
 
+            edge.SetEffectiveWindow(request.EffectiveFromUtc, request.EffectiveToUtc);
+
             dbContext.GenealogyEdges.Add(edge);
             await dbContext.SaveChangesAsync(cancellationToken);
 
@@ -182,7 +201,9 @@ public static class MaterialEndpoints
                 edge.Id,
                 edge.ParentMaterialUnitId,
                 edge.ChildMaterialUnitId,
-                edge.RelationshipType
+                edge.RelationshipType,
+                edge.EffectiveFromUtc,
+                edge.EffectiveToUtc
             });
         });
 
@@ -249,7 +270,11 @@ public static class MaterialEndpoints
         Guid ParentMaterialUnitId,
         Guid ChildMaterialUnitId,
         string RelationshipType,
+        DateTime? EffectiveFromUtc,
+        DateTime? EffectiveToUtc,
         bool IsSynthetic,
         string? SourceSystem,
         string? SourceRecordId);
+
+    public sealed record SoftDeleteRequest(string? Reason);
 }

@@ -4,6 +4,16 @@ namespace PlantProcess.Domain.Entities.Quality;
 
 public class DataQualityIssue : BaseEntity
 {
+    private static readonly HashSet<string> AllowedSeveritiesSet = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Info",
+        "Warning",
+        "Error",
+        "Critical"
+    };
+
+    public static IReadOnlyCollection<string> AllowedSeverities => AllowedSeveritiesSet.ToArray();
+
     public Guid? MaterialUnitId { get; private set; }
 
     public string IssueType { get; private set; } = null!;
@@ -42,11 +52,25 @@ public class DataQualityIssue : BaseEntity
         IssueType = issueType.Trim();
         Description = description.Trim();
         MaterialUnitId = materialUnitId;
-        Severity = string.IsNullOrWhiteSpace(severity) ? "Warning" : severity.Trim();
+        Severity = NormalizeSeverity(severity);
         AffectedEntityName = affectedEntityName?.Trim();
         AffectedEntityId = affectedEntityId;
         IsSynthetic = isSynthetic;
         SourceSystem = sourceSystem?.Trim();
         SourceRecordId = sourceRecordId?.Trim();
+    }
+
+    private static string NormalizeSeverity(string? severity)
+    {
+        if (string.IsNullOrWhiteSpace(severity))
+            return "Warning";
+
+        var trimmed = severity.Trim();
+        if (!AllowedSeveritiesSet.Contains(trimmed))
+            throw new ArgumentException(
+                $"Invalid data-quality severity '{severity}'. Allowed values: {string.Join(", ", AllowedSeveritiesSet.OrderBy(x => x))}.",
+                nameof(severity));
+
+        return AllowedSeveritiesSet.First(x => x.Equals(trimmed, StringComparison.OrdinalIgnoreCase));
     }
 }

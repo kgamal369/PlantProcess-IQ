@@ -41,6 +41,7 @@ public class PlantProcessDbContext : DbContext, IPlantProcessDbContext
     public DbSet<SourceSystemDefinition> SourceSystemDefinitions => Set<SourceSystemDefinition>();
     public DbSet<ImportBatch> ImportBatches => Set<ImportBatch>();
     public DbSet<MappingDefinition> MappingDefinitions => Set<MappingDefinition>();
+    public DbSet<StagingRecord> StagingRecords => Set<StagingRecord>();
 
     // ----------------------------
     // Materials / Genealogy

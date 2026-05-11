@@ -23,15 +23,23 @@ public static class ConfigurationEndpoints
 
         group.MapGet("/industry-templates", GetIndustryTemplatesAsync);
         group.MapPost("/industry-templates", CreateIndustryTemplateAsync);
+        group.MapPatch("/industry-templates/{id:guid}/activate", ActivateIndustryTemplateAsync);
+        group.MapPatch("/industry-templates/{id:guid}/deactivate", DeactivateIndustryTemplateAsync);
 
         group.MapGet("/material-unit-types", GetMaterialUnitTypesAsync);
         group.MapPost("/material-unit-types", CreateMaterialUnitTypeAsync);
+        group.MapPatch("/material-unit-types/{id:guid}/activate", ActivateMaterialUnitTypeAsync);
+        group.MapPatch("/material-unit-types/{id:guid}/deactivate", DeactivateMaterialUnitTypeAsync);
 
         group.MapGet("/operation-definitions", GetOperationDefinitionsAsync);
         group.MapPost("/operation-definitions", CreateOperationDefinitionAsync);
+        group.MapPatch("/operation-definitions/{id:guid}/activate", ActivateOperationDefinitionAsync);
+        group.MapPatch("/operation-definitions/{id:guid}/deactivate", DeactivateOperationDefinitionAsync);
 
         group.MapGet("/routes", GetRoutesAsync);
         group.MapPost("/routes", CreateRouteAsync);
+        group.MapPatch("/routes/{id:guid}/activate", ActivateRouteAsync);
+        group.MapPatch("/routes/{id:guid}/deactivate", DeactivateRouteAsync);
 
         group.MapGet("/route-steps", GetRouteStepsAsync);
         group.MapPost("/route-steps", CreateRouteStepAsync);
@@ -431,6 +439,79 @@ public static class ConfigurationEndpoints
             step.OperationDefinitionId,
             step.SequenceNo
         });
+    }
+
+
+    private static async Task<IResult> ActivateIndustryTemplateAsync(Guid id, PlantProcessDbContext dbContext, CancellationToken cancellationToken)
+    {
+        var entity = await dbContext.IndustryTemplates.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity is null) return Results.NotFound(new { message = "Industry template not found." });
+        entity.Activate();
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return Results.Ok(new { entity.Id, entity.TemplateCode, entity.IsActive });
+    }
+
+    private static async Task<IResult> DeactivateIndustryTemplateAsync(Guid id, PlantProcessDbContext dbContext, CancellationToken cancellationToken)
+    {
+        var entity = await dbContext.IndustryTemplates.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity is null) return Results.NotFound(new { message = "Industry template not found." });
+        entity.Deactivate();
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return Results.Ok(new { entity.Id, entity.TemplateCode, entity.IsActive });
+    }
+
+    private static async Task<IResult> ActivateMaterialUnitTypeAsync(Guid id, PlantProcessDbContext dbContext, CancellationToken cancellationToken)
+    {
+        var entity = await dbContext.MaterialUnitTypeDefinitions.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity is null) return Results.NotFound(new { message = "Material unit type not found." });
+        entity.Activate();
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return Results.Ok(new { entity.Id, entity.MaterialUnitTypeCode, entity.IsActive });
+    }
+
+    private static async Task<IResult> DeactivateMaterialUnitTypeAsync(Guid id, PlantProcessDbContext dbContext, CancellationToken cancellationToken)
+    {
+        var entity = await dbContext.MaterialUnitTypeDefinitions.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity is null) return Results.NotFound(new { message = "Material unit type not found." });
+        entity.Deactivate();
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return Results.Ok(new { entity.Id, entity.MaterialUnitTypeCode, entity.IsActive });
+    }
+
+    private static async Task<IResult> ActivateOperationDefinitionAsync(Guid id, PlantProcessDbContext dbContext, CancellationToken cancellationToken)
+    {
+        var entity = await dbContext.OperationDefinitions.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity is null) return Results.NotFound(new { message = "Operation definition not found." });
+        entity.Activate();
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return Results.Ok(new { entity.Id, entity.OperationCode, entity.IsActive });
+    }
+
+    private static async Task<IResult> DeactivateOperationDefinitionAsync(Guid id, PlantProcessDbContext dbContext, CancellationToken cancellationToken)
+    {
+        var entity = await dbContext.OperationDefinitions.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity is null) return Results.NotFound(new { message = "Operation definition not found." });
+        entity.Deactivate();
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return Results.Ok(new { entity.Id, entity.OperationCode, entity.IsActive });
+    }
+
+    private static async Task<IResult> ActivateRouteAsync(Guid id, PlantProcessDbContext dbContext, CancellationToken cancellationToken)
+    {
+        var entity = await dbContext.Routes.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity is null) return Results.NotFound(new { message = "Route not found." });
+        entity.Activate();
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return Results.Ok(new { entity.Id, entity.RouteCode, entity.IsActive });
+    }
+
+    private static async Task<IResult> DeactivateRouteAsync(Guid id, PlantProcessDbContext dbContext, CancellationToken cancellationToken)
+    {
+        var entity = await dbContext.Routes.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        if (entity is null) return Results.NotFound(new { message = "Route not found." });
+        entity.Deactivate();
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return Results.Ok(new { entity.Id, entity.RouteCode, entity.IsActive });
     }
 
     public sealed record CreateIndustryTemplateRequest(

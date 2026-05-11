@@ -41,6 +41,7 @@ public static class ProcessEndpoints
                     x.Id,
                     x.MaterialUnitId,
                     x.EquipmentId,
+                    x.OperationDefinitionId,
                     x.OperationType,
                     x.OperationCode,
                     x.CrewCode,
@@ -73,6 +74,7 @@ public static class ProcessEndpoints
                     x.Id,
                     x.MaterialUnitId,
                     x.EquipmentId,
+                    x.OperationDefinitionId,
                     x.OperationType,
                     x.OperationCode,
                     x.CrewCode,
@@ -112,6 +114,15 @@ public static class ProcessEndpoints
                     return Results.BadRequest(new { message = "Equipment does not exist." });
             }
 
+            if (request.OperationDefinitionId.HasValue)
+            {
+                var operationExists = await dbContext.OperationDefinitions
+                    .AnyAsync(x => x.Id == request.OperationDefinitionId.Value, cancellationToken);
+
+                if (!operationExists)
+                    return Results.BadRequest(new { message = "OperationDefinition does not exist." });
+            }
+
             var step = new ProcessStepExecution(
                 materialUnitId: request.MaterialUnitId,
                 operationType: request.OperationType,
@@ -120,6 +131,7 @@ public static class ProcessEndpoints
                 isSynthetic: request.IsSynthetic,
                 equipmentId: request.EquipmentId,
                 operationCode: request.OperationCode,
+                operationDefinitionId: request.OperationDefinitionId,
                 crewCode: request.CrewCode,
                 executionStatus: request.ExecutionStatus,
                 sourceSystem: request.SourceSystem,
@@ -135,8 +147,73 @@ public static class ProcessEndpoints
                 step.Id,
                 step.MaterialUnitId,
                 step.OperationType,
+                step.OperationDefinitionId,
                 step.ExecutionStatus
             });
+        });
+
+
+        group.MapPatch("/steps/{id:guid}/complete", async (
+            Guid id,
+            CompleteProcessStepRequest request,
+            PlantProcessDbContext dbContext,
+            CancellationToken cancellationToken) =>
+        {
+            var step = await dbContext.ProcessStepExecutions.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+            if (step is null)
+                return Results.NotFound(new { message = "ProcessStepExecution not found." });
+
+            try
+            {
+                step.Complete(request.EndedAtUtc, request.ExecutionStatus);
+                await dbContext.SaveChangesAsync(cancellationToken);
+                return Results.Ok(new { step.Id, step.MaterialUnitId, step.ExecutionStatus, step.EndedAtUtc, step.EndedAtLocal });
+            }
+            catch (Exception ex) when (ex is InvalidOperationException or ArgumentException)
+            {
+                return Results.BadRequest(new { message = ex.Message });
+            }
+        });
+
+        group.MapPatch("/steps/{id:guid}/abort", async (
+            Guid id,
+            AbortProcessStepRequest request,
+            PlantProcessDbContext dbContext,
+            CancellationToken cancellationToken) =>
+        {
+            var step = await dbContext.ProcessStepExecutions.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+            if (step is null)
+                return Results.NotFound(new { message = "ProcessStepExecution not found." });
+
+            try
+            {
+                step.Abort(request.EndedAtUtc, request.Reason);
+                await dbContext.SaveChangesAsync(cancellationToken);
+                return Results.Ok(new { step.Id, step.MaterialUnitId, step.ExecutionStatus, step.EndedAtUtc, step.EndedAtLocal, request.Reason });
+            }
+            catch (Exception ex) when (ex is InvalidOperationException or ArgumentException)
+            {
+                return Results.BadRequest(new { message = ex.Message });
+            }
+        });
+
+        group.MapDelete("/steps/{id:guid}", async (
+            Guid id,
+            SoftDeleteProcessRequest? request,
+            PlantProcessDbContext dbContext,
+            CancellationToken cancellationToken) =>
+        {
+            var step = await dbContext.ProcessStepExecutions.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+            if (step is null)
+                return Results.NotFound(new { message = "ProcessStepExecution not found." });
+
+            step.SoftDelete(request?.Reason ?? "Soft-deleted via API.");
+            await dbContext.SaveChangesAsync(cancellationToken);
+
+            return Results.Ok(new { step.Id, step.MaterialUnitId, step.IsDeleted, step.DeletedAtUtc });
         });
 
         // ------------------------------------------------------------
@@ -443,7 +520,7 @@ public static class ProcessEndpoints
                 processEvent.EventAtUtc
             });
         });
-        
+
         // ------------------------------------------------------------
         // Downtime Events
         // ------------------------------------------------------------
@@ -587,6 +664,7 @@ public static class ProcessEndpoints
     public sealed record CreateProcessStepExecutionRequest(
         Guid MaterialUnitId,
         Guid? EquipmentId,
+        Guid? OperationDefinitionId,
         string OperationType,
         string? OperationCode,
         string? CrewCode,
@@ -598,6 +676,16 @@ public static class ProcessEndpoints
         string? SourceRecordId,
         string? PlantTimeZoneId,
         int? PlantUtcOffsetMinutes);
+
+    public sealed record CompleteProcessStepRequest(
+        DateTime EndedAtUtc,
+        string? ExecutionStatus);
+
+    public sealed record AbortProcessStepRequest(
+        DateTime EndedAtUtc,
+        string? Reason);
+
+    public sealed record SoftDeleteProcessRequest(string? Reason);
 
     public sealed record CreateParameterDefinitionRequest(
         string ParameterCode,

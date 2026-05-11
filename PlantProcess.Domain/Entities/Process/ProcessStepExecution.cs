@@ -4,6 +4,17 @@ namespace PlantProcess.Domain.Entities.Process;
 
 public class ProcessStepExecution : BaseEntity
 {
+    private static readonly HashSet<string> AllowedStatusesSet = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Pending",
+        "Running",
+        "Completed",
+        "Aborted",
+        "Failed"
+    };
+
+    public static IReadOnlyCollection<string> AllowedStatuses => AllowedStatusesSet.ToArray();
+
     public Guid MaterialUnitId { get; private set; }
 
     public Guid? EquipmentId { get; private set; }
@@ -56,6 +67,9 @@ public class ProcessStepExecution : BaseEntity
         if (string.IsNullOrWhiteSpace(operationType))
             throw new ArgumentException("Operation type is required.", nameof(operationType));
 
+        if (equipmentId.HasValue && equipmentId.Value == Guid.Empty)
+            throw new ArgumentException("Equipment ID cannot be empty.", nameof(equipmentId));
+
         if (operationDefinitionId.HasValue && operationDefinitionId.Value == Guid.Empty)
             throw new ArgumentException("Operation definition ID cannot be empty.", nameof(operationDefinitionId));
 
@@ -72,9 +86,7 @@ public class ProcessStepExecution : BaseEntity
         OperationCode = operationCode?.Trim();
         CrewCode = crewCode?.Trim();
 
-        ExecutionStatus = string.IsNullOrWhiteSpace(executionStatus)
-            ? "Completed"
-            : executionStatus.Trim();
+        ExecutionStatus = NormalizeStatus(executionStatus ?? (EndedAtUtc.HasValue ? "Completed" : "Running"));
 
         IsSynthetic = isSynthetic;
         SourceSystem = sourceSystem?.Trim();
@@ -106,7 +118,7 @@ public class ProcessStepExecution : BaseEntity
         MarkAsUpdated();
     }
 
-    public void Complete(DateTime endedAtUtc)
+    public void Complete(DateTime endedAtUtc, string? executionStatus = null)
     {
         var normalizedEnd = EnsureUtcStrict(endedAtUtc);
 
@@ -114,7 +126,10 @@ public class ProcessStepExecution : BaseEntity
             throw new InvalidOperationException("Process step end time cannot be before start time.");
 
         EndedAtUtc = normalizedEnd;
-        ExecutionStatus = "Completed";
+        ExecutionStatus = NormalizeStatus(executionStatus ?? "Completed");
+
+        if (!ExecutionStatus.Equals("Completed", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("Complete operation can only set status to Completed.");
 
         EndedAtLocal = DateTime.SpecifyKind(
             EndedAtUtc.Value.AddMinutes(PlantUtcOffsetMinutes),
@@ -123,10 +138,45 @@ public class ProcessStepExecution : BaseEntity
         MarkAsUpdated();
     }
 
+    public void Abort(DateTime endedAtUtc, string? reason = null)
+    {
+        var normalizedEnd = EnsureUtcStrict(endedAtUtc);
+
+        if (normalizedEnd < StartedAtUtc)
+            throw new InvalidOperationException("Process step abort time cannot be before start time.");
+
+        EndedAtUtc = normalizedEnd;
+        ExecutionStatus = "Aborted";
+        EndedAtLocal = DateTime.SpecifyKind(
+            EndedAtUtc.Value.AddMinutes(PlantUtcOffsetMinutes),
+            DateTimeKind.Unspecified);
+
+        if (!string.IsNullOrWhiteSpace(reason))
+            SourceRecordId = string.IsNullOrWhiteSpace(SourceRecordId)
+                ? $"AbortReason:{reason.Trim()}"
+                : SourceRecordId;
+
+        MarkAsUpdated();
+    }
+
     public void MarkAsFailed()
     {
         ExecutionStatus = "Failed";
         MarkAsUpdated();
+    }
+
+    private static string NormalizeStatus(string status)
+    {
+        if (string.IsNullOrWhiteSpace(status))
+            return "Running";
+
+        var trimmed = status.Trim();
+        if (!AllowedStatusesSet.Contains(trimmed))
+            throw new ArgumentException(
+                $"Invalid execution status '{status}'. Allowed values: {string.Join(", ", AllowedStatusesSet.OrderBy(x => x))}.",
+                nameof(status));
+
+        return AllowedStatusesSet.First(x => x.Equals(trimmed, StringComparison.OrdinalIgnoreCase));
     }
 
     private static DateTime EnsureUtcStrict(DateTime value)

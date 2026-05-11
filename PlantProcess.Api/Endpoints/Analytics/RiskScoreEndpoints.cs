@@ -120,6 +120,9 @@ public static class RiskScoreEndpoints
             if (!materialExists)
                 return Results.BadRequest(new { message = "MaterialUnit does not exist." });
 
+            if (request.Score < 0 || request.Score > 1)
+                return Results.BadRequest(new { message = "Risk score must be between 0 and 1." });
+
             var riskScore = new RiskScore(
                 materialUnitId: request.MaterialUnitId,
                 riskType: request.RiskType,

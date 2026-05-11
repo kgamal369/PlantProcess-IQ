@@ -27,6 +27,8 @@ public static class DependencyInjection
         services.AddScoped<ISourceSystemService, SourceSystemService>();
         services.AddScoped<IImportBatchService, ImportBatchService>();
         services.AddScoped<IMappingDefinitionService, MappingDefinitionService>();
+        services.AddScoped<IStagingRecordService, StagingRecordService>();
+        services.AddScoped<IMappingExecutionService, MappingExecutionService>();
 
         services.AddScoped<IMaterialService, MaterialService>();
         services.AddScoped<IGenealogyService, GenealogyService>();

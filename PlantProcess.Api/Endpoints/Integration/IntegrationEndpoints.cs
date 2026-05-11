@@ -21,6 +21,8 @@ public static class IntegrationEndpoints
         group.MapGet("/source-systems", GetSourceSystemsAsync);
         group.MapGet("/source-systems/{id:guid}", GetSourceSystemByIdAsync);
         group.MapPost("/source-systems", CreateSourceSystemAsync);
+        group.MapPatch("/source-systems/{id:guid}/activate", ActivateSourceSystemAsync);
+        group.MapPatch("/source-systems/{id:guid}/deactivate", DeactivateSourceSystemAsync);
 
         group.MapGet("/import-batches", GetImportBatchesAsync);
         group.MapGet("/import-batches/{id:guid}", GetImportBatchByIdAsync);
@@ -29,10 +31,15 @@ public static class IntegrationEndpoints
         group.MapPost("/import-batches/{id:guid}/mark-completed", MarkImportBatchCompletedAsync);
         group.MapPost("/import-batches/{id:guid}/mark-failed", MarkImportBatchFailedAsync);
 
+        group.MapGet("/staging-records", GetStagingRecordsAsync);
+        group.MapPost("/staging-records/bulk", CreateStagingRecordsBulkAsync);
+
         group.MapGet("/mapping-definitions", GetMappingDefinitionsAsync);
         group.MapGet("/mapping-definitions/{id:guid}", GetMappingDefinitionByIdAsync);
         group.MapPost("/mapping-definitions", CreateMappingDefinitionAsync);
         group.MapPatch("/mapping-definitions/{id:guid}/mapping-json", UpdateMappingDefinitionJsonAsync);
+        group.MapPost("/mapping-definitions/{id:guid}/preview", PreviewMappingDefinitionAsync);
+        group.MapPost("/mapping-definitions/{id:guid}/execute", ExecuteMappingDefinitionAsync);
 
         return app;
     }
@@ -60,6 +67,7 @@ public static class IntegrationEndpoints
     private static async Task<IResult> GetSourceSystemsAsync(
         string? type,
         bool? readOnlyOnly,
+        bool? activeOnly,
         PlantProcessDbContext dbContext,
         CancellationToken cancellationToken)
     {
@@ -71,6 +79,9 @@ public static class IntegrationEndpoints
         if (readOnlyOnly == true)
             query = query.Where(x => x.IsReadOnlySource);
 
+        if (activeOnly == true)
+            query = query.Where(x => x.IsActive);
+
         var systems = await query
             .OrderBy(x => x.SourceSystemCode)
             .Select(x => new
@@ -81,6 +92,7 @@ public static class IntegrationEndpoints
                 x.SourceSystemType,
                 x.Description,
                 x.IsReadOnlySource,
+                x.IsActive,
                 x.IsSynthetic,
                 x.SourceSystem,
                 x.SourceRecordId
@@ -106,6 +118,7 @@ public static class IntegrationEndpoints
                 x.SourceSystemType,
                 x.Description,
                 x.IsReadOnlySource,
+                x.IsActive,
                 x.IsSynthetic,
                 x.SourceSystem,
                 x.SourceRecordId
@@ -146,6 +159,41 @@ public static class IntegrationEndpoints
             sourceSystem.SourceSystemName,
             sourceSystem.SourceSystemType
         });
+    }
+
+
+    private static async Task<IResult> ActivateSourceSystemAsync(
+        Guid id,
+        PlantProcessDbContext dbContext,
+        CancellationToken cancellationToken)
+    {
+        var source = await dbContext.SourceSystemDefinitions
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+        if (source is null)
+            return Results.NotFound(new { message = "Source system not found." });
+
+        source.Activate();
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return Results.Ok(new { source.Id, source.SourceSystemCode, source.IsActive });
+    }
+
+    private static async Task<IResult> DeactivateSourceSystemAsync(
+        Guid id,
+        PlantProcessDbContext dbContext,
+        CancellationToken cancellationToken)
+    {
+        var source = await dbContext.SourceSystemDefinitions
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+        if (source is null)
+            return Results.NotFound(new { message = "Source system not found." });
+
+        source.Deactivate();
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return Results.Ok(new { source.Id, source.SourceSystemCode, source.IsActive });
     }
 
     // ────────────────────────────────────────────────────────────────────────
@@ -334,6 +382,79 @@ public static class IntegrationEndpoints
         });
     }
 
+
+    // ────────────────────────────────────────────────────────────────────────
+    // Staging Records — raw/import retention layer (Phase C)
+    // ────────────────────────────────────────────────────────────────────────
+
+    private static async Task<IResult> GetStagingRecordsAsync(
+        Guid? importBatchId,
+        bool? isProcessed,
+        string? processingStatus,
+        int? take,
+        PlantProcessDbContext dbContext,
+        CancellationToken cancellationToken)
+    {
+        var query = dbContext.StagingRecords.AsNoTracking();
+
+        if (importBatchId.HasValue)
+            query = query.Where(x => x.ImportBatchId == importBatchId.Value);
+
+        if (isProcessed.HasValue)
+            query = query.Where(x => x.IsProcessed == isProcessed.Value);
+
+        if (!string.IsNullOrWhiteSpace(processingStatus))
+            query = query.Where(x => x.ProcessingStatus == processingStatus);
+
+        var records = await query
+            .OrderBy(x => x.ImportBatchId)
+            .ThenBy(x => x.RowNumber)
+            .Take(take ?? 500)
+            .Select(x => new
+            {
+                x.Id,
+                x.ImportBatchId,
+                x.SourceObjectName,
+                x.RowNumber,
+                x.RawJson,
+                x.IsProcessed,
+                x.ProcessingStatus,
+                x.ProcessedAtUtc,
+                x.ProcessingError,
+                x.CanonicalEntityId,
+                x.CanonicalEntityName,
+                x.SourceSystem,
+                x.SourceRecordId,
+                x.IsSynthetic
+            })
+            .ToListAsync(cancellationToken);
+
+        return Results.Ok(records);
+    }
+
+    private static async Task<IResult> CreateStagingRecordsBulkAsync(
+        BulkCreateStagingRecordsRequest request,
+        IStagingRecordService service,
+        HttpContext httpContext,
+        CancellationToken cancellationToken)
+    {
+        var command = new BulkCreateStagingRecordsCommand(
+            ImportBatchId: request.ImportBatchId,
+            SourceObjectName: request.SourceObjectName,
+            Rows: request.Rows.Select(x => new CreateStagingRecordRow(x.RowNumber, x.RawJson, x.SourceRecordId)).ToList(),
+            Metadata: new CommandMetadata(
+                IsSynthetic: request.IsSynthetic,
+                SourceSystem: request.SourceSystem,
+                SourceRecordId: request.SourceRecordId,
+                CorrelationId: httpContext.Items["CorrelationId"]?.ToString()));
+
+        var result = await service.CreateBulkAsync(command, cancellationToken);
+
+        return result.ToHttpResult(value => Results.Created(
+            $"/integration/staging-records?importBatchId={value.ImportBatchId}",
+            value));
+    }
+
     // ────────────────────────────────────────────────────────────────────────
     // Mapping Definitions — routed through IMappingDefinitionService (T-06)
     // ────────────────────────────────────────────────────────────────────────
@@ -472,9 +593,57 @@ public static class IntegrationEndpoints
         }));
     }
 
+
+    private static async Task<IResult> PreviewMappingDefinitionAsync(
+        Guid id,
+        Guid importBatchId,
+        int? take,
+        IMappingExecutionService service,
+        CancellationToken cancellationToken)
+    {
+        var result = await service.PreviewAsync(
+            id,
+            importBatchId,
+            take ?? 100,
+            cancellationToken);
+
+        return result.ToHttpResult(value => Results.Ok(value));
+    }
+
+    private static async Task<IResult> ExecuteMappingDefinitionAsync(
+        Guid id,
+        Guid importBatchId,
+        int? take,
+        bool? stopOnFirstError,
+        IMappingExecutionService service,
+        CancellationToken cancellationToken)
+    {
+        var result = await service.ExecuteAsync(
+            id,
+            importBatchId,
+            take ?? 500,
+            stopOnFirstError ?? false,
+            cancellationToken);
+
+        return result.ToHttpResult(value => Results.Ok(value));
+    }
+
     // ────────────────────────────────────────────────────────────────────────
     // Request records
     // ────────────────────────────────────────────────────────────────────────
+
+    public sealed record BulkCreateStagingRecordsRequest(
+        Guid ImportBatchId,
+        string SourceObjectName,
+        IReadOnlyCollection<BulkCreateStagingRecordRowRequest> Rows,
+        bool IsSynthetic,
+        string? SourceSystem,
+        string? SourceRecordId);
+
+    public sealed record BulkCreateStagingRecordRowRequest(
+        int RowNumber,
+        string RawJson,
+        string? SourceRecordId);
 
     public sealed record CreateSourceSystemRequest(
         string SourceSystemCode,

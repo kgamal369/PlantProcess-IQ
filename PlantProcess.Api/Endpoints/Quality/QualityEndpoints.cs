@@ -228,8 +228,28 @@ public static class QualityEndpoints
             });
         });
 
+
+        group.MapDelete("/events/{id:guid}", async (
+            Guid id,
+            SoftDeleteQualityEventRequest? request,
+            PlantProcessDbContext dbContext,
+            CancellationToken cancellationToken) =>
+        {
+            var qualityEvent = await dbContext.QualityEvents.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+            if (qualityEvent is null)
+                return Results.NotFound(new { message = "QualityEvent not found." });
+
+            qualityEvent.SoftDelete(request?.Reason ?? "Soft-deleted via API.");
+            await dbContext.SaveChangesAsync(cancellationToken);
+
+            return Results.Ok(new { qualityEvent.Id, qualityEvent.MaterialUnitId, qualityEvent.IsDeleted, qualityEvent.DeletedAtUtc });
+        });
+
         return app;
     }
+
+    public sealed record SoftDeleteQualityEventRequest(string? Reason);
 
     public sealed record CreateDefectCatalogRequest(
         string DefectCode,

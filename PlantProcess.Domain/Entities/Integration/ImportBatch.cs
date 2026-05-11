@@ -70,13 +70,18 @@ public class ImportBatch : BaseEntity
     public void MarkRunning()
     {
         Status = "Running";
+        ErrorMessage = null;
         MarkAsUpdated();
     }
 
     public void MarkCompleted(int rowCount)
     {
+        if (rowCount < 0)
+            throw new ArgumentOutOfRangeException(nameof(rowCount), "Row count cannot be negative.");
+
         Status = "Completed";
         RowCount = rowCount;
+        ErrorMessage = null;
         CompletedAtUtc = DateTime.UtcNow;
         MarkAsUpdated();
     }
