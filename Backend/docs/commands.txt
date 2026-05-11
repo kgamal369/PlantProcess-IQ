@@ -23,6 +23,14 @@ dotnet ef migrations list `
 dotnet run --project PlantProcess.Api
 dotnet run --project .\PlantProcess.Api\PlantProcess.Api.csproj
 
+cd C:\Workspace\PlantProcess-IQ\Backend
+dotnet run --project .\PlantProcess.Api
+
+
+cd C:\Workspace\PlantProcess-IQ\Frontend\PlantProcess.Web
+npm run dev
+
+
 
 3rd Sprint 
 Sprint 3  

@@ -72,6 +72,18 @@ try
     builder.Services.AddApplication();
     builder.Services.AddInfrastructure(builder.Configuration);
 
+
+    builder.Services.AddCors(options =>
+    {
+        options.AddPolicy("PlantProcessFrontend", policy =>
+        {
+            policy
+                .WithOrigins("http://localhost:5173")
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+        });
+    });
+
     // ── Swagger ───────────────────────────────────────────────────────────
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSwaggerGen(options =>
@@ -92,7 +104,9 @@ try
     });
 
     var app = builder.Build();
+    app.UseCors("PlantProcessFrontend");
 
+    
     // ── Middleware pipeline (ORDER MATTERS) ───────────────────────────────
     // 1. Correlation ID first — all subsequent middleware and endpoints get CorrelationId in scope.
     app.UseMiddleware<CorrelationIdMiddleware>();
