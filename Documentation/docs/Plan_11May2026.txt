@@ -1,0 +1,674 @@
+Karim, based on everything you mentioned, the new plan should be treated as PlantProcess IQ Master Plan v3 — QlikSense-Style Manufacturing Intelligence Platform.
+
+Your product direction is now clear:
+
+PlantProcess IQ is not only a dashboard.
+It is a full manufacturing intelligence platform:
+multi-source ingestion → raw/staging → mapping → canonical model → analytics/risk → interactive React dashboard.
+
+This still matches the original master vision: PlantProcess IQ must stay a generic manufacturing quality-intelligence platform, not steel-only, not MES/L2/SCADA replacement, and not BI-only. It should read existing plant systems, normalize fragmented data, build genealogy, detect data-quality issues, find process-to-defect correlations, predict risk, and show evidence through dashboard/reporting layers. 
+
+Your current codebase already has a strong base: SourceSystemDefinition, ImportBatch, MappingDefinition, StagingRecord, analytics endpoints, dashboard endpoints, risk score endpoints, data-quality endpoints, frontend pages, and API client structure. The latest full-stack snapshot shows 223 included files, with 204 backend files, 19 frontend files, and around 44k lines. 
+
+
+---
+
+Priority Level Meaning
+
+Level	Meaning
+
+CRITICAL	Must be done before continuing serious product development or publish/demo preparation.
+HIGH IMPORTANT	Needed for a strong demo, pilot readiness, and QlikSense-like behavior.
+IMPORTANT	Needed for professional quality, maintainability, and future customer confidence.
+NORMAL	Useful polish, UX, performance, or developer productivity.
+OPTIONAL	Later-stage enterprise or advanced feature. Do not block MVP.
+
+
+
+---
+
+Target Architecture
+
+Oracle / MSSQL / PostgreSQL / Excel / API / CSV
+        ↓
+Connector Layer
+        ↓
+Raw / Landing / Staging Layer
+        ↓
+Source Dataset + Source Field Schema Layer
+        ↓
+Mapping & Transformation Engine
+        ↓
+Canonical PlantProcess IQ Schema
+        ↓
+Data Quality + Genealogy + Feature Engineering
+        ↓
+Correlation + Risk Scoring + ML
+        ↓
+Dashboard API / Analytics API
+        ↓
+Super Interactive React Dashboard
+
+This is the correct direction because your requirement is not “show data only.” You want QlikSense-like source loading and dashboard interaction, but with a stronger manufacturing intelligence backend.
+
+
+---
+
+Phase 0 — Scope Guard and Architecture Freeze
+
+Purpose: prevent the product from becoming messy, steel-only, BI-only, or hardcoded.
+
+Task ID	Level	Task	Expected Output
+
+T-30	CRITICAL	Freeze the new architecture direction	One accepted architecture: connectors → staging → mapping → canonical → analytics → React dashboard
+T-31	CRITICAL	Confirm product boundaries	Written rule: not MES replacement, not L2 replacement, not SCADA replacement, not Qlik-only
+T-32	CRITICAL	Keep all steel terms as configuration/demo metadata	No hardcoded Heat, Slab, Coil, Caster, HSM logic in core
+T-33	CRITICAL	Create docs/current-product-scope.md	One developer-facing scope guard document
+T-34	HIGH IMPORTANT	Define demo route and generic route side by side	Flat steel demo + generic manufacturing explanation
+T-35	IMPORTANT	Add architecture diagram in docs	Simple source-to-dashboard flow diagram
+
+
+Definition of Done
+
+Any future developer can understand:
+1. What PlantProcess IQ is.
+2. What it is not.
+3. Why data goes first to staging.
+4. Why dashboard must not query source systems directly.
+5. Why steel is demo metadata, not core architecture.
+
+
+---
+
+Phase 1 — Publish-Ready Configuration and Ports
+
+Purpose: remove static/hardcoded local settings before the project grows.
+
+Task ID	Level	Task	Expected Output
+
+T-36	CRITICAL	Make backend port configurable	ASPNETCORE_URLS controls API port
+T-37	CRITICAL	Make frontend port configurable	Vite port comes from .env / command
+T-38	CRITICAL	Make PostgreSQL DB port configurable	Docker/local DB port comes from .env
+T-39	CRITICAL	Remove hardcoded CORS frontend URL	CORS reads from PlantProcess:AllowedOrigins
+T-40	CRITICAL	Remove hardcoded frontend fallback API URL	VITE_API_BASE_URL required or centrally handled
+T-41	CRITICAL	Add .env.example for full stack	API, WEB, DB, connection string, CORS
+T-42	HIGH IMPORTANT	Update Docker Compose to use variables	API_PORT, WEB_PORT, DB_PORT, POSTGRES_*
+T-43	HIGH IMPORTANT	Add startup validation for missing config	Clear error if API URL / DB connection missing
+T-44	IMPORTANT	Add environment documentation	Local, Docker, Production, Pilot setup
+
+
+Acceptance Criteria
+
+You can run the same solution with:
+API_PORT=5063 or 8080
+WEB_PORT=5173 or 3000
+DB_PORT=5432 or 55432
+without changing code.
+
+This phase is first because publishing with fixed local ports will create pain later. Tiny config gremlins love production. Nasty little creatures.
+
+
+---
+
+Phase 2 — Source System and Connection Profile Layer
+
+Purpose: support your real requirement: furnace Oracle, caster Excel, HSM MSSQL, inspection PostgreSQL, quality department another DB/API.
+
+Task ID	Level	Task	Expected Output
+
+T-45	CRITICAL	Create ConnectionProfile entity	Metadata for Oracle/MSSQL/Postgres/Excel/API connection
+T-46	CRITICAL	Link ConnectionProfile to SourceSystemDefinition	One source system can have one/many profiles
+T-47	CRITICAL	Add provider type enum/string	Oracle, SqlServer, PostgreSql, Excel, Csv, RestApi
+T-48	CRITICAL	Add host/port/database/schema/user fields	DB source profile support
+T-49	CRITICAL	Add SecretReference, not plain password	Password stored via env/secret reference
+T-50	HIGH IMPORTANT	Add file profile fields	Upload path, sheet name, delimiter, header row
+T-51	HIGH IMPORTANT	Add API profile fields	Base URL, auth type, endpoint path, method
+T-52	HIGH IMPORTANT	Add activate/deactivate endpoints	Enable/disable source profiles safely
+T-53	IMPORTANT	Add test connection endpoint	API returns connection success/failure
+T-54	IMPORTANT	Add profile validation rules	Missing host, invalid port, missing source system, etc.
+
+
+Proposed Entity
+
+ConnectionProfile
+- Id
+- SourceSystemDefinitionId
+- ProviderType
+- ConnectionMode
+- Host
+- Port
+- DatabaseName
+- SchemaName
+- Username
+- SecretReference
+- FilePath
+- SheetName
+- ApiBaseUrl
+- ApiAuthType
+- IsActive
+- IsReadOnly
+- CreatedAtUtc
+- UpdatedAtUtc
+
+Important Rule
+
+Never store real source passwords directly in database.
+Store SecretReference only.
+
+
+---
+
+Phase 3 — Source Dataset and Source Schema Discovery Layer
+
+Purpose: before mapping, the system must understand each source schema.
+
+Your previous plan already identified the missing professional layer: SourceDatasetDefinition and SourceFieldDefinition. 
+
+Task ID	Level	Task	Expected Output
+
+T-55	CRITICAL	Create SourceDatasetDefinition entity	Represents table/view/Excel sheet/API endpoint
+T-56	CRITICAL	Create SourceFieldDefinition entity	Represents source columns/fields
+T-57	CRITICAL	Link dataset to source system/profile	Dataset belongs to one source
+T-58	CRITICAL	Add dataset type	Table, View, ExcelSheet, CsvFile, ApiEndpoint
+T-59	HIGH IMPORTANT	Add schema discovery API	Read source columns and save metadata
+T-60	HIGH IMPORTANT	Add sample rows preview API	Preview first 50/100 rows before import
+T-61	HIGH IMPORTANT	Add source field profiling	Data type, nullable, sample value, distinct count later
+T-62	IMPORTANT	Add refresh mode	Manual, scheduled, incremental
+T-63	IMPORTANT	Add source object versioning	Track schema changes over time
+T-64	NORMAL	Add UI page for source datasets	Admin can see available tables/sheets/endpoints
+
+
+Proposed Entities
+
+SourceDatasetDefinition
+- Id
+- SourceSystemDefinitionId
+- ConnectionProfileId
+- DatasetCode
+- DatasetName
+- SourceObjectName
+- SourceObjectType
+- RefreshMode
+- IncrementalFieldName
+- IsActive
+
+SourceFieldDefinition
+- Id
+- SourceDatasetDefinitionId
+- FieldName
+- DisplayName
+- SourceDataType
+- CanonicalSuggestedType
+- IsNullable
+- SourceOrdinal
+- SampleValue
+
+
+---
+
+Phase 4 — Connector Framework
+
+Purpose: make backend able to read many data sources using one common abstraction.
+
+Task ID	Level	Task	Expected Output
+
+T-65	CRITICAL	Create connector abstractions	IDataSourceConnector, ISchemaReader, IDataSourceReader
+T-66	CRITICAL	Create connector factory	Select connector by provider type
+T-67	CRITICAL	Create connector result model	Standard success/error/row count/output
+T-68	CRITICAL	Add connection test contract	Every connector can test connection
+T-69	HIGH IMPORTANT	Excel connector MVP	Read sheets/columns/rows
+T-70	HIGH IMPORTANT	CSV connector MVP	Read delimiter files into staging
+T-71	HIGH IMPORTANT	PostgreSQL connector MVP	Read external Postgres table/view
+T-72	HIGH IMPORTANT	MSSQL connector MVP	Read external SQL Server table/view
+T-73	HIGH IMPORTANT	Oracle connector MVP	Read external Oracle table/view
+T-74	IMPORTANT	REST API connector MVP	Read JSON API into staging
+T-75	IMPORTANT	Add row limit and timeout protection	Prevent bad source query from killing app
+T-76	IMPORTANT	Add read-only enforcement	No insert/update/delete to source systems
+T-77	NORMAL	Add connector diagnostics logs	Duration, rows read, source object, correlation ID
+T-78	OPTIONAL	Add MySQL connector	Later customer support
+T-79	OPTIONAL	Add OPC/historian connector	Later, only with approved secure method
+
+
+Folder Structure
+
+PlantProcess.Infrastructure
+  Connectors
+    Abstractions
+      IDataSourceConnector.cs
+      IDataSourceSchemaReader.cs
+      IDataSourceRowReader.cs
+      DataSourceConnectorFactory.cs
+    Excel
+      ExcelConnector.cs
+    Csv
+      CsvConnector.cs
+    PostgreSql
+      PostgreSqlConnector.cs
+    SqlServer
+      SqlServerConnector.cs
+    Oracle
+      OracleConnector.cs
+    RestApi
+      RestApiConnector.cs
+
+Important Rule
+
+Dashboard must never query Oracle/MSSQL/Excel directly.
+Connector reads source → staging → mapping → canonical → dashboard.
+
+
+---
+
+Phase 5 — Raw Landing and Staging Upgrade
+
+Purpose: store source data exactly as received before transformation.
+
+The master architecture requires separation between raw/staging, canonical, analytics, and decision layers for auditability and replayability. 
+
+Task ID	Level	Task	Expected Output
+
+T-80	CRITICAL	Extend StagingRecord with dataset/profile link	Raw row knows source dataset
+T-81	CRITICAL	Store raw row JSON	Preserve source fidelity
+T-82	CRITICAL	Add row hash/checksum	Detect duplicate or changed rows
+T-83	CRITICAL	Add import batch status lifecycle	Created, Running, Completed, Failed, PartiallyMapped
+T-84	HIGH IMPORTANT	Add bulk staging insert	Large source data can be loaded efficiently
+T-85	HIGH IMPORTANT	Add failed row handling	Bad rows stay traceable
+T-86	HIGH IMPORTANT	Add import preview endpoint	Preview raw rows before mapping
+T-87	IMPORTANT	Add staging cleanup/archive policy	Prevent endless growth
+T-88	IMPORTANT	Add staging replay support	Re-run mapping with new mapping version
+T-89	NORMAL	Add staging records UI	Search/filter imported rows
+T-90	OPTIONAL	Add object storage for raw files	MinIO/S3 later
+
+
+Acceptance Criteria
+
+For any imported row, you can answer:
+1. Which source system?
+2. Which dataset/table/sheet/API?
+3. Which import batch?
+4. What was the original raw value?
+5. Was it mapped successfully?
+6. If failed, why?
+
+
+---
+
+Phase 6 — Mapping Workbench and Transformation Engine
+
+Purpose: convert every external source schema into the canonical PlantProcess IQ model.
+
+Task ID	Level	Task	Expected Output
+
+T-91	CRITICAL	Upgrade MappingDefinition to support field-level mapping	Source fields → canonical fields
+T-92	CRITICAL	Add mapping target types	MaterialUnit, Alias, GenealogyEdge, ProcessStep, ParameterObservation, QualityEvent
+T-93	CRITICAL	Add mapping preview	Show what canonical object will be created
+T-94	CRITICAL	Add mapping validation	Required fields, type conversion, missing values
+T-95	HIGH IMPORTANT	Add transformation rules	Trim, parse decimal, parse datetime, map code values
+T-96	HIGH IMPORTANT	Add lookup mapping	Source defect code → DefectCatalog
+T-97	HIGH IMPORTANT	Add unit normalization	mm, m, °C, kg, min, sec
+T-98	HIGH IMPORTANT	Add mapping versioning	Reproducible imports
+T-99	IMPORTANT	Add mapping workbench API	Backend endpoints for UI
+T-100	IMPORTANT	Add React mapping workbench	User selects source fields and canonical target
+T-101	NORMAL	Add mapping templates	Steel route, aluminum route, pharma batch
+T-102	OPTIONAL	Add AI-assisted mapping suggestion	Suggest fields based on names/sample values
+
+
+Example Mapping
+
+Oracle Furnace TEMP_ACT
+→ ParameterObservation.NumericValue
+
+Excel Caster CastSpeed
+→ ParameterObservation.NumericValue
+
+MSSQL HSM RollingForce
+→ ParameterObservation.NumericValue
+
+PostgreSQL Inspection defect_code
+→ QualityEvent.DefectCatalogId
+
+
+---
+
+Phase 7 — Canonical Model Completion
+
+Purpose: make the canonical model ready for multi-source manufacturing data.
+
+Task ID	Level	Task	Expected Output
+
+T-103	CRITICAL	Validate existing canonical entities	Confirm no steel-hardcoding
+T-104	CRITICAL	Add/complete SourceDatasetDefinition relations	Canonical records can trace back to source dataset
+T-105	CRITICAL	Add source lineage fields consistently	SourceSystem, SourceRecordId, ImportBatchId
+T-106	HIGH IMPORTANT	Add QualityDecision entity	Accept, reject, downgrade, hold, rework
+T-107	HIGH IMPORTANT	Add InspectionResult entity	Inspection-specific measurements/results
+T-108	HIGH IMPORTANT	Add Sample and SampleResult entities	Lab/chemistry/mechanical results
+T-109	IMPORTANT	Add ParameterWindow entity	Expected process windows by route/product/equipment
+T-110	IMPORTANT	Add AggregatedFeature entity	Feature engineering output table
+T-111	NORMAL	Add ShiftDefinition / CrewDefinition	Better shift/crew analytics
+T-112	OPTIONAL	Add tenant/company model	Multi-customer support later
+
+
+Do not add every entity at once unless needed. The next highest value entities are:
+
+1. SourceDatasetDefinition
+2. SourceFieldDefinition
+3. ConnectionProfile
+4. QualityDecision
+5. InspectionResult
+6. Sample/SampleResult
+7. ParameterWindow
+8. AggregatedFeature
+
+
+---
+
+Phase 8 — QlikSense-Style Interactive React Dashboard
+
+Purpose: build a dashboard where the user can filter, select, drill down, and explore.
+
+Your current React frontend is a good skeleton, but it is still closer to static pages. The latest source shows dashboard, data quality, material investigation, risk dashboard, and correlation pages. 
+
+Task ID	Level	Task	Expected Output
+
+T-113	CRITICAL	Create global dashboard filter model	One filter object shared by dashboard pages
+T-114	CRITICAL	Create backend dashboard query DTO	Site, area, equipment, material, source, defect, risk, time
+T-115	CRITICAL	Change dashboard APIs to accept filters	Backend aggregates based on selected filters
+T-116	CRITICAL	Create React DashboardFilterContext	All charts share same selected filters
+T-117	HIGH IMPORTANT	Add cross-filter interaction	Click chart item → update filters
+T-118	HIGH IMPORTANT	Add filter chips / selected filter bar	User sees active selections like Qlik
+T-119	HIGH IMPORTANT	Add reset/clear filters	Reset dashboard state
+T-120	HIGH IMPORTANT	Add date/shift filter	From/to, day, week, shift
+T-121	HIGH IMPORTANT	Add source-system filter	Oracle furnace, Excel caster, MSSQL HSM, etc.
+T-122	HIGH IMPORTANT	Add material search and drilldown	Search material → genealogy/risk/process history
+T-123	HIGH IMPORTANT	Add defect/risk filter	Defect type, risk class, threshold
+T-124	IMPORTANT	Add chart components	Trend, bar, heatmap, scatter, matrix
+T-125	IMPORTANT	Add data tables with sorting/filtering	Use AG Grid or TanStack Table
+T-126	IMPORTANT	Add dashboard URL state	Filters survive refresh/share
+T-127	NORMAL	Add export CSV/Excel	Export dashboard result
+T-128	NORMAL	Add dashboard layout persistence	Save dashboard layout
+T-129	OPTIONAL	Add embedded Qlik/Power BI option	Hybrid customer deployment
+
+
+Frontend Rule
+
+React does not load huge raw data.
+React sends filters.
+Backend returns aggregated dashboard-ready data.
+
+
+---
+
+Phase 9 — Dashboard Performance Layer
+
+Purpose: make huge data dashboard fast.
+
+Task ID	Level	Task	Expected Output
+
+T-130	CRITICAL	Prevent raw table dashboard queries	Dashboard uses aggregate queries only
+T-131	HIGH IMPORTANT	Create dashboard read models	Optimized query DTOs
+T-132	HIGH IMPORTANT	Add database indexes for dashboard filters	Site/time/equipment/defect/risk/material/source
+T-133	HIGH IMPORTANT	Add materialized views for heavy metrics	Faster KPI and trend loading
+T-134	IMPORTANT	Add pagination everywhere	No unlimited endpoints
+T-135	IMPORTANT	Add query timeout policy	Prevent runaway queries
+T-136	IMPORTANT	Add caching for stable reference data	Sites, areas, equipment, definitions
+T-137	NORMAL	Add API response compression	Improve frontend performance
+T-138	OPTIONAL	Add OLAP/ClickHouse/DuckDB analytics store	Later if PostgreSQL is not enough
+
+
+
+---
+
+Phase 10 — Genealogy-Aware Correlation Engine
+
+Purpose: make correlation truly valuable for process-to-quality analysis.
+
+Current correlation MVP is useful, but the next professional step is genealogy-aware correlation: upstream process parameters must link to downstream quality defects.
+
+Task ID	Level	Task	Expected Output
+
+T-139	CRITICAL	Add genealogy traversal to correlation query	Parent/child materials included
+T-140	CRITICAL	Add link mode	SameMaterial, UpstreamParents, DownstreamChildren, FullGenealogy
+T-141	CRITICAL	Add genealogy depth parameter	0, 1, 2, 3, All
+T-142	HIGH IMPORTANT	Correlate upstream parameters to downstream defects	Example: caster speed → HSM coil defect
+T-143	HIGH IMPORTANT	Add defect-rate-by-parameter-bin table	Range, material count, defect count, defect rate, lift
+T-144	HIGH IMPORTANT	Add statistical confidence fields	Minimum sample, baseline rate, lift
+T-145	IMPORTANT	Persist correlation run metadata	Query, filters, source, created time
+T-146	IMPORTANT	Add correlation result chart/table UI	No raw JSON only
+T-147	NORMAL	Add comparison mode	Compare equipment/shift/route
+T-148	OPTIONAL	Add advanced statistics	Spearman, chi-square, mutual information
+
+
+Demo Scenario
+
+Caster CastingSpeed / Superheat / Powder
+        ↓ genealogy
+Slab / Coil
+        ↓
+SurfaceCrack / Inclusion / Flatness issue
+
+This is the heart of PlantProcess IQ. Without genealogy-aware correlation, the product is “analytics.” With it, the product becomes “process-to-quality intelligence.”
+
+
+---
+
+Phase 11 — Feature Engineering Layer
+
+Purpose: prepare data for risk scoring and ML.
+
+Task ID	Level	Task	Expected Output
+
+T-149	CRITICAL	Define feature vector contract	One material/batch → one feature vector
+T-150	CRITICAL	Add feature calculation by material	Avg, max, min, std dev, duration, count
+T-151	HIGH IMPORTANT	Add route-aware features	Per process step: furnace, caster, rolling, inspection
+T-152	HIGH IMPORTANT	Add time-window features	Before defect, during process, after event
+T-153	HIGH IMPORTANT	Add equipment exposure features	Which equipment touched material
+T-154	IMPORTANT	Add quality label builder	Defect/no defect, reject/no reject, downgrade
+T-155	IMPORTANT	Store features in AggregatedFeature	Reusable for dashboard/ML
+T-156	NORMAL	Add feature explanation metadata	Human-readable names
+T-157	OPTIONAL	Add feature store versioning	ML governance later
+
+
+
+---
+
+Phase 12 — Risk Scoring and Prediction
+
+Purpose: move from rule-based risk scoring to explainable prediction.
+
+The master plan originally defines Sprint 6 as prediction model, with risk scoring and feature importance as the demo output. 
+
+Task ID	Level	Task	Expected Output
+
+T-158	CRITICAL	Keep current rule-based risk scoring stable	Transparent baseline
+T-159	HIGH IMPORTANT	Add model registry maturity	Active model, version, metrics, artifact URI
+T-160	HIGH IMPORTANT	Add Python training script	Train baseline model on synthetic features
+T-161	HIGH IMPORTANT	Add model evaluation metrics	AUC, precision, recall, confusion matrix
+T-162	HIGH IMPORTANT	Add feature importance output	Top contributors
+T-163	IMPORTANT	Add ML prediction API	Predict risk for one material/batch
+T-164	IMPORTANT	Add batch prediction job	Score all active/historical materials
+T-165	IMPORTANT	Store prediction explanation JSON	Contributors, confidence, model version
+T-166	NORMAL	Add model comparison page	Compare model versions
+T-167	OPTIONAL	Add SHAP explanations	Advanced explainability later
+T-168	OPTIONAL	Add ONNX serving	Enterprise model portability
+
+
+Important wording
+
+Before real customer validation:
+Use “risk indicator” and “suspected contributor.”
+Do not claim guaranteed root cause.
+
+
+---
+
+Phase 13 — Data Quality and Data Readiness Productization
+
+Purpose: turn your data-quality checks into a customer-facing assessment product.
+
+Task ID	Level	Task	Expected Output
+
+T-169	CRITICAL	Expand data-quality scan rules	Missing IDs, duplicates, invalid timestamps, broken genealogy
+T-170	CRITICAL	Add source-readiness scoring	Score per source/dataset
+T-171	HIGH IMPORTANT	Add genealogy feasibility score	Can source data trace material journey?
+T-172	HIGH IMPORTANT	Add mapping completeness score	Required canonical fields mapped
+T-173	HIGH IMPORTANT	Add dashboard readiness score	Enough data for dashboard?
+T-174	IMPORTANT	Add correlation readiness score	Enough samples/labels?
+T-175	IMPORTANT	Add prediction readiness score	Enough features/labels?
+T-176	IMPORTANT	Add data-readiness report endpoint	JSON + PDF later
+T-177	NORMAL	Add UI readiness page	Green/yellow/red per source
+T-178	OPTIONAL	Add auto-suggest pilot scope	Recommend best defect/source route
+
+
+This becomes commercially important because the customer proposal already defines Data Readiness Assessment as the first practical customer offer. 
+
+
+---
+
+Phase 14 — Import Monitoring and Operations UI
+
+Purpose: make the product usable by manufacturing IT / MES / quality engineers.
+
+Task ID	Level	Task	Expected Output
+
+T-179	HIGH IMPORTANT	Add source system management UI	List/register/edit/deactivate sources
+T-180	HIGH IMPORTANT	Add connection profile UI	DB/API/file profile management
+T-181	HIGH IMPORTANT	Add dataset discovery UI	Show tables/sheets/API endpoints
+T-182	HIGH IMPORTANT	Add import batch monitor	Created/running/completed/failed
+T-183	IMPORTANT	Add mapping status UI	Pending, mapped, failed rows
+T-184	IMPORTANT	Add failed rows viewer	See error and raw JSON
+T-185	IMPORTANT	Add rerun import/mapping action	Replay failed import
+T-186	NORMAL	Add import timeline	Operational visualization
+T-187	OPTIONAL	Add email/Teams notification	Later enterprise operations
+
+
+
+---
+
+Phase 15 — Reporting and Investigation Pack
+
+Purpose: make PlantProcess IQ valuable outside the dashboard.
+
+Task ID	Level	Task	Expected Output
+
+T-188	HIGH IMPORTANT	Upgrade material investigation report	Include genealogy, process, defects, risk, contributors
+T-189	HIGH IMPORTANT	Add PDF export with charts	Customer-friendly investigation document
+T-190	IMPORTANT	Add report templates	Data readiness, correlation, risk investigation
+T-191	IMPORTANT	Add report history	Store generated report metadata
+T-192	IMPORTANT	Add “recommended next actions” section	Investigation suggestions
+T-193	NORMAL	Add Excel export	Engineers love Excel, sadly but truly
+T-194	OPTIONAL	Add AI assistant narrative	Natural-language explanation later
+
+
+
+---
+
+Phase 16 — Security, Audit, and Deployment
+
+Purpose: prepare for real customer/pilot use.
+
+Task ID	Level	Task	Expected Output
+
+T-195	CRITICAL	Add authentication foundation	Login/auth ready
+T-196	CRITICAL	Add RBAC	Admin, Engineer, Viewer, Data Manager
+T-197	CRITICAL	Protect config/source endpoints	Only admin/data manager
+T-198	CRITICAL	Add audit log	Who changed mapping/source/config
+T-199	HIGH IMPORTANT	Add secret management strategy	Env vars / Docker secrets / Key Vault later
+T-200	HIGH IMPORTANT	Add production Docker Compose	API + Web + DB + Worker
+T-201	HIGH IMPORTANT	Add backup/restore documentation	DB and uploaded files
+T-202	IMPORTANT	Add HTTPS/reverse proxy setup	Nginx/Caddy
+T-203	IMPORTANT	Add deployment profiles	Local, demo, pilot
+T-204	NORMAL	Add health checks per component	API, DB, worker, source connections
+T-205	OPTIONAL	Add tenant isolation	Multi-customer SaaS/on-prem later
+
+
+
+---
+
+Phase 17 — Testing and Quality Gate
+
+Purpose: stop regressions as the project grows.
+
+Task ID	Level	Task	Expected Output
+
+T-206	CRITICAL	Add backend unit test project	Domain/service tests
+T-207	CRITICAL	Add integration test project	API + PostgreSQL test DB
+T-208	HIGH IMPORTANT	Add mapping engine tests	Source row → canonical object
+T-209	HIGH IMPORTANT	Add connector tests with sample files	Excel/CSV/Postgres
+T-210	HIGH IMPORTANT	Add data-quality tests	Known bad data → expected issues
+T-211	HIGH IMPORTANT	Add correlation tests	Known hidden pattern → detected correlation
+T-212	IMPORTANT	Add frontend component tests	Dashboard filters, tables
+T-213	IMPORTANT	Add smoke test script	Build, migrate, seed, run basic endpoints
+T-214	NORMAL	Add GitHub Actions/Azure pipeline	CI build/test
+T-215	OPTIONAL	Add E2E Playwright tests	Full UI flow later
+
+
+
+---
+
+Phase 18 — Demo and Customer Pilot Readiness
+
+Purpose: transform code into something sellable.
+
+Task ID	Level	Task	Expected Output
+
+T-216	HIGH IMPORTANT	Prepare demo script	10-minute flow
+T-217	HIGH IMPORTANT	Prepare sample customer story	“Caster parameter caused higher surface defect risk”
+T-218	HIGH IMPORTANT	Prepare data readiness demo	Show sources, schema, mapping, readiness
+T-219	HIGH IMPORTANT	Prepare correlation diagnostic demo	Show filters + top contributors
+T-220	HIGH IMPORTANT	Prepare risk dashboard demo	High-risk material drilldown
+T-221	IMPORTANT	Prepare proposal one-pager	Customer-facing offer
+T-222	IMPORTANT	Prepare pilot scope template	One route, one defect family, one dataset
+T-223	NORMAL	Prepare screenshots/video	For LinkedIn/customer validation
+T-224	OPTIONAL	Prepare hosted demo environment	Later, after security basics
+
+
+
+---
+
+Final Execution Order
+
+Do not start everything. The correct order is:
+
+1. Phase 1 — Configurable ports/settings
+2. Phase 2 — ConnectionProfile
+3. Phase 3 — SourceDataset + SourceField
+4. Phase 4 — Connector abstraction
+5. Phase 5 — Staging upgrade
+6. Phase 6 — Mapping workbench
+7. Phase 8 — Interactive dashboard filter model
+8. Phase 10 — Genealogy-aware correlation
+9. Phase 11/12 — Feature engineering + prediction
+10. Phase 13/15/16 — Readiness, reports, security
+
+The Next 10 Tasks Only
+
+Start here — one by one:
+
+Order	Task ID	Level	Task
+
+1	T-36	CRITICAL	Make backend port configurable
+2	T-37	CRITICAL	Make frontend port configurable
+3	T-38	CRITICAL	Make DB port configurable
+4	T-39	CRITICAL	Make CORS origins configurable
+5	T-40	CRITICAL	Remove hardcoded frontend API fallback
+6	T-41	CRITICAL	Add .env.example
+7	T-45	CRITICAL	Create ConnectionProfile entity
+8	T-55	CRITICAL	Create SourceDatasetDefinition
+9	T-56	CRITICAL	Create SourceFieldDefinition
+10	T-65	CRITICAL	Create connector abstraction interfaces
+
+
+Final Recommendation
+
+Your new roadmap should be named:
+
+PlantProcess IQ Master Plan v3
+QlikSense-Style Multi-Source Manufacturing Intelligence Platform
+
+And the golden rule from now on:
+
+No dashboard before staging.
+No analytics before mapping.
+No prediction before feature engineering.
+No customer pilot before security and data-readiness report.
+No steel hardcoding anywhere.
