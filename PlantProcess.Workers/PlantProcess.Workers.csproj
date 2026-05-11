@@ -12,13 +12,20 @@
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.8" />
   </ItemGroup>
 
+  <!-- EF Core version alignment.
+       Worker references Infrastructure/Application, so force the same EF Relational version
+       to avoid MSB3277 conflict between 9.0.1 and 9.0.4. -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.4" />
+  </ItemGroup>
+
   <!-- Serilog structured logging — must mirror PlantProcess.Api configuration -->
   <ItemGroup>
-    <PackageReference Include="Serilog.Extensions.Hosting"       Version="9.0.0" />
-    <PackageReference Include="Serilog.Sinks.Console"            Version="6.0.0" />
-    <PackageReference Include="Serilog.Sinks.File"               Version="7.0.0" />
-    <PackageReference Include="Serilog.Enrichers.Environment"    Version="3.0.1" />
-    <PackageReference Include="Serilog.Exceptions"               Version="8.4.0" />
+    <PackageReference Include="Serilog.Extensions.Hosting" Version="9.0.0" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
+    <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
+    <PackageReference Include="Serilog.Enrichers.Environment" Version="3.0.1" />
+    <PackageReference Include="Serilog.Exceptions" Version="8.4.0" />
   </ItemGroup>
 
   <!-- Internal project references -->
