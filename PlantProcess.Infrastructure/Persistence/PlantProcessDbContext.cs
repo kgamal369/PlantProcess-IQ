@@ -1,4 +1,4 @@
-﻿using System.Linq.Expressions;
+using System.Linq.Expressions;
 using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
@@ -70,6 +70,7 @@ public class PlantProcessDbContext : DbContext, IPlantProcessDbContext
     // Analytics / ML Outputs
     // ----------------------------
     public DbSet<RiskScore> RiskScores => Set<RiskScore>();
+    public DbSet<CorrelationResult> CorrelationResults => Set<CorrelationResult>();
 
     public PlantProcessDbContext(DbContextOptions<PlantProcessDbContext> options)
         : base(options)

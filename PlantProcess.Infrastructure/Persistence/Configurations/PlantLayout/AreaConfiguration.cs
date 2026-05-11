@@ -1,7 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using PlantProcess.Domain.Entities.PlantLayout;
-using PlantProcess.Infrastructure.Persistence.Configurations;
 
 namespace PlantProcess.Infrastructure.Persistence.Configurations.PlantLayout;
 

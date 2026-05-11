@@ -1,30 +1,27 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Configuration;
 using PlantProcess.Application.Services.DataQuality;
+using PlantProcess.Application.Services.Integration;
 
 namespace PlantProcess.Workers;
 
 /// <summary>
 /// Background worker host for PlantProcess IQ automated jobs.
 ///
-/// Currently active jobs:
-///   • DataQualityScanJob — runs RunFullScanAsync on a configurable interval.
+/// Active jobs:
+///   1. ImportQueueProcessorJob — processes Created/Running import batches with pending staging rows.
+///   2. DataQualityScanJob     — runs the automated full data-quality scan and persists findings.
 ///
-/// Future Sprint 2+ jobs to add here:
-///   • ImportOrchestrationJob  — monitor import batch queue, run CSV/SQL connectors
-///   • RiskScoringJob          — score newly completed materials automatically
-///   • SyntheticDataGenerator  — generate/refresh synthetic seed data
+/// Design rule: Worker.cs only schedules jobs. Business logic stays in PlantProcess.Application services.
 /// </summary>
 public class Worker : BackgroundService
 {
-    // ─── Dependencies ─────────────────────────────────────────────────────────
     private readonly ILogger<Worker> _logger;
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly IConfiguration _configuration;
 
-    // ─── Constructor ──────────────────────────────────────────────────────────
     public Worker(
         ILogger<Worker> logger,
         IServiceScopeFactory scopeFactory,
@@ -35,117 +32,140 @@ public class Worker : BackgroundService
         _configuration = configuration;
     }
 
-    // ─── Background loop ──────────────────────────────────────────────────────
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation(
-            "PlantProcess IQ Worker started. Jobs: DataQualityScanJob.");
+        _logger.LogInformation("PlantProcess IQ Worker started. Jobs: ImportQueueProcessorJob, DataQualityScanJob.");
 
-        // Read configuration values — both default to safe values if absent
+        var importEnabled = _configuration.GetValue("PlantProcess:Workers:EnableImportQueueProcessorJob", true);
+        var importIntervalSeconds = Math.Max(30, _configuration.GetValue("PlantProcess:Workers:ImportQueueProcessorIntervalSeconds", 120));
+        var importMaxBatches = Math.Clamp(_configuration.GetValue("PlantProcess:Workers:ImportQueueProcessorMaxBatches", 5), 1, 100);
+        var importRowsPerBatch = Math.Clamp(_configuration.GetValue("PlantProcess:Workers:ImportQueueProcessorRowsPerBatch", 5000), 1, 50000);
+
         var scanEnabled = _configuration.GetValue("PlantProcess:Workers:EnableDataQualityScanJob", true);
-        var scanIntervalSecs = _configuration.GetValue("PlantProcess:Workers:DataQualityScanIntervalSeconds", 3600);
-        var scanInterval = TimeSpan.FromSeconds(Math.Max(60, scanIntervalSecs)); // minimum 60 s
+        var scanIntervalSeconds = Math.Max(60, _configuration.GetValue("PlantProcess:Workers:DataQualityScanIntervalSeconds", 3600));
+        var scanMaxCandidatesPerRule = Math.Clamp(_configuration.GetValue("PlantProcess:Workers:DataQualityMaxCandidatesPerRule", 500), 1, 5000);
 
-        _logger.LogInformation(
-            "Worker configuration loaded. " +
-            "EnableDataQualityScanJob={Enabled}, ScanInterval={ScanInterval}",
-            scanEnabled,
-            scanInterval);
+        var nextImportRun = DateTimeOffset.UtcNow.AddSeconds(10);
+        var nextScanRun = DateTimeOffset.UtcNow.AddSeconds(30);
 
-        // ── Initial delay: give the API time to start before first scan ───
-        _logger.LogDebug("Worker waiting 30 s before first data-quality scan run.");
-        await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
-
-        // ── Main loop ─────────────────────────────────────────────────────
         while (!stoppingToken.IsCancellationRequested)
         {
-            if (scanEnabled)
+            var now = DateTimeOffset.UtcNow;
+
+            if (importEnabled && now >= nextImportRun)
             {
-                await RunDataQualityScanJobAsync(stoppingToken);
-            }
-            else
-            {
-                _logger.LogDebug(
-                    "DataQualityScanJob is disabled via configuration. " +
-                    "Set PlantProcess:Workers:EnableDataQualityScanJob=true to enable.");
+                await RunImportQueueProcessorJobAsync(importMaxBatches, importRowsPerBatch, stoppingToken);
+                nextImportRun = DateTimeOffset.UtcNow.AddSeconds(importIntervalSeconds);
             }
 
-            // Wait for the configured interval before the next run
-            _logger.LogDebug(
-                "Worker sleeping for {Interval} before next scan cycle.",
-                scanInterval);
+            if (scanEnabled && now >= nextScanRun)
+            {
+                await RunDataQualityScanJobAsync(scanMaxCandidatesPerRule, stoppingToken);
+                nextScanRun = DateTimeOffset.UtcNow.AddSeconds(scanIntervalSeconds);
+            }
 
-            await Task.Delay(scanInterval, stoppingToken);
+            await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
         }
 
         _logger.LogInformation("PlantProcess IQ Worker stopping.");
     }
 
-    // ─── Job: Data Quality Full Scan ──────────────────────────────────────────
-
-    private async Task RunDataQualityScanJobAsync(CancellationToken cancellationToken)
+    private async Task RunImportQueueProcessorJobAsync(
+        int maxBatches,
+        int rowsPerBatch,
+        CancellationToken cancellationToken)
     {
         _logger.LogInformation(
-            "DataQualityScanJob: starting scheduled run. UtcNow={UtcNow}",
-            DateTime.UtcNow);
+            "ImportQueueProcessorJob: starting. MaxBatches={MaxBatches}, RowsPerBatch={RowsPerBatch}",
+            maxBatches,
+            rowsPerBatch);
 
         try
         {
-            // Each job run gets its own DI scope so DbContext is fresh
-            // (DbContext is scoped — cannot use singleton scope)
             await using var scope = _scopeFactory.CreateAsyncScope();
-            var service = scope.ServiceProvider.GetRequiredService<IDataQualityService>();
+            var service = scope.ServiceProvider.GetRequiredService<IImportBatchQueueProcessorService>();
 
-            // maxCandidatesPerRule = 500 per run — prevents DB overload
-            var result = await service.RunFullScanAsync(
-                maxCandidatesPerRule: 500,
-                cancellationToken: cancellationToken);
+            var result = await service.ProcessPendingBatchesAsync(
+                maxBatches,
+                rowsPerBatch,
+                stopOnFirstError: false,
+                runDataQualityScan: true,
+                cancellationToken);
 
             if (result.IsSuccess && result.Value is not null)
             {
-                var summary = result.Value;
-
                 _logger.LogInformation(
-                    "DataQualityScanJob: completed successfully. " +
-                    "CandidatesFound={CandidatesFound}, " +
-                    "NewIssuesPersisted={NewIssuesPersisted}, " +
-                    "ExistingIssuesSkipped={ExistingIssuesSkipped}, " +
-                    "DurationMs={DurationMs}",
-                    summary.CandidatesFound,
-                    summary.NewIssuesPersisted,
-                    summary.ExistingIssuesSkipped,
-                    (long)summary.ScanDuration.TotalMilliseconds);
-
-                if (summary.NewIssuesPersisted > 0)
-                {
-                    _logger.LogWarning(
-                        "DataQualityScanJob: {NewIssuesPersisted} new data-quality issues were found and persisted. " +
-                        "Review GET /data-quality/issues for details.",
-                        summary.NewIssuesPersisted);
-                }
+                    "ImportQueueProcessorJob: completed. Scanned={Scanned}, Completed={Completed}, Failed={Failed}, Skipped={Skipped}, DurationMs={DurationMs}",
+                    result.Value.BatchesScanned,
+                    result.Value.BatchesCompleted,
+                    result.Value.BatchesFailed,
+                    result.Value.BatchesSkipped,
+                    (long)result.Value.Duration.TotalMilliseconds);
             }
             else
             {
                 _logger.LogError(
-                    "DataQualityScanJob: scan returned a failure result. " +
-                    "Error={ErrorCode} — {ErrorMessage}",
+                    "ImportQueueProcessorJob: failed. Error={ErrorCode} — {ErrorMessage}",
                     result.Error?.Code,
                     result.Error?.Message);
             }
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("DataQualityScanJob: cancelled during execution (host is shutting down).");
+            _logger.LogWarning("ImportQueueProcessorJob: cancelled during shutdown.");
         }
         catch (Exception ex)
         {
-            // Log and swallow — do not crash the worker host over a single scan failure.
-            // The next scheduled run will retry.
-            _logger.LogError(
-                ex,
-                "DataQualityScanJob: unhandled exception during scan run. " +
-                "Will retry on next scheduled interval. Exception={ExceptionMessage}",
-                ex.Message);
+            _logger.LogError(ex, "ImportQueueProcessorJob: unhandled exception. Will retry on next interval.");
+        }
+    }
+
+    private async Task RunDataQualityScanJobAsync(
+        int maxCandidatesPerRule,
+        CancellationToken cancellationToken)
+    {
+        _logger.LogInformation(
+            "DataQualityScanJob: starting. MaxCandidatesPerRule={MaxCandidatesPerRule}",
+            maxCandidatesPerRule);
+
+        try
+        {
+            await using var scope = _scopeFactory.CreateAsyncScope();
+            var service = scope.ServiceProvider.GetRequiredService<IDataQualityService>();
+
+            var result = await service.RunFullScanAsync(maxCandidatesPerRule, cancellationToken);
+
+            if (result.IsSuccess && result.Value is not null)
+            {
+                _logger.LogInformation(
+                    "DataQualityScanJob: completed. CandidatesFound={CandidatesFound}, NewIssuesPersisted={NewIssuesPersisted}, ExistingIssuesSkipped={ExistingIssuesSkipped}, DurationMs={DurationMs}",
+                    result.Value.CandidatesFound,
+                    result.Value.NewIssuesPersisted,
+                    result.Value.ExistingIssuesSkipped,
+                    (long)result.Value.ScanDuration.TotalMilliseconds);
+
+                if (result.Value.NewIssuesPersisted > 0)
+                {
+                    _logger.LogWarning(
+                        "DataQualityScanJob: {NewIssuesPersisted} new data-quality issues were persisted. Review /data-quality/issues.",
+                        result.Value.NewIssuesPersisted);
+                }
+            }
+            else
+            {
+                _logger.LogError(
+                    "DataQualityScanJob: failed. Error={ErrorCode} — {ErrorMessage}",
+                    result.Error?.Code,
+                    result.Error?.Message);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogWarning("DataQualityScanJob: cancelled during shutdown.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "DataQualityScanJob: unhandled exception. Will retry on next interval.");
         }
     }
 }

@@ -1,12 +1,13 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 using PlantProcess.Application.Common.Time;
-using PlantProcess.Application.Services.Readiness;
 using PlantProcess.Application.Services.Analytics;
 using PlantProcess.Application.Services.DataQuality;
 using PlantProcess.Application.Services.Integration;
 using PlantProcess.Application.Services.Materials;
+using PlantProcess.Application.Services.PlantLayout;
 using PlantProcess.Application.Services.Process;
 using PlantProcess.Application.Services.Quality;
+using PlantProcess.Application.Services.Readiness;
 
 namespace PlantProcess.Application;
 
@@ -18,25 +19,34 @@ public static class DependencyInjection
         services.AddSingleton<IClock, SystemClock>();
         services.AddSingleton<IPlantTimeContextResolver, PlantTimeContextResolver>();
 
-
-        // Phase 1 real implementation service
+        // Readiness
         services.AddScoped<IApplicationReadinessService, ApplicationReadinessService>();
 
-        // Phase 1 service contracts.
-        // Concrete implementations will be added in Phase 2 when endpoint logic is moved from API to Application.
+        // Integration / ingestion / mapping / import orchestration
         services.AddScoped<ISourceSystemService, SourceSystemService>();
         services.AddScoped<IImportBatchService, ImportBatchService>();
         services.AddScoped<IMappingDefinitionService, MappingDefinitionService>();
         services.AddScoped<IStagingRecordService, StagingRecordService>();
         services.AddScoped<IMappingExecutionService, MappingExecutionService>();
+        services.AddScoped<IImportWorkflowService, ImportWorkflowService>();
+        services.AddScoped<IImportBatchQueueProcessorService, ImportBatchQueueProcessorService>();
 
+        // Canonical material and genealogy workflow
         services.AddScoped<IMaterialService, MaterialService>();
         services.AddScoped<IGenealogyService, GenealogyService>();
 
+        // Plant layout read model
+        services.AddScoped<IPlantLayoutQueryService, PlantLayoutQueryService>();
+
+        // Process and quality workflow
         services.AddScoped<IProcessDataService, ProcessDataService>();
         services.AddScoped<IQualityService, QualityService>();
-        services.AddScoped<IRiskScoreService, RiskScoreService>();
+        services.AddScoped<IQualityQueryService, QualityQueryService>();
+
+        // Data quality and analytics
         services.AddScoped<IDataQualityService, DataQualityService>();
+        services.AddScoped<IRiskScoreService, RiskScoreService>();
+        services.AddScoped<ICorrelationService, CorrelationService>();
 
         return services;
     }

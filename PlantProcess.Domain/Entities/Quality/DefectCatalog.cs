@@ -1,9 +1,11 @@
-﻿using PlantProcess.Domain.Common;
+using PlantProcess.Domain.Common;
 
 namespace PlantProcess.Domain.Entities.Quality;
 
 public class DefectCatalog : BaseEntity
 {
+    private readonly List<QualityEvent> _qualityEvents = new();
+
     public string DefectCode { get; private set; } = null!;
 
     public string DefectName { get; private set; } = null!;
@@ -11,6 +13,8 @@ public class DefectCatalog : BaseEntity
     public string? DefectCategory { get; private set; }
 
     public string? IndustryTemplate { get; private set; }
+
+    public IReadOnlyCollection<QualityEvent> QualityEvents => _qualityEvents.AsReadOnly();
 
     private DefectCatalog()
     {

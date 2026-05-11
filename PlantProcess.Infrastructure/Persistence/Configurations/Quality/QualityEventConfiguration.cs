@@ -1,9 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using PlantProcess.Domain.Entities.Materials;
 using PlantProcess.Domain.Entities.Quality;
 
-
+using PlantProcess.Infrastructure.Persistence.Configurations;
 namespace PlantProcess.Infrastructure.Persistence.Configurations.Quality;
 
 public class QualityEventConfiguration : IEntityTypeConfiguration<QualityEvent>
@@ -36,7 +36,7 @@ public class QualityEventConfiguration : IEntityTypeConfiguration<QualityEvent>
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne<DefectCatalog>()
-            .WithMany()
+            .WithMany(x => x.QualityEvents)
             .HasForeignKey(x => x.DefectCatalogId)
             .OnDelete(DeleteBehavior.SetNull);
 

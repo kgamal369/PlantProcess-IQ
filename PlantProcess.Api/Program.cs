@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 using PlantProcess.Api.Endpoints.Analytics;
 using PlantProcess.Api.Endpoints.Configuration;
 using PlantProcess.Api.Endpoints.DataQuality;
@@ -125,11 +125,13 @@ try
     app.MapPlantLayoutEndpoints();
     app.MapConfigurationEndpoints();
     app.MapIntegrationEndpoints();
+    app.MapImportWorkflowEndpoints();
     app.MapMaterialEndpoints();
     app.MapMaterialInvestigationEndpoints();
     app.MapProcessEndpoints();
     app.MapQualityEndpoints();
     app.MapRiskScoreEndpoints();
+    app.MapCorrelationEndpoints();
     app.MapDataQualityEndpoints();
     app.MapDataQualityScanEndpoints();
     app.MapWorkflowEndpoints();

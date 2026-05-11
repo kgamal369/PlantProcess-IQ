@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using PlantProcess.Domain.Entities.Analytics;
 using PlantProcess.Domain.Entities.Configuration;
 using PlantProcess.Domain.Entities.Integration;
@@ -43,6 +43,7 @@ public interface IPlantProcessDbContext
     DbSet<DataQualityIssue> DataQualityIssues { get; }
 
     DbSet<RiskScore> RiskScores { get; }
+    DbSet<CorrelationResult> CorrelationResults { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }
