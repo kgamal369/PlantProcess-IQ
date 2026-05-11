@@ -1,0 +1,834 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Workspace\\PlantProcess-IQ\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{67C65D63-8D4A-4AC6-9BB7-19F1649BEDC5}|PlantProcess.Infrastructure\\PlantProcess.Infrastructure.csproj|c:\\workspace\\plantprocess-iq\\plantprocess.infrastructure\\persistence\\configurations\\integration\\sourcesystemdefinitionconfiguration.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{67C65D63-8D4A-4AC6-9BB7-19F1649BEDC5}|PlantProcess.Infrastructure\\PlantProcess.Infrastructure.csproj|solutionrelative:plantprocess.infrastructure\\persistence\\configurations\\integration\\sourcesystemdefinitionconfiguration.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{06344396-98BE-40E9-A81D-3EE9749DFE2F}|PlantProcess.Workers\\PlantProcess.Workers.csproj|c:\\workspace\\plantprocess-iq\\plantprocess.workers\\telemetryingestionworker.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{06344396-98BE-40E9-A81D-3EE9749DFE2F}|PlantProcess.Workers\\PlantProcess.Workers.csproj|solutionrelative:plantprocess.workers\\telemetryingestionworker.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{67C65D63-8D4A-4AC6-9BB7-19F1649BEDC5}|PlantProcess.Infrastructure\\PlantProcess.Infrastructure.csproj|c:\\workspace\\plantprocess-iq\\plantprocess.infrastructure\\bulk\\parameterobservationinsertrow.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{67C65D63-8D4A-4AC6-9BB7-19F1649BEDC5}|PlantProcess.Infrastructure\\PlantProcess.Infrastructure.csproj|solutionrelative:plantprocess.infrastructure\\bulk\\parameterobservationinsertrow.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{67C65D63-8D4A-4AC6-9BB7-19F1649BEDC5}|PlantProcess.Infrastructure\\PlantProcess.Infrastructure.csproj|c:\\workspace\\plantprocess-iq\\plantprocess.infrastructure\\bulk\\telemetrybulkrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{67C65D63-8D4A-4AC6-9BB7-19F1649BEDC5}|PlantProcess.Infrastructure\\PlantProcess.Infrastructure.csproj|solutionrelative:plantprocess.infrastructure\\bulk\\telemetrybulkrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{3EE9AE75-EC05-496D-8604-F4E75026ADBD}|PlantProcess.Application\\PlantProcess.Application.csproj|c:\\workspace\\plantprocess-iq\\plantprocess.application\\contracts\\plantlayout\\plantlayoutdtos.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{3EE9AE75-EC05-496D-8604-F4E75026ADBD}|PlantProcess.Application\\PlantProcess.Application.csproj|solutionrelative:plantprocess.application\\contracts\\plantlayout\\plantlayoutdtos.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{3EE9AE75-EC05-496D-8604-F4E75026ADBD}|PlantProcess.Application\\PlantProcess.Application.csproj|c:\\workspace\\plantprocess-iq\\plantprocess.application\\services\\plantlayout\\plantlayoutqueryservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{3EE9AE75-EC05-496D-8604-F4E75026ADBD}|PlantProcess.Application\\PlantProcess.Application.csproj|solutionrelative:plantprocess.application\\services\\plantlayout\\plantlayoutqueryservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{3EE9AE75-EC05-496D-8604-F4E75026ADBD}|PlantProcess.Application\\PlantProcess.Application.csproj|c:\\workspace\\plantprocess-iq\\plantprocess.application\\services\\integration\\importworkflowservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{3EE9AE75-EC05-496D-8604-F4E75026ADBD}|PlantProcess.Application\\PlantProcess.Application.csproj|solutionrelative:plantprocess.application\\services\\integration\\importworkflowservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{D5EB1FC6-A370-45DB-8AEA-FD3757735BDF}|PlantProcess.Api\\PlantProcess.Api.csproj|c:\\workspace\\plantprocess-iq\\plantprocess.api\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{D5EB1FC6-A370-45DB-8AEA-FD3757735BDF}|PlantProcess.Api\\PlantProcess.Api.csproj|solutionrelative:plantprocess.api\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{3EE9AE75-EC05-496D-8604-F4E75026ADBD}|PlantProcess.Application\\PlantProcess.Application.csproj|c:\\workspace\\plantprocess-iq\\plantprocess.application\\dependencyinjection.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{3EE9AE75-EC05-496D-8604-F4E75026ADBD}|PlantProcess.Application\\PlantProcess.Application.csproj|solutionrelative:plantprocess.application\\dependencyinjection.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{67C65D63-8D4A-4AC6-9BB7-19F1649BEDC5}|PlantProcess.Infrastructure\\PlantProcess.Infrastructure.csproj|c:\\workspace\\plantprocess-iq\\plantprocess.infrastructure\\persistence\\configurations\\plantlayout\\areaconfiguration.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{67C65D63-8D4A-4AC6-9BB7-19F1649BEDC5}|PlantProcess.Infrastructure\\PlantProcess.Infrastructure.csproj|solutionrelative:plantprocess.infrastructure\\persistence\\configurations\\plantlayout\\areaconfiguration.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{67C65D63-8D4A-4AC6-9BB7-19F1649BEDC5}|PlantProcess.Infrastructure\\PlantProcess.Infrastructure.csproj|c:\\workspace\\plantprocess-iq\\plantprocess.infrastructure\\persistence\\plantprocessdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{67C65D63-8D4A-4AC6-9BB7-19F1649BEDC5}|PlantProcess.Infrastructure\\PlantProcess.Infrastructure.csproj|solutionrelative:plantprocess.infrastructure\\persistence\\plantprocessdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{9C9C9B5B-88E4-44A6-A6D0-9C580A769418}|PlantProcess.Domain\\PlantProcess.Domain.csproj|c:\\workspace\\plantprocess-iq\\plantprocess.domain\\entities\\quality\\dataqualityissue.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{9C9C9B5B-88E4-44A6-A6D0-9C580A769418}|PlantProcess.Domain\\PlantProcess.Domain.csproj|solutionrelative:plantprocess.domain\\entities\\quality\\dataqualityissue.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{9C9C9B5B-88E4-44A6-A6D0-9C580A769418}|PlantProcess.Domain\\PlantProcess.Domain.csproj|c:\\workspace\\plantprocess-iq\\plantprocess.domain\\entities\\process\\processstepexecution.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{9C9C9B5B-88E4-44A6-A6D0-9C580A769418}|PlantProcess.Domain\\PlantProcess.Domain.csproj|solutionrelative:plantprocess.domain\\entities\\process\\processstepexecution.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{9C9C9B5B-88E4-44A6-A6D0-9C580A769418}|PlantProcess.Domain\\PlantProcess.Domain.csproj|c:\\workspace\\plantprocess-iq\\plantprocess.domain\\entities\\integration\\importbatch.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{9C9C9B5B-88E4-44A6-A6D0-9C580A769418}|PlantProcess.Domain\\PlantProcess.Domain.csproj|solutionrelative:plantprocess.domain\\entities\\integration\\importbatch.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{3EE9AE75-EC05-496D-8604-F4E75026ADBD}|PlantProcess.Application\\PlantProcess.Application.csproj|c:\\workspace\\plantprocess-iq\\plantprocess.application\\services\\integration\\iimportbatchservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{3EE9AE75-EC05-496D-8604-F4E75026ADBD}|PlantProcess.Application\\PlantProcess.Application.csproj|solutionrelative:plantprocess.application\\services\\integration\\iimportbatchservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{3EE9AE75-EC05-496D-8604-F4E75026ADBD}|PlantProcess.Application\\PlantProcess.Application.csproj|c:\\workspace\\plantprocess-iq\\plantprocess.application\\services\\integration\\stagingrecordservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{3EE9AE75-EC05-496D-8604-F4E75026ADBD}|PlantProcess.Application\\PlantProcess.Application.csproj|solutionrelative:plantprocess.application\\services\\integration\\stagingrecordservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{3EE9AE75-EC05-496D-8604-F4E75026ADBD}|PlantProcess.Application\\PlantProcess.Application.csproj|c:\\workspace\\plantprocess-iq\\plantprocess.application\\common\\persistence\\iplantprocessdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{3EE9AE75-EC05-496D-8604-F4E75026ADBD}|PlantProcess.Application\\PlantProcess.Application.csproj|solutionrelative:plantprocess.application\\common\\persistence\\iplantprocessdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{D5EB1FC6-A370-45DB-8AEA-FD3757735BDF}|PlantProcess.Api\\PlantProcess.Api.csproj|c:\\workspace\\plantprocess-iq\\plantprocess.api\\endpoints\\quality\\qualityendpoints.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{D5EB1FC6-A370-45DB-8AEA-FD3757735BDF}|PlantProcess.Api\\PlantProcess.Api.csproj|solutionrelative:plantprocess.api\\endpoints\\quality\\qualityendpoints.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{D5EB1FC6-A370-45DB-8AEA-FD3757735BDF}|PlantProcess.Api\\PlantProcess.Api.csproj|c:\\workspace\\plantprocess-iq\\plantprocess.api\\endpoints\\process\\processendpoints.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{D5EB1FC6-A370-45DB-8AEA-FD3757735BDF}|PlantProcess.Api\\PlantProcess.Api.csproj|solutionrelative:plantprocess.api\\endpoints\\process\\processendpoints.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{D5EB1FC6-A370-45DB-8AEA-FD3757735BDF}|PlantProcess.Api\\PlantProcess.Api.csproj|c:\\workspace\\plantprocess-iq\\plantprocess.api\\endpoints\\materials\\materialendpoints.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{D5EB1FC6-A370-45DB-8AEA-FD3757735BDF}|PlantProcess.Api\\PlantProcess.Api.csproj|solutionrelative:plantprocess.api\\endpoints\\materials\\materialendpoints.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{D5EB1FC6-A370-45DB-8AEA-FD3757735BDF}|PlantProcess.Api\\PlantProcess.Api.csproj|c:\\workspace\\plantprocess-iq\\plantprocess.api\\endpoints\\integration\\integrationendpoints.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{D5EB1FC6-A370-45DB-8AEA-FD3757735BDF}|PlantProcess.Api\\PlantProcess.Api.csproj|solutionrelative:plantprocess.api\\endpoints\\integration\\integrationendpoints.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{D5EB1FC6-A370-45DB-8AEA-FD3757735BDF}|PlantProcess.Api\\PlantProcess.Api.csproj|c:\\workspace\\plantprocess-iq\\plantprocess.api\\endpoints\\configuration\\configurationendpoints.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{D5EB1FC6-A370-45DB-8AEA-FD3757735BDF}|PlantProcess.Api\\PlantProcess.Api.csproj|solutionrelative:plantprocess.api\\endpoints\\configuration\\configurationendpoints.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{D5EB1FC6-A370-45DB-8AEA-FD3757735BDF}|PlantProcess.Api\\PlantProcess.Api.csproj|c:\\workspace\\plantprocess-iq\\plantprocess.api\\endpoints\\analytics\\riskscoreendpoints.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{D5EB1FC6-A370-45DB-8AEA-FD3757735BDF}|PlantProcess.Api\\PlantProcess.Api.csproj|solutionrelative:plantprocess.api\\endpoints\\analytics\\riskscoreendpoints.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{3EE9AE75-EC05-496D-8604-F4E75026ADBD}|PlantProcess.Application\\PlantProcess.Application.csproj|c:\\workspace\\plantprocess-iq\\plantprocess.application\\services\\integration\\mappingdefinitionservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{3EE9AE75-EC05-496D-8604-F4E75026ADBD}|PlantProcess.Application\\PlantProcess.Application.csproj|solutionrelative:plantprocess.application\\services\\integration\\mappingdefinitionservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{3EE9AE75-EC05-496D-8604-F4E75026ADBD}|PlantProcess.Application\\PlantProcess.Application.csproj|c:\\workspace\\plantprocess-iq\\plantprocess.application\\services\\integration\\imappingdefinitionservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{3EE9AE75-EC05-496D-8604-F4E75026ADBD}|PlantProcess.Application\\PlantProcess.Application.csproj|solutionrelative:plantprocess.application\\services\\integration\\imappingdefinitionservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{06344396-98BE-40E9-A81D-3EE9749DFE2F}|PlantProcess.Workers\\PlantProcess.Workers.csproj|c:\\workspace\\plantprocess-iq\\plantprocess.workers\\worker.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{06344396-98BE-40E9-A81D-3EE9749DFE2F}|PlantProcess.Workers\\PlantProcess.Workers.csproj|solutionrelative:plantprocess.workers\\worker.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{3EE9AE75-EC05-496D-8604-F4E75026ADBD}|PlantProcess.Application\\PlantProcess.Application.csproj|c:\\workspace\\plantprocess-iq\\plantprocess.application\\services\\dataquality\\dataqualityservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{3EE9AE75-EC05-496D-8604-F4E75026ADBD}|PlantProcess.Application\\PlantProcess.Application.csproj|solutionrelative:plantprocess.application\\services\\dataquality\\dataqualityservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{3EE9AE75-EC05-496D-8604-F4E75026ADBD}|PlantProcess.Application\\PlantProcess.Application.csproj|c:\\workspace\\plantprocess-iq\\plantprocess.application\\services\\dataquality\\idataqualityservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{3EE9AE75-EC05-496D-8604-F4E75026ADBD}|PlantProcess.Application\\PlantProcess.Application.csproj|solutionrelative:plantprocess.application\\services\\dataquality\\idataqualityservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{06344396-98BE-40E9-A81D-3EE9749DFE2F}|PlantProcess.Workers\\PlantProcess.Workers.csproj|c:\\workspace\\plantprocess-iq\\plantprocess.workers\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{06344396-98BE-40E9-A81D-3EE9749DFE2F}|PlantProcess.Workers\\PlantProcess.Workers.csproj|solutionrelative:plantprocess.workers\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{9C9C9B5B-88E4-44A6-A6D0-9C580A769418}|PlantProcess.Domain\\PlantProcess.Domain.csproj|c:\\workspace\\plantprocess-iq\\plantprocess.domain\\entities\\integration\\sourcesystemdefinition.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{9C9C9B5B-88E4-44A6-A6D0-9C580A769418}|PlantProcess.Domain\\PlantProcess.Domain.csproj|solutionrelative:plantprocess.domain\\entities\\integration\\sourcesystemdefinition.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{06344396-98BE-40E9-A81D-3EE9749DFE2F}|PlantProcess.Workers\\PlantProcess.Workers.csproj|c:\\workspace\\plantprocess-iq\\plantprocess.workers\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{06344396-98BE-40E9-A81D-3EE9749DFE2F}|PlantProcess.Workers\\PlantProcess.Workers.csproj|solutionrelative:plantprocess.workers\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{D5EB1FC6-A370-45DB-8AEA-FD3757735BDF}|PlantProcess.Api\\PlantProcess.Api.csproj|c:\\workspace\\plantprocess-iq\\plantprocess.api\\middleware\\correlationidmiddleware.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{D5EB1FC6-A370-45DB-8AEA-FD3757735BDF}|PlantProcess.Api\\PlantProcess.Api.csproj|solutionrelative:plantprocess.api\\middleware\\correlationidmiddleware.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{67C65D63-8D4A-4AC6-9BB7-19F1649BEDC5}|PlantProcess.Infrastructure\\PlantProcess.Infrastructure.csproj|c:\\workspace\\plantprocess-iq\\plantprocess.infrastructure\\resilience\\failedbatchwriter.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{67C65D63-8D4A-4AC6-9BB7-19F1649BEDC5}|PlantProcess.Infrastructure\\PlantProcess.Infrastructure.csproj|solutionrelative:plantprocess.infrastructure\\resilience\\failedbatchwriter.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{67C65D63-8D4A-4AC6-9BB7-19F1649BEDC5}|PlantProcess.Infrastructure\\PlantProcess.Infrastructure.csproj|c:\\workspace\\plantprocess-iq\\plantprocess.infrastructure\\bulk\\telemetrychannelbuffer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{67C65D63-8D4A-4AC6-9BB7-19F1649BEDC5}|PlantProcess.Infrastructure\\PlantProcess.Infrastructure.csproj|solutionrelative:plantprocess.infrastructure\\bulk\\telemetrychannelbuffer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{67C65D63-8D4A-4AC6-9BB7-19F1649BEDC5}|PlantProcess.Infrastructure\\PlantProcess.Infrastructure.csproj|c:\\workspace\\plantprocess-iq\\plantprocess.infrastructure\\persistence\\configurations\\process\\processstepexecutionconfiguration.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{67C65D63-8D4A-4AC6-9BB7-19F1649BEDC5}|PlantProcess.Infrastructure\\PlantProcess.Infrastructure.csproj|solutionrelative:plantprocess.infrastructure\\persistence\\configurations\\process\\processstepexecutionconfiguration.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{D5EB1FC6-A370-45DB-8AEA-FD3757735BDF}|PlantProcess.Api\\PlantProcess.Api.csproj|c:\\workspace\\plantprocess-iq\\plantprocess.api\\endpoints\\workflow\\workflowendpoints.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{D5EB1FC6-A370-45DB-8AEA-FD3757735BDF}|PlantProcess.Api\\PlantProcess.Api.csproj|solutionrelative:plantprocess.api\\endpoints\\workflow\\workflowendpoints.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{67C65D63-8D4A-4AC6-9BB7-19F1649BEDC5}|PlantProcess.Infrastructure\\PlantProcess.Infrastructure.csproj|c:\\workspace\\plantprocess-iq\\plantprocess.infrastructure\\persistence\\configurations\\process\\parameterdefinitionconfiguration.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{67C65D63-8D4A-4AC6-9BB7-19F1649BEDC5}|PlantProcess.Infrastructure\\PlantProcess.Infrastructure.csproj|solutionrelative:plantprocess.infrastructure\\persistence\\configurations\\process\\parameterdefinitionconfiguration.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{67C65D63-8D4A-4AC6-9BB7-19F1649BEDC5}|PlantProcess.Infrastructure\\PlantProcess.Infrastructure.csproj|c:\\workspace\\plantprocess-iq\\plantprocess.infrastructure\\persistence\\configurations\\materials\\materialunitconfiguration.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{67C65D63-8D4A-4AC6-9BB7-19F1649BEDC5}|PlantProcess.Infrastructure\\PlantProcess.Infrastructure.csproj|solutionrelative:plantprocess.infrastructure\\persistence\\configurations\\materials\\materialunitconfiguration.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{67C65D63-8D4A-4AC6-9BB7-19F1649BEDC5}|PlantProcess.Infrastructure\\PlantProcess.Infrastructure.csproj|c:\\workspace\\plantprocess-iq\\plantprocess.infrastructure\\dependencyinjection.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{67C65D63-8D4A-4AC6-9BB7-19F1649BEDC5}|PlantProcess.Infrastructure\\PlantProcess.Infrastructure.csproj|solutionrelative:plantprocess.infrastructure\\dependencyinjection.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{67C65D63-8D4A-4AC6-9BB7-19F1649BEDC5}|PlantProcess.Infrastructure\\PlantProcess.Infrastructure.csproj|c:\\workspace\\plantprocess-iq\\plantprocess.infrastructure\\plantprocessdesigntimedbcontextfactory.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{67C65D63-8D4A-4AC6-9BB7-19F1649BEDC5}|PlantProcess.Infrastructure\\PlantProcess.Infrastructure.csproj|solutionrelative:plantprocess.infrastructure\\plantprocessdesigntimedbcontextfactory.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{D5EB1FC6-A370-45DB-8AEA-FD3757735BDF}|PlantProcess.Api\\PlantProcess.Api.csproj|c:\\workspace\\plantprocess-iq\\plantprocess.api\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{D5EB1FC6-A370-45DB-8AEA-FD3757735BDF}|PlantProcess.Api\\PlantProcess.Api.csproj|solutionrelative:plantprocess.api\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{67C65D63-8D4A-4AC6-9BB7-19F1649BEDC5}|PlantProcess.Infrastructure\\PlantProcess.Infrastructure.csproj|c:\\workspace\\plantprocess-iq\\plantprocess.infrastructure\\persistence\\configurations\\common\\postgresconcurrencyextensions.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{67C65D63-8D4A-4AC6-9BB7-19F1649BEDC5}|PlantProcess.Infrastructure\\PlantProcess.Infrastructure.csproj|solutionrelative:plantprocess.infrastructure\\persistence\\configurations\\common\\postgresconcurrencyextensions.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{D5EB1FC6-A370-45DB-8AEA-FD3757735BDF}|PlantProcess.Api\\PlantProcess.Api.csproj|c:\\workspace\\plantprocess-iq\\plantprocess.api\\middleware\\requestresponseloggingmiddleware.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{D5EB1FC6-A370-45DB-8AEA-FD3757735BDF}|PlantProcess.Api\\PlantProcess.Api.csproj|solutionrelative:plantprocess.api\\middleware\\requestresponseloggingmiddleware.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{D5EB1FC6-A370-45DB-8AEA-FD3757735BDF}|PlantProcess.Api\\PlantProcess.Api.csproj|c:\\workspace\\plantprocess-iq\\plantprocess.api\\endpoints\\validation\\validationendpoints.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{D5EB1FC6-A370-45DB-8AEA-FD3757735BDF}|PlantProcess.Api\\PlantProcess.Api.csproj|solutionrelative:plantprocess.api\\endpoints\\validation\\validationendpoints.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{D5EB1FC6-A370-45DB-8AEA-FD3757735BDF}|PlantProcess.Api\\PlantProcess.Api.csproj|c:\\workspace\\plantprocess-iq\\plantprocess.api\\endpoints\\materials\\materialinvestigationendpoints.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{D5EB1FC6-A370-45DB-8AEA-FD3757735BDF}|PlantProcess.Api\\PlantProcess.Api.csproj|solutionrelative:plantprocess.api\\endpoints\\materials\\materialinvestigationendpoints.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{D5EB1FC6-A370-45DB-8AEA-FD3757735BDF}|PlantProcess.Api\\PlantProcess.Api.csproj|c:\\workspace\\plantprocess-iq\\plantprocess.api\\endpoints\\dataquality\\dataqualityscanendpoints.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{D5EB1FC6-A370-45DB-8AEA-FD3757735BDF}|PlantProcess.Api\\PlantProcess.Api.csproj|solutionrelative:plantprocess.api\\endpoints\\dataquality\\dataqualityscanendpoints.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{D5EB1FC6-A370-45DB-8AEA-FD3757735BDF}|PlantProcess.Api\\PlantProcess.Api.csproj|c:\\workspace\\plantprocess-iq\\plantprocess.api\\endpoints\\dataquality\\dataqualityendpoints.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{D5EB1FC6-A370-45DB-8AEA-FD3757735BDF}|PlantProcess.Api\\PlantProcess.Api.csproj|solutionrelative:plantprocess.api\\endpoints\\dataquality\\dataqualityendpoints.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 1192,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "SourceSystemDefinitionConfiguration.cs",
+              "DocumentMoniker": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Infrastructure\\Persistence\\Configurations\\Integration\\SourceSystemDefinitionConfiguration.cs",
+              "RelativeDocumentMoniker": "PlantProcess.Infrastructure\\Persistence\\Configurations\\Integration\\SourceSystemDefinitionConfiguration.cs",
+              "ToolTip": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Infrastructure\\Persistence\\Configurations\\Integration\\SourceSystemDefinitionConfiguration.cs",
+              "RelativeToolTip": "PlantProcess.Infrastructure\\Persistence\\Configurations\\Integration\\SourceSystemDefinitionConfiguration.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABsAAAAyAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-11T12:20:31.255Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "PlantLayoutQueryService.cs",
+              "DocumentMoniker": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Application\\Services\\PlantLayout\\PlantLayoutQueryService.cs",
+              "RelativeDocumentMoniker": "PlantProcess.Application\\Services\\PlantLayout\\PlantLayoutQueryService.cs",
+              "ToolTip": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Application\\Services\\PlantLayout\\PlantLayoutQueryService.cs",
+              "RelativeToolTip": "PlantProcess.Application\\Services\\PlantLayout\\PlantLayoutQueryService.cs",
+              "ViewState": "AgIAAGQAAAAAAAAAAAAgwHQAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-11T11:43:44.243Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "PlantLayoutDtos.cs",
+              "DocumentMoniker": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Application\\Contracts\\PlantLayout\\PlantLayoutDtos.cs",
+              "RelativeDocumentMoniker": "PlantProcess.Application\\Contracts\\PlantLayout\\PlantLayoutDtos.cs",
+              "ToolTip": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Application\\Contracts\\PlantLayout\\PlantLayoutDtos.cs",
+              "RelativeToolTip": "PlantProcess.Application\\Contracts\\PlantLayout\\PlantLayoutDtos.cs",
+              "ViewState": "AgIAABMAAAAAAAAAAAAgwEQAAAAcAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-11T11:36:11.129Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "ParameterObservationInsertRow.cs",
+              "DocumentMoniker": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Infrastructure\\Bulk\\ParameterObservationInsertRow.cs",
+              "RelativeDocumentMoniker": "PlantProcess.Infrastructure\\Bulk\\ParameterObservationInsertRow.cs",
+              "ToolTip": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Infrastructure\\Bulk\\ParameterObservationInsertRow.cs",
+              "RelativeToolTip": "PlantProcess.Infrastructure\\Bulk\\ParameterObservationInsertRow.cs",
+              "ViewState": "AgIAABUAAAAAAAAAAAAswDEAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-11T07:59:45.81Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "TelemetryIngestionWorker.cs",
+              "DocumentMoniker": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Workers\\TelemetryIngestionWorker.cs",
+              "RelativeDocumentMoniker": "PlantProcess.Workers\\TelemetryIngestionWorker.cs",
+              "ToolTip": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Workers\\TelemetryIngestionWorker.cs",
+              "RelativeToolTip": "PlantProcess.Workers\\TelemetryIngestionWorker.cs",
+              "ViewState": "AgIAAFEAAAAAAAAAAAAwwHMAAAAJAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-10T17:48:56.171Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "TelemetryBulkRepository.cs",
+              "DocumentMoniker": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Infrastructure\\Bulk\\TelemetryBulkRepository.cs",
+              "RelativeDocumentMoniker": "PlantProcess.Infrastructure\\Bulk\\TelemetryBulkRepository.cs",
+              "ToolTip": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Infrastructure\\Bulk\\TelemetryBulkRepository.cs",
+              "RelativeToolTip": "PlantProcess.Infrastructure\\Bulk\\TelemetryBulkRepository.cs",
+              "ViewState": "AgIAALoAAAAAAAAAAAA0wOMAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-10T17:48:21.533Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "ImportWorkflowService.cs",
+              "DocumentMoniker": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Application\\Services\\Integration\\ImportWorkflowService.cs",
+              "RelativeDocumentMoniker": "PlantProcess.Application\\Services\\Integration\\ImportWorkflowService.cs",
+              "ToolTip": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Application\\Services\\Integration\\ImportWorkflowService.cs",
+              "RelativeToolTip": "PlantProcess.Application\\Services\\Integration\\ImportWorkflowService.cs",
+              "ViewState": "AgIAAHUAAAAAAAAAAAAQwJIAAAAsAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-11T11:43:21.111Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Api\\Program.cs",
+              "RelativeDocumentMoniker": "PlantProcess.Api\\Program.cs",
+              "ToolTip": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Api\\Program.cs",
+              "RelativeToolTip": "PlantProcess.Api\\Program.cs",
+              "ViewState": "AgIAAHAAAAAAAAAAAAAnwIYAAAAIAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-10T07:41:10.776Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "DependencyInjection.cs",
+              "DocumentMoniker": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Application\\DependencyInjection.cs",
+              "RelativeDocumentMoniker": "PlantProcess.Application\\DependencyInjection.cs",
+              "ToolTip": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Application\\DependencyInjection.cs",
+              "RelativeToolTip": "PlantProcess.Application\\DependencyInjection.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA0AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-11T09:08:29.416Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "AreaConfiguration.cs",
+              "DocumentMoniker": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Infrastructure\\Persistence\\Configurations\\PlantLayout\\AreaConfiguration.cs",
+              "RelativeDocumentMoniker": "PlantProcess.Infrastructure\\Persistence\\Configurations\\PlantLayout\\AreaConfiguration.cs",
+              "ToolTip": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Infrastructure\\Persistence\\Configurations\\PlantLayout\\AreaConfiguration.cs",
+              "RelativeToolTip": "PlantProcess.Infrastructure\\Persistence\\Configurations\\PlantLayout\\AreaConfiguration.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-11T11:32:33.253Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "PlantProcessDbContext.cs",
+              "DocumentMoniker": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Infrastructure\\Persistence\\PlantProcessDbContext.cs",
+              "RelativeDocumentMoniker": "PlantProcess.Infrastructure\\Persistence\\PlantProcessDbContext.cs",
+              "ToolTip": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Infrastructure\\Persistence\\PlantProcessDbContext.cs",
+              "RelativeToolTip": "PlantProcess.Infrastructure\\Persistence\\PlantProcessDbContext.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAoAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-10T09:08:44.956Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
+              "Title": "DataQualityIssue.cs",
+              "DocumentMoniker": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Domain\\Entities\\Quality\\DataQualityIssue.cs",
+              "RelativeDocumentMoniker": "PlantProcess.Domain\\Entities\\Quality\\DataQualityIssue.cs",
+              "ToolTip": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Domain\\Entities\\Quality\\DataQualityIssue.cs",
+              "RelativeToolTip": "PlantProcess.Domain\\Entities\\Quality\\DataQualityIssue.cs",
+              "ViewState": "AgIAACIAAAAAAAAAAAAzwEwAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-11T09:17:52.865Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 13,
+              "Title": "ImportBatch.cs",
+              "DocumentMoniker": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Domain\\Entities\\Integration\\ImportBatch.cs",
+              "RelativeDocumentMoniker": "PlantProcess.Domain\\Entities\\Integration\\ImportBatch.cs",
+              "ToolTip": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Domain\\Entities\\Integration\\ImportBatch.cs",
+              "RelativeToolTip": "PlantProcess.Domain\\Entities\\Integration\\ImportBatch.cs",
+              "ViewState": "AgIAAEcAAAAAAAAAAAAkwGMAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-11T09:13:16.1Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 14,
+              "Title": "IImportBatchService.cs",
+              "DocumentMoniker": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Application\\Services\\Integration\\IImportBatchService.cs",
+              "RelativeDocumentMoniker": "PlantProcess.Application\\Services\\Integration\\IImportBatchService.cs",
+              "ToolTip": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Application\\Services\\Integration\\IImportBatchService.cs",
+              "RelativeToolTip": "PlantProcess.Application\\Services\\Integration\\IImportBatchService.cs",
+              "ViewState": "AgIAAAcAAAAAAAAAAAA1wEIAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-11T09:11:20.98Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 12,
+              "Title": "ProcessStepExecution.cs",
+              "DocumentMoniker": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Domain\\Entities\\Process\\ProcessStepExecution.cs",
+              "RelativeDocumentMoniker": "PlantProcess.Domain\\Entities\\Process\\ProcessStepExecution.cs",
+              "ToolTip": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Domain\\Entities\\Process\\ProcessStepExecution.cs",
+              "RelativeToolTip": "PlantProcess.Domain\\Entities\\Process\\ProcessStepExecution.cs",
+              "ViewState": "AgIAAJMAAAAAAAAAAAAYwL0AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-10T07:47:11.841Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 15,
+              "Title": "StagingRecordService.cs",
+              "DocumentMoniker": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Application\\Services\\Integration\\StagingRecordService.cs",
+              "RelativeDocumentMoniker": "PlantProcess.Application\\Services\\Integration\\StagingRecordService.cs",
+              "ToolTip": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Application\\Services\\Integration\\StagingRecordService.cs",
+              "RelativeToolTip": "PlantProcess.Application\\Services\\Integration\\StagingRecordService.cs",
+              "ViewState": "AgIAAFQAAAAAAAAAAAAYwHAAAAAlAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-11T09:10:50.003Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 16,
+              "Title": "IPlantProcessDbContext.cs",
+              "DocumentMoniker": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Application\\Common\\Persistence\\IPlantProcessDbContext.cs",
+              "RelativeDocumentMoniker": "PlantProcess.Application\\Common\\Persistence\\IPlantProcessDbContext.cs",
+              "ToolTip": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Application\\Common\\Persistence\\IPlantProcessDbContext.cs",
+              "RelativeToolTip": "PlantProcess.Application\\Common\\Persistence\\IPlantProcessDbContext.cs",
+              "ViewState": "AgIAABEAAAAAAAAAAAA6wDIAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-11T09:06:54.024Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 19,
+              "Title": "MaterialEndpoints.cs",
+              "DocumentMoniker": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Api\\Endpoints\\Materials\\MaterialEndpoints.cs",
+              "RelativeDocumentMoniker": "PlantProcess.Api\\Endpoints\\Materials\\MaterialEndpoints.cs",
+              "ToolTip": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Api\\Endpoints\\Materials\\MaterialEndpoints.cs",
+              "RelativeToolTip": "PlantProcess.Api\\Endpoints\\Materials\\MaterialEndpoints.cs",
+              "ViewState": "AgIAAO4AAAAAAAAAAAAYwBgBAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-10T07:53:20.211Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 18,
+              "Title": "ProcessEndpoints.cs",
+              "DocumentMoniker": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Api\\Endpoints\\Process\\ProcessEndpoints.cs",
+              "RelativeDocumentMoniker": "PlantProcess.Api\\Endpoints\\Process\\ProcessEndpoints.cs",
+              "ToolTip": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Api\\Endpoints\\Process\\ProcessEndpoints.cs",
+              "RelativeToolTip": "PlantProcess.Api\\Endpoints\\Process\\ProcessEndpoints.cs",
+              "ViewState": "AgIAAMMCAAAAAAAAAAAYwOUCAAAbAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-10T07:44:45.821Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 17,
+              "Title": "QualityEndpoints.cs",
+              "DocumentMoniker": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Api\\Endpoints\\Quality\\QualityEndpoints.cs",
+              "RelativeDocumentMoniker": "PlantProcess.Api\\Endpoints\\Quality\\QualityEndpoints.cs",
+              "ToolTip": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Api\\Endpoints\\Quality\\QualityEndpoints.cs",
+              "RelativeToolTip": "PlantProcess.Api\\Endpoints\\Quality\\QualityEndpoints.cs",
+              "ViewState": "AgIAAMsAAAAAAAAAAAAYwPMAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-10T13:18:08.083Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 20,
+              "Title": "IntegrationEndpoints.cs",
+              "DocumentMoniker": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Api\\Endpoints\\Integration\\IntegrationEndpoints.cs",
+              "RelativeDocumentMoniker": "PlantProcess.Api\\Endpoints\\Integration\\IntegrationEndpoints.cs",
+              "ToolTip": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Api\\Endpoints\\Integration\\IntegrationEndpoints.cs",
+              "RelativeToolTip": "PlantProcess.Api\\Endpoints\\Integration\\IntegrationEndpoints.cs",
+              "ViewState": "AgIAAIcCAAAAAAAAAAAzwJICAAAmAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-11T08:01:40.453Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 21,
+              "Title": "ConfigurationEndpoints.cs",
+              "DocumentMoniker": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Api\\Endpoints\\Configuration\\ConfigurationEndpoints.cs",
+              "RelativeDocumentMoniker": "PlantProcess.Api\\Endpoints\\Configuration\\ConfigurationEndpoints.cs",
+              "ToolTip": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Api\\Endpoints\\Configuration\\ConfigurationEndpoints.cs",
+              "RelativeToolTip": "PlantProcess.Api\\Endpoints\\Configuration\\ConfigurationEndpoints.cs",
+              "ViewState": "AgIAAB8CAAAAAAAAAAAkwDgCAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-10T07:41:32.142Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 22,
+              "Title": "RiskScoreEndpoints.cs",
+              "DocumentMoniker": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Api\\Endpoints\\Analytics\\RiskScoreEndpoints.cs",
+              "RelativeDocumentMoniker": "PlantProcess.Api\\Endpoints\\Analytics\\RiskScoreEndpoints.cs",
+              "ToolTip": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Api\\Endpoints\\Analytics\\RiskScoreEndpoints.cs",
+              "RelativeToolTip": "PlantProcess.Api\\Endpoints\\Analytics\\RiskScoreEndpoints.cs",
+              "ViewState": "AgIAANIAAAAAAAAAAAAYwPMAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-11T09:02:18.006Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 23,
+              "Title": "MappingDefinitionService.cs",
+              "DocumentMoniker": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Application\\Services\\Integration\\MappingDefinitionService.cs",
+              "RelativeDocumentMoniker": "PlantProcess.Application\\Services\\Integration\\MappingDefinitionService.cs",
+              "ToolTip": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Application\\Services\\Integration\\MappingDefinitionService.cs",
+              "RelativeToolTip": "PlantProcess.Application\\Services\\Integration\\MappingDefinitionService.cs",
+              "ViewState": "AgIAAMMAAAAAAAAAAAAYwOQAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-11T08:07:40.156Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 24,
+              "Title": "IMappingDefinitionService.cs",
+              "DocumentMoniker": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Application\\Services\\Integration\\IMappingDefinitionService.cs",
+              "RelativeDocumentMoniker": "PlantProcess.Application\\Services\\Integration\\IMappingDefinitionService.cs",
+              "ToolTip": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Application\\Services\\Integration\\IMappingDefinitionService.cs",
+              "RelativeToolTip": "PlantProcess.Application\\Services\\Integration\\IMappingDefinitionService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAACAAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-11T08:01:04.071Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 25,
+              "Title": "Worker.cs",
+              "DocumentMoniker": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Workers\\Worker.cs",
+              "RelativeDocumentMoniker": "PlantProcess.Workers\\Worker.cs",
+              "ToolTip": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Workers\\Worker.cs",
+              "RelativeToolTip": "PlantProcess.Workers\\Worker.cs",
+              "ViewState": "AgIAAJoAAAAAAAAAAAAYwPAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-11T08:06:09.07Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 26,
+              "Title": "DataQualityService.cs",
+              "DocumentMoniker": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Application\\Services\\DataQuality\\DataQualityService.cs",
+              "RelativeDocumentMoniker": "PlantProcess.Application\\Services\\DataQuality\\DataQualityService.cs",
+              "ToolTip": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Application\\Services\\DataQuality\\DataQualityService.cs",
+              "RelativeToolTip": "PlantProcess.Application\\Services\\DataQuality\\DataQualityService.cs",
+              "ViewState": "AgIAAN0BAAAAAAAAAAAYwAcCAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-11T08:05:27.753Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 27,
+              "Title": "IDataQualityService.cs",
+              "DocumentMoniker": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Application\\Services\\DataQuality\\IDataQualityService.cs",
+              "RelativeDocumentMoniker": "PlantProcess.Application\\Services\\DataQuality\\IDataQualityService.cs",
+              "ToolTip": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Application\\Services\\DataQuality\\IDataQualityService.cs",
+              "RelativeToolTip": "PlantProcess.Application\\Services\\DataQuality\\IDataQualityService.cs",
+              "ViewState": "AgIAABoAAAAAAAAAAAAkwDMAAAAbAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-11T08:05:17.634Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:128:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:128:0:{13b12e3e-c1b4-4539-9371-4fe9a0d523fc}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:129:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:130:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:131:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:132:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:133:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 28,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Workers\\Program.cs",
+              "RelativeDocumentMoniker": "PlantProcess.Workers\\Program.cs",
+              "ToolTip": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Workers\\Program.cs",
+              "RelativeToolTip": "PlantProcess.Workers\\Program.cs",
+              "ViewState": "AgIAACkAAAAAAAAAAAAnwEIAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-10T07:52:18.816Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 29,
+              "Title": "SourceSystemDefinition.cs",
+              "DocumentMoniker": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Domain\\Entities\\Integration\\SourceSystemDefinition.cs",
+              "RelativeDocumentMoniker": "PlantProcess.Domain\\Entities\\Integration\\SourceSystemDefinition.cs",
+              "ToolTip": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Domain\\Entities\\Integration\\SourceSystemDefinition.cs",
+              "RelativeToolTip": "PlantProcess.Domain\\Entities\\Integration\\SourceSystemDefinition.cs",
+              "ViewState": "AgIAAEkAAAAAAAAAAAAkwGUAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-11T07:58:37.676Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 30,
+              "Title": "appsettings.json",
+              "DocumentMoniker": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Workers\\appsettings.json",
+              "RelativeDocumentMoniker": "PlantProcess.Workers\\appsettings.json",
+              "ToolTip": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Workers\\appsettings.json",
+              "RelativeToolTip": "PlantProcess.Workers\\appsettings.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABoAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-05-11T07:53:18.067Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 31,
+              "Title": "CorrelationIdMiddleware.cs",
+              "DocumentMoniker": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Api\\Middleware\\CorrelationIdMiddleware.cs",
+              "RelativeDocumentMoniker": "PlantProcess.Api\\Middleware\\CorrelationIdMiddleware.cs",
+              "ToolTip": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Api\\Middleware\\CorrelationIdMiddleware.cs",
+              "RelativeToolTip": "PlantProcess.Api\\Middleware\\CorrelationIdMiddleware.cs",
+              "ViewState": "AgIAABQAAAAAAAAAAAAkwEIAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-11T07:51:50.614Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 32,
+              "Title": "FailedBatchWriter.cs",
+              "DocumentMoniker": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Infrastructure\\Resilience\\FailedBatchWriter.cs",
+              "RelativeDocumentMoniker": "PlantProcess.Infrastructure\\Resilience\\FailedBatchWriter.cs",
+              "ToolTip": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Infrastructure\\Resilience\\FailedBatchWriter.cs",
+              "RelativeToolTip": "PlantProcess.Infrastructure\\Resilience\\FailedBatchWriter.cs",
+              "ViewState": "AgIAAAsAAAAAAAAAAAA1wDoAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-10T17:53:38.056Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 33,
+              "Title": "TelemetryChannelBuffer.cs",
+              "DocumentMoniker": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Infrastructure\\Bulk\\TelemetryChannelBuffer.cs",
+              "RelativeDocumentMoniker": "PlantProcess.Infrastructure\\Bulk\\TelemetryChannelBuffer.cs",
+              "ToolTip": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Infrastructure\\Bulk\\TelemetryChannelBuffer.cs",
+              "RelativeToolTip": "PlantProcess.Infrastructure\\Bulk\\TelemetryChannelBuffer.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAACoAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-10T17:47:50.873Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 35,
+              "Title": "WorkflowEndpoints.cs",
+              "DocumentMoniker": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Api\\Endpoints\\Workflow\\WorkflowEndpoints.cs",
+              "RelativeDocumentMoniker": "PlantProcess.Api\\Endpoints\\Workflow\\WorkflowEndpoints.cs",
+              "ToolTip": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Api\\Endpoints\\Workflow\\WorkflowEndpoints.cs",
+              "RelativeToolTip": "PlantProcess.Api\\Endpoints\\Workflow\\WorkflowEndpoints.cs",
+              "ViewState": "AgIAAFYEAAAAAAAAAAAwwHUEAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-10T07:57:49.445Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 34,
+              "Title": "ProcessStepExecutionConfiguration.cs",
+              "DocumentMoniker": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Infrastructure\\Persistence\\Configurations\\Process\\ProcessStepExecutionConfiguration.cs",
+              "RelativeDocumentMoniker": "PlantProcess.Infrastructure\\Persistence\\Configurations\\Process\\ProcessStepExecutionConfiguration.cs",
+              "ToolTip": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Infrastructure\\Persistence\\Configurations\\Process\\ProcessStepExecutionConfiguration.cs",
+              "RelativeToolTip": "PlantProcess.Infrastructure\\Persistence\\Configurations\\Process\\ProcessStepExecutionConfiguration.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAACAAAABbAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-10T13:07:28.553Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 36,
+              "Title": "ParameterDefinitionConfiguration.cs",
+              "DocumentMoniker": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Infrastructure\\Persistence\\Configurations\\Process\\ParameterDefinitionConfiguration.cs",
+              "RelativeDocumentMoniker": "PlantProcess.Infrastructure\\Persistence\\Configurations\\Process\\ParameterDefinitionConfiguration.cs",
+              "ToolTip": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Infrastructure\\Persistence\\Configurations\\Process\\ParameterDefinitionConfiguration.cs",
+              "RelativeToolTip": "PlantProcess.Infrastructure\\Persistence\\Configurations\\Process\\ParameterDefinitionConfiguration.cs",
+              "ViewState": "AgIAAAkAAAAAAAAAAAAAACYAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-10T13:06:59.702Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 37,
+              "Title": "MaterialUnitConfiguration.cs",
+              "DocumentMoniker": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Infrastructure\\Persistence\\Configurations\\Materials\\MaterialUnitConfiguration.cs",
+              "RelativeDocumentMoniker": "PlantProcess.Infrastructure\\Persistence\\Configurations\\Materials\\MaterialUnitConfiguration.cs",
+              "ToolTip": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Infrastructure\\Persistence\\Configurations\\Materials\\MaterialUnitConfiguration.cs",
+              "RelativeToolTip": "PlantProcess.Infrastructure\\Persistence\\Configurations\\Materials\\MaterialUnitConfiguration.cs",
+              "ViewState": "AgIAABEAAAAAAAAAAAAQwBsAAABYAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-10T13:06:35.417Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 38,
+              "Title": "DependencyInjection.cs",
+              "DocumentMoniker": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Infrastructure\\DependencyInjection.cs",
+              "RelativeDocumentMoniker": "PlantProcess.Infrastructure\\DependencyInjection.cs",
+              "ToolTip": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Infrastructure\\DependencyInjection.cs",
+              "RelativeToolTip": "PlantProcess.Infrastructure\\DependencyInjection.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAACgAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-10T12:23:51.373Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 40,
+              "Title": "appsettings.json",
+              "DocumentMoniker": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Api\\appsettings.json",
+              "RelativeDocumentMoniker": "PlantProcess.Api\\appsettings.json",
+              "ToolTip": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Api\\appsettings.json",
+              "RelativeToolTip": "PlantProcess.Api\\appsettings.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAsAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-05-10T09:19:31.764Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 39,
+              "Title": "PlantProcessDesignTimeDbContextFactory.cs",
+              "DocumentMoniker": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Infrastructure\\PlantProcessDesignTimeDbContextFactory.cs",
+              "RelativeDocumentMoniker": "PlantProcess.Infrastructure\\PlantProcessDesignTimeDbContextFactory.cs",
+              "ToolTip": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Infrastructure\\PlantProcessDesignTimeDbContextFactory.cs",
+              "RelativeToolTip": "PlantProcess.Infrastructure\\PlantProcessDesignTimeDbContextFactory.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAAyAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-10T09:16:17.646Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 41,
+              "Title": "PostgresConcurrencyExtensions.cs",
+              "DocumentMoniker": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Infrastructure\\Persistence\\Configurations\\Common\\PostgresConcurrencyExtensions.cs",
+              "RelativeDocumentMoniker": "PlantProcess.Infrastructure\\Persistence\\Configurations\\Common\\PostgresConcurrencyExtensions.cs",
+              "ToolTip": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Infrastructure\\Persistence\\Configurations\\Common\\PostgresConcurrencyExtensions.cs",
+              "RelativeToolTip": "PlantProcess.Infrastructure\\Persistence\\Configurations\\Common\\PostgresConcurrencyExtensions.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABQAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-10T09:10:24.137Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 42,
+              "Title": "RequestResponseLoggingMiddleware.cs",
+              "DocumentMoniker": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Api\\Middleware\\RequestResponseLoggingMiddleware.cs",
+              "RelativeDocumentMoniker": "PlantProcess.Api\\Middleware\\RequestResponseLoggingMiddleware.cs",
+              "ToolTip": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Api\\Middleware\\RequestResponseLoggingMiddleware.cs",
+              "RelativeToolTip": "PlantProcess.Api\\Middleware\\RequestResponseLoggingMiddleware.cs",
+              "ViewState": "AgIAAFAAAAAAAAAAAAAmwHwAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-10T08:56:12.359Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 43,
+              "Title": "ValidationEndpoints.cs",
+              "DocumentMoniker": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Api\\Endpoints\\Validation\\ValidationEndpoints.cs",
+              "RelativeDocumentMoniker": "PlantProcess.Api\\Endpoints\\Validation\\ValidationEndpoints.cs",
+              "ToolTip": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Api\\Endpoints\\Validation\\ValidationEndpoints.cs",
+              "RelativeToolTip": "PlantProcess.Api\\Endpoints\\Validation\\ValidationEndpoints.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAAbAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-10T08:54:05.938Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 44,
+              "Title": "MaterialInvestigationEndpoints.cs",
+              "DocumentMoniker": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Api\\Endpoints\\Materials\\MaterialInvestigationEndpoints.cs",
+              "RelativeDocumentMoniker": "PlantProcess.Api\\Endpoints\\Materials\\MaterialInvestigationEndpoints.cs",
+              "ToolTip": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Api\\Endpoints\\Materials\\MaterialInvestigationEndpoints.cs",
+              "RelativeToolTip": "PlantProcess.Api\\Endpoints\\Materials\\MaterialInvestigationEndpoints.cs",
+              "ViewState": "AgIAABcBAAAAAAAAAAAgwDgBAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-10T07:43:58.373Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 45,
+              "Title": "DataQualityScanEndpoints.cs",
+              "DocumentMoniker": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Api\\Endpoints\\DataQuality\\DataQualityScanEndpoints.cs",
+              "RelativeDocumentMoniker": "PlantProcess.Api\\Endpoints\\DataQuality\\DataQualityScanEndpoints.cs",
+              "ToolTip": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Api\\Endpoints\\DataQuality\\DataQualityScanEndpoints.cs",
+              "RelativeToolTip": "PlantProcess.Api\\Endpoints\\DataQuality\\DataQualityScanEndpoints.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA0BAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-10T07:43:14.202Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 46,
+              "Title": "DataQualityEndpoints.cs",
+              "DocumentMoniker": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Api\\Endpoints\\DataQuality\\DataQualityEndpoints.cs",
+              "RelativeDocumentMoniker": "PlantProcess.Api\\Endpoints\\DataQuality\\DataQualityEndpoints.cs",
+              "ToolTip": "C:\\Workspace\\PlantProcess-IQ\\PlantProcess.Api\\Endpoints\\DataQuality\\DataQualityEndpoints.cs",
+              "RelativeToolTip": "PlantProcess.Api\\Endpoints\\DataQuality\\DataQualityEndpoints.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-10T07:42:57.939Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
