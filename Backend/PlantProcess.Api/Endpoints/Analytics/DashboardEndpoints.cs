@@ -244,31 +244,49 @@ public static class DashboardEndpoints
                 0))
             .ToListAsync(cancellationToken);
 
-        var riskClasses = await dbContext.RiskScores
+        var riskClassRows = await dbContext.RiskScores
             .AsNoTracking()
+            .Where(x => !x.IsDeleted)
             .Where(x => x.RiskClass != null && x.RiskClass != "")
-            .GroupBy(x => x.RiskClass!)
-            .Select(x => new DashboardReferenceItemDto(
-                x.Key,
-                x.Key,
-                x.Key,
-                "RiskClass",
-                x.Count()))
+            .GroupBy(x => x.RiskClass)
+            .Select(x => new
+            {
+                Code = x.Key!,
+                Count = x.Count()
+            })
             .OrderBy(x => x.Code)
             .ToListAsync(cancellationToken);
 
-        var shifts = await dbContext.ProcessStepExecutions
-            .AsNoTracking()
-            .Where(x => x.CrewCode != null && x.CrewCode != "")
-            .GroupBy(x => x.CrewCode!)
+        var riskClasses = riskClassRows
             .Select(x => new DashboardReferenceItemDto(
-                x.Key,
-                x.Key,
-                x.Key,
-                "Crew/Shift",
-                x.Count()))
+                x.Code,
+                x.Code,
+                x.Code,
+                "RiskClass",
+                x.Count))
+            .ToList();
+
+        var shiftRows = await dbContext.ProcessStepExecutions
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted)
+            .Where(x => x.CrewCode != null && x.CrewCode != "")
+            .GroupBy(x => x.CrewCode)
+            .Select(x => new
+            {
+                Code = x.Key!,
+                Count = x.Count()
+            })
             .OrderBy(x => x.Code)
             .ToListAsync(cancellationToken);
+
+        var shifts = shiftRows
+            .Select(x => new DashboardReferenceItemDto(
+                x.Code,
+                x.Code,
+                x.Code,
+                "Crew/Shift",
+                x.Count))
+            .ToList();
 
         var result = new DashboardReferenceDataDto(
             DateTime.UtcNow,

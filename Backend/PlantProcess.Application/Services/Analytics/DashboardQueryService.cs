@@ -415,11 +415,19 @@ public sealed class DashboardQueryService : IDashboardQueryService
         var materialIds = await GetFilteredMaterialIdsAsync(normalized, cancellationToken);
         var materialSet = materialIds.ToHashSet();
 
+       var materialsQuery = _dbContext.MaterialUnits
+            .AsNoTracking()
+            .Where(material => materialSet.Contains(material.Id));
+
+        materialsQuery = ApplyMaterialSort(
+            materialsQuery,
+            normalized.SortBy,
+            normalized.SafeSortDirection);
+
         var queryable =
-            from material in _dbContext.MaterialUnits.AsNoTracking()
+            from material in materialsQuery
             join site in _dbContext.Sites.AsNoTracking()
                 on material.SiteId equals site.Id
-            where materialSet.Contains(material.Id)
             select new
             {
                 material.Id,
@@ -433,9 +441,6 @@ public sealed class DashboardQueryService : IDashboardQueryService
                 material.ProductionEndUtc,
                 material.SourceSystem
             };
-
-        queryable = ApplyMaterialSort(queryable, normalized.SortBy, normalized.SafeSortDirection);
-
         var totalCount = await queryable.CountAsync(cancellationToken);
 
         var rows = await queryable
@@ -652,35 +657,82 @@ public sealed class DashboardQueryService : IDashboardQueryService
         }
     }
 
-    private static IQueryable<T> ApplyMaterialSort<T>(
-        IQueryable<T> queryable,
-        string? sortBy,
-        string sortDirection)
-    {
-        // This method is intentionally generic but expects the anonymous type
-        // produced in SearchMaterialsAsync. EF Core can translate these dynamic
-        // branches because each branch is strongly typed at compile time.
-        return (sortBy ?? "").Trim().ToLowerInvariant() switch
+    private static IQueryable<PlantProcess.Domain.Entities.Materials.MaterialUnit> ApplyMaterialSort(
+    IQueryable<PlantProcess.Domain.Entities.Materials.MaterialUnit> queryable,
+    string? sortBy,
+    string sortDirection)
+{
+    var normalizedSortBy = string.IsNullOrWhiteSpace(sortBy)
+        ? "productionstartutc"
+        : sortBy.Trim().ToLowerInvariant();
+
+        var ascending = string.Equals(sortDirection, "asc", StringComparison.OrdinalIgnoreCase);
+
+        return normalizedSortBy switch
         {
-            "materialcode" => sortDirection == "asc"
-                ? queryable.OrderBy(x => EF.Property<string>(x!, "MaterialCode"))
-                : queryable.OrderByDescending(x => EF.Property<string>(x!, "MaterialCode")),
+            "materialcode" => ascending
+                ? queryable
+                    .OrderBy(x => x.MaterialCode)
+                    .ThenByDescending(x => x.ProductionStartUtc)
+                : queryable
+                    .OrderByDescending(x => x.MaterialCode)
+                    .ThenByDescending(x => x.ProductionStartUtc),
 
-            "materialunittype" => sortDirection == "asc"
-                ? queryable.OrderBy(x => EF.Property<string>(x!, "MaterialUnitType"))
-                : queryable.OrderByDescending(x => EF.Property<string>(x!, "MaterialUnitType")),
+            "materialunittype" => ascending
+                ? queryable
+                    .OrderBy(x => x.MaterialUnitType)
+                    .ThenBy(x => x.MaterialCode)
+                : queryable
+                    .OrderByDescending(x => x.MaterialUnitType)
+                    .ThenBy(x => x.MaterialCode),
 
-            "productfamily" => sortDirection == "asc"
-                ? queryable.OrderBy(x => EF.Property<string>(x!, "ProductFamily"))
-                : queryable.OrderByDescending(x => EF.Property<string>(x!, "ProductFamily")),
+            "productfamily" => ascending
+                ? queryable
+                    .OrderBy(x => x.ProductFamily ?? string.Empty)
+                    .ThenBy(x => x.MaterialCode)
+                : queryable
+                    .OrderByDescending(x => x.ProductFamily ?? string.Empty)
+                    .ThenBy(x => x.MaterialCode),
 
-            "productionstartutc" => sortDirection == "asc"
-                ? queryable.OrderBy(x => EF.Property<DateTime?>(x!, "ProductionStartUtc"))
-                : queryable.OrderByDescending(x => EF.Property<DateTime?>(x!, "ProductionStartUtc")),
+            "gradeorrecipe" => ascending
+                ? queryable
+                    .OrderBy(x => x.GradeOrRecipe ?? string.Empty)
+                    .ThenBy(x => x.MaterialCode)
+                : queryable
+                    .OrderByDescending(x => x.GradeOrRecipe ?? string.Empty)
+                    .ThenBy(x => x.MaterialCode),
 
-            _ => sortDirection == "asc"
-                ? queryable.OrderBy(x => EF.Property<DateTime?>(x!, "ProductionStartUtc"))
-                : queryable.OrderByDescending(x => EF.Property<DateTime?>(x!, "ProductionStartUtc"))
+            "sourcesystem" => ascending
+                ? queryable
+                    .OrderBy(x => x.SourceSystem ?? string.Empty)
+                    .ThenBy(x => x.MaterialCode)
+                : queryable
+                    .OrderByDescending(x => x.SourceSystem ?? string.Empty)
+                    .ThenBy(x => x.MaterialCode),
+
+            "productionendutc" => ascending
+                ? queryable
+                    .OrderBy(x => x.ProductionEndUtc)
+                    .ThenBy(x => x.MaterialCode)
+                : queryable
+                    .OrderByDescending(x => x.ProductionEndUtc)
+                    .ThenBy(x => x.MaterialCode),
+
+            "productionstartutc" => ascending
+                ? queryable
+                    .OrderBy(x => x.ProductionStartUtc)
+                    .ThenBy(x => x.MaterialCode)
+                : queryable
+                    .OrderByDescending(x => x.ProductionStartUtc)
+                    .ThenBy(x => x.MaterialCode),
+
+            _ => ascending
+                ? queryable
+                    .OrderBy(x => x.ProductionStartUtc)
+                    .ThenBy(x => x.MaterialCode)
+                : queryable
+                    .OrderByDescending(x => x.ProductionStartUtc)
+                    .ThenBy(x => x.MaterialCode)
         };
     }
 
