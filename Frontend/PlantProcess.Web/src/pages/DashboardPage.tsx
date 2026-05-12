@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { plantProcessApi } from "../api/plantProcessApi";
-
+import type { ReactNode } from "react";
 import {
   Activity,
   AlertTriangle,
@@ -8,39 +7,44 @@ import {
   Database,
   Factory,
   Gauge,
+  Grid3X3,
+  Maximize2,
   RefreshCw,
+  ScatterChart as ScatterIcon,
   ShieldAlert,
   Workflow,
 } from "lucide-react";
-
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  Line,
-  LineChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
-
+import { plantProcessApi } from "../api/plantProcessApi";
 import type {
   DashboardMaterialRow,
   DashboardWorkspace,
   SortDirection,
 } from "../api/plantProcessApi";
-
 import { ActiveFilterChips } from "../components/ActiveFilterChips";
 import { DashboardFilterBar } from "../components/DashboardFilterBar";
 import { ErrorPanel, LoadingPanel } from "../components/AsyncState";
 import { SortableDataTable } from "../components/SortableDataTable";
 import type { SortableColumn } from "../components/SortableDataTable";
+import { DashboardWidgetCard } from "../components/dashboard/DashboardWidgetCard";
+import { DashboardGridLayout } from "../components/dashboard/DashboardGridLayout";
+import { DrilldownDrawer } from "../components/dashboard/DrilldownDrawer";
+import { SelectionBreadcrumb } from "../components/dashboard/SelectionBreadcrumb";
+import {
+  InteractiveBarChart,
+  InteractiveHeatmap,
+  InteractiveLineChart,
+  InteractivePieChart,
+  InteractiveScatterChart,
+} from "../components/charts/InteractiveCharts";
+import type { ChartRow } from "../components/charts/InteractiveCharts";
 import { useDashboardFilters } from "../state/DashboardFilterContext";
+import { useDashboardSelections } from "../state/DashboardSelectionContext";
 
 export function DashboardPage() {
-  const { filters, mergeFilters, setFilter } = useDashboardFilters();
+  const { filters, setFilter } = useDashboardFilters();
+  const { applySelection, openDrilldown, getWidgetState } =
+    useDashboardSelections();
+
   const [workspace, setWorkspace] = useState<DashboardWorkspace | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshingReadModels, setIsRefreshingReadModels] = useState(false);
@@ -91,6 +95,7 @@ export function DashboardPage() {
           page: filters.page ?? 1,
           pageSize: filters.pageSize ?? 25,
         });
+
         if (!ignore) setWorkspace(result);
       } catch (loadError) {
         if (!ignore) setError(loadError);
@@ -112,22 +117,97 @@ export function DashboardPage() {
   const dataQuality = workspace?.dataQuality;
   const materials = workspace?.materials;
 
-  const trendData = useMemo(() => {
+  const trendData = useMemo<ChartRow[]>(() => {
     return (overview?.defectTrend ?? []).map((x: any) => ({
       date: new Date(x.dateUtc).toLocaleDateString(),
+      isoDate: x.dateUtc,
       defectRate: Number(x.defectRatePercent ?? 0),
       defects: Number(x.defectEventCount ?? 0),
       materials: Number(x.materialCount ?? 0),
     }));
   }, [overview]);
 
-  const defectData = useMemo(() => {
+  const defectData = useMemo<ChartRow[]>(() => {
     return (quality?.defectBreakdown ?? []).map((x: any) => ({
       name: x.defectCode ?? x.defectName ?? "Unknown",
+      label: x.defectName ?? x.defectCode ?? "Unknown",
       count: Number(x.count ?? 0),
-      rate: Number(x.percentOfDefects ?? 0),
+      percent: Number(x.percentOfDefects ?? 0),
     }));
   }, [quality]);
+
+  const riskClassData = useMemo<ChartRow[]>(() => {
+    return (risk?.riskClassBreakdown ?? []).map((x: any) => ({
+      riskClass: x.riskClass ?? "Unknown",
+      count: Number(x.count ?? 0),
+      percent: Number(x.percent ?? 0),
+    }));
+  }, [risk]);
+
+  const sourceContributionData = useMemo<ChartRow[]>(() => {
+    const grouped = new Map<string, number>();
+
+    for (const row of materials?.items ?? []) {
+      const source = row.sourceSystem || "Unknown";
+      grouped.set(source, (grouped.get(source) ?? 0) + 1);
+    }
+
+    return Array.from(grouped.entries()).map(([sourceSystem, count]) => ({
+      sourceSystem,
+      count,
+    }));
+  }, [materials]);
+
+  const riskScatterData = useMemo<ChartRow[]>(() => {
+    return (materials?.items ?? [])
+      .filter(
+        (row) =>
+          row.latestRiskScore !== undefined && row.latestRiskScore !== null
+      )
+      .map((row) => ({
+        materialCode: row.materialCode,
+        riskScore: Number(row.latestRiskScore ?? 0),
+        defects: row.defectEventCount,
+        processSteps: row.processStepCount,
+        parameterObservations: row.parameterObservationCount,
+      }));
+  }, [materials]);
+
+  const heatmapData = useMemo<ChartRow[]>(() => {
+    const grouped = new Map<string, number>();
+
+    for (const row of materials?.items ?? []) {
+      const riskClass = row.latestRiskClass || "Unknown";
+      const materialType = row.materialUnitType || "Unknown";
+      const key = `${riskClass}||${materialType}`;
+      grouped.set(key, (grouped.get(key) ?? 0) + 1);
+    }
+
+    return Array.from(grouped.entries()).map(([key, count]) => {
+      const [riskClass, materialType] = key.split("||");
+      return {
+        riskClass,
+        materialType,
+        count,
+      };
+    });
+  }, [materials]);
+
+  const dataQualityRows = useMemo<Record<string, unknown>[]>(() => {
+    return (dataQuality?.issueTypeBreakdown ?? []).map((x: any) => ({
+      issueType: x.code,
+      count: x.count,
+      percent: x.percent,
+    }));
+  }, [dataQuality]);
+
+  const topContributors = useMemo<ChartRow[]>(() => {
+    return (overview?.topRiskContributors ?? []).map((x: any) => ({
+      contributorCode: x.contributorCode ?? x.contributorType ?? "Unknown",
+      count: Number(x.count ?? 0),
+      averageRiskScore: Number(x.averageRiskScore ?? 0),
+    }));
+  }, [overview]);
 
   const materialColumns: SortableColumn<DashboardMaterialRow>[] = [
     {
@@ -137,7 +217,23 @@ export function DashboardPage() {
       render: (row) => (
         <button
           className="link-button"
-          onClick={() => mergeFilters({ materialCode: row.materialCode })}
+          onClick={() => {
+            applySelection({
+              type: "material",
+              field: "materialCode",
+              value: row.materialCode,
+              label: row.materialCode,
+              sourceWidget: "Material Explorer",
+            });
+
+            openDrilldown({
+              title: row.materialCode,
+              subtitle: "Material drilldown",
+              type: "material",
+              payload: row,
+            });
+          }}
+          type="button"
         >
           {row.materialCode}
         </button>
@@ -163,7 +259,23 @@ export function DashboardPage() {
     {
       key: "sourceSystem",
       title: "Source",
-      render: (row) => row.sourceSystem ?? "-",
+      render: (row) => (
+        <button
+          className="link-button"
+          onClick={() =>
+            applySelection({
+              type: "sourceSystem",
+              field: "sourceSystem",
+              value: row.sourceSystem ?? "Unknown",
+              label: row.sourceSystem ?? "Unknown",
+              sourceWidget: "Material Explorer",
+            })
+          }
+          type="button"
+        >
+          {row.sourceSystem ?? "-"}
+        </button>
+      ),
     },
     {
       key: "processStepCount",
@@ -195,9 +307,21 @@ export function DashboardPage() {
       title: "Risk Class",
       render: (row) =>
         row.latestRiskClass ? (
-          <span className={`risk-pill risk-${row.latestRiskClass.toLowerCase()}`}>
+          <button
+            className={`risk-pill risk-${row.latestRiskClass.toLowerCase()}`}
+            onClick={() =>
+              applySelection({
+                type: "riskClass",
+                field: "riskClass",
+                value: row.latestRiskClass!,
+                label: row.latestRiskClass!,
+                sourceWidget: "Material Explorer",
+              })
+            }
+            type="button"
+          >
             {row.latestRiskClass}
-          </span>
+          </button>
         ) : (
           "-"
         ),
@@ -219,21 +343,42 @@ export function DashboardPage() {
     setFilter("page", 1);
   }
 
-  return (
-    <main className="page-shell">
-      <DashboardFilterBar />
-      <ActiveFilterChips />
+  const defectChartType = getWidgetState("defectBreakdown").chartType ?? "bar";
+  const trendChartType = getWidgetState("defectTrend").chartType ?? "line";
+  const riskChartType = getWidgetState("riskDistribution").chartType ?? "donut";
+  const sourceChartType =
+    getWidgetState("sourceContribution").chartType ?? "bar";
 
-      <section className="toolbar-row">
+  return (
+    <main className="page-shell advanced-dashboard-shell">
+      <section className="dashboard-hero">
+        <div>
+          <div className="eyebrow">
+            <Maximize2 size={14} />
+            Advanced interactive workspace
+          </div>
+          <h1>PlantProcess IQ Manufacturing Intelligence</h1>
+          <p>
+            Click any chart, widget, or material row to filter the full
+            dashboard. Drag and resize widgets to build your own analysis
+            layout.
+          </p>
+        </div>
+
         <button
-          className="secondary-button"
+          className="primary-button"
           onClick={refreshReadModels}
           disabled={isRefreshingReadModels}
+          type="button"
         >
           <RefreshCw size={16} />
           {isRefreshingReadModels ? "Refreshing..." : "Refresh read models"}
         </button>
       </section>
+
+      <DashboardFilterBar />
+      <ActiveFilterChips />
+      <SelectionBreadcrumb />
 
       {isLoading ? <LoadingPanel /> : null}
       {error ? <ErrorPanel error={error} /> : null}
@@ -241,40 +386,64 @@ export function DashboardPage() {
       {!isLoading && !error && workspace ? (
         <>
           <section className="metric-grid">
-            <Metric
+            <InteractiveMetric
               icon={<Factory size={20} />}
               label="Materials"
               value={overview?.materials ?? 0}
               note="Filtered canonical material population"
             />
-            <Metric
+
+            <InteractiveMetric
               icon={<Workflow size={20} />}
               label="Process Steps"
               value={overview?.processSteps ?? 0}
               note="Filtered process executions"
             />
-            <Metric
+
+            <InteractiveMetric
               icon={<Database size={20} />}
               label="Parameter Observations"
               value={overview?.parameterObservations ?? 0}
               note="Aggregated dashboard data"
             />
-            <Metric
+
+            <InteractiveMetric
               icon={<ShieldAlert size={20} />}
               label="Defect Rate"
               value={`${formatNumber(overview?.defectRatePercent ?? 0)}%`}
-              note="Quality defect ratio"
+              note="Click to focus default defect"
               accent="danger"
+              onClick={() =>
+                applySelection({
+                  type: "defect",
+                  field: "defectType",
+                  value: filters.defectType || "SurfaceCrack",
+                  label: filters.defectType || "SurfaceCrack",
+                  sourceWidget: "KPI Defect Rate",
+                })
+              }
             />
-            <Metric
+
+            <InteractiveMetric
               icon={<Gauge size={20} />}
               label="High Risk Materials"
               value={overview?.highRiskMaterials ?? 0}
-              note={`${formatNumber(overview?.highRiskRatePercent ?? 0)}% high risk`}
+              note={`${formatNumber(
+                overview?.highRiskRatePercent ?? 0
+              )}% high risk`}
               accent="warning"
-              onClick={() => mergeFilters({ riskClass: "High", page: 1 })}
+              onClick={() =>
+                applySelection({
+                  type: "riskClass",
+                  field: "riskClass",
+                  value: "High",
+                  label: "High",
+                  sourceWidget: "KPI High Risk Materials",
+                })
+              }
             />
-            <Metric
+
+            <InteractiveMetric
               icon={<AlertTriangle size={20} />}
               label="Data Quality Issues"
               value={overview?.dataQualityIssues ?? 0}
@@ -282,179 +451,427 @@ export function DashboardPage() {
             />
           </section>
 
-          <section className="dashboard-grid">
-            <Panel
-              title="Defect Trend"
-              subtitle="Backend filtered by time/site/source/material context."
-              icon={<Activity size={18} />}
-              className="wide-panel"
-            >
-              <div className="chart-box">
-                <ResponsiveContainer width="100%" height={280}>
-                  <LineChart data={trendData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis />
-                    <Tooltip />
-                    <Line
-                      type="monotone"
-                      dataKey="defectRate"
-                      name="Defect rate %"
-                      strokeWidth={3}
-                      dot={{ r: 4 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </Panel>
+          <DashboardGridLayout>
+            <div key="defectTrend">
+              <DashboardWidgetCard
+                widgetId="defectTrend"
+                title="Defect Trend"
+                subtitle="Click a date point to filter from that date."
+                icon={<Activity size={18} />}
+                chartTypes={["line", "area", "bar", "table"]}
+                exportRows={trendData as Record<string, unknown>[]}
+              >
+                {trendChartType === "line" ? (
+                  <InteractiveLineChart
+                    data={trendData}
+                    categoryKey="date"
+                    valueKey="defectRate"
+                    selection={{
+                      type: "dateRange",
+                      field: "fromUtc",
+                      sourceWidget: "Defect Trend",
+                      valueKey: "isoDate",
+                      labelKey: "date",
+                    }}
+                  />
+                ) : trendChartType === "area" ? (
+                  <InteractiveLineChart
+                    data={trendData}
+                    categoryKey="date"
+                    valueKey="defectRate"
+                    area
+                    selection={{
+                      type: "dateRange",
+                      field: "fromUtc",
+                      sourceWidget: "Defect Trend",
+                      valueKey: "isoDate",
+                      labelKey: "date",
+                    }}
+                  />
+                ) : trendChartType === "bar" ? (
+                  <InteractiveBarChart
+                    data={trendData}
+                    categoryKey="date"
+                    valueKey="defects"
+                    selection={{
+                      type: "dateRange",
+                      field: "fromUtc",
+                      sourceWidget: "Defect Trend",
+                      valueKey: "isoDate",
+                      labelKey: "date",
+                    }}
+                  />
+                ) : (
+                  <MiniTable rows={trendData} />
+                )}
+              </DashboardWidgetCard>
+            </div>
 
-            <Panel
-              title="Defect Breakdown"
-              subtitle="Click a defect to cross-filter the workspace."
-              icon={<BarChart3 size={18} />}
-            >
-              <div className="chart-box">
-                <ResponsiveContainer width="100%" height={280}>
-                  <BarChart data={defectData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar
-                      dataKey="count"
-                      name="Defects"
-                      onClick={(entry: any) =>
-                        mergeFilters({ defectType: entry.name, page: 1 })
-                      }
-                    >
-                      {defectData.map((_: any, index: number) => (
-                        <Cell key={index} className="clickable-bar" />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </Panel>
+            <div key="defectBreakdown">
+              <DashboardWidgetCard
+                widgetId="defectBreakdown"
+                title="Defect Breakdown"
+                subtitle="Click bar/pie/donut slice to filter defect type."
+                icon={<BarChart3 size={18} />}
+                chartTypes={["bar", "pie", "donut", "table"]}
+                exportRows={defectData as Record<string, unknown>[]}
+              >
+                {defectChartType === "bar" ? (
+                  <InteractiveBarChart
+                    data={defectData}
+                    categoryKey="name"
+                    valueKey="count"
+                    selection={{
+                      type: "defect",
+                      field: "defectType",
+                      sourceWidget: "Defect Breakdown",
+                      valueKey: "name",
+                      labelKey: "label",
+                    }}
+                  />
+                ) : defectChartType === "pie" ? (
+                  <InteractivePieChart
+                    data={defectData}
+                    categoryKey="name"
+                    valueKey="count"
+                    selection={{
+                      type: "defect",
+                      field: "defectType",
+                      sourceWidget: "Defect Breakdown",
+                      valueKey: "name",
+                      labelKey: "label",
+                    }}
+                  />
+                ) : defectChartType === "donut" ? (
+                  <InteractivePieChart
+                    data={defectData}
+                    categoryKey="name"
+                    valueKey="count"
+                    donut
+                    selection={{
+                      type: "defect",
+                      field: "defectType",
+                      sourceWidget: "Defect Breakdown",
+                      valueKey: "name",
+                      labelKey: "label",
+                    }}
+                  />
+                ) : (
+                  <MiniTable rows={defectData} />
+                )}
+              </DashboardWidgetCard>
+            </div>
 
-            <Panel
-              title="Risk Classes"
-              subtitle="Click risk class to filter the material table."
-              icon={<Gauge size={18} />}
-            >
-              <div className="table-wrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Risk Class</th>
-                      <th>Count</th>
-                      <th>Percent</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(risk?.riskClassBreakdown ?? []).map((item: any) => (
-                      <tr
-                        key={item.riskClass}
-                        onClick={() =>
-                          mergeFilters({ riskClass: item.riskClass, page: 1 })
-                        }
-                      >
-                        <td>{item.riskClass ?? "Unknown"}</td>
-                        <td>{item.count}</td>
-                        <td>{formatNumber(item.percent ?? 0)}%</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </Panel>
+            <div key="riskDistribution">
+              <DashboardWidgetCard
+                widgetId="riskDistribution"
+                title="Risk Class Distribution"
+                subtitle="Click class to filter materials by risk."
+                icon={<Gauge size={18} />}
+                chartTypes={["donut", "pie", "bar", "table"]}
+                exportRows={riskClassData as Record<string, unknown>[]}
+              >
+                {riskChartType === "donut" ? (
+                  <InteractivePieChart
+                    data={riskClassData}
+                    categoryKey="riskClass"
+                    valueKey="count"
+                    donut
+                    selection={{
+                      type: "riskClass",
+                      field: "riskClass",
+                      sourceWidget: "Risk Distribution",
+                      valueKey: "riskClass",
+                      labelKey: "riskClass",
+                    }}
+                  />
+                ) : riskChartType === "pie" ? (
+                  <InteractivePieChart
+                    data={riskClassData}
+                    categoryKey="riskClass"
+                    valueKey="count"
+                    selection={{
+                      type: "riskClass",
+                      field: "riskClass",
+                      sourceWidget: "Risk Distribution",
+                      valueKey: "riskClass",
+                      labelKey: "riskClass",
+                    }}
+                  />
+                ) : riskChartType === "bar" ? (
+                  <InteractiveBarChart
+                    data={riskClassData}
+                    categoryKey="riskClass"
+                    valueKey="count"
+                    selection={{
+                      type: "riskClass",
+                      field: "riskClass",
+                      sourceWidget: "Risk Distribution",
+                      valueKey: "riskClass",
+                      labelKey: "riskClass",
+                    }}
+                  />
+                ) : (
+                  <MiniTable rows={riskClassData} />
+                )}
+              </DashboardWidgetCard>
+            </div>
 
-            <Panel
-              title="Data Quality"
-              subtitle="Readiness signals for selected material population."
-              icon={<Database size={18} />}
-              className="wide-panel"
-            >
-              <div className="table-wrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Issue / Severity</th>
-                      <th>Count</th>
-                      <th>Percent</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(dataQuality?.issueTypeBreakdown ?? []).map((item: any) => (
-                      <tr key={item.code}>
-                        <td>{item.code}</td>
-                        <td>{item.count}</td>
-                        <td>{formatNumber(item.percent ?? 0)}%</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </Panel>
+            <div key="sourceContribution">
+              <DashboardWidgetCard
+                widgetId="sourceContribution"
+                title="Source System Contribution"
+                subtitle="Click source to filter by source system."
+                icon={<Database size={18} />}
+                chartTypes={["bar", "pie", "donut", "table"]}
+                exportRows={sourceContributionData as Record<string, unknown>[]}
+              >
+                {sourceChartType === "bar" ? (
+                  <InteractiveBarChart
+                    data={sourceContributionData}
+                    categoryKey="sourceSystem"
+                    valueKey="count"
+                    selection={{
+                      type: "sourceSystem",
+                      field: "sourceSystem",
+                      sourceWidget: "Source Contribution",
+                      valueKey: "sourceSystem",
+                      labelKey: "sourceSystem",
+                    }}
+                  />
+                ) : sourceChartType === "pie" ? (
+                  <InteractivePieChart
+                    data={sourceContributionData}
+                    categoryKey="sourceSystem"
+                    valueKey="count"
+                    selection={{
+                      type: "sourceSystem",
+                      field: "sourceSystem",
+                      sourceWidget: "Source Contribution",
+                      valueKey: "sourceSystem",
+                      labelKey: "sourceSystem",
+                    }}
+                  />
+                ) : sourceChartType === "donut" ? (
+                  <InteractivePieChart
+                    data={sourceContributionData}
+                    categoryKey="sourceSystem"
+                    valueKey="count"
+                    donut
+                    selection={{
+                      type: "sourceSystem",
+                      field: "sourceSystem",
+                      sourceWidget: "Source Contribution",
+                      valueKey: "sourceSystem",
+                      labelKey: "sourceSystem",
+                    }}
+                  />
+                ) : (
+                  <MiniTable rows={sourceContributionData} />
+                )}
+              </DashboardWidgetCard>
+            </div>
 
-            <Panel
-              title="Material Search and Drilldown"
-              subtitle="Backend paginated and sortable. Click material code to filter the whole workspace."
-              icon={<Factory size={18} />}
-              className="wide-panel"
-            >
-              <SortableDataTable
-                rows={materials?.items ?? []}
-                columns={materialColumns}
-                sortBy={filters.sortBy}
-                sortDirection={filters.sortDirection ?? "desc"}
-                onSort={updateSort}
-                emptyText="No materials match the selected filters."
-              />
+            <div key="riskScatter">
+              <DashboardWidgetCard
+                widgetId="riskScatter"
+                title="Risk vs Defect Scatter"
+                subtitle="Click a material point to filter and open drilldown."
+                icon={<ScatterIcon size={18} />}
+                chartTypes={["scatter", "table"]}
+                exportRows={riskScatterData as Record<string, unknown>[]}
+              >
+                {(getWidgetState("riskScatter").chartType ?? "scatter") ===
+                "scatter" ? (
+                  <InteractiveScatterChart
+                    data={riskScatterData}
+                    xKey="defects"
+                    yKey="riskScore"
+                    zKey="parameterObservations"
+                    labelKey="materialCode"
+                    selection={{
+                      type: "material",
+                      field: "materialCode",
+                      sourceWidget: "Risk vs Defect Scatter",
+                      valueKey: "materialCode",
+                      labelKey: "materialCode",
+                    }}
+                  />
+                ) : (
+                  <MiniTable rows={riskScatterData} />
+                )}
+              </DashboardWidgetCard>
+            </div>
 
-              <div className="pagination-row">
-                <button
-                  className="secondary-button"
-                  disabled={(materials?.page ?? 1) <= 1}
-                  onClick={() => setFilter("page", Math.max((materials?.page ?? 1) - 1, 1))}
-                >
-                  Previous
-                </button>
+            <div key="qualityHeatmap">
+              <DashboardWidgetCard
+                widgetId="qualityHeatmap"
+                title="Quality Heatmap"
+                subtitle="Material type vs risk class density from current result set."
+                icon={<Grid3X3 size={18} />}
+                chartTypes={["heatmap", "table"]}
+                exportRows={heatmapData as Record<string, unknown>[]}
+              >
+                {(getWidgetState("qualityHeatmap").chartType ?? "heatmap") ===
+                "heatmap" ? (
+                  <InteractiveHeatmap
+                    data={heatmapData}
+                    xKey="materialType"
+                    yKey="riskClass"
+                    valueKey="count"
+                    selection={{
+                      type: "riskClass",
+                      field: "riskClass",
+                      sourceWidget: "Quality Heatmap",
+                      valueKey: "riskClass",
+                      labelKey: "riskClass",
+                    }}
+                  />
+                ) : (
+                  <MiniTable rows={heatmapData} />
+                )}
+              </DashboardWidgetCard>
+            </div>
 
-                <span>
-                  Page {materials?.page ?? 1} / {materials?.totalPages ?? 0} —
-                  {materials?.totalCount ?? 0} materials
-                </span>
+            <div key="topContributors">
+              <DashboardWidgetCard
+                widgetId="topContributors"
+                title="Top Risk Contributors"
+                subtitle="Click contributor to use it as selected parameter."
+                icon={<Activity size={18} />}
+                chartTypes={["bar", "table"]}
+                exportRows={topContributors as Record<string, unknown>[]}
+              >
+                {(getWidgetState("topContributors").chartType ?? "bar") ===
+                "bar" ? (
+                  <InteractiveBarChart
+                    data={topContributors}
+                    categoryKey="contributorCode"
+                    valueKey="count"
+                    selection={{
+                      type: "parameter",
+                      field: "parameterCode",
+                      sourceWidget: "Top Risk Contributors",
+                      valueKey: "contributorCode",
+                      labelKey: "contributorCode",
+                    }}
+                  />
+                ) : (
+                  <MiniTable rows={topContributors} />
+                )}
+              </DashboardWidgetCard>
+            </div>
 
-                <button
-                  className="secondary-button"
-                  disabled={(materials?.page ?? 1) >= (materials?.totalPages ?? 0)}
-                  onClick={() => setFilter("page", (materials?.page ?? 1) + 1)}
-                >
-                  Next
-                </button>
+            <div key="dataQuality">
+              <DashboardWidgetCard
+                widgetId="dataQuality"
+                title="Data Quality"
+                subtitle="Readiness signals for selected material population."
+                icon={<AlertTriangle size={18} />}
+                chartTypes={["table", "bar"]}
+                exportRows={dataQualityRows}
+              >
+                {(getWidgetState("dataQuality").chartType ?? "table") ===
+                "bar" ? (
+                  <InteractiveBarChart
+                    data={dataQualityRows as ChartRow[]}
+                    categoryKey="issueType"
+                    valueKey="count"
+                    selection={{
+                      type: "generic",
+                      field: "materialCode",
+                      sourceWidget: "Data Quality",
+                      valueKey: "issueType",
+                      labelKey: "issueType",
+                    }}
+                  />
+                ) : (
+                  <MiniTable rows={dataQualityRows as ChartRow[]} />
+                )}
+              </DashboardWidgetCard>
+            </div>
 
-                <select
-                  value={filters.pageSize ?? 25}
-                  onChange={(event) => {
-                    setFilter("pageSize", Number(event.target.value));
-                    setFilter("page", 1);
-                  }}
-                >
-                  <option value={10}>10 rows</option>
-                  <option value={25}>25 rows</option>
-                  <option value={50}>50 rows</option>
-                  <option value={100}>100 rows</option>
-                </select>
-              </div>
-            </Panel>
-          </section>
+            <div key="materialExplorer">
+              <DashboardWidgetCard
+                widgetId="materialExplorer"
+                title="Material Explorer"
+                subtitle="Backend paginated and sortable. Click material/source/risk values to filter."
+                icon={<Factory size={18} />}
+                chartTypes={["table"]}
+                exportRows={
+                  (materials?.items ?? []) as unknown as Record<
+                    string,
+                    unknown
+                  >[]
+                }
+              >
+                <SortableDataTable
+                  rows={materials?.items ?? []}
+                  columns={materialColumns}
+                  sortBy={filters.sortBy}
+                  sortDirection={filters.sortDirection ?? "desc"}
+                  onSort={updateSort}
+                  emptyText="No materials match the selected filters."
+                />
+
+                <div className="pagination-row">
+                  <button
+                    className="secondary-button"
+                    disabled={(materials?.page ?? 1) <= 1}
+                    onClick={() =>
+                      setFilter(
+                        "page",
+                        Math.max((materials?.page ?? 1) - 1, 1)
+                      )
+                    }
+                    type="button"
+                  >
+                    Previous
+                  </button>
+
+                  <span>
+                    Page {materials?.page ?? 1} / {materials?.totalPages ?? 0} —
+                    {materials?.totalCount ?? 0} materials
+                  </span>
+
+                  <button
+                    className="secondary-button"
+                    disabled={
+                      (materials?.page ?? 1) >= (materials?.totalPages ?? 0)
+                    }
+                    onClick={() =>
+                      setFilter("page", (materials?.page ?? 1) + 1)
+                    }
+                    type="button"
+                  >
+                    Next
+                  </button>
+
+                  <select
+                    value={filters.pageSize ?? 25}
+                    onChange={(event) => {
+                      setFilter("pageSize", Number(event.target.value));
+                      setFilter("page", 1);
+                    }}
+                  >
+                    <option value={10}>10 rows</option>
+                    <option value={25}>25 rows</option>
+                    <option value={50}>50 rows</option>
+                    <option value={100}>100 rows</option>
+                  </select>
+                </div>
+              </DashboardWidgetCard>
+            </div>
+          </DashboardGridLayout>
+
+          <DrilldownDrawer />
         </>
       ) : null}
     </main>
   );
 }
 
-function Metric({
+function InteractiveMetric({
   icon,
   label,
   value,
@@ -462,7 +879,7 @@ function Metric({
   accent,
   onClick,
 }: {
-  icon: React.ReactNode;
+  icon: ReactNode;
   label: string;
   value: string | number;
   note: string;
@@ -485,33 +902,46 @@ function Metric({
   );
 }
 
-function Panel({
-  title,
-  subtitle,
-  icon,
-  children,
-  className,
-}: {
-  title: string;
-  subtitle: string;
-  icon: React.ReactNode;
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <section className={`dashboard-panel ${className ?? ""}`}>
-      <div className="panel-header">
-        <div>
-          <h3>
-            {icon}
-            {title}
-          </h3>
-          <p>{subtitle}</p>
-        </div>
+function MiniTable({ rows }: { rows: ChartRow[] }) {
+  if (!rows.length) {
+    return (
+      <div className="empty-insight">
+        <strong>No data</strong>
+        <p>No records are available for this widget and filter context.</p>
       </div>
-      {children}
-    </section>
+    );
+  }
+
+  const columns = Object.keys(rows[0]);
+
+  return (
+    <div className="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            {columns.map((column) => (
+              <th key={column}>{column}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, index) => (
+            <tr key={index}>
+              {columns.map((column) => (
+                <td key={column}>{formatCell(row[column])}</td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
+}
+
+function formatCell(value: unknown) {
+  if (value === null || value === undefined) return "-";
+  if (typeof value === "number") return formatNumber(value);
+  return String(value);
 }
 
 function formatNumber(value: number) {

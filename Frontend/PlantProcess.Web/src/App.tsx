@@ -1,26 +1,70 @@
+import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
+import "react-grid-layout/css/styles.css";
+import "react-resizable/css/styles.css";
 import { AppLayout } from "./components/AppLayout";
-import { DashboardPage } from "./pages/DashboardPage";
-import { MaterialInvestigationPage } from "./pages/MaterialInvestigationPage";
-import { RiskDashboardPage } from "./pages/RiskDashboardPage";
-import { DataQualityPage } from "./pages/DataQualityPage";
-import { CorrelationPage } from "./pages/CorrelationPage";
+import { LoadingPanel } from "./components/AsyncState";
 import { DashboardFilterProvider } from "./state/DashboardFilterContext";
+import { DashboardSelectionProvider } from "./state/DashboardSelectionContext";
+import { DashboardGridLayoutProvider } from "./state/DashboardGridLayoutContext";
+import { ThemeProvider } from "./state/ThemeContext";
 import "./index.css";
+
+const DashboardPage = lazy(() =>
+  import("./pages/DashboardPage").then((module) => ({
+    default: module.DashboardPage,
+  }))
+);
+
+const MaterialInvestigationPage = lazy(() =>
+  import("./pages/MaterialInvestigationPage").then((module) => ({
+    default: module.MaterialInvestigationPage,
+  }))
+);
+
+const RiskDashboardPage = lazy(() =>
+  import("./pages/RiskDashboardPage").then((module) => ({
+    default: module.RiskDashboardPage,
+  }))
+);
+
+const DataQualityPage = lazy(() =>
+  import("./pages/DataQualityPage").then((module) => ({
+    default: module.DataQualityPage,
+  }))
+);
+
+const CorrelationPage = lazy(() =>
+  import("./pages/CorrelationPage").then((module) => ({
+    default: module.CorrelationPage,
+  }))
+);
 
 export default function App() {
   return (
-    <DashboardFilterProvider>
-      <Routes>
-        <Route element={<AppLayout />}>
-          <Route index element={<Navigate to="/dashboard" replace />} />
-          <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/materials" element={<MaterialInvestigationPage />} />
-          <Route path="/risk" element={<RiskDashboardPage />} />
-          <Route path="/data-quality" element={<DataQualityPage />} />
-          <Route path="/correlations" element={<CorrelationPage />} />
-        </Route>
-      </Routes>
-    </DashboardFilterProvider>
+    <ThemeProvider>
+      <DashboardFilterProvider>
+        <DashboardSelectionProvider>
+          <DashboardGridLayoutProvider>
+            <Suspense
+              fallback={
+                <LoadingPanel text="Loading PlantProcess IQ workspace..." />
+              }
+            >
+              <Routes>
+                <Route element={<AppLayout />}>
+                  <Route index element={<Navigate to="/dashboard" replace />} />
+                  <Route path="/dashboard" element={<DashboardPage />} />
+                  <Route path="/materials" element={<MaterialInvestigationPage />} />
+                  <Route path="/risk" element={<RiskDashboardPage />} />
+                  <Route path="/data-quality" element={<DataQualityPage />} />
+                  <Route path="/correlations" element={<CorrelationPage />} />
+                </Route>
+              </Routes>
+            </Suspense>
+          </DashboardGridLayoutProvider>
+        </DashboardSelectionProvider>
+      </DashboardFilterProvider>
+    </ThemeProvider>
   );
 }
