@@ -72,7 +72,10 @@ public class PlantProcessDbContext : DbContext, IPlantProcessDbContext
     public DbSet<RiskScore> RiskScores => Set<RiskScore>();
     public DbSet<CorrelationResult> CorrelationResults => Set<CorrelationResult>();
     public DbSet<ModelRegistry> ModelRegistries => Set<ModelRegistry>();
-
+    public DbSet<DashboardDefinition> DashboardDefinitions => Set<DashboardDefinition>();
+    public DbSet<DashboardWidgetDefinition> DashboardWidgetDefinitions => Set<DashboardWidgetDefinition>();
+    
+    
     public PlantProcessDbContext(DbContextOptions<PlantProcessDbContext> options)
         : base(options)
     {

@@ -1,4 +1,5 @@
 using System.Reflection;
+using PlantProcess.Api.Configuration;
 using PlantProcess.Api.Endpoints.Analytics;
 using PlantProcess.Api.Endpoints.Configuration;
 using PlantProcess.Api.Endpoints.DataQuality;
@@ -13,6 +14,7 @@ using PlantProcess.Api.Endpoints.Reporting;
 using PlantProcess.Api.Endpoints.Validation;
 using PlantProcess.Api.Endpoints.Workflow;
 using PlantProcess.Api.Middleware;
+using PlantProcess.Api.Options;
 using PlantProcess.Application;
 using PlantProcess.Infrastructure;
 using Serilog;
@@ -23,8 +25,7 @@ using Serilog.Exceptions;
 var logDirectory = Path.Combine(AppContext.BaseDirectory, "logs");
 var logFilePath = Path.Combine(logDirectory, "plantprocess-api-.log");
 
-// ── Bootstrap logger (used before host is built) ─────────────────────────────
-// AppVersion enricher: reads from AssemblyInformationalVersion or falls back to "dev".
+// ── Bootstrap logger ────────────────────────────────────────────────────────
 var appVersion = Assembly
     .GetEntryAssembly()
     ?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()
@@ -37,13 +38,11 @@ Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
     .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
     .MinimumLevel.Override("Microsoft.EntityFrameworkCore.Database.Command", LogEventLevel.Warning)
-    // Keep all PlantProcess namespaces fully verbose for detailed diagnostics
     .MinimumLevel.Override("PlantProcess", LogEventLevel.Verbose)
     .Enrich.FromLogContext()
     .Enrich.WithMachineName()
     .Enrich.WithEnvironmentName()
     .Enrich.WithExceptionDetails()
-    // AppVersion on every log entry – critical for multi-version deployments
     .Enrich.WithProperty("AppVersion", appVersion)
     .WriteTo.Console(
         outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {CorrelationId,-32} {Message:lj}{NewLine}{Exception}")
@@ -64,30 +63,52 @@ try
         logFilePath);
 
     var builder = WebApplication.CreateBuilder(args);
-    
-    //Register Memory Cache
-    builder.Services.AddMemoryCache();
-    
-    // ── Replace default .NET logging with Serilog ─────────────────────────
+
+    // ── Serilog ────────────────────────────────────────────────────────────
     builder.Host.UseSerilog();
 
-    // ── Application and Infrastructure DI ────────────────────────────────
+    // ── Options + startup validation ───────────────────────────────────────
+    builder.Services.Configure<PlantProcessOptions>(
+        builder.Configuration.GetSection(PlantProcessOptions.SectionName));
+
+    var plantProcessOptions =
+        builder.Configuration
+            .GetSection(PlantProcessOptions.SectionName)
+            .Get<PlantProcessOptions>()
+        ?? new PlantProcessOptions();
+
+    var allowedOrigins = StartupConfigurationValidator.BuildEffectiveAllowedOrigins(
+        plantProcessOptions,
+        builder.Configuration);
+
+    StartupConfigurationValidator.Validate(
+        builder.Configuration,
+        builder.Environment,
+        plantProcessOptions,
+        allowedOrigins);
+
+    Log.Information(
+        "PlantProcess IQ effective CORS origins: {AllowedOrigins}",
+        string.Join(", ", allowedOrigins));
+
+    // ── Infrastructure services ────────────────────────────────────────────
+    builder.Services.AddMemoryCache();
     builder.Services.AddApplication();
     builder.Services.AddInfrastructure(builder.Configuration);
 
-
+    // ── CORS ───────────────────────────────────────────────────────────────
     builder.Services.AddCors(options =>
     {
         options.AddPolicy("PlantProcessFrontend", policy =>
         {
             policy
-                .WithOrigins("http://localhost:5173")
+                .WithOrigins(allowedOrigins.ToArray())
                 .AllowAnyHeader()
                 .AllowAnyMethod();
         });
     });
 
-    // ── Swagger ───────────────────────────────────────────────────────────
+    // ── Swagger ────────────────────────────────────────────────────────────
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSwaggerGen(options =>
     {
@@ -107,17 +128,15 @@ try
     });
 
     var app = builder.Build();
+
+    // ── CORS must be early enough before browser calls endpoints ───────────
     app.UseCors("PlantProcessFrontend");
 
-
-    // ── Middleware pipeline (ORDER MATTERS) ───────────────────────────────
-    // 1. Correlation ID first — all subsequent middleware and endpoints get CorrelationId in scope.
+    // ── Middleware pipeline ────────────────────────────────────────────────
     app.UseMiddleware<CorrelationIdMiddleware>();
-
-    // 2. Request/response logging — logs method, path, status code, elapsed.
     app.UseMiddleware<RequestResponseLoggingMiddleware>();
 
-    // ── Swagger (Development only) ────────────────────────────────────────
+    // ── Swagger ────────────────────────────────────────────────────────────
     if (app.Environment.IsDevelopment())
     {
         app.UseSwagger();
@@ -132,7 +151,7 @@ try
     // ── Root redirect ─────────────────────────────────────────────────────
     app.MapGet("/", () => Results.Redirect("/swagger"));
 
-    // ── HTTPS (Production only) ───────────────────────────────────────────
+    // ── HTTPS only outside development ────────────────────────────────────
     if (!app.Environment.IsDevelopment())
     {
         app.UseHttpsRedirection();
@@ -163,9 +182,7 @@ try
 }
 catch (Exception ex) when (ex.GetType().Name == "HostAbortedException")
 {
-    // EF Core design-time tools intentionally abort the host.
-    // This is not a real runtime crash — suppress it.
-    Log.Debug(ex, "Host aborted during EF Core design-time operation (expected, not an error).");
+    Log.Debug(ex, "Host aborted during EF Core design-time operation. This is expected.");
 }
 catch (Exception ex)
 {

@@ -1,6 +1,4 @@
-const API_BASE_URL =
-  (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, "") ||
-  "http://localhost:5063";
+import { API_BASE_URL } from "./apiConfig";
 
 export type SortDirection = "asc" | "desc";
 

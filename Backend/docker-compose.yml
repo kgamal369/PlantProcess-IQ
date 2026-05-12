@@ -1,26 +1,43 @@
 services:
-  plantprocess-postgres:
+  db:
     image: postgres:16
-    container_name: plantprocess-postgres
-    environment:
-      POSTGRES_DB: plantprocessiq
-      POSTGRES_USER: plantprocess
-      POSTGRES_PASSWORD: plantprocess123
+    container_name: plantprocessiq-db
+    restart: unless-stopped
     ports:
-      - "5435:5432"
+      - "${DB_PORT:-5432}:5432"
+    environment:
+      POSTGRES_DB: "${POSTGRES_DB:-plantprocessiq}"
+      POSTGRES_USER: "${POSTGRES_USER:-plantprocess}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-plantprocess123}"
     volumes:
-      - plantprocess_pgdata:/var/lib/postgresql/data
+      - plantprocessiq_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-plantprocess} -d ${POSTGRES_DB:-plantprocessiq}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
-  plantprocess-pgadmin:
-    image: dpage/pgadmin4
-    container_name: plantprocess-pgadmin
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@plantprocess.local
-      PGADMIN_DEFAULT_PASSWORD: admin123
-    ports:
-      - "5050:80"
+  api:
+    build:
+      context: .
+      dockerfile: PlantProcess.Api/Dockerfile
+    container_name: plantprocessiq-api
+    restart: unless-stopped
     depends_on:
-      - plantprocess-postgres
+      db:
+        condition: service_healthy
+    ports:
+      - "${API_PORT:-5063}:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: "${ASPNETCORE_ENVIRONMENT:-Development}"
+      ASPNETCORE_URLS: "http://+:8080"
+      ConnectionStrings__PlantProcessDb: "Host=db;Port=5432;Database=${POSTGRES_DB:-plantprocessiq};Username=${POSTGRES_USER:-plantprocess};Password=${POSTGRES_PASSWORD:-plantprocess123}"
+      PlantProcess__PlantTimeZoneId: "${PlantProcess__PlantTimeZoneId:-Europe/Berlin}"
+      PlantProcess__PlantUtcOffsetMinutes: "${PlantProcess__PlantUtcOffsetMinutes:-60}"
+      PlantProcess__AllowedOrigins__0: "http://localhost:${WEB_PORT:-5173}"
+      PlantProcess__RequireConfiguredCors: "true"
+      PlantProcess__RequireDatabaseConnectionString: "true"
+      PLANTPROCESS_ALLOWED_ORIGINS: "http://localhost:${WEB_PORT:-5173},http://localhost:3000"
 
 volumes:
-  plantprocess_pgdata:
+  plantprocessiq_pgdata:

@@ -6,7 +6,6 @@ using PlantProcess.Domain.Entities.Materials;
 using PlantProcess.Domain.Entities.PlantLayout;
 using PlantProcess.Domain.Entities.Process;
 using PlantProcess.Domain.Entities.Quality;
-using System.Collections.Generic;
 
 namespace PlantProcess.Application.Common.Persistence;
 
@@ -45,6 +44,9 @@ public interface IPlantProcessDbContext
     DbSet<RiskScore> RiskScores { get; }
     DbSet<CorrelationResult> CorrelationResults { get; }
     DbSet<ModelRegistry> ModelRegistries { get; }
+
+    DbSet<DashboardDefinition> DashboardDefinitions { get; }
+    DbSet<DashboardWidgetDefinition> DashboardWidgetDefinitions { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }
