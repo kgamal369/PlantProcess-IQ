@@ -1,0 +1,581 @@
+Yes — this is exactly the right moment to update the roadmap from a **pure engineering roadmap** into a **product + sales-readiness roadmap**.
+
+The important correction is this:
+
+```text
+We should not wait until the full product is finished to start sales.
+But every sales stage must have a clear technical readiness gate.
+```
+
+PlantProcess IQ should stay positioned as a **generic manufacturing quality-intelligence layer**, not a steel-only tool, not MES/L2/SCADA replacement, and not only a BI dashboard. The master document already defines it as an intelligence layer that reads existing systems, connects fragmented production/process/inspection/quality data, builds genealogy, detects correlations, predicts quality risk, and works across steel, aluminum, pharma, tire, paper, automotive, food, chemicals and other industries through a domain-neutral model and configuration templates. 
+
+---
+
+# 1. Updated Commercial Roadmap Gates
+
+| Stage                            | When to Start                                | Main Goal                                                          | Customer Test Level                                                         | Technical Readiness Needed                                                              |
+| -------------------------------- | -------------------------------------------- | ------------------------------------------------------------------ | --------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| **1. Soft Marketing**            | **Now**                                      | Build awareness and validate problem language                      | No system testing; only concept, visuals, positioning                       | Product name, generic story, UI screenshots, architecture diagram, non-goals            |
+| **2. Customer Discovery**        | After dashboard/UI is stable                 | Understand customer pain, systems, defect topics, decision process | Light HMI/UI/UX test with small synthetic data                              | Stable React UI, dashboard, wizard, generic industry explanation, synthetic demo        |
+| **3. Demo-Based Sales**          | After connector MVP + source preview         | Show believable product flow                                       | Small dataset import, schema discovery, preview, mapping preview, dashboard | ConnectionProfile, CSV/Excel MVP, schema discovery, sample preview, mapping preview     |
+| **4. Paid Readiness Assessment** | After readiness report + mapping preview     | Sell low-risk paid diagnostic                                      | Customer sends exported data, not huge live DB connection                   | Source catalog, staging, data-quality checks, mapping preview, readiness scoring/report |
+| **5. Pilot Sales**               | After security + audit + selected connectors | Sell real pilot with approved customer data                        | Real route, one defect family, controlled data volume                       | Auth, RBAC, audit, secrets, read-only connectors, pilot scope, reports                  |
+| **6. Full Product Marketing**    | After repeatable demo + pilot pack           | Public product marketing and broader selling                       | Demo video, deck, website, repeatable onboarding                            | Demo environment, case-style story, docs, tests, CI, synthetic dataset pack             |
+
+---
+
+# 2. Stage 1 — Soft Marketing
+
+## Start timing
+
+**Start now.**
+
+You already have enough to start problem-led marketing because the dashboard, analytics, correlation, data-quality, risk, and investigation direction are visible. Your current codebase is large and serious enough to support credibility, but marketing should not yet claim full connector or security readiness.
+
+## What must be ready before soft marketing
+
+| Item                          | Must be ready? | Current comment                                                             |
+| ----------------------------- | -------------: | --------------------------------------------------------------------------- |
+| Product name: PlantProcess IQ |            Yes | Ready                                                                       |
+| One-line positioning          |            Yes | Ready, but polish it                                                        |
+| Generic industry explanation  |            Yes | Must be very clear                                                          |
+| UI screenshots / short GIF    |            Yes | Use current dashboard, not connector pages                                  |
+| Architecture visual           |            Yes | Must show connector → staging → mapping → canonical → analytics → dashboard |
+| Non-goals                     |            Yes | Not MES, not SCADA, not L2 replacement                                      |
+| Safe language                 |            Yes | “Suspected contributors,” not “guaranteed root cause”                       |
+| Website/LinkedIn teaser       |       Optional | Can start with posts first                                                  |
+
+## What customer will ask at this stage
+
+| Customer Question                                  | Your Answer Should Be                                                                                                                                                            |
+| -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| “Is this only for steel?”                          | No. Steel is the first demo story. The core model is generic: material/batch/lot, process step, equipment, parameter, quality event, risk score.                                 |
+| “Can it work for paper/pharma/tire/aluminum/food?” | Yes, using configuration templates and source mappings. A paper roll, pharma batch, tire batch, aluminum billet, and food lot all map to the same generic Material Unit concept. |
+| “Does it replace our MES?”                         | No. It is a read-only intelligence layer above MES, L2, SCADA, historians, lab, inspection, ERP, and Excel exports.                                                              |
+| “Is it just a dashboard?”                          | No. Dashboard is only the presentation layer. The value is source mapping, genealogy, data quality, correlation, risk scoring, and investigation reports.                        |
+| “Can you connect directly to our DB?”              | Later, after IT/security approval. First safe path is CSV/Excel or SQL export.                                                                                                   |
+| “Can it prove root cause?”                         | It can detect correlations and suspected contributors. Final root-cause validation remains with process/quality experts.                                                         |
+
+## Soft marketing message
+
+Use this wording:
+
+```text
+PlantProcess IQ helps manufacturing teams connect fragmented process, production, inspection, and quality data into one generic intelligence layer.
+
+It is designed to support steel, aluminum, pharma, tire, paper, food, automotive, and other plants by using a domain-neutral model: material/batch, process step, equipment, parameter, quality event, genealogy, and risk score.
+
+The first goal is not to replace MES, SCADA, or BI. The goal is to help engineers investigate quality issues faster, detect suspected process contributors, and understand whether their historical data is ready for correlation and risk prediction.
+```
+
+The master plan also says not to build the full platform before selling the problem: create a credible demo, run discovery calls, sell data readiness, then sell a pilot. 
+
+---
+
+# 3. Stage 2 — Customer Discovery
+
+## Start timing
+
+Start **after current UI/HMI validation is complete**.
+
+For your case, this means:
+
+```text
+Finish/validate Tasks 5, 6, 7, 8, 18, 19, 20, 21, 22, 23, 24, 25.
+```
+
+Because at discovery, the customer is not yet testing huge data. They are testing:
+
+```text
+Does the idea make sense?
+Does the HMI/UI look professional?
+Can I imagine my plant inside this?
+Can this work for my industry?
+Does the dashboard tell a clear story?
+```
+
+So yes, you are right: **HMI/UI/UX must be ready before huge data testing**.
+
+## What must be ready before discovery
+
+| Area                        | Required Before Discovery                               | Reason                                   |
+| --------------------------- | ------------------------------------------------------- | ---------------------------------------- |
+| UI/HMI                      | Dashboard must load cleanly with no console errors      | First impression matters                 |
+| Theme                       | Dark industrial theme + clean navigation                | Matches enterprise manufacturing vibe    |
+| Generic model explanation   | Must explain steel, paper, pharma, tire, aluminum, food | Discovery must not sound steel-only      |
+| Widget builder              | Must create/preview/save a widget                       | Shows configurability                    |
+| Saved layout                | Must save/reload dashboard layout                       | Shows product feel, not static demo      |
+| Material investigation page | Must open material details                              | Shows engineering workflow               |
+| Correlation page            | Must show example suspected contributor                 | Shows intelligence value                 |
+| Data quality page           | Must show data gaps/issues                              | Shows realistic plant-data understanding |
+| Demo data                   | Small synthetic dataset is enough                       | No huge data needed here                 |
+| Sales script                | Discovery questions ready                               | Avoid random conversation                |
+
+## What customer will test
+
+| Customer Test              | Expected Behavior                                                       |
+| -------------------------- | ----------------------------------------------------------------------- |
+| Open dashboard             | Loads fast, no blank page, no console error                             |
+| Click filters              | Charts and table respond                                                |
+| Open widget builder        | User can select purpose, chart, dimension, measure, filters             |
+| Preview widget             | Chart/table preview appears                                             |
+| Save widget                | Widget appears in dashboard                                             |
+| Move/resize widget         | Layout behaves cleanly                                                  |
+| Reload page                | Saved widget/layout remains                                             |
+| Switch pages               | Dashboard, correlation, risk, data quality, material investigation work |
+| Ask about another industry | You explain how their data maps to generic model                        |
+
+## Discovery questions you should ask the customer
+
+| Topic               | Questions                                                                                    |
+| ------------------- | -------------------------------------------------------------------------------------------- |
+| Plant structure     | How is your plant divided: site, area, line, machine, inspection station?                    |
+| Industry mapping    | What is your traceable unit: batch, lot, coil, slab, roll, tire, part, order, VIN?           |
+| Process route       | What are the main operations from raw/input to final quality decision?                       |
+| Quality pain        | Which defect or quality KPI costs the most money?                                            |
+| Investigation today | How do engineers investigate this problem now? Excel? MES screens? SQL? BI? Manual meetings? |
+| Source systems      | Which systems hold process, inspection, lab, quality, downtime, ERP, and genealogy data?     |
+| Keys/IDs            | Do IDs match across systems, or does each system use different IDs?                          |
+| Timestamps          | Are timestamps reliable? UTC/local? shift-based?                                             |
+| Data access         | Can they share CSV/Excel export first?                                                       |
+| Security            | Is direct DB access possible later with read-only user?                                      |
+| Success             | What would make a 4-week diagnostic valuable?                                                |
+
+## Customer questions at discovery
+
+| Customer Question                      | Required Answer                                                                                             |
+| -------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| “Can I define my own plant layout?”    | Yes. The model supports flexible site/area/equipment structures, not fixed steel hierarchy.                 |
+| “Can I create dashboards myself?”      | Yes, widget builder supports backend metadata and saved widgets.                                            |
+| “Can this work with small data?”       | Yes. Discovery uses small data; large data is later for pilot/performance validation.                       |
+| “Can it handle big data?”              | Architecture supports it, but large-volume validation comes later after staging/indexing/bulk import tasks. |
+| “Can we use only exported data first?” | Yes. CSV/Excel export is the recommended first customer-safe route.                                         |
+| “Can you connect to Oracle/MSSQL?”     | Planned. CSV/Excel first, then read-only SQL connectors.                                                    |
+
+---
+
+# 4. Stage 3 — Demo-Based Sales
+
+## Start timing
+
+Start serious demo-based sales after:
+
+```text
+Task 37: CSV connector MVP
+Task 42: schema discovery API
+Task 43: sample rows preview API
+Task 52: mapping preview endpoint
+```
+
+In your current 94-task plan, this maps mostly to:
+
+```text
+27–37, 42–43, 50–52
+```
+
+The plan already says the connector/source schema layer must include `ConnectionProfile`, `SourceDatasetDefinition`, `SourceFieldDefinition`, schema discovery, sample rows preview, connector abstractions, and CSV/Excel/PostgreSQL/MSSQL/Oracle connector path. 
+
+## What must be ready before demo-based sales
+
+| Product Area       | Must Be Ready                                                    |
+| ------------------ | ---------------------------------------------------------------- |
+| Connection profile | Create/edit/test source profile                                  |
+| Provider type      | CSV, Excel, PostgreSQL, SQL Server, Oracle, REST planned/visible |
+| Secret reference   | No plain password stored                                         |
+| Source dataset     | Source table/sheet/file represented                              |
+| Source fields      | Columns/fields discovered and stored                             |
+| CSV connector      | Read header, discover fields, preview rows                       |
+| Sample preview     | First 50/100 rows visible before import                          |
+| Staging            | Raw source rows stored safely                                    |
+| Mapping preview    | Source row → canonical preview without committing                |
+| Dashboard          | Shows canonical result after mapping                             |
+| Report             | Basic investigation/report output                                |
+
+## What customer will test
+
+At this stage, they will test a **small realistic file**, not a huge production database.
+
+| Customer Test     | Expected Behavior                                     |
+| ----------------- | ----------------------------------------------------- |
+| Upload/select CSV | System reads file safely                              |
+| Discover schema   | Columns appear with names/types/sample values         |
+| Preview rows      | First rows visible before import                      |
+| Create mapping    | Source fields map to Material/Parameter/Quality/Event |
+| Preview mapping   | User sees what canonical records will be created      |
+| Run import        | Rows go to staging/canonical                          |
+| Open dashboard    | Data appears in charts/table                          |
+| Run correlation   | System shows suspected relationships                  |
+| Export/report     | Simple report is generated                            |
+
+## Customer questions at demo-based sales
+
+| Question                                       | Required Product Answer                                                                                         |
+| ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| “Can I see my CSV columns before import?”      | Yes, source schema discovery and sample preview.                                                                |
+| “Can I check mapping before saving?”           | Yes, mapping preview.                                                                                           |
+| “Can I undo/replay import?”                    | Staging keeps raw rows; replay is roadmap if not fully finished.                                                |
+| “Will dashboard query the source DB directly?” | No. Connector reads source → staging → mapping → canonical → dashboard. The plan explicitly defines this rule.  |
+| “Can you support Excel?”                       | Yes, planned immediately after CSV because many plants exchange data through Excel.                             |
+| “Can you support Oracle/MSSQL?”                | Yes, planned as read-only connectors after CSV/Excel.                                                           |
+| “What happens with bad rows?”                  | They are staged with status/error; failed-row viewer/rerun is next.                                             |
+
+---
+
+# 5. Stage 4 — Paid Readiness Assessment
+
+## Start timing
+
+Start selling this after:
+
+```text
+Connector MVP + schema preview + sample preview + mapping preview + readiness report.
+```
+
+In roadmap terms:
+
+```text
+Tasks 27–37
+Tasks 42–43
+Tasks 50–52
+Tasks 72–74
+```
+
+This should be your first paid offer, because it is safer than promising a full production pilot. Your master document already defines the recommended next step as a **data readiness workshop** that identifies source systems, data quality, genealogy feasibility, target quality topic, and best pilot scope. 
+
+## What the customer buys
+
+```text
+PlantProcess IQ Data Readiness Assessment
+Duration: 1–2 weeks
+Input: exported data + source list + defect topic
+Output: readiness score + data gaps + pilot recommendation
+```
+
+## What must be ready
+
+| Area                              | Required |
+| --------------------------------- | -------- |
+| Customer discovery checklist      | Ready    |
+| Source system inventory template  | Ready    |
+| CSV/Excel import or manual upload | Ready    |
+| Source schema discovery           | Ready    |
+| Sample row preview                | Ready    |
+| Staging/raw retention             | Ready    |
+| Data-quality scan                 | Ready    |
+| Mapping preview                   | Ready    |
+| Readiness scoring                 | Ready    |
+| Readiness PDF/report              | Ready    |
+| Pilot scope template              | Ready    |
+
+## What customer will test
+
+| Customer Test                 | Expected Behavior                                                 |
+| ----------------------------- | ----------------------------------------------------------------- |
+| Send sample export            | You load it safely                                                |
+| Check source columns          | System identifies fields/types/sample values                      |
+| Check data quality            | Missing IDs, timestamps, duplicate rows, broken references appear |
+| Check genealogy feasibility   | System says whether parent-child traceability is possible         |
+| Check mapping feasibility     | Which fields can/cannot map to canonical model                    |
+| Check correlation feasibility | Enough outcome/defect data or not                                 |
+| Receive report                | Customer gets readable readiness report                           |
+
+## Customer questions at readiness stage
+
+| Question                                      | Required Answer                                                                                                         |
+| --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| “What data do you need from us?”              | Source list, sample tables/files, material/batch IDs, timestamps, quality outcomes, process parameters, defect catalog. |
+| “Can you work without direct DB access?”      | Yes. CSV/Excel export is enough for readiness.                                                                          |
+| “How do you know if our data is good enough?” | Readiness score: source, schema, mapping, genealogy, data quality, correlation, prediction feasibility.                 |
+| “What if IDs do not match?”                   | MaterialAlias and genealogy/mapping logic handle multiple source IDs, but missing links reduce readiness score.         |
+| “What if data is messy?”                      | That is exactly what readiness assessment measures.                                                                     |
+| “What will we get?”                           | Source map, data-quality findings, mapping gaps, feasibility score, recommended pilot scope.                            |
+| “Can you guarantee prediction?”               | No. Prediction depends on historical labels, data volume, feature quality, and defect frequency.                        |
+
+---
+
+# 6. Stage 5 — Pilot Sales
+
+## Start timing
+
+Start only after:
+
+```text
+Security + audit + selected connector maturity + pilot templates.
+```
+
+In roadmap terms:
+
+```text
+Tasks 38–45 depending on needed connector/UI
+Tasks 57–59 lineage/replay
+Tasks 72–76 readiness/reporting
+Tasks 78–83 security/audit/secrets/retention
+Tasks 84–87 tests/CI
+```
+
+This is the point where customer data becomes real. The product must stop being “developer demo mode.”
+
+## What must be ready
+
+| Area                            | Required Before Real Pilot                      |
+| ------------------------------- | ----------------------------------------------- |
+| Authentication                  | Required                                        |
+| RBAC                            | Required                                        |
+| Tenant/site isolation           | Required or at least pilot-safe site isolation  |
+| Audit log                       | Required                                        |
+| Secret resolver                 | Required                                        |
+| Read-only connector enforcement | Required                                        |
+| Data retention policy           | Required                                        |
+| Failed-row viewer/rerun         | Strongly recommended                            |
+| Customer pilot SOW              | Required                                        |
+| Pilot scope                     | One route, one defect family, one dataset first |
+| Investigation PDF               | Customer-grade                                  |
+| Support process                 | Who handles issues, logs, data questions        |
+
+## What customer will test
+
+| Pilot Test        | Expected Behavior                                        |
+| ----------------- | -------------------------------------------------------- |
+| Login/security    | Users only see permitted data                            |
+| Source connection | Read-only connection works safely                        |
+| Import batch      | Data loads without corrupting source systems             |
+| Failed rows       | Errors are visible and fixable                           |
+| Mapping           | Customer can review source-to-canonical logic            |
+| Data quality      | Issues are documented                                    |
+| Genealogy         | Material/batch route can be traced                       |
+| Correlation       | Suspected contributors are shown with confidence         |
+| Risk score        | If enough data exists, risk score is calculated          |
+| Report            | Pilot report can be shared with quality/process managers |
+
+## Customer questions at pilot stage
+
+| Question                                    | Required Answer                                                                                                  |
+| ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| “Where is our data stored?”                 | In PlantProcess IQ product DB; source systems are read-only.                                                     |
+| “Do you write anything back to MES/L2/PLC?” | No, not in MVP/pilot.                                                                                            |
+| “Who can access our data?”                  | Auth/RBAC controls access; audit logs track actions.                                                             |
+| “Can we run on-prem?”                       | Yes, pilot can be on local/on-prem/private environment.                                                          |
+| “What is the scope?”                        | One route, one product family, one defect group, agreed sources.                                                 |
+| “How do you avoid false root cause?”        | Language is correlation/risk indicator/suspected contributor; expert validation required.                        |
+| “How do we measure success?”                | Faster investigation, clearer data gaps, confirmed correlations, pilot roadmap, possible risk model feasibility. |
+
+The master offer ladder already defines: discovery session → data readiness assessment → correlation diagnostic pilot → quality risk prediction pilot → dashboard/reporting pack → annual license/support. 
+
+---
+
+# 7. Stage 6 — Full Product Marketing
+
+## Start timing
+
+Start after you have at least one repeatable demo story and pilot-ready package:
+
+```text
+Tasks 88–92
+plus enough of 78–87 for trust
+```
+
+Full marketing means website, polished deck, video, public demo, offer pages, case-study-style examples, and broader outreach. Do not do this too early because the product story may still change.
+
+## What must be ready
+
+| Area                    | Required                                                        |
+| ----------------------- | --------------------------------------------------------------- |
+| Demo video              | 5–10 min                                                        |
+| Sales deck              | Generic + one industry example                                  |
+| Website/landing page    | Problem, solution, industries, offer                            |
+| Discovery checklist     | Downloadable/usable                                             |
+| Pilot one-pager         | Fixed-scope offer                                               |
+| Capability summary      | What works / what is partial / what is planned                  |
+| Screenshots             | Dashboard, source preview, mapping preview, correlation, report |
+| Synthetic dataset story | Repeatable and safe                                             |
+| Pricing ladder          | Discovery, readiness, diagnostic pilot, prediction pilot        |
+| Legal/IP safety         | Synthetic/customer-approved data only                           |
+
+## Customer questions at full marketing stage
+
+| Question                           | Required Answer                                                                 |
+| ---------------------------------- | ------------------------------------------------------------------------------- |
+| “Do you have references?”          | If no real customer yet, show synthetic case and pilot methodology.             |
+| “Which industries do you support?” | Generic core supports process, discrete, and hybrid manufacturing.              |
+| “What is deployment model?”        | Local demo, on-prem pilot, private cloud later.                                 |
+| “How much does it cost?”           | Readiness assessment, diagnostic pilot, prediction pilot, annual license.       |
+| “How long to first value?”         | Discovery/readiness in 1–2 weeks; diagnostic pilot in 3–6 weeks depending data. |
+| “Can it integrate with our BI?”    | Yes, React product plus optional BI layer; do not put core logic inside BI.     |
+
+---
+
+# 8. Updated Roadmap by Commercial Stage
+
+## Stage 1 — Soft Marketing Readiness
+
+| New ID | Task                                                                                               | Priority  | Existing Task Link   |
+| ------ | -------------------------------------------------------------------------------------------------- | --------- | -------------------- |
+| SM-01  | Finalize generic one-line positioning                                                              | Critical  | Sales governance     |
+| SM-02  | Create generic industry mapping sheet: steel, aluminum, pharma, tire, paper, food, automotive      | Critical  | Task 60              |
+| SM-03  | Create “not MES / not SCADA / not BI-only” boundary slide                                          | Critical  | Product scope        |
+| SM-04  | Create 5 dashboard screenshots                                                                     | Important | Tasks 5, 18–25       |
+| SM-05  | Create one architecture visual: connectors → staging → mapping → canonical → analytics → dashboard | Critical  | Product architecture |
+| SM-06  | Create LinkedIn soft-launch post                                                                   | Important | New                  |
+| SM-07  | Create one-page teaser PDF                                                                         | Important | Task 92              |
+| SM-08  | Create list of 50 target contacts/personas                                                         | Important | New                  |
+
+## Stage 2 — Customer Discovery Readiness
+
+| New ID | Task                                               | Priority  | Existing Task Link |
+| ------ | -------------------------------------------------- | --------- | ------------------ |
+| CD-01  | Validate dashboard UI no console errors            | Critical  | Task 5             |
+| CD-02  | Validate drag/resize/reflow                        | Critical  | Task 6             |
+| CD-03  | Validate global filter behavior                    | Critical  | Task 7             |
+| CD-04  | Validate dark/light theme                          | Important | Task 8             |
+| CD-05  | Validate widget builder create/preview/save flow   | Critical  | Tasks 18–22        |
+| CD-06  | Validate layout save/reload                        | Critical  | Task 23            |
+| CD-07  | Prepare small synthetic dataset for UI demo        | Critical  | Task 88 partial    |
+| CD-08  | Prepare discovery script                           | Critical  | Task 91            |
+| CD-09  | Prepare industry-neutral explanation per vertical  | Critical  | Task 60            |
+| CD-10  | Prepare UI/HMI feedback form                       | Important | New                |
+| CD-11  | Prepare “customer source systems questionnaire”    | Critical  | Task 91            |
+| CD-12  | Prepare “defect investigation today” questionnaire | Critical  | Task 91            |
+
+## Stage 3 — Demo-Based Sales Readiness
+
+| New ID | Task                            | Priority  | Existing Task Link |
+| ------ | ------------------------------- | --------- | ------------------ |
+| DS-01  | Create ConnectionProfile entity | Critical  | Task 27            |
+| DS-02  | Add provider types              | Critical  | Task 28            |
+| DS-03  | Add SecretReference             | Critical  | Task 29            |
+| DS-04  | Add connection validation       | Critical  | Task 30            |
+| DS-05  | Create SourceDatasetDefinition  | Critical  | Task 31            |
+| DS-06  | Create SourceFieldDefinition    | Critical  | Task 32            |
+| DS-07  | Link StagingRecord to dataset   | Critical  | Task 33            |
+| DS-08  | Add connector abstraction       | Critical  | Task 34            |
+| DS-09  | Add connector factory           | Critical  | Task 35            |
+| DS-10  | Add connection test endpoint    | Critical  | Task 36            |
+| DS-11  | Add CSV connector MVP           | Critical  | Task 37            |
+| DS-12  | Add schema discovery API        | Critical  | Task 42            |
+| DS-13  | Add sample rows preview API     | Critical  | Task 43            |
+| DS-14  | Add mapping preview endpoint    | Critical  | Task 52            |
+| DS-15  | Create 10-minute demo script    | Important | Task 89            |
+
+## Stage 4 — Paid Readiness Assessment Readiness
+
+| New ID | Task                                                 | Priority  | Existing Task Link |
+| ------ | ---------------------------------------------------- | --------- | ------------------ |
+| PRA-01 | Add source-readiness scoring                         | Critical  | Task 72            |
+| PRA-02 | Add mapping-completeness scoring                     | Critical  | Task 72            |
+| PRA-03 | Add genealogy-feasibility scoring                    | Important | Task 72            |
+| PRA-04 | Add correlation-readiness scoring                    | Important | Task 72            |
+| PRA-05 | Add prediction-readiness scoring                     | Important | Task 72            |
+| PRA-06 | Add commercial readiness report endpoint             | Critical  | Task 73            |
+| PRA-07 | Add readiness PDF export                             | Important | Task 74            |
+| PRA-08 | Add failed-row viewer/rerun                          | Important | Task 57            |
+| PRA-09 | Create paid readiness offer one-pager                | Critical  | Task 90/92         |
+| PRA-10 | Create readiness assessment SOW template             | Critical  | Task 90            |
+| PRA-11 | Create customer data request template                | Critical  | Task 91            |
+| PRA-12 | Prepare sample readiness report using synthetic data | Critical  | Task 88/73         |
+
+## Stage 5 — Pilot Sales Readiness
+
+| New ID | Task                                  | Priority  | Existing Task Link |
+| ------ | ------------------------------------- | --------- | ------------------ |
+| PS-01  | Add authentication                    | Critical  | Task 78            |
+| PS-02  | Add RBAC                              | Critical  | Task 79            |
+| PS-03  | Add tenant/site isolation             | Critical  | Task 80            |
+| PS-04  | Add audit log                         | Critical  | Task 81            |
+| PS-05  | Add data retention rules              | Important | Task 82            |
+| PS-06  | Add secure secret resolver            | Critical  | Task 83            |
+| PS-07  | Add Excel connector                   | Important | Task 38            |
+| PS-08  | Add PostgreSQL connector              | Important | Task 39            |
+| PS-09  | Add SQL Server connector              | Important | Task 40            |
+| PS-10  | Add Oracle connector                  | Important | Task 41            |
+| PS-11  | Upgrade material investigation report | Important | Task 75            |
+| PS-12  | Upgrade PDF formatting                | Important | Task 76            |
+| PS-13  | Add backend tests                     | Important | Task 84            |
+| PS-14  | Add integration tests                 | Important | Task 85            |
+| PS-15  | Prepare pilot scope template          | Critical  | Task 90            |
+
+## Stage 6 — Full Product Marketing Readiness
+
+| New ID | Task                                                              | Priority  | Existing Task Link |
+| ------ | ----------------------------------------------------------------- | --------- | ------------------ |
+| FPM-01 | Create demo video                                                 | Critical  | Task 89            |
+| FPM-02 | Create polished sales deck                                        | Critical  | Task 92            |
+| FPM-03 | Create public website/landing page                                | Important | New                |
+| FPM-04 | Create industry pages: steel, aluminum, pharma, tire, paper, food | Important | New                |
+| FPM-05 | Create customer-safe synthetic dataset pack                       | Critical  | Task 88            |
+| FPM-06 | Create product capability summary                                 | Critical  | Task 92            |
+| FPM-07 | Create pricing/offer ladder                                       | Important | Sales              |
+| FPM-08 | Add CI/CD build pipeline                                          | Important | Task 87            |
+| FPM-09 | Add frontend component tests                                      | Normal    | Task 86            |
+| FPM-10 | Add smoke test script                                             | Important | Testing            |
+| FPM-11 | Prepare hosted demo environment                                   | Optional  | Later              |
+| FPM-12 | Prepare case-study-style synthetic story                          | Important | Task 88/89         |
+
+---
+
+# 9. Revised Stage-Gate Roadmap
+
+| Gate                                       | You Can Say                                                                              | You Must Not Say Yet                                     |
+| ------------------------------------------ | ---------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| **After Soft Marketing Readiness**         | “We are building a generic manufacturing quality-intelligence platform.”                 | “We are ready to connect your live Oracle/MSSQL system.” |
+| **After Customer Discovery Readiness**     | “Here is the UI/HMI and how your plant concept maps into it.”                            | “This is production-ready.”                              |
+| **After Demo-Based Sales Readiness**       | “We can load exported CSV/Excel-style data, preview schema, map it, and show analytics.” | “We can deploy into your plant network tomorrow.”        |
+| **After Paid Readiness Readiness**         | “We can assess whether your data is ready for quality correlation and pilot.”            | “We guarantee prediction accuracy.”                      |
+| **After Pilot Sales Readiness**            | “We can run a controlled pilot using approved data and secure access.”                   | “This is full enterprise multi-site rollout.”            |
+| **After Full Product Marketing Readiness** | “We have a repeatable productized offer and demo package.”                               | “We support every connector/use case without scoping.”   |
+
+---
+
+# 10. Immediate Next 20 Tasks
+
+Based on this updated roadmap, your next work should be:
+
+| Order | Task                                         | Why                                      |
+| ----: | -------------------------------------------- | ---------------------------------------- |
+|     1 | Final `npm run build` confirmation           | Close UI/HMI build gate                  |
+|     2 | Browser smoke test dashboard                 | Required before customer discovery       |
+|     3 | Validate widget create/preview/save/reload   | Required before customer discovery       |
+|     4 | Validate layout save/reload                  | Required before customer discovery       |
+|     5 | Prepare generic industry mapping explanation | Required before soft marketing/discovery |
+|     6 | Prepare discovery questionnaire              | Required before calls                    |
+|     7 | Prepare UI/HMI feedback checklist            | Discovery customers will judge usability |
+|     8 | Create 5 clean dashboard screenshots         | Soft marketing asset                     |
+|     9 | Create ConnectionProfile entity              | Start demo-sales readiness               |
+|    10 | Add provider types                           | Connector foundation                     |
+|    11 | Add SecretReference                          | Customer trust/security from start       |
+|    12 | Add connection validation                    | Avoid bad source setup                   |
+|    13 | Create SourceDatasetDefinition               | Source schema layer                      |
+|    14 | Create SourceFieldDefinition                 | Source schema layer                      |
+|    15 | Link StagingRecord to dataset                | Audit/replay/source trust                |
+|    16 | Add connector abstraction                    | Prevent messy connector code             |
+|    17 | Add connector factory                        | Provider routing                         |
+|    18 | Add connection test endpoint                 | First connector proof                    |
+|    19 | Add CSV connector MVP                        | Safe first source connector              |
+|    20 | Add schema discovery + sample preview        | First serious demo-sales gate            |
+
+---
+
+# Final Recommendation
+
+Your commercial roadmap should now be:
+
+```text
+Now:
+Soft marketing + UI/HMI customer discovery preparation.
+
+After UI/HMI validation:
+Start customer discovery with small synthetic data and generic-industry story.
+
+After CSV connector + schema discovery + sample preview:
+Start demo-based sales.
+
+After mapping preview + readiness report:
+Start paid data readiness assessment.
+
+After security/auth/audit/secrets:
+Start real pilot sales.
+
+After demo pack + tests + capability summary:
+Start full product marketing.
+```
+
+The most important practical point: **customer discovery is not big-data testing**. It is product-story, HMI, UI/UX, generic-fit, and pain validation. Big data testing belongs later, after staging, connector, bulk import, indexing, and pilot security are ready.
