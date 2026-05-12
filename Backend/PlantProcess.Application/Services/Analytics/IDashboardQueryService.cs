@@ -5,8 +5,27 @@ namespace PlantProcess.Application.Services.Analytics;
 
 public interface IDashboardQueryService
 {
-    Task<ApplicationResult<DashboardOverviewDto>> GetOverviewAsync(Guid? siteId, DateTime? fromUtc, DateTime? toUtc, CancellationToken cancellationToken);
-    Task<ApplicationResult<QualityDashboardDto>> GetQualityDashboardAsync(Guid? siteId, DateTime? fromUtc, DateTime? toUtc, CancellationToken cancellationToken);
-    Task<ApplicationResult<RiskDashboardDto>> GetRiskDashboardAsync(Guid? siteId, int highRiskTake, CancellationToken cancellationToken);
-    Task<ApplicationResult<DataQualityDashboardDto>> GetDataQualityDashboardAsync(Guid? siteId, CancellationToken cancellationToken);
+    Task<ApplicationResult<DashboardWorkspaceDto>> GetWorkspaceAsync(
+        DashboardQueryDto query,
+        CancellationToken cancellationToken);
+
+    Task<ApplicationResult<DashboardOverviewDto>> GetOverviewAsync(
+        DashboardQueryDto query,
+        CancellationToken cancellationToken);
+
+    Task<ApplicationResult<QualityDashboardDto>> GetQualityDashboardAsync(
+        DashboardQueryDto query,
+        CancellationToken cancellationToken);
+
+    Task<ApplicationResult<RiskDashboardDto>> GetRiskDashboardAsync(
+        DashboardQueryDto query,
+        CancellationToken cancellationToken);
+
+    Task<ApplicationResult<DataQualityDashboardDto>> GetDataQualityDashboardAsync(
+        DashboardQueryDto query,
+        CancellationToken cancellationToken);
+
+    Task<ApplicationResult<DashboardPagedResultDto<DashboardMaterialRowDto>>> SearchMaterialsAsync(
+        DashboardQueryDto query,
+        CancellationToken cancellationToken);
 }

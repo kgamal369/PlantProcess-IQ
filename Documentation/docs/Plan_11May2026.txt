@@ -1,5 +1,478 @@
 Karim, based on everything you mentioned, the new plan should be treated as PlantProcess IQ Master Plan v3 — QlikSense-Style Manufacturing Intelligence Platform.
 
+Yes Karim — your requirement is **100% correct**, and it means PlantProcess IQ should evolve from the current demo dashboard into a **QlikSense-style manufacturing intelligence platform**.
+
+Your target architecture should be:
+
+```text
+Different Plant Data Sources
+Oracle / MSSQL / PostgreSQL / Excel / API / CSV
+        ↓
+Connector Layer
+        ↓
+Raw Landing / Staging Layer
+        ↓
+Mapping & Transformation Layer
+        ↓
+Canonical PlantProcess IQ Schema
+        ↓
+Analytics / Correlation / Risk Engine
+        ↓
+Interactive React Dashboard
+```
+
+Your current project already has a good base for this because it includes `SourceSystemDefinition`, `ImportBatch`, `MappingDefinition`, `StagingRecord`, dashboard endpoints, analytics services, and a React frontend structure. The latest snapshot also confirms you already have analytics endpoints, integration endpoints, dashboard endpoints, frontend pages, and the API client layer. 
+
+# Final Direction
+
+## 1. Super Interactive React Dashboard
+
+You should **not** build a normal static dashboard.
+
+You need a dashboard like QlikSense where the user can filter by:
+
+| Filter Area | Examples                                                                     |
+| ----------- | ---------------------------------------------------------------------------- |
+| Plant       | Site, area, line, equipment                                                  |
+| Process     | Furnace, caster, hot strip mill, inspection                                  |
+| Material    | Heat, slab, coil, batch, lot                                                 |
+| Quality     | Defect type, risk class, reject/downgrade                                    |
+| Time        | From/to, shift, day, week, month                                             |
+| Source      | Oracle furnace DB, Excel caster file, MSSQL HSM DB, PostgreSQL inspection DB |
+| Analytics   | Parameter, defect, correlation type, risk threshold                          |
+
+But very important: **React should not load millions of rows and filter them in browser**.
+
+React should only send filter selections to backend:
+
+```text
+User selects filters
+        ↓
+React sends query/filter object to API
+        ↓
+Backend queries prepared dashboard/analytics data
+        ↓
+Backend returns small aggregated result
+        ↓
+React redraws charts/tables
+```
+
+So the frontend needs:
+
+```text
+DashboardFilterContext
+DashboardQueryState
+Interactive chart components
+Drill-down tables
+Cross-filter behavior
+URL query parameters
+Date range selector
+Source-system selector
+Material search
+Export button
+```
+
+Your current frontend is still a good skeleton, but not yet QlikSense-style. It has pages and API calls, but it needs a real **interactive analytics workspace**. The current React package already uses `recharts`, but for stronger Qlik-like behavior I would later add **Apache ECharts** or **AG Grid Community** beside it.
+
+---
+
+## 2. Backend Must Read Huge Data from Many Sources
+
+Your backend should not only read from PostgreSQL. It should support a **Connector Framework**.
+
+You need this structure:
+
+```text
+PlantProcess.Infrastructure
+    Connectors
+        Abstractions
+            IDataSourceConnector.cs
+            IDataSourceReader.cs
+            IDataSourceSchemaReader.cs
+        Excel
+            ExcelConnector.cs
+        SqlServer
+            SqlServerConnector.cs
+        Oracle
+            OracleConnector.cs
+        PostgreSql
+            PostgreSqlConnector.cs
+        Api
+            RestApiConnector.cs
+```
+
+Each source system should be registered like this:
+
+```text
+SourceSystemDefinition
+- SourceSystemCode
+- SourceSystemName
+- SourceSystemType
+- ConnectionMode
+- IsReadOnlySource
+- IsActive
+- Description
+```
+
+Your current `SourceSystemDefinition` already supports the concept of MES, Level 2, historian, QMS, lab, inspection, CSV, Excel, and API sources, with read-only behavior and activation/deactivation logic. 
+
+But you still need to extend it to store connector configuration safely.
+
+Do **not** store plain passwords directly in the normal table long-term. Use:
+
+```text
+ConnectionProfile
+- SourceSystemDefinitionId
+- ProviderType: Oracle / SqlServer / PostgreSql / Excel / Api
+- Host
+- Port
+- DatabaseName
+- SchemaName
+- Username
+- SecretReference
+- FilePath / UploadPath for Excel
+- ApiBaseUrl for REST
+- IsActive
+```
+
+The password should come from:
+
+```text
+appsettings.Development.json only for local
+environment variables for deployment
+Azure Key Vault / Docker secret / mounted secret later
+```
+
+---
+
+## 3. Raw / Staging Layer Before Dashboard
+
+This is the most important point in your requirement.
+
+You are correct: every plant area can have a different source schema.
+
+Example:
+
+| Plant Area         | Source Type   | Example              |
+| ------------------ | ------------- | -------------------- |
+| Furnace            | Oracle        | EAF/LF process DB    |
+| Caster             | Excel         | Shift casting sheet  |
+| Hot Strip Mill     | MSSQL         | HSM Level 2 DB       |
+| Surface Inspection | PostgreSQL    | Inspection device DB |
+| Raw Material       | API / CSV     | ERP or supplier data |
+| Quality Dept.      | MSSQL / Excel | Lab/QMS data         |
+
+So you need **source-specific raw schemas** before the canonical model.
+
+The correct design is:
+
+```text
+Raw Source Data
+        ↓
+source_datasets
+source_fields
+staging_records
+        ↓
+mapping_definitions
+        ↓
+canonical tables
+```
+
+You already have `ImportBatch`, `MappingDefinition`, and `StagingRecord` in the current architecture, and `ImportBatch` supports import types such as CSV, Excel, read-only SQL, API snapshots, historian export, and synthetic seed. 
+
+Now we should make this more professional by adding:
+
+```text
+SourceDatasetDefinition
+- SourceSystemDefinitionId
+- DatasetCode
+- DatasetName
+- SourceObjectName
+- SourceObjectType: Table / View / ExcelSheet / ApiEndpoint / CsvFile
+- RefreshMode: Manual / Scheduled / Incremental
+- IsActive
+```
+
+```text
+SourceFieldDefinition
+- SourceDatasetDefinitionId
+- FieldName
+- DataType
+- IsNullable
+- SampleValue
+- SourceOrdinal
+```
+
+```text
+StagingRecord
+- ImportBatchId
+- SourceSystemDefinitionId
+- SourceDatasetDefinitionId
+- RawJson
+- RowNumber
+- SourceRecordId
+- MappingStatus
+- MappingError
+```
+
+Then mapping will convert:
+
+```text
+Oracle furnace table column TEMP_ACT
+        ↓
+ParameterObservation.NumericValue
+
+Excel caster column CastSpeed
+        ↓
+ParameterObservation.NumericValue
+
+MSSQL HSM table RollingForce
+        ↓
+ParameterObservation.NumericValue
+
+PostgreSQL inspection column defect_code
+        ↓
+QualityEvent / DefectCatalog
+```
+
+This is exactly the same logic as QlikSense loading different sources, but your product will add **manufacturing canonical intelligence**, genealogy, correlation, risk score, and report generation.
+
+---
+
+# Correct Product Architecture
+
+```text
+┌────────────────────────────────────────────┐
+│ React Interactive Dashboard                 │
+│ Filters, charts, drilldown, material search │
+└───────────────────┬────────────────────────┘
+                    │
+┌───────────────────▼────────────────────────┐
+│ Dashboard API / Analytics API               │
+│ Aggregated query endpoints                   │
+└───────────────────┬────────────────────────┘
+                    │
+┌───────────────────▼────────────────────────┐
+│ Analytics Layer                              │
+│ Correlation, feature engineering, risk score │
+└───────────────────┬────────────────────────┘
+                    │
+┌───────────────────▼────────────────────────┐
+│ Canonical PlantProcess IQ Schema             │
+│ Material, genealogy, process, quality        │
+└───────────────────┬────────────────────────┘
+                    │
+┌───────────────────▼────────────────────────┐
+│ Mapping & Transformation Layer               │
+│ Source fields → canonical fields             │
+└───────────────────┬────────────────────────┘
+                    │
+┌───────────────────▼────────────────────────┐
+│ Raw / Staging Layer                          │
+│ Raw JSON, source rows, import batches        │
+└───────────────────┬────────────────────────┘
+                    │
+┌───────────────────▼────────────────────────┐
+│ Connector Layer                              │
+│ Excel, Oracle, MSSQL, PostgreSQL, REST API   │
+└────────────────────────────────────────────┘
+```
+
+---
+
+# 4. Ports Must Be Configurable
+
+Yes — this is currently a gap.
+
+Your current backend launch profile still has fixed local URLs like:
+
+```json
+"applicationUrl": "http://localhost:5063"
+```
+
+And your frontend API client currently has a fallback like:
+
+```ts
+import.meta.env.VITE_API_BASE_URL || "http://localhost:5063"
+```
+
+The frontend part is already partly good because it supports `VITE_API_BASE_URL`, but the fallback is still static. The backend CORS also currently allows a static frontend origin, `http://localhost:5173`, which must become configurable before publishing.
+
+You need environment-based configuration:
+
+## Backend
+
+Use:
+
+```bash
+ASPNETCORE_URLS=http://+:8080
+PLANTPROCESS_ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000
+ConnectionStrings__PlantProcessDb=Host=localhost;Port=5432;Database=plantprocessiq;Username=plantprocess;Password=plantprocess123
+```
+
+Backend `appsettings.json` should include:
+
+```json
+{
+  "PlantProcess": {
+    "AllowedOrigins": [
+      "http://localhost:5173"
+    ]
+  }
+}
+```
+
+And CORS should read from config, not hardcoded string.
+
+## Frontend
+
+Create `.env.development`:
+
+```env
+VITE_API_BASE_URL=http://localhost:5063
+```
+
+Create `.env.production`:
+
+```env
+VITE_API_BASE_URL=https://your-api-domain.com
+```
+
+Run FE with variable port:
+
+```bash
+npm run dev -- --host 0.0.0.0 --port 5173
+```
+
+Or define:
+
+```json
+"scripts": {
+  "dev": "vite --host 0.0.0.0 --port ${VITE_PORT:-5173}"
+}
+```
+
+On Windows, better use `cross-env` or use `.env`.
+
+## Docker Compose
+
+Use variables:
+
+```yaml
+services:
+  api:
+    ports:
+      - "${API_PORT:-5063}:8080"
+    environment:
+      ASPNETCORE_URLS: "http://+:8080"
+      ConnectionStrings__PlantProcessDb: "Host=db;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}"
+      PlantProcess__AllowedOrigins__0: "http://localhost:${WEB_PORT:-5173}"
+
+  web:
+    ports:
+      - "${WEB_PORT:-5173}:5173"
+    environment:
+      VITE_API_BASE_URL: "http://localhost:${API_PORT:-5063}"
+
+  db:
+    ports:
+      - "${DB_PORT:-5432}:5432"
+```
+
+Then `.env`:
+
+```env
+API_PORT=5063
+WEB_PORT=5173
+DB_PORT=5432
+POSTGRES_DB=plantprocessiq
+POSTGRES_USER=plantprocess
+POSTGRES_PASSWORD=plantprocess123
+```
+
+This gives you full flexibility when publishing.
+
+---
+
+# My Recommended Next Tasks
+
+Do not treat these as random enhancements. This should become your next official implementation phase.
+
+## Phase H — QlikSense-Style Data Platform Layer
+
+| Priority | Task                                             | Output                                            |
+| -------- | ------------------------------------------------ | ------------------------------------------------- |
+| CRITICAL | T-31 Configurable ports and environment settings | No hardcoded BE/FE/DB ports                       |
+| CRITICAL | T-32 Configurable CORS and API base URL          | Publish-ready FE/BE communication                 |
+| CRITICAL | T-33 Source connection profile model             | Store datasource connection metadata              |
+| CRITICAL | T-34 Source dataset and source field metadata    | Understand schema of each datasource              |
+| CRITICAL | T-35 Connector abstraction layer                 | One interface for Excel/Oracle/MSSQL/Postgres/API |
+| HIGH     | T-36 Excel connector MVP                         | Read Excel sheets into staging records            |
+| HIGH     | T-37 PostgreSQL connector MVP                    | Read external PostgreSQL source tables            |
+| HIGH     | T-38 MSSQL connector MVP                         | Read external MSSQL source tables                 |
+| HIGH     | T-39 Oracle connector MVP                        | Read Oracle furnace/process DB                    |
+| HIGH     | T-40 Mapping workbench backend                   | Preview source rows and mapping result            |
+| HIGH     | T-41 Interactive dashboard filter API            | Backend accepts global filter object              |
+| HIGH     | T-42 React global filter dashboard               | Qlik-like filtering experience                    |
+| MEDIUM   | T-43 Dashboard materialized views                | Performance for huge data                         |
+| MEDIUM   | T-44 Scheduled import jobs                       | Refresh data automatically                        |
+| MEDIUM   | T-45 Import monitoring page                      | See source status, last load, errors              |
+
+---
+
+# Very Important Design Rule
+
+Never query Oracle/MSSQL/Excel directly from the dashboard.
+
+Bad design:
+
+```text
+React dashboard → Backend → Oracle/MSSQL/Excel directly every time
+```
+
+Correct design:
+
+```text
+Source systems → Import/Staging → Canonical model → Analytics marts → Dashboard
+```
+
+Because if the dashboard queries live source systems directly:
+
+```text
+1. Dashboard will be slow.
+2. Customer source systems may be overloaded.
+3. Excel/API sources are unreliable for live dashboarding.
+4. Correlation/risk logic becomes inconsistent.
+5. You lose audit/replay ability.
+```
+
+# Final Recommendation
+
+Your requirement should become the next master direction:
+
+```text
+PlantProcess IQ should behave like QlikSense in interactivity and source connectivity,
+but with a stronger manufacturing intelligence backend:
+source registry, raw staging, mapping engine, canonical model, genealogy,
+correlation, risk scoring, and investigation reporting.
+```
+
+The next thing I would implement first is **T-31 + T-32**:
+
+```text
+Make all BE / FE / DB ports, API URLs, CORS origins, and DB connection strings configurable by environment.
+```
+
+Then move to:
+
+```text
+T-33 Source Connection Profile
+T-34 Source Dataset Schema Layer
+T-35 Connector Abstraction Layer
+```
+
+That gives you the real foundation for QlikSense-style multi-source loading.
+
 Your product direction is now clear:
 
 PlantProcess IQ is not only a dashboard.

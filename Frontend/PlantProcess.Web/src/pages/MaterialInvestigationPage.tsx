@@ -1,11 +1,16 @@
 import { useEffect, useState } from "react";
 import { Download, Search, ShieldCheck } from "lucide-react";
-import { plantProcessApi } from "../api/plantProcessApi";
+import { plantProcessApi, type DashboardMaterialRow } from "../api/plantProcessApi";
 import { MetricCard } from "../components/MetricCard";
+import { SortableDataTable } from "../components/SortableDataTable";
+import type { SortableColumn } from "../components/SortableDataTable";
+import { useDashboardFilters } from "../state/DashboardFilterContext";
 
 export function MaterialInvestigationPage() {
-  const [materials, setMaterials] = useState<any[]>([]);
+  const { filters, mergeFilters } = useDashboardFilters();
+  const [materials, setMaterials] = useState<DashboardMaterialRow[]>([]);
   const [selectedId, setSelectedId] = useState("");
+  const [materialSearch, setMaterialSearch] = useState(filters.materialCode ?? "");
   const [investigation, setInvestigation] = useState<any>(null);
   const [features, setFeatures] = useState<any>(null);
   const [riskResult, setRiskResult] = useState<any>(null);
@@ -13,13 +18,49 @@ export function MaterialInvestigationPage() {
 
   useEffect(() => {
     plantProcessApi
-      .getMaterialSample(20)
-      .then((rows) => {
-        setMaterials(rows);
-        if (rows.length > 0) setSelectedId(rows[0].id);
+      .searchDashboardMaterials({
+        ...filters,
+        materialCode: materialSearch || filters.materialCode,
+        page: 1,
+        pageSize: 25,
+        sortBy: "materialCode",
+        sortDirection: "asc",
       })
-      .catch((err) => setError(err.message));
-  }, []);
+      .then((result) => {
+        setMaterials(result.items);
+        if (result.items.length > 0 && !selectedId) {
+          setSelectedId(result.items[0].materialUnitId);
+        }
+      })
+      .catch((err) =>
+        setError(err instanceof Error ? err.message : "Failed to load materials.")
+      );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters.siteId, filters.sourceSystem, filters.riskClass]);
+
+  async function searchMaterials() {
+    setError("");
+
+    try {
+      const result = await plantProcessApi.searchDashboardMaterials({
+        ...filters,
+        materialCode: materialSearch,
+        page: 1,
+        pageSize: 25,
+        sortBy: "materialCode",
+        sortDirection: "asc",
+      });
+
+      setMaterials(result.items);
+      if (result.items.length > 0) {
+        setSelectedId(result.items[0].materialUnitId);
+      }
+
+      mergeFilters({ materialCode: materialSearch || undefined, page: 1 });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to search materials.");
+    }
+  }
 
   async function loadInvestigation() {
     if (!selectedId) return;
@@ -36,7 +77,9 @@ export function MaterialInvestigationPage() {
       setInvestigation(investigationResult);
       setFeatures(featuresResult);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load material investigation.");
+      setError(
+        err instanceof Error ? err.message : "Failed to load material investigation."
+      );
     }
   }
 
@@ -51,71 +94,128 @@ export function MaterialInvestigationPage() {
     }
   }
 
+  const selectedMaterial = materials.find((x) => x.materialUnitId === selectedId);
   const pdfUrl = selectedId ? plantProcessApi.getInvestigationPdfUrl(selectedId) : "#";
 
+  const columns: SortableColumn<DashboardMaterialRow>[] = [
+    {
+      key: "materialCode",
+      title: "Material",
+      render: (row) => (
+        <button
+          className="link-button"
+          onClick={() => {
+            setSelectedId(row.materialUnitId);
+            mergeFilters({ materialCode: row.materialCode });
+          }}
+        >
+          {row.materialCode}
+        </button>
+      ),
+    },
+    {
+      key: "materialUnitType",
+      title: "Type",
+      render: (row) => row.materialUnitType,
+    },
+    {
+      key: "productFamily",
+      title: "Family",
+      render: (row) => row.productFamily ?? "-",
+    },
+    {
+      key: "latestRiskClass",
+      title: "Risk",
+      render: (row) => row.latestRiskClass ?? "-",
+    },
+    {
+      key: "defectEventCount",
+      title: "Defects",
+      align: "right",
+      render: (row) => row.defectEventCount,
+    },
+  ];
+
   return (
-    <section className="page">
+    <section className="page-shell">
       <div className="page-title">
         <div>
-          <h1>Material Investigation</h1>
-          <p>Inspect genealogy, process history, quality events, features and risk.</p>
+          <h1>Material Search and Drilldown</h1>
+          <p>
+            Search material/batch/coil/lot, then inspect genealogy, process
+            history, quality events, feature vector and risk.
+          </p>
         </div>
       </div>
 
-      {error && <div className="error-box">{error}</div>}
+      {error ? <div className="error-box">{error}</div> : null}
 
       <div className="toolbar">
-        <select value={selectedId} onChange={(e) => setSelectedId(e.target.value)}>
-          {materials.map((m) => (
-            <option key={m.id} value={m.id}>
-              {m.materialCode} — {m.materialUnitType}
-            </option>
-          ))}
-        </select>
-
-        <button onClick={loadInvestigation}>
+        <input
+          value={materialSearch}
+          onChange={(event) => setMaterialSearch(event.target.value)}
+          placeholder="Search material code..."
+        />
+        <button onClick={searchMaterials}>
+          <Search size={16} />
+          Search
+        </button>
+        <button onClick={loadInvestigation} disabled={!selectedId}>
           <Search size={16} />
           Load Investigation
         </button>
-
-        <button onClick={calculateRisk}>
+        <button onClick={calculateRisk} disabled={!selectedId}>
           <ShieldCheck size={16} />
           Calculate Risk
         </button>
-
         <a className="button-link" href={pdfUrl} target="_blank" rel="noreferrer">
           <Download size={16} />
-          Download PDF
+          PDF Report
         </a>
       </div>
 
+      <section className="dashboard-panel">
+        <div className="panel-header">
+          <div>
+            <h3>Search Results</h3>
+            <p>Click one material to drill down and synchronize global filters.</p>
+          </div>
+        </div>
+
+        <SortableDataTable
+          rows={materials}
+          columns={columns}
+          emptyText="No materials found."
+        />
+      </section>
+
       <div className="metric-grid">
-        <MetricCard title="Materials" value={investigation?.summary?.materials ?? "-"} />
-        <MetricCard title="Process Steps" value={investigation?.summary?.processSteps ?? "-"} />
-        <MetricCard title="Parameters" value={investigation?.summary?.parameterObservations ?? "-"} />
-        <MetricCard title="Quality Events" value={investigation?.summary?.qualityEvents ?? "-"} />
-        <MetricCard title="Risk Scores" value={investigation?.summary?.riskScores ?? "-"} />
-        <MetricCard title="DQ Issues" value={investigation?.summary?.dataQualityIssues ?? "-"} />
+        <MetricCard title="Selected Material" value={selectedMaterial?.materialCode ?? "-"} />
+        <MetricCard title="Type" value={selectedMaterial?.materialUnitType ?? "-"} />
+        <MetricCard title="Risk Class" value={selectedMaterial?.latestRiskClass ?? "-"} />
+        <MetricCard title="Defects" value={selectedMaterial?.defectEventCount ?? "-"} />
       </div>
 
-      {riskResult && (
-        <div className="panel success-panel">
-          <h3>Calculated Risk</h3>
+      {riskResult ? (
+        <div className="panel">
+          <h3>Latest Risk Calculation</h3>
           <pre>{JSON.stringify(riskResult, null, 2)}</pre>
         </div>
-      )}
+      ) : null}
 
-      <div className="two-column">
+      {investigation ? (
+        <div className="panel">
+          <h3>Material Investigation</h3>
+          <pre>{JSON.stringify(investigation, null, 2)}</pre>
+        </div>
+      ) : null}
+
+      {features ? (
         <div className="panel">
           <h3>Feature Vector</h3>
           <pre>{JSON.stringify(features, null, 2)}</pre>
         </div>
-
-        <div className="panel">
-          <h3>Investigation Result</h3>
-          <pre>{JSON.stringify(investigation, null, 2)}</pre>
-        </div>
-      </div>
+      ) : null}
     </section>
   );
 }

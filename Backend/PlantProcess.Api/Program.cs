@@ -64,7 +64,10 @@ try
         logFilePath);
 
     var builder = WebApplication.CreateBuilder(args);
-
+    
+    //Register Memory Cache
+    builder.Services.AddMemoryCache();
+    
     // ── Replace default .NET logging with Serilog ─────────────────────────
     builder.Host.UseSerilog();
 
@@ -106,7 +109,7 @@ try
     var app = builder.Build();
     app.UseCors("PlantProcessFrontend");
 
-    
+
     // ── Middleware pipeline (ORDER MATTERS) ───────────────────────────────
     // 1. Correlation ID first — all subsequent middleware and endpoints get CorrelationId in scope.
     app.UseMiddleware<CorrelationIdMiddleware>();

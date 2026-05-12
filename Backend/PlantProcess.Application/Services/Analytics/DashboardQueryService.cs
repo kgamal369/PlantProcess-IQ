@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using PlantProcess.Application.Common.Persistence;
 using PlantProcess.Application.Common.Results;
 using PlantProcess.Application.Contracts.Analytics;
@@ -9,158 +8,301 @@ namespace PlantProcess.Application.Services.Analytics;
 public sealed class DashboardQueryService : IDashboardQueryService
 {
     private readonly IPlantProcessDbContext _dbContext;
-    private readonly ILogger<DashboardQueryService> _logger;
 
-    public DashboardQueryService(
-        IPlantProcessDbContext dbContext,
-        ILogger<DashboardQueryService> logger)
+    public DashboardQueryService(IPlantProcessDbContext dbContext)
     {
         _dbContext = dbContext;
-        _logger = logger;
     }
 
-    public async Task<ApplicationResult<DashboardOverviewDto>> GetOverviewAsync(Guid? siteId, DateTime? fromUtc, DateTime? toUtc, CancellationToken cancellationToken)
+    public async Task<ApplicationResult<DashboardWorkspaceDto>> GetWorkspaceAsync(
+        DashboardQueryDto query,
+        CancellationToken cancellationToken)
     {
-        var range = NormalizeRange(fromUtc, toUtc);
-        var materialIds = await GetMaterialIdsAsync(siteId, range.FromUtc, range.ToUtc, cancellationToken);
-        var materialIdSet = materialIds.ToHashSet();
+        var overview = await GetOverviewAsync(query, cancellationToken);
+        if (!overview.IsSuccess) return ApplicationResult<DashboardWorkspaceDto>.Failure(overview.Error!);
 
-        var qualityEvents = await _dbContext.QualityEvents
-            .AsNoTracking()
-            .Where(x => !x.IsDeleted && materialIdSet.Contains(x.MaterialUnitId) && x.EventAtUtc >= range.FromUtc && x.EventAtUtc <= range.ToUtc)
-            .Select(x => new { x.MaterialUnitId, x.EventType, x.DefectCatalogId, x.EventAtUtc })
+        var quality = await GetQualityDashboardAsync(query, cancellationToken);
+        if (!quality.IsSuccess) return ApplicationResult<DashboardWorkspaceDto>.Failure(quality.Error!);
+
+        var risk = await GetRiskDashboardAsync(query, cancellationToken);
+        if (!risk.IsSuccess) return ApplicationResult<DashboardWorkspaceDto>.Failure(risk.Error!);
+
+        var dataQuality = await GetDataQualityDashboardAsync(query, cancellationToken);
+        if (!dataQuality.IsSuccess) return ApplicationResult<DashboardWorkspaceDto>.Failure(dataQuality.Error!);
+
+        var materials = await SearchMaterialsAsync(query, cancellationToken);
+        if (!materials.IsSuccess) return ApplicationResult<DashboardWorkspaceDto>.Failure(materials.Error!);
+
+        return ApplicationResult<DashboardWorkspaceDto>.Success(
+            new DashboardWorkspaceDto(
+                DateTime.UtcNow,
+                NormalizeQuery(query),
+                overview.Value!,
+                quality.Value!,
+                risk.Value!,
+                dataQuality.Value!,
+                materials.Value!));
+    }
+
+    public async Task<ApplicationResult<DashboardOverviewDto>> GetOverviewAsync(
+        DashboardQueryDto query,
+        CancellationToken cancellationToken)
+    {
+        var normalized = NormalizeQuery(query);
+        var materialIds = await GetFilteredMaterialIdsAsync(normalized, cancellationToken);
+        var materialSet = materialIds.ToHashSet();
+
+        var sites = await _dbContext.Sites.AsNoTracking().CountAsync(cancellationToken);
+
+        var materialCount = materialIds.Count;
+
+        var processStepsQuery = _dbContext.ProcessStepExecutions.AsNoTracking()
+            .Where(x => materialSet.Contains(x.MaterialUnitId));
+
+        var parameterQuery = _dbContext.ParameterObservations.AsNoTracking()
+            .Where(x => materialSet.Contains(x.MaterialUnitId));
+
+        var qualityQuery = _dbContext.QualityEvents.AsNoTracking()
+            .Where(x => materialSet.Contains(x.MaterialUnitId));
+
+        var riskQuery = _dbContext.RiskScores.AsNoTracking()
+            .Where(x => materialSet.Contains(x.MaterialUnitId));
+
+        ApplyTimeFiltersToProcessAndObservation(normalized, ref processStepsQuery, ref parameterQuery, ref qualityQuery);
+
+        if (!string.IsNullOrWhiteSpace(normalized.SourceSystem))
+        {
+            processStepsQuery = processStepsQuery.Where(x => x.SourceSystem == normalized.SourceSystem);
+            parameterQuery = parameterQuery.Where(x => x.SourceSystem == normalized.SourceSystem);
+            qualityQuery = qualityQuery.Where(x => x.SourceSystem == normalized.SourceSystem);
+            riskQuery = riskQuery.Where(x => x.SourceSystem == normalized.SourceSystem);
+        }
+
+        var qualityEvents = await qualityQuery
+            .Select(x => new { x.Id, x.EventType, x.EventAtUtc })
             .ToListAsync(cancellationToken);
 
-        var defectEvents = qualityEvents.Count(x => x.EventType.Equals("Defect", StringComparison.OrdinalIgnoreCase) || x.DefectCatalogId.HasValue);
-        var riskScores = await _dbContext.RiskScores
-            .AsNoTracking()
-            .Where(x => !x.IsDeleted && materialIdSet.Contains(x.MaterialUnitId))
-            .Select(x => new { x.MaterialUnitId, x.Score, x.RiskClass, x.MainContributorsJson })
+        var defectEvents = qualityEvents
+            .Where(x => IsDefectEvent(x.EventType))
+            .ToList();
+
+        var risks = await riskQuery
+            .Select(x => new
+            {
+                x.MaterialUnitId,
+                x.Score,
+                x.RiskClass,
+                x.MainContributorsJson
+            })
             .ToListAsync(cancellationToken);
 
-        var highRiskMaterials = riskScores.Where(x => x.Score >= 0.70m || (x.RiskClass ?? "").Equals("High", StringComparison.OrdinalIgnoreCase)).Select(x => x.MaterialUnitId).Distinct().Count();
-        var processSteps = await _dbContext.ProcessStepExecutions.AsNoTracking().CountAsync(x => !x.IsDeleted && materialIdSet.Contains(x.MaterialUnitId), cancellationToken);
-        var parameterObservations = await _dbContext.ParameterObservations.AsNoTracking().CountAsync(x => !x.IsDeleted && materialIdSet.Contains(x.MaterialUnitId), cancellationToken);
-        var dataQualityIssues = await _dbContext.DataQualityIssues.AsNoTracking().CountAsync(x => !x.IsDeleted && x.MaterialUnitId.HasValue && materialIdSet.Contains(x.MaterialUnitId.Value), cancellationToken);
-        var correlationResults = await _dbContext.CorrelationResults.AsNoTracking().CountAsync(x => !x.IsDeleted, cancellationToken);
-        var sites = siteId.HasValue ? 1 : await _dbContext.Sites.AsNoTracking().CountAsync(x => !x.IsDeleted, cancellationToken);
+        var latestRisks = risks
+            .GroupBy(x => x.MaterialUnitId)
+            .Select(x => x.OrderByDescending(r => r.Score).First())
+            .ToList();
 
-        var materialsCount = Math.Max(materialIds.Count, 1);
-        var defectRate = Math.Round((decimal)defectEvents / materialsCount * 100m, 2);
-        var highRiskRate = Math.Round((decimal)highRiskMaterials / materialsCount * 100m, 2);
+        if (!string.IsNullOrWhiteSpace(normalized.RiskClass))
+        {
+            latestRisks = latestRisks
+                .Where(x => string.Equals(x.RiskClass, normalized.RiskClass, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+
+        var highRiskMaterials = latestRisks
+            .Count(x => x.Score >= 0.70m || string.Equals(x.RiskClass, "High", StringComparison.OrdinalIgnoreCase) || string.Equals(x.RiskClass, "Critical", StringComparison.OrdinalIgnoreCase));
+
+        var correlationCount = await _dbContext.CorrelationResults
+            .AsNoTracking()
+            .CountAsync(cancellationToken);
+
+        var dataQualityCount = await _dbContext.DataQualityIssues.AsNoTracking()
+            .Where(x => !x.MaterialUnitId.HasValue || materialSet.Contains(x.MaterialUnitId.Value))
+            .CountAsync(cancellationToken);
 
         var trend = qualityEvents
             .GroupBy(x => x.EventAtUtc.Date)
             .OrderBy(x => x.Key)
-            .Select(x => new DashboardTrendPointDto(
-                DateTime.SpecifyKind(x.Key, DateTimeKind.Utc),
-                materialIds.Count,
-                x.Count(),
-                x.Count(e => e.EventType.Equals("Defect", StringComparison.OrdinalIgnoreCase) || e.DefectCatalogId.HasValue),
-                Math.Round((decimal)x.Count(e => e.EventType.Equals("Defect", StringComparison.OrdinalIgnoreCase) || e.DefectCatalogId.HasValue) / materialsCount * 100m, 2)))
+            .Select(x =>
+            {
+                var qualityCount = x.Count();
+                var defectCount = x.Count(y => IsDefectEvent(y.EventType));
+
+                return new DashboardTrendPointDto(
+                    x.Key,
+                    MaterialCount: materialCount,
+                    QualityEventCount: qualityCount,
+                    DefectEventCount: defectCount,
+                    DefectRatePercent: qualityCount == 0 ? 0 : Math.Round((decimal)defectCount / qualityCount * 100m, 2));
+            })
             .ToList();
 
-        var metrics = new List<DashboardMetricDto>
-        {
-            new("MATERIALS", "Materials in scope", materialIds.Count, null, "Traceable material units included in the selected period."),
-            new("DEFECT_RATE", "Defect rate", defectRate, "%", "Share of materials/events with defect signals."),
-            new("HIGH_RISK_RATE", "High-risk material rate", highRiskRate, "%", "Share of materials currently classified as high risk."),
-            new("DQ_ISSUES", "Data-quality issues", dataQualityIssues, null, "Open/current data-quality signals requiring review."),
-            new("CORRELATIONS", "Saved correlation results", correlationResults, null, "Persisted analytics evidence available for investigation.")
-        };
-
-        var topContributors = riskScores
-            .Where(x => !string.IsNullOrWhiteSpace(x.MainContributorsJson))
-            .GroupBy(x => x.RiskClass ?? "Unknown")
-            .Select(x => new DashboardRiskContributorDto("RiskClass", x.Key, x.Count(), Math.Round(x.Average(r => r.Score), 6)))
-            .OrderByDescending(x => x.AverageRiskScore)
+        var contributors = latestRisks
+            .SelectMany(x => ExtractContributorCodes(x.MainContributorsJson)
+                .Select(code => new { Code = code, x.Score }))
+            .GroupBy(x => x.Code)
+            .Select(x => new DashboardRiskContributorDto(
+                "RiskContributor",
+                x.Key,
+                x.Count(),
+                Math.Round(x.Average(y => y.Score), 6)))
+            .OrderByDescending(x => x.Count)
+            .ThenByDescending(x => x.AverageRiskScore)
             .Take(10)
             .ToList();
 
-        var dto = new DashboardOverviewDto(
-            DateTime.UtcNow,
-            siteId,
-            sites,
-            materialIds.Count,
-            processSteps,
-            parameterObservations,
-            qualityEvents.Count,
-            defectEvents,
-            dataQualityIssues,
-            riskScores.Count,
-            highRiskMaterials,
-            correlationResults,
-            defectRate,
-            highRiskRate,
-            metrics,
-            trend,
-            topContributors);
+        var processStepCount = await processStepsQuery.CountAsync(cancellationToken);
+        var parameterCount = await parameterQuery.CountAsync(cancellationToken);
+        var riskScoreCount = await riskQuery.CountAsync(cancellationToken);
 
-        _logger.LogInformation("Dashboard overview generated. SiteId={SiteId}, Materials={Materials}, DefectRate={DefectRate}", siteId, dto.Materials, dto.DefectRatePercent);
-        return ApplicationResult<DashboardOverviewDto>.Success(dto);
+        var defectRate = qualityEvents.Count == 0
+            ? 0
+            : Math.Round((decimal)defectEvents.Count / qualityEvents.Count * 100m, 2);
+
+        var highRiskRate = materialCount == 0
+            ? 0
+            : Math.Round((decimal)highRiskMaterials / materialCount * 100m, 2);
+
+        var metrics = new List<DashboardMetricDto>
+        {
+            new("MATERIALS", "Materials", materialCount, null, "Traceable material/batch units in the selected context."),
+            new("PROCESS_STEPS", "Process Steps", processStepCount, null, "Executed operations linked to selected materials."),
+            new("PARAMETER_OBS", "Parameter Observations", parameterCount, null, "Aggregated process values available for analytics."),
+            new("DEFECT_RATE", "Defect Rate", defectRate, "%", "Defect events divided by quality events."),
+            new("HIGH_RISK", "High-Risk Materials", highRiskMaterials, null, "Materials with high or critical risk class or score >= 0.70."),
+            new("DQ_ISSUES", "Data-Quality Issues", dataQualityCount, null, "Detected missing/broken/inconsistent records.")
+        };
+
+        return ApplicationResult<DashboardOverviewDto>.Success(
+            new DashboardOverviewDto(
+                DateTime.UtcNow,
+                normalized.SiteId,
+                sites,
+                materialCount,
+                processStepCount,
+                parameterCount,
+                qualityEvents.Count,
+                defectEvents.Count,
+                dataQualityCount,
+                riskScoreCount,
+                highRiskMaterials,
+                correlationCount,
+                defectRate,
+                highRiskRate,
+                metrics,
+                trend,
+                contributors));
     }
 
-    public async Task<ApplicationResult<QualityDashboardDto>> GetQualityDashboardAsync(Guid? siteId, DateTime? fromUtc, DateTime? toUtc, CancellationToken cancellationToken)
+    public async Task<ApplicationResult<QualityDashboardDto>> GetQualityDashboardAsync(
+        DashboardQueryDto query,
+        CancellationToken cancellationToken)
     {
-        var range = NormalizeRange(fromUtc, toUtc);
-        var materialIds = await GetMaterialIdsAsync(siteId, range.FromUtc, range.ToUtc, cancellationToken);
-        var materialIdSet = materialIds.ToHashSet();
+        var normalized = NormalizeQuery(query);
+        var materialIds = await GetFilteredMaterialIdsAsync(normalized, cancellationToken);
+        var materialSet = materialIds.ToHashSet();
 
-        var eventsRaw = await _dbContext.QualityEvents
-            .AsNoTracking()
-            .Where(x => !x.IsDeleted && materialIdSet.Contains(x.MaterialUnitId) && x.EventAtUtc >= range.FromUtc && x.EventAtUtc <= range.ToUtc)
-            .Select(x => new { x.Id, x.DefectCatalogId, x.EventType, x.Decision })
-            .ToListAsync(cancellationToken);
-
-        var defectIds = eventsRaw.Where(x => x.DefectCatalogId.HasValue).Select(x => x.DefectCatalogId!.Value).Distinct().ToList();
-        var defectLookup = await _dbContext.DefectCatalogs
-            .AsNoTracking()
-            .Where(x => defectIds.Contains(x.Id))
-            .Select(x => new { x.Id, x.DefectCode, x.DefectName, x.DefectCategory })
-            .ToDictionaryAsync(x => x.Id, cancellationToken);
-
-        var defects = eventsRaw.Where(x => x.EventType.Equals("Defect", StringComparison.OrdinalIgnoreCase) || x.DefectCatalogId.HasValue).ToList();
-        var defectBreakdown = defects
-            .GroupBy(x => x.DefectCatalogId)
-            .Select(x =>
+        var eventsQuery =
+            from qualityEvent in _dbContext.QualityEvents.AsNoTracking()
+            join defect in _dbContext.DefectCatalogs.AsNoTracking()
+                on qualityEvent.DefectCatalogId equals defect.Id into defectJoin
+            from defect in defectJoin.DefaultIfEmpty()
+            where materialSet.Contains(qualityEvent.MaterialUnitId)
+            select new
             {
-                defectLookup.TryGetValue(x.Key ?? Guid.Empty, out var defect);
-                return new DefectBreakdownDto(
-                    defect?.DefectCode,
-                    defect?.DefectName,
-                    defect?.DefectCategory,
-                    x.Count(),
-                    defects.Count == 0 ? 0 : Math.Round((decimal)x.Count() / defects.Count * 100m, 2));
+                qualityEvent.Id,
+                qualityEvent.EventType,
+                qualityEvent.EventAtUtc,
+                qualityEvent.Decision,
+                qualityEvent.SourceSystem,
+                DefectCode = defect == null ? null : defect.DefectCode,
+                DefectName = defect == null ? null : defect.DefectName,
+                DefectCategory = defect == null ? null : defect.DefectCategory
+            };
+
+        if (normalized.FromUtc.HasValue)
+            eventsQuery = eventsQuery.Where(x => x.EventAtUtc >= normalized.FromUtc.Value);
+
+        if (normalized.ToUtc.HasValue)
+            eventsQuery = eventsQuery.Where(x => x.EventAtUtc <= normalized.ToUtc.Value);
+
+        if (!string.IsNullOrWhiteSpace(normalized.SourceSystem))
+            eventsQuery = eventsQuery.Where(x => x.SourceSystem == normalized.SourceSystem);
+
+        if (!string.IsNullOrWhiteSpace(normalized.DefectType))
+        {
+            eventsQuery = eventsQuery.Where(x =>
+                x.EventType == normalized.DefectType ||
+                x.DefectCode == normalized.DefectType ||
+                x.DefectName == normalized.DefectType);
+        }
+
+        var eventsRaw = await eventsQuery.ToListAsync(cancellationToken);
+        var defects = eventsRaw.Where(x => IsDefectEvent(x.EventType)).ToList();
+
+        var defectBreakdown = defects
+            .GroupBy(x => new
+            {
+                Code = string.IsNullOrWhiteSpace(x.DefectCode) ? x.EventType : x.DefectCode,
+                Name = string.IsNullOrWhiteSpace(x.DefectName) ? x.EventType : x.DefectName,
+                Category = string.IsNullOrWhiteSpace(x.DefectCategory) ? "Unknown" : x.DefectCategory
             })
+            .Select(x => new DefectBreakdownDto(
+                x.Key.Code,
+                x.Key.Name,
+                x.Key.Category,
+                x.Count(),
+                defects.Count == 0 ? 0 : Math.Round((decimal)x.Count() / defects.Count * 100m, 2)))
             .OrderByDescending(x => x.Count)
             .ToList();
 
         var decisionBreakdown = eventsRaw
             .GroupBy(x => string.IsNullOrWhiteSpace(x.Decision) ? "Unknown" : x.Decision)
-            .Select(x => new DecisionBreakdownDto(x.Key, x.Count(), eventsRaw.Count == 0 ? 0 : Math.Round((decimal)x.Count() / eventsRaw.Count * 100m, 2)))
+            .Select(x => new DecisionBreakdownDto(
+                x.Key,
+                x.Count(),
+                eventsRaw.Count == 0 ? 0 : Math.Round((decimal)x.Count() / eventsRaw.Count * 100m, 2)))
             .OrderByDescending(x => x.Count)
             .ToList();
 
-        return ApplicationResult<QualityDashboardDto>.Success(new QualityDashboardDto(
-            DateTime.UtcNow,
-            siteId,
-            eventsRaw.Count,
-            defects.Count,
-            eventsRaw.Count == 0 ? 0 : Math.Round((decimal)defects.Count / eventsRaw.Count * 100m, 2),
-            defectBreakdown,
-            decisionBreakdown));
+        return ApplicationResult<QualityDashboardDto>.Success(
+            new QualityDashboardDto(
+                DateTime.UtcNow,
+                normalized.SiteId,
+                eventsRaw.Count,
+                defects.Count,
+                eventsRaw.Count == 0 ? 0 : Math.Round((decimal)defects.Count / eventsRaw.Count * 100m, 2),
+                defectBreakdown,
+                decisionBreakdown));
     }
 
-    public async Task<ApplicationResult<RiskDashboardDto>> GetRiskDashboardAsync(Guid? siteId, int highRiskTake, CancellationToken cancellationToken)
+    public async Task<ApplicationResult<RiskDashboardDto>> GetRiskDashboardAsync(
+        DashboardQueryDto query,
+        CancellationToken cancellationToken)
     {
-        var materialIds = await GetMaterialIdsAsync(siteId, null, null, cancellationToken);
-        var materialIdSet = materialIds.ToHashSet();
-        var take = Math.Clamp(highRiskTake, 1, 500);
+        var normalized = NormalizeQuery(query);
+        var materialIds = await GetFilteredMaterialIdsAsync(normalized, cancellationToken);
+        var materialSet = materialIds.ToHashSet();
 
-        var riskScores = await _dbContext.RiskScores
+        var riskScoresQuery = _dbContext.RiskScores
             .AsNoTracking()
-            .Where(x => !x.IsDeleted && materialIdSet.Contains(x.MaterialUnitId))
-            .Select(x => new { x.MaterialUnitId, x.RiskType, x.Score, x.RiskClass, x.ModelVersion, x.ScoredAtUtc })
+            .Where(x => materialSet.Contains(x.MaterialUnitId));
+
+        if (!string.IsNullOrWhiteSpace(normalized.SourceSystem))
+            riskScoresQuery = riskScoresQuery.Where(x => x.SourceSystem == normalized.SourceSystem);
+
+        if (!string.IsNullOrWhiteSpace(normalized.RiskClass))
+            riskScoresQuery = riskScoresQuery.Where(x => x.RiskClass == normalized.RiskClass);
+
+        var riskScores = await riskScoresQuery
+            .Select(x => new
+            {
+                x.MaterialUnitId,
+                x.RiskType,
+                x.Score,
+                x.RiskClass,
+                x.ModelVersion,
+                x.ScoredAtUtc
+            })
             .ToListAsync(cancellationToken);
 
         var latestRiskByMaterial = riskScores
@@ -170,23 +312,34 @@ public sealed class DashboardQueryService : IDashboardQueryService
 
         var materialLookup = await _dbContext.MaterialUnits
             .AsNoTracking()
-            .Where(x => materialIdSet.Contains(x.Id))
-            .Select(x => new { x.Id, x.MaterialCode, x.MaterialUnitType, x.ProductFamily, x.GradeOrRecipe })
+            .Where(x => materialSet.Contains(x.Id))
+            .Select(x => new
+            {
+                x.Id,
+                x.MaterialCode,
+                x.MaterialUnitType,
+                x.ProductFamily,
+                x.GradeOrRecipe
+            })
             .ToDictionaryAsync(x => x.Id, cancellationToken);
 
         var classBreakdown = latestRiskByMaterial
-            .GroupBy(x => x.RiskClass ?? "Unknown")
-            .Select(x => new RiskClassBreakdownDto(x.Key, x.Count(), latestRiskByMaterial.Count == 0 ? 0 : Math.Round((decimal)x.Count() / latestRiskByMaterial.Count * 100m, 2)))
+            .GroupBy(x => string.IsNullOrWhiteSpace(x.RiskClass) ? "Unknown" : x.RiskClass)
+            .Select(x => new RiskClassBreakdownDto(
+                x.Key,
+                x.Count(),
+                latestRiskByMaterial.Count == 0 ? 0 : Math.Round((decimal)x.Count() / latestRiskByMaterial.Count * 100m, 2)))
             .OrderByDescending(x => x.Count)
             .ToList();
 
         var highRisk = latestRiskByMaterial
-            .Where(x => x.Score >= 0.70m || (x.RiskClass ?? "").Equals("High", StringComparison.OrdinalIgnoreCase))
+            .Where(x => x.Score >= 0.70m || string.Equals(x.RiskClass, "High", StringComparison.OrdinalIgnoreCase) || string.Equals(x.RiskClass, "Critical", StringComparison.OrdinalIgnoreCase))
             .OrderByDescending(x => x.Score)
-            .Take(take)
+            .Take(normalized.SafePageSize)
             .Select(x =>
             {
                 materialLookup.TryGetValue(x.MaterialUnitId, out var material);
+
                 return new HighRiskMaterialDto(
                     x.MaterialUnitId,
                     material?.MaterialCode ?? x.MaterialUnitId.ToString("N"),
@@ -201,59 +354,389 @@ public sealed class DashboardQueryService : IDashboardQueryService
             })
             .ToList();
 
-        return ApplicationResult<RiskDashboardDto>.Success(new RiskDashboardDto(
-            DateTime.UtcNow,
-            siteId,
-            latestRiskByMaterial.Count,
-            highRisk.Count,
-            latestRiskByMaterial.Count == 0 ? 0 : Math.Round(latestRiskByMaterial.Average(x => x.Score), 6),
-            classBreakdown,
-            highRisk));
+        return ApplicationResult<RiskDashboardDto>.Success(
+            new RiskDashboardDto(
+                DateTime.UtcNow,
+                normalized.SiteId,
+                latestRiskByMaterial.Count,
+                highRisk.Count,
+                latestRiskByMaterial.Count == 0 ? 0 : Math.Round(latestRiskByMaterial.Average(x => x.Score), 6),
+                classBreakdown,
+                highRisk));
     }
 
-    public async Task<ApplicationResult<DataQualityDashboardDto>> GetDataQualityDashboardAsync(Guid? siteId, CancellationToken cancellationToken)
+    public async Task<ApplicationResult<DataQualityDashboardDto>> GetDataQualityDashboardAsync(
+        DashboardQueryDto query,
+        CancellationToken cancellationToken)
     {
-        var materialIds = await GetMaterialIdsAsync(siteId, null, null, cancellationToken);
-        var materialIdSet = materialIds.ToHashSet();
+        var normalized = NormalizeQuery(query);
+        var materialIds = await GetFilteredMaterialIdsAsync(normalized, cancellationToken);
+        var materialSet = materialIds.ToHashSet();
 
         var issues = await _dbContext.DataQualityIssues
             .AsNoTracking()
-            .Where(x => !x.IsDeleted && (!x.MaterialUnitId.HasValue || materialIdSet.Contains(x.MaterialUnitId.Value)))
+            .Where(x => !x.MaterialUnitId.HasValue || materialSet.Contains(x.MaterialUnitId.Value))
             .Select(x => new { x.IssueType, x.Severity })
             .ToListAsync(cancellationToken);
 
-        var severity = issues.GroupBy(x => x.Severity)
-            .Select(x => new DataQualityIssueBreakdownDto(x.Key, x.Count(), issues.Count == 0 ? 0 : Math.Round((decimal)x.Count() / issues.Count * 100m, 2)))
+        var severity = issues
+            .GroupBy(x => string.IsNullOrWhiteSpace(x.Severity) ? "Unknown" : x.Severity)
+            .Select(x => new DataQualityIssueBreakdownDto(
+                x.Key,
+                x.Count(),
+                issues.Count == 0 ? 0 : Math.Round((decimal)x.Count() / issues.Count * 100m, 2)))
             .OrderByDescending(x => x.Count)
             .ToList();
 
-        var issueType = issues.GroupBy(x => x.IssueType)
-            .Select(x => new DataQualityIssueBreakdownDto(x.Key, x.Count(), issues.Count == 0 ? 0 : Math.Round((decimal)x.Count() / issues.Count * 100m, 2)))
+        var issueType = issues
+            .GroupBy(x => string.IsNullOrWhiteSpace(x.IssueType) ? "Unknown" : x.IssueType)
+            .Select(x => new DataQualityIssueBreakdownDto(
+                x.Key,
+                x.Count(),
+                issues.Count == 0 ? 0 : Math.Round((decimal)x.Count() / issues.Count * 100m, 2)))
             .OrderByDescending(x => x.Count)
             .ToList();
 
-        return ApplicationResult<DataQualityDashboardDto>.Success(new DataQualityDashboardDto(DateTime.UtcNow, siteId, issues.Count, issues.Count, severity, issueType));
+        return ApplicationResult<DataQualityDashboardDto>.Success(
+            new DataQualityDashboardDto(
+                DateTime.UtcNow,
+                normalized.SiteId,
+                issues.Count,
+                issues.Count,
+                severity,
+                issueType));
     }
 
-    private async Task<List<Guid>> GetMaterialIdsAsync(Guid? siteId, DateTime? fromUtc, DateTime? toUtc, CancellationToken cancellationToken)
+    public async Task<ApplicationResult<DashboardPagedResultDto<DashboardMaterialRowDto>>> SearchMaterialsAsync(
+        DashboardQueryDto query,
+        CancellationToken cancellationToken)
     {
-        var query = _dbContext.MaterialUnits.AsNoTracking().Where(x => !x.IsDeleted);
-        if (siteId.HasValue) query = query.Where(x => x.SiteId == siteId.Value);
-        if (fromUtc.HasValue) query = query.Where(x => !x.ProductionEndUtc.HasValue || x.ProductionEndUtc >= fromUtc.Value);
-        if (toUtc.HasValue) query = query.Where(x => !x.ProductionStartUtc.HasValue || x.ProductionStartUtc <= toUtc.Value);
-        return await query.Select(x => x.Id).ToListAsync(cancellationToken);
+        var normalized = NormalizeQuery(query);
+        var materialIds = await GetFilteredMaterialIdsAsync(normalized, cancellationToken);
+        var materialSet = materialIds.ToHashSet();
+
+        var queryable =
+            from material in _dbContext.MaterialUnits.AsNoTracking()
+            join site in _dbContext.Sites.AsNoTracking()
+                on material.SiteId equals site.Id
+            where materialSet.Contains(material.Id)
+            select new
+            {
+                material.Id,
+                material.MaterialCode,
+                material.MaterialUnitType,
+                material.ProductFamily,
+                material.GradeOrRecipe,
+                material.SiteId,
+                site.SiteName,
+                material.ProductionStartUtc,
+                material.ProductionEndUtc,
+                material.SourceSystem
+            };
+
+        queryable = ApplyMaterialSort(queryable, normalized.SortBy, normalized.SafeSortDirection);
+
+        var totalCount = await queryable.CountAsync(cancellationToken);
+
+        var rows = await queryable
+            .Skip((normalized.SafePage - 1) * normalized.SafePageSize)
+            .Take(normalized.SafePageSize)
+            .ToListAsync(cancellationToken);
+
+        var pageMaterialIds = rows.Select(x => x.Id).ToHashSet();
+
+        var processCounts = await _dbContext.ProcessStepExecutions
+            .AsNoTracking()
+            .Where(x => pageMaterialIds.Contains(x.MaterialUnitId))
+            .GroupBy(x => x.MaterialUnitId)
+            .Select(x => new { MaterialUnitId = x.Key, Count = x.Count() })
+            .ToDictionaryAsync(x => x.MaterialUnitId, x => x.Count, cancellationToken);
+
+        var parameterCounts = await _dbContext.ParameterObservations
+            .AsNoTracking()
+            .Where(x => pageMaterialIds.Contains(x.MaterialUnitId))
+            .GroupBy(x => x.MaterialUnitId)
+            .Select(x => new { MaterialUnitId = x.Key, Count = x.Count() })
+            .ToDictionaryAsync(x => x.MaterialUnitId, x => x.Count, cancellationToken);
+
+        var qualityCounts = await _dbContext.QualityEvents
+            .AsNoTracking()
+            .Where(x => pageMaterialIds.Contains(x.MaterialUnitId))
+            .GroupBy(x => x.MaterialUnitId)
+            .Select(x => new
+            {
+                MaterialUnitId = x.Key,
+                QualityCount = x.Count(),
+                DefectCount = x.Count(e => e.EventType == "Defect")
+            })
+            .ToDictionaryAsync(x => x.MaterialUnitId, cancellationToken);
+
+        var latestRisks = await _dbContext.RiskScores
+            .AsNoTracking()
+            .Where(x => pageMaterialIds.Contains(x.MaterialUnitId))
+            .GroupBy(x => x.MaterialUnitId)
+            .Select(x => x.OrderByDescending(r => r.ScoredAtUtc).First())
+            .ToDictionaryAsync(x => x.MaterialUnitId, cancellationToken);
+
+        var items = rows.Select(row =>
+        {
+            processCounts.TryGetValue(row.Id, out var processCount);
+            parameterCounts.TryGetValue(row.Id, out var parameterCount);
+            qualityCounts.TryGetValue(row.Id, out var quality);
+            latestRisks.TryGetValue(row.Id, out var risk);
+
+            return new DashboardMaterialRowDto(
+                row.Id,
+                row.MaterialCode,
+                row.MaterialUnitType,
+                row.ProductFamily,
+                row.GradeOrRecipe,
+                row.SiteId,
+                row.SiteName,
+                row.ProductionStartUtc,
+                row.ProductionEndUtc,
+                row.SourceSystem,
+                processCount,
+                parameterCount,
+                quality?.QualityCount ?? 0,
+                quality?.DefectCount ?? 0,
+                risk?.Score,
+                risk?.RiskClass,
+                risk?.ScoredAtUtc);
+        }).ToList();
+
+        var totalPages = totalCount == 0
+            ? 0
+            : (int)Math.Ceiling((decimal)totalCount / normalized.SafePageSize);
+
+        return ApplicationResult<DashboardPagedResultDto<DashboardMaterialRowDto>>.Success(
+            new DashboardPagedResultDto<DashboardMaterialRowDto>(
+                items,
+                normalized.SafePage,
+                normalized.SafePageSize,
+                totalCount,
+                totalPages,
+                normalized.SortBy,
+                normalized.SafeSortDirection));
     }
 
-    private static (DateTime FromUtc, DateTime ToUtc) NormalizeRange(DateTime? fromUtc, DateTime? toUtc)
+    private async Task<List<Guid>> GetFilteredMaterialIdsAsync(
+        DashboardQueryDto query,
+        CancellationToken cancellationToken)
     {
-        var to = EnsureUtc(toUtc ?? DateTime.UtcNow);
-        var from = EnsureUtc(fromUtc ?? to.AddDays(-30));
-        if (from > to) (from, to) = (to, from);
-        return (from, to);
+        var normalized = NormalizeQuery(query);
+
+        var materialsQuery = _dbContext.MaterialUnits
+            .AsNoTracking()
+            .AsQueryable();
+
+        if (normalized.SiteId.HasValue)
+            materialsQuery = materialsQuery.Where(x => x.SiteId == normalized.SiteId.Value);
+
+        if (normalized.FromUtc.HasValue)
+            materialsQuery = materialsQuery.Where(x => !x.ProductionEndUtc.HasValue || x.ProductionEndUtc >= normalized.FromUtc.Value);
+
+        if (normalized.ToUtc.HasValue)
+            materialsQuery = materialsQuery.Where(x => !x.ProductionStartUtc.HasValue || x.ProductionStartUtc <= normalized.ToUtc.Value);
+
+        if (!string.IsNullOrWhiteSpace(normalized.MaterialCode))
+        {
+            var search = normalized.MaterialCode.Trim().ToLower();
+            materialsQuery = materialsQuery.Where(x => x.MaterialCode.ToLower().Contains(search));
+        }
+
+        if (!string.IsNullOrWhiteSpace(normalized.SourceSystem))
+            materialsQuery = materialsQuery.Where(x => x.SourceSystem == normalized.SourceSystem);
+
+        var materialIds = await materialsQuery
+            .Select(x => x.Id)
+            .ToListAsync(cancellationToken);
+
+        var materialSet = materialIds.ToHashSet();
+
+        if (normalized.AreaId.HasValue)
+        {
+            var equipmentIdsInArea = await _dbContext.Equipment
+                .AsNoTracking()
+                .Where(x => x.AreaId == normalized.AreaId.Value)
+                .Select(x => x.Id)
+                .ToListAsync(cancellationToken);
+
+            var stepMaterialIds = await _dbContext.ProcessStepExecutions
+                .AsNoTracking()
+                .Where(x => x.EquipmentId.HasValue && equipmentIdsInArea.Contains(x.EquipmentId.Value))
+                .Select(x => x.MaterialUnitId)
+                .Distinct()
+                .ToListAsync(cancellationToken);
+
+            materialSet.IntersectWith(stepMaterialIds);
+        }
+
+        if (normalized.EquipmentId.HasValue)
+        {
+            var stepMaterialIds = await _dbContext.ProcessStepExecutions
+                .AsNoTracking()
+                .Where(x => x.EquipmentId == normalized.EquipmentId.Value)
+                .Select(x => x.MaterialUnitId)
+                .Distinct()
+                .ToListAsync(cancellationToken);
+
+            materialSet.IntersectWith(stepMaterialIds);
+        }
+
+        if (!string.IsNullOrWhiteSpace(normalized.ShiftCode))
+        {
+            var shiftMaterialIds = await _dbContext.ProcessStepExecutions
+                .AsNoTracking()
+                .Where(x => x.CrewCode == normalized.ShiftCode)
+                .Select(x => x.MaterialUnitId)
+                .Distinct()
+                .ToListAsync(cancellationToken);
+
+            materialSet.IntersectWith(shiftMaterialIds);
+        }
+
+        if (!string.IsNullOrWhiteSpace(normalized.DefectType))
+        {
+            var defectMaterialIds = await (
+                from qualityEvent in _dbContext.QualityEvents.AsNoTracking()
+                join defect in _dbContext.DefectCatalogs.AsNoTracking()
+                    on qualityEvent.DefectCatalogId equals defect.Id into defectJoin
+                from defect in defectJoin.DefaultIfEmpty()
+                where
+                    qualityEvent.EventType == normalized.DefectType ||
+                    qualityEvent.EventType == "Defect" && defect != null && defect.DefectCode == normalized.DefectType ||
+                    qualityEvent.EventType == "Defect" && defect != null && defect.DefectName == normalized.DefectType ||
+                    defect != null && defect.DefectCode == normalized.DefectType ||
+                    defect != null && defect.DefectName == normalized.DefectType
+                select qualityEvent.MaterialUnitId)
+                .Distinct()
+                .ToListAsync(cancellationToken);
+
+            materialSet.IntersectWith(defectMaterialIds);
+        }
+
+        if (!string.IsNullOrWhiteSpace(normalized.RiskClass))
+        {
+            var riskMaterialIds = await _dbContext.RiskScores
+                .AsNoTracking()
+                .Where(x => x.RiskClass == normalized.RiskClass)
+                .Select(x => x.MaterialUnitId)
+                .Distinct()
+                .ToListAsync(cancellationToken);
+
+            materialSet.IntersectWith(riskMaterialIds);
+        }
+
+        return materialSet.ToList();
     }
 
-    private static DateTime EnsureUtc(DateTime value)
+    private static void ApplyTimeFiltersToProcessAndObservation(
+        DashboardQueryDto query,
+        ref IQueryable<PlantProcess.Domain.Entities.Process.ProcessStepExecution> processStepsQuery,
+        ref IQueryable<PlantProcess.Domain.Entities.Process.ParameterObservation> parameterQuery,
+        ref IQueryable<PlantProcess.Domain.Entities.Quality.QualityEvent> qualityQuery)
     {
-        return value.Kind == DateTimeKind.Utc ? value : DateTime.SpecifyKind(value, DateTimeKind.Utc);
+        if (query.FromUtc.HasValue)
+        {
+            processStepsQuery = processStepsQuery.Where(x => x.StartedAtUtc >= query.FromUtc.Value);
+            parameterQuery = parameterQuery.Where(x => x.ObservedAtUtc >= query.FromUtc.Value);
+            qualityQuery = qualityQuery.Where(x => x.EventAtUtc >= query.FromUtc.Value);
+        }
+
+        if (query.ToUtc.HasValue)
+        {
+            processStepsQuery = processStepsQuery.Where(x => x.StartedAtUtc <= query.ToUtc.Value);
+            parameterQuery = parameterQuery.Where(x => x.ObservedAtUtc <= query.ToUtc.Value);
+            qualityQuery = qualityQuery.Where(x => x.EventAtUtc <= query.ToUtc.Value);
+        }
+    }
+
+    private static IQueryable<T> ApplyMaterialSort<T>(
+        IQueryable<T> queryable,
+        string? sortBy,
+        string sortDirection)
+    {
+        // This method is intentionally generic but expects the anonymous type
+        // produced in SearchMaterialsAsync. EF Core can translate these dynamic
+        // branches because each branch is strongly typed at compile time.
+        return (sortBy ?? "").Trim().ToLowerInvariant() switch
+        {
+            "materialcode" => sortDirection == "asc"
+                ? queryable.OrderBy(x => EF.Property<string>(x!, "MaterialCode"))
+                : queryable.OrderByDescending(x => EF.Property<string>(x!, "MaterialCode")),
+
+            "materialunittype" => sortDirection == "asc"
+                ? queryable.OrderBy(x => EF.Property<string>(x!, "MaterialUnitType"))
+                : queryable.OrderByDescending(x => EF.Property<string>(x!, "MaterialUnitType")),
+
+            "productfamily" => sortDirection == "asc"
+                ? queryable.OrderBy(x => EF.Property<string>(x!, "ProductFamily"))
+                : queryable.OrderByDescending(x => EF.Property<string>(x!, "ProductFamily")),
+
+            "productionstartutc" => sortDirection == "asc"
+                ? queryable.OrderBy(x => EF.Property<DateTime?>(x!, "ProductionStartUtc"))
+                : queryable.OrderByDescending(x => EF.Property<DateTime?>(x!, "ProductionStartUtc")),
+
+            _ => sortDirection == "asc"
+                ? queryable.OrderBy(x => EF.Property<DateTime?>(x!, "ProductionStartUtc"))
+                : queryable.OrderByDescending(x => EF.Property<DateTime?>(x!, "ProductionStartUtc"))
+        };
+    }
+
+    private static DashboardQueryDto NormalizeQuery(DashboardQueryDto query)
+    {
+        return query with
+        {
+            MaterialCode = NormalizeText(query.MaterialCode),
+            SourceSystem = NormalizeText(query.SourceSystem),
+            DefectType = NormalizeText(query.DefectType),
+            RiskClass = NormalizeText(query.RiskClass),
+            ShiftCode = NormalizeText(query.ShiftCode),
+            Page = query.SafePage,
+            PageSize = query.SafePageSize,
+            SortDirection = query.SafeSortDirection
+        };
+    }
+
+    private static string? NormalizeText(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+    }
+
+    private static bool IsDefectEvent(string? eventType)
+    {
+        return string.Equals(eventType, "Defect", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static IReadOnlyList<string> ExtractContributorCodes(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+            return Array.Empty<string>();
+
+        // Keep this robust and cheap for the MVP.
+        // It extracts common contributor names from JSON-ish strings without taking dependency on a strict schema.
+        var tokens = json
+            .Replace("{", " ")
+            .Replace("}", " ")
+            .Replace("[", " ")
+            .Replace("]", " ")
+            .Replace("\"", " ")
+            .Replace(":", " ")
+            .Replace(",", " ")
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        return tokens
+            .Where(x =>
+                x.Contains("Speed", StringComparison.OrdinalIgnoreCase) ||
+                x.Contains("Temp", StringComparison.OrdinalIgnoreCase) ||
+                x.Contains("Force", StringComparison.OrdinalIgnoreCase) ||
+                x.Contains("Mould", StringComparison.OrdinalIgnoreCase) ||
+                x.Contains("Powder", StringComparison.OrdinalIgnoreCase) ||
+                x.Contains("Superheat", StringComparison.OrdinalIgnoreCase) ||
+                x.Contains("Equipment", StringComparison.OrdinalIgnoreCase))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Take(10)
+            .ToList();
     }
 }
