@@ -1,3 +1,16 @@
+// ============================================================
+// TASK 7 — Validate filter interaction
+// FILE: Frontend/PlantProcess.Web/src/state/DashboardFilterContext.tsx
+//
+// CHANGES vs current version:
+//  1. activeFilterCount excludes pagination and sort params (page,
+//     pageSize, sortBy, sortDirection) — these are not user filters.
+//  2. clearAllFilters preserves sort/pagination params when clearing.
+//  3. setFilter now resets page to 1 automatically so users always
+//     see the first page after applying a new filter.
+//  4. Numeric filter keys list separated clearly for clarity.
+// ============================================================
+
 import {
   createContext,
   useCallback,
@@ -17,29 +30,30 @@ interface DashboardFilterContextValue {
   mergeFilters: (patch: Partial<DashboardFilters>) => void;
   clearFilter: (key: keyof DashboardFilters) => void;
   clearAllFilters: () => void;
+  /** Count of user-facing filters (excludes pagination/sort). */
   activeFilterCount: number;
 }
 
 const DashboardFilterContext =
   createContext<DashboardFilterContextValue | null>(null);
 
+// All filter keys that map to URL search params.
 const filterKeys: (keyof DashboardFilters)[] = [
-  "siteId",
-  "areaId",
-  "equipmentId",
-  "materialCode",
-  "sourceSystem",
-  "defectType",
-  "parameterCode",
-  "riskClass",
-  "fromUtc",
-  "toUtc",
-  "shiftCode",
-  "linkMode",
-  "genealogyDepth",
-  "bins",
-  "minimumObservationsPerBin",
+  "siteId", "areaId", "equipmentId", "materialCode",
+  "sourceSystem", "defectType", "parameterCode", "riskClass",
+  "fromUtc", "toUtc", "shiftCode", "linkMode",
+  "genealogyDepth", "bins", "minimumObservationsPerBin",
+  "page", "pageSize", "sortBy", "sortDirection",
 ];
+
+// These are not user-facing filters — excluded from activeFilterCount.
+const paginationKeys = new Set<keyof DashboardFilters>([
+  "page", "pageSize", "sortBy", "sortDirection",
+]);
+
+const numericKeys = new Set<keyof DashboardFilters>([
+  "genealogyDepth", "bins", "minimumObservationsPerBin", "page", "pageSize",
+]);
 
 function parseFilters(searchParams: URLSearchParams): DashboardFilters {
   const filters: DashboardFilters = {};
@@ -48,17 +62,13 @@ function parseFilters(searchParams: URLSearchParams): DashboardFilters {
     const value = searchParams.get(key);
     if (!value) continue;
 
-    if (
-      key === "genealogyDepth" ||
-      key === "bins" ||
-      key === "minimumObservationsPerBin"
-    ) {
+    if (numericKeys.has(key)) {
       const parsed = Number(value);
       if (!Number.isNaN(parsed)) {
-        (filters as any)[key] = parsed;
+        (filters as Record<string, unknown>)[key] = parsed;
       }
     } else {
-      (filters as any)[key] = value;
+      (filters as Record<string, unknown>)[key] = value;
     }
   }
 
@@ -86,11 +96,15 @@ export function DashboardFilterProvider({ children }: { children: ReactNode }) {
     (patch: Partial<DashboardFilters>, replace = false) => {
       const nextFilters = replace ? patch : { ...filters, ...patch };
 
+      // Purge undefined / null / empty values.
       Object.keys(nextFilters).forEach((key) => {
-        const typedKey = key as keyof DashboardFilters;
-        const value = nextFilters[typedKey];
-        if (value === undefined || value === null || value === "") {
-          delete (nextFilters as any)[typedKey];
+        const k = key as keyof DashboardFilters;
+        if (
+          nextFilters[k] === undefined ||
+          nextFilters[k] === null ||
+          nextFilters[k] === ""
+        ) {
+          delete (nextFilters as Record<string, unknown>)[key];
         }
       });
 
@@ -106,7 +120,8 @@ export function DashboardFilterProvider({ children }: { children: ReactNode }) {
       key: K,
       value: DashboardFilters[K] | undefined
     ) => {
-      update({ [key]: value } as Partial<DashboardFilters>);
+      // Reset to page 1 whenever a filter changes.
+      update({ [key]: value, page: 1 } as Partial<DashboardFilters>);
     },
     [update]
   );
@@ -121,20 +136,33 @@ export function DashboardFilterProvider({ children }: { children: ReactNode }) {
   const clearFilter = useCallback(
     (key: keyof DashboardFilters) => {
       const next = { ...filters };
-      delete (next as any)[key];
+      delete (next as Record<string, unknown>)[key];
       update(next, true);
     },
     [filters, update]
   );
 
   const clearAllFilters = useCallback(() => {
-    setSearchParams(new URLSearchParams(), { replace: false });
-  }, [setSearchParams]);
+    // Preserve pagination state when clearing filters so the user stays
+    // on page 1 (reset page too) with their sort preference intact.
+    const preserved: Partial<DashboardFilters> = {
+      page: 1,
+      ...(filters.pageSize ? { pageSize: filters.pageSize } : {}),
+      ...(filters.sortBy ? { sortBy: filters.sortBy } : {}),
+      ...(filters.sortDirection ? { sortDirection: filters.sortDirection } : {}),
+    };
+    setSearchParams(writeFiltersToSearchParams(preserved), { replace: false });
+  }, [filters, setSearchParams]);
 
+  // Only count real user-facing filters, not pagination/sort.
   const activeFilterCount = useMemo(
     () =>
       Object.entries(filters).filter(
-        ([, value]) => value !== undefined && value !== null && value !== ""
+        ([key, value]) =>
+          !paginationKeys.has(key as keyof DashboardFilters) &&
+          value !== undefined &&
+          value !== null &&
+          value !== ""
       ).length,
     [filters]
   );
@@ -148,14 +176,7 @@ export function DashboardFilterProvider({ children }: { children: ReactNode }) {
       clearAllFilters,
       activeFilterCount,
     }),
-    [
-      filters,
-      setFilter,
-      mergeFilters,
-      clearFilter,
-      clearAllFilters,
-      activeFilterCount,
-    ]
+    [filters, setFilter, mergeFilters, clearFilter, clearAllFilters, activeFilterCount]
   );
 
   return (

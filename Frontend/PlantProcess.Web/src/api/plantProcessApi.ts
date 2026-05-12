@@ -251,6 +251,59 @@ export interface DashboardWidgetQueryResult {
   warnings: string[];
 }
 
+export interface DashboardDefinitionRecord {
+  id: string;
+  userId?: string | null;
+  dashboardCode: string;
+  name: string;
+  description?: string | null;
+  layoutJson: string;
+  isDefault: boolean;
+  isSystemTemplate: boolean;
+  isActive: boolean;
+  isSynthetic: boolean;
+  sourceSystem?: string | null;
+  sourceRecordId?: string | null;
+  widgets: DashboardWidgetDefinitionRecord[];
+}
+
+export interface DashboardWidgetDefinitionRecord {
+  id: string;
+  dashboardDefinitionId: string;
+  widgetCode: string;
+  widgetTitle: string;
+  widgetType: string;
+  chartType: string;
+  dimensionCode: string;
+  measureCode: string;
+  parameterCode?: string | null;
+  filterJson: string;
+  layoutJson: string;
+  displayOptionsJson: string;
+  sortOrder: number;
+  isActive: boolean;
+  isSynthetic: boolean;
+  sourceSystem?: string | null;
+  sourceRecordId?: string | null;
+}
+
+export interface CreateDashboardWidgetDefinitionPayload {
+  widgetCode: string;
+  widgetTitle: string;
+  widgetType: string;
+  chartType: string;
+  dimensionCode: string;
+  measureCode: string;
+  parameterCode?: string | null;
+  filterJson?: string | null;
+  layoutJson?: string | null;
+  displayOptionsJson?: string | null;
+  sortOrder?: number | null;
+  isSynthetic: boolean;
+  sourceSystem?: string | null;
+  sourceRecordId?: string | null;
+}
+
 type PrimitiveQueryValue = string | number | boolean | null | undefined;
 type QueryParams = Record<string, PrimitiveQueryValue>;
 
@@ -448,4 +501,104 @@ export const plantProcessApi = {
 
   getCorrelationRuns: (page = 1, pageSize = 25) =>
     getJson<any>("/analytics/correlations/runs", { page, pageSize }),
+
+  getDashboardDefinitions: (includeInactive = false, includeSystemTemplates = true) =>
+    getJson<DashboardDefinitionRecord[]>("/analytics/dashboard/definitions", {
+      includeInactive,
+      includeSystemTemplates,
+    }),
+
+  getDashboardDefinition: (dashboardDefinitionId: string) =>
+    getJson<DashboardDefinitionRecord>(
+      `/analytics/dashboard/definitions/${dashboardDefinitionId}`
+    ),
+
+  createDashboardDefinition: (payload: {
+    dashboardCode: string;
+    name: string;
+    description?: string | null;
+    layoutJson?: string | null;
+    isDefault: boolean;
+    isSystemTemplate: boolean;
+    isSynthetic: boolean;
+    sourceSystem?: string | null;
+    sourceRecordId?: string | null;
+  }) => postJson<{ id: string }>("/analytics/dashboard/definitions", payload),
+
+  updateDashboardLayout: (dashboardDefinitionId: string, layoutJson: string) =>
+    requestJson<any>(
+      `/analytics/dashboard/definitions/${dashboardDefinitionId}/layout`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({ layoutJson }),
+      }
+    ),
+
+  createDashboardWidgetDefinition: (
+    dashboardDefinitionId: string,
+    payload: CreateDashboardWidgetDefinitionPayload
+  ) =>
+    postJson<{ id: string }>(
+      `/analytics/dashboard/definitions/${dashboardDefinitionId}/widgets`,
+      payload
+    ),
+
+  updateDashboardWidgetDefinition: (
+    dashboardDefinitionId: string,
+    widgetDefinitionId: string,
+    payload: {
+      widgetTitle: string;
+      widgetType: string;
+      chartType: string;
+      dimensionCode: string;
+      measureCode: string;
+      parameterCode?: string | null;
+      filterJson?: string | null;
+      displayOptionsJson?: string | null;
+      isActive?: boolean | null;
+    }
+  ) =>
+    requestJson<any>(
+      `/analytics/dashboard/definitions/${dashboardDefinitionId}/widgets/${widgetDefinitionId}`,
+      {
+        method: "PUT",
+        body: JSON.stringify(payload),
+      }
+    ),
+
+  updateDashboardWidgetLayout: (
+    dashboardDefinitionId: string,
+    widgetDefinitionId: string,
+    layoutJson: string,
+    sortOrder?: number
+  ) =>
+    requestJson<any>(
+      `/analytics/dashboard/definitions/${dashboardDefinitionId}/widgets/${widgetDefinitionId}/layout`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({ layoutJson, sortOrder }),
+      }
+    ),
+
+  cloneDashboardWidgetDefinition: (
+    dashboardDefinitionId: string,
+    widgetDefinitionId: string,
+    payload: { widgetCode?: string | null; widgetTitle?: string | null; sortOrder?: number | null }
+  ) =>
+    postJson<{ id: string }>(
+      `/analytics/dashboard/definitions/${dashboardDefinitionId}/widgets/${widgetDefinitionId}/clone`,
+      payload
+    ),
+
+  deactivateDashboardWidgetDefinition: (
+    dashboardDefinitionId: string,
+    widgetDefinitionId: string
+  ) =>
+    requestJson<any>(
+      `/analytics/dashboard/definitions/${dashboardDefinitionId}/widgets/${widgetDefinitionId}`,
+      { method: "DELETE" }
+    ),
+
+  ensureSystemDashboardTemplates: () =>
+    postJson<any>("/analytics/dashboard/definitions/system-templates/ensure"),
 };

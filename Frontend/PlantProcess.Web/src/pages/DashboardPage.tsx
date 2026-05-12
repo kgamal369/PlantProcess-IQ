@@ -4,6 +4,7 @@ import {
   Activity,
   AlertTriangle,
   BarChart3,
+  Copy,
   Database,
   Factory,
   Gauge,
@@ -12,15 +13,22 @@ import {
   RefreshCw,
   ScatterChart as ScatterIcon,
   ShieldAlert,
+  Trash2,
   Workflow,
   PlusCircle,
 } from "lucide-react";
 import { plantProcessApi } from "../api/plantProcessApi";
+
 import type {
+  DashboardDefinitionRecord,
+  DashboardFilters,
   DashboardMaterialRow,
+  DashboardWidgetDefinitionRecord,
+  DashboardWidgetQueryResult,
   DashboardWorkspace,
   SortDirection,
 } from "../api/plantProcessApi";
+
 import { ActiveFilterChips } from "../components/ActiveFilterChips";
 import { DashboardFilterBar } from "../components/DashboardFilterBar";
 import { ErrorPanel, LoadingPanel } from "../components/AsyncState";
@@ -31,6 +39,8 @@ import { DashboardGridLayout } from "../components/dashboard/DashboardGridLayout
 import { DrilldownDrawer } from "../components/dashboard/DrilldownDrawer";
 import { SelectionBreadcrumb } from "../components/dashboard/SelectionBreadcrumb";
 import { WidgetBuilderWizard } from "../components/dashboard/WidgetBuilderWizard";
+import { useDashboardGridLayout } from "../state/DashboardGridLayoutContext";
+
 
 import {
   InteractiveBarChart,
@@ -48,12 +58,21 @@ export function DashboardPage() {
   const { applySelection, openDrilldown, getWidgetState } =
     useDashboardSelections();
 
+  const { serializeLayouts, replaceLayoutsFromJson, addWidget, removeWidget } =
+    useDashboardGridLayout();
+
   const [workspace, setWorkspace] = useState<DashboardWorkspace | null>(null);
+  const [dashboards, setDashboards] = useState<DashboardDefinitionRecord[]>([]);
+  const [activeDashboard, setActiveDashboard] =
+    useState<DashboardDefinitionRecord | null>(null);
+
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingDashboards, setIsLoadingDashboards] = useState(true);
   const [isRefreshingReadModels, setIsRefreshingReadModels] = useState(false);
+  const [isSavingLayout, setIsSavingLayout] = useState(false);
   const [error, setError] = useState<unknown>(null);
   const [isWidgetBuilderOpen, setIsWidgetBuilderOpen] = useState(false);
-  
+
   async function load() {
     setIsLoading(true);
     setError(null);
@@ -64,11 +83,104 @@ export function DashboardPage() {
         page: filters.page ?? 1,
         pageSize: filters.pageSize ?? 25,
       });
+
       setWorkspace(result);
     } catch (loadError) {
       setError(loadError);
     } finally {
       setIsLoading(false);
+    }
+  }
+
+  async function loadDashboardDefinitions(
+    preferredDashboardId?: string | null
+  ) {
+    setIsLoadingDashboards(true);
+
+    try {
+      await plantProcessApi.ensureSystemDashboardTemplates();
+
+      const result = await plantProcessApi.getDashboardDefinitions(false, true);
+      setDashboards(result);
+
+      const selected =
+        (preferredDashboardId
+          ? result.find((x) => x.id === preferredDashboardId)
+          : null) ??
+        result.find((x) => x.isDefault && x.isActive) ??
+        result.find((x) => x.isActive) ??
+        null;
+
+      setActiveDashboard(selected);
+
+      if (selected?.layoutJson) {
+        replaceLayoutsFromJson(selected.layoutJson);
+      }
+
+      for (const widget of selected?.widgets ?? []) {
+        if (widget.isActive) {
+          addWidget(`saved-${widget.id}`, {
+            w: 6,
+            h: 8,
+            minW: 4,
+            minH: 5,
+          });
+        }
+      }
+    } catch (loadError) {
+      setError(loadError);
+    } finally {
+      setIsLoadingDashboards(false);
+    }
+  }
+
+  async function selectDashboard(dashboardId: string) {
+    const selected = dashboards.find((x) => x.id === dashboardId) ?? null;
+
+    setActiveDashboard(selected);
+
+    if (selected?.layoutJson) {
+      replaceLayoutsFromJson(selected.layoutJson);
+    }
+
+    for (const widget of selected?.widgets ?? []) {
+      if (widget.isActive) {
+        addWidget(`saved-${widget.id}`, {
+          w: 6,
+          h: 8,
+          minW: 4,
+          minH: 5,
+        });
+      }
+    }
+  }
+
+  async function saveDashboardLayout() {
+    if (!activeDashboard) return;
+
+    setIsSavingLayout(true);
+    setError(null);
+
+    try {
+      await plantProcessApi.updateDashboardLayout(
+        activeDashboard.id,
+        serializeLayouts()
+      );
+
+      const refreshed = await plantProcessApi.getDashboardDefinition(
+        activeDashboard.id
+      );
+
+      setActiveDashboard(refreshed);
+      setDashboards((current) =>
+        current.map((dashboard) =>
+          dashboard.id === refreshed.id ? refreshed : dashboard
+        )
+      );
+    } catch (saveError) {
+      setError(saveError);
+    } finally {
+      setIsSavingLayout(false);
     }
   }
 
@@ -85,6 +197,11 @@ export function DashboardPage() {
       setIsRefreshingReadModels(false);
     }
   }
+
+  useEffect(() => {
+    loadDashboardDefinitions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     let ignore = false;
@@ -367,29 +484,66 @@ export function DashboardPage() {
             dashboard. Drag and resize widgets to build your own analysis
             layout.
           </p>
+
+          <div className="dashboard-subtitle-row">
+            <span>
+              Active dashboard:{" "}
+              <strong>{activeDashboard?.name ?? "No saved dashboard"}</strong>
+            </span>
+            {activeDashboard?.isSystemTemplate ? (
+              <span className="status-chip">System template</span>
+            ) : null}
+          </div>
         </div>
 
         <div className="dashboard-hero__actions">
-    <button
-      className="primary-button"
-      onClick={() => setIsWidgetBuilderOpen(true)}
-      type="button"
-    >
-      <PlusCircle size={16} />
-      Add widget
-    </button>
+          <select
+            className="dashboard-select"
+            value={activeDashboard?.id ?? ""}
+            onChange={(event) => selectDashboard(event.target.value)}
+            disabled={isLoadingDashboards || dashboards.length === 0}
+          >
+            {dashboards.length === 0 ? (
+              <option value="">No dashboards</option>
+            ) : null}
 
-    <button
-      className="secondary-button"
-      onClick={refreshReadModels}
-      disabled={isRefreshingReadModels}
-      type="button"
-    >
-      <RefreshCw size={16} />
-      {isRefreshingReadModels ? "Refreshing..." : "Refresh read models"}
-    </button>
+            {dashboards.map((dashboard) => (
+              <option key={dashboard.id} value={dashboard.id}>
+                {dashboard.name}
+                {dashboard.isDefault ? " — Default" : ""}
+              </option>
+            ))}
+          </select>
 
-  </div>
+          <button
+            className="primary-button"
+            onClick={() => setIsWidgetBuilderOpen(true)}
+            disabled={!activeDashboard}
+            type="button"
+          >
+            <PlusCircle size={16} />
+            Add widget
+          </button>
+
+          <button
+            className="secondary-button"
+            onClick={saveDashboardLayout}
+            disabled={!activeDashboard || isSavingLayout}
+            type="button"
+          >
+            {isSavingLayout ? "Saving Layout..." : "Save Layout"}
+          </button>
+
+          <button
+            className="secondary-button"
+            onClick={refreshReadModels}
+            disabled={isRefreshingReadModels}
+            type="button"
+          >
+            <RefreshCw size={16} />
+            {isRefreshingReadModels ? "Refreshing..." : "Refresh read models"}
+          </button>
+        </div>
       </section>
 
       <DashboardFilterBar />
@@ -807,6 +961,44 @@ export function DashboardPage() {
               </DashboardWidgetCard>
             </div>
 
+            {(activeDashboard?.widgets ?? [])
+              .filter((widget) => widget.isActive)
+              .map((widget) => (
+                <div key={`saved-${widget.id}`}>
+                  <SavedDashboardWidget
+                    dashboardDefinitionId={activeDashboard!.id}
+                    widget={widget}
+                    onRemoved={async () => {
+                      removeWidget(`saved-${widget.id}`);
+
+                      await plantProcessApi.deactivateDashboardWidgetDefinition(
+                        activeDashboard!.id,
+                        widget.id
+                      );
+
+                      await loadDashboardDefinitions(activeDashboard!.id);
+                    }}
+                    onCloned={async () => {
+                      const cloned =
+                        await plantProcessApi.cloneDashboardWidgetDefinition(
+                          activeDashboard!.id,
+                          widget.id,
+                          {}
+                        );
+
+                      addWidget(`saved-${cloned.id}`, {
+                        w: 6,
+                        h: 8,
+                        minW: 4,
+                        minH: 5,
+                      });
+
+                      await loadDashboardDefinitions(activeDashboard!.id);
+                    }}
+                  />
+                </div>
+              ))}
+
             <div key="materialExplorer">
               <DashboardWidgetCard
                 widgetId="materialExplorer"
@@ -884,13 +1076,365 @@ export function DashboardPage() {
         </>
       ) : null}
 
-       <WidgetBuilderWizard
+      <WidgetBuilderWizard
         isOpen={isWidgetBuilderOpen}
+        dashboardDefinitionId={activeDashboard?.id}
         onClose={() => setIsWidgetBuilderOpen(false)}
+        onWidgetSaved={async (widgetId) => {
+          addWidget(`saved-${widgetId}`, {
+            w: 6,
+            h: 8,
+            minW: 4,
+            minH: 5,
+          });
+
+          await loadDashboardDefinitions(activeDashboard?.id);
+        }}
       />
-      
     </main>
   );
+}
+
+function SavedDashboardWidget({
+  widget,
+  onRemoved,
+  onCloned,
+}: {
+  dashboardDefinitionId: string;
+  widget: DashboardWidgetDefinitionRecord;
+  onRemoved: () => Promise<void>;
+  onCloned: () => Promise<void>;
+}) {
+  const [result, setResult] = useState<DashboardWidgetQueryResult | null>(null);
+  const [error, setError] = useState<unknown>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRemoving, setIsRemoving] = useState(false);
+  const [isCloning, setIsCloning] = useState(false);
+
+  useEffect(() => {
+    let ignore = false;
+
+    async function loadWidget() {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const query = buildWidgetQueryFromDefinition(widget);
+        const response = await plantProcessApi.queryDashboardWidget(query);
+
+        if (!ignore) {
+          setResult(response);
+        }
+      } catch (loadError) {
+        if (!ignore) {
+          setError(loadError);
+        }
+      } finally {
+        if (!ignore) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    loadWidget();
+
+    return () => {
+      ignore = true;
+    };
+  }, [widget]);
+
+  async function handleRemove() {
+    setIsRemoving(true);
+    setError(null);
+
+    try {
+      await onRemoved();
+    } catch (removeError) {
+      setError(removeError);
+    } finally {
+      setIsRemoving(false);
+    }
+  }
+
+  async function handleClone() {
+    setIsCloning(true);
+    setError(null);
+
+    try {
+      await onCloned();
+    } catch (cloneError) {
+      setError(cloneError);
+    } finally {
+      setIsCloning(false);
+    }
+  }
+
+  const rows = (result?.rows ?? []) as ChartRow[];
+  const categoryKey = inferCategoryKey(result);
+  const valueKey = inferValueKey(result);
+  const chartType = normalizeChartType(widget.chartType);
+  const savedSelection = buildSavedWidgetSelection(widget, categoryKey);
+  
+  return (
+    <DashboardWidgetCard
+      widgetId={`saved-${widget.id}`}
+      title={widget.widgetTitle}
+      subtitle={`${widget.dimensionCode || "No dimension"} / ${
+        widget.measureCode || "No measure"
+      }${widget.parameterCode ? ` / ${widget.parameterCode}` : ""}`}
+      icon={<BarChart3 size={18} />}
+      chartTypes={[chartType, "table"]}
+      exportRows={result?.rows ?? []}
+    >
+      <div className="saved-widget-actions">
+        <button
+          className="secondary-button"
+          onClick={handleClone}
+          disabled={isCloning}
+          type="button"
+        >
+          <Copy size={14} />
+          {isCloning ? "Cloning..." : "Clone"}
+        </button>
+
+        <button
+          className="danger-button"
+          onClick={handleRemove}
+          disabled={isRemoving}
+          type="button"
+        >
+          <Trash2 size={14} />
+          {isRemoving ? "Removing..." : "Remove"}
+        </button>
+      </div>
+
+      {isLoading ? <LoadingPanel /> : null}
+      {error ? <ErrorPanel error={error} /> : null}
+
+      {!isLoading && !error ? (
+        rows.length === 0 ? (
+          <div className="empty-insight">
+            <strong>No data</strong>
+            <p>No records are available for this saved widget.</p>
+          </div>
+        ) : chartType === "line" || chartType === "area" ? (
+          <InteractiveLineChart
+          data={rows}
+          categoryKey={categoryKey}
+          valueKey={valueKey}
+          area={chartType === "area"}
+          selection={savedSelection}
+        />
+        ) : chartType === "pie" || chartType === "donut" ? (
+          <InteractivePieChart
+            data={rows}
+            categoryKey={categoryKey}
+            valueKey={valueKey}
+            donut={chartType === "donut"}
+            selection={savedSelection}
+          />
+        ) : chartType === "scatter" ? (
+          <InteractiveScatterChart
+            data={rows}
+            xKey={categoryKey}
+            yKey={valueKey}
+            labelKey={categoryKey}
+            selection={savedSelection}
+          />
+        ) : chartType === "heatmap" ? (
+          <InteractiveHeatmap
+            data={rows}
+            xKey={categoryKey}
+            yKey={result?.columns?.[1]?.code ?? valueKey}
+            valueKey={valueKey}
+            selection={savedSelection}
+          />
+        ) : chartType === "table" ? (
+          <MiniTable rows={rows} />
+        ) : (
+          <InteractiveBarChart
+            data={rows}
+            categoryKey={categoryKey}
+            valueKey={valueKey}
+            selection={savedSelection}
+          />
+        )
+      ) : null}
+
+      {result?.warnings?.length ? (
+        <div className="widget-warning-list">
+          {result.warnings.map((warning) => (
+            <span key={warning}>{warning}</span>
+          ))}
+        </div>
+      ) : null}
+    </DashboardWidgetCard>
+  );
+}
+
+function buildWidgetQueryFromDefinition(widget: DashboardWidgetDefinitionRecord) {
+  return {
+    widgetType: widget.widgetType,
+    chartType: widget.chartType,
+    dimensionCode: widget.dimensionCode || null,
+    measureCode: widget.measureCode || null,
+    parameterCode: widget.parameterCode || null,
+    filters: parseJsonOrNull(widget.filterJson),
+    options: {
+      maxRows: 100,
+      rawRowLimit: 500,
+      sortDirection: "desc" as SortDirection,
+      includeWarnings: true,
+    },
+  };
+}
+
+function parseJsonOrNull(value: string | null | undefined) {
+  if (!value || value.trim() === "" || value.trim() === "{}") {
+    return null;
+  }
+
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
+}
+
+function inferCategoryKey(result: DashboardWidgetQueryResult | null) {
+  const columns = result?.columns ?? [];
+
+  const preferred =
+    columns.find((column) =>
+      ["dimension", "label", "category", "name", "code"].some((key) =>
+        column.code.toLowerCase().includes(key)
+      )
+    ) ?? columns[0];
+
+  return preferred?.code ?? "dimension";
+}
+
+function inferValueKey(result: DashboardWidgetQueryResult | null) {
+  const columns = result?.columns ?? [];
+
+  const numeric =
+    columns.find((column) =>
+      ["number", "decimal", "double", "integer", "int"].some((type) =>
+        column.dataType.toLowerCase().includes(type)
+      )
+    ) ?? columns[1];
+
+  return numeric?.code ?? "value";
+}
+
+function normalizeChartType(value: string | null | undefined) {
+  const normalized = (value ?? "bar").toLowerCase();
+
+  if (
+    normalized === "line" ||
+    normalized === "area" ||
+    normalized === "pie" ||
+    normalized === "donut" ||
+    normalized === "scatter" ||
+    normalized === "heatmap" ||
+    normalized === "table"
+  ) {
+    return normalized;
+  }
+
+  return "bar";
+}
+
+function buildSavedWidgetSelection(
+  widget: DashboardWidgetDefinitionRecord,
+  categoryKey: string
+): {
+  type:
+    | "site"
+    | "area"
+    | "equipment"
+    | "sourceSystem"
+    | "material"
+    | "defect"
+    | "riskClass"
+    | "shift"
+    | "parameter"
+    | "dateRange"
+    | "generic";
+  field: keyof DashboardFilters;
+  sourceWidget: string;
+  valueKey?: string;
+  labelKey?: string;
+} {
+  const dimension = `${widget.dimensionCode ?? ""} ${categoryKey}`.toLowerCase();
+
+  if (dimension.includes("source")) {
+    return {
+      type: "sourceSystem",
+      field: "sourceSystem",
+      sourceWidget: widget.widgetTitle,
+      valueKey: categoryKey,
+      labelKey: categoryKey,
+    };
+  }
+
+  if (dimension.includes("defect") || dimension.includes("quality")) {
+    return {
+      type: "defect",
+      field: "defectType",
+      sourceWidget: widget.widgetTitle,
+      valueKey: categoryKey,
+      labelKey: categoryKey,
+    };
+  }
+
+  if (dimension.includes("risk")) {
+    return {
+      type: "riskClass",
+      field: "riskClass",
+      sourceWidget: widget.widgetTitle,
+      valueKey: categoryKey,
+      labelKey: categoryKey,
+    };
+  }
+
+  if (dimension.includes("parameter")) {
+    return {
+      type: "parameter",
+      field: "parameterCode",
+      sourceWidget: widget.widgetTitle,
+      valueKey: categoryKey,
+      labelKey: categoryKey,
+    };
+  }
+
+  if (dimension.includes("material")) {
+    return {
+      type: "material",
+      field: "materialCode",
+      sourceWidget: widget.widgetTitle,
+      valueKey: categoryKey,
+      labelKey: categoryKey,
+    };
+  }
+
+  if (dimension.includes("shift") || dimension.includes("crew")) {
+    return {
+      type: "shift",
+      field: "shiftCode",
+      sourceWidget: widget.widgetTitle,
+      valueKey: categoryKey,
+      labelKey: categoryKey,
+    };
+  }
+
+  return {
+    type: "generic",
+    field: "materialCode",
+    sourceWidget: widget.widgetTitle,
+    valueKey: categoryKey,
+    labelKey: categoryKey,
+  };
 }
 
 function InteractiveMetric({

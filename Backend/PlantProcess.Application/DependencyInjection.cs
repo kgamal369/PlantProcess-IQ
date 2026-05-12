@@ -53,6 +53,8 @@ public static class DependencyInjection
         services.AddScoped<IDashboardMetadataService, DashboardMetadataService>();
         services.AddScoped<IDashboardWidgetValidationService, DashboardWidgetValidationService>();
         services.AddScoped<IDashboardWidgetQueryService, DashboardWidgetQueryService>();
+        services.AddScoped<IDashboardDefinitionService, DashboardDefinitionService>();
+
 
         // Reporting / customer demo pack
         services.AddScoped<IInvestigationReportService, InvestigationReportService>();

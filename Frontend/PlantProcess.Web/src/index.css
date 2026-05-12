@@ -1925,6 +1925,51 @@ button.risk-pill {
   background: rgba(80, 10, 28, 0.42);
 }
 
+.wizard-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.wizard-form-grid label {
+  display: grid;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 0.84rem;
+}
+
+.wizard-form-grid input,
+.wizard-form-grid select {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface-2);
+  color: var(--text);
+  padding: 10px 12px;
+}
+
+.wizard-preview-actions,
+.saved-widget-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.wizard-preview-table {
+  display: grid;
+  gap: 12px;
+}
+
+.wizard-error {
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  background: rgba(239, 68, 68, 0.1);
+  color: #fecaca;
+  border-radius: 16px;
+  padding: 12px;
+}
+
 @media (max-width: 900px) {
   .wizard-progress {
     grid-template-columns: 1fr 1fr;

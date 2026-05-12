@@ -31,7 +31,55 @@ public static class DashboardEndpoints
         // Phase 9 materialized view support.
         group.MapPost("/read-models/refresh", RefreshDashboardReadModelsAsync);
 
-        return app;
+                // Dashboard persistence / builder endpoints.
+        group.MapGet("/definitions", GetDashboardDefinitionsAsync)
+            .WithSummary("List saved dashboard definitions")
+            .WithDescription("Returns saved dashboards, including active widgets. Used by the React dashboard builder.");
+
+        group.MapGet("/definitions/{dashboardDefinitionId:guid}", GetDashboardDefinitionByIdAsync)
+            .WithSummary("Get saved dashboard definition")
+            .WithDescription("Returns one dashboard with its widget definitions and persisted layout JSON.");
+
+        group.MapPost("/definitions", CreateDashboardDefinitionAsync)
+            .WithSummary("Create dashboard definition")
+            .WithDescription("Creates a user or system dashboard definition.");
+
+        group.MapPut("/definitions/{dashboardDefinitionId:guid}", UpdateDashboardDefinitionAsync)
+            .WithSummary("Update dashboard definition")
+            .WithDescription("Updates dashboard name, description, active flag and default flag.");
+
+        group.MapPatch("/definitions/{dashboardDefinitionId:guid}/layout", UpdateDashboardLayoutAsync)
+            .WithSummary("Persist dashboard grid layout")
+            .WithDescription("Persists React grid layout JSON in the backend instead of localStorage.");
+
+        group.MapDelete("/definitions/{dashboardDefinitionId:guid}", DeactivateDashboardDefinitionAsync)
+            .WithSummary("Deactivate dashboard definition")
+            .WithDescription("Soft-deactivates a dashboard definition without deleting historical configuration.");
+
+        group.MapPost("/definitions/{dashboardDefinitionId:guid}/widgets", CreateDashboardWidgetDefinitionAsync)
+            .WithSummary("Create dashboard widget definition")
+            .WithDescription("Saves a widget created by the widget builder wizard.");
+
+        group.MapPut("/definitions/{dashboardDefinitionId:guid}/widgets/{widgetDefinitionId:guid}", UpdateDashboardWidgetDefinitionAsync)
+            .WithSummary("Update dashboard widget definition")
+            .WithDescription("Updates saved widget query/configuration metadata.");
+
+        group.MapPatch("/definitions/{dashboardDefinitionId:guid}/widgets/{widgetDefinitionId:guid}/layout", UpdateDashboardWidgetLayoutAsync)
+            .WithSummary("Persist widget layout")
+            .WithDescription("Persists one saved widget layout JSON and sort order.");
+
+        group.MapPost("/definitions/{dashboardDefinitionId:guid}/widgets/{widgetDefinitionId:guid}/clone", CloneDashboardWidgetDefinitionAsync)
+            .WithSummary("Clone dashboard widget definition")
+            .WithDescription("Duplicates a saved widget definition in the same dashboard.");
+
+        group.MapDelete("/definitions/{dashboardDefinitionId:guid}/widgets/{widgetDefinitionId:guid}", DeactivateDashboardWidgetDefinitionAsync)
+            .WithSummary("Deactivate dashboard widget definition")
+            .WithDescription("Soft-deactivates a saved widget without deleting its configuration.");
+
+        group.MapPost("/definitions/system-templates/ensure", EnsureSystemDashboardTemplatesAsync)
+            .WithSummary("Ensure system dashboard templates")
+            .WithDescription("Creates default system dashboard templates when they do not already exist.");
+                return app;
     }
 
     private static async Task<IResult> GetMetadataAsync(
@@ -339,6 +387,192 @@ public static class DashboardEndpoints
             refreshedAtUtc = DateTime.UtcNow
         });
     }
+    private static async Task<IResult> GetDashboardDefinitionsAsync(
+    bool? includeInactive,
+    bool? includeSystemTemplates,
+    IDashboardDefinitionService service,
+    CancellationToken cancellationToken)
+    {
+        var result = await service.GetDashboardsAsync(
+            includeInactive ?? false,
+            includeSystemTemplates ?? true,
+            cancellationToken);
+
+        return result.ToHttpResult(value => Results.Ok(value));
+    }
+
+    private static async Task<IResult> GetDashboardDefinitionByIdAsync(
+        Guid dashboardDefinitionId,
+        IDashboardDefinitionService service,
+        CancellationToken cancellationToken)
+    {
+        var result = await service.GetDashboardByIdAsync(dashboardDefinitionId, cancellationToken);
+        return result.ToHttpResult(value => Results.Ok(value));
+    }
+
+    private static async Task<IResult> CreateDashboardDefinitionAsync(
+        CreateDashboardDefinitionRequest request,
+        IDashboardDefinitionService service,
+        CancellationToken cancellationToken)
+    {
+        var result = await service.CreateDashboardAsync(request, cancellationToken);
+        return result.ToHttpResult(id =>
+            Results.Created($"/analytics/dashboard/definitions/{id}", new { id }));
+    }
+
+    private static async Task<IResult> UpdateDashboardDefinitionAsync(
+        Guid dashboardDefinitionId,
+        UpdateDashboardDefinitionRequest request,
+        IDashboardDefinitionService service,
+        CancellationToken cancellationToken)
+    {
+        var result = await service.UpdateDashboardAsync(dashboardDefinitionId, request, cancellationToken);
+        return result.ToHttpResult(() => Results.Ok(new
+        {
+            dashboardDefinitionId,
+            updatedAtUtc = DateTime.UtcNow
+        }));
+    }
+
+    private static async Task<IResult> UpdateDashboardLayoutAsync(
+        Guid dashboardDefinitionId,
+        UpdateDashboardLayoutRequest request,
+        IDashboardDefinitionService service,
+        CancellationToken cancellationToken)
+    {
+        var result = await service.UpdateDashboardLayoutAsync(dashboardDefinitionId, request, cancellationToken);
+        return result.ToHttpResult(() => Results.Ok(new
+        {
+            dashboardDefinitionId,
+            layoutPersisted = true,
+            updatedAtUtc = DateTime.UtcNow
+        }));
+    }
+
+    private static async Task<IResult> DeactivateDashboardDefinitionAsync(
+        Guid dashboardDefinitionId,
+        IDashboardDefinitionService service,
+        CancellationToken cancellationToken)
+    {
+        var result = await service.DeactivateDashboardAsync(dashboardDefinitionId, cancellationToken);
+        return result.ToHttpResult(() => Results.Ok(new
+        {
+            dashboardDefinitionId,
+            isActive = false,
+            updatedAtUtc = DateTime.UtcNow
+        }));
+    }
+
+    private static async Task<IResult> CreateDashboardWidgetDefinitionAsync(
+        Guid dashboardDefinitionId,
+        CreateDashboardWidgetDefinitionRequest request,
+        IDashboardDefinitionService service,
+        CancellationToken cancellationToken)
+    {
+        var result = await service.CreateWidgetAsync(dashboardDefinitionId, request, cancellationToken);
+        return result.ToHttpResult(id =>
+            Results.Created(
+                $"/analytics/dashboard/definitions/{dashboardDefinitionId}/widgets/{id}",
+                new { id, dashboardDefinitionId }));
+    }
+
+    private static async Task<IResult> UpdateDashboardWidgetDefinitionAsync(
+        Guid dashboardDefinitionId,
+        Guid widgetDefinitionId,
+        UpdateDashboardWidgetDefinitionRequest request,
+        IDashboardDefinitionService service,
+        CancellationToken cancellationToken)
+    {
+        var result = await service.UpdateWidgetAsync(
+            dashboardDefinitionId,
+            widgetDefinitionId,
+            request,
+            cancellationToken);
+
+        return result.ToHttpResult(() => Results.Ok(new
+        {
+            dashboardDefinitionId,
+            widgetDefinitionId,
+            updatedAtUtc = DateTime.UtcNow
+        }));
+    }
+
+    private static async Task<IResult> UpdateDashboardWidgetLayoutAsync(
+        Guid dashboardDefinitionId,
+        Guid widgetDefinitionId,
+        UpdateDashboardWidgetLayoutRequest request,
+        IDashboardDefinitionService service,
+        CancellationToken cancellationToken)
+    {
+        var result = await service.UpdateWidgetLayoutAsync(
+            dashboardDefinitionId,
+            widgetDefinitionId,
+            request,
+            cancellationToken);
+
+        return result.ToHttpResult(() => Results.Ok(new
+        {
+            dashboardDefinitionId,
+            widgetDefinitionId,
+            layoutPersisted = true,
+            updatedAtUtc = DateTime.UtcNow
+        }));
+    }
+
+    private static async Task<IResult> CloneDashboardWidgetDefinitionAsync(
+        Guid dashboardDefinitionId,
+        Guid widgetDefinitionId,
+        CloneDashboardWidgetRequest request,
+        IDashboardDefinitionService service,
+        CancellationToken cancellationToken)
+    {
+        var result = await service.CloneWidgetAsync(
+            dashboardDefinitionId,
+            widgetDefinitionId,
+            request,
+            cancellationToken);
+
+        return result.ToHttpResult(id =>
+            Results.Created(
+                $"/analytics/dashboard/definitions/{dashboardDefinitionId}/widgets/{id}",
+                new { id, dashboardDefinitionId, clonedFromWidgetId = widgetDefinitionId }));
+    }
+
+    private static async Task<IResult> DeactivateDashboardWidgetDefinitionAsync(
+        Guid dashboardDefinitionId,
+        Guid widgetDefinitionId,
+        IDashboardDefinitionService service,
+        CancellationToken cancellationToken)
+    {
+        var result = await service.DeactivateWidgetAsync(
+            dashboardDefinitionId,
+            widgetDefinitionId,
+            cancellationToken);
+
+        return result.ToHttpResult(() => Results.Ok(new
+        {
+            dashboardDefinitionId,
+            widgetDefinitionId,
+            isActive = false,
+            updatedAtUtc = DateTime.UtcNow
+        }));
+    }
+
+    private static async Task<IResult> EnsureSystemDashboardTemplatesAsync(
+        IDashboardDefinitionService service,
+        CancellationToken cancellationToken)
+    {
+        var result = await service.EnsureSystemTemplatesAsync(cancellationToken);
+        return result.ToHttpResult(created => Results.Ok(new
+        {
+            created,
+            message = created == 0
+                ? "System dashboard templates already exist."
+                : "System dashboard templates created.",
+            ensuredAtUtc = DateTime.UtcNow
+        }));
+    }
+
 
     private static DashboardQueryDto BuildQuery(
         Guid? siteId,
