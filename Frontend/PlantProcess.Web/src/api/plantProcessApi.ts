@@ -113,6 +113,144 @@ export interface GenealogyAwareCorrelationBin {
   confidence: string;
 }
 
+export interface DashboardDimensionMetadata {
+  code: string;
+  label: string;
+  category: string;
+  dataType: string;
+  requiresParameterCode: boolean;
+  compatibleChartTypes: string[];
+  description?: string;
+}
+
+export interface DashboardMeasureMetadata {
+  code: string;
+  label: string;
+  category: string;
+  aggregation: string;
+  unit?: string | null;
+  requiresParameterCode: boolean;
+  compatibleChartTypes: string[];
+  description?: string;
+}
+
+export interface DashboardChartTypeMetadata {
+  code: string;
+  label: string;
+  category: string;
+  supportsDimension: boolean;
+  supportsMeasure: boolean;
+  supportsMultipleSeries: boolean;
+  supportsParameterSelection: boolean;
+  description?: string;
+}
+
+export interface DashboardFilterMetadata {
+  code: string;
+  label: string;
+  category: string;
+  dataType: string;
+  operatorMode: string;
+  isRequired: boolean;
+  sourceCatalog?: string | null;
+  description?: string;
+}
+
+export interface DashboardPurposeMetadata {
+  code: string;
+  label: string;
+  description: string;
+  recommendedDimensions: string[];
+  recommendedMeasures: string[];
+  recommendedChartTypes: string[];
+}
+
+export interface DashboardCompatibilityRule {
+  dimensionCode: string;
+  measureCode: string;
+  allowedChartTypes: string[];
+  requiresParameterCode: boolean;
+  warningMessage?: string | null;
+}
+
+export interface DashboardQuerySafetyLimits {
+  defaultMaxRows: number;
+  absoluteMaxRows: number;
+  defaultRawRowLimit: number;
+  absoluteRawRowLimit: number;
+  defaultLookbackDays: number;
+  absoluteLookbackDays: number;
+}
+
+export interface DashboardMetadata {
+  generatedAtUtc: string;
+  dimensions: DashboardDimensionMetadata[];
+  measures: DashboardMeasureMetadata[];
+  chartTypes: DashboardChartTypeMetadata[];
+  filters: DashboardFilterMetadata[];
+  purposes: DashboardPurposeMetadata[];
+  compatibilityRules: DashboardCompatibilityRule[];
+  safetyLimits: DashboardQuerySafetyLimits;
+}
+
+export interface DashboardWidgetFilters {
+  siteId?: string | null;
+  areaId?: string | null;
+  equipmentId?: string | null;
+  materialCode?: string | null;
+  sourceSystem?: string | null;
+  defectType?: string | null;
+  riskClass?: string | null;
+  shiftCode?: string | null;
+  parameterCode?: string | null;
+  fromUtc?: string | null;
+  toUtc?: string | null;
+}
+
+export interface DashboardWidgetQueryOptions {
+  maxRows?: number;
+  rawRowLimit?: number;
+  sortDirection?: SortDirection;
+  includeWarnings?: boolean;
+}
+
+export interface DashboardWidgetQuery {
+  widgetType?: string;
+  chartType?: string;
+  dimensionCode?: string | null;
+  measureCode?: string | null;
+  parameterCode?: string | null;
+  filters?: DashboardWidgetFilters | null;
+  options?: DashboardWidgetQueryOptions | null;
+}
+
+export interface DashboardWidgetResolved {
+  widgetType: string;
+  chartType: string;
+  dimensionCode?: string | null;
+  measureCode: string;
+  parameterCode?: string | null;
+  maxRows: number;
+  rawRowLimit: number;
+  sortDirection: SortDirection;
+  fromUtc?: string | null;
+  toUtc?: string | null;
+}
+
+export interface DashboardWidgetColumn {
+  code: string;
+  label: string;
+  dataType: string;
+}
+
+export interface DashboardWidgetQueryResult {
+  generatedAtUtc: string;
+  widget: DashboardWidgetResolved;
+  columns: DashboardWidgetColumn[];
+  rows: Record<string, unknown>[];
+  warnings: string[];
+}
+
 type PrimitiveQueryValue = string | number | boolean | null | undefined;
 type QueryParams = Record<string, PrimitiveQueryValue>;
 
@@ -222,6 +360,12 @@ export const plantProcessApi = {
       siteId: filters.siteId,
     }),
 
+  getDashboardMetadata: () =>
+    getJson<DashboardMetadata>("/analytics/dashboard/metadata"),
+
+  queryDashboardWidget: (query: DashboardWidgetQuery) =>
+    postJson<DashboardWidgetQueryResult>("/analytics/dashboard/widgets/query", query),
+  
   getDashboardWorkspace: (filters: DashboardFilters = {}) =>
     postJson<DashboardWorkspace>("/analytics/dashboard/workspace", dashboardBody(filters)),
 

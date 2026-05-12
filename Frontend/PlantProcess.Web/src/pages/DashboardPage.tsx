@@ -13,6 +13,7 @@ import {
   ScatterChart as ScatterIcon,
   ShieldAlert,
   Workflow,
+  PlusCircle,
 } from "lucide-react";
 import { plantProcessApi } from "../api/plantProcessApi";
 import type {
@@ -29,6 +30,8 @@ import { DashboardWidgetCard } from "../components/dashboard/DashboardWidgetCard
 import { DashboardGridLayout } from "../components/dashboard/DashboardGridLayout";
 import { DrilldownDrawer } from "../components/dashboard/DrilldownDrawer";
 import { SelectionBreadcrumb } from "../components/dashboard/SelectionBreadcrumb";
+import { WidgetBuilderWizard } from "../components/dashboard/WidgetBuilderWizard";
+
 import {
   InteractiveBarChart,
   InteractiveHeatmap,
@@ -49,7 +52,8 @@ export function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshingReadModels, setIsRefreshingReadModels] = useState(false);
   const [error, setError] = useState<unknown>(null);
-
+  const [isWidgetBuilderOpen, setIsWidgetBuilderOpen] = useState(false);
+  
   async function load() {
     setIsLoading(true);
     setError(null);
@@ -365,15 +369,27 @@ export function DashboardPage() {
           </p>
         </div>
 
-        <button
-          className="primary-button"
-          onClick={refreshReadModels}
-          disabled={isRefreshingReadModels}
-          type="button"
-        >
-          <RefreshCw size={16} />
-          {isRefreshingReadModels ? "Refreshing..." : "Refresh read models"}
-        </button>
+        <div className="dashboard-hero__actions">
+    <button
+      className="primary-button"
+      onClick={() => setIsWidgetBuilderOpen(true)}
+      type="button"
+    >
+      <PlusCircle size={16} />
+      Add widget
+    </button>
+
+    <button
+      className="secondary-button"
+      onClick={refreshReadModels}
+      disabled={isRefreshingReadModels}
+      type="button"
+    >
+      <RefreshCw size={16} />
+      {isRefreshingReadModels ? "Refreshing..." : "Refresh read models"}
+    </button>
+
+  </div>
       </section>
 
       <DashboardFilterBar />
@@ -867,6 +883,12 @@ export function DashboardPage() {
           <DrilldownDrawer />
         </>
       ) : null}
+
+       <WidgetBuilderWizard
+        isOpen={isWidgetBuilderOpen}
+        onClose={() => setIsWidgetBuilderOpen(false)}
+      />
+      
     </main>
   );
 }

@@ -50,6 +50,9 @@ public static class DependencyInjection
         services.AddScoped<IRiskScoreService, RiskScoreService>();
         services.AddScoped<ICorrelationService, CorrelationService>();
         services.AddScoped<IDashboardQueryService, DashboardQueryService>();
+        services.AddScoped<IDashboardMetadataService, DashboardMetadataService>();
+        services.AddScoped<IDashboardWidgetValidationService, DashboardWidgetValidationService>();
+        services.AddScoped<IDashboardWidgetQueryService, DashboardWidgetQueryService>();
 
         // Reporting / customer demo pack
         services.AddScoped<IInvestigationReportService, InvestigationReportService>();

@@ -24,11 +24,31 @@ public static class DashboardEndpoints
         group.MapPost("/workspace", GetWorkspaceAsync);
         group.MapGet("/materials", SearchMaterialsAsync);
         group.MapGet("/reference-data", GetReferenceDataAsync);
-
+        group.MapGet("/metadata", GetMetadataAsync);
+        group.MapPost("/widgets/query", QueryWidgetAsync);
+        
+        
         // Phase 9 materialized view support.
         group.MapPost("/read-models/refresh", RefreshDashboardReadModelsAsync);
 
         return app;
+    }
+
+    private static async Task<IResult> GetMetadataAsync(
+    IDashboardMetadataService service,
+    CancellationToken cancellationToken)
+    {
+        var result = await service.GetMetadataAsync(cancellationToken);
+        return result.ToHttpResult(value => Results.Ok(value));
+    }
+
+    private static async Task<IResult> QueryWidgetAsync(
+        DashboardWidgetQueryDto query,
+        IDashboardWidgetQueryService service,
+        CancellationToken cancellationToken)
+    {
+        var result = await service.ExecuteAsync(query, cancellationToken);
+        return result.ToHttpResult(value => Results.Ok(value));
     }
 
     private static async Task<IResult> GetWorkspaceAsync(

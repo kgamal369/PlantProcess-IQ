@@ -7,7 +7,8 @@ public sealed record DashboardMetadataDto(
     IReadOnlyList<DashboardChartTypeMetadataDto> ChartTypes,
     IReadOnlyList<DashboardFilterMetadataDto> Filters,
     IReadOnlyList<DashboardPurposeMetadataDto> Purposes,
-    IReadOnlyList<DashboardCompatibilityRuleDto> CompatibilityRules);
+    IReadOnlyList<DashboardCompatibilityRuleDto> CompatibilityRules,
+    DashboardQuerySafetyLimitsDto SafetyLimits);
 
 public sealed record DashboardDimensionMetadataDto(
     string Code,
@@ -63,8 +64,81 @@ public sealed record DashboardCompatibilityRuleDto(
     bool RequiresParameterCode,
     string? WarningMessage);
 
+public sealed record DashboardQuerySafetyLimitsDto(
+    int DefaultMaxRows,
+    int AbsoluteMaxRows,
+    int DefaultRawRowLimit,
+    int AbsoluteRawRowLimit,
+    int DefaultLookbackDays,
+    int AbsoluteLookbackDays);
+
+public sealed record DashboardWidgetQueryDto(
+    string? WidgetType,
+    string? ChartType,
+    string? DimensionCode,
+    string? MeasureCode,
+    string? ParameterCode,
+    DashboardWidgetFiltersDto? Filters,
+    DashboardWidgetQueryOptionsDto? Options);
+
+public sealed record DashboardWidgetFiltersDto(
+    Guid? SiteId,
+    Guid? AreaId,
+    Guid? EquipmentId,
+    string? MaterialCode,
+    string? SourceSystem,
+    string? DefectType,
+    string? RiskClass,
+    string? ShiftCode,
+    string? ParameterCode,
+    DateTime? FromUtc,
+    DateTime? ToUtc);
+
+public sealed record DashboardWidgetQueryOptionsDto(
+    int? MaxRows,
+    int? RawRowLimit,
+    string? SortDirection,
+    bool? IncludeWarnings);
+
+public sealed record DashboardWidgetQueryResultDto(
+    DateTime GeneratedAtUtc,
+    DashboardWidgetResolvedDto Widget,
+    IReadOnlyList<DashboardWidgetColumnDto> Columns,
+    IReadOnlyList<IDictionary<string, object?>> Rows,
+    IReadOnlyList<string> Warnings);
+
+public sealed record DashboardWidgetResolvedDto(
+    string WidgetType,
+    string ChartType,
+    string? DimensionCode,
+    string MeasureCode,
+    string? ParameterCode,
+    int MaxRows,
+    int RawRowLimit,
+    string SortDirection,
+    DateTime? FromUtc,
+    DateTime? ToUtc);
+
+public sealed record DashboardWidgetColumnDto(
+    string Code,
+    string Label,
+    string DataType);
+
+public sealed record DashboardWidgetValidationResultDto(
+    bool IsValid,
+    IReadOnlyDictionary<string, string[]> Errors,
+    IReadOnlyList<string> Warnings,
+    DashboardWidgetResolvedDto? ResolvedWidget);
+
 public static class DashboardMetadataCodes
 {
+    public static class WidgetTypes
+    {
+        public const string Kpi = "kpi";
+        public const string Chart = "chart";
+        public const string Table = "table";
+    }
+
     public static class Purposes
     {
         public const string Quality = "quality";
@@ -80,6 +154,7 @@ public static class DashboardMetadataCodes
         public const string Kpi = "kpi";
         public const string Bar = "bar";
         public const string Line = "line";
+        public const string Area = "area";
         public const string Pie = "pie";
         public const string Donut = "donut";
         public const string Scatter = "scatter";
