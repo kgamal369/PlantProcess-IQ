@@ -189,7 +189,9 @@ try
     app.MapValidationEndpoints();
     app.MapDevSeedEndpoints();
     app.MapAdminEndpoints();
-
+    app.MapConnectorAdminEndpoints();
+    app.MapSchemaConfigurationEndpoints();
+    
     app.Run();
 }
 catch (Exception ex) when (ex.GetType().Name == "HostAbortedException")

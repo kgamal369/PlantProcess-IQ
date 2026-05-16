@@ -31,7 +31,9 @@ public static class DependencyInjection
         services.AddScoped<IMappingExecutionService, MappingExecutionService>();
         services.AddScoped<IImportWorkflowService, ImportWorkflowService>();
         services.AddScoped<IImportBatchQueueProcessorService, ImportBatchQueueProcessorService>();
-
+        services.AddScoped<IConnectorConfigurationService, ConnectorConfigurationService>();
+        services.AddScoped<ISchemaConfigurationService, SchemaConfigurationService>();
+        
         // Canonical material and genealogy workflow
         services.AddScoped<IMaterialService, MaterialService>();
         services.AddScoped<IGenealogyService, GenealogyService>();

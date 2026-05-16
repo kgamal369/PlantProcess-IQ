@@ -42,6 +42,11 @@ public class PlantProcessDbContext : DbContext, IPlantProcessDbContext
     public DbSet<ImportBatch> ImportBatches => Set<ImportBatch>();
     public DbSet<MappingDefinition> MappingDefinitions => Set<MappingDefinition>();
     public DbSet<StagingRecord> StagingRecords => Set<StagingRecord>();
+    public DbSet<ConnectionProfile> ConnectionProfiles => Set<ConnectionProfile>();
+    public DbSet<SourceDatasetDefinition> SourceDatasetDefinitions => Set<SourceDatasetDefinition>();
+    public DbSet<SourceFieldDefinition> SourceFieldDefinitions => Set<SourceFieldDefinition>();
+    public DbSet<SchemaViewDefinition> SchemaViewDefinitions => Set<SchemaViewDefinition>();
+    public DbSet<KpiDefinition> KpiDefinitions => Set<KpiDefinition>();
 
     // ----------------------------
     // Materials / Genealogy

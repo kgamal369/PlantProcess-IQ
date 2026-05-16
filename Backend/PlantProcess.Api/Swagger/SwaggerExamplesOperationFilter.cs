@@ -213,6 +213,8 @@ public sealed class SwaggerTagGroupingOperationFilter : IOperationFilter
         ["reporting"] = ["Reporting"],
         ["validation"] = ["Validation"],
         ["admin"] = ["Admin"],
+        ["admin/connectors"] = ["Admin — Connectors"],
+        ["admin/schema-configuration"] = ["Admin — Schema Configuration"],
         ["dev"] = ["Development"]
     };
 

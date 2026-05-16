@@ -26,6 +26,11 @@ public interface IPlantProcessDbContext
     DbSet<ImportBatch> ImportBatches { get; }
     DbSet<MappingDefinition> MappingDefinitions { get; }
     DbSet<StagingRecord> StagingRecords { get; }
+    DbSet<ConnectionProfile> ConnectionProfiles { get; }
+    DbSet<SourceDatasetDefinition> SourceDatasetDefinitions { get; }
+    DbSet<SourceFieldDefinition> SourceFieldDefinitions { get; }
+    DbSet<SchemaViewDefinition> SchemaViewDefinitions { get; }
+    DbSet<KpiDefinition> KpiDefinitions { get; }
 
     DbSet<MaterialUnit> MaterialUnits { get; }
     DbSet<MaterialAlias> MaterialAliases { get; }

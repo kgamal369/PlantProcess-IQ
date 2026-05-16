@@ -439,6 +439,292 @@ export interface AdminJobsMonitor {
   jobs: AdminJobMonitorRow[];
 }
 
+// ============================================================
+// Phase 3 — Connector Foundation DTOs
+// ============================================================
+
+export interface ProviderTypeRecord {
+  providerType: string;
+  displayName: string;
+  description: string;
+  isAvailableNow: boolean;
+  requiresSecretReference: boolean;
+  supportsSchemaDiscovery: boolean;
+  supportsSnapshotImport: boolean;
+  supportsIncrementalImport: boolean;
+}
+
+export interface ConnectionProfileRecord {
+  id: string;
+  sourceSystemDefinitionId: string;
+  sourceSystemCode: string;
+  sourceSystemName: string;
+  connectionProfileCode: string;
+  connectionProfileName: string;
+  providerType: string;
+  connectionMode: string;
+  hostName: string | null;
+  port: number | null;
+  databaseName: string | null;
+  schemaName: string | null;
+  fileRootPath: string | null;
+  apiBaseUrl: string | null;
+  secretReference: string | null;
+  connectionOptionsJson: string;
+  isActive: boolean;
+  readOnlyEnforced: boolean;
+  description: string | null;
+  lastTestedAtUtc: string | null;
+  lastTestStatus: string | null;
+  lastTestMessage: string | null;
+  isSynthetic: boolean;
+  createdAtUtc: string;
+  updatedAtUtc: string | null;
+}
+
+export interface CreateConnectionProfileRequest {
+  sourceSystemDefinitionId: string;
+  connectionProfileCode: string;
+  connectionProfileName: string;
+  providerType: string;
+  connectionMode?: string | null;
+  hostName?: string | null;
+  port?: number | null;
+  databaseName?: string | null;
+  schemaName?: string | null;
+  fileRootPath?: string | null;
+  apiBaseUrl?: string | null;
+  secretReference?: string | null;
+  connectionOptionsJson?: string | null;
+  readOnlyEnforced?: boolean | null;
+  description?: string | null;
+  isSynthetic: boolean;
+  sourceSystem?: string | null;
+  sourceRecordId?: string | null;
+}
+
+export interface SourceDatasetDefinitionRecord {
+  id: string;
+  connectionProfileId: string;
+  connectionProfileCode: string;
+  providerType: string;
+  datasetCode: string;
+  datasetName: string;
+  datasetKind: string;
+  sourceObjectName: string;
+  sourceSchemaName: string | null;
+  primaryTimestampField: string | null;
+  incrementalCursorField: string | null;
+  lastCursorValue: string | null;
+  refreshIntervalSeconds: number;
+  datasetOptionsJson: string;
+  isActive: boolean;
+  description: string | null;
+  isSynthetic: boolean;
+  createdAtUtc: string;
+  updatedAtUtc: string | null;
+}
+
+export interface CreateSourceDatasetDefinitionRequest {
+  connectionProfileId: string;
+  datasetCode: string;
+  datasetName: string;
+  datasetKind: string;
+  sourceObjectName: string;
+  sourceSchemaName?: string | null;
+  primaryTimestampField?: string | null;
+  incrementalCursorField?: string | null;
+  refreshIntervalSeconds?: number | null;
+  datasetOptionsJson?: string | null;
+  description?: string | null;
+  isSynthetic: boolean;
+  sourceSystem?: string | null;
+  sourceRecordId?: string | null;
+}
+
+export interface SourceFieldDefinitionRecord {
+  id: string;
+  sourceDatasetDefinitionId: string;
+  fieldName: string;
+  displayName: string;
+  sourceDataType: string;
+  ordinal: number;
+  isNullable: boolean;
+  maxLength: number | null;
+  numericPrecision: number | null;
+  numericScale: number | null;
+  sampleValue: string | null;
+  isPrimaryKeyCandidate: boolean;
+  isTimestampCandidate: boolean;
+  isActive: boolean;
+}
+
+export interface CsvSchemaDiscoveryRequest {
+  csvText: string;
+  fileName?: string | null;
+  delimiter?: string | null;
+  hasHeader?: boolean | null;
+  maxRowsToAnalyze?: number | null;
+  persistFields: boolean;
+}
+
+export interface CsvPreviewRequest {
+  csvText: string;
+  delimiter?: string | null;
+  hasHeader?: boolean | null;
+  maxRows?: number | null;
+}
+
+export interface CsvImportSnapshotRequest {
+  csvText: string;
+  fileName?: string | null;
+  delimiter?: string | null;
+  hasHeader?: boolean | null;
+  importBatchCode?: string | null;
+  checksum?: string | null;
+  isSynthetic: boolean;
+  sourceSystem?: string | null;
+  sourceRecordId?: string | null;
+}
+
+export interface CsvSchemaDiscoveryResult {
+  sourceDatasetDefinitionId: string;
+  datasetCode: string;
+  sourceObjectName: string;
+  delimiter: string;
+  hasHeader: boolean;
+  analyzedRowCount: number;
+  fields: SourceFieldDefinitionRecord[];
+}
+
+export interface CsvPreviewResult {
+  delimiter: string;
+  hasHeader: boolean;
+  headers: string[];
+  rows: Record<string, string | null>[];
+}
+
+export interface CsvImportSnapshotResult {
+  importBatchId: string;
+  importBatchCode: string;
+  sourceDatasetDefinitionId: string;
+  connectionProfileId: string;
+  sourceSystemDefinitionId: string;
+  sourceObjectName: string;
+  rowCount: number;
+  status: string;
+  startedAtUtc: string;
+  completedAtUtc: string | null;
+}
+
+// ============================================================
+// Phase 4 — Schema Configuration DTOs
+// ============================================================
+
+export interface SchemaViewDefinitionRecord {
+  id: string;
+  schemaViewCode: string;
+  schemaViewName: string;
+  viewKind: string;
+  primarySourceDatasetDefinitionId: string | null;
+  sqlText: string;
+  sourceDatasetIdsJson: string;
+  outputSchemaJson: string;
+  maxPreviewRows: number;
+  timeoutSeconds: number;
+  isApproved: boolean;
+  isActive: boolean;
+  lastValidatedAtUtc: string | null;
+  lastValidationStatus: string | null;
+  lastValidationMessage: string | null;
+  description: string | null;
+  isSynthetic: boolean;
+  createdAtUtc: string;
+  updatedAtUtc: string | null;
+}
+
+export interface CreateSchemaViewDefinitionRequest {
+  schemaViewCode: string;
+  schemaViewName: string;
+  viewKind: string;
+  primarySourceDatasetDefinitionId?: string | null;
+  sqlText: string;
+  sourceDatasetIdsJson?: string | null;
+  maxPreviewRows?: number | null;
+  timeoutSeconds?: number | null;
+  description?: string | null;
+  isSynthetic: boolean;
+  sourceSystem?: string | null;
+  sourceRecordId?: string | null;
+}
+
+export interface UpdateSchemaViewDefinitionRequest {
+  schemaViewName: string;
+  viewKind: string;
+  primarySourceDatasetDefinitionId?: string | null;
+  sqlText: string;
+  sourceDatasetIdsJson?: string | null;
+  maxPreviewRows?: number | null;
+  timeoutSeconds?: number | null;
+  description?: string | null;
+}
+
+export interface SchemaViewPreviewColumn {
+  columnName: string;
+  dataType: string;
+  ordinal: number;
+}
+
+export interface SchemaViewPreviewResult {
+  isSuccess: boolean;
+  message: string;
+  rowCount: number;
+  durationMs: number;
+  columns: SchemaViewPreviewColumn[];
+  rows: Record<string, unknown>[];
+}
+
+export interface SchemaViewPreviewRequest {
+  sqlText?: string | null;
+  maxRows?: number | null;
+  timeoutSeconds?: number | null;
+}
+
+export interface KpiDefinitionRecord {
+  id: string;
+  schemaViewDefinitionId: string | null;
+  kpiCode: string;
+  kpiName: string;
+  kpiCategory: string;
+  valueExpression: string;
+  unit: string | null;
+  dimensionExpression: string | null;
+  filterExpression: string | null;
+  aggregationType: string;
+  kpiOptionsJson: string;
+  isActive: boolean;
+  description: string | null;
+  isSynthetic: boolean;
+  createdAtUtc: string;
+  updatedAtUtc: string | null;
+}
+
+export interface CreateKpiDefinitionRequest {
+  schemaViewDefinitionId?: string | null;
+  kpiCode: string;
+  kpiName: string;
+  kpiCategory: string;
+  valueExpression: string;
+  unit?: string | null;
+  dimensionExpression?: string | null;
+  filterExpression?: string | null;
+  aggregationType?: string | null;
+  kpiOptionsJson?: string | null;
+  description?: string | null;
+  isSynthetic: boolean;
+  sourceSystem?: string | null;
+  sourceRecordId?: string | null;
+}
 
 type PrimitiveQueryValue = string | number | boolean | null | undefined;
 type QueryParams = Record<string, PrimitiveQueryValue>;
@@ -497,6 +783,20 @@ function getJson<T>(path: string, params?: QueryParams): Promise<T> {
 function postJson<T>(path: string, body?: unknown): Promise<T> {
   return requestJson<T>(path, {
     method: "POST",
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+}
+
+function putJson<T>(path: string, body?: unknown): Promise<T> {
+  return requestJson<T>(path, {
+    method: "PUT",
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+}
+
+function patchJson<T>(path: string, body?: unknown): Promise<T> {
+  return requestJson<T>(path, {
+    method: "PATCH",
     body: body === undefined ? undefined : JSON.stringify(body),
   });
 }
@@ -664,6 +964,75 @@ export const plantProcessApi = {
       `/analytics/dashboard/definitions/${dashboardDefinitionId}`
     ),
 
+      getConnectorProviderTypes: () =>
+    getJson<ProviderTypeRecord[]>("/admin/connectors/provider-types"),
+
+  getConnectionProfiles: (includeInactive = true) =>
+    getJson<ConnectionProfileRecord[]>(
+      `/admin/connectors/connection-profiles?includeInactive=${includeInactive}`
+    ),
+
+  createConnectionProfile: (request: CreateConnectionProfileRequest) =>
+    postJson<ConnectionProfileRecord>(
+      "/admin/connectors/connection-profiles",
+      request
+    ),
+
+  testConnectionProfile: (id: string) =>
+    postJson<ConnectionProfileRecord>(
+      `/admin/connectors/connection-profiles/${id}/test`,
+      {}
+    ),
+
+  activateConnectionProfile: (id: string) =>
+    patchJson<ConnectionProfileRecord>(
+      `/admin/connectors/connection-profiles/${id}/activate`,
+      {}
+    ),
+
+  deactivateConnectionProfile: (id: string) =>
+    patchJson<ConnectionProfileRecord>(
+      `/admin/connectors/connection-profiles/${id}/deactivate`,
+      {}
+    ),
+
+  getSourceDatasets: (connectionProfileId?: string, includeInactive = true) => {
+    const params = new URLSearchParams();
+    params.set("includeInactive", String(includeInactive));
+
+    if (connectionProfileId) {
+      params.set("connectionProfileId", connectionProfileId);
+    }
+
+    return getJson<SourceDatasetDefinitionRecord[]>(
+      `/admin/connectors/datasets?${params.toString()}`
+    );
+  },
+
+  createSourceDataset: (request: CreateSourceDatasetDefinitionRequest) =>
+    postJson<SourceDatasetDefinitionRecord>(
+      "/admin/connectors/datasets",
+      request
+    ),
+
+  discoverCsvSchema: (datasetId: string, request: CsvSchemaDiscoveryRequest) =>
+    postJson<CsvSchemaDiscoveryResult>(
+      `/admin/connectors/datasets/${datasetId}/discover-csv-schema`,
+      request
+    ),
+
+  previewCsv: (datasetId: string, request: CsvPreviewRequest) =>
+    postJson<CsvPreviewResult>(
+      `/admin/connectors/datasets/${datasetId}/preview-csv`,
+      request
+    ),
+
+  importCsvSnapshot: (datasetId: string, request: CsvImportSnapshotRequest) =>
+    postJson<CsvImportSnapshotResult>(
+      `/admin/connectors/datasets/${datasetId}/import-csv-snapshot`,
+      request
+    ),
+
   createDashboardDefinition: (payload: {
     dashboardCode: string;
     name: string;
@@ -757,5 +1126,51 @@ repairSystemDashboardTemplates: () =>
   postJson<{ repaired: number; repairedAtUtc: string }>(
     "/analytics/dashboard/definitions/system-templates/repair"
   ),
+
+    getSchemaViews: (includeInactive = true) =>
+    getJson<SchemaViewDefinitionRecord[]>(
+      `/admin/schema-configuration/views?includeInactive=${includeInactive}`
+    ),
+
+  createSchemaView: (request: CreateSchemaViewDefinitionRequest) =>
+    postJson<SchemaViewDefinitionRecord>(
+      "/admin/schema-configuration/views",
+      request
+    ),
+
+  updateSchemaView: (id: string, request: UpdateSchemaViewDefinitionRequest) =>
+    putJson<SchemaViewDefinitionRecord>(
+      `/admin/schema-configuration/views/${id}`,
+      request
+    ),
+
+  previewSchemaView: (id: string, request: SchemaViewPreviewRequest) =>
+    postJson<SchemaViewPreviewResult>(
+      `/admin/schema-configuration/views/${id}/preview`,
+      request
+    ),
+
+  previewAdHocSchemaSql: (request: SchemaViewPreviewRequest) =>
+    postJson<SchemaViewPreviewResult>(
+      "/admin/schema-configuration/views/preview",
+      request
+    ),
+
+  approveSchemaView: (id: string) =>
+    postJson<SchemaViewDefinitionRecord>(
+      `/admin/schema-configuration/views/${id}/approve`,
+      {}
+    ),
+
+  getKpiDefinitions: (includeInactive = true) =>
+    getJson<KpiDefinitionRecord[]>(
+      `/admin/schema-configuration/kpis?includeInactive=${includeInactive}`
+    ),
+
+  createKpiDefinition: (request: CreateKpiDefinitionRequest) =>
+    postJson<KpiDefinitionRecord>(
+      "/admin/schema-configuration/kpis",
+      request
+    ),
 
 };
