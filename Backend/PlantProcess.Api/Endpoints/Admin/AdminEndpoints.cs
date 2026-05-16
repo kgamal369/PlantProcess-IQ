@@ -45,10 +45,10 @@ public static class AdminEndpoints
             .WithSummary("Get Schema Configuration summary")
             .WithDescription("Returns current mapping definitions and staging source-object coverage.");
 
-        group.MapGet("/jobs-monitor", GetJobsMonitorAsync)
+       group.MapGet("/jobs-monitor", GetJobsMonitorAsync)
             .WithSummary("Get Jobs Monitor")
-            .WithDescription("Returns inferred job status from import batches plus planned Phase 3/4 job types.");
-
+            .WithDescription("Returns DB-backed job status from JobDefinition records.");
+            
         return app;
     }
 
@@ -359,121 +359,42 @@ public static class AdminEndpoints
         PlantProcessDbContext dbContext,
         CancellationToken cancellationToken)
     {
-        var importRows = await (
-            from batch in dbContext.ImportBatches.AsNoTracking()
-            join source in dbContext.SourceSystemDefinitions.AsNoTracking()
-                on batch.SourceSystemDefinitionId equals source.Id into sourceJoin
-            from source in sourceJoin.DefaultIfEmpty()
-            where !batch.IsDeleted
-            orderby batch.StartedAtUtc descending
-            select new
-            {
-                batch.Id,
-                batch.ImportBatchCode,
-                batch.ImportType,
-                batch.Status,
-                batch.StartedAtUtc,
-                batch.CompletedAtUtc,
-                batch.RowCount,
-                batch.ErrorMessage,
-                batch.SourceObjectName,
-                SourceSystemCode = source == null ? "Unknown" : source.SourceSystemCode,
-                SourceSystemName = source == null ? "Unknown source" : source.SourceSystemName
-            })
-            .Take(100)
+        var jobs = await dbContext.JobDefinitions
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted)
+            .OrderBy(x => x.JobType)
+            .ThenBy(x => x.JobCode)
+            .Select(x => new AdminJobMonitorRowDto(
+                x.Id.ToString(),
+                x.JobCode,
+                x.JobName,
+                x.JobType.ToString(),
+                x.TargetType ?? "PlantProcessIQ",
+                x.TargetId.HasValue ? x.TargetId.Value.ToString() : "Global / System",
+                x.LastRunStatus.ToString(),
+                ToStatusClass(x.LastRunStatus.ToString(), x.IsEnabled),
+                x.LastRunStartedAtUtc,
+                x.LastRunDurationMs,
+                x.NextRunAtUtc,
+                null,
+                x.LastFailureReason,
+                true,
+                true))
             .ToListAsync(cancellationToken);
-
-        var jobRows = importRows
-            .Select(x =>
-            {
-                var durationMs = x.CompletedAtUtc.HasValue
-                    ? (long?)(x.CompletedAtUtc.Value - x.StartedAtUtc).TotalMilliseconds
-                    : null;
-
-                return new AdminJobMonitorRowDto(
-                    Id: x.Id.ToString(),
-                    JobCode: x.ImportBatchCode,
-                    JobName: $"{x.ImportType} import — {x.SourceObjectName ?? x.SourceSystemCode}",
-                    JobType: InferJobType(x.ImportType),
-                    SourceSystemCode: x.SourceSystemCode,
-                    SourceSystemName: x.SourceSystemName,
-                    Status: x.Status,
-                    StatusClass: ToStatusClass(x.Status),
-                    LastRunAtUtc: x.StartedAtUtc,
-                    LastDurationMs: durationMs,
-                    NextRunAtUtc: null,
-                    RowCount: x.RowCount,
-                    ErrorMessage: x.ErrorMessage,
-                    IsConfigured: true,
-                    IsRealRuntimeJob: true);
-            })
-            .ToList();
-
-        jobRows.InsertRange(0,
-        [
-            new AdminJobMonitorRowDto(
-                Id: "SYSTEM_IMPORT_QUEUE_PROCESSOR",
-                JobCode: "SYSTEM_IMPORT_QUEUE_PROCESSOR",
-                JobName: "Import Queue Processor",
-                JobType: "CanonicalRefresh",
-                SourceSystemCode: "PlantProcessIQ",
-                SourceSystemName: "Application Worker",
-                Status: "Configured",
-                StatusClass: "info",
-                LastRunAtUtc: null,
-                LastDurationMs: null,
-                NextRunAtUtc: null,
-                RowCount: null,
-                ErrorMessage: null,
-                IsConfigured: true,
-                IsRealRuntimeJob: false),
-
-            new AdminJobMonitorRowDto(
-                Id: "SYSTEM_DATA_QUALITY_SCAN",
-                JobCode: "SYSTEM_DATA_QUALITY_SCAN",
-                JobName: "Scheduled Data Quality Scan",
-                JobType: "DataQuality",
-                SourceSystemCode: "PlantProcessIQ",
-                SourceSystemName: "Application Worker",
-                Status: "Configured",
-                StatusClass: "info",
-                LastRunAtUtc: null,
-                LastDurationMs: null,
-                NextRunAtUtc: null,
-                RowCount: null,
-                ErrorMessage: null,
-                IsConfigured: true,
-                IsRealRuntimeJob: false),
-
-            new AdminJobMonitorRowDto(
-                Id: "SYSTEM_RISK_SCORING",
-                JobCode: "SYSTEM_RISK_SCORING",
-                JobName: "Scheduled Risk Scoring",
-                JobType: "RiskScoring",
-                SourceSystemCode: "PlantProcessIQ",
-                SourceSystemName: "Application Worker",
-                Status: "Configured",
-                StatusClass: "info",
-                LastRunAtUtc: null,
-                LastDurationMs: null,
-                NextRunAtUtc: null,
-                RowCount: null,
-                ErrorMessage: null,
-                IsConfigured: true,
-                IsRealRuntimeJob: false)
-        ]);
 
         var response = new AdminJobsMonitorDto(
             GeneratedAtUtc: DateTime.UtcNow,
             Summary:
             [
-                new AdminStatusCountDto("Total", jobRows.Count),
-                new AdminStatusCountDto("Running", jobRows.Count(x => x.Status == "Running")),
-                new AdminStatusCountDto("Failed", jobRows.Count(x => x.Status == "Failed")),
-                new AdminStatusCountDto("Configured", jobRows.Count(x => x.Status == "Configured")),
-                new AdminStatusCountDto("Completed", jobRows.Count(x => x.Status == "Completed"))
+                new AdminStatusCountDto("Total", jobs.Count),
+                new AdminStatusCountDto("Enabled", jobs.Count(x => x.IsConfigured)),
+                new AdminStatusCountDto("Running", jobs.Count(x => x.Status == "Running")),
+                new AdminStatusCountDto("Ok", jobs.Count(x => x.Status == "Ok")),
+                new AdminStatusCountDto("Failed", jobs.Count(x => x.Status == "Failed")),
+                new AdminStatusCountDto("Timeout", jobs.Count(x => x.Status == "Timeout")),
+                new AdminStatusCountDto("NeverRun", jobs.Count(x => x.Status == "NeverRun"))
             ],
-            Jobs: jobRows);
+            Jobs: jobs);
 
         return Results.Ok(response);
     }
@@ -503,16 +424,22 @@ public static class AdminEndpoints
         return "RawSnapshot";
     }
 
-    private static string ToStatusClass(string? status)
+    private static string ToStatusClass(string? status, bool isEnabled = true)
     {
+        if (!isEnabled)
+            return "paused";
+
         return status?.Trim().ToLowerInvariant() switch
         {
+            "ok" => "success",
             "completed" => "success",
             "running" => "running",
             "failed" => "danger",
+            "timeout" => "danger",
             "cancelled" => "warning",
             "created" => "neutral",
             "configured" => "info",
+            "neverrun" => "neutral",
             _ => "neutral"
         };
     }

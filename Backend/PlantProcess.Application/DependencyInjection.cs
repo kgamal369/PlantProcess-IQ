@@ -33,6 +33,7 @@ public static class DependencyInjection
         services.AddScoped<IImportBatchQueueProcessorService, ImportBatchQueueProcessorService>();
         services.AddScoped<IConnectorConfigurationService, ConnectorConfigurationService>();
         services.AddScoped<ISchemaConfigurationService, SchemaConfigurationService>();
+        services.AddScoped<IJobDefinitionService, JobDefinitionService>();
         
         // Canonical material and genealogy workflow
         services.AddScoped<IMaterialService, MaterialService>();

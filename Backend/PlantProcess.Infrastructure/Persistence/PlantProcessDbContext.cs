@@ -47,7 +47,8 @@ public class PlantProcessDbContext : DbContext, IPlantProcessDbContext
     public DbSet<SourceFieldDefinition> SourceFieldDefinitions => Set<SourceFieldDefinition>();
     public DbSet<SchemaViewDefinition> SchemaViewDefinitions => Set<SchemaViewDefinition>();
     public DbSet<KpiDefinition> KpiDefinitions => Set<KpiDefinition>();
-
+    public DbSet<JobDefinition> JobDefinitions => Set<JobDefinition>();
+    
     // ----------------------------
     // Materials / Genealogy
     // ----------------------------

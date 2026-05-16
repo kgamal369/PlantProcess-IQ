@@ -6,6 +6,7 @@ using PlantProcess.Domain.Entities.Materials;
 using PlantProcess.Domain.Entities.PlantLayout;
 using PlantProcess.Domain.Entities.Process;
 using PlantProcess.Domain.Entities.Quality;
+using PlantProcess.Domain.Entities.Integration;
 
 namespace PlantProcess.Application.Common.Persistence;
 
@@ -22,6 +23,7 @@ public interface IPlantProcessDbContext
     DbSet<Route> Routes { get; }
     DbSet<RouteStep> RouteSteps { get; }
 
+
     DbSet<SourceSystemDefinition> SourceSystemDefinitions { get; }
     DbSet<ImportBatch> ImportBatches { get; }
     DbSet<MappingDefinition> MappingDefinitions { get; }
@@ -31,10 +33,13 @@ public interface IPlantProcessDbContext
     DbSet<SourceFieldDefinition> SourceFieldDefinitions { get; }
     DbSet<SchemaViewDefinition> SchemaViewDefinitions { get; }
     DbSet<KpiDefinition> KpiDefinitions { get; }
+    DbSet<JobDefinition> JobDefinitions { get; }
+
 
     DbSet<MaterialUnit> MaterialUnits { get; }
     DbSet<MaterialAlias> MaterialAliases { get; }
     DbSet<GenealogyEdge> GenealogyEdges { get; }
+
 
     DbSet<ProcessStepExecution> ProcessStepExecutions { get; }
     DbSet<ParameterDefinition> ParameterDefinitions { get; }
