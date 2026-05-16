@@ -17,6 +17,7 @@ using PlantProcess.Api.Middleware;
 using PlantProcess.Api.Options;
 using PlantProcess.Api.Endpoints.Admin;
 using PlantProcess.Application;
+using PlantProcess.Application.Services.Integration;
 using PlantProcess.Infrastructure;
 using Serilog;
 using Serilog.Events;
@@ -140,6 +141,19 @@ try
 
     var app = builder.Build();
 
+    // ── Phase 2: Register DB-backed system jobs at API startup ─────────────────
+    await using (var scope = app.Services.CreateAsyncScope())
+    {
+        var jobRegistration = scope.ServiceProvider.GetRequiredService<IJobRegistrationService>();
+        var registrationResult = await jobRegistration.RegisterSystemJobsAsync(CancellationToken.None);
+
+        if (registrationResult.IsFailure)
+        {
+            throw new InvalidOperationException(
+                $"System job registration failed: {registrationResult.Error?.Message}");
+        }
+    }
+
     // ── CORS must be early enough before browser calls endpoints ───────────
     app.UseCors("PlantProcessFrontend");
 
@@ -189,6 +203,7 @@ try
     app.MapValidationEndpoints();
     app.MapDevSeedEndpoints();
     app.MapAdminEndpoints();
+    app.MapJobAdminEndpoints();
     app.MapConnectorAdminEndpoints();
     app.MapSchemaConfigurationEndpoints();
     

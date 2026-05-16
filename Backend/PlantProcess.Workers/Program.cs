@@ -22,6 +22,7 @@ using PlantProcess.Workers;
 using Serilog;
 using Serilog.Events;
 using Serilog.Exceptions;
+using PlantProcess.Application.Services.Integration;
 
 // ── Resolve stable absolute log path ─────────────────────────────────────────
 var logDirectory = Path.Combine(AppContext.BaseDirectory, "logs");
@@ -83,64 +84,77 @@ try
 
     var host = builder.Build();
 
+    // ── Phase 2: Register DB-backed system jobs at Worker startup ───────────────
+    await using (var scope = host.Services.CreateAsyncScope())
+    {
+        var jobRegistration = scope.ServiceProvider.GetRequiredService<IJobRegistrationService>();
+        var registrationResult = await jobRegistration.RegisterSystemJobsAsync(CancellationToken.None);
+
+        if (registrationResult.IsFailure)
+        {
+            throw new InvalidOperationException(
+                $"System job registration failed: {registrationResult.Error?.Message}");
+        }
+    }
+
     host.Run();
-}
-catch (Exception ex) when (ex.GetType().Name == "HostAbortedException")
-{
-    Log.Debug(ex, "Host aborted during design-time operation (expected).");
-}
-catch (Exception ex)
-{
-    Log.Fatal(ex, "PlantProcess IQ Worker terminated unexpectedly. Version={AppVersion}", appVersion);
-    Environment.Exit(1);
-}
-finally
-{
-    Log.Information("PlantProcess IQ Worker stopped. Version={AppVersion}", appVersion);
-    Log.CloseAndFlush();
-}
-
-// ── Local helpers ─────────────────────────────────────────────────────────────
-static void ValidateWorkerConfiguration(IConfiguration configuration, IHostEnvironment environment)
-{
-    var errors = new List<string>();
-
-    // 1. Database connection string — same check as the API.
-    var connectionString = configuration.GetConnectionString("PlantProcessDb");
-
-    if (string.IsNullOrWhiteSpace(connectionString))
+    }
+    catch (Exception ex) when (ex.GetType().Name == "HostAbortedException")
     {
-        errors.Add(
-            "Missing database connection string. " +
-            "Configure ConnectionStrings:PlantProcessDb or " +
-            "environment variable ConnectionStrings__PlantProcessDb.");
+        Log.Debug(ex, "Host aborted during design-time operation (expected).");
+    }
+    catch (Exception ex)
+    {
+        Log.Fatal(ex, "PlantProcess IQ Worker terminated unexpectedly. Version={AppVersion}", appVersion);
+        Environment.Exit(1);
+    }
+    finally
+    {
+        Log.Information("PlantProcess IQ Worker stopped. Version={AppVersion}", appVersion);
+        Log.CloseAndFlush();
     }
 
-    // 2. Warn if all scheduled jobs are disabled (worker is effectively idle).
-    var importEnabled     = configuration.GetValue<bool>("PlantProcess:Workers:EnableImportQueueProcessorJob", false);
-    var dqEnabled         = configuration.GetValue<bool>("PlantProcess:Workers:EnableDataQualityScanJob",     false);
-    var riskEnabled       = configuration.GetValue<bool>("PlantProcess:Workers:EnableRiskScoringJob",         false);
-
-    if (!importEnabled && !dqEnabled && !riskEnabled)
+    // ── Local helpers ─────────────────────────────────────────────────────────────
+    static void ValidateWorkerConfiguration(IConfiguration configuration, IHostEnvironment environment)
     {
-        Log.Warning(
-            "All Worker jobs are disabled. " +
-            "Set PlantProcess:Workers:Enable*Job = true to activate scheduled processing.");
+        var errors = new List<string>();
+
+        // 1. Database connection string — same check as the API.
+        var connectionString = configuration.GetConnectionString("PlantProcessDb");
+
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            errors.Add(
+                "Missing database connection string. " +
+                "Configure ConnectionStrings:PlantProcessDb or " +
+                "environment variable ConnectionStrings__PlantProcessDb.");
+        }
+
+        // 2. Warn if all scheduled jobs are disabled (worker is effectively idle).
+        var importEnabled     = configuration.GetValue<bool>("PlantProcess:Workers:EnableImportQueueProcessorJob", false);
+        var dqEnabled         = configuration.GetValue<bool>("PlantProcess:Workers:EnableDataQualityScanJob",     false);
+        var riskEnabled       = configuration.GetValue<bool>("PlantProcess:Workers:EnableRiskScoringJob",         false);
+
+        if (!importEnabled && !dqEnabled && !riskEnabled)
+        {
+            Log.Warning(
+                "All Worker jobs are disabled. " +
+                "Set PlantProcess:Workers:Enable*Job = true to activate scheduled processing.");
+        }
+
+        if (errors.Count == 0)
+        {
+            Log.Information(
+                "Worker startup validation passed. " +
+                "ImportQueue={ImportEnabled}, DataQuality={DqEnabled}, RiskScoring={RiskEnabled}",
+                importEnabled, dqEnabled, riskEnabled);
+            return;
+        }
+
+        var message =
+            "PlantProcess IQ Worker startup configuration validation failed:" +
+            Environment.NewLine +
+            string.Join(Environment.NewLine, errors.Select(x => "- " + x));
+
+        throw new InvalidOperationException(message);
     }
-
-    if (errors.Count == 0)
-    {
-        Log.Information(
-            "Worker startup validation passed. " +
-            "ImportQueue={ImportEnabled}, DataQuality={DqEnabled}, RiskScoring={RiskEnabled}",
-            importEnabled, dqEnabled, riskEnabled);
-        return;
-    }
-
-    var message =
-        "PlantProcess IQ Worker startup configuration validation failed:" +
-        Environment.NewLine +
-        string.Join(Environment.NewLine, errors.Select(x => "- " + x));
-
-    throw new InvalidOperationException(message);
-}

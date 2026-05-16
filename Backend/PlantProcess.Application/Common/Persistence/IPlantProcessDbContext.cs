@@ -6,7 +6,6 @@ using PlantProcess.Domain.Entities.Materials;
 using PlantProcess.Domain.Entities.PlantLayout;
 using PlantProcess.Domain.Entities.Process;
 using PlantProcess.Domain.Entities.Quality;
-using PlantProcess.Domain.Entities.Integration;
 
 namespace PlantProcess.Application.Common.Persistence;
 
@@ -34,7 +33,7 @@ public interface IPlantProcessDbContext
     DbSet<SchemaViewDefinition> SchemaViewDefinitions { get; }
     DbSet<KpiDefinition> KpiDefinitions { get; }
     DbSet<JobDefinition> JobDefinitions { get; }
-
+    DbSet<JobRunHistory> JobRunHistories { get; }
 
     DbSet<MaterialUnit> MaterialUnits { get; }
     DbSet<MaterialAlias> MaterialAliases { get; }

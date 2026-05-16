@@ -51,6 +51,10 @@ public class ConnectionProfile : BaseEntity
 
     public string ConnectionOptionsJson { get; private set; } = "{}";
 
+    public string ImportScheduleExpression { get; private set; } = "Every 15 minutes";
+
+    public int ImportIntervalMinutes { get; private set; } = 15;
+
     public bool IsActive { get; private set; } = true;
 
     public bool ReadOnlyEnforced { get; private set; } = true;
@@ -162,6 +166,23 @@ public class ConnectionProfile : BaseEntity
 
         ReadOnlyEnforced = readOnlyEnforced;
         Description = Clean(description);
+
+        MarkAsUpdated();
+    }
+
+    public void UpdateImportSchedule(string scheduleExpression, int importIntervalMinutes)
+    {
+        if (string.IsNullOrWhiteSpace(scheduleExpression))
+            throw new ArgumentException("Schedule expression is required.", nameof(scheduleExpression));
+
+        if (importIntervalMinutes < 2)
+            throw new ArgumentOutOfRangeException(nameof(importIntervalMinutes), "Import interval must be at least 2 minutes.");
+
+        if (importIntervalMinutes > 7 * 24 * 60)
+            throw new ArgumentOutOfRangeException(nameof(importIntervalMinutes), "Import interval cannot exceed 7 days.");
+
+        ImportScheduleExpression = scheduleExpression.Trim();
+        ImportIntervalMinutes = importIntervalMinutes;
 
         MarkAsUpdated();
     }

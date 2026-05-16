@@ -34,7 +34,11 @@ public static class DependencyInjection
         services.AddScoped<IConnectorConfigurationService, ConnectorConfigurationService>();
         services.AddScoped<ISchemaConfigurationService, SchemaConfigurationService>();
         services.AddScoped<IJobDefinitionService, JobDefinitionService>();
-        
+        services.AddScoped<IJobRegistrationService, JobRegistrationService>();
+        services.AddScoped<IJobRuntimeService, JobRuntimeService>();
+        services.AddScoped<IJobRunOrchestratorService, JobRunOrchestratorService>();
+        services.AddScoped<IIncrementalSyncStateService, IncrementalSyncStateService>();
+
         // Canonical material and genealogy workflow
         services.AddScoped<IMaterialService, MaterialService>();
         services.AddScoped<IGenealogyService, GenealogyService>();

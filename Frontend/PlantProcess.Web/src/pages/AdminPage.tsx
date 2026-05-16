@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { Navigate, NavLink, Route, Routes } from "react-router-dom";
+
 import {
   Activity,
   AlertTriangle,
@@ -16,7 +17,6 @@ import {
   Settings2,
   TableProperties,
   Workflow,
-  Wrench,
 } from "lucide-react";
 
 import {
@@ -26,6 +26,7 @@ import {
   type AdminOverview,
   type ConnectionProfileRecord,
   type DbConfigurationSummary,
+  type JobRunHistoryRecord,
   type KpiDefinitionRecord,
   type ProviderTypeRecord,
   type SchemaConfigurationSummary,
@@ -210,21 +211,38 @@ export function AdminPage() {
 
           <Routes>
             <Route index element={<Navigate to="db-configuration" replace />} />
-            <Route
-              path="db-configuration"
-              element={<DbConfigurationTab data={data.dbConfig} />}
+                <Route
+                    path="db-configuration"
+                    element={
+                        <DbConfigurationTab
+                        data={data.dbConfig}
+                        onRefresh={() => loadAdminData(true)}
+                />
+            }
             />
-            <Route
-              path="schema-configuration"
-              element={<SchemaConfigurationTab data={data.schemaConfig} />}
-            />
-            <Route
-              path="importing-data"
-              element={<ImportingDataTab data={data.model} />}
-            />
-            <Route
-              path="jobs-monitor"
-              element={<JobsMonitorTab data={data.jobs} />}
+                <Route
+                path="schema-configuration"
+                element={<SchemaConfigurationTab data={data.schemaConfig} />}
+                />
+                <Route
+                    path="importing-data"
+                    element={
+                        <ImportingDataTab
+                        data={data.model}
+                        schemaConfig={data.schemaConfig}
+                        jobs={data.jobs}
+                        onRefresh={() => loadAdminData(true)}
+                        />
+                    }
+                />
+                <Route
+                    path="jobs-monitor"
+                    element={
+                        <JobsMonitorTab
+                        data={data.jobs}
+                        onRefresh={() => loadAdminData(true)}
+                    />
+                }
             />
           </Routes>
         </>
@@ -255,12 +273,14 @@ function AdminOverviewCards({ cards }: { cards: AdminMetricCard[] }) {
   );
 }
 
-function DbConfigurationTab({ data }: { data: DbConfigurationSummary | null }) {
-  return (
+function DbConfigurationTab({ data, onRefresh,}: { data: DbConfigurationSummary | null; onRefresh: () => Promise<void> | void;}) 
+{  
+   return (
     <section className="admin-panel-grid">
-      <ConnectorFoundationPanel />
-      
-      <AdminPanel
+    <ConnectorFoundationPanel />
+    <ConnectionSchedulePanel onRefresh={onRefresh} />
+
+    <AdminPanel
         title="DB Link Configuration"
         subtitle="Customer source connection concept"
         icon={<ServerCog size={18} />}
@@ -346,6 +366,104 @@ function DbConfigurationTab({ data }: { data: DbConfigurationSummary | null }) {
         </div>
       </AdminPanel>
     </section>
+  );
+}
+
+function ConnectionSchedulePanel({
+  onRefresh,
+}: {
+  onRefresh: () => Promise<void> | void;
+}) {
+  const [connections, setConnections] = useState<ConnectionProfileRecord[]>([]);
+  const [selectedConnectionId, setSelectedConnectionId] = useState("");
+  const [intervalMinutes, setIntervalMinutes] = useState(15);
+  const [isSaving, setIsSaving] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
+  async function loadConnections() {
+    const result = await plantProcessApi.getConnectionProfiles(true);
+    setConnections(result);
+
+    if (!selectedConnectionId && result.length > 0) {
+      setSelectedConnectionId(result[0].id);
+    }
+  }
+
+  useEffect(() => {
+    loadConnections();
+  }, []);
+
+  async function saveSchedule() {
+    if (!selectedConnectionId) return;
+
+    setIsSaving(true);
+    setMessage(null);
+
+    try {
+      await plantProcessApi.updateConnectionImportSchedule(selectedConnectionId, {
+        scheduleExpression: `Every ${intervalMinutes} minutes`,
+        importIntervalMinutes: intervalMinutes,
+      });
+
+      setMessage("Import schedule saved and JobDefinition updated.");
+      await loadConnections();
+      await onRefresh();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : String(error));
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  return (
+    <AdminPanel
+      title="DB Link Import Scheduling"
+      subtitle="Configure import cycle rate per connection profile"
+      icon={<Clock size={18} />}
+      wide
+    >
+      <div className="form-grid">
+        <label>
+          Connection profile
+          <select
+            value={selectedConnectionId}
+            onChange={(event) => setSelectedConnectionId(event.target.value)}
+          >
+            <option value="">Select connection</option>
+            {connections.map((connection) => (
+              <option key={connection.id} value={connection.id}>
+                {connection.connectionProfileCode} · {connection.connectionProfileName}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label>
+          Import interval minutes
+          <input
+            type="number"
+            min={2}
+            max={10080}
+            value={intervalMinutes}
+            onChange={(event) => setIntervalMinutes(Number(event.target.value))}
+          />
+        </label>
+      </div>
+
+      <div className="admin-action-row">
+        <button
+          className="primary-button"
+          type="button"
+          onClick={saveSchedule}
+          disabled={!selectedConnectionId || isSaving}
+        >
+          <Clock size={16} />
+          {isSaving ? "Saving..." : "Save Import Schedule"}
+        </button>
+
+        {message ? <span className="admin-help-text">{message}</span> : null}
+      </div>
+    </AdminPanel>
   );
 }
 
@@ -457,8 +575,48 @@ function SchemaConfigurationTab({
   );
 }
 
-function ImportingDataTab({ data }: { data: TwoStageImportModel | null }) {
+function ImportingDataTab({
+  data,
+  schemaConfig,
+  jobs,
+  onRefresh,
+}: {
+  data: TwoStageImportModel | null;
+  schemaConfig: SchemaConfigurationSummary | null;
+  jobs: AdminJobsMonitor | null;
+  onRefresh: () => Promise<void> | void;
+}) {
   const stages = data?.stages ?? [];
+  const mappings = schemaConfig?.mappings ?? [];
+  const canonicalJobs = (jobs?.jobs ?? []).filter(
+    (job) => job.jobType === "CanonicalRefresh"
+  );
+
+  const [selectedMappingId, setSelectedMappingId] = useState("");
+  const [refreshIntervalMinutes, setRefreshIntervalMinutes] = useState(15);
+  const [isSaving, setIsSaving] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
+  async function saveMappingRefreshSchedule() {
+    if (!selectedMappingId) return;
+
+    setIsSaving(true);
+    setMessage(null);
+
+    try {
+      await plantProcessApi.updateMappingRefreshSchedule(selectedMappingId, {
+        scheduleExpression: `Every ${refreshIntervalMinutes} minutes`,
+        refreshIntervalMinutes,
+      });
+
+      setMessage("Canonical refresh schedule saved and JobDefinition updated.");
+      await onRefresh();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : String(error));
+    } finally {
+      setIsSaving(false);
+    }
+  }
 
   return (
     <section className="admin-panel-grid">
@@ -469,8 +627,7 @@ function ImportingDataTab({ data }: { data: TwoStageImportModel | null }) {
         wide
       >
         <p className="admin-copy">
-          {data?.summary ??
-            "The two-stage model is not available yet."}
+          {data?.summary ?? "The two-stage model is not available yet."}
         </p>
 
         <div className="admin-stage-flow">
@@ -488,6 +645,96 @@ function ImportingDataTab({ data }: { data: TwoStageImportModel | null }) {
               />
             </div>
           ))}
+        </div>
+      </AdminPanel>
+
+      <AdminPanel
+        title="Canonical Refresh Scheduling"
+        subtitle="Configure refresh cycle per MappingDefinition"
+        icon={<Workflow size={18} />}
+        wide
+      >
+        <div className="form-grid">
+          <label>
+            Mapping definition
+            <select
+              value={selectedMappingId}
+              onChange={(event) => setSelectedMappingId(event.target.value)}
+            >
+              <option value="">Select mapping</option>
+              {mappings.map((mapping) => (
+                <option key={mapping.id} value={mapping.id}>
+                  {mapping.mappingCode} · {mapping.mappingName}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label>
+            Refresh interval minutes
+            <input
+              type="number"
+              min={2}
+              max={10080}
+              value={refreshIntervalMinutes}
+              onChange={(event) =>
+                setRefreshIntervalMinutes(Number(event.target.value))
+              }
+            />
+          </label>
+        </div>
+
+        <div className="admin-action-row">
+          <button
+            className="primary-button"
+            type="button"
+            onClick={saveMappingRefreshSchedule}
+            disabled={!selectedMappingId || isSaving}
+          >
+            <Clock size={16} />
+            {isSaving ? "Saving..." : "Save Refresh Schedule"}
+          </button>
+
+          {message ? <span className="admin-help-text">{message}</span> : null}
+        </div>
+
+        <div className="admin-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Job</th>
+                <th>Status</th>
+                <th>Target</th>                
+                <th>Last Run</th>
+                <th>Duration</th>
+              </tr>
+            </thead>
+            <tbody>
+              {canonicalJobs.map((job) => (
+                <tr key={job.id}>
+                  <td>
+                    <strong>{job.jobCode}</strong>
+                    <small>{job.jobName}</small>
+                  </td>
+                  <td>
+                    <StatusPill status={job.status} statusClass={job.statusClass} />
+                  </td>
+                  <td>{job.sourceSystemName}</td>
+                  <td>{formatDate(job.lastRunAtUtc)}</td>
+                  <td>{formatDuration(job.lastDurationMs)}</td>
+                </tr>
+              ))}
+
+              {canonicalJobs.length === 0 ? (
+                <tr>
+                  <td colSpan={5}>
+                    No canonical refresh jobs configured yet. Save a mapping refresh
+                    schedule to create one.
+                  </td>
+                </tr>
+              ) : null}
+            </tbody>
+          </table>
         </div>
       </AdminPanel>
 
@@ -512,39 +759,24 @@ function ImportingDataTab({ data }: { data: TwoStageImportModel | null }) {
           ))}
         </div>
       </AdminPanel>
-
-      <AdminPanel
-        title="Phase 3/4 Functional Expansion"
-        subtitle="What becomes configurable next"
-        icon={<Wrench size={18} />}
-        wide
-      >
-        <div className="admin-roadmap-grid">
-          <RoadmapCard
-            title="ConnectionProfile"
-            text="Store provider type, host, database/schema, connection mode and SecretReference."
-          />
-          <RoadmapCard
-            title="SourceDatasetDefinition"
-            text="Represent source tables, SQL views, CSV files, Excel sheets and REST endpoints."
-          />
-          <RoadmapCard
-            title="SourceFieldDefinition"
-            text="Store discovered source columns, types, ordinals, nullability and sample values."
-          />
-          <RoadmapCard
-            title="Canonical Import Job"
-            text="Refresh canonical records from raw snapshots at an HMI-friendly frequency."
-          />
-        </div>
-      </AdminPanel>
     </section>
   );
 }
 
-function JobsMonitorTab({ data }: { data: AdminJobsMonitor | null }) {
+function JobsMonitorTab({
+  data,
+  onRefresh,
+}: {
+  data: AdminJobsMonitor | null;
+  onRefresh: () => Promise<void> | void;
+}) {
   const jobs = data?.jobs ?? [];
   const summary = data?.summary ?? [];
+
+  const [expandedJobId, setExpandedJobId] = useState<string | null>(null);
+  const [historyByJobId, setHistoryByJobId] = useState<Record<string, JobRunHistoryRecord[]>>({});
+  const [workingJobId, setWorkingJobId] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
 
   const sortedJobs = useMemo(
     () =>
@@ -556,11 +788,80 @@ function JobsMonitorTab({ data }: { data: AdminJobsMonitor | null }) {
     [jobs]
   );
 
+  async function toggleHistory(jobId: string) {
+    if (expandedJobId === jobId) {
+      setExpandedJobId(null);
+      return;
+    }
+
+    setExpandedJobId(jobId);
+
+    if (!historyByJobId[jobId]) {
+      const history = await plantProcessApi.getJobHistory(jobId, 20);
+
+      setHistoryByJobId((current) => ({
+        ...current,
+        [jobId]: history,
+      }));
+    }
+  }
+
+  async function runNow(jobId: string) {
+    setWorkingJobId(jobId);
+    setMessage(null);
+
+    try {
+      const response = await plantProcessApi.runJobNow(jobId, "Admin UI");
+      setMessage(response.message);
+      await onRefresh();
+
+      const history = await plantProcessApi.getJobHistory(jobId, 20);
+      setHistoryByJobId((current) => ({
+        ...current,
+        [jobId]: history,
+      }));
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : String(error));
+    } finally {
+      setWorkingJobId(null);
+    }
+  }
+
+  async function pause(jobId: string) {
+    setWorkingJobId(jobId);
+    setMessage(null);
+
+    try {
+      const response = await plantProcessApi.pauseJob(jobId);
+      setMessage(response.message);
+      await onRefresh();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : String(error));
+    } finally {
+      setWorkingJobId(null);
+    }
+  }
+
+  async function resume(jobId: string) {
+    setWorkingJobId(jobId);
+    setMessage(null);
+
+    try {
+      const response = await plantProcessApi.resumeJob(jobId);
+      setMessage(response.message);
+      await onRefresh();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : String(error));
+    } finally {
+      setWorkingJobId(null);
+    }
+  }
+
   return (
     <section className="admin-panel-grid">
       <AdminPanel
         title="Jobs Monitor"
-        subtitle="DB link imports, canonical refresh and future ML jobs"
+        subtitle="DB-backed operational status, manual controls, and run history"
         icon={<Activity size={18} />}
         wide
       >
@@ -570,56 +871,166 @@ function JobsMonitorTab({ data }: { data: AdminJobsMonitor | null }) {
           ))}
         </div>
 
+        {message ? (
+          <div className="admin-inline-message">
+            {message}
+          </div>
+        ) : null}
+
         <div className="admin-table-wrap">
           <table>
             <thead>
               <tr>
                 <th>Job</th>
                 <th>Type</th>
-                <th>Source</th>
+                <th>Target</th>
                 <th>Status</th>
                 <th>Last Run</th>
                 <th>Duration</th>
-                <th>Rows</th>
                 <th>Runtime</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {sortedJobs.map((job) => (
-                <tr key={job.id}>
-                  <td>
-                    <strong>{job.jobCode}</strong>
-                    <small>{job.jobName}</small>
-                    {job.errorMessage ? (
-                      <em className="admin-error-text">{job.errorMessage}</em>
+              {sortedJobs.map((job) => {
+                const isWorking = workingJobId === job.id;
+                const isPaused = job.statusClass === "paused";
+                const history = historyByJobId[job.id] ?? [];
+
+                return (
+                  <Fragment key={job.id}>
+                    <tr>
+                        <td>
+                        <strong>{job.jobCode}</strong>
+                        <small>{job.jobName}</small>
+                        {job.errorMessage ? (
+                          <em className="admin-error-text">{job.errorMessage}</em>
+                        ) : null}
+                      </td>
+                      <td>{job.jobType}</td>
+                      <td>
+                        <strong>{job.sourceSystemCode}</strong>
+                        <small>{job.sourceSystemName}</small>
+                      </td>
+                      <td>
+                        <StatusPill
+                          status={isPaused ? "Paused" : job.status}
+                          statusClass={job.statusClass}
+                        />
+                      </td>
+                      <td>{formatDate(job.lastRunAtUtc)}</td>
+                      <td>{formatDuration(job.lastDurationMs)}</td>
+                      <td>
+                        {job.isRealRuntimeJob ? (
+                          <span className="admin-pill success">Actual</span>
+                        ) : (
+                          <span className="admin-pill info">Configured</span>
+                        )}
+                      </td>
+                      <td>
+                        <div className="admin-action-row compact">
+                          <button
+                            className="secondary-button"
+                            type="button"
+                            disabled={isWorking || isPaused}
+                            onClick={() => runNow(job.id)}
+                          >
+                            <PlayCircle size={14} />
+                            {isWorking ? "Running..." : "Run Now"}
+                          </button>
+
+                          {isPaused ? (
+                            <button
+                              className="secondary-button"
+                              type="button"
+                              disabled={isWorking}
+                              onClick={() => resume(job.id)}
+                            >
+                              Resume
+                            </button>
+                          ) : (
+                            <button
+                              className="secondary-button"
+                              type="button"
+                              disabled={isWorking}
+                              onClick={() => pause(job.id)}
+                            >
+                              Pause
+                            </button>
+                          )}
+
+                          <button
+                            className="secondary-button"
+                            type="button"
+                            onClick={() => toggleHistory(job.id)}
+                          >
+                            History
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+
+                    {expandedJobId === job.id ? (
+                      <tr key={`${job.id}-history`}>
+                        <td colSpan={8}>
+                          <div className="job-history-panel">
+                            <strong>Last Runs</strong>
+
+                            {history.length === 0 ? (
+                              <p>No run history found for this job yet.</p>
+                            ) : (
+                              <table>
+                                <thead>
+                                  <tr>
+                                    <th>Status</th>
+                                    <th>Started</th>
+                                    <th>Completed</th>
+                                    <th>Duration</th>
+                                    <th>Trigger</th>
+                                    <th>Message</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {history.slice(0, 5).map((item) => (
+                                    <tr key={item.id}>
+                                      <td>
+                                        <StatusPill
+                                          status={item.status}
+                                          statusClass={
+                                            item.status === "Ok"
+                                              ? "success"
+                                              : item.status === "Running"
+                                                ? "running"
+                                                : item.status === "Failed" ||
+                                                    item.status === "Timeout"
+                                                  ? "danger"
+                                                  : "neutral"
+                                          }
+                                        />
+                                      </td>
+                                      <td>{formatDate(item.startedAtUtc)}</td>
+                                      <td>{formatDate(item.completedAtUtc)}</td>
+                                      <td>{formatDuration(item.durationMs)}</td>
+                                      <td>{item.triggerSource}</td>
+                                      <td>{item.failureReason ?? item.runMessage ?? "-"}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
                     ) : null}
-                  </td>
-                  <td>{job.jobType}</td>
-                  <td>
-                    <strong>{job.sourceSystemCode}</strong>
-                    <small>{job.sourceSystemName}</small>
-                  </td>
-                  <td>
-                    <StatusPill status={job.status} statusClass={job.statusClass} />
-                  </td>
-                  <td>{formatDate(job.lastRunAtUtc)}</td>
-                  <td>{formatDuration(job.lastDurationMs)}</td>
-                  <td>{job.rowCount ?? "-"}</td>
-                  <td>
-                    {job.isRealRuntimeJob ? (
-                      <span className="admin-pill success">Actual</span>
-                    ) : (
-                      <span className="admin-pill info">Configured</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
+                </Fragment>
+                );
+              })}
 
               {sortedJobs.length === 0 ? (
                 <tr>
                   <td colSpan={8}>
-                    No job activity found yet. Import batches will appear here
-                    after source data or synthetic seeds are loaded.
+                    No JobDefinition records found. Restart API/Workers to run
+                    startup registration.
                   </td>
                 </tr>
               ) : null}
@@ -668,14 +1079,6 @@ function MiniKpi({ label, value }: { label: string; value: number }) {
   );
 }
 
-function RoadmapCard({ title, text }: { title: string; text: string }) {
-  return (
-    <div className="admin-roadmap-card">
-      <strong>{title}</strong>
-      <p>{text}</p>
-    </div>
-  );
-}
 
 function EmptyAdminState({ text }: { text: string }) {
   return (

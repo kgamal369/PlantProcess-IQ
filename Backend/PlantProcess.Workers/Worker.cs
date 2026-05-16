@@ -1,26 +1,25 @@
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using PlantProcess.Application.Services.DataQuality;
-using PlantProcess.Application.Services.Integration;
 using PlantProcess.Application.Contracts.Analytics;
 using PlantProcess.Application.Services.Analytics;
+using PlantProcess.Application.Services.DataQuality;
+using PlantProcess.Application.Services.Integration;
+using PlantProcess.Domain.Enums.Integration;
 
 namespace PlantProcess.Workers;
 
 /// <summary>
 /// Background worker host for PlantProcess IQ automated jobs.
-///
-/// Active jobs:
-///   1. ImportQueueProcessorJob — processes Created/Running import batches with pending staging rows.
-///   2. DataQualityScanJob     — runs the automated full data-quality scan and persists findings.
-///   3. RiskScoringJob         — calculates/stores rule-based risk scores for recent materials.
-///
-/// Design rule: Worker.cs only schedules jobs. Business logic stays in PlantProcess.Application services.
+/// 
+/// Phase 2 upgrade:
+/// - Every execution updates JobDefinition status.
+/// - Every execution creates JobRunHistory.
+/// - Jobs Monitor becomes a real operational monitor, not a static/synthesized table.
 /// </summary>
 public class Worker : BackgroundService
 {
+    private const string ImportQueueJobCode = "SYSTEM_IMPORT_QUEUE_PROCESSOR";
+    private const string DataQualityJobCode = "SYSTEM_DATA_QUALITY_SCAN";
+    private const string RiskScoringJobCode = "SYSTEM_RISK_SCORING";
+
     private readonly ILogger<Worker> _logger;
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly IConfiguration _configuration;
@@ -37,7 +36,8 @@ public class Worker : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("PlantProcess IQ Worker started. Jobs: ImportQueueProcessorJob, DataQualityScanJob, RiskScoringJob.");
+        _logger.LogInformation(
+            "PlantProcess IQ Worker started. Jobs: ImportQueueProcessorJob, DataQualityScanJob, RiskScoringJob.");
 
         var importEnabled = _configuration.GetValue("PlantProcess:Workers:EnableImportQueueProcessorJob", true);
         var importIntervalSeconds = Math.Max(30, _configuration.GetValue("PlantProcess:Workers:ImportQueueProcessorIntervalSeconds", 120));
@@ -51,7 +51,8 @@ public class Worker : BackgroundService
         var riskEnabled = _configuration.GetValue("PlantProcess:Workers:EnableRiskScoringJob", true);
         var riskIntervalSeconds = Math.Max(300, _configuration.GetValue("PlantProcess:Workers:RiskScoringIntervalSeconds", 7200));
         var riskMaxMaterials = Math.Clamp(_configuration.GetValue("PlantProcess:Workers:RiskScoringMaxMaterials", 100), 1, 5000);
-        var riskType = _configuration.GetValue("PlantProcess:Workers:RiskScoringRiskType", RiskScoreService.DefaultRiskType) ?? RiskScoreService.DefaultRiskType;
+        var riskType = _configuration.GetValue("PlantProcess:Workers:RiskScoringRiskType", RiskScoreService.DefaultRiskType)
+            ?? RiskScoreService.DefaultRiskType;
 
         var nextImportRun = DateTimeOffset.UtcNow.AddSeconds(10);
         var nextScanRun = DateTimeOffset.UtcNow.AddSeconds(30);
@@ -90,15 +91,32 @@ public class Worker : BackgroundService
         int rowsPerBatch,
         CancellationToken cancellationToken)
     {
-        _logger.LogInformation(
-            "ImportQueueProcessorJob: starting. MaxBatches={MaxBatches}, RowsPerBatch={RowsPerBatch}",
-            maxBatches,
-            rowsPerBatch);
+        await using var scope = _scopeFactory.CreateAsyncScope();
+
+        var runtime = scope.ServiceProvider.GetRequiredService<IJobRuntimeService>();
+        var service = scope.ServiceProvider.GetRequiredService<IImportBatchQueueProcessorService>();
+
+        var run = await runtime.StartAsync(
+            ImportQueueJobCode,
+            triggerSource: "WorkerSchedule",
+            triggeredBy: "PlantProcess.Workers",
+            correlationId: Guid.NewGuid().ToString("N"),
+            cancellationToken);
+
+        if (run.IsFailure || run.Value is null)
+        {
+            _logger.LogWarning(
+                "ImportQueueProcessorJob: skipped. Reason={Reason}",
+                run.Error?.Message);
+            return;
+        }
 
         try
         {
-            await using var scope = _scopeFactory.CreateAsyncScope();
-            var service = scope.ServiceProvider.GetRequiredService<IImportBatchQueueProcessorService>();
+            _logger.LogInformation(
+                "ImportQueueProcessorJob: starting. MaxBatches={MaxBatches}, RowsPerBatch={RowsPerBatch}",
+                maxBatches,
+                rowsPerBatch);
 
             var result = await service.ProcessPendingBatchesAsync(
                 maxBatches,
@@ -109,29 +127,57 @@ public class Worker : BackgroundService
 
             if (result.IsSuccess && result.Value is not null)
             {
-                _logger.LogInformation(
-                    "ImportQueueProcessorJob: completed. Scanned={Scanned}, Completed={Completed}, Failed={Failed}, Skipped={Skipped}, DurationMs={DurationMs}",
-                    result.Value.BatchesScanned,
-                    result.Value.BatchesCompleted,
-                    result.Value.BatchesFailed,
-                    result.Value.BatchesSkipped,
-                    (long)result.Value.Duration.TotalMilliseconds);
+                var message =
+                    $"Import queue completed. Scanned={result.Value.BatchesScanned}, Completed={result.Value.BatchesCompleted}, Failed={result.Value.BatchesFailed}, Skipped={result.Value.BatchesSkipped}.";
+
+                _logger.LogInformation("{Message}", message);
+
+                await runtime.CompleteAsync(
+                    run.Value.Id,
+                    JobRunStatus.Ok,
+                    message,
+                    failureReason: null,
+                    resultSummaryJson: System.Text.Json.JsonSerializer.Serialize(result.Value),
+                    cancellationToken);
             }
             else
             {
-                _logger.LogError(
-                    "ImportQueueProcessorJob: failed. Error={ErrorCode} — {ErrorMessage}",
-                    result.Error?.Code,
-                    result.Error?.Message);
+                var message = result.Error?.Message ?? "Import queue processor failed.";
+
+                _logger.LogError("ImportQueueProcessorJob: failed. Error={Message}", message);
+
+                await runtime.CompleteAsync(
+                    run.Value.Id,
+                    JobRunStatus.Failed,
+                    message,
+                    message,
+                    resultSummaryJson: null,
+                    cancellationToken);
             }
         }
         catch (OperationCanceledException)
         {
             _logger.LogWarning("ImportQueueProcessorJob: cancelled during shutdown.");
+
+            await runtime.CompleteAsync(
+                run.Value.Id,
+                JobRunStatus.Timeout,
+                "Import queue job cancelled during shutdown.",
+                "Operation cancelled.",
+                null,
+                CancellationToken.None);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "ImportQueueProcessorJob: unhandled exception. Will retry on next interval.");
+            _logger.LogError(ex, "ImportQueueProcessorJob: unhandled exception.");
+
+            await runtime.CompleteAsync(
+                run.Value.Id,
+                JobRunStatus.Failed,
+                ex.Message,
+                ex.Message,
+                null,
+                CancellationToken.None);
         }
     }
 
@@ -139,48 +185,87 @@ public class Worker : BackgroundService
         int maxCandidatesPerRule,
         CancellationToken cancellationToken)
     {
-        _logger.LogInformation(
-            "DataQualityScanJob: starting. MaxCandidatesPerRule={MaxCandidatesPerRule}",
-            maxCandidatesPerRule);
+        await using var scope = _scopeFactory.CreateAsyncScope();
+
+        var runtime = scope.ServiceProvider.GetRequiredService<IJobRuntimeService>();
+        var service = scope.ServiceProvider.GetRequiredService<IDataQualityService>();
+
+        var run = await runtime.StartAsync(
+            DataQualityJobCode,
+            triggerSource: "WorkerSchedule",
+            triggeredBy: "PlantProcess.Workers",
+            correlationId: Guid.NewGuid().ToString("N"),
+            cancellationToken);
+
+        if (run.IsFailure || run.Value is null)
+        {
+            _logger.LogWarning(
+                "DataQualityScanJob: skipped. Reason={Reason}",
+                run.Error?.Message);
+            return;
+        }
 
         try
         {
-            await using var scope = _scopeFactory.CreateAsyncScope();
-            var service = scope.ServiceProvider.GetRequiredService<IDataQualityService>();
+            _logger.LogInformation(
+                "DataQualityScanJob: starting. MaxCandidatesPerRule={MaxCandidatesPerRule}",
+                maxCandidatesPerRule);
 
             var result = await service.RunFullScanAsync(maxCandidatesPerRule, cancellationToken);
 
             if (result.IsSuccess && result.Value is not null)
             {
-                _logger.LogInformation(
-                    "DataQualityScanJob: completed. CandidatesFound={CandidatesFound}, NewIssuesPersisted={NewIssuesPersisted}, ExistingIssuesSkipped={ExistingIssuesSkipped}, DurationMs={DurationMs}",
-                    result.Value.CandidatesFound,
-                    result.Value.NewIssuesPersisted,
-                    result.Value.ExistingIssuesSkipped,
-                    (long)result.Value.ScanDuration.TotalMilliseconds);
+                var message =
+                    $"Data quality scan completed. Candidates={result.Value.CandidatesFound}, NewIssues={result.Value.NewIssuesPersisted}, ExistingSkipped={result.Value.ExistingIssuesSkipped}.";
 
-                if (result.Value.NewIssuesPersisted > 0)
-                {
-                    _logger.LogWarning(
-                        "DataQualityScanJob: {NewIssuesPersisted} new data-quality issues were persisted. Review /data-quality/issues.",
-                        result.Value.NewIssuesPersisted);
-                }
+                _logger.LogInformation("{Message}", message);
+
+                await runtime.CompleteAsync(
+                    run.Value.Id,
+                    JobRunStatus.Ok,
+                    message,
+                    failureReason: null,
+                    resultSummaryJson: System.Text.Json.JsonSerializer.Serialize(result.Value),
+                    cancellationToken);
             }
             else
             {
-                _logger.LogError(
-                    "DataQualityScanJob: failed. Error={ErrorCode} — {ErrorMessage}",
-                    result.Error?.Code,
-                    result.Error?.Message);
+                var message = result.Error?.Message ?? "Data quality scan failed.";
+
+                _logger.LogError("DataQualityScanJob: failed. Error={Message}", message);
+
+                await runtime.CompleteAsync(
+                    run.Value.Id,
+                    JobRunStatus.Failed,
+                    message,
+                    message,
+                    null,
+                    cancellationToken);
             }
         }
         catch (OperationCanceledException)
         {
             _logger.LogWarning("DataQualityScanJob: cancelled during shutdown.");
+
+            await runtime.CompleteAsync(
+                run.Value.Id,
+                JobRunStatus.Timeout,
+                "Data quality job cancelled during shutdown.",
+                "Operation cancelled.",
+                null,
+                CancellationToken.None);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "DataQualityScanJob: unhandled exception. Will retry on next interval.");
+            _logger.LogError(ex, "DataQualityScanJob: unhandled exception.");
+
+            await runtime.CompleteAsync(
+                run.Value.Id,
+                JobRunStatus.Failed,
+                ex.Message,
+                ex.Message,
+                null,
+                CancellationToken.None);
         }
     }
 
@@ -189,15 +274,32 @@ public class Worker : BackgroundService
         int maxMaterials,
         CancellationToken cancellationToken)
     {
-        _logger.LogInformation(
-            "RiskScoringJob: starting. RiskType={RiskType}, MaxMaterials={MaxMaterials}",
-            riskType,
-            maxMaterials);
+        await using var scope = _scopeFactory.CreateAsyncScope();
+
+        var runtime = scope.ServiceProvider.GetRequiredService<IJobRuntimeService>();
+        var service = scope.ServiceProvider.GetRequiredService<IRiskScoreService>();
+
+        var run = await runtime.StartAsync(
+            RiskScoringJobCode,
+            triggerSource: "WorkerSchedule",
+            triggeredBy: "PlantProcess.Workers",
+            correlationId: Guid.NewGuid().ToString("N"),
+            cancellationToken);
+
+        if (run.IsFailure || run.Value is null)
+        {
+            _logger.LogWarning(
+                "RiskScoringJob: skipped. Reason={Reason}",
+                run.Error?.Message);
+            return;
+        }
 
         try
         {
-            await using var scope = _scopeFactory.CreateAsyncScope();
-            var service = scope.ServiceProvider.GetRequiredService<IRiskScoreService>();
+            _logger.LogInformation(
+                "RiskScoringJob: starting. RiskType={RiskType}, MaxMaterials={MaxMaterials}",
+                riskType,
+                maxMaterials);
 
             var result = await service.CalculateBatchAsync(
                 new CalculateRiskScoresBatchCommand(
@@ -211,30 +313,57 @@ public class Worker : BackgroundService
 
             if (result.IsSuccess && result.Value is not null)
             {
-                _logger.LogInformation(
-                    "RiskScoringJob: completed. Candidates={Candidates}, Calculated={Calculated}, Stored={Stored}, Skipped={Skipped}, DurationMs={DurationMs}",
-                    result.Value.CandidatesScanned,
-                    result.Value.ScoresCalculated,
-                    result.Value.ScoresStored,
-                    result.Value.Skipped,
-                    (long)result.Value.Duration.TotalMilliseconds);
+                var message =
+                    $"Risk scoring completed. Candidates={result.Value.CandidatesScanned}, Calculated={result.Value.ScoresCalculated}, Stored={result.Value.ScoresStored}, Skipped={result.Value.Skipped}.";
+
+                _logger.LogInformation("{Message}", message);
+
+                await runtime.CompleteAsync(
+                    run.Value.Id,
+                    JobRunStatus.Ok,
+                    message,
+                    failureReason: null,
+                    resultSummaryJson: System.Text.Json.JsonSerializer.Serialize(result.Value),
+                    cancellationToken);
             }
             else
             {
-                _logger.LogError(
-                    "RiskScoringJob: failed. Error={ErrorCode} — {ErrorMessage}",
-                    result.Error?.Code,
-                    result.Error?.Message);
+                var message = result.Error?.Message ?? "Risk scoring failed.";
+
+                _logger.LogError("RiskScoringJob: failed. Error={Message}", message);
+
+                await runtime.CompleteAsync(
+                    run.Value.Id,
+                    JobRunStatus.Failed,
+                    message,
+                    message,
+                    null,
+                    cancellationToken);
             }
         }
         catch (OperationCanceledException)
         {
             _logger.LogWarning("RiskScoringJob: cancelled during shutdown.");
+
+            await runtime.CompleteAsync(
+                run.Value.Id,
+                JobRunStatus.Timeout,
+                "Risk scoring job cancelled during shutdown.",
+                "Operation cancelled.",
+                null,
+                CancellationToken.None);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "RiskScoringJob: unhandled exception. Will retry on next interval.");
+            _logger.LogError(ex, "RiskScoringJob: unhandled exception.");
+
+            await runtime.CompleteAsync(
+                run.Value.Id,
+                JobRunStatus.Failed,
+                ex.Message,
+                ex.Message,
+                null,
+                CancellationToken.None);
         }
     }
-
 }

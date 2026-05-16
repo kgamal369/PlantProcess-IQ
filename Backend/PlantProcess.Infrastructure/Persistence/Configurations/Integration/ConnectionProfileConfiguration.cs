@@ -33,6 +33,16 @@ public sealed class ConnectionProfileConfiguration : IEntityTypeConfiguration<Co
             .HasColumnType("jsonb")
             .HasDefaultValue("{}");
 
+        builder.Property(x => x.ImportScheduleExpression)
+                .IsRequired()
+                .HasMaxLength(250)
+                .HasDefaultValue("Every 15 minutes");
+
+        builder.Property(x => x.ImportIntervalMinutes)
+                .IsRequired()
+                .HasDefaultValue(15);
+
+
         builder.Property(x => x.CreatedAtUtc).HasColumnType("timestamp with time zone");
         builder.Property(x => x.UpdatedAtUtc).HasColumnType("timestamp with time zone");
         builder.Property(x => x.DeletedAtUtc).HasColumnType("timestamp with time zone");
@@ -50,7 +60,7 @@ public sealed class ConnectionProfileConfiguration : IEntityTypeConfiguration<Co
         builder.HasIndex(x => x.SourceSystemDefinitionId);
         builder.HasIndex(x => x.ProviderType);
         builder.HasIndex(x => x.IsActive);
-
+        builder.HasIndex(x => x.ImportIntervalMinutes);
         builder.HasIndex(x => x.ConnectionProfileCode)
             .IsUnique()
             .HasFilter("is_deleted = FALSE");

@@ -728,6 +728,45 @@ export interface CreateKpiDefinitionRequest {
   sourceRecordId?: string | null;
 }
 
+export interface JobRunHistoryRecord {
+  id: string;
+  jobDefinitionId: string;
+  jobCode: string;
+  jobName: string;
+  jobType: string;
+  status: string;
+  startedAtUtc: string;
+  completedAtUtc: string | null;
+  durationMs: number | null;
+  triggerSource: string;
+  triggeredBy: string | null;
+  correlationId: string | null;
+  failureReason: string | null;
+  runMessage: string | null;
+  resultSummaryJson: string | null;
+}
+
+export interface JobActionResponse {
+  jobDefinitionId: string;
+  jobCode: string;
+  jobName: string;
+  jobType: string;
+  status: string;
+  message: string;
+  jobRunHistoryId: string | null;
+  actionedAtUtc: string;
+}
+
+export interface UpdateConnectionImportScheduleRequest {
+  scheduleExpression: string;
+  importIntervalMinutes: number;
+}
+
+export interface UpdateMappingRefreshScheduleRequest {
+  scheduleExpression: string;
+  refreshIntervalMinutes: number;
+}
+
 type PrimitiveQueryValue = string | number | boolean | null | undefined;
 type QueryParams = Record<string, PrimitiveQueryValue>;
 
@@ -840,6 +879,17 @@ function dashboardBody(filters: DashboardFilters) {
     sortDirection: filters.sortDirection || "desc",
   };
 }
+function createClientCorrelationId(): string {
+  if (
+    typeof crypto !== "undefined" &&
+    typeof crypto.randomUUID === "function"
+  ) {
+    return crypto.randomUUID();
+  }
+
+  return `client-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
 
 export const plantProcessApi = {
   apiBaseUrl: API_BASE_URL,
@@ -858,6 +908,41 @@ export const plantProcessApi = {
 
   getAdminJobsMonitor: () =>
     getJson<AdminJobsMonitor>("/admin/jobs-monitor"),
+  
+  runJobNow: (jobId: string, requestedBy = "Admin UI") =>
+    postJson<JobActionResponse>(`/admin/jobs/${jobId}/run-now`, {
+      requestedBy,
+      correlationId: createClientCorrelationId(),
+    }),
+
+  pauseJob: (jobId: string) =>
+    postJson<JobActionResponse>(`/admin/jobs/${jobId}/pause`, {}),
+
+  resumeJob: (jobId: string) =>
+    postJson<JobActionResponse>(`/admin/jobs/${jobId}/resume`, {}),
+
+  getJobHistory: (jobId: string, take = 20) =>
+    getJson<JobRunHistoryRecord[]>(`/admin/jobs/${jobId}/history`, {
+      take,
+    }),
+
+  updateConnectionImportSchedule: (
+    connectionProfileId: string,
+    request: UpdateConnectionImportScheduleRequest
+  ) =>
+    patchJson<any>(
+      `/admin/jobs/connection-profiles/${connectionProfileId}/schedule`,
+      request
+    ),
+
+  updateMappingRefreshSchedule: (
+    mappingDefinitionId: string,
+    request: UpdateMappingRefreshScheduleRequest
+  ) =>
+    patchJson<any>(
+      `/admin/jobs/mappings/${mappingDefinitionId}/schedule`,
+      request
+    ),
 
   getValidationReport: () => getJson<any>("/validation/sync-report"),
 

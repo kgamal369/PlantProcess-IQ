@@ -2918,3 +2918,58 @@ button.risk-pill {
   border-bottom: 1px solid var(--border-color, rgba(148, 163, 184, 0.2));
   text-align: left;
 }
+/* ============================================================
+   Phase 2 — Admin Jobs Monitor / Scheduling
+   ============================================================ */
+
+.admin-action-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+
+.admin-action-row.compact {
+  margin-top: 0;
+  gap: 6px;
+}
+
+.admin-action-row.compact button {
+  padding: 7px 9px;
+  font-size: 0.78rem;
+}
+
+.admin-inline-message,
+.admin-help-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0;
+  padding: 10px 12px;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-radius: 14px;
+  background: rgba(14, 165, 233, 0.1);
+  color: var(--text-muted, #bae6fd);
+}
+
+.job-history-panel {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 16px;
+  background: rgba(15, 23, 42, 0.48);
+}
+
+.job-history-panel table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.job-history-panel th,
+.job-history-panel td {
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+  text-align: left;
+}
