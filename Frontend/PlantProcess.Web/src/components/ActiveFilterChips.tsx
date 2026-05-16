@@ -7,6 +7,7 @@ const labels: Record<keyof DashboardFilters, string> = {
   areaId: "Area",
   equipmentId: "Equipment",
   materialCode: "Material",
+  materialUnitType: "Material type",
   sourceSystem: "Source",
   defectType: "Defect",
   parameterCode: "Parameter",

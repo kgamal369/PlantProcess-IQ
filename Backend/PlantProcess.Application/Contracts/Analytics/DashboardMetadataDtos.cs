@@ -86,6 +86,7 @@ public sealed record DashboardWidgetFiltersDto(
     Guid? AreaId,
     Guid? EquipmentId,
     string? MaterialCode,
+    string? MaterialUnitType,
     string? SourceSystem,
     string? DefectType,
     string? RiskClass,
@@ -93,7 +94,7 @@ public sealed record DashboardWidgetFiltersDto(
     string? ParameterCode,
     DateTime? FromUtc,
     DateTime? ToUtc);
-
+    
 public sealed record DashboardWidgetQueryOptionsDto(
     int? MaxRows,
     int? RawRowLimit,

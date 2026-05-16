@@ -736,21 +736,80 @@ private static string BuildWidgetLayout(int index)
     private static DashboardWidgetFiltersDto? DeserializeFilters(string? filterJson, string? parameterCode)
     {
         if (string.IsNullOrWhiteSpace(filterJson))
+        {
             return parameterCode is null
                 ? null
-                : new DashboardWidgetFiltersDto(null, null, null, null, null, null, null, null, parameterCode, null, null);
+                : new DashboardWidgetFiltersDto(
+                    SiteId: null,
+                    AreaId: null,
+                    EquipmentId: null,
+                    MaterialCode: null,
+                    MaterialUnitType: null,
+                    SourceSystem: null,
+                    DefectType: null,
+                    RiskClass: null,
+                    ShiftCode: null,
+                    ParameterCode: parameterCode,
+                    FromUtc: null,
+                    ToUtc: null);
+        }
 
         try
         {
-            return JsonSerializer.Deserialize<DashboardWidgetFiltersDto>(
+            var filters = JsonSerializer.Deserialize<DashboardWidgetFiltersDto>(
                 filterJson,
-                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+
+            if (filters is null)
+            {
+                return parameterCode is null
+                    ? null
+                    : new DashboardWidgetFiltersDto(
+                        SiteId: null,
+                        AreaId: null,
+                        EquipmentId: null,
+                        MaterialCode: null,
+                        MaterialUnitType: null,
+                        SourceSystem: null,
+                        DefectType: null,
+                        RiskClass: null,
+                        ShiftCode: null,
+                        ParameterCode: parameterCode,
+                        FromUtc: null,
+                        ToUtc: null);
+            }
+
+            if (!string.IsNullOrWhiteSpace(parameterCode) &&
+                string.IsNullOrWhiteSpace(filters.ParameterCode))
+            {
+                return filters with
+                {
+                    ParameterCode = parameterCode
+                };
+            }
+
+            return filters;
         }
         catch
         {
             return parameterCode is null
                 ? null
-                : new DashboardWidgetFiltersDto(null, null, null, null, null, null, null, null, parameterCode, null, null);
+                : new DashboardWidgetFiltersDto(
+                    SiteId: null,
+                    AreaId: null,
+                    EquipmentId: null,
+                    MaterialCode: null,
+                    MaterialUnitType: null,
+                    SourceSystem: null,
+                    DefectType: null,
+                    RiskClass: null,
+                    ShiftCode: null,
+                    ParameterCode: parameterCode,
+                    FromUtc: null,
+                    ToUtc: null);
         }
     }
 

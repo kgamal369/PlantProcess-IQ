@@ -72,7 +72,8 @@ export function DashboardPage() {
   const [isSavingLayout, setIsSavingLayout] = useState(false);
   const [error, setError] = useState<unknown>(null);
   const [isWidgetBuilderOpen, setIsWidgetBuilderOpen] = useState(false);
-
+  const [editingWidget, setEditingWidget] = useState<DashboardWidgetDefinitionRecord | null>(null);
+  
   async function load() {
     setIsLoading(true);
     setError(null);
@@ -153,6 +154,68 @@ export function DashboardPage() {
         });
       }
     }
+  }
+
+  function openCreateWidgetWizard() {
+  setEditingWidget(null);
+  setIsWidgetBuilderOpen(true);
+}
+
+function openEditWidgetWizard(widget: DashboardWidgetDefinitionRecord) {
+  setEditingWidget(widget);
+  setIsWidgetBuilderOpen(true);
+}
+
+async function handleWidgetSaved(widgetId: string) {
+  if (!activeDashboard) return;
+
+  addWidget(`saved-${widgetId}`, {
+    w: 6,
+    h: 8,
+    minW: 4,
+    minH: 5,
+  });
+
+  await loadDashboardDefinitions(activeDashboard.id);
+}
+
+  async function removeSavedWidget(widget: DashboardWidgetDefinitionRecord) {
+    if (!activeDashboard) return;
+
+    removeWidget(`saved-${widget.id}`);
+
+    await plantProcessApi.deactivateDashboardWidgetDefinition(
+      activeDashboard.id,
+      widget.id
+    );
+
+    await loadDashboardDefinitions(activeDashboard.id);
+  }
+
+  async function cloneSavedWidget(widget: DashboardWidgetDefinitionRecord) {
+    if (!activeDashboard) return;
+
+    const cloned = await plantProcessApi.cloneDashboardWidgetDefinition(
+      activeDashboard.id,
+      widget.id,
+      {
+        widgetTitle: `${widget.widgetTitle} Copy`,
+        sortOrder: widget.sortOrder + 1,
+      }
+    );
+
+    addWidget(`saved-${cloned.id}`, {
+      w: 6,
+      h: 8,
+      minW: 4,
+      minH: 5,
+    });
+
+    await loadDashboardDefinitions(activeDashboard.id);
+  }
+
+  async function hideSavedWidget(widget: DashboardWidgetDefinitionRecord) {
+    removeWidget(`saved-${widget.id}`);
   }
 
   async function saveDashboardLayout() {
@@ -517,7 +580,7 @@ export function DashboardPage() {
 
           <button
             className="primary-button"
-            onClick={() => setIsWidgetBuilderOpen(true)}
+            onClick={openCreateWidgetWizard}
             disabled={!activeDashboard}
             type="button"
           >
@@ -961,43 +1024,20 @@ export function DashboardPage() {
               </DashboardWidgetCard>
             </div>
 
-            {(activeDashboard?.widgets ?? [])
-              .filter((widget) => widget.isActive)
-              .map((widget) => (
-                <div key={`saved-${widget.id}`}>
-                  <SavedDashboardWidget
-                    dashboardDefinitionId={activeDashboard!.id}
-                    widget={widget}
-                    onRemoved={async () => {
-                      removeWidget(`saved-${widget.id}`);
-
-                      await plantProcessApi.deactivateDashboardWidgetDefinition(
-                        activeDashboard!.id,
-                        widget.id
-                      );
-
-                      await loadDashboardDefinitions(activeDashboard!.id);
-                    }}
-                    onCloned={async () => {
-                      const cloned =
-                        await plantProcessApi.cloneDashboardWidgetDefinition(
-                          activeDashboard!.id,
-                          widget.id,
-                          {}
-                        );
-
-                      addWidget(`saved-${cloned.id}`, {
-                        w: 6,
-                        h: 8,
-                        minW: 4,
-                        minH: 5,
-                      });
-
-                      await loadDashboardDefinitions(activeDashboard!.id);
-                    }}
-                  />
-                </div>
-              ))}
+           {(activeDashboard?.widgets ?? [])
+            .filter((widget) => widget.isActive)
+            .map((widget) => (
+              <div key={`saved-${widget.id}`}>
+                <SavedDashboardWidget
+                  dashboardDefinitionId={activeDashboard!.id}
+                  widget={widget}
+                  onEdit={() => openEditWidgetWizard(widget)}
+                  onRemoved={() => removeSavedWidget(widget)}
+                  onCloned={() => cloneSavedWidget(widget)}
+                  onHidden={() => hideSavedWidget(widget)}
+                />
+              </div>
+            ))}
 
             <div key="materialExplorer">
               <DashboardWidgetCard
@@ -1076,20 +1116,15 @@ export function DashboardPage() {
         </>
       ) : null}
 
-      <WidgetBuilderWizard
+        <WidgetBuilderWizard
         isOpen={isWidgetBuilderOpen}
         dashboardDefinitionId={activeDashboard?.id}
-        onClose={() => setIsWidgetBuilderOpen(false)}
-        onWidgetSaved={async (widgetId) => {
-          addWidget(`saved-${widgetId}`, {
-            w: 6,
-            h: 8,
-            minW: 4,
-            minH: 5,
-          });
-
-          await loadDashboardDefinitions(activeDashboard?.id);
+        existingWidget={editingWidget}
+        onClose={() => {
+          setIsWidgetBuilderOpen(false);
+          setEditingWidget(null);
         }}
+        onWidgetSaved={handleWidgetSaved}     
       />
     </main>
   );
@@ -1097,14 +1132,18 @@ export function DashboardPage() {
 
 function SavedDashboardWidget({
   widget,
+  onEdit,
   onRemoved,
   onCloned,
-}: {
-  dashboardDefinitionId: string;
-  widget: DashboardWidgetDefinitionRecord;
-  onRemoved: () => Promise<void>;
-  onCloned: () => Promise<void>;
-}) {
+  onHidden,
+  }: {
+    dashboardDefinitionId: string;
+    widget: DashboardWidgetDefinitionRecord;
+    onEdit: () => void | Promise<void>;
+    onRemoved: () => Promise<void>;
+    onCloned: () => Promise<void>;
+    onHidden?: () => void | Promise<void>;
+  }) {
   const [result, setResult] = useState<DashboardWidgetQueryResult | null>(null);
   const [error, setError] = useState<unknown>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -1176,7 +1215,7 @@ function SavedDashboardWidget({
   const savedSelection = buildSavedWidgetSelection(widget, categoryKey);
   
   return (
-    <DashboardWidgetCard
+  <DashboardWidgetCard
       widgetId={`saved-${widget.id}`}
       title={widget.widgetTitle}
       subtitle={`${widget.dimensionCode || "No dimension"} / ${
@@ -1185,6 +1224,11 @@ function SavedDashboardWidget({
       icon={<BarChart3 size={18} />}
       chartTypes={[chartType, "table"]}
       exportRows={result?.rows ?? []}
+      onEdit={onEdit}
+      onRename={onEdit}
+      onRemove={handleRemove}
+      onClone={handleClone}
+      onHide={onHidden}
     >
       <div className="saved-widget-actions">
         <button

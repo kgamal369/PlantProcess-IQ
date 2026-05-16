@@ -2,15 +2,21 @@ import {
   BarChart3,
   ChevronDown,
   ChevronUp,
+  Copy,
   Download,
+  Edit3,
   EyeOff,
   GripVertical,
   Maximize2,
   Minimize2,
+  MoreVertical,
   PanelTop,
   Shrink,
+  Trash2,
 } from "lucide-react";
 import type { ReactNode } from "react";
+import { useState } from "react";
+
 import {
   useDashboardSelections,
   type DashboardChartType,
@@ -26,6 +32,13 @@ interface DashboardWidgetCardProps {
   chartTypes?: DashboardChartType[];
   exportRows?: Record<string, unknown>[];
   children: ReactNode;
+
+  onRename?: () => void | Promise<void>;
+  onEdit?: () => void | Promise<void>;
+  onRemove?: () => void | Promise<void>;
+  onClone?: () => void | Promise<void>;
+  onHide?: () => void | Promise<void>;
+  disableActions?: boolean;
 }
 
 export function DashboardWidgetCard({
@@ -33,48 +46,78 @@ export function DashboardWidgetCard({
   title,
   subtitle,
   icon,
-  chartTypes,
+  chartTypes = ["bar", "line", "pie", "table"],
   exportRows,
   children,
+  onRename,
+  onEdit,
+  onRemove,
+  onClone,
+  onHide,
+  disableActions = false,
 }: DashboardWidgetCardProps) {
-  const {
-    getWidgetState,
-    setWidgetChartType,
-    toggleWidgetCollapsed,
-    toggleWidgetFullscreen,
-    toggleWidgetHidden,
-  } = useDashboardSelections();
+ const { getWidgetState, setWidgetChartType } =
+  useDashboardSelections();
 
-  const { expandWidgetToFullRow, expandWidgetToHalfRow, compactWidget } =
-    useDashboardGridLayout();
+  const {
+    expandWidgetToFullRow,
+    expandWidgetToHalfRow,
+    compactWidget,
+  } = useDashboardGridLayout();
+
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
 
   const state = getWidgetState(widgetId);
+  const activeChartType = state.chartType ?? chartTypes[0];
 
-  if (state.hidden) {
-    return null;
+  function exportCsv() {
+    if (!exportRows?.length) return;
+
+    const headers = Object.keys(exportRows[0] ?? {});
+    const escapeValue = (value: unknown) => {
+      if (value === null || value === undefined) return "";
+      const raw = String(value).replaceAll('"', '""');
+      return `"${raw}"`;
+    };
+
+    const csv = [
+      headers.map(escapeValue).join(","),
+      ...exportRows.map((row) =>
+        headers.map((header) => escapeValue(row[header])).join(",")
+      ),
+    ].join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = `${title.replace(/[^a-z0-9]+/gi, "_").toLowerCase()}.csv`;
+    link.click();
+
+    URL.revokeObjectURL(url);
   }
 
-  const activeChartType = state.chartType ?? chartTypes?.[0];
+  async function execute(action?: () => void | Promise<void>) {
+    setIsActionMenuOpen(false);
+    await action?.();
+  }
 
   return (
-    <section
+    <article
       className={`dashboard-widget ${
-        state.fullscreen ? "dashboard-widget--fullscreen" : ""
+        isFullscreen ? "dashboard-widget--fullscreen" : ""
       }`}
     >
-      <div className="dashboard-widget__header">
-        <div className="dashboard-widget__title">
-          <button
-            className="dashboard-widget__drag-handle"
-            title="Drag widget"
-            type="button"
-          >
-            <GripVertical size={18} />
-          </button>
+      <header className="dashboard-widget__header">
+        <div className="dashboard-widget__title-row">
+          <span className="dashboard-widget__drag-handle" title="Drag widget">
+            <GripVertical size={16} />
+          </span>
 
-          <div className="dashboard-widget__icon">
-            {icon ?? <BarChart3 size={18} />}
-          </div>
+          <span className="widget-icon">{icon ?? <BarChart3 size={18} />}</span>
 
           <div>
             <h3>{title}</h3>
@@ -83,143 +126,149 @@ export function DashboardWidgetCard({
         </div>
 
         <div className="dashboard-widget__actions">
-          {chartTypes && chartTypes.length > 0 ? (
-            <div className="chart-switcher">
-              {chartTypes.map((type) => (
-                <button
-                  key={type}
-                  className={
-                    activeChartType === type
-                      ? "chart-switcher__button chart-switcher__button--active"
-                      : "chart-switcher__button"
-                  }
-                  onClick={() => setWidgetChartType(widgetId, type)}
-                  type="button"
-                >
-                  {type}
-                </button>
-              ))}
-            </div>
-          ) : null}
-
-          {exportRows && exportRows.length > 0 ? (
-            <button
-              className="icon-button"
-              onClick={() => exportCsv(`${widgetId}.csv`, exportRows)}
-              title="Export widget data"
-              type="button"
+          {chartTypes.length > 1 ? (
+            <select
+              value={activeChartType}
+              onChange={(event) =>
+                setWidgetChartType(widgetId, event.target.value as DashboardChartType)
+              }
+              title="Switch chart type"
             >
-              <Download size={16} />
-            </button>
+              {chartTypes.map((chartType) => (
+                <option key={chartType} value={chartType}>
+                  {chartType}
+                </option>
+              ))}
+            </select>
           ) : null}
 
           <button
-            className="icon-button"
-            onClick={() => compactWidget(widgetId)}
-            title="Compact widget"
             type="button"
-          >
-            <Shrink size={16} />
-          </button>
-
-          <button
             className="icon-button"
-            onClick={() => expandWidgetToHalfRow(widgetId)}
-            title="Expand to half row"
-            type="button"
+            onClick={() =>
+              activeChartType === "table"
+                ? compactWidget(String(widgetId))
+                : expandWidgetToHalfRow(String(widgetId))
+            }
+            title="Resize widget"
           >
             <PanelTop size={16} />
           </button>
 
           <button
-            className="icon-button"
-            onClick={() => expandWidgetToFullRow(widgetId)}
-            title="Expand to full row"
             type="button"
+            className="icon-button"
+            onClick={() => expandWidgetToFullRow(String(widgetId))}
+            title="Full row"
           >
             <Maximize2 size={16} />
           </button>
 
           <button
-            className="icon-button"
-            onClick={() => toggleWidgetCollapsed(widgetId)}
-            title={state.collapsed ? "Expand content" : "Collapse content"}
             type="button"
+            className="icon-button"
+            onClick={() => compactWidget(String(widgetId))}
+            title="Compact"
           >
-            {state.collapsed ? (
-              <ChevronDown size={16} />
-            ) : (
-              <ChevronUp size={16} />
-            )}
+            <Shrink size={16} />
           </button>
 
           <button
-            className="icon-button"
-            onClick={() => toggleWidgetFullscreen(widgetId)}
-            title={
-              state.fullscreen
-                ? "Exit overlay fullscreen"
-                : "Overlay fullscreen"
-            }
             type="button"
+            className="icon-button"
+            onClick={exportCsv}
+            disabled={!exportRows?.length}
+            title="Export CSV"
           >
-            {state.fullscreen ? (
-              <Minimize2 size={16} />
-            ) : (
-              <Maximize2 size={16} />
-            )}
+            <Download size={16} />
           </button>
 
           <button
-            className="icon-button"
-            onClick={() => toggleWidgetHidden(widgetId)}
-            title="Hide widget"
             type="button"
+            className="icon-button"
+            onClick={() => setIsCollapsed((value) => !value)}
+            title={isCollapsed ? "Expand" : "Collapse"}
           >
-            <EyeOff size={16} />
+            {isCollapsed ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
           </button>
+
+          <button
+            type="button"
+            className="icon-button"
+            onClick={() => setIsFullscreen((value) => !value)}
+            title="Fullscreen"
+          >
+            {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+          </button>
+
+          {!disableActions ? (
+            <div className="widget-action-menu">
+              <button
+                type="button"
+                className="icon-button"
+                onClick={() => setIsActionMenuOpen((value) => !value)}
+                title="Widget actions"
+              >
+                <MoreVertical size={16} />
+              </button>
+
+              {isActionMenuOpen ? (
+                <div className="widget-action-menu__panel">
+                  <button type="button" onClick={() => execute(onRename)}>
+                    <Edit3 size={14} />
+                    Rename
+                  </button>
+
+                  <button type="button" onClick={() => execute(onEdit)}>
+                    <Edit3 size={14} />
+                    Edit
+                  </button>
+
+                  <button type="button" onClick={() => execute(onClone)}>
+                    <Copy size={14} />
+                    Duplicate / Clone
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      execute(async () => {
+                        await onHide?.();
+                      })
+                    }
+                  >
+                    <EyeOff size={14} />
+                    Hide
+                  </button>
+
+                  <button
+                    type="button"
+                    className="danger"
+                    onClick={() =>
+                      execute(async () => {
+                        const confirmed = window.confirm(
+                          `Remove widget "${title}" from this dashboard?`
+                        );
+
+                        if (!confirmed) return;
+
+                        await onRemove?.();
+                      })
+                    }
+                  >
+                    <Trash2 size={14} />
+                    Remove
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
         </div>
-      </div>
+      </header>
 
-      {!state.collapsed ? (
+      {!isCollapsed ? (
         <div className="dashboard-widget__body">{children}</div>
-      ) : (
-        <div className="dashboard-widget__collapsed">
-          Widget collapsed. Use the arrow button to expand.
-        </div>
-      )}
-    </section>
+      ) : null}
+    </article>
   );
-}
-
-function exportCsv(filename: string, rows: Record<string, unknown>[]) {
-  if (rows.length === 0) return;
-
-  const headers = Object.keys(rows[0]);
-
-  const escapeValue = (value: unknown) => {
-    if (value === null || value === undefined) return "";
-    const raw = String(value).replaceAll('"', '""');
-    return `"${raw}"`;
-  };
-
-  const csv = [
-    headers.join(","),
-    ...rows.map((row) =>
-      headers.map((header) => escapeValue(row[header])).join(",")
-    ),
-  ].join("\n");
-
-  const blob = new Blob([csv], {
-    type: "text/csv;charset=utf-8;",
-  });
-
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-
-  link.href = url;
-  link.download = filename;
-  link.click();
-
-  URL.revokeObjectURL(url);
 }

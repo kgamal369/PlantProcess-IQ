@@ -1,10 +1,12 @@
-import { Copy, Trash2, BarChart3 } from "lucide-react";
+import { BarChart3 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+
 import { plantProcessApi } from "../../api/plantProcessApi";
 import type {
   DashboardWidgetDefinitionRecord,
   DashboardWidgetQueryResult,
 } from "../../api/plantProcessApi";
+
 import {
   InteractiveBarChart,
   InteractiveLineChart,
@@ -12,18 +14,23 @@ import {
 } from "../charts/InteractiveCharts";
 import type { ChartRow } from "../charts/InteractiveCharts";
 import { DashboardWidgetCard } from "./DashboardWidgetCard";
+import { EmptyInsightState } from "./EmptyInsightState";
 
 interface SavedDashboardWidgetProps {
   dashboardDefinitionId: string;
   widget: DashboardWidgetDefinitionRecord;
+  onEdit: () => void | Promise<void>;
   onRemoved: () => void | Promise<void>;
   onCloned: () => void | Promise<void>;
+  onHidden?: () => void | Promise<void>;
 }
 
 export function SavedDashboardWidget({
   widget,
+  onEdit,
   onRemoved,
   onCloned,
+  onHidden,
 }: SavedDashboardWidgetProps) {
   const [result, setResult] = useState<DashboardWidgetQueryResult | null>(null);
   const [error, setError] = useState<unknown>(null);
@@ -35,6 +42,16 @@ export function SavedDashboardWidget({
       return {};
     }
   }, [widget.filterJson]);
+
+  const displayOptions = useMemo(() => {
+    try {
+      return widget.displayOptionsJson
+        ? JSON.parse(widget.displayOptionsJson)
+        : {};
+    } catch {
+      return {};
+    }
+  }, [widget.displayOptionsJson]);
 
   useEffect(() => {
     let ignore = false;
@@ -51,8 +68,8 @@ export function SavedDashboardWidget({
           parameterCode: widget.parameterCode,
           filters,
           options: {
-            maxRows: 100,
-            rawRowLimit: 500,
+            maxRows: displayOptions.maxRows ?? 100,
+            rawRowLimit: displayOptions.rawRowLimit ?? 500,
             sortDirection: "desc",
             includeWarnings: true,
           },
@@ -69,113 +86,106 @@ export function SavedDashboardWidget({
     return () => {
       ignore = true;
     };
-  }, [widget, filters]);
+  }, [widget, filters, displayOptions]);
 
   const rows = (result?.rows ?? []) as ChartRow[];
+
   const categoryKey =
-    result?.columns.find((x) => x.code !== widget.measureCode)?.code ??
+    result?.columns.find((column) => column.code === widget.dimensionCode)?.code ??
+    result?.columns.find((column) => column.code !== "value")?.code ??
     widget.dimensionCode;
-  const valueKey = widget.measureCode;
+
+  const valueKey =
+    result?.columns.find((column) => column.code === "value")?.code ??
+    result?.columns.find((column) => column.dataType === "number")?.code ??
+    "value";
 
   return (
-    <div key={`saved-${widget.id}`}>
-      <DashboardWidgetCard
-        widgetId={`saved-${widget.id}` as any}
-        title={widget.widgetTitle}
-        subtitle={`${widget.chartType} · ${widget.dimensionCode} · ${widget.measureCode}`}
-        icon={<BarChart3 size={18} />}
-        chartTypes={["bar", "line", "pie", "table"] as any}
-        exportRows={rows as Record<string, unknown>[]}
-      >
-        <div className="saved-widget-actions">
-          <button className="secondary-button" onClick={onCloned} type="button">
-            <Copy size={14} />
-            Clone
-          </button>
-          <button className="secondary-button" onClick={onRemoved} type="button">
-            <Trash2 size={14} />
-            Remove
-          </button>
+    <DashboardWidgetCard
+      widgetId={`saved-${widget.id}` as any}
+      title={widget.widgetTitle}
+      subtitle={`${widget.chartType} · ${widget.dimensionCode} · ${widget.measureCode}`}
+      icon={<BarChart3 size={18} />}
+      chartTypes={["bar", "line", "pie", "table"] as any}
+      exportRows={rows as Record<string, unknown>[]}
+      onEdit={onEdit}
+      onRename={onEdit}
+      onRemove={onRemoved}
+      onClone={onCloned}
+      onHide={onHidden}
+    >
+      {error ? (
+        <div className="empty-insight">
+          <strong>Widget failed</strong>
+          <p>{String(error)}</p>
         </div>
+      ) : null}
 
-        {error ? (
-          <div className="empty-insight">
-            <strong>Widget failed</strong>
-            <p>{String(error)}</p>
-          </div>
-        ) : null}
+      {!error && !result ? (
+        <div className="empty-insight">
+          <strong>Loading widget...</strong>
+        </div>
+      ) : null}
 
-        {!error && !result ? (
-          <div className="empty-insight">
-            <strong>Loading widget...</strong>
-          </div>
-        ) : null}
+      {result && !rows.length ? <EmptyInsightState /> : null}
 
-        {result ? (
-          widget.chartType === "line" || widget.chartType === "area" ? (
-            <InteractiveLineChart
-              data={rows}
-              categoryKey={categoryKey}
-              valueKey={valueKey}
-              area={widget.chartType === "area"}
-              selection={{
-                type: "generic",
-                field: "materialCode",
-                sourceWidget: widget.widgetTitle,
-                valueKey: categoryKey,
-                labelKey: categoryKey,
-              }}
-            />
-          ) : widget.chartType === "pie" || widget.chartType === "donut" ? (
-            <InteractivePieChart
-              data={rows}
-              categoryKey={categoryKey}
-              valueKey={valueKey}
-              donut={widget.chartType === "donut"}
-              selection={{
-                type: "generic",
-                field: "materialCode",
-                sourceWidget: widget.widgetTitle,
-                valueKey: categoryKey,
-                labelKey: categoryKey,
-              }}
-            />
-          ) : widget.chartType === "table" ? (
-            <MiniTable rows={rows} />
-          ) : (
-            <InteractiveBarChart
-              data={rows}
-              categoryKey={categoryKey}
-              valueKey={valueKey}
-              selection={{
-                type: "generic",
-                field: "materialCode",
-                sourceWidget: widget.widgetTitle,
-                valueKey: categoryKey,
-                labelKey: categoryKey,
-              }}
-            />
-          )
-        ) : null}
-      </DashboardWidgetCard>
-    </div>
+      {result && rows.length ? (
+        widget.chartType === "line" || widget.chartType === "area" ? (
+          <InteractiveLineChart
+            data={rows}
+            categoryKey={categoryKey}
+            valueKey={valueKey}
+            area={widget.chartType === "area"}
+            selection={{
+              type: "generic",
+              field: "materialCode",
+              sourceWidget: widget.widgetTitle,
+              valueKey: categoryKey,
+              labelKey: "dimensionLabel",
+            }}
+          />
+        ) : widget.chartType === "pie" || widget.chartType === "donut" ? (
+          <InteractivePieChart
+            data={rows}
+            categoryKey={categoryKey}
+            valueKey={valueKey}
+            donut={widget.chartType === "donut"}
+            selection={{
+              type: "generic",
+              field: "materialCode",
+              sourceWidget: widget.widgetTitle,
+              valueKey: categoryKey,
+              labelKey: "dimensionLabel",
+            }}
+          />
+        ) : widget.chartType === "table" ? (
+          <MiniTable rows={rows} />
+        ) : (
+          <InteractiveBarChart
+            data={rows}
+            categoryKey={categoryKey}
+            valueKey={valueKey}
+            selection={{
+              type: "generic",
+              field: "materialCode",
+              sourceWidget: widget.widgetTitle,
+              valueKey: categoryKey,
+              labelKey: "dimensionLabel",
+            }}
+          />
+        )
+      ) : null}
+    </DashboardWidgetCard>
   );
 }
 
 function MiniTable({ rows }: { rows: ChartRow[] }) {
-  if (!rows.length) {
-    return (
-      <div className="empty-insight">
-        <strong>No data</strong>
-        <p>No records are available for this saved widget.</p>
-      </div>
-    );
-  }
+  if (!rows.length) return <EmptyInsightState />;
 
-  const columns = Object.keys(rows[0]);
+  const columns = Object.keys(rows[0] ?? {});
 
   return (
-    <div className="table-wrap">
+    <div className="table-shell">
       <table>
         <thead>
           <tr>
@@ -185,10 +195,10 @@ function MiniTable({ rows }: { rows: ChartRow[] }) {
           </tr>
         </thead>
         <tbody>
-          {rows.map((row, index) => (
+          {rows.slice(0, 50).map((row, index) => (
             <tr key={index}>
               {columns.map((column) => (
-                <td key={column}>{String(row[column] ?? "-")}</td>
+                <td key={column}>{String(row[column] ?? "")}</td>
               ))}
             </tr>
           ))}

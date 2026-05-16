@@ -7,6 +7,7 @@ export interface DashboardFilters {
   areaId?: string;
   equipmentId?: string;
   materialCode?: string;
+  materialUnitType?: string;
   sourceSystem?: string;
   defectType?: string;
   riskClass?: string;
@@ -198,6 +199,7 @@ export interface DashboardWidgetFilters {
   areaId?: string | null;
   equipmentId?: string | null;
   materialCode?: string | null;
+  materialUnitType?: string | null;
   sourceSystem?: string | null;
   defectType?: string | null;
   riskClass?: string | null;

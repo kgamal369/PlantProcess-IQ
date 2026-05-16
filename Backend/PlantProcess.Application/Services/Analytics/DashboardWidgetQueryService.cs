@@ -507,12 +507,24 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
         if (filters?.SiteId.HasValue == true)
             query = query.Where(x => x.SiteId == filters.SiteId.Value);
 
-        if (!string.IsNullOrWhiteSpace(filters?.MaterialCode))
-            query = query.Where(x => x.MaterialCode.Contains(filters.MaterialCode));
+       if (!string.IsNullOrWhiteSpace(filters?.MaterialCode))
+        {
+            var materialCode = filters.MaterialCode.Trim();
+            query = query.Where(x => x.MaterialCode.Contains(materialCode));
+        }
+
+        if (!string.IsNullOrWhiteSpace(filters?.MaterialUnitType))
+        {
+            var materialUnitType = filters.MaterialUnitType.Trim();
+            query = query.Where(x => x.MaterialUnitType == materialUnitType);
+        }
 
         if (!string.IsNullOrWhiteSpace(filters?.SourceSystem))
-            query = query.Where(x => x.SourceSystem == filters.SourceSystem);
-
+        {
+            var sourceSystem = filters.SourceSystem.Trim();
+            query = query.Where(x => x.SourceSystem == sourceSystem);
+        }
+        
         if (filters?.FromUtc.HasValue == true)
             query = query.Where(x => x.ProductionStartUtc == null || x.ProductionStartUtc >= filters.FromUtc.Value);
 
