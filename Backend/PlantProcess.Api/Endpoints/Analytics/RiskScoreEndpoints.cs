@@ -2,6 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using PlantProcess.Api.Extensions;
 using PlantProcess.Application.Contracts.Analytics;
 using PlantProcess.Application.Services.Analytics;
+using PlantProcess.Application.Services.Analytics.Interfaces;
+using PlantProcess.Application.Services.Analytics.Services;
 using PlantProcess.Domain.Entities.Analytics;
 using PlantProcess.Infrastructure.Persistence;
 

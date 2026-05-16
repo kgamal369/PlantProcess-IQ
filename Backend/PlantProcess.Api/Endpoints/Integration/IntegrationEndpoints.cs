@@ -3,7 +3,9 @@ using PlantProcess.Api.Extensions;
 using PlantProcess.Application.Common.Results;
 using PlantProcess.Application.Contracts.Common;
 using PlantProcess.Application.Contracts.Integration;
+using PlantProcess.Application.Contracts.Integration.Commands;
 using PlantProcess.Application.Services.Integration;
+using PlantProcess.Application.Services.Integration.Interfaces;
 using PlantProcess.Domain.Entities.Integration;
 using PlantProcess.Infrastructure.Persistence;
 

@@ -1,4 +1,5 @@
 using PlantProcess.Application.Contracts.Integration;
+using PlantProcess.Application.Contracts.Integration.Dtos;
 using PlantProcess.Domain.Entities.Integration;
 
 namespace PlantProcess.Application.Services.Integration.Connectors;

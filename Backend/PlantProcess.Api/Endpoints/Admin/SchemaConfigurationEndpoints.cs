@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using PlantProcess.Api.Extensions;
 using PlantProcess.Application.Contracts.Integration;
+using PlantProcess.Application.Contracts.Integration.Dtos;
 using PlantProcess.Application.Services.Integration;
 using PlantProcess.Infrastructure.Persistence;
 

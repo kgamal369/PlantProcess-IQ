@@ -3,6 +3,7 @@ using Microsoft.Extensions.Caching.Memory;
 using PlantProcess.Api.Extensions;
 using PlantProcess.Application.Contracts.Analytics;
 using PlantProcess.Application.Services.Analytics;
+using PlantProcess.Application.Services.Dashboard.Interfaces;
 using PlantProcess.Infrastructure.Persistence;
 
 namespace PlantProcess.Api.Endpoints.Analytics;

@@ -23,6 +23,7 @@ using Serilog;
 using Serilog.Events;
 using Serilog.Exceptions;
 using PlantProcess.Api.Swagger;
+using PlantProcess.Application.Services.Integration.Interfaces;
 
 // ── Resolve a stable absolute log path regardless of working directory ──────
 var logDirectory = Path.Combine(AppContext.BaseDirectory, "logs");

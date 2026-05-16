@@ -7,6 +7,7 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using PlantProcess.Domain.Entities.Analytics;
 using PlantProcess.Infrastructure.Persistence;
+using PlantProcess.Application.Services.Analytics.Interfaces;
 
 
 namespace PlantProcess.Api.Endpoints.Analytics;

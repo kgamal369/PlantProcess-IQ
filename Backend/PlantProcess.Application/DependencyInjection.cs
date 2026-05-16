@@ -1,8 +1,14 @@
 using Microsoft.Extensions.DependencyInjection;
 using PlantProcess.Application.Common.Time;
-using PlantProcess.Application.Services.Analytics;
+using PlantProcess.Application.Services.Analytics.Interfaces;
+using PlantProcess.Application.Services.Analytics.Services;
+using PlantProcess.Application.Services.Dashboard.Interfaces;
+using PlantProcess.Application.Services.Dashboard.Services;
 using PlantProcess.Application.Services.DataQuality;
 using PlantProcess.Application.Services.Integration;
+using PlantProcess.Application.Services.Integration.Interfaces;
+using PlantProcess.Application.Services.Integration.Jobs;
+using PlantProcess.Application.Services.Integration.Services;
 using PlantProcess.Application.Services.Materials;
 using PlantProcess.Application.Services.PlantLayout;
 using PlantProcess.Application.Services.Process;

@@ -5,6 +5,7 @@ using PlantProcess.Application.Common.Persistence;
 using PlantProcess.Application.Common.Results;
 using PlantProcess.Application.Contracts.Reporting;
 using PlantProcess.Application.Services.Analytics;
+using PlantProcess.Application.Services.Analytics.Interfaces;
 
 namespace PlantProcess.Application.Services.Reporting;
 

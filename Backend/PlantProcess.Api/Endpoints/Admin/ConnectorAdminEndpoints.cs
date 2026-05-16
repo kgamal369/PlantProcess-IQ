@@ -1,6 +1,8 @@
 using PlantProcess.Api.Extensions;
 using PlantProcess.Application.Contracts.Integration;
+using PlantProcess.Application.Contracts.Integration.Dtos;
 using PlantProcess.Application.Services.Integration;
+using PlantProcess.Application.Services.Integration.Interfaces;
 
 namespace PlantProcess.Api.Endpoints.Admin;
 

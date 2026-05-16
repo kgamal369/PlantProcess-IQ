@@ -1,5 +1,6 @@
 using PlantProcess.Api.Extensions;
 using PlantProcess.Application.Services.Analytics;
+using PlantProcess.Application.Services.Analytics.Interfaces;
 
 namespace PlantProcess.Api.Endpoints.Analytics;
 

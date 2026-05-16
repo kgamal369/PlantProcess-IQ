@@ -1,7 +1,10 @@
 using PlantProcess.Application.Contracts.Analytics;
 using PlantProcess.Application.Services.Analytics;
+using PlantProcess.Application.Services.Analytics.Interfaces;
+using PlantProcess.Application.Services.Analytics.Services;
 using PlantProcess.Application.Services.DataQuality;
 using PlantProcess.Application.Services.Integration;
+using PlantProcess.Application.Services.Integration.Interfaces;
 using PlantProcess.Domain.Enums.Integration;
 
 namespace PlantProcess.Workers;

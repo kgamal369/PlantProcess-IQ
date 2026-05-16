@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using PlantProcess.Application.Contracts.Integration;
+using PlantProcess.Application.Contracts.Integration.Jobs;
 using PlantProcess.Application.Services.Integration;
+using PlantProcess.Application.Services.Integration.Interfaces;
 using PlantProcess.Domain.Enums.Integration;
 using PlantProcess.Infrastructure.Persistence;
 
