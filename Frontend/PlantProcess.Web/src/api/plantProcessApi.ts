@@ -303,6 +303,142 @@ export interface CreateDashboardWidgetDefinitionPayload {
   sourceSystem?: string | null;
   sourceRecordId?: string | null;
 }
+// ============================================================
+// Phase 2 — Admin Area Foundation DTOs
+// ============================================================
+
+export interface AdminMetricCard {
+  label: string;
+  value: number;
+  note: string;
+  group: string;
+}
+
+export interface AdminLatestImportBatch {
+  id: string;
+  importBatchCode: string;
+  importType: string;
+  status: string;
+  startedAtUtc: string;
+  completedAtUtc: string | null;
+  rowCount: number | null;
+  errorMessage: string | null;
+}
+
+export interface AdminOverview {
+  generatedAtUtc: string;
+  status: string;
+  cards: AdminMetricCard[];
+  latestImportBatch: AdminLatestImportBatch | null;
+}
+
+export interface TwoStageImportStage {
+  stageNo: number;
+  stageCode: string;
+  stageName: string;
+  purpose: string;
+  currentImplementation: string;
+  refreshOwner: string;
+  currentCount: number;
+  status: string;
+}
+
+export interface TwoStageImportModel {
+  generatedAtUtc: string;
+  modelName: string;
+  summary: string;
+  stages: TwoStageImportStage[];
+  metrics: AdminMetricCard[];
+}
+
+export interface PlannedProvider {
+  providerType: string;
+  description: string;
+  roadmapStatus: string;
+  recommendedForFirstDemo: boolean;
+}
+
+export interface DbConfigurationSourceSystem {
+  id: string;
+  sourceSystemCode: string;
+  sourceSystemName: string;
+  sourceSystemType: string;
+  description: string | null;
+  isReadOnlySource: boolean;
+  isActive: boolean;
+  importBatchCount: number;
+  completedBatchCount: number;
+  runningBatchCount: number;
+  failedBatchCount: number;
+  lastImportAtUtc: string | null;
+}
+
+export interface DbConfigurationSummary {
+  generatedAtUtc: string;
+  message: string;
+  plannedProviderTypes: PlannedProvider[];
+  sourceSystems: DbConfigurationSourceSystem[];
+}
+
+export interface SourceObjectCoverage {
+  sourceObjectName: string;
+  totalRows: number;
+  pendingRows: number;
+  mappedRows: number;
+  failedRows: number;
+  skippedRows: number;
+}
+
+export interface AdminStatusCount {
+  status: string;
+  count: number;
+}
+
+export interface SchemaMappingSummary {
+  id: string;
+  mappingCode: string;
+  mappingName: string;
+  sourceObjectName: string;
+  targetEntityName: string;
+  mappingVersion: string;
+  isActive: boolean;
+  description: string | null;
+}
+
+export interface SchemaConfigurationSummary {
+  generatedAtUtc: string;
+  message: string;
+  mappingCount: number;
+  activeMappingCount: number;
+  sourceObjects: SourceObjectCoverage[];
+  targetCoverage: AdminStatusCount[];
+  mappings: SchemaMappingSummary[];
+}
+
+export interface AdminJobMonitorRow {
+  id: string;
+  jobCode: string;
+  jobName: string;
+  jobType: string;
+  sourceSystemCode: string;
+  sourceSystemName: string;
+  status: string;
+  statusClass: "success" | "running" | "danger" | "warning" | "neutral" | "info" | string;
+  lastRunAtUtc: string | null;
+  lastDurationMs: number | null;
+  nextRunAtUtc: string | null;
+  rowCount: number | null;
+  errorMessage: string | null;
+  isConfigured: boolean;
+  isRealRuntimeJob: boolean;
+}
+
+export interface AdminJobsMonitor {
+  generatedAtUtc: string;
+  summary: AdminStatusCount[];
+  jobs: AdminJobMonitorRow[];
+}
+
 
 type PrimitiveQueryValue = string | number | boolean | null | undefined;
 type QueryParams = Record<string, PrimitiveQueryValue>;
@@ -406,6 +542,21 @@ function dashboardBody(filters: DashboardFilters) {
 export const plantProcessApi = {
   apiBaseUrl: API_BASE_URL,
 
+  getAdminOverview: () =>
+    getJson<AdminOverview>("/admin/overview"),
+
+  getAdminTwoStageImportModel: () =>
+    getJson<TwoStageImportModel>("/admin/two-stage-import-model"),
+
+  getAdminDbConfigurationSummary: () =>
+    getJson<DbConfigurationSummary>("/admin/db-configuration/summary"),
+
+  getAdminSchemaConfigurationSummary: () =>
+    getJson<SchemaConfigurationSummary>("/admin/schema-configuration/summary"),
+
+  getAdminJobsMonitor: () =>
+    getJson<AdminJobsMonitor>("/admin/jobs-monitor"),
+
   getValidationReport: () => getJson<any>("/validation/sync-report"),
 
   getDashboardReferenceData: (filters: DashboardFilters = {}) =>
@@ -479,7 +630,7 @@ export const plantProcessApi = {
       }
     ),
 
-  persistCorrelationRun: (
+    persistCorrelationRun: (
     filters: DashboardFilters,
     result: GenealogyAwareCorrelationResult
   ) =>
@@ -599,6 +750,12 @@ export const plantProcessApi = {
       { method: "DELETE" }
     ),
 
-  ensureSystemDashboardTemplates: () =>
-    postJson<any>("/analytics/dashboard/definitions/system-templates/ensure"),
+ ensureSystemDashboardTemplates: () =>
+  postJson<any>("/analytics/dashboard/definitions/system-templates/ensure"),
+
+repairSystemDashboardTemplates: () =>
+  postJson<{ repaired: number; repairedAtUtc: string }>(
+    "/analytics/dashboard/definitions/system-templates/repair"
+  ),
+
 };

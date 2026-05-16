@@ -62,4 +62,6 @@ public interface IDashboardDefinitionService
 
     Task<ApplicationResult<int>> EnsureSystemTemplatesAsync(
         CancellationToken cancellationToken);
+    Task<ApplicationResult<int>> RepairSystemTemplatesAsync(
+        CancellationToken cancellationToken);
 }

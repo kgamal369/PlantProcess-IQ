@@ -40,6 +40,12 @@ const CorrelationPage = lazy(() =>
   }))
 );
 
+const AdminPage = lazy(() =>
+  import("./pages/AdminPage").then((module) => ({
+    default: module.AdminPage,
+  }))
+);
+
 export default function App() {
   return (
     <ThemeProvider>
@@ -59,6 +65,7 @@ export default function App() {
                   <Route path="/risk" element={<RiskDashboardPage />} />
                   <Route path="/data-quality" element={<DataQualityPage />} />
                   <Route path="/correlations" element={<CorrelationPage />} />
+                  <Route path="/admin/*" element={<AdminPage />} />
                 </Route>
               </Routes>
             </Suspense>

@@ -79,7 +79,15 @@ public static class DashboardEndpoints
         group.MapPost("/definitions/system-templates/ensure", EnsureSystemDashboardTemplatesAsync)
             .WithSummary("Ensure system dashboard templates")
             .WithDescription("Creates default system dashboard templates when they do not already exist.");
-                return app;
+        
+        group.MapPost("/definitions/system-templates/repair", RepairSystemDashboardTemplatesAsync)
+            .WithSummary("Repair system dashboard templates")
+            .WithDescription(
+        "Repairs existing system-template widgets so their dimension and measure codes match " +
+        "the DashboardWidgetQuerySafetyRegistry. Safe to run multiple times.");
+        
+        return app;
+                
     }
 
     private static async Task<IResult> GetMetadataAsync(
@@ -606,4 +614,17 @@ public static class DashboardEndpoints
             sortBy,
             sortDirection);
     }
+
+    private static async Task<IResult> RepairSystemDashboardTemplatesAsync(
+    IDashboardDefinitionService service,
+    CancellationToken cancellationToken)
+{
+    var result = await service.RepairSystemTemplatesAsync(cancellationToken);
+
+    return result.ToHttpResult(repaired => Results.Ok(new
+    {
+        repaired,
+        repairedAtUtc = DateTime.UtcNow
+    }));
+}
 }

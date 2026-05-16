@@ -384,65 +384,100 @@ public sealed class DashboardDefinitionService : IDashboardDefinitionService
         return ApplicationResult.Success();
     }
 
-    public async Task<ApplicationResult<int>> EnsureSystemTemplatesAsync(
-        CancellationToken cancellationToken)
+public async Task<ApplicationResult<int>> EnsureSystemTemplatesAsync(
+    CancellationToken cancellationToken)
+{
+    var changed = 0;
+
+    changed += await EnsureTemplateAsync(
+        code: "SYSTEM_QUALITY_OVERVIEW",
+        name: "Quality Overview",
+        description:
+            "Default quality intelligence dashboard showing defect trend, defect breakdown, and material population.",
+        widgets:
+        [
+            TemplateWidget("DEFECT_TREND", "Defect Rate Trend", "line", "Day", "DefectRate", 0),
+            TemplateWidget("DEFECT_BREAKDOWN", "Defect Breakdown", "bar", "DefectType", "DefectCount", 1),
+            TemplateWidget("MATERIAL_BY_TYPE", "Material by Type", "bar", "MaterialUnitType", "MaterialCount", 2),
+        ],
+        cancellationToken);
+
+    changed += await EnsureTemplateAsync(
+        code: "SYSTEM_RISK_DASHBOARD",
+        name: "Risk Dashboard",
+        description:
+            "Default risk dashboard showing risk score distribution, risk by equipment, and risk by material type.",
+        widgets:
+        [
+            TemplateWidget("RISK_BY_CLASS", "Risk by Class", "donut", "RiskClass", "RiskScore", 0),
+            TemplateWidget("RISK_BY_EQUIPMENT", "Risk by Equipment", "bar", "Equipment", "RiskScore", 1),
+            TemplateWidget("RISK_BY_MATERIAL_TYPE", "Risk by Material Type", "bar", "MaterialUnitType", "RiskScore", 2),
+        ],
+        cancellationToken);
+
+    changed += await EnsureTemplateAsync(
+        code: "SYSTEM_DATA_QUALITY",
+        name: "Data Quality",
+        description:
+            "Default data quality monitoring dashboard showing issue counts by source system and material type.",
+        widgets:
+        [
+            TemplateWidget("DQ_BY_SOURCE", "Issues by Source", "bar", "SourceSystem", "DataQualityIssueCount", 0),
+            TemplateWidget("DQ_BY_MATERIAL_TYPE", "Issues by Material Type", "bar", "MaterialUnitType", "DataQualityIssueCount", 1),
+            TemplateWidget("DQ_BY_RISK_CLASS", "Issues by Risk Class", "bar", "RiskClass", "DataQualityIssueCount", 2),
+        ],
+        cancellationToken);
+
+    changed += await EnsureTemplateAsync(
+        code: "SYSTEM_CORRELATION_EXPLORER",
+        name: "Correlation Explorer",
+        description:
+            "Default correlation exploration dashboard for suspected contributors, defect rates, and equipment-level patterns.",
+        widgets:
+        [
+            TemplateWidget("CORR_DEFECT_RATE_BY_EQUIPMENT", "Defect Rate by Equipment", "bar", "Equipment", "DefectRate", 0),
+            TemplateWidget("CORR_DEFECT_RATE_BY_TYPE", "Defect Rate by Defect Type", "bar", "DefectType", "DefectRate", 1),
+            TemplateWidget("CORR_RISK_BY_DAY", "Risk Trend by Day", "line", "Day", "RiskScore", 2),
+        ],
+        cancellationToken);
+
+    changed += await EnsureTemplateAsync(
+        code: "SYSTEM_MATERIAL_INVESTIGATION_LAUNCHER",
+        name: "Material Investigation Launcher",
+        description:
+            "Default material investigation launcher showing material populations by source and type.",
+        widgets:
+        [
+            TemplateWidget("INV_MATERIAL_BY_SOURCE", "Material by Source", "bar", "SourceSystem", "MaterialCount", 0),
+            TemplateWidget("INV_MATERIAL_BY_TYPE", "Material by Type", "table", "MaterialUnitType", "MaterialCount", 1),
+            TemplateWidget("INV_RISK_BY_SOURCE", "Risk by Source", "bar", "SourceSystem", "RiskScore", 2),
+        ],
+        cancellationToken);
+
+    if (changed > 0)
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+    return ApplicationResult<int>.Success(changed);
+}
+
+private async Task<int> EnsureTemplateAsync(
+    string code,
+    string name,
+    string description,
+    IEnumerable<TemplateWidgetSeed> widgets,
+    CancellationToken cancellationToken)
+{
+    var changed = 0;
+
+    var dashboard = await _dbContext.DashboardDefinitions
+        .Include(x => x.Widgets)
+        .FirstOrDefaultAsync(
+            x => x.DashboardCode == code && !x.IsDeleted,
+            cancellationToken);
+
+    if (dashboard is null)
     {
-        var created = 0;
-
-        created += await EnsureTemplateAsync(
-            code: "SYSTEM_QUALITY_OVERVIEW",
-            name: "Quality Overview",
-            description: "Default quality intelligence dashboard for defect trend, defect breakdown and material explorer.",
-            widgets: new[]
-            {
-                TemplateWidget("DEFECT_TREND", "Defect Trend", "line", "productionDate", "defectRatePercent", 0),
-                TemplateWidget("DEFECT_BREAKDOWN", "Defect Breakdown", "bar", "defectType", "defectCount", 1),
-                TemplateWidget("MATERIAL_EXPLORER", "Material Explorer", "table", "material", "materialCount", 2)
-            },
-            cancellationToken);
-
-        created += await EnsureTemplateAsync(
-            code: "SYSTEM_RISK_DASHBOARD",
-            name: "Risk Dashboard",
-            description: "Default risk dashboard for high-risk materials and contributor analysis.",
-            widgets: new[]
-            {
-                TemplateWidget("RISK_BY_CLASS", "Risk Class Distribution", "donut", "riskClass", "riskScoreCount", 0),
-                TemplateWidget("TOP_CONTRIBUTORS", "Top Risk Contributors", "bar", "parameter", "riskContributorCount", 1)
-            },
-            cancellationToken);
-
-        created += await EnsureTemplateAsync(
-            code: "SYSTEM_DATA_QUALITY",
-            name: "Data Quality",
-            description: "Default data readiness and data quality monitoring dashboard.",
-            widgets: new[]
-            {
-                TemplateWidget("DQ_BY_SEVERITY", "Issues by Severity", "bar", "dataQualitySeverity", "dataQualityIssueCount", 0),
-                TemplateWidget("DQ_BY_TYPE", "Issues by Type", "table", "dataQualityIssueType", "dataQualityIssueCount", 1)
-            },
-            cancellationToken);
-
-        if (created > 0)
-            await _dbContext.SaveChangesAsync(cancellationToken);
-
-        return ApplicationResult<int>.Success(created);
-    }
-
-    private async Task<int> EnsureTemplateAsync(
-        string code,
-        string name,
-        string description,
-        IEnumerable<TemplateWidgetSeed> widgets,
-        CancellationToken cancellationToken)
-    {
-        var exists = await _dbContext.DashboardDefinitions
-            .AnyAsync(x => x.DashboardCode == code && !x.IsDeleted, cancellationToken);
-
-        if (exists)
-            return 0;
-
-        var dashboard = new DashboardDefinition(
+        dashboard = new DashboardDefinition(
             dashboardCode: code,
             name: name,
             isSynthetic: true,
@@ -454,8 +489,26 @@ public sealed class DashboardDefinitionService : IDashboardDefinitionService
             sourceRecordId: code);
 
         _dbContext.DashboardDefinitions.Add(dashboard);
+        changed++;
+    }
+    else
+    {
+        dashboard.Rename(name, description);
 
-        foreach (var seed in widgets)
+        if (!dashboard.IsActive)
+            dashboard.Activate();
+
+        changed++;
+    }
+
+    foreach (var seed in widgets)
+    {
+        var existingWidget = dashboard.Widgets
+            .FirstOrDefault(x =>
+                !x.IsDeleted &&
+                string.Equals(x.WidgetCode, seed.Code, StringComparison.OrdinalIgnoreCase));
+
+        if (existingWidget is null)
         {
             _dbContext.DashboardWidgetDefinitions.Add(new DashboardWidgetDefinition(
                 dashboardDefinitionId: dashboard.Id,
@@ -466,25 +519,141 @@ public sealed class DashboardDefinitionService : IDashboardDefinitionService
                 dimensionCode: seed.DimensionCode,
                 measureCode: seed.MeasureCode,
                 isSynthetic: true,
+                parameterCode: null,
                 filterJson: "{}",
                 layoutJson: BuildWidgetLayout(seed.SortOrder),
                 displayOptionsJson: "{}",
                 sortOrder: seed.SortOrder,
                 sourceSystem: "PlantProcessIQ.SystemTemplates",
                 sourceRecordId: seed.Code));
+
+            changed++;
+            continue;
         }
 
-        return 1;
+        var shouldUpdate =
+            !string.Equals(existingWidget.WidgetTitle, seed.Title, StringComparison.Ordinal) ||
+            !string.Equals(existingWidget.WidgetType, "chart", StringComparison.OrdinalIgnoreCase) ||
+            !string.Equals(existingWidget.ChartType, seed.ChartType, StringComparison.OrdinalIgnoreCase) ||
+            !string.Equals(existingWidget.DimensionCode, seed.DimensionCode, StringComparison.OrdinalIgnoreCase) ||
+            !string.Equals(existingWidget.MeasureCode, seed.MeasureCode, StringComparison.OrdinalIgnoreCase);
+
+        if (shouldUpdate)
+        {
+            existingWidget.UpdateDefinition(
+                widgetTitle: seed.Title,
+                widgetType: "chart",
+                chartType: seed.ChartType,
+                dimensionCode: seed.DimensionCode,
+                measureCode: seed.MeasureCode,
+                parameterCode: existingWidget.ParameterCode,
+                filterJson: existingWidget.FilterJson,
+                displayOptionsJson: existingWidget.DisplayOptionsJson);
+
+            existingWidget.UpdateLayout(
+                layoutJson: string.IsNullOrWhiteSpace(existingWidget.LayoutJson) || existingWidget.LayoutJson == "{}"
+                    ? BuildWidgetLayout(seed.SortOrder)
+                    : existingWidget.LayoutJson,
+                sortOrder: seed.SortOrder);
+
+            changed++;
+        }
     }
 
-    private static TemplateWidgetSeed TemplateWidget(
-        string code,
-        string title,
-        string chartType,
-        string dimensionCode,
-        string measureCode,
-        int sortOrder) =>
-        new(code, title, chartType, dimensionCode, measureCode, sortOrder);
+    return changed;
+}
+
+public async Task<ApplicationResult<int>> RepairSystemTemplatesAsync(
+    CancellationToken cancellationToken)
+{
+    // EnsureSystemTemplatesAsync is intentionally idempotent:
+    // - creates missing system dashboards,
+    // - creates missing widgets,
+    // - repairs invalid widget dimension/measure codes,
+    // - normalizes system template widget definitions.
+    return await EnsureSystemTemplatesAsync(cancellationToken);
+}
+
+private static TemplateWidgetSeed TemplateWidget(
+    string code,
+    string title,
+    string chartType,
+    string dimensionCode,
+    string measureCode,
+    int sortOrder)
+{
+    return new TemplateWidgetSeed(
+        Code: code,
+        Title: title,
+        ChartType: chartType,
+        DimensionCode: dimensionCode,
+        MeasureCode: measureCode,
+        SortOrder: sortOrder);
+}
+
+private static string BuildWidgetLayout(int index)
+{
+    var lgX = (index % 2) * 6;
+    var lgY = (index / 2) * 9;
+    var stackedY = index * 9;
+
+    return System.Text.Json.JsonSerializer.Serialize(new
+    {
+        lg = new
+        {
+            x = lgX,
+            y = lgY,
+            w = 6,
+            h = 9,
+            minW = 4,
+            minH = 6
+        },
+        md = new
+        {
+            x = 0,
+            y = stackedY,
+            w = 10,
+            h = 8,
+            minW = 4,
+            minH = 6
+        },
+        sm = new
+        {
+            x = 0,
+            y = stackedY,
+            w = 6,
+            h = 8,
+            minW = 3,
+            minH = 5
+        },
+        xs = new
+        {
+            x = 0,
+            y = stackedY,
+            w = 4,
+            h = 8,
+            minW = 3,
+            minH = 5
+        },
+        xxs = new
+        {
+            x = 0,
+            y = stackedY,
+            w = 2,
+            h = 8,
+            minW = 2,
+            minH = 5
+        }
+    });
+}
+
+    private sealed record TemplateWidgetSeed(
+        string Code,
+        string Title,
+        string ChartType,
+        string DimensionCode,
+        string MeasureCode,
+        int SortOrder);
 
     private static DashboardDefinitionDto ToDto(DashboardDefinition dashboard) =>
         new(
@@ -655,71 +824,4 @@ public sealed class DashboardDefinitionService : IDashboardDefinitionService
             dashboard.RemoveDefaultFlag();
         }
     }
-
-    private static string BuildWidgetLayout(int index)
-    {
-        var lgX = (index % 2) * 6;
-        var lgY = (index / 2) * 9;
-
-        // For medium/small layouts we use one column, so every widget needs its own row.
-        // This avoids overlapping widgets when the dashboard is viewed on smaller screens.
-        var stackedY = index * 9;
-
-        return System.Text.Json.JsonSerializer.Serialize(new
-        {
-            lg = new
-            {
-                x = lgX,
-                y = lgY,
-                w = 6,
-                h = 9,
-                minW = 4,
-                minH = 6
-            },
-            md = new
-            {
-                x = 0,
-                y = stackedY,
-                w = 10,
-                h = 8,
-                minW = 4,
-                minH = 6
-            },
-            sm = new
-            {
-                x = 0,
-                y = stackedY,
-                w = 6,
-                h = 8,
-                minW = 4,
-                minH = 6
-            },
-            xs = new
-            {
-                x = 0,
-                y = stackedY,
-                w = 4,
-                h = 8,
-                minW = 3,
-                minH = 5
-            },
-            xxs = new
-            {
-                x = 0,
-                y = stackedY,
-                w = 2,
-                h = 8,
-                minW = 2,
-                minH = 5
-            }
-        });
-    }
-
-    private sealed record TemplateWidgetSeed(
-        string Code,
-        string Title,
-        string ChartType,
-        string DimensionCode,
-        string MeasureCode,
-        int SortOrder);
 }

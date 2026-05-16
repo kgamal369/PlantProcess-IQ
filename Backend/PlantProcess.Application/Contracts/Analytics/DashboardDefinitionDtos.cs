@@ -1,3 +1,5 @@
+namespace PlantProcess.Application.Contracts.Analytics;
+
 public sealed record DashboardDefinitionDto(
     Guid Id,
     Guid? UserId,

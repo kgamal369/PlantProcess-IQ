@@ -11,6 +11,7 @@ import {
   Network,
   Radar,
   Search,
+  Settings2,
   ShieldCheck,
   Sparkles,
   Sun,
@@ -48,6 +49,12 @@ const navItems = [
     label: "Correlations",
     description: "Process-to-quality analytics",
     icon: GitBranch,
+  },
+  {
+    to: "/admin",
+    label: "Administrator",
+    description: "DB config, schema mapping and jobs",
+    icon: Settings2,
   },
 ];
 

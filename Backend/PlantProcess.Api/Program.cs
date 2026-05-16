@@ -15,11 +15,13 @@ using PlantProcess.Api.Endpoints.Validation;
 using PlantProcess.Api.Endpoints.Workflow;
 using PlantProcess.Api.Middleware;
 using PlantProcess.Api.Options;
+using PlantProcess.Api.Endpoints.Admin;
 using PlantProcess.Application;
 using PlantProcess.Infrastructure;
 using Serilog;
 using Serilog.Events;
 using Serilog.Exceptions;
+using PlantProcess.Api.Swagger;
 
 // ── Resolve a stable absolute log path regardless of working directory ──────
 var logDirectory = Path.Combine(AppContext.BaseDirectory, "logs");
@@ -110,6 +112,7 @@ try
 
     // ── Swagger ────────────────────────────────────────────────────────────
     builder.Services.AddEndpointsApiExplorer();
+
     builder.Services.AddSwaggerGen(options =>
     {
         options.SwaggerDoc("v1", new()
@@ -117,14 +120,22 @@ try
             Title = "PlantProcess IQ API",
             Version = "v1",
             Description =
-                "Generic manufacturing process-to-quality intelligence platform. " +
-                $"Version: {appVersion}"
+                "PlantProcess IQ is a generic manufacturing process-to-quality intelligence platform. " +
+                $"Version: {appVersion}. " +
+                "Use dashboard metadata endpoints to discover supported dimension and measure codes before calling widget query APIs.",
+            Contact = new()
+            {
+                Name = "PlantProcess IQ"
+            }
         });
 
         options.CustomSchemaIds(type =>
             type.FullName!
                 .Replace("+", "_")
                 .Replace(".", "_"));
+
+        options.OperationFilter<SwaggerExamplesOperationFilter>();
+        options.OperationFilter<SwaggerTagGroupingOperationFilter>();
     });
 
     var app = builder.Build();
@@ -177,6 +188,7 @@ try
     app.MapWorkflowEndpoints();
     app.MapValidationEndpoints();
     app.MapDevSeedEndpoints();
+    app.MapAdminEndpoints();
 
     app.Run();
 }
