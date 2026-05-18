@@ -34,7 +34,7 @@ public interface IConnectorConfigurationService
         Guid id,
         CancellationToken cancellationToken);
 
-    Task<ApplicationResult<ConnectionProfileDto>> TestConnectionProfileAsync(
+    Task<ApplicationResult<DataSourceConnectionTestResult>> TestConnectionProfileAsync(
         Guid id,
         CancellationToken cancellationToken);
 

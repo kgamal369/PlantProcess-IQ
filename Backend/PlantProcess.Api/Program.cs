@@ -1,4 +1,7 @@
 ﻿using System.Reflection;
+using System.IdentityModel.Tokens.Jwt;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using PlantProcess.Api.Configuration;
 using PlantProcess.Api.Endpoints.Analytics;
 using PlantProcess.Api.Endpoints.Dashboarding;
@@ -17,25 +20,23 @@ using PlantProcess.Api.Endpoints.Workflow;
 using PlantProcess.Api.Middleware;
 using PlantProcess.Api.Options;
 using PlantProcess.Api.Endpoints.Admin;
+using PlantProcess.Api.Endpoints.Security;
 using PlantProcess.Application;
 using PlantProcess.Infrastructure;
 using Serilog;
 using System.Text;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.IdentityModel.Tokens;
-using PlantProcess.Api.Endpoints.Security;
 using PlantProcess.Api.Security;
 using Serilog.Events;
 using Serilog.Exceptions;
 using PlantProcess.Api.Swagger;
 using PlantProcess.Application.Integration.Interfaces.Jobs;
 
-//  Resolve a stable absolute log path regardless of working directory â
+// Resolve a stable absolute log path regardless of working directory
 var logDirectory = Path.Combine(AppContext.BaseDirectory, "logs");
 var logFilePath = Path.Combine(logDirectory, "plantprocess-api-.log");
 
-//  Bootstrap logger âââ
+// Bootstrap logger
 var appVersion = Assembly
     .GetEntryAssembly()
     ?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()
@@ -101,12 +102,12 @@ try
         "PlantProcess IQ effective CORS origins: {AllowedOrigins}",
         string.Join(", ", allowedOrigins));
 
-    // --  Infrastructure services 
+    // -- Infrastructure services 
     builder.Services.AddMemoryCache();
     builder.Services.AddApplication();
     builder.Services.AddInfrastructure(builder.Configuration);
 
-    //  CORS
+    // CORS
     builder.Services.AddCors(options =>
     {
         options.AddPolicy("PlantProcessFrontend", policy =>
@@ -147,17 +148,17 @@ try
     });
 
     builder.Services.Configure<AuthOptions>(
-    builder.Configuration.GetSection("PlantProcess:Auth"));
+        builder.Configuration.GetSection("PlantProcess:Auth"));
 
-var authOptions = builder.Configuration
-    .GetSection("PlantProcess:Auth")
-    .Get<AuthOptions>() ?? new AuthOptions();
+    var authOptions = builder.Configuration
+        .GetSection("PlantProcess:Auth")
+        .Get<AuthOptions>() ?? new AuthOptions();
 
-if (authOptions.SigningKey.Length < 32)
-{
-    throw new InvalidOperationException(
-        "PlantProcess:Auth:SigningKey must be at least 32 characters.");
-}
+    if (authOptions.SigningKey.Length < 32)
+    {
+        throw new InvalidOperationException(
+            "PlantProcess:Auth:SigningKey must be at least 32 characters.");
+    }
 
     builder.Services
         .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -195,7 +196,7 @@ if (authOptions.SigningKey.Length < 32)
     
     var app = builder.Build();
 
-    //  Phase 2: Register DB-backed system jobs at API startup ââââ€
+    // Phase 2: Register DB-backed system jobs at API startup 
     await using (var scope = app.Services.CreateAsyncScope())
     {
         var jobRegistration = scope.ServiceProvider.GetRequiredService<IJobRegistrationService>();
@@ -208,14 +209,14 @@ if (authOptions.SigningKey.Length < 32)
         }
     }
 
-    //  CORS must be early enough before browser calls endpoints âââ€
+    // CORS must be early enough before browser calls endpoints 
     app.UseCors("PlantProcessFrontend");
 
-    //  Middleware pipeline â
+    // Middleware pipeline
     app.UseMiddleware<CorrelationIdMiddleware>();
     app.UseMiddleware<RequestResponseLoggingMiddleware>();
 
-    //  Swagger ââââ
+    // Swagger 
     if (app.Environment.IsDevelopment())
     {
         app.UseSwagger();
@@ -227,16 +228,17 @@ if (authOptions.SigningKey.Length < 32)
         });
     }
 
-    //  Root redirect ââ€
-    app.MapGet("/", () => Results.Redirect("/swagger"));
+    // Root redirect
+    app.MapGet("/", () => Results.Redirect("/swagger")).AllowAnonymous();
 
-    //  HTTPS only outside development âââââââââ
+    // HTTPS only outside development 
     if (!app.Environment.IsDevelopment())
     {
         app.UseHttpsRedirection();
     }
 
-    //  Endpoint registration €
+    // Endpoint registration
+    app.MapAuthEndpoints();
     app.MapHealthEndpoints();
     app.MapPlantLayoutEndpoints();
     app.MapConfigurationEndpoints();
@@ -278,5 +280,3 @@ finally
 }
 
 public partial class Program { }
-
-

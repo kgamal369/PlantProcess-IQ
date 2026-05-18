@@ -5,6 +5,7 @@ using PlantProcess.Application.Common.Persistence;
 using PlantProcess.Application.Common.Results;
 using PlantProcess.Application.Integration.Contracts.Dtos;
 using PlantProcess.Application.Integration.Interfaces.Connectors;
+using PlantProcess.Application.Integration.Interfaces.SourceSystems;
 using PlantProcess.Domain.Entities.Integration;
 
 namespace PlantProcess.Application.Integration.Services.Connectors;
@@ -322,8 +323,8 @@ public sealed class ConnectorConfigurationService : IConnectorConfigurationServi
             profile.MarkTestResult(false, ex.Message);
             await _dbContext.SaveChangesAsync(cancellationToken);
 
-            return ApplicationResult<DataSourceConnectionTestResult>.Failure(
-                ApplicationError.Validation("Connection test failed.", new[] { ex.Message }));
+           return ApplicationResult<DataSourceConnectionTestResult>.Failure(
+                 ApplicationError.Validation($"Some error message: {ex.Message}"));     
         }
     }
 
@@ -404,7 +405,7 @@ public sealed class ConnectorConfigurationService : IConnectorConfigurationServi
                 }
                 else
                 {
-                    dataset.UpdateProfile(
+                    dataset.Update(
                         datasetName: discovered.DatasetName,
                         sourceObjectName: discovered.SourceObjectName,
                         sourceSchemaName: discovered.SourceSchemaName,
@@ -475,8 +476,7 @@ public sealed class ConnectorConfigurationService : IConnectorConfigurationServi
         catch (Exception ex)
         {
             return ApplicationResult<IReadOnlyList<SourceDatasetDefinitionDto>>.Failure(
-                ApplicationError.Validation("Schema discovery failed.", new[] { ex.Message }));
-        }
+                ApplicationError.Validation($"Schema discovery failed: {ex.Message}"));}
     }
 
     private static string NormalizeCode(string value)
