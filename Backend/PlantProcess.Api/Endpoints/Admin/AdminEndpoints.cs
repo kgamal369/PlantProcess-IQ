@@ -321,19 +321,31 @@ public static class AdminEndpoints
                 x.Description))
             .ToListAsync(cancellationToken);
 
-        var sourceObjects = await dbContext.StagingRecords
+        var sourceObjectRows = await dbContext.StagingRecords
             .AsNoTracking()
             .Where(x => !x.IsDeleted)
             .GroupBy(x => x.SourceObjectName)
-            .Select(x => new SourceObjectCoverageDto(
-                x.Key,
-                x.Count(),
-                x.Count(y => y.ProcessingStatus == "Pending"),
-                x.Count(y => y.ProcessingStatus == "Mapped"),
-                x.Count(y => y.ProcessingStatus == "Failed"),
-                x.Count(y => y.ProcessingStatus == "Skipped")))
+            .Select(x => new
+            {
+                SourceObjectName = x.Key,
+                TotalRows = x.Count(),
+                PendingRows = x.Count(y => y.ProcessingStatus == "Pending"),
+                MappedRows = x.Count(y => y.ProcessingStatus == "Mapped"),
+                FailedRows = x.Count(y => y.ProcessingStatus == "Failed"),
+                SkippedRows = x.Count(y => y.ProcessingStatus == "Skipped")
+            })
             .OrderByDescending(x => x.TotalRows)
             .ToListAsync(cancellationToken);
+
+        var sourceObjects = sourceObjectRows
+            .Select(x => new SourceObjectCoverageDto(
+                x.SourceObjectName ?? "Unknown",
+                x.TotalRows,
+                x.PendingRows,
+                x.MappedRows,
+                x.FailedRows,
+                x.SkippedRows))
+            .ToList();
 
         var targetCoverage = mappings
             .GroupBy(x => x.TargetEntityName)
@@ -562,3 +574,4 @@ public static class AdminEndpoints
         bool IsConfigured,
         bool IsRealRuntimeJob);
 }
+

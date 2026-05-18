@@ -1,0 +1,28 @@
+﻿:root {
+  --ppiq-bg: #06111f;
+  --ppiq-surface: rgba(10, 24, 44, 0.84);
+  --ppiq-surface-strong: rgba(13, 34, 61, 0.94);
+  --ppiq-border: rgba(88, 204, 255, 0.22);
+  --ppiq-border-strong: rgba(88, 204, 255, 0.42);
+  --ppiq-text: #e7f6ff;
+  --ppiq-text-muted: #8fb7d1;
+  --ppiq-cyan: #39d5ff;
+  --ppiq-blue: #3b82f6;
+  --ppiq-success: #35d07f;
+  --ppiq-warning: #f7c948;
+  --ppiq-danger: #ff5f6d;
+  --ppiq-radius-card: 24px;
+  --ppiq-radius-control: 14px;
+  --ppiq-shadow-glow: 0 0 32px rgba(57, 213, 255, 0.18);
+}
+
+html[data-theme="light"] {
+  --ppiq-bg: #eef6fb;
+  --ppiq-surface: rgba(255, 255, 255, 0.86);
+  --ppiq-surface-strong: rgba(255, 255, 255, 0.96);
+  --ppiq-border: rgba(14, 116, 144, 0.2);
+  --ppiq-border-strong: rgba(14, 116, 144, 0.38);
+  --ppiq-text: #0d2238;
+  --ppiq-text-muted: #4b7288;
+  --ppiq-shadow-glow: 0 18px 45px rgba(15, 76, 117, 0.15);
+}

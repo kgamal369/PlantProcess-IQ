@@ -1,7 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using PlantProcess.Domain.Entities.Dashboarding;
-using PlantProcess.Domain.Entities.Dashboarding;
 using PlantProcess.Infrastructure.Persistence.Configurations.Common;
 
 namespace PlantProcess.Infrastructure.Persistence.Configurations.Dashboarding;

@@ -1,5 +1,6 @@
 ﻿using PlantProcess.Application.Common.Results;
 using PlantProcess.Application.Integration.Contracts.Jobs;
+using PlantProcess.Application.Integration.Services.Jobs;
 using PlantProcess.Domain.Enums.Integration;
 
 namespace PlantProcess.Application.Integration.Interfaces.Jobs;
@@ -40,5 +41,6 @@ public interface IJobDefinitionService
     Task<ApplicationResult> EnsureSystemJobsSeededAsync(
         CancellationToken cancellationToken);
 }
+
 
 

@@ -108,3 +108,4 @@ public sealed record MaterialEquipmentRiskIndicator(
 
 
 
+

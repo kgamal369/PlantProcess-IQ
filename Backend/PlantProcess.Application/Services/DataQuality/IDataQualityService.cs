@@ -52,3 +52,4 @@ public sealed record DataQualityScanSummary(
     TimeSpan ScanDuration);
 
 
+

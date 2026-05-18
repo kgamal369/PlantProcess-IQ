@@ -1,0 +1,13 @@
+﻿.app-shell,
+.page-shell,
+.dashboard-shell,
+.admin-shell {
+  min-height: 100vh;
+}
+
+.glass-panel {
+  background: var(--ppiq-surface);
+  border: 1px solid var(--ppiq-border);
+  border-radius: var(--ppiq-radius-card);
+  box-shadow: var(--ppiq-shadow-glow);
+}

@@ -15,3 +15,4 @@ public sealed record AddQualityEventCommand(
     CommandMetadata Metadata);
 
 
+

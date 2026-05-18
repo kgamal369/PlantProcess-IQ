@@ -9,3 +9,4 @@ public sealed record ApplicationReadinessDto(
     IReadOnlyList<string> RegisteredCapabilities);
 
 
+

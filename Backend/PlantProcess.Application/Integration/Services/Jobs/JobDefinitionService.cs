@@ -2,6 +2,7 @@
 using PlantProcess.Application.Common.Persistence;
 using PlantProcess.Application.Common.Results;
 using PlantProcess.Application.Integration.Contracts.Jobs;
+using PlantProcess.Application.Integration.Services.Jobs;
 using PlantProcess.Application.Integration.Interfaces.Jobs;
 using PlantProcess.Domain.Entities.Integration;
 using PlantProcess.Domain.Enums.Integration;
@@ -331,5 +332,6 @@ public sealed class JobDefinitionService : IJobDefinitionService
         string ScheduleExpression,
         string Description);
 }
+
 
 

@@ -10,3 +10,4 @@ public sealed record AddDefectCatalogCommand(
     CommandMetadata Metadata);
 
 
+

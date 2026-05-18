@@ -69,3 +69,4 @@ public sealed record MaterialByEquipmentRowDto(
     string ExecutionStatus);
 
 
+

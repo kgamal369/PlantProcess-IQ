@@ -11,6 +11,7 @@ using PlantProcess.Application.Dashboarding.Services.Queries;
 using PlantProcess.Application.Dashboarding.Services.Widgets;
 using PlantProcess.Application.Integration.Contracts;
 using PlantProcess.Application.Integration.Contracts.Jobs;
+using PlantProcess.Application.Integration.Services.Jobs;
 using PlantProcess.Application.Integration.Interfaces.Connectors;
 using PlantProcess.Application.Integration.Interfaces.Import;
 using PlantProcess.Application.Integration.Interfaces.Jobs;
@@ -20,7 +21,6 @@ using PlantProcess.Application.Integration.Interfaces.SourceSystems;
 using PlantProcess.Application.Integration.Interfaces.Staging;
 using PlantProcess.Application.Integration.Services.Connectors;
 using PlantProcess.Application.Integration.Services.Import;
-using PlantProcess.Application.Integration.Services.Jobs;
 using PlantProcess.Application.Integration.Services.Mapping;
 using PlantProcess.Application.Integration.Services.SourceSystems;
 using PlantProcess.Application.Services.DataQuality;
@@ -90,6 +90,8 @@ public static class DependencyInjection
         return services;
     }
 }
+
+
 
 
 
