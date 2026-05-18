@@ -3,6 +3,8 @@
 export type QueryPrimitive = string | number | boolean | null | undefined;
 export type QueryParams = Record<string, QueryPrimitive>;
 
+const ACCESS_TOKEN_KEY = "plantprocess.auth.accessToken";
+
 export class ApiError extends Error {
   public readonly status: number;
   public readonly responseText: string;
@@ -13,6 +15,19 @@ export class ApiError extends Error {
     this.status = status;
     this.responseText = responseText;
   }
+}
+
+export function setAccessToken(token: string | null) {
+  if (!token) {
+    localStorage.removeItem(ACCESS_TOKEN_KEY);
+    return;
+  }
+
+  localStorage.setItem(ACCESS_TOKEN_KEY, token);
+}
+
+export function getAccessToken() {
+  return localStorage.getItem(ACCESS_TOKEN_KEY);
 }
 
 export function buildQuery(params?: QueryParams): string {
@@ -34,12 +49,22 @@ async function requestJson<T>(
   path: string,
   body?: unknown
 ): Promise<T> {
+  const token = getAccessToken();
+
+  const headers: Record<string, string> = {};
+
+  if (body !== undefined) {
+    headers["Content-Type"] = "application/json";
+  }
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
   const response = await fetch(`${API_BASE_URL}${path}`, {
     method,
-    headers: body === undefined
-      ? undefined
-      : { "Content-Type": "application/json" },
-    body: body === undefined ? undefined : JSON.stringify(body)
+    headers,
+    body: body === undefined ? undefined : JSON.stringify(body),
   });
 
   const text = await response.text();
@@ -76,5 +101,18 @@ export const apiClient = {
 
   delete<T>(path: string) {
     return requestJson<T>("DELETE", path);
-  }
+  },
+
+  login(userName: string, password: string) {
+    return requestJson<{
+      accessToken: string;
+      tokenType: string;
+      expiresAtUtc: string;
+      userName: string;
+      role: string;
+    }>("POST", "/auth/login", { userName, password });
+  },
+
+  setAccessToken,
+  getAccessToken,
 };

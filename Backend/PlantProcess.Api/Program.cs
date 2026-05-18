@@ -20,16 +20,22 @@ using PlantProcess.Api.Endpoints.Admin;
 using PlantProcess.Application;
 using PlantProcess.Infrastructure;
 using Serilog;
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.IdentityModel.Tokens;
+using PlantProcess.Api.Endpoints.Security;
+using PlantProcess.Api.Security;
 using Serilog.Events;
 using Serilog.Exceptions;
 using PlantProcess.Api.Swagger;
 using PlantProcess.Application.Integration.Interfaces.Jobs;
 
-// â”€â”€ Resolve a stable absolute log path regardless of working directory â”€â”€â”€â”€â”€â”€
+//  Resolve a stable absolute log path regardless of working directory â
 var logDirectory = Path.Combine(AppContext.BaseDirectory, "logs");
 var logFilePath = Path.Combine(logDirectory, "plantprocess-api-.log");
 
-// â”€â”€ Bootstrap logger â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+//  Bootstrap logger âââ
 var appVersion = Assembly
     .GetEntryAssembly()
     ?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()
@@ -68,10 +74,10 @@ try
 
     var builder = WebApplication.CreateBuilder(args);
 
-    // â”€â”€ Serilog â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Serilog 
     builder.Host.UseSerilog();
 
-    // â”€â”€ Options + startup validation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Options + startup validation 
     builder.Services.Configure<PlantProcessOptions>(
         builder.Configuration.GetSection(PlantProcessOptions.SectionName));
 
@@ -95,12 +101,12 @@ try
         "PlantProcess IQ effective CORS origins: {AllowedOrigins}",
         string.Join(", ", allowedOrigins));
 
-    // â”€â”€ Infrastructure services â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // --  Infrastructure services 
     builder.Services.AddMemoryCache();
     builder.Services.AddApplication();
     builder.Services.AddInfrastructure(builder.Configuration);
 
-    // â”€â”€ CORS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    //  CORS
     builder.Services.AddCors(options =>
     {
         options.AddPolicy("PlantProcessFrontend", policy =>
@@ -112,7 +118,7 @@ try
         });
     });
 
-    // â”€â”€ Swagger â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Swagger 
     builder.Services.AddEndpointsApiExplorer();
 
     builder.Services.AddSwaggerGen(options =>
@@ -140,9 +146,56 @@ try
         options.OperationFilter<SwaggerTagGroupingOperationFilter>();
     });
 
+    builder.Services.Configure<AuthOptions>(
+    builder.Configuration.GetSection("PlantProcess:Auth"));
+
+var authOptions = builder.Configuration
+    .GetSection("PlantProcess:Auth")
+    .Get<AuthOptions>() ?? new AuthOptions();
+
+if (authOptions.SigningKey.Length < 32)
+{
+    throw new InvalidOperationException(
+        "PlantProcess:Auth:SigningKey must be at least 32 characters.");
+}
+
+    builder.Services
+        .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+        .AddJwtBearer(options =>
+        {
+            options.RequireHttpsMetadata = !builder.Environment.IsDevelopment();
+            options.SaveToken = true;
+
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidIssuer = authOptions.Issuer,
+
+                ValidateAudience = true,
+                ValidAudience = authOptions.Audience,
+
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(
+                    Encoding.UTF8.GetBytes(authOptions.SigningKey)),
+
+                ValidateLifetime = true,
+                ClockSkew = TimeSpan.FromMinutes(2)
+            };
+        });
+
+    builder.Services.AddAuthorization(options =>
+    {
+        options.FallbackPolicy = new AuthorizationPolicyBuilder()
+            .RequireAuthenticatedUser()
+            .Build();
+
+        options.AddPolicy("PlantProcessAdmin", policy =>
+            policy.RequireRole("Admin"));
+    });
+    
     var app = builder.Build();
 
-    // â”€â”€ Phase 2: Register DB-backed system jobs at API startup â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    //  Phase 2: Register DB-backed system jobs at API startup ââââ€
     await using (var scope = app.Services.CreateAsyncScope())
     {
         var jobRegistration = scope.ServiceProvider.GetRequiredService<IJobRegistrationService>();
@@ -155,14 +208,14 @@ try
         }
     }
 
-    // â”€â”€ CORS must be early enough before browser calls endpoints â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    //  CORS must be early enough before browser calls endpoints âââ€
     app.UseCors("PlantProcessFrontend");
 
-    // â”€â”€ Middleware pipeline â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    //  Middleware pipeline â
     app.UseMiddleware<CorrelationIdMiddleware>();
     app.UseMiddleware<RequestResponseLoggingMiddleware>();
 
-    // â”€â”€ Swagger â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    //  Swagger ââââ
     if (app.Environment.IsDevelopment())
     {
         app.UseSwagger();
@@ -174,16 +227,16 @@ try
         });
     }
 
-    // â”€â”€ Root redirect â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    //  Root redirect ââ€
     app.MapGet("/", () => Results.Redirect("/swagger"));
 
-    // â”€â”€ HTTPS only outside development â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    //  HTTPS only outside development âââââââââ
     if (!app.Environment.IsDevelopment())
     {
         app.UseHttpsRedirection();
     }
 
-    // â”€â”€ Endpoint registration â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    //  Endpoint registration €
     app.MapHealthEndpoints();
     app.MapPlantLayoutEndpoints();
     app.MapConfigurationEndpoints();

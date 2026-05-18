@@ -1,5 +1,6 @@
-﻿import { plantProcessApi as legacyApi } from "../legacy/plantProcessApi";
+﻿import { apiClient } from "../http";
 export type * from "../legacy/plantProcessApi";
+import { plantProcessApi as legacyApi } from "../legacy/plantProcessApi";
 
 type LegacyFunction = (...args: any[]) => unknown;
 const legacy = legacyApi as unknown as Record<string, LegacyFunction>;
@@ -26,6 +27,14 @@ export const dashboardingApi = {
   queryDashboardWidget: (...args: any[]) => call("queryDashboardWidget", ...args),
   createDashboardWidgetDefinition: (...args: any[]) => call("createDashboardWidgetDefinition", ...args),
   updateDashboardWidgetDefinition: (...args: any[]) => call("updateDashboardWidgetDefinition", ...args),
-  deleteDashboardWidgetDefinition: (...args: any[]) => call("deleteDashboardWidgetDefinition", ...args)
-};
+  deleteDashboardWidgetDefinition: (...args: any[]) => call("deleteDashboardWidgetDefinition", ...args),
 
+  updateDashboardLayout: (dashboardDefinitionId: string, layoutJson: string) =>
+    apiClient.patch<{
+      dashboardDefinitionId: string;
+      layoutPersisted: boolean;
+      updatedAtUtc: string;
+    }>(`/analytics/dashboard/definitions/${dashboardDefinitionId}/layout`, {
+      layoutJson,
+    }),
+};

@@ -11,6 +11,7 @@ namespace PlantProcess.Application.Integration.Services.Connectors;
 
 public sealed class ConnectorConfigurationService : IConnectorConfigurationService
 {
+    private readonly IDataSourceConnectorFactory _connectorFactory;
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
     {
         WriteIndented = false
@@ -18,9 +19,12 @@ public sealed class ConnectorConfigurationService : IConnectorConfigurationServi
 
     private readonly IPlantProcessDbContext _dbContext;
 
-    public ConnectorConfigurationService(IPlantProcessDbContext dbContext)
+    public ConnectorConfigurationService(IPlantProcessDbContext dbContext,
+    IDataSourceConnectorFactory connectorFactory)
     {
         _dbContext = dbContext;
+        _connectorFactory = connectorFactory;
+
     }
 
     public IReadOnlyList<ProviderTypeDto> GetProviderTypes()
@@ -291,43 +295,203 @@ public sealed class ConnectorConfigurationService : IConnectorConfigurationServi
         return await GetConnectionProfileByIdAsync(entity.Id, cancellationToken);
     }
 
-    public async Task<ApplicationResult<ConnectionProfileDto>> TestConnectionProfileAsync(
-        Guid id,
+    public async Task<ApplicationResult<DataSourceConnectionTestResult>> TestConnectionProfileAsync(
+        Guid connectionProfileId,
         CancellationToken cancellationToken)
     {
-        var entity = await _dbContext.ConnectionProfiles
-            .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, cancellationToken);
+        var profile = await _dbContext.ConnectionProfiles
+            .FirstOrDefaultAsync(x => x.Id == connectionProfileId && !x.IsDeleted, cancellationToken);
 
-        if (entity is null)
-            return ApplicationResult<ConnectionProfileDto>.Failure(ApplicationError.NotFound("Connection profile not found."));
+        if (profile is null)
+            return ApplicationResult<DataSourceConnectionTestResult>.Failure(
+                ApplicationError.NotFound("Connection profile was not found."));
 
-        var provider = GetProviderTypes().FirstOrDefault(x => x.ProviderType == entity.ProviderType);
-
-        if (provider is null)
+        try
         {
-            entity.MarkTestResult(false, $"Unsupported provider type '{entity.ProviderType}'.");
-        }
-        else if (!provider.IsAvailableNow)
-        {
-            entity.MarkTestResult(
-                false,
-                $"{entity.ProviderType} connector is planned but not implemented in Phase 3. CSV is available now.");
-        }
-        else if (entity.ProviderType == "Csv")
-        {
-            entity.MarkTestResult(
-                true,
-                "CSV connector is available. CSV import uses uploaded/exported CSV text and does not require live credentials.");
-        }
-        else
-        {
-            entity.MarkTestResult(false, "Provider exists but does not have a Phase 3 test implementation.");
-        }
+            var connector = _connectorFactory.GetConnector(profile.ProviderType);
+            var result = await connector.TestConnectionAsync(profile, cancellationToken);
 
-        await _dbContext.SaveChangesAsync(cancellationToken);
+            profile.MarkTestResult(result.IsSuccess, result.Message);
 
-        return await GetConnectionProfileByIdAsync(entity.Id, cancellationToken);
+            await _dbContext.SaveChangesAsync(cancellationToken);
+
+            return ApplicationResult<DataSourceConnectionTestResult>.Success(result);
+        }
+        catch (Exception ex)
+        {
+            profile.MarkTestResult(false, ex.Message);
+            await _dbContext.SaveChangesAsync(cancellationToken);
+
+            return ApplicationResult<DataSourceConnectionTestResult>.Failure(
+                ApplicationError.Validation("Connection test failed.", new[] { ex.Message }));
+        }
     }
+
+        private static SourceDatasetDefinitionDto ToDatasetDto(
+        SourceDatasetDefinition dataset,
+        ConnectionProfile profile)
+    {
+        return new SourceDatasetDefinitionDto(
+            Id: dataset.Id,
+            ConnectionProfileId: dataset.ConnectionProfileId,
+            ConnectionProfileCode: profile.ConnectionProfileCode,
+            ProviderType: profile.ProviderType,
+            DatasetCode: dataset.DatasetCode,
+            DatasetName: dataset.DatasetName,
+            DatasetKind: dataset.DatasetKind,
+            SourceObjectName: dataset.SourceObjectName,
+            SourceSchemaName: dataset.SourceSchemaName,
+            PrimaryTimestampField: dataset.PrimaryTimestampField,
+            IncrementalCursorField: dataset.IncrementalCursorField,
+            LastCursorValue: dataset.LastCursorValue,
+            RefreshIntervalSeconds: dataset.RefreshIntervalSeconds,
+            DatasetOptionsJson: dataset.DatasetOptionsJson,
+            IsActive: dataset.IsActive,
+            Description: dataset.Description,
+            IsSynthetic: dataset.IsSynthetic,
+            CreatedAtUtc: dataset.CreatedAtUtc,
+            UpdatedAtUtc: dataset.UpdatedAtUtc);
+    }
+
+    public async Task<ApplicationResult<IReadOnlyList<SourceDatasetDefinitionDto>>> DiscoverSchemaAsync(
+        Guid connectionProfileId,
+        CancellationToken cancellationToken)
+    {
+        var profile = await _dbContext.ConnectionProfiles
+            .FirstOrDefaultAsync(x => x.Id == connectionProfileId && !x.IsDeleted, cancellationToken);
+
+        if (profile is null)
+            return ApplicationResult<IReadOnlyList<SourceDatasetDefinitionDto>>.Failure(
+                ApplicationError.NotFound("Connection profile was not found."));
+
+        try
+        {
+            var schemaReader = _connectorFactory.GetSchemaReader(profile.ProviderType);
+            var discoveredDatasets = await schemaReader.DiscoverDatasetsAsync(profile, cancellationToken);
+
+            var persistedDtos = new List<SourceDatasetDefinitionDto>();
+
+            foreach (var discovered in discoveredDatasets)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                var datasetCode = NormalizeCode(discovered.DatasetCode);
+
+                var dataset = await _dbContext.SourceDatasetDefinitions
+                    .FirstOrDefaultAsync(
+                        x => x.ConnectionProfileId == profile.Id &&
+                            x.DatasetCode == datasetCode &&
+                            !x.IsDeleted,
+                        cancellationToken);
+
+                if (dataset is null)
+                {
+                    dataset = new SourceDatasetDefinition(
+                        connectionProfileId: profile.Id,
+                        datasetCode: datasetCode,
+                        datasetName: discovered.DatasetName,
+                        datasetKind: discovered.DatasetKind,
+                        sourceObjectName: discovered.SourceObjectName,
+                        isSynthetic: false,
+                        sourceSchemaName: discovered.SourceSchemaName,
+                        datasetOptionsJson: discovered.DatasetOptionsJson,
+                        description: "Discovered automatically by connector framework.",
+                        sourceSystem: "ConnectorDiscovery",
+                        sourceRecordId: discovered.SourceObjectName);
+
+                    _dbContext.SourceDatasetDefinitions.Add(dataset);
+                    await _dbContext.SaveChangesAsync(cancellationToken);
+                }
+                else
+                {
+                    dataset.UpdateProfile(
+                        datasetName: discovered.DatasetName,
+                        sourceObjectName: discovered.SourceObjectName,
+                        sourceSchemaName: discovered.SourceSchemaName,
+                        primaryTimestampField: dataset.PrimaryTimestampField,
+                        incrementalCursorField: dataset.IncrementalCursorField,
+                        refreshIntervalSeconds: dataset.RefreshIntervalSeconds,
+                        datasetOptionsJson: discovered.DatasetOptionsJson,
+                        description: dataset.Description);
+
+                    dataset.Activate();
+                    await _dbContext.SaveChangesAsync(cancellationToken);
+                }
+
+                var fields = await schemaReader.DiscoverFieldsForDatasetAsync(profile, dataset, cancellationToken);
+
+                foreach (var field in fields)
+                {
+                    var existingField = await _dbContext.SourceFieldDefinitions
+                        .FirstOrDefaultAsync(
+                            x => x.SourceDatasetDefinitionId == dataset.Id &&
+                                x.FieldName == field.FieldName &&
+                                !x.IsDeleted,
+                            cancellationToken);
+
+                    if (existingField is null)
+                    {
+                        _dbContext.SourceFieldDefinitions.Add(new SourceFieldDefinition(
+                            sourceDatasetDefinitionId: dataset.Id,
+                            fieldName: field.FieldName,
+                            displayName: field.DisplayName,
+                            sourceDataType: field.SourceDataType,
+                            ordinal: field.Ordinal,
+                            isNullable: field.IsNullable,
+                            isSynthetic: false,
+                            maxLength: field.MaxLength,
+                            numericPrecision: field.NumericPrecision,
+                            numericScale: field.NumericScale,
+                            sampleValue: field.SampleValue,
+                            isPrimaryKeyCandidate: field.IsPrimaryKeyCandidate,
+                            isTimestampCandidate: field.IsTimestampCandidate,
+                            sourceSystem: "ConnectorDiscovery",
+                            sourceRecordId: $"{dataset.DatasetCode}.{field.FieldName}"));
+                    }
+                    else
+                    {
+                        existingField.UpdateProfile(
+                            displayName: field.DisplayName,
+                            sourceDataType: field.SourceDataType,
+                            isNullable: field.IsNullable,
+                            maxLength: field.MaxLength,
+                            numericPrecision: field.NumericPrecision,
+                            numericScale: field.NumericScale,
+                            sampleValue: field.SampleValue,
+                            isPrimaryKeyCandidate: field.IsPrimaryKeyCandidate,
+                            isTimestampCandidate: field.IsTimestampCandidate);
+
+                        existingField.Activate();
+                    }
+                }
+
+                await _dbContext.SaveChangesAsync(cancellationToken);
+
+                persistedDtos.Add(ToDatasetDto(dataset, profile));
+            }
+
+            return ApplicationResult<IReadOnlyList<SourceDatasetDefinitionDto>>.Success(persistedDtos);
+        }
+        catch (Exception ex)
+        {
+            return ApplicationResult<IReadOnlyList<SourceDatasetDefinitionDto>>.Failure(
+                ApplicationError.Validation("Schema discovery failed.", new[] { ex.Message }));
+        }
+    }
+
+    private static string NormalizeCode(string value)
+    {
+        var clean = new string(value
+            .Trim()
+            .Select(ch => char.IsLetterOrDigit(ch) ? char.ToUpperInvariant(ch) : '_')
+            .ToArray());
+
+        while (clean.Contains("__", StringComparison.Ordinal))
+            clean = clean.Replace("__", "_", StringComparison.Ordinal);
+
+        return clean.Trim('_');
+    }
+
 
     public async Task<ApplicationResult<IReadOnlyList<SourceDatasetDefinitionDto>>> GetDatasetsAsync(
         Guid? connectionProfileId,

@@ -92,8 +92,15 @@ public static class DashboardEndpoints
 
     private static async Task<IResult> GetMetadataAsync(
     IDashboardMetadataService service,
+    ILoggerFactory loggerFactory,
     CancellationToken cancellationToken)
     {
+        var logger = loggerFactory.CreateLogger("DashboardMetadataVerification");
+
+        logger.LogInformation(
+            "H-10 verification: Dashboard metadata requested by widget builder at {RequestedAtUtc}.",
+            DateTime.UtcNow);
+
         var result = await service.GetMetadataAsync(cancellationToken);
         return result.ToHttpResult(value => Results.Ok(value));
     }
@@ -101,8 +108,18 @@ public static class DashboardEndpoints
     private static async Task<IResult> QueryWidgetAsync(
         DashboardWidgetQueryDto query,
         IDashboardWidgetQueryService service,
+        ILoggerFactory loggerFactory,
         CancellationToken cancellationToken)
     {
+        var logger = loggerFactory.CreateLogger("DashboardWidgetPreviewVerification");
+
+        logger.LogInformation(
+            "H-10 verification: Widget preview query received. ChartType={ChartType}, Dimension={DimensionCode}, Measure={MeasureCode}, Parameter={ParameterCode}",
+            query.ChartType,
+            query.DimensionCode,
+            query.MeasureCode,
+            query.ParameterCode);
+
         var result = await service.ExecuteAsync(query, cancellationToken);
         return result.ToHttpResult(value => Results.Ok(value));
     }

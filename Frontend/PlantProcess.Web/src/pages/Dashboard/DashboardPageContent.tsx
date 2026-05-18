@@ -52,6 +52,7 @@ import {
 import type { ChartRow } from "@/components/charts/InteractiveCharts";
 import { useDashboardFilters } from "@/state/DashboardFilterContext";
 import { useDashboardSelections } from "@/state/DashboardSelectionContext";
+import { dashboardingApi } from "@/api/dashboarding";
 
 export function DashboardPageContent() {
   const { filters, setFilter } = useDashboardFilters();
@@ -218,34 +219,30 @@ async function handleWidgetSaved(widgetId: string) {
     removeWidget(`saved-${widget.id}`);
   }
 
-  async function saveDashboardLayout() {
-    if (!activeDashboard) return;
-
-    setIsSavingLayout(true);
-    setError(null);
-
-    try {
-      await plantProcessApi.updateDashboardLayout(
-        activeDashboard.id,
-        serializeLayouts()
-      );
-
-      const refreshed = await plantProcessApi.getDashboardDefinition(
-        activeDashboard.id
-      );
-
-      setActiveDashboard(refreshed);
-      setDashboards((current) =>
-        current.map((dashboard) =>
-          dashboard.id === refreshed.id ? refreshed : dashboard
-        )
-      );
-    } catch (saveError) {
-      setError(saveError);
-    } finally {
-      setIsSavingLayout(false);
-    }
+ async function saveDashboardLayout() {
+  if (!activeDashboard) {
+    setError(new Error("No active dashboard is selected."));
+    return;
   }
+
+  setIsSavingLayout(true);
+  setError(null);
+
+  try {
+    const layoutJson = serializeLayouts();
+
+    await dashboardingApi.updateDashboardLayout(
+      activeDashboard.id,
+      layoutJson
+    );
+
+    await loadDashboardDefinitions(activeDashboard.id);
+  } catch (saveError) {
+    setError(saveError);
+  } finally {
+    setIsSavingLayout(false);
+  }
+}
 
   async function refreshReadModels() {
     setIsRefreshingReadModels(true);
