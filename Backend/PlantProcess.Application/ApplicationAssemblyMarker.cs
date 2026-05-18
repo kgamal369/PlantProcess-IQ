@@ -7,3 +7,5 @@
 public sealed class ApplicationAssemblyMarker
 {
 }
+
+

@@ -1,7 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
+using PlantProcess.Infrastructure.Persistence;
 
-namespace PlantProcess.Infrastructure.Persistence;
+namespace PlantProcess.Infrastructure;
 
 public sealed class PlantProcessDesignTimeDbContextFactory
     : IDesignTimeDbContextFactory<PlantProcessDbContext>

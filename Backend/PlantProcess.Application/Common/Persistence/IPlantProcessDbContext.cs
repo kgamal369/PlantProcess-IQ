@@ -1,6 +1,7 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using PlantProcess.Domain.Entities.Analytics;
 using PlantProcess.Domain.Entities.Configuration;
+using PlantProcess.Domain.Entities.Dashboarding;
 using PlantProcess.Domain.Entities.Integration;
 using PlantProcess.Domain.Entities.Materials;
 using PlantProcess.Domain.Entities.PlantLayout;
@@ -59,3 +60,5 @@ public interface IPlantProcessDbContext
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }
+
+

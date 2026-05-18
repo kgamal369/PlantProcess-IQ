@@ -11,3 +11,5 @@ public sealed record CreateGenealogyEdgeCommand(
     decimal? Quantity,
     string? UnitOfMeasure,
     CommandMetadata Metadata);
+
+

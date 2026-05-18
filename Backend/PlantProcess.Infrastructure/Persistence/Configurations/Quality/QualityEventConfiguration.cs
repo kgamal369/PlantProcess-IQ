@@ -2,8 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using PlantProcess.Domain.Entities.Materials;
 using PlantProcess.Domain.Entities.Quality;
-
-using PlantProcess.Infrastructure.Persistence.Configurations;
+using PlantProcess.Infrastructure.Persistence.Configurations.Common;
 namespace PlantProcess.Infrastructure.Persistence.Configurations.Quality;
 
 public class QualityEventConfiguration : IEntityTypeConfiguration<QualityEvent>

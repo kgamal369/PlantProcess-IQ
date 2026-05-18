@@ -13,3 +13,5 @@ public sealed record AddQualityEventCommand(
     string? PlantTimeZoneId,
     int? PlantUtcOffsetMinutes,
     CommandMetadata Metadata);
+
+

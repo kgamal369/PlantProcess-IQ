@@ -1,10 +1,10 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using PlantProcess.Infrastructure.Persistence;
 
 namespace PlantProcess.Api.Endpoints.Admin;
 
 /// <summary>
-/// Phase 2 — Admin Area Foundation.
+/// Phase 2 â€” Admin Area Foundation.
 /// 
 /// Purpose:
 /// This endpoint group supports the Administrator shell required before

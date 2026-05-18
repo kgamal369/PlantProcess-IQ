@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using PlantProcess.Api.Extensions;
 using PlantProcess.Application.Services.DataQuality;
 using PlantProcess.Domain.Entities.Quality;
@@ -162,3 +162,4 @@ public static class DataQualityScanEndpoints
         string? SourceSystem,
         string? SourceRecordId);
 }
+

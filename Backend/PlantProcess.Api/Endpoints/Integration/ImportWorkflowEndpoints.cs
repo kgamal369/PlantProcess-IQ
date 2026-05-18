@@ -1,9 +1,7 @@
-using PlantProcess.Api.Extensions;
+﻿using PlantProcess.Api.Extensions;
 using PlantProcess.Application.Contracts.Common;
-using PlantProcess.Application.Contracts.Integration;
-using PlantProcess.Application.Contracts.Integration.Commands;
-using PlantProcess.Application.Services.Integration;
-using PlantProcess.Application.Services.Integration.Interfaces;
+using PlantProcess.Application.Integration.Contracts.Commands;
+using PlantProcess.Application.Integration.Interfaces.Import;
 
 namespace PlantProcess.Api.Endpoints.Integration;
 
@@ -95,3 +93,4 @@ public static class ImportWorkflowEndpoints
         bool? StopOnFirstError,
         bool? RunDataQualityScan);
 }
+

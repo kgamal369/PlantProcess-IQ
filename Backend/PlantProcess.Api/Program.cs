@@ -1,6 +1,7 @@
-using System.Reflection;
+﻿using System.Reflection;
 using PlantProcess.Api.Configuration;
 using PlantProcess.Api.Endpoints.Analytics;
+using PlantProcess.Api.Endpoints.Dashboarding;
 using PlantProcess.Api.Endpoints.Configuration;
 using PlantProcess.Api.Endpoints.DataQuality;
 using PlantProcess.Api.Endpoints.Development;
@@ -17,19 +18,18 @@ using PlantProcess.Api.Middleware;
 using PlantProcess.Api.Options;
 using PlantProcess.Api.Endpoints.Admin;
 using PlantProcess.Application;
-using PlantProcess.Application.Services.Integration;
 using PlantProcess.Infrastructure;
 using Serilog;
 using Serilog.Events;
 using Serilog.Exceptions;
 using PlantProcess.Api.Swagger;
-using PlantProcess.Application.Services.Integration.Interfaces;
+using PlantProcess.Application.Integration.Interfaces.Jobs;
 
-// ── Resolve a stable absolute log path regardless of working directory ──────
+// â”€â”€ Resolve a stable absolute log path regardless of working directory â”€â”€â”€â”€â”€â”€
 var logDirectory = Path.Combine(AppContext.BaseDirectory, "logs");
 var logFilePath = Path.Combine(logDirectory, "plantprocess-api-.log");
 
-// ── Bootstrap logger ────────────────────────────────────────────────────────
+// â”€â”€ Bootstrap logger â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 var appVersion = Assembly
     .GetEntryAssembly()
     ?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()
@@ -68,10 +68,10 @@ try
 
     var builder = WebApplication.CreateBuilder(args);
 
-    // ── Serilog ────────────────────────────────────────────────────────────
+    // â”€â”€ Serilog â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     builder.Host.UseSerilog();
 
-    // ── Options + startup validation ───────────────────────────────────────
+    // â”€â”€ Options + startup validation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     builder.Services.Configure<PlantProcessOptions>(
         builder.Configuration.GetSection(PlantProcessOptions.SectionName));
 
@@ -95,12 +95,12 @@ try
         "PlantProcess IQ effective CORS origins: {AllowedOrigins}",
         string.Join(", ", allowedOrigins));
 
-    // ── Infrastructure services ────────────────────────────────────────────
+    // â”€â”€ Infrastructure services â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     builder.Services.AddMemoryCache();
     builder.Services.AddApplication();
     builder.Services.AddInfrastructure(builder.Configuration);
 
-    // ── CORS ───────────────────────────────────────────────────────────────
+    // â”€â”€ CORS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     builder.Services.AddCors(options =>
     {
         options.AddPolicy("PlantProcessFrontend", policy =>
@@ -112,7 +112,7 @@ try
         });
     });
 
-    // ── Swagger ────────────────────────────────────────────────────────────
+    // â”€â”€ Swagger â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     builder.Services.AddEndpointsApiExplorer();
 
     builder.Services.AddSwaggerGen(options =>
@@ -142,7 +142,7 @@ try
 
     var app = builder.Build();
 
-    // ── Phase 2: Register DB-backed system jobs at API startup ─────────────────
+    // â”€â”€ Phase 2: Register DB-backed system jobs at API startup â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     await using (var scope = app.Services.CreateAsyncScope())
     {
         var jobRegistration = scope.ServiceProvider.GetRequiredService<IJobRegistrationService>();
@@ -155,14 +155,14 @@ try
         }
     }
 
-    // ── CORS must be early enough before browser calls endpoints ───────────
+    // â”€â”€ CORS must be early enough before browser calls endpoints â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     app.UseCors("PlantProcessFrontend");
 
-    // ── Middleware pipeline ────────────────────────────────────────────────
+    // â”€â”€ Middleware pipeline â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     app.UseMiddleware<CorrelationIdMiddleware>();
     app.UseMiddleware<RequestResponseLoggingMiddleware>();
 
-    // ── Swagger ────────────────────────────────────────────────────────────
+    // â”€â”€ Swagger â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     if (app.Environment.IsDevelopment())
     {
         app.UseSwagger();
@@ -174,16 +174,16 @@ try
         });
     }
 
-    // ── Root redirect ─────────────────────────────────────────────────────
+    // â”€â”€ Root redirect â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     app.MapGet("/", () => Results.Redirect("/swagger"));
 
-    // ── HTTPS only outside development ────────────────────────────────────
+    // â”€â”€ HTTPS only outside development â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     if (!app.Environment.IsDevelopment())
     {
         app.UseHttpsRedirection();
     }
 
-    // ── Endpoint registration ─────────────────────────────────────────────
+    // â”€â”€ Endpoint registration â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     app.MapHealthEndpoints();
     app.MapPlantLayoutEndpoints();
     app.MapConfigurationEndpoints();
@@ -223,3 +223,7 @@ finally
     Log.Information("PlantProcess IQ API stopped. Version={AppVersion}", appVersion);
     Log.CloseAndFlush();
 }
+
+public partial class Program { }
+
+

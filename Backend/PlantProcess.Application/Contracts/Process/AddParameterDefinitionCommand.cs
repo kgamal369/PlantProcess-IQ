@@ -12,3 +12,5 @@ public sealed record AddParameterDefinitionCommand(
     decimal? ExpectedMinValue,
     decimal? ExpectedMaxValue,
     CommandMetadata Metadata);
+
+

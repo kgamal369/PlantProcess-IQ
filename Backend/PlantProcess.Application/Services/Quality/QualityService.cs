@@ -132,3 +132,5 @@ public sealed class QualityService : IQualityService
         return ApplicationResult<Guid>.Success(qualityEvent.Id);
     }
 }
+
+

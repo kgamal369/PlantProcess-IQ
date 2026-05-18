@@ -2,11 +2,26 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.4" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.8" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\PlantProcess.Domain\PlantProcess.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Common\Abstractions\" />
+    <Folder Include="Dashboarding\Contracts\" />
+    <Folder Include="Dashboarding\Services\Layouts\" />
+    <Folder Include="Dashboarding\Services\Pages\" />
+    <Folder Include="Integration\Contracts\ImportBatches\" />
+    <Folder Include="Integration\Contracts\SchemaConfiguration\" />
+    <Folder Include="Integration\Contracts\SourceDatasets\" />
+    <Folder Include="Integration\Services\SchemaConfiguration\" />
+    <Folder Include="Materials\" />
+    <Folder Include="Readiness\" />
+    <Folder Include="Quality\" />
+    <Folder Include="Process\" />
+    <Folder Include="PlantLayout\" />
   </ItemGroup>
 
   <PropertyGroup>

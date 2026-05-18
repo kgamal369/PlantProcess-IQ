@@ -1,4 +1,4 @@
-using PlantProcess.Application.Common.Paging;
+﻿using PlantProcess.Application.Common.Paging;
 
 namespace PlantProcess.Application.Contracts.Quality;
 
@@ -33,3 +33,6 @@ public sealed record QualityEventQuery(
     DateTime? ToUtc,
     int Page,
     int PageSize);
+
+
+

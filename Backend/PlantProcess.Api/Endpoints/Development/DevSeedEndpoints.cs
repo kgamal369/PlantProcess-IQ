@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using PlantProcess.Infrastructure.Persistence;
 
 namespace PlantProcess.Api.Endpoints.Development;
@@ -91,3 +91,4 @@ public static class DevSeedEndpoints
         return Results.Ok(result);
     }
 }
+

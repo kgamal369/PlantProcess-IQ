@@ -1,8 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using PlantProcess.Domain.Entities.Analytics;
-
-using PlantProcess.Infrastructure.Persistence.Configurations;
+using PlantProcess.Infrastructure.Persistence.Configurations.Common;
 namespace PlantProcess.Infrastructure.Persistence.Configurations.Analytics;
 
 public class CorrelationResultConfiguration : IEntityTypeConfiguration<CorrelationResult>

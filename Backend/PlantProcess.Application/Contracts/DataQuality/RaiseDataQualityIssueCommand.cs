@@ -10,3 +10,5 @@ public sealed record RaiseDataQualityIssueCommand(
     string? AffectedEntityName,
     Guid? AffectedEntityId,
     CommandMetadata Metadata);
+
+

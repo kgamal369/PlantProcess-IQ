@@ -13,3 +13,5 @@ public interface IQualityService
         AddQualityEventCommand command,
         CancellationToken cancellationToken);
 }
+
+

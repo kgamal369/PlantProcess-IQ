@@ -50,3 +50,5 @@ public sealed record DataQualityScanSummary(
     int NewIssuesPersisted,
     int ExistingIssuesSkipped,
     TimeSpan ScanDuration);
+
+

@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using PlantProcess.Application.Common.Paging;
 using PlantProcess.Application.Common.Persistence;
 using PlantProcess.Application.Common.Results;
@@ -95,3 +95,6 @@ public sealed class QualityQueryService : IQualityQueryService
         PlantProcess.Domain.Entities.Materials.MaterialUnit Material,
         PlantProcess.Domain.Entities.Quality.DefectCatalog? Defect);
 }
+
+
+

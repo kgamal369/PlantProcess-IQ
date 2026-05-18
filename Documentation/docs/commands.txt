@@ -30,33 +30,7 @@ dotnet run --project .\PlantProcess.Api
 cd C:\Workspace\PlantProcess-IQ\Frontend\PlantProcess.Web
 npm run dev
 
+dotnet restore .\PlantProcessIQ.sln
+dotnet build .\PlantProcessIQ.sln
 
-
-3rd Sprint 
-Sprint 3  
-kindly review this file deeply and very very well
-The generated documentation captured all .cs files for my current status , including the full folder structure and source code content for PlantProcess.Api, PlantProcess.Domain, PlantProcess.Infrastructure, and PlantProcess.Workers. 
-
-
-Kindly  review:
-
-1. Empty/incomplete/ inconsistent classes 
-2. Endpoint coverage 
-3. Domain model consistency 
-4. Missing workflow/process logic 
-5. Whether current implementation still matches PlantProcess IQ documents 
-6. I need to validate all domain classes and entities and endpoints and workflows and process are in sync with each other  
-7. I need to validate that all domain classes and entities and endpoints and workflows and process  matching my documenatin and project aim and vision and features and all what customer expected and need  
-8.. Analysis dataset of my db if it enough to test all endpoints and workflows and process 
-9. I need a better logging and log file for all endpoints and workflows and process including all log level (trace , debug , error , info ) 
-
-Before starting in the remaining of Sprint 3 and Sprint 4 , we need to check that we all still on track and no problem , so I want you to validate my current status and if we need some fixation before and we are ready or not to start  Sprint 3 and Sprint 4
-I want you to validate 
-1 . That I full fill all sprint 2 and all that you have mentioned 
-2. Empty/incomplete/ inconsistent classes 
-3. Endpoint coverage  3. Domain model consistency 
- 4. Missing workflow/process logic 
- 5. Whether current implementation still matches PlantProcess IQ documents
-  6. I need to validate all domain classes and entities and endpoints and workflows and process are in sync with each other
-   7. I need to validate that all domain classes and entities and endpoints and workflows and process  matching my documenatin and project aim and vision 
-8 .all consistency , all features , every line , work flow , endpoints , all process , all domain , all classes
+dotnet test .\PlantProcessIQ.sln

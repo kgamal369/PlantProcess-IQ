@@ -8,3 +8,5 @@ public sealed record AddDefectCatalogCommand(
     string? DefectCategory,
     string? IndustryTemplate,
     CommandMetadata Metadata);
+
+

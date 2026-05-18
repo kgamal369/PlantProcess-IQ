@@ -8,3 +8,5 @@ public interface IApplicationReadinessService
     Task<ApplicationResult<ApplicationReadinessDto>> GetReadinessAsync(
         CancellationToken cancellationToken);
 }
+
+

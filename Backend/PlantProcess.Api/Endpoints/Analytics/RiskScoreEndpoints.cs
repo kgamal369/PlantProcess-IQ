@@ -1,9 +1,8 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using PlantProcess.Api.Extensions;
-using PlantProcess.Application.Contracts.Analytics;
-using PlantProcess.Application.Services.Analytics;
-using PlantProcess.Application.Services.Analytics.Interfaces;
-using PlantProcess.Application.Services.Analytics.Services;
+using PlantProcess.Application.Analytics.Contracts;
+using PlantProcess.Application.Analytics.Interfaces;
+using PlantProcess.Application.Analytics.Services;
 using PlantProcess.Domain.Entities.Analytics;
 using PlantProcess.Infrastructure.Persistence;
 
@@ -243,3 +242,5 @@ public static class RiskScoreEndpoints
         string? PlantTimeZoneId,
         int? PlantUtcOffsetMinutes);
 }
+
+

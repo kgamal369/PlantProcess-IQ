@@ -1,5 +1,5 @@
-using PlantProcess.Application.Common.Results;
-using PlantProcess.Application.Contracts.Reporting;
+﻿using PlantProcess.Application.Common.Results;
+using PlantProcess.Application.Reporting;
 
 namespace PlantProcess.Application.Services.Reporting;
 
@@ -15,3 +15,6 @@ public interface IInvestigationReportService
         string? requestedBy,
         CancellationToken cancellationToken);
 }
+
+
+

@@ -24,3 +24,5 @@ public sealed record PagedResult<T>(
             0);
     }
 }
+
+

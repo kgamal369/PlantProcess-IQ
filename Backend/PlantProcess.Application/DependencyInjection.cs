@@ -1,14 +1,29 @@
+﻿using PlantProcess.Application.Integration.Services.Staging;
+using PlantProcess.Application.Integration.Services.SchemaConfiguration;
 using Microsoft.Extensions.DependencyInjection;
+using PlantProcess.Application.Analytics.Interfaces;
+using PlantProcess.Application.Analytics.Services;
 using PlantProcess.Application.Common.Time;
-using PlantProcess.Application.Services.Analytics.Interfaces;
-using PlantProcess.Application.Services.Analytics.Services;
-using PlantProcess.Application.Services.Dashboard.Interfaces;
-using PlantProcess.Application.Services.Dashboard.Services;
+using PlantProcess.Application.Dashboarding.Interfaces;
+using PlantProcess.Application.Dashboarding.Services.Dashboards;
+using PlantProcess.Application.Dashboarding.Services.Metadata;
+using PlantProcess.Application.Dashboarding.Services.Queries;
+using PlantProcess.Application.Dashboarding.Services.Widgets;
+using PlantProcess.Application.Integration.Contracts;
+using PlantProcess.Application.Integration.Contracts.Jobs;
+using PlantProcess.Application.Integration.Interfaces.Connectors;
+using PlantProcess.Application.Integration.Interfaces.Import;
+using PlantProcess.Application.Integration.Interfaces.Jobs;
+using PlantProcess.Application.Integration.Interfaces.Mapping;
+using PlantProcess.Application.Integration.Interfaces.SchemaConfiguration;
+using PlantProcess.Application.Integration.Interfaces.SourceSystems;
+using PlantProcess.Application.Integration.Interfaces.Staging;
+using PlantProcess.Application.Integration.Services.Connectors;
+using PlantProcess.Application.Integration.Services.Import;
+using PlantProcess.Application.Integration.Services.Jobs;
+using PlantProcess.Application.Integration.Services.Mapping;
+using PlantProcess.Application.Integration.Services.SourceSystems;
 using PlantProcess.Application.Services.DataQuality;
-using PlantProcess.Application.Services.Integration;
-using PlantProcess.Application.Services.Integration.Interfaces;
-using PlantProcess.Application.Services.Integration.Jobs;
-using PlantProcess.Application.Services.Integration.Services;
 using PlantProcess.Application.Services.Materials;
 using PlantProcess.Application.Services.PlantLayout;
 using PlantProcess.Application.Services.Process;
@@ -75,3 +90,7 @@ public static class DependencyInjection
         return services;
     }
 }
+
+
+
+

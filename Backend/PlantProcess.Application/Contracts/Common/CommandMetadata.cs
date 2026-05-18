@@ -6,3 +6,5 @@ public sealed record CommandMetadata(
     string? SourceRecordId,
     string? RequestedBy = null,
     string? CorrelationId = null);
+
+

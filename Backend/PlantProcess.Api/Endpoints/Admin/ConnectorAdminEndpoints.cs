@@ -1,13 +1,11 @@
-using PlantProcess.Api.Extensions;
-using PlantProcess.Application.Contracts.Integration;
-using PlantProcess.Application.Contracts.Integration.Dtos;
-using PlantProcess.Application.Services.Integration;
-using PlantProcess.Application.Services.Integration.Interfaces;
+﻿using PlantProcess.Api.Extensions;
+using PlantProcess.Application.Integration.Contracts.Dtos;
+using PlantProcess.Application.Integration.Interfaces.Connectors;
 
 namespace PlantProcess.Api.Endpoints.Admin;
 
 /// <summary>
-/// Phase 3 — Connector Foundation API.
+/// Phase 3 â€” Connector Foundation API.
 /// 
 /// This group powers the Admin / DB Configuration page.
 /// It introduces generic connection profiles, source datasets,
@@ -18,7 +16,7 @@ public static class ConnectorAdminEndpoints
     public static IEndpointRouteBuilder MapConnectorAdminEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/admin/connectors")
-            .WithTags("Admin — Connectors");
+            .WithTags("Admin â€” Connectors");
 
         group.MapGet("/provider-types", GetProviderTypes)
             .WithSummary("Get supported connector provider types");

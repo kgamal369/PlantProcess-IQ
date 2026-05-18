@@ -26,3 +26,5 @@ public sealed class ValidationResult
         return ApplicationError.Validation(message, details);
     }
 }
+
+

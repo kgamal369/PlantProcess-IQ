@@ -36,3 +36,5 @@ public sealed class ApplicationReadinessService : IApplicationReadinessService
         return Task.FromResult(ApplicationResult<ApplicationReadinessDto>.Success(dto));
     }
 }
+
+

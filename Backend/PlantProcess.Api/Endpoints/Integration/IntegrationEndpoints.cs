@@ -1,11 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PlantProcess.Api.Extensions;
-using PlantProcess.Application.Common.Results;
 using PlantProcess.Application.Contracts.Common;
-using PlantProcess.Application.Contracts.Integration;
-using PlantProcess.Application.Contracts.Integration.Commands;
-using PlantProcess.Application.Services.Integration;
-using PlantProcess.Application.Services.Integration.Interfaces;
+using PlantProcess.Application.Integration.Contracts.Commands;
+using PlantProcess.Application.Integration.Contracts.Mapping;
+using PlantProcess.Application.Integration.Interfaces.Mapping;
+using PlantProcess.Application.Integration.Interfaces.Staging;
 using PlantProcess.Domain.Entities.Integration;
 using PlantProcess.Infrastructure.Persistence;
 
@@ -689,3 +688,4 @@ public static class IntegrationEndpoints
         string MappingJson,
         string? MappingVersion);
 }
+

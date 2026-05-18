@@ -1,4 +1,4 @@
-using PlantProcess.Api.Extensions;
+﻿using PlantProcess.Api.Extensions;
 using PlantProcess.Application.Services.Reporting;
 
 namespace PlantProcess.Api.Endpoints.Reporting;
@@ -47,3 +47,4 @@ public static class ReportingEndpoints
             value.FileName));
     }
 }
+

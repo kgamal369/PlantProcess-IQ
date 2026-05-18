@@ -1,0 +1,984 @@
+=====================================================================
+ AI AUDIT TARGET : Configuration & Misc (.env, docker, sln)
+ TOTAL FILES     : 11
+=====================================================================
+ TABLE OF CONTENTS:
+  - Backend\.env.example (27 lines)
+  - Backend\docker-compose.yml (51 lines)
+  - Backend\PlantProcessIQ.sln (170 lines)
+  - Backend\tests\PlantProcess.PerformanceTests\PlantProcess.PerformanceTests.csproj (36 lines)
+  - Backend\tests\PlantProcess.PerformanceTests\UnitTest1.cs (11 lines)
+  - Backend\tools\phase0\README.md (268 lines)
+  - Documentation\docs\demo\PlantProcessIQ_DemoScript_PhaseH_I.md (67 lines)
+  - Documentation\docs\demo\PlantProcessIQ_OnePage_Pilot_Offer_PhaseI.md (32 lines)
+  - Documentation\docs\MappingJsonStandard.md (86 lines)
+  - Documentation\docs\PhaseD_E_F_G_ImplementationGuide.md (96 lines)
+  - Documentation\docs\print-3-current-status.md (78 lines)
+=====================================================================
+
+[FILE_START]
+[METADATA: Path='Backend\.env.example']
+# PostgreSQL product database
+POSTGRES_HOST=[MASKED_FOR_AI_AUDIT]
+POSTGRES_PORT=[MASKED_FOR_AI_AUDIT]
+POSTGRES_DB=[MASKED_FOR_AI_AUDIT]
+POSTGRES_USER=[MASKED_FOR_AI_AUDIT]
+POSTGRES_PASSWORD=[MASKED_FOR_AI_AUDIT]
+
+# Host ports
+PLANTPROCESS_API_PORT=[MASKED_FOR_AI_AUDIT]
+PLANTPROCESS_WEB_PORT=[MASKED_FOR_AI_AUDIT]
+PLANTPROCESS_DB_HOST_PORT=[MASKED_FOR_AI_AUDIT]
+
+# ASP.NET Core
+ASPNETCORE_ENVIRONMENT=[MASKED_FOR_AI_AUDIT]
+ASPNETCORE_URLS=[MASKED_FOR_AI_AUDIT]
+
+# Connection string consumed by API and Workers
+ConnectionStrings__PlantProcessDb=[MASKED_FOR_AI_AUDIT]
+
+# CORS
+PLANTPROCESS_ALLOWED_ORIGINS=[MASKED_FOR_AI_AUDIT]
+
+# Vite frontend
+VITE_HOST=[MASKED_FOR_AI_AUDIT]
+VITE_PORT=[MASKED_FOR_AI_AUDIT]
+VITE_PREVIEW_PORT=[MASKED_FOR_AI_AUDIT]
+VITE_API_BASE_URL=[MASKED_FOR_AI_AUDIT]
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Backend\docker-compose.yml']
+services:
+  plantprocess-db:
+    image: postgres:17-alpine
+    container_name: plantprocess-iq-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-plantprocessiq}
+      POSTGRES_USER: ${POSTGRES_USER:-plantprocess}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-plantprocess123}
+    ports:
+      - "${PLANTPROCESS_DB_HOST_PORT:-5432}:5432"
+    volumes:
+      - plantprocess_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-plantprocess} -d ${POSTGRES_DB:-plantprocessiq}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  plantprocess-api:
+    build:
+      context: .
+      dockerfile: PlantProcess.Api/Dockerfile
+    container_name: plantprocess-iq-api
+    restart: unless-stopped
+    depends_on:
+      plantprocess-db:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
+      ASPNETCORE_URLS: ${ASPNETCORE_URLS:-http://0.0.0.0:5063}
+      ConnectionStrings__PlantProcessDb: ${ConnectionStrings__PlantProcessDb:-Host=plantprocess-db;Port=5432;Database=plantprocessiq;Username=plantprocess;Password=plantprocess123}
+      PLANTPROCESS_ALLOWED_ORIGINS: ${PLANTPROCESS_ALLOWED_ORIGINS:-http://localhost:5173,http://localhost:3000}
+    ports:
+      - "${PLANTPROCESS_API_PORT:-5063}:5063"
+
+  plantprocess-workers:
+    build:
+      context: .
+      dockerfile: PlantProcess.Workers/Dockerfile
+    container_name: plantprocess-iq-workers
+    restart: unless-stopped
+    depends_on:
+      plantprocess-db:
+        condition: service_healthy
+    environment:
+      DOTNET_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
+      ConnectionStrings__PlantProcessDb: ${ConnectionStrings__PlantProcessDb:-Host=plantprocess-db;Port=5432;Database=plantprocessiq;Username=plantprocess;Password=plantprocess123}
+
+volumes:
+  plantprocess_pgdata:
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Backend\PlantProcessIQ.sln']
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlantProcess.Domain", "PlantProcess.Domain\PlantProcess.Domain.csproj", "{9C9C9B5B-88E4-44A6-A6D0-9C580A769418}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlantProcess.Infrastructure", "PlantProcess.Infrastructure\PlantProcess.Infrastructure.csproj", "{67C65D63-8D4A-4AC6-9BB7-19F1649BEDC5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlantProcess.Workers", "PlantProcess.Workers\PlantProcess.Workers.csproj", "{06344396-98BE-40E9-A81D-3EE9749DFE2F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlantProcess.Api", "PlantProcess.Api\PlantProcess.Api.csproj", "{D5EB1FC6-A370-45DB-8AEA-FD3757735BDF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlantProcess.Application", "PlantProcess.Application\PlantProcess.Application.csproj", "{3EE9AE75-EC05-496D-8604-F4E75026ADBD}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{0AB3BF05-4346-4AA6-1389-037BE0695223}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlantProcess.Domain.Tests", "tests\PlantProcess.Domain.Tests\PlantProcess.Domain.Tests.csproj", "{7C7E6FB0-721D-4797-BB7D-84F686AAD354}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlantProcess.Application.UnitTests", "tests\PlantProcess.Application.UnitTests\PlantProcess.Application.UnitTests.csproj", "{FE9D77EF-7C15-4189-83CF-095F9FFF4DDE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlantProcess.Infrastructure.IntegrationTests", "tests\PlantProcess.Infrastructure.IntegrationTests\PlantProcess.Infrastructure.IntegrationTests.csproj", "{66DA2A5A-9629-49F2-875A-4F44D7883605}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlantProcess.Api.IntegrationTests", "tests\PlantProcess.Api.IntegrationTests\PlantProcess.Api.IntegrationTests.csproj", "{86E54C48-5160-43A4-A304-99D03F66C7BA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlantProcess.PerformanceTests", "tests\PlantProcess.PerformanceTests\PlantProcess.PerformanceTests.csproj", "{1544247D-3C49-44BD-AEE2-26BAA82B5341}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9C9C9B5B-88E4-44A6-A6D0-9C580A769418}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9C9C9B5B-88E4-44A6-A6D0-9C580A769418}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9C9C9B5B-88E4-44A6-A6D0-9C580A769418}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{9C9C9B5B-88E4-44A6-A6D0-9C580A769418}.Debug|x64.Build.0 = Debug|Any CPU
+		{9C9C9B5B-88E4-44A6-A6D0-9C580A769418}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{9C9C9B5B-88E4-44A6-A6D0-9C580A769418}.Debug|x86.Build.0 = Debug|Any CPU
+		{9C9C9B5B-88E4-44A6-A6D0-9C580A769418}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9C9C9B5B-88E4-44A6-A6D0-9C580A769418}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9C9C9B5B-88E4-44A6-A6D0-9C580A769418}.Release|x64.ActiveCfg = Release|Any CPU
+		{9C9C9B5B-88E4-44A6-A6D0-9C580A769418}.Release|x64.Build.0 = Release|Any CPU
+		{9C9C9B5B-88E4-44A6-A6D0-9C580A769418}.Release|x86.ActiveCfg = Release|Any CPU
+		{9C9C9B5B-88E4-44A6-A6D0-9C580A769418}.Release|x86.Build.0 = Release|Any CPU
+		{67C65D63-8D4A-4AC6-9BB7-19F1649BEDC5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{67C65D63-8D4A-4AC6-9BB7-19F1649BEDC5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{67C65D63-8D4A-4AC6-9BB7-19F1649BEDC5}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{67C65D63-8D4A-4AC6-9BB7-19F1649BEDC5}.Debug|x64.Build.0 = Debug|Any CPU
+		{67C65D63-8D4A-4AC6-9BB7-19F1649BEDC5}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{67C65D63-8D4A-4AC6-9BB7-19F1649BEDC5}.Debug|x86.Build.0 = Debug|Any CPU
+		{67C65D63-8D4A-4AC6-9BB7-19F1649BEDC5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{67C65D63-8D4A-4AC6-9BB7-19F1649BEDC5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{67C65D63-8D4A-4AC6-9BB7-19F1649BEDC5}.Release|x64.ActiveCfg = Release|Any CPU
+		{67C65D63-8D4A-4AC6-9BB7-19F1649BEDC5}.Release|x64.Build.0 = Release|Any CPU
+		{67C65D63-8D4A-4AC6-9BB7-19F1649BEDC5}.Release|x86.ActiveCfg = Release|Any CPU
+		{67C65D63-8D4A-4AC6-9BB7-19F1649BEDC5}.Release|x86.Build.0 = Release|Any CPU
+		{06344396-98BE-40E9-A81D-3EE9749DFE2F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{06344396-98BE-40E9-A81D-3EE9749DFE2F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{06344396-98BE-40E9-A81D-3EE9749DFE2F}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{06344396-98BE-40E9-A81D-3EE9749DFE2F}.Debug|x64.Build.0 = Debug|Any CPU
+		{06344396-98BE-40E9-A81D-3EE9749DFE2F}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{06344396-98BE-40E9-A81D-3EE9749DFE2F}.Debug|x86.Build.0 = Debug|Any CPU
+		{06344396-98BE-40E9-A81D-3EE9749DFE2F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{06344396-98BE-40E9-A81D-3EE9749DFE2F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{06344396-98BE-40E9-A81D-3EE9749DFE2F}.Release|x64.ActiveCfg = Release|Any CPU
+		{06344396-98BE-40E9-A81D-3EE9749DFE2F}.Release|x64.Build.0 = Release|Any CPU
+		{06344396-98BE-40E9-A81D-3EE9749DFE2F}.Release|x86.ActiveCfg = Release|Any CPU
+		{06344396-98BE-40E9-A81D-3EE9749DFE2F}.Release|x86.Build.0 = Release|Any CPU
+		{D5EB1FC6-A370-45DB-8AEA-FD3757735BDF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D5EB1FC6-A370-45DB-8AEA-FD3757735BDF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D5EB1FC6-A370-45DB-8AEA-FD3757735BDF}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{D5EB1FC6-A370-45DB-8AEA-FD3757735BDF}.Debug|x64.Build.0 = Debug|Any CPU
+		{D5EB1FC6-A370-45DB-8AEA-FD3757735BDF}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{D5EB1FC6-A370-45DB-8AEA-FD3757735BDF}.Debug|x86.Build.0 = Debug|Any CPU
+		{D5EB1FC6-A370-45DB-8AEA-FD3757735BDF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D5EB1FC6-A370-45DB-8AEA-FD3757735BDF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D5EB1FC6-A370-45DB-8AEA-FD3757735BDF}.Release|x64.ActiveCfg = Release|Any CPU
+		{D5EB1FC6-A370-45DB-8AEA-FD3757735BDF}.Release|x64.Build.0 = Release|Any CPU
+		{D5EB1FC6-A370-45DB-8AEA-FD3757735BDF}.Release|x86.ActiveCfg = Release|Any CPU
+		{D5EB1FC6-A370-45DB-8AEA-FD3757735BDF}.Release|x86.Build.0 = Release|Any CPU
+		{3EE9AE75-EC05-496D-8604-F4E75026ADBD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3EE9AE75-EC05-496D-8604-F4E75026ADBD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3EE9AE75-EC05-496D-8604-F4E75026ADBD}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{3EE9AE75-EC05-496D-8604-F4E75026ADBD}.Debug|x64.Build.0 = Debug|Any CPU
+		{3EE9AE75-EC05-496D-8604-F4E75026ADBD}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{3EE9AE75-EC05-496D-8604-F4E75026ADBD}.Debug|x86.Build.0 = Debug|Any CPU
+		{3EE9AE75-EC05-496D-8604-F4E75026ADBD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3EE9AE75-EC05-496D-8604-F4E75026ADBD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3EE9AE75-EC05-496D-8604-F4E75026ADBD}.Release|x64.ActiveCfg = Release|Any CPU
+		{3EE9AE75-EC05-496D-8604-F4E75026ADBD}.Release|x64.Build.0 = Release|Any CPU
+		{3EE9AE75-EC05-496D-8604-F4E75026ADBD}.Release|x86.ActiveCfg = Release|Any CPU
+		{3EE9AE75-EC05-496D-8604-F4E75026ADBD}.Release|x86.Build.0 = Release|Any CPU
+		{7C7E6FB0-721D-4797-BB7D-84F686AAD354}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7C7E6FB0-721D-4797-BB7D-84F686AAD354}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7C7E6FB0-721D-4797-BB7D-84F686AAD354}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{7C7E6FB0-721D-4797-BB7D-84F686AAD354}.Debug|x64.Build.0 = Debug|Any CPU
+		{7C7E6FB0-721D-4797-BB7D-84F686AAD354}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{7C7E6FB0-721D-4797-BB7D-84F686AAD354}.Debug|x86.Build.0 = Debug|Any CPU
+		{7C7E6FB0-721D-4797-BB7D-84F686AAD354}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7C7E6FB0-721D-4797-BB7D-84F686AAD354}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7C7E6FB0-721D-4797-BB7D-84F686AAD354}.Release|x64.ActiveCfg = Release|Any CPU
+		{7C7E6FB0-721D-4797-BB7D-84F686AAD354}.Release|x64.Build.0 = Release|Any CPU
+		{7C7E6FB0-721D-4797-BB7D-84F686AAD354}.Release|x86.ActiveCfg = Release|Any CPU
+		{7C7E6FB0-721D-4797-BB7D-84F686AAD354}.Release|x86.Build.0 = Release|Any CPU
+		{FE9D77EF-7C15-4189-83CF-095F9FFF4DDE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FE9D77EF-7C15-4189-83CF-095F9FFF4DDE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FE9D77EF-7C15-4189-83CF-095F9FFF4DDE}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{FE9D77EF-7C15-4189-83CF-095F9FFF4DDE}.Debug|x64.Build.0 = Debug|Any CPU
+		{FE9D77EF-7C15-4189-83CF-095F9FFF4DDE}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{FE9D77EF-7C15-4189-83CF-095F9FFF4DDE}.Debug|x86.Build.0 = Debug|Any CPU
+		{FE9D77EF-7C15-4189-83CF-095F9FFF4DDE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FE9D77EF-7C15-4189-83CF-095F9FFF4DDE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FE9D77EF-7C15-4189-83CF-095F9FFF4DDE}.Release|x64.ActiveCfg = Release|Any CPU
+		{FE9D77EF-7C15-4189-83CF-095F9FFF4DDE}.Release|x64.Build.0 = Release|Any CPU
+		{FE9D77EF-7C15-4189-83CF-095F9FFF4DDE}.Release|x86.ActiveCfg = Release|Any CPU
+		{FE9D77EF-7C15-4189-83CF-095F9FFF4DDE}.Release|x86.Build.0 = Release|Any CPU
+		{66DA2A5A-9629-49F2-875A-4F44D7883605}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{66DA2A5A-9629-49F2-875A-4F44D7883605}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{66DA2A5A-9629-49F2-875A-4F44D7883605}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{66DA2A5A-9629-49F2-875A-4F44D7883605}.Debug|x64.Build.0 = Debug|Any CPU
+		{66DA2A5A-9629-49F2-875A-4F44D7883605}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{66DA2A5A-9629-49F2-875A-4F44D7883605}.Debug|x86.Build.0 = Debug|Any CPU
+		{66DA2A5A-9629-49F2-875A-4F44D7883605}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{66DA2A5A-9629-49F2-875A-4F44D7883605}.Release|Any CPU.Build.0 = Release|Any CPU
+		{66DA2A5A-9629-49F2-875A-4F44D7883605}.Release|x64.ActiveCfg = Release|Any CPU
+		{66DA2A5A-9629-49F2-875A-4F44D7883605}.Release|x64.Build.0 = Release|Any CPU
+		{66DA2A5A-9629-49F2-875A-4F44D7883605}.Release|x86.ActiveCfg = Release|Any CPU
+		{66DA2A5A-9629-49F2-875A-4F44D7883605}.Release|x86.Build.0 = Release|Any CPU
+		{86E54C48-5160-43A4-A304-99D03F66C7BA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{86E54C48-5160-43A4-A304-99D03F66C7BA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{86E54C48-5160-43A4-A304-99D03F66C7BA}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{86E54C48-5160-43A4-A304-99D03F66C7BA}.Debug|x64.Build.0 = Debug|Any CPU
+		{86E54C48-5160-43A4-A304-99D03F66C7BA}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{86E54C48-5160-43A4-A304-99D03F66C7BA}.Debug|x86.Build.0 = Debug|Any CPU
+		{86E54C48-5160-43A4-A304-99D03F66C7BA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{86E54C48-5160-43A4-A304-99D03F66C7BA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{86E54C48-5160-43A4-A304-99D03F66C7BA}.Release|x64.ActiveCfg = Release|Any CPU
+		{86E54C48-5160-43A4-A304-99D03F66C7BA}.Release|x64.Build.0 = Release|Any CPU
+		{86E54C48-5160-43A4-A304-99D03F66C7BA}.Release|x86.ActiveCfg = Release|Any CPU
+		{86E54C48-5160-43A4-A304-99D03F66C7BA}.Release|x86.Build.0 = Release|Any CPU
+		{1544247D-3C49-44BD-AEE2-26BAA82B5341}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1544247D-3C49-44BD-AEE2-26BAA82B5341}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1544247D-3C49-44BD-AEE2-26BAA82B5341}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{1544247D-3C49-44BD-AEE2-26BAA82B5341}.Debug|x64.Build.0 = Debug|Any CPU
+		{1544247D-3C49-44BD-AEE2-26BAA82B5341}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{1544247D-3C49-44BD-AEE2-26BAA82B5341}.Debug|x86.Build.0 = Debug|Any CPU
+		{1544247D-3C49-44BD-AEE2-26BAA82B5341}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1544247D-3C49-44BD-AEE2-26BAA82B5341}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1544247D-3C49-44BD-AEE2-26BAA82B5341}.Release|x64.ActiveCfg = Release|Any CPU
+		{1544247D-3C49-44BD-AEE2-26BAA82B5341}.Release|x64.Build.0 = Release|Any CPU
+		{1544247D-3C49-44BD-AEE2-26BAA82B5341}.Release|x86.ActiveCfg = Release|Any CPU
+		{1544247D-3C49-44BD-AEE2-26BAA82B5341}.Release|x86.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{7C7E6FB0-721D-4797-BB7D-84F686AAD354} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
+		{FE9D77EF-7C15-4189-83CF-095F9FFF4DDE} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
+		{66DA2A5A-9629-49F2-875A-4F44D7883605} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
+		{86E54C48-5160-43A4-A304-99D03F66C7BA} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
+		{1544247D-3C49-44BD-AEE2-26BAA82B5341} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
+	EndGlobalSection
+EndGlobal
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Backend\tests\PlantProcess.PerformanceTests\PlantProcess.PerformanceTests.csproj']
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" Version="0.15.8" />
+    <PackageReference Include="coverlet.collector" Version="10.0.0">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="FluentAssertions" Version="8.10.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.4" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.4" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageReference Include="Testcontainers.PostgreSql" Version="4.11.0" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\PlantProcess.Application\PlantProcess.Application.csproj" />
+    <ProjectReference Include="..\..\PlantProcess.Infrastructure\PlantProcess.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\PlantProcess.Domain\PlantProcess.Domain.csproj" />
+  </ItemGroup>
+
+</Project>
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Backend\tests\PlantProcess.PerformanceTests\UnitTest1.cs']
+namespace PlantProcess.PerformanceTests;
+
+public class UnitTest1
+{
+    [Fact]
+    public void Test1()
+    {
+
+    }
+}
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Backend\tools\phase0\README.md']
+# Phase 0 - Baseline Stabilization
+
+This folder contains scripts used to validate the current PlantProcess IQ Sprint 3 baseline before adding the Application layer.
+
+## Goal
+
+Phase 0 does not add product features. It proves that the current solution:
+
+1. Builds successfully.
+2. Has valid EF Core migrations.
+3. Can connect to the PostgreSQL database.
+4. Can load the current advanced demo seed.
+5. Can return valid responses from the core baseline API endpoints.
+6. Has a documented Sprint 3 status before new refactoring starts.
+
+## Main Scripts
+
+| Script | Purpose |
+|---|---|
+| `Run-Phase0-BaselineValidation.ps1` | Runs restore, build, EF database update, optional seed loading, and writes a validation report. |
+| `Test-ApiBaseline.ps1` | Calls the baseline API endpoints and validates HTTP success responses. |
+
+## Recommended Execution Order
+
+```powershell
+cd C:\Workspace\PlantProcess-IQ
+
+.\tools\phase0\Run-Phase0-BaselineValidation.ps1 `
+    -ProjectRoot "C:\Workspace\PlantProcess-IQ" `
+    -ApplyDatabaseMigration `
+    -LoadSeed `
+    -SeedFile "C:\Workspace\PlantProcess-IQ\database\seeds\002_full_feature_demo_seed.sql"
+
+dotnet run --project .\PlantProcess.Api\PlantProcess.Api.csproj
+
+.\tools\phase0\Test-ApiBaseline.ps1 `
+    -BaseUrl "https://localhost:7073"
+
+    
+---
+
+## 0.3 Add file: `tools/phase0/Run-Phase0-BaselineValidation.ps1`
+
+```powershell
+<#
+.SYNOPSIS
+    Phase 0 baseline validation script for PlantProcess IQ.
+
+.DESCRIPTION
+    This script validates the current Sprint 3 baseline before adding the Application layer.
+
+    It can:
+    - Verify expected project folders and solution file.
+    - Run dotnet restore.
+    - Run dotnet build.
+    - Apply EF Core migrations.
+    - Optionally load the advanced demo seed SQL file.
+    - Generate a timestamped validation report.
+
+.NOTES
+    Run from anywhere. Pass -ProjectRoot if needed.
+#>
+
+[CmdletBinding()]
+param(
+    [string]$ProjectRoot = "C:\Workspace\PlantProcess-IQ",
+
+    [string]$SolutionFile = "PlantProcessIQ.sln",
+
+    [string]$ApiProject = "PlantProcess.Api\PlantProcess.Api.csproj",
+
+    [string]$InfrastructureProject = "PlantProcess.Infrastructure\PlantProcess.Infrastructure.csproj",
+
+    [string]$DbConnectionString = "Host=localhost;Port=5432;Database=plantprocessiq;Username=plantprocess;Password=plantprocess123",
+
+    [switch]$ApplyDatabaseMigration,
+
+    [switch]$LoadSeed,
+
+    [string]$SeedFile = "database\seeds\002_full_feature_demo_seed.sql",
+
+    [string]$ReportFolder = "tools\phase0\reports"
+)
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = "Stop"
+
+function Write-Step {
+    param([string]$Message)
+
+    Write-Host ""
+    Write-Host "================================================================================" -ForegroundColor DarkGray
+    Write-Host $Message -ForegroundColor Cyan
+    Write-Host "================================================================================" -ForegroundColor DarkGray
+}
+
+function Invoke-CheckedCommand {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Command,
+
+        [Parameter(Mandatory = $true)]
+        [string[]]$Arguments,
+
+        [string]$WorkingDirectory = $ProjectRoot
+    )
+
+    Write-Host ""
+    Write-Host "> $Command $($Arguments -join ' ')" -ForegroundColor Yellow
+
+    $process = Start-Process `
+        -FilePath $Command `
+        -ArgumentList $Arguments `
+        -WorkingDirectory $WorkingDirectory `
+        -NoNewWindow `
+        -Wait `
+        -PassThru
+
+    if ($process.ExitCode -ne 0) {
+        throw "Command failed with exit code $($process.ExitCode): $Command $($Arguments -join ' ')"
+    }
+}
+
+function Test-RequiredPath {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Path,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Description
+    )
+
+    if (-not (Test-Path $Path)) {
+        throw "$Description was not found: $Path"
+    }
+
+    Write-Host "[OK] $Description found: $Path" -ForegroundColor Green
+}
+
+$startedAt = Get-Date
+$timestamp = $startedAt.ToString("yyyyMMdd_HHmmss")
+
+$ProjectRoot = (Resolve-Path $ProjectRoot).Path
+$solutionPath = Join-Path $ProjectRoot $SolutionFile
+$apiProjectPath = Join-Path $ProjectRoot $ApiProject
+$infrastructureProjectPath = Join-Path $ProjectRoot $InfrastructureProject
+$seedPath = Join-Path $ProjectRoot $SeedFile
+$reportRoot = Join-Path $ProjectRoot $ReportFolder
+
+if (-not (Test-Path $reportRoot)) {
+    New-Item -ItemType Directory -Path $reportRoot -Force | Out-Null
+}
+
+$reportPath = Join-Path $reportRoot "phase0_validation_$timestamp.md"
+
+Write-Step "PlantProcess IQ - Phase 0 Baseline Validation"
+Write-Host "Project root : $ProjectRoot"
+Write-Host "Started at   : $startedAt"
+
+Write-Step "1. Validate expected project structure"
+Test-RequiredPath -Path $solutionPath -Description "Solution file"
+Test-RequiredPath -Path $apiProjectPath -Description "API project"
+Test-RequiredPath -Path $infrastructureProjectPath -Description "Infrastructure project"
+Test-RequiredPath -Path (Join-Path $ProjectRoot "PlantProcess.Domain\PlantProcess.Domain.csproj") -Description "Domain project"
+Test-RequiredPath -Path (Join-Path $ProjectRoot "PlantProcess.Workers\PlantProcess.Workers.csproj") -Description "Workers project"
+
+Write-Step "2. Capture Git status"
+$gitStatus = & git -C $ProjectRoot status --short
+if ([string]::IsNullOrWhiteSpace($gitStatus)) {
+    Write-Host "[OK] Git working tree is clean." -ForegroundColor Green
+} else {
+    Write-Host "[INFO] Git working tree has changes:" -ForegroundColor Yellow
+    Write-Host $gitStatus
+}
+
+Write-Step "3. Dotnet information"
+Invoke-CheckedCommand -Command "dotnet" -Arguments @("--info")
+
+Write-Step "4. Restore solution"
+Invoke-CheckedCommand -Command "dotnet" -Arguments @("restore", $solutionPath)
+
+Write-Step "5. Build solution"
+Invoke-CheckedCommand -Command "dotnet" -Arguments @("build", $solutionPath, "--configuration", "Debug", "--no-restore")
+
+if ($ApplyDatabaseMigration) {
+    Write-Step "6. Apply EF Core database migrations"
+
+    $env:PLANTPROCESS_DB = $DbConnectionString
+
+    Invoke-CheckedCommand -Command "dotnet" -Arguments @(
+        "ef",
+        "database",
+        "update",
+        "--project",
+        $infrastructureProjectPath,
+        "--startup-project",
+        $apiProjectPath
+    )
+} else {
+    Write-Step "6. EF Core database migration skipped"
+    Write-Host "Use -ApplyDatabaseMigration to apply migrations." -ForegroundColor Yellow
+}
+
+if ($LoadSeed) {
+    Write-Step "7. Load advanced full feature demo seed"
+
+    Test-RequiredPath -Path $seedPath -Description "Seed SQL file"
+
+    $psqlCommand = Get-Command "psql" -ErrorAction SilentlyContinue
+
+    if ($null -eq $psqlCommand) {
+        throw "psql was not found in PATH. Install PostgreSQL client tools or load the seed manually from pgAdmin/DBeaver."
+    }
+
+    $env:PGPASSWORD = "plantprocess123"
+
+    Invoke-CheckedCommand -Command "psql" -Arguments @(
+        "--host", "localhost",
+        "--port", "5432",
+        "--username", "plantprocess",
+        "--dbname", "plantprocessiq",
+        "--file", $seedPath
+    )
+} else {
+    Write-Step "7. Seed loading skipped"
+    Write-Host "Use -LoadSeed to load the current demo seed." -ForegroundColor Yellow
+}
+
+$finishedAt = Get-Date
+$duration = $finishedAt - $startedAt
+
+Write-Step "8. Write validation report"
+
+$reportContent = @"
+# PlantProcess IQ - Phase 0 Baseline Validation Report
+
+Generated At: $($finishedAt.ToString("yyyy-MM-dd HH:mm:ss"))
+Project Root: `$ProjectRoot`
+
+## Result
+
+Baseline validation script completed successfully.
+
+## Actions Executed
+
+| Check | Result |
+|---|---|
+| Project structure exists | Passed |
+| Dotnet restore | Passed |
+| Dotnet build | Passed |
+| EF Core database migration | $(if ($ApplyDatabaseMigration) { "Executed" } else { "Skipped" }) |
+| Advanced seed loading | $(if ($LoadSeed) { "Executed" } else { "Skipped" }) |
+
+## Duration
+
+$($duration.ToString())
+
+## Notes
+
+- This report validates the current Sprint 3 baseline before Phase 1 Application layer implementation.
+- After this report, run `Test-ApiBaseline.ps1` while the API is running.
+"@
+
+Set-Content -Path $reportPath -Value $reportContent -Encoding UTF8
+
+Write-Host ""
+Write-Host "[OK] Phase 0 baseline validation completed." -ForegroundColor Green
+Write-Host "[OK] Report written to: $reportPath" -ForegroundColor Green
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Documentation\docs\demo\PlantProcessIQ_DemoScript_PhaseH_I.md']
+# PlantProcess IQ — Phase H/I Demo Script
+
+## Goal
+Demonstrate the path from correlation-ready data to inspectable feature vectors, calculated risk, dashboard summaries, and PDF investigation report.
+
+## Steps
+
+1. Build and migrate:
+
+```powershell
+dotnet clean
+dotnet restore
+dotnet build
+dotnet ef migrations add AddModelRegistry --project PlantProcess.Infrastructure --startup-project PlantProcess.Api
+dotnet ef database update --project PlantProcess.Infrastructure --startup-project PlantProcess.Api
+```
+
+2. Start API:
+
+```powershell
+dotnet run --project PlantProcess.Api
+```
+
+3. Choose one material:
+
+```http
+GET https://localhost:7001/dev/material-sample?take=5
+```
+
+4. Inspect feature vector:
+
+```http
+GET https://localhost:7001/analytics/features/{materialUnitId}
+```
+
+5. Calculate and store risk:
+
+```http
+POST https://localhost:7001/risk-scores/materials/{materialUnitId}/calculate
+Content-Type: application/json
+
+{
+  "riskType": "OverallQualityRisk",
+  "modelVersion": "rule-risk-v1.0",
+  "storeResult": true
+}
+```
+
+6. Generate dashboards:
+
+```http
+GET https://localhost:7001/analytics/dashboard/overview
+GET https://localhost:7001/analytics/dashboard/quality
+GET https://localhost:7001/analytics/dashboard/risk
+GET https://localhost:7001/analytics/dashboard/data-quality
+```
+
+7. Generate investigation report:
+
+```http
+GET https://localhost:7001/reports/materials/{materialUnitId}/investigation
+GET https://localhost:7001/reports/materials/{materialUnitId}/investigation/pdf
+```
+
+## Expected story
+PlantProcess IQ can now explain why a material is higher/lower risk using process features, parameter anomalies, downtime exposure, quality signals, data-quality issues, and correlation hints.
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Documentation\docs\demo\PlantProcessIQ_OnePage_Pilot_Offer_PhaseI.md']
+# PlantProcess IQ — One-Page Pilot Offer
+
+## Pilot name
+Process-to-Quality Risk Diagnostic Pilot
+
+## Customer problem
+Manufacturing plants collect large amounts of process and quality data, but the data is fragmented across MES, L2, historian, lab, inspection, downtime, and ERP systems. This makes defect investigation slow and makes early quality-risk prediction difficult.
+
+## Pilot promise
+PlantProcess IQ connects historical process and quality exports, builds material/batch genealogy, checks data quality, identifies process-to-defect correlations, generates material risk scores, and provides investigation reports for process and quality teams.
+
+## Pilot scope
+- One site
+- One production route
+- One or two defect groups
+- CSV/Excel/SQL export input
+- Read-only analysis
+- Synthetic/anonymized examples for demo
+- Dashboard summary and PDF investigation report
+
+## Deliverables
+- Data readiness assessment
+- Canonical data mapping
+- Data-quality issue report
+- Correlation diagnostic summary
+- Initial rule-based risk scoring
+- Investigation report sample
+- Go/no-go roadmap for ML pilot
+
+## Important positioning
+The pilot provides correlation and risk-support evidence. It does not claim guaranteed root cause without process-engineer validation.
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Documentation\docs\MappingJsonStandard.md']
+# PlantProcess IQ Mapping JSON Standard
+
+PlantProcess IQ mapping definitions use a simple field-map object:
+
+```json
+{
+  "CanonicalFieldName": "source_column_name"
+}
+```
+
+The key is the canonical entity field expected by the mapping engine. The value is the raw JSON property name stored in `staging_records.raw_json`.
+
+## Supported Phase C Targets
+
+- `MaterialUnit`
+- `MaterialAlias`
+- `ProcessStepExecution`
+- `ParameterObservation`
+- `QualityEvent`
+- `GenealogyEdge`
+
+## Example: MaterialUnit
+
+```json
+{
+  "MaterialCode": "material_id",
+  "MaterialUnitType": "material_type",
+  "SiteCode": "site_code",
+  "ProductFamily": "product_family",
+  "GradeOrRecipe": "grade",
+  "ProductionStartUtc": "start_utc",
+  "ProductionEndUtc": "end_utc"
+}
+```
+
+## Example: ProcessStepExecution
+
+```json
+{
+  "MaterialCode": "piece_id",
+  "OperationType": "operation",
+  "OperationCode": "operation_code",
+  "EquipmentCode": "equipment_code",
+  "StartedAtUtc": "start_utc",
+  "EndedAtUtc": "end_utc",
+  "CrewCode": "crew",
+  "ExecutionStatus": "status"
+}
+```
+
+## Example: ParameterObservation
+
+```json
+{
+  "MaterialCode": "piece_id",
+  "ParameterCode": "tag",
+  "NumericValue": "value",
+  "ObservedAtUtc": "sample_time",
+  "QualityFlag": "quality",
+  "EquipmentCode": "equipment_code",
+  "UnitOfMeasure": "unit"
+}
+```
+
+## Example: QualityEvent
+
+```json
+{
+  "MaterialCode": "coil_id",
+  "EventType": "quality_event",
+  "EventAtUtc": "event_time",
+  "Severity": "severity",
+  "Decision": "decision",
+  "DefectCode": "defect_code",
+  "Description": "description"
+}
+```
+
+## Execution Rules
+
+1. The mapping engine only maps rows already stored in `staging_records`.
+2. Preview mode validates and resolves references without saving canonical records.
+3. Execute mode creates canonical records and marks staging rows as `Mapped`, `Failed`, or `Skipped`.
+4. Failed rows keep `processing_error` for audit and replay.
+5. Steel terms must stay in data/configuration, not in code.
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Documentation\docs\PhaseD_E_F_G_ImplementationGuide.md']
+# PlantProcess IQ — Phase D, E, F and G Implementation Guide
+
+## Phase D — Import Workflow Orchestration Engine
+
+Adds:
+
+- `ImportWorkflowService`
+- `ImportBatchQueueProcessorService`
+- `POST /workflow/import/run`
+- `POST /workflow/import/process-queue`
+- worker automation for import queue + data-quality scan
+
+Flow:
+
+```text
+ImportBatch
+  -> StagingRecords
+  -> MappingExecutionService
+  -> Canonical model
+  -> DataQualityService.RunFullScanAsync
+  -> ImportBatch Completed / Failed
+```
+
+## Phase E — Application Layer Completion
+
+Adds:
+
+- Application-layer query services for Plant Layout
+- Application-layer enriched quality-event query service
+- page/pageSize paging for new read endpoints
+- equipment hierarchy traversal
+- material-by-equipment reverse lookup
+- defect catalog navigation property
+
+## Phase F — Synthetic Dataset Expansion
+
+Adds:
+
+- `database/seeds/003_additional_demo_seed.sql`
+- `tools/generate_synthetic_plantprocessiq.py`
+
+The Python generator creates CSV files with hidden patterns for correlation validation.
+
+## Phase G — Correlation Engine
+
+Adds:
+
+- `CorrelationResult` domain entity
+- correlation result EF config
+- `CorrelationService`
+- `GET /analytics/correlations/parameter-defect`
+- `GET /analytics/correlations/equipment-defect-rate`
+- `GET /analytics/correlations/operation-defect-rate`
+- `GET /analytics/correlations/materials/{materialUnitId}/context`
+
+Important: correlation output must be positioned as suspected contributors, not guaranteed root cause.
+
+## EF Migration Commands
+
+```powershell
+dotnet ef migrations add AddPhaseGCorrelationResults --project PlantProcess.Infrastructure --startup-project PlantProcess.Api
+dotnet ef database update --project PlantProcess.Infrastructure --startup-project PlantProcess.Api
+```
+
+If you do not want to generate the migration immediately, apply:
+
+```text
+database/migrations/manual/20260511_phase_g_correlation_results.sql
+```
+
+## Recommended Validation Sequence
+
+```powershell
+dotnet restore
+dotnet build
+
+dotnet ef database update --project PlantProcess.Infrastructure --startup-project PlantProcess.Api
+
+psql -h localhost -p 5432 -U plantprocess -d plantprocessiq -f database/seeds/003_additional_demo_seed.sql
+
+python tools/generate_synthetic_plantprocessiq.py --rows 100000 --out data/synthetic/phase_f
+```
+
+## Key APIs to Test
+
+```http
+POST /workflow/import/run
+POST /workflow/import/process-queue
+POST /data-quality/scan/run
+GET  /plant-layout/equipment/{equipmentId}/materials
+GET  /quality/events?page=1&pageSize=50
+GET  /analytics/correlations/parameter-defect?parameterCode=CastingSpeed&defectType=SurfaceCrack&bins=8
+GET  /analytics/correlations/equipment-defect-rate?defectType=SurfaceCrack
+GET  /analytics/correlations/operation-defect-rate?defectType=SurfaceCrack
+```
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Documentation\docs\print-3-current-status.md']
+# PlantProcess IQ - Sprint 3 Current Status
+
+## Status Date
+
+2026-05-10
+
+## Purpose
+
+This document freezes the current Sprint 3 implementation state before introducing the Application layer and process-engine foundation.
+
+## Current Technical State
+
+The current implementation contains a strong canonical backend foundation:
+
+- API project with endpoint groups for:
+  - Health
+  - Plant layout
+  - Configuration
+  - Integration
+  - Materials
+  - Material investigation
+  - Process
+  - Quality
+  - Risk scores
+  - Data quality
+  - Workflow
+  - Validation
+  - Development/database validation
+- Domain project with canonical manufacturing entities.
+- Infrastructure project with EF Core configurations, PostgreSQL persistence, migrations, and concurrency configuration.
+- Worker project with a placeholder background service.
+
+## Current Strengths
+
+| Area | Status |
+|---|---|
+| Canonical data model | Good foundation |
+| Recursive area hierarchy | Implemented |
+| Recursive equipment hierarchy | Implemented |
+| Source system registry | Implemented |
+| Import batch metadata | Implemented |
+| Mapping definition metadata | Implemented |
+| Material genealogy | Implemented |
+| Process step and parameter observation model | Implemented |
+| Quality event and defect catalog model | Implemented |
+| Data-quality issue model | Implemented |
+| Risk score model | Implemented |
+| Validation endpoint | Initial version implemented |
+| Advanced demo seed | Available |
+
+## Current Gaps
+
+| Gap | Description |
+|---|---|
+| Application layer | Missing. Endpoint files currently contain too much orchestration and EF logic. |
+| Real ingestion engine | Missing. Current import batch and mapping definitions are metadata only. |
+| Raw/staging persistence | Missing. Source rows are not yet stored exactly as received. |
+| Mapping executor | Missing. Mapping JSON is stored but not executed. |
+| Workflow service layer | Missing. Workflow endpoint is a facade, not yet a process engine. |
+| Worker jobs | Missing. Worker currently has placeholder loop only. |
+| Correlation engine | Missing. |
+| ML/prediction engine | Missing. |
+| Reporting/dashboard API | Missing. |
+| Production-grade logging | Partial. Basic request logging exists but needs correlation IDs and separated log files. |
+
+## Next Phase
+
+Phase 1 introduces `PlantProcess.Application`.
+
+The goal is not to change business behavior yet. The goal is to create a clean application-service foundation so later phases can move endpoint logic into services and build the real ingestion/mapping/process engine.
+
+## Guardrails
+
+- Do not use employer/customer confidential data.
+- Keep steel-specific words as configuration/demo metadata only.
+- Do not write to MES, Level 2, SCADA, PLC, ERP, QMS, or historian systems.
+- Keep PlantProcess IQ as a read-only intelligence layer in MVP.
+- Use suspected contributor / risk indicator wording, not guaranteed root cause.
+[FILE_END]
+

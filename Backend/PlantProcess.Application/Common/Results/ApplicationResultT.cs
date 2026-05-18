@@ -28,3 +28,5 @@ public sealed class ApplicationResult<T>
         return new ApplicationResult<T>(false, default, error);
     }
 }
+
+

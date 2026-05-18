@@ -1,4 +1,4 @@
-using PlantProcess.Application.Common.Paging;
+﻿using PlantProcess.Application.Common.Paging;
 using PlantProcess.Application.Common.Results;
 using PlantProcess.Application.Contracts.PlantLayout;
 
@@ -13,3 +13,6 @@ public interface IPlantLayoutQueryService
     Task<ApplicationResult<EquipmentHierarchyDto>> GetEquipmentChildrenAsync(Guid equipmentId, CancellationToken cancellationToken);
     Task<ApplicationResult<MaterialByEquipmentDto>> GetMaterialsByEquipmentAsync(Guid equipmentId, PageRequest pageRequest, CancellationToken cancellationToken);
 }
+
+
+

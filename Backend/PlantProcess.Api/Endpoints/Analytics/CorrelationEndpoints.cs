@@ -1,13 +1,10 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using PlantProcess.Api.Extensions;
-using PlantProcess.Application.Contracts.Analytics;
-using PlantProcess.Application.Services.Analytics;
 using PlantProcess.Infrastructure.Persistence;
 using System.Text.Json;
-using Microsoft.EntityFrameworkCore;
 using PlantProcess.Domain.Entities.Analytics;
-using PlantProcess.Infrastructure.Persistence;
-using PlantProcess.Application.Services.Analytics.Interfaces;
+using PlantProcess.Application.Analytics.Contracts;
+using PlantProcess.Application.Analytics.Interfaces;
 
 
 namespace PlantProcess.Api.Endpoints.Analytics;
@@ -667,3 +664,4 @@ public static class CorrelationEndpoints
         decimal? LiftVsBaseline,
         string Confidence);
 }
+

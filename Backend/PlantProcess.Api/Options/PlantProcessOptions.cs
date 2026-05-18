@@ -1,4 +1,4 @@
-namespace PlantProcess.Api.Options;
+﻿namespace PlantProcess.Api.Options;
 
 public sealed class PlantProcessOptions
 {

@@ -17,3 +17,5 @@ public sealed record PageRequest(
 
     public int Skip => (SafePage - 1) * SafePageSize;
 }
+
+

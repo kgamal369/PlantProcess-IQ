@@ -1,10 +1,10 @@
-// ============================================================
-// TASK 13 — Confirm CORS origins are configurable
+﻿// ============================================================
+// TASK 13 â€” Confirm CORS origins are configurable
 // FILE: Backend/PlantProcess.Api/Configuration/StartupConfigurationValidator.cs
 //
 // CHANGES vs current version:
 //  1. Production check now also rejects *:// wildcard origins.
-//  2. Validates that AllowedOrigins are parseable URIs — prevents
+//  2. Validates that AllowedOrigins are parseable URIs â€” prevents
 //     typos like "http//localhost" from silently being accepted by
 //     the CORS middleware and causing 403 errors.
 //  3. Added PlantTimeZoneId validation with a descriptive error.
@@ -25,7 +25,7 @@ public static class StartupConfigurationValidator
     {
         var errors = new List<string>();
 
-        // ── 1. Database connection string ─────────────────────────────────
+        // â”€â”€ 1. Database connection string â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         var connectionString = configuration.GetConnectionString("PlantProcessDb");
 
         if (options.RequireDatabaseConnectionString &&
@@ -37,7 +37,7 @@ public static class StartupConfigurationValidator
                 "or environment variable ConnectionStrings__PlantProcessDb.");
         }
 
-        // ── 2. CORS allowed origins ───────────────────────────────────────
+        // â”€â”€ 2. CORS allowed origins â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         if (options.RequireConfiguredCors && effectiveAllowedOrigins.Count == 0)
         {
             errors.Add(
@@ -79,7 +79,7 @@ public static class StartupConfigurationValidator
             }
         }
 
-        // ── 3. Time zone ──────────────────────────────────────────────────
+        // â”€â”€ 3. Time zone â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         if (string.IsNullOrWhiteSpace(options.PlantTimeZoneId))
         {
             errors.Add(
@@ -100,14 +100,14 @@ public static class StartupConfigurationValidator
             }
         }
 
-        // ── 4. UTC offset range ───────────────────────────────────────────
+        // â”€â”€ 4. UTC offset range â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         if (options.PlantUtcOffsetMinutes is < -720 or > 840)
         {
             errors.Add(
                 "PlantProcess:PlantUtcOffsetMinutes must be between -720 and 840.");
         }
 
-        // ── Fail fast ─────────────────────────────────────────────────────
+        // â”€â”€ Fail fast â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         if (errors.Count > 0)
         {
             var message =
@@ -169,3 +169,4 @@ public static class StartupConfigurationValidator
             .ToList();
     }
 }
+

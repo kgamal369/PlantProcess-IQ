@@ -1,18 +1,17 @@
-using System.Data;
+﻿using System.Data;
 using System.Diagnostics;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using PlantProcess.Api.Extensions;
-using PlantProcess.Application.Contracts.Integration;
-using PlantProcess.Application.Contracts.Integration.Dtos;
-using PlantProcess.Application.Services.Integration;
+using PlantProcess.Application.Integration.Contracts.Dtos;
+using PlantProcess.Application.Integration.Interfaces.SchemaConfiguration;
 using PlantProcess.Infrastructure.Persistence;
 
 namespace PlantProcess.Api.Endpoints.Admin;
 
 /// <summary>
-/// Phase 4 — Schema Configuration / SQL View Layer.
+/// Phase 4 â€” Schema Configuration / SQL View Layer.
 /// 
 /// This endpoint group supports:
 /// - schema view metadata CRUD,
@@ -27,7 +26,7 @@ public static class SchemaConfigurationEndpoints
     public static IEndpointRouteBuilder MapSchemaConfigurationEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/admin/schema-configuration")
-            .WithTags("Admin — Schema Configuration");
+            .WithTags("Admin â€” Schema Configuration");
 
         group.MapGet("/views", GetSchemaViewsAsync)
             .WithSummary("Get schema views");

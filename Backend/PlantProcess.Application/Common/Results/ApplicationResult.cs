@@ -25,3 +25,5 @@ public sealed class ApplicationResult
         return new ApplicationResult(false, error);
     }
 }
+
+

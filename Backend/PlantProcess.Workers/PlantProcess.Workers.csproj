@@ -34,5 +34,12 @@
     <ProjectReference Include="..\PlantProcess.Infrastructure\PlantProcess.Infrastructure.csproj" />
     <ProjectReference Include="..\PlantProcess.Application\PlantProcess.Application.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Jobs\Import\" />
+    <Folder Include="Jobs\CanonicalRefresh\" />
+    <Folder Include="Jobs\DataQuality\" />
+    <Folder Include="Jobs\CorrelationLearning\" />
+    <Folder Include="Jobs\RiskScoring\" />
+  </ItemGroup>
 
 </Project>

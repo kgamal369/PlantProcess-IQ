@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using PlantProcess.Api.Extensions;
 using PlantProcess.Application.Contracts.Quality;
 using PlantProcess.Application.Services.Quality;
@@ -253,3 +253,4 @@ public static class QualityEndpoints
         string? PlantTimeZoneId,
         int? PlantUtcOffsetMinutes);
 }
+

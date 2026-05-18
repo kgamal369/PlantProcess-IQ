@@ -1,4 +1,4 @@
-namespace PlantProcess.Application.Contracts.Reporting;
+﻿namespace PlantProcess.Application.Reporting;
 
 public sealed record InvestigationReportDto(
     Guid MaterialUnitId,
@@ -27,3 +27,6 @@ public sealed record InvestigationPdfReportResult(
     string FileName,
     string ContentType,
     byte[] Content);
+
+
+

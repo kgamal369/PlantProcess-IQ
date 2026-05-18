@@ -38,3 +38,5 @@ public static class TextNormalizer
         return RequiredTrim(value, fieldName, maxLength).ToUpperInvariant();
     }
 }
+
+

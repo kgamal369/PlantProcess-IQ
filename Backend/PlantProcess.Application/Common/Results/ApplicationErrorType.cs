@@ -12,3 +12,5 @@ public enum ApplicationErrorType
     Unexpected = 8,
     NotImplemented = 9
 }
+
+

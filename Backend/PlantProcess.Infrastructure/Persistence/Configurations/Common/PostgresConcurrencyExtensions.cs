@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace PlantProcess.Infrastructure.Persistence.Configurations;
+namespace PlantProcess.Infrastructure.Persistence.Configurations.Common;
 
 public static class PostgresConcurrencyExtensions
 {

@@ -290,3 +290,4 @@ public static class MaterialEndpoints
 
     public sealed record SoftDeleteRequest(string? Reason);
 }
+

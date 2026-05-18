@@ -7,3 +7,5 @@ public sealed record ApplicationReadinessDto(
     string Version,
     DateTime CheckedAtUtc,
     IReadOnlyList<string> RegisteredCapabilities);
+
+

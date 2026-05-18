@@ -21,3 +21,5 @@ internal sealed class NotImplementedGenealogyService : IGenealogyService
                 ApplicationError.NotImplemented(nameof(IGenealogyService))));
     }
 }
+
+

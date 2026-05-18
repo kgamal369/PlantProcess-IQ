@@ -1,6 +1,5 @@
-using PlantProcess.Api.Extensions;
-using PlantProcess.Application.Services.Analytics;
-using PlantProcess.Application.Services.Analytics.Interfaces;
+﻿using PlantProcess.Api.Extensions;
+using PlantProcess.Application.Analytics.Interfaces;
 
 namespace PlantProcess.Api.Endpoints.Analytics;
 
@@ -25,3 +24,5 @@ public static class FeatureEngineeringEndpoints
         return result.ToHttpResult(value => Results.Ok(value));
     }
 }
+
+

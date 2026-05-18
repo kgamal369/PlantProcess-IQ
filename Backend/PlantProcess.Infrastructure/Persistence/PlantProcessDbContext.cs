@@ -11,6 +11,7 @@ using PlantProcess.Domain.Entities.PlantLayout;
 using PlantProcess.Domain.Entities.Process;
 using PlantProcess.Domain.Entities.Quality;
 using PlantProcess.Application.Common.Persistence;
+using PlantProcess.Domain.Entities.Dashboarding;
 
 namespace PlantProcess.Infrastructure.Persistence;
 

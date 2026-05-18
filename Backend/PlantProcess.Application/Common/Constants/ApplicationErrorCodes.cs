@@ -10,3 +10,5 @@ public static class ApplicationErrorCodes
     public const string UnexpectedFailure = "unexpected.failure";
     public const string NotImplemented = "application.not_implemented";
 }
+
+
