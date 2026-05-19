@@ -1,0 +1,22 @@
+# ============================================================
+# Backend Docker ignore
+# Prevent Windows build artifacts from being copied into Linux containers
+# ============================================================
+
+**/bin/
+**/obj/
+**/.vs/
+**/.vscode/
+**/.idea/
+**/TestResults/
+**/coverage/
+**/logs/
+**/Documentation/
+
+*.user
+*.suo
+*.cache
+*.log
+
+.env
+.env.*

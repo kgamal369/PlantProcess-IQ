@@ -1,0 +1,159 @@
+name: plantprocessiq-demo
+
+services:
+  caddy:
+    image: caddy:2.8-alpine
+    container_name: ppiq-caddy
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - plantprocess-website
+      - plantprocess-app-web
+      - plantprocess-api
+      - jenkins
+    networks:
+      - ppiq-net
+
+  postgres:
+    image: postgres:17-alpine
+    container_name: ppiq-postgres
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_APP_DB}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - ${HOST_POSTGRES_DATA:-/data/plantprocess-iq/postgres}:/var/lib/postgresql/data
+    shm_size: "512mb"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_APP_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    networks:
+      - ppiq-net
+
+  plantprocess-api:
+    build:
+      context: ../../Backend
+      dockerfile: PlantProcess.Api/Dockerfile
+    container_name: ppiq-app-api
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
+      ASPNETCORE_URLS: ${ASPNETCORE_URLS}
+      ConnectionStrings__PlantProcessDb: ${ConnectionStrings__PlantProcessDb}
+      PLANTPROCESS_ALLOWED_ORIGINS: ${PLANTPROCESS_ALLOWED_ORIGINS}
+      PlantProcess__Auth__Issuer: ${PlantProcess__Auth__Issuer}
+      PlantProcess__Auth__Audience: ${PlantProcess__Auth__Audience}
+      PlantProcess__Auth__SigningKey: ${PlantProcess__Auth__SigningKey}
+      PlantProcess__Auth__BootstrapAdminUser: ${PlantProcess__Auth__BootstrapAdminUser}
+      PlantProcess__Auth__BootstrapAdminPassword: ${PlantProcess__Auth__BootstrapAdminPassword}
+      PlantProcess__PlantTimeZoneId: ${PlantProcess__PlantTimeZoneId}
+      PlantProcess__PlantUtcOffsetMinutes: ${PlantProcess__PlantUtcOffsetMinutes}
+    volumes:
+      - ${HOST_LOGS:-/data/plantprocess-iq/logs}/api:/app/logs
+      - ${HOST_REPORTS:-/data/plantprocess-iq/reports}:/app/reports
+      - ${HOST_APP_DUMPS:-/data/plantprocess-iq/app-dumps}:/app/app-dumps
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - ppiq-net
+
+  plantprocess-workers:
+    build:
+      context: ../../Backend
+      dockerfile: PlantProcess.Workers/Dockerfile
+    container_name: ppiq-app-workers
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DOTNET_ENVIRONMENT: ${DOTNET_ENVIRONMENT}
+      ConnectionStrings__PlantProcessDb: ${ConnectionStrings__PlantProcessDb}
+    volumes:
+      - ${HOST_LOGS:-/data/plantprocess-iq/logs}/workers:/app/logs
+      - ${HOST_APP_DUMPS:-/data/plantprocess-iq/app-dumps}:/app/app-dumps
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - ppiq-net
+
+  plantprocess-app-web:
+    build:
+      context: ../../Frontend/PlantProcess.Web
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL}
+    container_name: ppiq-app-web
+    restart: unless-stopped
+    depends_on:
+      - plantprocess-api
+    networks:
+      - ppiq-net
+
+  plantprocess-website:
+    build:
+      context: ../../Website/PlantProcess.Website
+      dockerfile: Dockerfile
+    container_name: ppiq-website-web
+    restart: unless-stopped
+    networks:
+      - ppiq-net
+
+  jenkins:
+    build:
+      context: ./jenkins
+      dockerfile: Dockerfile
+    container_name: ppiq-jenkins
+    restart: unless-stopped
+    user: root
+    environment:
+      JENKINS_OPTS: "--prefix=/"
+    volumes:
+      - ${HOST_JENKINS_HOME:-/data/plantprocess-iq/jenkins}:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - ppiq-net
+
+  backup-runner:
+    image: alpine:3.20
+    container_name: ppiq-backup-runner
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ${HOST_BACKUPS:-/data/plantprocess-iq/backups}:/backups
+      - ${HOST_APP_DUMPS:-/data/plantprocess-iq/app-dumps}:/app-dumps:ro
+      - ${HOST_LOGS:-/data/plantprocess-iq/logs}:/logs:ro
+    command: >
+      sh -c "while true; do
+      echo '[backup-runner] placeholder alive at' $$(date -u);
+      sleep 3600;
+      done"
+    networks:
+      - ppiq-net
+
+networks:
+  ppiq-net:
+    driver: bridge
+
+volumes:
+  caddy_data:
+  caddy_config:

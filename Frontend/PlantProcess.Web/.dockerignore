@@ -1,0 +1,18 @@
+@'
+# ============================================================
+# Frontend Docker ignore
+# ============================================================
+
+node_modules/
+dist/
+build/
+coverage/
+playwright-report/
+test-results/
+.vite/
+.cache/
+
+.env
+.env.*
+*.log
+'@ | Set-Content -Path Frontend\PlantProcess.Web\.dockerignore -Encoding ASCII

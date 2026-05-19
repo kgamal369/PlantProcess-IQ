@@ -1,0 +1,16 @@
+@'
+# ============================================================
+# Website Docker ignore
+# ============================================================
+
+node_modules/
+dist/
+build/
+coverage/
+.vite/
+.cache/
+
+.env
+.env.*
+*.log
+'@ | Set-Content -Path Website\PlantProcess.Website\.dockerignore -Encoding ASCII

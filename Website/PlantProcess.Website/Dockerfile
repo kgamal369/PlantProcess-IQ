@@ -13,7 +13,11 @@ RUN npm run build
 
 FROM nginx:1.27-alpine AS runtime
 
+COPY index.html /usr/share/nginx/html/index.html
+
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/dist /usr/share/nginx/html
+
+RUN printf 'server { listen 80; server_name _; root /usr/share/nginx/html; index index.html; location / { try_files $uri $uri/ /index.html; } location /health { access_log off; return 200 "plantprocess-website-ok\\n"; add_header Content-Type text/plain; } }' > /etc/nginx/conf.d/default.conf
 
 EXPOSE 80

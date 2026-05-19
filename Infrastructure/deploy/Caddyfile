@@ -1,0 +1,32 @@
+{
+    email admin@plantprocessiq.com
+    auto_https disable_redirects
+}
+
+# Public marketing website
+# Local: http://website.localhost
+# Later: https://plantprocessiq.com
+{$PUBLIC_WEBSITE_HOST} {
+    reverse_proxy plantprocess-website:80
+}
+
+# App frontend
+# Local: http://app.localhost
+# Later: https://app.plantprocessiq.com
+{$APP_FRONTEND_HOST} {
+    reverse_proxy plantprocess-app-web:80
+}
+
+# App backend API
+# Local: http://api.localhost
+# Later: https://api.plantprocessiq.com
+{$APP_API_HOST} {
+    reverse_proxy plantprocess-api:5063
+}
+
+# Jenkins
+# Local: http://jenkins.localhost
+# Later: https://jenkins.plantprocessiq.com
+{$JENKINS_HOST} {
+    reverse_proxy jenkins:8080
+}
