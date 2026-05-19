@@ -20,61 +20,125 @@ public sealed class JobRegistrationService : IJobRegistrationService
     public async Task<ApplicationResult> RegisterSystemJobsAsync(
         CancellationToken cancellationToken)
     {
-        var jobs = new[]
-        {
-            new UpsertJobDefinitionRequest(
-                JobCode: "SYSTEM_TELEMETRY_INGESTION",
-                JobName: "Telemetry Ingestion Worker",
-                JobType: JobDefinitionType.Custom,
-                TargetId: null,
-                TargetType: "SystemWorker",
-                ScheduleExpression: "Continuous",
-                IsEnabled: true,
-                Description: "Continuously flushes buffered high-frequency telemetry observations into the database.",
-                IsSynthetic: false,
-                SourceSystem: "PlantProcessIQ.System",
-                SourceRecordId: "SYSTEM_TELEMETRY_INGESTION"),
+       var jobs = new[]
+{
+        new UpsertJobDefinitionRequest(
+            JobCode: "SYSTEM_SOURCE_SNAPSHOT",
+            JobName: "Source Snapshot Worker",
+            JobType: JobDefinitionType.DbLinkImport,
+            TargetId: null,
+            TargetType: "SystemWorker",
+            ScheduleExpression: "Every 2 minutes",
+            IsEnabled: true,
+            Description: "Reads configured source systems/files into the raw staging layer. This is source -> staging only.",
+            IsSynthetic: false,
+            SourceSystem: "PlantProcessIQ.System",
+            SourceRecordId: "SYSTEM_SOURCE_SNAPSHOT"),
 
-            new UpsertJobDefinitionRequest(
-                JobCode: "SYSTEM_IMPORT_QUEUE_PROCESSOR",
-                JobName: "Import Batch Queue Processor",
-                JobType: JobDefinitionType.DbLinkImport,
-                TargetId: null,
-                TargetType: "SystemWorker",
-                ScheduleExpression: "Every 2 minutes",
-                IsEnabled: true,
-                Description: "Processes pending import batches and maps staging data into canonical records.",
-                IsSynthetic: false,
-                SourceSystem: "PlantProcessIQ.System",
-                SourceRecordId: "SYSTEM_IMPORT_QUEUE_PROCESSOR"),
+        new UpsertJobDefinitionRequest(
+            JobCode: "SYSTEM_CANONICAL_MAPPING",
+            JobName: "Canonical Mapping Worker",
+            JobType: JobDefinitionType.CanonicalRefresh,
+            TargetId: null,
+            TargetType: "SystemWorker",
+            ScheduleExpression: "Every 2 minutes",
+            IsEnabled: true,
+            Description: "Maps staged records into canonical MaterialUnit, ProcessStepExecution, ParameterObservation, QualityEvent and Genealogy records.",
+            IsSynthetic: false,
+            SourceSystem: "PlantProcessIQ.System",
+            SourceRecordId: "SYSTEM_CANONICAL_MAPPING"),
 
-            new UpsertJobDefinitionRequest(
-                JobCode: "SYSTEM_DATA_QUALITY_SCAN",
-                JobName: "Scheduled Data Quality Scan",
-                JobType: JobDefinitionType.DataQualityScan,
-                TargetId: null,
-                TargetType: "SystemWorker",
-                ScheduleExpression: "Every 15 minutes",
-                IsEnabled: true,
-                Description: "Scans canonical and staging data for data-quality issues.",
-                IsSynthetic: false,
-                SourceSystem: "PlantProcessIQ.System",
-                SourceRecordId: "SYSTEM_DATA_QUALITY_SCAN"),
+        new UpsertJobDefinitionRequest(
+            JobCode: "SYSTEM_DATA_QUALITY_SCAN",
+            JobName: "Scheduled Data Quality Scan",
+            JobType: JobDefinitionType.DataQualityScan,
+            TargetId: null,
+            TargetType: "SystemWorker",
+            ScheduleExpression: "Every 15 minutes",
+            IsEnabled: true,
+            Description: "Scans canonical and staging data for missing IDs, invalid timestamps, broken genealogy, duplicates and inconsistent quality records.",
+            IsSynthetic: false,
+            SourceSystem: "PlantProcessIQ.System",
+            SourceRecordId: "SYSTEM_DATA_QUALITY_SCAN"),
 
-            new UpsertJobDefinitionRequest(
-                JobCode: "SYSTEM_RISK_SCORING",
-                JobName: "Scheduled Risk Scoring",
-                JobType: JobDefinitionType.RiskScoring,
-                TargetId: null,
-                TargetType: "SystemWorker",
-                ScheduleExpression: "Every 15 minutes",
-                IsEnabled: true,
-                Description: "Calculates material/process risk scores for recent manufacturing records.",
-                IsSynthetic: false,
-                SourceSystem: "PlantProcessIQ.System",
-                SourceRecordId: "SYSTEM_RISK_SCORING")
-        };
+        new UpsertJobDefinitionRequest(
+            JobCode: "SYSTEM_RISK_SCORING",
+            JobName: "Scheduled Rule-Based Risk Scoring",
+            JobType: JobDefinitionType.RiskScoring,
+            TargetId: null,
+            TargetType: "SystemWorker",
+            ScheduleExpression: "Every 15 minutes",
+            IsEnabled: true,
+            Description: "Calculates transparent rule-based quality risk scores for recent material/batch records.",
+            IsSynthetic: false,
+            SourceSystem: "PlantProcessIQ.System",
+            SourceRecordId: "SYSTEM_RISK_SCORING"),
 
+        new UpsertJobDefinitionRequest(
+            JobCode: "SYSTEM_ML_PARAMS_VS_DEFECTS",
+            JobName: "Correlation Learning - Parameters vs Defects",
+            JobType: JobDefinitionType.MlParamsVsDefects,
+            TargetId: null,
+            TargetType: "SystemWorker",
+            ScheduleExpression: "Daily 02:00",
+            IsEnabled: false,
+            Description: "Future learning job: analyzes process parameters against configured defect outcomes. Disabled until ML phase.",
+            IsSynthetic: false,
+            SourceSystem: "PlantProcessIQ.System",
+            SourceRecordId: "SYSTEM_ML_PARAMS_VS_DEFECTS"),
+
+        new UpsertJobDefinitionRequest(
+            JobCode: "SYSTEM_ML_PARAMS_VS_DOWNTIME",
+            JobName: "Correlation Learning - Parameters vs Downtime",
+            JobType: JobDefinitionType.MlParamsVsDowntime,
+            TargetId: null,
+            TargetType: "SystemWorker",
+            ScheduleExpression: "Daily 02:30",
+            IsEnabled: false,
+            Description: "Future learning job: analyzes process parameters against downtime outcomes. Disabled until ML phase.",
+            IsSynthetic: false,
+            SourceSystem: "PlantProcessIQ.System",
+            SourceRecordId: "SYSTEM_ML_PARAMS_VS_DOWNTIME"),
+
+        new UpsertJobDefinitionRequest(
+            JobCode: "SYSTEM_ML_PARAMS_VS_KPIS",
+            JobName: "Correlation Learning - Parameters vs KPIs",
+            JobType: JobDefinitionType.MlParamsVsKpis,
+            TargetId: null,
+            TargetType: "SystemWorker",
+            ScheduleExpression: "Daily 03:00",
+            IsEnabled: false,
+            Description: "Future learning job: analyzes process parameters against configured KPIs. Disabled until ML phase.",
+            IsSynthetic: false,
+            SourceSystem: "PlantProcessIQ.System",
+            SourceRecordId: "SYSTEM_ML_PARAMS_VS_KPIS"),
+
+        new UpsertJobDefinitionRequest(
+            JobCode: "SYSTEM_ML_WEEKLY_FULL",
+            JobName: "Weekly Full Learning Refresh",
+            JobType: JobDefinitionType.MlWeeklyFull,
+            TargetId: null,
+            TargetType: "SystemWorker",
+            ScheduleExpression: "Weekly Sunday 03:00",
+            IsEnabled: false,
+            Description: "Future full learning refresh. Disabled until ML phase.",
+            IsSynthetic: false,
+            SourceSystem: "PlantProcessIQ.System",
+            SourceRecordId: "SYSTEM_ML_WEEKLY_FULL"),
+
+        new UpsertJobDefinitionRequest(
+            JobCode: "SYSTEM_DASHBOARD_READ_MODEL_REFRESH",
+            JobName: "Dashboard Read Model Refresh",
+            JobType: JobDefinitionType.Custom,
+            TargetId: null,
+            TargetType: "SystemWorker",
+            ScheduleExpression: "Every 15 minutes",
+            IsEnabled: true,
+            Description: "Refreshes dashboard-facing read models/materialized views after import and canonical mapping.",
+            IsSynthetic: false,
+            SourceSystem: "PlantProcessIQ.System",
+            SourceRecordId: "SYSTEM_DASHBOARD_READ_MODEL_REFRESH")
+    };
         foreach (var job in jobs)
         {
             var result = await UpsertJobAsync(job, cancellationToken);

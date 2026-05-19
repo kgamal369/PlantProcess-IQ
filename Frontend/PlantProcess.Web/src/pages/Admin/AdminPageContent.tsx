@@ -432,7 +432,7 @@ function ConnectionSchedulePanel({
             <option value="">Select connection</option>
             {connections.map((connection) => (
               <option key={connection.id} value={connection.id}>
-                {connection.connectionProfileCode} Â· {connection.connectionProfileName}
+                {connection.connectionProfileCode} · {connection.connectionProfileName}
               </option>
             ))}
           </select>
@@ -664,7 +664,7 @@ function ImportingDataTab({
               <option value="">Select mapping</option>
               {mappings.map((mapping) => (
                 <option key={mapping.id} value={mapping.id}>
-                  {mapping.mappingCode} Â· {mapping.mappingName}
+                  {mapping.mappingCode} · {mapping.mappingName}
                 </option>
               ))}
             </select>
@@ -763,284 +763,369 @@ function ImportingDataTab({
   );
 }
 
-function JobsMonitorTab({
-  data,
-  onRefresh,
-}: {
-  data: AdminJobsMonitor | null;
-  onRefresh: () => Promise<void> | void;
-}) {
-  const jobs = data?.jobs ?? [];
-  const summary = data?.summary ?? [];
+  function JobsMonitorTab({
+    data,
+    onRefresh,
+  }: {
+    data: AdminJobsMonitor | null;
+    onRefresh: () => Promise<void> | void;
+  }) {
+    const jobs = data?.jobs ?? [];
+    const summary = data?.summary ?? [];
 
-  const [expandedJobId, setExpandedJobId] = useState<string | null>(null);
-  const [historyByJobId, setHistoryByJobId] = useState<Record<string, JobRunHistoryRecord[]>>({});
-  const [workingJobId, setWorkingJobId] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
+    const [expandedJobId, setExpandedJobId] = useState<string | null>(null);
+    const [historyByJobId, setHistoryByJobId] = useState<
+      Record<string, JobRunHistoryRecord[]>
+    >({});
+    const [workingJobId, setWorkingJobId] = useState<string | null>(null);
+    const [message, setMessage] = useState<string | null>(null);
+    const [messageKind, setMessageKind] = useState<"success" | "error" | null>(
+      null
+    );
 
-  const sortedJobs = useMemo(
-    () =>
-      [...jobs].sort((a, b) => {
-        const aDate = a.lastRunAtUtc ? new Date(a.lastRunAtUtc).getTime() : 0;
-        const bDate = b.lastRunAtUtc ? new Date(b.lastRunAtUtc).getTime() : 0;
-        return bDate - aDate;
-      }),
-    [jobs]
-  );
+    const sortedJobs = useMemo(
+      () =>
+        [...jobs].sort((a, b) => {
+          const aDate = a.lastRunAtUtc ? new Date(a.lastRunAtUtc).getTime() : 0;
+          const bDate = b.lastRunAtUtc ? new Date(b.lastRunAtUtc).getTime() : 0;
+          return bDate - aDate;
+        }),
+      [jobs]
+    );
 
-  async function toggleHistory(jobId: string) {
-    if (expandedJobId === jobId) {
-      setExpandedJobId(null);
-      return;
+    function setSuccess(text: string) {
+      setMessage(text);
+      setMessageKind("success");
     }
 
-    setExpandedJobId(jobId);
+    function setFailure(error: unknown, fallback: string) {
+      setMessage(error instanceof Error ? error.message : fallback);
+      setMessageKind("error");
+    }
 
-    if (!historyByJobId[jobId]) {
+    async function refreshJobHistory(jobId: string) {
       const history = await plantProcessApi.getJobHistory(jobId, 20);
 
       setHistoryByJobId((current) => ({
         ...current,
         [jobId]: history,
       }));
+
+      return history;
     }
-  }
 
-  async function runNow(jobId: string) {
-    setWorkingJobId(jobId);
-    setMessage(null);
+    async function toggleHistory(jobId: string) {
+      setMessage(null);
+      setMessageKind(null);
 
-    try {
-      const response = await plantProcessApi.runJobNow(jobId, "Admin UI");
-      setMessage(response.message);
-      await onRefresh();
+      if (expandedJobId === jobId) {
+        setExpandedJobId(null);
+        return;
+      }
 
-      const history = await plantProcessApi.getJobHistory(jobId, 20);
-      setHistoryByJobId((current) => ({
-        ...current,
-        [jobId]: history,
-      }));
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : String(error));
-    } finally {
-      setWorkingJobId(null);
+      setExpandedJobId(jobId);
+
+      if (!historyByJobId[jobId]) {
+        try {
+          await refreshJobHistory(jobId);
+        } catch (error) {
+          setFailure(error, "Failed to load job history.");
+        }
+      }
     }
-  }
 
-  async function pause(jobId: string) {
-    setWorkingJobId(jobId);
-    setMessage(null);
+    async function runNow(jobId: string) {
+      setWorkingJobId(jobId);
+      setMessage(null);
+      setMessageKind(null);
 
-    try {
-      const response = await plantProcessApi.pauseJob(jobId);
-      setMessage(response.message);
-      await onRefresh();
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : String(error));
-    } finally {
-      setWorkingJobId(null);
+      try {
+        const response = await plantProcessApi.runJobNow(jobId, "Admin UI");
+
+        setSuccess(response.message ?? "Job triggered successfully.");
+
+        await onRefresh();
+        await refreshJobHistory(jobId);
+      } catch (error) {
+        setFailure(error, "Failed to run job.");
+      } finally {
+        setWorkingJobId(null);
+      }
     }
-  }
 
-  async function resume(jobId: string) {
-    setWorkingJobId(jobId);
-    setMessage(null);
+    async function pause(jobId: string) {
+      setWorkingJobId(jobId);
+      setMessage(null);
+      setMessageKind(null);
 
-    try {
-      const response = await plantProcessApi.resumeJob(jobId);
-      setMessage(response.message);
-      await onRefresh();
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : String(error));
-    } finally {
-      setWorkingJobId(null);
+      try {
+        const response = await plantProcessApi.pauseJob(jobId);
+
+        setSuccess(response.message ?? "Job paused successfully.");
+
+        await onRefresh();
+
+        if (expandedJobId === jobId) {
+          await refreshJobHistory(jobId);
+        }
+      } catch (error) {
+        setFailure(error, "Failed to pause job.");
+      } finally {
+        setWorkingJobId(null);
+      }
     }
-  }
 
-  return (
-    <section className="admin-panel-grid">
-      <AdminPanel
-        title="Jobs Monitor"
-        subtitle="DB-backed operational status, manual controls, and run history"
-        icon={<Activity size={18} />}
-        wide
-      >
-        <div className="admin-kpi-row">
-          {summary.map((item) => (
-            <MiniKpi key={item.status} label={item.status} value={item.count} />
-          ))}
-        </div>
+    async function resume(jobId: string) {
+      setWorkingJobId(jobId);
+      setMessage(null);
+      setMessageKind(null);
 
-        {message ? (
-          <div className="admin-inline-message">
-            {message}
+      try {
+        const response = await plantProcessApi.resumeJob(jobId);
+
+        setSuccess(response.message ?? "Job resumed successfully.");
+
+        await onRefresh();
+
+        if (expandedJobId === jobId) {
+          await refreshJobHistory(jobId);
+        }
+      } catch (error) {
+        setFailure(error, "Failed to resume job.");
+      } finally {
+        setWorkingJobId(null);
+      }
+    }
+
+    return (
+      <section className="admin-panel-grid">
+        <AdminPanel
+          title="Jobs Monitor"
+          subtitle="DB-backed operational status, manual controls, and run history"
+          icon={<Activity size={18} />}
+          wide
+        >
+          <div className="admin-kpi-row">
+            {summary.map((item) => (
+              <MiniKpi key={item.status} label={item.status} value={item.count} />
+            ))}
           </div>
-        ) : null}
 
-        <div className="admin-table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Job</th>
-                <th>Type</th>
-                <th>Target</th>
-                <th>Status</th>
-                <th>Last Run</th>
-                <th>Duration</th>
-                <th>Runtime</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sortedJobs.map((job) => {
-                const isWorking = workingJobId === job.id;
-                const isPaused = job.statusClass === "paused";
-                const history = historyByJobId[job.id] ?? [];
+          {message ? (
+            <div
+              className={
+                messageKind === "error"
+                  ? "admin-inline-error"
+                  : "admin-inline-success"
+              }
+            >
+              {message}
+            </div>
+          ) : null}
 
-                return (
-                  <Fragment key={job.id}>
-                    <tr>
+          <div className="admin-table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Job</th>
+                  <th>Type</th>
+                  <th>Target</th>
+                  <th>Status</th>
+                  <th>Last Run</th>
+                  <th>Duration</th>
+                  <th>Runtime</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {sortedJobs.map((job) => {
+                  const isWorking = workingJobId === job.id;
+                  const isPaused =
+                    job.statusClass === "paused" ||
+                    job.status.toLowerCase() === "paused";
+
+                  const history = historyByJobId[job.id] ?? [];
+                  const isHistoryOpen = expandedJobId === job.id;
+
+                  return (
+                    <Fragment key={job.id}>
+                      <tr>
                         <td>
-                        <strong>{job.jobCode}</strong>
-                        <small>{job.jobName}</small>
-                        {job.errorMessage ? (
-                          <em className="admin-error-text">{job.errorMessage}</em>
-                        ) : null}
-                      </td>
-                      <td>{job.jobType}</td>
-                      <td>
-                        <strong>{job.sourceSystemCode}</strong>
-                        <small>{job.sourceSystemName}</small>
-                      </td>
-                      <td>
-                        <StatusPill
-                          status={isPaused ? "Paused" : job.status}
-                          statusClass={job.statusClass}
-                        />
-                      </td>
-                      <td>{formatDate(job.lastRunAtUtc)}</td>
-                      <td>{formatDuration(job.lastDurationMs)}</td>
-                      <td>
-                        {job.isRealRuntimeJob ? (
-                          <span className="admin-pill success">Actual</span>
-                        ) : (
-                          <span className="admin-pill info">Configured</span>
-                        )}
-                      </td>
-                      <td>
-                        <div className="admin-action-row compact">
-                          <button
-                            className="secondary-button"
-                            type="button"
-                            disabled={isWorking || isPaused}
-                            onClick={() => runNow(job.id)}
-                          >
-                            <PlayCircle size={14} />
-                            {isWorking ? "Running..." : "Run Now"}
-                          </button>
+                          <strong>{job.jobCode}</strong>
+                          <small>{job.jobName}</small>
 
-                          {isPaused ? (
-                            <button
-                              className="secondary-button"
-                              type="button"
-                              disabled={isWorking}
-                              onClick={() => resume(job.id)}
-                            >
-                              Resume
-                            </button>
+                          {job.errorMessage ? (
+                            <em className="admin-error-text">
+                              {job.errorMessage}
+                            </em>
+                          ) : null}
+                        </td>
+
+                        <td>{job.jobType}</td>
+
+                        <td>
+                          <strong>{job.sourceSystemCode}</strong>
+                          <small>{job.sourceSystemName}</small>
+                        </td>
+
+                        <td>
+                          <StatusPill
+                            status={isPaused ? "Paused" : job.status}
+                            statusClass={job.statusClass}
+                          />
+                        </td>
+
+                        <td>{formatDate(job.lastRunAtUtc)}</td>
+                        <td>{formatDuration(job.lastDurationMs)}</td>
+
+                        <td>
+                          {job.isRealRuntimeJob ? (
+                            <span className="admin-pill success">Actual</span>
                           ) : (
+                            <span className="admin-pill info">Configured</span>
+                          )}
+                        </td>
+
+                        <td>
+                          <div className="admin-action-row compact">
+                            <button
+                              className="secondary-button"
+                              type="button"
+                              disabled={isWorking || isPaused}
+                              onClick={() => void runNow(job.id)}
+                            >
+                              <PlayCircle size={14} />
+                              {isWorking ? "Working..." : "Run Now"}
+                            </button>
+
+                            {isPaused ? (
+                              <button
+                                className="secondary-button"
+                                type="button"
+                                disabled={isWorking}
+                                onClick={() => void resume(job.id)}
+                              >
+                                Resume
+                              </button>
+                            ) : (
+                              <button
+                                className="secondary-button"
+                                type="button"
+                                disabled={isWorking}
+                                onClick={() => void pause(job.id)}
+                              >
+                                Pause
+                              </button>
+                            )}
+
                             <button
                               className="secondary-button"
                               type="button"
                               disabled={isWorking}
-                              onClick={() => pause(job.id)}
+                              onClick={() => void toggleHistory(job.id)}
                             >
-                              Pause
+                              {isHistoryOpen ? "Hide History" : "History"}
                             </button>
-                          )}
-
-                          <button
-                            className="secondary-button"
-                            type="button"
-                            onClick={() => toggleHistory(job.id)}
-                          >
-                            History
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-
-                    {expandedJobId === job.id ? (
-                      <tr key={`${job.id}-history`}>
-                        <td colSpan={8}>
-                          <div className="job-history-panel">
-                            <strong>Last Runs</strong>
-
-                            {history.length === 0 ? (
-                              <p>No run history found for this job yet.</p>
-                            ) : (
-                              <table>
-                                <thead>
-                                  <tr>
-                                    <th>Status</th>
-                                    <th>Started</th>
-                                    <th>Completed</th>
-                                    <th>Duration</th>
-                                    <th>Trigger</th>
-                                    <th>Message</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {history.slice(0, 5).map((item) => (
-                                    <tr key={item.id}>
-                                      <td>
-                                        <StatusPill
-                                          status={item.status}
-                                          statusClass={
-                                            item.status === "Ok"
-                                              ? "success"
-                                              : item.status === "Running"
-                                                ? "running"
-                                                : item.status === "Failed" ||
-                                                    item.status === "Timeout"
-                                                  ? "danger"
-                                                  : "neutral"
-                                          }
-                                        />
-                                      </td>
-                                      <td>{formatDate(item.startedAtUtc)}</td>
-                                      <td>{formatDate(item.completedAtUtc)}</td>
-                                      <td>{formatDuration(item.durationMs)}</td>
-                                      <td>{item.triggerSource}</td>
-                                      <td>{item.failureReason ?? item.runMessage ?? "-"}</td>
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
-                            )}
                           </div>
                         </td>
                       </tr>
-                    ) : null}
-                </Fragment>
-                );
-              })}
 
-              {sortedJobs.length === 0 ? (
-                <tr>
-                  <td colSpan={8}>
-                    No JobDefinition records found. Restart API/Workers to run
-                    startup registration.
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
-        </div>
-      </AdminPanel>
-    </section>
-  );
-}
+                      {isHistoryOpen ? (
+                        <tr key={`${job.id}-history`}>
+                          <td colSpan={8}>
+                            <div className="job-history-panel">
+                              <div className="panel-header">
+                                <div>
+                                  <h3>Last Runs</h3>
+                                  <p>
+                                    Latest executions for{" "}
+                                    <strong>{job.jobCode}</strong>
+                                  </p>
+                                </div>
+
+                                <button
+                                  type="button"
+                                  className="ghost-button"
+                                  onClick={() => setExpandedJobId(null)}
+                                >
+                                  Close
+                                </button>
+                              </div>
+
+                              {history.length === 0 ? (
+                                <p>No run history found for this job yet.</p>
+                              ) : (
+                                <table>
+                                  <thead>
+                                    <tr>
+                                      <th>Status</th>
+                                      <th>Started</th>
+                                      <th>Completed</th>
+                                      <th>Duration</th>
+                                      <th>Trigger</th>
+                                      <th>Message</th>
+                                    </tr>
+                                  </thead>
+
+                                  <tbody>
+                                    {history.slice(0, 5).map((item) => (
+                                      <tr key={item.id}>
+                                        <td>
+                                          <StatusPill
+                                            status={item.status}
+                                            statusClass={
+                                              item.status === "Ok" ||
+                                              item.status === "Succeeded" ||
+                                              item.status === "Completed"
+                                                ? "success"
+                                                : item.status === "Running"
+                                                  ? "running"
+                                                  : item.status === "Failed" ||
+                                                      item.status === "Timeout"
+                                                    ? "danger"
+                                                    : "neutral"
+                                            }
+                                          />
+                                        </td>
+
+                                        <td>{formatDate(item.startedAtUtc)}</td>
+                                        <td>{formatDate(item.completedAtUtc)}</td>
+                                        <td>{formatDuration(item.durationMs)}</td>
+                                        <td>{item.triggerSource}</td>
+                                        <td>
+                                          {item.failureReason ??
+                                            item.runMessage ??
+                                            "-"}
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ) : null}
+                    </Fragment>
+                  );
+                })}
+
+                {sortedJobs.length === 0 ? (
+                  <tr>
+                    <td colSpan={8}>
+                      No JobDefinition records found. Restart API/Workers to run
+                      startup registration.
+                    </td>
+                  </tr>
+                ) : null}
+              </tbody>
+            </table>
+          </div>
+        </AdminPanel>
+      </section>
+    );
+  }
 
 function AdminPanel({
   title,
@@ -1433,7 +1518,7 @@ function SchemaViewBuilderPanel() {
               <option value="">Select schema view...</option>
               {schemaViews.map((view) => (
                 <option key={view.id} value={view.id}>
-                  {view.schemaViewCode} â€” {view.viewKind}
+                  {view.schemaViewCode} {view.viewKind}
                 </option>
               ))}
             </select>
@@ -1443,7 +1528,7 @@ function SchemaViewBuilderPanel() {
             <div className="admin-selected-hint">
               <strong>{selectedView.schemaViewName}</strong>
               <br />
-              Status: {selectedView.lastValidationStatus ?? "Not validated"} Â·
+              Status: {selectedView.lastValidationStatus ?? "Not validated"} ·
               Approved: {selectedView.isApproved ? "Yes" : "No"}
               <br />
               {selectedView.lastValidationMessage ?? ""}
@@ -1533,7 +1618,7 @@ function SchemaViewBuilderPanel() {
             <div>
               <h2>Preview Result</h2>
               <p>
-                {preview.message} Â· {preview.durationMs} ms Â· {preview.rowCount} rows
+                {preview.message} · {preview.durationMs} ms · {preview.rowCount} rows
               </p>
             </div>
           </div>
@@ -1922,7 +2007,7 @@ function ConnectorFoundationPanel() {
 
             <p>{provider.description}</p>
             <small>
-              Discovery: {provider.supportsSchemaDiscovery ? "yes" : "no"} Â·
+              Discovery: {provider.supportsSchemaDiscovery ? "yes" : "no"} ·
               Snapshot: {provider.supportsSnapshotImport ? "yes" : "no"}
             </small>
           </div>
@@ -2008,7 +2093,7 @@ function ConnectorFoundationPanel() {
               <option value="">Select profile...</option>
               {profiles.map((profile) => (
                 <option key={profile.id} value={profile.id}>
-                  {profile.connectionProfileCode} â€” {profile.providerType}
+                  {profile.connectionProfileCode} {profile.providerType}
                 </option>
               ))}
             </select>
@@ -2135,7 +2220,7 @@ function ConnectorFoundationPanel() {
               <option value="">Select dataset...</option>
               {datasets.map((dataset) => (
                 <option key={dataset.id} value={dataset.id}>
-                  {dataset.datasetCode} â€” {dataset.sourceObjectName}
+                  {dataset.datasetCode} {dataset.sourceObjectName}
                 </option>
               ))}
             </select>
@@ -2182,7 +2267,7 @@ function ConnectorFoundationPanel() {
             {selectedProfile
               ? `${selectedProfile.connectionProfileCode} (${selectedProfile.providerType})`
               : "none"}{" "}
-            Â· <strong>Selected dataset:</strong>{" "}
+            · <strong>Selected dataset:</strong>{" "}
             {selectedDataset
               ? `${selectedDataset.datasetCode} (${selectedDataset.sourceObjectName})`
               : "none"}

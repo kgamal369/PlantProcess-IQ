@@ -14,15 +14,37 @@ public class RiskScoreConfiguration : IEntityTypeConfiguration<RiskScore>
 
         builder.HasKey(x => x.Id);
 
-        builder.Property(x => x.RiskType).IsRequired().HasMaxLength(100);
-        builder.Property(x => x.Score).HasPrecision(8, 6);
-        builder.Property(x => x.RiskClass).HasMaxLength(50);
-        builder.Property(x => x.MainContributorsJson).HasColumnType("jsonb");
-        builder.Property(x => x.ModelVersion).HasMaxLength(100);
-        builder.Property(x => x.PlantTimeZoneId).IsRequired().HasMaxLength(100);
-        builder.Property(x => x.SourceSystem).HasMaxLength(100);
-        builder.Property(x => x.SourceRecordId).HasMaxLength(100);
-        builder.Property(x => x.DeletedReason).HasMaxLength(500);
+        builder.Property(x => x.RiskType)
+            .IsRequired()
+            .HasMaxLength(100);
+
+        builder.Property(x => x.Score)
+            .HasPrecision(8, 6);
+
+        builder.Property(x => x.RiskClass)
+            .HasMaxLength(50);
+
+        builder.Property(x => x.MainContributorsJson)
+            .HasColumnType("jsonb");
+
+        builder.Property(x => x.ExplanationJson)
+            .HasColumnType("jsonb");
+
+        builder.Property(x => x.ModelVersion)
+            .HasMaxLength(100);
+
+        builder.Property(x => x.PlantTimeZoneId)
+            .IsRequired()
+            .HasMaxLength(100);
+
+        builder.Property(x => x.SourceSystem)
+            .HasMaxLength(100);
+
+        builder.Property(x => x.SourceRecordId)
+            .HasMaxLength(100);
+
+        builder.Property(x => x.DeletedReason)
+            .HasMaxLength(500);
 
         builder.Property(x => x.CreatedAtUtc).HasColumnType("timestamp with time zone");
         builder.Property(x => x.UpdatedAtUtc).HasColumnType("timestamp with time zone");
@@ -38,8 +60,11 @@ public class RiskScoreConfiguration : IEntityTypeConfiguration<RiskScore>
 
         builder.HasIndex(x => x.MaterialUnitId);
         builder.HasIndex(x => x.RiskType);
+        builder.HasIndex(x => x.RiskClass);
+        builder.HasIndex(x => x.Score);
         builder.HasIndex(x => x.ScoredAtUtc);
         builder.HasIndex(x => new { x.MaterialUnitId, x.RiskType, x.ScoredAtUtc });
+        builder.HasIndex(x => new { x.RiskType, x.RiskClass, x.Score });
 
         builder.UsePostgresXminConcurrencyToken();
     }

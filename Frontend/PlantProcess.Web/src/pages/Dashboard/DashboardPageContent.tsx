@@ -74,7 +74,10 @@ export function DashboardPageContent() {
   const [error, setError] = useState<unknown>(null);
   const [isWidgetBuilderOpen, setIsWidgetBuilderOpen] = useState(false);
   const [editingWidget, setEditingWidget] = useState<DashboardWidgetDefinitionRecord | null>(null);
-  
+  const [isReloadingLayout, setIsReloadingLayout] = useState(false);
+  const [lastSavedLayoutAtUtc, setLastSavedLayoutAtUtc] = useState<string | null>(null);
+  const [layoutMessage, setLayoutMessage] = useState<string | null>(null);
+
   async function load() {
     setIsLoading(true);
     setError(null);
@@ -219,7 +222,7 @@ async function handleWidgetSaved(widgetId: string) {
     removeWidget(`saved-${widget.id}`);
   }
 
- async function saveDashboardLayout() {
+async function saveDashboardLayout() {
   if (!activeDashboard) {
     setError(new Error("No active dashboard is selected."));
     return;
@@ -227,6 +230,7 @@ async function handleWidgetSaved(widgetId: string) {
 
   setIsSavingLayout(true);
   setError(null);
+  setLayoutMessage(null);
 
   try {
     const layoutJson = serializeLayouts();
@@ -236,11 +240,46 @@ async function handleWidgetSaved(widgetId: string) {
       layoutJson
     );
 
+    const savedAtUtc = new Date().toISOString();
+    setLastSavedLayoutAtUtc(savedAtUtc);
+    setLayoutMessage("Dashboard layout saved to backend.");
+
     await loadDashboardDefinitions(activeDashboard.id);
   } catch (saveError) {
     setError(saveError);
   } finally {
     setIsSavingLayout(false);
+  }
+}
+
+  async function reloadDashboardLayout() {
+  if (!activeDashboard) {
+    setError(new Error("No active dashboard is selected."));
+    return;
+  }
+
+  setIsReloadingLayout(true);
+  setError(null);
+  setLayoutMessage(null);
+
+  try {
+    const latestDashboard =
+      (await dashboardingApi.getDashboardDefinition(
+        activeDashboard.id
+      )) as DashboardDefinitionRecord;
+
+    if (latestDashboard.layoutJson) {
+      replaceLayoutsFromJson(latestDashboard.layoutJson);
+      setLayoutMessage("Dashboard layout reloaded from backend.");
+    } else {
+      setLayoutMessage("No backend layout is stored for this dashboard yet.");
+    }
+
+    await loadDashboardDefinitions(activeDashboard.id);
+  } catch (reloadError) {
+    setError(reloadError);
+  } finally {
+    setIsReloadingLayout(false);
   }
 }
 
@@ -557,54 +596,75 @@ async function handleWidgetSaved(widgetId: string) {
         </div>
 
         <div className="dashboard-hero__actions">
-          <select
-            className="dashboard-select"
-            value={activeDashboard?.id ?? ""}
-            onChange={(event) => selectDashboard(event.target.value)}
-            disabled={isLoadingDashboards || dashboards.length === 0}
-          >
-            {dashboards.length === 0 ? (
-              <option value="">No dashboards</option>
-            ) : null}
+  <select
+    className="dashboard-select"
+    value={activeDashboard?.id ?? ""}
+    onChange={(event) => selectDashboard(event.target.value)}
+    disabled={isLoadingDashboards || dashboards.length === 0}
+  >
+    {dashboards.length === 0 ? (
+      <option value="">No dashboards</option>
+    ) : null}
 
-            {dashboards.map((dashboard) => (
-              <option key={dashboard.id} value={dashboard.id}>
-                {dashboard.name}
-                {dashboard.isDefault ? " â€” Default" : ""}
-              </option>
-            ))}
-          </select>
+    {dashboards.map((dashboard) => (
+      <option key={dashboard.id} value={dashboard.id}>
+        {dashboard.name}
+        {dashboard.isDefault ? " — Default" : ""}
+      </option>
+    ))}
+  </select>
 
-          <button
-            className="primary-button"
-            onClick={openCreateWidgetWizard}
-            disabled={!activeDashboard}
-            type="button"
-          >
-            <PlusCircle size={16} />
-            Add widget
-          </button>
+  <button
+    className="primary-button"
+    onClick={openCreateWidgetWizard}
+    disabled={!activeDashboard}
+    type="button"
+  >
+    <PlusCircle size={16} />
+    Add widget
+  </button>
 
-          <button
-            className="secondary-button"
-            onClick={saveDashboardLayout}
-            disabled={!activeDashboard || isSavingLayout}
-            type="button"
-          >
-            {isSavingLayout ? "Saving Layout..." : "Save Layout"}
-          </button>
+  <button
+    className="secondary-button"
+    onClick={saveDashboardLayout}
+    disabled={!activeDashboard || isSavingLayout || isReloadingLayout}
+    type="button"
+  >
+    {isSavingLayout ? "Saving layout..." : "Save layout"}
+  </button>
 
-          <button
-            className="secondary-button"
-            onClick={refreshReadModels}
-            disabled={isRefreshingReadModels}
-            type="button"
-          >
-            <RefreshCw size={16} />
-            {isRefreshingReadModels ? "Refreshing..." : "Refresh read models"}
-          </button>
-        </div>
+  <button
+    className="secondary-button"
+    onClick={reloadDashboardLayout}
+    disabled={!activeDashboard || isSavingLayout || isReloadingLayout}
+    type="button"
+  >
+    {isReloadingLayout ? "Reloading layout..." : "Reload layout"}
+  </button>
+
+  <button
+    className="secondary-button"
+    onClick={refreshReadModels}
+    disabled={isRefreshingReadModels}
+    type="button"
+  >
+    <RefreshCw size={16} />
+    {isRefreshingReadModels ? "Refreshing..." : "Refresh read models"}
+  </button>
+</div>
       </section>
+
+      {layoutMessage ? (
+        <div className="success-banner">
+          {layoutMessage}
+          {lastSavedLayoutAtUtc ? (
+            <span className="muted-text">
+              {" "}
+              Last saved: {new Date(lastSavedLayoutAtUtc).toLocaleTimeString()}
+            </span>
+          ) : null}
+        </div>
+      ) : null}
 
       <DashboardFilterBar />
       <ActiveFilterChips />
@@ -1075,7 +1135,7 @@ async function handleWidgetSaved(widgetId: string) {
                   </button>
 
                   <span>
-                    Page {materials?.page ?? 1} / {materials?.totalPages ?? 0} â€”
+                    Page {materials?.page ?? 1} / {materials?.totalPages ?? 0}
                     {materials?.totalCount ?? 0} materials
                   </span>
 

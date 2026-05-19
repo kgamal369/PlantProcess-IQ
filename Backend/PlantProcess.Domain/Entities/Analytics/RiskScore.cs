@@ -7,13 +7,19 @@ public class RiskScore : BaseEntity
     public Guid MaterialUnitId { get; private set; }
 
     public string RiskType { get; private set; } = null!;
-    // SurfaceCrackRisk, InclusionRisk, CenterBuckleRisk
 
     public decimal Score { get; private set; }
 
     public string? RiskClass { get; private set; }
 
     public string? MainContributorsJson { get; private set; }
+
+    /// <summary>
+    /// Full persisted explanation snapshot.
+    /// This preserves why the score was calculated at that time,
+    /// even if rules/model versions change later.
+    /// </summary>
+    public string? ExplanationJson { get; private set; }
 
     public DateTime ScoredAtUtc { get; private set; }
 
@@ -36,6 +42,7 @@ public class RiskScore : BaseEntity
         bool isSynthetic,
         string? riskClass = null,
         string? mainContributorsJson = null,
+        string? explanationJson = null,
         string? modelVersion = null,
         string? sourceSystem = null,
         string? sourceRecordId = null,
@@ -54,9 +61,10 @@ public class RiskScore : BaseEntity
         MaterialUnitId = materialUnitId;
         RiskType = riskType.Trim();
         Score = score;
-        RiskClass = riskClass?.Trim();
-        MainContributorsJson = mainContributorsJson;
-        ModelVersion = modelVersion?.Trim();
+        RiskClass = Clean(riskClass);
+        MainContributorsJson = NormalizeJson(mainContributorsJson);
+        ExplanationJson = NormalizeJson(explanationJson);
+        ModelVersion = Clean(modelVersion);
 
         ScoredAtUtc = DateTime.UtcNow;
         ScoredAtLocal = DateTime.SpecifyKind(
@@ -70,7 +78,26 @@ public class RiskScore : BaseEntity
         PlantUtcOffsetMinutes = plantUtcOffsetMinutes;
 
         IsSynthetic = isSynthetic;
-        SourceSystem = sourceSystem?.Trim();
-        SourceRecordId = sourceRecordId?.Trim();
+        SourceSystem = Clean(sourceSystem);
+        SourceRecordId = Clean(sourceRecordId);
+    }
+
+    public void UpdateExplanation(
+        string? mainContributorsJson,
+        string? explanationJson)
+    {
+        MainContributorsJson = NormalizeJson(mainContributorsJson);
+        ExplanationJson = NormalizeJson(explanationJson);
+        MarkAsUpdated();
+    }
+
+    private static string? Clean(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+    }
+
+    private static string? NormalizeJson(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
     }
 }

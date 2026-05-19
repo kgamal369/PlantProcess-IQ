@@ -4,9 +4,9 @@ using PlantProcess.Application.Integration.Contracts.Dtos;
 using PlantProcess.Application.Integration.Interfaces.SchemaConfiguration;
 using PlantProcess.Application.Integration.Interfaces.SourceSystems;
 using PlantProcess.Domain.Entities.Integration;
-using PlantProcess.Infrastructure.Integration.Connectors.Common;
+using PlantProcess.Infrastructure.Connectors.Common;
 
-namespace PlantProcess.Infrastructure.Integration.Connectors.Excel;
+namespace PlantProcess.Infrastructure.Connectors.Excel;
 
 public sealed class ExcelConnector : IDataSourceConnector, ISchemaReader, IDataSourceReader
 {

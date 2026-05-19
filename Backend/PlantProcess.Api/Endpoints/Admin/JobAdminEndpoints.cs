@@ -11,7 +11,8 @@ public static class JobAdminEndpoints
     public static IEndpointRouteBuilder MapJobAdminEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/admin/jobs")
-            .WithTags("Admin - Jobs");
+            .WithTags("Admin - Jobs")
+            .RequireAuthorization("PlantProcessDataManager");
 
         group.MapPost("/{jobId:guid}/run-now", RunNowAsync)
             .WithSummary("Run a job immediately")

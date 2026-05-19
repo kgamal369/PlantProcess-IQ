@@ -339,32 +339,67 @@ public sealed class FeatureEngineeringService : IFeatureEngineeringService
     }
 
     private static List<EquipmentExposureFeatureDto> BuildEquipmentExposure(
-        IReadOnlyList<ProcessStepFeatureDto> processSteps,
-        IReadOnlyList<ObservationEquipmentProjection> observations,
-        IReadOnlyList<QualitySignalFeatureDto> qualitySignals,
-        IReadOnlyDictionary<Guid, EquipmentLookupDto> equipmentLookup)
+    IReadOnlyList<ProcessStepFeatureDto> processSteps,
+    IReadOnlyList<ObservationEquipmentProjection> observations,
+    IReadOnlyList<QualitySignalFeatureDto> qualitySignals,
+    IReadOnlyDictionary<Guid, EquipmentLookupDto> equipmentLookup)
     {
         var result = new List<EquipmentExposureFeatureDto>();
 
-        foreach (var equipmentGroup in processSteps.Where(x => x.EquipmentId.HasValue).GroupBy(x => x.EquipmentId!.Value))
+        var orderedQualitySignals = qualitySignals
+            .OrderBy(x => x.EventAtUtc)
+            .ToList();
+
+        foreach (var equipmentGroup in processSteps
+                    .Where(x => x.EquipmentId.HasValue)
+                    .GroupBy(x => x.EquipmentId!.Value))
         {
-            var key = equipmentGroup.Key;
-            equipmentLookup.TryGetValue(key, out var equipment);
+            var equipmentId = equipmentGroup.Key;
+            var stepsForEquipment = equipmentGroup
+                .OrderBy(x => x.StartedAtUtc)
+                .ToList();
+
+            equipmentLookup.TryGetValue(equipmentId, out var equipment);
+
+            var firstStartedAtUtc = stepsForEquipment.Min(x => x.StartedAtUtc);
+            var lastEndedAtUtc = stepsForEquipment
+                .Select(x => x.EndedAtUtc ?? x.StartedAtUtc)
+                .Max();
+
+            // Quality events are material-level today, not directly equipment-level.
+            // The old code assigned ALL quality signals to EVERY equipment, which inflated the feature vector.
+            // This version assigns a quality signal to equipment only when it happened after that equipment exposure.
+            // If all quality events happen after the full route, the final/process-late equipment will naturally carry more signals.
+            var qualitySignalsAfterExposure = orderedQualitySignals.Count(q =>
+                q.EventAtUtc >= firstStartedAtUtc &&
+                q.EventAtUtc >= lastEndedAtUtc);
+
+            // Fallback for historical/demo data where quality event timestamps are before/inside process windows:
+            // count signals inside the equipment exposure window.
+            var qualitySignalsInsideExposure = orderedQualitySignals.Count(q =>
+                q.EventAtUtc >= firstStartedAtUtc &&
+                q.EventAtUtc <= lastEndedAtUtc);
+
+            var equipmentQualitySignalCount = Math.Max(
+                qualitySignalsAfterExposure,
+                qualitySignalsInsideExposure);
 
             result.Add(new EquipmentExposureFeatureDto(
-                key,
-                equipment?.EquipmentCode ?? key.ToString("N"),
+                equipmentId,
+                equipment?.EquipmentCode ?? equipmentId.ToString("N"),
                 equipment?.EquipmentName ?? "Unknown equipment",
                 equipment?.EquipmentType ?? "Unknown",
-                equipmentGroup.Count(),
-                equipmentGroup.Sum(x => x.DurationMinutes),
-                observations.Count(x => x.EquipmentId == key),
-                qualitySignals.Count));
+                stepsForEquipment.Count,
+                stepsForEquipment.Sum(x => x.DurationMinutes),
+                observations.Count(x => x.EquipmentId == equipmentId),
+                equipmentQualitySignalCount));
         }
 
-        return result.OrderByDescending(x => x.TotalDurationMinutes).ToList();
+        return result
+            .OrderByDescending(x => x.TotalDurationMinutes)
+            .ThenBy(x => x.EquipmentCode)
+            .ToList();
     }
-
     private sealed record ObservationEquipmentProjection(Guid? EquipmentId);
 
     private sealed record EquipmentLookupDto(

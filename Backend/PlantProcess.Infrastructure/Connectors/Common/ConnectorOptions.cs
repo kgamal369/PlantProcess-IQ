@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace PlantProcess.Infrastructure.Integration.Connectors.Common;
+namespace PlantProcess.Infrastructure.Connectors.Common;
 
 internal sealed record ConnectorFileOptions(
     string? CsvText,

@@ -264,22 +264,11 @@ function enforceConstraints(
 }
 
 function loadLayouts(): DashboardGridLayouts {
-  if (typeof window === "undefined") {
-    return defaultLayouts;
-  }
-
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-
-    if (!raw) {
-      return defaultLayouts;
-    }
-
-    const parsed = JSON.parse(raw) as Partial<DashboardGridLayouts>;
-    return enforceConstraints(parsed, defaultLayouts);
-  } catch {
-    return defaultLayouts;
-  }
+  // Backend is the source of truth.
+  // Do NOT load localStorage as primary state here.
+  // The Dashboard page will call replaceLayoutsFromJson(layoutJson)
+  // after loading the selected dashboard definition from the API.
+  return defaultLayouts;
 }
 
 function updateWidgetInAllBreakpoints(
@@ -361,14 +350,12 @@ export function DashboardGridLayoutProvider({
   // Track whether a drag/resize is active to avoid mid-drag localStorage writes.
   const isDraggingRef = useRef(false);
 
-  // Keep localStorage as temporary fallback persistence.
-  // Backend persistence will use serializeLayouts() / replaceLayoutsFromJson().
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined" || isDraggingRef.current) return;
 
-    if (!isDraggingRef.current) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(layouts));
-    }
+    // Draft-only cache. This is not authoritative.
+    // Backend LayoutJson is authoritative and is loaded through replaceLayoutsFromJson().
+    localStorage.setItem(`${STORAGE_KEY}.draft`, JSON.stringify(layouts));
   }, [layouts]);
 
   const setLayouts = useCallback((next: DashboardGridLayouts) => {

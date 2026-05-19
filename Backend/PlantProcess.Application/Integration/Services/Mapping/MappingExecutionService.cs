@@ -732,22 +732,165 @@ public sealed class MappingExecutionService : IMappingExecutionService
         return bool.TryParse(value, out var result) ? result : null;
     }
 
-    private static DateTime RequiredDateTime(IReadOnlyDictionary<string, string> fieldMap, IReadOnlyDictionary<string, string?> sourceRow, string targetField)
+   private static DateTime RequiredDateTime(
+    IReadOnlyDictionary<string, string> fieldMap,
+    IReadOnlyDictionary<string, string?> sourceRow,
+    string targetField)
     {
         var value = Required(fieldMap, sourceRow, targetField);
-        if (!DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var parsed))
-            throw new InvalidOperationException($"Mapped field '{targetField}' value '{value}' is not a valid DateTime.");
-        return DateTime.SpecifyKind(parsed, DateTimeKind.Utc);
+
+        var parsed = ParseDate(value);
+
+        if (!parsed.HasValue)
+        {
+            throw new InvalidOperationException(
+                $"Mapped field '{targetField}' value '{value}' is not a valid DateTime. " +
+                "Supported formats include ISO 8601, yyyy-MM-dd HH:mm:ss.fff, dd/MM/yyyy, MM/dd/yyyy, Unix epoch seconds/milliseconds, and Excel OADate.");
+        }
+
+        return parsed.Value;
     }
 
-    private static DateTime? OptionalDateTime(IReadOnlyDictionary<string, string> fieldMap, IReadOnlyDictionary<string, string?> sourceRow, string targetField)
+   private static DateTime? OptionalDateTime(
+    IReadOnlyDictionary<string, string> fieldMap,
+    IReadOnlyDictionary<string, string?> sourceRow,
+    string targetField)
     {
         var value = Optional(fieldMap, sourceRow, targetField);
+
         if (string.IsNullOrWhiteSpace(value))
+        {
             return null;
-        if (!DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var parsed))
-            throw new InvalidOperationException($"Mapped field '{targetField}' value '{value}' is not a valid DateTime.");
-        return DateTime.SpecifyKind(parsed, DateTimeKind.Utc);
+        }
+
+        var parsed = ParseDate(value);
+
+        if (!parsed.HasValue)
+        {
+            throw new InvalidOperationException(
+                $"Mapped field '{targetField}' value '{value}' is not a valid DateTime. " +
+                "Supported formats include ISO 8601, yyyy-MM-dd HH:mm:ss.fff, dd/MM/yyyy, MM/dd/yyyy, Unix epoch seconds/milliseconds, and Excel OADate.");
+        }
+
+        return parsed.Value;
+    }
+    
+        private static readonly string[] SupportedPlantDateTimeFormats =
+    {
+        "O",
+        "o",
+        "yyyy-MM-ddTHH:mm:ss.fffffffK",
+        "yyyy-MM-ddTHH:mm:ssK",
+        "yyyy-MM-ddTHH:mm:ss",
+        "yyyy-MM-dd HH:mm:ss.fff",
+        "yyyy-MM-dd HH:mm:ss",
+        "yyyy-MM-dd",
+        "dd/MM/yyyy HH:mm:ss.fff",
+        "dd/MM/yyyy HH:mm:ss",
+        "dd/MM/yyyy",
+        "d/M/yyyy HH:mm:ss",
+        "d/M/yyyy",
+        "MM/dd/yyyy HH:mm:ss.fff",
+        "MM/dd/yyyy HH:mm:ss",
+        "MM/dd/yyyy",
+        "M/d/yyyy HH:mm:ss",
+        "M/d/yyyy",
+        "dd.MM.yyyy HH:mm:ss",
+        "dd.MM.yyyy"
+    };
+    private static DateTime? ParseDate(string? rawValue)
+    {
+        if (string.IsNullOrWhiteSpace(rawValue))
+            return null;
+
+        var value = rawValue.Trim();
+
+        if (long.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var longValue))
+        {
+            // Unix milliseconds
+            if (longValue > 10_000_000_000)
+            {
+                return DateTimeOffset
+                    .FromUnixTimeMilliseconds(longValue)
+                    .UtcDateTime;
+            }
+
+            // Unix seconds
+            if (longValue > 1_000_000_000)
+            {
+                return DateTimeOffset
+                    .FromUnixTimeSeconds(longValue)
+                    .UtcDateTime;
+            }
+
+            // Excel OADate, common in Excel exports
+            if (longValue > 20_000 && longValue < 80_000)
+            {
+                return DateTime.SpecifyKind(
+                    DateTime.FromOADate(longValue),
+                    DateTimeKind.Utc);
+            }
+        }
+
+        if (double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var doubleValue) &&
+            doubleValue > 20_000 &&
+            doubleValue < 80_000)
+        {
+            return DateTime.SpecifyKind(
+                DateTime.FromOADate(doubleValue),
+                DateTimeKind.Utc);
+        }
+
+        if (DateTimeOffset.TryParseExact(
+                value,
+                SupportedPlantDateTimeFormats,
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal,
+                out var exactOffset))
+        {
+            return exactOffset.UtcDateTime;
+        }
+
+        if (DateTime.TryParseExact(
+                value,
+                SupportedPlantDateTimeFormats,
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal,
+                out var exactDate))
+        {
+            return EnsureUtc(exactDate);
+        }
+
+        if (DateTimeOffset.TryParse(
+                value,
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal,
+                out var parsedOffset))
+        {
+            return parsedOffset.UtcDateTime;
+        }
+
+        if (DateTime.TryParse(
+                value,
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal,
+                out var parsedDate))
+        {
+            return EnsureUtc(parsedDate);
+        }
+
+        return null;
+    }
+
+       private static DateTime EnsureUtc(DateTime value)
+    {
+        if (value.Kind == DateTimeKind.Utc)
+            return value;
+
+        if (value.Kind == DateTimeKind.Local)
+            return value.ToUniversalTime();
+
+        return DateTime.SpecifyKind(value, DateTimeKind.Utc);
     }
 }
 

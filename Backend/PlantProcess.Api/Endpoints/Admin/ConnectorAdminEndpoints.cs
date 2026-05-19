@@ -5,7 +5,7 @@ using PlantProcess.Application.Integration.Interfaces.Connectors;
 namespace PlantProcess.Api.Endpoints.Admin;
 
 /// <summary>
-/// Phase 3 â€” Connector Foundation API.
+/// Phase 3 Connector Foundation API.
 /// 
 /// This group powers the Admin / DB Configuration page.
 /// It introduces generic connection profiles, source datasets,
@@ -16,7 +16,8 @@ public static class ConnectorAdminEndpoints
     public static IEndpointRouteBuilder MapConnectorAdminEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/admin/connectors")
-            .WithTags("Admin â€” Connectors");
+        .WithTags("Admin - Connectors")
+        .RequireAuthorization("PlantProcessDataManager");
 
         group.MapGet("/provider-types", GetProviderTypes)
             .WithSummary("Get supported connector provider types");
@@ -60,12 +61,73 @@ public static class ConnectorAdminEndpoints
         return app;
     }
 
-    private static IResult GetProviderTypes(IConnectorConfigurationService service)
+    private static IResult GetProviderTypes()
+{
+    IReadOnlyList<ProviderTypeDto> providers = new List<ProviderTypeDto>
     {
-        return Results.Ok(service.GetProviderTypes());
-    }
+        new(
+            ProviderType: "Csv",
+            DisplayName: "CSV Snapshot",
+            Description: "Reads CSV exports into the PlantProcess IQ raw staging layer. Available for demos, readiness assessments, and controlled pilots.",
+            IsAvailableNow: true,
+            RequiresSecretReference: false,
+            SupportsSchemaDiscovery: true,
+            SupportsSnapshotImport: true,
+            SupportsIncrementalImport: false),
 
-    private static async Task<IResult> GetConnectionProfilesAsync(
+        new(
+            ProviderType: "Excel",
+            DisplayName: "Excel Snapshot",
+            Description: "Reads Excel workbook/sheet snapshots. Available for customer exports and diagnostic assessments, not high-frequency production ingestion.",
+            IsAvailableNow: true,
+            RequiresSecretReference: false,
+            SupportsSchemaDiscovery: true,
+            SupportsSnapshotImport: true,
+            SupportsIncrementalImport: false),
+
+        new(
+            ProviderType: "PostgreSql",
+            DisplayName: "PostgreSQL Read-only DB Link",
+            Description: "Planned read-only database connector for PostgreSQL sources. Not available in this build.",
+            IsAvailableNow: false,
+            RequiresSecretReference: true,
+            SupportsSchemaDiscovery: false,
+            SupportsSnapshotImport: false,
+            SupportsIncrementalImport: false),
+
+        new(
+            ProviderType: "SqlServer",
+            DisplayName: "Microsoft SQL Server Read-only DB Link",
+            Description: "Planned read-only database connector for SQL Server / MSSQL sources. Not available in this build.",
+            IsAvailableNow: false,
+            RequiresSecretReference: true,
+            SupportsSchemaDiscovery: false,
+            SupportsSnapshotImport: false,
+            SupportsIncrementalImport: false),
+
+        new(
+            ProviderType: "Oracle",
+            DisplayName: "Oracle Read-only DB Link",
+            Description: "Planned read-only database connector for Oracle MES/L2/QMS sources. Not available in this build.",
+            IsAvailableNow: false,
+            RequiresSecretReference: true,
+            SupportsSchemaDiscovery: false,
+            SupportsSnapshotImport: false,
+            SupportsIncrementalImport: false),
+
+        new(
+            ProviderType: "MySql",
+            DisplayName: "MySQL / MariaDB Read-only DB Link",
+            Description: "Planned read-only database connector for MySQL/MariaDB sources. Not available in this build.",
+            IsAvailableNow: false,
+            RequiresSecretReference: true,
+            SupportsSchemaDiscovery: false,
+            SupportsSnapshotImport: false,
+            SupportsIncrementalImport: false)
+    };
+
+    return Results.Ok(providers);
+}    private static async Task<IResult> GetConnectionProfilesAsync(
         Guid? sourceSystemDefinitionId,
         string? providerType,
         bool? includeInactive,

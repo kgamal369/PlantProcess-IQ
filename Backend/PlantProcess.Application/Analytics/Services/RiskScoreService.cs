@@ -48,8 +48,7 @@ public sealed class RiskScoreService : IRiskScoreService
         var material = await _dbContext.MaterialUnits
             .AsNoTracking()
             .Where(x => x.Id == command.MaterialUnitId && !x.IsDeleted)
-            .Select(x => new { x.Id, x.SiteId })
-            .FirstOrDefaultAsync(cancellationToken);
+            .Select(x => new  { x.Id, x.SiteId, x.IsSynthetic }).FirstOrDefaultAsync(cancellationToken);
 
         if (material is null)
             return ApplicationResult<Guid>.Failure(ApplicationError.NotFound("Material unit does not exist."));
@@ -64,18 +63,19 @@ public sealed class RiskScoreService : IRiskScoreService
         var riskClass = string.IsNullOrWhiteSpace(command.RiskClass) ? CalculateRiskClass(command.Score) : command.RiskClass.Trim();
 
         var riskScore = new RiskScore(
-            materialUnitId: command.MaterialUnitId,
-            riskType: command.RiskType,
-            score: command.Score,
-            isSynthetic: command.Metadata.IsSynthetic,
-            riskClass: riskClass,
-            mainContributorsJson: command.MainContributorsJson,
-            modelVersion: command.ModelVersion,
-            sourceSystem: command.Metadata.SourceSystem,
-            sourceRecordId: command.Metadata.SourceRecordId,
-            plantTimeZoneId: command.PlantTimeZoneId ?? timeContext.TimeZoneId,
-            plantUtcOffsetMinutes: command.PlantUtcOffsetMinutes ?? timeContext.UtcOffsetMinutes);
-
+        materialUnitId: command.MaterialUnitId,
+        riskType: command.RiskType,
+        score: command.Score,
+        isSynthetic: material.IsSynthetic,
+        riskClass: command.RiskClass,
+        mainContributorsJson: command.MainContributorsJson,
+        explanationJson: command.MainContributorsJson,
+        modelVersion: command.ModelVersion,
+        sourceSystem: command.Metadata.SourceSystem,
+        sourceRecordId: command.Metadata.CorrelationId,
+        plantTimeZoneId: command.PlantTimeZoneId ?? timeContext.TimeZoneId,
+        plantUtcOffsetMinutes: command.PlantUtcOffsetMinutes ?? timeContext.UtcOffsetMinutes);
+        
         _dbContext.RiskScores.Add(riskScore);
         await _dbContext.SaveChangesAsync(cancellationToken);
 
@@ -140,6 +140,47 @@ public sealed class RiskScoreService : IRiskScoreService
         var riskClass = CalculateRiskClass(score);
         var contributorsJson = JsonSerializer.Serialize(contributors, JsonOptions);
 
+        var explanationJson = JsonSerializer.Serialize(new
+        {
+            riskType,
+            modelVersion,
+            scoringStrategy = "TransparentRuleBasedScorer",
+            calculatedAtUtc = DateTime.UtcNow,
+            baseScore = 0.05m,
+            finalScore = score,
+            riskClass,
+            featureVersion = vector.FeatureVersion,
+            material = new
+            {
+                vector.MaterialUnitId,
+                vector.MaterialCode,
+                vector.MaterialUnitType,
+                vector.SiteId,
+                vector.ProductFamily,
+                vector.GradeOrRecipe
+            },
+            featureSummary = new
+            {
+                vector.ProcessStepCount,
+                vector.CompletedProcessStepCount,
+                vector.AbortedProcessStepCount,
+                vector.DistinctEquipmentCount,
+                vector.TotalProcessDurationMinutes,
+                vector.TotalDowntimeMinutes,
+                vector.ParameterObservationCount,
+                vector.ParameterAnomalyCount,
+                vector.ParameterAnomalyRatio,
+                vector.QualityEventCount,
+                vector.DefectEventCount,
+                vector.DataQualityIssueCount,
+                correlationHintCount = vector.CorrelationHints.Count
+            },
+            contributors = contributors
+                .OrderByDescending(x => x.Contribution)
+                .Take(10)
+                .ToList()
+        }, JsonOptions);
+
         Guid? riskScoreId = null;
         if (command.StoreResult)
         {
@@ -158,18 +199,19 @@ public sealed class RiskScoreService : IRiskScoreService
             var timeContext = _timeContextResolver.Resolve(command.PlantTimeZoneId ?? siteTimeZoneId, DateTime.UtcNow);
 
             var riskScore = new RiskScore(
-                materialUnitId: command.MaterialUnitId,
-                riskType: riskType,
-                score: score,
-                isSynthetic: material.IsSynthetic,
-                riskClass: riskClass,
-                mainContributorsJson: contributorsJson,
-                modelVersion: modelVersion,
-                sourceSystem: "PlantProcessIQ.RuleScorer",
-                sourceRecordId: command.CorrelationId,
-                plantTimeZoneId: command.PlantTimeZoneId ?? timeContext.TimeZoneId,
-                plantUtcOffsetMinutes: command.PlantUtcOffsetMinutes ?? timeContext.UtcOffsetMinutes);
-
+            materialUnitId: command.MaterialUnitId,
+            riskType: riskType,
+            score: score,
+            isSynthetic: material.IsSynthetic,
+            riskClass: riskClass,
+            mainContributorsJson: contributorsJson,
+            explanationJson: explanationJson,
+            modelVersion: modelVersion,
+            sourceSystem: "PlantProcessIQ.RuleScorer",
+            sourceRecordId: command.CorrelationId,
+            plantTimeZoneId: command.PlantTimeZoneId ?? timeContext.TimeZoneId,
+            plantUtcOffsetMinutes: command.PlantUtcOffsetMinutes ?? timeContext.UtcOffsetMinutes);
+            
             _dbContext.RiskScores.Add(riskScore);
             await _dbContext.SaveChangesAsync(cancellationToken);
             riskScoreId = riskScore.Id;

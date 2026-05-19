@@ -149,12 +149,12 @@
 [FILE_START]
 [METADATA: Path='Backend\PlantProcess.Api\Configuration\StartupConfigurationValidator.cs', Lines=173, Size=8257 bytes]
 // ============================================================
-// TASK 13 â€” Confirm CORS origins are configurable
+// TASK 13 Confirm CORS origins are configurable
 // FILE: Backend/PlantProcess.Api/Configuration/StartupConfigurationValidator.cs
 //
 // CHANGES vs current version:
 //  1. Production check now also rejects *:// wildcard origins.
-//  2. Validates that AllowedOrigins are parseable URIs â€” prevents
+//  2. Validates that AllowedOrigins are parseable URIs prevents
 //     typos like "http//localhost" from silently being accepted by
 //     the CORS middleware and causing 403 errors.
 //  3. Added PlantTimeZoneId validation with a descriptive error.
@@ -331,7 +331,7 @@ using PlantProcess.Infrastructure.Persistence;
 namespace PlantProcess.Api.Endpoints.Admin;
 
 /// <summary>
-/// Phase 2 â€” Admin Area Foundation.
+/// Phase 2 Admin Area Foundation.
 /// 
 /// Purpose:
 /// This endpoint group supports the Administrator shell required before
@@ -901,7 +901,7 @@ using PlantProcess.Application.Integration.Interfaces.Connectors;
 namespace PlantProcess.Api.Endpoints.Admin;
 
 /// <summary>
-/// Phase 3 â€” Connector Foundation API.
+/// Phase 3 Connector Foundation API.
 /// 
 /// This group powers the Admin / DB Configuration page.
 /// It introduces generic connection profiles, source datasets,
@@ -912,7 +912,7 @@ public static class ConnectorAdminEndpoints
     public static IEndpointRouteBuilder MapConnectorAdminEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/admin/connectors")
-            .WithTags("Admin â€” Connectors");
+            .WithTags("Admin Connectors");
 
         group.MapGet("/provider-types", GetProviderTypes)
             .WithSummary("Get supported connector provider types");
@@ -1323,7 +1323,7 @@ using PlantProcess.Infrastructure.Persistence;
 namespace PlantProcess.Api.Endpoints.Admin;
 
 /// <summary>
-/// Phase 4 â€” Schema Configuration / SQL View Layer.
+/// Phase 4 Schema Configuration / SQL View Layer.
 /// 
 /// This endpoint group supports:
 /// - schema view metadata CRUD,
@@ -1338,7 +1338,7 @@ public static class SchemaConfigurationEndpoints
     public static IEndpointRouteBuilder MapSchemaConfigurationEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/admin/schema-configuration")
-            .WithTags("Admin â€” Schema Configuration");
+            .WithTags("Admin Schema Configuration");
 
         group.MapGet("/views", GetSchemaViewsAsync)
             .WithSummary("Get schema views");
@@ -9445,7 +9445,7 @@ public partial class Program { }
 [FILE_START]
 [METADATA: Path='Backend\PlantProcess.Api\Swagger\SwaggerExamplesOperationFilter.cs', Lines=238, Size=8592 bytes]
 // ============================================================
-// PHASE 0 â€” TASK 17
+// PHASE 0 TASK 17
 // FILE: Backend/PlantProcess.Api/Swagger/SwaggerExamplesOperationFilter.cs
 //
 // PURPOSE:
@@ -9645,10 +9645,10 @@ public sealed class SwaggerTagGroupingOperationFilter : IOperationFilter
     {
         ["health"] = ["Health"],
         ["db-health"] = ["Health"],
-        ["analytics/dashboard"] = ["Analytics â€” Dashboard"],
-        ["analytics/correlations"] = ["Analytics â€” Correlation"],
-        ["analytics/risk-scores"] = ["Analytics â€” Risk Scores"],
-        ["analytics/features"] = ["Analytics â€” Feature Engineering"],
+        ["analytics/dashboard"] = ["Analytics Dashboard"],
+        ["analytics/correlations"] = ["Analytics Correlation"],
+        ["analytics/risk-scores"] = ["Analytics Risk Scores"],
+        ["analytics/features"] = ["Analytics Feature Engineering"],
         ["integrations"] = ["Integration"],
         ["workflow"] = ["Workflow"],
         ["materials"] = ["Materials"],
@@ -9659,8 +9659,8 @@ public sealed class SwaggerTagGroupingOperationFilter : IOperationFilter
         ["reporting"] = ["Reporting"],
         ["validation"] = ["Validation"],
         ["admin"] = ["Admin"],
-        ["admin/connectors"] = ["Admin â€” Connectors"],
-        ["admin/schema-configuration"] = ["Admin â€” Schema Configuration"],
+        ["admin/connectors"] = ["Admin Connectors"],
+        ["admin/schema-configuration"] = ["Admin Schema Configuration"],
         ["dev"] = ["Development"]
     };
 

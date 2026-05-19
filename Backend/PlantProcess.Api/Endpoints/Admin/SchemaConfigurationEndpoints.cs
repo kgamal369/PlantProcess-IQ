@@ -11,7 +11,7 @@ using PlantProcess.Infrastructure.Persistence;
 namespace PlantProcess.Api.Endpoints.Admin;
 
 /// <summary>
-/// Phase 4 â€” Schema Configuration / SQL View Layer.
+/// Phase 4 Schema Configuration / SQL View Layer.
 /// 
 /// This endpoint group supports:
 /// - schema view metadata CRUD,
@@ -26,7 +26,8 @@ public static class SchemaConfigurationEndpoints
     public static IEndpointRouteBuilder MapSchemaConfigurationEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/admin/schema-configuration")
-            .WithTags("Admin â€” Schema Configuration");
+        .WithTags("Admin - Schema Configuration")
+        .RequireAuthorization("PlantProcessDataManager");
 
         group.MapGet("/views", GetSchemaViewsAsync)
             .WithSummary("Get schema views");

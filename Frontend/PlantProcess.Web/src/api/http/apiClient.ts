@@ -3,17 +3,38 @@
 export type QueryPrimitive = string | number | boolean | null | undefined;
 export type QueryParams = Record<string, QueryPrimitive>;
 
-const ACCESS_TOKEN_KEY = "plantprocess.auth.accessToken";
+export const ACCESS_TOKEN_KEY = "plantprocess.auth.accessToken";
+export const AUTH_USER_KEY = "plantprocess.auth.user";
+
+export interface AuthenticatedUser {
+  userName: string;
+  displayName?: string | null;
+  role: "Admin" | "DataManager" | "Engineer" | "Viewer" | string;
+  expiresAtUtc: string;
+  scopes?: string[];
+}
+
+export interface LoginResponse {
+  accessToken: string;
+  tokenType: string;
+  expiresAtUtc: string;
+  userName: string;
+  displayName?: string | null;
+  role: string;
+  scopes?: string[];
+}
 
 export class ApiError extends Error {
   public readonly status: number;
   public readonly responseText: string;
+  public readonly path: string;
 
-  constructor(message: string, status: number, responseText: string) {
+  constructor(message: string, status: number, responseText: string, path: string) {
     super(message);
     this.name = "ApiError";
     this.status = status;
     this.responseText = responseText;
+    this.path = path;
   }
 }
 
@@ -30,6 +51,32 @@ export function getAccessToken() {
   return localStorage.getItem(ACCESS_TOKEN_KEY);
 }
 
+export function setAuthenticatedUser(user: AuthenticatedUser | null) {
+  if (!user) {
+    localStorage.removeItem(AUTH_USER_KEY);
+    return;
+  }
+
+  localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
+}
+
+export function getAuthenticatedUser(): AuthenticatedUser | null {
+  const raw = localStorage.getItem(AUTH_USER_KEY);
+  if (!raw) return null;
+
+  try {
+    return JSON.parse(raw) as AuthenticatedUser;
+  } catch {
+    localStorage.removeItem(AUTH_USER_KEY);
+    return null;
+  }
+}
+
+export function clearAuthentication() {
+  setAccessToken(null);
+  setAuthenticatedUser(null);
+}
+
 export function buildQuery(params?: QueryParams): string {
   if (!params) return "";
 
@@ -44,14 +91,33 @@ export function buildQuery(params?: QueryParams): string {
   return query ? `?${query}` : "";
 }
 
+function dispatchAuthFailure(error: ApiError) {
+  if (error.status === 401 || error.status === 403) {
+    window.dispatchEvent(
+      new CustomEvent("plantprocess:auth-failure", {
+        detail: {
+          status: error.status,
+          path: error.path,
+          responseText: error.responseText,
+        },
+      })
+    );
+  }
+}
+
 async function requestJson<T>(
   method: string,
   path: string,
-  body?: unknown
+  body?: unknown,
+  timeoutMs = 30_000
 ): Promise<T> {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
   const token = getAccessToken();
 
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = {
+    Accept: "application/json",
+  };
 
   if (body !== undefined) {
     headers["Content-Type"] = "application/json";
@@ -61,58 +127,83 @@ async function requestJson<T>(
     headers.Authorization = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    method,
-    headers,
-    body: body === undefined ? undefined : JSON.stringify(body),
-  });
+  try {
+    const response = await fetch(`${API_BASE_URL}${path}`, {
+      method,
+      headers,
+      signal: controller.signal,
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
 
-  const text = await response.text();
+    const text = await response.text();
 
-  if (!response.ok) {
-    throw new ApiError(
-      `API request failed: ${method} ${path} returned ${response.status}`,
-      response.status,
-      text
-    );
+    if (!response.ok) {
+      const error = new ApiError(
+        text || `API request failed: ${method} ${path} returned ${response.status}`,
+        response.status,
+        text,
+        path
+      );
+
+      dispatchAuthFailure(error);
+      throw error;
+    }
+
+    if (!text) return undefined as T;
+
+    return JSON.parse(text) as T;
+  } finally {
+    window.clearTimeout(timeout);
   }
-
-  if (!text) return undefined as T;
-
-  return JSON.parse(text) as T;
 }
 
 export const apiClient = {
-  get<T>(path: string, params?: QueryParams) {
-    return requestJson<T>("GET", `${path}${buildQuery(params)}`);
+  get<T>(path: string, params?: QueryParams, timeoutMs?: number) {
+    return requestJson<T>("GET", `${path}${buildQuery(params)}`, undefined, timeoutMs);
   },
 
-  post<T>(path: string, body?: unknown) {
-    return requestJson<T>("POST", path, body);
+  post<T>(path: string, body?: unknown, timeoutMs?: number) {
+    return requestJson<T>("POST", path, body, timeoutMs);
   },
 
-  put<T>(path: string, body?: unknown) {
-    return requestJson<T>("PUT", path, body);
+  put<T>(path: string, body?: unknown, timeoutMs?: number) {
+    return requestJson<T>("PUT", path, body, timeoutMs);
   },
 
-  patch<T>(path: string, body?: unknown) {
-    return requestJson<T>("PATCH", path, body);
+  patch<T>(path: string, body?: unknown, timeoutMs?: number) {
+    return requestJson<T>("PATCH", path, body, timeoutMs);
   },
 
-  delete<T>(path: string) {
-    return requestJson<T>("DELETE", path);
+  delete<T>(path: string, timeoutMs?: number) {
+    return requestJson<T>("DELETE", path, undefined, timeoutMs);
   },
 
-  login(userName: string, password: string) {
-    return requestJson<{
-      accessToken: string;
-      tokenType: string;
-      expiresAtUtc: string;
-      userName: string;
-      role: string;
-    }>("POST", "/auth/login", { userName, password });
+  async login(userName: string, password: string, requestedRole?: string | null) {
+    const response = await requestJson<LoginResponse>("POST", "/auth/login", {
+      userName,
+      password,
+      requestedRole,
+    });
+
+    setAccessToken(response.accessToken);
+    setAuthenticatedUser({
+      userName: response.userName,
+      displayName: response.displayName,
+      role: response.role,
+      expiresAtUtc: response.expiresAtUtc,
+      scopes: response.scopes ?? [],
+    });
+
+    return response;
+  },
+
+  logout() {
+    clearAuthentication();
   },
 
   setAccessToken,
   getAccessToken,
+  setAuthenticatedUser,
+  getAuthenticatedUser,
+  clearAuthentication,
 };

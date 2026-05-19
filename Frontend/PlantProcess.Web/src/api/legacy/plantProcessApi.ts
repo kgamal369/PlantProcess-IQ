@@ -1,4 +1,5 @@
 ﻿import { API_BASE_URL } from "../apiConfig";
+import { getAccessToken } from "../http";
 
 export type SortDirection = "asc" | "desc";
 
@@ -306,7 +307,7 @@ export interface CreateDashboardWidgetDefinitionPayload {
   sourceRecordId?: string | null;
 }
 // ============================================================
-// Phase 2 â€” Admin Area Foundation DTOs
+// Phase 2 Admin Area Foundation DTOs
 // ============================================================
 
 export interface AdminMetricCard {
@@ -442,7 +443,7 @@ export interface AdminJobsMonitor {
 }
 
 // ============================================================
-// Phase 3 â€” Connector Foundation DTOs
+// Phase 3 Connector Foundation DTOs
 // ============================================================
 
 export interface ProviderTypeRecord {
@@ -620,7 +621,7 @@ export interface CsvImportSnapshotResult {
 }
 
 // ============================================================
-// Phase 4 â€” Schema Configuration DTOs
+// Phase 4 Schema Configuration DTOs
 // ============================================================
 
 export interface SchemaViewDefinitionRecord {
@@ -790,6 +791,7 @@ async function requestJson<T>(
 ): Promise<T> {
   const controller = new AbortController();
   const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
+  const token = getAccessToken();
 
   try {
     const response = await fetch(`${API_BASE_URL}${path}`, {
@@ -798,6 +800,7 @@ async function requestJson<T>(
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...(options?.headers ?? {}),
       },
     });
@@ -805,6 +808,18 @@ async function requestJson<T>(
     const text = await response.text();
 
     if (!response.ok) {
+      if (response.status === 401 || response.status === 403) {
+        window.dispatchEvent(
+          new CustomEvent("plantprocess:auth-failure", {
+            detail: {
+              status: response.status,
+              path,
+              responseText: text,
+            },
+          })
+        );
+      }
+
       throw new Error(
         text || `PlantProcess API request failed: ${response.status} ${response.statusText}`
       );

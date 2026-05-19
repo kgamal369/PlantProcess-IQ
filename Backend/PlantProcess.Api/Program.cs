@@ -20,7 +20,6 @@ using PlantProcess.Api.Endpoints.Workflow;
 using PlantProcess.Api.Middleware;
 using PlantProcess.Api.Options;
 using PlantProcess.Api.Endpoints.Admin;
-using PlantProcess.Api.Endpoints.Security;
 using PlantProcess.Application;
 using PlantProcess.Infrastructure;
 using Serilog;
@@ -154,10 +153,11 @@ try
         .GetSection("PlantProcess:Auth")
         .Get<AuthOptions>() ?? new AuthOptions();
 
-    if (authOptions.SigningKey.Length < 32)
+    if (string.IsNullOrWhiteSpace(authOptions.SigningKey) ||
+    authOptions.SigningKey.Length < 32)
     {
         throw new InvalidOperationException(
-            "PlantProcess:Auth:SigningKey must be at least 32 characters.");
+            "PlantProcess:Auth:SigningKey must be configured and at least 32 characters.");
     }
 
     builder.Services
@@ -192,6 +192,15 @@ try
 
         options.AddPolicy("PlantProcessAdmin", policy =>
             policy.RequireRole("Admin"));
+
+        options.AddPolicy("PlantProcessDataManager", policy =>
+            policy.RequireRole("Admin", "DataManager"));
+
+        options.AddPolicy("PlantProcessEngineer", policy =>
+            policy.RequireRole("Admin", "Engineer"));
+
+        options.AddPolicy("PlantProcessViewer", policy =>
+            policy.RequireRole("Admin", "DataManager", "Engineer", "Viewer"));
     });
     
     var app = builder.Build();
@@ -257,7 +266,10 @@ try
     app.MapDataQualityScanEndpoints();
     app.MapWorkflowEndpoints();
     app.MapValidationEndpoints();
-    app.MapDevSeedEndpoints();
+    if (app.Environment.IsDevelopment())
+    {
+        app.MapDevSeedEndpoints();
+    }    
     app.MapAdminEndpoints();
     app.MapJobAdminEndpoints();
     app.MapConnectorAdminEndpoints();

@@ -1,5 +1,5 @@
 ﻿// ============================================================
-// PHASE 0 â€” TASK 17
+// PHASE 0 TASK 17
 // FILE: Backend/PlantProcess.Api/Swagger/SwaggerExamplesOperationFilter.cs
 //
 // PURPOSE:
@@ -199,10 +199,10 @@ public sealed class SwaggerTagGroupingOperationFilter : IOperationFilter
     {
         ["health"] = ["Health"],
         ["db-health"] = ["Health"],
-        ["analytics/dashboard"] = ["Analytics â€” Dashboard"],
-        ["analytics/correlations"] = ["Analytics â€” Correlation"],
-        ["analytics/risk-scores"] = ["Analytics â€” Risk Scores"],
-        ["analytics/features"] = ["Analytics â€” Feature Engineering"],
+        ["analytics/dashboard"] = ["Analytics Dashboard"],
+        ["analytics/correlations"] = ["Analytics Correlation"],
+        ["analytics/risk-scores"] = ["Analytics Risk Scores"],
+        ["analytics/features"] = ["Analytics Feature Engineering"],
         ["integrations"] = ["Integration"],
         ["workflow"] = ["Workflow"],
         ["materials"] = ["Materials"],
@@ -213,8 +213,8 @@ public sealed class SwaggerTagGroupingOperationFilter : IOperationFilter
         ["reporting"] = ["Reporting"],
         ["validation"] = ["Validation"],
         ["admin"] = ["Admin"],
-        ["admin/connectors"] = ["Admin â€” Connectors"],
-        ["admin/schema-configuration"] = ["Admin â€” Schema Configuration"],
+        ["admin/connectors"] = ["Admin Connectors"],
+        ["admin/schema-configuration"] = ["Admin Schema Configuration"],
         ["dev"] = ["Development"]
     };
 

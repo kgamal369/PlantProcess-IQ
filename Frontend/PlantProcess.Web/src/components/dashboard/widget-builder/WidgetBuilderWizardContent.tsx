@@ -1038,7 +1038,7 @@ function DataStep({
             <option value="">Select dimension</option>
             {dimensions.map((dimension) => (
               <option key={dimension.code} value={dimension.code}>
-                {dimension.label} Â· {dimension.category}
+                {dimension.label}  {dimension.category}
               </option>
             ))}
           </select>
@@ -1055,7 +1055,7 @@ function DataStep({
             <option value="">Select measure</option>
             {measures.map((measure) => (
               <option key={measure.code} value={measure.code}>
-                {measure.label} Â· {measure.aggregation}
+                {measure.label}  {measure.aggregation}
               </option>
             ))}
           </select>
@@ -1073,7 +1073,7 @@ function DataStep({
               <option value="">Select parameter</option>
               {(referenceData?.parameters ?? []).map((item) => (
                 <option key={item.code} value={item.code}>
-                  {item.name} Â· {item.code}
+                  {item.name}  {item.code}
                 </option>
               ))}
             </select>

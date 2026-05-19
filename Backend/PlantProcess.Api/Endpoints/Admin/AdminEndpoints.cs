@@ -4,7 +4,7 @@ using PlantProcess.Infrastructure.Persistence;
 namespace PlantProcess.Api.Endpoints.Admin;
 
 /// <summary>
-/// Phase 2 â€” Admin Area Foundation.
+/// Phase 2 Admin Area Foundation.
 /// 
 /// Purpose:
 /// This endpoint group supports the Administrator shell required before
@@ -27,7 +27,8 @@ public static class AdminEndpoints
     public static IEndpointRouteBuilder MapAdminEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/admin")
-            .WithTags("Admin");
+        .WithTags("Admin")
+        .RequireAuthorization("PlantProcessAdmin");
 
         group.MapGet("/overview", GetOverviewAsync)
             .WithSummary("Get Admin overview")

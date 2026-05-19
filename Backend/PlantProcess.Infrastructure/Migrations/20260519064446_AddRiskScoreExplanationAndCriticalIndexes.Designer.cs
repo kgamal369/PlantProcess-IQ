@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using PlantProcess.Infrastructure.Persistence;
@@ -11,9 +12,11 @@ using PlantProcess.Infrastructure.Persistence;
 namespace PlantProcess.Infrastructure.Migrations
 {
     [DbContext(typeof(PlantProcessDbContext))]
-    partial class PlantProcessDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260519064446_AddRiskScoreExplanationAndCriticalIndexes")]
+    partial class AddRiskScoreExplanationAndCriticalIndexes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -263,10 +266,6 @@ namespace PlantProcess.Infrastructure.Migrations
                         .HasColumnType("character varying(500)")
                         .HasColumnName("deleted_reason");
 
-                    b.Property<string>("ExplanationJson")
-                        .HasColumnType("jsonb")
-                        .HasColumnName("explanation_json");
-
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean")
                         .HasColumnName("is_deleted");
@@ -348,23 +347,14 @@ namespace PlantProcess.Infrastructure.Migrations
                     b.HasIndex("MaterialUnitId")
                         .HasDatabaseName("ix_risk_scores_material_unit_id");
 
-                    b.HasIndex("RiskClass")
-                        .HasDatabaseName("ix_risk_scores_risk_class");
-
                     b.HasIndex("RiskType")
                         .HasDatabaseName("ix_risk_scores_risk_type");
-
-                    b.HasIndex("Score")
-                        .HasDatabaseName("ix_risk_scores_score");
 
                     b.HasIndex("ScoredAtUtc")
                         .HasDatabaseName("ix_risk_scores_scored_at_utc");
 
                     b.HasIndex("MaterialUnitId", "RiskType", "ScoredAtUtc")
                         .HasDatabaseName("ix_risk_scores_material_unit_id_risk_type_scored_at_utc");
-
-                    b.HasIndex("RiskType", "RiskClass", "Score")
-                        .HasDatabaseName("ix_risk_scores_risk_type_risk_class_score");
 
                     b.ToTable("risk_scores", (string)null);
                 });

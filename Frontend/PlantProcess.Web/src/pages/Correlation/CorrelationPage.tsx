@@ -86,7 +86,7 @@ export function CorrelationPage() {
         <div>
           <div className="eyebrow">
             <Network size={14} />
-            Phase 10 â€” Genealogy-aware correlation
+            Phase 10 Genealogy-aware correlation
           </div>
           <h1>Process-to-Quality Correlation</h1>
           <p>
@@ -141,7 +141,7 @@ export function CorrelationPage() {
                     Defect Rate by Parameter Bin
                   </h3>
                   <p>
-                    Parameter: <strong>{result.parameterCode}</strong> â†’ Defect:{" "}
+                    Parameter: <strong>{result.parameterCode}</strong>  Defect:{" "}
                     <strong>{result.defectType}</strong>. Click a bar to change
                     bin count for exploration.
                   </p>
@@ -188,8 +188,8 @@ export function CorrelationPage() {
               <div className="mode-grid">
                 {[
                   ["SameMaterial", "Same material only"],
-                  ["DownstreamChildren", "Upstream parameter â†’ downstream defect"],
-                  ["UpstreamParents", "Downstream material â†’ upstream context"],
+                  ["DownstreamChildren", "Upstream parameter  downstream defect"],
+                  ["UpstreamParents", "Downstream material  upstream context"],
                   ["FullGenealogy", "Parents + children"],
                 ].map(([value, label]) => (
                   <button
