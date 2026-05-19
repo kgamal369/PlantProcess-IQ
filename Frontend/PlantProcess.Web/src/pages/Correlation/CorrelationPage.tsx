@@ -271,9 +271,10 @@ export function CorrelationPage() {
           <section className="insight-box">
             <strong>Engineering interpretation</strong>
             <p>
-              This is not claiming automatic root cause. It shows suspected risk
-              indicators by comparing defect rate per parameter range against
-              the selected baseline while following material genealogy.
+              This view shows suspected contributor signals by comparing defect rate per
+              parameter range against the selected baseline while following material
+              genealogy. Results require process engineering validation before any process
+              change decision.
             </p>
             <small>{result.message}</small>
           </section>

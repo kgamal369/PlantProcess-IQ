@@ -15,8 +15,9 @@
     "e2e:ui": "playwright test --ui",
     "validate": "npm run build && npm run lint && npm run test",
     "validate:fast": "npm run build && npm run test",
-    "validate:full": "npm run build && npm run lint && npm run test && npm run e2e",
-    "check:ts": "tsc -b --verbose"
+    "validate:full": "npm run build && npm run lint && npm run test && npm run language:audit && npm run e2e",
+    "check:ts": "tsc -b --verbose",
+    "language:audit": "node scripts/audit-language.mjs"
   },
   "dependencies": {
     "lucide-react": "^1.14.0",

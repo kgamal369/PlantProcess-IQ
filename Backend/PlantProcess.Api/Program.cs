@@ -1,11 +1,14 @@
 ﻿using System.Reflection;
 using System.IdentityModel.Tokens.Jwt;
+using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using PlantProcess.Api.Configuration;
+using PlantProcess.Api.Endpoints.Admin;
 using PlantProcess.Api.Endpoints.Analytics;
-using PlantProcess.Api.Endpoints.Dashboarding;
 using PlantProcess.Api.Endpoints.Configuration;
+using PlantProcess.Api.Endpoints.Dashboarding;
 using PlantProcess.Api.Endpoints.DataQuality;
 using PlantProcess.Api.Endpoints.Development;
 using PlantProcess.Api.Endpoints.Health;
@@ -19,23 +22,20 @@ using PlantProcess.Api.Endpoints.Validation;
 using PlantProcess.Api.Endpoints.Workflow;
 using PlantProcess.Api.Middleware;
 using PlantProcess.Api.Options;
-using PlantProcess.Api.Endpoints.Admin;
+using PlantProcess.Api.Security;
+using PlantProcess.Api.Swagger;
 using PlantProcess.Application;
+using PlantProcess.Application.Integration.Interfaces.Jobs;
 using PlantProcess.Infrastructure;
 using Serilog;
-using System.Text;
-using Microsoft.AspNetCore.Authorization;
-using PlantProcess.Api.Security;
 using Serilog.Events;
 using Serilog.Exceptions;
-using PlantProcess.Api.Swagger;
-using PlantProcess.Application.Integration.Interfaces.Jobs;
 
-// Resolve a stable absolute log path regardless of working directory
+// Resolve a stable absolute log path regardless of working directory.
 var logDirectory = Path.Combine(AppContext.BaseDirectory, "logs");
 var logFilePath = Path.Combine(logDirectory, "plantprocess-api-.log");
 
-// Bootstrap logger
+// Resolve app version.
 var appVersion = Assembly
     .GetEntryAssembly()
     ?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()
@@ -43,6 +43,7 @@ var appVersion = Assembly
     ?? Assembly.GetEntryAssembly()?.GetName().Version?.ToString(3)
     ?? "dev";
 
+// Bootstrap logger.
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Verbose()
     .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
@@ -74,10 +75,14 @@ try
 
     var builder = WebApplication.CreateBuilder(args);
 
-    // -- Serilog 
+    // ---------------------------------------------------------------------
+    // Serilog
+    // ---------------------------------------------------------------------
     builder.Host.UseSerilog();
 
-    // -- Options + startup validation 
+    // ---------------------------------------------------------------------
+    // Options + startup validation
+    // ---------------------------------------------------------------------
     builder.Services.Configure<PlantProcessOptions>(
         builder.Configuration.GetSection(PlantProcessOptions.SectionName));
 
@@ -97,28 +102,44 @@ try
         plantProcessOptions,
         allowedOrigins);
 
-    Log.Information(
-        "PlantProcess IQ effective CORS origins: {AllowedOrigins}",
-        string.Join(", ", allowedOrigins));
-
-    // -- Infrastructure services 
+    // ---------------------------------------------------------------------
+    // Infrastructure + application services
+    // ---------------------------------------------------------------------
     builder.Services.AddMemoryCache();
     builder.Services.AddApplication();
     builder.Services.AddInfrastructure(builder.Configuration);
 
+    // ---------------------------------------------------------------------
     // CORS
+    //
+    // IMPORTANT:
+    // CORS must be registered BEFORE builder.Build().
+    // UseCors must run BEFORE UseAuthentication/UseAuthorization.
+    // ---------------------------------------------------------------------
+    var corsOrigins = allowedOrigins.Count > 0
+        ? allowedOrigins.ToArray()
+        : builder.Environment.IsDevelopment()
+            ? new[] { "http://localhost:5173", "http://localhost:3000" }
+            : Array.Empty<string>();
+
+    Log.Information(
+        "PlantProcess IQ effective CORS origins: {AllowedOrigins}",
+        string.Join(", ", corsOrigins));
+
     builder.Services.AddCors(options =>
     {
         options.AddPolicy("PlantProcessFrontend", policy =>
         {
             policy
-                .WithOrigins(allowedOrigins.ToArray())
+                .WithOrigins(corsOrigins)
                 .AllowAnyHeader()
                 .AllowAnyMethod();
         });
     });
 
-    // -- Swagger 
+    // ---------------------------------------------------------------------
+    // Swagger / OpenAPI
+    // ---------------------------------------------------------------------
     builder.Services.AddEndpointsApiExplorer();
 
     builder.Services.AddSwaggerGen(options =>
@@ -146,6 +167,11 @@ try
         options.OperationFilter<SwaggerTagGroupingOperationFilter>();
     });
 
+    // ---------------------------------------------------------------------
+    // Authentication
+    // ---------------------------------------------------------------------
+    JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
+
     builder.Services.Configure<AuthOptions>(
         builder.Configuration.GetSection("PlantProcess:Auth"));
 
@@ -154,7 +180,7 @@ try
         .Get<AuthOptions>() ?? new AuthOptions();
 
     if (string.IsNullOrWhiteSpace(authOptions.SigningKey) ||
-    authOptions.SigningKey.Length < 32)
+        authOptions.SigningKey.Length < 32)
     {
         throw new InvalidOperationException(
             "PlantProcess:Auth:SigningKey must be configured and at least 32 characters.");
@@ -184,6 +210,9 @@ try
             };
         });
 
+    // ---------------------------------------------------------------------
+    // Authorization
+    // ---------------------------------------------------------------------
     builder.Services.AddAuthorization(options =>
     {
         options.FallbackPolicy = new AuthorizationPolicyBuilder()
@@ -202,10 +231,15 @@ try
         options.AddPolicy("PlantProcessViewer", policy =>
             policy.RequireRole("Admin", "DataManager", "Engineer", "Viewer"));
     });
-    
+
+    // ---------------------------------------------------------------------
+    // Build app
+    // ---------------------------------------------------------------------
     var app = builder.Build();
 
-    // Phase 2: Register DB-backed system jobs at API startup 
+    // ---------------------------------------------------------------------
+    // Register DB-backed system jobs at API startup
+    // ---------------------------------------------------------------------
     await using (var scope = app.Services.CreateAsyncScope())
     {
         var jobRegistration = scope.ServiceProvider.GetRequiredService<IJobRegistrationService>();
@@ -218,14 +252,30 @@ try
         }
     }
 
-    // CORS must be early enough before browser calls endpoints 
+    // ---------------------------------------------------------------------
+    // Middleware pipeline
+    // ---------------------------------------------------------------------
+
+    // HTTPS only outside Development.
+    // In Development, Vite/Playwright calls http://localhost:5063 directly.
+    if (!app.Environment.IsDevelopment())
+    {
+        app.UseHttpsRedirection();
+    }
+
+    // CORS must run before authentication and authorization.
+    // This is required for browser preflight OPTIONS requests.
     app.UseCors("PlantProcessFrontend");
 
-    // Middleware pipeline
+    // Request tracing/logging middleware.
     app.UseMiddleware<CorrelationIdMiddleware>();
     app.UseMiddleware<RequestResponseLoggingMiddleware>();
 
-    // Swagger 
+    // Authentication and authorization.
+    app.UseAuthentication();
+    app.UseAuthorization();
+
+    // Swagger.
     if (app.Environment.IsDevelopment())
     {
         app.UseSwagger();
@@ -237,44 +287,49 @@ try
         });
     }
 
-    // Root redirect
+    // Root redirect.
     app.MapGet("/", () => Results.Redirect("/swagger")).AllowAnonymous();
 
-    // HTTPS only outside development 
-    if (!app.Environment.IsDevelopment())
-    {
-        app.UseHttpsRedirection();
-    }
-
+    // ---------------------------------------------------------------------
     // Endpoint registration
+    // ---------------------------------------------------------------------
     app.MapAuthEndpoints();
     app.MapHealthEndpoints();
+
     app.MapPlantLayoutEndpoints();
     app.MapConfigurationEndpoints();
     app.MapIntegrationEndpoints();
     app.MapImportWorkflowEndpoints();
+
     app.MapMaterialEndpoints();
     app.MapMaterialInvestigationEndpoints();
+
     app.MapProcessEndpoints();
     app.MapQualityEndpoints();
+
     app.MapRiskScoreEndpoints();
     app.MapCorrelationEndpoints();
     app.MapFeatureEngineeringEndpoints();
+
     app.MapDashboardEndpoints();
     app.MapReportingEndpoints();
+
     app.MapDataQualityEndpoints();
     app.MapDataQualityScanEndpoints();
+
     app.MapWorkflowEndpoints();
     app.MapValidationEndpoints();
+
     if (app.Environment.IsDevelopment())
     {
         app.MapDevSeedEndpoints();
-    }    
+    }
+
     app.MapAdminEndpoints();
     app.MapJobAdminEndpoints();
     app.MapConnectorAdminEndpoints();
     app.MapSchemaConfigurationEndpoints();
-    
+
     app.Run();
 }
 catch (Exception ex) when (ex.GetType().Name == "HostAbortedException")
@@ -291,4 +346,6 @@ finally
     Log.CloseAndFlush();
 }
 
-public partial class Program { }
+public partial class Program
+{
+}

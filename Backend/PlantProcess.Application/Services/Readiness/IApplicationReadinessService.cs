@@ -7,7 +7,17 @@ public interface IApplicationReadinessService
 {
     Task<ApplicationResult<ApplicationReadinessDto>> GetReadinessAsync(
         CancellationToken cancellationToken);
+
+    Task<ApplicationResult<CommercialReadinessReportDto>> BuildCommercialReadinessReportAsync(
+        CommercialReadinessReportRequest request,
+        CancellationToken cancellationToken);
+
+    Task<ApplicationResult<ReadinessPdfReportResult>> BuildCommercialReadinessPdfAsync(
+        CommercialReadinessReportRequest request,
+        CancellationToken cancellationToken);
 }
 
-
-
+public sealed record ReadinessPdfReportResult(
+    byte[] Content,
+    string ContentType,
+    string FileName);

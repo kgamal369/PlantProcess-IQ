@@ -9,6 +9,7 @@ using PlantProcess.Infrastructure.Persistence;
 using PlantProcess.Infrastructure.Connectors.Common;
 using PlantProcess.Infrastructure.Connectors.Csv;
 using PlantProcess.Infrastructure.Connectors.Excel;
+using PlantProcess.Infrastructure.Connectors.PostgreSql;
 
 namespace PlantProcess.Infrastructure;
 
@@ -54,6 +55,11 @@ public static class DependencyInjection
         services.AddScoped<ISchemaReader, ExcelConnector>();
         services.AddScoped<IDataSourceReader, ExcelConnector>();
 
+        services.AddScoped<PostgreSqlConnector>();
+        services.AddScoped<IDataSourceConnector>(sp => sp.GetRequiredService<PostgreSqlConnector>());
+        services.AddScoped<ISchemaReader>(sp => sp.GetRequiredService<PostgreSqlConnector>());
+        services.AddScoped<IDataSourceReader>(sp => sp.GetRequiredService<PostgreSqlConnector>());
+        
         services.AddScoped<IDataSourceConnectorFactory, DataSourceConnectorFactory>();
 
         return services;

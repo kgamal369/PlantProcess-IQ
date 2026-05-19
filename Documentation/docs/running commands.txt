@@ -1,0 +1,12 @@
+cd C:\Workspace\PlantProcess-IQ\Backend
+dotnet build
+dotnet test
+
+cd C:\Workspace\PlantProcess-IQ\Frontend\PlantProcess.Web
+npm run build
+npm run test
+npm run language:audit
+npm run e2e
+
+cd C:\Workspace\PlantProcess-IQ\Frontend\PlantProcess.Web
+npx playwright test e2e/golden-path.spec.ts --headed
