@@ -1,12 +1,15 @@
+# ============================================================
+# PlantProcess IQ - API Dockerfile
+# ============================================================
+
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 
 COPY PlantProcessIQ.sln ./
-COPY PlantProcess.Api/PlantProcess.Api.csproj PlantProcess.Api/
-COPY PlantProcess.Application/PlantProcess.Application.csproj PlantProcess.Application/
 COPY PlantProcess.Domain/PlantProcess.Domain.csproj PlantProcess.Domain/
+COPY PlantProcess.Application/PlantProcess.Application.csproj PlantProcess.Application/
 COPY PlantProcess.Infrastructure/PlantProcess.Infrastructure.csproj PlantProcess.Infrastructure/
-COPY PlantProcess.Workers/PlantProcess.Workers.csproj PlantProcess.Workers/
+COPY PlantProcess.Api/PlantProcess.Api.csproj PlantProcess.Api/
 
 RUN dotnet restore PlantProcess.Api/PlantProcess.Api.csproj
 
@@ -20,10 +23,11 @@ RUN dotnet publish PlantProcess.Api/PlantProcess.Api.csproj \
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS runtime
 WORKDIR /app
 
+ENV ASPNETCORE_URLS=http://0.0.0.0:5063
+ENV ASPNETCORE_ENVIRONMENT=Production
+
 COPY --from=build /app/publish .
 
-ENV ASPNETCORE_URLS=http://+:8080
-
-EXPOSE 8080
+EXPOSE 5063
 
 ENTRYPOINT ["dotnet", "PlantProcess.Api.dll"]

@@ -1,0 +1,29 @@
+{
+  "name": "sou-plantprocess-website",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview --host 0.0.0.0",
+    "check:ts": "tsc -b --verbose",
+    "lint": "echo \"Website lint placeholder - ESLint can be added after V1 content stabilizes\"",
+    "test": "echo \"Website tests placeholder - Vitest can be added after V1 content stabilizes\"",
+    "validate": "npm run build && npm run lint && npm run test"
+  },
+  "dependencies": {
+    "lucide-react": "^1.14.0",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
+    "react-router-dom": "^7.15.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.12.3",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "typescript": "~6.0.2",
+    "vite": "^8.0.12"
+  }
+}
