@@ -8,6 +8,7 @@ import { DashboardFilterProvider } from "./state/DashboardFilterContext";
 import { DashboardSelectionProvider } from "./state/DashboardSelectionContext";
 import { DashboardGridLayoutProvider } from "./state/DashboardGridLayoutContext";
 import { ThemeProvider } from "./state/ThemeContext";
+import { DemoModeProvider } from "./state/DemoModeContext";
 import "./index.css";
 
 const DashboardPage = lazy(() =>
@@ -46,32 +47,41 @@ const AdminPage = lazy(() =>
   }))
 );
 
+const DemoLifecyclePage = lazy(() =>
+  import("./pages/DemoLifecycle/DemoLifecyclePage").then((module) => ({
+    default: module.DemoLifecyclePage,
+  }))
+);
+
 export default function App() {
   return (
     <ThemeProvider>
-      <DashboardFilterProvider>
-        <DashboardSelectionProvider>
-          <DashboardGridLayoutProvider>
-            <Suspense
-              fallback={
-                <LoadingPanel text="Loading PlantProcess IQ workspace..." />
-              }
-            >
-              <Routes>
-                <Route element={<AppLayout />}>
-                  <Route index element={<Navigate to="/dashboard" replace />} />
-                  <Route path="/dashboard" element={<DashboardPage />} />
-                  <Route path="/materials" element={<MaterialInvestigationPage />} />
-                  <Route path="/risk" element={<RiskDashboardPage />} />
-                  <Route path="/data-quality" element={<DataQualityPage />} />
-                  <Route path="/correlations" element={<CorrelationPage />} />
-                  <Route path="/admin/*" element={<AdminPage />} />
-                </Route>
-              </Routes>
-            </Suspense>
-          </DashboardGridLayoutProvider>
-        </DashboardSelectionProvider>
-      </DashboardFilterProvider>
+      <DemoModeProvider>
+        <DashboardFilterProvider>
+          <DashboardSelectionProvider>
+            <DashboardGridLayoutProvider>
+              <Suspense
+                fallback={
+                  <LoadingPanel text="Loading PlantProcess IQ workspace..." />
+                }
+              >
+                <Routes>
+                  <Route element={<AppLayout />}>
+                    <Route index element={<Navigate to="/dashboard" replace />} />
+                    <Route path="/dashboard" element={<DashboardPage />} />
+                    <Route path="/materials" element={<MaterialInvestigationPage />} />
+                    <Route path="/risk" element={<RiskDashboardPage />} />
+                    <Route path="/data-quality" element={<DataQualityPage />} />
+                    <Route path="/correlations" element={<CorrelationPage />} />
+                    <Route path="/admin/*" element={<AdminPage />} />
+                    <Route path="/demo-lifecycle" element={<DemoLifecyclePage />} />
+                  </Route>
+                </Routes>
+              </Suspense>
+            </DashboardGridLayoutProvider>
+          </DashboardSelectionProvider>
+        </DashboardFilterProvider>
+      </DemoModeProvider>
     </ThemeProvider>
   );
 }
