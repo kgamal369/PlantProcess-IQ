@@ -3,30 +3,21 @@
     auto_https disable_redirects
 }
 
-# Public marketing website
-# Local: http://website.localhost
-# Later: https://plantprocessiq.com
-{$PUBLIC_WEBSITE_HOST} {
-    reverse_proxy plantprocess-website:80
+# Website → http://178.105.152.180:8081
+:8081 {
+    reverse_proxy plantprocess-website
+}
+# App Frontend → http://178.105.152.180
+:80 {
+    reverse_proxy plantprocess-app-web
 }
 
-# App frontend
-# Local: http://app.localhost
-# Later: https://app.plantprocessiq.com
-{$APP_FRONTEND_HOST} {
-    reverse_proxy plantprocess-app-web:80
-}
-
-# App backend API
-# Local: http://api.localhost
-# Later: https://api.plantprocessiq.com
-{$APP_API_HOST} {
+# API → http://178.105.152.180:5063
+:5063 {
     reverse_proxy plantprocess-api:5063
 }
 
-# Jenkins
-# Local: http://jenkins.localhost
-# Later: https://jenkins.plantprocessiq.com
-{$JENKINS_HOST} {
+# Jenkins → http://178.105.152.180:9090
+:9090 {
     reverse_proxy jenkins:8080
 }

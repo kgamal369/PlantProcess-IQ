@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   Moon,
   Network,
+  PlayCircle,
   Radar,
   Search,
   Settings2,
@@ -22,6 +23,7 @@ import { usePlantProcessTheme } from "../state/ThemeContext";
 import { AppCommandHeader } from "./brand/AppCommandHeader";
 import { ProductBrand } from "./brand/ProductBrand";
 import { SOUBrand } from "./brand/SOUBrand";
+import { DemoModeControl } from "./demo/DemoModeControl";
 
 const navItems = [
   {
@@ -53,6 +55,12 @@ const navItems = [
     label: "Correlations",
     description: "Process-to-quality analytics",
     icon: GitBranch,
+  },
+  {
+    to: "/demo-lifecycle",
+    label: "Demo Lifecycle",
+    description: "Connector to ML result workflow",
+    icon: PlayCircle,
   },
   {
     to: "/admin",
@@ -197,6 +205,8 @@ export function AppLayout() {
           </div>
 
           <div className="topbar-actions">
+            <DemoModeControl />
+            
             <button
               className="theme-toggle-button"
               onClick={toggleTheme}
