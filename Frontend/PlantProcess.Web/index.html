@@ -1,19 +1,21 @@
-@'
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="SOU PlantProcess IQ - Manufacturing intelligence for process-to-quality investigation."
+      content="PlantProcess IQ — process-to-quality intelligence for manufacturing plants."
     />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <title>SOU | PlantProcess IQ</title>
+    <title>PlantProcess IQ</title>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div style="padding: 32px; font-family: Inter, Arial, sans-serif; background: #050b18; color: #eaf6ff; min-height: 100vh;">
+        <strong>SOU | PlantProcess IQ</strong>
+        <p>Loading PlantProcess IQ workspace...</p>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
-'@ | Set-Content -Path Frontend\PlantProcess.Web\index.html -Encoding UTF8

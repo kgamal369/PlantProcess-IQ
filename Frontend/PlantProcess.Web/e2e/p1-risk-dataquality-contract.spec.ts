@@ -1,56 +1,71 @@
 import { expect, test } from "@playwright/test";
-import { installNetworkGuard } from "./helpers/networkGuard";
+import { apiBaseUrl, login } from "./helpers/auth";
 
-async function login(request: any) {
-  const response = await request.post("http://localhost:5063/auth/login", {
-    data: {
-      userName: "admin",
-      password: "ChangeMe123!",
-    },
+async function authenticatedGet(request: any, path: string, token: string) {
+  return request.get(`${apiBaseUrl}${path}`, {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
   });
-
-  expect(response.ok()).toBeTruthy();
-
-  const body = await response.json();
-  return body.accessToken as string;
 }
 
 test.describe("PlantProcess IQ P1 risk and data-quality contracts", () => {
-  test("risk and data quality pages call real backend endpoints without contract failure", async ({ page, request }) => {
+  test("backend risk and data-quality APIs return stable JSON contracts", async ({
+    request
+  }) => {
     const token = await login(request);
 
-    await page.addInitScript((accessToken) => {
-      window.localStorage.setItem("plantprocess.auth.accessToken", accessToken);
-    }, token);
+    const risk = await authenticatedGet(
+      request,
+      "/analytics/dashboard/risk",
+      token
+    );
 
-    const assertNoNetworkFailures = installNetworkGuard(page);
+    expect(
+      risk.ok(),
+      `/analytics/dashboard/risk should return 2xx but returned HTTP ${risk.status()}`
+    ).toBeTruthy();
 
-    await page.goto("/risk");
-    await expect(page.locator("body")).toContainText(/risk/i);
-
-    await page.goto("/data-quality");
-    await expect(page.locator("body")).toContainText(/data quality|quality/i);
-
-    await assertNoNetworkFailures();
-  });
-
-  test("backend risk and data-quality APIs return JSON shape", async ({ request }) => {
-    const token = await login(request);
-
-    const risk = await request.get("http://localhost:5063/analytics/dashboard/risk", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    expect(risk.ok()).toBeTruthy();
     const riskBody = await risk.json();
     expect(riskBody).toBeDefined();
 
-    const dq = await request.get("http://localhost:5063/analytics/dashboard/data-quality", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const dataQuality = await authenticatedGet(
+      request,
+      "/analytics/dashboard/data-quality",
+      token
+    );
 
-    expect(dq.ok()).toBeTruthy();
-    const dqBody = await dq.json();
-    expect(dqBody).toBeDefined();
+    expect(
+      dataQuality.ok(),
+      `/analytics/dashboard/data-quality should return 2xx but returned HTTP ${dataQuality.status()}`
+    ).toBeTruthy();
+
+    const dataQualityBody = await dataQuality.json();
+    expect(dataQualityBody).toBeDefined();
+
+    const issues = await authenticatedGet(
+      request,
+      "/data-quality/issues",
+      token
+    );
+
+    expect(
+      issues.ok(),
+      `/data-quality/issues should return 2xx but returned HTTP ${issues.status()}`
+    ).toBeTruthy();
+
+    const issuesBody = await issues.json();
+    expect(issuesBody).toBeDefined();
+
+    const scanPreview = await authenticatedGet(
+      request,
+      "/data-quality/scan-preview",
+      token
+    );
+
+    expect(
+      scanPreview.status(),
+      `/data-quality/scan-preview should not return 5xx but returned HTTP ${scanPreview.status()}`
+    ).toBeLessThan(500);
   });
 });

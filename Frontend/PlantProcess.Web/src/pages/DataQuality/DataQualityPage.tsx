@@ -81,7 +81,7 @@ export function DataQualityPage() {
     setError(null);
 
     try {
-      const [dashboardResult, issuesResult, scanHistoryResult, validationResult] =
+      const [dashboardResult, issuesResult, scanPreviewResult] =
         await Promise.allSettled([
           apiClient.get<DataQualityDashboardResponse>("/analytics/dashboard/data-quality", {
             severity: filters.severity || undefined,
@@ -95,10 +95,22 @@ export function DataQualityPage() {
             fromUtc: filters.fromUtc || undefined,
             toUtc: filters.toUtc || undefined,
           }),
-          apiClient.get<ScanHistoryRow[]>("/data-quality/scans/history", {
+          apiClient.get<{
+            persistIssues: boolean;
+            generatedCandidates: number;
+            candidates: Array<{
+              issueType?: string;
+              severity?: string;
+              description?: string;
+              affectedEntityName?: string;
+              affectedEntityId?: string;
+              materialUnitId?: string;
+              sourceSystem?: string;
+              sourceRecordId?: string;
+            }>;
+          }>("/data-quality/scan-preview", {
             take: 20,
           }),
-          apiClient.get<any>("/validation/sync-report"),
         ]);
 
       if (dashboardResult.status === "fulfilled") {
@@ -110,19 +122,31 @@ export function DataQualityPage() {
         setIssues(Array.isArray(issuesResult.value) ? issuesResult.value : []);
       }
 
-      if (scanHistoryResult.status === "fulfilled") {
-        setScanHistory(Array.isArray(scanHistoryResult.value) ? scanHistoryResult.value : []);
+      if (scanPreviewResult.status === "fulfilled") {
+        const preview = scanPreviewResult.value;
+
+        setScanHistory([
+          {
+            id: "preview",
+            scanId: "preview",
+            status: "Preview",
+            startedAtUtc: new Date().toISOString(),
+            completedAtUtc: new Date().toISOString(),
+            issueCount: preview.generatedCandidates ?? preview.candidates?.length ?? 0,
+            message: "Preview generated from current canonical data.",
+          },
+        ]);
+      } else {
+        setScanHistory([]);
       }
 
-      if (validationResult.status === "fulfilled") {
-        setValidation(validationResult.value);
-      }
+      const failed = [dashboardResult, issuesResult].find(
+        (x) => x.status === "rejected"
+      ) as PromiseRejectedResult | undefined;
 
-      const failed = [dashboardResult, issuesResult, scanHistoryResult, validationResult]
-        .find((x) => x.status === "rejected") as PromiseRejectedResult | undefined;
-
-      if (failed && !dashboardResult)
+      if (failed) {
         throw failed.reason;
+      }
     } catch (loadError) {
       setError(loadError);
     } finally {
@@ -131,22 +155,22 @@ export function DataQualityPage() {
   }
 
   async function scanNow() {
-    setIsScanning(true);
-    setError(null);
+  setIsScanning(true);
+  setError(null);
 
-    try {
-      await apiClient.post("/data-quality/scans", {
-        requestedBy: "PlantProcess IQ UI",
-        requestedAtUtc: new Date().toISOString(),
-      });
+  try {
+    await apiClient.post("/data-quality/scan/run", {
+      requestedBy: "PlantProcess IQ UI",
+      requestedAtUtc: new Date().toISOString(),
+    });
 
-      await load();
-    } catch (scanError) {
-      setError(scanError);
-    } finally {
-      setIsScanning(false);
-    }
+    await load();
+  } catch (scanError) {
+    setError(scanError);
+  } finally {
+    setIsScanning(false);
   }
+}
 
   useEffect(() => {
     void load();

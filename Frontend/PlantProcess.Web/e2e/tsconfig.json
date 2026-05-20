@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "skipLibCheck": true,
+    "types": ["node", "@playwright/test"],
+    "baseUrl": "..",
+    "paths": {
+      "@/*": ["src/*"]
+    },
+    "noEmit": true,
+    "ignoreDeprecations": "6.0"
+  },
+  "include": ["./**/*.ts"]
+}

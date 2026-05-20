@@ -36,13 +36,33 @@ public static class DataQualityScanEndpoints
         PlantProcessDbContext dbContext,
         CancellationToken cancellationToken)
     {
-        var candidates = await BuildDataQualityCandidatesAsync(dbContext, take ?? 500, cancellationToken);
-        return Results.Ok(new
+        try
         {
-            persistIssues = false,
-            generatedCandidates = candidates.Count,
-            candidates
-        });
+            var candidates = await BuildDataQualityCandidatesAsync(
+                dbContext,
+                take ?? 500,
+                cancellationToken);
+
+            return Results.Ok(new
+            {
+                persistIssues = false,
+                generatedCandidates = candidates.Count,
+                candidates,
+                status = "Ok",
+                generatedAtUtc = DateTime.UtcNow
+            });
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            return Results.Problem(
+                title: "Data quality scan preview failed.",
+                detail: ex.Message,
+                statusCode: StatusCodes.Status500InternalServerError);
+        }
     }
 
     private static async Task<List<DataQualityCandidate>> BuildDataQualityCandidatesAsync(
@@ -129,12 +149,21 @@ public static class DataQualityScanEndpoints
             x.SourceSystem,
             x.SourceRecordId)));
 
-        var highRiskWithoutContributors = await dbContext.RiskScores
+       var highRiskWithoutContributors = await dbContext.RiskScores
             .AsNoTracking()
-            .Where(x => x.Score >= 0.70m && (x.MainContributorsJson == null || x.MainContributorsJson == ""))
+            .Where(x => x.Score >= 0.70m && x.MainContributorsJson == null)
             .OrderByDescending(x => x.ScoredAtUtc)
             .Take(maxRows)
-            .Select(x => new { x.Id, x.MaterialUnitId, x.RiskType, x.Score, x.IsSynthetic, x.SourceSystem, x.SourceRecordId })
+            .Select(x => new
+            {
+                x.Id,
+                x.MaterialUnitId,
+                x.RiskType,
+                x.Score,
+                x.IsSynthetic,
+                x.SourceSystem,
+                x.SourceRecordId
+            })
             .ToListAsync(cancellationToken);
 
         result.AddRange(highRiskWithoutContributors.Select(x => new DataQualityCandidate(
@@ -147,9 +176,8 @@ public static class DataQualityScanEndpoints
             x.IsSynthetic,
             x.SourceSystem,
             x.SourceRecordId)));
-
-        return result;
-    }
+                return result;
+            }
 
     private sealed record DataQualityCandidate(
         string IssueType,

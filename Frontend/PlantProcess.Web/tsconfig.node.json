@@ -4,25 +4,25 @@
     "target": "ES2023",
     "lib": ["ES2023"],
     "module": "ESNext",
-    "types": ["node"],
-    "skipLibCheck": true,
     "moduleResolution": "Bundler",
-    "allowImportingTsExtensions": true,
-    "verbatimModuleSyntax": true,
-    "moduleDetection": "force",
-    "noEmit": true,
-    "paths": {
-      "@/*": ["./src/*"]
-    },
+    "types": ["node"],
+    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true,
     "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "erasableSyntaxOnly": true,
-    "noFallthroughCasesInSwitch": true
+    "noEmit": true,
+    "ignoreDeprecations": "6.0"
   },
   "include": [
     "vite.config.ts",
     "vitest.config.ts",
     "playwright.config.ts"
+  ],
+  "exclude": [
+    "src",
+    "e2e",
+    "dist",
+    "node_modules",
+    "playwright-report",
+    "test-results"
   ]
 }

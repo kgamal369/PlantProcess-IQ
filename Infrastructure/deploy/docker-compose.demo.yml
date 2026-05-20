@@ -46,6 +46,7 @@ services:
       - ppiq-net
 
   plantprocess-api:
+    image: plantprocessiq/api:${PPIQ_IMAGE_TAG:-local}
     build:
       context: ../../Backend
       dockerfile: PlantProcess.Api/Dockerfile
@@ -55,6 +56,7 @@ services:
       - .env
     environment:
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
+      DOTNET_ENVIRONMENT: ${DOTNET_ENVIRONMENT}
       ASPNETCORE_URLS: ${ASPNETCORE_URLS}
       ConnectionStrings__PlantProcessDb: ${ConnectionStrings__PlantProcessDb}
       PLANTPROCESS_ALLOWED_ORIGINS: ${PLANTPROCESS_ALLOWED_ORIGINS}
@@ -76,6 +78,7 @@ services:
       - ppiq-net
 
   plantprocess-workers:
+    image: plantprocessiq/workers:${PPIQ_IMAGE_TAG:-local}
     build:
       context: ../../Backend
       dockerfile: PlantProcess.Workers/Dockerfile
@@ -86,8 +89,11 @@ services:
     environment:
       DOTNET_ENVIRONMENT: ${DOTNET_ENVIRONMENT}
       ConnectionStrings__PlantProcessDb: ${ConnectionStrings__PlantProcessDb}
+      PlantProcess__PlantTimeZoneId: ${PlantProcess__PlantTimeZoneId}
+      PlantProcess__PlantUtcOffsetMinutes: ${PlantProcess__PlantUtcOffsetMinutes}
     volumes:
       - ${HOST_LOGS:-/data/plantprocess-iq/logs}/workers:/app/logs
+      - ${HOST_REPORTS:-/data/plantprocess-iq/reports}:/app/reports
       - ${HOST_APP_DUMPS:-/data/plantprocess-iq/app-dumps}:/app/app-dumps
     depends_on:
       postgres:
@@ -96,6 +102,7 @@ services:
       - ppiq-net
 
   plantprocess-app-web:
+    image: plantprocessiq/app-web:${PPIQ_IMAGE_TAG:-local}
     build:
       context: ../../Frontend/PlantProcess.Web
       dockerfile: Dockerfile
@@ -103,15 +110,16 @@ services:
         VITE_API_BASE_URL: ${VITE_API_BASE_URL}
     container_name: ppiq-app-web
     restart: unless-stopped
-    depends_on:
-      - plantprocess-api
     networks:
       - ppiq-net
 
   plantprocess-website:
+    image: plantprocessiq/website:${PPIQ_IMAGE_TAG:-local}
     build:
       context: ../../Website/PlantProcess.Website
       dockerfile: Dockerfile
+      args:
+        VITE_WEBSITE_API_BASE_URL: ${VITE_WEBSITE_API_BASE_URL:-}
     container_name: ppiq-website-web
     restart: unless-stopped
     networks:
