@@ -16,8 +16,12 @@ import {
   Sparkles,
   Sun,
 } from "lucide-react";
+
 import { plantProcessApi } from "../api/plantProcessApi";
 import { usePlantProcessTheme } from "../state/ThemeContext";
+import { AppCommandHeader } from "./brand/AppCommandHeader";
+import { ProductBrand } from "./brand/ProductBrand";
+import { SOUBrand } from "./brand/SOUBrand";
 
 const navItems = [
   {
@@ -58,32 +62,67 @@ const navItems = [
   },
 ];
 
+function getRuntimeEnvironment(): "Demo" | "Development" | "Staging" | "Production" {
+  const mode = import.meta.env.MODE?.toLowerCase();
+
+  if (mode === "production") {
+    return "Demo";
+  }
+
+  if (mode === "development") {
+    return "Development";
+  }
+
+  if (mode === "staging") {
+    return "Staging";
+  }
+
+  return "Demo";
+}
+
 export function AppLayout() {
   const { theme, isDark, toggleTheme } = usePlantProcessTheme();
+  const runtimeEnvironment = getRuntimeEnvironment();
 
   return (
-    <div className="app-shell">
-      <aside className="sidebar">
+    <div className="app-shell app-shell--premium">
+      <aside className="sidebar sidebar--branded">
         <div className="sidebar-glow" />
 
-        <div className="brand">
-          <div className="brand-icon">
-            <Factory size={28} />
-          </div>
-
-          <div className="brand-copy">
-            <h1>PlantProcess IQ</h1>
-            <p>Manufacturing intelligence</p>
+        <div className="sidebar-company-brand" aria-label="SOU company identity">
+          <SOUBrand compact />
+          <div className="sidebar-company-brand__copy">
+            <span className="sidebar-company-brand__name">SOU</span>
+            <span className="sidebar-company-brand__tagline">
+              Manufacturing Intelligence
+            </span>
           </div>
         </div>
 
-        <div className="sidebar-status-card">
+        <div className="sidebar-product-brand" aria-label="PlantProcess IQ product identity">
+          <ProductBrand showSubtitle />
+        </div>
+
+        <div className="sidebar-status-card sidebar-status-card--premium">
           <div className="status-orb">
             <Radar size={18} />
           </div>
+
           <div>
             <strong>Digital Plant Layer</strong>
             <span>Canonical analytics model online</span>
+          </div>
+        </div>
+
+        <div className="sidebar-context-strip" aria-label="Application context">
+          <div className="sidebar-context-strip__item">
+            <Factory size={15} />
+            <span>Generic Plant Model</span>
+          </div>
+
+          <div className="sidebar-context-strip__item">
+            <ShieldCheck size={15} />
+            <span>Demo License</span>
           </div>
         </div>
 
@@ -115,6 +154,7 @@ export function AppLayout() {
         <div className="sidebar-bottom">
           <div className="sidebar-metric-card">
             <DatabaseZap size={18} />
+
             <div>
               <strong>Backend API</strong>
               <span>{plantProcessApi.apiBaseUrl}</span>
@@ -123,6 +163,7 @@ export function AppLayout() {
 
           <div className="sidebar-metric-card">
             <Network size={18} />
+
             <div>
               <strong>Mode</strong>
               <span>Phase 8–10 Interactive MVP</span>
@@ -131,8 +172,15 @@ export function AppLayout() {
         </div>
       </aside>
 
-      <main className="main">
-        <header className="topbar">
+      <main className="main main--command">
+        <AppCommandHeader
+          licenseTier="Demo"
+          environment={runtimeEnvironment}
+          plantName="Demo Plant"
+          userName="Admin"
+        />
+
+        <section className="topbar topbar--premium" aria-label="Application overview">
           <div className="topbar-left">
             <div className="topbar-kicker">
               <Cpu size={15} />
@@ -143,7 +191,8 @@ export function AppLayout() {
 
             <p>
               Digital plant data, genealogy, process history, quality events,
-              risk prediction and correlation intelligence.
+              risk scoring and correlation intelligence in one evidence-based
+              manufacturing workspace.
             </p>
           </div>
 
@@ -169,7 +218,7 @@ export function AppLayout() {
 
             <div className="topbar-badge">
               <Sparkles size={16} />
-              AI-ready analytics layer
+              Rule-based intelligence layer
             </div>
 
             <div className="topbar-badge topbar-badge--strong">
@@ -177,9 +226,11 @@ export function AppLayout() {
               Interactive workspace
             </div>
           </div>
-        </header>
+        </section>
 
-        <Outlet />
+        <section className="app-page-workspace">
+          <Outlet />
+        </section>
       </main>
     </div>
   );

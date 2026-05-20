@@ -34,3 +34,21 @@ dotnet restore .\PlantProcessIQ.sln
 dotnet build .\PlantProcessIQ.sln
 
 dotnet test .\PlantProcessIQ.sln
+
+ssh root@178.105.152.180 
+password:369369
+
+acces DB 
+Host: 178.105.152.180
+Port: 5432
+Database: plantprocess_app_db
+Username: plantprocess_admin
+Password: THEspider369
+
+
+https://website.178.105.152.180.sslip.io
+https://app.178.105.152.180.sslip.io
+https://jenkins.178.105.152.180.sslip.io
+
+cd C:\Workspace\PlantProcess-IQ
+.\tools\GeneratePlantProcessIQ_UltimateAudit.ps1 -OpenAfterGeneration

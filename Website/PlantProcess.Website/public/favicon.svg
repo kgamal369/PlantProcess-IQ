@@ -1,0 +1,50 @@
+﻿<svg width="96" height="96" viewBox="0 0 96 96" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="SOU">
+  <defs>
+    <linearGradient id="souCyanBlue" x1="14" y1="10" x2="82" y2="88" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#00E0FF"/>
+      <stop offset="0.45" stop-color="#00D4FF"/>
+      <stop offset="1" stop-color="#0A84FF"/>
+    </linearGradient>
+    <filter id="souGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="2.6" result="blur"/>
+      <feColorMatrix in="blur" type="matrix" values="0 0 0 0 0  0 0 0 0 0.82  0 0 0 0 1  0 0 0 .65 0"/>
+      <feBlend in="SourceGraphic" mode="screen"/>
+    </filter>
+  </defs>
+
+  <rect x="5" y="5" width="86" height="86" rx="24" fill="#050B18"/>
+  <rect x="6" y="6" width="84" height="84" rx="23" stroke="#00D4FF" stroke-opacity=".18"/>
+
+  <g filter="url(#souGlow)">
+    <!-- Industrial S/U monogram inspired by selected V1 direction -->
+    <path
+      d="M67 22H35C24.5 22 16 30.5 16 41C16 51.5 24.5 60 35 60H51"
+      stroke="url(#souCyanBlue)"
+      stroke-width="11"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <path
+      d="M29 75H58C69.6 75 79 65.6 79 54V37"
+      stroke="url(#souCyanBlue)"
+      stroke-width="11"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <path
+      d="M29 39H66"
+      stroke="url(#souCyanBlue)"
+      stroke-width="11"
+      stroke-linecap="round"
+    />
+    <path
+      d="M34 58C34 48.6 41.6 41 51 41H67"
+      stroke="#071326"
+      stroke-width="6"
+      stroke-linecap="round"
+      opacity=".95"
+    />
+    <circle cx="66" cy="58" r="3.2" fill="#00D4FF"/>
+    <circle cx="30" cy="75" r="3.2" fill="#0A84FF"/>
+  </g>
+</svg>

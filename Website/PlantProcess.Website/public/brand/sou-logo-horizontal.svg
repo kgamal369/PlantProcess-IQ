@@ -1,0 +1,40 @@
+﻿<svg width="420" height="110" viewBox="0 0 420 110" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="SOU Manufacturing Intelligence">
+  <defs>
+    <linearGradient id="souCyanBlue" x1="8" y1="8" x2="92" y2="100" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#00E0FF"/>
+      <stop offset="0.5" stop-color="#00D4FF"/>
+      <stop offset="1" stop-color="#0A84FF"/>
+    </linearGradient>
+    <filter id="souGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="2.7" result="blur"/>
+      <feColorMatrix in="blur" type="matrix" values="0 0 0 0 0  0 0 0 0 .82  0 0 0 0 1  0 0 0 .6 0"/>
+      <feBlend in="SourceGraphic" mode="screen"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#souGlow)">
+    <path d="M75 22H38C26.4 22 17 31.4 17 43C17 54.6 26.4 64 38 64H55"
+      stroke="url(#souCyanBlue)" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M31 84H63C75.2 84 85 74.2 85 62V39"
+      stroke="url(#souCyanBlue)" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M31 42H73" stroke="url(#souCyanBlue)" stroke-width="12" stroke-linecap="round"/>
+    <path d="M37 62C37 51.5 45.5 43 56 43H73"
+      stroke="#071326" stroke-width="6.5" stroke-linecap="round" opacity=".95"/>
+  </g>
+
+  <line x1="116" y1="20" x2="116" y2="90" stroke="#8EA7C1" stroke-opacity=".45"/>
+
+  <text x="145" y="58"
+        font-family="Sora, Inter, Segoe UI, Arial, sans-serif"
+        font-size="48"
+        font-weight="700"
+        letter-spacing="8"
+        fill="#EAF6FF">SOU</text>
+
+  <text x="148" y="84"
+        font-family="Inter, Segoe UI, Arial, sans-serif"
+        font-size="13"
+        font-weight="700"
+        letter-spacing="7"
+        fill="#00D4FF">MANUFACTURING INTELLIGENCE</text>
+</svg>
