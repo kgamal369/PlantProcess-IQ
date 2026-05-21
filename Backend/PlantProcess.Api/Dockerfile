@@ -18,7 +18,8 @@ COPY . .
 RUN dotnet publish PlantProcess.Api/PlantProcess.Api.csproj \
     -c Release \
     -o /app/publish \
-    --no-restore
+    --no-restore \
+    /p:ErrorOnDuplicatePublishOutputFiles=false
 
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS runtime
 WORKDIR /app
