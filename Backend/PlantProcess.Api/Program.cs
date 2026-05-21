@@ -3,6 +3,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using PlantProcess.Api.Configuration;
 using PlantProcess.Api.Endpoints.Admin;
@@ -28,6 +29,7 @@ using PlantProcess.Application;
 using PlantProcess.Api.Endpoints.Demo;
 using PlantProcess.Application.Integration.Interfaces.Jobs;
 using PlantProcess.Infrastructure;
+using PlantProcess.Infrastructure.Persistence;
 using Serilog;
 using Serilog.Events;
 using Serilog.Exceptions;
@@ -237,6 +239,24 @@ try
     // Build app
     // ---------------------------------------------------------------------
     var app = builder.Build();
+
+    // =====================================================================
+    // AUTO-MIGRATE: Apply all pending EF Core migrations at startup.
+    //
+    // Runs BEFORE RegisterSystemJobsAsync so the schema is always in place
+    // on fresh deployments — no manual SQL scripts or dotnet-ef commands
+    // needed on the server. Idempotent: already-applied migrations are
+    // skipped automatically by EF Core.
+    // =====================================================================
+    await using (var migrationScope = app.Services.CreateAsyncScope())
+    {
+        var dbContext = migrationScope.ServiceProvider
+            .GetRequiredService<PlantProcessDbContext>();
+
+        Log.Information("Applying pending EF Core migrations...");
+        await dbContext.Database.MigrateAsync();
+        Log.Information("EF Core migrations applied successfully.");
+    }
 
     // ---------------------------------------------------------------------
     // Register DB-backed system jobs at API startup
