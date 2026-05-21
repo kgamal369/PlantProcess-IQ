@@ -35,6 +35,8 @@ using PlantProcess.Application.Licensing.Options;
 using PlantProcess.Application.Licensing.Services;
 using PlantProcess.Application.Demo.Interfaces;
 using PlantProcess.Application.Demo.Services;
+using PlantProcess.Application.Analytics.Interfaces;
+using PlantProcess.Application.Analytics.Services;
 
 namespace PlantProcess.Application;
 
@@ -89,14 +91,19 @@ public static class DependencyInjection
 
         // Data quality and analytics
         services.AddScoped<IDataQualityService, DataQualityService>();
-        services.AddScoped<IFeatureEngineeringService, FeatureEngineeringService>();
         services.AddScoped<IRiskScoreService, RiskScoreService>();
-        services.AddScoped<ICorrelationService, CorrelationService>();
         services.AddScoped<IDashboardQueryService, DashboardQueryService>();
         services.AddScoped<IDashboardMetadataService, DashboardMetadataService>();
         services.AddScoped<IDashboardWidgetValidationService, DashboardWidgetValidationService>();
         services.AddScoped<IDashboardWidgetQueryService, DashboardWidgetQueryService>();
         services.AddScoped<IDashboardDefinitionService, DashboardDefinitionService>();
+
+
+        //Analytics
+        services.AddScoped<ICorrelationService, CorrelationService>();
+        services.AddScoped<IFeatureEngineeringService, FeatureEngineeringService>();
+        services.AddScoped<IQualityLabelBuilderService, QualityLabelBuilderService>();
+        services.AddScoped<IMlReadinessService, MlReadinessService>();
 
 
         // Reporting / customer demo pack

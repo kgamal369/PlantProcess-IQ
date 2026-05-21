@@ -311,6 +311,7 @@ try
     app.MapRiskScoreEndpoints();
     app.MapCorrelationEndpoints();
     app.MapFeatureEngineeringEndpoints();
+    app.MapMlReadinessEndpoints();
 
     app.MapDashboardEndpoints();
     app.MapReportingEndpoints();

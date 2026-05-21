@@ -2,6 +2,7 @@ import { NavLink, Outlet } from "react-router-dom";
 import {
   AlertTriangle,
   BarChart3,
+  BrainCircuit,
   Cpu,
   DatabaseZap,
   Factory,
@@ -55,6 +56,12 @@ const navItems = [
     label: "Correlations",
     description: "Process-to-quality analytics",
     icon: GitBranch,
+  },
+  {
+    to: "/ml-readiness",
+    label: "ML Readiness",
+    description: "Labels, feature vectors and training gates",
+    icon: BrainCircuit,
   },
   {
     to: "/demo-lifecycle",

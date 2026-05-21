@@ -58,6 +58,12 @@ const CommercialLicensePage = lazy(() =>
   }))
 );
 
+const MlReadinessPage = lazy(() =>
+  import("./pages/MlReadiness/MlReadinessPage").then((module) => ({
+    default: module.MlReadinessPage,
+  }))
+);
+
 export default function App() {
   return (
     <ThemeProvider>
@@ -85,7 +91,7 @@ export default function App() {
                   <Route path="/risk" element={<RiskDashboardPage />} />
                   <Route path="/data-quality" element={<DataQualityPage />} />
                   <Route path="/correlation" element={<CorrelationPage />} />
-
+                  <Route path="/ml-readiness" element={<MlReadinessPage />} />
                   <Route path="/admin/*" element={<AdminPage />} />
 
                   <Route

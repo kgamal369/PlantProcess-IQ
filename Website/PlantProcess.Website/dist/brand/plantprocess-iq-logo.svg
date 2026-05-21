@@ -1,0 +1,51 @@
+﻿<svg width="520" height="92" viewBox="0 0 520 92" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="PlantProcess IQ">
+  <defs>
+    <linearGradient id="ppiqAccent" x1="0" y1="0" x2="120" y2="92" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#00E0FF"/>
+      <stop offset="0.55" stop-color="#00D4FF"/>
+      <stop offset="1" stop-color="#0A84FF"/>
+    </linearGradient>
+
+    <filter id="ppiqGlow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="2.4" result="blur"/>
+      <feColorMatrix in="blur" type="matrix" values="0 0 0 0 0  0 0 0 0 .82  0 0 0 0 1  0 0 0 .58 0"/>
+      <feBlend in="SourceGraphic" mode="screen"/>
+    </filter>
+  </defs>
+
+  <!-- Generic process/data-network mark: non-steel, multi-industry -->
+  <g filter="url(#ppiqGlow)">
+    <circle cx="32" cy="46" r="8" fill="url(#ppiqAccent)"/>
+    <circle cx="68" cy="24" r="7" fill="url(#ppiqAccent)"/>
+    <circle cx="68" cy="68" r="7" fill="url(#ppiqAccent)"/>
+    <circle cx="106" cy="46" r="9" fill="url(#ppiqAccent)"/>
+
+    <path d="M40 42L60 29" stroke="url(#ppiqAccent)" stroke-width="4" stroke-linecap="round"/>
+    <path d="M40 50L60 63" stroke="url(#ppiqAccent)" stroke-width="4" stroke-linecap="round"/>
+    <path d="M75 28L98 42" stroke="url(#ppiqAccent)" stroke-width="4" stroke-linecap="round"/>
+    <path d="M75 64L98 50" stroke="url(#ppiqAccent)" stroke-width="4" stroke-linecap="round"/>
+  </g>
+
+  <line x1="136" y1="18" x2="136" y2="74" stroke="#8EA7C1" stroke-opacity=".38"/>
+
+  <text x="162" y="48"
+        font-family="Inter, Sora, Segoe UI, Arial, sans-serif"
+        font-size="32"
+        font-weight="800"
+        letter-spacing=".5"
+        fill="#EAF6FF">PlantProcess</text>
+
+  <text x="388" y="48"
+        font-family="Inter, Sora, Segoe UI, Arial, sans-serif"
+        font-size="36"
+        font-weight="900"
+        letter-spacing="1.5"
+        fill="#00D4FF">IQ</text>
+
+  <text x="164" y="70"
+        font-family="Inter, Segoe UI, Arial, sans-serif"
+        font-size="11"
+        font-weight="800"
+        letter-spacing="4.5"
+        fill="#8EA7C1">PROCESS-TO-QUALITY INTELLIGENCE</text>
+</svg>
