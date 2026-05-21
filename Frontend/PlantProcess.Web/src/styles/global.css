@@ -6,12 +6,6 @@
 @import "./pages/dashboard.css";
 @import "./components/dashboard-components.css";
 
-/*
-  Legacy CSS remains imported during Refactor Phase R2 to avoid visual regressions.
-  Move selectors from legacy-global.css into page/component CSS one section at a time.
-*/
-@import "./legacy/legacy-global.css";
-
 /* ============================================================
    Premium App Shell with SOU + PlantProcess IQ Dual Brand
    ============================================================ */

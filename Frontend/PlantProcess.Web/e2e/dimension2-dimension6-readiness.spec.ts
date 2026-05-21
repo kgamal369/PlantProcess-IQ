@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { authenticatedGet } from "./helpers/auth";
+import { authenticatedGet, login } from "./helpers/auth";
 
 test.describe("Dimension 6 ML readiness", () => {
   test("ML readiness endpoints expose score, labels, jobs and workspace", async ({
@@ -41,15 +41,26 @@ test.describe("Dimension 6 ML readiness", () => {
     expect(workspaceBody.disclaimer).toContain("No trained production ML model is active");
   });
 
-  test("ML readiness page renders honest training status", async ({ page }) => {
+  test("ML readiness page renders honest training status", async ({ page, request }) => {
+    const token = await login(request);
+
+    await page.addInitScript((accessToken) => {
+      window.localStorage.setItem("plantprocess.auth.accessToken", accessToken);
+      window.localStorage.setItem("plantprocess.auth.userName", "admin");
+      window.localStorage.setItem("plantprocess.auth.role", "Admin");
+      window.localStorage.setItem(
+        "plantprocess.auth.expiresAtUtc",
+        new Date(Date.now() + 60 * 60 * 1000).toISOString()
+      );
+    }, token);
+
     await page.goto("/ml-readiness");
 
-    await expect(page.getByText("ML readiness before training")).toBeVisible();
-    await expect(page.getByText("Training disabled")).toBeVisible();
-    await expect(page.getByText("No trained production ML model is active")).toBeVisible();
+    await expect(page.getByText(/ML readiness before training/i)).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText(/Training disabled/i)).toBeVisible();
+    await expect(page.getByText(/No trained production ML model is active/i).first()).toBeVisible();
 
     const body = await page.locator("body").innerText();
-
     expect(body.toLowerCase()).not.toContain("guaranteed root cause detection");
     expect(body.toLowerCase()).not.toContain("production-ready ai model");
   });

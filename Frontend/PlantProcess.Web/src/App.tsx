@@ -8,6 +8,7 @@ import { BrandProofSection } from "./components/BrandProofSection";
 import { DashboardFilterProvider } from "./state/DashboardFilterContext";
 import { DashboardSelectionProvider } from "./state/DashboardSelectionContext";
 import { DashboardGridLayoutProvider } from "./state/DashboardGridLayoutContext";
+import { DemoModeProvider } from "./state/DemoModeContext";
 import { ThemeProvider } from "./state/ThemeContext";
 import "./index.css";
 
@@ -74,48 +75,45 @@ const MlReadinessPage = lazy(() =>
 export default function App() {
   return (
     <ThemeProvider>
-      <DashboardFilterProvider>
-        <DashboardSelectionProvider>
-          <DashboardGridLayoutProvider>
-            <Suspense
-              fallback={
-                <LoadingPanel text="Loading PlantProcess IQ workspace." />
-              }
-            >
-              <Routes>
-                <Route element={<AppLayout />}>
-                  <Route index element={<Navigate to="/dashboard" replace />} />
+      <DemoModeProvider>
+        <DashboardFilterProvider>
+          <DashboardSelectionProvider>
+            <DashboardGridLayoutProvider>
+              <Suspense
+                fallback={
+                  <LoadingPanel text="Loading PlantProcess IQ workspace." />
+                }
+              >
+                <Routes>
+                  <Route element={<AppLayout />}>
+                    <Route index element={<Navigate to="/dashboard" replace />} />
 
-                  <Route path="/dashboard" element={<DashboardPage />} />
-                  <Route
-                    path="/materials/:materialUnitId"
-                    element={<MaterialInvestigationPage />}
-                  />
-                  <Route
-                    path="/materials"
-                    element={<MaterialInvestigationPage />}
-                  />
-                  <Route path="/risk" element={<RiskDashboardPage />} />
-                  <Route path="/data-quality" element={<DataQualityPage />} />
-                  <Route path="/correlation" element={<CorrelationPage />} />
-                  <Route path="/ml-readiness" element={<MlReadinessPage />} />
-                  <Route path="/admin/*" element={<AdminPage />} />
+                    <Route path="/dashboard" element={<DashboardPage />} />
+                    <Route
+                      path="/materials/:materialUnitId"
+                      element={<MaterialInvestigationPage />}
+                    />
+                    <Route
+                      path="/materials"
+                      element={<MaterialInvestigationPage />}
+                    />
+                    <Route path="/risk" element={<RiskDashboardPage />} />
+                    <Route path="/data-quality" element={<DataQualityPage />} />
+                    <Route path="/correlations" element={<CorrelationPage />} />
+                    <Route path="/ml-readiness" element={<MlReadinessPage />} />
+                    <Route path="/admin/*" element={<AdminPage />} />
+                    <Route path="/demo-lifecycle" element={<DemoLifecyclePage />} />
+                    <Route path="/commercial/license" element={<CommercialLicensePage />} />
+                    <Route path="/brand" element={<BrandIdentityPage />} />
 
-                  <Route
-                    path="/demo/lifecycle"
-                    element={<DemoLifecyclePage />}
-                  />
-
-                  <Route path="/commercial/license" element={<CommercialLicensePage />} />
-                  <Route path="/brand" element={<BrandIdentityPage />} />
-
-                  <Route path="*" element={<Navigate to="/dashboard" replace />} />
-                </Route>
-              </Routes>
-            </Suspense>
-          </DashboardGridLayoutProvider>
-        </DashboardSelectionProvider>
-      </DashboardFilterProvider>
+                    <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                  </Route>
+                </Routes>
+              </Suspense>
+            </DashboardGridLayoutProvider>
+          </DashboardSelectionProvider>
+        </DashboardFilterProvider>
+      </DemoModeProvider>
     </ThemeProvider>
   );
 }

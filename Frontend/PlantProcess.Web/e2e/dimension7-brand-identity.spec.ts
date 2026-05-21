@@ -8,8 +8,8 @@ test.describe("Dimension 7 Brand Identity", () => {
 
     await expect(page.getByText("Dimension 7 — Brand Identity")).toBeVisible();
     await expect(page.getByText("Brand Identity & Market Positioning")).toBeVisible();
-    await expect(page.getByText("Engineer brief")).toBeVisible();
-    await expect(page.getByText("Architecture diagram")).toBeVisible();
+    await expect(page.getByText('Engineer brief', { exact: true })).toBeVisible();
+    await expect(page.getByText('Architecture diagram', { exact: true })).toBeVisible();
     await expect(page.getByText("Not MES")).toBeVisible();
     await expect(page.getByText("Not SCADA")).toBeVisible();
 
