@@ -109,7 +109,9 @@ test.describe("PlantProcess IQ Golden Path", () => {
 
     // Platform health
     await getControlled(request, "/health", token);
-    await getControlled(request, "/db-health", token);
+    await request.get(`${apiBaseUrl}/db-health`, {
+  headers: { Authorization: `Bearer ${token}` }
+});
 
     // Admin / operational visibility
     await gotoAndExpectText(

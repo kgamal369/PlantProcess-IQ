@@ -1,1 +1,854 @@
-﻿/* Shared dashboard component styles will be moved here during component extraction. */
+﻿/* ============================================================
+   FILE: Frontend/PlantProcess.Web/src/styles/components/dashboard-components.css
+   Replaces the 1-line placeholder comment.
+   Covers: demo-mode bar, selection breadcrumb, light mode overrides.
+   ============================================================ */
+
+/* ── Demo mode control bar ───────────────────────────────────── */
+.demo-mode-control {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.demo-mode-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+  background: rgba(11, 23, 48, 0.70);
+  border: 1px solid rgba(0, 212, 255, 0.14);
+  color: #5a7a9a;
+}
+
+.demo-mode-toggle:hover {
+  background: rgba(0, 212, 255, 0.06);
+  border-color: rgba(0, 212, 255, 0.28);
+  color: #b0d0f0;
+}
+
+.demo-mode-toggle.active {
+  background: rgba(0, 212, 255, 0.10);
+  border-color: rgba(0, 212, 255, 0.30);
+  color: #00d4ff;
+}
+
+.demo-plan-select {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.5rem;
+  border-radius: 8px;
+  background: rgba(11, 23, 48, 0.70);
+  border: 1px solid rgba(0, 212, 255, 0.14);
+  font-size: 12px;
+  font-weight: 500;
+  color: #5a7a9a;
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s;
+}
+
+.demo-plan-select:focus-within {
+  border-color: rgba(0, 212, 255, 0.30);
+  background: rgba(0, 212, 255, 0.06);
+  color: #b0d0f0;
+}
+
+.demo-plan-select select {
+  background: none;
+  border: none;
+  outline: none;
+  font-size: 12px;
+  font-weight: 600;
+  color: inherit;
+  font-family: inherit;
+  cursor: pointer;
+  padding: 0;
+}
+
+.demo-plan-select select option {
+  background: #0b1730;
+  color: #eaf6ff;
+}
+
+.demo-run-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  background: rgba(0, 212, 255, 0.08);
+  border: 1px solid rgba(0, 212, 255, 0.20);
+  color: #00d4ff;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.demo-run-link:hover {
+  background: rgba(0, 212, 255, 0.16);
+  border-color: rgba(0, 212, 255, 0.36);
+}
+
+/* ── Selection breadcrumb toolbar ───────────────────────────── */
+.selection-breadcrumb {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.625rem 0;
+  margin-bottom: 0.5rem;
+}
+
+.selection-breadcrumb > div:first-child {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 12px;
+  color: #4a6a8a;
+}
+
+.selection-breadcrumb > div:first-child strong {
+  font-size: 11px;
+  font-weight: 700;
+  color: #5a7a9a;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.selection-breadcrumb__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+/* Override legacy secondary-button in this context */
+.selection-breadcrumb__actions .secondary-button,
+.selection-breadcrumb .secondary-button {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.3rem !important;
+  padding: 0.32rem 0.75rem !important;
+  border-radius: 7px !important;
+  font-size: 11.5px !important;
+  font-weight: 600 !important;
+  font-family: inherit !important;
+  cursor: pointer !important;
+  background: rgba(11, 23, 48, 0.70) !important;
+  border: 1px solid rgba(0, 212, 255, 0.12) !important;
+  color: #6a8aaa !important;
+  transition: background 0.12s, border-color 0.12s, color 0.12s !important;
+  white-space: nowrap !important;
+  line-height: 1.4 !important;
+  height: auto !important;
+  min-height: 0 !important;
+}
+
+.selection-breadcrumb__actions .secondary-button:hover:not(:disabled),
+.selection-breadcrumb .secondary-button:hover:not(:disabled) {
+  background: rgba(0, 212, 255, 0.07) !important;
+  border-color: rgba(0, 212, 255, 0.25) !important;
+  color: #b0d0f0 !important;
+}
+
+.selection-breadcrumb__actions .secondary-button:disabled,
+.selection-breadcrumb .secondary-button:disabled {
+  opacity: 0.35 !important;
+  cursor: not-allowed !important;
+}
+
+/* Visual selection chips */
+.visual-selection-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.25rem;
+}
+
+.visual-selection-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  background: rgba(0, 212, 255, 0.09);
+  border: 1px solid rgba(0, 212, 255, 0.20);
+  color: #a0c8e8;
+}
+
+.visual-selection-chip strong {
+  color: #00d4ff;
+  font-weight: 700;
+}
+
+/* Active filter chips */
+.active-filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 0.5rem;
+  min-height: 0;
+}
+
+/* ── Light mode overrides for app shell ──────────────────────── */
+/* Targets html[data-theme="light"] set by ThemeContext           */
+
+html[data-theme="light"] .piq-shell {
+  background:
+    radial-gradient(circle at 14% 0%, rgba(0,132,255,0.06), transparent 34%),
+    radial-gradient(circle at 86% 0%, rgba(0,100,200,0.04), transparent 32%),
+    linear-gradient(180deg, #f0f6ff 0%, #e8f2fb 52%, #f0f6ff 100%);
+  color: #0d2238;
+}
+
+html[data-theme="light"] .piq-sidebar {
+  background: linear-gradient(180deg, #e8f2fb 0%, #ddeaf7 100%);
+  border-right-color: rgba(14,116,144,0.18);
+}
+
+html[data-theme="light"] .piq-brand-sou__name,
+html[data-theme="light"] .piq-brand-product__name {
+  color: #0d2238;
+}
+
+html[data-theme="light"] .piq-brand-sou__tagline,
+html[data-theme="light"] .piq-brand-product__sub {
+  color: #4b7288;
+}
+
+html[data-theme="light"] .piq-brand-divider {
+  background: rgba(14,116,144,0.10);
+}
+
+html[data-theme="light"] .piq-plant-strip {
+  background: rgba(14,116,144,0.05);
+  border-bottom-color: rgba(14,116,144,0.10);
+}
+
+html[data-theme="light"] .piq-plant-strip__name {
+  color: #1a4a6a;
+}
+
+html[data-theme="light"] .piq-nav__section-label {
+  color: #7aacbc;
+}
+
+html[data-theme="light"] .piq-nav-link {
+  color: #3a6a8a;
+}
+
+html[data-theme="light"] .piq-nav-link:hover {
+  background: rgba(14,116,144,0.08);
+  color: #0d2238;
+}
+
+html[data-theme="light"] .piq-nav-link.active {
+  background: rgba(0,132,255,0.10);
+  color: #0a84ff;
+  border-left-color: #0a84ff;
+}
+
+html[data-theme="light"] .piq-sidebar-bottom {
+  border-top-color: rgba(14,116,144,0.10);
+}
+
+html[data-theme="light"] .piq-sidebar-stat {
+  color: #5a8aaa;
+}
+
+html[data-theme="light"] .piq-sidebar-stat code {
+  color: #3a6a8a;
+}
+
+html[data-theme="light"] .piq-theme-btn {
+  border-color: rgba(14,116,144,0.18);
+  color: #3a6a8a;
+}
+
+html[data-theme="light"] .piq-theme-btn:hover {
+  background: rgba(14,116,144,0.08);
+  color: #0d2238;
+  border-color: rgba(14,116,144,0.30);
+}
+
+html[data-theme="light"] .piq-cmd-header {
+  background: rgba(240,246,255,0.85);
+  border-bottom-color: rgba(14,116,144,0.12);
+}
+
+html[data-theme="light"] .piq-cmd-header__ctx-pill {
+  background: rgba(14,116,144,0.07);
+  border-color: rgba(14,116,144,0.18);
+  color: #3a6a8a;
+}
+
+html[data-theme="light"] .piq-cmd-header__ctx-pill strong {
+  color: #0d2238;
+}
+
+html[data-theme="light"] .piq-user-btn {
+  color: #3a6a8a;
+  border-color: rgba(14,116,144,0.18);
+}
+
+html[data-theme="light"] .piq-topbar {
+  background: rgba(240,246,255,0.60);
+  border-bottom-color: rgba(14,116,144,0.08);
+}
+
+html[data-theme="light"] .piq-topbar__title {
+  color: #0d2238;
+}
+
+html[data-theme="light"] .piq-topbar__sub {
+  color: #4b7288;
+}
+
+html[data-theme="light"] .piq-topbar__kicker {
+  color: #0a84ff;
+}
+
+html[data-theme="light"] .piq-demo-bar {
+  background: rgba(14,116,144,0.04);
+  border-bottom-color: rgba(14,116,144,0.08);
+}
+
+html[data-theme="light"] .demo-mode-toggle {
+  background: rgba(240,246,255,0.80);
+  border-color: rgba(14,116,144,0.18);
+  color: #3a6a8a;
+}
+
+html[data-theme="light"] .demo-mode-toggle.active {
+  background: rgba(0,132,255,0.08);
+  border-color: rgba(0,132,255,0.25);
+  color: #0a84ff;
+}
+
+html[data-theme="light"] .demo-plan-select {
+  background: rgba(240,246,255,0.80);
+  border-color: rgba(14,116,144,0.18);
+  color: #3a6a8a;
+}
+
+html[data-theme="light"] .demo-plan-select select option {
+  background: #f0f6ff;
+  color: #0d2238;
+}
+
+html[data-theme="light"] .demo-run-link {
+  background: rgba(0,132,255,0.07);
+  border-color: rgba(0,132,255,0.20);
+  color: #0a84ff;
+}
+
+html[data-theme="light"] .piq-filter-bar {
+  background: rgba(255,255,255,0.75);
+  border-color: rgba(14,116,144,0.12);
+}
+
+html[data-theme="light"] .piq-filter-bar__title {
+  color: #5a8aaa;
+}
+
+html[data-theme="light"] .piq-filter-select,
+html[data-theme="light"] .piq-filter-input {
+  background: rgba(240,246,255,0.80);
+  border-color: rgba(14,116,144,0.15);
+}
+
+html[data-theme="light"] .piq-filter-select:hover,
+html[data-theme="light"] .piq-filter-input:focus-within {
+  background: rgba(14,116,144,0.06);
+  border-color: rgba(14,116,144,0.30);
+}
+
+html[data-theme="light"] .piq-filter-select__label,
+html[data-theme="light"] .piq-filter-input__label {
+  color: #3a6a8a;
+}
+
+html[data-theme="light"] .piq-filter-input__native {
+  color: #0d2238;
+}
+
+html[data-theme="light"] .piq-filter-group-label {
+  color: #7aacbc;
+  border-right-color: rgba(14,116,144,0.12);
+}
+
+html[data-theme="light"] .piq-dash-select {
+  background: rgba(240,246,255,0.80);
+  border-color: rgba(14,116,144,0.18);
+  color: #1a4a6a;
+}
+
+html[data-theme="light"] .piq-dash-btn {
+  background: rgba(240,246,255,0.80);
+  border-color: rgba(14,116,144,0.18);
+  color: #3a6a8a;
+}
+
+html[data-theme="light"] .piq-dash-btn:hover:not(:disabled) {
+  background: rgba(14,116,144,0.08);
+  border-color: rgba(14,116,144,0.30);
+  color: #0d2238;
+}
+
+html[data-theme="light"] .piq-dash-btn--primary {
+  background: rgba(0,132,255,0.08);
+  border-color: rgba(0,132,255,0.22);
+  color: #0a84ff;
+}
+
+html[data-theme="light"] .selection-breadcrumb > div:first-child {
+  color: #5a8aaa;
+}
+
+html[data-theme="light"] .selection-breadcrumb > div:first-child strong {
+  color: #3a6a8a;
+}
+
+html[data-theme="light"] .selection-breadcrumb__actions .secondary-button,
+html[data-theme="light"] .selection-breadcrumb .secondary-button {
+  background: rgba(240,246,255,0.80) !important;
+  border-color: rgba(14,116,144,0.18) !important;
+  color: #3a6a8a !important;
+}
+
+html[data-theme="light"] .selection-breadcrumb__actions .secondary-button:hover:not(:disabled),
+html[data-theme="light"] .selection-breadcrumb .secondary-button:hover:not(:disabled) {
+  background: rgba(14,116,144,0.08) !important;
+  border-color: rgba(14,116,144,0.28) !important;
+  color: #0d2238 !important;
+}
+
+
+/* ============================================================
+   WIDGET CARD — professional styling
+   Append this block to dashboard-components.css
+   ============================================================ */
+
+/* ── Widget card shell ──────────────────────────────────────── */
+.dashboard-widget {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: rgba(8, 16, 36, 0.70);
+  border: 1px solid rgba(0, 212, 255, 0.10);
+  border-radius: 14px;
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+
+.dashboard-widget:hover {
+  border-color: rgba(0, 212, 255, 0.20);
+}
+
+/* ── Widget header ──────────────────────────────────────────── */
+.dashboard-widget__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.65rem 0.75rem 0.5rem;
+  border-bottom: 1px solid rgba(0, 212, 255, 0.07);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.dashboard-widget__title-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.dashboard-widget__drag-handle {
+  color: #2a4a6a;
+  cursor: grab;
+  display: flex;
+  align-items: center;
+  padding-top: 1px;
+  flex-shrink: 0;
+  transition: color 0.12s;
+}
+
+.dashboard-widget__drag-handle:hover {
+  color: #00d4ff;
+}
+
+.widget-icon {
+  color: #4a7a9a;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding-top: 1px;
+}
+
+.dashboard-widget__title-copy {
+  min-width: 0;
+}
+
+.dashboard-widget__title-copy h3 {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #c4dcf4;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+}
+
+.dashboard-widget__title-copy p {
+  font-size: 10px;
+  color: #3a5a7a;
+  margin: 1px 0 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+}
+
+/* ── Widget action bar ──────────────────────────────────────── */
+.dashboard-widget__actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+/* ── Chart type switcher ────────────────────────────────────── */
+.widget-chart-switcher {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: rgba(0, 0, 0, 0.20);
+  border-radius: 6px;
+  padding: 2px;
+  margin-right: 4px;
+}
+
+.widget-chart-btn {
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  background: none;
+  border: none;
+  color: #4a6a8a;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  transition: background 0.10s, color 0.10s;
+  white-space: nowrap;
+}
+
+.widget-chart-btn:hover {
+  background: rgba(0, 212, 255, 0.08);
+  color: #a0c8e8;
+}
+
+.widget-chart-btn--active {
+  background: rgba(0, 212, 255, 0.15);
+  color: #00d4ff;
+}
+
+/* ── Icon buttons ───────────────────────────────────────────── */
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: none;
+  color: #3a5a7a;
+  cursor: pointer;
+  transition: background 0.10s, color 0.10s, border-color 0.10s;
+  flex-shrink: 0;
+}
+
+.icon-button:hover:not(:disabled) {
+  background: rgba(0, 212, 255, 0.08);
+  color: #b0d0f0;
+  border-color: rgba(0, 212, 255, 0.18);
+}
+
+.icon-button:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
+
+/* ── Widget body ────────────────────────────────────────────── */
+.dashboard-widget__body {
+  flex: 1;
+  overflow: auto;
+  padding: 0.5rem 0.75rem 0.75rem;
+  min-height: 0;
+}
+
+/* ── Action menu ────────────────────────────────────────────── */
+.widget-action-menu {
+  position: relative;
+}
+
+.widget-action-menu__panel {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 200;
+  background: #0d1e3a;
+  border: 1px solid rgba(0, 212, 255, 0.18);
+  border-radius: 10px;
+  padding: 4px;
+  min-width: 160px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.widget-action-menu__panel button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.65rem;
+  border: none;
+  border-radius: 7px;
+  background: none;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: inherit;
+  color: #8ea7c1;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.10s, color 0.10s;
+  width: 100%;
+}
+
+.widget-action-menu__panel button:hover {
+  background: rgba(0, 212, 255, 0.08);
+  color: #eaf6ff;
+}
+
+.widget-action-menu__panel button.danger {
+  color: #ff7a8a;
+}
+
+.widget-action-menu__panel button.danger:hover {
+  background: rgba(255, 77, 109, 0.10);
+  color: #ff4d6d;
+}
+
+/* ── Fullscreen overlay ─────────────────────────────────────── */
+.widget-fullscreen-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 8, 20, 0.82);
+  backdrop-filter: blur(6px);
+  z-index: 9998;
+}
+
+.widget-fullscreen-panel {
+  position: fixed;
+  inset: 2vh 2vw;
+  z-index: 9999;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 0 80px rgba(0, 212, 255, 0.18);
+  display: flex;
+  flex-direction: column;
+}
+
+.widget-fullscreen-panel .dashboard-widget {
+  height: 100%;
+  border-radius: 16px;
+  border-color: rgba(0, 212, 255, 0.25);
+}
+
+.widget-fullscreen-panel .dashboard-widget__body {
+  flex: 1;
+  overflow: auto;
+}
+
+/* ── KPI metric tiles ───────────────────────────────────────── */
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.metric-tile {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  background: rgba(8, 16, 36, 0.70);
+  border: 1px solid rgba(0, 212, 255, 0.10);
+  border-radius: 12px;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.12s, background 0.12s, box-shadow 0.12s;
+  font-family: inherit;
+  width: 100%;
+}
+
+.metric-tile:hover {
+  border-color: rgba(0, 212, 255, 0.28);
+  background: rgba(0, 212, 255, 0.04);
+  box-shadow: 0 0 20px rgba(0, 212, 255, 0.08);
+}
+
+.metric-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: rgba(0, 212, 255, 0.08);
+  border: 1px solid rgba(0, 212, 255, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #00d4ff;
+  flex-shrink: 0;
+}
+
+.metric-tile--danger .metric-icon {
+  background: rgba(255, 77, 109, 0.10);
+  border-color: rgba(255, 77, 109, 0.18);
+  color: #ff4d6d;
+}
+
+.metric-tile--warning .metric-icon {
+  background: rgba(255, 176, 32, 0.10);
+  border-color: rgba(255, 176, 32, 0.18);
+  color: #ffb020;
+}
+
+.metric-tile > div:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.metric-tile span {
+  font-size: 10px;
+  font-weight: 700;
+  color: #5a7a9a;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+.metric-tile strong {
+  font-size: 22px;
+  font-weight: 800;
+  color: #eaf6ff;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.metric-tile--danger strong { color: #ff7a8a; }
+.metric-tile--warning strong { color: #ffb020; }
+
+.metric-tile small {
+  font-size: 10px;
+  color: #3a5a7a;
+  line-height: 1.3;
+}
+
+/* ── Light mode overrides for widget card ───────────────────── */
+html[data-theme="light"] .dashboard-widget {
+  background: rgba(255, 255, 255, 0.80);
+  border-color: rgba(14, 116, 144, 0.14);
+}
+
+html[data-theme="light"] .dashboard-widget:hover {
+  border-color: rgba(14, 116, 144, 0.28);
+}
+
+html[data-theme="light"] .dashboard-widget__header {
+  border-bottom-color: rgba(14, 116, 144, 0.08);
+}
+
+html[data-theme="light"] .dashboard-widget__title-copy h3 {
+  color: #0d2238;
+}
+
+html[data-theme="light"] .dashboard-widget__title-copy p,
+html[data-theme="light"] .dashboard-widget__drag-handle {
+  color: #5a8aaa;
+}
+
+html[data-theme="light"] .widget-icon { color: #2a7aaa; }
+
+html[data-theme="light"] .icon-button {
+  color: #4a7a9a;
+}
+
+html[data-theme="light"] .icon-button:hover:not(:disabled) {
+  background: rgba(14, 116, 144, 0.08);
+  color: #0d2238;
+  border-color: rgba(14, 116, 144, 0.22);
+}
+
+html[data-theme="light"] .widget-chart-btn { color: #4a7a9a; }
+html[data-theme="light"] .widget-chart-btn:hover {
+  background: rgba(14, 116, 144, 0.08);
+  color: #0d2238;
+}
+html[data-theme="light"] .widget-chart-btn--active {
+  background: rgba(0, 132, 255, 0.12);
+  color: #0a84ff;
+}
+
+html[data-theme="light"] .widget-action-menu__panel {
+  background: #f0f6ff;
+  border-color: rgba(14, 116, 144, 0.22);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+}
+
+html[data-theme="light"] .widget-action-menu__panel button {
+  color: #2a5a7a;
+}
+
+html[data-theme="light"] .widget-action-menu__panel button:hover {
+  background: rgba(14, 116, 144, 0.08);
+  color: #0d2238;
+}
+
+html[data-theme="light"] .metric-tile {
+  background: rgba(255, 255, 255, 0.80);
+  border-color: rgba(14, 116, 144, 0.12);
+}
+
+html[data-theme="light"] .metric-tile:hover {
+  border-color: rgba(14, 116, 144, 0.26);
+  background: rgba(14, 116, 144, 0.04);
+}
+
+html[data-theme="light"] .metric-tile span { color: #5a8aaa; }
+html[data-theme="light"] .metric-tile strong { color: #0d2238; }
+html[data-theme="light"] .metric-tile small { color: #5a8aaa; }
+html[data-theme="light"] .metric-icon {
+  background: rgba(0, 132, 255, 0.07);
+  border-color: rgba(0, 132, 255, 0.14);
+  color: #0a84ff;
+}

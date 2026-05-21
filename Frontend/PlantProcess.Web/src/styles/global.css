@@ -5,6 +5,7 @@
 @import "./pages/admin.css";
 @import "./pages/dashboard.css";
 @import "./components/dashboard-components.css";
+@import "./pages/demo-lifecycle.css";
 
 /* ============================================================
    Premium App Shell with SOU + PlantProcess IQ Dual Brand
@@ -207,7 +208,7 @@
     padding: 0 0.75rem 0.75rem;
   }
 }
-@import "./pages/demo-lifecycle.css";
+
 .brand-proof-website {
   border-color: rgba(45, 247, 163, 0.24);
   background:

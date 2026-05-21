@@ -456,7 +456,19 @@ public async Task<ApplicationResult<int>> EnsureSystemTemplatesAsync(
         cancellationToken);
 
     if (changed > 0)
-        await _dbContext.SaveChangesAsync(cancellationToken);
+    {
+        try
+        {
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException ex)
+            when (ex.InnerException?.Message.Contains("23505") == true ||
+                ex.InnerException?.Message.Contains("duplicate key value violates unique constraint") == true)
+        {
+            // A concurrent request already inserted the same widget_code.
+            // The templates exist — this call's goal is achieved. Safe to ignore.
+        }
+    }
 
     return ApplicationResult<int>.Success(changed);
 }

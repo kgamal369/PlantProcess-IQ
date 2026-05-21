@@ -1,15 +1,98 @@
+// ============================================================
+// FILE: Frontend/PlantProcess.Web/src/components/DashboardFilterBar.tsx
+// Complete redesign — professional filter bar.
+// Removed: "QlikSense-style" label, raw filter-grid layout.
+// Added: grouped pill-style filter row with icon badges.
+// ============================================================
+
 import { useEffect, useMemo, useState } from "react";
 import {
   CalendarDays,
+  ChevronDown,
   Database,
   Filter,
+  GitMerge,
   RotateCcw,
   Search,
-  SlidersHorizontal,
+  ShieldAlert,
+  Sliders,
+  Thermometer,
+  Wrench,
 } from "lucide-react";
 import { plantProcessApi, type DashboardReferenceData } from "../api/plantProcessApi";
 import { useDashboardFilters } from "../state/DashboardFilterContext";
+import "./DashboardFilterBar.css";
 
+// ── FilterSelect ──────────────────────────────────────────────
+function FilterSelect({
+  label,
+  icon: Icon,
+  value,
+  onChange,
+  children,
+  active,
+}: {
+  label: string;
+  icon: React.ElementType;
+  value: string;
+  onChange: (v: string) => void;
+  children: React.ReactNode;
+  active?: boolean;
+}) {
+  return (
+    <label className={`piq-filter-select ${active ? "piq-filter-select--active" : ""}`}>
+      <span className="piq-filter-select__icon" aria-hidden="true">
+        <Icon size={12} />
+      </span>
+      <span className="piq-filter-select__label">{label}</span>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="piq-filter-select__native"
+      >
+        {children}
+      </select>
+      <ChevronDown size={11} className="piq-filter-select__caret" aria-hidden="true" />
+    </label>
+  );
+}
+
+// ── FilterInput ───────────────────────────────────────────────
+function FilterInput({
+  label,
+  icon: Icon,
+  value,
+  onChange,
+  placeholder,
+  type = "text",
+  active,
+}: {
+  label: string;
+  icon: React.ElementType;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  type?: string;
+  active?: boolean;
+}) {
+  return (
+    <label className={`piq-filter-input ${active ? "piq-filter-input--active" : ""}`}>
+      <span className="piq-filter-input__icon" aria-hidden="true">
+        <Icon size={12} />
+      </span>
+      <span className="piq-filter-input__label">{label}</span>
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="piq-filter-input__native"
+      />
+    </label>
+  );
+}
+
+// ── Main component ────────────────────────────────────────────
 export function DashboardFilterBar() {
   const { filters, setFilter, clearAllFilters, activeFilterCount } =
     useDashboardFilters();
@@ -18,272 +101,230 @@ export function DashboardFilterBar() {
     useState<DashboardReferenceData | null>(null);
 
   const materialSearchLabel = useMemo(() => {
-    if (!filters.materialCode) return "Material code";
+    if (!filters.materialCode) return "Material";
     return `Material: ${filters.materialCode}`;
   }, [filters.materialCode]);
 
   useEffect(() => {
     let ignore = false;
-
     plantProcessApi
       .getDashboardReferenceData(filters)
-      .then((data) => {
-        if (!ignore) setReferenceData(data);
-      })
-      .catch(() => {
-        if (!ignore) setReferenceData(null);
-      });
-
-    return () => {
-      ignore = true;
-    };
+      .then((data) => { if (!ignore) setReferenceData(data); })
+      .catch(() => { if (!ignore) setReferenceData(null); });
+    return () => { ignore = true; };
   }, [filters.siteId]);
 
-  return (
-    <section className="filter-panel">
-      <div className="filter-panel__header">
-        <div>
-          <div className="eyebrow">
-            <SlidersHorizontal size={14} />
-            QlikSense-style global filters
-          </div>
-          <h2>Interactive Manufacturing Intelligence Workspace</h2>
-          <p>
-            Filters are sent to the backend. The dashboard receives aggregated
-            read-model data only.
-          </p>
-        </div>
+  const hasActiveFilters = activeFilterCount > 0;
 
-        <button className="secondary-button" onClick={clearAllFilters}>
-          <RotateCcw size={16} />
-          Clear all ({activeFilterCount})
+  return (
+    <section className="piq-filter-bar" aria-label="Dashboard filters">
+      {/* Header row */}
+      <div className="piq-filter-bar__header">
+        <div className="piq-filter-bar__title">
+          <Sliders size={14} aria-hidden="true" />
+          <span>Global filters</span>
+          {hasActiveFilters && (
+            <span className="piq-filter-bar__count">{activeFilterCount} active</span>
+          )}
+        </div>
+        <button
+          className={`piq-filter-clear ${hasActiveFilters ? "piq-filter-clear--visible" : ""}`}
+          onClick={clearAllFilters}
+          type="button"
+          title="Clear all filters"
+          disabled={!hasActiveFilters}
+        >
+          <RotateCcw size={12} />
+          Clear all
         </button>
       </div>
 
-      <div className="filter-grid">
-        <label className="field">
-          <span>
-            <Filter size={14} />
-            Site
-          </span>
-          <select
-            value={filters.siteId ?? ""}
-            onChange={(event) => setFilter("siteId", event.target.value || undefined)}
-          >
-            <option value="">All sites</option>
-            {referenceData?.sites.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.code} — {item.name}
-              </option>
-            ))}
-          </select>
-        </label>
+      {/* Filter row — Group 1: Location */}
+      <div className="piq-filter-row">
+        <span className="piq-filter-group-label">Location</span>
 
-        <label className="field">
-          <span>
-            <Filter size={14} />
-            Area
-          </span>
-          <select
-            value={filters.areaId ?? ""}
-            onChange={(event) => setFilter("areaId", event.target.value || undefined)}
-          >
-            <option value="">All areas</option>
-            {referenceData?.areas.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.code} — {item.name}
-              </option>
-            ))}
-          </select>
-        </label>
+        <FilterSelect
+          label="Site"
+          icon={Database}
+          value={filters.siteId ?? ""}
+          onChange={(v) => setFilter("siteId", v || undefined)}
+          active={!!filters.siteId}
+        >
+          <option value="">All sites</option>
+          {referenceData?.sites.map((item) => (
+            <option key={item.id} value={item.id}>
+              {item.code} — {item.name}
+            </option>
+          ))}
+        </FilterSelect>
 
-        <label className="field">
-          <span>
-            <Filter size={14} />
-            Equipment
-          </span>
-          <select
-            value={filters.equipmentId ?? ""}
-            onChange={(event) => setFilter("equipmentId", event.target.value || undefined)}
-          >
-            <option value="">All equipment</option>
-            {referenceData?.equipment.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.code} — {item.name}
-              </option>
-            ))}
-          </select>
-        </label>
+        <FilterSelect
+          label="Area"
+          icon={Filter}
+          value={filters.areaId ?? ""}
+          onChange={(v) => setFilter("areaId", v || undefined)}
+          active={!!filters.areaId}
+        >
+          <option value="">All areas</option>
+          {referenceData?.areas.map((item) => (
+            <option key={item.id} value={item.id}>
+              {item.code} — {item.name}
+            </option>
+          ))}
+        </FilterSelect>
 
-        <label className="field">
-          <span>
-            <Database size={14} />
-            Source system
-          </span>
-          <select
-            value={filters.sourceSystem ?? ""}
-            onChange={(event) =>
-              setFilter("sourceSystem", event.target.value || undefined)
-            }
-          >
-            <option value="">All source systems</option>
-            {referenceData?.sourceSystems.map((item) => (
+        <FilterSelect
+          label="Equipment"
+          icon={Wrench}
+          value={filters.equipmentId ?? ""}
+          onChange={(v) => setFilter("equipmentId", v || undefined)}
+          active={!!filters.equipmentId}
+        >
+          <option value="">All equipment</option>
+          {referenceData?.equipment.map((item) => (
+            <option key={item.id} value={item.id}>
+              {item.code} — {item.name}
+            </option>
+          ))}
+        </FilterSelect>
+
+        <FilterSelect
+          label="Source"
+          icon={Database}
+          value={filters.sourceSystem ?? ""}
+          onChange={(v) => setFilter("sourceSystem", v || undefined)}
+          active={!!filters.sourceSystem}
+        >
+          <option value="">All source systems</option>
+          {referenceData?.sourceSystems.map((item) => (
+            <option key={item.id} value={item.code}>
+              {item.code} — {item.name}
+            </option>
+          ))}
+        </FilterSelect>
+
+        <FilterInput
+          label={materialSearchLabel}
+          icon={Search}
+          value={filters.materialCode ?? ""}
+          onChange={(v) => setFilter("materialCode", v || undefined)}
+          placeholder="Search material / batch / lot"
+          active={!!filters.materialCode}
+        />
+      </div>
+
+      {/* Filter row — Group 2: Process & Quality */}
+      <div className="piq-filter-row">
+        <span className="piq-filter-group-label">Process & Quality</span>
+
+        <FilterSelect
+          label="Parameter"
+          icon={Thermometer}
+          value={filters.parameterCode ?? "CastingSpeed"}
+          onChange={(v) => setFilter("parameterCode", v || undefined)}
+          active={!!filters.parameterCode}
+        >
+          {referenceData?.parameters.length ? (
+            referenceData.parameters.map((item) => (
               <option key={item.id} value={item.code}>
                 {item.code} — {item.name}
               </option>
-            ))}
-          </select>
-        </label>
+            ))
+          ) : (
+            <>
+              <option value="CastingSpeed">CastingSpeed</option>
+              <option value="Superheat">Superheat</option>
+              <option value="RollingForce">RollingForce</option>
+            </>
+          )}
+        </FilterSelect>
 
-        <label className="field">
-          <span>
-            <Search size={14} />
-            {materialSearchLabel}
-          </span>
-          <input
-            value={filters.materialCode ?? ""}
-            onChange={(event) =>
-              setFilter("materialCode", event.target.value || undefined)
-            }
-            placeholder="Search material / batch / coil / lot"
-          />
-        </label>
+        <FilterSelect
+          label="Defect"
+          icon={ShieldAlert}
+          value={filters.defectType ?? ""}
+          onChange={(v) => setFilter("defectType", v || undefined)}
+          active={!!filters.defectType}
+        >
+          <option value="">All defects</option>
+          {referenceData?.defects.map((item) => (
+            <option key={item.id} value={item.code}>
+              {item.code} — {item.name}
+            </option>
+          ))}
+        </FilterSelect>
 
-        <label className="field">
-          <span>
-            <Filter size={14} />
-            Parameter
-          </span>
-          <select
-            value={filters.parameterCode ?? "CastingSpeed"}
-            onChange={(event) =>
-              setFilter("parameterCode", event.target.value || undefined)
-            }
-          >
-            {referenceData?.parameters.length ? (
-              referenceData.parameters.map((item) => (
-                <option key={item.id} value={item.code}>
-                  {item.code} — {item.name}
-                </option>
-              ))
-            ) : (
-              <>
-                <option>CastingSpeed</option>
-                <option>Superheat</option>
-                <option>RollingForce</option>
-              </>
-            )}
-          </select>
-        </label>
+        <FilterSelect
+          label="Risk class"
+          icon={Filter}
+          value={filters.riskClass ?? ""}
+          onChange={(v) => setFilter("riskClass", v || undefined)}
+          active={!!filters.riskClass}
+        >
+          <option value="">All risk classes</option>
+          {referenceData?.riskClasses.map((item) => (
+            <option key={item.id} value={item.code}>
+              {item.name} ({item.count})
+            </option>
+          ))}
+        </FilterSelect>
 
-        <label className="field">
-          <span>
-            <Filter size={14} />
-            Defect / outcome
-          </span>
-          <select
-            value={filters.defectType ?? ""}
-            onChange={(event) =>
-              setFilter("defectType", event.target.value || undefined)
-            }
-          >
-            <option value="">All defects</option>
-            {referenceData?.defects.map((item) => (
-              <option key={item.id} value={item.code}>
-                {item.code} — {item.name}
-              </option>
-            ))}
-          </select>
-        </label>
+        <FilterSelect
+          label="Shift / Crew"
+          icon={Filter}
+          value={filters.shiftCode ?? ""}
+          onChange={(v) => setFilter("shiftCode", v || undefined)}
+          active={!!filters.shiftCode}
+        >
+          <option value="">All shifts/crews</option>
+          {referenceData?.shifts.map((item) => (
+            <option key={item.id} value={item.code}>
+              {item.name} ({item.count})
+            </option>
+          ))}
+        </FilterSelect>
 
-        <label className="field">
-          <span>
-            <Filter size={14} />
-            Risk class
-          </span>
-          <select
-            value={filters.riskClass ?? ""}
-            onChange={(event) =>
-              setFilter("riskClass", event.target.value || undefined)
-            }
-          >
-            <option value="">All risk classes</option>
-            {referenceData?.riskClasses.map((item) => (
-              <option key={item.id} value={item.code}>
-                {item.name} ({item.count})
-              </option>
-            ))}
-          </select>
-        </label>
+        <FilterSelect
+          label="Genealogy"
+          icon={GitMerge}
+          value={filters.linkMode ?? "DownstreamChildren"}
+          onChange={(v) => setFilter("linkMode", v as any)}
+          active={filters.linkMode !== "DownstreamChildren" && !!filters.linkMode}
+        >
+          <option value="SameMaterial">Same material only</option>
+          <option value="DownstreamChildren">Downstream children</option>
+          <option value="UpstreamParents">Upstream parents</option>
+          <option value="FullGenealogy">Full genealogy</option>
+        </FilterSelect>
+      </div>
 
-        <label className="field">
-          <span>
-            <Filter size={14} />
-            Shift / Crew
-          </span>
-          <select
-            value={filters.shiftCode ?? ""}
-            onChange={(event) =>
-              setFilter("shiftCode", event.target.value || undefined)
-            }
-          >
-            <option value="">All shifts/crews</option>
-            {referenceData?.shifts.map((item) => (
-              <option key={item.id} value={item.code}>
-                {item.name} ({item.count})
-              </option>
-            ))}
-          </select>
-        </label>
+      {/* Filter row — Group 3: Time range */}
+      <div className="piq-filter-row">
+        <span className="piq-filter-group-label">Time range</span>
 
-        <label className="field">
-          <span>
-            <CalendarDays size={14} />
-            From UTC
-          </span>
-          <input
-            type="datetime-local"
-            value={toLocalInput(filters.fromUtc)}
-            onChange={(event) =>
-              setFilter("fromUtc", toUtcValue(event.target.value))
-            }
-          />
-        </label>
+        <FilterInput
+          label="From UTC"
+          icon={CalendarDays}
+          type="datetime-local"
+          value={toLocalInput(filters.fromUtc)}
+          onChange={(v) => setFilter("fromUtc", toUtcValue(v))}
+          active={!!filters.fromUtc}
+        />
 
-        <label className="field">
-          <span>
-            <CalendarDays size={14} />
-            To UTC
-          </span>
-          <input
-            type="datetime-local"
-            value={toLocalInput(filters.toUtc)}
-            onChange={(event) =>
-              setFilter("toUtc", toUtcValue(event.target.value))
-            }
-          />
-        </label>
-
-        <label className="field">
-          <span>
-            <Filter size={14} />
-            Genealogy mode
-          </span>
-          <select
-            value={filters.linkMode ?? "DownstreamChildren"}
-            onChange={(event) => setFilter("linkMode", event.target.value as any)}
-          >
-            <option value="SameMaterial">Same material only</option>
-            <option value="DownstreamChildren">Downstream children</option>
-            <option value="UpstreamParents">Upstream parents</option>
-            <option value="FullGenealogy">Full genealogy</option>
-          </select>
-        </label>
+        <FilterInput
+          label="To UTC"
+          icon={CalendarDays}
+          type="datetime-local"
+          value={toLocalInput(filters.toUtc)}
+          onChange={(v) => setFilter("toUtc", toUtcValue(v))}
+          active={!!filters.toUtc}
+        />
       </div>
     </section>
   );
 }
 
+// ── Helpers ───────────────────────────────────────────────────
 function toLocalInput(value?: string): string {
   if (!value) return "";
   const date = new Date(value);

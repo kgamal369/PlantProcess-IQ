@@ -105,12 +105,15 @@ const lifecycleSteps = [
   ["Report", "Export a Data Diagnostic report with ML readiness status."],
 ];
 
-function Layout({ children }: { children: ReactNode }) {
-    return (
+function Layout({ children }: { children: React.ReactNode }) {
+  return (
     <div className="site-shell">
       <header className="site-header">
         <NavLink to="/" className="brand-link">
-          <span className="sou-mark">SOU</span>
+          {/* Use the actual SOU icon SVG — file exists at /brand/sou-icon.svg */}
+          <span className="sou-mark">
+            <img src="/brand/sou-icon.svg" alt="SOU" width={38} height={38} />
+          </span>
           <span className="brand-text">
             PlantProcess <strong>IQ</strong>
           </span>
@@ -136,7 +139,6 @@ function Layout({ children }: { children: ReactNode }) {
           <strong>PlantProcess IQ</strong>
           <span>Process-to-quality intelligence for manufacturing plants.</span>
         </div>
-
         <div>
           <span>Düsseldorf, Germany</span>
           <span>EU / MENA industrial focus</span>

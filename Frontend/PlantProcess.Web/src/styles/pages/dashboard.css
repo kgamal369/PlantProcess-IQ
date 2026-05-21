@@ -1,1 +1,152 @@
 ﻿/* Dashboard page styles will be moved here from legacy-global.css during component extraction. */
+/* ============================================================
+   FILE: Frontend/PlantProcess.Web/src/styles/pages/dashboard.css
+   REPLACE the current 1-line placeholder comment with this.
+   ============================================================ */
+
+/* ── Dashboard hero toolbar ─────────────────────────────────── */
+.piq-dash-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 0 1rem;
+  flex-wrap: wrap;
+}
+
+.piq-dash-hero__left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.piq-dash-hero__dashboard-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Dashboard selector dropdown */
+.piq-dash-select {
+  appearance: none;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%234a6a8a' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")
+    no-repeat right 10px center,
+    rgba(8, 16, 36, 0.8);
+  border: 1px solid rgba(0, 212, 255, 0.14);
+  border-radius: 10px;
+  padding: 0.45rem 2rem 0.45rem 0.85rem;
+  font-size: 13px;
+  font-weight: 600;
+  color: #c4dcf4;
+  font-family: inherit;
+  cursor: pointer;
+  min-width: 200px;
+  max-width: 320px;
+  transition: border-color 0.12s, background 0.12s;
+}
+
+.piq-dash-select:hover {
+  border-color: rgba(0, 212, 255, 0.30);
+  background-color: rgba(0, 212, 255, 0.06);
+}
+
+.piq-dash-select:focus {
+  outline: none;
+  border-color: rgba(0, 212, 255, 0.45);
+  box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.08);
+}
+
+.piq-dash-select:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.piq-dash-select option {
+  background: #0b1730;
+  color: #eaf6ff;
+}
+
+/* Badges */
+.piq-dash-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 5px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.piq-dash-badge--system {
+  background: rgba(10, 132, 255, 0.12);
+  color: #0a84ff;
+  border: 1px solid rgba(10, 132, 255, 0.20);
+}
+
+/* Actions row */
+.piq-dash-hero__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+/* Action buttons */
+.piq-dash-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.42rem 0.85rem;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+  white-space: nowrap;
+  background: rgba(11, 23, 48, 0.70);
+  border: 1px solid rgba(0, 212, 255, 0.12);
+  color: #7090b0;
+}
+
+.piq-dash-btn:hover:not(:disabled) {
+  background: rgba(0, 212, 255, 0.07);
+  border-color: rgba(0, 212, 255, 0.25);
+  color: #b0d0f0;
+}
+
+.piq-dash-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.piq-dash-btn--primary {
+  background: rgba(0, 212, 255, 0.10);
+  border-color: rgba(0, 212, 255, 0.25);
+  color: #00d4ff;
+}
+
+.piq-dash-btn--primary:hover:not(:disabled) {
+  background: rgba(0, 212, 255, 0.18);
+  border-color: rgba(0, 212, 255, 0.40);
+}
+
+/* Layout save success banner */
+.success-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 1rem;
+  margin-bottom: 0.75rem;
+  border-radius: 8px;
+  background: rgba(48, 209, 88, 0.08);
+  border: 1px solid rgba(48, 209, 88, 0.20);
+  color: #30d158;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.success-banner .muted-text {
+  color: rgba(48, 209, 88, 0.55);
+}

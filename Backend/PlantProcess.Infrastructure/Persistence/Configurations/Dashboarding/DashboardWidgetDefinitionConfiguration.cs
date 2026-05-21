@@ -83,8 +83,9 @@ public class DashboardWidgetDefinitionConfiguration : IEntityTypeConfiguration<D
 
         builder.HasIndex(x => x.DashboardDefinitionId);
 
-        builder.HasIndex(x => x.WidgetCode)
-            .IsUnique();
+       builder.HasIndex(x => new { x.DashboardDefinitionId, x.WidgetCode })
+            .IsUnique()
+            .HasDatabaseName("ix_dashboard_widget_definitions_widget_code");
 
         builder.HasIndex(x => new
         {
