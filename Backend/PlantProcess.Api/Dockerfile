@@ -10,9 +10,9 @@ COPY PlantProcess.Domain/PlantProcess.Domain.csproj PlantProcess.Domain/
 COPY PlantProcess.Application/PlantProcess.Application.csproj PlantProcess.Application/
 COPY PlantProcess.Infrastructure/PlantProcess.Infrastructure.csproj PlantProcess.Infrastructure/
 COPY PlantProcess.Api/PlantProcess.Api.csproj PlantProcess.Api/
-
-RUN dotnet restore PlantProcessIQ.sln
-
+COPY PlantProcess.Workers/PlantProcess.Workers.csproj PlantProcess.Workers/
+RUN dotnet restore PlantProcess.Api/PlantProcess.Api.csproj && \
+    dotnet restore PlantProcess.Workers/PlantProcess.Workers.csproj
 COPY . .
 
 RUN dotnet publish PlantProcess.Api/PlantProcess.Api.csproj \
