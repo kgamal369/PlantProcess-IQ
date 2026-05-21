@@ -25,6 +25,7 @@ using PlantProcess.Api.Options;
 using PlantProcess.Api.Security;
 using PlantProcess.Api.Swagger;
 using PlantProcess.Application;
+using PlantProcess.Api.Endpoints.Demo;
 using PlantProcess.Application.Integration.Interfaces.Jobs;
 using PlantProcess.Infrastructure;
 using Serilog;
@@ -326,9 +327,11 @@ try
     }
 
     app.MapAdminEndpoints();
+    app.MapLicenseAdminEndpoints();
     app.MapJobAdminEndpoints();
     app.MapConnectorAdminEndpoints();
     app.MapSchemaConfigurationEndpoints();
+    app.MapDemoLifecycleEndpoints();
 
     app.Run();
 }

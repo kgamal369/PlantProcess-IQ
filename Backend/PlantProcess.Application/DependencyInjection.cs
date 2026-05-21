@@ -30,6 +30,11 @@ using PlantProcess.Application.Services.Process;
 using PlantProcess.Application.Services.Quality;
 using PlantProcess.Application.Services.Readiness;
 using PlantProcess.Application.Services.Reporting;
+using PlantProcess.Application.Licensing.Interfaces;
+using PlantProcess.Application.Licensing.Options;
+using PlantProcess.Application.Licensing.Services;
+using PlantProcess.Application.Demo.Interfaces;
+using PlantProcess.Application.Demo.Services;
 
 namespace PlantProcess.Application;
 
@@ -40,6 +45,16 @@ public static class DependencyInjection
         // Cross-cutting application services
         services.AddSingleton<IClock, SystemClock>();
         services.AddSingleton<IPlantTimeContextResolver, PlantTimeContextResolver>();
+
+        // Commercial license / feature enforcement
+        services.AddOptions<LicenseOptions>()
+            .BindConfiguration(LicenseOptions.SectionName)
+            .Validate(options => !string.IsNullOrWhiteSpace(options.Tier), "PlantProcess:License:Tier is required.");
+
+        services.AddSingleton<ILicenseService, LicenseService>();
+
+        // Demo lifecycle readiness and proof surface
+        services.AddScoped<IDemoLifecycleService, DemoLifecycleService>();
 
         // Readiness
         services.AddScoped<IApplicationReadinessService, ApplicationReadinessService>();

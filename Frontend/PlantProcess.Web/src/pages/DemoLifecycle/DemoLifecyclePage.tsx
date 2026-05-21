@@ -1,622 +1,364 @@
-import {
-  Activity,
-  AlertTriangle,
-  ArrowRight,
-  BadgeEuro,
-  BarChart3,
-  BrainCircuit,
-  CheckCircle2,
-  DatabaseZap,
-  FileText,
-  GitBranch,
-  LockKeyhole,
-  PlayCircle,
-  RefreshCw,
-  ShieldCheck,
-  TableProperties,
-  Users,
-  Workflow,
-} from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { demoLifecycleApi, type DemoLifecycle } from "../../api/demo";
+import { LicenseBadge } from "../../components/license/LicenseBadge";
+import { DimensionCompletionPanel } from "../../components/demo/DimensionCompletionPanel";
+import { DemoEnvironmentBanner } from "../../components/demo/DemoEnvironmentBanner";
+import { LicenseUsagePanel } from "../../components/license/LicenseUsagePanel";
+import { ConnectorTruthPanel } from "../../components/license/ConnectorTruthPanel";
+import { useLicense } from "../../state/LicenseContext";
+import { DemoLifecycleKpiStrip } from "../../components/demo/DemoLifecycleKpiStrip";
 
-import { useDemoMode, licensePlans } from "@/state/DemoModeContext";
+import "../../styles/pages/demo-lifecycle.css";
 
-const lifecycleSteps = [
-  {
-    title: "1. Configure source connector",
-    description: "Select CSV, PostgreSQL, Excel planned, Oracle planned, or future historian.",
-    icon: DatabaseZap,
-  },
-  {
-    title: "2. Import raw source snapshot",
-    description: "Show import jobs, scan cycle, raw staging and source freshness.",
-    icon: RefreshCw,
-  },
-  {
-    title: "3. Map to canonical schema",
-    description: "Preview SQL mapping from plant-specific source data to generic PlantProcess IQ model.",
-    icon: TableProperties,
-  },
-  {
-    title: "4. Build dashboard widget",
-    description: "Dynamic widget configuration and query preview.",
-    icon: BarChart3,
-  },
-  {
-    title: "5. Investigate quality issue",
-    description: "Move from quality event to material, process route and suspected contributors.",
-    icon: Workflow,
-  },
-  {
-    title: "6. Run ML preview",
-    description: "Frontend-only ML workflow preview. No trained backend model yet.",
-    icon: BrainCircuit,
-  },
-  {
-    title: "7. Show result on dashboard/report",
-    description: "End with dashboard insight and customer-grade report preview.",
-    icon: FileText,
-  },
-];
+function formatDate(value: string | null | undefined) {
+  if (!value) return "—";
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(value));
+}
 
-export function DemoLifecyclePage() {
- const {
-    selectedPlan,
-    setSelectedPlan,
-    activeLifecycleStep,
-    setActiveLifecycleStep,
-    connectors,
-    jobs,
-    mappings,
-    visibleWidgets,
-    users,
-    mlPreview,
-    mlTrainingForm,
-    isFeatureAvailable,
-  } = useDemoMode();
+function statusClass(status: string) {
+  const normalized = status.toLowerCase();
 
-  const activeStep = lifecycleSteps[activeLifecycleStep];
-  const ActiveIcon = activeStep.icon;
+  if (normalized.includes("ready") || normalized.includes("allowed")) {
+    return "ppi-status ppi-status--success";
+  }
+
+  if (normalized.includes("partial") || normalized.includes("attention")) {
+    return "ppi-status ppi-status--warning";
+  }
+
+  if (normalized.includes("locked") || normalized.includes("failed")) {
+    return "ppi-status ppi-status--danger";
+  }
+
+  return "ppi-status ppi-status--muted";
+}
+
+  export function DemoLifecyclePage() {
+  const { readiness } = useLicense();
+  const [data, setData] = useState<DemoLifecycle | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  async function load() {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const result = await demoLifecycleApi.getLifecycle();
+      setData(result);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load demo lifecycle.");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    void load();
+  }, []);
+
+  const orderedSteps = useMemo(() => {
+    return [...(data?.steps ?? [])].sort((a, b) => a.order - b.order);
+  }, [data]);
+
+  if (isLoading) {
+    return (
+      <main className="demo-lifecycle-page">
+        <DemoEnvironmentBanner />
+          <section className="demo-hero-panel">
+            <p className="eyebrow">Controlled product lifecycle</p>
+            <h1>Loading PlantProcess IQ demo lifecycle...</h1>
+          </section>
+      </main>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <main className="demo-lifecycle-page">
+        <section className="demo-hero-panel demo-hero-panel--error">
+          <p className="eyebrow">Controlled product lifecycle</p>
+          <h1>Demo lifecycle unavailable</h1>
+          <p>{error ?? "No lifecycle data returned from backend."}</p>
+          <button className="primary-action" onClick={() => void load()}>
+            Retry
+          </button>
+        </section>
+      </main>
+    );
+  }
 
   return (
-    <main className="page-shell demo-lifecycle-page">
-      <section className="dashboard-hero demo-lifecycle-hero">
+    <main className="demo-lifecycle-page">
+      <section className="demo-hero-panel">
         <div>
-          <div className="eyebrow">
-            <PlayCircle size={14} />
-            Real app demo workflow
-          </div>
-
-          <h1>PlantProcess IQ Lifecycle Demo</h1>
-
-          <p>
-            Demonstrate the full product story from connector setup to import
-            job, schema mapping, dashboard widget, investigation, ML preview and
-            final report. Some steps are frontend preview only, but they are
-            embedded inside the real app workflow.
+          <p className="eyebrow">Controlled product lifecycle</p>
+          <h1>PlantProcess IQ Demo Lifecycle</h1>
+          <p className="hero-copy">
+            One real product journey: license gates → connector truth → staging copy →
+            schema mapping → jobs monitor → dashboard output → risk/correlation →
+            honest ML readiness → customer-grade report.
           </p>
-
-          <div className="dashboard-subtitle-row">
-            <span>
-              Active plan: <strong>{selectedPlan}</strong>
-            </span>
-            <span className="status-chip">Frontend demo mode</span>
-            <span className="status-chip status-chip--warning">
-              ML preview only
-            </span>
-          </div>
         </div>
 
-        <div className="demo-plan-switcher">
-          <BadgeEuro size={22} />
-          <strong>License simulation</strong>
-          <select
-            value={selectedPlan}
-            onChange={(event) => setSelectedPlan(event.target.value as typeof selectedPlan)}
-          >
-            {licensePlans.map((plan) => (
-              <option key={plan.code} value={plan.code}>
-                {plan.name}
-              </option>
-            ))}
-          </select>
-          <small>
-            Toggle the plan to show more or fewer pages, widgets and privileges.
-          </small>
+        <div className="hero-license-card">
+          <span>Active license</span>
+          <LicenseBadge license={data.license} />
+          <strong>{data.license.tier}</strong>
+          <small>{data.license.environment} · {data.license.source}</small>
         </div>
       </section>
 
-      <section className="demo-lifecycle-grid">
-        <aside className="demo-stepper">
-          {lifecycleSteps.map((step, index) => {
-            const Icon = step.icon;
-            const active = index === activeLifecycleStep;
-            const done = index < activeLifecycleStep;
+      <DimensionCompletionPanel readiness={readiness} />
+      <LicenseUsagePanel />
+      <ConnectorTruthPanel connectors={data.connectorTruth.connectors} />
 
-            return (
-              <button
-                key={step.title}
-                className={`demo-stepper-item ${active ? "active" : ""} ${
-                  done ? "done" : ""
-                }`}
-                type="button"
-                onClick={() => setActiveLifecycleStep(index)}
-              >
-                <Icon size={18} />
-                <span>{step.title}</span>
-                {done ? <CheckCircle2 size={16} /> : null}
-              </button>
-            );
-          })}
-        </aside>
-
-        <section className="demo-stage">
-          <div className="demo-stage-header">
-            <div>
-              <div className="eyebrow">
-                <ActiveIcon size={14} />
-                Active workflow step
-              </div>
-              <h2>{activeStep.title}</h2>
-              <p>{activeStep.description}</p>
+      <section className="lifecycle-grid">
+        <DemoLifecycleKpiStrip lifecycle={data} />
+        {orderedSteps.map((step) => (
+          <article className="lifecycle-step-card" key={step.code}>
+            <div className="step-header">
+              <span className="step-number">{step.order}</span>
+              <span className={statusClass(step.status)}>{step.status}</span>
             </div>
-
-            <button
-              className="primary-button"
-              type="button"
-              onClick={() =>
-                setActiveLifecycleStep(
-                  Math.min(activeLifecycleStep + 1, lifecycleSteps.length - 1)
-                )
-              }
-            >
-              Next step
-              <ArrowRight size={16} />
-            </button>
-          </div>
-
-          {activeLifecycleStep === 0 ? <ConnectorStage connectors={connectors} /> : null}
-          {activeLifecycleStep === 1 ? <JobsStage jobs={jobs} /> : null}
-          {activeLifecycleStep === 2 ? <SchemaStage mappings={mappings} /> : null}
-          {activeLifecycleStep === 3 ? (
-            <WidgetStage
-              widgets={visibleWidgets}
-              isFeatureAvailable={isFeatureAvailable}
-            />
-          ) : null}
-          {activeLifecycleStep === 4 ? (
-            <InvestigationStage isFeatureAvailable={isFeatureAvailable} />
-          ) : null}
-          {activeLifecycleStep === 5 ? (
-            <MlStage
-            mlPreview={mlPreview}
-            selectedFeatures={mlTrainingForm.selectedFeatures}
-            isFeatureAvailable={isFeatureAvailable}
-            />         
-         ) : null}
-          {activeLifecycleStep === 6 ? (
-            <ReportStage isFeatureAvailable={isFeatureAvailable} />
-          ) : null}
-        </section>
+            <h2>{step.title}</h2>
+            <p>{step.description}</p>
+            <footer>
+              <span>Required tier: {step.requiredLicenseTier}</span>
+              <code>{step.evidenceEndpoint}</code>
+            </footer>
+          </article>
+        ))}
       </section>
 
-      <section className="demo-integrated-grid">
-        <LicenseWorkflowPanel />
-        <UsersRolesPreview users={users} />
+      <section className="demo-section">
+        <div className="section-title-row">
+          <div>
+            <p className="eyebrow">Dimension 5</p>
+            <h2>License / Feature / Pricing Enforcement</h2>
+          </div>
+          <LicenseBadge license={data.license} />
+        </div>
+
+        <div className="license-limit-grid">
+          <div className="metric-card">
+            <span>Data sources</span>
+            <strong>
+              {data.license.limits.maxDataSources ?? "Unlimited"}
+            </strong>
+          </div>
+          <div className="metric-card">
+            <span>Scheduled jobs</span>
+            <strong>
+              {data.license.limits.maxScheduledJobs ?? "Unlimited"}
+            </strong>
+          </div>
+          <div className="metric-card">
+            <span>Dashboards/pages</span>
+            <strong>
+              {data.license.limits.maxDashboards ?? "Unlimited"}
+            </strong>
+          </div>
+          <div className="metric-card">
+            <span>Minimum refresh</span>
+            <strong>
+              {data.license.limits.minRefreshIntervalMinutes ?? 1} min
+            </strong>
+          </div>
+        </div>
+      </section>
+
+      <section className="demo-section">
+        <div className="section-title-row">
+          <div>
+            <p className="eyebrow">Dimension 8</p>
+            <h2>Connector Truth</h2>
+          </div>
+        </div>
+
+        <div className="connector-truth-table">
+          <div className="table-row table-row--head">
+            <span>Connector</span>
+            <span>Implementation</span>
+            <span>License</span>
+            <span>Demo safe</span>
+          </div>
+
+          {data.connectorTruth.connectors.map((connector) => (
+            <div className="table-row" key={connector.providerType}>
+              <strong>{connector.displayName}</strong>
+              <span>{connector.implementationStatus}</span>
+              <span className={statusClass(connector.licenseStatus)}>
+                {connector.licenseStatus}
+              </span>
+              <span className={statusClass(connector.isSafeForDemo ? "Ready" : "Locked")}>
+                {connector.isSafeForDemo ? "Yes" : "No"}
+              </span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="demo-section two-column">
+        <article className="summary-card">
+          <p className="eyebrow">Source → staging</p>
+          <h2>Staging / Dump Copy</h2>
+          <dl>
+            <div>
+              <dt>Active connections</dt>
+              <dd>{data.stagingSummary.activeConnectionProfiles}</dd>
+            </div>
+            <div>
+              <dt>Active datasets</dt>
+              <dd>{data.stagingSummary.activeDatasets}</dd>
+            </div>
+            <div>
+              <dt>Staging records</dt>
+              <dd>{data.stagingSummary.stagingRecordCount}</dd>
+            </div>
+            <div>
+              <dt>Import batches</dt>
+              <dd>{data.stagingSummary.importBatchCount}</dd>
+            </div>
+            <div>
+              <dt>Last snapshot</dt>
+              <dd>{formatDate(data.stagingSummary.lastSnapshotUtc)}</dd>
+            </div>
+          </dl>
+          <p>{data.stagingSummary.message}</p>
+        </article>
+
+        <article className="summary-card">
+          <p className="eyebrow">Genericity layer</p>
+          <h2>Schema Mapping</h2>
+          <dl>
+            <div>
+              <dt>Schema views</dt>
+              <dd>{data.schemaMapping.schemaViewCount}</dd>
+            </div>
+            <div>
+              <dt>Active views</dt>
+              <dd>{data.schemaMapping.activeSchemaViewCount}</dd>
+            </div>
+            <div>
+              <dt>Mappings</dt>
+              <dd>{data.schemaMapping.mappingDefinitionCount}</dd>
+            </div>
+            <div>
+              <dt>Active mappings</dt>
+              <dd>{data.schemaMapping.activeMappingDefinitionCount}</dd>
+            </div>
+            <div>
+              <dt>KPI definitions</dt>
+              <dd>{data.schemaMapping.kpiDefinitionCount}</dd>
+            </div>
+          </dl>
+          <p>{data.schemaMapping.message}</p>
+        </article>
+      </section>
+
+      <section className="demo-section">
+        <div className="section-title-row">
+          <div>
+            <p className="eyebrow">Operational chain</p>
+            <h2>Jobs Monitor</h2>
+          </div>
+          <span className={statusClass(data.jobChain.failedOrTimeoutJobs > 0 ? "NeedsAttention" : "Ready")}>
+            {data.jobChain.enabledJobs}/{data.jobChain.totalJobs} enabled
+          </span>
+        </div>
+
+        <div className="job-chain-list">
+          {data.jobChain.jobs.map((job) => (
+            <article className="job-chain-card" key={job.jobId}>
+              <header>
+                <strong>{job.jobName}</strong>
+                <span className={statusClass(job.licenseStatus)}>{job.licenseStatus}</span>
+              </header>
+              <p>{job.operationalRole}</p>
+              <footer>
+                <code>{job.jobType}</code>
+                <span>{job.lastRunStatus}</span>
+                <span>{formatDate(job.lastRunStartedAtUtc)}</span>
+              </footer>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="demo-section two-column">
+        <article className="summary-card">
+          <p className="eyebrow">Configured output</p>
+          <h2>Dashboard / Page Output</h2>
+          <dl>
+            <div>
+              <dt>Dashboards</dt>
+              <dd>{data.dashboardOutput.dashboardCount}</dd>
+            </div>
+            <div>
+              <dt>Active dashboards</dt>
+              <dd>{data.dashboardOutput.activeDashboardCount}</dd>
+            </div>
+            <div>
+              <dt>Widgets</dt>
+              <dd>{data.dashboardOutput.widgetCount}</dd>
+            </div>
+            <div>
+              <dt>Active widgets</dt>
+              <dd>{data.dashboardOutput.activeWidgetCount}</dd>
+            </div>
+          </dl>
+          <p>{data.dashboardOutput.message}</p>
+        </article>
+
+        <article className="summary-card">
+          <p className="eyebrow">Honest AI / ML</p>
+          <h2>ML Readiness Preview</h2>
+          <dl>
+            <div>
+              <dt>Model status</dt>
+              <dd>{data.mlReadiness.modelStatus}</dd>
+            </div>
+            <div>
+              <dt>Training status</dt>
+              <dd>{data.mlReadiness.trainingStatus}</dd>
+            </div>
+            <div>
+              <dt>Parameters</dt>
+              <dd>{data.mlReadiness.parameterObservationCount}</dd>
+            </div>
+            <div>
+              <dt>Quality events</dt>
+              <dd>{data.mlReadiness.qualityEventCount}</dd>
+            </div>
+            <div>
+              <dt>Genealogy edges</dt>
+              <dd>{data.mlReadiness.genealogyEdgeCount}</dd>
+            </div>
+          </dl>
+          <ul className="warning-list">
+            {data.mlReadiness.warnings.map((warning) => (
+              <li key={warning}>{warning}</li>
+            ))}
+          </ul>
+        </article>
+      </section>
+
+      <section className="demo-section report-close">
+        <p className="eyebrow">Final close</p>
+        <h2>Customer-grade Report</h2>
+        <p>{data.reportClose.dataDiagnosticBridge}</p>
+        <div className="report-section-grid">
+          {data.reportClose.includedSections.map((section) => (
+            <span key={section}>{section}</span>
+          ))}
+        </div>
+        <blockquote>{data.reportClose.disclaimer}</blockquote>
       </section>
     </main>
   );
 }
-
-function ConnectorStage({
-  connectors,
-}: {
-  connectors: ReturnType<typeof useDemoMode>["connectors"];
-}) {
-  return (
-    <div className="demo-card-grid">
-      {connectors.map((connector) => (
-        <article className="demo-card" key={connector.id}>
-          <div className="demo-card-top">
-            <DatabaseZap size={22} />
-            <span className={`connector-status connector-status--${connector.status}`}>
-              {connector.status}
-            </span>
-          </div>
-
-          <h3>{connector.name}</h3>
-          <p>{connector.description}</p>
-
-          <div className="demo-mini-table">
-            {connector.tables.length === 0 ? (
-              <div className="empty-mini-row">
-                Planned connector — shown for roadmap/demo only.
-              </div>
-            ) : (
-              connector.tables.map((table) => (
-                <div key={table.id}>
-                  <strong>{table.name}</strong>
-                  <span>{table.rows.toLocaleString()} rows</span>
-                  <small>Last import: {table.lastImportedAt}</small>
-                </div>
-              ))
-            )}
-          </div>
-        </article>
-      ))}
-    </div>
-  );
-}
-
-function JobsStage({
-  jobs,
-}: {
-  jobs: ReturnType<typeof useDemoMode>["jobs"];
-}) {
-  return (
-    <div className="demo-card-grid">
-      {jobs.map((job) => (
-        <article className="demo-card" key={job.id}>
-          <div className="demo-card-top">
-            <Activity size={22} />
-            <span className={`job-status job-status--${job.status.toLowerCase()}`}>
-              {job.status}
-            </span>
-          </div>
-
-          <h3>{job.name}</h3>
-          <p>{job.message}</p>
-
-          <div className="progress-track">
-            <span style={{ width: `${job.progress}%` }} />
-          </div>
-
-          <div className="demo-card-footer">
-            <small>Last: {job.lastRun}</small>
-            <small>Next: {job.nextRun}</small>
-          </div>
-        </article>
-      ))}
-    </div>
-  );
-}
-
-function SchemaStage({
-  mappings,
-}: {
-  mappings: ReturnType<typeof useDemoMode>["mappings"];
-}) {
-  return (
-    <div className="demo-card-grid demo-card-grid--two">
-      {mappings.map((mapping) => (
-        <article className="demo-card demo-card--wide" key={mapping.id}>
-          <div className="demo-card-top">
-            <TableProperties size={22} />
-            <span className="status-chip">{mapping.status}</span>
-          </div>
-
-          <h3>{mapping.name}</h3>
-          <p>
-            {mapping.source} → <strong>{mapping.target}</strong>
-          </p>
-
-          <pre className="sql-preview">{mapping.sqlPreview}</pre>
-
-          <div className="field-map-grid">
-            {mapping.mappedFields.map((field) => (
-              <div key={`${field.sourceField}-${field.targetField}`}>
-                <strong>{field.sourceField}</strong>
-                <ArrowRight size={14} />
-                <span>{field.targetField}</span>
-                <small>{field.confidence}% mapping confidence</small>
-              </div>
-            ))}
-          </div>
-        </article>
-      ))}
-    </div>
-  );
-}
-
-function WidgetStage({
-  widgets,
-  isFeatureAvailable,
-}: {
-  widgets: ReturnType<typeof useDemoMode>["widgets"];
-  isFeatureAvailable: ReturnType<typeof useDemoMode>["isFeatureAvailable"];
-}) {
-  return (
-    <div className="demo-card-grid">
-      {widgets.map((widget) => {
-        const unlocked = isFeatureAvailable(widget.requiredPlan);
-
-        return (
-          <article
-            className={`demo-card demo-widget-card ${!unlocked ? "locked" : ""}`}
-            key={widget.id}
-          >
-            <div className="demo-card-top">
-              <BarChart3 size={22} />
-              <span className="status-chip">{widget.requiredPlan}</span>
-            </div>
-
-            <h3>{widget.title}</h3>
-            <p>{widget.description}</p>
-
-            {!unlocked ? (
-              <div className="locked-inline">
-                <LockKeyhole size={18} />
-                Requires {widget.requiredPlan}
-              </div>
-            ) : (
-              <>
-                {widget.value ? (
-                  <strong className="big-widget-value">{widget.value}</strong>
-                ) : null}
-
-                {widget.trend ? <small>{widget.trend}</small> : null}
-
-                <div className="demo-chart-bars">
-                  {widget.data.map((point) => (
-                    <div key={point.label}>
-                      <span>{point.label}</span>
-                      <div>
-                        <b style={{ width: `${point.value}%` }} />
-                      </div>
-                      <small>{point.value}</small>
-                    </div>
-                  ))}
-                </div>
-
-                <pre className="query-preview">{widget.queryPreview}</pre>
-              </>
-            )}
-          </article>
-        );
-      })}
-    </div>
-  );
-}
-
-function InvestigationStage({
-  isFeatureAvailable,
-}: {
-  isFeatureAvailable: ReturnType<typeof useDemoMode>["isFeatureAvailable"];
-}) {
-  const unlocked = isFeatureAvailable("ProPlus");
-
-  return (
-    <article className="demo-card demo-card--wide">
-      <div className="demo-card-top">
-        <Workflow size={22} />
-        <span className="status-chip">Investigation-first story</span>
-      </div>
-
-      <h3>Quality Issue Investigation</h3>
-
-      <p>
-        Start from a defect signal, open the affected material, review genealogy,
-        compare process windows, and identify suspected contributors.
-      </p>
-
-      {!unlocked ? (
-        <div className="locked-inline">
-          <LockKeyhole size={18} />
-          Investigation workflow requires Pro Plus.
-        </div>
-      ) : (
-        <div className="investigation-timeline">
-          <div>
-            <strong>Quality event</strong>
-            <span>Surface defect detected on Coil C-2048</span>
-          </div>
-          <div>
-            <strong>Material genealogy</strong>
-            <span>Linked to upstream heat, slab and process route</span>
-          </div>
-          <div>
-            <strong>Process evidence</strong>
-            <span>Temperature instability and speed variation found</span>
-          </div>
-          <div>
-            <strong>Suspected contributors</strong>
-            <span>Correlation suggests temperature and speed windows</span>
-          </div>
-        </div>
-      )}
-    </article>
-  );
-}
-
-function MlStage({
-  mlPreview,
-  selectedFeatures,
-  isFeatureAvailable,
-}: {
-  mlPreview: ReturnType<typeof useDemoMode>["mlPreview"];
-  selectedFeatures: string[];
-  isFeatureAvailable: ReturnType<typeof useDemoMode>["isFeatureAvailable"];
-}) {
-
-  const unlocked = isFeatureAvailable("ProPlus");
-
-  return (
-    <article className="demo-card demo-card--wide">
-      <div className="demo-card-top">
-        <BrainCircuit size={22} />
-        <span className="status-chip status-chip--warning">Preview only</span>
-      </div>
-
-      <h3>ML Workspace Preview</h3>
-
-      <p>
-        Demonstrates future workflow only. No trained production model is active.
-        Current product intelligence remains rule-based risk scoring and
-        correlation analysis.
-      </p>
-
-      {!unlocked ? (
-        <div className="locked-inline">
-          <LockKeyhole size={18} />
-          ML preview requires Pro Plus.
-        </div>
-      ) : (
-        <>
-          <div className="feature-chip-grid">
-            {selectedFeatures.map((feature) => (
-                  <span className="feature-chip active" key={feature}>
-                <CheckCircle2 size={14} />
-                {feature}
-              </span>
-            ))}
-          </div>
-
-          <div className="ml-result-card">
-            <ShieldCheck size={28} />
-            <div>
-              <strong>{mlPreview.resultLabel}</strong>
-              <span>{mlPreview.confidence}% preview confidence</span>
-            </div>
-          </div>
-
-          <div className="explainability-grid">
-            {mlPreview.explanation.map((item) => (
-              <div key={item.feature}>
-                <strong>{item.feature}</strong>
-                <span>{item.direction}</span>
-                <div className="progress-track">
-                  <span style={{ width: `${item.contribution}%` }} />
-                </div>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
-    </article>
-  );
-}
-
-function ReportStage({
-  isFeatureAvailable,
-}: {
-  isFeatureAvailable: ReturnType<typeof useDemoMode>["isFeatureAvailable"];
-}) {
-  const unlocked = isFeatureAvailable("Pro");
-
-  return (
-    <article className="demo-card demo-card--wide">
-      <div className="demo-card-top">
-        <FileText size={22} />
-        <span className="status-chip">Customer-grade output</span>
-      </div>
-
-      <h3>Final Dashboard + Report Preview</h3>
-
-      {!unlocked ? (
-        <div className="locked-inline">
-          <LockKeyhole size={18} />
-          Report preview requires Pro.
-        </div>
-      ) : (
-        <div className="report-preview">
-          <h4>Quality Investigation Report — Coil C-2048</h4>
-          <p>
-            Elevated quality risk was detected. Evidence suggests temperature
-            instability and speed variation as suspected contributors. Process
-            engineering validation is required before operational action.
-          </p>
-
-          <div className="report-kpi-grid">
-            <div>
-              <strong>72</strong>
-              <span>Risk score</span>
-            </div>
-            <div>
-              <strong>4</strong>
-              <span>Suspected contributors</span>
-            </div>
-            <div>
-              <strong>18,420</strong>
-              <span>Inspection records</span>
-            </div>
-          </div>
-        </div>
-      )}
-    </article>
-  );
-}
-
-function LicenseWorkflowPanel() {
-  const { selectedPlan, setSelectedPlan } = useDemoMode();
-
-  return (
-    <article className="demo-card demo-card--wide">
-      <div className="demo-card-top">
-        <BadgeEuro size={22} />
-        <span className="status-chip">Integrated license preview</span>
-      </div>
-
-      <h3>License / Feature / Pricing inside the app</h3>
-
-      <p>
-        This is not a billing engine yet. It is frontend feature visibility to
-        demonstrate how Light, Pro, Pro Plus and Enterprise unlock different
-        workflows.
-      </p>
-
-      <div className="license-plan-grid">
-        {licensePlans.map((plan) => (
-          <button
-            key={plan.code}
-            type="button"
-            className={`license-plan-card ${
-              selectedPlan === plan.code ? "active" : ""
-            }`}
-            onClick={() => setSelectedPlan(plan.code)}
-          >
-            <strong>{plan.name}</strong>
-            <span>{plan.priceLabel}</span>
-            <small>{plan.description}</small>
-          </button>
-        ))}
-      </div>
-    </article>
-  );
-}
-
-function UsersRolesPreview({
-  users,
-}: {
-  users: ReturnType<typeof useDemoMode>["users"];
-}) {
-  return (
-    <article className="demo-card demo-card--wide">
-      <div className="demo-card-top">
-        <Users size={22} />
-        <span className="status-chip">User / Role preview</span>
-      </div>
-
-      <h3>Users, Roles & Privileges</h3>
-
-      <p>
-        Frontend preview for future RBAC flow: add user, define role, assign
-        privileges and show license visibility.
-      </p>
-
-      <div className="user-role-grid">
-        {users.map((user) => (
-          <div className="user-role-card" key={user.id}>
-            <strong>{user.userName}</strong>
-            <span>{user.role}</span>
-            <small>{user.licensePlan} · {user.status}</small>
-
-            <ul>
-              {user.privileges.map((privilege) => (
-                <li key={privilege}>{privilege}</li>
-              ))}
-            </ul>
-          </div>
-        ))}
-      </div>
-    </article>
-  );
-}
+export default DemoLifecyclePage;

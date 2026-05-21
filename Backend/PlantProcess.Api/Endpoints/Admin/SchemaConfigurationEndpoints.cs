@@ -7,6 +7,9 @@ using PlantProcess.Api.Extensions;
 using PlantProcess.Application.Integration.Contracts.Dtos;
 using PlantProcess.Application.Integration.Interfaces.SchemaConfiguration;
 using PlantProcess.Infrastructure.Persistence;
+using PlantProcess.Api.Extensions;
+using PlantProcess.Application.Licensing.Contracts;
+using PlantProcess.Application.Licensing.Interfaces;
 
 namespace PlantProcess.Api.Endpoints.Admin;
 
@@ -89,8 +92,12 @@ public static class SchemaConfigurationEndpoints
     private static async Task<IResult> CreateSchemaViewAsync(
         CreateSchemaViewDefinitionRequest request,
         ISchemaConfigurationService service,
+        ILicenseService licenseService,
         CancellationToken cancellationToken)
     {
+        var gate = licenseService.EnsureFeatureEnabled(LicenseFeature.SchemaSqlViewBuilder);
+        if (gate.IsFailure)
+            return gate.ToHttpResult(() => Results.NoContent());
         var safety = SafeSqlValidator.Validate(request.SqlText);
 
         if (!safety.IsValid)
@@ -112,8 +119,13 @@ public static class SchemaConfigurationEndpoints
         Guid id,
         UpdateSchemaViewDefinitionRequest request,
         ISchemaConfigurationService service,
+        ILicenseService licenseService,
         CancellationToken cancellationToken)
     {
+        var gate = licenseService.EnsureFeatureEnabled(LicenseFeature.SchemaSqlViewBuilder);
+        if (gate.IsFailure)
+            return gate.ToHttpResult(() => Results.NoContent());
+
         var safety = SafeSqlValidator.Validate(request.SqlText);
 
         if (!safety.IsValid)
@@ -134,8 +146,13 @@ public static class SchemaConfigurationEndpoints
         SchemaViewPreviewRequest request,
         PlantProcessDbContext dbContext,
         ISchemaConfigurationService service,
+        ILicenseService licenseService,
         CancellationToken cancellationToken)
     {
+        var previewGate = licenseService.EnsureFeatureEnabled(LicenseFeature.SchemaPreviewExecution);
+        if (previewGate.IsFailure)
+            return previewGate.ToHttpResult(() => Results.NoContent());
+
         var view = await dbContext.SchemaViewDefinitions
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, cancellationToken);
@@ -236,8 +253,13 @@ public static class SchemaConfigurationEndpoints
     private static async Task<IResult> CreateKpiAsync(
         CreateKpiDefinitionRequest request,
         ISchemaConfigurationService service,
+        ILicenseService licenseService,
         CancellationToken cancellationToken)
     {
+        var gate = licenseService.EnsureFeatureEnabled(LicenseFeature.KpiViewBuilder);
+        if (gate.IsFailure)
+            return gate.ToHttpResult(() => Results.NoContent());
+
         var result = await service.CreateKpiAsync(request, cancellationToken);
 
         return result.ToHttpResult(value =>

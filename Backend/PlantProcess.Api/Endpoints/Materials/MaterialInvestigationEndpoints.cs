@@ -1,4 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using PlantProcess.Api.Extensions;
+using PlantProcess.Application.Licensing.Contracts;
+using PlantProcess.Application.Licensing.Interfaces;
 using PlantProcess.Infrastructure.Persistence;
 
 namespace PlantProcess.Api.Endpoints.Materials;
@@ -8,9 +11,12 @@ public static class MaterialInvestigationEndpoints
     public static IEndpointRouteBuilder MapMaterialInvestigationEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/materials")
-            .WithTags("Material Investigation");
+            .WithTags("Material Investigation")
+            .RequireAuthorization("PlantProcessViewer");
 
-        group.MapGet("/{materialUnitId:guid}/investigation-full", InvestigateMaterialFullAsync);
+        group.MapGet("/{materialUnitId:guid}/investigation-full", InvestigateMaterialFullAsync)
+            .WithSummary("Get full genealogy-aware material investigation")
+            .WithDescription("Returns material, aliases, genealogy, process steps, parameters, events, downtime, quality, risk and data-quality issues for one material and its related genealogy.");
 
         return app;
     }
@@ -18,12 +24,17 @@ public static class MaterialInvestigationEndpoints
     private static async Task<IResult> InvestigateMaterialFullAsync(
         Guid materialUnitId,
         int? maxDepth,
+        ILicenseService licenseService,
         PlantProcessDbContext dbContext,
         CancellationToken cancellationToken)
     {
+        var gate = licenseService.EnsureFeatureEnabled(LicenseFeature.InvestigationWorkflow);
+        if (gate.IsFailure)
+            return gate.ToHttpResult(() => Results.NoContent());
+
         var materialExists = await dbContext.MaterialUnits
             .AsNoTracking()
-            .AnyAsync(x => x.Id == materialUnitId, cancellationToken);
+            .AnyAsync(x => x.Id == materialUnitId && !x.IsDeleted, cancellationToken);
 
         if (!materialExists)
             return Results.NotFound(new { message = "Material unit not found." });
@@ -39,7 +50,7 @@ public static class MaterialInvestigationEndpoints
 
         var materials = await dbContext.MaterialUnits
             .AsNoTracking()
-            .Where(x => materialIds.Contains(x.Id))
+            .Where(x => materialIds.Contains(x.Id) && !x.IsDeleted)
             .OrderBy(x => x.ProductionStartUtc)
             .ThenBy(x => x.MaterialCode)
             .Select(x => new
@@ -64,7 +75,7 @@ public static class MaterialInvestigationEndpoints
 
         var aliases = await dbContext.MaterialAliases
             .AsNoTracking()
-            .Where(x => materialIds.Contains(x.MaterialUnitId))
+            .Where(x => materialIds.Contains(x.MaterialUnitId) && !x.IsDeleted)
             .OrderBy(x => x.SourceSystem)
             .ThenBy(x => x.AliasCode)
             .Select(x => new
@@ -81,7 +92,9 @@ public static class MaterialInvestigationEndpoints
 
         var genealogyEdges = await dbContext.GenealogyEdges
             .AsNoTracking()
-            .Where(x => materialIds.Contains(x.ParentMaterialUnitId) || materialIds.Contains(x.ChildMaterialUnitId))
+            .Where(x =>
+                !x.IsDeleted &&
+                (materialIds.Contains(x.ParentMaterialUnitId) || materialIds.Contains(x.ChildMaterialUnitId)))
             .OrderBy(x => x.EffectiveFromUtc)
             .Select(x => new
             {
@@ -99,7 +112,7 @@ public static class MaterialInvestigationEndpoints
 
         var processSteps = await dbContext.ProcessStepExecutions
             .AsNoTracking()
-            .Where(x => materialIds.Contains(x.MaterialUnitId))
+            .Where(x => materialIds.Contains(x.MaterialUnitId) && !x.IsDeleted)
             .OrderBy(x => x.StartedAtUtc)
             .Select(x => new
             {
@@ -126,8 +139,12 @@ public static class MaterialInvestigationEndpoints
 
         var parameterObservations = await dbContext.ParameterObservations
             .AsNoTracking()
-            .Where(x => materialIds.Contains(x.MaterialUnitId) ||
-                        (x.ProcessStepExecutionId.HasValue && processStepIds.Contains(x.ProcessStepExecutionId.Value)))
+            .Where(x =>
+                !x.IsDeleted &&
+                (
+                    materialIds.Contains(x.MaterialUnitId) ||
+                    (x.ProcessStepExecutionId.HasValue && processStepIds.Contains(x.ProcessStepExecutionId.Value))
+                ))
             .OrderBy(x => x.ObservedAtUtc)
             .Select(x => new
             {
@@ -153,8 +170,11 @@ public static class MaterialInvestigationEndpoints
         var processEvents = await dbContext.ProcessEvents
             .AsNoTracking()
             .Where(x =>
-                (x.MaterialUnitId.HasValue && materialIds.Contains(x.MaterialUnitId.Value)) ||
-                (x.ProcessStepExecutionId.HasValue && processStepIds.Contains(x.ProcessStepExecutionId.Value)))
+                !x.IsDeleted &&
+                (
+                    (x.MaterialUnitId.HasValue && materialIds.Contains(x.MaterialUnitId.Value)) ||
+                    (x.ProcessStepExecutionId.HasValue && processStepIds.Contains(x.ProcessStepExecutionId.Value))
+                ))
             .OrderBy(x => x.EventAtUtc)
             .Select(x => new
             {
@@ -176,8 +196,11 @@ public static class MaterialInvestigationEndpoints
         var downtimeEvents = await dbContext.DowntimeEvents
             .AsNoTracking()
             .Where(x =>
-                (x.MaterialUnitId.HasValue && materialIds.Contains(x.MaterialUnitId.Value)) ||
-                (x.ProcessStepExecutionId.HasValue && processStepIds.Contains(x.ProcessStepExecutionId.Value)))
+                !x.IsDeleted &&
+                (
+                    (x.MaterialUnitId.HasValue && materialIds.Contains(x.MaterialUnitId.Value)) ||
+                    (x.ProcessStepExecutionId.HasValue && processStepIds.Contains(x.ProcessStepExecutionId.Value))
+                ))
             .OrderBy(x => x.StartedAtUtc)
             .Select(x => new
             {
@@ -200,7 +223,7 @@ public static class MaterialInvestigationEndpoints
 
         var qualityEvents = await dbContext.QualityEvents
             .AsNoTracking()
-            .Where(x => materialIds.Contains(x.MaterialUnitId))
+            .Where(x => materialIds.Contains(x.MaterialUnitId) && !x.IsDeleted)
             .OrderBy(x => x.EventAtUtc)
             .Select(x => new
             {
@@ -221,7 +244,7 @@ public static class MaterialInvestigationEndpoints
 
         var riskScores = await dbContext.RiskScores
             .AsNoTracking()
-            .Where(x => materialIds.Contains(x.MaterialUnitId))
+            .Where(x => materialIds.Contains(x.MaterialUnitId) && !x.IsDeleted)
             .OrderByDescending(x => x.ScoredAtUtc)
             .Select(x => new
             {
@@ -242,7 +265,10 @@ public static class MaterialInvestigationEndpoints
 
         var dataQualityIssues = await dbContext.DataQualityIssues
             .AsNoTracking()
-            .Where(x => x.MaterialUnitId.HasValue && materialIds.Contains(x.MaterialUnitId.Value))
+            .Where(x =>
+                !x.IsDeleted &&
+                x.MaterialUnitId.HasValue &&
+                materialIds.Contains(x.MaterialUnitId.Value))
             .OrderByDescending(x => x.CreatedAtUtc)
             .Select(x => new
             {
@@ -264,6 +290,12 @@ public static class MaterialInvestigationEndpoints
         {
             requestedMaterialUnitId = materialUnitId,
             maxDepth = depthLimit,
+            license = new
+            {
+                tier = licenseService.GetCurrentTier().ToString(),
+                feature = LicenseFeature.InvestigationWorkflow.ToString(),
+                status = "Allowed"
+            },
             summary = new
             {
                 materials = materials.Count,
@@ -305,7 +337,9 @@ public static class MaterialInvestigationEndpoints
 
             var edges = await dbContext.GenealogyEdges
                 .AsNoTracking()
-                .Where(x => frontierIds.Contains(x.ParentMaterialUnitId) || frontierIds.Contains(x.ChildMaterialUnitId))
+                .Where(x =>
+                    !x.IsDeleted &&
+                    (frontierIds.Contains(x.ParentMaterialUnitId) || frontierIds.Contains(x.ChildMaterialUnitId)))
                 .Select(x => new { x.ParentMaterialUnitId, x.ChildMaterialUnitId })
                 .ToListAsync(cancellationToken);
 

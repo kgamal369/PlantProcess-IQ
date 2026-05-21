@@ -1,0 +1,1705 @@
+================================================================================================
+PLANTPROCESS IQ BACKEND TESTS AUDIT
+================================================================================================
+
+Product Name          : PlantProcess IQ
+Generated At          : 2026-05-21 15:23:50
+Repository Root       : C:\Workspace\PlantProcess-IQ
+Output Folder         : C:\Workspace\PlantProcess-IQ\Documentation\UltimateAudit_21May2026_152312
+Included Files        : 26
+Total Lines           : 1447
+Total Size            : 0.049 MB
+Mask Secrets          : True
+Max File Size         : 8 MB
+PowerShell Version    : 5.1.26100.7920
+Machine Name          : WAP174432
+User Name             : elka01
+
+------------------------------------------------------------------------------------------------
+CATEGORY SUMMARY
+------------------------------------------------------------------------------------------------
+
+Backend Tests                    Files:    26 | Lines:     1447 | Size:    0.049 MB
+
+------------------------------------------------------------------------------------------------
+CLASSIFICATION SUMMARY
+------------------------------------------------------------------------------------------------
+
+Backend Test                               Files:    26 | Lines:     1447
+
+------------------------------------------------------------------------------------------------
+EXTENSION / SPECIAL FILE SUMMARY
+------------------------------------------------------------------------------------------------
+
+.cs                  Files:    21 | Lines:     1269 | Size:    42.51 KB
+.csproj              Files:     5 | Lines:      178 | Size:      7.4 KB
+
+------------------------------------------------------------------------------------------------
+TABLE OF CONTENTS
+------------------------------------------------------------------------------------------------
+
+    1. Backend\tests\PlantProcess.Api.IntegrationTests\ApiTestEnvironmentTests.cs | Backend Test | 12 lines | 0.24 KB
+    2. Backend\tests\PlantProcess.Api.IntegrationTests\AssemblyInfo.cs | Backend Test | 3 lines | 0.08 KB
+    3. Backend\tests\PlantProcess.Api.IntegrationTests\Connectors\ConnectorTruthContractTests.cs | Backend Test | 148 lines | 5.61 KB
+    4. Backend\tests\PlantProcess.Api.IntegrationTests\Health\HealthEndpointTests.cs | Backend Test | 58 lines | 2.3 KB
+    5. Backend\tests\PlantProcess.Api.IntegrationTests\Infrastructure\AuthenticatedApiTestBase.cs | Backend Test | 72 lines | 2.59 KB
+    6. Backend\tests\PlantProcess.Api.IntegrationTests\OpenApi\OpenApiContractTests.cs | Backend Test | 54 lines | 1.64 KB
+    7. Backend\tests\PlantProcess.Api.IntegrationTests\PlantProcess.Api.IntegrationTests.csproj | Backend Test | 42 lines | 1.96 KB
+    8. Backend\tests\PlantProcess.Api.IntegrationTests\Security\AuthEndpointTests.cs | Backend Test | 72 lines | 2.1 KB
+    9. Backend\tests\PlantProcess.Api.IntegrationTests\Smoke\ApiEndpointCatalogSmokeTests.cs | Backend Test | 88 lines | 3.52 KB
+   10. Backend\tests\PlantProcess.Api.IntegrationTests\Smoke\ApiSmokeEndpointTests.cs | Backend Test | 66 lines | 2.67 KB
+   11. Backend\tests\PlantProcess.Application.UnitTests\ApplicationTestEnvironmentTests.cs | Backend Test | 18 lines | 0.43 KB
+   12. Backend\tests\PlantProcess.Application.UnitTests\Common\ApplicationResultTests.cs | Backend Test | 91 lines | 3.09 KB
+   13. Backend\tests\PlantProcess.Application.UnitTests\Common\PageRequestTests.cs | Backend Test | 39 lines | 0.98 KB
+   14. Backend\tests\PlantProcess.Application.UnitTests\Common\TextNormalizerTests.cs | Backend Test | 40 lines | 1 KB
+   15. Backend\tests\PlantProcess.Application.UnitTests\Licensing\LicenseServiceTests.cs | Backend Test | 177 lines | 4.68 KB
+   16. Backend\tests\PlantProcess.Application.UnitTests\PlantProcess.Application.UnitTests.csproj | Backend Test | 31 lines | 1.13 KB
+   17. Backend\tests\PlantProcess.Application.UnitTests\Security\SafeSqlPolicyTests.cs | Backend Test | 92 lines | 3.72 KB
+   18. Backend\tests\PlantProcess.Domain.Tests\Architecture\DomainArchitectureTests.cs | Backend Test | 51 lines | 1.87 KB
+   19. Backend\tests\PlantProcess.Domain.Tests\DomainTestEnvironmentTests.cs | Backend Test | 17 lines | 0.38 KB
+   20. Backend\tests\PlantProcess.Domain.Tests\PlantProcess.Domain.Tests.csproj | Backend Test | 30 lines | 1.04 KB
+   21. Backend\tests\PlantProcess.Infrastructure.IntegrationTests\Connectors\CsvConnectorSmokeTests.cs | Backend Test | 63 lines | 2.11 KB
+   22. Backend\tests\PlantProcess.Infrastructure.IntegrationTests\Connectors\ExcelConnectorSmokeTests.cs | Backend Test | 78 lines | 2.78 KB
+   23. Backend\tests\PlantProcess.Infrastructure.IntegrationTests\InfrastructureTestEnvironmentTests.cs | Backend Test | 18 lines | 0.47 KB
+   24. Backend\tests\PlantProcess.Infrastructure.IntegrationTests\PlantProcess.Infrastructure.IntegrationTests.csproj | Backend Test | 40 lines | 1.79 KB
+   25. Backend\tests\PlantProcess.PerformanceTests\PerformanceTestEnvironmentTests.cs | Backend Test | 12 lines | 0.24 KB
+   26. Backend\tests\PlantProcess.PerformanceTests\PlantProcess.PerformanceTests.csproj | Backend Test | 35 lines | 1.49 KB
+
+------------------------------------------------------------------------------------------------
+INCLUDED FILE TREE
+------------------------------------------------------------------------------------------------
+
+ - Backend\tests\PlantProcess.Api.IntegrationTests\ApiTestEnvironmentTests.cs
+ - Backend\tests\PlantProcess.Api.IntegrationTests\AssemblyInfo.cs
+ - Backend\tests\PlantProcess.Api.IntegrationTests\Connectors\ConnectorTruthContractTests.cs
+ - Backend\tests\PlantProcess.Api.IntegrationTests\Health\HealthEndpointTests.cs
+ - Backend\tests\PlantProcess.Api.IntegrationTests\Infrastructure\AuthenticatedApiTestBase.cs
+ - Backend\tests\PlantProcess.Api.IntegrationTests\OpenApi\OpenApiContractTests.cs
+ - Backend\tests\PlantProcess.Api.IntegrationTests\PlantProcess.Api.IntegrationTests.csproj
+ - Backend\tests\PlantProcess.Api.IntegrationTests\Security\AuthEndpointTests.cs
+ - Backend\tests\PlantProcess.Api.IntegrationTests\Smoke\ApiEndpointCatalogSmokeTests.cs
+ - Backend\tests\PlantProcess.Api.IntegrationTests\Smoke\ApiSmokeEndpointTests.cs
+ - Backend\tests\PlantProcess.Application.UnitTests\ApplicationTestEnvironmentTests.cs
+ - Backend\tests\PlantProcess.Application.UnitTests\Common\ApplicationResultTests.cs
+ - Backend\tests\PlantProcess.Application.UnitTests\Common\PageRequestTests.cs
+ - Backend\tests\PlantProcess.Application.UnitTests\Common\TextNormalizerTests.cs
+ - Backend\tests\PlantProcess.Application.UnitTests\Licensing\LicenseServiceTests.cs
+ - Backend\tests\PlantProcess.Application.UnitTests\PlantProcess.Application.UnitTests.csproj
+ - Backend\tests\PlantProcess.Application.UnitTests\Security\SafeSqlPolicyTests.cs
+ - Backend\tests\PlantProcess.Domain.Tests\Architecture\DomainArchitectureTests.cs
+ - Backend\tests\PlantProcess.Domain.Tests\DomainTestEnvironmentTests.cs
+ - Backend\tests\PlantProcess.Domain.Tests\PlantProcess.Domain.Tests.csproj
+ - Backend\tests\PlantProcess.Infrastructure.IntegrationTests\Connectors\CsvConnectorSmokeTests.cs
+ - Backend\tests\PlantProcess.Infrastructure.IntegrationTests\Connectors\ExcelConnectorSmokeTests.cs
+ - Backend\tests\PlantProcess.Infrastructure.IntegrationTests\InfrastructureTestEnvironmentTests.cs
+ - Backend\tests\PlantProcess.Infrastructure.IntegrationTests\PlantProcess.Infrastructure.IntegrationTests.csproj
+ - Backend\tests\PlantProcess.PerformanceTests\PerformanceTestEnvironmentTests.cs
+ - Backend\tests\PlantProcess.PerformanceTests\PlantProcess.PerformanceTests.csproj
+
+================================================================================================
+FULL FILE CONTENT
+================================================================================================
+
+[FILE_START]
+[METADATA: Path='Backend\tests\PlantProcess.Api.IntegrationTests\ApiTestEnvironmentTests.cs', Category='Backend Tests', Classification='Backend Test', Lines=12, SizeKB=0.24, Modified='2026-05-19 00:19:15']
+
+using FluentAssertions;
+
+namespace PlantProcess.Api.IntegrationTests;
+
+public sealed class ApiTestEnvironmentTests
+{
+    [Fact]
+    public void Api_integration_test_project_should_run()
+    {
+        true.Should().BeTrue();
+    }
+}
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Backend\tests\PlantProcess.Api.IntegrationTests\AssemblyInfo.cs', Category='Backend Tests', Classification='Backend Test', Lines=3, SizeKB=0.08, Modified='2026-05-19 00:19:15']
+
+using Xunit;
+
+[assembly: CollectionBehavior(DisableTestParallelization = true)]
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Backend\tests\PlantProcess.Api.IntegrationTests\Connectors\ConnectorTruthContractTests.cs', Category='Backend Tests', Classification='Backend Test', Lines=148, SizeKB=5.61, Modified='2026-05-21 13:18:42']
+
+using System.Net;
+using System.Net.Http.Json;
+using FluentAssertions;
+using Xunit;
+using System.Text.Json;
+using FluentAssertions;
+using Microsoft.AspNetCore.Mvc.Testing;
+using PlantProcess.Api.IntegrationTests.Infrastructure;
+
+namespace PlantProcess.Api.IntegrationTests.Connectors;
+
+public sealed class ConnectorTruthContractTests : AuthenticatedApiTestBase
+{
+    public ConnectorTruthContractTests(WebApplicationFactory<Program> factory)
+        : base(factory)
+    {
+    }
+
+    [Fact]
+    public async Task Connector_provider_types_should_return_provider_list()
+    {
+        using var client = await CreateAuthenticatedClientAsync();
+
+        var response = await client.GetAsync("/admin/connectors/provider-types");
+
+        response.EnsureSuccessStatusCode();
+
+        var json = await response.Content.ReadAsStringAsync();
+
+        json.Should().NotBeNullOrWhiteSpace();
+        json.Should().Contain("Csv");
+        json.Should().Contain("Excel");
+    }
+
+    [Fact]
+    public async Task Connector_provider_types_should_not_mark_unimplemented_enterprise_connectors_as_available_now()
+    {
+        using var client = await CreateAuthenticatedClientAsync();
+
+        var response = await client.GetAsync("/admin/connectors/provider-types");
+
+        response.EnsureSuccessStatusCode();
+
+        var json = await response.Content.ReadAsStringAsync();
+
+        using var document = JsonDocument.Parse(json);
+
+        var providers = document.RootElement.ValueKind == JsonValueKind.Array
+            ? document.RootElement.EnumerateArray().ToList()
+            : document.RootElement.TryGetProperty("providers", out var providersElement)
+                ? providersElement.EnumerateArray().ToList()
+                : new List<JsonElement>();
+
+        providers.Should().NotBeEmpty("connector provider type endpoint must return provider definitions");
+
+        foreach (var provider in providers)
+        {
+            var providerType = GetStringProperty(provider, "providerType")
+                ?? GetStringProperty(provider, "ProviderType")
+                ?? string.Empty;
+
+            var isAvailableNow =
+                GetBooleanProperty(provider, "isAvailableNow")
+                ?? GetBooleanProperty(provider, "IsAvailableNow")
+                ?? false;
+
+            if (providerType.Equals("SqlServer", StringComparison.OrdinalIgnoreCase)
+                || providerType.Equals("MSSQL", StringComparison.OrdinalIgnoreCase)
+                || providerType.Equals("Oracle", StringComparison.OrdinalIgnoreCase)
+                || providerType.Equals("MySql", StringComparison.OrdinalIgnoreCase)
+                || providerType.Equals("MySQL", StringComparison.OrdinalIgnoreCase)
+                || providerType.Equals("OpcUa", StringComparison.OrdinalIgnoreCase)
+                || providerType.Equals("Historian", StringComparison.OrdinalIgnoreCase))
+            {
+                isAvailableNow
+                    .Should()
+                    .BeFalse($"{providerType} must remain Planned until a tested implementation exists");
+            }
+        }
+    }
+
+    [Fact]
+    public async Task Csv_and_excel_provider_types_should_be_visible_for_demo_import_story()
+    {
+        using var client = await CreateAuthenticatedClientAsync();
+
+        var response = await client.GetAsync("/admin/connectors/provider-types");
+
+        response.EnsureSuccessStatusCode();
+
+        var json = await response.Content.ReadAsStringAsync();
+
+        json.Should().Contain("Csv");
+        json.Should().Contain("CSV Snapshot");
+
+        json.Should().Contain("Excel");
+        json.Should().Contain("Excel Snapshot");
+    }
+
+    private static string? GetStringProperty(JsonElement element, string name)
+    {
+        return element.TryGetProperty(name, out var property)
+            && property.ValueKind == JsonValueKind.String
+            ? property.GetString()
+            : null;
+    }
+
+    private static bool? GetBooleanProperty(JsonElement element, string name)
+    {
+        return element.TryGetProperty(name, out var property)
+            && (property.ValueKind == JsonValueKind.True || property.ValueKind == JsonValueKind.False)
+            ? property.GetBoolean()
+            : null;
+    }
+    
+    [Fact]
+    public async Task ProviderTypes_ShouldNotExposeUntestedConnectorsAsAvailableNow()
+    {
+        var client = await CreateAuthenticatedClientAsync();
+
+        var response = await client.GetAsync("/admin/connectors/provider-types");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var providers = await response.Content.ReadFromJsonAsync<List<ConnectorProviderResponse>>();
+
+        providers.Should().NotBeNull();
+        providers!.Should().NotBeEmpty();
+
+        providers.Single(x => x.ProviderType == "Csv").IsAvailableNow.Should().BeTrue();
+
+        providers.Single(x => x.ProviderType == "Excel").IsAvailableNow.Should().BeFalse();
+        providers.Single(x => x.ProviderType == "SqlServer").IsAvailableNow.Should().BeFalse();
+        providers.Single(x => x.ProviderType == "Oracle").IsAvailableNow.Should().BeFalse();
+        providers.Single(x => x.ProviderType == "MySql").IsAvailableNow.Should().BeFalse();
+        providers.Single(x => x.ProviderType == "OpcUaHistorian").IsAvailableNow.Should().BeFalse();
+    }
+
+    private sealed record ConnectorProviderResponse(
+        string ProviderType,
+        string DisplayName,
+        string Description,
+        bool IsAvailableNow,
+        bool RequiresSecretReference,
+        bool SupportsSchemaDiscovery,
+        bool SupportsSnapshotImport,
+        bool SupportsIncrementalImport);
+}
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Backend\tests\PlantProcess.Api.IntegrationTests\Health\HealthEndpointTests.cs', Category='Backend Tests', Classification='Backend Test', Lines=58, SizeKB=2.3, Modified='2026-05-19 00:19:15']
+
+using System.Net;
+using System.Net.Http.Json;
+using System.Text.Json;
+using FluentAssertions;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Xunit;
+
+namespace PlantProcess.Api.IntegrationTests.Health;
+
+public sealed class HealthEndpointTests : IClassFixture<WebApplicationFactory<Program>>
+{
+    private readonly WebApplicationFactory<Program> _factory;
+
+    public HealthEndpointTests(WebApplicationFactory<Program> factory)
+    {
+        _factory = factory.WithWebHostBuilder(builder =>
+        {
+            builder.UseSetting("ConnectionStrings:PlantProcessDb",
+                "Host=localhost;Port=5432;Database=plantprocessiq;Username=plantprocess;Password=plantprocess123");
+
+            builder.UseSetting("PLANTPROCESS_ALLOWED_ORIGINS",
+                "http://localhost:5173");
+
+            // Explicitly force test auth credentials
+            builder.UseSetting("PlantProcess:Auth:BootstrapAdminUser", "admin");
+            builder.UseSetting("PlantProcess:Auth:BootstrapAdminPassword", "password123");
+            builder.UseSetting("PlantProcess:Auth:SigningKey", "SuperSecretTestKeyThatIsAtLeast32Bytes!!");
+            builder.UseSetting("PlantProcess:Auth:Issuer", "TestIssuer");
+            builder.UseSetting("PlantProcess:Auth:Audience", "TestAudience");
+            builder.UseSetting("PlantProcess:Auth:AccessTokenMinutes", "60");
+        });
+    }
+
+    [Fact]
+    public async Task Health_endpoint_should_return_success()
+    {
+        using var client = _factory.CreateClient();
+
+        // 1. Authenticate using the exact credentials forced in the test builder
+        var loginResponse = await client.PostAsJsonAsync("/auth/login", new
+        {
+            UserName = "admin", 
+            Password = "password123" 
+        });
+
+        loginResponse.EnsureSuccessStatusCode();
+
+        // 2. Extract and attach the token
+        var loginData = await loginResponse.Content.ReadFromJsonAsync<JsonElement>();
+        var token = loginData.GetProperty("accessToken").GetString();
+        client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+        // 3. Make the secured request
+        var response = await client.GetAsync("/health");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+}
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Backend\tests\PlantProcess.Api.IntegrationTests\Infrastructure\AuthenticatedApiTestBase.cs', Category='Backend Tests', Classification='Backend Test', Lines=72, SizeKB=2.59, Modified='2026-05-20 11:27:04']
+
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
+using System.Text.Json;
+using FluentAssertions;
+using Microsoft.AspNetCore.Mvc.Testing;
+
+namespace PlantProcess.Api.IntegrationTests.Infrastructure;
+
+public abstract class AuthenticatedApiTestBase : IClassFixture<WebApplicationFactory<Program>>
+{
+    protected readonly WebApplicationFactory<Program> Factory;
+
+    protected AuthenticatedApiTestBase(WebApplicationFactory<Program> factory)
+    {
+        Factory = factory.WithWebHostBuilder(builder =>
+        {
+            builder.UseSetting(
+                "ConnectionStrings:PlantProcessDb",
+                "Host=localhost;Port=5432;Database=plantprocessiq;Username=plantprocess;Password=plantprocess123");
+
+            builder.UseSetting("PLANTPROCESS_ALLOWED_ORIGINS", "http://localhost:5173");
+
+            builder.UseSetting("PlantProcess:Auth:BootstrapAdminUser", "admin");
+            builder.UseSetting("PlantProcess:Auth:BootstrapAdminPassword", "ChangeMe123!");
+            builder.UseSetting("PlantProcess:Auth:SigningKey", "SuperSecretTestKeyThatIsAtLeast32Bytes!!");
+            builder.UseSetting("PlantProcess:Auth:Issuer", "PlantProcessIQ");
+            builder.UseSetting("PlantProcess:Auth:Audience", "PlantProcessIQ.Client");
+            builder.UseSetting("PlantProcess:Auth:AccessTokenMinutes", "60");
+
+            builder.UseSetting("PlantProcess:PlantTimeZoneId", "Europe/Berlin");
+            builder.UseSetting("PlantProcess:PlantUtcOffsetMinutes", "60");
+        });
+    }
+
+    protected HttpClient CreateAnonymousClient()
+    {
+        return Factory.CreateClient();
+    }
+
+    protected async Task<HttpClient> CreateAuthenticatedClientAsync()
+    {
+        var client = Factory.CreateClient();
+
+        var loginResponse = await client.PostAsJsonAsync("/auth/login", new
+        {
+            UserName = "admin",
+            Password = "ChangeMe123!"
+        });
+
+        loginResponse.EnsureSuccessStatusCode();
+
+        var json = await loginResponse.Content.ReadFromJsonAsync<JsonElement>();
+
+        string? token = null;
+
+        if (json.TryGetProperty("accessToken", out var accessTokenProperty))
+        {
+            token = accessTokenProperty.GetString();
+        }
+        else if (json.TryGetProperty("token", out var tokenProperty))
+        {
+            token = tokenProperty.GetString();
+        }
+
+        token.Should().NotBeNullOrWhiteSpace("login must return a bearer token");
+
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", token);
+
+        return client;
+    }
+}
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Backend\tests\PlantProcess.Api.IntegrationTests\OpenApi\OpenApiContractTests.cs', Category='Backend Tests', Classification='Backend Test', Lines=54, SizeKB=1.64, Modified='2026-05-20 11:28:01']
+
+using System.Text.Json;
+using FluentAssertions;
+using Microsoft.AspNetCore.Mvc.Testing;
+using PlantProcess.Api.IntegrationTests.Infrastructure;
+
+namespace PlantProcess.Api.IntegrationTests.OpenApi;
+
+public sealed class OpenApiContractTests : AuthenticatedApiTestBase
+{
+    public OpenApiContractTests(WebApplicationFactory<Program> factory)
+        : base(factory)
+    {
+    }
+
+    [Fact]
+    public async Task Swagger_document_should_be_generated_in_development_or_test_mode()
+    {
+        using var client = await CreateAuthenticatedClientAsync();
+
+        var response = await client.GetAsync("/swagger/v1/swagger.json");
+
+        response.EnsureSuccessStatusCode();
+
+        var json = await response.Content.ReadAsStringAsync();
+
+        using var document = JsonDocument.Parse(json);
+
+        document.RootElement.TryGetProperty("paths", out var paths)
+            .Should()
+            .BeTrue("Swagger document must contain paths");
+
+        paths.EnumerateObject()
+            .Should()
+            .NotBeEmpty("Swagger paths must not be empty");
+    }
+
+    [Fact]
+    public async Task Swagger_document_should_include_critical_endpoint_groups()
+    {
+        using var client = await CreateAuthenticatedClientAsync();
+
+        var response = await client.GetAsync("/swagger/v1/swagger.json");
+
+        response.EnsureSuccessStatusCode();
+
+        var json = await response.Content.ReadAsStringAsync();
+
+        json.Should().Contain("health");
+        json.Should().Contain("dashboard");
+        json.Should().Contain("admin");
+        json.Should().Contain("quality");
+        json.Should().Contain("material");
+    }
+}
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Backend\tests\PlantProcess.Api.IntegrationTests\PlantProcess.Api.IntegrationTests.csproj', Category='Backend Tests', Classification='Backend Test', Lines=42, SizeKB=1.96, Modified='2026-05-19 00:19:15']
+
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="10.0.0">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="FluentAssertions" Version="8.10.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="9.0.8" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.4" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.4">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.4" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageReference Include="NSubstitute" Version="5.3.0" />
+    <PackageReference Include="Respawn" Version="7.0.0" />
+    <PackageReference Include="Testcontainers.PostgreSql" Version="4.11.0" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\PlantProcess.Api\PlantProcess.Api.csproj" />
+    <ProjectReference Include="..\..\PlantProcess.Application\PlantProcess.Application.csproj" />
+    <ProjectReference Include="..\..\PlantProcess.Infrastructure\PlantProcess.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\PlantProcess.Domain\PlantProcess.Domain.csproj" />
+  </ItemGroup>
+
+</Project>
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Backend\tests\PlantProcess.Api.IntegrationTests\Security\AuthEndpointTests.cs', Category='Backend Tests', Classification='Backend Test', Lines=72, SizeKB=2.1, Modified='2026-05-20 11:28:39']
+
+using System.Net;
+using System.Net.Http.Json;
+using System.Text.Json;
+using FluentAssertions;
+using Microsoft.AspNetCore.Mvc.Testing;
+using PlantProcess.Api.IntegrationTests.Infrastructure;
+
+namespace PlantProcess.Api.IntegrationTests.Security;
+
+public sealed class AuthEndpointTests : AuthenticatedApiTestBase
+{
+    public AuthEndpointTests(WebApplicationFactory<Program> factory)
+        : base(factory)
+    {
+    }
+
+    [Fact]
+    public async Task Login_should_return_access_token_for_valid_admin_credentials()
+    {
+        using var client = CreateAnonymousClient();
+
+        var response = await client.PostAsJsonAsync("/auth/login", new
+        {
+            UserName = "admin",
+            Password = "ChangeMe123!"
+        });
+
+        response.EnsureSuccessStatusCode();
+
+        var json = await response.Content.ReadFromJsonAsync<JsonElement>();
+
+        var hasAccessToken =
+            json.TryGetProperty("accessToken", out var accessToken)
+            && !string.IsNullOrWhiteSpace(accessToken.GetString());
+
+        var hasToken =
+            json.TryGetProperty("token", out var token)
+            && !string.IsNullOrWhiteSpace(token.GetString());
+
+        (hasAccessToken || hasToken)
+            .Should()
+            .BeTrue("login must return a bearer token");
+    }
+
+    [Fact]
+    public async Task Login_should_reject_invalid_credentials()
+    {
+        using var client = CreateAnonymousClient();
+
+        var response = await client.PostAsJsonAsync("/auth/login", new
+        {
+            UserName = "admin",
+            Password = "wrong-password"
+        });
+
+        response.StatusCode
+            .Should()
+            .BeOneOf(HttpStatusCode.BadRequest, HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task Protected_endpoint_should_reject_anonymous_request()
+    {
+        using var client = CreateAnonymousClient();
+
+        var response = await client.GetAsync("/admin/jobs-monitor");
+
+        response.StatusCode
+            .Should()
+            .BeOneOf(HttpStatusCode.Unauthorized, HttpStatusCode.Forbidden);
+    }
+}
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Backend\tests\PlantProcess.Api.IntegrationTests\Smoke\ApiEndpointCatalogSmokeTests.cs', Category='Backend Tests', Classification='Backend Test', Lines=88, SizeKB=3.52, Modified='2026-05-20 12:24:51']
+
+using System.Net;
+using FluentAssertions;
+using Microsoft.AspNetCore.Mvc.Testing;
+using PlantProcess.Api.IntegrationTests.Infrastructure;
+
+namespace PlantProcess.Api.IntegrationTests.Smoke;
+
+public sealed class ApiEndpointCatalogSmokeTests : AuthenticatedApiTestBase
+{
+    public ApiEndpointCatalogSmokeTests(WebApplicationFactory<Program> factory)
+        : base(factory)
+    {
+    }
+
+    public static IEnumerable<object[]> PublicOrLightweightEndpoints()
+    {
+        yield return new object[] { "Health", "/health" };
+        yield return new object[] { "DB health", "/db-health" };
+    }
+
+    public static IEnumerable<object[]> AuthenticatedStableGetEndpoints()
+    {
+        yield return new object[] { "Admin overview", "/admin/overview" };
+        yield return new object[] { "Admin jobs monitor", "/admin/jobs-monitor" };
+        yield return new object[] { "Admin two-stage import model", "/admin/two-stage-import-model" };
+
+        yield return new object[] { "Connector provider types", "/admin/connectors/provider-types" };
+        yield return new object[] { "Connection profiles", "/admin/connectors/connection-profiles?includeInactive=true" };
+        yield return new object[] { "Source datasets", "/admin/connectors/datasets?includeInactive=true" };
+
+        yield return new object[] { "Schema configuration summary", "/admin/schema-configuration/summary" };
+
+        yield return new object[] { "Dashboard overview", "/analytics/dashboard/overview" };
+        yield return new object[] { "Dashboard metadata", "/analytics/dashboard/metadata" };
+        yield return new object[] { "Dashboard definitions", "/analytics/dashboard/definitions" };
+        yield return new object[] { "Dashboard risk", "/analytics/dashboard/risk" };
+        yield return new object[] { "Dashboard data quality", "/analytics/dashboard/data-quality" };
+
+        yield return new object[] { "Data quality issues", "/data-quality/issues" };
+        yield return new object[] { "Data quality scan preview", "/data-quality/scan-preview" };
+    }
+
+    [Theory]
+    [MemberData(nameof(PublicOrLightweightEndpoints))]
+    public async Task Lightweight_endpoint_should_not_return_server_error(
+        string name,
+        string url)
+    {
+        using var client = await CreateAuthenticatedClientAsync();
+
+        var response = await client.GetAsync(url);
+
+        response.StatusCode
+            .Should()
+            .NotBe(HttpStatusCode.InternalServerError, $"{name} must not return 500");
+
+        response.StatusCode
+            .Should()
+            .NotBe(HttpStatusCode.NotFound, $"{name} route must exist");
+    }
+
+    [Theory]
+    [MemberData(nameof(AuthenticatedStableGetEndpoints))]
+    public async Task Authenticated_stable_get_endpoint_should_not_return_server_error(
+        string name,
+        string url)
+    {
+        using var client = await CreateAuthenticatedClientAsync();
+
+        var response = await client.GetAsync(url);
+
+        response.StatusCode
+            .Should()
+            .NotBe(HttpStatusCode.InternalServerError, $"{name} must not return 500");
+
+        response.StatusCode
+            .Should()
+            .NotBe(HttpStatusCode.NotFound, $"{name} route must exist");
+
+        response.StatusCode
+            .Should()
+            .NotBe(HttpStatusCode.Unauthorized, $"{name} must accept authenticated admin user");
+
+        response.StatusCode
+            .Should()
+            .NotBe(HttpStatusCode.Forbidden, $"{name} must accept authenticated admin user role/policy");
+    }
+}
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Backend\tests\PlantProcess.Api.IntegrationTests\Smoke\ApiSmokeEndpointTests.cs', Category='Backend Tests', Classification='Backend Test', Lines=66, SizeKB=2.67, Modified='2026-05-19 00:19:15']
+
+using System.Net;
+using System.Net.Http.Json;
+using System.Text.Json;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Xunit;
+
+namespace PlantProcess.Api.IntegrationTests.Smoke;
+
+public sealed class ApiSmokeEndpointTests : IClassFixture<WebApplicationFactory<Program>>
+{
+    private readonly WebApplicationFactory<Program> _factory;
+
+    public ApiSmokeEndpointTests(WebApplicationFactory<Program> factory)
+    {
+        _factory = factory.WithWebHostBuilder(builder =>
+        {
+            builder.UseSetting(
+                "ConnectionStrings:PlantProcessDb",
+                "Host=localhost;Port=5432;Database=plantprocessiq;Username=plantprocess;Password=plantprocess123");
+
+            builder.UseSetting(
+                "PLANTPROCESS_ALLOWED_ORIGINS",
+                "http://localhost:5173,http://localhost:3000");
+
+            // Explicitly force test auth credentials to ensure login passes
+            builder.UseSetting("PlantProcess:Auth:BootstrapAdminUser", "admin");
+            builder.UseSetting("PlantProcess:Auth:BootstrapAdminPassword", "password123");
+            builder.UseSetting("PlantProcess:Auth:SigningKey", "SuperSecretTestKeyThatIsAtLeast32Bytes!!");
+            builder.UseSetting("PlantProcess:Auth:Issuer", "TestIssuer");
+            builder.UseSetting("PlantProcess:Auth:Audience", "TestAudience");
+            builder.UseSetting("PlantProcess:Auth:AccessTokenMinutes", "60");
+        });
+    }
+
+    [Theory]
+    [InlineData("/health")]
+    [InlineData("/swagger/v1/swagger.json")]
+    [InlineData("/admin/jobs-monitor")]
+    [InlineData("/admin/overview")]
+    [InlineData("/admin/two-stage-import-model")]
+    [InlineData("/admin/db-configuration/summary")]
+    [InlineData("/admin/schema-configuration/summary")]
+    public async Task Smoke_endpoint_should_return_success(string url)
+    {
+        using var client = _factory.CreateClient();
+
+        // 1. Authenticate using the exact credentials forced in the test builder
+        var loginResponse = await client.PostAsJsonAsync("/auth/login", new
+        {
+            UserName = "admin", 
+            Password = "password123" 
+        });
+
+        loginResponse.EnsureSuccessStatusCode();
+
+        // 2. Extract and attach the token
+        var loginData = await loginResponse.Content.ReadFromJsonAsync<JsonElement>();
+        var token = loginData.GetProperty("accessToken").GetString();
+        client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+        // 3. Make the secured request
+        var response = await client.GetAsync(url);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+}
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Backend\tests\PlantProcess.Application.UnitTests\ApplicationTestEnvironmentTests.cs', Category='Backend Tests', Classification='Backend Test', Lines=18, SizeKB=0.43, Modified='2026-05-19 00:19:15']
+
+using FluentAssertions;
+using PlantProcess.Application;
+
+namespace PlantProcess.Application.UnitTests;
+
+public sealed class ApplicationTestEnvironmentTests
+{
+    [Fact]
+    public void Application_test_project_should_be_available()
+    {
+        typeof(ApplicationAssemblyMarker)
+            .Assembly
+            .GetName()
+            .Name
+            .Should()
+            .Be("PlantProcess.Application");
+    }
+}
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Backend\tests\PlantProcess.Application.UnitTests\Common\ApplicationResultTests.cs', Category='Backend Tests', Classification='Backend Test', Lines=91, SizeKB=3.09, Modified='2026-05-20 11:46:31']
+
+using FluentAssertions;
+using PlantProcess.Application.Common.Constants;
+using PlantProcess.Application.Common.Results;
+
+namespace PlantProcess.Application.UnitTests.Common;
+
+public sealed class ApplicationResultTests
+{
+    [Fact]
+    public void Success_result_should_be_successful()
+    {
+        var result = ApplicationResult.Success();
+
+        result.IsSuccess.Should().BeTrue();
+        result.IsFailure.Should().BeFalse();
+        result.Error.Should().BeNull();
+    }
+
+    [Fact]
+    public void Failure_result_should_contain_validation_error()
+    {
+        var error = ApplicationError.Validation("Test validation failure");
+
+        var result = ApplicationResult.Failure(error);
+
+        result.IsSuccess.Should().BeFalse();
+        result.IsFailure.Should().BeTrue();
+        result.Error.Should().NotBeNull();
+        result.Error!.Code.Should().Be(ApplicationErrorCodes.ValidationFailed);
+        result.Error.Message.Should().Be("Test validation failure");
+        result.Error.Type.Should().Be(ApplicationErrorType.Validation);
+    }
+
+    [Fact]
+    public void Failure_result_should_throw_when_error_is_null()
+    {
+        Action act = () => ApplicationResult.Failure(null!);
+
+        act.Should().Throw<ArgumentNullException>();
+    }
+
+    [Fact]
+    public void Validation_error_should_preserve_details_when_supplied()
+    {
+        var details = new Dictionary<string, string[]>
+        {
+            ["Sql"] = new[] { "Only SELECT statements are allowed." }
+        };
+
+        var error = ApplicationError.Validation(
+            "Invalid schema-view SQL.",
+            details);
+
+        error.Code.Should().Be(ApplicationErrorCodes.ValidationFailed);
+        error.Message.Should().Be("Invalid schema-view SQL.");
+        error.Type.Should().Be(ApplicationErrorType.Validation);
+        error.Details.Should().NotBeNull();
+        error.Details!.Should().ContainKey("Sql");
+        error.Details["Sql"].Should().Contain("Only SELECT statements are allowed.");
+    }
+
+    [Fact]
+    public void Not_found_error_should_have_not_found_type()
+    {
+        var error = ApplicationError.NotFound("Material was not found.");
+
+        error.Code.Should().Be(ApplicationErrorCodes.NotFound);
+        error.Message.Should().Be("Material was not found.");
+        error.Type.Should().Be(ApplicationErrorType.NotFound);
+    }
+
+    [Fact]
+    public void Conflict_error_should_have_conflict_type()
+    {
+        var error = ApplicationError.Conflict("Concurrent update detected.");
+
+        error.Code.Should().Be(ApplicationErrorCodes.Conflict);
+        error.Message.Should().Be("Concurrent update detected.");
+        error.Type.Should().Be(ApplicationErrorType.Conflict);
+    }
+
+    [Fact]
+    public void Infrastructure_error_should_have_infrastructure_type()
+    {
+        var error = ApplicationError.Infrastructure("Database unavailable.");
+
+        error.Code.Should().Be(ApplicationErrorCodes.InfrastructureFailure);
+        error.Message.Should().Be("Database unavailable.");
+        error.Type.Should().Be(ApplicationErrorType.Infrastructure);
+    }
+}
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Backend\tests\PlantProcess.Application.UnitTests\Common\PageRequestTests.cs', Category='Backend Tests', Classification='Backend Test', Lines=39, SizeKB=0.98, Modified='2026-05-19 00:19:15']
+
+using FluentAssertions;
+using PlantProcess.Application.Common.Paging;
+
+namespace PlantProcess.Application.UnitTests.Common;
+
+public sealed class PageRequestTests
+{
+    [Fact]
+    public void SafePage_should_normalize_values_below_one()
+    {
+        var request = new PageRequest(Page: 0, PageSize: 50);
+
+        request.SafePage.Should().Be(1);
+    }
+
+    [Fact]
+    public void SafePageSize_should_default_when_value_is_invalid()
+    {
+        var request = new PageRequest(Page: 1, PageSize: 0);
+
+        request.SafePageSize.Should().Be(50);
+    }
+
+    [Fact]
+    public void SafePageSize_should_cap_to_max_page_size()
+    {
+        var request = new PageRequest(Page: 1, PageSize: 9999);
+
+        request.SafePageSize.Should().Be(PageRequest.MaxPageSize);
+    }
+
+    [Fact]
+    public void Skip_should_calculate_offset_from_safe_values()
+    {
+        var request = new PageRequest(Page: 3, PageSize: 25);
+
+        request.Skip.Should().Be(50);
+    }
+}
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Backend\tests\PlantProcess.Application.UnitTests\Common\TextNormalizerTests.cs', Category='Backend Tests', Classification='Backend Test', Lines=40, SizeKB=1, Modified='2026-05-19 00:19:15']
+
+using FluentAssertions;
+using PlantProcess.Application.Common.Text;
+
+namespace PlantProcess.Application.UnitTests.Common;
+
+public sealed class TextNormalizerTests
+{
+    [Fact]
+    public void RequiredTrim_should_trim_value()
+    {
+        var result = TextNormalizer.RequiredTrim("  ABC  ", "Code");
+
+        result.Should().Be("ABC");
+    }
+
+    [Fact]
+    public void RequiredTrim_should_throw_when_value_is_empty()
+    {
+        var act = () => TextNormalizer.RequiredTrim("   ", "Code");
+
+        act.Should().Throw<ArgumentException>()
+            .WithMessage("*Code is required*");
+    }
+
+    [Fact]
+    public void OptionalTrim_should_return_null_for_empty_value()
+    {
+        var result = TextNormalizer.OptionalTrim("   ");
+
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public void NormalizeCode_should_trim_and_uppercase()
+    {
+        var result = TextNormalizer.NormalizeCode("  defect_a  ", "DefectCode");
+
+        result.Should().Be("DEFECT_A");
+    }
+}
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Backend\tests\PlantProcess.Application.UnitTests\Licensing\LicenseServiceTests.cs', Category='Backend Tests', Classification='Backend Test', Lines=177, SizeKB=4.68, Modified='2026-05-21 15:18:45']
+
+using FluentAssertions;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
+using PlantProcess.Application.Common.Results;
+using PlantProcess.Application.Licensing.Contracts;
+using PlantProcess.Application.Licensing.Options;
+using PlantProcess.Application.Licensing.Services;
+
+namespace PlantProcess.Application.UnitTests.Licensing;
+
+public sealed class LicenseServiceTests
+{
+    [Fact]
+    public void Light_should_block_postgresql_connector()
+    {
+        var service = CreateService("Light");
+
+        var result = service.EnsureConnectorAllowed("PostgreSql");
+
+        result.IsFailure.Should().BeTrue();
+        result.Error!.Type.Should().Be(ApplicationErrorType.Forbidden);
+    }
+
+    [Fact]
+    public void Pro_should_allow_postgresql_connector()
+    {
+        var service = CreateService("Pro");
+
+        var result = service.EnsureConnectorAllowed("PostgreSql");
+
+        result.IsSuccess.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Light_should_block_15_minute_refresh()
+    {
+        var service = CreateService("Light");
+
+        var result = service.EnsureRefreshIntervalAllowed(15);
+
+        result.IsFailure.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Pro_should_allow_15_minute_refresh()
+    {
+        var service = CreateService("Pro");
+
+        var result = service.EnsureRefreshIntervalAllowed(15);
+
+        result.IsSuccess.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Pro_should_block_2_minute_refresh()
+    {
+        var service = CreateService("Pro");
+
+        var result = service.EnsureRefreshIntervalAllowed(2);
+
+        result.IsFailure.Should().BeTrue();
+    }
+
+    [Fact]
+    public void ProPlus_should_allow_2_minute_refresh()
+    {
+        var service = CreateService("ProPlus");
+
+        var result = service.EnsureRefreshIntervalAllowed(2);
+
+        result.IsSuccess.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Light_should_block_schema_sql_builder()
+    {
+        var service = CreateService("Light");
+
+        var result = service.EnsureFeatureEnabled(LicenseFeature.SchemaSqlViewBuilder);
+
+        result.IsFailure.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Pro_should_allow_schema_sql_builder()
+    {
+        var service = CreateService("Pro");
+
+        var result = service.EnsureFeatureEnabled(LicenseFeature.SchemaSqlViewBuilder);
+
+        result.IsSuccess.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Pro_should_block_ml_learning_jobs()
+    {
+        var service = CreateService("Pro");
+
+        var result = service.EnsureFeatureEnabled(LicenseFeature.MlLearningJobs);
+
+        result.IsFailure.Should().BeTrue();
+    }
+
+    [Fact]
+    public void ProPlus_should_allow_ml_learning_jobs()
+    {
+        var service = CreateService("ProPlus");
+
+        var result = service.EnsureFeatureEnabled(LicenseFeature.MlLearningJobs);
+
+        result.IsSuccess.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Light_should_block_second_source_when_limit_is_reached()
+    {
+        var service = CreateService("Light");
+
+        var result = service.EnsureSourceCountAllowed(currentActiveSourceCount: 1);
+
+        result.IsFailure.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Pro_should_block_fourth_source_when_limit_is_reached()
+    {
+        var service = CreateService("Pro");
+
+        var result = service.EnsureSourceCountAllowed(currentActiveSourceCount: 3);
+
+        result.IsFailure.Should().BeTrue();
+    }
+
+    [Fact]
+    public void ProPlus_should_allow_until_eight_sources()
+    {
+        var service = CreateService("ProPlus");
+
+        var result = service.EnsureSourceCountAllowed(currentActiveSourceCount: 7);
+
+        result.IsSuccess.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Light_should_block_fourth_dashboard_when_limit_is_reached()
+    {
+        var service = CreateService("Light");
+
+        var result = service.EnsureDashboardCountAllowed(currentActiveDashboardCount: 3);
+
+        result.IsFailure.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Enterprise_should_allow_branded_reports()
+    {
+        var service = CreateService("Enterprise");
+
+        var result = service.EnsureFeatureEnabled(LicenseFeature.BrandedReportPdf);
+
+        result.IsSuccess.Should().BeTrue();
+    }
+
+    private static LicenseService CreateService(string tier)
+    {
+        var options = Options.Create(new LicenseOptions
+        {
+            Tier = tier,
+            IsTrial = false,
+            DisplayName = $"{tier} Test License"
+        });
+
+        return new LicenseService(
+            options,
+            NullLogger<LicenseService>.Instance);
+    }
+}
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Backend\tests\PlantProcess.Application.UnitTests\PlantProcess.Application.UnitTests.csproj', Category='Backend Tests', Classification='Backend Test', Lines=31, SizeKB=1.13, Modified='2026-05-19 00:19:15']
+
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="10.0.0">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="FluentAssertions" Version="8.10.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageReference Include="NSubstitute" Version="5.3.0" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\PlantProcess.Application\PlantProcess.Application.csproj" />
+    <ProjectReference Include="..\..\PlantProcess.Domain\PlantProcess.Domain.csproj" />
+  </ItemGroup>
+
+</Project>
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Backend\tests\PlantProcess.Application.UnitTests\Security\SafeSqlPolicyTests.cs', Category='Backend Tests', Classification='Backend Test', Lines=92, SizeKB=3.72, Modified='2026-05-20 12:02:53']
+
+using System.Text.RegularExpressions;
+using FluentAssertions;
+using PlantProcess.Application;
+
+namespace PlantProcess.Application.UnitTests.Security;
+
+public sealed class SafeSqlPolicyTests
+{
+    [Fact]
+    public void Application_layer_should_contain_sql_safety_component_for_customer_defined_schema_views()
+    {
+        var applicationAssembly = typeof(ApplicationAssemblyMarker).Assembly;
+
+        var matchingTypes = applicationAssembly
+            .GetTypes()
+            .Where(type =>
+                type.Name.Contains("Sql", StringComparison.OrdinalIgnoreCase)
+                && (
+                    type.Name.Contains("Validator", StringComparison.OrdinalIgnoreCase)
+                    || type.Name.Contains("Guard", StringComparison.OrdinalIgnoreCase)
+                    || type.Name.Contains("Safety", StringComparison.OrdinalIgnoreCase)
+                    || type.Name.Contains("Policy", StringComparison.OrdinalIgnoreCase)
+                ))
+            .Select(type => type.FullName)
+            .ToList();
+
+        matchingTypes.Should()
+            .NotBeEmpty(
+                "PlantProcess IQ allows user-defined schema views and mapping queries, so the Application layer must expose an explicit SQL safety validator/guard/policy.");
+    }
+
+    [Theory]
+    [InlineData("DROP TABLE material_units", "drop")]
+    [InlineData("DELETE FROM quality_events", "delete")]
+    [InlineData("UPDATE material_units SET material_code = 'x'", "update")]
+    [InlineData("INSERT INTO material_units VALUES (1)", "insert")]
+    [InlineData("ALTER TABLE material_units ADD COLUMN hacked text", "alter")]
+    [InlineData("TRUNCATE TABLE parameter_observations", "truncate")]
+    [InlineData("CREATE EXTENSION dblink", "create")]
+    [InlineData("COPY material_units TO PROGRAM 'cat /etc/passwd'", "copy")]
+    [InlineData("SELECT * FROM users; DROP TABLE users;", "drop")]
+    [InlineData("SELECT pg_sleep(30)", "pg_sleep")]
+    public void Dangerous_sql_examples_should_be_treated_as_rejection_cases(
+        string sql,
+        string expectedForbiddenToken)
+    {
+        ContainsForbiddenSqlToken(sql, expectedForbiddenToken)
+            .Should()
+            .BeTrue("the test data must represent SQL that a future SafeSqlValidator must reject");
+    }
+
+    [Theory]
+    [InlineData("SELECT material_code, grade_or_recipe FROM material_units")]
+    [InlineData("select qe.event_type, count(*) from quality_events qe group by qe.event_type")]
+    [InlineData("SELECT po.observed_at_utc, po.numeric_value FROM parameter_observations po WHERE po.is_deleted = false")]
+    public void Read_only_select_examples_should_represent_allowed_query_shape(string sql)
+    {
+        sql.TrimStart()
+            .StartsWith("select", StringComparison.OrdinalIgnoreCase)
+            .Should()
+            .BeTrue("schema-view SQL should be read-only SELECT style only");
+
+        var forbiddenTokens = new[]
+        {
+            "drop",
+            "delete",
+            "update",
+            "insert",
+            "alter",
+            "truncate",
+            "create",
+            "copy",
+            "pg_sleep"
+        };
+
+        foreach (var token in forbiddenTokens)
+        {
+            ContainsForbiddenSqlToken(sql, token)
+                .Should()
+                .BeFalse($"read-only SELECT examples must not contain the forbidden SQL command token '{token}'");
+        }
+    }
+
+    private static bool ContainsForbiddenSqlToken(string sql, string token)
+    {
+        var pattern = token.Equals("pg_sleep", StringComparison.OrdinalIgnoreCase)
+            ? @"(?i)\bpg_sleep\s*\("
+            : $@"(?i)\b{Regex.Escape(token)}\b";
+
+        return Regex.IsMatch(sql, pattern, RegexOptions.CultureInvariant);
+    }
+}
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Backend\tests\PlantProcess.Domain.Tests\Architecture\DomainArchitectureTests.cs', Category='Backend Tests', Classification='Backend Test', Lines=51, SizeKB=1.87, Modified='2026-05-20 12:03:29']
+
+using System.Runtime.CompilerServices;
+using FluentAssertions;
+using PlantProcess.Domain.Common;
+
+namespace PlantProcess.Domain.Tests.Architecture;
+
+public sealed class DomainArchitectureTests
+{
+    [Fact]
+    public void All_real_domain_entities_should_inherit_base_entity()
+    {
+        var domainAssembly = typeof(BaseEntity).Assembly;
+
+        var entityTypes = domainAssembly
+            .GetTypes()
+            .Where(type =>
+                type.IsClass
+                && !type.IsAbstract
+                && !type.IsNested
+                && !type.IsDefined(typeof(CompilerGeneratedAttribute), inherit: false)
+                && type.Namespace != null
+                && type.Namespace.Contains(".Entities.", StringComparison.OrdinalIgnoreCase)
+                && !type.Name.Contains("<", StringComparison.OrdinalIgnoreCase)
+                && !type.Name.Contains(">", StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        entityTypes.Should().NotBeEmpty("the domain assembly must contain real entity classes");
+
+        entityTypes
+            .Where(type => !typeof(BaseEntity).IsAssignableFrom(type))
+            .Should()
+            .BeEmpty("all real domain entities must inherit BaseEntity for audit, timestamps, soft delete and concurrency consistency");
+    }
+
+    [Fact]
+    public void Domain_entities_should_not_reference_entity_framework()
+    {
+        var domainAssembly = typeof(BaseEntity).Assembly;
+
+        var forbiddenReferences = domainAssembly
+            .GetReferencedAssemblies()
+            .Where(assembly =>
+                assembly.Name != null
+                && assembly.Name.StartsWith("Microsoft.EntityFrameworkCore", StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        forbiddenReferences
+            .Should()
+            .BeEmpty("Domain project must stay persistence-agnostic");
+    }
+}
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Backend\tests\PlantProcess.Domain.Tests\DomainTestEnvironmentTests.cs', Category='Backend Tests', Classification='Backend Test', Lines=17, SizeKB=0.38, Modified='2026-05-19 00:19:15']
+
+using FluentAssertions;
+
+namespace PlantProcess.Domain.Tests;
+
+public sealed class DomainTestEnvironmentTests
+{
+    [Fact]
+    public void Domain_test_project_should_be_available()
+    {
+        typeof(PlantProcess.Domain.Common.BaseEntity)
+            .Assembly
+            .GetName()
+            .Name
+            .Should()
+            .Be("PlantProcess.Domain");
+    }
+}
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Backend\tests\PlantProcess.Domain.Tests\PlantProcess.Domain.Tests.csproj', Category='Backend Tests', Classification='Backend Test', Lines=30, SizeKB=1.04, Modified='2026-05-19 00:19:15']
+
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="10.0.0">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="FluentAssertions" Version="8.10.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageReference Include="NSubstitute" Version="5.3.0" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\PlantProcess.Domain\PlantProcess.Domain.csproj" />
+  </ItemGroup>
+
+</Project>
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Backend\tests\PlantProcess.Infrastructure.IntegrationTests\Connectors\CsvConnectorSmokeTests.cs', Category='Backend Tests', Classification='Backend Test', Lines=63, SizeKB=2.11, Modified='2026-05-19 11:16:20']
+
+using FluentAssertions;
+using PlantProcess.Domain.Entities.Integration;
+using PlantProcess.Infrastructure.Connectors.Csv;
+
+namespace PlantProcess.Infrastructure.IntegrationTests.Connectors;
+
+public sealed class CsvConnectorSmokeTests
+{
+    [Fact]
+    public async Task CsvConnector_should_test_inline_csv_connection()
+    {
+        var connector = new CsvConnector();
+
+        var connection = CreateConnectionProfile(
+            connectionOptionsJson: """
+            {
+              "csvText": "MaterialCode,ObservedAtUtc,Temperature\nM-001,2026-05-19 10:15:12.123,1234.56",
+              "delimiter": ",",
+              "hasHeader": true
+            }
+            """);
+
+        var result = await connector.TestConnectionAsync(connection, CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue(result.Message);    }
+
+    [Fact]
+    public async Task CsvConnector_should_discover_inline_csv_datasets()
+    {
+        var connector = new CsvConnector();
+
+        var connection = CreateConnectionProfile(
+            connectionOptionsJson: """
+            {
+              "csvText": "MaterialCode;ObservedAtUtc;Temperature\nM-001;19/05/2026 10:15:12;1234.56",
+              "delimiter": ";",
+              "hasHeader": true
+            }
+            """);
+
+        var datasets = await connector.DiscoverDatasetsAsync(connection, CancellationToken.None);
+
+        datasets.Should().NotBeEmpty();
+        datasets[0].DatasetCode.Should().NotBeNullOrWhiteSpace();
+    }
+
+    private static ConnectionProfile CreateConnectionProfile(string connectionOptionsJson)
+    {
+       return new ConnectionProfile(
+        sourceSystemDefinitionId: Guid.NewGuid(),
+        connectionProfileCode: "TEST_CSV",
+        connectionProfileName: "Test CSV",
+        providerType: "Csv",
+        isSynthetic: true,
+        connectionMode: "Snapshot",
+        fileRootPath: null,
+        connectionOptionsJson: connectionOptionsJson,
+        readOnlyEnforced: true,
+        description: "Test CSV connector",
+        sourceSystem: "Test",
+        sourceRecordId: Guid.NewGuid().ToString("N"));
+    }
+}
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Backend\tests\PlantProcess.Infrastructure.IntegrationTests\Connectors\ExcelConnectorSmokeTests.cs', Category='Backend Tests', Classification='Backend Test', Lines=78, SizeKB=2.78, Modified='2026-05-19 11:16:32']
+
+using ClosedXML.Excel;
+using FluentAssertions;
+using PlantProcess.Domain.Entities.Integration;
+using PlantProcess.Infrastructure.Connectors.Excel;
+
+namespace PlantProcess.Infrastructure.IntegrationTests.Connectors;
+
+public sealed class ExcelConnectorSmokeTests
+{
+    [Fact]
+    public async Task ExcelConnector_should_test_file_connection()
+    {
+        var tempFolder = Path.Combine(Path.GetTempPath(), "plantprocess-excel-tests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(tempFolder);
+
+        var filePath = Path.Combine(tempFolder, "sample.xlsx");
+        CreateWorkbook(filePath);
+
+        var connector = new ExcelConnector();
+
+        var connection = CreateConnectionProfile(tempFolder);
+
+        var result = await connector.TestConnectionAsync(connection, CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue(result.Message);    }
+
+    [Fact]
+    public async Task ExcelConnector_should_discover_workbook_sheets()
+    {
+        var tempFolder = Path.Combine(Path.GetTempPath(), "plantprocess-excel-tests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(tempFolder);
+
+        var filePath = Path.Combine(tempFolder, "sample.xlsx");
+        CreateWorkbook(filePath);
+
+        var connector = new ExcelConnector();
+
+        var connection = CreateConnectionProfile(tempFolder);
+
+        var datasets = await connector.DiscoverDatasetsAsync(connection, CancellationToken.None);
+
+        datasets.Should().NotBeEmpty();
+        datasets.Should().Contain(x => x.DatasetName.Contains("ProcessData", StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static void CreateWorkbook(string filePath)
+    {
+        using var workbook = new XLWorkbook();
+        var sheet = workbook.AddWorksheet("ProcessData");
+
+        sheet.Cell(1, 1).Value = "MaterialCode";
+        sheet.Cell(1, 2).Value = "ObservedAtUtc";
+        sheet.Cell(1, 3).Value = "Temperature";
+
+        sheet.Cell(2, 1).Value = "M-001";
+        sheet.Cell(2, 2).Value = new DateTime(2026, 5, 19, 10, 15, 12);
+        sheet.Cell(2, 3).Value = 1234.56;
+
+        workbook.SaveAs(filePath);
+    }
+
+    private static ConnectionProfile CreateConnectionProfile(string fileRootPath)
+    {
+        return new ConnectionProfile(
+            sourceSystemDefinitionId: Guid.NewGuid(),
+            connectionProfileCode: "TEST_EXCEL",
+            connectionProfileName: "Test Excel",
+            providerType: "Excel",
+            isSynthetic: true,
+            connectionMode: "Snapshot",
+            fileRootPath: fileRootPath,
+            connectionOptionsJson: "{}",
+            readOnlyEnforced: true,
+            description: "Test Excel connector",
+            sourceSystem: "Test",
+            sourceRecordId: Guid.NewGuid().ToString("N"));
+    }
+}
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Backend\tests\PlantProcess.Infrastructure.IntegrationTests\InfrastructureTestEnvironmentTests.cs', Category='Backend Tests', Classification='Backend Test', Lines=18, SizeKB=0.47, Modified='2026-05-19 00:19:15']
+
+using FluentAssertions;
+using PlantProcess.Infrastructure.Persistence;
+
+namespace PlantProcess.Infrastructure.IntegrationTests;
+
+public sealed class InfrastructureTestEnvironmentTests
+{
+    [Fact]
+    public void Infrastructure_test_project_should_reference_db_context()
+    {
+        typeof(PlantProcessDbContext)
+            .Assembly
+            .GetName()
+            .Name
+            .Should()
+            .Be("PlantProcess.Infrastructure");
+    }
+}
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Backend\tests\PlantProcess.Infrastructure.IntegrationTests\PlantProcess.Infrastructure.IntegrationTests.csproj', Category='Backend Tests', Classification='Backend Test', Lines=40, SizeKB=1.79, Modified='2026-05-19 00:19:15']
+
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="10.0.0">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="FluentAssertions" Version="8.10.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.4" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.4">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.4" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageReference Include="NSubstitute" Version="5.3.0" />
+    <PackageReference Include="Respawn" Version="7.0.0" />
+    <PackageReference Include="Testcontainers.PostgreSql" Version="4.11.0" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\PlantProcess.Infrastructure\PlantProcess.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\PlantProcess.Application\PlantProcess.Application.csproj" />
+    <ProjectReference Include="..\..\PlantProcess.Domain\PlantProcess.Domain.csproj" />
+  </ItemGroup>
+
+</Project>
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Backend\tests\PlantProcess.PerformanceTests\PerformanceTestEnvironmentTests.cs', Category='Backend Tests', Classification='Backend Test', Lines=12, SizeKB=0.24, Modified='2026-05-19 00:19:15']
+
+using FluentAssertions;
+
+namespace PlantProcess.PerformanceTests;
+
+public sealed class PerformanceTestEnvironmentTests
+{
+    [Fact]
+    public void Performance_test_project_should_run()
+    {
+        true.Should().BeTrue();
+    }
+}
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Backend\tests\PlantProcess.PerformanceTests\PlantProcess.PerformanceTests.csproj', Category='Backend Tests', Classification='Backend Test', Lines=35, SizeKB=1.49, Modified='2026-05-19 00:19:15']
+
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" Version="0.15.8" />
+    <PackageReference Include="coverlet.collector" Version="10.0.0">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="FluentAssertions" Version="8.10.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.4" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.4" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageReference Include="Testcontainers.PostgreSql" Version="4.11.0" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\PlantProcess.Application\PlantProcess.Application.csproj" />
+    <ProjectReference Include="..\..\PlantProcess.Infrastructure\PlantProcess.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\PlantProcess.Domain\PlantProcess.Domain.csproj" />
+  </ItemGroup>
+
+</Project>
+
+[FILE_END]
+

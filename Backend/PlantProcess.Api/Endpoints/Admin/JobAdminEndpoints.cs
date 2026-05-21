@@ -3,6 +3,11 @@ using PlantProcess.Application.Integration.Contracts.Jobs;
 using PlantProcess.Application.Integration.Interfaces.Jobs;
 using PlantProcess.Domain.Enums.Integration;
 using PlantProcess.Infrastructure.Persistence;
+using PlantProcess.Api.Extensions;
+using PlantProcess.Application.Common.Results;
+using PlantProcess.Application.Licensing.Contracts;
+using PlantProcess.Application.Licensing.Interfaces;
+
 
 namespace PlantProcess.Api.Endpoints.Admin;
 
@@ -44,9 +49,27 @@ public static class JobAdminEndpoints
     private static async Task<IResult> RunNowAsync(
         Guid jobId,
         RunJobNowRequest request,
+        PlantProcessDbContext dbContext,
+        ILicenseService licenseService,
         IJobRunOrchestratorService orchestrator,
         CancellationToken cancellationToken)
     {
+        var job = await dbContext.JobDefinitions
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == jobId && !x.IsDeleted, cancellationToken);
+
+        if (job is null)
+            return Results.NotFound(new { message = "Job definition was not found." });
+
+        var featureGate = ResolveJobRunLicenseGate(
+            job.JobType,
+            job.JobCode,
+            job.JobName,
+            licenseService);
+
+        if (featureGate.IsFailure)
+            return featureGate.ToHttpResult(() => Results.NoContent());
+
         var result = await orchestrator.RunNowAsync(
             jobId,
             request.RequestedBy,
@@ -130,9 +153,22 @@ public static class JobAdminEndpoints
         Guid connectionProfileId,
         UpdateConnectionImportScheduleRequest request,
         PlantProcessDbContext dbContext,
+        ILicenseService licenseService,
         IJobRegistrationService jobRegistrationService,
         CancellationToken cancellationToken)
     {
+        var intervalGate = licenseService.EnsureRefreshIntervalAllowed(request.ImportIntervalMinutes);
+        if (intervalGate.IsFailure)
+            return intervalGate.ToHttpResult(() => Results.NoContent());
+
+        var activeJobCount = await dbContext.JobDefinitions
+            .AsNoTracking()
+            .CountAsync(x => !x.IsDeleted && x.IsEnabled, cancellationToken);
+
+        var jobLimitGate = licenseService.EnsureJobCountAllowed(activeJobCount);
+        if (jobLimitGate.IsFailure)
+            return jobLimitGate.ToHttpResult(() => Results.NoContent());
+
         var connection = await dbContext.ConnectionProfiles
             .FirstOrDefaultAsync(x => !x.IsDeleted && x.Id == connectionProfileId, cancellationToken);
 
@@ -171,9 +207,26 @@ public static class JobAdminEndpoints
         Guid mappingDefinitionId,
         UpdateMappingRefreshScheduleRequest request,
         PlantProcessDbContext dbContext,
+        ILicenseService licenseService,
         IJobRegistrationService jobRegistrationService,
         CancellationToken cancellationToken)
-    {
+    {   
+         var mappingGate = licenseService.EnsureFeatureEnabled(LicenseFeature.MappingExecution);
+        if (mappingGate.IsFailure)
+            return mappingGate.ToHttpResult(() => Results.NoContent());
+
+        var intervalGate = licenseService.EnsureRefreshIntervalAllowed(request.RefreshIntervalMinutes);
+        if (intervalGate.IsFailure)
+            return intervalGate.ToHttpResult(() => Results.NoContent());
+
+        var activeJobCount = await dbContext.JobDefinitions
+            .AsNoTracking()
+            .CountAsync(x => !x.IsDeleted && x.IsEnabled, cancellationToken);
+
+        var jobLimitGate = licenseService.EnsureJobCountAllowed(activeJobCount);
+        if (jobLimitGate.IsFailure)
+            return jobLimitGate.ToHttpResult(() => Results.NoContent());
+
         var mapping = await dbContext.MappingDefinitions
             .FirstOrDefaultAsync(x => !x.IsDeleted && x.Id == mappingDefinitionId, cancellationToken);
 
@@ -202,6 +255,55 @@ public static class JobAdminEndpoints
             : ToProblem(upsertResult.Error!.Message, upsertResult.Error.Type.ToString());
     }
 
+
+        private static ApplicationResult ResolveJobRunLicenseGate(
+        JobDefinitionType jobType,
+        string jobCode,
+        string jobName,
+        ILicenseService licenseService)
+    {
+        if (jobType == JobDefinitionType.DbLinkImport)
+            return licenseService.EnsureFeatureEnabled(LicenseFeature.SourceSnapshotImport);
+
+        if (jobType == JobDefinitionType.CanonicalRefresh)
+            return licenseService.EnsureFeatureEnabled(LicenseFeature.MappingExecution);
+
+        if (jobType == JobDefinitionType.DataQualityScan)
+            return licenseService.EnsureFeatureEnabled(LicenseFeature.DataQualityFullScan);
+
+        if (jobType == JobDefinitionType.RiskScoring)
+            return licenseService.EnsureFeatureEnabled(LicenseFeature.RiskDashboardView);
+
+        if (IsMlJob(jobType))
+            return licenseService.EnsureFeatureEnabled(LicenseFeature.MlLearningJobs);
+
+        if (LooksLikeCorrelationJob(jobCode, jobName))
+            return licenseService.EnsureFeatureEnabled(LicenseFeature.CorrelationScheduledRun);
+
+        return ApplicationResult.Success();
+    }
+
+    private static bool IsMlJob(JobDefinitionType jobType)
+    {
+        return jobType is JobDefinitionType.MlParamsVsDefects
+            or JobDefinitionType.MlParamsVsDowntime
+            or JobDefinitionType.MlParamsVsKpis
+            or JobDefinitionType.MlWeeklyFull;
+    }
+
+    private static bool LooksLikeCorrelationJob(string jobCode, string jobName)
+    {
+        return ContainsIgnoreCase(jobCode, "CORRELATION")
+            || ContainsIgnoreCase(jobCode, "CORRELATE")
+            || ContainsIgnoreCase(jobName, "CORRELATION")
+            || ContainsIgnoreCase(jobName, "CORRELATE");
+    }
+
+    private static bool ContainsIgnoreCase(string value, string token)
+    {
+        return value.Contains(token, StringComparison.OrdinalIgnoreCase);
+    }
+    
     private static IResult ToProblem(string message, string code)
     {
         return Results.Problem(

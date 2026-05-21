@@ -1,6 +1,9 @@
 ﻿using PlantProcess.Api.Extensions;
 using PlantProcess.Application.Integration.Contracts.Dtos;
 using PlantProcess.Application.Integration.Interfaces.Connectors;
+using Microsoft.EntityFrameworkCore;
+using PlantProcess.Application.Licensing.Interfaces;
+using PlantProcess.Infrastructure.Persistence;
 
 namespace PlantProcess.Api.Endpoints.Admin;
 
@@ -166,8 +169,22 @@ public static class ConnectorAdminEndpoints
     private static async Task<IResult> CreateConnectionProfileAsync(
         CreateConnectionProfileRequest request,
         IConnectorConfigurationService service,
+        ILicenseService licenseService,
+        PlantProcessDbContext dbContext,
         CancellationToken cancellationToken)
     {
+        var connectorGate = licenseService.EnsureConnectorAllowed(request.ProviderType);
+        if (connectorGate.IsFailure)
+            return connectorGate.ToHttpResult(() => Results.NoContent());
+
+        var activeSourceCount = await dbContext.ConnectionProfiles
+            .AsNoTracking()
+            .CountAsync(x => !x.IsDeleted && x.IsActive, cancellationToken);
+
+        var sourceLimitGate = licenseService.EnsureSourceCountAllowed(activeSourceCount);
+        if (sourceLimitGate.IsFailure)
+            return sourceLimitGate.ToHttpResult(() => Results.NoContent());
+
         var result = await service.CreateConnectionProfileAsync(request, cancellationToken);
 
         return result.ToHttpResult(value =>
@@ -178,8 +195,21 @@ public static class ConnectorAdminEndpoints
         Guid id,
         UpdateConnectionProfileRequest request,
         IConnectorConfigurationService service,
+        PlantProcessDbContext dbContext,
+        ILicenseService licenseService,
         CancellationToken cancellationToken)
     {
+        var existing = await dbContext.ConnectionProfiles
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, cancellationToken);
+
+        if (existing is null)
+            return Results.NotFound(new { message = "Connection profile was not found." });
+
+        var connectorGate = licenseService.EnsureConnectorAllowed(existing.ProviderType);
+        if (connectorGate.IsFailure)
+            return connectorGate.ToHttpResult(() => Results.NoContent());
+
         var result = await service.UpdateConnectionProfileAsync(id, request, cancellationToken);
         return result.ToHttpResult(Results.Ok);
     }

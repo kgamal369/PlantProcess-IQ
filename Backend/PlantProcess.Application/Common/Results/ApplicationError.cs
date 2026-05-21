@@ -43,6 +43,14 @@ public sealed record ApplicationError(
             ApplicationErrorType.BusinessRule);
     }
 
+    public static ApplicationError Forbidden(string message)
+    {
+        return new ApplicationError(
+            ApplicationErrorCodes.Forbidden,
+            message,
+            ApplicationErrorType.Forbidden);
+    }
+    
     public static ApplicationError Infrastructure(string message)
     {
         return new ApplicationError(

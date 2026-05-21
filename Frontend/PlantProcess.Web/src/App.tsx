@@ -8,7 +8,6 @@ import { DashboardFilterProvider } from "./state/DashboardFilterContext";
 import { DashboardSelectionProvider } from "./state/DashboardSelectionContext";
 import { DashboardGridLayoutProvider } from "./state/DashboardGridLayoutContext";
 import { ThemeProvider } from "./state/ThemeContext";
-import { DemoModeProvider } from "./state/DemoModeContext";
 import "./index.css";
 
 const DashboardPage = lazy(() =>
@@ -53,42 +52,59 @@ const DemoLifecyclePage = lazy(() =>
   }))
 );
 
-const AdminPreviewWorkspacePage = lazy(() =>
-  import("./pages/AdminPreview/AdminPreviewWorkspacePage").then((module) => ({
-    default: module.AdminPreviewWorkspacePage,
+const CommercialLicensePage = lazy(() =>
+  import("./pages/CommercialLicense/CommercialLicensePage").then((module) => ({
+    default: module.CommercialLicensePage,
   }))
 );
 
 export default function App() {
   return (
     <ThemeProvider>
-      <DemoModeProvider>
-        <DashboardFilterProvider>
-          <DashboardSelectionProvider>
-            <DashboardGridLayoutProvider>
-              <Suspense
-                fallback={
-                  <LoadingPanel text="Loading PlantProcess IQ workspace..." />
-                }
-              >
-                <Routes>
-                  <Route element={<AppLayout />}>
-                    <Route index element={<Navigate to="/dashboard" replace />} />
-                    <Route path="/dashboard" element={<DashboardPage />} />
-                    <Route path="/materials" element={<MaterialInvestigationPage />} />
-                    <Route path="/risk" element={<RiskDashboardPage />} />
-                    <Route path="/data-quality" element={<DataQualityPage />} />
-                    <Route path="/correlations" element={<CorrelationPage />} />
-                    <Route path="/admin/*" element={<AdminPage />} />
-                    <Route path="/demo-lifecycle" element={<DemoLifecyclePage />} />
-                    <Route path="/admin-preview" element={<AdminPreviewWorkspacePage />} />
-                  </Route>
-                </Routes>
-              </Suspense>
-            </DashboardGridLayoutProvider>
-          </DashboardSelectionProvider>
-        </DashboardFilterProvider>
-      </DemoModeProvider>
+      <DashboardFilterProvider>
+        <DashboardSelectionProvider>
+          <DashboardGridLayoutProvider>
+            <Suspense
+              fallback={
+                <LoadingPanel text="Loading PlantProcess IQ workspace." />
+              }
+            >
+              <Routes>
+                <Route element={<AppLayout />}>
+                  <Route index element={<Navigate to="/dashboard" replace />} />
+
+                  <Route path="/dashboard" element={<DashboardPage />} />
+                  <Route
+                    path="/materials/:materialUnitId"
+                    element={<MaterialInvestigationPage />}
+                  />
+                  <Route
+                    path="/materials"
+                    element={<MaterialInvestigationPage />}
+                  />
+                  <Route path="/risk" element={<RiskDashboardPage />} />
+                  <Route path="/data-quality" element={<DataQualityPage />} />
+                  <Route path="/correlation" element={<CorrelationPage />} />
+
+                  <Route path="/admin/*" element={<AdminPage />} />
+
+                  <Route
+                    path="/demo/lifecycle"
+                    element={<DemoLifecyclePage />}
+                  />
+
+                  <Route
+                    path="/commercial/license"
+                    element={<CommercialLicensePage />}
+                  />
+
+                  <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                </Route>
+              </Routes>
+            </Suspense>
+          </DashboardGridLayoutProvider>
+        </DashboardSelectionProvider>
+      </DashboardFilterProvider>
     </ThemeProvider>
   );
 }

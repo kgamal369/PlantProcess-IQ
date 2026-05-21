@@ -78,6 +78,7 @@ export function CorrelationPage() {
   }, [result]);
 
   return (
+    
     <main className="page-shell">
       <DashboardFilterBar />
       <ActiveFilterChips />

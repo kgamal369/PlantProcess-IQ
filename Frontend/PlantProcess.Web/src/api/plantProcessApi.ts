@@ -5,3 +5,5 @@ export * from "./admin";
 export * from "./dashboarding";
 export * from "./integration";
 export * from "./analytics";
+export * from "./license";
+export * from "./demo";

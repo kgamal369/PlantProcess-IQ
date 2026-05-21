@@ -1,11 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PlantProcess.Api.Extensions;
-using PlantProcess.Infrastructure.Persistence;
-using System.Text.Json;
-using PlantProcess.Domain.Entities.Analytics;
 using PlantProcess.Application.Analytics.Contracts;
 using PlantProcess.Application.Analytics.Interfaces;
-
+using PlantProcess.Application.Licensing.Contracts;
+using PlantProcess.Application.Licensing.Interfaces;
+using PlantProcess.Domain.Entities.Analytics;
+using PlantProcess.Infrastructure.Persistence;
+using System.Text.Json;
 
 namespace PlantProcess.Api.Endpoints.Analytics;
 
@@ -14,7 +15,8 @@ public static class CorrelationEndpoints
     public static IEndpointRouteBuilder MapCorrelationEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/analytics/correlations")
-            .WithTags("Correlation Analytics");
+            .WithTags("Correlation Analytics")
+            .RequireAuthorization("PlantProcessViewer");
 
         // Existing MVP endpoints
         group.MapGet("/parameter-defect", GetParameterDefectCorrelationAsync);
@@ -22,7 +24,7 @@ public static class CorrelationEndpoints
         group.MapGet("/operation-defect-rate", GetOperationDefectRateAsync);
         group.MapGet("/materials/{materialUnitId:guid}/context", GetMaterialCorrelationContextAsync);
 
-        //Persisted Correlation Metadata Patch
+        // Persisted Correlation Metadata Patch
         group.MapPost("/runs", PersistCorrelationRunAsync);
         group.MapGet("/runs", GetCorrelationRunsAsync);
         group.MapGet("/runs/{id:guid}", GetCorrelationRunByIdAsync);
@@ -42,9 +44,14 @@ public static class CorrelationEndpoints
         int? bins,
         int? minimumObservationsPerBin,
         bool? persistResult,
+        ILicenseService licenseService,
         ICorrelationService service,
         CancellationToken cancellationToken)
     {
+        var gate = licenseService.EnsureFeatureEnabled(LicenseFeature.CorrelationManualRun);
+        if (gate.IsFailure)
+            return gate.ToHttpResult(() => Results.NoContent());
+
         var result = await service.GetParameterDefectCorrelationAsync(
             new ParameterDefectCorrelationQuery(
                 parameterCode,
@@ -66,9 +73,14 @@ public static class CorrelationEndpoints
         DateTime? fromUtc,
         DateTime? toUtc,
         int? minimumMaterialsPerEquipment,
+        ILicenseService licenseService,
         ICorrelationService service,
         CancellationToken cancellationToken)
     {
+        var gate = licenseService.EnsureFeatureEnabled(LicenseFeature.CorrelationManualRun);
+        if (gate.IsFailure)
+            return gate.ToHttpResult(() => Results.NoContent());
+
         var result = await service.GetEquipmentDefectRateAsync(
             new EquipmentDefectRateQuery(
                 defectType,
@@ -87,9 +99,14 @@ public static class CorrelationEndpoints
         DateTime? fromUtc,
         DateTime? toUtc,
         int? minimumMaterialsPerOperation,
+        ILicenseService licenseService,
         ICorrelationService service,
         CancellationToken cancellationToken)
     {
+        var gate = licenseService.EnsureFeatureEnabled(LicenseFeature.CorrelationManualRun);
+        if (gate.IsFailure)
+            return gate.ToHttpResult(() => Results.NoContent());
+
         var result = await service.GetOperationDefectRateAsync(
             new OperationDefectRateQuery(
                 defectType,
@@ -105,18 +122,28 @@ public static class CorrelationEndpoints
     private static async Task<IResult> GetMaterialCorrelationContextAsync(
         Guid materialUnitId,
         string defectType,
+        ILicenseService licenseService,
         ICorrelationService service,
         CancellationToken cancellationToken)
     {
+        var gate = licenseService.EnsureFeatureEnabled(LicenseFeature.CorrelationManualRun);
+        if (gate.IsFailure)
+            return gate.ToHttpResult(() => Results.NoContent());
+
         var result = await service.GetMaterialCorrelationContextAsync(materialUnitId, defectType, cancellationToken);
         return result.ToHttpResult(value => Results.Ok(value));
     }
 
     private static async Task<IResult> PersistCorrelationRunAsync(
-    PersistCorrelationRunRequest request,
-    PlantProcessDbContext dbContext,
-    CancellationToken cancellationToken)
-    {   
+        PersistCorrelationRunRequest request,
+        ILicenseService licenseService,
+        PlantProcessDbContext dbContext,
+        CancellationToken cancellationToken)
+    {
+        var gate = licenseService.EnsureFeatureEnabled(LicenseFeature.CorrelationManualRun);
+        if (gate.IsFailure)
+            return gate.ToHttpResult(() => Results.NoContent());
+
         if (string.IsNullOrWhiteSpace(request.CorrelationType))
             return Results.BadRequest(new { message = "CorrelationType is required." });
 
@@ -165,9 +192,14 @@ public static class CorrelationEndpoints
         string? outcomeCode,
         int? page,
         int? pageSize,
+        ILicenseService licenseService,
         PlantProcessDbContext dbContext,
         CancellationToken cancellationToken)
     {
+        var gate = licenseService.EnsureFeatureEnabled(LicenseFeature.CorrelationManualRun);
+        if (gate.IsFailure)
+            return gate.ToHttpResult(() => Results.NoContent());
+
         var safePage = Math.Max(page ?? 1, 1);
         var safePageSize = Math.Clamp(pageSize ?? 25, 1, 200);
 
@@ -215,9 +247,14 @@ public static class CorrelationEndpoints
 
     private static async Task<IResult> GetCorrelationRunByIdAsync(
         Guid id,
+        ILicenseService licenseService,
         PlantProcessDbContext dbContext,
         CancellationToken cancellationToken)
     {
+        var gate = licenseService.EnsureFeatureEnabled(LicenseFeature.CorrelationManualRun);
+        if (gate.IsFailure)
+            return gate.ToHttpResult(() => Results.NoContent());
+
         var item = await dbContext.CorrelationResults
             .AsNoTracking()
             .Where(x => x.Id == id && !x.IsDeleted)
@@ -264,9 +301,14 @@ public static class CorrelationEndpoints
         int? minimumObservationsPerBin,
         string? linkMode,
         int? genealogyDepth,
+        ILicenseService licenseService,
         PlantProcessDbContext dbContext,
         CancellationToken cancellationToken)
     {
+        var gate = licenseService.EnsureFeatureEnabled(LicenseFeature.CorrelationManualRun);
+        if (gate.IsFailure)
+            return gate.ToHttpResult(() => Results.NoContent());
+
         var safeBins = Math.Clamp(bins ?? 8, 2, 25);
         var safeMinimumObservations = Math.Clamp(minimumObservationsPerBin ?? 5, 1, 10_000);
         var safeDepth = Math.Clamp(genealogyDepth ?? 3, 0, 20);
@@ -664,4 +706,3 @@ public static class CorrelationEndpoints
         decimal? LiftVsBaseline,
         string Confidence);
 }
-

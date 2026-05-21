@@ -4,6 +4,10 @@ using PlantProcess.Api.Extensions;
 using PlantProcess.Application.Dashboarding.Contracts;
 using PlantProcess.Application.Dashboarding.Interfaces;
 using PlantProcess.Infrastructure.Persistence;
+using PlantProcess.Application.Licensing.Contracts;
+using PlantProcess.Application.Licensing.Interfaces;
+using PlantProcess.Application.Licensing.Contracts;
+using PlantProcess.Application.Licensing.Interfaces;
 
 namespace PlantProcess.Api.Endpoints.Dashboarding;
 
@@ -438,8 +442,22 @@ public static class DashboardEndpoints
     private static async Task<IResult> CreateDashboardDefinitionAsync(
         CreateDashboardDefinitionRequest request,
         IDashboardDefinitionService service,
+        PlantProcessDbContext dbContext,
+        ILicenseService licenseService,
         CancellationToken cancellationToken)
     {
+        var featureGate = licenseService.EnsureFeatureEnabled(LicenseFeature.DashboardPageBuilder);
+        if (featureGate.IsFailure)
+            return featureGate.ToHttpResult(() => Results.NoContent());
+
+        var activeDashboardCount = await dbContext.DashboardDefinitions
+            .AsNoTracking()
+            .CountAsync(x => !x.IsDeleted && x.IsActive && !x.IsSystemTemplate, cancellationToken);
+
+        var countGate = licenseService.EnsureDashboardCountAllowed(activeDashboardCount);
+        if (countGate.IsFailure)
+            return countGate.ToHttpResult(() => Results.NoContent());
+
         var result = await service.CreateDashboardAsync(request, cancellationToken);
         return result.ToHttpResult(id =>
             Results.Created($"/analytics/dashboard/definitions/{id}", new { id }));
@@ -492,8 +510,13 @@ public static class DashboardEndpoints
         Guid dashboardDefinitionId,
         CreateDashboardWidgetDefinitionRequest request,
         IDashboardDefinitionService service,
+        ILicenseService licenseService,
         CancellationToken cancellationToken)
     {
+        var featureGate = licenseService.EnsureFeatureEnabled(LicenseFeature.DashboardWidgetBuilder);
+        if (featureGate.IsFailure)
+            return featureGate.ToHttpResult(() => Results.NoContent());
+
         var result = await service.CreateWidgetAsync(dashboardDefinitionId, request, cancellationToken);
         return result.ToHttpResult(id =>
             Results.Created(
