@@ -11,7 +11,7 @@ COPY PlantProcess.Application/PlantProcess.Application.csproj PlantProcess.Appli
 COPY PlantProcess.Infrastructure/PlantProcess.Infrastructure.csproj PlantProcess.Infrastructure/
 COPY PlantProcess.Api/PlantProcess.Api.csproj PlantProcess.Api/
 
-RUN dotnet restore PlantProcess.Api/PlantProcess.Api.csproj
+RUN dotnet restore PlantProcessIQ.sln
 
 COPY . .
 
