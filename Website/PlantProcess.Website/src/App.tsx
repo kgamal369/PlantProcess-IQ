@@ -1,4 +1,5 @@
 ﻿import { NavLink, Route, Routes } from "react-router-dom";
+import type { ReactNode } from "react";
 import {
   BadgeEuro,
   BarChart3,
@@ -104,8 +105,8 @@ const lifecycleSteps = [
   ["Report", "Export a Data Diagnostic report with ML readiness status."],
 ];
 
-function Layout({ children }: { children: React.ReactNode }) {
-  return (
+function Layout({ children }: { children: ReactNode }) {
+    return (
     <div className="site-shell">
       <header className="site-header">
         <NavLink to="/" className="brand-link">

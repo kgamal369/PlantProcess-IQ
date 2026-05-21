@@ -44,12 +44,24 @@ public sealed class MlReadinessService : IMlReadinessService
             .AsNoTracking()
             .CountAsync(x => !x.IsDeleted, cancellationToken);
 
-        var materialsWithGenealogy = await _dbContext.GenealogyEdges
+        var parentMaterialIds = await _dbContext.GenealogyEdges
             .AsNoTracking()
             .Where(x => !x.IsDeleted)
-            .SelectMany(x => new[] { x.ParentMaterialUnitId, x.ChildMaterialUnitId })
+            .Select(x => x.ParentMaterialUnitId)
             .Distinct()
-            .CountAsync(cancellationToken);
+            .ToListAsync(cancellationToken);
+
+        var childMaterialIds = await _dbContext.GenealogyEdges
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted)
+            .Select(x => x.ChildMaterialUnitId)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
+        var materialsWithGenealogy = parentMaterialIds
+            .Concat(childMaterialIds)
+            .Distinct()
+            .Count();
 
         var genealogyCoveragePercent = materialCount == 0
             ? 0m
@@ -277,9 +289,11 @@ public sealed class MlReadinessService : IMlReadinessService
         CancellationToken cancellationToken = default)
     {
         var readiness = await GetReadinessAsync(cancellationToken);
+
         var labelPreview = await _labelBuilderService.BuildPreviewAsync(
             labelPreviewLimit,
             cancellationToken);
+
         var jobs = await GetMlJobsAsync(cancellationToken);
 
         var models = await _dbContext.ModelRegistries
@@ -404,15 +418,23 @@ public sealed class MlReadinessService : IMlReadinessService
 
     private static DateTime? Min(DateTime? left, DateTime? right)
     {
-        if (!left.HasValue) return right;
-        if (!right.HasValue) return left;
+        if (!left.HasValue)
+            return right;
+
+        if (!right.HasValue)
+            return left;
+
         return left.Value <= right.Value ? left : right;
     }
 
     private static DateTime? Max(DateTime? left, DateTime? right)
     {
-        if (!left.HasValue) return right;
-        if (!right.HasValue) return left;
+        if (!left.HasValue)
+            return right;
+
+        if (!right.HasValue)
+            return left;
+
         return left.Value >= right.Value ? left : right;
     }
 
