@@ -1,0 +1,124 @@
+.brand-proof-panel {
+  display: grid;
+  gap: 20px;
+  padding: 22px;
+  border: 1px solid rgba(19, 216, 255, 0.22);
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at top left, rgba(19, 216, 255, 0.14), transparent 34%),
+    rgba(5, 11, 24, 0.72);
+}
+
+.brand-proof-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 18px;
+}
+
+.brand-eyebrow {
+  margin: 0 0 6px;
+  color: var(--pp-cyan, #13d8ff);
+  font-size: 0.74rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.brand-proof-header h2 {
+  margin: 0 0 8px;
+  color: var(--pp-text-strong, #ffffff);
+  font-size: clamp(1.7rem, 3vw, 2.6rem);
+  letter-spacing: -0.04em;
+}
+
+.brand-proof-header p {
+  max-width: 920px;
+  margin: 0;
+  color: var(--pp-muted, #91a9c5);
+  line-height: 1.65;
+}
+
+.brand-score {
+  display: grid;
+  gap: 6px;
+  min-width: 190px;
+  padding: 16px;
+  border: 1px solid rgba(45, 247, 163, 0.28);
+  border-radius: 20px;
+  background: rgba(45, 247, 163, 0.08);
+}
+
+.brand-score span,
+.brand-score small {
+  color: var(--pp-muted, #91a9c5);
+}
+
+.brand-score strong {
+  color: var(--pp-green, #2df7a3);
+  font-size: 1.9rem;
+}
+
+.brand-proof-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.brand-card {
+  padding: 18px;
+  border: 1px solid rgba(145, 169, 197, 0.16);
+  border-radius: 22px;
+  background: rgba(11, 35, 59, 0.72);
+}
+
+.brand-card svg {
+  color: var(--pp-cyan, #13d8ff);
+}
+
+.brand-card h3 {
+  margin: 12px 0 8px;
+  color: var(--pp-text-strong, #ffffff);
+}
+
+.brand-card p,
+.brand-card li {
+  color: var(--pp-muted, #91a9c5);
+  line-height: 1.55;
+}
+
+.brand-card ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.brand-link-list {
+  display: grid;
+  gap: 8px;
+}
+
+.brand-link-list a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  color: var(--pp-cyan, #13d8ff);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+@media (max-width: 1200px) {
+  .brand-proof-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .brand-proof-header {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 720px) {
+  .brand-proof-grid {
+    grid-template-columns: 1fr;
+  }
+}

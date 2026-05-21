@@ -1,1 +1,1 @@
-{"root":["./src/app.tsx","./src/main.tsx","./src/vite-env.d.ts","./src/components/brand/soubrand.tsx"],"version":"6.0.3"}
+{"root":["./src/app.tsx","./src/main.tsx","./src/vite-env.d.ts","./src/brand/plantprocessbrand.ts","./src/components/brandproofsection.tsx","./src/components/brand/soubrand.tsx"],"version":"6.0.3"}

@@ -18,7 +18,7 @@ import {
   Workflow,
   XCircle,
 } from "lucide-react";
-
+import { BrandProofSection } from "./components/BrandProofSection";
 const demoMailto =
   "mailto:info@plantprocessiq.com?subject=PlantProcess%20IQ%20Demo%20Request&body=Hello%20Karim%2C%0A%0AI%20would%20like%20to%20book%20a%2020-minute%20PlantProcess%20IQ%20demo.%0A%0ACompany%3A%0APlant%20type%3A%0AData%20sources%3A%0AMain%20quality%20problem%3A%0APreferred%20time%3A%0A";
 
@@ -335,6 +335,8 @@ function HomePage() {
 
       <MlHonestySection />
 
+      <BrandProofSection />
+
       <section className="website-section demo-cta-section" id="demo">
         <div>
           <div className="eyebrow">
@@ -393,6 +395,7 @@ function ProductPage() {
           ))}
         </div>
       </section>
+      <BrandProofSection />
     </Layout>
   );
 }

@@ -81,6 +81,12 @@ const navItems = [
     description: "DB config, schema mapping and jobs",
     icon: Settings2,
   },
+  {
+    to: "/brand",
+    label: "Brand",
+    description: "Identity, positioning and proof assets",
+    icon: Sparkles,
+  },
 ];
 
 function getRuntimeEnvironment(): "Demo" | "Development" | "Staging" | "Production" {

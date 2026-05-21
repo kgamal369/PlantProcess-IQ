@@ -214,3 +214,64 @@
   }
 }
 @import "./pages/demo-lifecycle.css";
+.brand-proof-website {
+  border-color: rgba(45, 247, 163, 0.24);
+  background:
+    radial-gradient(circle at top left, rgba(45, 247, 163, 0.11), transparent 32%),
+    rgba(5, 11, 24, 0.7);
+}
+
+.brand-proof-website-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.brand-proof-website-grid article {
+  padding: 18px;
+  border: 1px solid rgba(145, 169, 197, 0.16);
+  border-radius: 22px;
+  background: rgba(11, 35, 59, 0.72);
+}
+
+.brand-proof-website-grid svg {
+  color: var(--cyan, #13d8ff);
+}
+
+.brand-proof-website-grid h3 {
+  margin: 12px 0 8px;
+  color: var(--text, #eaf7ff);
+}
+
+.brand-proof-website-grid p,
+.brand-proof-website-grid li {
+  color: var(--muted, #91a9c5);
+  line-height: 1.55;
+}
+
+.brand-proof-website-grid ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.brand-proof-website-grid a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  color: var(--cyan, #13d8ff);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+@media (max-width: 1100px) {
+  .brand-proof-website-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .brand-proof-website-grid {
+    grid-template-columns: 1fr;
+  }
+}

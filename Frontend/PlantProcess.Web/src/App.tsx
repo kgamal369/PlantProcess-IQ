@@ -4,6 +4,7 @@ import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
 import { AppLayout } from "./components/AppLayout";
 import { LoadingPanel } from "./components/AsyncState";
+import { BrandProofSection } from "./components/BrandProofSection";
 import { DashboardFilterProvider } from "./state/DashboardFilterContext";
 import { DashboardSelectionProvider } from "./state/DashboardSelectionContext";
 import { DashboardGridLayoutProvider } from "./state/DashboardGridLayoutContext";
@@ -58,6 +59,12 @@ const CommercialLicensePage = lazy(() =>
   }))
 );
 
+const BrandIdentityPage = lazy(() =>
+  import("./pages/BrandIdentity/BrandIdentityPage").then((module) => ({
+    default: module.BrandIdentityPage,
+  }))
+);
+
 const MlReadinessPage = lazy(() =>
   import("./pages/MlReadiness/MlReadinessPage").then((module) => ({
     default: module.MlReadinessPage,
@@ -99,10 +106,8 @@ export default function App() {
                     element={<DemoLifecyclePage />}
                   />
 
-                  <Route
-                    path="/commercial/license"
-                    element={<CommercialLicensePage />}
-                  />
+                  <Route path="/commercial/license" element={<CommercialLicensePage />} />
+                  <Route path="/brand" element={<BrandIdentityPage />} />
 
                   <Route path="*" element={<Navigate to="/dashboard" replace />} />
                 </Route>

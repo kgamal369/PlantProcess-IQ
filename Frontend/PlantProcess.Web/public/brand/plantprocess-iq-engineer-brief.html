@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>PlantProcess IQ — Engineer Brief</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #020712;
+      --panel: #071a2d;
+      --text: #eaf7ff;
+      --muted: #91a9c5;
+      --cyan: #13d8ff;
+      --green: #2df7a3;
+      --amber: #ffb020;
+      font-family: Inter, Segoe UI, Arial, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: radial-gradient(circle at top left, rgba(19,216,255,.16), transparent 34%), var(--bg);
+      color: var(--text);
+    }
+
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 56px 28px;
+    }
+
+    header {
+      border-bottom: 1px solid rgba(19,216,255,.24);
+      padding-bottom: 28px;
+      margin-bottom: 28px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 46px;
+      letter-spacing: -0.04em;
+    }
+
+    h2 {
+      color: var(--cyan);
+      margin-top: 0;
+    }
+
+    p, li {
+      color: var(--muted);
+      line-height: 1.65;
+      font-size: 16px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .card {
+      border: 1px solid rgba(19,216,255,.2);
+      border-radius: 22px;
+      padding: 22px;
+      background: rgba(7,26,45,.72);
+    }
+
+    .pill {
+      display: inline-flex;
+      border-radius: 999px;
+      padding: 7px 11px;
+      color: #020712;
+      background: linear-gradient(135deg, var(--cyan), var(--green));
+      font-weight: 900;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .warning {
+      border-color: rgba(255,176,32,.34);
+      background: rgba(255,176,32,.08);
+    }
+
+    .warning h2 {
+      color: var(--amber);
+    }
+
+    footer {
+      margin-top: 30px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    @media print {
+      body { background: #fff; color: #111827; }
+      p, li, footer { color: #374151; }
+      .card { border-color: #d1d5db; background: #fff; }
+      h2 { color: #075985; }
+      .warning h2 { color: #92400e; }
+      .pill { color: #fff; background: #075985; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <span class="pill">Engineer Brief</span>
+      <h1>PlantProcess IQ</h1>
+      <p>Read-only manufacturing intelligence layer for process-to-quality investigation.</p>
+    </header>
+
+    <section class="grid">
+      <article class="card">
+        <h2>What it is</h2>
+        <p>
+          PlantProcess IQ connects plant data, creates a safe staging copy, maps customer-specific schemas into a generic canonical manufacturing model, and supports dashboards, data-quality checks, risk scoring, correlation, investigation, ML readiness, and Data Diagnostic reporting.
+        </p>
+      </article>
+
+      <article class="card">
+        <h2>What it is not</h2>
+        <ul>
+          <li>Not MES replacement.</li>
+          <li>Not SCADA replacement.</li>
+          <li>Not Level 2 / PLC control.</li>
+          <li>Not BI-only dashboarding.</li>
+          <li>Not steel-only.</li>
+        </ul>
+      </article>
+
+      <article class="card">
+        <h2>Core lifecycle</h2>
+        <ul>
+          <li>Connect source data.</li>
+          <li>Stage a read-only data copy.</li>
+          <li>Map schema into canonical entities.</li>
+          <li>Monitor import and analysis jobs.</li>
+          <li>Analyze quality, risk, correlation and genealogy.</li>
+          <li>Report findings and ML readiness.</li>
+        </ul>
+      </article>
+
+      <article class="card">
+        <h2>Current intelligence</h2>
+        <p>
+          Current intelligence is based on rule-based risk scoring, data-quality scanning, statistical correlation, suspected contributor ranking, and investigation workflows.
+        </p>
+      </article>
+
+      <article class="card warning">
+        <h2>ML honesty</h2>
+        <p>
+          No trained production ML model is active. ML training starts only after validated labeled historical data, genealogy coverage, feature vectors, and readiness gates are sufficient.
+        </p>
+      </article>
+
+      <article class="card warning">
+        <h2>Connector honesty</h2>
+        <p>
+          Only tested connectors should be marked available. CSV is safe for starter demos. PostgreSQL is available only when environment proof is green. SQL Server and Oracle remain planned until implementation and tests pass.
+        </p>
+      </article>
+    </section>
+
+    <footer>
+      PlantProcess IQ · SOU Industrial Intelligence · Düsseldorf, Germany · EU / MENA industrial focus
+    </footer>
+  </main>
+</body>
+</html>
