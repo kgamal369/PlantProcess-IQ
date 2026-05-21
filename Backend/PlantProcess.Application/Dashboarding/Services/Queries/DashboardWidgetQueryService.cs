@@ -337,8 +337,7 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
                 from equipment in equipmentJoin.DefaultIfEmpty()
                 where
                     !downtime.IsDeleted &&
-                    (!downtime.MaterialUnitId.HasValue || materialIds.Contains(downtime.MaterialUnitId.Value))
-                select new WidgetFact(
+                    (downtime.MaterialUnitId == null || materialIds.Contains(downtime.MaterialUnitId.GetValueOrDefault()))                select new WidgetFact(
                     downtime.MaterialUnitId,
                     material != null ? material.SiteId : null,
                     equipment != null ? equipment.AreaId : null,
@@ -353,10 +352,12 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
                     null,
                     null,
                     downtime.StartedAtUtc,
-                    downtime.EndedAtUtc.HasValue
-                        ? (decimal)Math.Max(0, (downtime.EndedAtUtc.Value - downtime.StartedAtUtc).TotalMinutes)
-                        : 0m))
-            .Take(resolved.RawRowLimit)
+                    downtime.EndedAtUtc == null
+                    ? 0m
+                    : (decimal)Math.Max(
+                        0,
+                        (downtime.EndedAtUtc.GetValueOrDefault() - downtime.StartedAtUtc).TotalMinutes)))
+                            .Take(resolved.RawRowLimit)
             .ToListAsync(cancellationToken);
 
         facts = ApplyFactDateFilter(facts, filters).ToList();

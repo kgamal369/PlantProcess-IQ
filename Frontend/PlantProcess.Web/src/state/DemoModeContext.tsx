@@ -7,18 +7,34 @@ import {
 } from "react";
 
 import {
+  customerReportSections,
+  demoChecklist,
   demoConnectors,
   demoJobs,
   demoMappings,
   demoMlPreview,
+  demoPrivilegeGroups,
   demoUsers,
   demoWidgets,
+  executiveFiveMinuteScript,
+  forbiddenLanguageExamples,
+  initialMlTrainingForm,
   licensePlans,
+  objections,
+  safeLanguageExamples,
+  screenshotPack,
+  twentyMinuteScript,
+  type DemoChecklistItem,
   type DemoConnector,
   type DemoJob,
   type DemoLicensePlan,
   type DemoMlPreview,
+  type DemoMlTrainingForm,
+  type DemoObjection,
+  type DemoPrivilegeGroup,
+  type DemoReportSection,
   type DemoSchemaMapping,
+  type DemoScreenshotItem,
   type DemoUserRole,
   type DemoWidget,
 } from "@/demo/plantProcessDemoScenario";
@@ -33,15 +49,28 @@ type DemoModeContextValue = {
   activeLifecycleStep: number;
   setActiveLifecycleStep: (value: number) => void;
 
+  mlTrainingForm: DemoMlTrainingForm;
+  setMlTrainingForm: (value: DemoMlTrainingForm) => void;
+
   connectors: DemoConnector[];
   jobs: DemoJob[];
   mappings: DemoSchemaMapping[];
   widgets: DemoWidget[];
   users: DemoUserRole[];
+  privilegeGroups: DemoPrivilegeGroup[];
   mlPreview: DemoMlPreview;
+  checklist: DemoChecklistItem[];
+  screenshots: DemoScreenshotItem[];
+  objections: DemoObjection[];
+  customerReportSections: DemoReportSection[];
+  executiveFiveMinuteScript: string[];
+  twentyMinuteScript: string[];
+  forbiddenLanguageExamples: string[];
+  safeLanguageExamples: string[];
 
   visibleWidgets: DemoWidget[];
   isFeatureAvailable: (requiredPlan: DemoLicensePlan) => boolean;
+  resetDemoState: () => void;
 };
 
 const planRank: Record<DemoLicensePlan, number> = {
@@ -57,10 +86,19 @@ export function DemoModeProvider({ children }: { children: ReactNode }) {
   const [demoModeEnabled, setDemoModeEnabled] = useState(true);
   const [selectedPlan, setSelectedPlan] = useState<DemoLicensePlan>("ProPlus");
   const [activeLifecycleStep, setActiveLifecycleStep] = useState(0);
+  const [mlTrainingForm, setMlTrainingForm] =
+    useState<DemoMlTrainingForm>(initialMlTrainingForm);
 
   const value = useMemo<DemoModeContextValue>(() => {
     const isFeatureAvailable = (requiredPlan: DemoLicensePlan) =>
       planRank[selectedPlan] >= planRank[requiredPlan];
+
+    const resetDemoState = () => {
+      setDemoModeEnabled(true);
+      setSelectedPlan("ProPlus");
+      setActiveLifecycleStep(0);
+      setMlTrainingForm(initialMlTrainingForm);
+    };
 
     return {
       demoModeEnabled,
@@ -72,17 +110,30 @@ export function DemoModeProvider({ children }: { children: ReactNode }) {
       activeLifecycleStep,
       setActiveLifecycleStep,
 
+      mlTrainingForm,
+      setMlTrainingForm,
+
       connectors: demoConnectors,
       jobs: demoJobs,
       mappings: demoMappings,
       widgets: demoWidgets,
       users: demoUsers,
+      privilegeGroups: demoPrivilegeGroups,
       mlPreview: demoMlPreview,
+      checklist: demoChecklist,
+      screenshots: screenshotPack,
+      objections,
+      customerReportSections,
+      executiveFiveMinuteScript,
+      twentyMinuteScript,
+      forbiddenLanguageExamples,
+      safeLanguageExamples,
 
       visibleWidgets: demoWidgets,
       isFeatureAvailable,
+      resetDemoState,
     };
-  }, [activeLifecycleStep, demoModeEnabled, selectedPlan]);
+  }, [activeLifecycleStep, demoModeEnabled, mlTrainingForm, selectedPlan]);
 
   return (
     <DemoModeContext.Provider value={value}>

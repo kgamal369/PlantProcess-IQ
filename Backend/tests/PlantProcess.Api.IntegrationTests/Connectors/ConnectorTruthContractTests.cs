@@ -1,3 +1,7 @@
+using System.Net;
+using System.Net.Http.Json;
+using FluentAssertions;
+using Xunit;
 using System.Text.Json;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -108,4 +112,37 @@ public sealed class ConnectorTruthContractTests : AuthenticatedApiTestBase
             ? property.GetBoolean()
             : null;
     }
+    
+    [Fact]
+    public async Task ProviderTypes_ShouldNotExposeUntestedConnectorsAsAvailableNow()
+    {
+        var client = await CreateAuthenticatedClientAsync();
+
+        var response = await client.GetAsync("/admin/connectors/provider-types");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var providers = await response.Content.ReadFromJsonAsync<List<ConnectorProviderResponse>>();
+
+        providers.Should().NotBeNull();
+        providers!.Should().NotBeEmpty();
+
+        providers.Single(x => x.ProviderType == "Csv").IsAvailableNow.Should().BeTrue();
+
+        providers.Single(x => x.ProviderType == "Excel").IsAvailableNow.Should().BeFalse();
+        providers.Single(x => x.ProviderType == "SqlServer").IsAvailableNow.Should().BeFalse();
+        providers.Single(x => x.ProviderType == "Oracle").IsAvailableNow.Should().BeFalse();
+        providers.Single(x => x.ProviderType == "MySql").IsAvailableNow.Should().BeFalse();
+        providers.Single(x => x.ProviderType == "OpcUaHistorian").IsAvailableNow.Should().BeFalse();
+    }
+
+    private sealed record ConnectorProviderResponse(
+        string ProviderType,
+        string DisplayName,
+        string Description,
+        bool IsAvailableNow,
+        bool RequiresSecretReference,
+        bool SupportsSchemaDiscovery,
+        bool SupportsSnapshotImport,
+        bool SupportsIncrementalImport);
 }

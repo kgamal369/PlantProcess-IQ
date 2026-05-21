@@ -63,6 +63,12 @@ const navItems = [
     icon: PlayCircle,
   },
   {
+    to: "/admin-preview",
+    label: "Admin Preview",
+    description: "License, roles, ML, scripts, report",
+    icon: ShieldCheck,
+  },
+  {
     to: "/admin",
     label: "Administrator",
     description: "DB config, schema mapping and jobs",

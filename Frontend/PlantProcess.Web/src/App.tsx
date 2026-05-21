@@ -53,6 +53,12 @@ const DemoLifecyclePage = lazy(() =>
   }))
 );
 
+const AdminPreviewWorkspacePage = lazy(() =>
+  import("./pages/AdminPreview/AdminPreviewWorkspacePage").then((module) => ({
+    default: module.AdminPreviewWorkspacePage,
+  }))
+);
+
 export default function App() {
   return (
     <ThemeProvider>
@@ -75,6 +81,7 @@ export default function App() {
                     <Route path="/correlations" element={<CorrelationPage />} />
                     <Route path="/admin/*" element={<AdminPage />} />
                     <Route path="/demo-lifecycle" element={<DemoLifecyclePage />} />
+                    <Route path="/admin-preview" element={<AdminPreviewWorkspacePage />} />
                   </Route>
                 </Routes>
               </Suspense>

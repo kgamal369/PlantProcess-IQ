@@ -63,62 +63,72 @@ public static class ConnectorAdminEndpoints
 
     private static IResult GetProviderTypes()
 {
-    IReadOnlyList<ProviderTypeDto> providers = new List<ProviderTypeDto>
+    var providerTypes = new[]
     {
-        new(
+        new ProviderTypeDto(
             ProviderType: "Csv",
             DisplayName: "CSV Snapshot",
-            Description: "Reads CSV exports into the PlantProcess IQ raw staging layer. Available for demos, readiness assessments, and controlled pilots.",
+            Description: "Reads CSV exports into the PlantProcess IQ raw staging layer. Available for controlled demo, readiness assessment and pilot imports.",
             IsAvailableNow: true,
             RequiresSecretReference: false,
             SupportsSchemaDiscovery: true,
             SupportsSnapshotImport: true,
             SupportsIncrementalImport: false),
 
-        new(
-            ProviderType: "Excel",
-            DisplayName: "Excel Snapshot",
-            Description: "Reads Excel workbook/sheet snapshots. Available for customer exports and diagnostic assessments, not high-frequency production ingestion.",
-            IsAvailableNow: true,
-            RequiresSecretReference: false,
-            SupportsSchemaDiscovery: true,
-            SupportsSnapshotImport: true,
-            SupportsIncrementalImport: false),
-
-        new(
+        new ProviderTypeDto(
             ProviderType: "PostgreSql",
             DisplayName: "PostgreSQL Read-only DB Link",
-            Description: "Planned read-only database connector for PostgreSQL sources. Not available in this build.",
-            IsAvailableNow: false,
+            Description: "Read-only PostgreSQL connector. Mark available only when connector implementation and smoke tests are green in this environment.",
+            IsAvailableNow: true,
             RequiresSecretReference: true,
+            SupportsSchemaDiscovery: true,
+            SupportsSnapshotImport: true,
+            SupportsIncrementalImport: true),
+
+        new ProviderTypeDto(
+            ProviderType: "Excel",
+            DisplayName: "Excel Snapshot",
+            Description: "Planned Excel workbook/sheet snapshot connector. Not available in this build until implementation and connector smoke tests pass.",
+            IsAvailableNow: false,
+            RequiresSecretReference: false,
             SupportsSchemaDiscovery: false,
             SupportsSnapshotImport: false,
             SupportsIncrementalImport: false),
 
-        new(
+        new ProviderTypeDto(
             ProviderType: "SqlServer",
-            DisplayName: "Microsoft SQL Server Read-only DB Link",
-            Description: "Planned read-only database connector for SQL Server / MSSQL sources. Not available in this build.",
+            DisplayName: "Microsoft SQL Server",
+            Description: "Planned read-only SQL Server connector for MES/L3/customer databases. Not available until implemented and tested.",
             IsAvailableNow: false,
             RequiresSecretReference: true,
             SupportsSchemaDiscovery: false,
             SupportsSnapshotImport: false,
             SupportsIncrementalImport: false),
 
-        new(
+        new ProviderTypeDto(
             ProviderType: "Oracle",
-            DisplayName: "Oracle Read-only DB Link",
-            Description: "Planned read-only database connector for Oracle MES/L2/QMS sources. Not available in this build.",
+            DisplayName: "Oracle",
+            Description: "Planned read-only Oracle connector for MES/L2/industrial databases. Not available until implemented and tested.",
             IsAvailableNow: false,
             RequiresSecretReference: true,
             SupportsSchemaDiscovery: false,
             SupportsSnapshotImport: false,
             SupportsIncrementalImport: false),
 
-        new(
+        new ProviderTypeDto(
             ProviderType: "MySql",
-            DisplayName: "MySQL / MariaDB Read-only DB Link",
-            Description: "Planned read-only database connector for MySQL/MariaDB sources. Not available in this build.",
+            DisplayName: "MySQL",
+            Description: "Planned read-only MySQL connector for local systems and inspection device databases. Not available until implemented and tested.",
+            IsAvailableNow: false,
+            RequiresSecretReference: true,
+            SupportsSchemaDiscovery: false,
+            SupportsSnapshotImport: false,
+            SupportsIncrementalImport: false),
+
+        new ProviderTypeDto(
+            ProviderType: "OpcUaHistorian",
+            DisplayName: "OPC-UA / Historian",
+            Description: "Future live industrial data path. Not part of current demo availability.",
             IsAvailableNow: false,
             RequiresSecretReference: true,
             SupportsSchemaDiscovery: false,
@@ -126,8 +136,9 @@ public static class ConnectorAdminEndpoints
             SupportsIncrementalImport: false)
     };
 
-    return Results.Ok(providers);
-}    private static async Task<IResult> GetConnectionProfilesAsync(
+    return Results.Ok(providerTypes);
+}
+    private static async Task<IResult> GetConnectionProfilesAsync(
         Guid? sourceSystemDefinitionId,
         string? providerType,
         bool? includeInactive,

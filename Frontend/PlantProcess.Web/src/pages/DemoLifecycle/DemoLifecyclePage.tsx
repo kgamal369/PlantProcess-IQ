@@ -59,7 +59,7 @@ const lifecycleSteps = [
 ];
 
 export function DemoLifecyclePage() {
-  const {
+ const {
     selectedPlan,
     setSelectedPlan,
     activeLifecycleStep,
@@ -70,6 +70,7 @@ export function DemoLifecyclePage() {
     visibleWidgets,
     users,
     mlPreview,
+    mlTrainingForm,
     isFeatureAvailable,
   } = useDemoMode();
 
@@ -186,8 +187,12 @@ export function DemoLifecyclePage() {
             <InvestigationStage isFeatureAvailable={isFeatureAvailable} />
           ) : null}
           {activeLifecycleStep === 5 ? (
-            <MlStage mlPreview={mlPreview} isFeatureAvailable={isFeatureAvailable} />
-          ) : null}
+            <MlStage
+            mlPreview={mlPreview}
+            selectedFeatures={mlTrainingForm.selectedFeatures}
+            isFeatureAvailable={isFeatureAvailable}
+            />         
+         ) : null}
           {activeLifecycleStep === 6 ? (
             <ReportStage isFeatureAvailable={isFeatureAvailable} />
           ) : null}
@@ -424,11 +429,14 @@ function InvestigationStage({
 
 function MlStage({
   mlPreview,
+  selectedFeatures,
   isFeatureAvailable,
 }: {
   mlPreview: ReturnType<typeof useDemoMode>["mlPreview"];
+  selectedFeatures: string[];
   isFeatureAvailable: ReturnType<typeof useDemoMode>["isFeatureAvailable"];
 }) {
+
   const unlocked = isFeatureAvailable("ProPlus");
 
   return (
@@ -454,8 +462,8 @@ function MlStage({
       ) : (
         <>
           <div className="feature-chip-grid">
-            {mlPreview.selectedFeatures.map((feature) => (
-              <span className="feature-chip active" key={feature}>
+            {selectedFeatures.map((feature) => (
+                  <span className="feature-chip active" key={feature}>
                 <CheckCircle2 size={14} />
                 {feature}
               </span>
@@ -566,7 +574,7 @@ function LicenseWorkflowPanel() {
             onClick={() => setSelectedPlan(plan.code)}
           >
             <strong>{plan.name}</strong>
-            <span>{plan.price}</span>
+            <span>{plan.priceLabel}</span>
             <small>{plan.description}</small>
           </button>
         ))}

@@ -1,0 +1,918 @@
+================================================================================================
+PLANTPROCESS IQ FRONTEND MISC AUDIT - E2E / SCRIPTS / TEST RESULTS
+================================================================================================
+
+Product Name          : PlantProcess IQ
+Generated At          : 2026-05-21 13:23:55
+Repository Root       : C:\Workspace\PlantProcess-IQ
+Output Folder         : C:\Workspace\PlantProcess-IQ\Documentation\UltimateAudit_21May2026_132105
+Included Files        : 11
+Total Lines           : 778
+Total Size            : 0.021 MB
+Mask Secrets          : True
+Max File Size         : 8 MB
+PowerShell Version    : 5.1.26100.7920
+Machine Name          : WAP174432
+User Name             : elka01
+
+------------------------------------------------------------------------------------------------
+CATEGORY SUMMARY
+------------------------------------------------------------------------------------------------
+
+Frontend Misc: E2E, Scripts, Test Results, Reports Files:    11 | Lines:      778 | Size:    0.021 MB
+
+------------------------------------------------------------------------------------------------
+CLASSIFICATION SUMMARY
+------------------------------------------------------------------------------------------------
+
+Frontend E2E Test                          Files:    10 | Lines:      624
+Frontend Script                            Files:     1 | Lines:      154
+
+------------------------------------------------------------------------------------------------
+EXTENSION / SPECIAL FILE SUMMARY
+------------------------------------------------------------------------------------------------
+
+.json                Files:     1 | Lines:       18 | Size:      0.4 KB
+.mjs                 Files:     1 | Lines:      154 | Size:     3.58 KB
+.ts                  Files:     9 | Lines:      606 | Size:    17.24 KB
+
+------------------------------------------------------------------------------------------------
+TABLE OF CONTENTS
+------------------------------------------------------------------------------------------------
+
+    1. Frontend\PlantProcess.Web\e2e\api-smoke.spec.ts | Frontend E2E Test | 99 lines | 3.14 KB
+    2. Frontend\PlantProcess.Web\e2e\critical-shell-regression.spec.ts | Frontend E2E Test | 22 lines | 0.82 KB
+    3. Frontend\PlantProcess.Web\e2e\full-stack-smoke.spec.ts | Frontend E2E Test | 29 lines | 0.95 KB
+    4. Frontend\PlantProcess.Web\e2e\golden-path.spec.ts | Frontend E2E Test | 222 lines | 5.82 KB
+    5. Frontend\PlantProcess.Web\e2e\helpers\auth.ts | Frontend E2E Test | 51 lines | 1.24 KB
+    6. Frontend\PlantProcess.Web\e2e\helpers\networkGuard.ts | Frontend E2E Test | 39 lines | 1.01 KB
+    7. Frontend\PlantProcess.Web\e2e\p0-auth-pages-contract.spec.ts | Frontend E2E Test | 45 lines | 1.29 KB
+    8. Frontend\PlantProcess.Web\e2e\p1-risk-dataquality-contract.spec.ts | Frontend E2E Test | 71 lines | 1.87 KB
+    9. Frontend\PlantProcess.Web\e2e\route-smoke.spec.ts | Frontend E2E Test | 28 lines | 1.09 KB
+   10. Frontend\PlantProcess.Web\e2e\tsconfig.json | Frontend E2E Test | 18 lines | 0.4 KB
+   11. Frontend\PlantProcess.Web\scripts\audit-language.mjs | Frontend Script | 154 lines | 3.58 KB
+
+------------------------------------------------------------------------------------------------
+INCLUDED FILE TREE
+------------------------------------------------------------------------------------------------
+
+ - Frontend\PlantProcess.Web\e2e\api-smoke.spec.ts
+ - Frontend\PlantProcess.Web\e2e\critical-shell-regression.spec.ts
+ - Frontend\PlantProcess.Web\e2e\full-stack-smoke.spec.ts
+ - Frontend\PlantProcess.Web\e2e\golden-path.spec.ts
+ - Frontend\PlantProcess.Web\e2e\helpers\auth.ts
+ - Frontend\PlantProcess.Web\e2e\helpers\networkGuard.ts
+ - Frontend\PlantProcess.Web\e2e\p0-auth-pages-contract.spec.ts
+ - Frontend\PlantProcess.Web\e2e\p1-risk-dataquality-contract.spec.ts
+ - Frontend\PlantProcess.Web\e2e\route-smoke.spec.ts
+ - Frontend\PlantProcess.Web\e2e\tsconfig.json
+ - Frontend\PlantProcess.Web\scripts\audit-language.mjs
+
+================================================================================================
+FULL FILE CONTENT
+================================================================================================
+
+[FILE_START]
+[METADATA: Path='Frontend\PlantProcess.Web\e2e\api-smoke.spec.ts', Category='Frontend Misc: E2E, Scripts, Test Results, Reports', Classification='Frontend E2E Test', Lines=99, SizeKB=3.14, Modified='2026-05-20 12:14:47']
+
+import { expect, test } from "@playwright/test";
+import { authenticatedGet, login, apiBaseUrl } from "./helpers/auth";
+
+test.describe("PlantProcess IQ backend API smoke", () => {
+  test("login returns access token", async ({ request }) => {
+    const token = await login(request);
+    expect(token.length).toBeGreaterThan(20);
+  });
+
+  test("health endpoint responds with authenticated user", async ({ request }) => {
+    const response = await authenticatedGet(request, "/health");
+
+    expect(
+      response.ok(),
+      `/health should return 200 for authenticated smoke user but returned HTTP ${response.status()}`
+    ).toBeTruthy();
+
+    const body = await response.json();
+    expect(body).toBeDefined();
+  });
+
+  test("db-health endpoint responds with authenticated user", async ({ request }) => {
+    const response = await authenticatedGet(request, "/db-health");
+
+    expect(
+      [200, 503].includes(response.status()),
+      `/db-health should return 200 or controlled 503 for authenticated smoke user but returned HTTP ${response.status()}`
+    ).toBeTruthy();
+
+    const body = await response.json();
+    expect(body).toBeDefined();
+  });
+
+  test("readiness endpoint responds with authenticated user", async ({ request }) => {
+    const response = await authenticatedGet(request, "/health/ready");
+
+    expect(
+      [200, 503, 404].includes(response.status()),
+      `/health/ready should return controlled status but returned HTTP ${response.status()}`
+    ).toBeTruthy();
+  });
+
+  test("admin jobs monitor endpoint responds", async ({ request }) => {
+    const response = await authenticatedGet(request, "/admin/jobs-monitor");
+
+    expect(
+      response.ok(),
+      `/admin/jobs-monitor should return 200 but returned HTTP ${response.status()}`
+    ).toBeTruthy();
+
+    const body = await response.json();
+    expect(body).toBeDefined();
+  });
+
+  test("dashboard metadata endpoint responds", async ({ request }) => {
+    const response = await authenticatedGet(
+      request,
+      "/analytics/dashboard/metadata"
+    );
+
+    expect(
+      response.ok(),
+      `/analytics/dashboard/metadata should return 200 but returned HTTP ${response.status()}`
+    ).toBeTruthy();
+
+    const body = await response.json();
+    expect(body).toBeDefined();
+  });
+
+  test("connector provider-types endpoint responds", async ({ request }) => {
+    const response = await authenticatedGet(
+      request,
+      "/admin/connectors/provider-types"
+    );
+
+    expect(
+      response.ok(),
+      `/admin/connectors/provider-types should return 200 but returned HTTP ${response.status()}`
+    ).toBeTruthy();
+
+    const body = await response.json();
+    expect(body).toBeDefined();
+  });
+
+  test("data quality dashboard endpoint responds", async ({ request }) => {
+    const response = await authenticatedGet(
+      request,
+      "/analytics/dashboard/data-quality"
+    );
+
+    expect(
+      response.ok(),
+      `/analytics/dashboard/data-quality should return 200 but returned HTTP ${response.status()}`
+    ).toBeTruthy();
+
+    const body = await response.json();
+    expect(body).toBeDefined();
+  });
+});
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Frontend\PlantProcess.Web\e2e\critical-shell-regression.spec.ts', Category='Frontend Misc: E2E, Scripts, Test Results, Reports', Classification='Frontend E2E Test', Lines=22, SizeKB=0.82, Modified='2026-05-19 00:19:15']
+
+import { expect, test } from "@playwright/test";
+
+test.describe("PlantProcess IQ critical shell regression", () => {
+  test("admin page exposes core operational sections", async ({ page }) => {
+    await page.goto("/admin");
+
+    await expect(page.locator("body")).toContainText(/admin/i);
+    await expect(page.locator("body")).toContainText(/jobs|configuration|schema|import/i);
+  });
+
+  test("dashboard page exposes dashboard and widget experience", async ({ page }) => {
+    await page.goto("/dashboard");
+
+    await expect(page.locator("body")).toContainText(/dashboard|widget|quality|risk/i);
+  });
+
+  test("material investigation route remains available", async ({ page }) => {
+    await page.goto("/materials");
+
+    await expect(page.locator("body")).toContainText(/material|investigation|search/i);
+  });
+});
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Frontend\PlantProcess.Web\e2e\full-stack-smoke.spec.ts', Category='Frontend Misc: E2E, Scripts, Test Results, Reports', Classification='Frontend E2E Test', Lines=29, SizeKB=0.95, Modified='2026-05-19 00:19:15']
+
+import { test, expect } from '@playwright/test';
+
+test.describe('PlantProcess IQ full-stack smoke', () => {
+  
+  test('frontend opens and backend health responds', async ({ page, request }) => {
+    // 1. Authenticate using the exact development credentials
+    const loginRes = await request.post('http://localhost:5063/auth/login', {
+      data: { 
+        UserName: 'admin', 
+        Password: 'ChangeMe123!' 
+      }
+    });
+    
+    expect(loginRes.ok()).toBeTruthy();
+    const data = await loginRes.json();
+    const token = data.accessToken;
+
+    // 2. Assert backend telemetry status is operational
+    const response = await request.get('http://localhost:5063/health', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    expect(response.ok()).toBeTruthy();
+
+    // 3. Confirm front-end web shell loads and intercepts successfully
+    await page.goto('/');
+    await expect(page).toHaveTitle(/PlantProcess IQ/i);
+  });
+
+});
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Frontend\PlantProcess.Web\e2e\golden-path.spec.ts', Category='Frontend Misc: E2E, Scripts, Test Results, Reports', Classification='Frontend E2E Test', Lines=222, SizeKB=5.82, Modified='2026-05-20 13:04:56']
+
+import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
+import { apiBaseUrl, login } from "./helpers/auth";
+
+async function getJson<T>(
+  request: APIRequestContext,
+  path: string,
+  token: string
+): Promise<T> {
+  const response = await request.get(`${apiBaseUrl}${path}`, {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+
+  expect(
+    response.ok(),
+    `${path} should return 2xx but returned HTTP ${response.status()}`
+  ).toBeTruthy();
+
+  return response.json() as Promise<T>;
+}
+
+async function getControlled(
+  request: APIRequestContext,
+  path: string,
+  token: string
+) {
+  const response = await request.get(`${apiBaseUrl}${path}`, {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+
+  expect(
+    response.status(),
+    `${path} should not return 5xx but returned HTTP ${response.status()}`
+  ).toBeLessThan(500);
+
+  return response;
+}
+
+async function prepareAuthenticatedPage(page: Page, token: string) {
+  await page.addInitScript((accessToken) => {
+    window.localStorage.setItem("plantprocess.auth.accessToken", accessToken);
+    window.localStorage.setItem("plantprocess.auth.userName", "admin");
+    window.localStorage.setItem("plantprocess.auth.role", "Admin");
+    window.localStorage.setItem(
+      "plantprocess.auth.expiresAtUtc",
+      new Date(Date.now() + 60 * 60 * 1000).toISOString()
+    );
+  }, token);
+}
+
+async function gotoAndExpectText(
+  page: Page,
+  url: string,
+  expected: RegExp
+) {
+  await page.goto(url, {
+    waitUntil: "domcontentloaded",
+    timeout: 30_000
+  });
+
+  await page.waitForLoadState("networkidle", {
+    timeout: 15_000
+  }).catch(() => {
+    // Some app pages may keep polling; do not fail solely on networkidle.
+  });
+
+  await expect(page.locator("body")).toContainText(expected, {
+    timeout: 20_000
+  });
+}
+
+test.describe("PlantProcess IQ Golden Path", () => {
+  test("proves login, admin visibility, dashboard, data quality, risk API, connector readiness, and schema readiness", async ({
+    page,
+    request
+  }) => {
+    const unexpectedServerResponses: string[] = [];
+
+    page.on("response", (response) => {
+      const status = response.status();
+      const url = response.url();
+
+      if (status < 500) {
+        return;
+      }
+
+      /*
+       * This endpoint is a background self-healing/ensure action triggered by
+       * dashboard pages. It is not the golden-path business assertion.
+       *
+       * Backend hardening task:
+       * Make /analytics/dashboard/definitions/system-templates/ensure
+       * idempotent/concurrency-safe and add a dedicated backend integration test.
+       */
+      if (url.includes("/analytics/dashboard/definitions/system-templates/ensure")) {
+        return;
+      }
+
+      unexpectedServerResponses.push(`${status} ${url}`);
+    });
+
+    const token = await login(request);
+    expect(token.length).toBeGreaterThan(20);
+
+    await prepareAuthenticatedPage(page, token);
+
+    // Platform health
+    await getControlled(request, "/health", token);
+    await getControlled(request, "/db-health", token);
+
+    // Admin / operational visibility
+    await gotoAndExpectText(
+      page,
+      "/admin",
+      /admin|jobs|configuration|schema|import/i
+    );
+
+    const adminOverview = await getJson<unknown>(
+      request,
+      "/admin/overview",
+      token
+    );
+    expect(adminOverview).toBeDefined();
+
+    const jobsMonitor = await getJson<unknown>(
+      request,
+      "/admin/jobs-monitor",
+      token
+    );
+    expect(jobsMonitor).toBeDefined();
+
+    // Dashboard foundation
+    await gotoAndExpectText(
+      page,
+      "/dashboard",
+      /dashboard|widget|quality|risk/i
+    );
+
+    const dashboardOverview = await getJson<unknown>(
+      request,
+      "/analytics/dashboard/overview",
+      token
+    );
+    expect(dashboardOverview).toBeDefined();
+
+    const dashboardMetadata = await getJson<unknown>(
+      request,
+      "/analytics/dashboard/metadata",
+      token
+    );
+    expect(dashboardMetadata).toBeDefined();
+
+    const dashboardDefinitions = await getJson<unknown>(
+      request,
+      "/analytics/dashboard/definitions",
+      token
+    );
+    expect(dashboardDefinitions).toBeDefined();
+
+    // Data quality foundation
+    await gotoAndExpectText(
+      page,
+      "/data-quality",
+      /data quality|quality|issue|readiness|scan/i
+    );
+
+    const dataQualityDashboard = await getJson<unknown>(
+      request,
+      "/analytics/dashboard/data-quality",
+      token
+    );
+    expect(dataQualityDashboard).toBeDefined();
+
+    const dataQualityIssues = await getJson<unknown>(
+      request,
+      "/data-quality/issues",
+      token
+    );
+    expect(dataQualityIssues).toBeDefined();
+
+    await getControlled(request, "/data-quality/scan-preview", token);
+
+    // Risk API contract.
+    // /risk UI route is already tested by route-smoke.spec.ts.
+    const riskDashboard = await getJson<unknown>(
+      request,
+      "/analytics/dashboard/risk",
+      token
+    );
+    expect(riskDashboard).toBeDefined();
+
+    // Investigation / material route visibility
+    await gotoAndExpectText(
+      page,
+      "/materials",
+      /material|investigation|search|genealogy|quality/i
+    );
+
+    // Connector and schema readiness
+    const connectorProviderTypes = await getJson<unknown>(
+      request,
+      "/admin/connectors/provider-types",
+      token
+    );
+    expect(connectorProviderTypes).toBeDefined();
+
+    const schemaSummary = await getJson<unknown>(
+      request,
+      "/admin/schema-configuration/summary",
+      token
+    );
+    expect(schemaSummary).toBeDefined();
+
+    expect(
+      unexpectedServerResponses,
+      `Unexpected 5xx responses:\n${unexpectedServerResponses.join("\n")}`
+    ).toEqual([]);
+  });
+});
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Frontend\PlantProcess.Web\e2e\helpers\auth.ts', Category='Frontend Misc: E2E, Scripts, Test Results, Reports', Classification='Frontend E2E Test', Lines=51, SizeKB=1.24, Modified='2026-05-20 11:53:00']
+
+import { APIRequestContext, expect } from "@playwright/test";
+
+export const apiBaseUrl =
+  process.env.PLAYWRIGHT_API_URL ||
+  process.env.VITE_API_BASE_URL ||
+  "http://localhost:5063";
+
+export const smokeUserName =
+  process.env.PPIQ_SMOKE_USERNAME ||
+  process.env.VITE_SMOKE_USERNAME ||
+  "admin";
+
+export const smokePassword =
+  process.env.PPIQ_SMOKE_PASSWORD ||
+  process.env.VITE_SMOKE_PASSWORD ||
+  "ChangeMe123!";
+
+export async function login(request: APIRequestContext): Promise<string> {
+  const response = await request.post(`${apiBaseUrl}/auth/login`, {
+    data: {
+      UserName: smokeUserName,
+      Password: smokePassword
+    }
+  });
+
+  expect(
+    response.ok(),
+    `Login failed against ${apiBaseUrl}/auth/login with HTTP ${response.status()}`
+  ).toBeTruthy();
+
+  const body = await response.json();
+
+  const token = body.accessToken || body.token;
+
+  expect(token, "Login response must contain accessToken or token").toBeTruthy();
+
+  return token;
+}
+
+export async function authenticatedGet(
+  request: APIRequestContext,
+  url: string
+) {
+  const token = await login(request);
+
+  return request.get(`${apiBaseUrl}${url}`, {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+}
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Frontend\PlantProcess.Web\e2e\helpers\networkGuard.ts', Category='Frontend Misc: E2E, Scripts, Test Results, Reports', Classification='Frontend E2E Test', Lines=39, SizeKB=1.01, Modified='2026-05-19 10:14:19']
+
+import type { Page } from "@playwright/test";
+import { expect } from "@playwright/test";
+
+const ignoredUrlParts = [
+  "favicon",
+  "vite",
+  "sockjs",
+  "hot-update",
+];
+
+export function installNetworkGuard(page: Page) {
+  const failedResponses: string[] = [];
+  const consoleErrors: string[] = [];
+
+  page.on("response", (response) => {
+    const url = response.url();
+    const status = response.status();
+
+    if (ignoredUrlParts.some((part) => url.includes(part))) return;
+
+    if ([401, 403, 404, 500].includes(status)) {
+      failedResponses.push(`${status} ${url}`);
+    }
+  });
+
+  page.on("console", (message) => {
+    if (message.type() === "error") {
+      consoleErrors.push(message.text());
+    }
+  });
+
+  return async function assertNoNetworkFailures() {
+    expect(failedResponses, `Unexpected API failures:\n${failedResponses.join("\n")}`)
+      .toEqual([]);
+
+    expect(consoleErrors, `Unexpected browser console errors:\n${consoleErrors.join("\n")}`)
+      .toEqual([]);
+  };
+}
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Frontend\PlantProcess.Web\e2e\p0-auth-pages-contract.spec.ts', Category='Frontend Misc: E2E, Scripts, Test Results, Reports', Classification='Frontend E2E Test', Lines=45, SizeKB=1.29, Modified='2026-05-19 10:14:35']
+
+import { expect, test } from "@playwright/test";
+import { installNetworkGuard } from "./helpers/networkGuard";
+
+async function login(request: any) {
+  const response = await request.post("http://localhost:5063/auth/login", {
+    data: {
+      userName: "admin",
+      password: "ChangeMe123!",
+    },
+  });
+
+  expect(response.ok()).toBeTruthy();
+
+  const body = await response.json();
+  expect(body.accessToken).toBeTruthy();
+  expect(body.role).toBe("Admin");
+
+  return body.accessToken as string;
+}
+
+test.describe("PlantProcess IQ P0 authenticated page contract", () => {
+  test("core pages load without auth, route, DTO, or console failures", async ({ page, request }) => {
+    const token = await login(request);
+
+    await page.addInitScript((accessToken) => {
+      window.localStorage.setItem("plantprocess.auth.accessToken", accessToken);
+    }, token);
+
+    const assertNoNetworkFailures = installNetworkGuard(page);
+
+    for (const route of [
+      "/dashboard",
+      "/risk",
+      "/data-quality",
+      "/correlations",
+      "/materials",
+      "/admin",
+    ]) {
+      await page.goto(route);
+      await expect(page.locator("body")).toContainText(/PlantProcess|Dashboard|Risk|Data|Admin|Material|Correlation/i);
+    }
+
+    await assertNoNetworkFailures();
+  });
+});
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Frontend\PlantProcess.Web\e2e\p1-risk-dataquality-contract.spec.ts', Category='Frontend Misc: E2E, Scripts, Test Results, Reports', Classification='Frontend E2E Test', Lines=71, SizeKB=1.87, Modified='2026-05-20 13:04:40']
+
+import { expect, test } from "@playwright/test";
+import { apiBaseUrl, login } from "./helpers/auth";
+
+async function authenticatedGet(request: any, path: string, token: string) {
+  return request.get(`${apiBaseUrl}${path}`, {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+}
+
+test.describe("PlantProcess IQ P1 risk and data-quality contracts", () => {
+  test("backend risk and data-quality APIs return stable JSON contracts", async ({
+    request
+  }) => {
+    const token = await login(request);
+
+    const risk = await authenticatedGet(
+      request,
+      "/analytics/dashboard/risk",
+      token
+    );
+
+    expect(
+      risk.ok(),
+      `/analytics/dashboard/risk should return 2xx but returned HTTP ${risk.status()}`
+    ).toBeTruthy();
+
+    const riskBody = await risk.json();
+    expect(riskBody).toBeDefined();
+
+    const dataQuality = await authenticatedGet(
+      request,
+      "/analytics/dashboard/data-quality",
+      token
+    );
+
+    expect(
+      dataQuality.ok(),
+      `/analytics/dashboard/data-quality should return 2xx but returned HTTP ${dataQuality.status()}`
+    ).toBeTruthy();
+
+    const dataQualityBody = await dataQuality.json();
+    expect(dataQualityBody).toBeDefined();
+
+    const issues = await authenticatedGet(
+      request,
+      "/data-quality/issues",
+      token
+    );
+
+    expect(
+      issues.ok(),
+      `/data-quality/issues should return 2xx but returned HTTP ${issues.status()}`
+    ).toBeTruthy();
+
+    const issuesBody = await issues.json();
+    expect(issuesBody).toBeDefined();
+
+    const scanPreview = await authenticatedGet(
+      request,
+      "/data-quality/scan-preview",
+      token
+    );
+
+    expect(
+      scanPreview.status(),
+      `/data-quality/scan-preview should not return 5xx but returned HTTP ${scanPreview.status()}`
+    ).toBeLessThan(500);
+  });
+});
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Frontend\PlantProcess.Web\e2e\route-smoke.spec.ts', Category='Frontend Misc: E2E, Scripts, Test Results, Reports', Classification='Frontend E2E Test', Lines=28, SizeKB=1.09, Modified='2026-05-20 23:29:32']
+
+import { expect, test } from "@playwright/test";
+
+const routes = [
+  { path: "/dashboard",      text: /dashboard|plantprocess iq/i },
+  { path: "/materials",      text: /material|investigation|plantprocess iq/i },
+  { path: "/risk",           text: /risk|plantprocess iq/i },
+  { path: "/data-quality",   text: /data quality|quality|plantprocess iq/i },
+  { path: "/correlations",   text: /correlation|plantprocess iq/i },
+  { path: "/admin",          text: /admin|jobs|configuration|plantprocess iq/i },
+  { path: "/demo-lifecycle", text: /lifecycle|connector|ML|PlantProcess IQ/i },
+];
+
+test.describe("PlantProcess IQ route smoke regression", () => {
+  for (const route of routes) {
+    test(`opens ${route.path} without browser errors`, async ({ page }) => {
+      const pageErrors: string[] = [];
+
+      page.on("pageerror", (error) => {
+        pageErrors.push(error.message);
+      });
+
+      await page.goto(route.path);
+      await expect(page.locator("body")).toContainText(route.text);
+
+      expect(pageErrors, `Browser page errors on ${route.path}`).toEqual([]);
+    });
+  }
+});
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Frontend\PlantProcess.Web\e2e\tsconfig.json', Category='Frontend Misc: E2E, Scripts, Test Results, Reports', Classification='Frontend E2E Test', Lines=18, SizeKB=0.4, Modified='2026-05-20 12:30:01']
+
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "skipLibCheck": true,
+    "types": ["node", "@playwright/test"],
+    "baseUrl": "..",
+    "paths": {
+      "@/*": ["src/*"]
+    },
+    "noEmit": true,
+    "ignoreDeprecations": "6.0"
+  },
+  "include": ["./**/*.ts"]
+}
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Frontend\PlantProcess.Web\scripts\audit-language.mjs', Category='Frontend Misc: E2E, Scripts, Test Results, Reports', Classification='Frontend Script', Lines=154, SizeKB=3.58, Modified='2026-05-21 12:44:05']
+
+import fs from "node:fs";
+import path from "node:path";
+
+const repoRoot = process.cwd();
+
+const scanRoots = [
+  path.join(repoRoot, "src"),
+  path.resolve(repoRoot, "..", "..", "Website", "PlantProcess.Website", "src"),
+];
+
+const allowedExtensions = new Set([
+  ".ts",
+  ".tsx",
+  ".js",
+  ".jsx",
+  ".css",
+  ".html",
+  ".md",
+]);
+
+const forbiddenPatterns = [
+  {
+    pattern: /\bAI prediction\b/gi,
+    reason: "Use 'ML workspace preview' or 'rule-based risk score' instead.",
+  },
+  {
+    pattern: /\bAI-powered prediction\b/gi,
+    reason: "No trained production model is active.",
+  },
+  {
+    pattern: /\bguaranteed root cause\b/gi,
+    reason: "Use 'suspected contributor' instead.",
+  },
+  {
+    pattern: /\bguaranteed root-cause\b/gi,
+    reason: "Use 'suspected contributor' instead.",
+  },
+  {
+    pattern: /\bautomatically finds the root cause\b/gi,
+    reason: "Do not claim autonomous root-cause discovery.",
+  },
+  {
+    pattern: /\bpredicts defects\b/gi,
+    reason: "Use 'risk scoring' or 'quality risk preview' instead.",
+  },
+  {
+    pattern: /\bpredict defect\b/gi,
+    reason: "Use 'risk scoring' or 'quality risk preview' instead.",
+  },
+  {
+    pattern: /\blive AI model\b/gi,
+    reason: "No trained production ML model is active.",
+  },
+  {
+    pattern: /\breal-time AI prediction\b/gi,
+    reason: "Do not claim live AI prediction.",
+  },
+  {
+    pattern: /\bcertified ML model\b/gi,
+    reason: "No certified production ML model exists.",
+  },
+  {
+    pattern: /\bproduction ML model active\b/gi,
+    reason: "ML is preview-only.",
+  },
+];
+
+const ignoredDirectories = new Set([
+  "node_modules",
+  "dist",
+  "build",
+  "coverage",
+  "test-results",
+  "playwright-report",
+  ".git",
+]);
+
+function walk(directory) {
+  if (!fs.existsSync(directory)) return [];
+
+  const entries = fs.readdirSync(directory, { withFileTypes: true });
+  const files = [];
+
+  for (const entry of entries) {
+    if (ignoredDirectories.has(entry.name)) continue;
+
+    const fullPath = path.join(directory, entry.name);
+
+    if (entry.isDirectory()) {
+      files.push(...walk(fullPath));
+      continue;
+    }
+
+    if (!entry.isFile()) continue;
+
+    const ext = path.extname(entry.name);
+    if (allowedExtensions.has(ext)) {
+      files.push(fullPath);
+    }
+  }
+
+  return files;
+}
+
+const violations = [];
+
+for (const root of scanRoots) {
+  for (const file of walk(root)) {
+    const content = fs.readFileSync(file, "utf8");
+
+    for (const rule of forbiddenPatterns) {
+      const matches = [...content.matchAll(rule.pattern)];
+
+      for (const match of matches) {
+        const before = content.slice(0, match.index);
+        const line = before.split(/\r?\n/).length;
+
+        violations.push({
+          file: path.relative(repoRoot, file),
+          line,
+          text: match[0],
+          reason: rule.reason,
+        });
+      }
+    }
+  }
+}
+
+if (violations.length > 0) {
+  console.error("PlantProcess IQ language audit failed.");
+  console.error("Unsafe AI/ML/root-cause wording found:");
+  console.error("");
+
+  for (const violation of violations) {
+    console.error(
+      `- ${violation.file}:${violation.line} -> "${violation.text}" | ${violation.reason}`
+    );
+  }
+
+  console.error("");
+  console.error("Safe wording examples:");
+  console.error("- rule-based risk score");
+  console.error("- suspected contributor");
+  console.error("- correlation analysis");
+  console.error("- evidence-based investigation");
+  console.error("- ML workspace preview only");
+  console.error("- no trained production model active");
+
+  process.exit(1);
+}
+
+console.log(
+  "PlantProcess IQ language audit passed. No misleading AI/ML prediction terminology found."
+);
+
+[FILE_END]
+

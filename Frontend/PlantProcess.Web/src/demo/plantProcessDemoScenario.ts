@@ -1,18 +1,22 @@
 export type DemoLicensePlan = "Light" | "Pro" | "ProPlus" | "Enterprise";
 
-export type DemoWorkflowStepStatus =
-  | "not-started"
-  | "running"
-  | "completed"
-  | "warning"
-  | "locked";
+export type DemoConnectorStatus = "available" | "planned" | "future";
+
+export type DemoJobStatus =
+  | "Queued"
+  | "Running"
+  | "Completed"
+  | "Warning"
+  | "Failed";
 
 export interface DemoConnector {
   id: string;
   name: string;
   provider: string;
-  status: "available" | "planned" | "future";
+  status: DemoConnectorStatus;
   description: string;
+  availableNow: boolean;
+  safeDemoLabel: string;
   tables: DemoSourceTable[];
 }
 
@@ -28,8 +32,14 @@ export interface DemoSourceTable {
 export interface DemoJob {
   id: string;
   name: string;
-  type: "Source Import" | "Schema Mapping" | "Dashboard Refresh" | "Risk Scoring" | "ML Preview";
-  status: "Queued" | "Running" | "Completed" | "Warning" | "Failed";
+  type:
+    | "Source Import"
+    | "Schema Mapping"
+    | "Dashboard Refresh"
+    | "Risk Scoring"
+    | "Report Export"
+    | "ML Preview";
+  status: DemoJobStatus;
   progress: number;
   lastRun: string;
   nextRun: string;
@@ -53,7 +63,7 @@ export interface DemoSchemaMapping {
 export interface DemoWidget {
   id: string;
   title: string;
-  type: "kpi" | "bar" | "line" | "table" | "risk";
+  type: "kpi" | "bar" | "line" | "table" | "risk" | "ml";
   requiredPlan: DemoLicensePlan;
   description: string;
   queryPreview: string;
@@ -65,9 +75,44 @@ export interface DemoWidget {
   }>;
 }
 
-export interface DemoMlPreview {
+export interface DemoUserRole {
+  id: string;
+  userName: string;
+  email: string;
+  role: string;
+  licensePlan: DemoLicensePlan;
+  status: "Active" | "Invited" | "Disabled";
+  privileges: string[];
+}
+
+export interface DemoPrivilegeGroup {
+  group: string;
+  privileges: Array<{
+    code: string;
+    label: string;
+    light: boolean;
+    pro: boolean;
+    proPlus: boolean;
+    enterprise: boolean;
+  }>;
+}
+
+export interface DemoMlTrainingForm {
+  targetOutcome: string;
+  timeWindow: string;
+  validationMethod: string;
   selectedFeatures: string[];
-  trainingStatus: "Not Started" | "Configured" | "Training Preview" | "Preview Result Ready";
+}
+
+export interface DemoMlPreview {
+  status: "PreviewOnly";
+  label: string;
+  disclaimer: string;
+  trainingStatus:
+    | "Not Started"
+    | "Configured"
+    | "Training Preview"
+    | "Preview Result Ready";
   modelName: string;
   resultLabel: string;
   confidence: number;
@@ -76,21 +121,45 @@ export interface DemoMlPreview {
     contribution: number;
     direction: "increases risk" | "reduces risk" | "neutral";
   }>;
+  registry: Array<{
+    modelName: string;
+    version: string;
+    status: string;
+    trainedAt: string;
+    note: string;
+  }>;
 }
 
-export interface DemoUserRole {
+export interface DemoChecklistItem {
   id: string;
-  userName: string;
-  role: string;
-  licensePlan: DemoLicensePlan;
-  status: "Active" | "Invited" | "Disabled";
-  privileges: string[];
+  title: string;
+  acceptance: string;
+  priority: "Required" | "Recommended";
+  done: boolean;
+}
+
+export interface DemoScreenshotItem {
+  id: string;
+  title: string;
+  targetRoute: string;
+  purpose: string;
+  done: boolean;
+}
+
+export interface DemoObjection {
+  objection: string;
+  answer: string;
+}
+
+export interface DemoReportSection {
+  title: string;
+  content: string;
 }
 
 export const licensePlans: Array<{
   code: DemoLicensePlan;
   name: string;
-  price: string;
+  priceLabel: string;
   users: number | "Custom";
   sources: number | "Custom";
   dashboards: number | "Custom";
@@ -100,11 +169,11 @@ export const licensePlans: Array<{
   {
     code: "Light",
     name: "Light",
-    price: "Entry",
+    priceLabel: "Entry / Discovery",
     users: 3,
     sources: 1,
     dashboards: 2,
-    description: "Small discovery package for limited visibility.",
+    description: "Small discovery package for limited plant visibility.",
     features: [
       "Prepared dashboards",
       "Basic data quality",
@@ -114,48 +183,51 @@ export const licensePlans: Array<{
   {
     code: "Pro",
     name: "Pro",
-    price: "Team",
+    priceLabel: "Team / Department",
     users: 10,
     sources: 5,
     dashboards: 10,
-    description: "Operational quality intelligence for one team.",
+    description: "Operational quality intelligence for one plant team.",
     features: [
       "Dashboard builder",
       "Jobs monitor",
       "Rule-based risk score",
       "PDF report preview",
+      "Basic admin preview",
     ],
   },
   {
     code: "ProPlus",
     name: "Pro Plus",
-    price: "Pilot",
+    priceLabel: "Pilot / Advanced",
     users: 25,
     sources: 10,
     dashboards: 20,
-    description: "Investigation-first pilot package.",
+    description: "Investigation-first pilot package with correlation and workflow preview.",
     features: [
       "Correlation analysis",
       "Schema mapping",
       "Investigation workflow",
       "ML workspace preview",
       "Advanced dashboard widgets",
+      "Feature matrix preview",
     ],
   },
   {
     code: "Enterprise",
     name: "Enterprise",
-    price: "Custom",
+    priceLabel: "Custom / Private Deployment",
     users: "Custom",
     sources: "Custom",
     dashboards: "Custom",
-    description: "Private deployment and custom plant integration.",
+    description: "Private deployment, custom connectors, RBAC and multi-plant rollout.",
     features: [
       "Private deployment",
       "Custom connectors",
       "Advanced RBAC",
       "Audit logs",
       "Support SLA",
+      "Enterprise security review",
     ],
   },
 ];
@@ -166,6 +238,8 @@ export const demoConnectors: DemoConnector[] = [
     name: "Surface Inspection CSV",
     provider: "CSV",
     status: "available",
+    availableNow: true,
+    safeDemoLabel: "Available now",
     description: "Controlled CSV export from inspection system.",
     tables: [
       {
@@ -183,6 +257,8 @@ export const demoConnectors: DemoConnector[] = [
     name: "Process PostgreSQL Link",
     provider: "PostgreSQL",
     status: "available",
+    availableNow: true,
+    safeDemoLabel: "Available now / pilot",
     description: "Read-only process data source for demo workflow.",
     tables: [
       {
@@ -208,15 +284,39 @@ export const demoConnectors: DemoConnector[] = [
     name: "Excel Quality Report",
     provider: "Excel",
     status: "planned",
-    description: "Preview only until Excel connector implementation is tested.",
+    availableNow: false,
+    safeDemoLabel: "Planned",
+    description: "Preview only until Excel connector implementation and tests pass.",
     tables: [],
   },
   {
-    id: "oracle_mes",
-    name: "Oracle MES / L2",
+    id: "sqlserver_mes",
+    name: "SQL Server MES",
+    provider: "SQL Server",
+    status: "planned",
+    availableNow: false,
+    safeDemoLabel: "Planned",
+    description: "Planned connector for customer MES / L3 databases.",
+    tables: [],
+  },
+  {
+    id: "oracle_l2",
+    name: "Oracle L2 / MES",
     provider: "Oracle",
     status: "planned",
-    description: "Planned custom connector for industrial MES/L2 systems.",
+    availableNow: false,
+    safeDemoLabel: "Planned",
+    description: "Important industrial connector, but not available until implemented and tested.",
+    tables: [],
+  },
+  {
+    id: "mysql_inspection",
+    name: "MySQL Inspection Device",
+    provider: "MySQL",
+    status: "planned",
+    availableNow: false,
+    safeDemoLabel: "Planned",
+    description: "Useful for inspection devices and local production databases.",
     tables: [],
   },
   {
@@ -224,7 +324,9 @@ export const demoConnectors: DemoConnector[] = [
     name: "OPC-UA / Historian",
     provider: "OPC-UA",
     status: "future",
-    description: "Future live historian integration path.",
+    availableNow: false,
+    safeDemoLabel: "Future",
+    description: "Future live historian integration path. Do not present as active ingestion.",
     tables: [],
   },
 ];
@@ -278,7 +380,17 @@ export const demoJobs: DemoJob[] = [
     progress: 100,
     lastRun: "2026-05-20 09:48",
     nextRun: "2026-05-20 10:18",
-    message: "High risk detected for Coil C-2048. Use suspected contributor wording.",
+    message: "Elevated risk detected for Coil C-2048. Use suspected contributor wording.",
+  },
+  {
+    id: "job_report_export",
+    name: "Generate Customer Investigation Report",
+    type: "Report Export",
+    status: "Completed",
+    progress: 100,
+    lastRun: "2026-05-20 09:51",
+    nextRun: "Manual",
+    message: "Customer-grade report preview generated.",
   },
   {
     id: "job_ml_preview",
@@ -342,7 +454,7 @@ export const demoWidgets: DemoWidget[] = [
     title: "Quality Risk Score",
     type: "risk",
     requiredPlan: "Pro",
-    description: "Rule-based risk score. Not AI prediction.",
+    description: "Rule-based risk score. Not an AI prediction.",
     queryPreview: "RiskScoreService.Calculate(material, genealogy, recent events)",
     value: "72",
     trend: "+11 vs previous shift",
@@ -383,7 +495,7 @@ export const demoWidgets: DemoWidget[] = [
   {
     id: "widget_ml",
     title: "ML Preview Result",
-    type: "risk",
+    type: "ml",
     requiredPlan: "ProPlus",
     description: "Frontend preview only. No trained backend model active.",
     queryPreview: "Future ML inference placeholder",
@@ -402,6 +514,7 @@ export const demoUsers: DemoUserRole[] = [
   {
     id: "u_admin",
     userName: "Demo Admin",
+    email: "admin@demo.plantprocessiq.local",
     role: "Administrator",
     licensePlan: "Enterprise",
     status: "Active",
@@ -416,6 +529,7 @@ export const demoUsers: DemoUserRole[] = [
   {
     id: "u_engineer",
     userName: "Process Engineer",
+    email: "engineer@demo.plantprocessiq.local",
     role: "Engineer",
     licensePlan: "ProPlus",
     status: "Active",
@@ -429,6 +543,7 @@ export const demoUsers: DemoUserRole[] = [
   {
     id: "u_quality",
     userName: "Quality Manager",
+    email: "quality@demo.plantprocessiq.local",
     role: "Quality Manager",
     licensePlan: "Pro",
     status: "Invited",
@@ -440,7 +555,92 @@ export const demoUsers: DemoUserRole[] = [
   },
 ];
 
-export const demoMlPreview: DemoMlPreview = {
+export const demoPrivilegeGroups: DemoPrivilegeGroup[] = [
+  {
+    group: "Dashboard & analytics",
+    privileges: [
+      {
+        code: "dashboard.view",
+        label: "View prepared dashboards",
+        light: true,
+        pro: true,
+        proPlus: true,
+        enterprise: true,
+      },
+      {
+        code: "dashboard.builder",
+        label: "Build dashboard widgets",
+        light: false,
+        pro: true,
+        proPlus: true,
+        enterprise: true,
+      },
+      {
+        code: "correlation.view",
+        label: "View correlation analysis",
+        light: false,
+        pro: false,
+        proPlus: true,
+        enterprise: true,
+      },
+    ],
+  },
+  {
+    group: "Administration",
+    privileges: [
+      {
+        code: "connectors.manage",
+        label: "Configure source connectors",
+        light: false,
+        pro: true,
+        proPlus: true,
+        enterprise: true,
+      },
+      {
+        code: "schema.manage",
+        label: "Manage schema mapping",
+        light: false,
+        pro: false,
+        proPlus: true,
+        enterprise: true,
+      },
+      {
+        code: "users.manage",
+        label: "Manage users and roles",
+        light: false,
+        pro: false,
+        proPlus: false,
+        enterprise: true,
+      },
+    ],
+  },
+  {
+    group: "Reports & ML preview",
+    privileges: [
+      {
+        code: "reports.export",
+        label: "Export customer-grade report",
+        light: false,
+        pro: true,
+        proPlus: true,
+        enterprise: true,
+      },
+      {
+        code: "ml.preview",
+        label: "Open ML workspace preview",
+        light: false,
+        pro: false,
+        proPlus: true,
+        enterprise: true,
+      },
+    ],
+  },
+];
+
+export const initialMlTrainingForm: DemoMlTrainingForm = {
+  targetOutcome: "Quality risk class",
+  timeWindow: "Last 90 days",
+  validationMethod: "Holdout validation",
   selectedFeatures: [
     "Equipment",
     "Process step",
@@ -449,6 +649,13 @@ export const demoMlPreview: DemoMlPreview = {
     "Material genealogy",
     "Defect history",
   ],
+};
+
+export const demoMlPreview: DemoMlPreview = {
+  status: "PreviewOnly",
+  label: "ML Workspace Preview — no trained model active",
+  disclaimer:
+    "This workflow demonstrates the future ML user experience only. Current intelligence is rule-based risk scoring, correlation analysis and suspected contributor ranking.",
   trainingStatus: "Preview Result Ready",
   modelName: "Quality Risk Preview Model",
   resultLabel: "Elevated quality risk preview",
@@ -475,4 +682,218 @@ export const demoMlPreview: DemoMlPreview = {
       direction: "increases risk",
     },
   ],
+  registry: [
+    {
+      modelName: "Quality Risk Preview Model",
+      version: "v0-preview",
+      status: "Frontend placeholder",
+      trainedAt: "Not trained",
+      note: "No production model active.",
+    },
+    {
+      modelName: "Defect Family Classifier",
+      version: "future",
+      status: "Planned",
+      trainedAt: "Future",
+      note: "Requires validated historical labeled quality data.",
+    },
+    {
+      modelName: "Root Contributor Ranking",
+      version: "future",
+      status: "Planned",
+      trainedAt: "Future",
+      note: "Will remain explainability-first and human-reviewed.",
+    },
+  ],
 };
+
+export const demoChecklist: DemoChecklistItem[] = [
+  {
+    id: "health",
+    title: "API health",
+    acceptance: "/health returns 200",
+    priority: "Required",
+    done: true,
+  },
+  {
+    id: "db-health",
+    title: "DB health",
+    acceptance: "/db-health returns 200 and migration state is clean",
+    priority: "Required",
+    done: true,
+  },
+  {
+    id: "login",
+    title: "Demo login",
+    acceptance: "Seeded demo user can log in",
+    priority: "Required",
+    done: true,
+  },
+  {
+    id: "seed",
+    title: "Seeded data",
+    acceptance: "Dashboard, quality, risk and investigation screens show records",
+    priority: "Required",
+    done: true,
+  },
+  {
+    id: "console",
+    title: "Browser console",
+    acceptance: "No red console errors and no failed requests during golden path",
+    priority: "Required",
+    done: false,
+  },
+  {
+    id: "connector-truth",
+    title: "Connector honesty",
+    acceptance: "Excel, Oracle, SQL Server, MySQL and OPC-UA are not falsely available",
+    priority: "Required",
+    done: false,
+  },
+  {
+    id: "language",
+    title: "AI wording",
+    acceptance: "No AI prediction or guaranteed root cause wording",
+    priority: "Required",
+    done: false,
+  },
+  {
+    id: "report",
+    title: "Customer report",
+    acceptance: "Report preview is demo-ready",
+    priority: "Recommended",
+    done: true,
+  },
+];
+
+export const screenshotPack: DemoScreenshotItem[] = [
+  {
+    id: "dashboard",
+    title: "Command dashboard",
+    targetRoute: "/dashboard",
+    purpose: "Executive opening screen with KPI, quality and risk visibility.",
+    done: false,
+  },
+  {
+    id: "admin-db",
+    title: "Admin DB configuration",
+    targetRoute: "/admin",
+    purpose: "Show source connection and connector honesty.",
+    done: false,
+  },
+  {
+    id: "admin-schema",
+    title: "Schema mapping SQL preview",
+    targetRoute: "/admin-preview",
+    purpose: "Show mapping from plant-specific data to generic model.",
+    done: false,
+  },
+  {
+    id: "jobs",
+    title: "Jobs monitor",
+    targetRoute: "/admin-preview",
+    purpose: "Show import, mapping, dashboard refresh and report jobs.",
+    done: false,
+  },
+  {
+    id: "ml",
+    title: "ML workspace preview",
+    targetRoute: "/admin-preview",
+    purpose: "Show feature selection, training mock, registry and explainability.",
+    done: false,
+  },
+  {
+    id: "report",
+    title: "Customer-grade report",
+    targetRoute: "/admin-preview",
+    purpose: "Show final investigation report preview.",
+    done: false,
+  },
+];
+
+export const executiveFiveMinuteScript: string[] = [
+  "Position PlantProcess IQ as a generic manufacturing quality-intelligence layer.",
+  "Clarify it does not replace MES, SCADA, L2 automation or BI.",
+  "Open dashboard: plant health, risk, quality and data readiness.",
+  "Open one quality issue and follow material genealogy to process evidence.",
+  "Show suspected contributors and correlation using careful wording.",
+  "Show report output, license progression and pilot/readiness next step.",
+];
+
+export const twentyMinuteScript: string[] = [
+  "00:00–02:00 — Product positioning: intelligence layer, not MES/SCADA/L2 replacement.",
+  "02:00–05:00 — Dashboard overview: quality, risk, readiness and defect families.",
+  "05:00–08:00 — Admin connector story: CSV/PostgreSQL available, Excel/Oracle/SQL Server planned.",
+  "08:00–11:00 — Schema mapping: source table to canonical quality/process model.",
+  "11:00–14:00 — Jobs monitor: import, mapping, dashboard refresh and risk scoring.",
+  "14:00–17:00 — Investigation-first story: event → material → genealogy → process evidence.",
+  "17:00–19:00 — ML workspace preview: feature selection, training mock, registry, explainability.",
+  "19:00–20:00 — Report, pricing/license progression and next-step CTA.",
+];
+
+export const objections: DemoObjection[] = [
+  {
+    objection: "Is this replacing our MES?",
+    answer:
+      "No. PlantProcess IQ sits above MES/L2/SCADA/inspection/databases as an intelligence and investigation layer. Existing systems remain the operational source.",
+  },
+  {
+    objection: "Is this an AI system predicting defects?",
+    answer:
+      "Not yet. Current product intelligence is rule-based risk scoring, correlation analysis and suspected contributor ranking. ML is preview-only until trained and validated.",
+  },
+  {
+    objection: "Can you connect to Oracle or SQL Server?",
+    answer:
+      "The architecture supports connector expansion. For the current demo, only tested connectors are marked available. Oracle/SQL Server are planned or custom pilot connectors.",
+  },
+  {
+    objection: "How is this different from Power BI or Qlik?",
+    answer:
+      "BI visualizes data. PlantProcess IQ adds manufacturing canonical mapping, genealogy, quality-event investigation, risk scoring and workflow context before visualization.",
+  },
+  {
+    objection: "Can the engineer trust the root cause?",
+    answer:
+      "The system does not claim guaranteed root cause. It presents evidence, correlations and suspected contributors for engineer validation.",
+  },
+];
+
+export const customerReportSections: DemoReportSection[] = [
+  {
+    title: "Executive Summary",
+    content:
+      "Coil C-2048 shows elevated quality risk. The system highlights temperature instability and speed variation as suspected contributors. Engineering validation is required before operational changes.",
+  },
+  {
+    title: "Affected Material",
+    content:
+      "Material genealogy links the affected coil to upstream heat, slab and processing route. The inspection defect family is surface-related with medium-high severity.",
+  },
+  {
+    title: "Process Evidence",
+    content:
+      "Parameter windows before inspection show instability in temperature and speed trend. These are correlation-based suspected contributors, not guaranteed root cause.",
+  },
+  {
+    title: "Recommended Next Step",
+    content:
+      "Run a focused process engineering review over the same parameter window, compare against known-good materials, and validate against additional historical batches.",
+  },
+];
+
+export const forbiddenLanguageExamples = [
+  "AI prediction",
+  "guaranteed root cause",
+  "automatically finds the root cause",
+  "predicts defects",
+  "live AI model",
+];
+
+export const safeLanguageExamples = [
+  "rule-based risk score",
+  "suspected contributor",
+  "correlation analysis",
+  "evidence-based investigation",
+  "ML workspace preview only",
+];
