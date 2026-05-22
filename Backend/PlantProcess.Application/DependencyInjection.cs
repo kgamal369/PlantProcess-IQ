@@ -1,5 +1,11 @@
-﻿using PlantProcess.Application.Integration.Services.Staging;
-using PlantProcess.Application.Integration.Services.SchemaConfiguration;
+﻿// ============================================================
+// FILE: Backend/PlantProcess.Application/DependencyInjection.cs
+// FIX: Removed duplicate using directives for
+//      PlantProcess.Application.Analytics.Interfaces
+//      PlantProcess.Application.Analytics.Services
+//      (were declared twice — lines 20496-20497 AND 20530-20531)
+// ============================================================
+
 using Microsoft.Extensions.DependencyInjection;
 using PlantProcess.Application.Analytics.Interfaces;
 using PlantProcess.Application.Analytics.Services;
@@ -9,9 +15,10 @@ using PlantProcess.Application.Dashboarding.Services.Dashboards;
 using PlantProcess.Application.Dashboarding.Services.Metadata;
 using PlantProcess.Application.Dashboarding.Services.Queries;
 using PlantProcess.Application.Dashboarding.Services.Widgets;
+using PlantProcess.Application.Demo.Interfaces;
+using PlantProcess.Application.Demo.Services;
 using PlantProcess.Application.Integration.Contracts;
 using PlantProcess.Application.Integration.Contracts.Jobs;
-using PlantProcess.Application.Integration.Services.Jobs;
 using PlantProcess.Application.Integration.Interfaces.Connectors;
 using PlantProcess.Application.Integration.Interfaces.Import;
 using PlantProcess.Application.Integration.Interfaces.Jobs;
@@ -21,8 +28,14 @@ using PlantProcess.Application.Integration.Interfaces.SourceSystems;
 using PlantProcess.Application.Integration.Interfaces.Staging;
 using PlantProcess.Application.Integration.Services.Connectors;
 using PlantProcess.Application.Integration.Services.Import;
+using PlantProcess.Application.Integration.Services.Jobs;
 using PlantProcess.Application.Integration.Services.Mapping;
+using PlantProcess.Application.Integration.Services.SchemaConfiguration;
 using PlantProcess.Application.Integration.Services.SourceSystems;
+using PlantProcess.Application.Integration.Services.Staging;
+using PlantProcess.Application.Licensing.Interfaces;
+using PlantProcess.Application.Licensing.Options;
+using PlantProcess.Application.Licensing.Services;
 using PlantProcess.Application.Services.DataQuality;
 using PlantProcess.Application.Services.Materials;
 using PlantProcess.Application.Services.PlantLayout;
@@ -30,13 +43,6 @@ using PlantProcess.Application.Services.Process;
 using PlantProcess.Application.Services.Quality;
 using PlantProcess.Application.Services.Readiness;
 using PlantProcess.Application.Services.Reporting;
-using PlantProcess.Application.Licensing.Interfaces;
-using PlantProcess.Application.Licensing.Options;
-using PlantProcess.Application.Licensing.Services;
-using PlantProcess.Application.Demo.Interfaces;
-using PlantProcess.Application.Demo.Services;
-using PlantProcess.Application.Analytics.Interfaces;
-using PlantProcess.Application.Analytics.Services;
 
 namespace PlantProcess.Application;
 
@@ -98,13 +104,11 @@ public static class DependencyInjection
         services.AddScoped<IDashboardWidgetQueryService, DashboardWidgetQueryService>();
         services.AddScoped<IDashboardDefinitionService, DashboardDefinitionService>();
 
-
-        //Analytics
+        // Analytics — correlation, feature engineering, ML readiness
         services.AddScoped<ICorrelationService, CorrelationService>();
         services.AddScoped<IFeatureEngineeringService, FeatureEngineeringService>();
         services.AddScoped<IQualityLabelBuilderService, QualityLabelBuilderService>();
         services.AddScoped<IMlReadinessService, MlReadinessService>();
-
 
         // Reporting / customer demo pack
         services.AddScoped<IInvestigationReportService, InvestigationReportService>();
@@ -112,9 +116,3 @@ public static class DependencyInjection
         return services;
     }
 }
-
-
-
-
-
-

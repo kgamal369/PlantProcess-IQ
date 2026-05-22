@@ -2,19 +2,22 @@
 import type { ReactNode } from "react";
 import {
   Activity,
+  AlertOctagon,
   AlertTriangle,
   BarChart3,
+  Bug,
   Copy,
   Database,
   Factory,
+  FlaskConical,
+  GitBranch,
   Gauge,
   Grid3X3,
   PlusCircle,
   RefreshCw,
   ScatterChart as ScatterIcon,
-  ShieldAlert,
+  ShieldOff,
   Trash2,
-  Workflow,
 } from "lucide-react";
 import { plantProcessApi } from "@/api/plantProcessApi";
 
@@ -376,33 +379,90 @@ export function DashboardPageContent() {
 
       {layoutMessage ? (
         <div className="success-banner">
-          {layoutMessage}
-          {lastSavedLayoutAtUtc ? (
-            <span className="muted-text"> Last saved: {new Date(lastSavedLayoutAtUtc).toLocaleTimeString()}</span>
+              {layoutMessage}
+              {lastSavedLayoutAtUtc ? (
+                <span className="muted-text"> Last saved: {new Date(lastSavedLayoutAtUtc).toLocaleTimeString()}</span>
+              ) : null}
+            </div>
           ) : null}
-        </div>
-      ) : null}
 
-      <DashboardFilterBar />
-      <ActiveFilterChips />
-      <SelectionBreadcrumb />
+          <DashboardFilterBar />
+          <ActiveFilterChips />
+          <SelectionBreadcrumb />
 
-      {isLoading ? <LoadingPanel /> : null}
-      {error ? <ErrorPanel error={error} /> : null}
+          {isLoading ? <LoadingPanel /> : null}
+          {error ? <ErrorPanel error={error} /> : null}
 
-      {!isLoading && !error && workspace ? (
-        <>
-          <section className="metric-grid">
-            <InteractiveMetric icon={<Factory size={20} />} label="Materials" value={overview?.materials ?? 0} note="Filtered canonical material population" />
-            <InteractiveMetric icon={<Workflow size={20} />} label="Process Steps" value={overview?.processSteps ?? 0} note="Filtered process executions" />
-            <InteractiveMetric icon={<Database size={20} />} label="Parameter Observations" value={overview?.parameterObservations ?? 0} note="Aggregated dashboard data" />
-            <InteractiveMetric icon={<ShieldAlert size={20} />} label="Defect Rate" value={`${formatNumber(overview?.defectRatePercent ?? 0)}%`} note="Click to focus default defect" accent="danger"
-              onClick={() => applySelection({ type: "defect", field: "defectType", value: filters.defectType || "SurfaceCrack", label: filters.defectType || "SurfaceCrack", sourceWidget: "KPI Defect Rate" })} />
-            <InteractiveMetric icon={<Gauge size={20} />} label="High Risk Materials" value={overview?.highRiskMaterials ?? 0}
-              note={`${formatNumber(overview?.highRiskRatePercent ?? 0)}% high risk`} accent="warning"
-              onClick={() => applySelection({ type: "riskClass", field: "riskClass", value: "High", label: "High", sourceWidget: "KPI High Risk Materials" })} />
-            <InteractiveMetric icon={<AlertTriangle size={20} />} label="Data Quality Issues" value={overview?.dataQualityIssues ?? 0} note="Detected validation findings" />
-          </section>
+          {!isLoading && !error && workspace ? (
+            <>
+              <section className="metric-grid">
+      <InteractiveMetric
+        icon={<Factory size={20} />}
+        label="Materials"
+        value={overview?.materials ?? 0}
+        note="Filtered canonical material population"
+      />
+
+      {/* Process Steps — GitBranch: steps in a process flow/tree */}
+      <InteractiveMetric
+        icon={<GitBranch size={20} />}
+        label="Process Steps"
+        value={overview?.processSteps ?? 0}
+        note="Filtered process executions"
+      />
+
+      {/* Parameter Observations — FlaskConical: laboratory/measurement readings */}
+      <InteractiveMetric
+        icon={<FlaskConical size={20} />}
+        label="Parameter Observations"
+        value={overview?.parameterObservations ?? 0}
+        note="Aggregated sensor & measurement data"
+      />
+
+      {/* Defect Rate — Bug: defects are bugs in the production process */}
+      <InteractiveMetric
+        icon={<Bug size={20} />}
+        label="Defect Rate"
+        value={`${formatNumber(overview?.defectRatePercent ?? 0)}%`}
+        note="Click to focus default defect"
+        accent="danger"
+        onClick={() =>
+          applySelection({
+            type: "defect",
+            field: "defectType",
+            value: filters.defectType || "SurfaceCrack",
+            label: filters.defectType || "SurfaceCrack",
+            sourceWidget: "KPI Defect Rate",
+          })
+        }
+      />
+
+      {/* High Risk Materials — AlertOctagon: octagon = STOP/danger (stronger than triangle) */}
+      <InteractiveMetric
+        icon={<AlertOctagon size={20} />}
+        label="High Risk Materials"
+        value={overview?.highRiskMaterials ?? 0}
+        note={`${formatNumber(overview?.highRiskRatePercent ?? 0)}% high risk`}
+        accent="warning"
+        onClick={() =>
+          applySelection({
+            type: "riskClass",
+            field: "riskClass",
+            value: "High",
+            label: "High",
+            sourceWidget: "KPI High Risk Materials",
+          })
+        }
+      />
+
+      {/* Data Quality Issues — ShieldOff: broken shield = quality protection failed */}
+      <InteractiveMetric
+        icon={<ShieldOff size={20} />}
+        label="Data Quality Issues"
+        value={overview?.dataQualityIssues ?? 0}
+        note="Detected validation findings"
+      />
+      </section>
 
           <DashboardGridLayout>
             <div key="defectTrend">

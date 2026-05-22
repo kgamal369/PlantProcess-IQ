@@ -1,3 +1,8 @@
+// ============================================================
+// FILE: Backend/PlantProcess.Infrastructure/Connectors/Common/DataSourceConnectorFactory.cs
+// CHANGES: Added MySQL and MSSQL provider type normalisation mappings.
+// ============================================================
+
 using PlantProcess.Application.Integration.Interfaces.SchemaConfiguration;
 using PlantProcess.Application.Integration.Interfaces.SourceSystems;
 
@@ -38,7 +43,8 @@ public sealed class DataSourceConnectorFactory : IDataSourceConnectorFactory
             return connector;
 
         throw new NotSupportedException(
-            $"No data-source connector is registered for provider type '{providerType}'.");
+            $"No data-source connector is registered for provider type '{providerType}'. " +
+            $"Supported types: csv, excel, postgresql, sqlserver, mysql.");
     }
 
     public ISchemaReader GetSchemaReader(string providerType)
@@ -63,6 +69,10 @@ public sealed class DataSourceConnectorFactory : IDataSourceConnectorFactory
             $"No data reader is registered for provider type '{providerType}'.");
     }
 
+    /// <summary>
+    /// Normalises all recognised provider type aliases to a canonical key.
+    /// New connectors should add their aliases here.
+    /// </summary>
     private static string NormalizeProvider(string providerType)
     {
         if (string.IsNullOrWhiteSpace(providerType))
@@ -70,16 +80,30 @@ public sealed class DataSourceConnectorFactory : IDataSourceConnectorFactory
 
         return providerType.Trim().ToLowerInvariant() switch
         {
-            "csv" => "csv",
-            "csvfile" => "csv",
-            "excel" => "excel",
-            "excelsheet" => "excel",
-            "xlsx" => "excel",
-            "postgres" => "postgresql",
-            "postgresql" => "postgresql",
-            "sqlserver" => "sqlserver",
-            "mssql" => "sqlserver",
-            _ => providerType.Trim().ToLowerInvariant()
+            // File-based
+            "csv"          => "csv",
+            "csvfile"      => "csv",
+            "excel"        => "excel",
+            "excelsheet"   => "excel",
+            "xlsx"         => "excel",
+
+            // PostgreSQL
+            "postgres"     => "postgresql",
+            "postgresql"   => "postgresql",
+
+            // SQL Server / MSSQL
+            "sqlserver"    => "sqlserver",
+            "mssql"        => "sqlserver",
+            "microsoftsql" => "sqlserver",
+            "sql server"   => "sqlserver",
+
+            // MySQL / MariaDB
+            "mysql"        => "mysql",
+            "mariadb"      => "mysql",
+            "maria"        => "mysql",
+
+            // Fall-through for future connectors (oracle, etc.)
+            _              => providerType.Trim().ToLowerInvariant()
         };
     }
 }

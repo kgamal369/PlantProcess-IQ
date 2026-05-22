@@ -52,3 +52,27 @@ https://jenkins.178.105.152.180.sslip.io
 
 cd C:\Workspace\PlantProcess-IQ
 .\tools\GeneratePlantProcessIQ_UltimateAudit.ps1 -OpenAfterGeneration
+
+
+Command server :
+# SSH into server
+ssh root@178.105.152.180
+
+# Pull and redeploy
+cd /opt/PlantProcess-IQ/Backend && git pull origin main
+cd /opt/PlantProcess-IQ/Infrastructure/deploy
+docker compose -f docker-compose.demo.yml up -d --build
+
+
+If only the frontend changed (faster rebuild):
+docker compose -f docker-compose.demo.yml up -d --build plantprocess-app-web
+
+If only the backend changed:
+docker compose -f docker-compose.demo.yml up -d --build plantprocess-api plantprocess-workers
+
+If .env variables changed (no rebuild needed, just recreate):
+docker compose -f docker-compose.demo.yml up -d
+
+Full teardown and fresh start (nuclear option):
+docker compose -f docker-compose.demo.yml down
+docker compose -f docker-compose.demo.yml up -d --build
