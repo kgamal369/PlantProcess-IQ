@@ -10,17 +10,21 @@ namespace PlantProcess.Workers;
 
 /// <summary>
 /// Background worker host for PlantProcess IQ automated jobs.
-/// 
+///
 /// Phase 2 upgrade:
 /// - Every execution updates JobDefinition status.
 /// - Every execution creates JobRunHistory.
 /// - Jobs Monitor becomes a real operational monitor, not a static/synthesized table.
+///
+/// Phase 3 addition (HIGH item 10):
+/// - DeltaImportJob: reads only new rows per dataset using IncrementalCursorField.
 /// </summary>
 public class Worker : BackgroundService
 {
     private const string ImportQueueJobCode = "SYSTEM_IMPORT_QUEUE_PROCESSOR";
-    private const string DataQualityJobCode = "SYSTEM_DATA_QUALITY_SCAN";
-    private const string RiskScoringJobCode = "SYSTEM_RISK_SCORING";
+    private const string DataQualityJobCode  = "SYSTEM_DATA_QUALITY_SCAN";
+    private const string RiskScoringJobCode  = "SYSTEM_RISK_SCORING";
+    private const string DeltaImportJobCode  = "SYSTEM_DELTA_IMPORT_JOB";   // ← NEW
 
     private readonly ILogger<Worker> _logger;
     private readonly IServiceScopeFactory _scopeFactory;
@@ -39,26 +43,37 @@ public class Worker : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _logger.LogInformation(
-            "PlantProcess IQ Worker started. Jobs: ImportQueueProcessorJob, DataQualityScanJob, RiskScoringJob.");
+            "PlantProcess IQ Worker started. Jobs: ImportQueueProcessorJob, DataQualityScanJob, RiskScoringJob, DeltaImportJob.");
 
+        // ── ImportQueueProcessor ──────────────────────────────────────────────
         var importEnabled = _configuration.GetValue("PlantProcess:Workers:EnableImportQueueProcessorJob", true);
         var importIntervalSeconds = Math.Max(30, _configuration.GetValue("PlantProcess:Workers:ImportQueueProcessorIntervalSeconds", 120));
         var importMaxBatches = Math.Clamp(_configuration.GetValue("PlantProcess:Workers:ImportQueueProcessorMaxBatches", 5), 1, 100);
         var importRowsPerBatch = Math.Clamp(_configuration.GetValue("PlantProcess:Workers:ImportQueueProcessorRowsPerBatch", 5000), 1, 50000);
 
+        // ── DataQualityScan ───────────────────────────────────────────────────
         var scanEnabled = _configuration.GetValue("PlantProcess:Workers:EnableDataQualityScanJob", true);
         var scanIntervalSeconds = Math.Max(60, _configuration.GetValue("PlantProcess:Workers:DataQualityScanIntervalSeconds", 3600));
         var scanMaxCandidatesPerRule = Math.Clamp(_configuration.GetValue("PlantProcess:Workers:DataQualityMaxCandidatesPerRule", 500), 1, 5000);
 
+        // ── RiskScoring ───────────────────────────────────────────────────────
         var riskEnabled = _configuration.GetValue("PlantProcess:Workers:EnableRiskScoringJob", true);
         var riskIntervalSeconds = Math.Max(300, _configuration.GetValue("PlantProcess:Workers:RiskScoringIntervalSeconds", 7200));
         var riskMaxMaterials = Math.Clamp(_configuration.GetValue("PlantProcess:Workers:RiskScoringMaxMaterials", 100), 1, 5000);
         var riskType = _configuration.GetValue("PlantProcess:Workers:RiskScoringRiskType", RiskScoreService.DefaultRiskType)
             ?? RiskScoreService.DefaultRiskType;
 
+        // ── DeltaImport (NEW) ─────────────────────────────────────────────────
+        var deltaEnabled = _configuration.GetValue("PlantProcess:Workers:EnableDeltaImportJob", true);
+        var deltaIntervalSeconds = Math.Max(60, _configuration.GetValue("PlantProcess:Workers:DeltaImportIntervalSeconds", 300));
+        var deltaMaxDatasets = Math.Clamp(_configuration.GetValue("PlantProcess:Workers:DeltaImportMaxDatasets", 20), 1, 100);
+        var deltaMaxRowsPerDataset = Math.Clamp(_configuration.GetValue("PlantProcess:Workers:DeltaImportMaxRowsPerDataset", 5000), 1, 50000);
+
+        // ── Initial delays (stagger jobs to avoid startup burst) ──────────────
         var nextImportRun = DateTimeOffset.UtcNow.AddSeconds(10);
-        var nextScanRun = DateTimeOffset.UtcNow.AddSeconds(30);
-        var nextRiskRun = DateTimeOffset.UtcNow.AddSeconds(60);
+        var nextScanRun   = DateTimeOffset.UtcNow.AddSeconds(30);
+        var nextRiskRun   = DateTimeOffset.UtcNow.AddSeconds(60);
+        var nextDeltaRun  = DateTimeOffset.UtcNow.AddSeconds(15);   // ← NEW
 
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -82,11 +97,99 @@ public class Worker : BackgroundService
                 nextRiskRun = DateTimeOffset.UtcNow.AddSeconds(riskIntervalSeconds);
             }
 
+            // ── NEW ────────────────────────────────────────────────────────────
+            if (deltaEnabled && now >= nextDeltaRun)
+            {
+                await RunDeltaImportJobAsync(deltaMaxDatasets, deltaMaxRowsPerDataset, stoppingToken);
+                nextDeltaRun = DateTimeOffset.UtcNow.AddSeconds(deltaIntervalSeconds);
+            }
+            // ──────────────────────────────────────────────────────────────────
+
             await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
         }
 
         _logger.LogInformation("PlantProcess IQ Worker stopping.");
     }
+
+    // ── Delta Import Job (NEW — HIGH item 10) ─────────────────────────────────
+
+    private async Task RunDeltaImportJobAsync(
+        int maxDatasets,
+        int maxRowsPerDataset,
+        CancellationToken cancellationToken)
+    {
+        await using var scope = _scopeFactory.CreateAsyncScope();
+
+        var runtime = scope.ServiceProvider.GetRequiredService<IJobRuntimeService>();
+        var service = scope.ServiceProvider.GetRequiredService<IDeltaImportExecutionService>();
+
+        var run = await runtime.StartAsync(
+            DeltaImportJobCode,
+            triggerSource: "WorkerSchedule",
+            triggeredBy: "PlantProcess.Workers",
+            correlationId: Guid.NewGuid().ToString("N"),
+            cancellationToken);
+
+        if (run.IsFailure || run.Value is null)
+        {
+            _logger.LogWarning(
+                "DeltaImportJob: skipped. Reason={Reason}",
+                run.Error?.Message);
+            return;
+        }
+
+        try
+        {
+            _logger.LogInformation(
+                "DeltaImportJob: starting. MaxDatasets={MaxDatasets}, MaxRowsPerDataset={MaxRows}",
+                maxDatasets,
+                maxRowsPerDataset);
+
+            var summary = await service.ExecuteAllAsync(maxDatasets, maxRowsPerDataset, cancellationToken);
+
+            var message =
+                $"Delta import completed. Datasets={summary.DatasetsProcessed}, " +
+                $"Rows={summary.TotalRowsImported}, Failures={summary.DatasetsFailedCount}.";
+
+            _logger.LogInformation("{Message}", message);
+
+            await runtime.CompleteAsync(
+                run.Value.Id,
+                summary.DatasetsFailedCount == 0 ? JobRunStatus.Ok : JobRunStatus.Failed,
+                message,
+                failureReason: summary.DatasetsFailedCount > 0
+                    ? $"{summary.DatasetsFailedCount} dataset(s) failed — see logs."
+                    : null,
+                resultSummaryJson: System.Text.Json.JsonSerializer.Serialize(summary),
+                cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogWarning("DeltaImportJob: cancelled during shutdown.");
+
+            await runtime.CompleteAsync(
+                run.Value.Id,
+                JobRunStatus.Timeout,
+                "Delta import job cancelled during shutdown.",
+                "Operation cancelled.",
+                null,
+                CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "DeltaImportJob: unhandled exception.");
+
+            await runtime.CompleteAsync(
+                run.Value.Id,
+                JobRunStatus.Failed,
+                ex.Message,
+                ex.Message,
+                null,
+                CancellationToken.None);
+        }
+    }
+
+    // ── Import Queue Processor ────────────────────────────────────────────────
 
     private async Task RunImportQueueProcessorJobAsync(
         int maxBatches,
@@ -130,7 +233,9 @@ public class Worker : BackgroundService
             if (result.IsSuccess && result.Value is not null)
             {
                 var message =
-                    $"Import queue completed. Scanned={result.Value.BatchesScanned}, Completed={result.Value.BatchesCompleted}, Failed={result.Value.BatchesFailed}, Skipped={result.Value.BatchesSkipped}.";
+                    $"Import queue completed. Scanned={result.Value.BatchesScanned}, " +
+                    $"Completed={result.Value.BatchesCompleted}, Failed={result.Value.BatchesFailed}, " +
+                    $"Skipped={result.Value.BatchesSkipped}.";
 
                 _logger.LogInformation("{Message}", message);
 
@@ -183,6 +288,8 @@ public class Worker : BackgroundService
         }
     }
 
+    // ── Data Quality Scan ─────────────────────────────────────────────────────
+
     private async Task RunDataQualityScanJobAsync(
         int maxCandidatesPerRule,
         CancellationToken cancellationToken)
@@ -218,7 +325,8 @@ public class Worker : BackgroundService
             if (result.IsSuccess && result.Value is not null)
             {
                 var message =
-                    $"Data quality scan completed. Candidates={result.Value.CandidatesFound}, NewIssues={result.Value.NewIssuesPersisted}, ExistingSkipped={result.Value.ExistingIssuesSkipped}.";
+                    $"Data quality scan completed. Candidates={result.Value.CandidatesFound}, " +
+                    $"NewIssues={result.Value.NewIssuesPersisted}, ExistingSkipped={result.Value.ExistingIssuesSkipped}.";
 
                 _logger.LogInformation("{Message}", message);
 
@@ -271,6 +379,8 @@ public class Worker : BackgroundService
         }
     }
 
+    // ── Risk Scoring ──────────────────────────────────────────────────────────
+
     private async Task RunRiskScoringJobAsync(
         string riskType,
         int maxMaterials,
@@ -316,7 +426,9 @@ public class Worker : BackgroundService
             if (result.IsSuccess && result.Value is not null)
             {
                 var message =
-                    $"Risk scoring completed. Candidates={result.Value.CandidatesScanned}, Calculated={result.Value.ScoresCalculated}, Stored={result.Value.ScoresStored}, Skipped={result.Value.Skipped}.";
+                    $"Risk scoring completed. Candidates={result.Value.CandidatesScanned}, " +
+                    $"Calculated={result.Value.ScoresCalculated}, Stored={result.Value.ScoresStored}, " +
+                    $"Skipped={result.Value.Skipped}.";
 
                 _logger.LogInformation("{Message}", message);
 

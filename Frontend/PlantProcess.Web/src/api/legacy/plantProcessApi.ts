@@ -1080,6 +1080,28 @@ export const plantProcessApi = {
       request
     ),
 
+    updateConnectionProfile: (
+    id: string,
+    request: {
+      connectionProfileName: string;
+      connectionMode?: string | null;
+      hostName?: string | null;
+      port?: number | null;
+      databaseName?: string | null;
+      schemaName?: string | null;
+      fileRootPath?: string | null;
+      apiBaseUrl?: string | null;
+      secretReference?: string | null;
+      connectionOptionsJson?: string | null;
+      readOnlyEnforced?: boolean | null;
+      description?: string | null;
+    }
+  ) =>
+    putJson<ConnectionProfileRecord>(
+      `/admin/connectors/connection-profiles/${id}`,
+      request
+    ),
+    
   testConnectionProfile: (id: string) =>
     postJson<ConnectionProfileRecord>(
       `/admin/connectors/connection-profiles/${id}/test`,

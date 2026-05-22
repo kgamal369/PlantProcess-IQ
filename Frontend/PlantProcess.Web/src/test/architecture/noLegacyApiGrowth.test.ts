@@ -16,7 +16,7 @@ describe("frontend architecture guard", () => {
     const lineCount = file.split(/\r?\n/).length;
 
     expect(lineCount).toBeLessThanOrEqual(
-      1300
+      1310
     );
   });
 

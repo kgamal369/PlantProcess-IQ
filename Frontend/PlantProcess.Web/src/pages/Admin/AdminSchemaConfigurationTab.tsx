@@ -1,20 +1,33 @@
 // ============================================================
 // FILE: Frontend/PlantProcess.Web/src/pages/Admin/AdminSchemaConfigurationTab.tsx
 //
-// Extracted from monolithic AdminPageContent.tsx.
-// Contains: SchemaConfigurationTab + SchemaViewBuilderPanel
+// HIGH PRIORITY ITEMS 11 + 12 + 13:
+//  11. Schema Configuration visual mapper — map source fields to canonical targets
+//  12. SQL View editor — full-featured textarea with syntax hints, save & preview
+//  13. KPI Definition UI — create/edit KPIs with SQL expressions
+//
+// Replaces the previous read-only version.
 // ============================================================
 
 import { useEffect, useState } from "react";
 import {
+  AlertTriangle,
+  CheckCircle2,
+  ChevronRight,
+  FileCode2,
   FileJson,
-  Link2,
+  Gauge,
+  Loader2,
   PlayCircle,
+  Plus,
+  Save,
   TableProperties,
 } from "lucide-react";
 
 import {
   plantProcessApi,
+  type CreateKpiDefinitionRequest,
+  type CreateSchemaViewDefinitionRequest,
   type KpiDefinitionRecord,
   type SchemaConfigurationSummary,
   type SchemaViewDefinitionRecord,
@@ -34,10 +47,16 @@ export function SchemaConfigurationTab({
 
   return (
     <section className="admin-panel-grid">
-      <SchemaViewBuilderPanel />
 
+      {/* Item 12: SQL View Editor */}
+      <SqlViewEditorPanel />
+
+      {/* Item 13: KPI Definition UI */}
+      <KpiDefinitionPanel />
+
+      {/* Stats summary */}
       <AdminPanel
-        title="Schema Configuration"
+        title="Schema Configuration Summary"
         subtitle="Source objects, mappings and canonical targets"
         icon={<TableProperties size={18} />}
         wide
@@ -54,177 +73,114 @@ export function SchemaConfigurationTab({
         </div>
       </AdminPanel>
 
-      <AdminPanel
-        title="Source Object Coverage"
-        subtitle="Current raw/staging source-object distribution"
-        icon={<FileJson size={18} />}
-      >
-        <div className="admin-list">
-          {coverage.map((item) => (
-            <div className="admin-list-item" key={item.sourceObjectName}>
-              <div>
-                <strong>{item.sourceObjectName}</strong>
-                <span>
-                  {item.mappedRows} mapped / {item.pendingRows} pending /{" "}
-                  {item.failedRows} failed
-                </span>
+      {/* Item 11: Visual field mapper */}
+      <FieldMapperPanel mappings={mappings} coverage={coverage} />
+
+      {/* Source coverage */}
+      {coverage.length > 0 ? (
+        <AdminPanel
+          title="Source Object Coverage"
+          subtitle="Raw/staging rows per source object"
+          icon={<FileJson size={18} />}
+        >
+          <div className="admin-list">
+            {coverage.map((item) => (
+              <div className="admin-list-item" key={item.sourceObjectName}>
+                <div>
+                  <strong>{item.sourceObjectName}</strong>
+                  <span>
+                    {item.mappedRows} mapped / {item.pendingRows} pending / {item.failedRows} failed
+                  </span>
+                </div>
+                <b>{item.totalRows}</b>
               </div>
-              <b>{item.totalRows}</b>
-            </div>
-          ))}
+            ))}
+          </div>
+        </AdminPanel>
+      ) : null}
 
-          {coverage.length === 0 ? (
-            <div className="empty-insight">
-              <strong>No staging source objects found yet.</strong>
-            </div>
-          ) : null}
-        </div>
-      </AdminPanel>
-
-      <AdminPanel
-        title="Mapping Definitions"
-        subtitle="Existing raw-to-canonical mapping metadata"
-        icon={<Link2 size={18} />}
-        wide
-      >
-        <div className="admin-table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Mapping</th>
-                <th>Source Object</th>
-                <th>Target Entity</th>
-                <th>Version</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {mappings.map((mapping) => (
-                <tr key={mapping.id}>
-                  <td>
-                    <strong>{mapping.mappingCode}</strong>
-                    <small>{mapping.mappingName}</small>
-                  </td>
-                  <td>{mapping.sourceObjectName}</td>
-                  <td>{mapping.targetEntityName}</td>
-                  <td>{mapping.mappingVersion}</td>
-                  <td>
-                    <StatusPill
-                      status={mapping.isActive ? "Active" : "Inactive"}
-                      statusClass={mapping.isActive ? "success" : "neutral"}
-                    />
-                  </td>
-                </tr>
-              ))}
-
-              {mappings.length === 0 ? (
-                <tr>
-                  <td colSpan={5}>
-                    No mapping definitions found. Phase 4 will add the visual
-                    schema configuration and SQL/view layer.
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
-        </div>
-      </AdminPanel>
     </section>
   );
 }
 
-// ── SchemaViewBuilderPanel ────────────────────────────────────────────────────
+// ── Item 12: SQL View Editor Panel ────────────────────────────────────────────
 
-function SchemaViewBuilderPanel() {
+function SqlViewEditorPanel() {
   const [schemaViews, setSchemaViews] = useState<SchemaViewDefinitionRecord[]>([]);
-  const [kpis, setKpis] = useState<KpiDefinitionRecord[]>([]);
   const [selectedViewId, setSelectedViewId] = useState("");
   const [preview, setPreview] = useState<SchemaViewPreviewResult | null>(null);
   const [isBusy, setIsBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
-  const [viewForm, setViewForm] = useState({
-    schemaViewCode: "CSV_STAGING_PREVIEW_VIEW",
-    schemaViewName: "CSV Staging Preview View",
+  const [form, setForm] = useState({
+    schemaViewCode: "",
+    schemaViewName: "",
     viewKind: "SqlView",
-    sqlText:
-      "select sr.id, sr.source_object_name, sr.row_number, sr.processing_status, sr.raw_json\n" +
-      "from staging_records sr\n" +
-      "where sr.is_deleted = false\n" +
-      "order by sr.row_number",
+    sqlText: `-- Write a safe SELECT or WITH query.
+-- Joins between staging tables are supported.
+-- Example:
+SELECT
+    sr.id,
+    sr.source_object_name,
+    sr.row_number,
+    sr.processing_status,
+    sr.raw_json
+FROM staging_records sr
+WHERE sr.is_deleted = false
+ORDER BY sr.row_number
+LIMIT 100`,
     maxPreviewRows: 50,
     timeoutSeconds: 15,
-    description: "Controlled SQL view over raw staging records.",
+    description: "",
   });
 
-  const [kpiForm, setKpiForm] = useState({
-    kpiCode: "STAGING_ROW_COUNT",
-    kpiName: "Staging Row Count",
-    kpiCategory: "Production",
-    valueExpression: "count(*)",
-    unit: "rows",
-    dimensionExpression: "source_object_name",
-    aggregationType: "Count",
-  });
+  function setField(key: string, value: unknown) {
+    setForm((f) => ({ ...f, [key]: value }));
+  }
 
-  async function loadSchemaConfig() {
+  async function load() {
     setIsBusy(true);
-    setError(null);
     try {
-      const [views, kpiRows] = await Promise.all([
-        plantProcessApi.getSchemaViews(true),
-        plantProcessApi.getKpiDefinitions(true),
-      ]);
+      const views = await plantProcessApi.getSchemaViews(true);
       setSchemaViews(views);
-      setKpis(kpiRows);
-      if (!selectedViewId && views.length > 0) {
-        setSelectedViewId(views[0].id);
-      }
-    } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : "Failed to load schema config.");
-    } finally {
-      setIsBusy(false);
-    }
-  }
-
-  useEffect(() => { loadSchemaConfig(); }, []);
-
-  async function createSchemaView() {
-    setIsBusy(true);
-    setError(null);
-    setPreview(null);
-    try {
-      const created = await plantProcessApi.createSchemaView({
-        schemaViewCode: viewForm.schemaViewCode,
-        schemaViewName: viewForm.schemaViewName,
-        viewKind: viewForm.viewKind,
-        sqlText: viewForm.sqlText,
-        sourceDatasetIdsJson: "[]",
-        maxPreviewRows: viewForm.maxPreviewRows,
-        timeoutSeconds: viewForm.timeoutSeconds,
-        description: viewForm.description,
-        isSynthetic: true,
-        sourceSystem: "PlantProcessIQ.Admin",
-        sourceRecordId: "PHASE4-SCHEMA-VIEW",
-      });
-      setSelectedViewId(created.id);
-      await loadSchemaConfig();
+      if (!selectedViewId && views.length > 0) setSelectedViewId(views[0].id);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create schema view.");
+      setError(err instanceof Error ? err.message : "Load failed.");
     } finally {
       setIsBusy(false);
     }
   }
 
-  async function previewAdHocSql() {
+  useEffect(() => { load(); }, []);
+
+  function loadSelectedViewIntoEditor(viewId: string) {
+    const view = schemaViews.find((v) => v.id === viewId);
+    if (!view) return;
+    setSelectedViewId(viewId);
+    setForm((f) => ({
+      ...f,
+      schemaViewCode: view.schemaViewCode,
+      schemaViewName: view.schemaViewName,
+      viewKind: view.viewKind,
+      sqlText: view.sqlText,
+      maxPreviewRows: view.maxPreviewRows,
+      timeoutSeconds: view.timeoutSeconds,
+      description: view.description ?? "",
+    }));
+    setPreview(null);
+  }
+
+  async function previewSql() {
     setIsBusy(true);
     setError(null);
     setPreview(null);
+    setSuccessMsg(null);
     try {
       const result = await plantProcessApi.previewAdHocSchemaSql({
-        sqlText: viewForm.sqlText,
-        maxRows: viewForm.maxPreviewRows,
-        timeoutSeconds: viewForm.timeoutSeconds,
+        sqlText: form.sqlText,
+        maxRows: form.maxPreviewRows,
+        timeoutSeconds: form.timeoutSeconds,
       });
       setPreview(result);
     } catch (err) {
@@ -234,32 +190,63 @@ function SchemaViewBuilderPanel() {
     }
   }
 
-  async function previewSelectedView() {
-    if (!selectedViewId) { setError("Select a schema view first."); return; }
+  async function saveView() {
+    if (!form.schemaViewCode.trim() || !form.schemaViewName.trim()) {
+      setError("View Code and View Name are required to save.");
+      return;
+    }
     setIsBusy(true);
     setError(null);
-    setPreview(null);
+    setSuccessMsg(null);
+
     try {
-      const result = await plantProcessApi.previewSchemaView(selectedViewId, {
-        maxRows: viewForm.maxPreviewRows,
-        timeoutSeconds: viewForm.timeoutSeconds,
-      });
-      setPreview(result);
-      await loadSchemaConfig();
+      const existing = schemaViews.find((v) => v.id === selectedViewId);
+      if (existing) {
+        await plantProcessApi.updateSchemaView(existing.id, {
+          schemaViewName: form.schemaViewName,
+          viewKind: form.viewKind,
+          primarySourceDatasetDefinitionId: null,
+          sqlText: form.sqlText,
+          sourceDatasetIdsJson: "[]",
+          maxPreviewRows: form.maxPreviewRows,
+          timeoutSeconds: form.timeoutSeconds,
+          description: form.description,
+        });
+        setSuccessMsg(`✅ View "${form.schemaViewName}" updated.`);
+      } else {
+        const request: CreateSchemaViewDefinitionRequest = {
+          schemaViewCode: form.schemaViewCode,
+          schemaViewName: form.schemaViewName,
+          viewKind: form.viewKind,
+          sqlText: form.sqlText,
+          sourceDatasetIdsJson: "[]",
+          maxPreviewRows: form.maxPreviewRows,
+          timeoutSeconds: form.timeoutSeconds,
+          description: form.description,
+          isSynthetic: false,
+          sourceSystem: "PlantProcessIQ.Admin",
+          sourceRecordId: null,
+        };
+        const created = await plantProcessApi.createSchemaView(request);
+        setSelectedViewId(created.id);
+        setSuccessMsg(`✅ View "${form.schemaViewName}" created.`);
+      }
+      await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Preview failed.");
+      setError(err instanceof Error ? err.message : "Save failed.");
     } finally {
       setIsBusy(false);
     }
   }
 
-  async function approveSelectedView() {
-    if (!selectedViewId) { setError("Select a schema view first."); return; }
+  async function approveView() {
+    if (!selectedViewId) { setError("Select a view first."); return; }
     setIsBusy(true);
     setError(null);
     try {
       await plantProcessApi.approveSchemaView(selectedViewId);
-      await loadSchemaConfig();
+      setSuccessMsg("✅ View approved for use in canonical mappings.");
+      await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Approval failed.");
     } finally {
@@ -267,223 +254,186 @@ function SchemaViewBuilderPanel() {
     }
   }
 
-  async function createKpi() {
-    setIsBusy(true);
-    setError(null);
-    try {
-      await plantProcessApi.createKpiDefinition({
-        schemaViewDefinitionId: selectedViewId || null,
-        kpiCode: kpiForm.kpiCode,
-        kpiName: kpiForm.kpiName,
-        kpiCategory: kpiForm.kpiCategory,
-        valueExpression: kpiForm.valueExpression,
-        unit: kpiForm.unit,
-        dimensionExpression: kpiForm.dimensionExpression,
-        aggregationType: kpiForm.aggregationType,
-        kpiOptionsJson: "{}",
-        description: "Created from Phase 4 Schema Configuration panel.",
-        isSynthetic: true,
-        sourceSystem: "PlantProcessIQ.Admin",
-        sourceRecordId: "PHASE4-KPI",
-      });
-      await loadSchemaConfig();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create KPI.");
-    } finally {
-      setIsBusy(false);
-    }
-  }
-
-  const selectedView = schemaViews.find((x) => x.id === selectedViewId);
+  const selectedView = schemaViews.find((v) => v.id === selectedViewId);
 
   return (
     <AdminPanel
-      title="Schema View Builder"
-      subtitle="Controlled SQL views, JOIN previews and KPI definitions"
-      icon={<TableProperties size={18} />}
+      title="SQL View Editor"
+      subtitle="Write and manage controlled SQL views and JOINs over staging data"
+      icon={<FileCode2 size={18} />}
       wide
     >
       <p className="admin-copy">
-        This layer converts raw/dump/staging records into customer-specific
-        schema views before canonical mapping. Only safe SELECT/WITH queries are
-        allowed — destructive SQL is blocked.
+        Views are safe SELECT/WITH queries over raw staging records. Use them to
+        normalise column names, JOIN tables from different sources, and prepare data
+        for canonical mapping. Only read operations are permitted.
       </p>
 
-      {error ? (
-        <div className="admin-inline-error">{error}</div>
-      ) : null}
+      {error ? <div className="admin-inline-error">{error}</div> : null}
+      {successMsg ? <div className="admin-inline-success">{successMsg}</div> : null}
 
-      {/* SQL View builder */}
-      <div className="admin-schema-grid">
-        <section className="admin-form-card admin-form-card--wide">
-          <h3>Create / Preview Controlled SQL View</h3>
-
-          <div className="admin-form-row">
-            <label>
-              View Code
-              <input
-                value={viewForm.schemaViewCode}
-                onChange={(e) => setViewForm((f) => ({ ...f, schemaViewCode: e.target.value }))}
-              />
-            </label>
-            <label>
-              View Name
-              <input
-                value={viewForm.schemaViewName}
-                onChange={(e) => setViewForm((f) => ({ ...f, schemaViewName: e.target.value }))}
-              />
-            </label>
-            <label>
-              View Kind
-              <select
-                value={viewForm.viewKind}
-                onChange={(e) => setViewForm((f) => ({ ...f, viewKind: e.target.value }))}
-              >
-                <option value="SqlView">SQL View</option>
-                <option value="JoinView">Join View</option>
-                <option value="KpiView">KPI View</option>
-                <option value="MappingPreparationView">Mapping Preparation View</option>
-              </select>
-            </label>
-          </div>
-
-          <textarea
-            className="admin-sql-editor"
-            value={viewForm.sqlText}
-            onChange={(e) => setViewForm((f) => ({ ...f, sqlText: e.target.value }))}
-            spellCheck={false}
-            rows={8}
-          />
-
-          <div className="admin-action-row">
-            <button
-              className="secondary-button"
-              onClick={previewAdHocSql}
-              disabled={isBusy || !viewForm.sqlText.trim()}
-              type="button"
-            >
-              Preview SQL
-            </button>
-            <button
-              className="primary-button"
-              onClick={createSchemaView}
-              disabled={isBusy || !viewForm.schemaViewCode.trim()}
-              type="button"
-            >
-              Save Schema View
-            </button>
-          </div>
-        </section>
-      </div>
-
-      {/* Stored views selector */}
-      <div className="admin-schema-grid">
-        <section className="admin-form-card">
-          <h3>Stored Schema Views</h3>
-          <label>
-            Select View
+      {/* Existing views selector */}
+      {schemaViews.length > 0 ? (
+        <div className="admin-form-row" style={{ marginBottom: "1rem" }}>
+          <label className="admin-form-label">Load existing view</label>
+          <div className="admin-form-inline">
             <select
+              className="admin-select"
               value={selectedViewId}
-              onChange={(e) => setSelectedViewId(e.target.value)}
+              onChange={(e) => loadSelectedViewIntoEditor(e.target.value)}
             >
-              <option value="">Select schema view…</option>
-              {schemaViews.map((view) => (
-                <option key={view.id} value={view.id}>
-                  {view.schemaViewCode} — {view.viewKind}
+              <option value="">New view…</option>
+              {schemaViews.map((v) => (
+                <option key={v.id} value={v.id}>
+                  {v.schemaViewCode} — {v.schemaViewName}
+                  {v.isApproved ? " ✅" : ""}
                 </option>
               ))}
             </select>
-          </label>
-
-          {selectedView ? (
-            <div className="admin-selected-hint">
-              <strong>{selectedView.schemaViewName}</strong>
-              <br />
-              Status: {selectedView.lastValidationStatus ?? "Not validated"} ·
-              Approved: {selectedView.isApproved ? "Yes" : "No"}
-              {selectedView.lastValidationMessage ? (
-                <><br />{selectedView.lastValidationMessage}</>
-              ) : null}
-            </div>
-          ) : null}
-
-          <div className="admin-action-row">
-            <button
-              className="secondary-button"
-              onClick={previewSelectedView}
-              disabled={isBusy || !selectedViewId}
-              type="button"
-            >
-              Preview Selected
-            </button>
-            <button
-              className="secondary-button"
-              onClick={approveSelectedView}
-              disabled={isBusy || !selectedViewId}
-              type="button"
-            >
-              Approve View
-            </button>
+            {selectedView ? (
+              <span className="admin-copy" style={{ fontSize: 12 }}>
+                Status: {selectedView.lastValidationStatus ?? "Not run"} ·
+                Approved: {selectedView.isApproved ? "Yes" : "No"} ·
+                Last: {formatDate(selectedView.lastValidatedAtUtc)}
+              </span>
+            ) : null}
           </div>
-        </section>
+        </div>
+      ) : null}
 
-        {/* KPI creator */}
-        <section className="admin-form-card">
-          <h3>Create KPI Definition</h3>
-          <label>
-            KPI Code
-            <input
-              value={kpiForm.kpiCode}
-              onChange={(e) => setKpiForm((f) => ({ ...f, kpiCode: e.target.value }))}
-            />
-          </label>
-          <label>
-            KPI Name
-            <input
-              value={kpiForm.kpiName}
-              onChange={(e) => setKpiForm((f) => ({ ...f, kpiName: e.target.value }))}
-            />
-          </label>
-          <label>
-            Value Expression
-            <input
-              value={kpiForm.valueExpression}
-              onChange={(e) => setKpiForm((f) => ({ ...f, valueExpression: e.target.value }))}
-            />
-          </label>
-          <button
-            className="primary-button"
-            onClick={createKpi}
-            disabled={isBusy || !kpiForm.kpiCode.trim()}
-            type="button"
+      {/* Form metadata */}
+      <div className="admin-form-grid" style={{ marginBottom: "1rem" }}>
+        <label className="admin-form-label">
+          View Code *
+          <input
+            className="admin-input"
+            value={form.schemaViewCode}
+            onChange={(e) => setField("schemaViewCode", e.target.value)}
+            placeholder="e.g. DEFECT_JOIN_MATERIAL_VIEW"
+            disabled={!!selectedView}
+          />
+        </label>
+        <label className="admin-form-label">
+          View Name *
+          <input
+            className="admin-input"
+            value={form.schemaViewName}
+            onChange={(e) => setField("schemaViewName", e.target.value)}
+            placeholder="e.g. Defect + Material JOIN"
+          />
+        </label>
+        <label className="admin-form-label">
+          View Kind
+          <select
+            className="admin-select"
+            value={form.viewKind}
+            onChange={(e) => setField("viewKind", e.target.value)}
           >
-            Create KPI
+            <option value="SqlView">SQL View — generic SELECT</option>
+            <option value="JoinView">Join View — multi-table JOIN</option>
+            <option value="KpiView">KPI View — aggregation for KPI</option>
+            <option value="MappingPreparationView">Mapping Prep — pre-canonical transform</option>
+          </select>
+        </label>
+        <label className="admin-form-label">
+          Max Preview Rows
+          <select
+            className="admin-select admin-select--narrow"
+            value={form.maxPreviewRows}
+            onChange={(e) => setField("maxPreviewRows", Number(e.target.value))}
+          >
+            {[10, 25, 50, 100, 200].map((v) => (
+              <option key={v} value={v}>{v} rows</option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      {/* SQL Editor */}
+      <label className="admin-form-label">
+        SQL Query
+        <div className="admin-sql-editor-wrapper">
+          <div className="admin-sql-editor-hint">
+            Supported: SELECT, WITH (CTE), JOINs on staging_records. Blocked: INSERT, UPDATE, DELETE, DROP, TRUNCATE.
+          </div>
+          <textarea
+            className="admin-sql-editor admin-sql-editor--large"
+            value={form.sqlText}
+            onChange={(e) => setField("sqlText", e.target.value)}
+            spellCheck={false}
+            rows={12}
+          />
+        </div>
+      </label>
+
+      {/* Description */}
+      <label className="admin-form-label">
+        Description
+        <input
+          className="admin-input"
+          value={form.description}
+          onChange={(e) => setField("description", e.target.value)}
+          placeholder="Describe what this view does and how it will be used"
+        />
+      </label>
+
+      {/* Actions */}
+      <div className="admin-action-row" style={{ marginTop: "1rem", flexWrap: "wrap" }}>
+        <button
+          className="secondary-button"
+          type="button"
+          onClick={previewSql}
+          disabled={isBusy || !form.sqlText.trim()}
+        >
+          {isBusy ? <Loader2 size={14} className="spin" /> : <PlayCircle size={14} />}
+          Preview SQL
+        </button>
+        <button
+          className="primary-button"
+          type="button"
+          onClick={saveView}
+          disabled={isBusy || !form.schemaViewCode.trim()}
+        >
+          {isBusy ? <Loader2 size={14} className="spin" /> : <Save size={14} />}
+          {selectedView ? "Update View" : "Save View"}
+        </button>
+        {selectedView && !selectedView.isApproved ? (
+          <button
+            className="secondary-button"
+            type="button"
+            onClick={approveView}
+            disabled={isBusy}
+          >
+            <CheckCircle2 size={14} /> Approve for Mapping
           </button>
-        </section>
+        ) : null}
       </div>
 
       {/* Preview result */}
       {preview ? (
-        <section className="admin-preview-panel">
+        <div className="admin-preview-panel" style={{ marginTop: "1.5rem" }}>
           <div className="admin-panel__header">
-            <div className="admin-panel__icon"><PlayCircle size={18} /></div>
+            <div className="admin-panel__icon">
+              <PlayCircle size={18} />
+            </div>
             <div>
               <h2>Preview Result</h2>
               <p>
-                {preview.message} · {preview.durationMs}ms · {preview.rowCount} rows
+                {preview.isSuccess ? "✅" : "❌"} {preview.message} ·
+                {preview.durationMs}ms · {preview.rowCount} rows
               </p>
             </div>
           </div>
 
           {preview.columns.length > 0 ? (
-            <div className="admin-table-wrap">
+            <div className="admin-table-wrap" style={{ maxHeight: 300, overflowY: "auto" }}>
               <table>
                 <thead>
                   <tr>
-                    {preview.columns.map((col) => (
-                      <th key={col.columnName}>
-                        {col.columnName}
-                        <small>{col.dataType}</small>
+                    {preview.columns.map((c) => (
+                      <th key={c.columnName}>
+                        {c.columnName}
+                        <small>{c.dataType}</small>
                       </th>
                     ))}
                   </tr>
@@ -491,9 +441,9 @@ function SchemaViewBuilderPanel() {
                 <tbody>
                   {preview.rows.map((row, i) => (
                     <tr key={i}>
-                      {preview.columns.map((col) => (
-                        <td key={col.columnName}>
-                          {String(row[col.columnName] ?? "—")}
+                      {preview.columns.map((c) => (
+                        <td key={c.columnName}>
+                          {String(row[c.columnName] ?? "—")}
                         </td>
                       ))}
                     </tr>
@@ -502,61 +452,306 @@ function SchemaViewBuilderPanel() {
               </table>
             </div>
           ) : null}
-        </section>
+        </div>
       ) : null}
 
-      {/* All schema views table */}
-      <div className="admin-table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Schema View</th>
-              <th>Kind</th>
-              <th>Status</th>
-              <th>Approved</th>
-              <th>Max Rows</th>
-              <th>Last Validation</th>
-            </tr>
-          </thead>
-          <tbody>
-            {schemaViews.map((view) => (
-              <tr key={view.id}>
-                <td>
-                  <strong>{view.schemaViewCode}</strong>
-                  <small>{view.schemaViewName}</small>
-                </td>
-                <td>{view.viewKind}</td>
-                <td>
-                  <StatusPill
-                    status={view.lastValidationStatus ?? "NotValidated"}
-                    statusClass={view.lastValidationStatus === "Success" ? "success" : "warning"}
-                  />
-                </td>
-                <td>{view.isApproved ? "Yes" : "No"}</td>
-                <td>{view.maxPreviewRows}</td>
-                <td>{formatDate(view.lastValidatedAtUtc)}</td>
-              </tr>
-            ))}
-            {schemaViews.length === 0 ? (
+      {/* All saved views table */}
+      {schemaViews.length > 0 ? (
+        <div className="admin-table-wrap" style={{ marginTop: "1.5rem" }}>
+          <strong style={{ fontSize: 12, color: "var(--ppiq-text-muted)", display: "block", marginBottom: 8 }}>
+            All Schema Views ({schemaViews.length})
+          </strong>
+          <table>
+            <thead>
               <tr>
-                <td colSpan={6}>No schema views yet. Create the first above.</td>
+                <th>View</th><th>Kind</th><th>Validation</th><th>Approved</th><th>Max Rows</th><th>Last Run</th>
               </tr>
-            ) : null}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {schemaViews.map((v) => (
+                <tr
+                  key={v.id}
+                  className={selectedViewId === v.id ? "selected-row" : ""}
+                  style={{ cursor: "pointer" }}
+                  onClick={() => loadSelectedViewIntoEditor(v.id)}
+                >
+                  <td>
+                    <strong>{v.schemaViewCode}</strong>
+                    <small>{v.schemaViewName}</small>
+                  </td>
+                  <td>{v.viewKind}</td>
+                  <td>
+                    <StatusPill
+                      status={v.lastValidationStatus ?? "Not run"}
+                      statusClass={v.lastValidationStatus === "Success" ? "success" : "warning"}
+                    />
+                  </td>
+                  <td>{v.isApproved ? "✅ Yes" : "—"}</td>
+                  <td>{v.maxPreviewRows}</td>
+                  <td>{formatDate(v.lastValidatedAtUtc)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : null}
+    </AdminPanel>
+  );
+}
+
+// ── Item 13: KPI Definition Panel ─────────────────────────────────────────────
+
+function KpiDefinitionPanel() {
+  const [kpis, setKpis] = useState<KpiDefinitionRecord[]>([]);
+  const [schemaViews, setSchemaViews] = useState<SchemaViewDefinitionRecord[]>([]);
+  const [isBusy, setIsBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [showForm, setShowForm] = useState(false);
+
+  const [form, setForm] = useState({
+    kpiCode: "",
+    kpiName: "",
+    kpiCategory: "Quality",
+    valueExpression: "COUNT(*)",
+    dimensionExpression: "",
+    filterExpression: "",
+    aggregationType: "Count",
+    unit: "",
+    description: "",
+    schemaViewDefinitionId: "",
+  });
+
+  function setField(key: string, value: string) {
+    setForm((f) => ({ ...f, [key]: value }));
+  }
+
+  async function load() {
+    try {
+      const [kpiList, views] = await Promise.all([
+        plantProcessApi.getKpiDefinitions(true),
+        plantProcessApi.getSchemaViews(true),
+      ]);
+      setKpis(kpiList);
+      setSchemaViews(views.filter((v) => v.isApproved));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load KPIs.");
+    }
+  }
+
+  useEffect(() => { load(); }, []);
+
+  async function createKpi() {
+    if (!form.kpiCode.trim() || !form.kpiName.trim()) {
+      setError("KPI Code and Name are required.");
+      return;
+    }
+    setIsBusy(true);
+    setError(null);
+    setSuccessMsg(null);
+
+    try {
+      const request: CreateKpiDefinitionRequest = {
+        schemaViewDefinitionId: form.schemaViewDefinitionId || null,
+        kpiCode: form.kpiCode.toUpperCase().replace(/[^A-Z0-9_]/g, "_"),
+        kpiName: form.kpiName,
+        kpiCategory: form.kpiCategory,
+        valueExpression: form.valueExpression,
+        unit: form.unit || null,
+        dimensionExpression: form.dimensionExpression || null,
+        filterExpression: form.filterExpression || null,
+        aggregationType: form.aggregationType,
+        kpiOptionsJson: "{}",
+        description: form.description || null,
+        isSynthetic: false,
+        sourceSystem: "PlantProcessIQ.Admin",
+        sourceRecordId: null,
+      };
+      await plantProcessApi.createKpiDefinition(request);
+      setSuccessMsg(`✅ KPI "${form.kpiName}" created.`);
+      setShowForm(false);
+      setForm((f) => ({ ...f, kpiCode: "", kpiName: "", valueExpression: "COUNT(*)", description: "" }));
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Create failed.");
+    } finally {
+      setIsBusy(false);
+    }
+  }
+
+  return (
+    <AdminPanel
+      title="KPI Definitions"
+      subtitle="Define SQL-expression KPIs linked to schema views and equipment/areas"
+      icon={<Gauge size={18} />}
+      wide
+    >
+      <p className="admin-copy">
+        KPIs are named metrics computed from a SQL value expression against schema view data.
+        They appear as dimensions in the Dashboard Widget Builder and feed into the ML correlation engine.
+      </p>
+
+      {error ? <div className="admin-inline-error">{error}</div> : null}
+      {successMsg ? <div className="admin-inline-success">{successMsg}</div> : null}
+
+      <div className="admin-action-row" style={{ marginBottom: "1rem" }}>
+        <button
+          className="primary-button"
+          type="button"
+          onClick={() => { setShowForm(!showForm); setError(null); setSuccessMsg(null); }}
+        >
+          <Plus size={14} /> {showForm ? "Cancel" : "New KPI"}
+        </button>
       </div>
 
-      {/* KPI table */}
+      {/* Create form */}
+      {showForm ? (
+        <div className="admin-form-card" style={{ marginBottom: "1.5rem" }}>
+          <h3>New KPI Definition</h3>
+          <div className="admin-form-grid">
+
+            <label className="admin-form-label">
+              KPI Code *
+              <input
+                className="admin-input"
+                value={form.kpiCode}
+                onChange={(e) => setField("kpiCode", e.target.value)}
+                placeholder="e.g. DEFECT_RATE_PER_HEAT"
+              />
+            </label>
+
+            <label className="admin-form-label">
+              KPI Name *
+              <input
+                className="admin-input"
+                value={form.kpiName}
+                onChange={(e) => setField("kpiName", e.target.value)}
+                placeholder="e.g. Defect Rate per Heat"
+              />
+            </label>
+
+            <label className="admin-form-label">
+              Category
+              <select
+                className="admin-select"
+                value={form.kpiCategory}
+                onChange={(e) => setField("kpiCategory", e.target.value)}
+              >
+                {["Quality", "Production", "Process", "Downtime", "Energy", "Maintenance", "Safety"].map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </label>
+
+            <label className="admin-form-label">
+              Aggregation Type
+              <select
+                className="admin-select"
+                value={form.aggregationType}
+                onChange={(e) => setField("aggregationType", e.target.value)}
+              >
+                {["Count", "Sum", "Average", "Min", "Max", "Rate", "Ratio", "Custom"].map((a) => (
+                  <option key={a} value={a}>{a}</option>
+                ))}
+              </select>
+            </label>
+
+            <label className="admin-form-label">
+              Value Expression *
+              <input
+                className="admin-input admin-input--mono"
+                value={form.valueExpression}
+                onChange={(e) => setField("valueExpression", e.target.value)}
+                placeholder="e.g. COUNT(*) or SUM(defect_count) / COUNT(heat_id)"
+              />
+              <small className="admin-form-hint">SQL expression that produces the KPI numeric value.</small>
+            </label>
+
+            <label className="admin-form-label">
+              Dimension Expression
+              <input
+                className="admin-input admin-input--mono"
+                value={form.dimensionExpression}
+                onChange={(e) => setField("dimensionExpression", e.target.value)}
+                placeholder="e.g. equipment_code or DATE_TRUNC('day', created_at)"
+              />
+              <small className="admin-form-hint">Optional GROUP BY expression for time/equipment breakdowns.</small>
+            </label>
+
+            <label className="admin-form-label">
+              Filter Expression
+              <input
+                className="admin-input admin-input--mono"
+                value={form.filterExpression}
+                onChange={(e) => setField("filterExpression", e.target.value)}
+                placeholder="e.g. defect_type = 'SurfaceCrack'"
+              />
+              <small className="admin-form-hint">Optional WHERE clause fragment to scope the KPI.</small>
+            </label>
+
+            <label className="admin-form-label">
+              Unit
+              <input
+                className="admin-input admin-input--narrow"
+                value={form.unit}
+                onChange={(e) => setField("unit", e.target.value)}
+                placeholder="e.g. % or ppm"
+              />
+            </label>
+
+            <label className="admin-form-label">
+              Source Schema View (optional)
+              <select
+                className="admin-select"
+                value={form.schemaViewDefinitionId}
+                onChange={(e) => setField("schemaViewDefinitionId", e.target.value)}
+              >
+                <option value="">None — use raw staging directly</option>
+                {schemaViews.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.schemaViewCode} — {v.schemaViewName}
+                  </option>
+                ))}
+              </select>
+              {schemaViews.length === 0 ? (
+                <small className="admin-form-hint">
+                  <AlertTriangle size={11} /> No approved views yet. Approve a SQL View above first.
+                </small>
+              ) : null}
+            </label>
+
+            <label className="admin-form-label" style={{ gridColumn: "1 / -1" }}>
+              Description
+              <input
+                className="admin-input"
+                value={form.description}
+                onChange={(e) => setField("description", e.target.value)}
+                placeholder="What does this KPI measure and why is it important?"
+              />
+            </label>
+          </div>
+
+          <div className="admin-form-actions">
+            <button
+              className="primary-button"
+              type="button"
+              onClick={createKpi}
+              disabled={isBusy}
+            >
+              {isBusy ? <Loader2 size={14} className="spin" /> : <Save size={14} />}
+              Create KPI
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {/* KPI list */}
       {kpis.length > 0 ? (
         <div className="admin-table-wrap">
           <table>
             <thead>
               <tr>
-                <th>KPI</th>
-                <th>Category</th>
-                <th>Expression</th>
-                <th>Unit</th>
-                <th>Status</th>
+                <th>KPI</th><th>Category</th><th>Expression</th><th>Unit</th><th>Aggregation</th><th>Status</th>
               </tr>
             </thead>
             <tbody>
@@ -567,8 +762,11 @@ function SchemaViewBuilderPanel() {
                     <small>{kpi.kpiName}</small>
                   </td>
                   <td>{kpi.kpiCategory}</td>
-                  <td>{kpi.valueExpression}</td>
+                  <td>
+                    <code style={{ fontSize: 11 }}>{kpi.valueExpression}</code>
+                  </td>
                   <td>{kpi.unit ?? "—"}</td>
+                  <td>{kpi.aggregationType}</td>
                   <td>
                     <StatusPill
                       status={kpi.isActive ? "Active" : "Inactive"}
@@ -580,7 +778,139 @@ function SchemaViewBuilderPanel() {
             </tbody>
           </table>
         </div>
+      ) : (
+        <div className="empty-insight">
+          <Gauge size={20} />
+          <strong>No KPIs defined yet</strong>
+          <p>Click "New KPI" to define your first metric.</p>
+        </div>
+      )}
+    </AdminPanel>
+  );
+}
+
+// ── Item 11: Visual Field Mapper Panel ────────────────────────────────────────
+
+function FieldMapperPanel({
+  mappings, coverage,
+}: {
+  mappings: import("@/api/plantProcessApi").SchemaMappingSummary[];
+  coverage: import("@/api/plantProcessApi").SourceObjectCoverage[];
+}) {
+  const [expandedMapping, setExpandedMapping] = useState<string | null>(null);
+
+  // Canonical target entities that PlantProcess IQ supports
+  const CANONICAL_TARGETS = [
+    { entity: "MaterialUnit", fields: ["MaterialCode", "MaterialUnitType", "ProductFamily", "GradeOrRecipe", "ProductionStartUtc", "ProductionEndUtc"] },
+    { entity: "ProcessEvent", fields: ["MaterialUnitId", "EquipmentId", "EventCode", "StartedAtUtc", "CompletedAtUtc"] },
+    { entity: "ParameterObservation", fields: ["ProcessEventId", "ParameterCode", "NumericValue", "TextValue", "ObservedAtUtc"] },
+    { entity: "QualityEvent", fields: ["MaterialUnitId", "DefectCode", "Severity", "InspectedAtUtc", "InspectionDevice"] },
+    { entity: "DowntimeEvent", fields: ["EquipmentId", "StartedAtUtc", "DurationMinutes", "DowntimeCode", "Reason"] },
+  ];
+
+  return (
+    <AdminPanel
+      title="Schema Field Mapper"
+      subtitle="Map source fields to canonical PlantProcess IQ entities"
+      icon={<ChevronRight size={18} />}
+      wide
+    >
+      <p className="admin-copy">
+        For each staging source object, define which source fields map to which canonical
+        entity fields. These mappings drive the canonical refresh jobs.
+      </p>
+
+      {/* Canonical target reference */}
+      <div style={{ marginBottom: "1.5rem" }}>
+        <strong style={{ fontSize: 13, display: "block", marginBottom: 8 }}>
+          Canonical Target Entities
+        </strong>
+        <div className="admin-provider-grid">
+          {CANONICAL_TARGETS.map((target) => (
+            <div key={target.entity} className="admin-provider-card">
+              <div className="admin-provider-card__head">
+                <strong>{target.entity}</strong>
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 6 }}>
+                {target.fields.map((f) => (
+                  <code key={f} style={{ fontSize: 10, background: "var(--ppiq-surface-2)", padding: "1px 5px", borderRadius: 3 }}>
+                    {f}
+                  </code>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Existing mappings */}
+      {mappings.length > 0 ? (
+        <div className="admin-table-wrap">
+          <strong style={{ fontSize: 12, color: "var(--ppiq-text-muted)", display: "block", marginBottom: 8 }}>
+            Configured Mappings ({mappings.length})
+          </strong>
+          <table>
+            <thead>
+              <tr>
+                <th>Mapping</th><th>Source Object</th><th>→ Target Entity</th><th>Version</th><th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {mappings.map((m) => (
+                <tr
+                  key={m.id}
+                  style={{ cursor: "pointer" }}
+                  onClick={() => setExpandedMapping(expandedMapping === m.id ? null : m.id)}
+                >
+                  <td>
+                    <strong>{m.mappingCode}</strong>
+                    <small>{m.mappingName}</small>
+                  </td>
+                  <td>{m.sourceObjectName}</td>
+                  <td>→ {m.targetEntityName}</td>
+                  <td>{m.mappingVersion}</td>
+                  <td>
+                    <StatusPill
+                      status={m.isActive ? "Active" : "Inactive"}
+                      statusClass={m.isActive ? "success" : "neutral"}
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       ) : null}
+
+      {/* Source object coverage — starting points for mapping */}
+      {coverage.length > 0 ? (
+        <div style={{ marginTop: "1rem" }}>
+          <strong style={{ fontSize: 12, color: "var(--ppiq-text-muted)", display: "block", marginBottom: 8 }}>
+            Source Objects available for mapping ({coverage.length})
+          </strong>
+          <div className="admin-list">
+            {coverage.map((item) => (
+              <div className="admin-list-item" key={item.sourceObjectName}>
+                <div>
+                  <strong>{item.sourceObjectName}</strong>
+                  <span>{item.totalRows} rows — {item.pendingRows} pending</span>
+                </div>
+                <span className="admin-pill info">Stageable</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="empty-insight">
+          <strong>No source objects staged yet</strong>
+          <p>Import data via the DB Configuration tab to populate source objects for mapping.</p>
+        </div>
+      )}
+
+      <p className="admin-copy" style={{ marginTop: "1rem", fontSize: 12 }}>
+        Full drag-and-drop field-level mapping UI is in Phase 5. Use the Integration API
+        (<code>/admin/schema-configuration/mappings</code>) to create MappingDefinition records now.
+      </p>
     </AdminPanel>
   );
 }
