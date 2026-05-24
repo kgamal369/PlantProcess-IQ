@@ -401,7 +401,8 @@ namespace PlantProcess.Infrastructure.Migrations
                         .HasColumnName("deleted_at_utc");
 
                     b.Property<string>("DeletedReason")
-                        .HasColumnType("text")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
                         .HasColumnName("deleted_reason");
 
                     b.Property<string>("Endpoint")
@@ -453,11 +454,13 @@ namespace PlantProcess.Infrastructure.Migrations
                         .HasColumnName("resource_type");
 
                     b.Property<string>("SourceRecordId")
-                        .HasColumnType("text")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
                         .HasColumnName("source_record_id");
 
                     b.Property<string>("SourceSystem")
-                        .HasColumnType("text")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
                         .HasColumnName("source_system");
 
                     b.Property<DateTime?>("UpdatedAtUtc")
@@ -484,6 +487,12 @@ namespace PlantProcess.Infrastructure.Migrations
 
                     b.HasIndex("CorrelationId")
                         .HasDatabaseName("ix_audit_log_correlation");
+
+                    b.HasIndex("CreatedAtUtc")
+                        .HasDatabaseName("ix_audit_log_created_at");
+
+                    b.HasIndex("IsDeleted")
+                        .HasDatabaseName("ix_audit_log_is_deleted");
 
                     b.HasIndex("OccurredAtUtc")
                         .HasDatabaseName("ix_audit_log_occurred_at");

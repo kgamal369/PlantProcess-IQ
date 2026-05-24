@@ -1,23 +1,75 @@
 {
     email admin@plantprocessiq.com
-    auto_https disable_redirects
 }
 
-# Website → http://178.105.152.180:8081
-:8081 {
-    reverse_proxy plantprocess-website
-}
-# App Frontend → http://178.105.152.180
-:80 {
-    reverse_proxy plantprocess-app-web
+# ============================================================
+# Public marketing website
+# ============================================================
+plantprocessiq.com, www.plantprocessiq.com {
+    encode zstd gzip
+
+    reverse_proxy plantprocess-website:80
+
+    header {
+        -Server
+        X-Content-Type-Options nosniff
+        X-Frame-Options SAMEORIGIN
+        Referrer-Policy strict-origin-when-cross-origin
+        Permissions-Policy "geolocation=(), microphone=(), camera=()"
+    }
 }
 
-# API → http://178.105.152.180:5063
-:5063 {
+# ============================================================
+# React application
+# ============================================================
+app.plantprocessiq.com {
+    encode zstd gzip
+
+    reverse_proxy plantprocess-app-web:80
+
+    header {
+        -Server
+        X-Content-Type-Options nosniff
+        X-Frame-Options SAMEORIGIN
+        Referrer-Policy strict-origin-when-cross-origin
+        Permissions-Policy "geolocation=(), microphone=(), camera=()"
+    }
+}
+
+# ============================================================
+# API backend
+# ============================================================
+api.plantprocessiq.com {
+    encode zstd gzip
+
     reverse_proxy plantprocess-api:5063
+
+    header {
+        -Server
+        X-Content-Type-Options nosniff
+        Referrer-Policy strict-origin-when-cross-origin
+        Permissions-Policy "geolocation=(), microphone=(), camera=()"
+    }
 }
 
-# Jenkins → http://178.105.152.180:9090
-:9090 {
+# ============================================================
+# Jenkins
+# Replace the hash below with:
+#   docker run --rm -it caddy:2.8-alpine caddy hash-password --plaintext "YOUR_PASSWORD"
+# ============================================================
+jenkins.plantprocessiq.com {
+    encode zstd gzip
+
+    basicauth {
+        admin $2a$14$REPLACE_WITH_REAL_CADDY_BCRYPT_HASH
+    }
+
     reverse_proxy jenkins:8080
+
+    header {
+        -Server
+        X-Content-Type-Options nosniff
+        X-Frame-Options SAMEORIGIN
+        Referrer-Policy no-referrer
+    }
 }

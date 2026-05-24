@@ -1,6 +1,14 @@
 ﻿import { API_BASE_URL } from "../apiConfig";
-import { getAccessToken } from "../http";
-
+import {
+  buildQuery,
+  deleteJson,
+  getJson,
+  patchJson,
+  postJson,
+  putJson,
+  requestJson,
+  type QueryParams,
+} from "./legacyApiHardening";
 export type SortDirection = "asc" | "desc";
 
 export interface DashboardFilters {
@@ -768,94 +776,12 @@ export interface UpdateMappingRefreshScheduleRequest {
   refreshIntervalMinutes: number;
 }
 
-type PrimitiveQueryValue = string | number | boolean | null | undefined;
-type QueryParams = Record<string, PrimitiveQueryValue>;
-
-function buildQuery(params?: QueryParams): string {
-  if (!params) return "";
-  const searchParams = new URLSearchParams();
-
-  Object.entries(params).forEach(([key, value]) => {
-    if (value === undefined || value === null || value === "") return;
-    searchParams.set(key, String(value));
-  });
-
-  const query = searchParams.toString();
-  return query ? `?${query}` : "";
+export interface MaterialInvestigationRequestOptions {
+  maxDepth?: number;
+  parameterPage?: number;
+  parameterPageSize?: number;
 }
 
-async function requestJson<T>(
-  path: string,
-  options?: RequestInit,
-  timeoutMs = 30_000
-): Promise<T> {
-  const controller = new AbortController();
-  const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
-  const token = getAccessToken();
-
-  try {
-    const response = await fetch(`${API_BASE_URL}${path}`, {
-      ...options,
-      signal: controller.signal,
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        ...(options?.headers ?? {}),
-      },
-    });
-
-    const text = await response.text();
-
-    if (!response.ok) {
-      if (response.status === 401 || response.status === 403) {
-        window.dispatchEvent(
-          new CustomEvent("plantprocess:auth-failure", {
-            detail: {
-              status: response.status,
-              path,
-              responseText: text,
-            },
-          })
-        );
-      }
-
-      throw new Error(
-        text || `PlantProcess API request failed: ${response.status} ${response.statusText}`
-      );
-    }
-
-    if (!text) return undefined as T;
-    return JSON.parse(text) as T;
-  } finally {
-    window.clearTimeout(timeout);
-  }
-}
-
-function getJson<T>(path: string, params?: QueryParams): Promise<T> {
-  return requestJson<T>(`${path}${buildQuery(params)}`, { method: "GET" });
-}
-
-function postJson<T>(path: string, body?: unknown): Promise<T> {
-  return requestJson<T>(path, {
-    method: "POST",
-    body: body === undefined ? undefined : JSON.stringify(body),
-  });
-}
-
-function putJson<T>(path: string, body?: unknown): Promise<T> {
-  return requestJson<T>(path, {
-    method: "PUT",
-    body: body === undefined ? undefined : JSON.stringify(body),
-  });
-}
-
-function patchJson<T>(path: string, body?: unknown): Promise<T> {
-  return requestJson<T>(path, {
-    method: "PATCH",
-    body: body === undefined ? undefined : JSON.stringify(body),
-  });
-}
 
 function dashboardQuery(filters: DashboardFilters): QueryParams {
   return {
@@ -1010,8 +936,14 @@ export const plantProcessApi = {
       riskType: "QualityRisk",
     }),
 
-  getMaterialInvestigation: (materialUnitId: string) =>
-    getJson<any>(`/reports/materials/${materialUnitId}/investigation`),
+  getMaterialInvestigation: (materialUnitId: string, options: MaterialInvestigationRequestOptions = {}) =>
+  getJson<any>(
+    `/materials/${materialUnitId}/investigation-full${buildQuery({
+      maxDepth: options.maxDepth ?? 5,
+      parameterPage: options.parameterPage ?? 1,
+      parameterPageSize: options.parameterPageSize ?? 500,
+    })}`
+  ),
 
   getInvestigationPdfUrl: (materialUnitId: string) =>
     `${API_BASE_URL}/reports/materials/${materialUnitId}/investigation/pdf`,
@@ -1297,5 +1229,7 @@ repairSystemDashboardTemplates: () =>
       request
     ),
 
+    
 };
+
 

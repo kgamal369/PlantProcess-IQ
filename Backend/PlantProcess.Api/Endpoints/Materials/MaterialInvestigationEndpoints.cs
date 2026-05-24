@@ -16,7 +16,7 @@ public static class MaterialInvestigationEndpoints
 
         group.MapGet("/{materialUnitId:guid}/investigation-full", InvestigateMaterialFullAsync)
             .WithSummary("Get full genealogy-aware material investigation")
-            .WithDescription("Returns material, aliases, genealogy, process steps, parameters, events, downtime, quality, risk and data-quality issues for one material and its related genealogy.");
+            .WithDescription("Returns genealogy-aware material investigation with paginated parameter observations.");
 
         return app;
     }
@@ -24,6 +24,8 @@ public static class MaterialInvestigationEndpoints
     private static async Task<IResult> InvestigateMaterialFullAsync(
         Guid materialUnitId,
         int? maxDepth,
+        int? parameterPage,
+        int? parameterPageSize,
         ILicenseService licenseService,
         PlantProcessDbContext dbContext,
         CancellationToken cancellationToken)
@@ -40,6 +42,9 @@ public static class MaterialInvestigationEndpoints
             return Results.NotFound(new { message = "Material unit not found." });
 
         var depthLimit = Math.Clamp(maxDepth ?? 5, 1, 20);
+        var safeParameterPage = Math.Max(parameterPage ?? 1, 1);
+        var safeParameterPageSize = Math.Clamp(parameterPageSize ?? 500, 25, 500);
+
         var relatedMaterialIds = await ResolveGenealogyMaterialIdsAsync(
             dbContext,
             materialUnitId,
@@ -95,7 +100,8 @@ public static class MaterialInvestigationEndpoints
             .Where(x =>
                 !x.IsDeleted &&
                 (materialIds.Contains(x.ParentMaterialUnitId) || materialIds.Contains(x.ChildMaterialUnitId)))
-            .OrderBy(x => x.EffectiveFromUtc)
+            .OrderBy(x => x.ParentMaterialUnitId)
+            .ThenBy(x => x.ChildMaterialUnitId)
             .Select(x => new
             {
                 x.Id,
@@ -119,33 +125,35 @@ public static class MaterialInvestigationEndpoints
                 x.Id,
                 x.MaterialUnitId,
                 x.EquipmentId,
-                x.OperationType,
                 x.OperationCode,
-                x.CrewCode,
+                x.OperationType,
                 x.StartedAtUtc,
                 x.EndedAtUtc,
                 x.StartedAtLocal,
                 x.EndedAtLocal,
-                x.PlantTimeZoneId,
-                x.PlantUtcOffsetMinutes,
-                x.ExecutionStatus,
+                ProcessStatus = x.ExecutionStatus,
                 x.SourceSystem,
                 x.SourceRecordId,
                 x.IsSynthetic
             })
             .ToListAsync(cancellationToken);
 
-        var processStepIds = processSteps.Select(x => x.Id).ToList();
+        var processStepIds = processSteps
+            .Select(x => x.Id)
+            .Distinct()
+            .ToList();
 
-        var parameterObservations = await dbContext.ParameterObservations
+        var parameterQuery = dbContext.ParameterObservations
             .AsNoTracking()
-            .Where(x =>
-                !x.IsDeleted &&
-                (
-                    materialIds.Contains(x.MaterialUnitId) ||
-                    (x.ProcessStepExecutionId.HasValue && processStepIds.Contains(x.ProcessStepExecutionId.Value))
-                ))
-            .OrderBy(x => x.ObservedAtUtc)
+            .Where(x => materialIds.Contains(x.MaterialUnitId) && !x.IsDeleted);
+
+        var parameterTotalCount = await parameterQuery.CountAsync(cancellationToken);
+
+        var parameterObservations = await parameterQuery
+            .OrderByDescending(x => x.ObservedAtUtc)
+            .ThenBy(x => x.ParameterDefinitionId)
+            .Skip((safeParameterPage - 1) * safeParameterPageSize)
+            .Take(safeParameterPageSize)
             .Select(x => new
             {
                 x.Id,
@@ -158,9 +166,9 @@ public static class MaterialInvestigationEndpoints
                 x.NumericValue,
                 x.TextValue,
                 x.BooleanValue,
-                x.UnitOfMeasure,
-                x.QualityFlag,
-                x.RawValue,
+                Unit = x.UnitOfMeasure,
+                x.PlantTimeZoneId,
+                x.PlantUtcOffsetMinutes,
                 x.SourceSystem,
                 x.SourceRecordId,
                 x.IsSynthetic
@@ -183,9 +191,10 @@ public static class MaterialInvestigationEndpoints
                 x.ProcessStepExecutionId,
                 x.EquipmentId,
                 x.EventType,
+                EventCode = x.EventValue,
+                EventValue = x.EventValue,
                 x.EventAtUtc,
                 x.EventAtLocal,
-                x.EventValue,
                 x.Description,
                 x.SourceSystem,
                 x.SourceRecordId,
@@ -254,6 +263,7 @@ public static class MaterialInvestigationEndpoints
                 x.Score,
                 x.RiskClass,
                 x.MainContributorsJson,
+                x.ExplanationJson,
                 x.ModelVersion,
                 x.ScoredAtUtc,
                 x.ScoredAtLocal,
@@ -286,6 +296,11 @@ public static class MaterialInvestigationEndpoints
             })
             .ToListAsync(cancellationToken);
 
+        var parameterTotalPages =
+            parameterTotalCount == 0
+                ? 0
+                : (int)Math.Ceiling(parameterTotalCount / (double)safeParameterPageSize);
+
         return Results.Ok(new
         {
             requestedMaterialUnitId = materialUnitId,
@@ -302,12 +317,22 @@ public static class MaterialInvestigationEndpoints
                 aliases = aliases.Count,
                 genealogyEdges = genealogyEdges.Count,
                 processSteps = processSteps.Count,
-                parameterObservations = parameterObservations.Count,
+                parameterObservations = parameterTotalCount,
+                parameterObservationsReturned = parameterObservations.Count,
                 processEvents = processEvents.Count,
                 downtimeEvents = downtimeEvents.Count,
                 qualityEvents = qualityEvents.Count,
                 riskScores = riskScores.Count,
                 dataQualityIssues = dataQualityIssues.Count
+            },
+            parameterObservationPage = new
+            {
+                page = safeParameterPage,
+                pageSize = safeParameterPageSize,
+                totalCount = parameterTotalCount,
+                totalPages = parameterTotalPages,
+                hasPrevious = safeParameterPage > 1,
+                hasMore = safeParameterPage < parameterTotalPages
             },
             materials,
             aliases,
@@ -339,7 +364,8 @@ public static class MaterialInvestigationEndpoints
                 .AsNoTracking()
                 .Where(x =>
                     !x.IsDeleted &&
-                    (frontierIds.Contains(x.ParentMaterialUnitId) || frontierIds.Contains(x.ChildMaterialUnitId)))
+                    (frontierIds.Contains(x.ParentMaterialUnitId) ||
+                     frontierIds.Contains(x.ChildMaterialUnitId)))
                 .Select(x => new { x.ParentMaterialUnitId, x.ChildMaterialUnitId })
                 .ToListAsync(cancellationToken);
 

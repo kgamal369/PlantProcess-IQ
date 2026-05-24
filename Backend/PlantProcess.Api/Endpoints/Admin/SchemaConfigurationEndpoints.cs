@@ -7,10 +7,9 @@ using PlantProcess.Api.Extensions;
 using PlantProcess.Application.Integration.Contracts.Dtos;
 using PlantProcess.Application.Integration.Interfaces.SchemaConfiguration;
 using PlantProcess.Application.Integration.Security;
-using PlantProcess.Infrastructure.Persistence;
-using PlantProcess.Api.Extensions;
 using PlantProcess.Application.Licensing.Contracts;
 using PlantProcess.Application.Licensing.Interfaces;
+using PlantProcess.Infrastructure.Persistence;
 
 namespace PlantProcess.Api.Endpoints.Admin;
 
@@ -266,7 +265,7 @@ public static class SchemaConfigurationEndpoints
         return result.ToHttpResult(value =>
             Results.Created($"/admin/schema-configuration/kpis/{value.Id}", value));
     }
-
+    
     private static async Task<SchemaViewPreviewResult> ExecuteSafePreviewAsync(
         PlantProcessDbContext dbContext,
         string sqlText,
@@ -287,12 +286,20 @@ public static class SchemaConfigurationEndpoints
                 Rows: Array.Empty<IReadOnlyDictionary<string, object?>>());
         }
 
+        var safeMaxRows = Math.Clamp(maxRows, 1, 5000);
+
+        // Hard safety:
+        // - CommandTimeout protects the client call.
+        // - SET LOCAL statement_timeout protects the PostgreSQL server.
+        var safeTimeoutSeconds = Math.Clamp(timeoutSeconds, 1, 5);
+        var statementTimeoutMs = safeTimeoutSeconds * 1000;
+
         var wrappedSql = $"""
             SELECT *
             FROM (
             {sqlText.Trim()}
             ) AS ppq_schema_preview
-            LIMIT {maxRows}
+            LIMIT {safeMaxRows}
             """;
 
         var stopwatch = Stopwatch.StartNew();
@@ -304,204 +311,113 @@ public static class SchemaConfigurationEndpoints
             if (connection.State != ConnectionState.Open)
                 await connection.OpenAsync(cancellationToken);
 
-            using var command = connection.CreateCommand();
-            command.CommandText = wrappedSql;
-            command.CommandTimeout = timeoutSeconds;
+            await using var transaction =
+                await connection.BeginTransactionAsync(cancellationToken);
 
-            using var reader = await command.ExecuteReaderAsync(cancellationToken);
-
-            var columns = new List<SchemaViewPreviewColumnDto>();
-
-            for (var i = 0; i < reader.FieldCount; i++)
+            try
             {
-                columns.Add(new SchemaViewPreviewColumnDto(
-                    ColumnName: reader.GetName(i),
-                    DataType: reader.GetFieldType(i).Name,
-                    Ordinal: i + 1));
-            }
-
-            var rows = new List<IReadOnlyDictionary<string, object?>>();
-
-            while (await reader.ReadAsync(cancellationToken))
-            {
-                var row = new Dictionary<string, object?>();
-
-                for (var i = 0; i < reader.FieldCount; i++)
+                await using (var timeoutCommand = connection.CreateCommand())
                 {
-                    var name = reader.GetName(i);
+                    timeoutCommand.Transaction = transaction;
+                    timeoutCommand.CommandText = $"SET LOCAL statement_timeout = '{statementTimeoutMs}ms';";
+                    timeoutCommand.CommandTimeout = 2;
 
-                    if (await reader.IsDBNullAsync(i, cancellationToken))
-                    {
-                        row[name] = null;
-                        continue;
-                    }
-
-                    var value = reader.GetValue(i);
-
-                    row[name] = value switch
-                    {
-                        DateTime dateTime => dateTime.ToString("O"),
-                        DateTimeOffset dateTimeOffset => dateTimeOffset.ToString("O"),
-                        Guid guid => guid.ToString(),
-                        _ => value
-                    };
+                    await timeoutCommand.ExecuteNonQueryAsync(cancellationToken);
                 }
 
-                rows.Add(row);
+                var columns = new List<SchemaViewPreviewColumnDto>();
+                var rows = new List<IReadOnlyDictionary<string, object?>>();
+
+                await using (var command = connection.CreateCommand())
+                {
+                    command.Transaction = transaction;
+                    command.CommandText = wrappedSql;
+
+                    // Let PostgreSQL statement_timeout fire first.
+                    command.CommandTimeout = safeTimeoutSeconds + 2;
+
+                    await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+
+                    for (var i = 0; i < reader.FieldCount; i++)
+                    {
+                        columns.Add(new SchemaViewPreviewColumnDto(
+                            ColumnName: reader.GetName(i),
+                            DataType: reader.GetFieldType(i).Name,
+                            Ordinal: i + 1));
+                    }
+
+                    while (await reader.ReadAsync(cancellationToken))
+                    {
+                        var row = new Dictionary<string, object?>();
+
+                        for (var i = 0; i < reader.FieldCount; i++)
+                        {
+                            var name = reader.GetName(i);
+
+                            if (await reader.IsDBNullAsync(i, cancellationToken))
+                            {
+                                row[name] = null;
+                                continue;
+                            }
+
+                            var value = reader.GetValue(i);
+
+                            row[name] = value switch
+                            {
+                                DateTime dateTime => dateTime.ToString("O"),
+                                DateTimeOffset dateTimeOffset => dateTimeOffset.ToString("O"),
+                                Guid guid => guid.ToString(),
+                                _ => value
+                            };
+                        }
+
+                        rows.Add(row);
+                    }
+                }
+
+                await transaction.RollbackAsync(cancellationToken);
+
+                stopwatch.Stop();
+
+                return new SchemaViewPreviewResult(
+                    IsSuccess: true,
+                    Message: $"Preview succeeded. {rows.Count} row(s) returned.",
+                    RowCount: rows.Count,
+                    DurationMs: stopwatch.ElapsedMilliseconds,
+                    Columns: columns,
+                    Rows: rows);
             }
-
-            stopwatch.Stop();
-
-            return new SchemaViewPreviewResult(
-                IsSuccess: true,
-                Message: $"Preview succeeded. {rows.Count} row(s) returned.",
-                RowCount: rows.Count,
-                DurationMs: stopwatch.ElapsedMilliseconds,
-                Columns: columns,
-                Rows: rows);
+            catch
+            {
+                await transaction.RollbackAsync(CancellationToken.None);
+                throw;
+            }
         }
         catch (Exception ex)
         {
             stopwatch.Stop();
 
+            var message = IsSqlPreviewTimeout(ex)
+                ? "Query exceeded the 5 second safety timeout. Add a WHERE filter, reduce the date range, or preview fewer rows."
+                : ex.Message;
+
             return new SchemaViewPreviewResult(
                 IsSuccess: false,
-                Message: ex.Message,
+                Message: message,
                 RowCount: 0,
                 DurationMs: stopwatch.ElapsedMilliseconds,
                 Columns: Array.Empty<SchemaViewPreviewColumnDto>(),
                 Rows: Array.Empty<IReadOnlyDictionary<string, object?>>());
         }
     }
-
-    private static class SafeSqlValidator
+    
+    private static bool IsSqlPreviewTimeout(Exception ex)
     {
-        private static readonly string[] ForbiddenTokens =
-        [
-            "insert",
-            "update",
-            "delete",
-            "drop",
-            "alter",
-            "truncate",
-            "create",
-            "grant",
-            "revoke",
-            "execute",
-            "exec",
-            "merge",
-            "copy",
-            "vacuum",
-            "analyze",
-            "call",
-            "do",
-            "listen",
-            "notify",
-            "unlisten",
-            "set",
-            "reset",
-            "prepare"
-        ];
+        var message = ex.Message ?? string.Empty;
 
-        private static readonly HashSet<string> AllowedTables = new(StringComparer.OrdinalIgnoreCase)
-        {
-            // Phase 3 raw/dump/source metadata
-            "staging_records",
-            "import_batches",
-            "source_system_definitions",
-            "connection_profiles",
-            "source_dataset_definitions",
-            "source_field_definitions",
-
-            // Canonical/analytics tables allowed for controlled preview
-            "material_units",
-            "material_aliases",
-            "genealogy_edges",
-            "process_step_executions",
-            "parameter_definitions",
-            "parameter_observations",
-            "process_events",
-            "downtime_events",
-            "defect_catalogs",
-            "quality_events",
-            "data_quality_issues",
-            "risk_scores",
-            "correlation_results",
-
-            // New Phase 4 metadata
-            "schema_view_definitions",
-            "kpi_definitions"
-        };
-
-        public static SqlSafetyValidationResultDto Validate(string? sqlText)
-        {
-            var errors = new List<string>();
-            var warnings = new List<string>();
-            var referencedTables = new List<string>();
-
-            if (string.IsNullOrWhiteSpace(sqlText))
-            {
-                errors.Add("SQL text is required.");
-                return new SqlSafetyValidationResultDto(false, errors, warnings, referencedTables);
-            }
-
-            var sql = StripSqlComments(sqlText).Trim();
-
-            if (sql.Contains(';'))
-                errors.Add("Semicolon is not allowed. Submit one SELECT/WITH query only.");
-
-            if (!sql.StartsWith("select", StringComparison.OrdinalIgnoreCase) &&
-                !sql.StartsWith("with", StringComparison.OrdinalIgnoreCase))
-            {
-                errors.Add("Only SELECT or WITH queries are allowed.");
-            }
-
-            var lowered = Regex.Replace(sql.ToLowerInvariant(), @"\s+", " ");
-
-            foreach (var token in ForbiddenTokens)
-            {
-                if (Regex.IsMatch(lowered, $@"(^|\W){Regex.Escape(token)}(\W|$)", RegexOptions.IgnoreCase))
-                    errors.Add($"Forbidden SQL token detected: {token}");
-            }
-
-            var tableMatches = Regex.Matches(
-                sql,
-                @"\b(from|join)\s+([a-zA-Z_][a-zA-Z0-9_\.]*)",
-                RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
-
-            foreach (Match match in tableMatches)
-            {
-                var rawTableName = match.Groups[2].Value;
-                var tableName = rawTableName.Contains('.')
-                    ? rawTableName.Split('.').Last()
-                    : rawTableName;
-
-                referencedTables.Add(tableName);
-
-                if (!AllowedTables.Contains(tableName))
-                    errors.Add($"Table '{rawTableName}' is not in the Phase 4 allowed table list.");
-            }
-
-            if (referencedTables.Count == 0)
-                warnings.Add("No FROM/JOIN table reference detected. This is allowed but may not be useful.");
-
-            if (!lowered.Contains("limit "))
-            {
-                warnings.Add("No LIMIT found. The preview endpoint wraps the query and applies its own LIMIT.");
-            }
-
-            return new SqlSafetyValidationResultDto(
-                IsValid: errors.Count == 0,
-                Errors: errors,
-                Warnings: warnings,
-                ReferencedTables: referencedTables.Distinct(StringComparer.OrdinalIgnoreCase).ToList());
-        }
-
-        private static string StripSqlComments(string sql)
-        {
-            var noLineComments = Regex.Replace(sql, @"--.*?$", string.Empty, RegexOptions.Multiline);
-            var noBlockComments = Regex.Replace(noLineComments, @"/\*.*?\*/", string.Empty, RegexOptions.Singleline);
-            return noBlockComments;
-        }
+        return ex is TimeoutException ||
+            message.Contains("statement timeout", StringComparison.OrdinalIgnoreCase) ||
+            message.Contains("canceling statement due to statement timeout", StringComparison.OrdinalIgnoreCase) ||
+            message.Contains("57014", StringComparison.OrdinalIgnoreCase);
     }
-}
+  }

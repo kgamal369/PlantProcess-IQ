@@ -13,6 +13,7 @@
     "test:coverage": "vitest run --coverage --config vitest.config.ts",
     "e2e": "playwright test",
     "e2e:ui": "playwright test --ui",
+    "qa:hardening": "playwright test e2e/hardening-matrix.spec.ts e2e/widget-builder-focused.spec.ts e2e/admin-db-focused.spec.ts e2e/admin-schema-focused.spec.ts",
     "validate": "npm run build && npm run lint && npm run test",
     "validate:fast": "npm run build && npm run test",
     "validate:full": "npm run build && npm run lint && npm run test && npm run language:audit && npm run e2e",

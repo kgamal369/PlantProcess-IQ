@@ -2,10 +2,24 @@
 // File: Backend/tests/PlantProcess.Infrastructure.IntegrationTests/Audit/AuditLogImmutabilityTests.cs
 // Task: BE-ADD-001
 //
-// Integration tests that prove the audit log table is immutable
-// from the application's perspective. Requires the migration to
-// have run against a real PostgreSQL instance with the same role
-// the app uses in production.
+// Purpose:
+//   Local runnable proof that audit_log_entries is append-only at
+//   database level using trigger guards.
+//
+// Why trigger-based:
+//   The current local DB user does not have CREATEROLE, so we cannot
+//   create a separate plantprocess_app runtime role in this environment.
+//   This test proves UPDATE / DELETE / TRUNCATE are blocked by the DB.
+//
+// Required environment variable:
+//   PPIQ_AUDIT_TRIGGER_TEST_CONNECTION
+//
+// Example:
+//   Host=localhost;Port=5432;Database=plantprocessiq;Username=plantprocess;Password=YOUR_PASSWORD
+//
+// Expected SQLSTATE:
+//   P0001 = blocked by prevent_audit_log_mutation trigger.
+//   42501 = blocked by privilege revocation, if later you add role isolation.
 // ============================================================
 
 using Microsoft.EntityFrameworkCore;
@@ -17,7 +31,8 @@ using Xunit;
 namespace PlantProcess.Infrastructure.IntegrationTests.Audit;
 
 [Trait("Category", "Integration")]
-public class AuditLogImmutabilityTests : IClassFixture<AuditLogDatabaseFixture>
+[Trait("Task", "BE-ADD-001")]
+public sealed class AuditLogImmutabilityTests : IClassFixture<AuditLogDatabaseFixture>
 {
     private readonly AuditLogDatabaseFixture _fixture;
 
@@ -26,25 +41,14 @@ public class AuditLogImmutabilityTests : IClassFixture<AuditLogDatabaseFixture>
         _fixture = fixture;
     }
 
-    [Fact(Skip = "Pending DB fixture wiring — REVOKE verified manually via psql")]
-
-    public async Task App_user_can_INSERT_audit_rows()
+    [Fact]
+    public async Task Audit_table_should_allow_insert()
     {
-        await using var db = _fixture.CreateAppRoleDbContext();
-        var entry = new AuditLogEntry(
-            httpMethod: "GET",
-            endpoint: "/admin/license/tier",
-            actionCategory: "Read",
-            outcomeStatus: "Success",
-            userId: "test-user",
-            userName: "test-user",
-            resourceType: "License",
-            resourceId: null,
-            clientIp: "127.0.0.1",
-            userAgent: "test",
-            correlationId: Guid.NewGuid().ToString(),
-            httpStatusCode: 200,
-            metadataJson: null);
+        await using var db = _fixture.CreateDbContext();
+
+        var entry = CreateAuditEntry(
+            endpoint: "/admin/license/current",
+            actionCategory: "Read");
 
         db.Set<AuditLogEntry>().Add(entry);
         await db.SaveChangesAsync();
@@ -52,103 +56,182 @@ public class AuditLogImmutabilityTests : IClassFixture<AuditLogDatabaseFixture>
         Assert.NotEqual(Guid.Empty, entry.Id);
     }
 
-    [Fact(Skip = "Pending DB fixture wiring — REVOKE verified manually via psql")]
-
-    public async Task App_user_can_SELECT_audit_rows()
+    [Fact]
+    public async Task Audit_table_should_allow_select()
     {
-        await using var db = _fixture.CreateAppRoleDbContext();
-        var rows = await db.Set<AuditLogEntry>().Take(10).ToListAsync();
-        Assert.NotNull(rows);
+        await using var db = _fixture.CreateDbContext();
+
+        var entry = CreateAuditEntry(
+            endpoint: "/admin/jobs-monitor",
+            actionCategory: "Read");
+
+        db.Set<AuditLogEntry>().Add(entry);
+        await db.SaveChangesAsync();
+
+        var loaded = await db
+            .Set<AuditLogEntry>()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == entry.Id);
+
+        Assert.NotNull(loaded);
+        Assert.Equal(entry.Id, loaded!.Id);
+        Assert.Equal("Success", loaded.OutcomeStatus);
     }
 
-    [Fact(Skip = "Pending DB fixture wiring — REVOKE verified manually via psql")]
-    public async Task App_user_cannot_UPDATE_audit_rows()
+    [Fact]
+    public async Task Audit_table_should_block_update()
     {
         Guid insertedId;
-        await using (var db = _fixture.CreateAppRoleDbContext())
+
+        await using (var db = _fixture.CreateDbContext())
         {
-            var entry = new AuditLogEntry(
-                "GET", "/test", "Read", "Success",
-                "test", "test", "Test", null,
-                "127.0.0.1", "test", Guid.NewGuid().ToString(),
-                200, null);
+            var entry = CreateAuditEntry(
+                endpoint: "/admin/schema-configuration/views",
+                actionCategory: "Create");
+
             db.Set<AuditLogEntry>().Add(entry);
             await db.SaveChangesAsync();
+
             insertedId = entry.Id;
         }
 
-        await using (var db = _fixture.CreateAppRoleDbContext())
+        await using (var db = _fixture.CreateDbContext())
         {
-            var ex = await Assert.ThrowsAsync<PostgresException>(async () =>
+            var exception = await Assert.ThrowsAsync<PostgresException>(async () =>
                 await db.Database.ExecuteSqlRawAsync(
-                    "UPDATE audit_log_entries SET outcome_status = 'Tampered' WHERE id = {0}",
+                    """
+                    UPDATE audit_log_entries
+                    SET outcome_status = 'Tampered'
+                    WHERE id = {0}
+                    """,
                     insertedId));
 
-            Assert.Equal("42501", ex.SqlState);
+            AssertMutationBlocked(exception);
         }
 
-        await using (var verifyDb = _fixture.CreateAppRoleDbContext())
+        await using (var verifyDb = _fixture.CreateDbContext())
         {
-            var row = await verifyDb.Set<AuditLogEntry>()
+            var row = await verifyDb
+                .Set<AuditLogEntry>()
+                .AsNoTracking()
                 .FirstOrDefaultAsync(x => x.Id == insertedId);
+
             Assert.NotNull(row);
             Assert.Equal("Success", row!.OutcomeStatus);
         }
     }
 
-    [Fact(Skip = "Pending DB fixture wiring — REVOKE verified manually via psql")]
-
-    public async Task App_user_cannot_DELETE_audit_rows()
+    [Fact]
+    public async Task Audit_table_should_block_delete()
     {
         Guid insertedId;
-        await using (var db = _fixture.CreateAppRoleDbContext())
+
+        await using (var db = _fixture.CreateDbContext())
         {
-            var entry = new AuditLogEntry(
-                "GET", "/test", "Read", "Success",
-                "test", "test", "Test", null,
-                "127.0.0.1", "test", Guid.NewGuid().ToString(),
-                200, null);
+            var entry = CreateAuditEntry(
+                endpoint: "/admin/db-configuration/summary",
+                actionCategory: "Read");
+
             db.Set<AuditLogEntry>().Add(entry);
             await db.SaveChangesAsync();
+
             insertedId = entry.Id;
         }
 
-        await using (var db = _fixture.CreateAppRoleDbContext())
-        {
-            var ex = await Assert.ThrowsAsync<PostgresException>(async () =>
-                await db.Database.ExecuteSqlRawAsync(
-                    "DELETE FROM audit_log_entries WHERE id = {0}",
-                    insertedId));
+        await using var mutationDb = _fixture.CreateDbContext();
 
-            Assert.Equal("42501", ex.SqlState);
-        }
+        var exception = await Assert.ThrowsAsync<PostgresException>(async () =>
+            await mutationDb.Database.ExecuteSqlRawAsync(
+                """
+                DELETE FROM audit_log_entries
+                WHERE id = {0}
+                """,
+                insertedId));
+
+        AssertMutationBlocked(exception);
+
+        await using var verifyDb = _fixture.CreateDbContext();
+
+        var stillExists = await verifyDb
+            .Set<AuditLogEntry>()
+            .AsNoTracking()
+            .AnyAsync(x => x.Id == insertedId);
+
+        Assert.True(stillExists);
     }
 
-    [Fact(Skip = "Pending DB fixture wiring — REVOKE verified manually via psql")]
-    public async Task App_user_cannot_TRUNCATE_audit_table()
+    [Fact]
+    public async Task Audit_table_should_block_truncate()
     {
-        await using var db = _fixture.CreateAppRoleDbContext();
-        var ex = await Assert.ThrowsAsync<PostgresException>(async () =>
-            await db.Database.ExecuteSqlRawAsync("TRUNCATE audit_log_entries"));
+        await using var db = _fixture.CreateDbContext();
 
-        Assert.Equal("42501", ex.SqlState);
+        var exception = await Assert.ThrowsAsync<PostgresException>(async () =>
+            await db.Database.ExecuteSqlRawAsync(
+                "TRUNCATE TABLE audit_log_entries"));
+
+        AssertMutationBlocked(exception);
+    }
+
+    private static AuditLogEntry CreateAuditEntry(
+        string endpoint,
+        string actionCategory)
+    {
+        return new AuditLogEntry(
+            httpMethod: "GET",
+            endpoint: endpoint,
+            actionCategory: actionCategory,
+            outcomeStatus: "Success",
+            userId: "hardening-test-user",
+            userName: "hardening-test-user",
+            resourceType: "HardeningTest",
+            resourceId: Guid.NewGuid().ToString(),
+            clientIp: "127.0.0.1",
+            userAgent: "PlantProcessIQ.HardeningTests",
+            correlationId: Guid.NewGuid().ToString(),
+            httpStatusCode: 200,
+            metadataJson: """
+            {
+              "source": "AuditLogImmutabilityTests",
+              "task": "BE-ADD-001",
+              "mode": "local-trigger-guard"
+            }
+            """);
+    }
+
+    private static void AssertMutationBlocked(PostgresException exception)
+    {
+        Assert.True(
+            exception.SqlState == "P0001" ||
+            exception.SqlState == PostgresErrorCodes.InsufficientPrivilege,
+            $"Expected audit mutation to be blocked by trigger P0001 or privilege 42501, but got SQLSTATE {exception.SqlState}: {exception.MessageText}");
     }
 }
 
-/// <summary>
-/// Test fixture that provides a DbContext connected to the test database
-/// using the production app role (the one with REVOKE applied).
-/// Wire this against your existing Infrastructure.IntegrationTests fixture
-/// patterns (Testcontainers, appsettings.Testing.json, or a shared DB).
-/// </summary>
-public class AuditLogDatabaseFixture : IDisposable
+public sealed class AuditLogDatabaseFixture
 {
-    public PlantProcessDbContext CreateAppRoleDbContext()
+    private const string ConnectionStringEnvironmentVariable =
+        "PPIQ_AUDIT_TRIGGER_TEST_CONNECTION";
+
+    public AuditLogDatabaseFixture()
     {
-        throw new NotImplementedException(
-            "Wire this up to your existing Infrastructure.IntegrationTests DB fixture pattern. " +
-            "Return a DbContext connecting as the app role (the one with REVOKE UPDATE/DELETE/TRUNCATE applied).");
+        ConnectionString =
+            Environment.GetEnvironmentVariable(ConnectionStringEnvironmentVariable)
+            ?? throw new InvalidOperationException(
+                $"Missing environment variable {ConnectionStringEnvironmentVariable}. " +
+                "Set it to your local PostgreSQL connection string, for example: " +
+                "Host=localhost;Port=5432;Database=plantprocessiq;Username=plantprocess;Password=YOUR_PASSWORD");
     }
 
-    public void Dispose() { }
+    public string ConnectionString { get; }
+
+    public PlantProcessDbContext CreateDbContext()
+    {
+       var options = new DbContextOptionsBuilder<PlantProcessDbContext>()
+            .UseNpgsql(ConnectionString)
+            .UseSnakeCaseNamingConvention()
+            .EnableSensitiveDataLogging(false)
+            .Options;
+
+        return new PlantProcessDbContext(options);
+    }
 }

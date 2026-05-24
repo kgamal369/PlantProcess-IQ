@@ -1,6 +1,14 @@
 // ============================================================
-// File:    Backend/PlantProcess.Infrastructure/Persistence/Configurations/Audit/AuditLogEntryConfiguration.cs
-// Task:    BE-ADD-001 (AuditLogEntry full implementation)
+// File: Backend/PlantProcess.Infrastructure/Persistence/Configurations/Configuration/Audit/AuditLogEntryConfiguration.cs
+// Task: BE-ADD-001 — AuditLogEntry full implementation
+//
+// Purpose:
+//   Maps AuditLogEntry to audit_log_entries using snake_case column names.
+//
+// Important fix:
+//   AuditLogEntry inherits BaseEntity. Without explicit mapping for the
+//   inherited BaseEntity properties, EF Core tries to write columns like
+//   "CreatedAtUtc", which do not exist in the PostgreSQL snake_case table.
 // ============================================================
 
 using Microsoft.EntityFrameworkCore;
@@ -14,9 +22,53 @@ public sealed class AuditLogEntryConfiguration : IEntityTypeConfiguration<AuditL
     public void Configure(EntityTypeBuilder<AuditLogEntry> b)
     {
         b.ToTable("audit_log_entries");
+
         b.HasKey(x => x.Id);
 
-        b.Property(x => x.Id).HasColumnName("id");
+        // ============================================================
+        // BaseEntity mapping
+        // ============================================================
+
+        b.Property(x => x.Id)
+            .HasColumnName("id")
+            .IsRequired();
+
+        b.Property(x => x.CreatedAtUtc)
+            .HasColumnName("created_at_utc")
+            .HasColumnType("timestamp with time zone")
+            .IsRequired();
+
+        b.Property(x => x.UpdatedAtUtc)
+            .HasColumnName("updated_at_utc")
+            .HasColumnType("timestamp with time zone");
+
+        b.Property(x => x.IsSynthetic)
+            .HasColumnName("is_synthetic")
+            .IsRequired();
+
+        b.Property(x => x.SourceSystem)
+            .HasColumnName("source_system")
+            .HasMaxLength(100);
+
+        b.Property(x => x.SourceRecordId)
+            .HasColumnName("source_record_id")
+            .HasMaxLength(200);
+
+        b.Property(x => x.IsDeleted)
+            .HasColumnName("is_deleted")
+            .IsRequired();
+
+        b.Property(x => x.DeletedAtUtc)
+            .HasColumnName("deleted_at_utc")
+            .HasColumnType("timestamp with time zone");
+
+        b.Property(x => x.DeletedReason)
+            .HasColumnName("deleted_reason")
+            .HasMaxLength(500);
+
+        // ============================================================
+        // AuditLogEntry mapping
+        // ============================================================
 
         b.Property(x => x.OccurredAtUtc)
             .HasColumnName("occurred_at_utc")
@@ -61,7 +113,7 @@ public sealed class AuditLogEntryConfiguration : IEntityTypeConfiguration<AuditL
 
         b.Property(x => x.ClientIp)
             .HasColumnName("client_ip")
-            .HasMaxLength(45);   // IPv6 max length
+            .HasMaxLength(45);
 
         b.Property(x => x.UserAgent)
             .HasColumnName("user_agent")
@@ -78,11 +130,16 @@ public sealed class AuditLogEntryConfiguration : IEntityTypeConfiguration<AuditL
             .HasColumnName("metadata_json")
             .HasColumnType("jsonb");
 
-        // BaseEntity fields are managed by the base configuration
-        // applied via the global UTC converter + soft-delete query filter
-        // already in place across the codebase.
+        // ============================================================
+        // Query filter
+        // ============================================================
 
-        // Indexes for the most common audit-log query patterns
+        b.HasQueryFilter(x => !x.IsDeleted);
+
+        // ============================================================
+        // Indexes
+        // ============================================================
+
         b.HasIndex(x => x.OccurredAtUtc)
             .HasDatabaseName("ix_audit_log_occurred_at");
 
@@ -94,5 +151,11 @@ public sealed class AuditLogEntryConfiguration : IEntityTypeConfiguration<AuditL
 
         b.HasIndex(x => x.CorrelationId)
             .HasDatabaseName("ix_audit_log_correlation");
+
+        b.HasIndex(x => x.CreatedAtUtc)
+            .HasDatabaseName("ix_audit_log_created_at");
+
+        b.HasIndex(x => x.IsDeleted)
+            .HasDatabaseName("ix_audit_log_is_deleted");
     }
 }
