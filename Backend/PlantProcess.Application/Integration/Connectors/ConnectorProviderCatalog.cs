@@ -31,7 +31,7 @@ public static class ConnectorProviderCatalog
             new ProviderTypeDto(
                 ProviderType: "PostgreSql",
                 DisplayName: "PostgreSQL Read-only DB Link",
-                Description: "Planned/conditional read-only connector for PostgreSQL source systems. Show as available only after connector implementation and smoke test are wired.",
+                Description: "Planned/conditional read-only connector for PostgreSQL source systems. Show as available only after demo-certification smoke tests are part of the API contract suite.",
                 IsAvailableNow: false,
                 RequiresSecretReference: true,
                 SupportsSchemaDiscovery: true,
@@ -86,14 +86,7 @@ public static class ConnectorProviderCatalog
                 RequiresSecretReference: true,
                 SupportsSchemaDiscovery: false,
                 SupportsSnapshotImport: false,
-                SupportsIncrementalImport: true),
+                SupportsIncrementalImport: true)
         };
-    }
-
-    public static ProviderTypeDto? Find(string providerType)
-    {
-        return GetProviderTypes()
-            .FirstOrDefault(x =>
-                string.Equals(x.ProviderType, providerType, StringComparison.OrdinalIgnoreCase));
     }
 }

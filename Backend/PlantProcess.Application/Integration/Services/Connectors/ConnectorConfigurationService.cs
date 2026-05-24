@@ -30,7 +30,88 @@ public sealed class ConnectorConfigurationService : IConnectorConfigurationServi
 
     public IReadOnlyList<ProviderTypeDto> GetProviderTypes()
     {
-        return PlantProcess.Application.Integration.Connectors.ConnectorProviderCatalog.GetProviderTypes();
+        return new List<ProviderTypeDto>
+        {
+            new(
+                "Csv",
+                "CSV Snapshot",
+                "Available now. Reads CSV snapshot exports into the PlantProcess IQ raw staging layer.",
+                IsAvailableNow: true,
+                RequiresSecretReference: false,
+                SupportsSchemaDiscovery: true,
+                SupportsSnapshotImport: true,
+                SupportsIncrementalImport: false),
+
+            new(
+                "Excel",
+                "Excel Snapshot",
+                "Available now. Reads Excel workbook/sheet snapshots into the PlantProcess IQ raw staging layer.",
+                IsAvailableNow: true,
+                RequiresSecretReference: false,
+                SupportsSchemaDiscovery: true,
+                SupportsSnapshotImport: true,
+                SupportsIncrementalImport: false),
+
+            new(
+                "PostgreSql",
+                "PostgreSQL Read-only DB Link",
+                "Planned/conditional read-only connector for PostgreSQL source systems. Not marked demo-ready until customer-demo certification is complete.",
+                IsAvailableNow: false,
+                RequiresSecretReference: true,
+                SupportsSchemaDiscovery: true,
+                SupportsSnapshotImport: true,
+                SupportsIncrementalImport: true),
+
+            new(
+                "SqlServer",
+                "Microsoft SQL Server Read-only DB Link",
+                "Planned read-only connector for SQL Server / MSSQL source systems.",
+                IsAvailableNow: false,
+                RequiresSecretReference: true,
+                SupportsSchemaDiscovery: true,
+                SupportsSnapshotImport: true,
+                SupportsIncrementalImport: true),
+
+            new(
+                "MySql",
+                "MySQL Read-only DB Link",
+                "Planned read-only connector for MySQL source systems.",
+                IsAvailableNow: false,
+                RequiresSecretReference: true,
+                SupportsSchemaDiscovery: true,
+                SupportsSnapshotImport: true,
+                SupportsIncrementalImport: true),
+
+            new(
+                "Oracle",
+                "Oracle Read-only DB Link",
+                "Planned read-only connector for Oracle MES/L2/QMS source systems.",
+                IsAvailableNow: false,
+                RequiresSecretReference: true,
+                SupportsSchemaDiscovery: true,
+                SupportsSnapshotImport: true,
+                SupportsIncrementalImport: true),
+
+            new(
+                "RestApi",
+                "REST API Snapshot",
+                "Planned API snapshot connector. Not part of the current demo-ready connector set.",
+                IsAvailableNow: false,
+                RequiresSecretReference: true,
+                SupportsSchemaDiscovery: false,
+                SupportsSnapshotImport: true,
+                SupportsIncrementalImport: true),
+
+            new(
+                "OpcUaHistorian",
+                "OPC-UA / Historian",
+                "Future historian/live-data connector. Not part of the current demo-ready connector set.",
+                IsAvailableNow: false,
+                RequiresSecretReference: true,
+                SupportsSchemaDiscovery: false,
+                SupportsSnapshotImport: false,
+                SupportsIncrementalImport: true)
+        };
     }
 
     public async Task<ApplicationResult<IReadOnlyList<ConnectionProfileDto>>> GetConnectionProfilesAsync(

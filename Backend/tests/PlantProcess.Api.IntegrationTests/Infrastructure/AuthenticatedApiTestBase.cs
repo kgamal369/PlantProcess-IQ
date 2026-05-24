@@ -8,6 +8,9 @@ namespace PlantProcess.Api.IntegrationTests.Infrastructure;
 
 public abstract class AuthenticatedApiTestBase : IClassFixture<WebApplicationFactory<Program>>
 {
+    protected const string TestAdminUserName = "admin";
+    protected const string TestAdminPassword = "ChangeMe123!";
+
     protected readonly WebApplicationFactory<Program> Factory;
 
     protected AuthenticatedApiTestBase(WebApplicationFactory<Program> factory)
@@ -20,12 +23,25 @@ public abstract class AuthenticatedApiTestBase : IClassFixture<WebApplicationFac
 
             builder.UseSetting("PLANTPROCESS_ALLOWED_ORIGINS", "http://localhost:5173");
 
-            builder.UseSetting("PlantProcess:Auth:BootstrapAdminUser", "admin");
-            builder.UseSetting("PlantProcess:Auth:BootstrapAdminPassword", "ChangeMe123!");
             builder.UseSetting("PlantProcess:Auth:SigningKey", "SuperSecretTestKeyThatIsAtLeast32Bytes!!");
             builder.UseSetting("PlantProcess:Auth:Issuer", "PlantProcessIQ");
             builder.UseSetting("PlantProcess:Auth:Audience", "PlantProcessIQ.Client");
             builder.UseSetting("PlantProcess:Auth:AccessTokenMinutes", "60");
+
+            // Important:
+            // The bootstrap admin must NOT be the same identity used by tests.
+            // Otherwise the lock-after-first-real-admin hardening correctly returns 403.
+            builder.UseSetting("PlantProcess:Auth:BootstrapAdminUser", "__bootstrap_disabled_for_integration_tests__");
+            builder.UseSetting("PlantProcess:Auth:BootstrapAdminPassword", "BootstrapDisabledOnlyForTests123!");
+
+            // Real configured test admin.
+            // This keeps the bootstrap lock behavior intact while giving tests a real Admin identity.
+            builder.UseSetting("PlantProcess:Auth:Users:0:UserName", TestAdminUserName);
+            builder.UseSetting("PlantProcess:Auth:Users:0:Password", TestAdminPassword);
+            builder.UseSetting("PlantProcess:Auth:Users:0:Role", "Admin");
+            builder.UseSetting("PlantProcess:Auth:Users:0:DisplayName", "Integration Test Admin");
+            builder.UseSetting("PlantProcess:Auth:Users:0:IsBootstrapAdmin", "false");
+            builder.UseSetting("PlantProcess:Auth:Users:0:ForcePasswordChangeOnFirstLogin", "false");
 
             builder.UseSetting("PlantProcess:PlantTimeZoneId", "Europe/Berlin");
             builder.UseSetting("PlantProcess:PlantUtcOffsetMinutes", "60");
@@ -43,11 +59,19 @@ public abstract class AuthenticatedApiTestBase : IClassFixture<WebApplicationFac
 
         var loginResponse = await client.PostAsJsonAsync("/auth/login", new
         {
-            UserName = "admin",
-            Password = "ChangeMe123!"
+            UserName = TestAdminUserName,
+            Password = TestAdminPassword
         });
 
-        loginResponse.EnsureSuccessStatusCode();
+        if (!loginResponse.IsSuccessStatusCode)
+        {
+            var body = await loginResponse.Content.ReadAsStringAsync();
+
+            throw new InvalidOperationException(
+                $"Integration test login failed. " +
+                $"Status={(int)loginResponse.StatusCode} {loginResponse.StatusCode}. " +
+                $"Body={body}");
+        }
 
         var json = await loginResponse.Content.ReadFromJsonAsync<JsonElement>();
 

@@ -6,6 +6,7 @@ using PlantProcess.Application.Integration.Contracts.Mapping;
 using PlantProcess.Application.Integration.Interfaces.Mapping;
 using PlantProcess.Application.Integration.Interfaces.Staging;
 using PlantProcess.Domain.Entities.Integration;
+using PlantProcess.Application.Integration.Connectors;
 using PlantProcess.Infrastructure.Persistence;
 
 namespace PlantProcess.Api.Endpoints.Integration;

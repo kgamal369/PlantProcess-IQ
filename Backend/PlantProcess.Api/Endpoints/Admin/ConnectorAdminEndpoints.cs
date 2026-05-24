@@ -3,6 +3,7 @@ using PlantProcess.Application.Integration.Contracts.Dtos;
 using PlantProcess.Application.Integration.Interfaces.Connectors;
 using Microsoft.EntityFrameworkCore;
 using PlantProcess.Application.Licensing.Interfaces;
+using PlantProcess.Application.Integration.Connectors;
 using PlantProcess.Infrastructure.Persistence;
 
 namespace PlantProcess.Api.Endpoints.Admin;
@@ -65,82 +66,9 @@ public static class ConnectorAdminEndpoints
     }
 
     private static IResult GetProviderTypes()
-{
-    var providerTypes = new[]
     {
-        new ProviderTypeDto(
-            ProviderType: "Csv",
-            DisplayName: "CSV Snapshot",
-            Description: "Reads CSV exports into the PlantProcess IQ raw staging layer. Available for controlled demo, readiness assessment and pilot imports.",
-            IsAvailableNow: true,
-            RequiresSecretReference: false,
-            SupportsSchemaDiscovery: true,
-            SupportsSnapshotImport: true,
-            SupportsIncrementalImport: false),
-
-        new ProviderTypeDto(
-            ProviderType: "PostgreSql",
-            DisplayName: "PostgreSQL Read-only DB Link",
-            Description: "Read-only PostgreSQL connector. Mark available only when connector implementation and smoke tests are green in this environment.",
-            IsAvailableNow: true,
-            RequiresSecretReference: true,
-            SupportsSchemaDiscovery: true,
-            SupportsSnapshotImport: true,
-            SupportsIncrementalImport: true),
-
-        new ProviderTypeDto(
-            ProviderType: "Excel",
-            DisplayName: "Excel Snapshot",
-            Description: "Planned Excel workbook/sheet snapshot connector. Not available in this build until implementation and connector smoke tests pass.",
-            IsAvailableNow: false,
-            RequiresSecretReference: false,
-            SupportsSchemaDiscovery: false,
-            SupportsSnapshotImport: false,
-            SupportsIncrementalImport: false),
-
-        new ProviderTypeDto(
-            ProviderType: "SqlServer",
-            DisplayName: "Microsoft SQL Server",
-            Description: "Planned read-only SQL Server connector for MES/L3/customer databases. Not available until implemented and tested.",
-            IsAvailableNow: false,
-            RequiresSecretReference: true,
-            SupportsSchemaDiscovery: false,
-            SupportsSnapshotImport: false,
-            SupportsIncrementalImport: false),
-
-        new ProviderTypeDto(
-            ProviderType: "Oracle",
-            DisplayName: "Oracle",
-            Description: "Planned read-only Oracle connector for MES/L2/industrial databases. Not available until implemented and tested.",
-            IsAvailableNow: false,
-            RequiresSecretReference: true,
-            SupportsSchemaDiscovery: false,
-            SupportsSnapshotImport: false,
-            SupportsIncrementalImport: false),
-
-        new ProviderTypeDto(
-            ProviderType: "MySql",
-            DisplayName: "MySQL",
-            Description: "Planned read-only MySQL connector for local systems and inspection device databases. Not available until implemented and tested.",
-            IsAvailableNow: false,
-            RequiresSecretReference: true,
-            SupportsSchemaDiscovery: false,
-            SupportsSnapshotImport: false,
-            SupportsIncrementalImport: false),
-
-        new ProviderTypeDto(
-            ProviderType: "OpcUaHistorian",
-            DisplayName: "OPC-UA / Historian",
-            Description: "Future live industrial data path. Not part of current demo availability.",
-            IsAvailableNow: false,
-            RequiresSecretReference: true,
-            SupportsSchemaDiscovery: false,
-            SupportsSnapshotImport: false,
-            SupportsIncrementalImport: false)
-    };
-
-    return Results.Ok(providerTypes);
-}
+    return Results.Ok(ConnectorProviderCatalog.GetProviderTypes());
+    }
     private static async Task<IResult> GetConnectionProfilesAsync(
         Guid? sourceSystemDefinitionId,
         string? providerType,
