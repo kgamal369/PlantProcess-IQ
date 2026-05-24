@@ -1,0 +1,18 @@
+.inline-field-error {
+  margin: 0.35rem 0 0;
+  color: #fca5a5;
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+
+.form-control.invalid input,
+.form-control.invalid select,
+.form-control.invalid textarea {
+  border-color: rgba(248, 113, 113, 0.85);
+  box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.14);
+}
+
+.required-marker {
+  color: #f87171;
+  margin-left: 0.2rem;
+}

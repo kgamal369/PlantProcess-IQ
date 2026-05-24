@@ -782,6 +782,13 @@ export interface MaterialInvestigationRequestOptions {
   parameterPageSize?: number;
 }
 
+export type WidgetQueryExpressionRequest = {
+  expression: string;
+  filters?: DashboardWidgetFilters | null;
+  options?: DashboardWidgetQueryOptions | null;
+};
+
+export type WidgetQueryExpressionResult = DashboardWidgetQueryResult;
 
 function dashboardQuery(filters: DashboardFilters): QueryParams {
   return {
@@ -850,6 +857,9 @@ export const plantProcessApi = {
   getAdminJobsMonitor: () =>
     getJson<AdminJobsMonitor>("/admin/jobs-monitor"),
   
+  getAdminJobs: () =>
+    getJson<AdminJobsMonitor>("/admin/jobs-monitor"),
+
   runJobNow: (jobId: string, requestedBy = "Admin UI") =>
     postJson<JobActionResponse>(`/admin/jobs/${jobId}/run-now`, {
       requestedBy,
@@ -1101,6 +1111,35 @@ export const plantProcessApi = {
     sourceRecordId?: string | null;
   }) => postJson<{ id: string }>("/analytics/dashboard/definitions", payload),
 
+
+  getDashboardDefinitionById: (dashboardDefinitionId: string) =>
+    getJson<DashboardDefinitionRecord>(
+      `/analytics/dashboard/definitions/${dashboardDefinitionId}`
+    ),
+
+  updateDashboardDefinition: (
+    dashboardDefinitionId: string,
+    payload: {
+      name: string;
+      description?: string | null;
+      layoutJson?: string | null;
+      isActive?: boolean | null;
+      isDefault?: boolean | null;
+    }
+  ) =>
+    putJson<DashboardDefinitionRecord>(
+      `/analytics/dashboard/definitions/${dashboardDefinitionId}`,
+      payload
+    ),
+
+  deleteDashboardDefinition: (dashboardDefinitionId: string) =>
+    requestJson<any>(
+      `/analytics/dashboard/definitions/${dashboardDefinitionId}`,
+      {
+        method: "DELETE",
+      }
+    ),
+
   updateDashboardLayout: (dashboardDefinitionId: string, layoutJson: string) =>
     requestJson<any>(
       `/analytics/dashboard/definitions/${dashboardDefinitionId}/layout`,
@@ -1118,7 +1157,65 @@ export const plantProcessApi = {
       `/analytics/dashboard/definitions/${dashboardDefinitionId}/widgets`,
       payload
     ),
+  
+    
+  createDashboardWidget: (
+  dashboardDefinitionId: string,
+  payload: CreateDashboardWidgetDefinitionPayload
+) =>
+  postJson<{ id: string }>(
+    `/analytics/dashboard/definitions/${dashboardDefinitionId}/widgets`,
+    payload
+  ),
 
+  updateDashboardWidget: (
+    dashboardDefinitionId: string,
+    widgetDefinitionId: string,
+    payload: {
+      widgetTitle: string;
+      widgetType: string;
+      chartType: string;
+      dimensionCode: string;
+      measureCode: string;
+      parameterCode?: string | null;
+      filterJson?: string | null;
+      displayOptionsJson?: string | null;
+      isActive?: boolean | null;
+    }
+  ) =>
+    requestJson<any>(
+      `/analytics/dashboard/definitions/${dashboardDefinitionId}/widgets/${widgetDefinitionId}`,
+      {
+        method: "PUT",
+        body: JSON.stringify(payload),
+      }
+    ),
+
+  deleteDashboardWidget: (
+    dashboardDefinitionId: string,
+    widgetDefinitionId: string
+  ) =>
+    requestJson<any>(
+      `/analytics/dashboard/definitions/${dashboardDefinitionId}/widgets/${widgetDefinitionId}`,
+      {
+        method: "DELETE",
+      }
+    ),
+
+  cloneDashboardWidget: (
+    dashboardDefinitionId: string,
+    widgetDefinitionId: string,
+    payload: {
+      widgetCode?: string | null;
+      widgetTitle?: string | null;
+      sortOrder?: number | null;
+    } = {}
+  ) =>
+    postJson<{ id: string }>(
+      `/analytics/dashboard/definitions/${dashboardDefinitionId}/widgets/${widgetDefinitionId}/clone`,
+      payload
+    ),
+  
   updateDashboardWidgetDefinition: (
     dashboardDefinitionId: string,
     widgetDefinitionId: string,
@@ -1229,6 +1326,11 @@ repairSystemDashboardTemplates: () =>
       request
     ),
 
+  executeWidgetExpression: (request: WidgetQueryExpressionRequest) =>
+    postJson<WidgetQueryExpressionResult>(
+        "/analytics/dashboard/widgets/execute",
+        request
+      ),
     
 };
 

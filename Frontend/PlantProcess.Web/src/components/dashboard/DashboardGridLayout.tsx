@@ -1,19 +1,3 @@
-// ============================================================
-// TASK 6 — Validate drag, resize, and reflow   [FIXED BUILD]
-// FILE: Frontend/PlantProcess.Web/src/components/dashboard/DashboardGridLayout.tsx
-//
-// FIX: Reverted to the project's existing react-grid-layout pattern:
-//   • Uses `Responsive as any` — NO WidthProvider (not exported as
-//     a named member in this version of react-grid-layout).
-//   • Manages width manually via ResizeObserver + useState.
-//   • Removed `import type { Layout, Layouts }` — not needed here.
-//
-// ADDITIONS vs the original:
-//   • beginDrag / endDrag wired to onDragStart/Stop and
-//     onResizeStart/Stop so localStorage is NOT written mid-drag.
-//   • draggableHandle matches original ".dashboard-widget__drag-handle".
-// ============================================================
-
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { Responsive } from "react-grid-layout";
@@ -21,6 +5,10 @@ import {
   useDashboardGridLayout,
 } from "../../state/DashboardGridLayoutContext";
 import type { DashboardGridLayouts } from "../../state/DashboardGridLayoutContext";
+import {
+  startDragPerformanceProbe,
+  stopDragPerformanceProbe,
+} from "@/utils/dragPerformance";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const ResponsiveGridLayout = Responsive as any;
@@ -57,6 +45,34 @@ export function DashboardGridLayout({ children }: { children: ReactNode }) {
     [setLayouts]
   );
 
+  const handleDragStart = useCallback(() => {
+    beginDrag();
+    startDragPerformanceProbe("dashboard-grid-drag");
+  }, [beginDrag]);
+
+  const handleDragStop = useCallback(() => {
+    const result = stopDragPerformanceProbe("dashboard-grid-drag");
+    endDrag();
+
+    if (result && !result.passed) {
+      console.warn("Dashboard grid drag smoothness below target", result);
+    }
+  }, [endDrag]);
+
+  const handleResizeStart = useCallback(() => {
+    beginDrag();
+    startDragPerformanceProbe("dashboard-grid-resize");
+  }, [beginDrag]);
+
+  const handleResizeStop = useCallback(() => {
+    const result = stopDragPerformanceProbe("dashboard-grid-resize");
+    endDrag();
+
+    if (result && !result.passed) {
+      console.warn("Dashboard grid resize smoothness below target", result);
+    }
+  }, [endDrag]);
+
   return (
     <div ref={containerRef} className="dashboard-grid-layout-shell">
       <ResponsiveGridLayout
@@ -73,10 +89,10 @@ export function DashboardGridLayout({ children }: { children: ReactNode }) {
         isDraggable
         isResizable
         draggableHandle=".dashboard-widget__drag-handle"
-        onDragStart={beginDrag}
-        onDragStop={endDrag}
-        onResizeStart={beginDrag}
-        onResizeStop={endDrag}
+        onDragStart={handleDragStart}
+        onDragStop={handleDragStop}
+        onResizeStart={handleResizeStart}
+        onResizeStop={handleResizeStop}
         onLayoutChange={handleLayoutChange}
       >
         {children}

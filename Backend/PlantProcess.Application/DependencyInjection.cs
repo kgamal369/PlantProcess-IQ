@@ -33,6 +33,7 @@ using PlantProcess.Application.Integration.Services.Mapping;
 using PlantProcess.Application.Integration.Services.SchemaConfiguration;
 using PlantProcess.Application.Integration.Services.SourceSystems;
 using PlantProcess.Application.Integration.Services.Staging;
+using PlantProcess.Application.Dashboarding.Services.Widgets;
 using PlantProcess.Application.Licensing.Interfaces;
 using PlantProcess.Application.Licensing.Options;
 using PlantProcess.Application.Licensing.Services;
@@ -109,7 +110,8 @@ public static class DependencyInjection
         services.AddScoped<IFeatureEngineeringService, FeatureEngineeringService>();
         services.AddScoped<IQualityLabelBuilderService, QualityLabelBuilderService>();
         services.AddScoped<IMlReadinessService, MlReadinessService>();
-
+        services.AddScoped<IWidgetQueryExpressionService, WidgetQueryExpressionService>();
+        
         // Reporting / customer demo pack
         services.AddScoped<IInvestigationReportService, InvestigationReportService>();
 

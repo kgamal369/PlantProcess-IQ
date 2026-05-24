@@ -30,68 +30,7 @@ public sealed class ConnectorConfigurationService : IConnectorConfigurationServi
 
     public IReadOnlyList<ProviderTypeDto> GetProviderTypes()
     {
-        return new List<ProviderTypeDto>
-        {
-            new(
-                "Csv",
-                "CSV Snapshot",
-                "Reads uploaded/exported CSV text into the PlantProcess IQ raw staging layer.",
-                IsAvailableNow: true,
-                RequiresSecretReference: false,
-                SupportsSchemaDiscovery: true,
-                SupportsSnapshotImport: true,
-                SupportsIncrementalImport: false),
-
-            new(
-                "Excel",
-                "Excel Snapshot",
-                "Planned next file connector for workbook/sheet snapshots.",
-                IsAvailableNow: false,
-                RequiresSecretReference: false,
-                SupportsSchemaDiscovery: true,
-                SupportsSnapshotImport: true,
-                SupportsIncrementalImport: false),
-
-            new(
-                "PostgreSql",
-                "PostgreSQL Read-only DB Link",
-                "Planned read-only database connector for PostgreSQL sources.",
-                IsAvailableNow: false,
-                RequiresSecretReference: true,
-                SupportsSchemaDiscovery: true,
-                SupportsSnapshotImport: true,
-                SupportsIncrementalImport: true),
-
-            new(
-                "SqlServer",
-                "Microsoft SQL Server Read-only DB Link",
-                "Planned read-only database connector for SQL Server / MSSQL sources.",
-                IsAvailableNow: false,
-                RequiresSecretReference: true,
-                SupportsSchemaDiscovery: true,
-                SupportsSnapshotImport: true,
-                SupportsIncrementalImport: true),
-
-            new(
-                "Oracle",
-                "Oracle Read-only DB Link",
-                "Planned read-only database connector for Oracle MES/L2/QMS sources.",
-                IsAvailableNow: false,
-                RequiresSecretReference: true,
-                SupportsSchemaDiscovery: true,
-                SupportsSnapshotImport: true,
-                SupportsIncrementalImport: true),
-
-            new(
-                "RestApi",
-                "REST API Snapshot",
-                "Planned API snapshot connector.",
-                IsAvailableNow: false,
-                RequiresSecretReference: true,
-                SupportsSchemaDiscovery: false,
-                SupportsSnapshotImport: true,
-                SupportsIncrementalImport: true)
-        };
+        return PlantProcess.Application.Integration.Connectors.ConnectorProviderCatalog.GetProviderTypes();
     }
 
     public async Task<ApplicationResult<IReadOnlyList<ConnectionProfileDto>>> GetConnectionProfilesAsync(

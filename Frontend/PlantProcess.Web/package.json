@@ -13,12 +13,17 @@
     "test:coverage": "vitest run --coverage --config vitest.config.ts",
     "e2e": "playwright test",
     "e2e:ui": "playwright test --ui",
+    "check:ts": "tsc -b --verbose",
+    "size-check": "node scripts/check-bundle-size.mjs",
+    "contract:api": "vitest run src/api/legacy/__tests__/plantProcessApi.contract.test.ts --config vitest.config.ts",
+    "language:audit": "node scripts/audit-language.mjs",
     "qa:hardening": "playwright test e2e/hardening-matrix.spec.ts e2e/widget-builder-focused.spec.ts e2e/admin-db-focused.spec.ts e2e/admin-schema-focused.spec.ts",
+    "qa:nav": "playwright test e2e/nav-graph-refresh-survival.spec.ts",
+    "qa:license": "playwright test e2e/license-gate-ux.spec.ts",
+    "qa:dashboard": "playwright test e2e/dashboard-refresh-filter.spec.ts",
     "validate": "npm run build && npm run lint && npm run test",
     "validate:fast": "npm run build && npm run test",
-    "validate:full": "npm run build && npm run lint && npm run test && npm run language:audit && npm run e2e",
-    "check:ts": "tsc -b --verbose",
-    "language:audit": "node scripts/audit-language.mjs"
+    "validate:full": "npm run build && npm run lint && npm run test && npm run language:audit && npm run e2e"
   },
   "dependencies": {
     "lucide-react": "^1.14.0",

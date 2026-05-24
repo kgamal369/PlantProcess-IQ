@@ -15,7 +15,7 @@
 //   AdminJobsMonitorTab.tsx     ← JobsMonitorTab
 // ============================================================
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Navigate, NavLink, Route, Routes } from "react-router-dom";
 import {
   Activity,
@@ -29,7 +29,7 @@ import {
 import { plantProcessApi } from "@/api/plantProcessApi";
 import { StateRenderer } from "@/components/StateRenderer";
 import { SkeletonTable, SkeletonKpi } from "@/components/skeletons/Skeleton";
-
+import { useLatestOnlyPolling } from "@/hooks/useLatestOnlyPolling";
 import { DbConfigurationTab } from "./AdminDbConfigurationTab";
 import { SchemaConfigurationTab } from "./AdminSchemaConfigurationTab";
 import { ImportingDataTab } from "./AdminImportingDataTab";
@@ -79,12 +79,13 @@ export function AdminPageContent() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<unknown>(null);
 
-  async function loadAdminData(isManualRefresh = false) {
+  const loadAdminData = useCallback(async (isManualRefresh = false) => {
     if (isManualRefresh) {
       setIsRefreshing(true);
     } else {
       setIsLoading(true);
     }
+
     setError(null);
 
     try {
@@ -103,9 +104,36 @@ export function AdminPageContent() {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  }
+  }, []);
 
-  useEffect(() => { loadAdminData(); }, []);
+  useEffect(() => {
+    void loadAdminData();
+  }, [loadAdminData]);
+
+  const loadJobsMonitor = useCallback(
+  async () => plantProcessApi.getAdminJobsMonitor(),
+  []
+);
+
+  const jobsPolling = useLatestOnlyPolling(
+    async () => loadJobsMonitor(),
+    10_000,
+    true
+  );
+
+  useEffect(() => {
+    if (!jobsPolling.data) return;
+
+    setData((current) => ({
+      ...current,
+      jobs: jobsPolling.data,
+    }));
+  }, [jobsPolling.data]);
+
+  const refreshAllAdminData = useCallback(async () => {
+    await loadAdminData(true);
+    await jobsPolling.refresh();
+  }, [jobsPolling, loadAdminData]);
 
   const status = data.overview?.status ?? "Loading";
 
@@ -198,7 +226,7 @@ export function AdminPageContent() {
               element={
                 <DbConfigurationTab
                   data={data.dbConfig}
-                  onRefresh={() => loadAdminData(true)}
+                  onRefresh={refreshAllAdminData}
                 />
               }
             />
@@ -215,7 +243,7 @@ export function AdminPageContent() {
                   data={data.model}
                   schemaConfig={data.schemaConfig}
                   jobs={data.jobs}
-                  onRefresh={() => loadAdminData(true)}
+                  onRefresh={refreshAllAdminData}
                 />
               }
             />
@@ -225,7 +253,7 @@ export function AdminPageContent() {
               element={
                 <JobsMonitorTab
                   data={data.jobs}
-                  onRefresh={() => loadAdminData(true)}
+                  onRefresh={refreshAllAdminData}
                 />
               }
             />

@@ -20,7 +20,8 @@ public static class AuthEndpoints
 
         group.MapPost("/login", LoginAsync)
             .WithSummary("Login and return JWT access token")
-            .WithDescription("Development/bootstrap JWT login. Produces role-aware tokens.");
+            .WithDescription(
+                "Development/bootstrap JWT login. Bootstrap admin is automatically disabled once a real configured admin exists.");
 
         return app;
     }
@@ -43,6 +44,15 @@ public static class AuthEndpoints
             });
         }
 
+        if (IsBootstrapCredential(request, auth) && HasRealAdmin(auth))
+        {
+            logger.LogWarning(
+                "Bootstrap admin login rejected because at least one real admin exists. Environment={EnvironmentName}",
+                environment.EnvironmentName);
+
+            return Results.Forbid();
+        }
+
         var resolvedUser = ResolveUser(request, auth);
 
         if (resolvedUser is null)
@@ -55,7 +65,9 @@ public static class AuthEndpoints
             return Results.Unauthorized();
         }
 
-        if (!AllowedRoles.Contains(resolvedUser.Role))
+        var normalizedRole = NormalizeRole(resolvedUser.Role);
+
+        if (!AllowedRoles.Contains(normalizedRole))
         {
             logger.LogWarning(
                 "Login rejected because configured role is not allowed. UserName={UserName}, Role={Role}",
@@ -68,10 +80,21 @@ public static class AuthEndpoints
             });
         }
 
+        if (string.IsNullOrWhiteSpace(auth.SigningKey) || auth.SigningKey.Length < 32)
+        {
+            logger.LogError(
+                "JWT signing key is missing or too short. Environment={EnvironmentName}",
+                environment.EnvironmentName);
+
+            return Results.Problem(
+                title: "Authentication configuration error",
+                detail: "JWT signing key is not configured correctly.",
+                statusCode: StatusCodes.Status500InternalServerError);
+        }
+
         var now = DateTime.UtcNow;
         var expires = now.AddMinutes(Math.Clamp(auth.AccessTokenMinutes, 5, 24 * 60));
 
-        var normalizedRole = NormalizeRole(resolvedUser.Role);
         var displayName = string.IsNullOrWhiteSpace(resolvedUser.DisplayName)
             ? resolvedUser.UserName
             : resolvedUser.DisplayName.Trim();
@@ -103,9 +126,11 @@ public static class AuthEndpoints
         var accessToken = new JwtSecurityTokenHandler().WriteToken(token);
 
         logger.LogInformation(
-            "Login succeeded. UserName={UserName}, Role={Role}, ExpiresAtUtc={ExpiresAtUtc}",
+            "Login succeeded. UserName={UserName}, Role={Role}, Bootstrap={IsBootstrapAdmin}, ForcePasswordChange={ForcePasswordChangeRequired}, ExpiresAtUtc={ExpiresAtUtc}",
             resolvedUser.UserName,
             normalizedRole,
+            resolvedUser.IsBootstrapAdmin,
+            resolvedUser.ForcePasswordChangeRequired,
             expires);
 
         return Results.Ok(new LoginResponse(
@@ -115,40 +140,57 @@ public static class AuthEndpoints
             UserName: resolvedUser.UserName,
             DisplayName: displayName,
             Role: normalizedRole,
-            Scopes: scopes));
+            Scopes: scopes,
+            ForcePasswordChangeRequired: resolvedUser.ForcePasswordChangeRequired,
+            IsBootstrapAdmin: resolvedUser.IsBootstrapAdmin));
     }
 
     private static ResolvedLoginUser? ResolveUser(LoginRequest request, AuthOptions auth)
     {
         var requestedUserName = request.UserName.Trim();
 
-        var configuredUser = auth.Users
-            .FirstOrDefault(x =>
-                string.Equals(x.UserName, requestedUserName, StringComparison.OrdinalIgnoreCase) &&
-                string.Equals(x.Password, request.Password, StringComparison.Ordinal));
+        var configuredUser = auth.Users.FirstOrDefault(x =>
+            string.Equals(x.UserName, requestedUserName, StringComparison.OrdinalIgnoreCase) &&
+            string.Equals(x.Password, request.Password, StringComparison.Ordinal));
 
         if (configuredUser is not null)
         {
             return new ResolvedLoginUser(
-                configuredUser.UserName.Trim(),
-                configuredUser.Role.Trim(),
-                configuredUser.DisplayName);
+                UserName: configuredUser.UserName.Trim(),
+                Role: NormalizeRole(configuredUser.Role),
+                DisplayName: configuredUser.DisplayName,
+                IsBootstrapAdmin: configuredUser.IsBootstrapAdmin,
+                ForcePasswordChangeRequired: configuredUser.ForcePasswordChangeOnFirstLogin);
         }
 
-        // Backward-compatible bootstrap admin.
-        // StartupConfigurationValidator rejects unsafe defaults outside Development.
-        if (!string.IsNullOrWhiteSpace(auth.BootstrapAdminUser) &&
-            !string.IsNullOrWhiteSpace(auth.BootstrapAdminPassword) &&
-            string.Equals(requestedUserName, auth.BootstrapAdminUser, StringComparison.OrdinalIgnoreCase) &&
-            string.Equals(request.Password, auth.BootstrapAdminPassword, StringComparison.Ordinal))
+        if (IsBootstrapCredential(request, auth) && !HasRealAdmin(auth))
         {
             return new ResolvedLoginUser(
-                auth.BootstrapAdminUser.Trim(),
-                "Admin",
-                "Bootstrap Admin");
+                UserName: auth.BootstrapAdminUser!.Trim(),
+                Role: "Admin",
+                DisplayName: "Bootstrap Admin",
+                IsBootstrapAdmin: true,
+                ForcePasswordChangeRequired: auth.BootstrapAdminForcePasswordChange);
         }
 
         return null;
+    }
+
+    private static bool IsBootstrapCredential(LoginRequest request, AuthOptions auth)
+    {
+        return !string.IsNullOrWhiteSpace(auth.BootstrapAdminUser) &&
+               !string.IsNullOrWhiteSpace(auth.BootstrapAdminPassword) &&
+               string.Equals(request.UserName.Trim(), auth.BootstrapAdminUser, StringComparison.OrdinalIgnoreCase) &&
+               string.Equals(request.Password, auth.BootstrapAdminPassword, StringComparison.Ordinal);
+    }
+
+    private static bool HasRealAdmin(AuthOptions options)
+    {
+        return options.Users.Any(user =>
+            !user.IsBootstrapAdmin &&
+            string.Equals(user.Role, "Admin", StringComparison.OrdinalIgnoreCase) &&
+            !string.IsNullOrWhiteSpace(user.UserName) &&
+            !string.IsNullOrWhiteSpace(user.Password));
     }
 
     private static string NormalizeRole(string role)
@@ -212,10 +254,14 @@ public static class AuthEndpoints
         string UserName,
         string DisplayName,
         string Role,
-        IReadOnlyList<string> Scopes);
+        IReadOnlyList<string> Scopes,
+        bool ForcePasswordChangeRequired,
+        bool IsBootstrapAdmin);
 
     private sealed record ResolvedLoginUser(
         string UserName,
         string Role,
-        string? DisplayName);
+        string? DisplayName,
+        bool IsBootstrapAdmin,
+        bool ForcePasswordChangeRequired);
 }

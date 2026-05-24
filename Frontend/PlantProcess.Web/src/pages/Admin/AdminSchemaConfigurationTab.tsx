@@ -37,6 +37,13 @@ import {
 } from "@/api/plantProcessApi";
 import { AdminPanel, MiniKpi, StatusPill, formatDate } from "./AdminSharedComponents";
 import { useOptimisticSave } from "@/hooks/useOptimisticSave";
+import { InlineFieldError } from "@/components/forms/InlineFieldError";
+import {
+  useInlineFormValidation,
+  validateCode,
+  validateIntervalMinutes,
+  validateRequired,
+} from "@/hooks/useInlineFormValidation";
 
 // ── SchemaConfigurationTab ────────────────────────────────────────────────────
 
@@ -143,6 +150,24 @@ LIMIT 100`,
     setForm((f) => ({ ...f, [key]: value }));
   }
 
+  type SqlViewField =
+    | "schemaViewCode"
+    | "schemaViewName"
+    | "sqlText"
+    | "maxPreviewRows"
+    | "timeoutSeconds";
+
+  const validation = useInlineFormValidation<typeof form, SqlViewField>(
+    form,
+    (value) => ({
+      schemaViewCode: validateCode(value.schemaViewCode, "View code"),
+      schemaViewName: validateRequired(value.schemaViewName, "View name"),
+      sqlText: validateRequired(value.sqlText, "SQL query"),
+      maxPreviewRows: validateIntervalMinutes(value.maxPreviewRows, 1, "Max preview rows"),
+      timeoutSeconds: validateIntervalMinutes(value.timeoutSeconds, 1, "Timeout seconds"),
+    })
+  );
+  
   async function load() {
     setIsBusy(true);
     try {
@@ -179,6 +204,10 @@ LIMIT 100`,
     setIsBusy(true);
     setError(null);
     setPreview(null);
+    if (!validation.prepareSubmit()) {
+      setError("Please fix the highlighted fields before previewing SQL.");
+      return;
+    }
     try {
       const result = await plantProcessApi.previewAdHocSchemaSql({
         sqlText: form.sqlText,

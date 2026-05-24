@@ -90,6 +90,10 @@ public static class DashboardEndpoints
         "Repairs existing system-template widgets so their dimension and measure codes match " +
         "the DashboardWidgetQuerySafetyRegistry. Safe to run multiple times.");
         
+        group.MapPost("/widgets/execute", ExecuteWidgetExpressionAsync)
+            .WithSummary("Execute widget query expression DSL")
+            .WithDescription("Parses a small safe widget expression DSL and executes it using the normal whitelisted dashboard widget query engine.");
+        
         return app;
                 
     }
@@ -656,17 +660,40 @@ public static class DashboardEndpoints
     }
 
     private static async Task<IResult> RepairSystemDashboardTemplatesAsync(
-    IDashboardDefinitionService service,
-    CancellationToken cancellationToken)
-{
-    var result = await service.RepairSystemTemplatesAsync(cancellationToken);
-
-    return result.ToHttpResult(repaired => Results.Ok(new
+        IDashboardDefinitionService service,
+        CancellationToken cancellationToken)
     {
-        repaired,
-        repairedAtUtc = DateTime.UtcNow
-    }));
-}
+        var result = await service.RepairSystemTemplatesAsync(cancellationToken);
+
+        return result.ToHttpResult(repaired => Results.Ok(new
+        {
+            repaired,
+            repairedAtUtc = DateTime.UtcNow
+        }));
+    }
+
+    private static async Task<IResult> ExecuteWidgetExpressionAsync(
+        WidgetQueryExpressionRequest request,
+        IWidgetQueryExpressionService expressionService,
+        IDashboardWidgetQueryService widgetQueryService,
+        CancellationToken cancellationToken)
+    {
+        var parseResult = expressionService.Parse(request);
+
+        if (!parseResult.IsSuccess)
+        {
+            // Generic ApplicationResult<T>.ToHttpResult requires Func<T, IResult>.
+            // This lambda is never executed on failure; it only satisfies the generic overload.
+            return parseResult.ToHttpResult(_ => Results.NoContent());
+        }
+
+        var executeResult = await widgetQueryService.ExecuteAsync(
+            parseResult.Value!,
+            cancellationToken);
+
+        return executeResult.ToHttpResult(value => Results.Ok(value));
+    }
+
 }
 
 

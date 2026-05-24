@@ -47,6 +47,14 @@ import { ErrorPanel } from "@/components/AsyncState";
 import { useOptimisticSave } from "@/hooks/useOptimisticSave";
 import { AdminPanel, StatusPill, formatDate } from "./AdminSharedComponents";
 
+import { InlineFieldError } from "@/components/forms/InlineFieldError";
+import {
+  useInlineFormValidation,
+  validateCode,
+  validateIntervalMinutes,
+  validatePort,
+  validateRequired,
+} from "@/hooks/useInlineFormValidation";
 // ── Local types ───────────────────────────────────────────────────────────────
 
 interface ConnectionTestResult {
@@ -416,6 +424,40 @@ function ConnectionProfileForm({
   const isFileProvider = ["csv", "excel"].includes(form.providerType.toLowerCase());
   const isDbProvider = !isFileProvider;
 
+  type ConnectionProfileField =
+  | "connectionProfileCode"
+  | "connectionProfileName"
+  | "providerType"
+  | "hostName"
+  | "port"
+  | "fileRootPath"
+  | "secretReference";
+
+  const validation = useInlineFormValidation<typeof form, ConnectionProfileField>(
+    form,
+    (value) => ({
+      connectionProfileCode: !isEdit
+        ? value.connectionProfileCode.trim()
+          ? validateCode(value.connectionProfileCode, "Profile code")
+          : undefined
+        : undefined,
+      connectionProfileName: validateRequired(value.connectionProfileName, "Profile name"),
+      providerType: validateRequired(value.providerType, "Provider type"),
+      hostName: isDbProvider
+        ? validateRequired(value.hostName, "Host / Server")
+        : undefined,
+      port: isDbProvider
+        ? validatePort(value.port, "Port")
+        : undefined,
+      fileRootPath: isFileProvider
+        ? validateRequired(value.fileRootPath, "File root path")
+        : undefined,
+      secretReference: isDbProvider
+        ? validateRequired(value.secretReference, "Secret reference")
+        : undefined,
+    })
+  );
+
   function handleProviderChange(provider: string) {
     const defaults = PROVIDER_DEFAULTS[provider.toLowerCase()] ?? { port: 0, schemaName: "" };
     setForm((f) => ({
@@ -443,11 +485,8 @@ function ConnectionProfileForm({
     toastId: `save-connection-profile-${profile?.id ?? "new"}`,
     onSave: async () => {
       // Validation — throw to surface as inline error + toast.
-      if (!form.connectionProfileName.trim()) {
-        throw new Error("Profile name is required.");
-      }
-      if (isDbProvider && !form.hostName.trim()) {
-        throw new Error("Host name is required for database connectors.");
+      if (!validation.prepareSubmit()) {
+        throw new Error("Please fix the highlighted fields before saving.");
       }
 
       if (isEdit && profile) {
@@ -521,48 +560,71 @@ function ConnectionProfileForm({
         </label>
 
         {/* Profile name */}
-        <label className="admin-form-label">
+        <label
+          className={`admin-form-label ${
+            validation.getError("connectionProfileName") ? "invalid" : ""
+          }`}
+        >
           Profile Name *
           <input
             className="admin-input"
             value={form.connectionProfileName}
+            aria-invalid={Boolean(validation.getError("connectionProfileName"))}
+            aria-describedby="connection-profile-name-error"
+            onBlur={() => validation.markTouched("connectionProfileName")}
             onChange={(e) => set("connectionProfileName", e.target.value)}
             placeholder="e.g. Production MES Database"
+          />
+          <InlineFieldError
+            id="connection-profile-name-error"
+            message={validation.getError("connectionProfileName")}
           />
         </label>
 
         {!isEdit ? (
-          <label className="admin-form-label">
-            Profile Code
-            <input
-              className="admin-input"
-              value={form.connectionProfileCode}
-              onChange={(e) => set("connectionProfileCode", e.target.value)}
-              placeholder="Auto-generated if empty"
-            />
-          </label>
+        <label
+          className={`admin-form-label ${
+            validation.getError("connectionProfileCode") ? "invalid" : ""
+          }`}
+        >
+          Profile Code
+          <input
+            className="admin-input"
+            value={form.connectionProfileCode}
+            aria-invalid={Boolean(validation.getError("connectionProfileCode"))}
+            aria-describedby="connection-profile-code-error"
+            onBlur={() => validation.markTouched("connectionProfileCode")}
+            onChange={(e) => set("connectionProfileCode", e.target.value)}
+            placeholder="Auto-generated if empty"
+          />
+          <InlineFieldError
+            id="connection-profile-code-error"
+            message={validation.getError("connectionProfileCode")}
+          />
+        </label>
         ) : null}
 
         {/* DB-specific fields */}
         {isDbProvider ? (
           <>
-            <label className="admin-form-label">
+            <label
+              className={`admin-form-label ${
+                validation.getError("hostName") ? "invalid" : ""
+              }`}
+            >
               Host / Server *
               <input
                 className="admin-input"
                 value={form.hostName}
+                aria-invalid={Boolean(validation.getError("hostName"))}
+                aria-describedby="connection-host-error"
+                onBlur={() => validation.markTouched("hostName")}
                 onChange={(e) => set("hostName", e.target.value)}
                 placeholder="e.g. 192.168.1.100 or db.plant.local"
               />
-            </label>
-
-            <label className="admin-form-label">
-              Port
-              <input
-                className="admin-input admin-input--narrow"
-                type="number"
-                value={form.port}
-                onChange={(e) => set("port", Number(e.target.value))}
+              <InlineFieldError
+                id="connection-host-error"
+                message={validation.getError("hostName")}
               />
             </label>
 
@@ -587,25 +649,47 @@ function ConnectionProfileForm({
             </label>
           </>
         ) : (
-          <label className="admin-form-label">
-            File Root Path
-            <input
-              className="admin-input"
-              value={form.fileRootPath}
-              onChange={(e) => set("fileRootPath", e.target.value)}
-              placeholder="e.g. /data/imports or C:\\Imports"
-            />
-          </label>
+        <label
+          className={`admin-form-label ${
+            validation.getError("fileRootPath") ? "invalid" : ""
+          }`}
+        >
+          File Root Path *
+          <input
+            className="admin-input"
+            value={form.fileRootPath}
+            aria-invalid={Boolean(validation.getError("fileRootPath"))}
+            aria-describedby="connection-file-root-error"
+            onBlur={() => validation.markTouched("fileRootPath")}
+            onChange={(e) => set("fileRootPath", e.target.value)}
+            placeholder="e.g. /data/imports or C:\\Imports"
+          />
+          <InlineFieldError
+            id="connection-file-root-error"
+            message={validation.getError("fileRootPath")}
+          />
+        </label>
         )}
 
         {/* Credentials */}
-        <label className="admin-form-label">
+        <label
+          className={`admin-form-label ${
+            validation.getError("secretReference") ? "invalid" : ""
+          }`}
+        >
           Secret Reference
           <input
             className="admin-input"
             value={form.secretReference}
+            aria-invalid={Boolean(validation.getError("secretReference"))}
+            aria-describedby="connection-secret-error"
+            onBlur={() => validation.markTouched("secretReference")}
             onChange={(e) => set("secretReference", e.target.value)}
             placeholder="Env var name e.g. PLANT_DB_USER"
+          />
+          <InlineFieldError
+            id="connection-secret-error"
+            message={validation.getError("secretReference")}
           />
           <small className="admin-form-hint">
             Username pulled from env var. Password from {"{"}SECRET_REF{"}"}_PASSWORD env var.
