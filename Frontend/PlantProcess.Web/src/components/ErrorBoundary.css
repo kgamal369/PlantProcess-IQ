@@ -1,0 +1,91 @@
+/* ErrorBoundary.css — brand-consistent fallback panel styling */
+
+.ppiq-error-boundary {
+  width: 100%;
+  min-height: 320px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background:
+    linear-gradient(180deg, rgba(255, 228, 230, 0.15) 0%, rgba(254, 226, 226, 0.05) 100%);
+}
+
+.ppiq-error-boundary__panel {
+  max-width: 480px;
+  background: #ffffff;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  padding: 2rem 2.5rem;
+  text-align: center;
+  box-shadow: 0 4px 20px rgba(127, 29, 29, 0.08);
+}
+
+.ppiq-error-boundary__icon {
+  color: #b91c1c;
+  display: inline-flex;
+  padding: 0.75rem;
+  background: #fee2e2;
+  border-radius: 50%;
+  margin-bottom: 1rem;
+}
+
+.ppiq-error-boundary__title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 0.5rem 0;
+  letter-spacing: -0.01em;
+}
+
+.ppiq-error-boundary__message {
+  font-size: 0.95rem;
+  color: #475569;
+  margin: 0 0 1rem 0;
+  line-height: 1.5;
+}
+
+.ppiq-error-boundary__ref {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin: 0 0 1.5rem 0;
+}
+
+.ppiq-error-boundary__ref code {
+  background: #f1f5f9;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  font-family: "Consolas", "Monaco", monospace;
+  font-size: 0.78rem;
+  color: #0f172a;
+  user-select: all;
+}
+
+.ppiq-error-boundary__retry {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #0f172a;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.6rem 1.25rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.05s ease;
+  font-family: inherit;
+}
+
+.ppiq-error-boundary__retry:hover {
+  background: #1e293b;
+}
+
+.ppiq-error-boundary__retry:active {
+  transform: translateY(1px);
+}
+
+.ppiq-error-boundary__retry:focus-visible {
+  outline: 2px solid #0891b2;
+  outline-offset: 2px;
+}

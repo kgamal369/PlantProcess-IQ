@@ -25,6 +25,8 @@ public class SourceDatasetDefinition : BaseEntity
     public string DatasetKind { get; private set; } = null!;
     // CsvFile, ExcelSheet, SqlTable, SqlView, ApiEndpoint
 
+    public DateTime? NextRunAtUtc { get; private set; }
+
     public string SourceObjectName { get; private set; } = null!;
 
     public string? SourceSchemaName { get; private set; }
@@ -42,6 +44,34 @@ public class SourceDatasetDefinition : BaseEntity
     public bool IsActive { get; private set; } = true;
 
     public string? Description { get; private set; }
+
+    /// Advance the next-run timestamp after a successful import.
+    /// Uses RefreshIntervalSeconds as configured.
+    public void ScheduleNextRunAfterSuccess()
+    {
+        NextRunAtUtc = DateTime.UtcNow.AddSeconds(RefreshIntervalSeconds);
+        MarkAsUpdated();
+    }
+    
+    /// Advance the next-run timestamp after a failed import.
+    /// Uses a 2x back-off so a broken connection does not hammer the
+    /// source every tick.
+    public void ScheduleNextRunAfterFailure()
+    {
+        // 2x back-off, capped at 24 hours to prevent indefinite postponement
+        var backoffSeconds = Math.Min(RefreshIntervalSeconds * 2, 86_400);
+        NextRunAtUtc = DateTime.UtcNow.AddSeconds(backoffSeconds);
+        MarkAsUpdated();
+    }
+
+    /// Force the next run to happen on the next tick. Used when the
+    /// user changes the configuration or manually triggers a refresh.
+    public void ScheduleNextRunImmediately()
+    {
+        NextRunAtUtc = null;
+        MarkAsUpdated();
+    }
+
 
     private SourceDatasetDefinition()
     {

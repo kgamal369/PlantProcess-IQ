@@ -22,7 +22,8 @@ public sealed class CsvConnectorSmokeTests
 
         var result = await connector.TestConnectionAsync(connection, CancellationToken.None);
 
-        result.IsSuccess.Should().BeTrue(result.Message);    }
+        result.IsSuccess.Should().BeTrue(result.Message);
+    }
 
     [Fact]
     public async Task CsvConnector_should_discover_inline_csv_datasets()
@@ -46,18 +47,15 @@ public sealed class CsvConnectorSmokeTests
 
     private static ConnectionProfile CreateConnectionProfile(string connectionOptionsJson)
     {
-       return new ConnectionProfile(
-        sourceSystemDefinitionId: Guid.NewGuid(),
-        connectionProfileCode: "TEST_CSV",
-        connectionProfileName: "Test CSV",
-        providerType: "Csv",
-        isSynthetic: true,
-        connectionMode: "Snapshot",
-        fileRootPath: null,
-        connectionOptionsJson: connectionOptionsJson,
-        readOnlyEnforced: true,
-        description: "Test CSV connector",
-        sourceSystem: "Test",
-        sourceRecordId: Guid.NewGuid().ToString("N"));
+        return new ConnectionProfile(
+            sourceSystemDefinitionId: Guid.NewGuid(),
+            connectionProfileCode:    "TEST_CSV",
+            connectionProfileName:    "Test CSV",
+            providerType:             "Csv",
+            isSynthetic:              true,
+            connectionOptionsJson:    connectionOptionsJson,
+            description:              "Test CSV connector",
+            sourceSystem:             "Test",
+            sourceRecordId:           Guid.NewGuid().ToString("N"));
     }
 }

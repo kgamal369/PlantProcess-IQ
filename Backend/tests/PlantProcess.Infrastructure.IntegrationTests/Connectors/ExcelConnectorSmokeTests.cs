@@ -22,7 +22,8 @@ public sealed class ExcelConnectorSmokeTests
 
         var result = await connector.TestConnectionAsync(connection, CancellationToken.None);
 
-        result.IsSuccess.Should().BeTrue(result.Message);    }
+        result.IsSuccess.Should().BeTrue(result.Message);
+    }
 
     [Fact]
     public async Task ExcelConnector_should_discover_workbook_sheets()
@@ -63,16 +64,14 @@ public sealed class ExcelConnectorSmokeTests
     {
         return new ConnectionProfile(
             sourceSystemDefinitionId: Guid.NewGuid(),
-            connectionProfileCode: "TEST_EXCEL",
-            connectionProfileName: "Test Excel",
-            providerType: "Excel",
-            isSynthetic: true,
-            connectionMode: "Snapshot",
-            fileRootPath: fileRootPath,
-            connectionOptionsJson: "{}",
-            readOnlyEnforced: true,
-            description: "Test Excel connector",
-            sourceSystem: "Test",
-            sourceRecordId: Guid.NewGuid().ToString("N"));
+            connectionProfileCode:    "TEST_EXCEL",
+            connectionProfileName:    "Test Excel",
+            providerType:             "Excel",
+            isSynthetic:              true,
+            fileRootPath:             fileRootPath,
+            connectionOptionsJson:    "{}",
+            description:              "Test Excel connector",
+            sourceSystem:             "Test",
+            sourceRecordId:           Guid.NewGuid().ToString("N"));
     }
 }

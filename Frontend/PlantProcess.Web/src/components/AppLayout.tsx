@@ -28,6 +28,8 @@ import { plantProcessApi } from "../api/plantProcessApi";
 import { useAuth } from "../state/AuthContext";
 import { usePlantProcessTheme } from "../state/ThemeContext";
 import { DemoModeControl } from "./demo/DemoModeControl";
+import { AppToaster } from "../notifications/Toaster";
+
 import "./AppLayout.css";
 
 // ── Navigation definition ─────────────────────────────────────
@@ -99,6 +101,7 @@ export function AppLayout() {
 
   return (
     <div className="piq-shell">
+      <AppToaster />
       {/* ── Sidebar ── */}
       <aside className="piq-sidebar" aria-label="PlantProcess IQ navigation">
 

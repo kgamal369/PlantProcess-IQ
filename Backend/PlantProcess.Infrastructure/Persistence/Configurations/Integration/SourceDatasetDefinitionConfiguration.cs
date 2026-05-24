@@ -28,6 +28,11 @@ public sealed class SourceDatasetDefinitionConfiguration : IEntityTypeConfigurat
             .HasColumnType("jsonb")
             .HasDefaultValue("{}");
 
+         builder.Property(x => x.NextRunAtUtc)
+            .HasColumnName("next_run_at_utc")
+            .HasColumnType("timestamp with time zone")
+            .IsRequired(false);
+
         builder.Property(x => x.CreatedAtUtc).HasColumnType("timestamp with time zone");
         builder.Property(x => x.UpdatedAtUtc).HasColumnType("timestamp with time zone");
         builder.Property(x => x.DeletedAtUtc).HasColumnType("timestamp with time zone");
@@ -49,6 +54,9 @@ public sealed class SourceDatasetDefinitionConfiguration : IEntityTypeConfigurat
         builder.HasIndex(x => new { x.ConnectionProfileId, x.DatasetCode })
             .IsUnique()
             .HasFilter("is_deleted = FALSE");
+
+        builder.HasIndex(x => new { x.IsActive, x.IsDeleted, x.NextRunAtUtc })
+            .HasDatabaseName("ix_source_dataset_definitions_next_run");
 
         builder.UsePostgresXminConcurrencyToken();
     }

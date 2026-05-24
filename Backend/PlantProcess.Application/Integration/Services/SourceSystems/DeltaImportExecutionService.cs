@@ -1,19 +1,23 @@
 // ============================================================
 // FILE: Backend/PlantProcess.Application/Integration/Services/SourceSystems/DeltaImportExecutionService.cs
 //
-// FIXED: All 7 build errors resolved by using the real interfaces:
-//   1. SourceDatasetDefinition has no .ConnectionProfile navigation prop
-//      → load ConnectionProfile separately by ConnectionProfileId
-//   2. DataSourceIncrementalReadRequest has 8 params (ConnectionProfileId,
-//      SourceDatasetDefinitionId, SourceObjectName, SourceSchemaName,
-//      CursorFieldName, LastCursorValue, Limit, DatasetOptionsJson)
-//   3. IImportBatchService.CreateAsync() not CreateImportBatchAsync()
-//   4. CreateImportBatchCommand has (SourceSystemDefinitionId, ImportBatchCode,
-//      ImportType, SourceObjectName?, FileName?, Checksum?, CommandMetadata)
-//   5. IStagingRecordService.CreateBulkAsync() not CreateStagingRecordAsync()
-//   6. BulkCreateStagingRecordsCommand(ImportBatchId, SourceObjectName,
-//      IReadOnlyCollection<CreateStagingRecordRow>, CommandMetadata)
-//   7. CommandMetadata(IsSynthetic, SourceSystem, SourceRecordId, ...)
+// CORRECTED v2 — matches the real types in the codebase:
+//   - DeltaImportSummary has: DatasetsProcessed, TotalRowsImported,
+//     DatasetsFailedCount, DatasetResults  (NO StartedAtUtc/CompletedAtUtc/
+//     DatasetsSkippedCount/DatasetsSucceededCount)
+//   - DeltaDatasetResult is a sealed record (NOT DeltaDatasetRunResult)
+//     with positional ctor (DatasetId, DatasetCode, RowsImported, ErrorMessage)
+//   - SourceDatasetDefinition has NO ConnectionProfile navigation property —
+//     load ConnectionProfiles separately by ConnectionProfileId
+//
+// BE-FIX-001 changes (the only new behaviour vs the original):
+//   1. WHERE clause filters on NextRunAtUtc <= now OR NULL
+//   2. ORDER BY adds NextRunAtUtc first
+//   3. After each dataset, call ScheduleNextRunAfterSuccess() or
+//      ScheduleNextRunAfterFailure() on the TRACKED entity
+//   4. SaveChangesAsync at the end to persist NextRunAtUtc updates
+//
+// IMPORTANT: removed .AsNoTracking() because we now mutate datasets.
 // ============================================================
 
 using Microsoft.EntityFrameworkCore;
@@ -30,16 +34,6 @@ using PlantProcess.Domain.Entities.Integration;
 
 namespace PlantProcess.Application.Integration.Services.SourceSystems;
 
-/// <summary>
-/// Executes delta (incremental) imports for all active datasets that have
-/// an IncrementalCursorField configured.
-///
-/// For each eligible dataset:
-///  1. Reads the last cursor value stored in the dataset record.
-///  2. Calls the appropriate connector's ReadRowsSinceKeyAsync() with that cursor.
-///  3. Writes all new rows as StagingRecords via IStagingRecordService.CreateBulkAsync().
-///  4. Updates the dataset's LastCursorValue to the highest value seen.
-/// </summary>
 public sealed class DeltaImportExecutionService : IDeltaImportExecutionService
 {
     private readonly IPlantProcessDbContext _dbContext;
@@ -71,28 +65,36 @@ public sealed class DeltaImportExecutionService : IDeltaImportExecutionService
         CancellationToken cancellationToken)
     {
         var summary = new DeltaImportSummary();
+        var nowUtc = DateTime.UtcNow;
 
-        // Load all active datasets that have an incremental cursor field.
-        // SourceDatasetDefinition has no navigation property to ConnectionProfile,
-        // so we join manually via ConnectionProfileId.
+        // ─────────────────────────────────────────────────────
+        // BE-FIX-001: select only datasets that are DUE.
+        // Tracked query (NO AsNoTracking) because we mutate NextRunAtUtc
+        // on each dataset and SaveChangesAsync at the end.
+        // ─────────────────────────────────────────────────────
         var datasets = await _dbContext.SourceDatasetDefinitions
-            .AsNoTracking()
             .Where(d =>
                 !d.IsDeleted &&
                 d.IsActive &&
                 d.IncrementalCursorField != null &&
-                d.IncrementalCursorField != "")
-            .OrderBy(d => d.UpdatedAtUtc ?? d.CreatedAtUtc)
+                d.IncrementalCursorField != "" &&
+                (d.NextRunAtUtc == null || d.NextRunAtUtc <= nowUtc))
+            .OrderBy(d => d.NextRunAtUtc ?? DateTime.MinValue)
+            .ThenBy(d => d.UpdatedAtUtc ?? d.CreatedAtUtc)
             .Take(Math.Clamp(maxDatasetsPerRun, 1, 100))
             .ToListAsync(cancellationToken);
 
         if (datasets.Count == 0)
         {
-            _logger.LogDebug("DeltaImportExecutionService: No eligible incremental datasets found.");
+            _logger.LogDebug(
+                "DeltaImportExecutionService: no datasets due for import at {NowUtc:O}.",
+                nowUtc);
             return summary;
         }
 
-        // Load all required connection profiles in one query
+        // SourceDatasetDefinition has no navigation property to ConnectionProfile,
+        // so join manually via ConnectionProfileId. AsNoTracking here is fine
+        // because we never mutate the profile.
         var profileIds = datasets.Select(d => d.ConnectionProfileId).Distinct().ToList();
 
         var profiles = await _dbContext.ConnectionProfiles
@@ -101,10 +103,12 @@ public sealed class DeltaImportExecutionService : IDeltaImportExecutionService
             .ToDictionaryAsync(p => p.Id, cancellationToken);
 
         _logger.LogInformation(
-            "DeltaImportExecutionService: {Count} eligible datasets, {Profiles} active connection profiles.",
-            datasets.Count,
-            profiles.Count);
+            "DeltaImportExecutionService: {Count} due datasets, {Profiles} active profiles, at {NowUtc:O}.",
+            datasets.Count, profiles.Count, nowUtc);
 
+        // ─────────────────────────────────────────────────────
+        // Process each dataset sequentially.
+        // ─────────────────────────────────────────────────────
         foreach (var dataset in datasets)
         {
             if (cancellationToken.IsCancellationRequested) break;
@@ -115,6 +119,10 @@ public sealed class DeltaImportExecutionService : IDeltaImportExecutionService
                     "DeltaImportExecutionService: Dataset {DatasetCode} skipped — connection profile {ProfileId} not found or inactive.",
                     dataset.DatasetCode,
                     dataset.ConnectionProfileId);
+
+                // Defer this dataset by the normal interval so we don't keep
+                // re-evaluating it every tick while its profile is inactive.
+                dataset.ScheduleNextRunAfterSuccess();
                 continue;
             }
 
@@ -126,6 +134,9 @@ public sealed class DeltaImportExecutionService : IDeltaImportExecutionService
                     maxRowsPerDataset,
                     cancellationToken);
 
+                // BE-FIX-001: success → advance by configured interval
+                dataset.ScheduleNextRunAfterSuccess();
+
                 summary.DatasetsProcessed++;
                 summary.TotalRowsImported += rowsImported;
                 summary.DatasetResults.Add(new DeltaDatasetResult(
@@ -133,13 +144,24 @@ public sealed class DeltaImportExecutionService : IDeltaImportExecutionService
                     dataset.DatasetCode,
                     rowsImported,
                     null));
+
+                _logger.LogInformation(
+                    "DeltaImportExecutionService: dataset {DatasetCode} ok, {Rows} rows, next run at {NextRun:O}.",
+                    dataset.DatasetCode, rowsImported, dataset.NextRunAtUtc);
+            }
+            catch (OperationCanceledException)
+            {
+                // App is shutting down — do not advance the schedule.
+                throw;
             }
             catch (Exception ex)
             {
-                _logger.LogError(
-                    ex,
-                    "DeltaImportExecutionService: Dataset {DatasetCode} failed.",
-                    dataset.DatasetCode);
+                // BE-FIX-001: failure → 2× back-off
+                dataset.ScheduleNextRunAfterFailure();
+
+                _logger.LogError(ex,
+                    "DeltaImportExecutionService: dataset {DatasetCode} failed; next attempt at {NextRun:O}.",
+                    dataset.DatasetCode, dataset.NextRunAtUtc);
 
                 summary.DatasetsFailedCount++;
                 summary.DatasetResults.Add(new DeltaDatasetResult(
@@ -149,6 +171,9 @@ public sealed class DeltaImportExecutionService : IDeltaImportExecutionService
                     ex.Message));
             }
         }
+
+        // BE-FIX-001: persist all NextRunAtUtc updates in one round-trip
+        await _dbContext.SaveChangesAsync(cancellationToken);
 
         _logger.LogInformation(
             "DeltaImportExecutionService: Complete. Datasets={Processed}, Rows={Rows}, Failures={Failures}",
@@ -174,16 +199,15 @@ public sealed class DeltaImportExecutionService : IDeltaImportExecutionService
 
         var dataReader = _connectorFactory.GetDataSourceReader(connectionProfile.ProviderType);
 
-        // FIX 2: DataSourceIncrementalReadRequest has 8 required parameters
         var readRequest = new DataSourceIncrementalReadRequest(
-            ConnectionProfileId:         connectionProfile.Id,
-            SourceDatasetDefinitionId:   dataset.Id,
-            SourceObjectName:            dataset.SourceObjectName,
-            SourceSchemaName:            dataset.SourceSchemaName,
-            CursorFieldName:             dataset.IncrementalCursorField!,
-            LastCursorValue:             dataset.LastCursorValue,
-            Limit:                       Math.Clamp(maxRows, 1, 5000),
-            DatasetOptionsJson:          dataset.DatasetOptionsJson);
+            ConnectionProfileId:       connectionProfile.Id,
+            SourceDatasetDefinitionId: dataset.Id,
+            SourceObjectName:          dataset.SourceObjectName,
+            SourceSchemaName:          dataset.SourceSchemaName,
+            CursorFieldName:           dataset.IncrementalCursorField!,
+            LastCursorValue:           dataset.LastCursorValue,
+            Limit:                     Math.Clamp(maxRows, 1, 5000),
+            DatasetOptionsJson:        dataset.DatasetOptionsJson);
 
         var rows = await dataReader.ReadRowsSinceKeyAsync(
             connectionProfile,
@@ -205,13 +229,12 @@ public sealed class DeltaImportExecutionService : IDeltaImportExecutionService
             rows.Count);
 
         var metadata = new CommandMetadata(
-            IsSynthetic:   false,
-            SourceSystem:  "PlantProcessIQ.DeltaImport",
+            IsSynthetic:    false,
+            SourceSystem:   "PlantProcessIQ.DeltaImport",
             SourceRecordId: dataset.DatasetCode,
-            RequestedBy:   "DeltaImportExecutionService",
-            CorrelationId: Guid.NewGuid().ToString("N"));
+            RequestedBy:    "DeltaImportExecutionService",
+            CorrelationId:  Guid.NewGuid().ToString("N"));
 
-        // FIX 3+4: IImportBatchService.CreateAsync() with correct CreateImportBatchCommand fields
         var batchCode = $"DELTA_{dataset.DatasetCode}_{DateTime.UtcNow:yyyyMMddHHmmss}";
 
         var batchResult = await _importBatchService.CreateAsync(
@@ -231,7 +254,6 @@ public sealed class DeltaImportExecutionService : IDeltaImportExecutionService
                 "DeltaImportExecutionService: Failed to create import batch for {DatasetCode}: {Error}",
                 dataset.DatasetCode,
                 batchResult.Error?.Message);
-            // Do not abort — we still write staging records without a batch ID
         }
 
         var importBatchId = batchResult.IsSuccess ? batchResult.Value : Guid.Empty;
@@ -239,14 +261,12 @@ public sealed class DeltaImportExecutionService : IDeltaImportExecutionService
         // Track highest cursor value seen in this batch
         string? highestCursorValue = dataset.LastCursorValue;
 
-        // FIX 5+6: IStagingRecordService.CreateBulkAsync() with BulkCreateStagingRecordsCommand
         var stagingRows = new List<CreateStagingRecordRow>(rows.Count);
 
         foreach (var row in rows)
         {
             var rawJson = System.Text.Json.JsonSerializer.Serialize(row.Values);
 
-            // Advance the cursor tracker
             if (row.Values.TryGetValue(dataset.IncrementalCursorField!, out var cursorValue)
                 && cursorValue != null)
             {
@@ -269,16 +289,15 @@ public sealed class DeltaImportExecutionService : IDeltaImportExecutionService
         {
             var bulkResult = await _stagingRecordService.CreateBulkAsync(
                 new BulkCreateStagingRecordsCommand(
-                    ImportBatchId:   importBatchId,
+                    ImportBatchId:    importBatchId,
                     SourceObjectName: dataset.SourceObjectName,
-                    Rows:            stagingRows,
-                    Metadata:        metadata),
+                    Rows:             stagingRows,
+                    Metadata:         metadata),
                 cancellationToken);
 
             if (bulkResult.IsSuccess && bulkResult.Value is not null)
             {
                 rowsWritten = bulkResult.Value.Accepted;
-
                 await _importBatchService.MarkCompletedAsync(importBatchId, rowsWritten, cancellationToken);
             }
             else

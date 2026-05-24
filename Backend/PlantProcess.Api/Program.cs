@@ -1,12 +1,15 @@
 ﻿using System.Reflection;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using PlantProcess.Api.Configuration;
 using PlantProcess.Api.Endpoints.Admin;
+using PlantProcess.Application.Audit;
 using PlantProcess.Api.Endpoints.Analytics;
 using PlantProcess.Api.Endpoints.Configuration;
 using PlantProcess.Api.Endpoints.Dashboarding;
@@ -21,6 +24,7 @@ using PlantProcess.Api.Endpoints.Quality;
 using PlantProcess.Api.Endpoints.Reporting;
 using PlantProcess.Api.Endpoints.Validation;
 using PlantProcess.Api.Endpoints.Workflow;
+using PlantProcess.Api.Endpoints.Diagnostics;
 using PlantProcess.Api.Middleware;
 using PlantProcess.Api.Options;
 using PlantProcess.Api.Security;
@@ -29,6 +33,7 @@ using PlantProcess.Application;
 using PlantProcess.Api.Endpoints.Demo;
 using PlantProcess.Application.Integration.Interfaces.Jobs;
 using PlantProcess.Infrastructure;
+using PlantProcess.Infrastructure.Audit;
 using PlantProcess.Infrastructure.Persistence;
 using Serilog;
 using Serilog.Events;
@@ -111,7 +116,7 @@ try
     builder.Services.AddMemoryCache();
     builder.Services.AddApplication();
     builder.Services.AddInfrastructure(builder.Configuration);
-
+    builder.Services.AddScoped<IAuditLogService, AuditLogService>();
     // ---------------------------------------------------------------------
     // CORS
     //
@@ -234,7 +239,25 @@ try
         options.AddPolicy("PlantProcessViewer", policy =>
             policy.RequireRole("Admin", "DataManager", "Engineer", "Viewer"));
     });
+    // ---------------------------------------------------------------------
+    // Rate limiting
+    builder.Services.AddRateLimiter(options =>
+    {
+        options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 
+        // Client error beacon: 10 requests per second per IP, no queue
+        options.AddPolicy("client-error", httpContext =>
+            RateLimitPartition.GetFixedWindowLimiter(
+                partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                factory: _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit       = 10,
+                    Window            = TimeSpan.FromSeconds(1),
+                    QueueLimit        = 0,
+                    QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                    AutoReplenishment = true,
+                }));
+    });
     // ---------------------------------------------------------------------
     // Build app
     // ---------------------------------------------------------------------
@@ -292,9 +315,17 @@ try
     app.UseMiddleware<CorrelationIdMiddleware>();
     app.UseMiddleware<RequestResponseLoggingMiddleware>();
 
+    // Rate limiting middleware.
+    app.UseRateLimiter();
+
+
     // Authentication and authorization.
     app.UseAuthentication();
     app.UseAuthorization();
+
+    // Audit log — wraps every request matching the audited prefix allow-list (BE-ADD-001).
+    // Must run AFTER UseAuthentication so context.User is available, and BEFORE endpoints.
+    app.UseAuditLog();
 
     // Swagger.
     if (app.Environment.IsDevelopment())
@@ -353,6 +384,9 @@ try
     app.MapConnectorAdminEndpoints();
     app.MapSchemaConfigurationEndpoints();
     app.MapDemoLifecycleEndpoints();
+
+    app.MapDiagnosticsEndpoints();
+
 
     app.Run();
 }

@@ -16,6 +16,8 @@ import { DashboardGridLayoutProvider } from "./state/DashboardGridLayoutContext"
 import { DemoModeProvider } from "./state/DemoModeContext";
 import { ThemeProvider } from "./state/ThemeContext";
 import { AuthProvider, useAuth } from "./state/AuthContext";
+import { ErrorBoundary } from "./components/ErrorBoundary";
+
 import "./index.css";
 
 // ── Lazy pages ────────────────────────────────────────────────
@@ -180,6 +182,7 @@ function AppRoutes() {
   }
 
   return (
+  <ErrorBoundary routePath="app" fallbackTitle="The application could not start">
     <DemoModeProvider>
       <DashboardFilterProvider>
         <DashboardSelectionProvider>
@@ -189,36 +192,127 @@ function AppRoutes() {
                 <LoadingPanel text="Loading PlantProcess IQ workspace." />
               }
             >
-              <Routes>
-                <Route element={<AppLayout />}>
-                  <Route index element={<Navigate to="/dashboard" replace />} />
+            <Routes>
+              <Route element={<AppLayout />}>
+                <Route index element={<Navigate to="/dashboard" replace />} />
 
-                  {/* Analytics */}
-                  <Route path="/dashboard" element={<DashboardPage />} />
-                  <Route path="/materials/:materialUnitId" element={<MaterialInvestigationPage />} />
-                  <Route path="/materials" element={<MaterialInvestigationPage />} />
-                  <Route path="/risk" element={<RiskDashboardPage />} />
-                  <Route path="/data-quality" element={<DataQualityPage />} />
-                  <Route path="/correlations" element={<CorrelationPage />} />
+                <Route
+                  path="/dashboard"
+                  element={
+                    <ErrorBoundary routePath="/dashboard" fallbackTitle="The dashboard could not load">
+                      <DashboardPage />
+                    </ErrorBoundary>
+                  }
+                />
 
-                  {/* Intelligence */}
-                  <Route path="/ml-readiness" element={<MlReadinessPage />} />
-                  <Route path="/demo-lifecycle" element={<DemoLifecyclePage />} />
+                <Route
+                  path="/materials/:materialUnitId"
+                  element={
+                    <ErrorBoundary routePath="/materials/:materialUnitId" fallbackTitle="Material details could not load">
+                      <MaterialInvestigationPage />
+                    </ErrorBoundary>
+                  }
+                />
 
-                  {/* System */}
-                  <Route path="/admin-preview" element={<AdminPreviewPage />} />
-                  <Route path="/admin/*" element={<AdminPage />} />
-                  <Route path="/brand" element={<BrandIdentityPage />} />
-                  <Route path="/commercial/license" element={<CommercialLicensePage />} />
+                <Route
+                  path="/materials"
+                  element={
+                    <ErrorBoundary routePath="/materials" fallbackTitle="The material list could not load">
+                      <MaterialInvestigationPage />
+                    </ErrorBoundary>
+                  }
+                />
 
-                  <Route path="*" element={<Navigate to="/dashboard" replace />} />
-                </Route>
-              </Routes>
+                <Route
+                  path="/risk"
+                  element={
+                    <ErrorBoundary routePath="/risk" fallbackTitle="Risk dashboard could not load">
+                      <RiskDashboardPage />
+                    </ErrorBoundary>
+                  }
+                />
+
+                <Route
+                  path="/data-quality"
+                  element={
+                    <ErrorBoundary routePath="/data-quality" fallbackTitle="Data quality view could not load">
+                      <DataQualityPage />
+                    </ErrorBoundary>
+                  }
+                />
+
+                <Route
+                  path="/correlations"
+                  element={
+                    <ErrorBoundary routePath="/correlations" fallbackTitle="Correlation analysis could not load">
+                      <CorrelationPage />
+                    </ErrorBoundary>
+                  }
+                />
+
+                <Route
+                  path="/ml-readiness"
+                  element={
+                    <ErrorBoundary routePath="/ml-readiness" fallbackTitle="ML readiness view could not load">
+                      <MlReadinessPage />
+                    </ErrorBoundary>
+                  }
+                />
+
+                <Route
+                  path="/demo-lifecycle"
+                  element={
+                    <ErrorBoundary routePath="/demo-lifecycle" fallbackTitle="Demo lifecycle view could not load">
+                      <DemoLifecyclePage />
+                    </ErrorBoundary>
+                  }
+                />
+
+                <Route
+                  path="/admin-preview"
+                  element={
+                    <ErrorBoundary routePath="/admin-preview" fallbackTitle="Admin preview could not load">
+                      <AdminPreviewPage />
+                    </ErrorBoundary>
+                  }
+                />
+
+                <Route
+                  path="/admin/*"
+                  element={
+                    <ErrorBoundary routePath="/admin" fallbackTitle="The admin area could not load">
+                      <AdminPage />
+                    </ErrorBoundary>
+                  }
+                />
+
+                <Route
+                  path="/brand"
+                  element={
+                    <ErrorBoundary routePath="/brand" fallbackTitle="The brand page could not load">
+                      <BrandIdentityPage />
+                    </ErrorBoundary>
+                  }
+                />
+
+                <Route
+                  path="/commercial/license"
+                  element={
+                    <ErrorBoundary routePath="/commercial/license" fallbackTitle="The license page could not load">
+                      <CommercialLicensePage />
+                    </ErrorBoundary>
+                  }
+                />
+
+                <Route path="*" element={<Navigate to="/dashboard" replace />} />
+              </Route>
+            </Routes>
             </Suspense>
           </DashboardGridLayoutProvider>
         </DashboardSelectionProvider>
       </DashboardFilterProvider>
     </DemoModeProvider>
+    </ErrorBoundary>
   );
 }
 

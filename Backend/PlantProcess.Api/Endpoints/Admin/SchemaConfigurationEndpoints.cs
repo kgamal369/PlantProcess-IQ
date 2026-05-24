@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using PlantProcess.Api.Extensions;
 using PlantProcess.Application.Integration.Contracts.Dtos;
 using PlantProcess.Application.Integration.Interfaces.SchemaConfiguration;
+using PlantProcess.Application.Integration.Security;
 using PlantProcess.Infrastructure.Persistence;
 using PlantProcess.Api.Extensions;
 using PlantProcess.Application.Licensing.Contracts;

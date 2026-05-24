@@ -1,5 +1,6 @@
 ﻿using PlantProcess.Application.Analytics.Contracts;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc;
 using PlantProcess.Api.Extensions;
 using PlantProcess.Application.Dashboarding.Contracts;
 using PlantProcess.Application.Analytics.Interfaces;
@@ -664,12 +665,21 @@ public static class WorkflowEndpoints
 
     private static async Task<IResult> InvestigateMaterialAsync(
         Guid materialUnitId,
+        [FromQuery] int? observationsTake,
+        [FromQuery] int? observationsSkip,
         PlantProcessDbContext dbContext,
         CancellationToken cancellationToken)
     {
+        // Clamp inputs to sane bounds
+        var take = Math.Clamp(observationsTake ?? 500, 1, 5_000);
+        var skip = Math.Max(observationsSkip ?? 0, 0);
+
+        // ─────────────────────────────────────────────────────
+        // Block on the small, certain queries first
+        // ─────────────────────────────────────────────────────
         var material = await dbContext.MaterialUnits
             .AsNoTracking()
-            .Where(x => x.Id == materialUnitId)
+            .Where(x => x.Id == materialUnitId && !x.IsDeleted)
             .Select(x => new
             {
                 x.Id,
@@ -695,86 +705,44 @@ public static class WorkflowEndpoints
 
         var aliases = await dbContext.MaterialAliases
             .AsNoTracking()
-            .Where(x => x.MaterialUnitId == materialUnitId)
+            .Where(x => x.MaterialUnitId == materialUnitId && !x.IsDeleted)
             .OrderBy(x => x.SourceSystem)
             .ThenBy(x => x.AliasCode)
-            .Select(x => new
-            {
-                x.Id,
-                x.MaterialUnitId,
-                x.AliasCode,
-                x.AliasType,
-                x.SourceSystem,
-                x.IsSynthetic
-            })
             .ToListAsync(cancellationToken);
 
         var parentEdges = await dbContext.GenealogyEdges
             .AsNoTracking()
-            .Where(x => x.ChildMaterialUnitId == materialUnitId)
+            .Where(x => x.ChildMaterialUnitId == materialUnitId && !x.IsDeleted)
             .OrderBy(x => x.EffectiveFromUtc)
-            .Select(x => new
-            {
-                x.Id,
-                x.ParentMaterialUnitId,
-                x.ChildMaterialUnitId,
-                x.RelationshipType,
-                x.EffectiveFromUtc,
-                x.EffectiveToUtc,
-                x.SourceSystem,
-                x.SourceRecordId,
-                x.IsSynthetic
-            })
             .ToListAsync(cancellationToken);
 
         var childEdges = await dbContext.GenealogyEdges
             .AsNoTracking()
-            .Where(x => x.ParentMaterialUnitId == materialUnitId)
+            .Where(x => x.ParentMaterialUnitId == materialUnitId && !x.IsDeleted)
             .OrderBy(x => x.EffectiveFromUtc)
-            .Select(x => new
-            {
-                x.Id,
-                x.ParentMaterialUnitId,
-                x.ChildMaterialUnitId,
-                x.RelationshipType,
-                x.EffectiveFromUtc,
-                x.EffectiveToUtc,
-                x.SourceSystem,
-                x.SourceRecordId,
-                x.IsSynthetic
-            })
             .ToListAsync(cancellationToken);
 
         var processSteps = await dbContext.ProcessStepExecutions
             .AsNoTracking()
-            .Where(x => x.MaterialUnitId == materialUnitId)
+            .Where(x => x.MaterialUnitId == materialUnitId && !x.IsDeleted)
             .OrderBy(x => x.StartedAtUtc)
-            .Select(x => new
-            {
-                x.Id,
-                x.MaterialUnitId,
-                x.EquipmentId,
-                x.OperationDefinitionId,
-                x.OperationType,
-                x.OperationCode,
-                x.CrewCode,
-                x.StartedAtUtc,
-                x.EndedAtUtc,
-                x.StartedAtLocal,
-                x.EndedAtLocal,
-                x.PlantTimeZoneId,
-                x.PlantUtcOffsetMinutes,
-                x.ExecutionStatus,
-                x.SourceSystem,
-                x.SourceRecordId,
-                x.IsSynthetic
-            })
             .ToListAsync(cancellationToken);
+
+        // ─────────────────────────────────────────────────────
+        // Parameter observations — PAGINATED
+        // Get the count first (cheap), then the page.
+        // ─────────────────────────────────────────────────────
+        var parameterObservationsTotalCount = await dbContext.ParameterObservations
+            .AsNoTracking()
+            .Where(x => x.MaterialUnitId == materialUnitId && !x.IsDeleted)
+            .CountAsync(cancellationToken);
 
         var parameterObservations = await dbContext.ParameterObservations
             .AsNoTracking()
-            .Where(x => x.MaterialUnitId == materialUnitId)
-            .OrderBy(x => x.ObservedAtUtc)
+            .Where(x => x.MaterialUnitId == materialUnitId && !x.IsDeleted)
+            .OrderByDescending(x => x.ObservedAtUtc) // newest first
+            .Skip(skip)
+            .Take(take)
             .Select(x => new
             {
                 x.Id,
@@ -798,137 +766,49 @@ public static class WorkflowEndpoints
 
         var processEvents = await dbContext.ProcessEvents
             .AsNoTracking()
-            .Where(x => x.MaterialUnitId == materialUnitId)
+            .Where(x => x.MaterialUnitId == materialUnitId && !x.IsDeleted)
             .OrderBy(x => x.EventAtUtc)
-            .Select(x => new
-            {
-                x.Id,
-                x.MaterialUnitId,
-                x.ProcessStepExecutionId,
-                x.EquipmentId,
-                x.EventType,
-                x.EventAtUtc,
-                x.EventAtLocal,
-                x.EventValue,
-                x.Description,
-                x.SourceSystem,
-                x.SourceRecordId,
-                x.IsSynthetic
-            })
-            .ToListAsync(cancellationToken);
-
-        var downtimeEvents = await dbContext.DowntimeEvents
-            .AsNoTracking()
-            .Where(x => x.MaterialUnitId == materialUnitId)
-            .OrderBy(x => x.StartedAtUtc)
-            .Select(x => new
-            {
-                x.Id,
-                x.MaterialUnitId,
-                x.ProcessStepExecutionId,
-                x.EquipmentId,
-                x.StartedAtUtc,
-                x.EndedAtUtc,
-                x.StartedAtLocal,
-                x.EndedAtLocal,
-                x.DowntimeType,
-                x.ReasonCode,
-                x.Description,
-                x.SourceSystem,
-                x.SourceRecordId,
-                x.IsSynthetic
-            })
             .ToListAsync(cancellationToken);
 
         var qualityEvents = await dbContext.QualityEvents
             .AsNoTracking()
-            .Where(x => x.MaterialUnitId == materialUnitId)
+            .Where(x => x.MaterialUnitId == materialUnitId && !x.IsDeleted)
             .OrderBy(x => x.EventAtUtc)
-            .Select(x => new
-            {
-                x.Id,
-                x.MaterialUnitId,
-                x.DefectCatalogId,
-                x.EventType,
-                x.EventAtUtc,
-                x.EventAtLocal,
-                x.Severity,
-                x.Decision,
-                x.Description,
-                x.SourceSystem,
-                x.SourceRecordId,
-                x.IsSynthetic
-            })
-            .ToListAsync(cancellationToken);
-
-        var dataQualityIssues = await dbContext.DataQualityIssues
-            .AsNoTracking()
-            .Where(x => x.MaterialUnitId == materialUnitId)
-            .OrderByDescending(x => x.CreatedAtUtc)
-            .Select(x => new
-            {
-                x.Id,
-                x.MaterialUnitId,
-                x.IssueType,
-                x.Severity,
-                x.Description,
-                x.AffectedEntityName,
-                x.AffectedEntityId,
-                x.SourceSystem,
-                x.SourceRecordId,
-                x.CreatedAtUtc,
-                x.IsSynthetic
-            })
             .ToListAsync(cancellationToken);
 
         var riskScores = await dbContext.RiskScores
             .AsNoTracking()
-            .Where(x => x.MaterialUnitId == materialUnitId)
+            .Where(x => x.MaterialUnitId == materialUnitId && !x.IsDeleted)
             .OrderByDescending(x => x.ScoredAtUtc)
-            .Select(x => new
-            {
-                x.Id,
-                x.MaterialUnitId,
-                x.RiskType,
-                x.Score,
-                x.RiskClass,
-                x.MainContributorsJson,
-                x.ModelVersion,
-                x.ScoredAtUtc,
-                x.ScoredAtLocal,
-                x.PlantTimeZoneId,
-                x.PlantUtcOffsetMinutes,
-                x.SourceSystem,
-                x.SourceRecordId,
-                x.IsSynthetic
-            })
+            .Take(20)
             .ToListAsync(cancellationToken);
 
+        // ─────────────────────────────────────────────────────
+        // Compose the response
+        // ─────────────────────────────────────────────────────
         return Results.Ok(new
         {
             material,
             aliases,
             genealogy = new
             {
-                parents = parentEdges,
-                children = childEdges
+                parentEdges,
+                childEdges,
             },
-            process = new
+            processSteps,
+            parameterObservations = new
             {
-                processSteps,
-                parameterObservations,
-                processEvents,
-                downtimeEvents
+                items = parameterObservations,
+                totalCount = parameterObservationsTotalCount,
+                pageSkip = skip,
+                pageTake = take,
+                hasMore = (skip + parameterObservations.Count) < parameterObservationsTotalCount,
             },
-            quality = new
-            {
-                qualityEvents
-            },
-            dataQualityIssues,
-            riskScores
+            processEvents,
+            qualityEvents,
+            riskScores,
         });
     }
-
     // ---------------------------------------------------------------------
     // Helpers
     // ---------------------------------------------------------------------
