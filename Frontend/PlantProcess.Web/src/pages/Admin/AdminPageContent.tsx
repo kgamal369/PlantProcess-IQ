@@ -1,4 +1,6 @@
-﻿// ============================================================
+﻿
+
+// ============================================================
 // FILE: Frontend/PlantProcess.Web/src/pages/Admin/AdminPageContent.tsx
 //
 // Fix 3: Refactored from 2,362-line monolith into a clean shell that
@@ -25,14 +27,20 @@ import {
 } from "lucide-react";
 
 import { plantProcessApi } from "@/api/plantProcessApi";
-import { ErrorPanel, LoadingPanel } from "@/components/AsyncState";
+import { StateRenderer } from "@/components/StateRenderer";
+import { SkeletonTable, SkeletonKpi } from "@/components/skeletons/Skeleton";
 
-import { emptyAdminData, iconForGroup, formatNumber, type AdminData } from "./AdminSharedComponents";
 import { DbConfigurationTab } from "./AdminDbConfigurationTab";
 import { SchemaConfigurationTab } from "./AdminSchemaConfigurationTab";
 import { ImportingDataTab } from "./AdminImportingDataTab";
 import { JobsMonitorTab } from "./AdminJobsMonitorTab";
 import type { AdminMetricCard } from "@/api/plantProcessApi";
+import {
+  emptyAdminData,
+  iconForGroup,
+  formatNumber,
+  type AdminData,
+} from "./AdminSharedComponents";
 
 // ── Tab navigation config ────────────────────────────────────────────────────
 
@@ -161,53 +169,69 @@ export function AdminPageContent() {
         </nav>
       </section>
 
-      {/* ── Loading / Error states ─────────────────────────────────── */}
-      {isLoading ? <LoadingPanel /> : null}
-      {error ? <ErrorPanel error={error} /> : null}
+      {/* ── Loading / Error / Data states (FE-HARD-004 / FE-HARD-012) ───────────── */}
+      <StateRenderer
+        isLoading={isLoading}
+        error={error}
+        data={!isLoading && !error ? data : null}
+        loadingSkeleton={
+          <div className="admin-loading-skeleton">
+            <div className="metric-grid admin-metric-grid">
+              <SkeletonKpi />
+              <SkeletonKpi />
+              <SkeletonKpi />
+              <SkeletonKpi />
+            </div>
+            <SkeletonTable rows={8} columns={5} />
+          </div>
+        }
+        emptyTitle="Admin data unavailable"
+        emptyHint="Try refreshing — if this persists, contact your administrator."
+        onRetry={() => loadAdminData(true)}
+      >
+        {() => (
+          <Routes>
+            <Route index element={<Navigate to="db-configuration" replace />} />
 
-      {/* ── Tab routes ─────────────────────────────────────────────── */}
-      {!isLoading && !error ? (
-        <Routes>
-          <Route index element={<Navigate to="db-configuration" replace />} />
+            <Route
+              path="db-configuration"
+              element={
+                <DbConfigurationTab
+                  data={data.dbConfig}
+                  onRefresh={() => loadAdminData(true)}
+                />
+              }
+            />
 
-          <Route
-            path="db-configuration"
-            element={
-              <DbConfigurationTab
-                data={data.dbConfig}
-                onRefresh={() => loadAdminData(true)}
-              />
-            }
-          />
+            <Route
+              path="schema-configuration"
+              element={<SchemaConfigurationTab data={data.schemaConfig} />}
+            />
 
-          <Route
-            path="schema-configuration"
-            element={<SchemaConfigurationTab data={data.schemaConfig} />}
-          />
+            <Route
+              path="importing-data"
+              element={
+                <ImportingDataTab
+                  data={data.model}
+                  schemaConfig={data.schemaConfig}
+                  jobs={data.jobs}
+                  onRefresh={() => loadAdminData(true)}
+                />
+              }
+            />
 
-          <Route
-            path="importing-data"
-            element={
-              <ImportingDataTab
-                data={data.model}
-                schemaConfig={data.schemaConfig}
-                jobs={data.jobs}
-                onRefresh={() => loadAdminData(true)}
-              />
-            }
-          />
-
-          <Route
-            path="jobs-monitor"
-            element={
-              <JobsMonitorTab
-                data={data.jobs}
-                onRefresh={() => loadAdminData(true)}
-              />
-            }
-          />
-        </Routes>
-      ) : null}
+            <Route
+              path="jobs-monitor"
+              element={
+                <JobsMonitorTab
+                  data={data.jobs}
+                  onRefresh={() => loadAdminData(true)}
+                />
+              }
+            />
+          </Routes>
+        )}
+      </StateRenderer>
     </main>
   );
 }

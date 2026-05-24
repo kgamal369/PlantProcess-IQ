@@ -1,3 +1,5 @@
+
+
 // ============================================================
 // FILE: Frontend/PlantProcess.Web/src/pages/Admin/AdminImportingDataTab.tsx
 //
@@ -6,13 +8,14 @@
 // ============================================================
 
 import { useState } from "react";
-import { Clock, Layers3, PlayCircle, Workflow } from "lucide-react";
+import { Clock, Layers3, Loader2, PlayCircle, Workflow } from "lucide-react";
 import {
   plantProcessApi,
   type AdminJobsMonitor,
   type SchemaConfigurationSummary,
   type TwoStageImportModel,
 } from "@/api/plantProcessApi";
+import { useOptimisticSave } from "@/hooks/useOptimisticSave";
 import {
   AdminPanel,
   StatusPill,
@@ -43,26 +46,24 @@ export function ImportingDataTab({
 
   const [selectedMappingId, setSelectedMappingId] = useState("");
   const [refreshIntervalMinutes, setRefreshIntervalMinutes] = useState(15);
-  const [isSaving, setIsSaving] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
 
-  async function saveMappingRefreshSchedule() {
-    if (!selectedMappingId) return;
-    setIsSaving(true);
-    setMessage(null);
-    try {
+  // ── FE-HARD-005: Optimistic save for mapping refresh schedule ──────────────
+  const { isSaving, save: saveMappingRefreshSchedule } = useOptimisticSave({
+    successMessage: "Canonical refresh schedule saved and JobDefinition updated",
+    toastId: "save-mapping-refresh-schedule",
+    onSave: async () => {
+      if (!selectedMappingId) {
+        throw new Error("Select a mapping first.");
+      }
       await plantProcessApi.updateMappingRefreshSchedule(selectedMappingId, {
         scheduleExpression: `Every ${refreshIntervalMinutes} minutes`,
         refreshIntervalMinutes,
       });
-      setMessage("Canonical refresh schedule saved and JobDefinition updated.");
+    },
+    onSuccess: async () => {
       await onRefresh();
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : String(error));
-    } finally {
-      setIsSaving(false);
-    }
-  }
+    },
+  });
 
   return (
     <section className="admin-panel-grid">
@@ -149,10 +150,10 @@ export function ImportingDataTab({
             onClick={saveMappingRefreshSchedule}
             disabled={!selectedMappingId || isSaving}
           >
-            <Clock size={16} />
-            {isSaving ? "Saving…" : "Save Refresh Schedule"}
+            {isSaving
+              ? <><Loader2 size={16} className="spin" /> Saving…</>
+              : <><Clock size={16} /> Save Refresh Schedule</>}
           </button>
-          {message ? <span className="admin-help-text">{message}</span> : null}
         </div>
 
         {/* Canonical jobs table */}

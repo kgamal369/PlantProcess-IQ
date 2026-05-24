@@ -1,3 +1,5 @@
+
+
 // ============================================================
 // FILE: Frontend/PlantProcess.Web/src/pages/Admin/AdminDbConfigurationTab.tsx
 //
@@ -42,6 +44,7 @@ import {
   type UpdateConnectionImportScheduleRequest,
 } from "@/api/plantProcessApi";
 import { ErrorPanel } from "@/components/AsyncState";
+import { useOptimisticSave } from "@/hooks/useOptimisticSave";
 import { AdminPanel, StatusPill, formatDate } from "./AdminSharedComponents";
 
 // ── Local types ───────────────────────────────────────────────────────────────
@@ -410,9 +413,6 @@ function ConnectionProfileForm({
     readOnlyEnforced: profile?.readOnlyEnforced ?? true,
   });
 
-  const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
   const isFileProvider = ["csv", "excel"].includes(form.providerType.toLowerCase());
   const isDbProvider = !isFileProvider;
 
@@ -430,20 +430,26 @@ function ConnectionProfileForm({
     setForm((f) => ({ ...f, [field]: value }));
   }
 
-  async function save() {
-    if (!form.connectionProfileName.trim()) {
-      setError("Profile name is required.");
-      return;
-    }
-    if (isDbProvider && !form.hostName.trim()) {
-      setError("Host name is required for database connectors.");
-      return;
-    }
+  // ── FE-HARD-005: Optimistic save ────────────────────────────────────────────
+  // Replaces ~50 lines of manual isSaving/error state + try/catch boilerplate.
+  // - Button label flips to "Saving…" within ~50ms of click (no network wait).
+  // - Success → green toast with auto-dismiss, then `onSaved()` is called.
+  // - Failure → red toast (from apiClient) + `error` exposed below for inline display.
+  // - Double-submit guard built in (button disabled + in-flight ref).
+  const { isSaving, save, error } = useOptimisticSave({
+    successMessage: isEdit
+      ? `Connection profile "${form.connectionProfileName}" updated`
+      : `Connection profile "${form.connectionProfileName}" created`,
+    toastId: `save-connection-profile-${profile?.id ?? "new"}`,
+    onSave: async () => {
+      // Validation — throw to surface as inline error + toast.
+      if (!form.connectionProfileName.trim()) {
+        throw new Error("Profile name is required.");
+      }
+      if (isDbProvider && !form.hostName.trim()) {
+        throw new Error("Host name is required for database connectors.");
+      }
 
-    setIsSaving(true);
-    setError(null);
-
-    try {
       if (isEdit && profile) {
         await plantProcessApi.updateConnectionProfile(profile.id, {
           connectionProfileName: form.connectionProfileName,
@@ -460,10 +466,6 @@ function ConnectionProfileForm({
           description: form.description || null,
         });
       } else {
-        // For create we need a SourceSystemDefinitionId
-        // Use a default/first available source system, or let user pick
-        // For now use a well-known seed source system ID from demo data
-        // A future enhancement will add a source system selector
         const request: CreateConnectionProfileRequest = {
           sourceSystemDefinitionId: "00000000-0000-0000-0000-000000000001", // placeholder
           connectionProfileCode: form.connectionProfileCode ||
@@ -487,19 +489,17 @@ function ConnectionProfileForm({
         };
         await plantProcessApi.createConnectionProfile(request);
       }
+    },
+    onSuccess: () => {
       onSaved();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Save failed.");
-    } finally {
-      setIsSaving(false);
-    }
-  }
+    },
+  });
 
   return (
     <div className="admin-form-card admin-form-card--wide">
       <h3>{isEdit ? `Edit: ${profile!.connectionProfileName}` : "New Connection Profile"}</h3>
 
-      {error ? <div className="admin-inline-error">{error}</div> : null}
+      {error instanceof Error ? <div className="admin-inline-error">{error.message}</div> : null}
 
       <div className="admin-form-grid">
 
@@ -950,8 +950,6 @@ function ImportJobSchedulePanel({
   const [connections, setConnections] = useState<ConnectionProfileRecord[]>([]);
   const [selectedConnectionId, setSelectedConnectionId] = useState("");
   const [intervalMinutes, setIntervalMinutes] = useState(15);
-  const [isSaving, setIsSaving] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
     plantProcessApi.getConnectionProfiles(true).then((result) => {
@@ -960,24 +958,27 @@ function ImportJobSchedulePanel({
     });
   }, []);
 
-  async function saveSchedule() {
-    if (!selectedConnectionId) return;
-    setIsSaving(true);
-    setMessage(null);
-    try {
+  // ── FE-HARD-005: Optimistic save ────────────────────────────────────────────
+  // Replaces local isSaving/message state + manual try/catch.
+  // Toast handles both success and failure feedback.
+  // Form stays open after save — user may want to schedule another connection.
+  const { isSaving, save } = useOptimisticSave({
+    successMessage: `Raw snapshot schedule set to every ${intervalMinutes} minutes`,
+    toastId: "save-import-schedule",
+    onSave: async () => {
+      if (!selectedConnectionId) {
+        throw new Error("Pick a connection profile first.");
+      }
       const request: UpdateConnectionImportScheduleRequest = {
         scheduleExpression: `Every ${intervalMinutes} minutes`,
         importIntervalMinutes: intervalMinutes,
       };
       await plantProcessApi.updateConnectionImportSchedule(selectedConnectionId, request);
-      setMessage(`✅ Raw snapshot schedule set to every ${intervalMinutes} minutes.`);
+    },
+    onSuccess: async () => {
       await onRefresh();
-    } catch (error) {
-      setMessage(`❌ ${error instanceof Error ? error.message : String(error)}`);
-    } finally {
-      setIsSaving(false);
-    }
-  }
+    },
+  });
 
   return (
     <AdminPanel
@@ -1027,7 +1028,7 @@ function ImportJobSchedulePanel({
         <button
           className="primary-button"
           type="button"
-          onClick={saveSchedule}
+          onClick={save}
           disabled={isSaving || !selectedConnectionId}
         >
           {isSaving
@@ -1035,12 +1036,7 @@ function ImportJobSchedulePanel({
             : <><Settings2 size={14} /> Save Import Schedule</>}
         </button>
       </div>
-
-      {message ? (
-        <p className={message.startsWith("✅") ? "admin-success-text" : "admin-error-text"}>
-          {message}
-        </p>
-      ) : null}
     </AdminPanel>
   );
 }
+

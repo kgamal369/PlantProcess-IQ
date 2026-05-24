@@ -1,4 +1,6 @@
-﻿import { useEffect, useMemo, useState } from "react";
+﻿
+
+import { useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
   Gauge,
@@ -13,7 +15,8 @@ import { MetricCard } from "@/components/MetricCard";
 import { StatusBadge } from "@/components/StatusBadge";
 import { SortableDataTable } from "@/components/SortableDataTable";
 import type { SortableColumn } from "@/components/SortableDataTable";
-import { ErrorPanel, LoadingPanel } from "@/components/AsyncState";
+import { ErrorPanel } from "@/components/AsyncState";
+import { SkeletonKpi, SkeletonTable, SkeletonChart } from "@/components/skeletons/Skeleton";
 import {
   InteractiveBarChart,
   InteractiveLineChart,
@@ -240,12 +243,31 @@ export function RiskDashboardPage() {
     },
   ];
 
-  if (isLoading && !dashboard) {
-    return <LoadingPanel text="Loading risk intelligence dashboard." />;
-  }
-
+  // FE-HARD-012: error FIRST, then loading.
   if (error && !dashboard) {
     return <ErrorPanel title="Could not load risk dashboard" error={error} />;
+  }
+
+  // FE-HARD-004: skeleton placeholders matching the eventual content shape.
+  if (isLoading && !dashboard) {
+    return (
+      <section className="page">
+        <div className="page-title">
+          <div>
+            <h1>Risk Dashboard</h1>
+            <p>Monitor material risk classes, high-risk units, contributors and risk trend movement.</p>
+          </div>
+        </div>
+        <div className="metric-grid">
+          <SkeletonKpi />
+          <SkeletonKpi />
+          <SkeletonKpi />
+          <SkeletonKpi />
+        </div>
+        <SkeletonChart height={320} />
+        <SkeletonTable rows={12} columns={6} />
+      </section>
+    );
   }
 
   return (

@@ -1,4 +1,6 @@
-﻿import { useEffect, useMemo, useState } from "react";
+﻿
+
+import { useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -13,7 +15,8 @@ import { MetricCard } from "@/components/MetricCard";
 import { StatusBadge } from "@/components/StatusBadge";
 import { SortableDataTable } from "@/components/SortableDataTable";
 import type { SortableColumn } from "@/components/SortableDataTable";
-import { ErrorPanel, LoadingPanel } from "@/components/AsyncState";
+import { ErrorPanel } from "@/components/AsyncState";
+import { SkeletonKpi, SkeletonTable } from "@/components/skeletons/Skeleton";
 import { EmptyInsightState } from "@/components/dashboard/EmptyInsightState";
 
 type DataQualitySeverity = "Critical" | "Error" | "Warning" | "Info" | string;
@@ -253,12 +256,30 @@ export function DataQualityPage() {
     },
   ];
 
-  if (isLoading && !dashboard) {
-    return <LoadingPanel text="Loading data-quality intelligence." />;
-  }
-
+  // FE-HARD-012: error FIRST, then loading. Initial-load behavior.
   if (error && !dashboard) {
     return <ErrorPanel title="Could not load data quality page" error={error} />;
+  }
+
+  // FE-HARD-004: skeleton placeholders matching the page shape.
+  if (isLoading && !dashboard) {
+    return (
+      <section className="page">
+        <div className="page-title">
+          <div>
+            <h1>Data Quality</h1>
+            <p>Monitor source completeness, validation issues, scan history and data-readiness blockers.</p>
+          </div>
+        </div>
+        <div className="metric-grid">
+          <SkeletonKpi />
+          <SkeletonKpi />
+          <SkeletonKpi />
+          <SkeletonKpi />
+        </div>
+        <SkeletonTable rows={10} columns={6} />
+      </section>
+    );
   }
 
   return (

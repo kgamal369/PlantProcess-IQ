@@ -1,3 +1,5 @@
+
+
 // ============================================================
 // FILE: Frontend/PlantProcess.Web/src/App.tsx
 // Added: AuthProvider wrapping entire app tree.
@@ -9,7 +11,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
 import { AppLayout } from "./components/AppLayout";
-import { LoadingPanel } from "./components/AsyncState";
+import { SkeletonWidgetGrid } from "./components/skeletons/Skeleton";
 import { DashboardFilterProvider } from "./state/DashboardFilterContext";
 import { DashboardSelectionProvider } from "./state/DashboardSelectionContext";
 import { DashboardGridLayoutProvider } from "./state/DashboardGridLayoutContext";
@@ -189,7 +191,9 @@ function AppRoutes() {
           <DashboardGridLayoutProvider>
             <Suspense
               fallback={
-                <LoadingPanel text="Loading PlantProcess IQ workspace." />
+                <div className="ppiq-suspense-shell">
+                  <SkeletonWidgetGrid widgetCount={6} />
+                </div>
               }
             >
             <Routes>

@@ -1,4 +1,6 @@
-﻿import { useEffect, useMemo, useState } from "react";
+﻿
+
+import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import {
   Activity,
@@ -34,6 +36,8 @@ import type {
 import { ActiveFilterChips } from "@/components/ActiveFilterChips";
 import { DashboardFilterBar } from "@/components/DashboardFilterBar";
 import { ErrorPanel, LoadingPanel } from "@/components/AsyncState";
+import { StateRenderer } from "@/components/StateRenderer";
+import { SkeletonWidgetGrid, SkeletonChart, SkeletonKpi } from "@/components/skeletons/Skeleton";
 import { SortableDataTable } from "@/components/SortableDataTable";
 import type { SortableColumn } from "@/components/SortableDataTable";
 import { DashboardWidgetCard } from "@/components/dashboard/DashboardWidgetCard";
@@ -390,7 +394,18 @@ export function DashboardPageContent() {
           <ActiveFilterChips />
           <SelectionBreadcrumb />
 
-          {isLoading ? <LoadingPanel /> : null}
+          {/* FE-HARD-004 / FE-HARD-012: skeleton during initial load */}
+          {isLoading && !workspace ? (
+            <>
+              <div className="metric-grid">
+                <SkeletonKpi />
+                <SkeletonKpi />
+                <SkeletonKpi />
+                <SkeletonKpi />
+              </div>
+              <SkeletonWidgetGrid widgetCount={6} />
+            </>
+          ) : null}
           {error ? <ErrorPanel error={error} /> : null}
 
           {!isLoading && !error && workspace ? (
@@ -678,7 +693,8 @@ function SavedDashboardWidget({ widget, onEdit, onRemoved, onCloned, onHidden }:
           <Trash2 size={14} />{isRemoving ? "Removing..." : "Remove"}
         </button>
       </div>
-      {isLoading ? <LoadingPanel /> : null}
+      {/* Per-widget loading: skeleton-chart matches eventual chart shape */}
+      {isLoading ? <SkeletonChart height={240} /> : null}
       {error ? <ErrorPanel error={error} /> : null}
       {!isLoading && !error ? (
         rows.length === 0 ? (

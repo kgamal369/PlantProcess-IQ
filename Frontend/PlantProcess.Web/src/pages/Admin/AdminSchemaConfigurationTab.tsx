@@ -1,3 +1,5 @@
+
+
 // ============================================================
 // FILE: Frontend/PlantProcess.Web/src/pages/Admin/AdminSchemaConfigurationTab.tsx
 //
@@ -34,6 +36,7 @@ import {
   type SchemaViewPreviewResult,
 } from "@/api/plantProcessApi";
 import { AdminPanel, MiniKpi, StatusPill, formatDate } from "./AdminSharedComponents";
+import { useOptimisticSave } from "@/hooks/useOptimisticSave";
 
 // ── SchemaConfigurationTab ────────────────────────────────────────────────────
 
@@ -109,9 +112,10 @@ function SqlViewEditorPanel() {
   const [schemaViews, setSchemaViews] = useState<SchemaViewDefinitionRecord[]>([]);
   const [selectedViewId, setSelectedViewId] = useState("");
   const [preview, setPreview] = useState<SchemaViewPreviewResult | null>(null);
+  // isBusy is now ONLY used for non-save async work (load + previewSql).
+  // Save and approve are owned by useOptimisticSave below.
   const [isBusy, setIsBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   const [form, setForm] = useState({
     schemaViewCode: "",
@@ -175,7 +179,6 @@ LIMIT 100`,
     setIsBusy(true);
     setError(null);
     setPreview(null);
-    setSuccessMsg(null);
     try {
       const result = await plantProcessApi.previewAdHocSchemaSql({
         sqlText: form.sqlText,
@@ -190,16 +193,19 @@ LIMIT 100`,
     }
   }
 
-  async function saveView() {
-    if (!form.schemaViewCode.trim() || !form.schemaViewName.trim()) {
-      setError("View Code and View Name are required to save.");
-      return;
-    }
-    setIsBusy(true);
-    setError(null);
-    setSuccessMsg(null);
+  // ── FE-HARD-005: Optimistic save for saveView ──────────────────────────────
+  // The hook computes a fresh successMessage on every render via the closure,
+  // so it always reflects the current form.schemaViewName.
+  const { isSaving: isSavingView, save: saveView, error: saveError } = useOptimisticSave({
+    successMessage: selectedViewId
+      ? `Schema view "${form.schemaViewName}" updated`
+      : `Schema view "${form.schemaViewName}" created`,
+    toastId: `save-schema-view-${selectedViewId || "new"}`,
+    onSave: async () => {
+      if (!form.schemaViewCode.trim() || !form.schemaViewName.trim()) {
+        throw new Error("View Code and View Name are required to save.");
+      }
 
-    try {
       const existing = schemaViews.find((v) => v.id === selectedViewId);
       if (existing) {
         await plantProcessApi.updateSchemaView(existing.id, {
@@ -212,7 +218,6 @@ LIMIT 100`,
           timeoutSeconds: form.timeoutSeconds,
           description: form.description,
         });
-        setSuccessMsg(`✅ View "${form.schemaViewName}" updated.`);
       } else {
         const request: CreateSchemaViewDefinitionRequest = {
           schemaViewCode: form.schemaViewCode,
@@ -229,30 +234,27 @@ LIMIT 100`,
         };
         const created = await plantProcessApi.createSchemaView(request);
         setSelectedViewId(created.id);
-        setSuccessMsg(`✅ View "${form.schemaViewName}" created.`);
       }
+    },
+    onSuccess: async () => {
       await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Save failed.");
-    } finally {
-      setIsBusy(false);
-    }
-  }
+    },
+  });
 
-  async function approveView() {
-    if (!selectedViewId) { setError("Select a view first."); return; }
-    setIsBusy(true);
-    setError(null);
-    try {
+  // ── FE-HARD-005: Optimistic save for approveView ───────────────────────────
+  const { isSaving: isApproving, save: approveView, error: approveError } = useOptimisticSave({
+    successMessage: "View approved for use in canonical mappings",
+    toastId: `approve-schema-view-${selectedViewId || "none"}`,
+    onSave: async () => {
+      if (!selectedViewId) {
+        throw new Error("Select a view first.");
+      }
       await plantProcessApi.approveSchemaView(selectedViewId);
-      setSuccessMsg("✅ View approved for use in canonical mappings.");
+    },
+    onSuccess: async () => {
       await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Approval failed.");
-    } finally {
-      setIsBusy(false);
-    }
-  }
+    },
+  });
 
   const selectedView = schemaViews.find((v) => v.id === selectedViewId);
 
@@ -270,7 +272,8 @@ LIMIT 100`,
       </p>
 
       {error ? <div className="admin-inline-error">{error}</div> : null}
-      {successMsg ? <div className="admin-inline-success">{successMsg}</div> : null}
+      {saveError instanceof Error ? <div className="admin-inline-error">{saveError.message}</div> : null}
+      {approveError instanceof Error ? <div className="admin-inline-error">{approveError.message}</div> : null}
 
       {/* Existing views selector */}
       {schemaViews.length > 0 ? (
@@ -383,7 +386,7 @@ LIMIT 100`,
           className="secondary-button"
           type="button"
           onClick={previewSql}
-          disabled={isBusy || !form.sqlText.trim()}
+          disabled={isBusy || isSavingView || isApproving || !form.sqlText.trim()}
         >
           {isBusy ? <Loader2 size={14} className="spin" /> : <PlayCircle size={14} />}
           Preview SQL
@@ -392,19 +395,22 @@ LIMIT 100`,
           className="primary-button"
           type="button"
           onClick={saveView}
-          disabled={isBusy || !form.schemaViewCode.trim()}
+          disabled={isSavingView || isBusy || isApproving || !form.schemaViewCode.trim()}
         >
-          {isBusy ? <Loader2 size={14} className="spin" /> : <Save size={14} />}
-          {selectedView ? "Update View" : "Save View"}
+          {isSavingView
+            ? <><Loader2 size={14} className="spin" /> Saving…</>
+            : <><Save size={14} /> {selectedView ? "Update View" : "Save View"}</>}
         </button>
         {selectedView && !selectedView.isApproved ? (
           <button
             className="secondary-button"
             type="button"
             onClick={approveView}
-            disabled={isBusy}
+            disabled={isApproving || isBusy || isSavingView}
           >
-            <CheckCircle2 size={14} /> Approve for Mapping
+            {isApproving
+              ? <><Loader2 size={14} className="spin" /> Approving…</>
+              : <><CheckCircle2 size={14} /> Approve for Mapping</>}
           </button>
         ) : null}
       </div>
@@ -504,9 +510,7 @@ LIMIT 100`,
 function KpiDefinitionPanel() {
   const [kpis, setKpis] = useState<KpiDefinitionRecord[]>([]);
   const [schemaViews, setSchemaViews] = useState<SchemaViewDefinitionRecord[]>([]);
-  const [isBusy, setIsBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
 
   const [form, setForm] = useState({
@@ -541,16 +545,15 @@ function KpiDefinitionPanel() {
 
   useEffect(() => { load(); }, []);
 
-  async function createKpi() {
-    if (!form.kpiCode.trim() || !form.kpiName.trim()) {
-      setError("KPI Code and Name are required.");
-      return;
-    }
-    setIsBusy(true);
-    setError(null);
-    setSuccessMsg(null);
+  // ── FE-HARD-005: Optimistic save for createKpi ─────────────────────────────
+  const { isSaving: isCreatingKpi, save: createKpi, error: createKpiError } = useOptimisticSave({
+    successMessage: `KPI "${form.kpiName}" created`,
+    toastId: `create-kpi-${form.kpiCode || "new"}`,
+    onSave: async () => {
+      if (!form.kpiCode.trim() || !form.kpiName.trim()) {
+        throw new Error("KPI Code and Name are required.");
+      }
 
-    try {
       const request: CreateKpiDefinitionRequest = {
         schemaViewDefinitionId: form.schemaViewDefinitionId || null,
         kpiCode: form.kpiCode.toUpperCase().replace(/[^A-Z0-9_]/g, "_"),
@@ -568,16 +571,13 @@ function KpiDefinitionPanel() {
         sourceRecordId: null,
       };
       await plantProcessApi.createKpiDefinition(request);
-      setSuccessMsg(`✅ KPI "${form.kpiName}" created.`);
+    },
+    onSuccess: async () => {
       setShowForm(false);
       setForm((f) => ({ ...f, kpiCode: "", kpiName: "", valueExpression: "COUNT(*)", description: "" }));
       await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Create failed.");
-    } finally {
-      setIsBusy(false);
-    }
-  }
+    },
+  });
 
   return (
     <AdminPanel
@@ -592,13 +592,13 @@ function KpiDefinitionPanel() {
       </p>
 
       {error ? <div className="admin-inline-error">{error}</div> : null}
-      {successMsg ? <div className="admin-inline-success">{successMsg}</div> : null}
+      {createKpiError instanceof Error ? <div className="admin-inline-error">{createKpiError.message}</div> : null}
 
       <div className="admin-action-row" style={{ marginBottom: "1rem" }}>
         <button
           className="primary-button"
           type="button"
-          onClick={() => { setShowForm(!showForm); setError(null); setSuccessMsg(null); }}
+          onClick={() => { setShowForm(!showForm); setError(null); }}
         >
           <Plus size={14} /> {showForm ? "Cancel" : "New KPI"}
         </button>
@@ -736,10 +736,11 @@ function KpiDefinitionPanel() {
               className="primary-button"
               type="button"
               onClick={createKpi}
-              disabled={isBusy}
+              disabled={isCreatingKpi}
             >
-              {isBusy ? <Loader2 size={14} className="spin" /> : <Save size={14} />}
-              Create KPI
+              {isCreatingKpi
+                ? <><Loader2 size={14} className="spin" /> Creating…</>
+                : <><Save size={14} /> Create KPI</>}
             </button>
           </div>
         </div>
