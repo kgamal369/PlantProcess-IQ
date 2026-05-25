@@ -1,11 +1,33 @@
 // ============================================================
 // FILE: Frontend/PlantProcess.Web/src/App.tsx
 //
-// Phase 1 Hardening Update:
+// Phase 2 E2E Stability Update:
+//
 // - Uses the existing ErrorBoundary only.
-// - Removes RouteErrorBoundary to avoid duplicate/crossover behavior.
 // - Keeps one global app boundary plus route-level page boundaries.
-// - Adds route aliases required for direct-route/browser-refresh contracts.
+// - Mounts exactly one global Sonner toast host.
+// - Keeps canonical routes:
+//     /dashboard
+//     /materials
+//     /risk
+//     /data-quality
+//     /correlations
+//     /ml-readiness
+//     /demo-lifecycle
+//     /admin
+//     /admin-preview
+//     /brand
+//     /commercial/license
+//
+// - Adds compatibility aliases required by old E2E/direct-route tests:
+//     /quality                -> /data-quality
+//     /correlation            -> /correlations
+//     /material-investigation -> /materials
+//     /commercial-license     -> /commercial/license
+//
+// Product guard:
+// - This file does not change product positioning.
+// - It only stabilizes shell routing, refresh survival, and toast mounting.
 // ============================================================
 
 import { lazy, Suspense, type ReactNode } from "react";
@@ -14,15 +36,17 @@ import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
 
 import { AppLayout } from "./components/AppLayout";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import { SkeletonWidgetGrid } from "./components/skeletons/Skeleton";
+import { AppToastHost } from "./notifications/AppToastHost";
+
+import { AuthProvider, useAuth } from "./state/AuthContext";
 import { DashboardFilterProvider } from "./state/DashboardFilterContext";
-import { DashboardSelectionProvider } from "./state/DashboardSelectionContext";
 import { DashboardGridLayoutProvider } from "./state/DashboardGridLayoutContext";
+import { DashboardSelectionProvider } from "./state/DashboardSelectionContext";
 import { DemoModeProvider } from "./state/DemoModeContext";
 import { ThemeProvider } from "./state/ThemeContext";
-import { AuthProvider, useAuth } from "./state/AuthContext";
-import { ErrorBoundary } from "./components/ErrorBoundary";
-
+import { LicenseProvider } from "./state/LicenseContext";
 import "./index.css";
 
 // ── Lazy pages ────────────────────────────────────────────────
@@ -44,15 +68,21 @@ const RiskDashboardPage = lazy(() =>
 );
 
 const DataQualityPage = lazy(() =>
-  import("./pages/DataQualityPage").then((m) => ({ default: m.DataQualityPage }))
+  import("./pages/DataQualityPage").then((m) => ({
+    default: m.DataQualityPage,
+  }))
 );
 
 const CorrelationPage = lazy(() =>
-  import("./pages/CorrelationPage").then((m) => ({ default: m.CorrelationPage }))
+  import("./pages/CorrelationPage").then((m) => ({
+    default: m.CorrelationPage,
+  }))
 );
 
 const AdminPage = lazy(() =>
-  import("./pages/AdminPage").then((m) => ({ default: m.AdminPage }))
+  import("./pages/AdminPage").then((m) => ({
+    default: m.AdminPage,
+  }))
 );
 
 const AdminPreviewPage = lazy(() =>
@@ -250,6 +280,16 @@ function BootstrapScreen() {
   return null;
 }
 
+// ── Route loading fallback ────────────────────────────────────
+
+function RouteLoadingFallback() {
+  return (
+    <div className="ppiq-suspense-shell">
+      <SkeletonWidgetGrid widgetCount={6} />
+    </div>
+  );
+}
+
 // ── Routes ────────────────────────────────────────────────────
 
 function AppRoutes() {
@@ -260,22 +300,23 @@ function AppRoutes() {
   }
 
   return (
-    <ErrorBoundary routePath="app" fallbackTitle="The application could not start">
+    <ErrorBoundary
+      routePath="app"
+      fallbackTitle="The application could not start"
+    >
       <DemoModeProvider>
         <DashboardFilterProvider>
           <DashboardSelectionProvider>
             <DashboardGridLayoutProvider>
-              <Suspense
-                fallback={
-                  <div className="ppiq-suspense-shell">
-                    <SkeletonWidgetGrid widgetCount={6} />
-                  </div>
-                }
-              >
+              <Suspense fallback={<RouteLoadingFallback />}>
                 <Routes>
                   <Route element={<AppLayout />}>
-                    <Route index element={<Navigate to="/dashboard" replace />} />
+                    <Route
+                      index
+                      element={<Navigate to="/dashboard" replace />}
+                    />
 
+                    {/* Canonical dashboard route */}
                     <Route
                       path="/dashboard"
                       element={withPageBoundary(
@@ -285,6 +326,7 @@ function AppRoutes() {
                       )}
                     />
 
+                    {/* Material investigation */}
                     <Route
                       path="/materials/:materialUnitId"
                       element={withPageBoundary(
@@ -303,11 +345,18 @@ function AppRoutes() {
                       )}
                     />
 
+                    {/* Compatibility alias for older E2E/deep links */}
                     <Route
                       path="/material-investigation"
                       element={<Navigate to="/materials" replace />}
                     />
 
+                    <Route
+                      path="/material-investigation/:materialUnitId"
+                      element={<Navigate to="/materials/:materialUnitId" replace />}
+                    />
+
+                    {/* Risk */}
                     <Route
                       path="/risk"
                       element={withPageBoundary(
@@ -317,6 +366,7 @@ function AppRoutes() {
                       )}
                     />
 
+                    {/* Data quality */}
                     <Route
                       path="/data-quality"
                       element={withPageBoundary(
@@ -326,6 +376,13 @@ function AppRoutes() {
                       )}
                     />
 
+                    {/* Compatibility alias for older E2E/deep links */}
+                    <Route
+                      path="/quality"
+                      element={<Navigate to="/data-quality" replace />}
+                    />
+
+                    {/* Correlations */}
                     <Route
                       path="/correlations"
                       element={withPageBoundary(
@@ -335,11 +392,13 @@ function AppRoutes() {
                       )}
                     />
 
+                    {/* Compatibility alias for older E2E/deep links */}
                     <Route
                       path="/correlation"
                       element={<Navigate to="/correlations" replace />}
                     />
 
+                    {/* ML readiness */}
                     <Route
                       path="/ml-readiness"
                       element={withPageBoundary(
@@ -349,6 +408,7 @@ function AppRoutes() {
                       )}
                     />
 
+                    {/* Demo lifecycle */}
                     <Route
                       path="/demo-lifecycle"
                       element={withPageBoundary(
@@ -358,6 +418,7 @@ function AppRoutes() {
                       )}
                     />
 
+                    {/* Admin preview workspace */}
                     <Route
                       path="/admin-preview"
                       element={withPageBoundary(
@@ -367,6 +428,7 @@ function AppRoutes() {
                       )}
                     />
 
+                    {/* Admin area, including nested admin tabs */}
                     <Route
                       path="/admin/*"
                       element={withPageBoundary(
@@ -376,6 +438,7 @@ function AppRoutes() {
                       )}
                     />
 
+                    {/* Brand identity */}
                     <Route
                       path="/brand"
                       element={withPageBoundary(
@@ -385,6 +448,7 @@ function AppRoutes() {
                       )}
                     />
 
+                    {/* Commercial license */}
                     <Route
                       path="/commercial/license"
                       element={withPageBoundary(
@@ -394,12 +458,17 @@ function AppRoutes() {
                       )}
                     />
 
+                    {/* Compatibility alias for older E2E/deep links */}
                     <Route
                       path="/commercial-license"
                       element={<Navigate to="/commercial/license" replace />}
                     />
 
-                    <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                    {/* Default */}
+                    <Route
+                      path="*"
+                      element={<Navigate to="/dashboard" replace />}
+                    />
                   </Route>
                 </Routes>
               </Suspense>
@@ -417,7 +486,10 @@ export default function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <AppRoutes />
+        <LicenseProvider>
+          <AppToastHost />
+          <AppRoutes />
+        </LicenseProvider>
       </AuthProvider>
     </ThemeProvider>
   );

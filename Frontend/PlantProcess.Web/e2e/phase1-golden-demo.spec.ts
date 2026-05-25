@@ -10,7 +10,11 @@ test.describe("PPIQ Phase 1 — Golden Demo & Workflow Truth", () => {
     page,
     request,
   }) => {
-    await prepareAuthenticatedPage(page, request);
+    const token = await prepareAuthenticatedPage(page, request);
+
+    const authHeaders = {
+      Authorization: `Bearer ${token}`,
+    };
 
     const guard = installHardeningPageGuard(page, {
       allowServerFailureUrlFragments: [
@@ -39,13 +43,16 @@ test.describe("PPIQ Phase 1 — Golden Demo & Workflow Truth", () => {
     ];
 
     for (const endpoint of endpoints) {
-      const response = await request.get(`${apiBase}${endpoint}`);
+    const response = await request.get(`${apiBase}${endpoint}`, {
+      headers: authHeaders,
+    });    
       expect(response.ok(), `${endpoint} should return 2xx`).toBeTruthy();
     }
 
     const widgetResponse = await request.post(
       `${apiBase}/analytics/dashboard/widgets/execute`,
       {
+        headers: authHeaders,
         data: {
           expression:
             "widget=chart; chart=bar; dimension=defectType; measure=defectCount; maxRows=20; sort=desc;",
@@ -63,7 +70,10 @@ test.describe("PPIQ Phase 1 — Golden Demo & Workflow Truth", () => {
     expect(widgetResponse.ok()).toBeTruthy();
 
     const pdfResponse = await request.get(
-      `${apiBase}/reports/customer-demo/phase1.pdf`
+      `${apiBase}/reports/customer-demo/phase1.pdf`,
+      {
+        headers: authHeaders,
+      }
     );
 
     expect(pdfResponse.ok()).toBeTruthy();

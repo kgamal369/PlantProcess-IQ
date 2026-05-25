@@ -1,0 +1,49 @@
+.phase2-progress-list {
+  display: grid;
+  gap: 12px;
+}
+
+.phase2-progress-row {
+  border: 1px solid rgba(70, 213, 255, 0.16);
+  border-radius: 14px;
+  padding: 14px;
+  background: rgba(6, 14, 28, 0.62);
+}
+
+.phase2-progress-row__top,
+.phase2-progress-row__meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.phase2-progress-row__top strong {
+  color: #e7f8ff;
+}
+
+.phase2-progress-row__top span {
+  color: #46d5ff;
+  font-weight: 800;
+}
+
+.phase2-progress-row__meta {
+  color: rgba(231, 248, 255, 0.66);
+  font-size: 0.88rem;
+}
+
+.phase2-progress-bar {
+  margin: 10px 0;
+  height: 10px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(70, 213, 255, 0.1);
+  border: 1px solid rgba(70, 213, 255, 0.16);
+}
+
+.phase2-progress-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #46d5ff, #68f0a6);
+}

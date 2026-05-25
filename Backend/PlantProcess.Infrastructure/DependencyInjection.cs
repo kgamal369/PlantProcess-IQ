@@ -18,6 +18,7 @@ using PlantProcess.Infrastructure.Connectors.Excel;
 using PlantProcess.Infrastructure.Connectors.MySql;
 using PlantProcess.Infrastructure.Connectors.PostgreSql;
 using PlantProcess.Infrastructure.Connectors.SqlServer;
+using PlantProcess.Infrastructure.Connectors.Oracle;
 
 namespace PlantProcess.Infrastructure;
 
@@ -88,6 +89,11 @@ public static class DependencyInjection
 
          // Factory resolves connector by provider type string
         services.AddScoped<IDataSourceConnectorFactory, DataSourceConnectorFactory>();
+
+        //Oracle 
+        services.AddScoped<IDataSourceConnector, OracleConnector>();
+        services.AddScoped<ISchemaReader, OracleConnector>();
+        services.AddScoped<IDataSourceReader, OracleConnector>();
 
         return services;
     }

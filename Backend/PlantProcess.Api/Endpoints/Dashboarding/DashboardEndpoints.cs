@@ -610,19 +610,41 @@ public static class DashboardEndpoints
 
     private static async Task<IResult> EnsureSystemDashboardTemplatesAsync(
         IDashboardDefinitionService service,
+        ILoggerFactory loggerFactory,
         CancellationToken cancellationToken)
     {
-        var result = await service.EnsureSystemTemplatesAsync(cancellationToken);
-        return result.ToHttpResult(created => Results.Ok(new
-        {
-            created,
-            message = created == 0
-                ? "System dashboard templates already exist."
-                : "System dashboard templates created.",
-            ensuredAtUtc = DateTime.UtcNow
-        }));
-    }
+        var logger = loggerFactory.CreateLogger("DashboardSystemTemplateEnsure");
 
+        try
+        {
+            var result = await service.EnsureSystemTemplatesAsync(cancellationToken);
+
+            return result.ToHttpResult(created => Results.Ok(new
+            {
+                created,
+                message = created == 0
+                    ? "System dashboard templates already exist."
+                    : "System dashboard templates created.",
+                ensuredAtUtc = DateTime.UtcNow,
+                isCustomerSafe = true
+            }));
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(
+                ex,
+                "System dashboard template ensure failed. Returning controlled response to keep dashboard route customer-safe.");
+
+            return Results.Ok(new
+            {
+                created = 0,
+                message = "System dashboard template ensure could not complete, but the dashboard route remains customer-safe.",
+                ensuredAtUtc = DateTime.UtcNow,
+                isCustomerSafe = true,
+                warning = "Template ensure failed. Use the repair endpoint or backend logs for diagnostics."
+            });
+        }
+    }
 
     private static DashboardQueryDto BuildQuery(
         Guid? siteId,

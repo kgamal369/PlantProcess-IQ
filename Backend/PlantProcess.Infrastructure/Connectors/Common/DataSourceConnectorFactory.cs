@@ -44,7 +44,7 @@ public sealed class DataSourceConnectorFactory : IDataSourceConnectorFactory
 
         throw new NotSupportedException(
             $"No data-source connector is registered for provider type '{providerType}'. " +
-            $"Supported types: csv, excel, postgresql, sqlserver, mysql.");
+            $"Supported types: csv, excel, postgresql, sqlserver, mysql, oracle.");
     }
 
     public ISchemaReader GetSchemaReader(string providerType)
@@ -101,6 +101,12 @@ public sealed class DataSourceConnectorFactory : IDataSourceConnectorFactory
             "mysql"        => "mysql",
             "mariadb"      => "mysql",
             "maria"        => "mysql",
+
+            // Oracle
+            "oracle"       => "oracle",
+            "ora"          => "oracle",
+            "oracledb"     => "oracle",
+            "oracle db"    => "oracle",
 
             // Fall-through for future connectors (oracle, etc.)
             _              => providerType.Trim().ToLowerInvariant()

@@ -85,7 +85,7 @@ public sealed class ConnectorConfigurationService : IConnectorConfigurationServi
             new(
                 "Oracle",
                 "Oracle Read-only DB Link",
-                "Planned read-only connector for Oracle MES/L2/QMS source systems.",
+                "Implemented read-only Oracle connector for MES/L2/QMS/source databases. Available only after customer/demo certification connection is configured.",
                 IsAvailableNow: false,
                 RequiresSecretReference: true,
                 SupportsSchemaDiscovery: true,

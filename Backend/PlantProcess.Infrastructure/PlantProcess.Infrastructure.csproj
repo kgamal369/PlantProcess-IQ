@@ -13,6 +13,7 @@
     <PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.2" />
     <!-- Fix 5: MySQL / MariaDB connector (async-first community driver) -->
     <PackageReference Include="MySqlConnector" Version="2.3.7" />
+    <PackageReference Include="Oracle.ManagedDataAccess.Core" Version="23.26.200" />
   </ItemGroup>
 
   <ItemGroup>

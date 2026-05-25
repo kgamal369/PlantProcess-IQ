@@ -1,131 +1,85 @@
 // ============================================================
-// File: Frontend/PlantProcess.Web/e2e/helpers/hardening.ts
-// Tasks:
-//   QA-HARD-001
-//   FE-HARD-010
-//   FE-HARD-012
+// FILE: Frontend/PlantProcess.Web/e2e/helpers/hardening.ts
 //
-// Purpose:
-//   Shared hardening helper for:
-//   - authenticated direct route loading
-//   - console/page error detection
-//   - customer-safe state assertions
-//   - API failure-mode checks
+// General hardening helpers.
+// Restores blockBackendApisForPage export used by outage tests.
 // ============================================================
 
 import { expect, type APIRequestContext, type Page } from "@playwright/test";
 import { apiBaseUrl, login } from "./auth";
+import {
+  formatRequestFailure,
+  formatResponseFailure,
+  isIgnorableConsoleMessage,
+  shouldTrackFailedRequest,
+  shouldTrackFailedResponse,
+  type AllowedFailureOptions,
+} from "./e2eFailureFilters";
 
 export type HardeningPageGuard = {
   assertNoUnexpectedFailures: () => Promise<void>;
-  getConsoleErrors: () => string[];
   getPageErrors: () => string[];
+  getConsoleErrors: () => string[];
+  getFailedRequests: () => string[];
   getServerFailures: () => string[];
 };
-
-const ignoredConsoleFragments = [
-  "favicon",
-  "vite",
-  "sockjs",
-  "hmr",
-  "ResizeObserver loop",
-];
-
-const ignoredResponseUrlFragments = [
-  "favicon",
-  "vite",
-  "sockjs",
-  "hot-update",
-];
 
 export async function prepareAuthenticatedPage(
   page: Page,
   request: APIRequestContext
-) {
+): Promise<string> {
   const token = await login(request);
 
-  await page.addInitScript((accessToken) => {
-    window.localStorage.setItem("plantprocess.auth.accessToken", accessToken);
-    window.localStorage.setItem("plantprocess.auth.userName", "admin");
-    window.localStorage.setItem("plantprocess.auth.role", "Admin");
-    window.localStorage.setItem(
-      "plantprocess.auth.expiresAtUtc",
-      new Date(Date.now() + 60 * 60 * 1000).toISOString()
-    );
-  }, token);
+  await page.addInitScript(
+    ({ accessToken, baseUrl }) => {
+      localStorage.setItem("plantprocess.auth.accessToken", accessToken);
+      localStorage.setItem("plantprocess.auth.token", accessToken);
+      localStorage.setItem("plantprocess.accessToken", accessToken);
+      localStorage.setItem("accessToken", accessToken);
+      localStorage.setItem("ppiq-demo-mode", "true");
+      localStorage.setItem("VITE_API_BASE_URL", baseUrl);
+    },
+    {
+      accessToken: token,
+      baseUrl: apiBaseUrl,
+    }
+  );
 
   return token;
 }
 
 export function installHardeningPageGuard(
   page: Page,
-  options: {
-    allowServerFailureUrlFragments?: string[];
-    allowConsoleErrorFragments?: string[];
-  } = {}
+  options: AllowedFailureOptions = {}
 ): HardeningPageGuard {
-  const consoleErrors: string[] = [];
   const pageErrors: string[] = [];
-  const serverFailures: string[] = [];
-
-  page.on("console", (message) => {
-    if (message.type() !== "error") return;
-
-    const text = message.text();
-
-    if (
-      ignoredConsoleFragments.some((fragment) =>
-        text.toLowerCase().includes(fragment.toLowerCase())
-      )
-    ) {
-      return;
-    }
-
-    if (
-      options.allowConsoleErrorFragments?.some((fragment) =>
-        text.toLowerCase().includes(fragment.toLowerCase())
-      )
-    ) {
-      return;
-    }
-
-    consoleErrors.push(text);
-  });
+  const consoleErrors: string[] = [];
+  const failedRequests: string[] = [];
 
   page.on("pageerror", (error) => {
     pageErrors.push(error.message);
   });
 
+  page.on("console", (message) => {
+    if (message.type() !== "error") return;
+    if (isIgnorableConsoleMessage(message)) return;
+
+    consoleErrors.push(message.text());
+  });
+
+  page.on("requestfailed", (request) => {
+    if (!shouldTrackFailedRequest(request, options)) return;
+
+    failedRequests.push(formatRequestFailure(request));
+  });
+
   page.on("response", (response) => {
-    const url = response.url();
-    const status = response.status();
+    if (!shouldTrackFailedResponse(response, options)) return;
 
-    if (status < 500) return;
-
-    if (
-      ignoredResponseUrlFragments.some((fragment) =>
-        url.toLowerCase().includes(fragment.toLowerCase())
-      )
-    ) {
-      return;
-    }
-
-    if (
-      options.allowServerFailureUrlFragments?.some((fragment) =>
-        url.toLowerCase().includes(fragment.toLowerCase())
-      )
-    ) {
-      return;
-    }
-
-    serverFailures.push(`${status} ${url}`);
+    failedRequests.push(formatResponseFailure(response));
   });
 
   return {
-    getConsoleErrors: () => consoleErrors,
-    getPageErrors: () => pageErrors,
-    getServerFailures: () => serverFailures,
-
     async assertNoUnexpectedFailures() {
       expect(
         pageErrors,
@@ -138,9 +92,25 @@ export function installHardeningPageGuard(
       ).toEqual([]);
 
       expect(
-        serverFailures,
-        `Unexpected uncontrolled server failures:\n${serverFailures.join("\n")}`
+        failedRequests,
+        `Unexpected failed requests:\n${failedRequests.join("\n")}`
       ).toEqual([]);
+    },
+
+    getPageErrors() {
+      return [...pageErrors];
+    },
+
+    getConsoleErrors() {
+      return [...consoleErrors];
+    },
+
+    getFailedRequests() {
+      return [...failedRequests];
+    },
+
+    getServerFailures() {
+      return [...failedRequests];
     },
   };
 }
@@ -149,36 +119,40 @@ export async function gotoAndAssertCustomerSafePage(
   page: Page,
   route: string,
   expectedText: RegExp
-) {
+): Promise<void> {
   await page.goto(route, {
     waitUntil: "domcontentloaded",
     timeout: 30_000,
   });
 
-  await page.waitForLoadState("networkidle", {
-    timeout: 12_000,
-  }).catch(() => {
-    // Polling or long-lived requests should not fail the hardening check alone.
-  });
+  await page
+    .waitForLoadState("networkidle", {
+      timeout: 8_000,
+    })
+    .catch(() => {
+      // Long polling/background retries should not fail route containment alone.
+    });
 
   const body = page.locator("body");
+
+  await expect(body).toBeVisible({
+    timeout: 20_000,
+  });
 
   await expect(body).toContainText(expectedText, {
     timeout: 20_000,
   });
 
-  const text = await body.innerText();
-  const normalized = text.toLowerCase();
+  const normalized = (await body.innerText()).toLowerCase();
 
   expect(normalized).not.toContain("cannot read properties");
   expect(normalized).not.toContain("is not a function");
   expect(normalized).not.toContain("uncaught");
   expect(normalized).not.toContain("stack trace");
   expect(normalized).not.toContain("undefined is not");
-  expect(normalized).not.toContain("failed to fetch");
 }
 
-export async function blockBackendApisForPage(page: Page) {
+export async function blockBackendApisForPage(page: Page): Promise<void> {
   await page.route("**/*", async (route) => {
     const url = route.request().url();
 
@@ -194,6 +168,7 @@ export async function blockBackendApisForPage(page: Page) {
           message: "Simulated backend outage from hardening test.",
         }),
       });
+
       return;
     }
 

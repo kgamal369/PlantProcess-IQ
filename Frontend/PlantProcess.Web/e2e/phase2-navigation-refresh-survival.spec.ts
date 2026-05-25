@@ -1,3 +1,8 @@
+// ============================================================
+// FILE: Frontend/PlantProcess.Web/e2e/phase2-navigation-refresh-survival.spec.ts
+// Task: PPIQ-HARD-031
+// ============================================================
+
 import { test } from "@playwright/test";
 import {
   gotoCustomerSafeRoute,
@@ -15,9 +20,17 @@ test.describe("PPIQ-HARD-031 — navigation and browser refresh survival", () =>
       await gotoCustomerSafeRoute(page, route.route, route.expectedText);
 
       await page.reload({
-        waitUntil: "networkidle",
+        waitUntil: "domcontentloaded",
         timeout: 30_000,
       });
+
+      await page
+        .waitForLoadState("networkidle", {
+          timeout: 8_000,
+        })
+        .catch(() => {
+          // Polling/background retries are acceptable.
+        });
 
       await gotoCustomerSafeRoute(page, route.route, route.expectedText);
 

@@ -46,6 +46,28 @@ def sql_ts(value: datetime | None) -> str:
         return "NULL"
     return "'" + value.astimezone(timezone.utc).strftime("%Y-%m-%d %H:%M:%S+00") + "'"
 
+def injected_quality_correlation(actual_fdt_c: float, actual_ct_c: float, thickness_mm: float) -> float:
+    """
+    PPIQ-DEMO-010:
+    Inject a realistic but not deterministic correlation signal.
+
+    Purpose:
+    - Makes rule-based/correlation engines discover a suspected contributor.
+    - Does not make defects perfectly predictable.
+    - Keeps demo honest: evidence pattern, not guaranteed root cause.
+    """
+    risk = 0.035
+
+    if actual_fdt_c > 910:
+        risk += 0.055
+
+    if actual_ct_c < 560:
+        risk += 0.045
+
+    if thickness_mm < 2.2:
+        risk += 0.025
+
+    return min(risk, 0.28)
 
 def main() -> None:
     parser = argparse.ArgumentParser()

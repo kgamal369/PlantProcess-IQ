@@ -1,13 +1,10 @@
 // ============================================================
-// File: Frontend/PlantProcess.Web/e2e/widget-builder-focused.spec.ts
+// FILE: Frontend/PlantProcess.Web/e2e/widget-builder-focused.spec.ts
 // Task: FE-HARD-015
 //
-// Focused QA:
-//   - Dashboard loads.
-//   - Add widget opens wizard.
-//   - Wizard renders builder content.
-//   - Empty/invalid save/preview does not crash.
-//   - Close/cancel returns to dashboard.
+// Fix:
+//   Scope close/cancel/back lookup to the widget modal/dialog only.
+//   Do not accidentally click Sonner toast close buttons.
 // ============================================================
 
 import { expect, test } from "@playwright/test";
@@ -33,7 +30,7 @@ test.describe("FE-HARD-015 — WidgetBuilderWizard focused QA", () => {
     await gotoAndAssertCustomerSafePage(
       page,
       "/dashboard",
-      /dashboard|widget|defect|risk/i
+      /dashboard|widget|defect|risk|quality|plantprocess iq/i
     );
 
     const addWidgetButton = page.getByRole("button", {
@@ -49,10 +46,16 @@ test.describe("FE-HARD-015 — WidgetBuilderWizard focused QA", () => {
     const body = page.locator("body");
 
     await expect(body).toContainText(/widget|builder|dimension|measure|chart/i, {
+      timeout: 20_000,
+    });
+
+    const modal = page.locator('[role="dialog"], .widget-builder-modal').first();
+
+    await expect(modal).toBeVisible({
       timeout: 15_000,
     });
 
-    const previewButton = page
+    const previewButton = modal
       .getByRole("button", {
         name: /preview|run preview|test/i,
       })
@@ -69,7 +72,7 @@ test.describe("FE-HARD-015 — WidgetBuilderWizard focused QA", () => {
       }
     }
 
-    const saveButton = page
+    const saveButton = modal
       .getByRole("button", {
         name: /save|create widget|update widget/i,
       })
@@ -86,19 +89,25 @@ test.describe("FE-HARD-015 — WidgetBuilderWizard focused QA", () => {
       }
     }
 
-    const closeButton = page
+    const closeButton = modal
       .getByRole("button", {
         name: /cancel|close|back/i,
       })
       .first();
 
     if (await closeButton.isVisible().catch(() => false)) {
-      await closeButton.click();
-
-      await expect(body).toContainText(/dashboard|defect|risk|material/i, {
-        timeout: 10_000,
-      });
+      if (await closeButton.isEnabled().catch(() => false)) {
+        await closeButton.click();
+      } else {
+        await page.keyboard.press("Escape");
+      }
+    } else {
+      await page.keyboard.press("Escape");
     }
+
+    await expect(body).toContainText(/dashboard|defect|risk|material|quality/i, {
+      timeout: 15_000,
+    });
 
     await guard.assertNoUnexpectedFailures();
   });
