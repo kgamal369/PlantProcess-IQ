@@ -1,0 +1,113 @@
+.app-error-boundary {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 32px;
+  background:
+    radial-gradient(circle at top, rgba(0, 198, 255, 0.18), transparent 35%),
+    #050b16;
+  color: #e7f8ff;
+}
+
+.app-error-boundary__card {
+  width: min(760px, 100%);
+  border: 1px solid rgba(70, 213, 255, 0.24);
+  border-radius: 24px;
+  padding: 28px;
+  background: rgba(7, 18, 36, 0.92);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
+}
+
+.app-error-boundary__reference {
+  margin: 18px 0;
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(70, 213, 255, 0.08);
+  border: 1px solid rgba(70, 213, 255, 0.18);
+}
+
+.data-fetch-boundary {
+  border: 1px solid rgba(70, 213, 255, 0.14);
+  border-radius: 16px;
+  padding: 16px;
+  background: rgba(6, 14, 28, 0.72);
+}
+
+.data-fetch-boundary.error {
+  border-color: rgba(255, 96, 96, 0.38);
+}
+
+.data-fetch-boundary.empty {
+  border-style: dashed;
+  color: rgba(224, 246, 255, 0.72);
+}
+
+.data-fetch-boundary__skeleton {
+  height: 18px;
+  border-radius: 999px;
+  margin: 10px 0;
+  background: linear-gradient(
+    90deg,
+    rgba(70, 213, 255, 0.08),
+    rgba(70, 213, 255, 0.2),
+    rgba(70, 213, 255, 0.08)
+  );
+  animation: ppiq-skeleton 1.4s infinite linear;
+}
+
+.data-fetch-boundary__skeleton.short {
+  width: 55%;
+}
+
+@keyframes ppiq-skeleton {
+  0% { opacity: 0.45; }
+  50% { opacity: 0.95; }
+  100% { opacity: 0.45; }
+}
+
+.standard-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  font-weight: 700;
+  transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+}
+
+.standard-button:disabled {
+  opacity: 0.58;
+  cursor: not-allowed;
+}
+
+.standard-button:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+
+.standard-button--primary {
+  color: #04111f;
+  background: #46d5ff;
+  border-color: rgba(70, 213, 255, 0.9);
+}
+
+.standard-button--secondary {
+  color: #e7f8ff;
+  background: rgba(70, 213, 255, 0.1);
+  border-color: rgba(70, 213, 255, 0.24);
+}
+
+.standard-button--danger {
+  color: #fff;
+  background: rgba(255, 74, 96, 0.2);
+  border-color: rgba(255, 74, 96, 0.42);
+}
+
+.standard-button--ghost {
+  color: #e7f8ff;
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.12);
+}

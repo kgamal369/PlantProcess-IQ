@@ -49,7 +49,7 @@ import { DashboardWidgetCard } from "@/components/dashboard/DashboardWidgetCard"
 import { DashboardGridLayout } from "@/components/dashboard/DashboardGridLayout";
 import { DrilldownDrawer } from "@/components/dashboard/DrilldownDrawer";
 import { SelectionBreadcrumb } from "@/components/dashboard/SelectionBreadcrumb";
-import { WidgetBuilderWizard } from "@/components/dashboard/WidgetBuilderWizard";
+import { WidgetBuilderWizard } from "@/components/dashboard/widget-builder/WidgetBuilderWizard";
 
 import {
   InteractiveBarChart,

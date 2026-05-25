@@ -1,3 +1,6 @@
 ﻿@import "./styles/global.css";
 @import "./styles/pages/demo-lifecycle.css";
 @import "./styles/pages/admin-preview.css";
+@import "./styles/components/widget-script-step.css";
+@import "./styles/components/hardening.css";
+

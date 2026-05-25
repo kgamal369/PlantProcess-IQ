@@ -21,7 +21,9 @@
     "qa:nav": "playwright test e2e/nav-graph-refresh-survival.spec.ts",
     "qa:license": "playwright test e2e/license-gate-ux.spec.ts",
     "qa:dashboard": "playwright test e2e/dashboard-refresh-filter.spec.ts",
+    "qa:phase1": "playwright test e2e/phase1-golden-demo.spec.ts e2e/phase1-button-action-matrix.spec.ts",
     "validate": "npm run build && npm run lint && npm run test",
+    "validate:phase1": "npm run build && npm run test && npm run qa:phase1",
     "validate:fast": "npm run build && npm run test",
     "validate:full": "npm run build && npm run lint && npm run test && npm run language:audit && npm run e2e"
   },

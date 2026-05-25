@@ -11,6 +11,8 @@
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { plantProcessApi } from "@/api/plantProcessApi";
+import { widgetScriptApi } from "@/api/widgetScript";
+import { useOptimisticSave } from "@/hooks/useOptimisticSave";
 import type {
   DashboardChartTypeMetadata,
   DashboardDefinitionRecord,
@@ -21,6 +23,7 @@ import type {
   DashboardWidgetDefinitionRecord,
   DashboardWidgetFilters,
   DashboardWidgetQuery,
+  DashboardWidgetQueryOptions,
   DashboardWidgetQueryResult,
 } from "@/api/plantProcessApi";
 
@@ -31,6 +34,7 @@ import {
 } from "@/components/charts/InteractiveCharts";
 import type { ChartRow } from "@/components/charts/InteractiveCharts";
 import { EmptyInsightState } from "@/components/dashboard/EmptyInsightState";
+import { WidgetScriptStep } from "./WidgetScriptStep";
 
 interface WidgetBuilderWizardProps {
   isOpen: boolean;
@@ -40,7 +44,14 @@ interface WidgetBuilderWizardProps {
   onWidgetSaved?: (widgetId: string) => void | Promise<void>;
 }
 
-type WizardStep = "purpose" | "chartType" | "data" | "filters" | "preview";
+type WizardStep =
+  | "purpose"
+  | "chartType"
+  | "data"
+  | "filters"
+  | "script"
+  | "preview";
+
 type RelativeDateUnit = "days" | "weeks" | "months";
 
 interface WidgetBuilderState {
@@ -57,6 +68,8 @@ interface WidgetBuilderState {
   dateMode: "none" | "absolute" | "relative";
   relativeDateValue: number;
   relativeDateUnit: RelativeDateUnit;
+  queryExpression: string;
+  expressionEnabled: boolean;
 }
 
 interface ValidationIssue {
@@ -69,8 +82,18 @@ const stepOrder: WizardStep[] = [
   "chartType",
   "data",
   "filters",
+  "script",
   "preview",
 ];
+
+const stepLabels: Record<WizardStep, string> = {
+  purpose: "Purpose",
+  chartType: "Chart",
+  data: "Data",
+  filters: "Filters",
+  script: "Transform",
+  preview: "Preview",
+};
 
 const defaultState: WidgetBuilderState = {
   widgetTitle: "",
@@ -81,6 +104,8 @@ const defaultState: WidgetBuilderState = {
   dateMode: "relative",
   relativeDateValue: 30,
   relativeDateUnit: "days",
+  queryExpression: "",
+  expressionEnabled: false,
 };
 
 function generateWidgetCode(title: string) {
@@ -120,7 +145,6 @@ function fromInputDateTime(value: string) {
 
   return parsed.toISOString();
 }
-
 
 function relativeFromUtc(value: number, unit: RelativeDateUnit) {
   const date = new Date();
@@ -227,7 +251,10 @@ function inferValueKey(result: DashboardWidgetQueryResult | null) {
     return "value";
   }
 
-  return result.columns.find((column) => column.dataType === "number")?.code ?? "value";
+  return (
+    result.columns.find((column) => column.dataType === "number")?.code ??
+    "value"
+  );
 }
 
 function selectFieldForDimension(
@@ -275,16 +302,18 @@ export function WidgetBuilderWizardContent({
   onWidgetSaved,
 }: WidgetBuilderWizardProps) {
   const [metadata, setMetadata] = useState<DashboardMetadata | null>(null);
-  const [referenceData, setReferenceData] = useState<DashboardReferenceData | null>(null);
+  const [referenceData, setReferenceData] =
+    useState<DashboardReferenceData | null>(null);
   const [dashboards, setDashboards] = useState<DashboardDefinitionRecord[]>([]);
 
   const [isLoading, setIsLoading] = useState(false);
   const [isPreviewing, setIsPreviewing] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
 
   const [loadError, setLoadError] = useState<unknown>(null);
   const [previewError, setPreviewError] = useState<unknown>(null);
-  const [preview, setPreview] = useState<DashboardWidgetQueryResult | null>(null);
+  const [preview, setPreview] = useState<DashboardWidgetQueryResult | null>(
+    null
+  );
 
   const [step, setStep] = useState<WizardStep>("purpose");
   const [builderState, setBuilderState] =
@@ -331,6 +360,9 @@ export function WidgetBuilderWizardContent({
           const displayOptions = parseJson<{
             maxRows?: number;
             rawRowLimit?: number;
+            queryExpression?: string;
+            expressionEnabled?: boolean;
+            expressionVersion?: string;
           }>(existingWidget.displayOptionsJson, {});
 
           setBuilderState({
@@ -351,6 +383,10 @@ export function WidgetBuilderWizardContent({
             dateMode: filters.fromUtc || filters.toUtc ? "absolute" : "relative",
             relativeDateValue: metadataResult.safetyLimits.defaultLookbackDays,
             relativeDateUnit: "days",
+            queryExpression: displayOptions.queryExpression ?? "",
+            expressionEnabled: Boolean(
+              displayOptions.expressionEnabled && displayOptions.queryExpression
+            ),
           });
 
           setStep("data");
@@ -376,17 +412,24 @@ export function WidgetBuilderWizardContent({
   }, [isOpen, existingWidget]);
 
   const selectedChartType = useMemo(
-    () => metadata?.chartTypes.find((item) => item.code === builderState.chartTypeCode),
+    () =>
+      metadata?.chartTypes.find(
+        (item) => item.code === builderState.chartTypeCode
+      ),
     [metadata, builderState.chartTypeCode]
   );
 
   const selectedDimension = useMemo(
-    () => metadata?.dimensions.find((item) => item.code === builderState.dimensionCode),
+    () =>
+      metadata?.dimensions.find(
+        (item) => item.code === builderState.dimensionCode
+      ),
     [metadata, builderState.dimensionCode]
   );
 
   const selectedMeasure = useMemo(
-    () => metadata?.measures.find((item) => item.code === builderState.measureCode),
+    () =>
+      metadata?.measures.find((item) => item.code === builderState.measureCode),
     [metadata, builderState.measureCode]
   );
 
@@ -480,7 +523,8 @@ export function WidgetBuilderWizardContent({
         builderState.dateMode === "absolute" &&
         builderState.filters.fromUtc &&
         builderState.filters.toUtc &&
-        new Date(builderState.filters.fromUtc) > new Date(builderState.filters.toUtc)
+        new Date(builderState.filters.fromUtc) >
+          new Date(builderState.filters.toUtc)
       ) {
         issues.push({
           field: "Date range",
@@ -499,6 +543,18 @@ export function WidgetBuilderWizardContent({
       }
     }
 
+    if (
+      step === "script" &&
+      builderState.expressionEnabled &&
+      !builderState.queryExpression.trim()
+    ) {
+      issues.push({
+        field: "Safe expression",
+        message:
+          "Expression mode is enabled, but the expression is empty. Run a valid expression preview or disable expression mode.",
+      });
+    }
+
     return issues;
   }, [
     step,
@@ -511,7 +567,8 @@ export function WidgetBuilderWizardContent({
 
   const currentStepIndex = stepOrder.indexOf(step);
   const canGoBack = currentStepIndex > 0;
-  const canGoNext = validationIssues.length === 0 && currentStepIndex < stepOrder.length - 1;
+  const canGoNext =
+    validationIssues.length === 0 && currentStepIndex < stepOrder.length - 1;
 
   function patchState(patch: Partial<WidgetBuilderState>) {
     setBuilderState((current) => ({
@@ -573,7 +630,8 @@ export function WidgetBuilderWizardContent({
       chartType: builderState.chartTypeCode,
       dimensionCode: builderState.dimensionCode,
       measureCode: builderState.measureCode,
-      parameterCode: builderState.parameterCode || builderState.filters.parameterCode || null,
+      parameterCode:
+        builderState.parameterCode || builderState.filters.parameterCode || null,
       filters: cleanFilters(),
       options: {
         maxRows: builderState.maxRows,
@@ -584,40 +642,58 @@ export function WidgetBuilderWizardContent({
     };
   }
 
-  async function runPreview() {
-    setIsPreviewing(true);
-    setPreviewError(null);
+ async function runPreview() {
+  setIsPreviewing(true);
+  setPreviewError(null);
 
-    try {
-      const result = await plantProcessApi.queryDashboardWidget(buildQuery());
-      setPreview(result);
-    } catch (error) {
-      setPreview(null);
-      setPreviewError(error);
-    } finally {
-      setIsPreviewing(false);
-    }
+  try {
+    const options: DashboardWidgetQueryOptions = {
+      maxRows: builderState.maxRows,
+      rawRowLimit: builderState.rawRowLimit,
+      sortDirection: "desc",
+      includeWarnings: true,
+    };
+
+    const result =
+      builderState.expressionEnabled && builderState.queryExpression.trim()
+        ? await widgetScriptApi.executeExpression({
+            expression: builderState.queryExpression,
+            filters: cleanFilters(),
+            options,
+          })
+        : await plantProcessApi.queryDashboardWidget(buildQuery());
+
+    setPreview(result);
+  } catch (error) {
+    setPreview(null);
+    setPreviewError(error);
+  } finally {
+    setIsPreviewing(false);
   }
+}
+  const { isSaving, save: saveWidget } = useOptimisticSave({
+    successMessage: existingWidget ? "Widget updated" : "Widget saved",
+    toastId: `save-widget-${existingWidget?.id ?? "new"}`,
+    onSave: async () => {
+      if (!effectiveDashboardDefinitionId) {
+        throw new Error("No dashboard definition is selected.");
+      }
 
-  async function saveWidget() {
-    if (!effectiveDashboardDefinitionId) {
-      setPreviewError(new Error("No dashboard definition is selected."));
-      return;
-    }
+      if (validationIssues.length > 0) {
+        throw new Error("Fix validation issues before saving.");
+      }
 
-    if (validationIssues.length > 0) {
-      setPreviewError(new Error("Fix validation issues before saving."));
-      return;
-    }
-
-    setIsSaving(true);
-    setPreviewError(null);
-
-    try {
       const filterJson = JSON.stringify(cleanFilters());
       const displayOptionsJson = JSON.stringify({
         maxRows: builderState.maxRows,
         rawRowLimit: builderState.rawRowLimit,
+        queryExpression: builderState.expressionEnabled
+          ? builderState.queryExpression.trim()
+          : null,
+        expressionEnabled:
+          builderState.expressionEnabled &&
+          builderState.queryExpression.trim().length > 0,
+        expressionVersion: "phase1.v1",
       });
 
       if (existingWidget) {
@@ -631,7 +707,9 @@ export function WidgetBuilderWizardContent({
             dimensionCode: builderState.dimensionCode!,
             measureCode: builderState.measureCode!,
             parameterCode:
-              builderState.parameterCode || builderState.filters.parameterCode || null,
+              builderState.parameterCode ||
+              builderState.filters.parameterCode ||
+              null,
             filterJson,
             displayOptionsJson,
             isActive: true,
@@ -650,7 +728,9 @@ export function WidgetBuilderWizardContent({
             dimensionCode: builderState.dimensionCode!,
             measureCode: builderState.measureCode!,
             parameterCode:
-              builderState.parameterCode || builderState.filters.parameterCode || null,
+              builderState.parameterCode ||
+              builderState.filters.parameterCode ||
+              null,
             filterJson,
             layoutJson: "{}",
             displayOptionsJson,
@@ -663,14 +743,14 @@ export function WidgetBuilderWizardContent({
 
         await onWidgetSaved?.(saved.id);
       }
-
+    },
+    onSuccess: () => {
       onClose();
-    } catch (error) {
-      setPreviewError(error);
-    } finally {
-      setIsSaving(false);
-    }
-  }
+    },
+    onError: (err) => {
+      setPreviewError(err);
+    },
+  });
 
   function goNext() {
     if (!canGoNext) return;
@@ -701,11 +781,13 @@ export function WidgetBuilderWizardContent({
           <div>
             <p className="eyebrow">Dashboard Builder</p>
             <h2>
-              {existingWidget ? "Edit dashboard widget" : "Create dashboard widget"}
+              {existingWidget
+                ? "Edit dashboard widget"
+                : "Create dashboard widget"}
             </h2>
             <p>
-              Metadata-driven widget configuration using the backend dashboard query
-              engine.
+              Metadata-driven widget configuration using the backend dashboard
+              query engine.
             </p>
           </div>
 
@@ -726,7 +808,7 @@ export function WidgetBuilderWizardContent({
               disabled={index > currentStepIndex + 1}
             >
               <span>{index + 1}</span>
-              {item}
+              {stepLabels[item]}
             </button>
           ))}
         </div>
@@ -751,7 +833,9 @@ export function WidgetBuilderWizardContent({
                 metadata={metadata}
                 selectedPurposeCode={builderState.purposeCode}
                 onSelect={(purposeCode) => {
-                  const purpose = metadata?.purposes.find((x) => x.code === purposeCode);
+                  const purpose = metadata?.purposes.find(
+                    (x) => x.code === purposeCode
+                  );
 
                   patchState({
                     purposeCode,
@@ -759,7 +843,8 @@ export function WidgetBuilderWizardContent({
                       builderState.dimensionCode ||
                       purpose?.recommendedDimensions[0],
                     measureCode:
-                      builderState.measureCode || purpose?.recommendedMeasures[0],
+                      builderState.measureCode ||
+                      purpose?.recommendedMeasures[0],
                     chartTypeCode:
                       builderState.chartTypeCode ||
                       purpose?.recommendedChartTypes[0],
@@ -818,6 +903,28 @@ export function WidgetBuilderWizardContent({
               />
             ) : null}
 
+            {step === "script" ? (
+              <ScriptStep
+                state={builderState}
+                filters={cleanFilters()}
+                onPatch={patchState}
+                onExpressionPreviewAccepted={(expression, result) => {
+                  patchState({
+                    queryExpression: expression,
+                    expressionEnabled: true,
+                  });
+                  setPreview(result);
+                  setPreviewError(null);
+                }}
+                onDisableExpression={() => {
+                  patchState({
+                    expressionEnabled: false,
+                    queryExpression: "",
+                  });
+                }}
+              />
+            ) : null}
+
             {step === "preview" ? (
               <PreviewStep
                 preview={preview}
@@ -827,6 +934,7 @@ export function WidgetBuilderWizardContent({
                 chartType={builderState.chartTypeCode}
                 title={builderState.widgetTitle}
                 dimensionCode={builderState.dimensionCode}
+                expressionEnabled={builderState.expressionEnabled}
                 isPreviewing={isPreviewing}
                 previewError={previewError}
                 onPreview={runPreview}
@@ -886,7 +994,11 @@ export function WidgetBuilderWizardContent({
                   type="button"
                 >
                   <Save size={16} />
-                  {isSaving ? "Saving..." : existingWidget ? "Update widget" : "Save widget"}
+                  {isSaving
+                    ? "Saving..."
+                    : existingWidget
+                      ? "Update widget"
+                      : "Save widget"}
                 </button>
               </>
             ) : (
@@ -1038,7 +1150,7 @@ function DataStep({
             <option value="">Select dimension</option>
             {dimensions.map((dimension) => (
               <option key={dimension.code} value={dimension.code}>
-                {dimension.label}  {dimension.category}
+                {dimension.label} — {dimension.category}
               </option>
             ))}
           </select>
@@ -1055,7 +1167,7 @@ function DataStep({
             <option value="">Select measure</option>
             {measures.map((measure) => (
               <option key={measure.code} value={measure.code}>
-                {measure.label}  {measure.aggregation}
+                {measure.label} — {measure.aggregation}
               </option>
             ))}
           </select>
@@ -1073,7 +1185,7 @@ function DataStep({
               <option value="">Select parameter</option>
               {(referenceData?.parameters ?? []).map((item) => (
                 <option key={item.code} value={item.code}>
-                  {item.name}  {item.code}
+                  {item.name} — {item.code}
                 </option>
               ))}
             </select>
@@ -1130,7 +1242,9 @@ function FilterStep({
           Site
           <select
             value={state.filters.siteId ?? ""}
-            onChange={(event) => onPatchFilters({ siteId: event.target.value || null })}
+            onChange={(event) =>
+              onPatchFilters({ siteId: event.target.value || null })
+            }
           >
             <option value="">All sites</option>
             {(referenceData?.sites ?? []).map((item) => (
@@ -1145,7 +1259,9 @@ function FilterStep({
           Area
           <select
             value={state.filters.areaId ?? ""}
-            onChange={(event) => onPatchFilters({ areaId: event.target.value || null })}
+            onChange={(event) =>
+              onPatchFilters({ areaId: event.target.value || null })
+            }
           >
             <option value="">All areas</option>
             {(referenceData?.areas ?? []).map((item) => (
@@ -1308,7 +1424,9 @@ function FilterStep({
                 type="datetime-local"
                 value={toInputDateTime(state.filters.fromUtc)}
                 onChange={(event) =>
-                  onPatchFilters({ fromUtc: fromInputDateTime(event.target.value) })
+                  onPatchFilters({
+                    fromUtc: fromInputDateTime(event.target.value),
+                  })
                 }
               />
             </label>
@@ -1319,13 +1437,91 @@ function FilterStep({
                 type="datetime-local"
                 value={toInputDateTime(state.filters.toUtc)}
                 onChange={(event) =>
-                  onPatchFilters({ toUtc: fromInputDateTime(event.target.value) })
+                  onPatchFilters({
+                    toUtc: fromInputDateTime(event.target.value),
+                  })
                 }
               />
             </label>
           </>
         ) : null}
       </div>
+    </WizardSection>
+  );
+}
+
+function ScriptStep({
+  state,
+  filters,
+  onPatch,
+  onExpressionPreviewAccepted,
+  onDisableExpression,
+}: {
+  state: WidgetBuilderState;
+  filters: DashboardWidgetFilters;
+  onPatch: (patch: Partial<WidgetBuilderState>) => void;
+  onExpressionPreviewAccepted: (
+    expression: string,
+    preview: DashboardWidgetQueryResult
+  ) => void;
+  onDisableExpression: () => void;
+}) {
+  const widgetScriptOptions = {
+    maxRows: state.maxRows,
+    rawRowLimit: state.rawRowLimit,
+    sortDirection: "desc",
+    includeWarnings: true,
+  } satisfies DashboardWidgetQueryOptions;
+
+  return (
+    <WizardSection
+      icon={<Sparkles size={18} />}
+      title="5. Safe transform / expression"
+      description="Optional advanced layer for grouping, measure, parameter, row limits and sorting. It is a safe expression, not raw SQL."
+    >
+      <div className="wizard-script-status">
+        <div>
+          <strong>
+            {state.expressionEnabled
+              ? "Expression mode is enabled for this widget."
+              : "Expression mode is optional for this widget."}
+          </strong>
+          <p>
+            Use this step when the normal wizard fields are not enough. The
+            backend validates allowed tokens and rejects SQL/script-like input.
+          </p>
+        </div>
+
+        {state.expressionEnabled ? (
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={onDisableExpression}
+          >
+            Use standard query only
+          </button>
+        ) : null}
+      </div>
+
+      <WidgetScriptStep
+        initialExpression={
+          state.queryExpression ||
+          "widget=chart;\nchart=bar;\ndimension=defectType;\nmeasure=defectCount;\nmaxRows=20;\nsort=desc;"
+        }
+        filters={filters}
+        options={widgetScriptOptions}
+        onExpressionAccepted={(
+          expression: string,
+          result: DashboardWidgetQueryResult
+        ) => {
+          onPatch({
+            queryExpression: expression,
+            expressionEnabled: true,
+          });
+
+          onExpressionPreviewAccepted(expression, result);
+        }}
+      />
     </WizardSection>
   );
 }
@@ -1338,6 +1534,7 @@ function PreviewStep({
   chartType,
   title,
   dimensionCode,
+  expressionEnabled,
   isPreviewing,
   previewError,
   onPreview,
@@ -1349,6 +1546,7 @@ function PreviewStep({
   chartType?: string;
   title: string;
   dimensionCode?: string | null;
+  expressionEnabled: boolean;
   isPreviewing: boolean;
   previewError: unknown;
   onPreview: () => void;
@@ -1356,8 +1554,12 @@ function PreviewStep({
   return (
     <WizardSection
       icon={<Eye size={18} />}
-      title="5. Preview"
-      description="The preview calls the backend widget query endpoint with the complete DTO."
+      title="6. Preview"
+      description={
+        expressionEnabled
+          ? "The preview uses the backend safe expression endpoint. No raw SQL is executed."
+          : "The preview calls the backend widget query endpoint with the complete DTO."
+      }
     >
       <div className="preview-toolbar">
         <button
@@ -1374,6 +1576,10 @@ function PreviewStep({
           <span className="muted-text">
             {preview.rows.length} row(s), generated {preview.generatedAtUtc}
           </span>
+        ) : null}
+
+        {expressionEnabled ? (
+          <span className="muted-text">Safe expression mode</span>
         ) : null}
       </div>
 
@@ -1499,3 +1705,5 @@ function WizardSection({
   );
 }
 
+export { WidgetBuilderWizardContent as WidgetBuilderWizard };
+export default WidgetBuilderWizardContent;

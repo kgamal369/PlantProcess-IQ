@@ -25,6 +25,7 @@ using PlantProcess.Api.Endpoints.Reporting;
 using PlantProcess.Api.Endpoints.Validation;
 using PlantProcess.Api.Endpoints.Workflow;
 using PlantProcess.Api.Endpoints.Diagnostics;
+using PlantProcess.Api.Endpoints.Reporting;
 using PlantProcess.Api.Middleware;
 using PlantProcess.Api.Options;
 using PlantProcess.Api.Security;
@@ -388,7 +389,8 @@ try
     app.MapDiagnosticsEndpoints();
 
     app.MapPhase1WorkflowTruthEndpoints();
-
+    app.MapCustomerDemoReportEndpoints();
+    
     app.Run();
 }
 catch (Exception ex) when (ex.GetType().Name == "HostAbortedException")
