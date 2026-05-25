@@ -27,7 +27,13 @@
     "validate:phase1": "npm run build && npm run test && npm run qa:phase1",
     "validate:phase1:hardening": "npm run build && npm run qa:phase1:hardening",
     "validate:fast": "npm run build && npm run test",
-    "validate:full": "npm run build && npm run lint && npm run test && npm run language:audit && npm run e2e"
+    "validate:full": "npm run build && npm run lint && npm run test && npm run language:audit && npm run e2e",
+    "validate:api-policy": "node scripts/validate-api-client-policy.mjs",
+    "validate:no-console": "node scripts/validate-no-console-in-src.mjs",
+    "validate:ui-system": "node scripts/validate-ui-system-rollout.mjs",
+    "qa:phase2:step1": "playwright test -c playwright.phase2.config.ts e2e/phase2-zero-console-production.spec.ts e2e/phase2-backend-outage.spec.ts e2e/phase2-navigation-refresh-survival.spec.ts",
+    "qa:phase2:step2": "playwright test -c playwright.phase2.config.ts e2e/phase2-chart-interaction.spec.ts e2e/phase2-responsive-multibrowser.spec.ts",
+    "validate:phase2:step1-step2": "npm run build && npm run validate:api-policy && npm run validate:no-console && npm run validate:ui-system && npm run qa:phase2:step1 && npm run qa:phase2:step2"
   },
   "dependencies": {
     "lucide-react": "^1.14.0",

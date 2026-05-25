@@ -227,7 +227,7 @@ public static class Phase1WorkflowTruthEndpoints
 
     private static async Task<IResult> RunDueSourceImportsAsync(
         [FromBody] RunDueSourceImportsRequest request,
-        IDeltaImportExecutionService deltaImportExecutionService,
+        [FromServices] IDeltaImportExecutionService deltaImportExecutionService,
         CancellationToken cancellationToken)
     {
         var maxDatasets = request.MaxDatasetsPerRun is > 0 and <= 200

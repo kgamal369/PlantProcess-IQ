@@ -4,3 +4,5 @@
 @import "./styles/components/widget-script-step.css";
 @import "./styles/components/hardening.css";
 @import "./styles/hardening.css";
+@import "./components/table/standard-table.css";
+@import "./components/layout/page-grid.css";

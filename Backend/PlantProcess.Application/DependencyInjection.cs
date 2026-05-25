@@ -82,6 +82,7 @@ public static class DependencyInjection
         services.AddScoped<IJobRuntimeService, JobRuntimeService>();
         services.AddScoped<IJobRunOrchestratorService, JobRunOrchestratorService>();
         services.AddScoped<IIncrementalSyncStateService, IncrementalSyncStateService>();
+        services.AddScoped<IDeltaImportExecutionService, DeltaImportExecutionService>();
 
         // Canonical material and genealogy workflow
         services.AddScoped<IMaterialService, MaterialService>();

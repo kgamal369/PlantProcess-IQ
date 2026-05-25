@@ -1,0 +1,116 @@
+:root {
+  --ppiq-space-1: 4px;
+  --ppiq-space-2: 8px;
+  --ppiq-space-3: 12px;
+  --ppiq-space-4: 16px;
+  --ppiq-space-5: 20px;
+  --ppiq-space-6: 24px;
+  --ppiq-space-8: 32px;
+
+  --ppiq-radius-card: 18px;
+  --ppiq-radius-panel: 22px;
+
+  --ppiq-border-subtle: 1px solid rgba(70, 213, 255, 0.14);
+  --ppiq-panel-bg: rgba(6, 14, 28, 0.74);
+}
+
+.page-header-standard {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--ppiq-space-6);
+  margin-bottom: var(--ppiq-space-6);
+}
+
+.page-header-standard__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #46d5ff;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.78rem;
+  font-weight: 900;
+  margin-bottom: 8px;
+}
+
+.page-header-standard h1 {
+  margin: 0;
+  color: #e7f8ff;
+  line-height: 1.05;
+  font-size: clamp(1.8rem, 3vw, 2.8rem);
+}
+
+.page-header-standard p {
+  margin: 10px 0 0;
+  color: rgba(231, 248, 255, 0.68);
+  line-height: 1.6;
+  max-width: 860px;
+}
+
+.page-header-standard__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--ppiq-space-2);
+}
+
+.page-grid {
+  display: grid;
+  gap: var(--ppiq-space-5);
+}
+
+.page-grid--1 {
+  grid-template-columns: 1fr;
+}
+
+.page-grid--2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.page-grid--3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.page-grid--4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.page-grid--compact {
+  gap: var(--ppiq-space-3);
+}
+
+.page-panel {
+  border: var(--ppiq-border-subtle);
+  border-radius: var(--ppiq-radius-panel);
+  padding: var(--ppiq-space-5);
+  background:
+    radial-gradient(circle at top left, rgba(70, 213, 255, 0.08), transparent 35%),
+    var(--ppiq-panel-bg);
+}
+
+@media (max-width: 1180px) {
+  .page-grid--4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .page-grid--3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .page-header-standard {
+    flex-direction: column;
+  }
+
+  .page-header-standard__actions {
+    justify-content: flex-start;
+  }
+
+  .page-grid--2,
+  .page-grid--3,
+  .page-grid--4 {
+    grid-template-columns: 1fr;
+  }
+}

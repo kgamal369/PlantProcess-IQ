@@ -1,0 +1,78 @@
+.standard-table-shell {
+  width: 100%;
+  border: 1px solid rgba(70, 213, 255, 0.14);
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at top left, rgba(70, 213, 255, 0.08), transparent 34%),
+    rgba(6, 14, 28, 0.74);
+  overflow: hidden;
+}
+
+.standard-table-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 16px 18px;
+  border-bottom: 1px solid rgba(70, 213, 255, 0.12);
+}
+
+.standard-table-header h3 {
+  margin: 0;
+  color: #e7f8ff;
+  font-size: 1rem;
+}
+
+.standard-table-header p {
+  margin: 5px 0 0;
+  color: rgba(231, 248, 255, 0.64);
+  font-size: 0.9rem;
+}
+
+.standard-table-scroll {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.standard-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 760px;
+}
+
+.standard-table th,
+.standard-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(70, 213, 255, 0.09);
+  color: rgba(231, 248, 255, 0.82);
+  vertical-align: top;
+}
+
+.standard-table th {
+  color: rgba(70, 213, 255, 0.86);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  background: rgba(70, 213, 255, 0.05);
+}
+
+.standard-table tr:hover td {
+  background: rgba(70, 213, 255, 0.045);
+}
+
+.standard-table-shell--compact th,
+.standard-table-shell--compact td {
+  padding: 8px 10px;
+  font-size: 0.88rem;
+}
+
+.standard-table .align-left {
+  text-align: left;
+}
+
+.standard-table .align-center {
+  text-align: center;
+}
+
+.standard-table .align-right {
+  text-align: right;
+}
