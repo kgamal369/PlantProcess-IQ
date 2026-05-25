@@ -1,5 +1,4 @@
 ﻿import { NavLink, Route, Routes } from "react-router-dom";
-import type { ReactNode } from "react";
 import {
   BadgeEuro,
   BarChart3,
@@ -16,9 +15,15 @@ import {
   Network,
   ShieldCheck,
   Workflow,
-  XCircle,
 } from "lucide-react";
+
 import { BrandProofSection } from "./components/BrandProofSection";
+import ProductScreenshotShowcase from "./components/proof/ProductScreenshotShowcase";
+import PricingLicenseMatrix from "./components/proof/PricingLicenseMatrix";
+import PositioningTruthBlock from "./components/proof/PositioningTruthBlock";
+import ConnectorHonestyBlock from "./components/proof/ConnectorHonestyBlock";
+import RequestDemoForm from "./components/proof/RequestDemoForm";
+
 const demoMailto =
   "mailto:info@plantprocessiq.com?subject=PlantProcess%20IQ%20Demo%20Request&body=Hello%20Karim%2C%0A%0AI%20would%20like%20to%20book%20a%2020-minute%20PlantProcess%20IQ%20demo.%0A%0ACompany%3A%0APlant%20type%3A%0AData%20sources%3A%0AMain%20quality%20problem%3A%0APreferred%20time%3A%0A";
 
@@ -55,54 +60,13 @@ const screenshotCards = [
   },
 ];
 
-const connectorRows = [
-  ["CSV snapshot", "Available", "Safe for demo and starter diagnostic imports."],
-  ["Excel snapshot", "Visible / proof required", "Show only after end-to-end proof passes."],
-  ["PostgreSQL read-only", "Available for Pro+", "Use for read-only database integration demos."],
-  ["Microsoft SQL Server", "Planned", "Do not mark available until tested connector proof exists."],
-  ["Oracle", "Planned", "Important for steel plants, but not available until tested."],
-  ["MySQL", "Planned", "Useful for inspection/QMS systems; keep honest as planned."],
-];
-
-const pricingPlans = [
-  {
-    name: "Light",
-    label: "Starter validation",
-    price: "€1.2k–€2k / year",
-    description: "For one engineer validating the concept with limited CSV/Excel data.",
-    features: ["1 user", "CSV/Excel starter source", "2–3 pages", "Basic dashboard", "Manual investigation"],
-  },
-  {
-    name: "Pro",
-    label: "Engineering team",
-    price: "€8k–€12k / year",
-    description: "For teams running real discovery with controlled database connections.",
-    features: ["Up to 5 users", "CSV / Excel / PostgreSQL", "Jobs monitor", "Data quality scan", "Basic PDF report"],
-    highlighted: true,
-  },
-  {
-    name: "Pro Plus",
-    label: "Pilot-ready intelligence",
-    price: "€25k–€40k / year",
-    description: "For serious pilots with more sources, correlation, ML readiness, and stronger reports.",
-    features: ["Up to 20 users", "More sources", "Correlation jobs", "ML readiness workspace", "Full genealogy report"],
-  },
-  {
-    name: "Enterprise",
-    label: "Private deployment",
-    price: "Custom",
-    description: "For larger plants needing private cloud/on-prem, governance, and custom support.",
-    features: ["Custom users", "Private deployment", "RBAC/audit roadmap", "Custom connectors", "Enterprise support"],
-  },
-];
-
 const lifecycleSteps = [
-  ["Connect", "Configure CSV, Excel, PostgreSQL or future source connectors."],
-  ["Stage", "Copy raw data into a safe read-only staging/dump layer."],
-  ["Map", "Use SQL/JOIN views and mapping rules to fit the generic model."],
-  ["Monitor", "Track jobs, refresh cycle, failures, duration, and next run."],
-  ["Analyze", "Dashboard, quality, risk, correlation, and investigation workflow."],
-  ["Report", "Export a Data Diagnostic report with ML readiness status."],
+  ["Connect", "Configure file and database source connectors honestly."],
+  ["Stage", "Copy raw source-shaped data into a safe staging/dump layer."],
+  ["Map", "Use schema views and mapping rules to fit the generic canonical model."],
+  ["Monitor", "Track jobs, refresh cycles, failures, duration, and next run."],
+  ["Analyze", "Use dashboards, quality, risk, correlation, and investigation workflows."],
+  ["Report", "Export a customer-grade Data Diagnostic report with limitations stated clearly."],
 ];
 
 function Layout({ children }: { children: React.ReactNode }) {
@@ -110,7 +74,6 @@ function Layout({ children }: { children: React.ReactNode }) {
     <div className="site-shell">
       <header className="site-header">
         <NavLink to="/" className="brand-link">
-          {/* Use the actual SOU icon SVG — file exists at /brand/sou-icon.svg */}
           <span className="sou-mark">
             <img src="/brand/sou-icon.svg" alt="SOU" width={38} height={38} />
           </span>
@@ -165,9 +128,10 @@ function HomePage() {
 
           <p>
             PlantProcess IQ is a read-only intelligence layer for manufacturing
-            plants. It connects plant data, maps it into a generic process-to-quality
-            model, detects data readiness gaps, highlights suspected contributors,
-            and prepares customer-grade Data Diagnostic reports.
+            plants. It connects plant data, maps it into a generic
+            process-to-quality model, detects data readiness gaps, highlights
+            suspected contributors, and prepares customer-grade Data Diagnostic
+            reports.
           </p>
 
           <div className="hero-actions">
@@ -233,32 +197,7 @@ function HomePage() {
         </div>
       </section>
 
-      <section className="website-section no-replacement-block">
-        <div>
-          <div className="eyebrow">
-            <XCircle size={15} />
-            Clear positioning
-          </div>
-
-          <h2>Not MES. Not SCADA. Not Level 2. Not BI-only.</h2>
-
-          <p>
-            PlantProcess IQ sits above existing MES, L2, SCADA, historians,
-            inspection systems, QMS, ERP, and plant databases. It does not write
-            back to production systems. It creates an evidence layer for process,
-            quality, genealogy, risk, correlation, and readiness.
-          </p>
-        </div>
-
-        <div className="replacement-grid">
-          {["MES", "SCADA", "L2 automation", "ERP", "BI tools"].map((item) => (
-            <div key={item}>
-              <XCircle size={18} />
-              <span>Not replacing {item}</span>
-            </div>
-          ))}
-        </div>
-      </section>
+      <ProductScreenshotShowcase />
 
       <section className="website-section screenshot-section">
         <div className="section-heading">
@@ -331,34 +270,13 @@ function HomePage() {
         </div>
       </section>
 
-      <ConnectorHonestySection />
-
+      <PositioningTruthBlock />
+      <ConnectorHonestyBlock />
+      <PricingLicenseMatrix />
       <DataDiagnosticSection />
-
       <MlHonestySection />
-
       <BrandProofSection />
-
-      <section className="website-section demo-cta-section" id="demo">
-        <div>
-          <div className="eyebrow">
-            <CalendarCheck size={15} />
-            Demo CTA
-          </div>
-
-          <h2>Run a 20-minute investigation-first walkthrough.</h2>
-
-          <p>
-            Best demo story: connector → import job → schema mapping → dashboard
-            widget → quality investigation → ML readiness → customer report.
-          </p>
-        </div>
-
-        <a className="button button-primary" href={demoMailto}>
-          <Mail size={17} />
-          Request founder demo by email
-        </a>
-      </section>
+      <RequestDemoForm />
     </Layout>
   );
 }
@@ -382,12 +300,30 @@ function ProductPage() {
       <section className="website-section">
         <div className="feature-grid">
           {[
-            ["Generic source layer", "CSV, Excel, PostgreSQL now; MSSQL, Oracle, MySQL planned after tested proof."],
-            ["Staging / dump copy", "Keeps a latest safe copy of customer source data before canonical mapping."],
-            ["Schema mapping", "Maps plant-specific tables into a generic manufacturing data model."],
-            ["Jobs monitor", "Shows import, refresh, mapping, quality, risk, correlation, and ML readiness jobs."],
-            ["Dashboard builder", "Creates pages and widgets from configured canonical data."],
-            ["ML readiness", "Prepares labels and feature vectors before real training starts."],
+            [
+              "Generic source layer",
+              "CSV and Excel are starter-friendly; database connectors are shown honestly according to certification status.",
+            ],
+            [
+              "Staging / dump copy",
+              "Keeps a latest safe copy of customer source-shaped data before canonical mapping.",
+            ],
+            [
+              "Schema mapping",
+              "Maps plant-specific tables into a generic manufacturing data model.",
+            ],
+            [
+              "Jobs monitor",
+              "Shows import, refresh, mapping, quality, risk, correlation, and readiness jobs.",
+            ],
+            [
+              "Dashboard builder",
+              "Creates pages and widgets from configured canonical data.",
+            ],
+            [
+              "ML readiness",
+              "Prepares labels and feature vectors before real training starts.",
+            ],
           ].map(([title, text]) => (
             <article className="feature-card" key={title}>
               <CheckCircle2 size={22} />
@@ -397,6 +333,10 @@ function ProductPage() {
           ))}
         </div>
       </section>
+
+      <ProductScreenshotShowcase />
+      <PositioningTruthBlock />
+      <ConnectorHonestyBlock />
       <BrandProofSection />
     </Layout>
   );
@@ -412,45 +352,20 @@ function PricingPage() {
         </div>
         <h1>Start with a diagnostic. Grow into a licensed platform.</h1>
         <p>
-          Pricing is staged to match product maturity: Data Diagnostic first,
-          then pilot, then annual license after proof.
+          Pricing is staged to match product maturity: data diagnostic first,
+          pilot next, then annual license after workflow proof.
         </p>
       </section>
 
-      <section className="website-section" id="pricing">
-        <div className="pricing-grid">
-          {pricingPlans.map((plan) => (
-            <article
-              className={`pricing-card ${plan.highlighted ? "highlighted" : ""}`}
-              key={plan.name}
-            >
-              <div className="pricing-card-top">
-                <h3>{plan.name}</h3>
-                <span>{plan.label}</span>
-              </div>
+      <PricingLicenseMatrix />
 
-              <strong>{plan.price}</strong>
-              <p>{plan.description}</p>
-
-              <ul>
-                {plan.features.map((feature) => (
-                  <li key={feature}>
-                    <CheckCircle2 size={16} />
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-            </article>
-          ))}
-        </div>
-
-        <p className="pricing-note">
-          Pricing labels are demo-stage positioning. Final pilot/SOW pricing
-          depends on scope, deployment model, connectors, support, and data volume.
-        </p>
-      </section>
+      <p className="pricing-note">
+        Pricing labels are demo-stage positioning. Final pilot/SOW pricing
+        depends on scope, deployment model, connectors, support, and data volume.
+      </p>
 
       <DataDiagnosticSection />
+      <RequestDemoForm />
     </Layout>
   );
 }
@@ -482,16 +397,19 @@ function SecurityPage() {
           <article className="proof-card">
             <DatabaseZap size={24} />
             <h3>Staging before canonical</h3>
-            <p>Raw data lands in staging before any canonical mapping.</p>
+            <p>Raw source-shaped data lands in staging before canonical mapping.</p>
           </article>
 
           <article className="proof-card">
             <FileText size={24} />
             <h3>Audit-friendly reporting</h3>
-            <p>Reports include data readiness and limitation statements.</p>
+            <p>Reports include data readiness, evidence, and limitation statements.</p>
           </article>
         </div>
       </section>
+
+      <PositioningTruthBlock />
+      <ConnectorHonestyBlock />
     </Layout>
   );
 }
@@ -532,33 +450,9 @@ function ContactPage() {
           </a>
         </article>
       </section>
+
+      <RequestDemoForm />
     </Layout>
-  );
-}
-
-function ConnectorHonestySection() {
-  return (
-    <section className="website-section" id="connectors">
-      <div className="section-heading">
-        <div>
-          <div className="eyebrow">
-            <DatabaseZap size={15} />
-            Connector status honesty
-          </div>
-          <h2>Only tested connectors are marked available.</h2>
-        </div>
-      </div>
-
-      <div className="connector-table">
-        {connectorRows.map(([name, status, note]) => (
-          <div className="connector-row" key={name}>
-            <strong>{name}</strong>
-            <span>{status}</span>
-            <p>{note}</p>
-          </div>
-        ))}
-      </div>
-    </section>
   );
 }
 
@@ -574,9 +468,9 @@ function DataDiagnosticSection() {
         <h2>The first realistic paid offer before pilot/license.</h2>
 
         <p>
-          A short paid diagnostic can validate data availability, source structure,
-          mapping effort, quality gaps, risk/correlation potential, and ML readiness
-          before committing to a larger pilot.
+          A short paid diagnostic can validate data availability, source
+          structure, mapping effort, quality gaps, risk/correlation potential,
+          and ML readiness before committing to a larger pilot.
         </p>
       </div>
 
@@ -635,3 +529,5 @@ export function App() {
     </Routes>
   );
 }
+
+export default App;

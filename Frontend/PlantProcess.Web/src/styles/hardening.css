@@ -1,0 +1,159 @@
+.data-fetch-boundary {
+  border: 1px solid rgba(70, 213, 255, 0.16);
+  border-radius: 16px;
+  padding: 16px;
+  background:
+    radial-gradient(circle at top left, rgba(70, 213, 255, 0.08), transparent 35%),
+    rgba(6, 14, 28, 0.72);
+  color: #e7f8ff;
+}
+
+.data-fetch-boundary__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.data-fetch-boundary--error {
+  border-color: rgba(255, 96, 96, 0.38);
+  background:
+    radial-gradient(circle at top left, rgba(255, 96, 96, 0.1), transparent 35%),
+    rgba(26, 9, 18, 0.72);
+}
+
+.data-fetch-boundary--empty {
+  border-style: dashed;
+  color: rgba(224, 246, 255, 0.72);
+}
+
+.data-fetch-boundary__skeleton {
+  height: 18px;
+  border-radius: 999px;
+  margin: 10px 0;
+  background: linear-gradient(
+    90deg,
+    rgba(70, 213, 255, 0.08),
+    rgba(70, 213, 255, 0.2),
+    rgba(70, 213, 255, 0.08)
+  );
+  animation: ppiq-skeleton 1.4s infinite linear;
+}
+
+.data-fetch-boundary__skeleton.short {
+  width: 55%;
+}
+
+@keyframes ppiq-skeleton {
+  0% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 0.95;
+  }
+  100% {
+    opacity: 0.45;
+  }
+}
+
+.standard-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  font-weight: 700;
+  transition:
+    transform 120ms ease,
+    border-color 120ms ease,
+    background 120ms ease,
+    box-shadow 120ms ease;
+}
+
+.standard-button:disabled {
+  opacity: 0.58;
+  cursor: not-allowed;
+}
+
+.standard-button:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+
+.standard-button__icon {
+  display: inline-flex;
+  align-items: center;
+}
+
+.standard-button--primary {
+  color: #04111f;
+  background: #46d5ff;
+  border-color: rgba(70, 213, 255, 0.9);
+  box-shadow: 0 12px 34px rgba(70, 213, 255, 0.24);
+}
+
+.standard-button--secondary {
+  color: #e7f8ff;
+  background: rgba(70, 213, 255, 0.1);
+  border-color: rgba(70, 213, 255, 0.24);
+}
+
+.standard-button--danger {
+  color: #fff;
+  background: rgba(255, 74, 96, 0.2);
+  border-color: rgba(255, 74, 96, 0.42);
+}
+
+.standard-button--success {
+  color: #03160d;
+  background: #68f0a6;
+  border-color: rgba(104, 240, 166, 0.72);
+}
+
+.standard-button--ghost {
+  color: #e7f8ff;
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.route-error-boundary {
+  padding: 32px;
+  display: grid;
+  place-items: center;
+  min-height: 420px;
+}
+
+.route-error-boundary__card {
+  max-width: 760px;
+  border: 1px solid rgba(255, 96, 96, 0.28);
+  border-radius: 22px;
+  padding: 24px;
+  background:
+    radial-gradient(circle at top left, rgba(255, 96, 96, 0.12), transparent 32%),
+    rgba(6, 14, 28, 0.9);
+  color: #e7f8ff;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
+}
+
+.route-error-boundary__icon {
+  width: 54px;
+  height: 54px;
+  display: grid;
+  place-items: center;
+  border-radius: 18px;
+  color: #ff8e8e;
+  background: rgba(255, 96, 96, 0.12);
+  border: 1px solid rgba(255, 96, 96, 0.24);
+  margin-bottom: 16px;
+}
+
+.route-error-boundary__reference {
+  margin: 16px 0;
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(70, 213, 255, 0.08);
+  border: 1px solid rgba(70, 213, 255, 0.18);
+}

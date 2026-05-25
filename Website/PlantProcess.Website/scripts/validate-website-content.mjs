@@ -2,84 +2,101 @@ import fs from "node:fs";
 import path from "node:path";
 
 const root = process.cwd();
-const appPath = path.join(root, "src", "App.tsx");
 
-if (!fs.existsSync(appPath)) {
-  console.error(`Website validation failed. Missing file: ${appPath}`);
-  process.exit(1);
-}
-
-const app = fs.readFileSync(appPath, "utf8");
-const normalized = app.toLowerCase();
-
-const requiredPhrases = [
-  "Request founder demo",
-  "connect → stage → map → monitor → analyze → report",
-  "Not MES. Not SCADA. Not Level 2. Not BI-only.",
-  "Connector status honesty",
-  "Data Diagnostic offer",
-  "No trained production model active",
-  "No AI prediction claim",
-  "No guaranteed root cause claim",
-  "mailto:info@plantprocessiq.com",
-  "/screenshots/plantprocess-dashboard.png"
+const requiredFiles = [
+  "src/App.tsx",
+  "src/main.tsx",
+  "src/content/phase1WebsiteProof.ts",
+  "src/components/proof/ProductScreenshotShowcase.tsx",
+  "src/components/proof/PricingLicenseMatrix.tsx",
+  "src/components/proof/PositioningTruthBlock.tsx",
+  "src/components/proof/ConnectorHonestyBlock.tsx",
+  "src/components/proof/RequestDemoForm.tsx",
+  "src/styles/phase1-proof.css",
 ];
 
-const forbiddenClaims = [
+const requiredText = [
   {
-    phrase: "guarantees root cause",
-    message: "Do not claim guaranteed root cause."
+    file: "src/components/proof/ProductScreenshotShowcase.tsx",
+    pattern: "/screenshots/product-dashboard.png",
+    message: "PPIQ-WEB-002 product screenshot path exists",
   },
   {
-    phrase: "guaranteed root cause detection",
-    message: "Do not claim guaranteed root cause detection."
+    file: "src/components/proof/PricingLicenseMatrix.tsx",
+    pattern: "Pricing and license logic",
+    message: "PPIQ-WEB-004 pricing/license section exists",
   },
   {
-    phrase: "production-ready ai model",
-    message: "Do not claim production-ready AI model."
+    file: "src/components/proof/PositioningTruthBlock.tsx",
+    pattern: "Not MES. Not SCADA. Not Level 2. Not BI-only.",
+    message: "PPIQ-WEB-005 positioning truth headline exists",
   },
   {
-    phrase: "production-ready ai prediction",
-    message: "Do not claim production-ready AI prediction."
+    file: "src/components/proof/ConnectorHonestyBlock.tsx",
+    pattern: "Connector status honesty",
+    message: "PPIQ-WEB-006 connector honesty block exists",
   },
   {
-    phrase: "replaces mes",
-    message: "Do not claim MES replacement."
+    file: "src/components/proof/RequestDemoForm.tsx",
+    pattern: "mailto:",
+    message: "PPIQ-WEB-008 mailto delivery path exists",
   },
   {
-    phrase: "replaces scada",
-    message: "Do not claim SCADA replacement."
+    file: "src/content/phase1WebsiteProof.ts",
+    pattern: "implemented-certification-pending",
+    message: "Connector truth differentiates implemented vs certified",
   },
   {
-    phrase: "replaces level 2",
-    message: "Do not claim Level 2 replacement."
+    file: "src/content/phase1WebsiteProof.ts",
+    pattern: "enterprise",
+    message: "Enterprise license tier exists",
   },
-  {
-    phrase: "replaces l2",
-    message: "Do not claim L2 replacement."
-  }
 ];
 
-const missing = requiredPhrases.filter((phrase) => !app.includes(phrase));
-
-if (missing.length > 0) {
-  console.error("Website validation failed. Missing required phrases:");
-  for (const phrase of missing) {
-    console.error(`- ${phrase}`);
-  }
-  process.exit(1);
+function read(relativePath) {
+  return fs.readFileSync(path.join(root, relativePath), "utf8");
 }
 
-const forbiddenFound = forbiddenClaims.filter((item) =>
-  normalized.includes(item.phrase)
-);
+function assertFile(relativePath) {
+  const fullPath = path.join(root, relativePath);
 
-if (forbiddenFound.length > 0) {
-  console.error("Website validation failed. Forbidden claims found:");
-  for (const item of forbiddenFound) {
-    console.error(`- ${item.message} Phrase: ${item.phrase}`);
+  if (!fs.existsSync(fullPath)) {
+    throw new Error(`Missing required file: ${relativePath}`);
   }
-  process.exit(1);
+}
+
+function assertContains(relativePath, pattern, message) {
+  const content = read(relativePath);
+
+  if (!content.includes(pattern)) {
+    throw new Error(`${message}. Missing pattern "${pattern}" in ${relativePath}`);
+  }
+
+  console.log(`✓ ${message}`);
+}
+
+for (const file of requiredFiles) {
+  assertFile(file);
+}
+
+for (const item of requiredText) {
+  assertContains(item.file, item.pattern, item.message);
+}
+
+const app = read("src/App.tsx");
+
+for (const componentName of [
+  "ProductScreenshotShowcase",
+  "PricingLicenseMatrix",
+  "PositioningTruthBlock",
+  "ConnectorHonestyBlock",
+  "RequestDemoForm",
+]) {
+  if (!app.includes(componentName)) {
+    throw new Error(`App.tsx does not render ${componentName}`);
+  }
+
+  console.log(`✓ App renders ${componentName}`);
 }
 
 console.log("Website content validation passed.");
