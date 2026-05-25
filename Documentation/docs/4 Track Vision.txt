@@ -1,0 +1,285 @@
+4 Track Vision Regarding my presentation for customer 
+
+1st Track : Workflow 
+
+1st Track Description :
+The entire workflow and feature set are fully operational, covering the complete data lifecycle. This includes database integration, end-to-end data workflows, UI page creation, and widget/chart configuration. It also provides full customization, configuration, control, and monitoring for both standard jobs and Machine Learning (ML) jobs as describing below 
+"The complete feature workflow is now live, supporting the entire data lifecycle. Key capabilities include:
+Setup & UI: Database integration, custom page creation, and widget/chart configuration.
+Data Pipelines: End-to-end data workflow management.
+Job Management: Full customization, configuration, control, and monitoring of standard tasks.
+Machine Learning: Comprehensive management and monitoring of ML jobs."
+"The overarching workflow and feature set are successfully running. The system supports the entire product lifecycle, starting from initial database linking and data pipeline creation, to building custom UI pages with configurable widgets and charts. Furthermore, it enables end-to-end customization, configuration, control, and monitoring for both standard operational jobs and Machine Learning (ML) jobs."
+
+
+1st Track Detailed Requirement 
+1. Generic : Where my application will be install in any plant and every plant has it's own 
+1.1. Data base types
+1.2. Data base structures and differnet tables 
+1.3. Inpsection devices which generate different defect type and different structure 
+1.4. production lines different structures
+1.5. different Proccess and different and unqiue worklows
+1.6. every CEO and process engnieer in every plant have different focus and want to monitor different process parameter and different KPI and different type of correlation 
+
+Based on that 
+1. Backend : I need My Data Domain Model and Endpoint and Everything to be generic this will be done by 
+1.1. we should to be able to access all kind of Database ( MSSQL , PostgreSQL , MySQl , Oracle , Excel , .csv )
+
+1.2. in Adminstrator part - DB Configuration page - DB Link Configuration tab : in Front end : 
+1.2.1.User Define and configure those DB link and define in each DB link which table he want to import in our Application
+1.2.2.User Define and configure as well the rate where we read it or import it again and copy past it from his Database or data source files and make a dumpy copy file in our application 
+1.2.3. Every Importing data called a job and , it has job name and job cycle and job status if it crash
+1.2.3. this rate could be every from :starting by  2 min  up to few day 
+1.2.4. we the next scan cycle of the table we compare the last index in our dump file against last index of table in the customer Database table and we import in our dump file copy the last few record 
+
+1.3. Those dump files which are stored in our application are lastest copy state of customer several DBs not based on our own structure
+
+1.4. in Adminstrator part - Schema Configuration Page ( have several tab) : in Front end : 
+1.4.1. in this tab user should be able to configure and  write some view and some querey and configure and map all his imported table to fit into my generic schema 
+1.4.2. for example user can make joing  for piece Id  between  piece id  from Dump File coming from  HotStripMill oracelDB  with MaterialId from DumpFile coming from Inspection Surface inspection device MySQL DB 
+1.4.3. For example user create and make a KPI as new sql view script : and add it to our process parameter to certain equipment or area 
+1.4.5. For example may be the process parameter of EAF is normalizae we have table of processDefition Proccess id and process name , and another table for all process id and values against every heat id so may be us automatic or user make this script and joining   
+1.4.6. I don't have yet a full vision how this configuration and mapping could be done I want your support to desgin it to be effective advanced proffesional and detailed and generic
+
+1.5.in Adminstrator part - DB Configuration page - Importing Data tab : in Front end : 
+1.5.1. after user make configuration and sql scripting and creating views and Mapping and linking and joining between several Dump files 
+1.5.2. User Define and configure as well the rate where we read it or import it again and copy past it from dumpy copy files to our Data base in our application and this rate of HMI refresh where new data is ready 
+1.5.3. this Importing data called a job and , it has job name and job cycle and job status if it crash
+
+1.6. in Adminstrator part - Jobs Monitors page
+1.6.1. Monitor every job status (last time was run correct or crash or timeout), last run data time , duration taken during last run to copy or import or execution 
+
+
+2. Front End :
+2.1. Creating Page :
+2.1.1. User are able to create or delete or modify any page 
+2.1.2. after creating page here have library of all widgets (all charts , KPI , sorting and filtering tool (date time , list of value )) he drag drop the widget to the page until customize the page , the press save 
+2.1.3. Also for existing Pages , he can edit or delete or add a widget then press save 
+
+2.2. Widget :
+2.2.1. the selected Widget have an edit button to link it to certain  list of values from our DB 
+2.2.2.some script Layer could be adjust  for example a bar chart and I want to group by with some think shift 
+2.2.3. this script layer will be helpful , I shouldn't create an endpoint for every think this will written in the widget this script layer , other with I should written 100k endpoint my software should be generic
+
+
+3. Functionality :
+3.1. our engine  
+3.1.1. have a job which run to learn one time per day or defined per user (out side working our) - which take long time to make Correlation between all process parameter vs ( all defect id) and start to learn 
+3.1.2. have a job which run to learn one time per day or defined per user (out side working our) - which take long time to make Correlation between all process parameter vs ( downtime Id ) and start to learn 
+3.1.3. have a job which run to learn one time per day or defined per user (out side working our) - which take long time to make Correlation between all process parameter vs ( all defineed KPI) and start to learn 
+3.1.4. have overall job which through all data to learn once per week or defined per user (out side working our)
+3.1.5. all those jobs also existing in Adminstrator part - Jobs Monitors page , to be monitor 
+
+3.2. ML  Area -  Correlation Page - (every generate page from job will be in one tab inside): 
+3.2.1. User can select certain defect id  or certain down time id  or certain KPI Id and select inspection duration (check during last week , last month , last year) and make a name for this inspection Job 
+3.2.2. and Inpsection Job is run based on our engine learning ML , after running finish it generate a page which contain several widget and chart to demonstate what are the parameter more infleunce and lead to that 
+3.2.3. user can decide to save this page and  that this job to run periodcal (for example every hour or every day )or just run it with now using run button  against this page 
+
+3.3. ML  Area  - Suggestion and recommdation Page 
+not yet define how it will be but I guess all this learning of those jobs existing in my enigne in  3.1.1 , 3.1.2. , 3.1.3 and  3.1.4 will created alot of
+  Suggestion and recommdation from my engine assiant as ChatGpt to tell who better we can perfom in the plant
+
+
+4. License and Feature  
+4.1. we have 4 kind of Licenses and every one give you different range of functionality and feature and number of use (Lite / Pro / Pro Plus / Enterprise)
+4.2. Need to Demonstrate During Presenation that by toggling from License type to differnt type that different feature became available or by switching from Enterprise to Pro some exising feature and functionality had disappear
+
+ 
+5. User / Role and Admin 
+
+
+
+
+
+2nd Track : Hardnening 
+
+2nd Track Description 
+
+Based on it will be live presentation of the whole for work flow based on Demo data set , but the customer is always curisose always ask to see this page or that feature or will ask to demonstrate that functionality and we should be always ready to the worst case senario 
+- I will never accept in widget or chart  show view could not load or this part of page could not load in front of customer as shown , and after try again it come to work 
+- or as shown in Material investigation page the search code and search button , load investigation button and Calculate Risk button and pdf report button there style are not matching I don't want only to fix those it should to be standard every where in all current and further 
+- I will never accept to press on any button which don't do it's proper functionality min or max , or calculation or loading data 
+
+
+2nd Track Detailed Requirement
+
+1. Styling : 
+1.1. all buttons , in all exisitng and further tabs and page style should to be as our standard styling 
+1.2. Table , all table should to be with the same style 
+1.3. button and wording tabs in all exisitng and further pages or dashboard style should to be as our standard styling 
+1.4. location and page aligment and page style and component orientation in the in all exisitng and further tabs and page should always be perfect and advanced and proffesional and super in presective of UI/UX 
+1.5. Drag drop or moving or minize or maxmize widget and chart should should done correct 
+1.6. web page should to appear correct with every page size on any screen size on any browser type on http or https  and readjust properly 
+
+2. endpoint and calls 
+2.1. can't be hanging or lagging , and if it will take longer for large dataset should appear some loading icon with some progress percentage 
+2.2. resise every single current and further API and corresponding endpoint with corresponding sql querey , table and join  make sure no expected failure due to any reason or problem in PK or FK or any reason 
+2.3. I don't want to suddenly surpise  
+
+3. Functionality 
+3.1. every button and every component and every hook and every recall  should to it's proper functionality  100% correct  
+3.1.1. also  list of all action in every page and every sub page and every navigation with every expect action should to be always test 
+
+3.2. ML functionality and Correlation , and  Suggestion and recommdation based on ML learning and AI should be ready 
+
+4. Widget and charts 
+4.1. all are dynamic interactive and all works with filter sorting 
+4.2. Heat map works correctly 
+
+ 
+
+3rd Track :  Demo 
+
+3rd Track Description
+
+Golden Rules : 
+
+Demo for me it's not a separated app or extra layer of my app , but it's more or less 1st release or 1st version  or the Trial version with some premade and pre preapred dataset for testing 
+so not 
+
+we don't need to made any hardcode widget or pages 
+we only prepare the different database and datasource with the dataset and
+we will do all DB Link , Job , create Page and configure them and save them from the APP HMI Front end , configure widget and chart and link them with dataset from HMI ,  configure widget and chart by sql script from frontend
+we need to have the experince of real user and real customer and face and found all bugs and error , if we hard code some pages we will fake our self , 
+
+
+Demo Data Set : 
+I want more than 100K of real , realistic advanced proffesional , deep detailed , look like real back up of data set whihc represnet around 1 month of data 
+Real plant can produce around 18 heat 24 heat
+
+so if we said 1 month of real deep detailed realistic advanced proffesional production data set 
+so Real one  eaf plant can produce around 18 heat 24 heat so  average 21 heat per day - > one month  630 heat 
+and if eaf can producte heat average  150 to 170 ton , so average 160 ton and avergae coil  18 ton  , so I want data of 5600 (slabs/coils)
+
+it will be Flat steel plant , as customer from flat steel plant 
+he has
+1. EAF : Electrical Arc Furnace    - 1 EAF   produce 160 ton heat - average production between from 35 min to 55 min 
+2. LF  : Ladle Furnace             - 4 LF station with 11 ladle rotating 
+3. CC  : Caster ( Countious Casting)     - one thin slab caster of 2 strand  - average casting speed 5 meter per min from 3.6 to 5.6 based on slab thickness avg 56 mm and width 1100 mm to 1650 mm and average slab 8 ton to 22 ton
+4. TF  : Tunnel Furnace 
+5. HSM : HotStripMill  
+6. SKP : Skin Pass Mill 
+7. LCT : Light cut to length 
+8. HCT : Heavy cut to length
+9. STL : Sligthing Machine
+10 PKL : Pickiling Line 
+11.GVL : Galvanizating line 
+12. Yard : 11 Yard ( cooling Yard afte HotStripMill , 1 yard before  and 1 line after SKP Entry and Exit SKP ,  Entry and Exit Yard for ( LCT,HCT,STL) ,Entry and Exit Yard for(PKL,GVL)  , 4 yard for selling and buffering and stocks 
+13. Roll Shop 
+
+Database and Data source Structure 
+1st Database is postgreSql MeltShop ( EAF , LF)
+ contain 
+ 1.MeltShop Equipment and Equipment counter ( Furnace , refractory , Ladle furnace number Id , electrodes, and each ladle make how many heat , in order to be manintain before few number of 
+ 2. Heats : HeatID in EAF and LF ,
+  2.1. one table for summarizing data , (Steel grade , start end time , crew id , total electricitly in use , total duration , total power on time , .....etc)
+  2.2.  ( Sample Table : Sample ID , Sample time , HeatID  , EAF , or LF /  Sample Result Table  : Sample ID , ComponentID  Component Result Table / ComponentID : ComponentID , Chemical Name 
+  2.3. one table for additives added to every heat with quantity 
+  2.4. one table for steps of EAF , what done in which step step Id and which parameter done 
+  2.5. Paramter id of 2.4 ( electricitly , Oxygen , Argon ) 
+  
+ 2nd Database Caster : Oracle
+ 1. Linking few parameter : HeatId , LadleId , Tundish ID , Mould ID , Sequence Id which few heats , Slab ID which will be cutted at the end of of Caster , StrandId where casting could generate multiple strand
+ 2. Managing all and linking all  those parameter 
+ 3. Heat Table : HeatID , Crew ID ,  which ladleId , which tundish Id , which steel grade , which mould , which sequence ID , avg casting speed , avg mould width , start end time 
+ 4. Slab table : coming from which heatid , whihc steel grade , cutted time , whihc strand ID , Which sequence Id , Piece head width ,piece tail, slab thickness , slab length 
+ 5. Sequence table : start time , end time , avg speed , Crew ID 
+ 6. Sample Table : Sample ID , Sample time , HeatID 
+ 7. Sample Result : Sample ID , ComponentID , Component Result 
+ 8. ComponentID : ComponentID , Chemical Name 
+ 
+ 3rd Database HSM  : Oracle
+ continue with same deep level 
+ 
+ 4. PKL : MSSQL database
+ 
+ 5. YardManagement : Excel sheet 
+ 
+ 6. Downtime : MYSQL
+ all crew store what happend  
+  Area : EAF / LF /CC/HSM ....
+  Down time : Duration 
+  Start time end time :
+  production Stoppage time : not all equipment stoppage can lead to production stoppage can be longer or shorter ,because may be some 20 min problem in HSM can be over come with buffer slab in TF and slowing down in caster without any production stoppage only slow down and buffering in TF
+ but in other hand 3 min equipment stoppage in water pump in caster can lead to Caster stoppage and rebuilding the new sequence and take out the metal from cooling header can lead to 4 to 6 hour production stoppage    
+  Equipment Stoppage time : 
+  reason of stoppage : electrical , operation, production , mechanical , hydralic , ( operation mean bad driver , production mean due to defect or very bad temperature lead to that , or break out in caster due to non metalic inculsion so not operator mistake)
+  description of reason :
+  
+  7. Surface inspection device (parsytec) in end of HSM has MySQl DB
+  8. QA has excel sheet : Quality Assurance take sample of every 3 coil after HSM and in case of improtant coils customer or difficult steel grade take up to 2 sample per coil
+  
+  
+  
+  
+  4 Track : website 
+  Customer before check app in real detailed the first window before siding together is the our website , website should to be amazing really shiny has the brand identity  has all info they look for 
+  the website should to be advanced and proffesional and has an amazing UI/UX 
+  Golden Rule : the website should my first and best marketing and sales person make the any customer want to buy our products and request an inquiry 
+  
+  Style and Identity  : same brandIdentity should to be in website of company and all  APPs and product
+1 Brand Name, Tagline & Voice
+Attribute	Definition
+Product Name	Product APP : PlantProcess IQ / Company Name  SOU
+Short Name	PPIQ
+Primary Tagline	Connect Your Plant Data. Understand Your Process.
+Secondary Tagline	Process-to-quality intelligence for manufacturing plants.
+Customer Promise	Connect plant data. Discover quality drivers. Score risk earlier. Explain suspected contributors. Act with evidence.
+Elevator Pitch	PlantProcess IQ connects fragmented MES, L2, inspection, lab and ERP data into one generic intelligence layer - enabling process engineers to investigate quality issues faster, detect suspected process contributors, and build custom monitoring dashboards without replacing existing systems.
+Brand Personality	Industrial, intelligent, trusted, technical, calm, evidence-based. It should feel like plant operations + data science, not flashy consumer AI.
+What to NEVER say	Guaranteed root cause. AI-powered prediction. Production-ready AI. Live Oracle/MSSQL ready today. We replace MES/L2/SCADA/BI.
+What to say now	Rule-based risk scoring. Correlation analysis. Suspected contributor. Statistical pattern. Evidence-based investigation. Read-only intelligence layer.
+
+2.2 Updated Color Palette - Dark Industrial Command Center
+Role	Hex Code	Name	Application
+Ultra-Dark Background	#050B18	Deep Navy Black	App page background, website hero background, cover/landing background.
+Panel / Card Background	#0B1730	Panel Navy	Sidebar, card surfaces, modal backgrounds, admin panel.
+Section Header Background	#102A43	Industrial Blue	Table header rows, nav bar, section dividers on dark surfaces.
+Primary CTA / Accent	#0A84FF	Electric Blue	Primary action buttons, active links, active nav item underline, badge fills.
+Highlight / Glow Accent	#00D4FF	Electric Cyan	Icon glow effects, chart primary series, divider lines, hover highlights on dark background.
+Enterprise Blue	#2F80ED	Corporate Blue	Secondary buttons, info badges, chart secondary series, Pro Plus tier badge.
+Success	#2CE6A2	Cyan Green	Job running, status OK, validation passed, Pro Plus tier, positive indicators.
+Warning	#FFB020	Amber	Data quality warnings, partial status, Pro tier badge, pending states.
+Critical	#FF4D6D	Hot Red	Critical errors, security flags, CRITICAL task markers, failed jobs.
+Light Text (on dark)	#EAF6FF	Near White	All primary text on dark backgrounds - headings, labels, card titles.
+Muted Text	#8EA7C1	Muted Steel	Secondary labels, metadata, timestamps, placeholder text on dark background.
+Light Mode Surfaces (reports)	#F4F6F8	Light Grey	PDF reports, printed deliverables, email-friendly document surfaces.
+
+2.3 Typography
+Element	Font	Notes
+Primary UI Font	Inter (Google Fonts)	Clean technical sans-serif. Avoid playful fonts. IBM Plex Sans or Sora acceptable alternatives.
+Monospace (SQL/Code)	JetBrains Mono	SQL editor, schema config, code preview, JSON display, terminal-style output.
+Minimum Body Size	14px web, 12pt PDF	Accessibility requirement. Never smaller for any UI text visible to customers.
+Heading Scale	48 / 36 / 28 / 20 / 16px	Website H1-H5. App: 24 / 18 / 14 / 12px. Consistent across all surfaces.
+
+2.4 Logo Design Brief
+Attribute	Specification
+Concept	A connected-node process line or circuit-like genealogy path - referencing both plant process steps and data network topology. Avoid steel-only coil/slab symbols; the logo must work for aluminum, pharma, paper, and automotive equally.
+Mark Shape	Hexagonal grid fragment or interconnected nodes: 4-6 nodes, one dominant central node connected by clean lines. Clean, geometric, technical, not cold.
+Colors	Electric Cyan (#00D4FF) nodes on Deep Navy Black (#050B18) background. White variant for dark backgrounds. Dark variant for light/PDF use.
+Wordmark	PlantProcess IQ - PlantProcess in Inter Bold, IQ in Electric Cyan (#00D4FF), slightly larger weight to draw attention.
+Variants Required	Full horizontal, icon only favicon, stacked vertical. Each in full color, dark, light, monochrome.
+Do Not	Rotate, recolor outside palette, stretch, add drop shadows, place on low-contrast backgrounds, use steel industry imagery, put in a generic square box.
+
+2.5 In-App Brand Implementation
+App Location	Dark Industrial Implementation
+Page Background	Deep Navy Black (#050B18). Full-bleed. No white space on main surfaces.
+Navigation Bar	Panel Navy (#0B1730) background. Logo left, Electric Blue active state, Muted Steel inactive links. Height 56px.
+Sidebar	Industrial Blue (#102A43) background. Icon + label items. Active: Electric Cyan left border + Electric Blue tint fill. Hover: subtle cyan glow.
+Cards / Panels	Panel Navy (#0B1730) fill, 1px Electric Cyan (#00D4FF) border on hover. 12px corner radius. Subtle box shadow.
+Primary Buttons	Electric Blue (#0A84FF) fill, Near-White text, Inter 14px Semi-Bold, 8px radius. Hover: darken 10%. Disabled: 0.35 opacity.
+Chart Colors	Primary series: Electric Cyan (#00D4FF). Secondary: Enterprise Blue (#2F80ED). Success states: Cyan Green (#2CE6A2). Alert: Hot Red (#FF4D6D).
+Status Badges	Running/OK = Cyan Green dot + label. Warning = Amber dot. Failed = Hot Red dot. Planned = Muted Steel dot.
+License Tier Badge	Top-right corner of app header. Light = Muted Steel, Pro = Amber, Pro Plus = Electric Blue, Enterprise = Cyan Green.
+Reports / PDFs	Switch to Light Mode for all PDF deliverables. Brand header/footer maintained.
+
+
+Info : SOU  take AI and ML learning into the all Manufcature and take it into another level make the best of your manufacturing and plant make the optimun soltuion and give you answer and info you never know about your plant 
+it's not an normal management or planning or execution or quality it's new generation based on AI 
+
+Product 
+1. first product PlantProcess IQ : write the description benefit behind  and all info and all interactive graphic and pictures  and license and all detailed  and don't forget  Golden Rule 
+2. 2nd MES : Manfucture execution system :  write the description benefit behind  and all info and all interactive graphic and pictures  and license and all detailed  and don't forget  Golden Rule 
+3. 3rd QES : Quality execution system :  write the description benefit behind  and all info and all interactive graphic and pictures  and license and all detailed  and don't forget  Golden Rule 
+4. 4th Yard and wahre house management :  write the description benefit behind  and all info and all interactive graphic and pictures  and license and all detailed  and don't forget  Golden Rule 
+5. 5th Energy Management :  write the description benefit behind  and all info and all interactive graphic and pictures  and license and all detailed  and don't forget  Golden Rule 

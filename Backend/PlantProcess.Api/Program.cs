@@ -1,6 +1,7 @@
 ﻿using System.Reflection;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
+using PlantProcess.Api.Endpoints.Admin;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -8,7 +9,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using PlantProcess.Api.Configuration;
-using PlantProcess.Api.Endpoints.Admin;
 using PlantProcess.Application.Audit;
 using PlantProcess.Api.Endpoints.Analytics;
 using PlantProcess.Api.Endpoints.Configuration;
@@ -387,6 +387,7 @@ try
 
     app.MapDiagnosticsEndpoints();
 
+    app.MapPhase1WorkflowTruthEndpoints();
 
     app.Run();
 }

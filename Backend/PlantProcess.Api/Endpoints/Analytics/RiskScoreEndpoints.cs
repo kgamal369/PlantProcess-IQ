@@ -5,7 +5,6 @@ using PlantProcess.Application.Analytics.Interfaces;
 using PlantProcess.Application.Analytics.Services;
 using PlantProcess.Domain.Entities.Analytics;
 using PlantProcess.Infrastructure.Persistence;
-using PlantProcess.Api.Extensions;
 using PlantProcess.Application.Licensing.Contracts;
 
 namespace PlantProcess.Api.Endpoints.Analytics;

@@ -6,8 +6,6 @@ using PlantProcess.Application.Dashboarding.Interfaces;
 using PlantProcess.Infrastructure.Persistence;
 using PlantProcess.Application.Licensing.Contracts;
 using PlantProcess.Application.Licensing.Interfaces;
-using PlantProcess.Application.Licensing.Contracts;
-using PlantProcess.Application.Licensing.Interfaces;
 
 namespace PlantProcess.Api.Endpoints.Dashboarding;
 

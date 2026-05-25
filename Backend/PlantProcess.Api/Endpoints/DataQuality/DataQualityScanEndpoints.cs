@@ -3,7 +3,6 @@ using PlantProcess.Api.Extensions;
 using PlantProcess.Application.Services.DataQuality;
 using PlantProcess.Domain.Entities.Quality;
 using PlantProcess.Infrastructure.Persistence;
-using PlantProcess.Api.Extensions;
 using PlantProcess.Application.Licensing.Contracts;
 
 namespace PlantProcess.Api.Endpoints.DataQuality;
