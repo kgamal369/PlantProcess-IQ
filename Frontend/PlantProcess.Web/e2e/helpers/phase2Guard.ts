@@ -107,9 +107,38 @@ export function installPhase2StrictGuard(
   });
 
   page.on("requestfailed", (request) => {
-    if (!shouldTrackFailedRequest(request, options)) return;
+  const url = request.url();
+  const method = request.method();
+  const failureText = request.failure()?.errorText ?? "";
+  const ignoredUrlParts = [
+  "favicon",
+  "vite",
+  "sockjs",
+  "hot-update",
+  "__vite_ping",
+  ];
 
-    failedRequests.push(formatRequestFailure(request));
+  function shouldIgnoreUrl(url: string) {
+    return ignoredUrlParts.some((part) => url.includes(part));
+  }
+    if (shouldIgnoreUrl(url)) {
+      return;
+    }
+
+    const isNavigationCancellation =
+      /net::ERR_ABORTED|NS_BINDING_ABORTED|aborted|cancelled|canceled|Target closed|frame was detached/i.test(
+        failureText
+      );
+
+    if (isNavigationCancellation) {
+      return;
+    }
+
+    failedRequests.push(
+      failureText
+        ? `${method} ${url} (${failureText})`
+        : `${method} ${url}`
+    );
   });
 
   page.on("response", (response) => {

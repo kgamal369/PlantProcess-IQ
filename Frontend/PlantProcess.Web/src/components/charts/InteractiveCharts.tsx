@@ -99,7 +99,7 @@ export function InteractiveBarChart({
           <XAxis dataKey={categoryKey} />
           <YAxis />
           <Tooltip />
-          <Bar dataKey={valueKey} onClick={(row: any) => selectRow(row)}>
+          <Bar dataKey={valueKey} isAnimationActive={false} onClick={(row: any) => selectRow(row)}>
             {data.map((_, index) => (
               <Cell
                 key={index}
@@ -161,6 +161,7 @@ export function InteractivePieChart({
             innerRadius={donut ? 70 : 0}
             outerRadius={105}
             paddingAngle={donut ? 2 : 0}
+            isAnimationActive={false}
             onClick={(row: any) => selectRow(row)}
           >
             {data.map((_, index) => (
@@ -228,13 +229,14 @@ export function InteractiveLineChart({
             <XAxis dataKey={categoryKey} />
             <YAxis />
             <Tooltip />
-            <Area
-              type="monotone"
-              dataKey={valueKey}
-              stroke="#2563eb"
-              fill="#bfdbfe"
-              strokeWidth={3}
-            />
+           <Area
+            type="monotone"
+            dataKey={valueKey}
+            stroke="#2563eb"
+            fill="#bfdbfe"
+            strokeWidth={3}
+            isAnimationActive={false}
+          />
           </AreaChart>
         </ResponsiveContainer>
       </div>
@@ -256,6 +258,7 @@ export function InteractiveLineChart({
             strokeWidth={3}
             dot={{ r: 4 }}
             activeDot={{ r: 7 }}
+            isAnimationActive={false}
           />
         </LineChart>
       </ResponsiveContainer>
@@ -318,6 +321,7 @@ export function InteractiveScatterChart({
           <Scatter
             data={data}
             fill="#2563eb"
+            isAnimationActive={false}
             onClick={(row: any) => selectRow(row)}
           />
         </ScatterChart>

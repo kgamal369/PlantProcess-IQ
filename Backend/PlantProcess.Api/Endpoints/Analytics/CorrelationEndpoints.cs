@@ -330,11 +330,20 @@ public static class CorrelationEndpoints
 
         if (parameter is null)
         {
-            return Results.NotFound(new
-            {
-                message = "Parameter definition not found.",
-                parameterCode
-            });
+            return Results.Ok(new GenealogyAwareParameterDefectCorrelationResponse(
+                GeneratedAtUtc: DateTime.UtcNow,
+                ParameterCode: parameterCode,
+                ParameterName: parameterCode,
+                UnitOfMeasure: null,
+                DefectType: defectType,
+                LinkMode: normalizedLinkMode,
+                GenealogyDepth: safeDepth,
+                BaselineDefectRatePercent: 0,
+                TotalObservationCount: 0,
+                TotalMaterialCount: 0,
+                TotalDefectLinkedObservationCount: 0,
+                Bins: Array.Empty<GenealogyAwareCorrelationBinDto>(),
+                Message: $"Parameter definition '{parameterCode}' was not found. Returning an empty customer-safe correlation result."));
         }
 
         var observationsQuery =

@@ -76,3 +76,9 @@ docker compose -f docker-compose.demo.yml up -d
 Full teardown and fresh start (nuclear option):
 docker compose -f docker-compose.demo.yml down
 docker compose -f docker-compose.demo.yml up -d --build
+
+//Jenkins
+https://jenkins.178.105.152.180.sslip.io/
+https://jenkins.178.105.152.180.sslip.io/
+UserName :kgamal369
+password :THEspider369

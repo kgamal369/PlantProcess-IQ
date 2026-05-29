@@ -11,13 +11,21 @@
 //   create a separate plantprocess_app runtime role in this environment.
 //   This test proves UPDATE / DELETE / TRUNCATE are blocked by the DB.
 //
-// Required environment variable:
-//   PPIQ_AUDIT_TRIGGER_TEST_CONNECTION
+// How these tests behave:
+//   These are OPT-IN integration tests. They require a live PostgreSQL
+//   that already has the audit_log_entries table (from EF migrations)
+//   and the append-only triggers (from script 096_harden_audit_log_immutability.sql).
 //
-// Example:
-//   Host=localhost;Port=5432;Database=plantprocessiq;Username=plantprocess;Password=YOUR_PASSWORD
+//   When the environment variable below is NOT set, every test in this
+//   class is SKIPPED (not failed), so `dotnet test` stays green in
+//   environments without a configured database (e.g. CI, a fresh laptop).
 //
-// Expected SQLSTATE:
+//   To actually run them, set the connection string and apply script 096:
+//     PPIQ_AUDIT_TRIGGER_TEST_CONNECTION
+//   Example value:
+//     Host=localhost;Port=5432;Database=plantprocessiq;Username=plantprocess;Password=YOUR_PASSWORD
+//
+// Expected SQLSTATE when a mutation is correctly blocked:
 //   P0001 = blocked by prevent_audit_log_mutation trigger.
 //   42501 = blocked by privilege revocation, if later you add role isolation.
 // ============================================================
@@ -34,6 +42,11 @@ namespace PlantProcess.Infrastructure.IntegrationTests.Audit;
 [Trait("Task", "BE-ADD-001")]
 public sealed class AuditLogImmutabilityTests : IClassFixture<AuditLogDatabaseFixture>
 {
+    private const string SkipReason =
+        "Opt-in integration test. Set PPIQ_AUDIT_TRIGGER_TEST_CONNECTION to a PostgreSQL " +
+        "connection string (with EF migrations applied and script 096 run) to execute this " +
+        "audit-immutability proof. Skipped automatically when no database is configured.";
+
     private readonly AuditLogDatabaseFixture _fixture;
 
     public AuditLogImmutabilityTests(AuditLogDatabaseFixture fixture)
@@ -41,9 +54,11 @@ public sealed class AuditLogImmutabilityTests : IClassFixture<AuditLogDatabaseFi
         _fixture = fixture;
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task Audit_table_should_allow_insert()
     {
+        Skip.IfNot(_fixture.IsConfigured, SkipReason);
+
         await using var db = _fixture.CreateDbContext();
 
         var entry = CreateAuditEntry(
@@ -56,9 +71,11 @@ public sealed class AuditLogImmutabilityTests : IClassFixture<AuditLogDatabaseFi
         Assert.NotEqual(Guid.Empty, entry.Id);
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task Audit_table_should_allow_select()
     {
+        Skip.IfNot(_fixture.IsConfigured, SkipReason);
+
         await using var db = _fixture.CreateDbContext();
 
         var entry = CreateAuditEntry(
@@ -78,9 +95,11 @@ public sealed class AuditLogImmutabilityTests : IClassFixture<AuditLogDatabaseFi
         Assert.Equal("Success", loaded.OutcomeStatus);
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task Audit_table_should_block_update()
     {
+        Skip.IfNot(_fixture.IsConfigured, SkipReason);
+
         Guid insertedId;
 
         await using (var db = _fixture.CreateDbContext())
@@ -121,9 +140,11 @@ public sealed class AuditLogImmutabilityTests : IClassFixture<AuditLogDatabaseFi
         }
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task Audit_table_should_block_delete()
     {
+        Skip.IfNot(_fixture.IsConfigured, SkipReason);
+
         Guid insertedId;
 
         await using (var db = _fixture.CreateDbContext())
@@ -160,9 +181,11 @@ public sealed class AuditLogImmutabilityTests : IClassFixture<AuditLogDatabaseFi
         Assert.True(stillExists);
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task Audit_table_should_block_truncate()
     {
+        Skip.IfNot(_fixture.IsConfigured, SkipReason);
+
         await using var db = _fixture.CreateDbContext();
 
         var exception = await Assert.ThrowsAsync<PostgresException>(async () =>
@@ -214,19 +237,30 @@ public sealed class AuditLogDatabaseFixture
 
     public AuditLogDatabaseFixture()
     {
+        // Do NOT throw here. A missing connection string simply means the
+        // opt-in audit-immutability tests are skipped (see Skip.IfNot in the
+        // test methods). Throwing would surface as test FAILURES instead of
+        // skips and would break `dotnet test` in CI and on fresh machines.
         ConnectionString =
-            Environment.GetEnvironmentVariable(ConnectionStringEnvironmentVariable)
-            ?? throw new InvalidOperationException(
-                $"Missing environment variable {ConnectionStringEnvironmentVariable}. " +
-                "Set it to your local PostgreSQL connection string, for example: " +
-                "Host=localhost;Port=5432;Database=plantprocessiq;Username=plantprocess;Password=YOUR_PASSWORD");
+            Environment.GetEnvironmentVariable(ConnectionStringEnvironmentVariable);
     }
 
-    public string ConnectionString { get; }
+    public string? ConnectionString { get; }
+
+    public bool IsConfigured => !string.IsNullOrWhiteSpace(ConnectionString);
 
     public PlantProcessDbContext CreateDbContext()
     {
-       var options = new DbContextOptionsBuilder<PlantProcessDbContext>()
+        if (!IsConfigured)
+        {
+            // Defensive guard: tests gate on IsConfigured via Skip.IfNot before
+            // ever calling this, so this should be unreachable in practice.
+            throw new InvalidOperationException(
+                $"{ConnectionStringEnvironmentVariable} is not set. " +
+                "CreateDbContext() must not be called when the fixture is not configured.");
+        }
+
+        var options = new DbContextOptionsBuilder<PlantProcessDbContext>()
             .UseNpgsql(ConnectionString)
             .UseSnakeCaseNamingConvention()
             .EnableSensitiveDataLogging(false)

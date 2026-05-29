@@ -1,20 +1,23 @@
 import {
   createContext,
-  type ReactNode,
   useCallback,
   useContext,
   useEffect,
   useMemo,
   useState,
+  type ReactNode,
 } from "react";
+
 import {
   licenseApi,
   licenseUsageApi,
+  type CommercialReadinessResponse,
   type LicenseFeatureStatus,
   type LicenseStatus,
   type LicenseUsageResponse,
-  type CommercialReadinessResponse,
 } from "../api/license";
+
+import { useAuth } from "./AuthContext";
 
 interface LicenseContextValue {
   license: LicenseStatus | null;
@@ -32,14 +35,38 @@ const LicenseContext = createContext<LicenseContextValue | undefined>(
 );
 
 export function LicenseProvider({ children }: { children: ReactNode }) {
+  const { isAuthenticated, isBootstrapping, bootstrapError } = useAuth();
+
   const [license, setLicense] = useState<LicenseStatus | null>(null);
   const [usage, setUsage] = useState<LicenseUsageResponse | null>(null);
   const [readiness, setReadiness] =
     useState<CommercialReadinessResponse | null>(null);
+
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const clearLicenseState = useCallback((message: string | null) => {
+    setLicense(null);
+    setUsage(null);
+    setReadiness(null);
+    setError(message);
+  }, []);
+
   const refresh = useCallback(async () => {
+    if (isBootstrapping) {
+      setIsLoading(true);
+      return;
+    }
+
+    if (!isAuthenticated) {
+      clearLicenseState(
+        bootstrapError ??
+          "License information is waiting for an authenticated PlantProcess IQ session."
+      );
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
 
@@ -59,11 +86,16 @@ export function LicenseProvider({ children }: { children: ReactNode }) {
           ? err.message
           : "Failed to load license configuration.";
 
-      setError(message);
+      clearLicenseState(message);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [
+    bootstrapError,
+    clearLicenseState,
+    isAuthenticated,
+    isBootstrapping,
+  ]);
 
   useEffect(() => {
     void refresh();
@@ -96,11 +128,22 @@ export function LicenseProvider({ children }: { children: ReactNode }) {
       hasFeature,
       getFeature,
     }),
-    [license, usage, readiness, isLoading, error, refresh, hasFeature, getFeature]
+    [
+      license,
+      usage,
+      readiness,
+      isLoading,
+      error,
+      refresh,
+      hasFeature,
+      getFeature,
+    ]
   );
 
   return (
-    <LicenseContext.Provider value={value}>{children}</LicenseContext.Provider>
+    <LicenseContext.Provider value={value}>
+      {children}
+    </LicenseContext.Provider>
   );
 }
 
