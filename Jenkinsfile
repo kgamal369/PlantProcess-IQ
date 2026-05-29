@@ -2,7 +2,8 @@
 // PlantProcess IQ — CI/CD pipeline
 //
 // What this does on every git push to main:
-//   1. Pull latest source on the deploy server (/opt/PlantProcess-IQ)
+//   1. Pull latest source on the deploy server (/opt/PlantProcess-IQ),
+//      preserving server-only config (.env, Caddyfile, compose mount)
 //   2. Apply numbered SQL scripts (idempotent)
 //   3. Rebuild 4 Docker images (api, workers, app-web, website)
 //   4. Recreate the 4 app containers (Postgres + Caddy stay running)
@@ -37,10 +38,46 @@ pipeline {
         stage('1. Pull latest code') {
             steps {
                 sh '''
+                    set -e
                     cd ${REPO_DIR}
+
+                    # ---- Preserve server-only files across the pull ----
+                    # These three files have production-only modifications
+                    # that intentionally diverge from the repo (secrets,
+                    # sslip.io routing, server-side bind mount). We back
+                    # them up, hard-reset to origin/main, then restore.
+                    BACKUP=$(mktemp -d)
+                    for f in \
+                        Infrastructure/deploy/.env \
+                        Infrastructure/deploy/Caddyfile \
+                        Infrastructure/deploy/docker-compose.demo.yml
+                    do
+                        if [ -f "$f" ]; then
+                            mkdir -p "$BACKUP/$(dirname $f)"
+                            cp "$f" "$BACKUP/$f"
+                            echo "    backed up $f"
+                        fi
+                    done
+
+                    # ---- Hard sync to origin/main ----
                     git fetch --all --prune
-                    git checkout main
-                    git pull --ff-only
+                    git reset --hard origin/main
+                    git clean -fd
+
+                    # ---- Restore the production config files ----
+                    for f in \
+                        Infrastructure/deploy/.env \
+                        Infrastructure/deploy/Caddyfile \
+                        Infrastructure/deploy/docker-compose.demo.yml
+                    do
+                        if [ -f "$BACKUP/$f" ]; then
+                            cp "$BACKUP/$f" "$f"
+                            echo "    restored $f"
+                        fi
+                    done
+
+                    rm -rf "$BACKUP"
+
                     echo "==> HEAD is now at:"
                     git log -1 --format='%h %ai %s'
                 '''
