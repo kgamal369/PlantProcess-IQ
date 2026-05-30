@@ -53,7 +53,10 @@
     "test:visual": "playwright test e2e/visual/phase56-analytics-system.visual.spec.ts --project=chromium",
     "test:visual:update": "playwright test e2e/visual/phase56-analytics-system.visual.spec.ts --project=chromium --update-snapshots",
     "test:phase56:e2e": "playwright test e2e/phase56-primary-flows.spec.ts --project=chromium",
-    "test:a11y": "playwright test e2e/a11y/phase56-accessibility.spec.ts --project=chromium"
+    "test:a11y": "playwright test e2e/a11y/phase56-accessibility.spec.ts --project=chromium",
+    "phase78:acceptance": "node ../../tools/phase78/validate-phase7-phase8-acceptance.cjs",
+    "validate:phase7-phase8:strict": "npm run build && npm run lint && npm run phase78:acceptance",
+    "test:phase78:e2e": "playwright test e2e/phase78-workflow-widget.spec.ts --project=chromium"
   },
   "dependencies": {
     "lucide-react": "^1.14.0",

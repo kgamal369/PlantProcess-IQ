@@ -25,6 +25,7 @@ using PlantProcess.Api.Endpoints.Reporting;
 using PlantProcess.Api.Endpoints.Validation;
 using PlantProcess.Api.Endpoints.Workflow;
 using PlantProcess.Api.Endpoints.Diagnostics;
+using PlantProcess.Api.Endpoints.DynamicContent;
 using PlantProcess.Api.Middleware;
 using PlantProcess.Api.Options;
 using PlantProcess.Api.Security;
@@ -384,6 +385,7 @@ try
     app.MapConnectorAdminEndpoints();
     app.MapSchemaConfigurationEndpoints();
     app.MapDemoLifecycleEndpoints();
+    app.MapDynamicContentEndpoints();
 
     app.MapDiagnosticsEndpoints();
 

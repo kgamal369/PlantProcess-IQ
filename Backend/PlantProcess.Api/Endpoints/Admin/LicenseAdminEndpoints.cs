@@ -1,8 +1,19 @@
+using System.Data.Common;
+using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using PlantProcess.Application.Licensing.Interfaces;
 using PlantProcess.Infrastructure.Persistence;
 
 namespace PlantProcess.Api.Endpoints.Admin;
+
+
+// ============================================================
+// PPIQ-T053 / PPIQ-WF-021 acceptance contract
+// POST /admin/license/tier-override persists to license_overrides.
+// GET  /admin/license/effective-tier returns { tier, source = "override", expiresAt }
+// or { tier, source = "license", expiresAt = null }.
+// license_overrides.expires_at_utc controls override expiry.
+// ============================================================
 
 public static class LicenseAdminEndpoints
 {
@@ -242,6 +253,138 @@ public static class LicenseAdminEndpoints
                 modelRegistryEntries
             }
         });
+    }
+
+
+    private sealed record LicenseTierOverrideRequest(
+        string Tier,
+        DateTime? ExpiresAt);
+
+    private static async Task<IResult> PostTierOverrideAsync(
+        LicenseTierOverrideRequest request,
+        PlantProcessDbContext dbContext,
+        ClaimsPrincipal user,
+        CancellationToken cancellationToken)
+    {
+        var allowed = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "Free",
+            "Light",
+            "Pro",
+            "ProPlus",
+            "Enterprise"
+        };
+
+        if (string.IsNullOrWhiteSpace(request.Tier) || !allowed.Contains(request.Tier.Trim()))
+        {
+            return Results.BadRequest(new
+            {
+                error = "Invalid tier",
+                allowed = allowed.OrderBy(x => x).ToArray()
+            });
+        }
+
+        var tier = request.Tier.Trim();
+        var expiresAtUtc = request.ExpiresAt?.ToUniversalTime() ?? DateTime.UtcNow.AddHours(1);
+        var operatorName =
+            user.Identity?.Name ??
+            user.FindFirst(ClaimTypes.NameIdentifier)?.Value ??
+            "unknown-admin";
+
+        await EnsureLicenseOverrideTableAsync(dbContext, cancellationToken);
+
+        await dbContext.Database.ExecuteSqlInterpolatedAsync($@"
+            INSERT INTO license_overrides
+            (
+                id,
+                tier,
+                source,
+                expires_at_utc,
+                created_at_utc,
+                created_by,
+                audit_reason
+            )
+            VALUES
+            (
+                {Guid.NewGuid()},
+                {tier},
+                {"override"},
+                {expiresAtUtc},
+                {DateTime.UtcNow},
+                {operatorName},
+                {"PPIQ-WF-021 tier override from Admin UI"}
+            );
+        ", cancellationToken);
+
+        return Results.Ok(new
+        {
+            tier,
+            source = "override",
+            expiresAt = expiresAtUtc,
+            operatorName,
+            audit = "license_overrides row inserted"
+        });
+    }
+
+    private static async Task<IResult> GetEffectiveTierAsync(
+        ILicenseService licenseService,
+        PlantProcessDbContext dbContext,
+        CancellationToken cancellationToken)
+    {
+        await EnsureLicenseOverrideTableAsync(dbContext, cancellationToken);
+
+        await dbContext.Database.OpenConnectionAsync(cancellationToken);
+
+        await using var command = dbContext.Database.GetDbConnection().CreateCommand();
+        command.CommandText = """
+            SELECT tier, expires_at_utc
+            FROM license_overrides
+            WHERE expires_at_utc > NOW() AT TIME ZONE 'UTC'
+            ORDER BY created_at_utc DESC
+            LIMIT 1;
+            """;
+
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+
+        if (await reader.ReadAsync(cancellationToken))
+        {
+            return Results.Ok(new
+            {
+                tier = reader.GetString(0),
+                source = "override",
+                expiresAt = reader.GetDateTime(1)
+            });
+        }
+
+        var current = licenseService.GetStatus();
+
+        return Results.Ok(new
+        {
+            tier = current.Tier,
+            source = "license",
+            expiresAt = (DateTime?)null
+        });
+    }
+
+    private static async Task EnsureLicenseOverrideTableAsync(
+        PlantProcessDbContext dbContext,
+        CancellationToken cancellationToken)
+    {
+        await dbContext.Database.ExecuteSqlRawAsync("""
+            CREATE TABLE IF NOT EXISTS license_overrides
+            (
+                id uuid PRIMARY KEY,
+                tier text NOT NULL,
+                source text NOT NULL DEFAULT 'override',
+                expires_at_utc timestamptz NOT NULL,
+                created_at_utc timestamptz NOT NULL DEFAULT NOW(),
+                created_by text NOT NULL,
+                audit_reason text NOT NULL
+            );
+
+            CREATE INDEX IF NOT EXISTS ix_license_overrides_effective
+            ON license_overrides (expires_at_utc DESC, created_at_utc DESC);
+            """, cancellationToken);
     }
 
     private static int? CalculateRemaining(int? limit, int current)

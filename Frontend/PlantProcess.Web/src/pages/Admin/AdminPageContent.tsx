@@ -1,5 +1,5 @@
-import { Phase56AdministratorPage } from "../Phase56/Phase56Pages";
+import { Phase78AdminPage } from "../Phase78/Phase78Pages";
 
 export function AdminPageContent() {
-  return <Phase56AdministratorPage />;
+  return <Phase78AdminPage />;
 }

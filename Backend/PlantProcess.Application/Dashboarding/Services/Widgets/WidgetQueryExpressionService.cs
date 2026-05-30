@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Text.RegularExpressions;
 using PlantProcess.Application.Common.Results;
 using PlantProcess.Application.Dashboarding.Contracts;
 using PlantProcess.Application.Dashboarding.Interfaces;
@@ -9,20 +11,26 @@ public sealed class WidgetQueryExpressionService : IWidgetQueryExpressionService
     private static readonly HashSet<string> DirectAllowedKeys = new(StringComparer.OrdinalIgnoreCase)
     {
         "widget",
+        "widgetId",
         "widgetType",
         "chart",
         "chartType",
+        "source",
         "dimension",
         "dimensionCode",
         "measure",
         "measureCode",
         "parameter",
         "parameterCode",
+        "filter",
+        "where",
+        "sort",
+        "limit",
+        "timeWindow",
         "material",
         "materialCode",
         "materialType",
         "materialUnitType",
-        "source",
         "sourceSystem",
         "defect",
         "defectType",
@@ -36,7 +44,6 @@ public sealed class WidgetQueryExpressionService : IWidgetQueryExpressionService
         "toUtc",
         "maxRows",
         "rawRowLimit",
-        "sort",
         "sortDirection",
         "includeWarnings",
         "bucket",
@@ -52,6 +59,108 @@ public sealed class WidgetQueryExpressionService : IWidgetQueryExpressionService
     };
 
     public ApplicationResult<DashboardWidgetQueryDto> Parse(WidgetQueryExpressionRequest request)
+    {
+        if (IsCompiledGrammarEnabled())
+        {
+            var compiled = Compile(request);
+
+            if (compiled.IsFailure)
+                return ApplicationResult<DashboardWidgetQueryDto>.Failure(compiled.Error!);
+
+            var value = compiled.Value!;
+
+            return ApplicationResult<DashboardWidgetQueryDto>.Success(new DashboardWidgetQueryDto(
+                WidgetType: value.Tokens.TryGetValue("widgetType", out var widgetType) ? widgetType : null,
+                ChartType: value.Tokens.TryGetValue("chartType", out var chartType) ? chartType : null,
+                DimensionCode: value.Dimensions.FirstOrDefault()?.Column,
+                MeasureCode: value.Measures.FirstOrDefault()?.Alias ?? value.Measures.FirstOrDefault()?.Column,
+                ParameterCode: value.Tokens.TryGetValue("parameterCode", out var parameterCode) ? parameterCode : null,
+                Filters: request.Filters,
+                Options: request.Options));
+        }
+
+        return ParseLegacy(request);
+    }
+
+    public ApplicationResult<CompiledWidgetQueryExpression> Compile(WidgetQueryExpressionRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Expression))
+        {
+            return ApplicationResult<CompiledWidgetQueryExpression>.Failure(
+                ApplicationError.Validation("Widget query expression is required."));
+        }
+
+        var tokens = ParseTokens(request.Expression);
+        var unknownKeys = tokens.Keys.Where(key => !IsAllowedKey(key)).ToArray();
+
+        if (unknownKeys.Length > 0)
+        {
+            return ApplicationResult<CompiledWidgetQueryExpression>.Failure(
+                ApplicationError.Validation(
+                    $"UnknownKeyword: unsupported widget expression token(s): {string.Join(", ", unknownKeys)}"));
+        }
+
+        var source = ReadAnyNullable(tokens, "source");
+
+        if (string.IsNullOrWhiteSpace(source))
+        {
+            return ApplicationResult<CompiledWidgetQueryExpression>.Failure(
+                ApplicationError.Validation("MissingValue: source is required."));
+        }
+
+        var dimensions = ReadRepeated(tokens, "dimension", "dimensionCode")
+            .Select(x => new WidgetQueryDimensionExpression(x))
+            .ToArray();
+
+        var measures = ReadRepeated(tokens, "measure", "measureCode")
+            .Select(ParseMeasure)
+            .ToArray();
+
+        if (measures.Length == 0)
+        {
+            return ApplicationResult<CompiledWidgetQueryExpression>.Failure(
+                ApplicationError.Validation("MissingValue: at least one measure is required."));
+        }
+
+        var filters = ReadRepeated(tokens, "filter", "where")
+            .Select(ParseFilter)
+            .ToArray();
+
+        if (filters.Any(x => string.IsNullOrWhiteSpace(x.Column)))
+        {
+            return ApplicationResult<CompiledWidgetQueryExpression>.Failure(
+                ApplicationError.Validation("InvalidGrammar: filter must follow '<column> <operator> <value>'."));
+        }
+
+        var sort = ReadRepeated(tokens, "sort")
+            .Select(ParseSort)
+            .ToArray();
+
+        var limit = ReadIntAny(tokens, null, "limit", "top", "maxRows");
+
+        if (limit is <= 0)
+        {
+            return ApplicationResult<CompiledWidgetQueryExpression>.Failure(
+                ApplicationError.Validation("TypeMismatch: limit must be a positive integer."));
+        }
+
+        var timeWindow = ParseTimeWindow(ReadAnyNullable(tokens, "timeWindow"));
+
+        var expression = new CompiledWidgetQueryExpression(
+            WidgetId: ReadAnyNullable(tokens, "widget", "widgetId"),
+            Source: source.Trim(),
+            Dimensions: dimensions,
+            Measures: measures,
+            Filters: filters,
+            Sort: sort,
+            Limit: limit,
+            TimeWindow: timeWindow,
+            Tokens: tokens);
+
+        return ApplicationResult<CompiledWidgetQueryExpression>.Success(expression);
+    }
+
+    private static ApplicationResult<DashboardWidgetQueryDto> ParseLegacy(WidgetQueryExpressionRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.Expression))
         {
@@ -69,143 +178,124 @@ public sealed class WidgetQueryExpressionService : IWidgetQueryExpressionService
         {
             return ApplicationResult<DashboardWidgetQueryDto>.Failure(
                 ApplicationError.Validation(
-                    $"Unsupported widget expression token(s): {string.Join(", ", unknownKeys)}."));
+                    $"Unsupported widget expression token(s): {string.Join(", ", unknownKeys)}"));
         }
 
-        var dangerousToken = tokens
-            .FirstOrDefault(x => ContainsDangerousValue(x.Value));
-
-        if (!string.IsNullOrWhiteSpace(dangerousToken.Key))
-        {
-            return ApplicationResult<DashboardWidgetQueryDto>.Failure(
-                ApplicationError.Validation(
-                    $"Unsafe expression value detected for token '{dangerousToken.Key}'. Widget expressions do not allow SQL, scripts, filesystem, or command tokens."));
-        }
-
-        var widgetType = ReadAny(tokens, DashboardMetadataCodes.WidgetTypes.Chart, "widget", "widgetType");
-        var chartType = ReadAny(tokens, DashboardMetadataCodes.ChartTypes.Bar, "chart", "chartType", "bucket", "timeBucket");
-        var dimensionCode = ReadAnyNullable(tokens, "dimension", "dimensionCode");
-        var measureCode = ReadAnyNullable(tokens, "measure", "measureCode");
-        var parameterCode = ReadAnyNullable(tokens, "parameter", "parameterCode", "filter.parameterCode", "where.parameterCode");
-
-        if (string.IsNullOrWhiteSpace(measureCode))
-        {
-            return ApplicationResult<DashboardWidgetQueryDto>.Failure(
-                ApplicationError.Validation("Expression must include measure=<measureCode>."));
-        }
-
-        var filters = BuildFilters(request.Filters, tokens, parameterCode);
-        var options = BuildOptions(request.Options, tokens);
+        var filters = MergeFilters(tokens, request.Filters);
+        var options = MergeOptions(tokens, request.Options);
 
         var query = new DashboardWidgetQueryDto(
-            WidgetType: widgetType,
-            ChartType: chartType,
-            DimensionCode: NormalizeEmpty(dimensionCode),
-            MeasureCode: NormalizeEmpty(measureCode),
-            ParameterCode: NormalizeEmpty(parameterCode),
+            WidgetType: ReadAnyNullable(tokens, "widget", "widgetType"),
+            ChartType: ReadAnyNullable(tokens, "chart", "chartType"),
+            DimensionCode: ReadAnyNullable(tokens, "dimension", "dimensionCode"),
+            MeasureCode: ReadAnyNullable(tokens, "measure", "measureCode") ?? "Count",
+            ParameterCode: ReadAnyNullable(tokens, "parameter", "parameterCode"),
             Filters: filters,
             Options: options);
 
         return ApplicationResult<DashboardWidgetQueryDto>.Success(query);
     }
 
-    private static DashboardWidgetFiltersDto BuildFilters(
-        DashboardWidgetFiltersDto? baseFilters,
-        IReadOnlyDictionary<string, string> tokens,
-        string? parameterCode)
+    private static WidgetQueryMeasureExpression ParseMeasure(string value)
     {
-        var siteId = ReadGuidAny(tokens, baseFilters?.SiteId, "siteId", "filter.siteId", "where.siteId");
-        var areaId = ReadGuidAny(tokens, baseFilters?.AreaId, "areaId", "filter.areaId", "where.areaId");
-        var equipmentId = ReadGuidAny(tokens, baseFilters?.EquipmentId, "equipmentId", "filter.equipmentId", "where.equipmentId");
+        var trimmed = value.Trim();
+        var alias = default(string?);
 
-        var materialCode = ReadAnyNullable(tokens, "material", "materialCode", "filter.materialCode", "where.materialCode")
-            ?? baseFilters?.MaterialCode;
+        var aliasParts = Regex.Split(trimmed, "\\s+as\\s+", RegexOptions.IgnoreCase);
 
-        var materialUnitType = ReadAnyNullable(tokens, "materialType", "materialUnitType", "filter.materialUnitType", "where.materialUnitType")
-            ?? baseFilters?.MaterialUnitType;
-
-        var sourceSystem = ReadAnyNullable(tokens, "source", "sourceSystem", "filter.sourceSystem", "where.sourceSystem")
-            ?? baseFilters?.SourceSystem;
-
-        var defectType = ReadAnyNullable(tokens, "defect", "defectType", "filter.defectType", "where.defectType")
-            ?? baseFilters?.DefectType;
-
-        var riskClass = ReadAnyNullable(tokens, "risk", "riskClass", "filter.riskClass", "where.riskClass")
-            ?? baseFilters?.RiskClass;
-
-        var shiftCode = ReadAnyNullable(tokens, "shift", "shiftCode", "filter.shiftCode", "where.shiftCode")
-            ?? baseFilters?.ShiftCode;
-
-        var effectiveParameterCode = parameterCode
-            ?? baseFilters?.ParameterCode;
-
-        var fromUtc = ReadDateAny(tokens, baseFilters?.FromUtc, "from", "fromUtc", "filter.fromUtc", "where.fromUtc");
-        var toUtc = ReadDateAny(tokens, baseFilters?.ToUtc, "to", "toUtc", "filter.toUtc", "where.toUtc");
-
-        return new DashboardWidgetFiltersDto(
-            SiteId: siteId,
-            AreaId: areaId,
-            EquipmentId: equipmentId,
-            MaterialCode: NormalizeEmpty(materialCode),
-            MaterialUnitType: NormalizeEmpty(materialUnitType),
-            SourceSystem: NormalizeEmpty(sourceSystem),
-            DefectType: NormalizeEmpty(defectType),
-            RiskClass: NormalizeEmpty(riskClass),
-            ShiftCode: NormalizeEmpty(shiftCode),
-            ParameterCode: NormalizeEmpty(effectiveParameterCode),
-            FromUtc: fromUtc,
-            ToUtc: toUtc);
-    }
-
-    private static DashboardWidgetQueryOptionsDto BuildOptions(
-        DashboardWidgetQueryOptionsDto? baseOptions,
-        IReadOnlyDictionary<string, string> tokens)
-    {
-        var maxRows = ReadIntAny(tokens, baseOptions?.MaxRows, "maxRows", "top", "option.maxRows", "option.top");
-        var rawRowLimit = ReadIntAny(tokens, baseOptions?.RawRowLimit, "rawRowLimit", "option.rawRowLimit");
-
-        var sortDirection = ReadAnyNullable(tokens, "sort", "sortDirection", "option.sortDirection")
-            ?? baseOptions?.SortDirection
-            ?? "desc";
-
-        if (!string.Equals(sortDirection, "asc", StringComparison.OrdinalIgnoreCase) &&
-            !string.Equals(sortDirection, "desc", StringComparison.OrdinalIgnoreCase))
+        if (aliasParts.Length == 2)
         {
-            sortDirection = "desc";
+            trimmed = aliasParts[0].Trim();
+            alias = aliasParts[1].Trim();
         }
 
-        var includeWarnings = ReadBoolAny(tokens, baseOptions?.IncludeWarnings, "includeWarnings", "option.includeWarnings")
-            ?? true;
+        var match = Regex.Match(trimmed, @"^(?<fn>[a-zA-Z_][a-zA-Z0-9_]*)\((?<col>[^)]*)\)$");
 
-        return new DashboardWidgetQueryOptionsDto(
-            MaxRows: maxRows,
-            RawRowLimit: rawRowLimit,
-            SortDirection: sortDirection.ToLowerInvariant(),
-            IncludeWarnings: includeWarnings);
+        if (match.Success)
+        {
+            return new WidgetQueryMeasureExpression(
+                match.Groups["fn"].Value.Trim(),
+                match.Groups["col"].Value.Trim(),
+                alias);
+        }
+
+        return new WidgetQueryMeasureExpression("value", trimmed, alias);
     }
 
-    private static Dictionary<string, string> ParseTokens(string expression)
+    private static WidgetQueryFilterExpression ParseFilter(string value)
     {
-        var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var match = Regex.Match(
+            value.Trim(),
+            @"^(?<col>[a-zA-Z_][a-zA-Z0-9_\.]*)\s*(?<op>=|!=|>=|<=|>|<|contains|in)\s*(?<value>.+)$",
+            RegexOptions.IgnoreCase);
 
-        var parts = expression
-            .Split(new[] { ';', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (!match.Success)
+            return new WidgetQueryFilterExpression("", "", value);
 
-        foreach (var part in parts)
+        return new WidgetQueryFilterExpression(
+            match.Groups["col"].Value.Trim(),
+            match.Groups["op"].Value.Trim(),
+            match.Groups["value"].Value.Trim().Trim('\'', '"'));
+    }
+
+    private static WidgetQuerySortExpression ParseSort(string value)
+    {
+        var parts = value.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        return new WidgetQuerySortExpression(
+            parts.ElementAtOrDefault(0) ?? value.Trim(),
+            parts.ElementAtOrDefault(1)?.ToUpperInvariant() is "DESC" ? "DESC" : "ASC");
+    }
+
+    private static WidgetQueryTimeWindowExpression? ParseTimeWindow(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return null;
+
+        var parts = value.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        return new WidgetQueryTimeWindowExpression(
+            parts.ElementAtOrDefault(0) ?? "observed_at_utc",
+            parts.ElementAtOrDefault(1) ?? "last-30-days");
+    }
+
+    private static bool IsCompiledGrammarEnabled()
+    {
+        var value =
+            Environment.GetEnvironmentVariable("PPIQ__UseCompiledWidgetGrammar") ??
+            Environment.GetEnvironmentVariable("PlantProcess__UseCompiledWidgetGrammar");
+
+        return string.Equals(value, "true", StringComparison.OrdinalIgnoreCase) ||
+               string.Equals(value, "1", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static IReadOnlyDictionary<string, string> ParseTokens(string expression)
+    {
+        var tokens = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+        var statements = expression
+            .Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        foreach (var statement in statements)
         {
-            var index = part.IndexOf('=', StringComparison.Ordinal);
+            var separatorIndex = statement.IndexOf(':');
 
-            if (index <= 0 || index == part.Length - 1)
+            if (separatorIndex < 0)
+                separatorIndex = statement.IndexOf('=');
+
+            if (separatorIndex <= 0 || separatorIndex == statement.Length - 1)
                 continue;
 
-            var key = part[..index].Trim();
-            var value = part[(index + 1)..].Trim().Trim('"', '\'');
+            var key = statement[..separatorIndex].Trim();
+            var value = statement[(separatorIndex + 1)..].Trim();
 
-            if (!string.IsNullOrWhiteSpace(key) && !string.IsNullOrWhiteSpace(value))
-                result[key] = value;
+            if (tokens.TryGetValue(key, out var existing))
+                tokens[key] = existing + "||" + value;
+            else
+                tokens[key] = value;
         }
 
-        return result;
+        return tokens;
     }
 
     private static bool IsAllowedKey(string key)
@@ -213,52 +303,59 @@ public sealed class WidgetQueryExpressionService : IWidgetQueryExpressionService
         if (DirectAllowedKeys.Contains(key))
             return true;
 
-        return AllowedPrefixes.Any(prefix =>
-            key.StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
+        return AllowedPrefixes.Any(prefix => key.StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
     }
 
-    private static bool ContainsDangerousValue(string value)
-    {
-        var v = $" {value.ToLowerInvariant()} ";
-
-        var banned = new[]
-        {
-            " select ",
-            " insert ",
-            " update ",
-            " delete ",
-            " drop ",
-            " alter ",
-            " create ",
-            " truncate ",
-            " exec ",
-            " execute ",
-            " copy ",
-            " grant ",
-            " revoke ",
-            " pg_read_file",
-            " xp_",
-            " dblink",
-            "<script",
-            "javascript:",
-            "../",
-            "..\\",
-            "powershell",
-            "cmd.exe",
-            "bash ",
-            "curl ",
-            "wget "
-        };
-
-        return banned.Any(v.Contains);
-    }
-
-    private static string ReadAny(
+    private static IReadOnlyList<string> ReadRepeated(
         IReadOnlyDictionary<string, string> tokens,
-        string fallback,
         params string[] keys)
     {
-        return ReadAnyNullable(tokens, keys) ?? fallback;
+        var value = ReadAnyNullable(tokens, keys);
+
+        if (string.IsNullOrWhiteSpace(value))
+            return Array.Empty<string>();
+
+        return value
+            .Split("||", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .SelectMany(x => x.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .ToArray();
+    }
+
+    private static DashboardWidgetFiltersDto? MergeFilters(
+        IReadOnlyDictionary<string, string> tokens,
+        DashboardWidgetFiltersDto? existing)
+    {
+        if (existing is null && tokens.Count == 0)
+            return null;
+
+        return new DashboardWidgetFiltersDto(
+            SiteId: existing?.SiteId,
+            AreaId: existing?.AreaId,
+            EquipmentId: existing?.EquipmentId,
+            MaterialCode: ReadAnyNullable(tokens, "material", "materialCode") ?? existing?.MaterialCode,
+            MaterialUnitType: ReadAnyNullable(tokens, "materialType", "materialUnitType") ?? existing?.MaterialUnitType,
+            SourceSystem: ReadAnyNullable(tokens, "source", "sourceSystem") ?? existing?.SourceSystem,
+            DefectType: ReadAnyNullable(tokens, "defect", "defectType") ?? existing?.DefectType,
+            RiskClass: ReadAnyNullable(tokens, "risk", "riskClass") ?? existing?.RiskClass,
+            ShiftCode: ReadAnyNullable(tokens, "shift", "shiftCode") ?? existing?.ShiftCode,
+            ParameterCode: ReadAnyNullable(tokens, "parameter", "parameterCode") ?? existing?.ParameterCode,
+            FromUtc: ReadDateAny(tokens, existing?.FromUtc, "from", "fromUtc"),
+            ToUtc: ReadDateAny(tokens, existing?.ToUtc, "to", "toUtc"));
+    }
+
+    private static DashboardWidgetQueryOptionsDto? MergeOptions(
+        IReadOnlyDictionary<string, string> tokens,
+        DashboardWidgetQueryOptionsDto? existing)
+    {
+        if (existing is null && tokens.Count == 0)
+            return null;
+
+        return new DashboardWidgetQueryOptionsDto(
+            MaxRows: ReadIntAny(tokens, existing?.MaxRows, "maxRows", "top", "limit"),
+            RawRowLimit: ReadIntAny(tokens, existing?.RawRowLimit, "rawRowLimit"),
+            SortDirection: ReadAnyNullable(tokens, "sort", "sortDirection") ?? existing?.SortDirection,
+            IncludeWarnings: ReadBoolAny(tokens, existing?.IncludeWarnings, "includeWarnings"));
     }
 
     private static string? ReadAnyNullable(
@@ -274,19 +371,6 @@ public sealed class WidgetQueryExpressionService : IWidgetQueryExpressionService
         return null;
     }
 
-    private static Guid? ReadGuidAny(
-        IReadOnlyDictionary<string, string> tokens,
-        Guid? fallback,
-        params string[] keys)
-    {
-        var value = ReadAnyNullable(tokens, keys);
-
-        if (Guid.TryParse(value, out var parsed))
-            return parsed;
-
-        return fallback;
-    }
-
     private static DateTime? ReadDateAny(
         IReadOnlyDictionary<string, string> tokens,
         DateTime? fallback,
@@ -294,8 +378,8 @@ public sealed class WidgetQueryExpressionService : IWidgetQueryExpressionService
     {
         var value = ReadAnyNullable(tokens, keys);
 
-        if (DateTime.TryParse(value, out var parsed))
-            return DateTime.SpecifyKind(parsed.ToUniversalTime(), DateTimeKind.Utc);
+        if (DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var parsed))
+            return parsed.ToUniversalTime();
 
         return fallback;
     }
@@ -330,12 +414,5 @@ public sealed class WidgetQueryExpressionService : IWidgetQueryExpressionService
             return false;
 
         return fallback;
-    }
-
-    private static string? NormalizeEmpty(string? value)
-    {
-        return string.IsNullOrWhiteSpace(value)
-            ? null
-            : value.Trim();
     }
 }

@@ -109,6 +109,24 @@ const BrandIdentityPage = lazy(() =>
   }))
 );
 
+const SuggestionsPage = lazy(() =>
+  import("./pages/Phase78/Phase78Pages").then((m) => ({
+    default: m.Phase78SuggestionsPage,
+  }))
+);
+
+const DynamicPage = lazy(() =>
+  import("./pages/Phase78/Phase78Pages").then((m) => ({
+    default: m.Phase78DynamicPage,
+  }))
+);
+
+const WidgetScriptCompilerPage = lazy(() =>
+  import("./pages/Phase78/Phase78Pages").then((m) => ({
+    default: m.Phase78WidgetScriptCompilerPage,
+  }))
+);
+
 const MlReadinessPage = lazy(() =>
   import("./pages/MlReadiness/MlReadinessPage").then((m) => ({
     default: m.MlReadinessPage,
@@ -445,6 +463,34 @@ function AppRoutes() {
                         "/brand",
                         "The brand page is refreshing",
                         <BrandIdentityPage />
+                      )}
+                    />
+
+                    {/* Phase 7 dynamic routes */}
+                    <Route
+                      path="/suggestions"
+                      element={withPageBoundary(
+                        "/suggestions",
+                        "Suggestions are refreshing",
+                        <SuggestionsPage />
+                      )}
+                    />
+
+                    <Route
+                      path="/pages/:slug"
+                      element={withPageBoundary(
+                        "/pages/:slug",
+                        "Dynamic page is refreshing",
+                        <DynamicPage />
+                      )}
+                    />
+
+                    <Route
+                      path="/widget-script-compiler"
+                      element={withPageBoundary(
+                        "/widget-script-compiler",
+                        "Widget compiler is refreshing",
+                        <WidgetScriptCompilerPage />
                       )}
                     />
 

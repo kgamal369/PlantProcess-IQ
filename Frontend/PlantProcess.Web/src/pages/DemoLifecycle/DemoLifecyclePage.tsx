@@ -1,5 +1,5 @@
-import { Phase56DemoLifecyclePage } from "../Phase56/Phase56Pages";
+import { Phase78DemoLifecyclePage } from "../Phase78/Phase78Pages";
 
 export function DemoLifecyclePage() {
-  return <Phase56DemoLifecyclePage />;
+  return <Phase78DemoLifecyclePage />;
 }

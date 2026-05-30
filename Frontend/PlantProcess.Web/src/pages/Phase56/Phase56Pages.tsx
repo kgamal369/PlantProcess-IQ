@@ -42,6 +42,7 @@ import { mlReadinessApi } from "@/api/ml";
 import { demoLifecycleApi } from "@/api/demo";
 import { licenseApi, type LicenseStatus, type LicenseTier } from "@/api/license";
 import { OperationProgressPanel } from "@/components/phase2/OperationProgressPanel";
+import { SaveInspectionJobModal } from "@/components/phase2/SaveInspectionJobModal";
 import * as tokens from "@/components/standard/tokens";
 import "./phase56-standard.css";
 
@@ -520,8 +521,16 @@ export function Phase56MaterialInvestigationPage() {
         </StandardDataState>
       </StandardCard>
 
+      <SaveInspectionJobModal
+        isOpen={saveOpen}
+        onClose={() => setSaveOpen(false)}
+        materialUnitId={selectedMaterialId}
+        materialCode={selected?.materialCode ?? null}
+        filters={{ tab, source: "Phase56MaterialInvestigationPage" }}
+      />
+
       <StandardModal
-        open={saveOpen}
+        open={false}
         title="Save investigation"
         description="Save the current drilldown scope as a reusable investigation view."
         onClose={() => setSaveOpen(false)}
