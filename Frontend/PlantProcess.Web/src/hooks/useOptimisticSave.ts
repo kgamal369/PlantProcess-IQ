@@ -24,7 +24,7 @@
  *   </button>
  */
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useRef, useState, useId } from "react";
 import { toast } from "@/notifications/toast";
 
 export interface UseOptimisticSaveOptions<TResult> {
@@ -58,9 +58,8 @@ export function useOptimisticSave<TResult = unknown>(
 
   // Stable random id per hook instance — used as the toast id so a stuck
   // toast for this form replaces (not stacks) on a retry.
-  const idRef = useRef<string>(
-    opts.toastId ?? `save-${Math.random().toString(36).slice(2, 10)}`,
-  );
+  const generatedToastId = useId().replace(/:/g, "");
+  const idRef = useRef<string>(opts.toastId ?? `save-${generatedToastId}`);
 
   // Prevent double-submit even if the consumer forgets to disable the button.
   const inFlightRef = useRef(false);

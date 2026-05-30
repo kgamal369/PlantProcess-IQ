@@ -36,7 +36,7 @@ import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
 
 import { AppLayout } from "./components/AppLayout";
-import { ErrorBoundary } from "./components/ErrorBoundary";
+import { ErrorBoundary } from "./components/standard/ErrorBoundary";
 import { SkeletonWidgetGrid } from "./components/skeletons/Skeleton";
 import { AppToastHost } from "./notifications/AppToastHost";
 

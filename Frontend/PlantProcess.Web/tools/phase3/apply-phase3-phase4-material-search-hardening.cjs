@@ -1,3 +1,217 @@
+﻿const fs = require("node:fs");
+const path = require("node:path");
+
+const root = process.cwd();
+const srcRoot = path.join(root, "src");
+
+function abs(relativePath) {
+  return path.join(root, relativePath.split("/").join(path.sep));
+}
+
+function ensureDir(filePath) {
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+}
+
+function write(relativePath, content) {
+  const target = abs(relativePath);
+  ensureDir(target);
+  fs.writeFileSync(target, content.replace(/^\n/, ""), "utf8");
+  console.log("Wrote " + relativePath);
+}
+
+function remove(relativePath) {
+  const target = abs(relativePath);
+  if (fs.existsSync(target)) {
+    fs.rmSync(target, { force: true });
+    console.log("Deleted " + relativePath);
+  }
+}
+
+function removeEmptyDir(relativePath) {
+  const target = abs(relativePath);
+  if (fs.existsSync(target) && fs.readdirSync(target).length === 0) {
+    fs.rmdirSync(target);
+    console.log("Removed empty directory " + relativePath);
+  }
+}
+
+function walk(dir) {
+  if (!fs.existsSync(dir)) return [];
+  const result = [];
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      if (["node_modules", "dist", "build", "coverage", "storybook-static"].includes(entry.name)) continue;
+      result.push(...walk(full));
+      continue;
+    }
+    if (entry.isFile() && /\.(ts|tsx|js|jsx)$/.test(entry.name)) result.push(full);
+  }
+  return result;
+}
+
+function replaceInSourceFiles(replacements) {
+  for (const file of walk(srcRoot)) {
+    let text = fs.readFileSync(file, "utf8");
+    const before = text;
+    for (const [pattern, replacement] of replacements) text = text.replace(pattern, replacement);
+    if (text !== before) {
+      fs.writeFileSync(file, text, "utf8");
+      console.log("Rewrote imports in " + path.relative(root, file).split(path.sep).join("/"));
+    }
+  }
+}
+
+write("src/components/standard/DataFetchBoundary.tsx", String.raw`
+import type { ReactNode } from "react";
+import { AlertTriangle, CheckCircle2, RefreshCw } from "lucide-react";
+import { StandardButton } from "./StandardButton";
+import "./standard-components.css";
+
+export type DataFetchBoundaryStatus = "idle" | "loading" | "success" | "error" | "empty";
+
+export type DataFetchBoundaryProps = {
+  title?: ReactNode;
+  status?: DataFetchBoundaryStatus;
+  isLoading?: boolean;
+  error?: unknown;
+  isEmpty?: boolean;
+  emptyTitle?: ReactNode;
+  emptyMessage?: ReactNode;
+  loadingMessage?: ReactNode;
+  successMessage?: ReactNode;
+  errorMessage?: ReactNode;
+  onRetry?: () => void;
+  retryLabel?: string;
+  children: ReactNode;
+};
+
+function messageFrom(error: unknown): string {
+  if (!error) return "The request did not complete. Retry when the data source is available.";
+  if (error instanceof Error) return error.message;
+  return String(error);
+}
+
+export function DataFetchBoundary({
+  title = "Data",
+  status = "idle",
+  isLoading = false,
+  error,
+  isEmpty = false,
+  emptyTitle = "No records available",
+  emptyMessage = "Adjust filters or refresh the data source.",
+  loadingMessage = "Loading data...",
+  successMessage,
+  errorMessage,
+  onRetry,
+  retryLabel = "Retry",
+  children,
+}: DataFetchBoundaryProps) {
+  const normalizedStatus: DataFetchBoundaryStatus = isLoading
+    ? "loading"
+    : error
+      ? "error"
+      : isEmpty
+        ? "empty"
+        : status;
+
+  if (normalizedStatus === "loading") {
+    return (
+      <div className="ppiq-std-table-shell" aria-busy="true">
+        <div className="ppiq-std-table-state">
+          <strong>{loadingMessage}</strong>
+          <span>{title}</span>
+          <div className="ppiq-std-table-skeleton" />
+          <div className="ppiq-std-table-skeleton" />
+          <div className="ppiq-std-table-skeleton" />
+        </div>
+      </div>
+    );
+  }
+
+  if (normalizedStatus === "error") {
+    return (
+      <div className="ppiq-std-table-shell" role="alert">
+        <div className="ppiq-std-table-state">
+          <strong>
+            <AlertTriangle size={16} aria-hidden="true" /> {title}
+          </strong>
+          <span>{errorMessage ?? messageFrom(error)}</span>
+          {onRetry ? (
+            <div style={{ marginTop: 14 }}>
+              <StandardButton variant="secondary" leadingIcon={<RefreshCw size={16} />} onClick={onRetry}>
+                {retryLabel}
+              </StandardButton>
+            </div>
+          ) : null}
+        </div>
+      </div>
+    );
+  }
+
+  if (normalizedStatus === "empty") {
+    return (
+      <div className="ppiq-std-table-shell">
+        <div className="ppiq-std-table-state">
+          <strong>{emptyTitle}</strong>
+          <span>{emptyMessage}</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {normalizedStatus === "success" && successMessage ? (
+        <div className="ppiq-std-table-shell" role="status" style={{ marginBottom: 12 }}>
+          <div className="ppiq-std-table-state">
+            <strong>
+              <CheckCircle2 size={16} aria-hidden="true" /> Ready
+            </strong>
+            <span>{successMessage}</span>
+          </div>
+        </div>
+      ) : null}
+      {children}
+    </>
+  );
+}
+
+export default DataFetchBoundary;
+`);
+
+write("src/components/standard/index.ts", String.raw`
+export * from "./tokens";
+export * from "./StandardButton";
+export * from "./StandardFields";
+export * from "./StandardTabs";
+export * from "./StandardTable";
+export * from "./StandardSurface";
+export * from "./DataFetchBoundary";
+`);
+
+write("src/main.tsx", String.raw`
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { BrowserRouter } from "react-router-dom";
+import App from "./App";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { ToastRoot } from "@/notifications/ToastRoot";
+import "./index.css";
+
+ReactDOM.createRoot(document.getElementById("root")!).render(
+  <React.StrictMode>
+    <ErrorBoundary routePath="app-root" fallbackTitle="The application shell is refreshing">
+      <BrowserRouter>
+        <App />
+        <ToastRoot />
+      </BrowserRouter>
+    </ErrorBoundary>
+  </React.StrictMode>,
+);
+`);
+
+write("src/pages/MaterialInvestigationPage.tsx", String.raw`
 import { useEffect, useMemo, useState, type MouseEvent } from "react";
 import { Download, FileSearch, Search, ShieldCheck } from "lucide-react";
 import { plantProcessApi, type DashboardMaterialRow } from "@/api/plantProcessApi";
@@ -91,7 +305,6 @@ export function MaterialInvestigationPage() {
   const [materials, setMaterials] = useState<DashboardMaterialRow[]>([]);
   const [selectedId, setSelectedId] = useState("");
   const [materialSearch, setMaterialSearch] = useState(filters.materialCode ?? "");
-  const [debouncedMaterialSearch, setDebouncedMaterialSearch] = useState(filters.materialCode ?? "");
 
   const [investigation, setInvestigation] = useState<MaterialInvestigationResponse | null>(null);
   const [features, setFeatures] = useState<unknown>(null);
@@ -112,16 +325,6 @@ export function MaterialInvestigationPage() {
   const [isCalculatingRisk, setIsCalculatingRisk] = useState(false);
 
   useEffect(() => {
-    const debounceHandle = window.setTimeout(() => {
-      setDebouncedMaterialSearch(materialSearch.trim());
-    }, 250);
-
-    return () => {
-      window.clearTimeout(debounceHandle);
-    };
-  }, [materialSearch]);
-
-  useEffect(() => {
     let ignore = false;
 
     async function loadFromGlobalFilters() {
@@ -130,7 +333,7 @@ export function MaterialInvestigationPage() {
       try {
         const result = await plantProcessApi.searchDashboardMaterials({
           ...filters,
-          materialCode: debouncedMaterialSearch || filters.materialCode,
+          materialCode: materialSearch || filters.materialCode,
           page: 1,
           pageSize: MATERIAL_PAGE_SIZE,
           sortBy: "materialCode",
@@ -144,7 +347,7 @@ export function MaterialInvestigationPage() {
         setMaterialState({
           status: "success",
           error: "",
-          lastSuccessfulQuery: debouncedMaterialSearch || filters.materialCode || "",
+          lastSuccessfulQuery: materialSearch || filters.materialCode || "",
           totalCount: result.totalCount,
         });
       } catch (err) {
@@ -319,7 +522,7 @@ export function MaterialInvestigationPage() {
     try {
       const result = await plantProcessApi.searchDashboardMaterials({
         ...filters,
-        materialCode: debouncedMaterialSearch || undefined,
+        materialCode: materialSearch.trim() || undefined,
         page: 1,
         pageSize: MATERIAL_PAGE_SIZE,
         sortBy: "materialCode",
@@ -331,10 +534,10 @@ export function MaterialInvestigationPage() {
       setMaterialState({
         status: "success",
         error: "",
-        lastSuccessfulQuery: debouncedMaterialSearch,
+        lastSuccessfulQuery: materialSearch.trim(),
         totalCount: result.totalCount,
       });
-      mergeFilters({ materialCode: debouncedMaterialSearch || undefined, page: 1 });
+      mergeFilters({ materialCode: materialSearch.trim() || undefined, page: 1 });
     } catch (err) {
       setMaterialState((current) => ({
         ...current,
@@ -708,3 +911,132 @@ function shortenId(value?: string | null) {
   if (value.length <= 12) return value;
   return value.slice(0, 8) + "..." + value.slice(-4);
 }
+`);
+
+write("eslint.config.js", String.raw`
+import js from "@eslint/js";
+import globals from "globals";
+import reactHooks from "eslint-plugin-react-hooks";
+import reactRefresh from "eslint-plugin-react-refresh";
+import tseslint from "typescript-eslint";
+import { defineConfig, globalIgnores } from "eslint/config";
+
+const bannedLegacyUiImports = [
+  { name: "@/components/hardening/StandardButton", message: "Use @/components/standard/StandardButton." },
+  { name: "@/hardening/StandardButton", message: "Use @/components/standard/StandardButton." },
+  { name: "@/components/hardening/DataFetchBoundary", message: "Use @/components/standard/DataFetchBoundary." },
+  { name: "@/hardening/DataFetchBoundary", message: "Use @/components/standard/DataFetchBoundary." },
+  { name: "@/components/table/StandardTable", message: "Use @/components/standard/StandardTable." },
+  { name: "@/components/hardening/AppErrorBoundary", message: "Use @/components/ErrorBoundary." },
+  { name: "@/hardening/RouteErrorBoundary", message: "Use @/components/ErrorBoundary." },
+];
+
+export default defineConfig([
+  globalIgnores([
+    "dist",
+    "build",
+    "coverage",
+    "playwright-report",
+    "test-results",
+    "node_modules",
+    "storybook-static",
+  ]),
+
+  {
+    files: ["**/*.{ts,tsx}"],
+    extends: [
+      js.configs.recommended,
+      tseslint.configs.recommended,
+      reactHooks.configs.flat.recommended,
+      reactRefresh.configs.vite,
+    ],
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+      },
+    },
+    rules: {
+      "@typescript-eslint/no-explicit-any": "warn",
+      "react-hooks/exhaustive-deps": "warn",
+      "react-hooks/set-state-in-effect": "off",
+      "no-restricted-imports": [
+        "error",
+        {
+          paths: bannedLegacyUiImports,
+          patterns: [
+            {
+              group: [
+                "*/components/hardening/StandardButton",
+                "*/hardening/StandardButton",
+                "*/components/hardening/DataFetchBoundary",
+                "*/hardening/DataFetchBoundary",
+                "*/components/table/StandardTable",
+                "*/components/hardening/AppErrorBoundary",
+                "*/hardening/RouteErrorBoundary",
+              ],
+              message: "Use canonical UI components under src/components/standard or src/components/ErrorBoundary.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  {
+    files: ["src/pages/MaterialInvestigationPage.tsx"],
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        { selector: "JSXOpeningElement[name.name='input']", message: "Use StandardInput in Material Search." },
+        { selector: "JSXOpeningElement[name.name='button']", message: "Use StandardButton in Material Search." },
+        { selector: "JSXOpeningElement[name.name='a']", message: "Use StandardButton as='a' for PDF actions." },
+        { selector: "JSXOpeningElement[name.name='SortableDataTable']", message: "Use StandardTable in Material Search." },
+      ],
+    },
+  },
+
+  {
+    files: ["src/state/**/*.tsx"],
+    rules: {
+      "react-refresh/only-export-components": "off",
+    },
+  },
+]);
+`);
+
+replaceInSourceFiles([
+  [/from\s+["']@\/components\/hardening\/StandardButton["']/g, "from \"@/components/standard/StandardButton\""],
+  [/from\s+["']@\/hardening\/StandardButton["']/g, "from \"@/components/standard/StandardButton\""],
+  [/from\s+["']@\/components\/hardening\/DataFetchBoundary["']/g, "from \"@/components/standard/DataFetchBoundary\""],
+  [/from\s+["']@\/hardening\/DataFetchBoundary["']/g, "from \"@/components/standard/DataFetchBoundary\""],
+  [/from\s+["']@\/components\/table\/StandardTable["']/g, "from \"@/components/standard/StandardTable\""],
+  [/from\s+["']@\/components\/hardening\/AppErrorBoundary["']/g, "from \"@/components/ErrorBoundary\""],
+  [/from\s+["']@\/hardening\/RouteErrorBoundary["']/g, "from \"@/components/ErrorBoundary\""],
+  [/from\s+["'](?:\.\.\/)+hardening\/StandardButton["']/g, "from \"@/components/standard/StandardButton\""],
+  [/from\s+["'](?:\.\.\/)+hardening\/DataFetchBoundary["']/g, "from \"@/components/standard/DataFetchBoundary\""],
+  [/from\s+["'](?:\.\.\/)+components\/table\/StandardTable["']/g, "from \"@/components/standard/StandardTable\""],
+]);
+
+remove("src/components/hardening/StandardButton.tsx");
+remove("src/hardening/StandardButton.tsx");
+remove("src/components/hardening/DataFetchBoundary.tsx");
+remove("src/hardening/DataFetchBoundary.tsx");
+remove("src/components/hardening/AppErrorBoundary.tsx");
+remove("src/hardening/RouteErrorBoundary.tsx");
+remove("src/components/table/StandardTable.tsx");
+remove("src/pages/MaterialInvestigation/MaterialInvestigationPage.tsx");
+removeEmptyDir("src/components/hardening");
+removeEmptyDir("src/components/table");
+removeEmptyDir("src/pages/MaterialInvestigation");
+
+const packagePath = abs("package.json");
+if (fs.existsSync(packagePath)) {
+  const pkg = JSON.parse(fs.readFileSync(packagePath, "utf8"));
+  pkg.scripts = pkg.scripts || {};
+  pkg.scripts["validate:phase3-phase4:material"] = "npm run build && npm run lint";
+  fs.writeFileSync(packagePath, JSON.stringify(pkg, null, 2) + "\n", "utf8");
+  console.log("Updated package.json script validate:phase3-phase4:material");
+}
+
+console.log("Done. Run: npm run validate:phase3-phase4:material");

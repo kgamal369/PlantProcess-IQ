@@ -1,5 +1,4 @@
-
-import { forwardRef, type AnchorHTMLAttributes, type ButtonHTMLAttributes, type MouseEvent, type ReactNode, type Ref } from "react";
+﻿import { forwardRef, type AnchorHTMLAttributes, type ButtonHTMLAttributes, type ReactNode, type Ref } from "react";
 import { Loader2 } from "lucide-react";
 import "./standard-components.css";
 
@@ -130,3 +129,5 @@ export const StandardButton = forwardRef<HTMLButtonElement | HTMLAnchorElement, 
 );
 
 StandardButton.displayName = "StandardButton";
+
+

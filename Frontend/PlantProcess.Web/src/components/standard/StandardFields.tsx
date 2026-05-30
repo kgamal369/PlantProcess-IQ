@@ -1,13 +1,4 @@
-
-import {
-  forwardRef,
-  useMemo,
-  useState,
-  type ChangeEvent,
-  type InputHTMLAttributes,
-  type ReactNode,
-  type TextareaHTMLAttributes,
-} from "react";
+﻿import { useId,  forwardRef, useMemo, useState, type ChangeEvent, type InputHTMLAttributes, type ReactNode, type TextareaHTMLAttributes  } from "react";
 import { ChevronDown, Search, X } from "lucide-react";
 import { StandardButton } from "./StandardButton";
 import "./standard-components.css";
@@ -45,7 +36,8 @@ function FieldChrome({
   textarea,
   className,
 }: FieldChromeProps) {
-  const safeId = id ?? "ppiq-field-" + Math.random().toString(36).slice(2);
+  const generatedId = useId();
+  const safeId = id ?? "ppiq-field-" + generatedId.replace(/:/g, "");
   const hintId = helperText ? safeId + "-hint" : undefined;
   const errorId = error ? safeId + "-error" : undefined;
   const describedBy = [hintId, errorId].filter(Boolean).join(" ") || undefined;
@@ -375,3 +367,4 @@ export function StandardSelect({
     </FieldChrome>
   );
 }
+

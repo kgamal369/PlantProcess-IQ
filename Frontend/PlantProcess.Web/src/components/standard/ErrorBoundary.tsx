@@ -25,8 +25,8 @@
 
 import { Component, ReactNode, ErrorInfo } from "react";
 import { AlertTriangle, RefreshCw } from "lucide-react";
-import { API_BASE_URL } from "../api/apiConfig";
-import "./ErrorBoundary.css";
+import { API_BASE_URL } from "../../api/apiConfig";
+import "../ErrorBoundary.css";
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -98,7 +98,6 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
     // Also write to console for local dev visibility.
     if (typeof console !== "undefined") {
-      // eslint-disable-next-line no-console
       console.error("[ErrorBoundary]", errorId, error, info);
     }
   }

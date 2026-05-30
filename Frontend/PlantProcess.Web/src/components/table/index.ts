@@ -1,1 +1,1 @@
-export * from "./StandardTable";
+export * from "@/components/standard/StandardTable";

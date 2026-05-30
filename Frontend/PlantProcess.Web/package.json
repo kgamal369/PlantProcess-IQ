@@ -44,7 +44,10 @@
     "ui:inventory": "node tools/ui/generate-ui-standards-inventory.mjs",
     "ui:validate:phase2-full": "node tools/ui/validate-phase2-full-ui-standards.mjs",
     "test:ui-standards": "vitest run src/components/standard/__tests__ --config vitest.config.ts",
-    "validate:phase2:ui-standards-full": "npm run ui:inventory && npm run ui:validate:phase2-full && npm run test:ui-standards && npm run build && npm run build:storybook"
+    "validate:phase2:ui-standards-full": "npm run ui:inventory && npm run ui:validate:phase2-full && npm run test:ui-standards && npm run build && npm run build:storybook",
+    "validate:phase3-phase4:material": "npm run build && npm run lint",
+    "phase34:acceptance": "node tools/phase3/validate-phase3-phase4-acceptance.cjs",
+    "validate:phase3-phase4:strict": "npm run build && npm run lint && npm run phase34:acceptance"
   },
   "dependencies": {
     "lucide-react": "^1.14.0",
