@@ -38,6 +38,7 @@ import {
 import { AdminPanel, MiniKpi, StatusPill, formatDate } from "./AdminSharedComponents";
 import { useOptimisticSave } from "@/hooks/useOptimisticSave";
 import { InlineFieldError } from "@/components/forms/InlineFieldError";
+import { CanonicalSchemaMappingPanel } from "./CanonicalSchemaMappingPanel";
 import {
   useInlineFormValidation,
   validateCode,
@@ -568,7 +569,7 @@ function KpiDefinitionPanel() {
       setKpis(kpiList);
       setSchemaViews(views.filter((v) => v.isApproved));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load KPIs.");
+      setError(err instanceof Error ? err.message : "Data refresh did not complete KPIs.");
     }
   }
 

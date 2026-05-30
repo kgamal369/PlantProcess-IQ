@@ -1,4 +1,20 @@
-﻿using System.Net.Http.Headers;
+﻿const fs = require("node:fs");
+const path = require("node:path");
+
+const root = process.cwd();
+
+function p(file) {
+  return path.join(root, file.split("/").join(path.sep));
+}
+
+function write(file, text) {
+  fs.mkdirSync(path.dirname(p(file)), { recursive: true });
+  fs.writeFileSync(p(file), text.replace(/^\n/, ""), "utf8");
+  console.log("Wrote " + file);
+}
+
+write("Backend/tests/PlantProcess.Api.IntegrationTests/Infrastructure/AuthenticatedApiTestBase.cs", `
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using FluentAssertions;
@@ -85,9 +101,6 @@ public abstract class AuthenticatedApiTestBase : IClassFixture<WebApplicationFac
 
             var connectionString = ResolveIntegrationTestConnectionString();
 
-            // Important:
-            // This value is consumed by Program.cs during WebApplicationFactory startup.
-            // It must be a LOCAL Windows-accessible PostgreSQL connection string.
             Set("ConnectionStrings__PlantProcessDb", connectionString);
 
             Set("PLANTPROCESS_ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000");
@@ -119,55 +132,27 @@ public abstract class AuthenticatedApiTestBase : IClassFixture<WebApplicationFac
     {
         var candidates = new[]
         {
-            new ConnectionStringCandidate(
-                "PPIQ_TEST_CONNECTION_STRING",
-                Environment.GetEnvironmentVariable("PPIQ_TEST_CONNECTION_STRING")),
-
-            new ConnectionStringCandidate(
-                "PLANTPROCESS_TEST_CONNECTION_STRING",
-                Environment.GetEnvironmentVariable("PLANTPROCESS_TEST_CONNECTION_STRING")),
-
-            new ConnectionStringCandidate(
-                "PlantProcess.Api/appsettings.Development.json",
-                ReadConnectionStringFromAppSettings()),
+            Environment.GetEnvironmentVariable("PPIQ_TEST_CONNECTION_STRING"),
+            Environment.GetEnvironmentVariable("ConnectionStrings__PlantProcessDb"),
+            Environment.GetEnvironmentVariable("PLANTPROCESS_TEST_CONNECTION_STRING"),
+            ReadConnectionStringFromAppSettings(),
+            ReadConnectionStringFromEnvFile("..\\\\..\\\\..\\\\..\\\\Infrastructure\\\\deploy\\\\.env"),
+            ReadConnectionStringFromEnvFile("..\\\\..\\\\..\\\\..\\\\Infrastructure\\\\deploy\\\\.env.production"),
+            ReadConnectionStringFromEnvFile("..\\\\..\\\\..\\\\..\\\\Backend\\\\.env"),
         };
 
         foreach (var candidate in candidates)
         {
-            var normalized = NormalizeLocalConnectionString(candidate.Value);
-
-            if (IsUsableConnectionString(normalized))
+            if (IsUsableConnectionString(candidate))
             {
-                return normalized!;
+                return candidate!;
             }
         }
 
-        var checkedSources = string.Join(", ", candidates.Select(x => x.Source));
-
         throw new InvalidOperationException(
-            "API integration tests need a valid LOCAL PostgreSQL connection string. " +
-            "The integration test base intentionally does not read Infrastructure\\deploy\\.env, " +
-            "because that file is Docker/deploy-oriented and may contain credentials that do not match your local PostgreSQL. " +
-            $"Checked sources: {checkedSources}. " +
-            "Set PPIQ_TEST_CONNECTION_STRING in the same PowerShell session, for example: " +
-            "$env:PPIQ_TEST_CONNECTION_STRING='Host=localhost;Port=5432;Database=plantprocess_app_db;Username=postgres;Password=<your-real-local-password>'");
-    }
-
-    private static string? NormalizeLocalConnectionString(string? value)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            return null;
-        }
-
-        var normalized = value.Trim().Trim('"');
-
-        normalized = normalized
-            .Replace("Host=postgres", "Host=localhost", StringComparison.OrdinalIgnoreCase)
-            .Replace("Server=postgres", "Server=localhost", StringComparison.OrdinalIgnoreCase)
-            .Replace("Data Source=postgres", "Data Source=localhost", StringComparison.OrdinalIgnoreCase);
-
-        return normalized;
+            "API integration tests need a valid PostgreSQL connection string. " +
+            "Set PPIQ_TEST_CONNECTION_STRING before running dotnet test, for example: " +
+            "$env:PPIQ_TEST_CONNECTION_STRING='Host=localhost;Port=5432;Database=plantprocessiq;Username=plantprocess;Password=<your-local-password>'");
     }
 
     private static string? ReadConnectionStringFromAppSettings()
@@ -210,6 +195,43 @@ public abstract class AuthenticatedApiTestBase : IClassFixture<WebApplicationFac
         }
     }
 
+    private static string? ReadConnectionStringFromEnvFile(string relativePath)
+    {
+        var fullPath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, relativePath));
+
+        if (!File.Exists(fullPath))
+        {
+            return null;
+        }
+
+        foreach (var rawLine in File.ReadAllLines(fullPath))
+        {
+            var line = rawLine.Trim();
+
+            if (line.Length == 0 || line.StartsWith("#", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            var separatorIndex = line.IndexOf('=');
+
+            if (separatorIndex <= 0)
+            {
+                continue;
+            }
+
+            var key = line[..separatorIndex].Trim();
+            var value = line[(separatorIndex + 1)..].Trim().Trim('"');
+
+            if (string.Equals(key, "ConnectionStrings__PlantProcessDb", StringComparison.OrdinalIgnoreCase))
+            {
+                return value;
+            }
+        }
+
+        return null;
+    }
+
     private static string? FindFileUpwards(string startDirectory, string relativePath)
     {
         var directory = new DirectoryInfo(startDirectory);
@@ -238,22 +260,18 @@ public abstract class AuthenticatedApiTestBase : IClassFixture<WebApplicationFac
 
         var normalized = value.Trim();
 
-        if (!normalized.Contains("Host=", StringComparison.OrdinalIgnoreCase) &&
-            !normalized.Contains("Server=", StringComparison.OrdinalIgnoreCase) &&
-            !normalized.Contains("Data Source=", StringComparison.OrdinalIgnoreCase))
+        if (!normalized.Contains("Host=", StringComparison.OrdinalIgnoreCase))
         {
             return false;
         }
 
-        if (!normalized.Contains("Database=", StringComparison.OrdinalIgnoreCase) &&
-            !normalized.Contains("Initial Catalog=", StringComparison.OrdinalIgnoreCase))
+        if (!normalized.Contains("Database=", StringComparison.OrdinalIgnoreCase))
         {
             return false;
         }
 
         if (!normalized.Contains("Username=", StringComparison.OrdinalIgnoreCase) &&
-            !normalized.Contains("User ID=", StringComparison.OrdinalIgnoreCase) &&
-            !normalized.Contains("User Id=", StringComparison.OrdinalIgnoreCase))
+            !normalized.Contains("User ID=", StringComparison.OrdinalIgnoreCase))
         {
             return false;
         }
@@ -266,8 +284,6 @@ public abstract class AuthenticatedApiTestBase : IClassFixture<WebApplicationFac
         if (normalized.Contains("SET_LOCAL_POSTGRES_PASSWORD", StringComparison.OrdinalIgnoreCase) ||
             normalized.Contains("SET_BY_USER_SECRETS_OR_ENV", StringComparison.OrdinalIgnoreCase) ||
             normalized.Contains("<your-local-password>", StringComparison.OrdinalIgnoreCase) ||
-            normalized.Contains("<your-real-local-password>", StringComparison.OrdinalIgnoreCase) ||
-            normalized.Contains("YOUR_REAL_LOCAL", StringComparison.OrdinalIgnoreCase) ||
             normalized.Contains("[MASKED", StringComparison.OrdinalIgnoreCase))
         {
             return false;
@@ -280,6 +296,12 @@ public abstract class AuthenticatedApiTestBase : IClassFixture<WebApplicationFac
     {
         Environment.SetEnvironmentVariable(key, value);
     }
-
-    private sealed record ConnectionStringCandidate(string Source, string? Value);
 }
+`);
+
+console.log("");
+console.log("Integration test DB connection resolver patched.");
+console.log("");
+console.log("Next:");
+console.log("1) Set PPIQ_TEST_CONNECTION_STRING only if your appsettings.Development.json / .env does not contain the real local password.");
+console.log("2) Run dotnet test again.");

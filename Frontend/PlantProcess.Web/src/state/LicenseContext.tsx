@@ -84,7 +84,7 @@ export function LicenseProvider({ children }: { children: ReactNode }) {
       const message =
         err instanceof Error
           ? err.message
-          : "Failed to load license configuration.";
+          : "Data refresh did not complete license configuration.";
 
       clearLicenseState(message);
     } finally {

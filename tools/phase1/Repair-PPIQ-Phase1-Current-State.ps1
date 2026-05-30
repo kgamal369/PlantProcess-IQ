@@ -434,7 +434,7 @@ $sql116 = "Backend\database\scripts\116_phase2_operation_analytics_pilot_foundat
 if (Test-Path (Join-Path $repoRoot $sql116)) {
     Replace-InFile `
         $sql116 `
-        "SELECT 'Phase 2 operation analytics pilot foundation applied' AS status;plantadmin" `
+        "SELECT 'Phase 2 operation analytics pilot foundation applied' AS status<semicolon>plantadmin" `
         "SELECT 'Phase 2 operation analytics pilot foundation applied' AS status;"
 }
 

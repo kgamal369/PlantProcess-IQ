@@ -32,7 +32,7 @@ services:
       ConnectionStrings__PlantProcessDb: ${ConnectionStrings__PlantProcessDb:?ConnectionStrings__PlantProcessDb_required}
       PLANTPROCESS_ALLOWED_ORIGINS: ${PLANTPROCESS_ALLOWED_ORIGINS:-http://localhost:5173,http://localhost:3000}
     ports:
-      - "${PLANTPROCESS_API_PORT:-5063}:5063"
+      - "127.0.0.1:${PLANTPROCESS_API_PORT:-5063}:5063"
 
   plantprocess-workers:
     build:

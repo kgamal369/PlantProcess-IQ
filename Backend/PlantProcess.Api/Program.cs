@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using System.Threading.RateLimiting;
@@ -395,6 +395,8 @@ try
     app.MapPhase2OperationEndpoints();
     app.MapPhase2InvestigationEndpoints();
     app.MapPhase2PilotReadinessEndpoints();
+    app.MapGenericSchemaMappingEndpoints();
+app.MapTwoStageImportEndpoints();
     
     app.Run();
 }

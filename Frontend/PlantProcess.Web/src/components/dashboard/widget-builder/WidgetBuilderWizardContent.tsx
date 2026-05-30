@@ -1,4 +1,4 @@
-﻿import {
+import {
   ArrowLeft,
   ArrowRight,
   BarChart3,
@@ -821,7 +821,7 @@ export function WidgetBuilderWizardContent({
 
         {loadError ? (
           <div className="error-panel">
-            <strong>Failed to load wizard metadata</strong>
+            <strong>Data refresh did not complete wizard metadata</strong>
             <p>{formatError(loadError)}</p>
           </div>
         ) : null}

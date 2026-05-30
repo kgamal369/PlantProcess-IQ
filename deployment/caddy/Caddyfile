@@ -1,56 +1,13 @@
-{
+﻿{
     email admin@plantprocessiq.com
-    servers {
-        protocols h1 h2
-    }
 }
 
-plantprocessiq.com, www.plantprocessiq.com {
+plantprocessiq.com {
     encode gzip zstd
 
-    root * /srv/plantprocessiq/website
-    file_server
-
     header {
-        X-Content-Type-Options nosniff
-        X-Frame-Options DENY
-        Referrer-Policy strict-origin-when-cross-origin
+        Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://api.plantprocessiq.com wss://api.plantprocessiq.com https://api.178.105.152.180.sslip.io wss://api.178.105.152.180.sslip.io http://api.localhost http://localhost:5063 ws://localhost:5063;"
     }
 
-    handle_path /health {
-        respond "plantprocess-website-ok" 200
-    }
-}
-
-app.plantprocessiq.com {
-    encode gzip zstd
-
-    root * /srv/plantprocessiq/app
-    try_files {path} /index.html
-    file_server
-
-    header {
-        X-Content-Type-Options nosniff
-        X-Frame-Options DENY
-        Referrer-Policy strict-origin-when-cross-origin
-    }
-
-    handle_path /health {
-        respond "plantprocess-app-ok" 200
-    }
-}
-
-api.plantprocessiq.com {
-    encode gzip zstd
-
-    reverse_proxy 127.0.0.1:5063 {
-        header_up X-Forwarded-Proto {scheme}
-        header_up X-Forwarded-Host {host}
-        header_up X-Real-IP {remote_host}
-    }
-
-    header {
-        X-Content-Type-Options nosniff
-        Referrer-Policy no-referrer
-    }
+    reverse_proxy plantprocess-web:80
 }

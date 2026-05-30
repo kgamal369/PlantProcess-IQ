@@ -7,6 +7,7 @@
 // ============================================================
 
 import { Fragment, useMemo, useState } from "react";
+import { TwoStageImportMonitorPanel } from "./TwoStageImportMonitorPanel";
 import { Activity, PlayCircle } from "lucide-react";
 import {
   plantProcessApi,
@@ -79,7 +80,7 @@ export function JobsMonitorTab({
       try {
         await refreshJobHistory(jobId);
       } catch (error) {
-        setFailure(error, "Failed to load job history.");
+        setFailure(error, "Data refresh did not complete job history.");
       }
     }
   }
@@ -342,6 +343,7 @@ export function JobsMonitorTab({
           </table>
         </div>
       </AdminPanel>
+      <TwoStageImportMonitorPanel />
     </section>
   );
 }

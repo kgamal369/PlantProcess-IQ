@@ -122,6 +122,19 @@ pipeline {
             }
         }
 
+        stage('2c. Phase 01/02 residual + schema-mapping gates') {
+            steps {
+                sh '''
+                    set -e
+                    cd ${REPO_DIR}
+
+                    node tools/validation/validate-phase01-phase02-gates.mjs
+
+                    echo "Phase 01/02 gate passed: PPIQ-T101..PPIQ-T112"
+                '''
+            }
+        }
+
         stage('3. Build images') {
             steps {
                 sh '''

@@ -37,7 +37,7 @@ export function useDashboardLayoutPersistence(
       const message =
         error instanceof Error
           ? error.message
-          : "Failed to load dashboard layout.";
+          : "Data refresh did not complete dashboard layout.";
 
       setLayoutError(message);
       throw error;

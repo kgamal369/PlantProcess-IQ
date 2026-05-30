@@ -1,4 +1,4 @@
-﻿{
+{
     email {$ACME_EMAIL:admin@plantprocessiq.com}
 }
 
@@ -15,7 +15,7 @@
 
 (web_csp) {
     header {
-        Content-Security-Policy "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; img-src 'self' data: https:; font-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self' https://api.plantprocessiq.com wss://api.plantprocessiq.com;"
+        Content-Security-Policy "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; img-src 'self' data: https:; font-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self' https://api.plantprocessiq.com wss://api.plantprocessiq.com https://api.178.105.152.180.sslip.io wss://api.178.105.152.180.sslip.io http://api.localhost http://localhost:5063 ws://localhost:5063;"
     }
 }
 
