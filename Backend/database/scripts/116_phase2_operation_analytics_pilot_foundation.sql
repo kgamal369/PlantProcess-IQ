@@ -1,4 +1,4 @@
--- ============================================================================
+﻿-- ============================================================================
 -- PlantProcess IQ
 -- Phase 2 Step 3/4/5 Foundation
 --
@@ -268,4 +268,5 @@ ON CONFLICT (lower(rule_code)) DO NOTHING;
 
 COMMIT;
 
-SELECT 'Phase 2 operation analytics pilot foundation applied' AS status;plantadmin
+SELECT 'Phase 2 operation analytics pilot foundation applied' AS status;
+

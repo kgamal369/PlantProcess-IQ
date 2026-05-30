@@ -5,7 +5,7 @@
 //   Robust Playwright auth helper for PlantProcess IQ.
 //
 // Critical auth rule:
-//   Do not default E2E to admin / ChangeMe123!.
+//   Do not default E2E to default bootstrap credentials.
 //   That credential can be treated as bootstrap admin and rejected
 //   with 403 once a real admin exists.
 // ============================================================
@@ -25,7 +25,7 @@ export const smokeUserName =
 export const smokePassword =
   process.env.PPIQ_SMOKE_PASSWORD ||
   process.env.VITE_SMOKE_PASSWORD ||
-  "E2EAdmin123!";
+  "";
 
 type LoginPayload = {
   label: string;
@@ -134,7 +134,7 @@ export async function login(request: APIRequestContext): Promise<string> {
       "1. Stop old backend/frontend processes on ports 5063 and 5173.",
       "2. Let Playwright start both servers from playwright.config.ts.",
       "3. Ensure E2E uses a real admin user, not bootstrap admin:",
-      "   e2eadmin / E2EAdmin123!",
+      "   legacy hardcoded E2E credentials",
     ].join("\n")
   );
 }

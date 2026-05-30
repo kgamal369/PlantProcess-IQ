@@ -1,75 +1,71 @@
-{
-    email admin@plantprocessiq.com
+﻿{
+    email {$ACME_EMAIL:admin@plantprocessiq.com}
 }
 
-# ============================================================
-# Public marketing website
-# ============================================================
+(security_headers_common) {
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "SAMEORIGIN"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Permissions-Policy "geolocation=(), microphone=(), camera=()"
+        -Server
+    }
+}
+
+(web_csp) {
+    header {
+        Content-Security-Policy "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; img-src 'self' data: https:; font-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self' https://api.plantprocessiq.com wss://api.plantprocessiq.com;"
+    }
+}
+
+(api_csp) {
+    header {
+        Content-Security-Policy "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none';"
+        X-Frame-Options "DENY"
+    }
+}
+
+(jenkins_csp) {
+    header {
+        Content-Security-Policy "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; img-src 'self' data:; font-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self';"
+        X-Frame-Options "DENY"
+        Referrer-Policy "no-referrer"
+    }
+}
+
 plantprocessiq.com, www.plantprocessiq.com {
-    encode zstd gzip
+    import security_headers_common
+    import web_csp
 
+    encode gzip zstd
     reverse_proxy plantprocess-website:80
-
-    header {
-        -Server
-        X-Content-Type-Options nosniff
-        X-Frame-Options SAMEORIGIN
-        Referrer-Policy strict-origin-when-cross-origin
-        Permissions-Policy "geolocation=(), microphone=(), camera=()"
-    }
 }
 
-# ============================================================
-# React application
-# ============================================================
 app.plantprocessiq.com {
-    encode zstd gzip
+    import security_headers_common
+    import web_csp
 
+    encode gzip zstd
     reverse_proxy plantprocess-app-web:80
-
-    header {
-        -Server
-        X-Content-Type-Options nosniff
-        X-Frame-Options SAMEORIGIN
-        Referrer-Policy strict-origin-when-cross-origin
-        Permissions-Policy "geolocation=(), microphone=(), camera=()"
-    }
 }
 
-# ============================================================
-# API backend
-# ============================================================
 api.plantprocessiq.com {
-    encode zstd gzip
+    import security_headers_common
+    import api_csp
 
-    reverse_proxy plantprocess-api:5063
-
-    header {
-        -Server
-        X-Content-Type-Options nosniff
-        Referrer-Policy strict-origin-when-cross-origin
-        Permissions-Policy "geolocation=(), microphone=(), camera=()"
-    }
+    encode gzip zstd
+    reverse_proxy plantprocess-api:8080
 }
 
-# ============================================================
-# Jenkins
-# Replace the hash below with:
-#   docker run --rm -it caddy:2.8-alpine caddy hash-password --plaintext "YOUR_PASSWORD"
-# ============================================================
 jenkins.plantprocessiq.com {
-    encode zstd gzip
+    import security_headers_common
+    import jenkins_csp
 
     basicauth {
-        admin $2a$14$REPLACE_WITH_REAL_CADDY_BCRYPT_HASH
+        {$JENKINS_BASIC_AUTH_USER:ppiq_jenkins_admin} {$JENKINS_BASIC_AUTH_HASH}
     }
 
+    encode gzip zstd
     reverse_proxy jenkins:8080
-
-    header {
-        -Server
-        X-Content-Type-Options nosniff
-        X-Frame-Options SAMEORIGIN
-        Referrer-Policy no-referrer
-    }
 }

@@ -1,16 +1,16 @@
-﻿// ============================================================
+// ============================================================
 // FILE: Frontend/PlantProcess.Web/playwright.config.ts
 //
 // Purpose:
 //   Deterministic Playwright E2E configuration for PlantProcess IQ.
 //
 // Critical auth fix:
-//   Do NOT use admin / ChangeMe123! for E2E login.
+//   Do NOT use default bootstrap credentials for E2E login.
 //   That pair is treated as bootstrap admin and is rejected with 403
 //   once a real configured admin exists.
 //
 //   E2E now uses:
-//     e2eadmin / E2EAdmin123!
+//     legacy hardcoded E2E credentials
 //
 // This user is configured as a real admin, not bootstrap admin.
 // ============================================================
@@ -35,7 +35,7 @@ const frontendHost = process.env.PLAYWRIGHT_FRONTEND_HOST || "127.0.0.1";
 const frontendPort = Number(process.env.PLAYWRIGHT_FRONTEND_PORT || "5173");
 
 const e2eUserName = "e2eadmin";
-const e2ePassword = "E2EAdmin123!";
+const e2ePassword = "SET_E2E_SMOKE_PASSWORD_BY_ENV";
 
 // Make the values visible to Playwright test code itself.
 // webServer.env is only for spawned backend/frontend processes.
@@ -87,7 +87,7 @@ export default defineConfig({
         ASPNETCORE_URLS: apiBaseUrl,
 
         ConnectionStrings__PlantProcessDb:
-          "Host=localhost;Port=5432;Database=plantprocessiq;Username=plantprocess;Password=plantprocess123",
+          "Host=localhost;Port=5432;Database=plantprocessiq;Username=plantprocess;Password=SET_LOCAL_POSTGRES_PASSWORD",
 
         PLANTPROCESS_ALLOWED_ORIGINS:
           "http://localhost:5173,http://localhost:3000",

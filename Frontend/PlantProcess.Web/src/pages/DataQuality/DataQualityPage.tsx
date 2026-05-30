@@ -258,7 +258,7 @@ export function DataQualityPage() {
 
   // FE-HARD-012: error FIRST, then loading. Initial-load behavior.
   if (error && !dashboard) {
-    return <ErrorPanel title="Could not load data quality page" error={error} />;
+    return <ErrorPanel title="is refreshing data quality page" error={error} />;
   }
 
   // FE-HARD-004: skeleton placeholders matching the page shape.

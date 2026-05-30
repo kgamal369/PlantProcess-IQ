@@ -5,7 +5,7 @@ async function login(request: any) {
   const response = await request.post("http://localhost:5063/auth/login", {
     data: {
       userName: "admin",
-      password: "ChangeMe123!",
+      password: process.env.PPIQ_SMOKE_PASSWORD ?? process.env.VITE_SMOKE_PASSWORD ?? "",
     },
   });
 

@@ -26,7 +26,7 @@ const DEMO_USER =
   (import.meta.env.VITE_SMOKE_USERNAME as string | undefined) ?? "admin";
 const DEMO_PASS =
   (import.meta.env.VITE_SMOKE_PASSWORD as string | undefined) ??
-  "ChangeMe123!";
+  "";
 
 // Token is considered expired when < 60 s remain.
 const EXPIRY_BUFFER_MS = 60_000;

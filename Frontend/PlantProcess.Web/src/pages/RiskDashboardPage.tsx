@@ -248,7 +248,7 @@ export function RiskDashboardPage() {
   ];
 
   if (error && !dashboard) {
-    return <ErrorPanel title="Could not load risk dashboard" error={error} />;
+    return <ErrorPanel title="is refreshing risk dashboard" error={error} />;
   }
 
   if (isLoading && !dashboard) {

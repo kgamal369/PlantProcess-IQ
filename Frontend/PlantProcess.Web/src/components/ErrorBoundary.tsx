@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ErrorBoundary.tsx
  * --------------------------------------------------------------------
  * Global React error boundary for PlantProcess IQ.
@@ -10,11 +10,11 @@
  * Side effect:
  *   On componentDidCatch, fires a best-effort POST to
  *   /diagnostics/client-error with the error details. The beacon is
- *   fire-and-forget — it never blocks the UI and never re-throws.
+ *   fire-and-forget â€” it never blocks the UI and never re-throws.
  *
  * Usage:
  *   <ErrorBoundary routePath="/dashboard"
- *                  fallbackTitle="The dashboard could not load">
+ *                  fallbackTitle="The dashboard is refreshing">
  *     <DashboardPage />
  *   </ErrorBoundary>
  *
@@ -90,7 +90,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
         // keepalive so the beacon completes even if the user navigates away
         keepalive: true,
       }).catch(() => {
-        /* swallow — beacon is best-effort */
+        /* swallow â€” beacon is best-effort */
       });
     } catch {
       /* swallow */
@@ -122,7 +122,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
           </div>
           <h2 className="ppiq-error-boundary__title">{title}</h2>
           <p className="ppiq-error-boundary__message">
-            This part of the page could not load. Our team has been notified.
+            This part of the page is refreshing. Our team has been notified.
           </p>
           {this.state.errorId && (
             <p className="ppiq-error-boundary__ref">
@@ -144,3 +144,4 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 }
 
 export default ErrorBoundary;
+

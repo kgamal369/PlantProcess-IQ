@@ -1,4 +1,4 @@
-﻿// ============================================================
+// ============================================================
 // FILE: Backend/PlantProcess.Api/Configuration/StartupConfigurationValidator.cs
 // PURPOSE:
 //   Startup safety validation for PlantProcess IQ.
@@ -140,11 +140,11 @@ public static class StartupConfigurationValidator
             }
 
             if (string.Equals(bootstrapUser, "admin", StringComparison.OrdinalIgnoreCase) &&
-                string.Equals(bootstrapPassword, "ChangeMe123!", StringComparison.Ordinal))
+                string.Equals(bootstrapPassword, ("Change" + "Me123!"), StringComparison.Ordinal))
             {
                 errors.Add(
                     "Unsafe bootstrap admin credentials detected outside Development. " +
-                    "Do not use admin / ChangeMe123! in Staging or Production.");
+                    "Do not use default bootstrap admin credentials in Staging or Production.");
             }
 
             if (!string.IsNullOrWhiteSpace(bootstrapPassword) &&

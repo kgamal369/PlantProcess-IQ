@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using PlantProcess.Infrastructure.Persistence;
 
@@ -11,7 +11,7 @@ public sealed class PlantProcessDesignTimeDbContextFactory
     {
         var connectionString =
             Environment.GetEnvironmentVariable("PLANTPROCESS_DB")
-            ?? "Host=localhost;Port=5432;Database=plantprocessiq;Username=plantprocess;Password=plantprocess123";
+            ?? throw new InvalidOperationException("Set ConnectionStrings__PlantProcessDb or PLANTPROCESS_DESIGNTIME_CONNECTION_STRING before running EF design-time commands.");
         var optionsBuilder = new DbContextOptionsBuilder<PlantProcessDbContext>();
 
         optionsBuilder

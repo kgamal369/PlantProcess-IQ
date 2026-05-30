@@ -1,4 +1,4 @@
-name: plantprocessiq-demo
+﻿name: plantprocessiq-demo
 
 services:
   caddy:
@@ -33,7 +33,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_APP_DB}
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     volumes:
       - ${HOST_POSTGRES_DATA:-/data/plantprocess-iq/postgres}:/var/lib/postgresql/data
     shm_size: "512mb"

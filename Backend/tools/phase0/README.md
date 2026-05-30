@@ -71,7 +71,7 @@ param(
 
     [string]$InfrastructureProject = "PlantProcess.Infrastructure\PlantProcess.Infrastructure.csproj",
 
-    [string]$DbConnectionString = "Host=localhost;Port=5432;Database=plantprocessiq;Username=plantprocess;Password=plantprocess123",
+    [string]$DbConnectionString = "Host=localhost;Port=5432;Database=plantprocessiq;Username=plantprocess;Password=SET_LOCAL_POSTGRES_PASSWORD",
 
     [switch]$ApplyDatabaseMigration,
 
@@ -212,7 +212,7 @@ if ($LoadSeed) {
         throw "psql was not found in PATH. Install PostgreSQL client tools or load the seed manually from pgAdmin/DBeaver."
     }
 
-    $env:PGPASSWORD = "plantprocess123"
+    $env:PGPASSWORD = "SET_LOCAL_POSTGRES_PASSWORD"
 
     Invoke-CheckedCommand -Command "psql" -Arguments @(
         "--host", "localhost",

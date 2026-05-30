@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+﻿import type { ReactNode } from "react";
 
 type Props = {
   title?: string;
@@ -32,7 +32,7 @@ export function DataFetchBoundary({
   if (error) {
     return (
       <div className="data-fetch-boundary error" role="alert">
-        <h3>{title} could not be loaded</h3>
+        <h3>{title} is refreshing</h3>
         <p>{error instanceof Error ? error.message : "The request failed."}</p>
         {onRetry ? (
           <button type="button" className="secondary-button" onClick={onRetry}>

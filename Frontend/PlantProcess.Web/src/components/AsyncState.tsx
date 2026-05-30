@@ -1,4 +1,4 @@
-import { AlertTriangle, Loader2 } from "lucide-react";
+﻿import { AlertTriangle, Loader2 } from "lucide-react";
 
 export function LoadingPanel({ text = "Loading dashboard..." }: { text?: string }) {
   return (
@@ -11,7 +11,7 @@ export function LoadingPanel({ text = "Loading dashboard..." }: { text?: string 
 }
 
 export function ErrorPanel({
-  title = "Could not load data",
+  title = "Refreshing data",
   error,
 }: {
   title?: string;

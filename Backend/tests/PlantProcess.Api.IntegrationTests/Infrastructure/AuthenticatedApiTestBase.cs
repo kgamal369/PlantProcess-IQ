@@ -31,7 +31,7 @@ namespace PlantProcess.Api.IntegrationTests.Infrastructure;
 public abstract class AuthenticatedApiTestBase : IClassFixture<WebApplicationFactory<Program>>
 {
     protected const string TestAdminUserName = "admin";
-    protected const string TestAdminPassword = "ChangeMe123!";
+    protected const string TestAdminPassword = "PpiqIntegrationAdmin!2026_Rotated";
 
     protected readonly WebApplicationFactory<Program> Factory;
 
@@ -114,7 +114,7 @@ public abstract class AuthenticatedApiTestBase : IClassFixture<WebApplicationFac
             // Database
             Set(
                 "ConnectionStrings__PlantProcessDb",
-                "Host=localhost;Port=5432;Database=plantprocessiq;Username=plantprocess;Password=plantprocess123");
+                "Host=localhost;Port=5432;Database=plantprocessiq;Username=plantprocess;Password=PpiqIntegrationDb!2026_LocalOnly");
 
             // CORS
             Set("PLANTPROCESS_ALLOWED_ORIGINS", "http://localhost:5173");

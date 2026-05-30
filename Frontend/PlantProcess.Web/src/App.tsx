@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // FILE: Frontend/PlantProcess.Web/src/App.tsx
 //
 // Phase 2 E2E Stability Update:
@@ -49,7 +49,7 @@ import { ThemeProvider } from "./state/ThemeContext";
 import { LicenseProvider } from "./state/LicenseContext";
 import "./index.css";
 
-// ── Lazy pages ────────────────────────────────────────────────
+// â”€â”€ Lazy pages â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const DashboardPage = lazy(() =>
   import("./pages/DashboardPage").then((m) => ({ default: m.DashboardPage }))
@@ -115,7 +115,7 @@ const MlReadinessPage = lazy(() =>
   }))
 );
 
-// ── Boundary helper ───────────────────────────────────────────
+// â”€â”€ Boundary helper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function withPageBoundary(
   routePath: string,
@@ -129,7 +129,7 @@ function withPageBoundary(
   );
 }
 
-// ── Bootstrap screen ──────────────────────────────────────────
+// â”€â”€ Bootstrap screen â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function BootstrapScreen() {
   const { isBootstrapping, bootstrapError, retryBootstrap } = useAuth();
@@ -171,7 +171,7 @@ function BootstrapScreen() {
             PlantProcess <span style={{ color: "#00d4ff" }}>IQ</span>
           </p>
           <p style={{ margin: 0, fontSize: 13, color: "#5a7a9a" }}>
-            Connecting to backend…
+            Connecting to backendâ€¦
           </p>
         </div>
 
@@ -280,7 +280,7 @@ function BootstrapScreen() {
   return null;
 }
 
-// ── Route loading fallback ────────────────────────────────────
+// â”€â”€ Route loading fallback â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function RouteLoadingFallback() {
   return (
@@ -290,7 +290,7 @@ function RouteLoadingFallback() {
   );
 }
 
-// ── Routes ────────────────────────────────────────────────────
+// â”€â”€ Routes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function AppRoutes() {
   const { isBootstrapping, bootstrapError } = useAuth();
@@ -321,7 +321,7 @@ function AppRoutes() {
                       path="/dashboard"
                       element={withPageBoundary(
                         "/dashboard",
-                        "The dashboard could not load",
+                        "The dashboard is refreshing",
                         <DashboardPage />
                       )}
                     />
@@ -331,7 +331,7 @@ function AppRoutes() {
                       path="/materials/:materialUnitId"
                       element={withPageBoundary(
                         "/materials/:materialUnitId",
-                        "Material details could not load",
+                        "Material details is refreshing",
                         <MaterialInvestigationPage />
                       )}
                     />
@@ -340,7 +340,7 @@ function AppRoutes() {
                       path="/materials"
                       element={withPageBoundary(
                         "/materials",
-                        "The material investigation view could not load",
+                        "The material investigation view is refreshing",
                         <MaterialInvestigationPage />
                       )}
                     />
@@ -361,7 +361,7 @@ function AppRoutes() {
                       path="/risk"
                       element={withPageBoundary(
                         "/risk",
-                        "Risk dashboard could not load",
+                        "Risk dashboard is refreshing",
                         <RiskDashboardPage />
                       )}
                     />
@@ -371,7 +371,7 @@ function AppRoutes() {
                       path="/data-quality"
                       element={withPageBoundary(
                         "/data-quality",
-                        "Data quality view could not load",
+                        "Data quality view is refreshing",
                         <DataQualityPage />
                       )}
                     />
@@ -387,7 +387,7 @@ function AppRoutes() {
                       path="/correlations"
                       element={withPageBoundary(
                         "/correlations",
-                        "Correlation analysis could not load",
+                        "Correlation analysis is refreshing",
                         <CorrelationPage />
                       )}
                     />
@@ -403,7 +403,7 @@ function AppRoutes() {
                       path="/ml-readiness"
                       element={withPageBoundary(
                         "/ml-readiness",
-                        "ML readiness view could not load",
+                        "ML readiness view is refreshing",
                         <MlReadinessPage />
                       )}
                     />
@@ -413,7 +413,7 @@ function AppRoutes() {
                       path="/demo-lifecycle"
                       element={withPageBoundary(
                         "/demo-lifecycle",
-                        "Demo lifecycle view could not load",
+                        "Demo lifecycle view is refreshing",
                         <DemoLifecyclePage />
                       )}
                     />
@@ -423,7 +423,7 @@ function AppRoutes() {
                       path="/admin-preview"
                       element={withPageBoundary(
                         "/admin-preview",
-                        "Admin preview could not load",
+                        "Admin preview is refreshing",
                         <AdminPreviewPage />
                       )}
                     />
@@ -433,7 +433,7 @@ function AppRoutes() {
                       path="/admin/*"
                       element={withPageBoundary(
                         "/admin",
-                        "The admin area could not load",
+                        "The admin area is refreshing",
                         <AdminPage />
                       )}
                     />
@@ -443,7 +443,7 @@ function AppRoutes() {
                       path="/brand"
                       element={withPageBoundary(
                         "/brand",
-                        "The brand page could not load",
+                        "The brand page is refreshing",
                         <BrandIdentityPage />
                       )}
                     />
@@ -453,7 +453,7 @@ function AppRoutes() {
                       path="/commercial/license"
                       element={withPageBoundary(
                         "/commercial/license",
-                        "The license page could not load",
+                        "The license page is refreshing",
                         <CommercialLicensePage />
                       )}
                     />
@@ -480,7 +480,7 @@ function AppRoutes() {
   );
 }
 
-// ── Root App ──────────────────────────────────────────────────
+// â”€â”€ Root App â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export default function App() {
   return (

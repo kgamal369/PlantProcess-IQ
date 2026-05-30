@@ -1,3 +1,11 @@
+\set ON_ERROR_STOP on
+
+\if :{?plantprocess_app_password}
+\else
+\echo 'Required psql variable is missing: plantprocess_app_password'
+\echo 'Usage: psql -v plantprocess_app_password=<rotated-password> -f 095_create_runtime_app_role_admin_only.sql'
+\quit 1
+\endif
 -- ============================================================================
 -- PlantProcess IQ
 -- File: Backend/database/scripts/095_create_runtime_app_role_admin_only.sql
@@ -21,7 +29,7 @@ BEGIN
     ) THEN
         CREATE ROLE plantprocess_app
             LOGIN
-            PASSWORD 'CHANGE_ME_STRONG_APP_PASSWORD'
+            PASSWORD :'plantprocess_app_password'
             NOSUPERUSER
             NOCREATEDB
             NOCREATEROLE

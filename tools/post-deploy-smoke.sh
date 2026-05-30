@@ -7,7 +7,7 @@ APP_HEALTH_URL="${PPIQ_INTERNAL_APP_HEALTH_URL:-http://plantprocess-app-web/heal
 WEBSITE_HEALTH_URL="${PPIQ_INTERNAL_WEBSITE_HEALTH_URL:-http://plantprocess-website/health}"
 
 SMOKE_USERNAME="${PPIQ_SMOKE_USERNAME:-admin}"
-SMOKE_PASSWORD="${PPIQ_SMOKE_PASSWORD:-ChangeMe123!}"
+SMOKE_PASSWORD="${PPIQ_SMOKE_PASSWORD:?PPIQ_SMOKE_PASSWORD_required}"
 
 echo "============================================================"
 echo "PlantProcess IQ — Post Deploy Smoke Test"

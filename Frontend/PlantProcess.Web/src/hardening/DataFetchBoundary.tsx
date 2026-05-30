@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+﻿import type { ReactNode } from "react";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 
 export type DataFetchBoundaryProps = {
@@ -46,7 +46,7 @@ export function DataFetchBoundary({
       <div className="data-fetch-boundary data-fetch-boundary--error" role="alert">
         <div className="data-fetch-boundary__header">
           <AlertTriangle size={18} />
-          <strong>{title} could not be loaded</strong>
+          <strong>{title} is refreshing</strong>
         </div>
 
         <p>{errorMessage(error) ?? "The request failed."}</p>

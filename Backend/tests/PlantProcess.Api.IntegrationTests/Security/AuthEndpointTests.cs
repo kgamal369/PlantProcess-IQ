@@ -22,7 +22,7 @@ public sealed class AuthEndpointTests : AuthenticatedApiTestBase
         var response = await client.PostAsJsonAsync("/auth/login", new
         {
             UserName = "admin",
-            Password = "ChangeMe123!"
+            Password = TestAdminPassword
         });
 
         response.EnsureSuccessStatusCode();
