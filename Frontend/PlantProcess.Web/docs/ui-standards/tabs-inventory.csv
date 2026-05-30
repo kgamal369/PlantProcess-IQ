@@ -1,0 +1,5 @@
+task,file,line,page,currentImplementation,itemCount,navigationType,activeIndicatorStyle,badgeSupport,keyboardNavigation,lazyLoading,responsiveBehavior,standardStatus
+PPIQ-T011,src/components/AppLayout.tsx,137,Component:AppLayout.tsx,navigation,3,primary-navigation,not-detected,missing,missing,missing,not-detected,non-standard
+PPIQ-T011,src/components/AppLayout.tsx,75,Component:AppLayout.tsx,navigation,3,primary-navigation,detected,missing,missing,missing,not-detected,non-standard
+PPIQ-T011,src/pages/Admin/AdminPageContent.tsx,183,Admin,navigation,2,in-page-navigation,detected,missing,missing,missing,not-detected,non-standard
+PPIQ-T011,src/pages/Admin/AdminPageContent.tsx,185,Admin,navigation,2,in-page-navigation,detected,missing,missing,missing,not-detected,non-standard

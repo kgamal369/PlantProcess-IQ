@@ -1,0 +1,44 @@
+:root {
+  color-scheme: dark;
+
+  --ppiq-font-sans: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --ppiq-bg-0: #050b18;
+  --ppiq-bg-1: #081426;
+  --ppiq-bg-2: #0b1730;
+
+  --ppiq-surface-0: rgba(8, 20, 38, 0.86);
+  --ppiq-surface-1: rgba(11, 23, 48, 0.84);
+  --ppiq-surface-2: rgba(16, 33, 61, 0.78);
+
+  --ppiq-border-subtle: rgba(0, 212, 255, 0.1);
+  --ppiq-border: rgba(0, 212, 255, 0.18);
+  --ppiq-border-strong: rgba(0, 212, 255, 0.34);
+
+  --ppiq-text: #eaf6ff;
+  --ppiq-text-muted: #a0bdd8;
+  --ppiq-text-soft: #6d8eae;
+  --ppiq-text-disabled: #48647f;
+
+  --ppiq-brand: #00d4ff;
+  --ppiq-brand-strong: #36e5ff;
+  --ppiq-brand-soft: rgba(0, 212, 255, 0.12);
+
+  --ppiq-success: #30d158;
+  --ppiq-warning: #ffd166;
+  --ppiq-danger: #ff4d6d;
+  --ppiq-info: #5ac8fa;
+
+  --ppiq-radius-sm: 8px;
+  --ppiq-radius-md: 12px;
+  --ppiq-radius-lg: 16px;
+  --ppiq-radius-xl: 22px;
+
+  --ppiq-shadow-sm: 0 8px 20px rgba(0, 0, 0, 0.22);
+  --ppiq-shadow-md: 0 18px 46px rgba(0, 0, 0, 0.34);
+  --ppiq-shadow-glow: 0 0 24px rgba(0, 212, 255, 0.18);
+
+  --ppiq-focus: 0 0 0 3px rgba(0, 212, 255, 0.24);
+  --ppiq-transition-fast: 120ms ease;
+  --ppiq-transition: 180ms ease;
+}

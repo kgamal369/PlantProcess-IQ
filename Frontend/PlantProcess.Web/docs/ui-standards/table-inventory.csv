@@ -1,0 +1,35 @@
+task,file,line,page,implementation,dataSourceEndpoint,typicalRowCount,columns,features,stylingApproach,loadingState,emptyState,errorState,accessibilityProps,standardStatus,migrationCandidate
+PPIQ-T010,src/components/dashboard/SavedDashboardWidget.tsx,189,Component:dashboard,native <table>,not-detected,unknown,not-detected,not-detected,not-detected,missing,missing,missing,missing,non-standard,P3
+PPIQ-T010,src/components/dashboard/widget-builder/WidgetBuilderWizard.tsx,1465,Component:dashboard,native <table>,not-detected,unknown,not-detected,not-detected,not-detected,missing,missing,missing,missing,non-standard,P3
+PPIQ-T010,src/components/dashboard/widget-builder/WidgetBuilderWizardContent.tsx,1661,Component:dashboard,native <table>,not-detected,unknown,not-detected,not-detected,not-detected,missing,missing,missing,missing,non-standard,P3
+PPIQ-T010,src/components/SortableDataTable.tsx,101,Component:SortableDataTable.tsx,native <table>,not-detected,>500,not-detected,sort,inline-style,missing,present,missing,present,non-standard,P3
+PPIQ-T010,src/components/standard/StandardTable.tsx,238,Component:standard,native <table>,not-detected,unknown,not-detected,density,className,missing,missing,missing,present,non-standard,P3
+PPIQ-T010,src/components/standard/StandardTable.tsx,344,Component:standard,native <table>,not-detected,unknown,not-detected,sort|select|density|resize,inline-style,missing,missing,missing,present,non-standard,P3
+PPIQ-T010,src/components/table/StandardTable.tsx,57,Component:table,native <table>,not-detected,unknown,not-detected,not-detected,inline-style,missing,missing,missing,missing,non-standard,P3
+PPIQ-T010,src/pages/Admin/AdminDbConfigurationTab.tsx,220,Admin,native <table>,not-detected,unknown,not-detected,not-detected,not-detected,missing,missing,missing,missing,non-standard,P3
+PPIQ-T010,src/pages/Admin/AdminDbConfigurationTab.tsx,308,Admin,native <table>,not-detected,unknown,not-detected,not-detected,inline-style,missing,missing,missing,missing,non-standard,P3
+PPIQ-T010,src/pages/Admin/AdminDbConfigurationTab.tsx,938,Admin,native <table>,not-detected,unknown,not-detected,select,inline-style,missing,missing,missing,missing,non-standard,P3
+PPIQ-T010,src/pages/Admin/AdminDbConfigurationTab.tsx,990,Admin,native <table>,not-detected,unknown,not-detected,not-detected,not-detected,missing,missing,missing,missing,non-standard,P3
+PPIQ-T010,src/pages/Admin/AdminImportingDataTab.tsx,161,Admin,native <table>,not-detected,unknown,not-detected,not-detected,not-detected,missing,missing,missing,missing,non-standard,P3
+PPIQ-T010,src/pages/Admin/AdminJobsMonitorTab.tsx,163,Admin,native <table>,not-detected,unknown,not-detected,sort,className,missing,missing,present,missing,non-standard,P3
+PPIQ-T010,src/pages/Admin/AdminJobsMonitorTab.tsx,282,Admin,native <table>,not-detected,unknown,not-detected,not-detected,not-detected,missing,missing,missing,missing,non-standard,P3
+PPIQ-T010,src/pages/Admin/AdminSchemaConfigurationTab.tsx,465,Admin,native <table>,not-detected,unknown,not-detected,not-detected,not-detected,missing,missing,missing,missing,non-standard,P3
+PPIQ-T010,src/pages/Admin/AdminSchemaConfigurationTab.tsx,499,Admin,native <table>,not-detected,unknown,not-detected,select,inline-style,missing,missing,missing,missing,non-standard,P3
+PPIQ-T010,src/pages/Admin/AdminSchemaConfigurationTab.tsx,781,Admin,native <table>,not-detected,unknown,not-detected,not-detected,inline-style,missing,missing,missing,missing,non-standard,P3
+PPIQ-T010,src/pages/Admin/AdminSchemaConfigurationTab.tsx,882,Admin,native <table>,not-detected,unknown,not-detected,not-detected,inline-style,missing,missing,missing,missing,non-standard,P3
+PPIQ-T010,src/pages/Admin/Phase1WorkflowTruthPanel.tsx,126,Admin,native <table>,not-detected,unknown,not-detected,not-detected,not-detected,missing,missing,missing,missing,non-standard,P3
+PPIQ-T010,src/pages/Admin/Phase1WorkflowTruthPanel.tsx,165,Admin,native <table>,not-detected,unknown,not-detected,not-detected,not-detected,missing,missing,missing,missing,non-standard,P3
+PPIQ-T010,src/pages/Admin/Phase1WorkflowTruthPanel.tsx,203,Admin,native <table>,not-detected,unknown,not-detected,not-detected,not-detected,missing,missing,missing,missing,non-standard,P3
+PPIQ-T010,src/pages/Admin/Phase1WorkflowTruthPanel.tsx,247,Admin,native <table>,not-detected,unknown,not-detected,not-detected,not-detected,missing,missing,missing,missing,non-standard,P3
+PPIQ-T010,src/pages/AdminPreview/AdminPreviewWorkspacePage.tsx,202,AdminPreview,native <table>,not-detected,unknown,not-detected,select,className,missing,missing,missing,missing,non-standard,P3
+PPIQ-T010,src/pages/Correlation/CorrelationPage.tsx,224,Correlation,native <table>,not-detected,unknown,not-detected,select,className,missing,missing,missing,missing,non-standard,P3
+PPIQ-T010,src/pages/CorrelationPage.tsx,252,CorrelationPage,native <table>,not-detected,unknown,not-detected,select,className,missing,missing,missing,missing,non-standard,P3
+PPIQ-T010,src/pages/Dashboard/DashboardPageContent.tsx,1837,Dashboard,native <table>,not-detected,unknown,not-detected,not-detected,not-detected,missing,missing,missing,missing,non-standard,P3
+PPIQ-T010,src/pages/Dashboard/DashboardPageContent.tsx,1189,Dashboard,SortableDataTable,not-detected,unknown,materialColumns,sort|filter|select,not-detected,missing,present,missing,missing,non-standard,P3
+PPIQ-T010,src/pages/DataQuality/DataQualityPage.tsx,435,DataQuality,SortableDataTable,not-detected,unknown,columns,sort|filter,not-detected,missing,missing,missing,missing,non-standard,P3
+PPIQ-T010,src/pages/MaterialInvestigation/MaterialInvestigationPage.tsx,185,MaterialInvestigation,SortableDataTable,not-detected,unknown,columns,sort,not-detected,missing,present,missing,missing,non-standard,P3
+PPIQ-T010,src/pages/MaterialInvestigationPage.tsx,430,MaterialInvestigationPage,SortableDataTable,not-detected,unknown,materialColumns,sort,not-detected,missing,present,missing,missing,non-standard,P3
+PPIQ-T010,src/pages/MaterialInvestigationPage.tsx,539,MaterialInvestigationPage,SortableDataTable,not-detected,unknown,parameterColumns,sort,not-detected,missing,present,missing,missing,non-standard,P3
+PPIQ-T010,src/pages/RiskDashboard/RiskDashboardPage.tsx,505,RiskDashboard,SortableDataTable,not-detected,unknown,columns,sort,not-detected,missing,missing,missing,missing,non-standard,P3
+PPIQ-T010,src/pages/RiskDashboardPage.tsx,507,RiskDashboardPage,SortableDataTable,not-detected,unknown,columns,sort,not-detected,missing,missing,missing,missing,non-standard,P3
+PPIQ-T010,src/ui/standard-components.tsx,193,Unknown,native <table>,not-detected,unknown,not-detected,not-detected,inline-style,missing,missing,missing,missing,non-standard,P3

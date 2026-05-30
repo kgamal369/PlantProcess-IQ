@@ -1,0 +1,3598 @@
+================================================================================================
+PLANTPROCESS IQ WEBSITE AUDIT - PLANTPROCESS.WEBSITE
+================================================================================================
+
+Product Name          : PlantProcess IQ
+Generated At          : 2026-05-30 09:28:35
+Repository Root       : C:\Workspace\PlantProcess-IQ
+Output Folder         : C:\Workspace\PlantProcess-IQ\Documentation\UltimateAudit_30May2026_092713
+Included Files        : 33
+Total Lines           : 3272
+Total Size            : 0.084 MB
+Mask Secrets          : True
+Max File Size         : 8 MB
+PowerShell Version    : 5.1.26100.7920
+Machine Name          : WAP174432
+User Name             : elka01
+
+------------------------------------------------------------------------------------------------
+CATEGORY SUMMARY
+------------------------------------------------------------------------------------------------
+
+Website: PlantProcess.Website    Files:    33 | Lines:     3272 | Size:    0.084 MB
+
+------------------------------------------------------------------------------------------------
+CLASSIFICATION SUMMARY
+------------------------------------------------------------------------------------------------
+
+Website Component                          Files:     8 | Lines:      614
+Website Config / Asset                     Files:    17 | Lines:      628
+Website Source                             Files:     8 | Lines:     2030
+
+------------------------------------------------------------------------------------------------
+EXTENSION / SPECIAL FILE SUMMARY
+------------------------------------------------------------------------------------------------
+
+.cjs                 Files:     1 | Lines:        3 | Size:     0.04 KB
+.conf                Files:     1 | Lines:       20 | Size:     0.44 KB
+.css                 Files:     3 | Lines:     1315 | Size:    23.45 KB
+.dockerignore        Files:     1 | Lines:       16 | Size:     0.31 KB
+.example             Files:     1 | Lines:        1 | Size:     0.05 KB
+.html                Files:     2 | Lines:      190 | Size:     5.41 KB
+.json                Files:     4 | Lines:       68 | Size:     1.62 KB
+.mjs                 Files:     1 | Lines:      102 | Size:     2.82 KB
+.svg                 Files:     5 | Lines:      278 | Size:    12.78 KB
+.ts                  Files:     4 | Lines:      260 | Size:      7.9 KB
+.tsx                 Files:     9 | Lines:      996 | Size:    30.31 KB
+[NO_EXTENSION]       Files:     1 | Lines:       23 | Size:     0.67 KB
+
+------------------------------------------------------------------------------------------------
+TABLE OF CONTENTS
+------------------------------------------------------------------------------------------------
+
+    1. Website\PlantProcess.Website\.dockerignore | Website Config / Asset | 16 lines | 0.31 KB
+    2. Website\PlantProcess.Website\.env.example | Website Config / Asset | 1 lines | 0.05 KB
+    3. Website\PlantProcess.Website\Dockerfile | Website Config / Asset | 23 lines | 0.67 KB
+    4. Website\PlantProcess.Website\index.html | Website Config / Asset | 19 lines | 0.67 KB
+    5. Website\PlantProcess.Website\nginx.conf | Website Config / Asset | 20 lines | 0.44 KB
+    6. Website\PlantProcess.Website\package.json | Website Config / Asset | 30 lines | 0.82 KB
+    7. Website\PlantProcess.Website\postcss.config.cjs | Website Config / Asset | 3 lines | 0.04 KB
+    8. Website\PlantProcess.Website\public\brand\plantprocess-iq-engineer-brief.html | Website Config / Asset | 171 lines | 4.74 KB
+    9. Website\PlantProcess.Website\public\brand\plantprocess-iq-logo.svg | Website Config / Asset | 51 lines | 2.12 KB
+   10. Website\PlantProcess.Website\public\brand\sou-icon.svg | Website Config / Asset | 50 lines | 1.7 KB
+   11. Website\PlantProcess.Website\public\brand\sou-logo-horizontal.svg | Website Config / Asset | 40 lines | 1.77 KB
+   12. Website\PlantProcess.Website\public\favicon.svg | Website Config / Asset | 50 lines | 1.7 KB
+   13. Website\PlantProcess.Website\scripts\validate-website-content.mjs | Website Config / Asset | 102 lines | 2.82 KB
+   14. Website\PlantProcess.Website\src\App.tsx | Website Source | 533 lines | 16.42 KB
+   15. Website\PlantProcess.Website\src\brand\plantProcessBrand.ts | Website Source | 61 lines | 2.16 KB
+   16. Website\PlantProcess.Website\src\brand\plantprocess-iq-architecture.svg | Website Source | 87 lines | 5.49 KB
+   17. Website\PlantProcess.Website\src\components\brand\sou-brand.css | Website Component | 165 lines | 3.32 KB
+   18. Website\PlantProcess.Website\src\components\brand\SOUBrand.tsx | Website Component | 40 lines | 0.97 KB
+   19. Website\PlantProcess.Website\src\components\BrandProofSection.tsx | Website Component | 60 lines | 1.77 KB
+   20. Website\PlantProcess.Website\src\components\proof\ConnectorHonestyBlock.tsx | Website Component | 39 lines | 1.24 KB
+   21. Website\PlantProcess.Website\src\components\proof\PositioningTruthBlock.tsx | Website Component | 30 lines | 0.98 KB
+   22. Website\PlantProcess.Website\src\components\proof\PricingLicenseMatrix.tsx | Website Component | 65 lines | 1.94 KB
+   23. Website\PlantProcess.Website\src\components\proof\ProductScreenshotShowcase.tsx | Website Component | 53 lines | 1.91 KB
+   24. Website\PlantProcess.Website\src\components\proof\RequestDemoForm.tsx | Website Component | 162 lines | 4.71 KB
+   25. Website\PlantProcess.Website\src\content\phase1WebsiteProof.ts | Website Source | 175 lines | 5.27 KB
+   26. Website\PlantProcess.Website\src\main.tsx | Website Source | 14 lines | 0.37 KB
+   27. Website\PlantProcess.Website\src\styles\global.css | Website Source | 818 lines | 13.63 KB
+   28. Website\PlantProcess.Website\src\styles\phase1-proof.css | Website Source | 332 lines | 6.51 KB
+   29. Website\PlantProcess.Website\src\vite-env.d.ts | Website Source | 10 lines | 0.23 KB
+   30. Website\PlantProcess.Website\tsconfig.app.json | Website Config / Asset | 18 lines | 0.42 KB
+   31. Website\PlantProcess.Website\tsconfig.json | Website Config / Asset | 7 lines | 0.12 KB
+   32. Website\PlantProcess.Website\tsconfig.node.json | Website Config / Asset | 13 lines | 0.26 KB
+   33. Website\PlantProcess.Website\vite.config.ts | Website Config / Asset | 14 lines | 0.24 KB
+
+------------------------------------------------------------------------------------------------
+INCLUDED FILE TREE
+------------------------------------------------------------------------------------------------
+
+ - Website\PlantProcess.Website\.dockerignore
+ - Website\PlantProcess.Website\.env.example
+ - Website\PlantProcess.Website\Dockerfile
+ - Website\PlantProcess.Website\index.html
+ - Website\PlantProcess.Website\nginx.conf
+ - Website\PlantProcess.Website\package.json
+ - Website\PlantProcess.Website\postcss.config.cjs
+ - Website\PlantProcess.Website\public\brand\plantprocess-iq-engineer-brief.html
+ - Website\PlantProcess.Website\public\brand\plantprocess-iq-logo.svg
+ - Website\PlantProcess.Website\public\brand\sou-icon.svg
+ - Website\PlantProcess.Website\public\brand\sou-logo-horizontal.svg
+ - Website\PlantProcess.Website\public\favicon.svg
+ - Website\PlantProcess.Website\scripts\validate-website-content.mjs
+ - Website\PlantProcess.Website\src\App.tsx
+ - Website\PlantProcess.Website\src\brand\plantProcessBrand.ts
+ - Website\PlantProcess.Website\src\brand\plantprocess-iq-architecture.svg
+ - Website\PlantProcess.Website\src\components\brand\sou-brand.css
+ - Website\PlantProcess.Website\src\components\brand\SOUBrand.tsx
+ - Website\PlantProcess.Website\src\components\BrandProofSection.tsx
+ - Website\PlantProcess.Website\src\components\proof\ConnectorHonestyBlock.tsx
+ - Website\PlantProcess.Website\src\components\proof\PositioningTruthBlock.tsx
+ - Website\PlantProcess.Website\src\components\proof\PricingLicenseMatrix.tsx
+ - Website\PlantProcess.Website\src\components\proof\ProductScreenshotShowcase.tsx
+ - Website\PlantProcess.Website\src\components\proof\RequestDemoForm.tsx
+ - Website\PlantProcess.Website\src\content\phase1WebsiteProof.ts
+ - Website\PlantProcess.Website\src\main.tsx
+ - Website\PlantProcess.Website\src\styles\global.css
+ - Website\PlantProcess.Website\src\styles\phase1-proof.css
+ - Website\PlantProcess.Website\src\vite-env.d.ts
+ - Website\PlantProcess.Website\tsconfig.app.json
+ - Website\PlantProcess.Website\tsconfig.json
+ - Website\PlantProcess.Website\tsconfig.node.json
+ - Website\PlantProcess.Website\vite.config.ts
+
+================================================================================================
+FULL FILE CONTENT
+================================================================================================
+
+[FILE_START]
+[METADATA: Path='Website\PlantProcess.Website\.dockerignore', Category='Website: PlantProcess.Website', Classification='Website Config / Asset', Lines=16, SizeKB=0.31, Modified='2026-05-19 15:44:31']
+
+@'
+# ============================================================
+# Website Docker ignore
+# ============================================================
+
+node_modules/
+dist/
+build/
+coverage/
+.vite/
+.cache/
+
+.env
+.env.*
+*.log
+'@ | Set-Content -Path Website\PlantProcess.Website\.dockerignore -Encoding ASCII
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Website\PlantProcess.Website\.env.example', Category='Website: PlantProcess.Website', Classification='Website Config / Asset', Lines=1, SizeKB=0.05, Modified='2026-05-19 14:26:36']
+
+VITE_WEBSITE_API_BASE_URL=http://localhost:5080
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Website\PlantProcess.Website\Dockerfile', Category='Website: PlantProcess.Website', Classification='Website Config / Asset', Lines=23, SizeKB=0.67, Modified='2026-05-19 15:03:14']
+
+FROM node:24-alpine AS build
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci
+
+COPY . .
+
+ARG VITE_WEBSITE_API_BASE_URL
+ENV VITE_WEBSITE_API_BASE_URL=$VITE_WEBSITE_API_BASE_URL
+
+RUN npm run build
+
+FROM nginx:1.27-alpine AS runtime
+
+COPY index.html /usr/share/nginx/html/index.html
+
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /app/dist /usr/share/nginx/html
+
+RUN printf 'server { listen 80; server_name _; root /usr/share/nginx/html; index index.html; location / { try_files $uri $uri/ /index.html; } location /health { access_log off; return 200 "plantprocess-website-ok\\n"; add_header Content-Type text/plain; } }' > /etc/nginx/conf.d/default.conf
+
+EXPOSE 80
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Website\PlantProcess.Website\index.html', Category='Website: PlantProcess.Website', Classification='Website Config / Asset', Lines=19, SizeKB=0.67, Modified='2026-05-20 09:23:57']
+
+@'
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="SOU delivers PlantProcess IQ, MES consulting and Yard Management solutions for manufacturing plants."
+    />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>SOU | PlantProcess IQ | Manufacturing Intelligence, MES & Yard Management</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+'@ | Set-Content -Path Website\PlantProcess.Website\index.html -Encoding UTF8
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Website\PlantProcess.Website\nginx.conf', Category='Website: PlantProcess.Website', Classification='Website Config / Asset', Lines=20, SizeKB=0.44, Modified='2026-05-19 14:26:36']
+
+server {
+    listen 80;
+    server_name _;
+
+    root /usr/share/nginx/html;
+    index index.html;
+
+    gzip on;
+    gzip_types text/plain text/css application/json application/javascript text/xml application/xml image/svg+xml;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    location /health {
+        access_log off;
+        return 200 "sou-plantprocess-website-ok\n";
+        add_header Content-Type text/plain;
+    }
+}
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Website\PlantProcess.Website\package.json', Category='Website: PlantProcess.Website', Classification='Website Config / Asset', Lines=30, SizeKB=0.82, Modified='2026-05-25 12:36:59']
+
+{
+  "name": "sou-plantprocess-website",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "check:ts": "tsc -b --verbose",
+    "lint": "node scripts/validate-website-content.mjs",
+    "test": "node scripts/validate-website-content.mjs",
+    "validate:content": "node scripts/validate-website-content.mjs",
+    "validate": "npm run build && npm run validate:content"
+  },
+  "dependencies": {
+    "lucide-react": "^1.14.0",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
+    "react-router-dom": "^7.15.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.12.3",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "typescript": "~6.0.2",
+    "vite": "^8.0.12"
+  }
+}
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Website\PlantProcess.Website\postcss.config.cjs', Category='Website: PlantProcess.Website', Classification='Website Config / Asset', Lines=3, SizeKB=0.04, Modified='2026-05-19 14:58:18']
+
+module.exports = {
+  plugins: {}
+};
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Website\PlantProcess.Website\public\brand\plantprocess-iq-engineer-brief.html', Category='Website: PlantProcess.Website', Classification='Website Config / Asset', Lines=171, SizeKB=4.74, Modified='2026-05-21 16:44:43']
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>PlantProcess IQ — Engineer Brief</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #020712;
+      --panel: #071a2d;
+      --text: #eaf7ff;
+      --muted: #91a9c5;
+      --cyan: #13d8ff;
+      --green: #2df7a3;
+      --amber: #ffb020;
+      font-family: Inter, Segoe UI, Arial, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: radial-gradient(circle at top left, rgba(19,216,255,.16), transparent 34%), var(--bg);
+      color: var(--text);
+    }
+
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 56px 28px;
+    }
+
+    header {
+      border-bottom: 1px solid rgba(19,216,255,.24);
+      padding-bottom: 28px;
+      margin-bottom: 28px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 46px;
+      letter-spacing: -0.04em;
+    }
+
+    h2 {
+      color: var(--cyan);
+      margin-top: 0;
+    }
+
+    p, li {
+      color: var(--muted);
+      line-height: 1.65;
+      font-size: 16px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .card {
+      border: 1px solid rgba(19,216,255,.2);
+      border-radius: 22px;
+      padding: 22px;
+      background: rgba(7,26,45,.72);
+    }
+
+    .pill {
+      display: inline-flex;
+      border-radius: 999px;
+      padding: 7px 11px;
+      color: #020712;
+      background: linear-gradient(135deg, var(--cyan), var(--green));
+      font-weight: 900;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .warning {
+      border-color: rgba(255,176,32,.34);
+      background: rgba(255,176,32,.08);
+    }
+
+    .warning h2 {
+      color: var(--amber);
+    }
+
+    footer {
+      margin-top: 30px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    @media print {
+      body { background: #fff; color: #111827; }
+      p, li, footer { color: #374151; }
+      .card { border-color: #d1d5db; background: #fff; }
+      h2 { color: #075985; }
+      .warning h2 { color: #92400e; }
+      .pill { color: #fff; background: #075985; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <span class="pill">Engineer Brief</span>
+      <h1>PlantProcess IQ</h1>
+      <p>Read-only manufacturing intelligence layer for process-to-quality investigation.</p>
+    </header>
+
+    <section class="grid">
+      <article class="card">
+        <h2>What it is</h2>
+        <p>
+          PlantProcess IQ connects plant data, creates a safe staging copy, maps customer-specific schemas into a generic canonical manufacturing model, and supports dashboards, data-quality checks, risk scoring, correlation, investigation, ML readiness, and Data Diagnostic reporting.
+        </p>
+      </article>
+
+      <article class="card">
+        <h2>What it is not</h2>
+        <ul>
+          <li>Not MES replacement.</li>
+          <li>Not SCADA replacement.</li>
+          <li>Not Level 2 / PLC control.</li>
+          <li>Not BI-only dashboarding.</li>
+          <li>Not steel-only.</li>
+        </ul>
+      </article>
+
+      <article class="card">
+        <h2>Core lifecycle</h2>
+        <ul>
+          <li>Connect source data.</li>
+          <li>Stage a read-only data copy.</li>
+          <li>Map schema into canonical entities.</li>
+          <li>Monitor import and analysis jobs.</li>
+          <li>Analyze quality, risk, correlation and genealogy.</li>
+          <li>Report findings and ML readiness.</li>
+        </ul>
+      </article>
+
+      <article class="card">
+        <h2>Current intelligence</h2>
+        <p>
+          Current intelligence is based on rule-based risk scoring, data-quality scanning, statistical correlation, suspected contributor ranking, and investigation workflows.
+        </p>
+      </article>
+
+      <article class="card warning">
+        <h2>ML honesty</h2>
+        <p>
+          No trained production ML model is active. ML training starts only after validated labeled historical data, genealogy coverage, feature vectors, and readiness gates are sufficient.
+        </p>
+      </article>
+
+      <article class="card warning">
+        <h2>Connector honesty</h2>
+        <p>
+          Only tested connectors should be marked available. CSV is safe for starter demos. PostgreSQL is available only when environment proof is green. SQL Server and Oracle remain planned until implementation and tests pass.
+        </p>
+      </article>
+    </section>
+
+    <footer>
+      PlantProcess IQ · SOU Industrial Intelligence · Düsseldorf, Germany · EU / MENA industrial focus
+    </footer>
+  </main>
+</body>
+</html>
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Website\PlantProcess.Website\public\brand\plantprocess-iq-logo.svg', Category='Website: PlantProcess.Website', Classification='Website Config / Asset', Lines=51, SizeKB=2.12, Modified='2026-05-20 09:31:14']
+
+<svg width="520" height="92" viewBox="0 0 520 92" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="PlantProcess IQ">
+  <defs>
+    <linearGradient id="ppiqAccent" x1="0" y1="0" x2="120" y2="92" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#00E0FF"/>
+      <stop offset="0.55" stop-color="#00D4FF"/>
+      <stop offset="1" stop-color="#0A84FF"/>
+    </linearGradient>
+
+    <filter id="ppiqGlow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="2.4" result="blur"/>
+      <feColorMatrix in="blur" type="matrix" values="0 0 0 0 0  0 0 0 0 .82  0 0 0 0 1  0 0 0 .58 0"/>
+      <feBlend in="SourceGraphic" mode="screen"/>
+    </filter>
+  </defs>
+
+  <!-- Generic process/data-network mark: non-steel, multi-industry -->
+  <g filter="url(#ppiqGlow)">
+    <circle cx="32" cy="46" r="8" fill="url(#ppiqAccent)"/>
+    <circle cx="68" cy="24" r="7" fill="url(#ppiqAccent)"/>
+    <circle cx="68" cy="68" r="7" fill="url(#ppiqAccent)"/>
+    <circle cx="106" cy="46" r="9" fill="url(#ppiqAccent)"/>
+
+    <path d="M40 42L60 29" stroke="url(#ppiqAccent)" stroke-width="4" stroke-linecap="round"/>
+    <path d="M40 50L60 63" stroke="url(#ppiqAccent)" stroke-width="4" stroke-linecap="round"/>
+    <path d="M75 28L98 42" stroke="url(#ppiqAccent)" stroke-width="4" stroke-linecap="round"/>
+    <path d="M75 64L98 50" stroke="url(#ppiqAccent)" stroke-width="4" stroke-linecap="round"/>
+  </g>
+
+  <line x1="136" y1="18" x2="136" y2="74" stroke="#8EA7C1" stroke-opacity=".38"/>
+
+  <text x="162" y="48"
+        font-family="Inter, Sora, Segoe UI, Arial, sans-serif"
+        font-size="32"
+        font-weight="800"
+        letter-spacing=".5"
+        fill="#EAF6FF">PlantProcess</text>
+
+  <text x="388" y="48"
+        font-family="Inter, Sora, Segoe UI, Arial, sans-serif"
+        font-size="36"
+        font-weight="900"
+        letter-spacing="1.5"
+        fill="#00D4FF">IQ</text>
+
+  <text x="164" y="70"
+        font-family="Inter, Segoe UI, Arial, sans-serif"
+        font-size="11"
+        font-weight="800"
+        letter-spacing="4.5"
+        fill="#8EA7C1">PROCESS-TO-QUALITY INTELLIGENCE</text>
+</svg>
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Website\PlantProcess.Website\public\brand\sou-icon.svg', Category='Website: PlantProcess.Website', Classification='Website Config / Asset', Lines=50, SizeKB=1.7, Modified='2026-05-20 09:19:52']
+
+<svg width="96" height="96" viewBox="0 0 96 96" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="SOU">
+  <defs>
+    <linearGradient id="souCyanBlue" x1="14" y1="10" x2="82" y2="88" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#00E0FF"/>
+      <stop offset="0.45" stop-color="#00D4FF"/>
+      <stop offset="1" stop-color="#0A84FF"/>
+    </linearGradient>
+    <filter id="souGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="2.6" result="blur"/>
+      <feColorMatrix in="blur" type="matrix" values="0 0 0 0 0  0 0 0 0 0.82  0 0 0 0 1  0 0 0 .65 0"/>
+      <feBlend in="SourceGraphic" mode="screen"/>
+    </filter>
+  </defs>
+
+  <rect x="5" y="5" width="86" height="86" rx="24" fill="#050B18"/>
+  <rect x="6" y="6" width="84" height="84" rx="23" stroke="#00D4FF" stroke-opacity=".18"/>
+
+  <g filter="url(#souGlow)">
+    <!-- Industrial S/U monogram inspired by selected V1 direction -->
+    <path
+      d="M67 22H35C24.5 22 16 30.5 16 41C16 51.5 24.5 60 35 60H51"
+      stroke="url(#souCyanBlue)"
+      stroke-width="11"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <path
+      d="M29 75H58C69.6 75 79 65.6 79 54V37"
+      stroke="url(#souCyanBlue)"
+      stroke-width="11"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <path
+      d="M29 39H66"
+      stroke="url(#souCyanBlue)"
+      stroke-width="11"
+      stroke-linecap="round"
+    />
+    <path
+      d="M34 58C34 48.6 41.6 41 51 41H67"
+      stroke="#071326"
+      stroke-width="6"
+      stroke-linecap="round"
+      opacity=".95"
+    />
+    <circle cx="66" cy="58" r="3.2" fill="#00D4FF"/>
+    <circle cx="30" cy="75" r="3.2" fill="#0A84FF"/>
+  </g>
+</svg>
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Website\PlantProcess.Website\public\brand\sou-logo-horizontal.svg', Category='Website: PlantProcess.Website', Classification='Website Config / Asset', Lines=40, SizeKB=1.77, Modified='2026-05-20 09:19:52']
+
+<svg width="420" height="110" viewBox="0 0 420 110" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="SOU Manufacturing Intelligence">
+  <defs>
+    <linearGradient id="souCyanBlue" x1="8" y1="8" x2="92" y2="100" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#00E0FF"/>
+      <stop offset="0.5" stop-color="#00D4FF"/>
+      <stop offset="1" stop-color="#0A84FF"/>
+    </linearGradient>
+    <filter id="souGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="2.7" result="blur"/>
+      <feColorMatrix in="blur" type="matrix" values="0 0 0 0 0  0 0 0 0 .82  0 0 0 0 1  0 0 0 .6 0"/>
+      <feBlend in="SourceGraphic" mode="screen"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#souGlow)">
+    <path d="M75 22H38C26.4 22 17 31.4 17 43C17 54.6 26.4 64 38 64H55"
+      stroke="url(#souCyanBlue)" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M31 84H63C75.2 84 85 74.2 85 62V39"
+      stroke="url(#souCyanBlue)" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M31 42H73" stroke="url(#souCyanBlue)" stroke-width="12" stroke-linecap="round"/>
+    <path d="M37 62C37 51.5 45.5 43 56 43H73"
+      stroke="#071326" stroke-width="6.5" stroke-linecap="round" opacity=".95"/>
+  </g>
+
+  <line x1="116" y1="20" x2="116" y2="90" stroke="#8EA7C1" stroke-opacity=".45"/>
+
+  <text x="145" y="58"
+        font-family="Sora, Inter, Segoe UI, Arial, sans-serif"
+        font-size="48"
+        font-weight="700"
+        letter-spacing="8"
+        fill="#EAF6FF">SOU</text>
+
+  <text x="148" y="84"
+        font-family="Inter, Segoe UI, Arial, sans-serif"
+        font-size="13"
+        font-weight="700"
+        letter-spacing="7"
+        fill="#00D4FF">MANUFACTURING INTELLIGENCE</text>
+</svg>
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Website\PlantProcess.Website\public\favicon.svg', Category='Website: PlantProcess.Website', Classification='Website Config / Asset', Lines=50, SizeKB=1.7, Modified='2026-05-20 09:19:52']
+
+<svg width="96" height="96" viewBox="0 0 96 96" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="SOU">
+  <defs>
+    <linearGradient id="souCyanBlue" x1="14" y1="10" x2="82" y2="88" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#00E0FF"/>
+      <stop offset="0.45" stop-color="#00D4FF"/>
+      <stop offset="1" stop-color="#0A84FF"/>
+    </linearGradient>
+    <filter id="souGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="2.6" result="blur"/>
+      <feColorMatrix in="blur" type="matrix" values="0 0 0 0 0  0 0 0 0 0.82  0 0 0 0 1  0 0 0 .65 0"/>
+      <feBlend in="SourceGraphic" mode="screen"/>
+    </filter>
+  </defs>
+
+  <rect x="5" y="5" width="86" height="86" rx="24" fill="#050B18"/>
+  <rect x="6" y="6" width="84" height="84" rx="23" stroke="#00D4FF" stroke-opacity=".18"/>
+
+  <g filter="url(#souGlow)">
+    <!-- Industrial S/U monogram inspired by selected V1 direction -->
+    <path
+      d="M67 22H35C24.5 22 16 30.5 16 41C16 51.5 24.5 60 35 60H51"
+      stroke="url(#souCyanBlue)"
+      stroke-width="11"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <path
+      d="M29 75H58C69.6 75 79 65.6 79 54V37"
+      stroke="url(#souCyanBlue)"
+      stroke-width="11"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <path
+      d="M29 39H66"
+      stroke="url(#souCyanBlue)"
+      stroke-width="11"
+      stroke-linecap="round"
+    />
+    <path
+      d="M34 58C34 48.6 41.6 41 51 41H67"
+      stroke="#071326"
+      stroke-width="6"
+      stroke-linecap="round"
+      opacity=".95"
+    />
+    <circle cx="66" cy="58" r="3.2" fill="#00D4FF"/>
+    <circle cx="30" cy="75" r="3.2" fill="#0A84FF"/>
+  </g>
+</svg>
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Website\PlantProcess.Website\scripts\validate-website-content.mjs', Category='Website: PlantProcess.Website', Classification='Website Config / Asset', Lines=102, SizeKB=2.82, Modified='2026-05-25 12:35:45']
+
+import fs from "node:fs";
+import path from "node:path";
+
+const root = process.cwd();
+
+const requiredFiles = [
+  "src/App.tsx",
+  "src/main.tsx",
+  "src/content/phase1WebsiteProof.ts",
+  "src/components/proof/ProductScreenshotShowcase.tsx",
+  "src/components/proof/PricingLicenseMatrix.tsx",
+  "src/components/proof/PositioningTruthBlock.tsx",
+  "src/components/proof/ConnectorHonestyBlock.tsx",
+  "src/components/proof/RequestDemoForm.tsx",
+  "src/styles/phase1-proof.css",
+];
+
+const requiredText = [
+  {
+    file: "src/components/proof/ProductScreenshotShowcase.tsx",
+    pattern: "/screenshots/product-dashboard.png",
+    message: "PPIQ-WEB-002 product screenshot path exists",
+  },
+  {
+    file: "src/components/proof/PricingLicenseMatrix.tsx",
+    pattern: "Pricing and license logic",
+    message: "PPIQ-WEB-004 pricing/license section exists",
+  },
+  {
+    file: "src/components/proof/PositioningTruthBlock.tsx",
+    pattern: "Not MES. Not SCADA. Not Level 2. Not BI-only.",
+    message: "PPIQ-WEB-005 positioning truth headline exists",
+  },
+  {
+    file: "src/components/proof/ConnectorHonestyBlock.tsx",
+    pattern: "Connector status honesty",
+    message: "PPIQ-WEB-006 connector honesty block exists",
+  },
+  {
+    file: "src/components/proof/RequestDemoForm.tsx",
+    pattern: "mailto:",
+    message: "PPIQ-WEB-008 mailto delivery path exists",
+  },
+  {
+    file: "src/content/phase1WebsiteProof.ts",
+    pattern: "implemented-certification-pending",
+    message: "Connector truth differentiates implemented vs certified",
+  },
+  {
+    file: "src/content/phase1WebsiteProof.ts",
+    pattern: "enterprise",
+    message: "Enterprise license tier exists",
+  },
+];
+
+function read(relativePath) {
+  return fs.readFileSync(path.join(root, relativePath), "utf8");
+}
+
+function assertFile(relativePath) {
+  const fullPath = path.join(root, relativePath);
+
+  if (!fs.existsSync(fullPath)) {
+    throw new Error(`Missing required file: ${relativePath}`);
+  }
+}
+
+function assertContains(relativePath, pattern, message) {
+  const content = read(relativePath);
+
+  if (!content.includes(pattern)) {
+    throw new Error(`${message}. Missing pattern "${pattern}" in ${relativePath}`);
+  }
+
+  console.log(`✓ ${message}`);
+}
+
+for (const file of requiredFiles) {
+  assertFile(file);
+}
+
+for (const item of requiredText) {
+  assertContains(item.file, item.pattern, item.message);
+}
+
+const app = read("src/App.tsx");
+
+for (const componentName of [
+  "ProductScreenshotShowcase",
+  "PricingLicenseMatrix",
+  "PositioningTruthBlock",
+  "ConnectorHonestyBlock",
+  "RequestDemoForm",
+]) {
+  if (!app.includes(componentName)) {
+    throw new Error(`App.tsx does not render ${componentName}`);
+  }
+
+  console.log(`✓ App renders ${componentName}`);
+}
+
+console.log("Website content validation passed.");
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Website\PlantProcess.Website\src\App.tsx', Category='Website: PlantProcess.Website', Classification='Website Source', Lines=533, SizeKB=16.42, Modified='2026-05-25 12:39:53']
+
+import { NavLink, Route, Routes } from "react-router-dom";
+import {
+  BadgeEuro,
+  BarChart3,
+  BrainCircuit,
+  CalendarCheck,
+  CheckCircle2,
+  DatabaseZap,
+  Factory,
+  FileText,
+  GitBranch,
+  Mail,
+  MapPin,
+  MonitorCheck,
+  Network,
+  ShieldCheck,
+  Workflow,
+} from "lucide-react";
+
+import { BrandProofSection } from "./components/BrandProofSection";
+import ProductScreenshotShowcase from "./components/proof/ProductScreenshotShowcase";
+import PricingLicenseMatrix from "./components/proof/PricingLicenseMatrix";
+import PositioningTruthBlock from "./components/proof/PositioningTruthBlock";
+import ConnectorHonestyBlock from "./components/proof/ConnectorHonestyBlock";
+import RequestDemoForm from "./components/proof/RequestDemoForm";
+
+const demoMailto =
+  "mailto:info@plantprocessiq.com?subject=PlantProcess%20IQ%20Demo%20Request&body=Hello%20Karim%2C%0A%0AI%20would%20like%20to%20book%20a%2020-minute%20PlantProcess%20IQ%20demo.%0A%0ACompany%3A%0APlant%20type%3A%0AData%20sources%3A%0AMain%20quality%20problem%3A%0APreferred%20time%3A%0A";
+
+const screenshotCards = [
+  {
+    title: "Command dashboard",
+    image: "/screenshots/plantprocess-dashboard.png",
+    description: "Cross-filtered quality, risk, and process intelligence.",
+  },
+  {
+    title: "Admin DB configuration",
+    image: "/screenshots/admin-db-configuration.png",
+    description: "Source links, import cycles, and staging/dump visibility.",
+  },
+  {
+    title: "Schema mapping workspace",
+    image: "/screenshots/schema-mapping.png",
+    description: "Customer tables mapped into the generic canonical model.",
+  },
+  {
+    title: "Jobs monitor",
+    image: "/screenshots/jobs-monitor.png",
+    description: "Source snapshot, canonical import, quality, risk, and ML jobs.",
+  },
+  {
+    title: "ML readiness workspace",
+    image: "/screenshots/ml-readiness.png",
+    description: "Honest readiness gates before real model training starts.",
+  },
+  {
+    title: "Investigation report",
+    image: "/screenshots/investigation-report.png",
+    description: "Data Diagnostic output for customer decision-making.",
+  },
+];
+
+const lifecycleSteps = [
+  ["Connect", "Configure file and database source connectors honestly."],
+  ["Stage", "Copy raw source-shaped data into a safe staging/dump layer."],
+  ["Map", "Use schema views and mapping rules to fit the generic canonical model."],
+  ["Monitor", "Track jobs, refresh cycles, failures, duration, and next run."],
+  ["Analyze", "Use dashboards, quality, risk, correlation, and investigation workflows."],
+  ["Report", "Export a customer-grade Data Diagnostic report with limitations stated clearly."],
+];
+
+function Layout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="site-shell">
+      <header className="site-header">
+        <NavLink to="/" className="brand-link">
+          <span className="sou-mark">
+            <img src="/brand/sou-icon.svg" alt="SOU" width={38} height={38} />
+          </span>
+          <span className="brand-text">
+            PlantProcess <strong>IQ</strong>
+          </span>
+        </NavLink>
+
+        <nav className="nav-links">
+          <NavLink to="/">Home</NavLink>
+          <NavLink to="/product">Product</NavLink>
+          <NavLink to="/pricing">Pricing</NavLink>
+          <NavLink to="/security">Security</NavLink>
+          <NavLink to="/contact">Contact</NavLink>
+        </nav>
+
+        <a className="header-cta" href={demoMailto}>
+          Request founder demo
+        </a>
+      </header>
+
+      {children}
+
+      <footer className="site-footer">
+        <div>
+          <strong>PlantProcess IQ</strong>
+          <span>Process-to-quality intelligence for manufacturing plants.</span>
+        </div>
+        <div>
+          <span>Düsseldorf, Germany</span>
+          <span>EU / MENA industrial focus</span>
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+function HomePage() {
+  return (
+    <Layout>
+      <section className="hero-section">
+        <div className="hero-copy">
+          <div className="status-pill">
+            <Factory size={16} />
+            Generic manufacturing intelligence layer
+          </div>
+
+          <h1>
+            Connect plant data. Understand your process.
+            <span> Act with evidence.</span>
+          </h1>
+
+          <p>
+            PlantProcess IQ is a read-only intelligence layer for manufacturing
+            plants. It connects plant data, maps it into a generic
+            process-to-quality model, detects data readiness gaps, highlights
+            suspected contributors, and prepares customer-grade Data Diagnostic
+            reports.
+          </p>
+
+          <div className="hero-actions">
+            <a className="button button-primary" href={demoMailto}>
+              <CalendarCheck size={18} />
+              Request 20-minute demo
+            </a>
+
+            <a className="button button-secondary" href="#how-it-works">
+              <Workflow size={18} />
+              See how it works
+            </a>
+          </div>
+        </div>
+
+        <div className="hero-real-screenshot">
+          <div className="screenshot-browser-bar">
+            <span />
+            <span />
+            <span />
+            <strong>PlantProcess IQ Command Center</strong>
+          </div>
+
+          <img
+            src="/screenshots/plantprocess-dashboard.png"
+            alt="PlantProcess IQ dashboard screenshot"
+            onError={(event) => {
+              event.currentTarget.style.display = "none";
+            }}
+          />
+
+          <div className="screenshot-fallback">
+            <MonitorCheck size={42} />
+            <strong>Replace with real deployed app screenshot</strong>
+            <p>
+              Save your real screenshot here:
+              <br />
+              <code>/public/screenshots/plantprocess-dashboard.png</code>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="website-section" id="how-it-works">
+        <div className="section-heading">
+          <div>
+            <div className="eyebrow">
+              <Workflow size={15} />
+              How it works
+            </div>
+            <h2>One lifecycle: connect → stage → map → monitor → analyze → report.</h2>
+          </div>
+        </div>
+
+        <div className="lifecycle-flow">
+          {lifecycleSteps.map(([title, description], index) => (
+            <article className="flow-card" key={title}>
+              <span>{index + 1}</span>
+              <h3>{title}</h3>
+              <p>{description}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <ProductScreenshotShowcase />
+
+      <section className="website-section screenshot-section">
+        <div className="section-heading">
+          <div>
+            <div className="eyebrow">
+              <MonitorCheck size={15} />
+              Screenshot gallery
+            </div>
+            <h2>Proof screens for engineers before they book a demo.</h2>
+          </div>
+        </div>
+
+        <div className="screenshot-gallery-grid">
+          {screenshotCards.map((card) => (
+            <article className="screenshot-card" key={card.title}>
+              <img
+                src={card.image}
+                alt={card.title}
+                onError={(event) => {
+                  event.currentTarget.style.display = "none";
+                }}
+              />
+
+              <div className="screenshot-card-fallback">
+                <MonitorCheck size={22} />
+                <strong>{card.title}</strong>
+                <span>{card.description}</span>
+                <code>{card.image}</code>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="website-section" id="demo-lifecycle">
+        <div className="section-heading">
+          <div>
+            <div className="eyebrow">
+              <GitBranch size={15} />
+              Demo lifecycle
+            </div>
+            <h2>The demo follows the real product flow, not a fake isolated page.</h2>
+          </div>
+        </div>
+
+        <div className="proof-grid">
+          <article className="proof-card">
+            <DatabaseZap size={24} />
+            <h3>1. Configure source</h3>
+            <p>Show read-only source setup, provider honesty, and refresh cycle.</p>
+          </article>
+
+          <article className="proof-card">
+            <Network size={24} />
+            <h3>2. Map schema</h3>
+            <p>Show how plant-specific tables become generic canonical data.</p>
+          </article>
+
+          <article className="proof-card">
+            <BarChart3 size={24} />
+            <h3>3. Analyze</h3>
+            <p>Show dashboards, risk, correlation, investigation, and job status.</p>
+          </article>
+
+          <article className="proof-card">
+            <FileText size={24} />
+            <h3>4. Report</h3>
+            <p>Close with a Data Diagnostic report and ML readiness status.</p>
+          </article>
+        </div>
+      </section>
+
+      <PositioningTruthBlock />
+      <ConnectorHonestyBlock />
+      <PricingLicenseMatrix />
+      <DataDiagnosticSection />
+      <MlHonestySection />
+      <BrandProofSection />
+      <RequestDemoForm />
+    </Layout>
+  );
+}
+
+function ProductPage() {
+  return (
+    <Layout>
+      <section className="page-hero">
+        <div className="eyebrow">
+          <Factory size={15} />
+          Product
+        </div>
+        <h1>Generic process-to-quality intelligence for plants.</h1>
+        <p>
+          PlantProcess IQ is designed for different database types, different
+          inspection devices, different process structures, and different KPIs —
+          without hard-coding one plant or one industry.
+        </p>
+      </section>
+
+      <section className="website-section">
+        <div className="feature-grid">
+          {[
+            [
+              "Generic source layer",
+              "CSV and Excel are starter-friendly; database connectors are shown honestly according to certification status.",
+            ],
+            [
+              "Staging / dump copy",
+              "Keeps a latest safe copy of customer source-shaped data before canonical mapping.",
+            ],
+            [
+              "Schema mapping",
+              "Maps plant-specific tables into a generic manufacturing data model.",
+            ],
+            [
+              "Jobs monitor",
+              "Shows import, refresh, mapping, quality, risk, correlation, and readiness jobs.",
+            ],
+            [
+              "Dashboard builder",
+              "Creates pages and widgets from configured canonical data.",
+            ],
+            [
+              "ML readiness",
+              "Prepares labels and feature vectors before real training starts.",
+            ],
+          ].map(([title, text]) => (
+            <article className="feature-card" key={title}>
+              <CheckCircle2 size={22} />
+              <h3>{title}</h3>
+              <p>{text}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <ProductScreenshotShowcase />
+      <PositioningTruthBlock />
+      <ConnectorHonestyBlock />
+      <BrandProofSection />
+    </Layout>
+  );
+}
+
+function PricingPage() {
+  return (
+    <Layout>
+      <section className="page-hero">
+        <div className="eyebrow">
+          <BadgeEuro size={15} />
+          License architecture
+        </div>
+        <h1>Start with a diagnostic. Grow into a licensed platform.</h1>
+        <p>
+          Pricing is staged to match product maturity: data diagnostic first,
+          pilot next, then annual license after workflow proof.
+        </p>
+      </section>
+
+      <PricingLicenseMatrix />
+
+      <p className="pricing-note">
+        Pricing labels are demo-stage positioning. Final pilot/SOW pricing
+        depends on scope, deployment model, connectors, support, and data volume.
+      </p>
+
+      <DataDiagnosticSection />
+      <RequestDemoForm />
+    </Layout>
+  );
+}
+
+function SecurityPage() {
+  return (
+    <Layout>
+      <section className="page-hero">
+        <div className="eyebrow">
+          <ShieldCheck size={15} />
+          Security and data handling
+        </div>
+        <h1>Read-only by design. No plant control. No write-back.</h1>
+        <p>
+          PlantProcess IQ is positioned as a safe evidence layer. It reads data,
+          stages it, maps it, analyzes it, and reports findings without replacing
+          operational systems.
+        </p>
+      </section>
+
+      <section className="website-section">
+        <div className="proof-grid">
+          <article className="proof-card">
+            <ShieldCheck size={24} />
+            <h3>Read-only source contract</h3>
+            <p>Source links should be configured as read-only wherever possible.</p>
+          </article>
+
+          <article className="proof-card">
+            <DatabaseZap size={24} />
+            <h3>Staging before canonical</h3>
+            <p>Raw source-shaped data lands in staging before canonical mapping.</p>
+          </article>
+
+          <article className="proof-card">
+            <FileText size={24} />
+            <h3>Audit-friendly reporting</h3>
+            <p>Reports include data readiness, evidence, and limitation statements.</p>
+          </article>
+        </div>
+      </section>
+
+      <PositioningTruthBlock />
+      <ConnectorHonestyBlock />
+    </Layout>
+  );
+}
+
+function ContactPage() {
+  return (
+    <Layout>
+      <section className="page-hero">
+        <div className="eyebrow">
+          <Mail size={15} />
+          Contact
+        </div>
+        <h1>Book a founder-led PlantProcess IQ walkthrough.</h1>
+        <p>
+          Send a short note with your plant type, quality problem, data sources,
+          and preferred time.
+        </p>
+      </section>
+
+      <section className="website-section contact-grid">
+        <article className="contact-card">
+          <Mail size={24} />
+          <h3>Email</h3>
+          <a href={demoMailto}>info@plantprocessiq.com</a>
+        </article>
+
+        <article className="contact-card">
+          <MapPin size={24} />
+          <h3>Location</h3>
+          <p>Düsseldorf, Germany — EU / MENA industrial focus.</p>
+        </article>
+
+        <article className="contact-card">
+          <CalendarCheck size={24} />
+          <h3>Demo request</h3>
+          <a className="button button-primary" href={demoMailto}>
+            Open email request
+          </a>
+        </article>
+      </section>
+
+      <RequestDemoForm />
+    </Layout>
+  );
+}
+
+function DataDiagnosticSection() {
+  return (
+    <section className="website-section diagnostic-section">
+      <div>
+        <div className="eyebrow">
+          <FileText size={15} />
+          Data Diagnostic offer
+        </div>
+
+        <h2>The first realistic paid offer before pilot/license.</h2>
+
+        <p>
+          A short paid diagnostic can validate data availability, source
+          structure, mapping effort, quality gaps, risk/correlation potential,
+          and ML readiness before committing to a larger pilot.
+        </p>
+      </div>
+
+      <div className="diagnostic-card">
+        <strong>Typical deliverable</strong>
+        <ul>
+          <li>Source and connector inventory</li>
+          <li>Schema mapping coverage</li>
+          <li>Data quality findings</li>
+          <li>Risk/correlation evidence</li>
+          <li>ML readiness score</li>
+          <li>Recommended pilot scope</li>
+        </ul>
+      </div>
+    </section>
+  );
+}
+
+function MlHonestySection() {
+  return (
+    <section className="website-section ml-truth-section">
+      <div>
+        <div className="eyebrow">
+          <BrainCircuit size={15} />
+          ML preview honesty
+        </div>
+
+        <h2>ML workspace is readiness-first, not a production ML claim.</h2>
+
+        <p>
+          Today the product uses rule-based risk scoring, correlation analysis,
+          and suspected contributor ranking. ML training starts only after enough
+          validated labeled historical quality data exists.
+        </p>
+      </div>
+
+      <div className="ml-truth-card">
+        <BrainCircuit size={30} />
+        <strong>No trained production model active</strong>
+        <span>No AI prediction claim. No guaranteed root cause claim.</span>
+      </div>
+    </section>
+  );
+}
+
+export function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<HomePage />} />
+      <Route path="/product" element={<ProductPage />} />
+      <Route path="/services" element={<ProductPage />} />
+      <Route path="/pricing" element={<PricingPage />} />
+      <Route path="/security" element={<SecurityPage />} />
+      <Route path="/about" element={<ProductPage />} />
+      <Route path="/contact" element={<ContactPage />} />
+    </Routes>
+  );
+}
+
+export default App;
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Website\PlantProcess.Website\src\brand\plantProcessBrand.ts', Category='Website: PlantProcess.Website', Classification='Website Source', Lines=61, SizeKB=2.16, Modified='2026-05-21 16:43:21']
+
+export const plantProcessBrand = {
+  productName: "PlantProcess IQ",
+  companyName: "SOU Industrial Intelligence",
+  founderLocation: "Düsseldorf, Germany",
+  marketFocus: "EU / MENA industrial plants",
+  tagline: "Connect plant data. Understand your process. Act with evidence.",
+  shortPositioning:
+    "A read-only manufacturing intelligence layer for process-to-quality investigation.",
+  longPositioning:
+    "PlantProcess IQ connects plant data, creates a safe staging copy, maps customer-specific schemas into a generic canonical model, and supports dashboards, risk scoring, correlation, investigation, ML readiness, and Data Diagnostic reporting.",
+  category:
+    "Generic manufacturing quality-intelligence and process-to-quality investigation platform",
+  notClaims: [
+    "Not MES",
+    "Not SCADA",
+    "Not Level 2 replacement",
+    "Not PLC control",
+    "Not BI-only",
+    "Not steel-only",
+  ],
+  approvedLanguage: [
+    "Rule-based risk scoring",
+    "Statistical correlation",
+    "Suspected contributor ranking",
+    "Evidence-based investigation",
+    "ML readiness",
+    "Data Diagnostic",
+    "Read-only intelligence layer",
+    "Generic manufacturing canonical model",
+  ],
+  forbiddenLanguage: [
+    "Guaranteed root cause",
+    "AI prediction",
+    "Production-ready AI",
+    "Live Oracle connector today",
+    "Live MSSQL connector today",
+    "MES replacement",
+    "SCADA replacement",
+    "L2 replacement",
+  ],
+  proofAssets: [
+    {
+      title: "Engineer brief",
+      href: "/brand/plantprocess-iq-engineer-brief.html",
+      description:
+        "Technical one-page brief explaining product scope, architecture, non-goals, and demo lifecycle.",
+    },
+    {
+      title: "Architecture diagram",
+      href: "/brand/plantprocess-iq-architecture.svg",
+      description:
+        "Read-only source → staging → canonical model → analytics → report architecture.",
+    },
+    {
+      title: "Screenshot gallery",
+      href: "/#screenshots",
+      description:
+        "Screenshots for dashboard, admin configuration, schema mapping, jobs monitor, ML readiness, and report preview.",
+    },
+  ],
+} as const;
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Website\PlantProcess.Website\src\brand\plantprocess-iq-architecture.svg', Category='Website: PlantProcess.Website', Classification='Website Source', Lines=87, SizeKB=5.49, Modified='2026-05-21 16:44:08']
+
+<svg width="1440" height="860" viewBox="0 0 1440 860" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1440" height="860" fill="#020712"/>
+  <defs>
+    <linearGradient id="panel" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#071A2D"/>
+      <stop offset="100%" stop-color="#04101F"/>
+    </linearGradient>
+    <linearGradient id="cyan" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#13D8FF"/>
+      <stop offset="100%" stop-color="#2DF7A3"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <text x="70" y="82" fill="#EAF7FF" font-family="Inter, Segoe UI, Arial" font-size="42" font-weight="800">
+    PlantProcess IQ — Read-only Manufacturing Intelligence Architecture
+  </text>
+  <text x="70" y="122" fill="#91A9C5" font-family="Inter, Segoe UI, Arial" font-size="20">
+    Connect → Stage → Map → Monitor → Analyze → Report. Not MES. Not SCADA. Not L2. Not BI-only.
+  </text>
+
+  <g transform="translate(70 190)">
+    <rect width="230" height="150" rx="24" fill="url(#panel)" stroke="#13D8FF" stroke-opacity="0.35"/>
+    <text x="28" y="44" fill="#13D8FF" font-family="Inter, Segoe UI, Arial" font-size="16" font-weight="800">SOURCE SYSTEMS</text>
+    <text x="28" y="82" fill="#EAF7FF" font-family="Inter, Segoe UI, Arial" font-size="23" font-weight="800">Plant Data</text>
+    <text x="28" y="116" fill="#91A9C5" font-family="Inter, Segoe UI, Arial" font-size="15">MES / L2 / QMS / DB</text>
+    <text x="28" y="140" fill="#91A9C5" font-family="Inter, Segoe UI, Arial" font-size="15">CSV / Excel / PostgreSQL</text>
+  </g>
+
+  <g transform="translate(365 190)">
+    <rect width="230" height="150" rx="24" fill="url(#panel)" stroke="#13D8FF" stroke-opacity="0.35"/>
+    <text x="28" y="44" fill="#13D8FF" font-family="Inter, Segoe UI, Arial" font-size="16" font-weight="800">STAGING COPY</text>
+    <text x="28" y="82" fill="#EAF7FF" font-family="Inter, Segoe UI, Arial" font-size="23" font-weight="800">Safe Dump</text>
+    <text x="28" y="116" fill="#91A9C5" font-family="Inter, Segoe UI, Arial" font-size="15">Read-only import</text>
+    <text x="28" y="140" fill="#91A9C5" font-family="Inter, Segoe UI, Arial" font-size="15">No production write-back</text>
+  </g>
+
+  <g transform="translate(660 190)">
+    <rect width="230" height="150" rx="24" fill="url(#panel)" stroke="#13D8FF" stroke-opacity="0.35"/>
+    <text x="28" y="44" fill="#13D8FF" font-family="Inter, Segoe UI, Arial" font-size="16" font-weight="800">SCHEMA MAPPING</text>
+    <text x="28" y="82" fill="#EAF7FF" font-family="Inter, Segoe UI, Arial" font-size="23" font-weight="800">Canonical Model</text>
+    <text x="28" y="116" fill="#91A9C5" font-family="Inter, Segoe UI, Arial" font-size="15">Material / Process</text>
+    <text x="28" y="140" fill="#91A9C5" font-family="Inter, Segoe UI, Arial" font-size="15">Quality / Genealogy</text>
+  </g>
+
+  <g transform="translate(955 190)">
+    <rect width="230" height="150" rx="24" fill="url(#panel)" stroke="#13D8FF" stroke-opacity="0.35"/>
+    <text x="28" y="44" fill="#13D8FF" font-family="Inter, Segoe UI, Arial" font-size="16" font-weight="800">ANALYTICS</text>
+    <text x="28" y="82" fill="#EAF7FF" font-family="Inter, Segoe UI, Arial" font-size="23" font-weight="800">Investigation</text>
+    <text x="28" y="116" fill="#91A9C5" font-family="Inter, Segoe UI, Arial" font-size="15">Risk / correlation</text>
+    <text x="28" y="140" fill="#91A9C5" font-family="Inter, Segoe UI, Arial" font-size="15">ML readiness</text>
+  </g>
+
+  <g transform="translate(1250 190)">
+    <rect width="120" height="150" rx="24" fill="url(#cyan)" filter="url(#glow)"/>
+    <text x="28" y="58" fill="#020712" font-family="Inter, Segoe UI, Arial" font-size="17" font-weight="900">REPORT</text>
+    <text x="28" y="94" fill="#020712" font-family="Inter, Segoe UI, Arial" font-size="15" font-weight="700">Data</text>
+    <text x="28" y="116" fill="#020712" font-family="Inter, Segoe UI, Arial" font-size="15" font-weight="700">Diagnostic</text>
+  </g>
+
+  <path d="M305 265H355" stroke="#13D8FF" stroke-width="4" stroke-linecap="round"/>
+  <path d="M600 265H650" stroke="#13D8FF" stroke-width="4" stroke-linecap="round"/>
+  <path d="M895 265H945" stroke="#13D8FF" stroke-width="4" stroke-linecap="round"/>
+  <path d="M1190 265H1240" stroke="#13D8FF" stroke-width="4" stroke-linecap="round"/>
+
+  <g transform="translate(110 460)">
+    <rect width="1220" height="250" rx="30" fill="#071A2D" fill-opacity="0.66" stroke="#2DF7A3" stroke-opacity="0.28"/>
+    <text x="40" y="58" fill="#2DF7A3" font-family="Inter, Segoe UI, Arial" font-size="20" font-weight="900">
+      Brand Safety Rules
+    </text>
+    <text x="40" y="104" fill="#EAF7FF" font-family="Inter, Segoe UI, Arial" font-size="24" font-weight="800">
+      Use evidence language: rule-based risk, correlation, suspected contributors, ML readiness.
+    </text>
+    <text x="40" y="150" fill="#91A9C5" font-family="Inter, Segoe UI, Arial" font-size="18">
+      Avoid false claims: no guaranteed root cause, no production-ready AI, no MES/SCADA/L2 replacement claims.
+    </text>
+    <text x="40" y="196" fill="#91A9C5" font-family="Inter, Segoe UI, Arial" font-size="18">
+      Positioning: generic manufacturing intelligence layer for steel, paper, aluminum, pharma, food, chemicals, automotive and more.
+    </text>
+  </g>
+</svg>
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Website\PlantProcess.Website\src\components\brand\sou-brand.css', Category='Website: PlantProcess.Website', Classification='Website Component', Lines=165, SizeKB=3.32, Modified='2026-05-20 09:22:15']
+
+.sou-brand {
+  --sou-bg: #050b18;
+  --sou-panel: #0b1730;
+  --sou-panel-2: #102a43;
+  --sou-cyan: #00d4ff;
+  --sou-blue: #0a84ff;
+  --sou-text: #eaf6ff;
+  --sou-muted: #8ea7c1;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+  color: var(--sou-text);
+  text-decoration: none;
+  user-select: none;
+}
+
+.sou-brand__iconWrap {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 16px;
+  background:
+    radial-gradient(circle at 20% 15%, rgba(0, 212, 255, 0.22), transparent 42%),
+    linear-gradient(145deg, rgba(11, 23, 48, 0.92), rgba(5, 11, 24, 0.98));
+  border: 1px solid rgba(0, 212, 255, 0.28);
+  box-shadow:
+    0 0 22px rgba(0, 212, 255, 0.14),
+    inset 0 0 18px rgba(10, 132, 255, 0.12);
+  overflow: hidden;
+}
+
+.sou-brand__iconWrap::after {
+  content: "";
+  position: absolute;
+  inset: -40%;
+  background: linear-gradient(
+    120deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.18) 48%,
+    transparent 58%
+  );
+  transform: translateX(-45%) rotate(20deg);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.sou-brand__icon {
+  position: relative;
+  z-index: 1;
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+}
+
+.sou-brand__text {
+  display: grid;
+  gap: 0.08rem;
+  min-width: 0;
+}
+
+.sou-brand__company {
+  font-family: Sora, Inter, "Segoe UI", system-ui, sans-serif;
+  font-size: 1.32rem;
+  font-weight: 800;
+  letter-spacing: 0.28em;
+  line-height: 1;
+  color: #ffffff;
+  text-shadow: 0 0 18px rgba(0, 212, 255, 0.18);
+}
+
+.sou-brand__tagline {
+  font-family: Inter, "Segoe UI", system-ui, sans-serif;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--sou-cyan);
+  white-space: nowrap;
+}
+
+.sou-brand--compact {
+  gap: 0;
+}
+
+.sou-brand--compact .sou-brand__iconWrap {
+  width: 38px;
+  height: 38px;
+  border-radius: 13px;
+}
+
+.sou-brand--compact .sou-brand__icon {
+  width: 30px;
+  height: 30px;
+}
+
+.sou-mark {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 12px rgba(0, 212, 255, 0.28));
+}
+
+.sou-global-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 64px;
+  padding: 0.75rem 1rem;
+  background:
+    linear-gradient(90deg, rgba(5, 11, 24, 0.94), rgba(11, 23, 48, 0.9)),
+    radial-gradient(circle at 10% 0%, rgba(0, 212, 255, 0.16), transparent 32%);
+  border-bottom: 1px solid rgba(0, 212, 255, 0.18);
+  backdrop-filter: blur(14px);
+}
+
+.sou-global-header__right {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #8ea7c1;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.sou-license-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.42rem 0.7rem;
+  border: 1px solid rgba(0, 212, 255, 0.26);
+  border-radius: 999px;
+  background: rgba(10, 132, 255, 0.1);
+  color: #eaf6ff;
+  box-shadow: inset 0 0 18px rgba(0, 212, 255, 0.08);
+}
+
+.sou-license-pill::before {
+  content: "";
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 999px;
+  background: #2ce6a2;
+  box-shadow: 0 0 12px rgba(44, 230, 162, 0.8);
+}
+
+@media (max-width: 720px) {
+  .sou-brand__company {
+    font-size: 1.05rem;
+    letter-spacing: 0.2em;
+  }
+
+  .sou-brand__tagline,
+  .sou-global-header__right {
+    display: none;
+  }
+}
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Website\PlantProcess.Website\src\components\brand\SOUBrand.tsx', Category='Website: PlantProcess.Website', Classification='Website Component', Lines=40, SizeKB=0.97, Modified='2026-05-20 09:20:58']
+
+import "./sou-brand.css";
+
+type SOUBrandProps = {
+  compact?: boolean;
+  showTagline?: boolean;
+  className?: string;
+};
+
+export function SOUBrand({
+  compact = false,
+  showTagline = true,
+  className = "",
+}: SOUBrandProps) {
+  return (
+    <a className={`sou-brand ${compact ? "sou-brand--compact" : ""} ${className}`} href="/" aria-label="SOU PlantProcess IQ home">
+      <span className="sou-brand__iconWrap">
+        <img src="/brand/sou-icon.svg" alt="" className="sou-brand__icon" />
+      </span>
+
+      {!compact && (
+        <span className="sou-brand__text">
+          <span className="sou-brand__company">SOU</span>
+          {showTagline && (
+            <span className="sou-brand__tagline">Manufacturing Intelligence</span>
+          )}
+        </span>
+      )}
+    </a>
+  );
+}
+
+export function SOUMark({ className = "" }: { className?: string }) {
+  return (
+    <img
+      src="/brand/sou-icon.svg"
+      alt="SOU"
+      className={`sou-mark ${className}`}
+    />
+  );
+}
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Website\PlantProcess.Website\src\components\BrandProofSection.tsx', Category='Website: PlantProcess.Website', Classification='Website Component', Lines=60, SizeKB=1.77, Modified='2026-05-21 16:56:19']
+
+import {
+  ExternalLink,
+  FileText,
+  Network,
+  ShieldCheck,
+  Sparkles,
+} from "lucide-react";
+import { plantProcessBrand } from "../brand/plantProcessBrand";
+
+export function BrandProofSection() {
+  return (
+    <section className="website-section brand-proof-website" id="brand-proof">
+      <div className="section-heading">
+        <div>
+          <div className="eyebrow">
+            <Sparkles size={15} />
+            Brand proof
+          </div>
+          <h2>Industrial, technical, calm, and evidence-first.</h2>
+        </div>
+      </div>
+
+      <div className="brand-proof-website-grid">
+        <article>
+          <Sparkles size={24} />
+          <h3>Positioning</h3>
+          <p>{plantProcessBrand.shortPositioning}</p>
+        </article>
+
+        <article>
+          <ShieldCheck size={24} />
+          <h3>Non-goals</h3>
+          <ul>
+            {plantProcessBrand.notClaims.map((claim) => (
+              <li key={claim}>{claim}</li>
+            ))}
+          </ul>
+        </article>
+
+        <article>
+          <Network size={24} />
+          <h3>Architecture diagram</h3>
+          <p>Read-only source → staging → canonical model → analytics → report.</p>
+          <a href="/brand/plantprocess-iq-architecture.svg" target="_blank" rel="noreferrer">
+            Open diagram <ExternalLink size={14} />
+          </a>
+        </article>
+
+        <article>
+          <FileText size={24} />
+          <h3>Engineer brief</h3>
+          <p>A concise technical brief for engineers before a discovery call.</p>
+          <a href="/brand/plantprocess-iq-engineer-brief.html" target="_blank" rel="noreferrer">
+            Open brief <ExternalLink size={14} />
+          </a>
+        </article>
+      </div>
+    </section>
+  );
+}
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Website\PlantProcess.Website\src\components\proof\ConnectorHonestyBlock.tsx', Category='Website: PlantProcess.Website', Classification='Website Component', Lines=39, SizeKB=1.24, Modified='2026-05-25 12:32:05']
+
+import { websiteConnectors } from "../../content/phase1WebsiteProof";
+
+function statusClass(status: string) {
+  return `connector-status connector-status--${status}`;
+}
+
+export function ConnectorHonestyBlock() {
+  return (
+    <section className="website-section connector-honesty-section" id="connectors">
+      <div className="section-kicker">Connector status honesty</div>
+
+      <div className="section-heading-row">
+        <div>
+          <h2>Connector truth is part of the product, not sales decoration.</h2>
+          <p>
+            PlantProcess IQ separates available connectors, implemented-but-not-certified
+            providers, planned connectors, and source-shaped demo schemas.
+          </p>
+        </div>
+      </div>
+
+      <div className="connector-honesty-table">
+        {websiteConnectors.map((connector) => (
+          <article key={connector.provider}>
+            <div>
+              <strong>{connector.label}</strong>
+              <span className={statusClass(connector.status)}>
+                {connector.frontendLabel}
+              </span>
+            </div>
+            <p>{connector.note}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+export default ConnectorHonestyBlock;
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Website\PlantProcess.Website\src\components\proof\PositioningTruthBlock.tsx', Category='Website: PlantProcess.Website', Classification='Website Component', Lines=30, SizeKB=0.98, Modified='2026-05-25 12:31:45']
+
+import { positioningTruths } from "../../content/phase1WebsiteProof";
+
+export function PositioningTruthBlock() {
+  return (
+    <section className="website-section positioning-truth-section" id="positioning">
+      <div className="section-kicker">Positioning truth</div>
+
+      <div className="truth-hero">
+        <h2>Not MES. Not SCADA. Not Level 2. Not BI-only.</h2>
+        <p>
+          PlantProcess IQ is a manufacturing intelligence layer above existing
+          plant systems. It helps teams connect source-shaped data, stage it,
+          map it into a generic model, investigate quality signals, and produce
+          explainable reporting.
+        </p>
+      </div>
+
+      <div className="truth-grid">
+        {positioningTruths.map((item) => (
+          <article key={item.title}>
+            <strong>{item.title}</strong>
+            <p>{item.text}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+export default PositioningTruthBlock;
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Website\PlantProcess.Website\src\components\proof\PricingLicenseMatrix.tsx', Category='Website: PlantProcess.Website', Classification='Website Component', Lines=65, SizeKB=1.94, Modified='2026-05-25 12:31:23']
+
+import { licensePlans } from "../../content/phase1WebsiteProof";
+
+export function PricingLicenseMatrix() {
+  return (
+    <section className="website-section pricing-section" id="pricing">
+      <div className="section-kicker">Pricing and license logic</div>
+      <div className="section-heading-row">
+        <div>
+          <h2>Start small. Prove the workflow. Expand when the plant data story is real.</h2>
+          <p>
+            The commercial packaging mirrors the product gating: users, feature
+            depth, connector readiness, refresh cadence and analysis allowance.
+          </p>
+        </div>
+      </div>
+
+      <div className="pricing-grid">
+        {licensePlans.map((plan) => (
+          <article className={`pricing-card pricing-card--${plan.code}`} key={plan.code}>
+            <div className="pricing-card__top">
+              <span>{plan.name}</span>
+              <strong>{plan.monthlyPrice}</strong>
+            </div>
+
+            <p>{plan.idealFor}</p>
+
+            <dl>
+              <div>
+                <dt>Users</dt>
+                <dd>{plan.users}</dd>
+              </div>
+              <div>
+                <dt>Analysis allowance</dt>
+                <dd>{plan.tokens}</dd>
+              </div>
+              <div>
+                <dt>Refresh</dt>
+                <dd>{plan.refresh}</dd>
+              </div>
+              <div>
+                <dt>Connectors</dt>
+                <dd>{plan.connectors}</dd>
+              </div>
+            </dl>
+
+            <ul>
+              {plan.features.map((feature) => (
+                <li key={feature}>{feature}</li>
+              ))}
+            </ul>
+
+            <a
+              className="website-button website-button--secondary"
+              href={`#request-demo`}
+            >
+              {plan.cta}
+            </a>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+export default PricingLicenseMatrix;
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Website\PlantProcess.Website\src\components\proof\ProductScreenshotShowcase.tsx', Category='Website: PlantProcess.Website', Classification='Website Component', Lines=53, SizeKB=1.91, Modified='2026-05-25 12:31:10']
+
+export function ProductScreenshotShowcase() {
+  return (
+    <section className="website-section proof-screenshot-section" id="product-proof">
+      <div className="section-kicker">Product proof</div>
+      <div className="section-heading-row">
+        <div>
+          <h2>Real PlantProcess IQ workspace, not a placeholder story.</h2>
+          <p>
+            The Phase 1 website must show the actual product: connector truth,
+            source-shaped data, schema mapping, widget builder, investigation,
+            and customer-grade reporting.
+          </p>
+        </div>
+      </div>
+
+      <div className="product-screenshot-frame">
+        <img
+          src="/screenshots/product-dashboard.png"
+          alt="PlantProcess IQ dashboard screenshot showing manufacturing intelligence widgets"
+          onError={(event) => {
+            event.currentTarget.style.display = "none";
+          }}
+        />
+
+        <div className="product-screenshot-fallback">
+          <span>Replace this frame with:</span>
+          <strong>/public/screenshots/product-dashboard.png</strong>
+          <p>
+            Capture the current dashboard after golden demo data is loaded. This
+            keeps the website honest and avoids fake UI mockups.
+          </p>
+        </div>
+      </div>
+
+      <div className="proof-grid">
+        <div>
+          <strong>Shown in app</strong>
+          <span>Connector truth, dashboard widgets, material investigation, and report export.</span>
+        </div>
+        <div>
+          <strong>Shown in data</strong>
+          <span>630 heats, 5,670 slabs/coils, 39,690 HSM pass measurements, 1,987 defects.</span>
+        </div>
+        <div>
+          <strong>Shown in message</strong>
+          <span>Evidence-based investigation, not guaranteed root-cause theatre.</span>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export default ProductScreenshotShowcase;
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Website\PlantProcess.Website\src\components\proof\RequestDemoForm.tsx', Category='Website: PlantProcess.Website', Classification='Website Component', Lines=162, SizeKB=4.71, Modified='2026-05-25 12:32:17']
+
+import { useMemo, useState } from "react";
+import { requestDemoMail } from "../../content/phase1WebsiteProof";
+
+type FormState = {
+  name: string;
+  company: string;
+  email: string;
+  role: string;
+  plantType: string;
+  message: string;
+};
+
+const initialState: FormState = {
+  name: "",
+  company: "",
+  email: "",
+  role: "",
+  plantType: "",
+  message: "",
+};
+
+function encode(value: string) {
+  return encodeURIComponent(value);
+}
+
+export function RequestDemoForm() {
+  const [form, setForm] = useState<FormState>(initialState);
+  const [submitted, setSubmitted] = useState(false);
+
+  const mailtoHref = useMemo(() => {
+    const subject = `PlantProcess IQ demo request - ${form.company || form.name || "New inquiry"}`;
+
+    const body = [
+      "PlantProcess IQ demo request",
+      "",
+      `Name: ${form.name}`,
+      `Company: ${form.company}`,
+      `Email: ${form.email}`,
+      `Role: ${form.role}`,
+      `Plant / industry type: ${form.plantType}`,
+      "",
+      "Message:",
+      form.message,
+      "",
+      "Requested from website Phase 1 demo form.",
+    ].join("\n");
+
+    return `mailto:${requestDemoMail}?subject=${encode(subject)}&body=${encode(body)}`;
+  }, [form]);
+
+  function patch<K extends keyof FormState>(key: K, value: FormState[K]) {
+    setForm((current) => ({
+      ...current,
+      [key]: value,
+    }));
+  }
+
+  function onSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSubmitted(true);
+    window.location.href = mailtoHref;
+  }
+
+  return (
+    <section className="website-section request-demo-section" id="request-demo">
+      <div className="section-kicker">Request demo</div>
+
+      <div className="request-demo-layout">
+        <div>
+          <h2>Request a Phase 1 Golden Demo or data diagnostic.</h2>
+          <p>
+            Best fit: manufacturing teams with scattered process, quality,
+            genealogy, inspection, downtime or lab data who need a clear
+            investigation layer without replacing MES, SCADA or Level 2 systems.
+          </p>
+
+          <div className="request-demo-proof">
+            <strong>Email delivery path</strong>
+            <span>{requestDemoMail}</span>
+            <p>
+              The form opens a prepared email so the inquiry can be sent from the
+              user’s mail client immediately. A backend CRM form can be added later.
+            </p>
+          </div>
+        </div>
+
+        <form className="request-demo-form" onSubmit={onSubmit}>
+          <label>
+            Name
+            <input
+              required
+              value={form.name}
+              onChange={(event) => patch("name", event.target.value)}
+              placeholder="Your name"
+            />
+          </label>
+
+          <label>
+            Company
+            <input
+              required
+              value={form.company}
+              onChange={(event) => patch("company", event.target.value)}
+              placeholder="Company / plant group"
+            />
+          </label>
+
+          <label>
+            Work email
+            <input
+              required
+              type="email"
+              value={form.email}
+              onChange={(event) => patch("email", event.target.value)}
+              placeholder="name@company.com"
+            />
+          </label>
+
+          <label>
+            Role
+            <input
+              value={form.role}
+              onChange={(event) => patch("role", event.target.value)}
+              placeholder="Quality, process, operations, automation, IT..."
+            />
+          </label>
+
+          <label>
+            Plant / industry type
+            <input
+              value={form.plantType}
+              onChange={(event) => patch("plantType", event.target.value)}
+              placeholder="Steel, paper, aluminum, food, pharma, tire..."
+            />
+          </label>
+
+          <label>
+            What do you want to investigate?
+            <textarea
+              value={form.message}
+              onChange={(event) => patch("message", event.target.value)}
+              placeholder="Example: surface defects, downtime impact, quality claims, genealogy gaps, process parameter correlation..."
+              rows={5}
+            />
+          </label>
+
+          <button className="website-button website-button--primary" type="submit">
+            Send demo request
+          </button>
+
+          {submitted ? (
+            <p className="request-demo-form__confirmation">
+              Your email client should now open with a prepared request.
+            </p>
+          ) : null}
+        </form>
+      </div>
+    </section>
+  );
+}
+
+export default RequestDemoForm;
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Website\PlantProcess.Website\src\content\phase1WebsiteProof.ts', Category='Website: PlantProcess.Website', Classification='Website Source', Lines=175, SizeKB=5.27, Modified='2026-05-25 12:30:39']
+
+export type WebsiteConnectorStatus =
+  | "available-now"
+  | "demo-certified"
+  | "implemented-certification-pending"
+  | "planned"
+  | "simulated-source-shape";
+
+export type WebsiteConnector = {
+  provider: string;
+  label: string;
+  status: WebsiteConnectorStatus;
+  frontendLabel: string;
+  note: string;
+};
+
+export type WebsiteLicensePlan = {
+  code: "light" | "pro" | "proPlus" | "enterprise";
+  name: string;
+  monthlyPrice: string;
+  idealFor: string;
+  users: string;
+  tokens: string;
+  refresh: string;
+  connectors: string;
+  features: string[];
+  cta: string;
+};
+
+export const websiteConnectors: WebsiteConnector[] = [
+  {
+    provider: "csv",
+    label: "CSV",
+    status: "available-now",
+    frontendLabel: "Available now",
+    note: "Best for controlled exports, first diagnostics, and rapid discovery.",
+  },
+  {
+    provider: "excel",
+    label: "Excel",
+    status: "available-now",
+    frontendLabel: "Available now",
+    note: "Good for lab files, QA sheets, business checks, and manual investigations.",
+  },
+  {
+    provider: "postgresql",
+    label: "PostgreSQL",
+    status: "implemented-certification-pending",
+    frontendLabel: "Implemented / certification pending",
+    note: "Read-only source connector implementation exists; demo certification requires environment smoke test.",
+  },
+  {
+    provider: "sqlserver",
+    label: "Microsoft SQL Server",
+    status: "implemented-certification-pending",
+    frontendLabel: "Implemented / certification pending",
+    note: "Target connector for MES, QA, ERP-side and manufacturing source databases.",
+  },
+  {
+    provider: "mysql",
+    label: "MySQL",
+    status: "implemented-certification-pending",
+    frontendLabel: "Implemented / certification pending",
+    note: "Useful for inspection systems, downtime databases, device-side systems and small MES sources.",
+  },
+  {
+    provider: "oracle",
+    label: "Oracle",
+    status: "simulated-source-shape",
+    frontendLabel: "Oracle-shaped source demo",
+    note: "Represented in Phase 1 as Oracle-shaped source schemas until real Oracle connector certification is complete.",
+  },
+  {
+    provider: "rest-api",
+    label: "REST API",
+    status: "planned",
+    frontendLabel: "Planned",
+    note: "For API-based systems after database and file connector workflow is proven.",
+  },
+];
+
+export const licensePlans: WebsiteLicensePlan[] = [
+  {
+    code: "light",
+    name: "Light",
+    monthlyPrice: "Starter diagnostic",
+    idealFor: "Discovery workshops and early data-readiness checks.",
+    users: "2–3 users",
+    tokens: "Low monthly analysis allowance",
+    refresh: "Manual / scheduled low-frequency refresh",
+    connectors: "CSV + Excel",
+    features: [
+      "Connector truth view",
+      "Basic staging/import visibility",
+      "Limited dashboards",
+      "Customer-safe PDF diagnostic",
+      "No advanced automation",
+    ],
+    cta: "Start diagnostic",
+  },
+  {
+    code: "pro",
+    name: "Pro",
+    monthlyPrice: "Pilot team",
+    idealFor: "Plant quality, process and data teams proving the workflow.",
+    users: "5–10 users",
+    tokens: "Medium analysis allowance",
+    refresh: "Scheduled refresh",
+    connectors: "CSV, Excel, PostgreSQL/MSSQL/MySQL when certified",
+    features: [
+      "Golden workflow demo",
+      "Schema mapping workbench",
+      "Widget builder",
+      "Scheduled imports",
+      "Material investigation views",
+    ],
+    cta: "Request pilot",
+  },
+  {
+    code: "proPlus",
+    name: "Pro Plus",
+    monthlyPrice: "Multi-team pilot",
+    idealFor: "Manufacturing sites that need broader dashboard and investigation usage.",
+    users: "10–25 users",
+    tokens: "Higher analysis allowance",
+    refresh: "More frequent scheduled refresh",
+    connectors: "Certified DB connectors + source-shaped diagnostics",
+    features: [
+      "More dashboards and widgets",
+      "Advanced widget expression layer",
+      "Data quality story",
+      "Risk scoring workspace",
+      "Customer-grade reporting pack",
+    ],
+    cta: "Plan rollout",
+  },
+  {
+    code: "enterprise",
+    name: "Enterprise",
+    monthlyPrice: "Custom",
+    idealFor: "Plant groups, multi-site pilots, and controlled production rollout.",
+    users: "Custom",
+    tokens: "Custom",
+    refresh: "Custom SLA and deployment design",
+    connectors: "Roadmap-based connector certification",
+    features: [
+      "Private deployment path",
+      "Custom connector hardening",
+      "Governed data model extension",
+      "Security and audit alignment",
+      "Pilot-to-product roadmap",
+    ],
+    cta: "Talk to us",
+  },
+];
+
+export const positioningTruths = [
+  {
+    title: "Not MES",
+    text: "PlantProcess IQ does not replace order execution, production booking, or plant transaction systems.",
+  },
+  {
+    title: "Not SCADA",
+    text: "It does not control machines, alarms, PLCs, or operator control screens.",
+  },
+  {
+    title: "Not Level 2",
+    text: "It does not replace automation models, setup calculation, or real-time process control.",
+  },
+  {
+    title: "Not BI-only",
+    text: "It goes beyond dashboards by adding staging, mapping, genealogy, investigation and risk-readiness logic.",
+  },
+];
+
+export const requestDemoMail = "info@plantprocessiq.com";
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Website\PlantProcess.Website\src\main.tsx', Category='Website: PlantProcess.Website', Classification='Website Source', Lines=14, SizeKB=0.37, Modified='2026-05-25 12:33:21']
+
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { BrowserRouter } from "react-router-dom";
+import { App } from "./App";
+import "./styles/global.css";
+import "./styles/phase1-proof.css";
+
+ReactDOM.createRoot(document.getElementById("root")!).render(
+  <React.StrictMode>
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
+  </React.StrictMode>
+);
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Website\PlantProcess.Website\src\styles\global.css', Category='Website: PlantProcess.Website', Classification='Website Source', Lines=818, SizeKB=13.63, Modified='2026-05-21 20:45:00']
+
+:root {
+  --bg: #050B18;
+  --panel: #0B1730;
+  --panel-2: #102A43;
+  --blue: #0A84FF;
+  --cyan: #00D4FF;
+  --green: #2CE6A2;
+  --warning: #FFB020;
+  --critical: #FF4D6D;
+  --text: #EAF6FF;
+  --muted: #8EA7C1;
+  --border: rgba(142, 167, 193, 0.16);
+  --border-cyan: rgba(0, 212, 255, 0.24);
+  --shadow: 0 24px 80px rgba(0, 0, 0, 0.38);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: var(--text);
+  background: var(--bg);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 18% 8%, rgba(0, 212, 255, 0.16), transparent 30%),
+    radial-gradient(circle at 82% 4%, rgba(10, 132, 255, 0.16), transparent 26%),
+    linear-gradient(180deg, #050B18 0%, #071124 54%, #050B18 100%);
+}
+
+a {
+  color: inherit;
+}
+
+.site-shell {
+  width: 100%;
+  max-width: 100%;
+}
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 18px 0;
+  backdrop-filter: blur(20px);
+}
+
+/* Constrain inner page content, not the shell itself */
+.site-header,
+.page-hero,
+.hero-section,
+.section,
+.product-section,
+.pricing-section,
+.security-section,
+.contact-section,
+.site-footer {
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 40px;
+  padding-right: 40px;
+  box-sizing: border-box;
+}
+
+/* On very wide screens keep the background full bleed */
+.site-shell > * {
+  width: 100%;
+}
+
+
+.brand-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  min-width: max-content;
+}
+
+.sou-mark {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 15px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #081426, #0b1730);
+  border: 1px solid rgba(0, 212, 255, 0.22);
+  box-shadow: 0 0 36px rgba(0, 212, 255, 0.25);
+  flex-shrink: 0;
+}
+
+.sou-mark img {
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+  display: block;
+}
+
+.brand-text {
+  font-size: 18px;
+  font-weight: 850;
+}
+
+.brand-text strong {
+  color: var(--cyan);
+}
+
+.nav-links {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  flex: 1;
+}
+
+.nav-links a {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 750;
+  padding: 10px 11px;
+  border-radius: 10px;
+}
+
+.nav-links a.active,
+.nav-links a:hover {
+  color: var(--text);
+  background: rgba(0, 212, 255, 0.08);
+}
+
+.header-cta,
+.button {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 44px;
+  padding: 11px 16px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  text-decoration: none;
+  font-weight: 850;
+}
+
+.header-cta,
+.button-primary {
+  color: white;
+  background: var(--blue);
+  box-shadow: 0 0 32px rgba(10, 132, 255, 0.28);
+}
+
+.button-secondary {
+  color: var(--text);
+  background: rgba(11, 23, 48, 0.72);
+  border-color: var(--border-cyan);
+}
+
+.hero-section {
+  display: grid;
+  grid-template-columns: 1.06fr 0.94fr;
+  gap: 42px;
+  align-items: center;
+  padding: 86px 0 72px;
+}
+
+.page-hero {
+  padding: 76px 0 46px;
+}
+
+.hero-copy h1,
+.page-hero h1 {
+  margin: 0 0 22px;
+  max-width: 980px;
+  font-size: clamp(42px, 6vw, 76px);
+  line-height: 0.98;
+  letter-spacing: -0.075em;
+}
+
+.hero-copy h1 span {
+  color: var(--cyan);
+}
+
+.hero-copy p,
+.page-hero p,
+.section-header p,
+.feature-card p,
+.pricing-card p,
+.warning-note span,
+.site-footer span {
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.hero-copy p,
+.page-hero p {
+  max-width: 800px;
+  margin: 0 0 30px;
+  font-size: 18px;
+}
+
+.status-pill,
+.eyebrow,
+.tier-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: max-content;
+  margin-bottom: 18px;
+  color: var(--green);
+  border: 1px solid rgba(44, 230, 162, 0.32);
+  background: rgba(44, 230, 162, 0.08);
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.eyebrow {
+  color: var(--cyan);
+  border-color: rgba(0, 212, 255, 0.28);
+  background: rgba(0, 212, 255, 0.08);
+}
+
+.hero-actions {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.hero-panel,
+.feature-card,
+.pricing-card,
+.step-card,
+.warning-note,
+.contact-card,
+.industry-card {
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(11, 23, 48, 0.94), rgba(8, 18, 38, 0.94));
+  border-radius: 24px;
+  box-shadow: var(--shadow);
+}
+
+.hero-panel {
+  padding: 24px;
+}
+
+.panel-topline {
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 13px;
+  margin-bottom: 18px;
+}
+
+.signal-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.signal-grid div {
+  padding: 16px;
+  border-radius: 16px;
+  background: rgba(16, 42, 67, 0.64);
+  border: 1px solid rgba(0, 212, 255, 0.12);
+}
+
+.signal-grid strong {
+  display: block;
+  margin-bottom: 7px;
+}
+
+.signal-grid span {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.mock-chart {
+  display: grid;
+  place-items: center;
+  min-height: 210px;
+  margin-top: 16px;
+  color: var(--cyan);
+  border-radius: 18px;
+  background:
+    linear-gradient(rgba(0, 212, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 212, 255, 0.06) 1px, transparent 1px),
+    rgba(0, 212, 255, 0.035);
+  background-size: 28px 28px;
+}
+
+.content-section {
+  padding: 42px 0;
+}
+
+.section-header {
+  max-width: 860px;
+  margin-bottom: 24px;
+}
+
+.section-header h2 {
+  margin: 0 0 14px;
+  font-size: clamp(30px, 4vw, 48px);
+  line-height: 1.04;
+  letter-spacing: -0.055em;
+}
+
+.feature-grid,
+.pricing-grid,
+.industry-grid,
+.contact-grid,
+.process-flow {
+  display: grid;
+  gap: 18px;
+}
+
+.feature-grid.four,
+.pricing-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.feature-grid.three,
+.process-flow {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.feature-grid.two,
+.contact-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.industry-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.feature-card,
+.pricing-card,
+.step-card,
+.contact-card,
+.industry-card {
+  padding: 22px;
+}
+
+.feature-card:hover,
+.pricing-card:hover,
+.step-card:hover,
+.contact-card:hover,
+.industry-card:hover {
+  border-color: var(--border-cyan);
+  box-shadow: 0 0 42px rgba(0, 212, 255, 0.14);
+}
+
+.feature-icon {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  color: var(--cyan);
+  border: 1px solid var(--border-cyan);
+  border-radius: 15px;
+  background: rgba(0, 212, 255, 0.08);
+  margin-bottom: 18px;
+}
+
+.feature-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.feature-card h3,
+.pricing-card h3,
+.step-card h3,
+.contact-card h3 {
+  margin: 0 0 10px;
+  font-size: 19px;
+}
+
+.feature-card p,
+.pricing-card p,
+.step-card p,
+.contact-card p {
+  margin: 0;
+  font-size: 15px;
+}
+
+.step-card span {
+  display: inline-flex;
+  margin-bottom: 14px;
+  color: var(--cyan);
+  font-weight: 950;
+}
+
+.pricing-card.highlighted {
+  border-color: rgba(0, 212, 255, 0.52);
+  background: linear-gradient(180deg, rgba(10, 132, 255, 0.18), rgba(11, 23, 48, 0.94));
+}
+
+.pricing-card strong {
+  display: block;
+  color: var(--cyan);
+  font-size: 23px;
+  margin-bottom: 12px;
+}
+
+.pricing-card ul {
+  padding-left: 18px;
+  color: var(--muted);
+  line-height: 1.8;
+}
+
+.industry-card {
+  min-height: 110px;
+  display: flex;
+  align-items: end;
+  font-size: 19px;
+  font-weight: 850;
+}
+
+.warning-note {
+  display: grid;
+  gap: 8px;
+  margin: 42px 0;
+  padding: 24px;
+  border-color: rgba(255, 176, 32, 0.36);
+  background: rgba(255, 176, 32, 0.06);
+}
+
+.warning-note strong {
+  color: var(--warning);
+}
+
+.compare-section {
+  padding: 28px 0 60px;
+}
+
+.site-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 36px 0 46px;
+  border-top: 1px solid var(--border);
+}
+
+.site-footer div:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.footer-links {
+  display: flex;
+  gap: 16px;
+}
+
+.footer-links a {
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.footer-links a:hover {
+  color: var(--cyan);
+}
+
+@media (max-width: 1050px) {
+  .hero-section,
+  .feature-grid.four,
+  .feature-grid.three,
+  .pricing-grid,
+  .industry-grid,
+  .process-flow {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .hero-section {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .site-shell {
+    width: min(100% - 28px, 1180px);
+  }
+
+  .site-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .nav-links {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .hero-section,
+  .page-hero {
+    padding: 48px 0 34px;
+  }
+
+  .feature-grid.four,
+  .feature-grid.three,
+  .feature-grid.two,
+  .pricing-grid,
+  .industry-grid,
+  .contact-grid,
+  .process-flow {
+    grid-template-columns: 1fr;
+  }
+
+  .site-footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+.hero-real-screenshot,
+.screenshot-card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--border-cyan);
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at top left, rgba(0, 212, 255, 0.14), transparent 34%),
+    rgba(11, 23, 48, 0.9);
+  box-shadow: var(--shadow);
+}
+
+.screenshot-browser-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(5, 11, 24, 0.82);
+}
+
+.screenshot-browser-bar span {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--muted);
+  opacity: 0.65;
+}
+
+.screenshot-browser-bar strong {
+  margin-left: 8px;
+  color: var(--cyan);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.hero-real-screenshot img,
+.screenshot-card img {
+  display: block;
+  width: 100%;
+  min-height: 320px;
+  object-fit: cover;
+}
+
+.screenshot-fallback,
+.screenshot-card-fallback {
+  display: grid;
+  place-items: center;
+  gap: 10px;
+  min-height: 320px;
+  padding: 28px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.screenshot-fallback strong,
+.screenshot-card-fallback strong {
+  color: var(--text);
+}
+
+.screenshot-fallback code,
+.screenshot-card-fallback code {
+  padding: 5px 8px;
+  border-radius: 8px;
+  color: var(--cyan);
+  background: rgba(0, 0, 0, 0.24);
+}
+
+.website-section {
+  margin: 32px 0;
+  padding: 34px;
+  border: 1px solid var(--border);
+  border-radius: 32px;
+  background:
+    radial-gradient(circle at top left, rgba(0, 212, 255, 0.08), transparent 30%),
+    rgba(5, 11, 24, 0.66);
+}
+
+.section-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 22px;
+}
+
+.section-heading h2,
+.website-section h2 {
+  margin: 0;
+  color: var(--text);
+  font-size: clamp(28px, 3.6vw, 46px);
+  letter-spacing: -0.05em;
+}
+
+.lifecycle-flow {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.flow-card,
+.proof-card,
+.feature-card,
+.contact-card,
+.diagnostic-card,
+.ml-truth-card {
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  background: rgba(11, 23, 48, 0.74);
+}
+
+.flow-card span {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 12px;
+  color: #00101a;
+  background: linear-gradient(135deg, var(--cyan), var(--green));
+  font-weight: 950;
+}
+
+.flow-card h3,
+.proof-card h3,
+.feature-card h3,
+.contact-card h3 {
+  margin: 14px 0 8px;
+  color: var(--text);
+}
+
+.flow-card p,
+.proof-card p,
+.feature-card p,
+.contact-card p,
+.diagnostic-section p,
+.ml-truth-section p {
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.no-replacement-block,
+.diagnostic-section,
+.ml-truth-section,
+.demo-cta-section {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 24px;
+  align-items: center;
+}
+
+.replacement-grid,
+.connector-table {
+  display: grid;
+  gap: 10px;
+}
+
+.replacement-grid div,
+.connector-row {
+  display: grid;
+  gap: 6px;
+  padding: 13px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: rgba(11, 23, 48, 0.72);
+}
+
+.replacement-grid div {
+  grid-template-columns: 24px minmax(0, 1fr);
+  align-items: center;
+}
+
+.replacement-grid svg {
+  color: var(--warning);
+}
+
+.proof-grid,
+.feature-grid,
+.pricing-grid,
+.contact-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.feature-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.contact-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.screenshot-gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.screenshot-card {
+  min-height: 260px;
+}
+
+.screenshot-card img {
+  min-height: 260px;
+}
+
+.screenshot-card-fallback {
+  min-height: 260px;
+}
+
+.connector-row {
+  grid-template-columns: 220px 160px minmax(0, 1fr);
+  align-items: center;
+}
+
+.connector-row strong {
+  color: var(--text);
+}
+
+.connector-row span {
+  width: fit-content;
+  padding: 6px 9px;
+  border-radius: 999px;
+  color: #00101a;
+  background: var(--green);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.connector-row p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.diagnostic-card ul,
+.pricing-card ul,
+.report-close ul {
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.diagnostic-card li,
+.pricing-card li {
+  display: flex;
+  gap: 8px;
+  margin: 8px 0;
+  color: var(--muted);
+}
+
+.ml-truth-card {
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+}
+
+.ml-truth-card strong {
+  color: var(--warning);
+}
+
+.pricing-card strong {
+  display: block;
+  margin: 10px 0;
+  color: var(--cyan);
+  font-size: 1.2rem;
+}
+
+@media (max-width: 1100px) {
+  .hero-section,
+  .no-replacement-block,
+  .diagnostic-section,
+  .ml-truth-section,
+  .demo-cta-section {
+    grid-template-columns: 1fr;
+  }
+
+  .lifecycle-flow,
+  .proof-grid,
+  .feature-grid,
+  .pricing-grid,
+  .screenshot-gallery-grid,
+  .contact-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .connector-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .lifecycle-flow,
+  .proof-grid,
+  .feature-grid,
+  .pricing-grid,
+  .screenshot-gallery-grid,
+  .contact-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Website\PlantProcess.Website\src\styles\phase1-proof.css', Category='Website: PlantProcess.Website', Classification='Website Source', Lines=332, SizeKB=6.51, Modified='2026-05-25 12:32:38']
+
+.website-section {
+  padding: 92px 28px;
+  max-width: 1240px;
+  margin: 0 auto;
+}
+
+.section-kicker {
+  color: #46d5ff;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.78rem;
+  font-weight: 800;
+  margin-bottom: 12px;
+}
+
+.section-heading-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 28px;
+  margin-bottom: 28px;
+}
+
+.section-heading-row h2,
+.truth-hero h2,
+.request-demo-layout h2 {
+  font-size: clamp(2rem, 4vw, 3.25rem);
+  line-height: 1.02;
+  margin: 0 0 14px;
+  color: #e7f8ff;
+}
+
+.section-heading-row p,
+.truth-hero p,
+.request-demo-layout p {
+  color: rgba(231, 248, 255, 0.72);
+  max-width: 820px;
+  line-height: 1.7;
+}
+
+.product-screenshot-frame {
+  position: relative;
+  overflow: hidden;
+  min-height: 440px;
+  border-radius: 28px;
+  border: 1px solid rgba(70, 213, 255, 0.24);
+  background:
+    radial-gradient(circle at top left, rgba(70, 213, 255, 0.18), transparent 28%),
+    linear-gradient(135deg, rgba(8, 18, 34, 0.98), rgba(3, 9, 20, 0.98));
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.34);
+}
+
+.product-screenshot-frame img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.product-screenshot-fallback {
+  position: absolute;
+  inset: 28px;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  border: 1px dashed rgba(70, 213, 255, 0.28);
+  border-radius: 20px;
+  color: rgba(231, 248, 255, 0.78);
+}
+
+.product-screenshot-fallback strong {
+  display: block;
+  margin: 8px 0;
+  color: #e7f8ff;
+}
+
+.proof-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.proof-grid div,
+.truth-grid article,
+.connector-honesty-table article,
+.request-demo-proof {
+  border: 1px solid rgba(70, 213, 255, 0.16);
+  border-radius: 18px;
+  padding: 18px;
+  background: rgba(6, 14, 28, 0.68);
+}
+
+.proof-grid strong,
+.truth-grid strong,
+.connector-honesty-table strong,
+.request-demo-proof strong {
+  display: block;
+  color: #e7f8ff;
+  margin-bottom: 8px;
+}
+
+.proof-grid span,
+.truth-grid p,
+.connector-honesty-table p,
+.request-demo-proof p {
+  color: rgba(231, 248, 255, 0.68);
+  line-height: 1.6;
+}
+
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.pricing-card {
+  border: 1px solid rgba(70, 213, 255, 0.16);
+  border-radius: 24px;
+  padding: 22px;
+  background:
+    radial-gradient(circle at top left, rgba(70, 213, 255, 0.1), transparent 38%),
+    rgba(6, 14, 28, 0.74);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.pricing-card--proPlus,
+.pricing-card--enterprise {
+  border-color: rgba(70, 213, 255, 0.34);
+  box-shadow: 0 18px 60px rgba(70, 213, 255, 0.1);
+}
+
+.pricing-card__top span {
+  display: block;
+  color: #46d5ff;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.pricing-card__top strong {
+  display: block;
+  color: #e7f8ff;
+  font-size: 1.35rem;
+}
+
+.pricing-card p,
+.pricing-card dd,
+.pricing-card li {
+  color: rgba(231, 248, 255, 0.72);
+  line-height: 1.55;
+}
+
+.pricing-card dl {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+
+.pricing-card dt {
+  color: rgba(70, 213, 255, 0.78);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.pricing-card dd {
+  margin: 3px 0 0;
+}
+
+.pricing-card ul {
+  padding-left: 18px;
+  margin: 0;
+}
+
+.truth-hero {
+  border: 1px solid rgba(70, 213, 255, 0.24);
+  border-radius: 28px;
+  padding: 30px;
+  background:
+    radial-gradient(circle at top left, rgba(70, 213, 255, 0.14), transparent 34%),
+    rgba(6, 14, 28, 0.78);
+  margin-bottom: 18px;
+}
+
+.truth-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.connector-honesty-table {
+  display: grid;
+  gap: 12px;
+}
+
+.connector-honesty-table article {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 18px;
+  align-items: center;
+}
+
+.connector-status {
+  display: inline-flex;
+  margin-top: 8px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.connector-status--available-now,
+.connector-status--demo-certified {
+  color: #03160d;
+  background: #68f0a6;
+}
+
+.connector-status--implemented-certification-pending {
+  color: #07111c;
+  background: #ffd166;
+}
+
+.connector-status--planned,
+.connector-status--simulated-source-shape {
+  color: #e7f8ff;
+  background: rgba(70, 213, 255, 0.16);
+  border: 1px solid rgba(70, 213, 255, 0.28);
+}
+
+.request-demo-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(360px, 0.7fr);
+  gap: 32px;
+  align-items: start;
+}
+
+.request-demo-form {
+  border: 1px solid rgba(70, 213, 255, 0.2);
+  border-radius: 26px;
+  padding: 24px;
+  background:
+    radial-gradient(circle at top left, rgba(70, 213, 255, 0.14), transparent 34%),
+    rgba(6, 14, 28, 0.82);
+  display: grid;
+  gap: 14px;
+}
+
+.request-demo-form label {
+  display: grid;
+  gap: 7px;
+  color: rgba(231, 248, 255, 0.82);
+  font-weight: 700;
+}
+
+.request-demo-form input,
+.request-demo-form textarea {
+  width: 100%;
+  border: 1px solid rgba(70, 213, 255, 0.22);
+  border-radius: 13px;
+  padding: 12px 13px;
+  background: rgba(2, 8, 18, 0.88);
+  color: #e7f8ff;
+  outline: none;
+}
+
+.request-demo-form input:focus,
+.request-demo-form textarea:focus {
+  border-color: rgba(70, 213, 255, 0.58);
+  box-shadow: 0 0 0 3px rgba(70, 213, 255, 0.12);
+}
+
+.request-demo-form__confirmation {
+  color: #68f0a6;
+  font-weight: 800;
+}
+
+.website-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 10px 16px;
+  border-radius: 13px;
+  font-weight: 900;
+  text-decoration: none;
+  border: 1px solid transparent;
+}
+
+.website-button--primary {
+  background: #46d5ff;
+  color: #04111f;
+  border-color: rgba(70, 213, 255, 0.9);
+}
+
+.website-button--secondary {
+  background: rgba(70, 213, 255, 0.1);
+  color: #e7f8ff;
+  border-color: rgba(70, 213, 255, 0.24);
+}
+
+@media (max-width: 1050px) {
+  .pricing-grid,
+  .truth-grid,
+  .proof-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .request-demo-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .connector-honesty-table article {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 680px) {
+  .pricing-grid,
+  .truth-grid,
+  .proof-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .website-section {
+    padding: 64px 18px;
+  }
+
+  .product-screenshot-frame {
+    min-height: 320px;
+  }
+}
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Website\PlantProcess.Website\src\vite-env.d.ts', Category='Website: PlantProcess.Website', Classification='Website Source', Lines=10, SizeKB=0.23, Modified='2026-05-19 14:54:50']
+
+/// <reference types="vite/client" />
+
+declare module "*.css";
+declare module "*.scss";
+declare module "*.sass";
+declare module "*.svg";
+declare module "*.png";
+declare module "*.jpg";
+declare module "*.jpeg";
+declare module "*.webp";
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Website\PlantProcess.Website\tsconfig.app.json', Category='Website: PlantProcess.Website', Classification='Website Config / Asset', Lines=18, SizeKB=0.42, Modified='2026-05-19 14:26:36']
+
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "useDefineForClassFields": true,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "allowJs": false,
+    "skipLibCheck": true,
+    "strict": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "verbatimModuleSyntax": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx"
+  },
+  "include": ["src"]
+}
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Website\PlantProcess.Website\tsconfig.json', Category='Website: PlantProcess.Website', Classification='Website Config / Asset', Lines=7, SizeKB=0.12, Modified='2026-05-19 14:26:36']
+
+{
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
+  ]
+}
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Website\PlantProcess.Website\tsconfig.node.json', Category='Website: PlantProcess.Website', Classification='Website Config / Asset', Lines=13, SizeKB=0.26, Modified='2026-05-19 14:26:36']
+
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "lib": ["ES2023"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "types": ["node"],
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true
+  },
+  "include": ["vite.config.ts"]
+}
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Website\PlantProcess.Website\vite.config.ts', Category='Website: PlantProcess.Website', Classification='Website Config / Asset', Lines=14, SizeKB=0.24, Modified='2026-05-19 14:26:36']
+
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    host: "0.0.0.0",
+    port: 5180
+  },
+  preview: {
+    host: "0.0.0.0",
+    port: 4180
+  }
+});
+
+[FILE_END]
+

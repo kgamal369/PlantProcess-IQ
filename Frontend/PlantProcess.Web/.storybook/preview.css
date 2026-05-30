@@ -1,0 +1,11 @@
+
+html,
+body,
+#storybook-root {
+  min-height: 100%;
+  background: #050B18;
+}
+
+body {
+  margin: 0;
+}

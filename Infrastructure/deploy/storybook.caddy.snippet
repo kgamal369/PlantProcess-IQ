@@ -1,0 +1,30 @@
+
+# ============================================================
+# PlantProcess IQ Storybook static standards reference
+# Include this snippet in Caddy deployment after copying:
+#   Frontend/PlantProcess.Web/storybook-static
+# to:
+#   /opt/PlantProcess-IQ/Website/storybook
+#
+# Requires:
+#   STORYBOOK_BASIC_AUTH_USER
+#   STORYBOOK_BASIC_AUTH_HASH
+# ============================================================
+
+storybook.178.105.152.180.sslip.io {
+    root * /opt/PlantProcess-IQ/Website/storybook
+    file_server
+
+    basicauth {
+        {$STORYBOOK_BASIC_AUTH_USER} {$STORYBOOK_BASIC_AUTH_HASH}
+    }
+
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "SAMEORIGIN"
+        Referrer-Policy "no-referrer"
+        Permissions-Policy "geolocation=(), microphone=(), camera=()"
+        -Server
+    }
+}

@@ -1,0 +1,202 @@
+task,file,line,page,implementation,labelText,intendedAction,currentStyle,wiredHandler,context,standardStatus,migrationCandidate
+PPIQ-T009,src/App.tsx,259,Unknown,native <button>,Retry connection,secondary,inline-style,retryBootstrap,Unknown,non-standard,yes
+PPIQ-T009,src/components/ActiveFilterChips.tsx,49,Component:ActiveFilterChips.tsx,native <button>,Remove filter,destructive,className,() => clearFilter(key),Component:ActiveFilterChips.tsx,non-standard,yes
+PPIQ-T009,src/components/AppLayout.tsx,159,Component:AppLayout.tsx,native <button>,"`Switch to ${isDark ? ""light"" : ""dark""",action,className,toggleTheme,Component:AppLayout.tsx,non-standard,yes
+PPIQ-T009,src/components/AppLayout.tsx,190,Component:AppLayout.tsx,native <button>,Logout,action,inline-style,logout,Component:AppLayout.tsx,non-standard,yes
+PPIQ-T009,src/components/brand/AppCommandHeader.tsx,56,Component:brand,native <button>,Notifications,display-or-dead-review,className,null,Component:brand,non-standard,yes
+PPIQ-T009,src/components/brand/AppCommandHeader.tsx,61,Component:brand,native <button>,User menu,display-or-dead-review,className,null,Component:brand,non-standard,yes
+PPIQ-T009,src/components/brand/BrandProofPanel.tsx,53,Component:brand,native <a>,Engineer brief,navigation,not-detected,/brand/plantprocess-iq-engineer-brief.html,Component:brand,non-standard,yes
+PPIQ-T009,src/components/brand/BrandProofPanel.tsx,57,Component:brand,native <a>,Architecture diagram,navigation,not-detected,/brand/plantprocess-iq-architecture.svg,Component:brand,non-standard,yes
+PPIQ-T009,src/components/brand/ProductBrand.tsx,15,Component:brand,native <a>,PlantProcess IQ dashboard,navigation,className,/dashboard,Component:brand,non-standard,yes
+PPIQ-T009,src/components/brand/SOUBrand.tsx,15,Component:brand,native <a>,SOU PlantProcess IQ home,navigation,className,/,Component:brand,non-standard,yes
+PPIQ-T009,src/components/BrandProofSection.tsx,44,Component:BrandProofSection.tsx,native <a>,Open diagram,navigation,not-detected,/brand/plantprocess-iq-architecture.svg,Component:BrandProofSection.tsx,non-standard,yes
+PPIQ-T009,src/components/BrandProofSection.tsx,53,Component:BrandProofSection.tsx,native <a>,Open brief,navigation,not-detected,/brand/plantprocess-iq-engineer-brief.html,Component:BrandProofSection.tsx,non-standard,yes
+PPIQ-T009,src/components/charts/InteractiveCharts.tsx,407,Component:charts,native <button>,`${x,action,inline-style,() => selectCell(row),Component:charts,non-standard,yes
+PPIQ-T009,src/components/dashboard/DashboardWidgetCard.tsx,178,Component:dashboard,native <button>,`Switch to ${ct,action,className,"() => setWidgetChartType(widgetId, ct)",Component:dashboard,non-standard,yes
+PPIQ-T009,src/components/dashboard/DashboardWidgetCard.tsx,192,Component:dashboard,native <button>,Half-row width,action,className,"() =>
+              activeChartType === ""table""
+                ? compactWidget(String(widgetId))
+                : expandWidgetToHalfRow(String(widgetId))",Component:dashboard,non-standard,yes
+PPIQ-T009,src/components/dashboard/DashboardWidgetCard.tsx,207,Component:dashboard,native <button>,Full-row width,action,className,() => expandWidgetToFullRow(String(widgetId)),Component:dashboard,non-standard,yes
+PPIQ-T009,src/components/dashboard/DashboardWidgetCard.tsx,218,Component:dashboard,native <button>,Compact size,action,className,() => compactWidget(String(widgetId)),Component:dashboard,non-standard,yes
+PPIQ-T009,src/components/dashboard/DashboardWidgetCard.tsx,229,Component:dashboard,native <button>,Export CSV,export,className,exportCsv,Component:dashboard,non-standard,yes
+PPIQ-T009,src/components/dashboard/DashboardWidgetCard.tsx,241,Component:dashboard,native <button>,"isCollapsed ? ""Expand widget"" : ""Collapse widget""",action,className,() => setIsCollapsed((v) => !v),Component:dashboard,non-standard,yes
+PPIQ-T009,src/components/dashboard/DashboardWidgetCard.tsx,252,Component:dashboard,native <button>,"isFullscreen ? ""Exit fullscreen"" : ""Fullscreen""",action,className,() => setIsFullscreen((v) => !v),Component:dashboard,non-standard,yes
+PPIQ-T009,src/components/dashboard/DashboardWidgetCard.tsx,265,Component:dashboard,native <button>,Widget actions,action,className,() => setIsActionMenuOpen((v) => !v),Component:dashboard,non-standard,yes
+PPIQ-T009,src/components/dashboard/DashboardWidgetCard.tsx,279,Component:dashboard,native <button>,execute(onRename)}> Rename,action,not-detected,() => execute(onRename),Component:dashboard,non-standard,yes
+PPIQ-T009,src/components/dashboard/DashboardWidgetCard.tsx,286,Component:dashboard,native <button>,execute(onEdit)}> Edit widget,action,not-detected,() => execute(onEdit),Component:dashboard,non-standard,yes
+PPIQ-T009,src/components/dashboard/DashboardWidgetCard.tsx,293,Component:dashboard,native <button>,execute(onClone)}> Duplicate,action,not-detected,() => execute(onClone),Component:dashboard,non-standard,yes
+PPIQ-T009,src/components/dashboard/DashboardWidgetCard.tsx,300,Component:dashboard,native <button>,execute(onHide)}> Hide,action,not-detected,() => execute(onHide),Component:dashboard,non-standard,yes
+PPIQ-T009,src/components/dashboard/DashboardWidgetCard.tsx,307,Component:dashboard,native <button>,"execute(async () => "" from this dashboard?` ); if (!confirmed) return; await onRemove?.(); }) } > Remove",destructive,className,"() =>
+                        execute(async () => {
+                          const confirmed = window.confirm(
+                            `Remove widget ""${title",Component:dashboard,non-standard,yes
+PPIQ-T009,src/components/dashboard/DrilldownDrawer.tsx,20,Component:dashboard,native <button>,UNLABELLED,secondary,className,closeDrilldown,Component:dashboard,non-standard,yes
+PPIQ-T009,src/components/dashboard/SelectionBreadcrumb.tsx,22,Component:dashboard,native <button>,Undo,action,className,undoSelection,Component:dashboard,non-standard,yes
+PPIQ-T009,src/components/dashboard/SelectionBreadcrumb.tsx,32,Component:dashboard,native <button>,Clear visual selections,action,className,clearSelections,Component:dashboard,non-standard,yes
+PPIQ-T009,src/components/dashboard/SelectionBreadcrumb.tsx,42,Component:dashboard,native <button>,Show widgets,action,className,showAllWidgets,Component:dashboard,non-standard,yes
+PPIQ-T009,src/components/dashboard/SelectionBreadcrumb.tsx,46,Component:dashboard,native <button>,Reset layout,action,className,resetLayout,Component:dashboard,non-standard,yes
+PPIQ-T009,src/components/dashboard/SelectionBreadcrumb.tsx,51,Component:dashboard,native <button>,Reset grid,action,className,resetGridLayout,Component:dashboard,non-standard,yes
+PPIQ-T009,src/components/dashboard/widget-builder/WidgetBuilderWizard.tsx,722,Component:dashboard,native <button>,UNLABELLED,secondary,className,onClose,Component:dashboard,non-standard,yes
+PPIQ-T009,src/components/dashboard/widget-builder/WidgetBuilderWizard.tsx,729,Component:dashboard,native <button>,setStep(item)} disabled= >,action,className,() => setStep(item),Component:dashboard,non-standard,yes
+PPIQ-T009,src/components/dashboard/widget-builder/WidgetBuilderWizard.tsx,869,Component:dashboard,native <button>,Back,secondary,className,goBack,Component:dashboard,non-standard,yes
+PPIQ-T009,src/components/dashboard/widget-builder/WidgetBuilderWizard.tsx,882,Component:dashboard,native <button>,UNLABELLED,primary,className,runPreview,Component:dashboard,non-standard,yes
+PPIQ-T009,src/components/dashboard/widget-builder/WidgetBuilderWizard.tsx,892,Component:dashboard,native <button>,"0} type=""button"" >",primary,className,saveWidget,Component:dashboard,non-standard,yes
+PPIQ-T009,src/components/dashboard/widget-builder/WidgetBuilderWizard.tsx,903,Component:dashboard,native <button>,Next,action,className,goNext,Component:dashboard,non-standard,yes
+PPIQ-T009,src/components/dashboard/widget-builder/WidgetBuilderWizard.tsx,937,Component:dashboard,native <button>,"onSelect(purpose.code)} type=""button"" >",action,className,() => onSelect(purpose.code),Component:dashboard,non-standard,yes
+PPIQ-T009,src/components/dashboard/widget-builder/WidgetBuilderWizard.tsx,971,Component:dashboard,native <button>,"onSelect(chartType.code)} type=""button"" >",action,className,() => onSelect(chartType.code),Component:dashboard,non-standard,yes
+PPIQ-T009,src/components/dashboard/widget-builder/WidgetBuilderWizard.tsx,1373,Component:dashboard,native <button>,UNLABELLED,primary,className,onPreview,Component:dashboard,non-standard,yes
+PPIQ-T009,src/components/dashboard/widget-builder/WidgetBuilderWizardContent.tsx,794,Component:dashboard,native <button>,UNLABELLED,secondary,className,onClose,Component:dashboard,non-standard,yes
+PPIQ-T009,src/components/dashboard/widget-builder/WidgetBuilderWizardContent.tsx,801,Component:dashboard,native <button>,setStep(item)} disabled= >,action,className,() => setStep(item),Component:dashboard,non-standard,yes
+PPIQ-T009,src/components/dashboard/widget-builder/WidgetBuilderWizardContent.tsx,967,Component:dashboard,native <button>,Back,secondary,className,goBack,Component:dashboard,non-standard,yes
+PPIQ-T009,src/components/dashboard/widget-builder/WidgetBuilderWizardContent.tsx,980,Component:dashboard,native <button>,UNLABELLED,primary,className,runPreview,Component:dashboard,non-standard,yes
+PPIQ-T009,src/components/dashboard/widget-builder/WidgetBuilderWizardContent.tsx,990,Component:dashboard,native <button>,"0} type=""button"" >",primary,className,saveWidget,Component:dashboard,non-standard,yes
+PPIQ-T009,src/components/dashboard/widget-builder/WidgetBuilderWizardContent.tsx,1005,Component:dashboard,native <button>,Next,action,className,goNext,Component:dashboard,non-standard,yes
+PPIQ-T009,src/components/dashboard/widget-builder/WidgetBuilderWizardContent.tsx,1039,Component:dashboard,native <button>,"onSelect(purpose.code)} type=""button"" >",action,className,() => onSelect(purpose.code),Component:dashboard,non-standard,yes
+PPIQ-T009,src/components/dashboard/widget-builder/WidgetBuilderWizardContent.tsx,1073,Component:dashboard,native <button>,"onSelect(chartType.code)} type=""button"" >",action,className,() => onSelect(chartType.code),Component:dashboard,non-standard,yes
+PPIQ-T009,src/components/dashboard/widget-builder/WidgetBuilderWizardContent.tsx,1496,Component:dashboard,native <button>,Use standard query only,action,className,onDisableExpression,Component:dashboard,non-standard,yes
+PPIQ-T009,src/components/dashboard/widget-builder/WidgetBuilderWizardContent.tsx,1565,Component:dashboard,native <button>,UNLABELLED,primary,className,onPreview,Component:dashboard,non-standard,yes
+PPIQ-T009,src/components/dashboard/widget-builder/WidgetScriptStep.tsx,88,Component:dashboard,native <button>,void runPreview()} >,primary,className,() => void runPreview(),Component:dashboard,non-standard,yes
+PPIQ-T009,src/components/dashboard/widget-builder/WidgetScriptStep.tsx,100,Component:dashboard,native <button>,template.description,action,className,"() => {
+              setExpression(template.expression);
+              setPreview(null);
+              setError(null);",Component:dashboard,non-standard,yes
+PPIQ-T009,src/components/DashboardFilterBar.tsx,130,Component:DashboardFilterBar.tsx,native <button>,Clear all filters,action,className,clearAllFilters,Component:DashboardFilterBar.tsx,non-standard,yes
+PPIQ-T009,src/components/demo/DemoModeControl.tsx,15,Component:demo,native <button>,Toggle frontend demo mode,action,className,() => setDemoModeEnabled(!demoModeEnabled),Component:demo,non-standard,yes
+PPIQ-T009,src/components/demo/DemoModeControl.tsx,39,Component:demo,native <a>,Run flow,primary,className,/demo-lifecycle,Component:demo,non-standard,yes
+PPIQ-T009,src/components/ErrorBoundary.tsx,132,Component:ErrorBoundary.tsx,native <button>,Try again,refresh,className,this.reset,Component:ErrorBoundary.tsx,non-standard,yes
+PPIQ-T009,src/components/hardening/AppErrorBoundary.tsx,82,Component:hardening,native <button>,Try again,action,className,this.reset,Component:hardening,non-standard,yes
+PPIQ-T009,src/components/hardening/AppErrorBoundary.tsx,85,Component:hardening,native <button>,window.location.reload()} > Refresh page,refresh,className,() => window.location.reload(),Component:hardening,non-standard,yes
+PPIQ-T009,src/components/hardening/DataFetchBoundary.tsx,38,Component:hardening,native <button>,Retry,refresh,className,onRetry,Component:hardening,non-standard,yes
+PPIQ-T009,src/components/hardening/StandardButton.tsx,31,Component:hardening,native <button>,: null},display-or-dead-review,className,null,Component:hardening,non-standard,yes
+PPIQ-T009,src/components/license/LicenseUsagePanel.tsx,31,Component:license,native <button>,void refresh()}> Retry,refresh,not-detected,() => void refresh(),Component:license,non-standard,yes
+PPIQ-T009,src/components/phase2/OperationProgressPanel.tsx,20,Component:phase2,native <button>,void onRefresh()}> Refresh,refresh,className,() => void onRefresh(),Component:phase2,non-standard,yes
+PPIQ-T009,src/components/phase2/SaveInspectionJobModal.tsx,96,Component:phase2,native <button>,UNLABELLED,secondary,className,onClose,Component:phase2,non-standard,yes
+PPIQ-T009,src/components/phase2/SaveInspectionJobModal.tsx,166,Component:phase2,native <button>,Cancel,secondary,className,onClose,Component:phase2,non-standard,yes
+PPIQ-T009,src/components/phase2/SaveInspectionJobModal.tsx,170,Component:phase2,native <button>,void save()} >,primary,className,() => void save(),Component:phase2,non-standard,yes
+PPIQ-T009,src/components/standard/StandardButton.tsx,115,Component:standard,native <button>,ariaLabel,action,className,"onClick as ButtonHTMLAttributes<HTMLButtonElement>[""onClick""]",Component:standard,non-standard,yes
+PPIQ-T009,src/components/standard/StandardButton.tsx,89,Component:standard,native <a>,ariaLabel,action,className,"(event) => {
+            if (disabled) {
+              event.preventDefault();
+              return;",Component:standard,non-standard,yes
+PPIQ-T009,src/components/standard/StandardFields.tsx,307,Component:standard,native <button>,setOpen((current) => !current)} onKeyDown= }} style= } > ))} ) : ( selectedLabels[0] ) ) : ( )},action,inline-style,() => setOpen((current) => !current),Component:standard,non-standard,yes
+PPIQ-T009,src/components/standard/StandardFields.tsx,128,Component:standard,StandardButton,"} as ChangeEvent ; onChange?.("""", synthetic); }} >",action,not-detected,"() => {
+                const synthetic = { target: { value: """"",Component:standard,standard,no
+PPIQ-T009,src/components/standard/StandardSurface.tsx,179,Component:standard,StandardButton,UNLABELLED,secondary,not-detected,onClose,Component:standard,standard,no
+PPIQ-T009,src/components/standard/StandardSurface.tsx,261,Component:standard,StandardButton,dismiss(message.id)}>,action,not-detected,() => dismiss(message.id),Component:standard,standard,no
+PPIQ-T009,src/components/standard/StandardTable.tsx,364,Component:standard,native <button>,"toggleSort(column, event.shiftKey)} >",action,className,"(event) => toggleSort(column, event.shiftKey)",Component:standard,non-standard,yes
+PPIQ-T009,src/components/standard/StandardTable.tsx,224,Component:standard,StandardButton,UNLABELLED,display-or-dead-review,not-detected,null,Component:standard,standard,no
+PPIQ-T009,src/components/standard/StandardTable.tsx,322,Component:standard,StandardButton,UNLABELLED,display-or-dead-review,not-detected,null,Component:standard,standard,no
+PPIQ-T009,src/components/standard/StandardTable.tsx,440,Component:standard,StandardButton,); }} > Previous,action,not-detected,"() => {
+                const next = Math.max(0, pageIndex - 1);
+                setPageIndex(next);
+                emitQuery({ pageIndex: next",Component:standard,standard,no
+PPIQ-T009,src/components/standard/StandardTable.tsx,464,Component:standard,StandardButton,= pageCount - 1} onClick= ); }} > Next,action,not-detected,"() => {
+                const next = Math.min(pageCount - 1, pageIndex + 1);
+                setPageIndex(next);
+                emitQuery({ pageIndex: next",Component:standard,standard,no
+PPIQ-T009,src/components/standard/StandardTabs.tsx,124,Component:standard,native <button>,"} id= type=""button"" role=""tab"" className=""ppiq-std-tabs__button"" aria-selected= aria-controls= disabled= tabIndex= onCli",action,className,"() => {
+              if (!item.disabled) onChange(item.id);",Component:standard,non-standard,yes
+PPIQ-T009,src/components/StateRenderer.tsx,84,Component:StateRenderer.tsx,native <button>,Retry,refresh,className,onRetry,Component:StateRenderer.tsx,non-standard,yes
+PPIQ-T009,src/components/StateRenderer.tsx,111,Component:StateRenderer.tsx,native <button>,Refresh,refresh,className,onRetry,Component:StateRenderer.tsx,non-standard,yes
+PPIQ-T009,src/hardening/DataFetchBoundary.tsx,55,Unknown,native <button>,Retry,refresh,className,onRetry,Unknown,non-standard,yes
+PPIQ-T009,src/hardening/RouteErrorBoundary.tsx,84,Unknown,native <button>,Retry route,refresh,className,this.retry,Unknown,non-standard,yes
+PPIQ-T009,src/hardening/RouteErrorBoundary.tsx,89,Unknown,native <button>,window.location.reload()} > Refresh browser,refresh,className,() => window.location.reload(),Unknown,non-standard,yes
+PPIQ-T009,src/hardening/StandardButton.tsx,38,Unknown,native <button>,: null},display-or-dead-review,className,null,Unknown,non-standard,yes
+PPIQ-T009,src/hooks/useOptimisticSave.ts,22,Unknown,native <button>,* *,primary,not-detected,save,Unknown,non-standard,yes
+PPIQ-T009,src/pages/Admin/AdminDbConfigurationTab.tsx,141,Admin,native <button>,Back to list,secondary,className,backToList,Admin,non-standard,yes
+PPIQ-T009,src/pages/Admin/AdminDbConfigurationTab.tsx,145,Admin,native <button>,New Connection Profile,action,className,openCreate,Admin,non-standard,yes
+PPIQ-T009,src/pages/Admin/AdminDbConfigurationTab.tsx,353,Admin,native <button>,Test connection,action,className,() => testConnection(conn.id),Admin,non-standard,yes
+PPIQ-T009,src/pages/Admin/AdminDbConfigurationTab.tsx,364,Admin,native <button>,Browse tables and datasets,action,className,() => onBrowseTables(conn.id),Admin,non-standard,yes
+PPIQ-T009,src/pages/Admin/AdminDbConfigurationTab.tsx,372,Admin,native <button>,Edit connection profile,action,className,() => onEdit(conn),Admin,non-standard,yes
+PPIQ-T009,src/pages/Admin/AdminDbConfigurationTab.tsx,722,Admin,native <button>,},primary,className,save,Admin,non-standard,yes
+PPIQ-T009,src/pages/Admin/AdminDbConfigurationTab.tsx,730,Admin,native <button>,Cancel,secondary,className,onCancel,Admin,non-standard,yes
+PPIQ-T009,src/pages/Admin/AdminDbConfigurationTab.tsx,909,Admin,native <button>,UNLABELLED,action,className,registerDataset,Admin,non-standard,yes
+PPIQ-T009,src/pages/Admin/AdminDbConfigurationTab.tsx,955,Admin,native <button>,Expand field details,action,className,() => toggleFields(ds.id),Admin,non-standard,yes
+PPIQ-T009,src/pages/Admin/AdminDbConfigurationTab.tsx,1112,Admin,native <button>,UNLABELLED,primary,className,save,Admin,non-standard,yes
+PPIQ-T009,src/pages/Admin/AdminImportingDataTab.tsx,147,Admin,native <button>,UNLABELLED,primary,className,saveMappingRefreshSchedule,Admin,non-standard,yes
+PPIQ-T009,src/pages/Admin/AdminJobsMonitorTab.tsx,217,Admin,native <button>,void runNow(job.id)} >,primary,className,() => void runNow(job.id),Admin,non-standard,yes
+PPIQ-T009,src/pages/Admin/AdminJobsMonitorTab.tsx,227,Admin,native <button>,void resume(job.id)} > Resume,action,className,() => void resume(job.id),Admin,non-standard,yes
+PPIQ-T009,src/pages/Admin/AdminJobsMonitorTab.tsx,236,Admin,native <button>,void pause(job.id)} > Pause,action,className,() => void pause(job.id),Admin,non-standard,yes
+PPIQ-T009,src/pages/Admin/AdminJobsMonitorTab.tsx,245,Admin,native <button>,void toggleHistory(job.id)} >,action,className,() => void toggleHistory(job.id),Admin,non-standard,yes
+PPIQ-T009,src/pages/Admin/AdminJobsMonitorTab.tsx,270,Admin,native <button>,setExpandedJobId(null)} > Close,secondary,className,() => setExpandedJobId(null),Admin,non-standard,yes
+PPIQ-T009,src/pages/Admin/AdminPageContent.tsx,163,Admin,native <button>,"loadAdminData(true)} disabled= type=""button"" >",refresh,className,() => loadAdminData(true),Admin,non-standard,yes
+PPIQ-T009,src/pages/Admin/AdminSchemaConfigurationTab.tsx,414,Admin,native <button>,Preview SQL,action,className,previewSql,Admin,non-standard,yes
+PPIQ-T009,src/pages/Admin/AdminSchemaConfigurationTab.tsx,423,Admin,native <button>,},primary,className,saveView,Admin,non-standard,yes
+PPIQ-T009,src/pages/Admin/AdminSchemaConfigurationTab.tsx,434,Admin,native <button>,UNLABELLED,action,className,approveView,Admin,non-standard,yes
+PPIQ-T009,src/pages/Admin/AdminSchemaConfigurationTab.tsx,627,Admin,native <button>,} >,secondary,className,() => { setShowForm(!showForm); setError(null);,Admin,non-standard,yes
+PPIQ-T009,src/pages/Admin/AdminSchemaConfigurationTab.tsx,764,Admin,native <button>,UNLABELLED,primary,className,createKpi,Admin,non-standard,yes
+PPIQ-T009,src/pages/Admin/Phase1WorkflowTruthPanel.tsx,98,Admin,native <button>,void load()}> Refresh,refresh,className,() => void load(),Admin,non-standard,yes
+PPIQ-T009,src/pages/Admin/Phase1WorkflowTruthPanel.tsx,101,Admin,native <button>,void runDueImports()} >,primary,className,() => void runDueImports(),Admin,non-standard,yes
+PPIQ-T009,src/pages/AdminPreview/AdminPreviewWorkspacePage.tsx,81,AdminPreview,native <button>,setActiveTab(tab.id)} >,action,className,() => setActiveTab(tab.id),AdminPreview,non-standard,yes
+PPIQ-T009,src/pages/AdminPreview/AdminPreviewWorkspacePage.tsx,117,AdminPreview,native <button>,Reset demo,action,className,resetDemoState,AdminPreview,non-standard,yes
+PPIQ-T009,src/pages/AdminPreview/AdminPreviewWorkspacePage.tsx,139,AdminPreview,native <button>,setSelectedPlan(plan.code)} > users sources dashboards ))},action,className,() => setSelectedPlan(plan.code),AdminPreview,non-standard,yes
+PPIQ-T009,src/pages/AdminPreview/AdminPreviewWorkspacePage.tsx,291,AdminPreview,native <button>,Add user preview,display-or-dead-review,className,null,AdminPreview,non-standard,yes
+PPIQ-T009,src/pages/AdminPreview/AdminPreviewWorkspacePage.tsx,296,AdminPreview,native <button>,Define role preview,display-or-dead-review,className,null,AdminPreview,non-standard,yes
+PPIQ-T009,src/pages/AdminPreview/AdminPreviewWorkspacePage.tsx,301,AdminPreview,native <button>,Assign privileges preview,display-or-dead-review,className,null,AdminPreview,non-standard,yes
+PPIQ-T009,src/pages/AdminPreview/AdminPreviewWorkspacePage.tsx,383,AdminPreview,native <button>,toggleFeature(feature)} >,action,className,() => toggleFeature(feature),AdminPreview,non-standard,yes
+PPIQ-T009,src/pages/AdminPreview/AdminPreviewWorkspacePage.tsx,459,AdminPreview,native <button>,Preview only — backend training disabled,display-or-dead-review,className,null,AdminPreview,non-standard,yes
+PPIQ-T009,src/pages/AdminPreview/AdminPreviewWorkspacePage.tsx,539,AdminPreview,native <button>,Reset frontend demo state,action,className,resetDemoState,AdminPreview,non-standard,yes
+PPIQ-T009,src/pages/AdminPreview/AdminPreviewWorkspacePage.tsx,678,AdminPreview,native <button>,Export PDF later — preview only,display-or-dead-review,className,null,AdminPreview,non-standard,yes
+PPIQ-T009,src/pages/AdminPreview/AdminPreviewWorkspacePage.tsx,544,AdminPreview,native <a>,Demo CTA mailto,navigation,className,mailto:info@plantprocessiq.com?subject=PlantProcess%20IQ%20demo%20request,AdminPreview,non-standard,yes
+PPIQ-T009,src/pages/Correlation/CorrelationPage.tsx,99,Correlation,native <button>,Recalculate,refresh,className,load,Correlation,non-standard,yes
+PPIQ-T009,src/pages/Correlation/CorrelationPage.tsx,196,Correlation,native <button>,"setFilter(""linkMode"", value as any)} >",action,className,"() => setFilter(""linkMode"", value as any)",Correlation,non-standard,yes
+PPIQ-T009,src/pages/CorrelationPage.tsx,102,CorrelationPage,native <button>,Recalculate,refresh,className,load,CorrelationPage,non-standard,yes
+PPIQ-T009,src/pages/CorrelationPage.tsx,224,CorrelationPage,native <button>,"setFilter(""linkMode"", value as any)} >",action,className,"() => setFilter(""linkMode"", value as any)",CorrelationPage,non-standard,yes
+PPIQ-T009,src/pages/Dashboard/DashboardPageContent.tsx,509,Dashboard,native <button>,); openDrilldown( ); }} >,primary,className,"() => {
+              applySelection({
+                type: ""material"",
+                field: ""materialCode"",
+                value: row.materialCode,
+                label: row.materialCode,
+                sourceWidget: ""Material Explorer"",",Dashboard,non-standard,yes
+PPIQ-T009,src/pages/Dashboard/DashboardPageContent.tsx,554,Dashboard,native <button>,applySelection( ) } >,primary,className,"() =>
+              applySelection({
+                type: ""sourceSystem"",
+                field: ""sourceSystem"",
+                value: row.sourceSystem ?? ""Unknown"",
+                label: row.sourceSystem ?? ""Unknown"",
+                sourceWidget: ""Material Explorer"",",Dashboard,non-standard,yes
+PPIQ-T009,src/pages/Dashboard/DashboardPageContent.tsx,601,Dashboard,native <button>,applySelection( ) } >,primary,className,"() =>
+                applySelection({
+                  type: ""riskClass"",
+                  field: ""riskClass"",
+                  value: row.latestRiskClass!,
+                  label: row.latestRiskClass!,
+                  sourceWidget: ""Material Explorer"",",Dashboard,non-standard,yes
+PPIQ-T009,src/pages/Dashboard/DashboardPageContent.tsx,682,Dashboard,native <button>,Add a new custom widget,action,className,openCreateWidgetWizard,Dashboard,non-standard,yes
+PPIQ-T009,src/pages/Dashboard/DashboardPageContent.tsx,693,Dashboard,native <button>,Save widget positions to backend,primary,className,() => void saveDashboardLayout(),Dashboard,non-standard,yes
+PPIQ-T009,src/pages/Dashboard/DashboardPageContent.tsx,703,Dashboard,native <button>,Reload positions from last saved state,primary,className,() => void reloadDashboardLayout(),Dashboard,non-standard,yes
+PPIQ-T009,src/pages/Dashboard/DashboardPageContent.tsx,713,Dashboard,native <button>,Rebuild all read-models from source data,refresh,className,() => void refreshReadModels(),Dashboard,non-standard,yes
+PPIQ-T009,src/pages/Dashboard/DashboardPageContent.tsx,1199,Dashboard,native <button>,"setFilter(""page"", Math.max((materials?.page ?? 1) - 1, 1)) } > Previous",action,className,"() =>
+                      setFilter(""page"", Math.max((materials?.page ?? 1) - 1, 1))",Dashboard,non-standard,yes
+PPIQ-T009,src/pages/Dashboard/DashboardPageContent.tsx,1215,Dashboard,native <button>,= (materials?.totalPages ?? 0) } onClick= > Next,action,className,"() => setFilter(""page"", (materials?.page ?? 1) + 1)",Dashboard,non-standard,yes
+PPIQ-T009,src/pages/Dashboard/DashboardPageContent.tsx,1449,Dashboard,native <button>,UNLABELLED,action,className,handleClone,Dashboard,non-standard,yes
+PPIQ-T009,src/pages/Dashboard/DashboardPageContent.tsx,1459,Dashboard,native <button>,UNLABELLED,destructive,className,handleRemove,Dashboard,non-standard,yes
+PPIQ-T009,src/pages/Dashboard/DashboardPageContent.tsx,1807,Dashboard,native <button>,UNLABELLED,action,className,onClick,Dashboard,non-standard,yes
+PPIQ-T009,src/pages/DataQuality/DataQualityPage.tsx,297,DataQuality,native <button>,UNLABELLED,refresh,className,scanNow,DataQuality,non-standard,yes
+PPIQ-T009,src/pages/DataQuality/DataQualityPage.tsx,348,DataQuality,native <button>,setFilters(defaultFilters)} > Clear Filters,action,className,() => setFilters(defaultFilters),DataQuality,non-standard,yes
+PPIQ-T009,src/pages/DemoLifecycle/DemoLifecyclePage.tsx,86,DemoLifecycle,native <button>,void load()}> Retry,refresh,className,() => void load(),DemoLifecycle,non-standard,yes
+PPIQ-T009,src/pages/MaterialInvestigation/MaterialInvestigationPage.tsx,105,MaterialInvestigation,native <button>,); }} >,action,className,"() => {
+            setSelectedId(row.materialUnitId);
+            mergeFilters({ materialCode: row.materialCode",MaterialInvestigation,non-standard,yes
+PPIQ-T009,src/pages/MaterialInvestigation/MaterialInvestigationPage.tsx,159,MaterialInvestigation,native <button>,Search,action,not-detected,searchMaterials,MaterialInvestigation,non-standard,yes
+PPIQ-T009,src/pages/MaterialInvestigation/MaterialInvestigationPage.tsx,163,MaterialInvestigation,native <button>,Load Investigation,action,not-detected,loadInvestigation,MaterialInvestigation,non-standard,yes
+PPIQ-T009,src/pages/MaterialInvestigation/MaterialInvestigationPage.tsx,167,MaterialInvestigation,native <button>,Calculate Risk,action,not-detected,calculateRisk,MaterialInvestigation,non-standard,yes
+PPIQ-T009,src/pages/MaterialInvestigation/MaterialInvestigationPage.tsx,171,MaterialInvestigation,native <a>,PDF Report,export,className,pdfUrl,MaterialInvestigation,non-standard,yes
+PPIQ-T009,src/pages/MaterialInvestigationPage.tsx,144,MaterialInvestigationPage,native <button>,selectMaterial(row)} >,action,className,() => selectMaterial(row),MaterialInvestigationPage,non-standard,yes
+PPIQ-T009,src/pages/MaterialInvestigationPage.tsx,387,MaterialInvestigationPage,native <button>,UNLABELLED,action,not-detected,searchMaterials,MaterialInvestigationPage,non-standard,yes
+PPIQ-T009,src/pages/MaterialInvestigationPage.tsx,392,MaterialInvestigationPage,native <button>,UNLABELLED,action,not-detected,loadInvestigation,MaterialInvestigationPage,non-standard,yes
+PPIQ-T009,src/pages/MaterialInvestigationPage.tsx,401,MaterialInvestigationPage,native <button>,UNLABELLED,action,not-detected,calculateRisk,MaterialInvestigationPage,non-standard,yes
+PPIQ-T009,src/pages/MaterialInvestigationPage.tsx,529,MaterialInvestigationPage,native <button>,UNLABELLED,action,not-detected,loadMoreParameters,MaterialInvestigationPage,non-standard,yes
+PPIQ-T009,src/pages/MaterialInvestigationPage.tsx,410,MaterialInvestigationPage,native <a>,PDF Report,export,className,pdfUrl,MaterialInvestigationPage,non-standard,yes
+PPIQ-T009,src/pages/MlReadiness/MlReadinessPage.tsx,84,MlReadiness,native <button>,void load()}> Retry,refresh,className,() => void load(),MlReadiness,non-standard,yes
+PPIQ-T009,src/pages/MlReadiness/MlReadinessPage.tsx,181,MlReadiness,native <button>,void ensureJobs()} >,action,className,() => void ensureJobs(),MlReadiness,non-standard,yes
+PPIQ-T009,src/pages/RiskDashboard/RiskDashboardPage.tsx,284,RiskDashboard,native <button>,UNLABELLED,refresh,className,recalculateRisk,RiskDashboard,non-standard,yes
+PPIQ-T009,src/pages/RiskDashboard/RiskDashboardPage.tsx,332,RiskDashboard,native <button>,setFilters(defaultFilters)} > Clear Filters,action,className,() => setFilters(defaultFilters),RiskDashboard,non-standard,yes
+PPIQ-T009,src/pages/RiskDashboardPage.tsx,286,RiskDashboardPage,native <button>,UNLABELLED,refresh,className,recalculateRisk,RiskDashboardPage,non-standard,yes
+PPIQ-T009,src/pages/RiskDashboardPage.tsx,334,RiskDashboardPage,native <button>,setFilters(defaultFilters)} > Clear Filters,action,className,() => setFilters(defaultFilters),RiskDashboardPage,non-standard,yes
+PPIQ-T009,src/ui/standard-components.tsx,58,Unknown,native <button>,: null} : null},display-or-dead-review,className,null,Unknown,non-standard,yes
+PPIQ-T009,src/ui/standard-components.tsx,276,Unknown,native <button>,onChange(item.id)} > : null},action,className,() => onChange(item.id),Unknown,non-standard,yes
+PPIQ-T009,src/ui/standard-components.tsx,459,Unknown,StandardButton,Close modal,secondary,not-detected,onClose,Unknown,standard,no
+PPIQ-T009,src/ui/standard-components.tsx,514,Unknown,StandardButton,Dismiss notification,action,not-detected,() => dismiss(message.id),Unknown,standard,no

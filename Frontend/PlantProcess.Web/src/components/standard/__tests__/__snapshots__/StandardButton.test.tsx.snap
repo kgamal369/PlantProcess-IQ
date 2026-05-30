@@ -1,0 +1,91 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`StandardButton > renders disabled snapshot for danger lg 1`] = `"<button type="button" class="ppiq-std-button ppiq-std-button--danger ppiq-std-button--lg" disabled="" aria-disabled="true"><span>Disabled</span></button>"`;
+
+exports[`StandardButton > renders disabled snapshot for danger md 1`] = `"<button type="button" class="ppiq-std-button ppiq-std-button--danger ppiq-std-button--md" disabled="" aria-disabled="true"><span>Disabled</span></button>"`;
+
+exports[`StandardButton > renders disabled snapshot for danger sm 1`] = `"<button type="button" class="ppiq-std-button ppiq-std-button--danger ppiq-std-button--sm" disabled="" aria-disabled="true"><span>Disabled</span></button>"`;
+
+exports[`StandardButton > renders disabled snapshot for ghost lg 1`] = `"<button type="button" class="ppiq-std-button ppiq-std-button--ghost ppiq-std-button--lg" disabled="" aria-disabled="true"><span>Disabled</span></button>"`;
+
+exports[`StandardButton > renders disabled snapshot for ghost md 1`] = `"<button type="button" class="ppiq-std-button ppiq-std-button--ghost ppiq-std-button--md" disabled="" aria-disabled="true"><span>Disabled</span></button>"`;
+
+exports[`StandardButton > renders disabled snapshot for ghost sm 1`] = `"<button type="button" class="ppiq-std-button ppiq-std-button--ghost ppiq-std-button--sm" disabled="" aria-disabled="true"><span>Disabled</span></button>"`;
+
+exports[`StandardButton > renders disabled snapshot for primary lg 1`] = `"<button type="button" class="ppiq-std-button ppiq-std-button--primary ppiq-std-button--lg" disabled="" aria-disabled="true"><span>Disabled</span></button>"`;
+
+exports[`StandardButton > renders disabled snapshot for primary md 1`] = `"<button type="button" class="ppiq-std-button ppiq-std-button--primary ppiq-std-button--md" disabled="" aria-disabled="true"><span>Disabled</span></button>"`;
+
+exports[`StandardButton > renders disabled snapshot for primary sm 1`] = `"<button type="button" class="ppiq-std-button ppiq-std-button--primary ppiq-std-button--sm" disabled="" aria-disabled="true"><span>Disabled</span></button>"`;
+
+exports[`StandardButton > renders disabled snapshot for secondary lg 1`] = `"<button type="button" class="ppiq-std-button ppiq-std-button--secondary ppiq-std-button--lg" disabled="" aria-disabled="true"><span>Disabled</span></button>"`;
+
+exports[`StandardButton > renders disabled snapshot for secondary md 1`] = `"<button type="button" class="ppiq-std-button ppiq-std-button--secondary ppiq-std-button--md" disabled="" aria-disabled="true"><span>Disabled</span></button>"`;
+
+exports[`StandardButton > renders disabled snapshot for secondary sm 1`] = `"<button type="button" class="ppiq-std-button ppiq-std-button--secondary ppiq-std-button--sm" disabled="" aria-disabled="true"><span>Disabled</span></button>"`;
+
+exports[`StandardButton > renders disabled snapshot for success lg 1`] = `"<button type="button" class="ppiq-std-button ppiq-std-button--success ppiq-std-button--lg" disabled="" aria-disabled="true"><span>Disabled</span></button>"`;
+
+exports[`StandardButton > renders disabled snapshot for success md 1`] = `"<button type="button" class="ppiq-std-button ppiq-std-button--success ppiq-std-button--md" disabled="" aria-disabled="true"><span>Disabled</span></button>"`;
+
+exports[`StandardButton > renders disabled snapshot for success sm 1`] = `"<button type="button" class="ppiq-std-button ppiq-std-button--success ppiq-std-button--sm" disabled="" aria-disabled="true"><span>Disabled</span></button>"`;
+
+exports[`StandardButton > renders loading snapshot for danger lg 1`] = `"<button type="button" class="ppiq-std-button ppiq-std-button--danger ppiq-std-button--lg" disabled="" aria-busy="true" aria-disabled="true"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-loader-circle ppiq-std-button__spinner" aria-hidden="true"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg><span class="ppiq-std-button__label--loading">Loading</span></button>"`;
+
+exports[`StandardButton > renders loading snapshot for danger md 1`] = `"<button type="button" class="ppiq-std-button ppiq-std-button--danger ppiq-std-button--md" disabled="" aria-busy="true" aria-disabled="true"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-loader-circle ppiq-std-button__spinner" aria-hidden="true"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg><span class="ppiq-std-button__label--loading">Loading</span></button>"`;
+
+exports[`StandardButton > renders loading snapshot for danger sm 1`] = `"<button type="button" class="ppiq-std-button ppiq-std-button--danger ppiq-std-button--sm" disabled="" aria-busy="true" aria-disabled="true"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-loader-circle ppiq-std-button__spinner" aria-hidden="true"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg><span class="ppiq-std-button__label--loading">Loading</span></button>"`;
+
+exports[`StandardButton > renders loading snapshot for ghost lg 1`] = `"<button type="button" class="ppiq-std-button ppiq-std-button--ghost ppiq-std-button--lg" disabled="" aria-busy="true" aria-disabled="true"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-loader-circle ppiq-std-button__spinner" aria-hidden="true"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg><span class="ppiq-std-button__label--loading">Loading</span></button>"`;
+
+exports[`StandardButton > renders loading snapshot for ghost md 1`] = `"<button type="button" class="ppiq-std-button ppiq-std-button--ghost ppiq-std-button--md" disabled="" aria-busy="true" aria-disabled="true"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-loader-circle ppiq-std-button__spinner" aria-hidden="true"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg><span class="ppiq-std-button__label--loading">Loading</span></button>"`;
+
+exports[`StandardButton > renders loading snapshot for ghost sm 1`] = `"<button type="button" class="ppiq-std-button ppiq-std-button--ghost ppiq-std-button--sm" disabled="" aria-busy="true" aria-disabled="true"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-loader-circle ppiq-std-button__spinner" aria-hidden="true"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg><span class="ppiq-std-button__label--loading">Loading</span></button>"`;
+
+exports[`StandardButton > renders loading snapshot for primary lg 1`] = `"<button type="button" class="ppiq-std-button ppiq-std-button--primary ppiq-std-button--lg" disabled="" aria-busy="true" aria-disabled="true"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-loader-circle ppiq-std-button__spinner" aria-hidden="true"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg><span class="ppiq-std-button__label--loading">Loading</span></button>"`;
+
+exports[`StandardButton > renders loading snapshot for primary md 1`] = `"<button type="button" class="ppiq-std-button ppiq-std-button--primary ppiq-std-button--md" disabled="" aria-busy="true" aria-disabled="true"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-loader-circle ppiq-std-button__spinner" aria-hidden="true"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg><span class="ppiq-std-button__label--loading">Loading</span></button>"`;
+
+exports[`StandardButton > renders loading snapshot for primary sm 1`] = `"<button type="button" class="ppiq-std-button ppiq-std-button--primary ppiq-std-button--sm" disabled="" aria-busy="true" aria-disabled="true"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-loader-circle ppiq-std-button__spinner" aria-hidden="true"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg><span class="ppiq-std-button__label--loading">Loading</span></button>"`;
+
+exports[`StandardButton > renders loading snapshot for secondary lg 1`] = `"<button type="button" class="ppiq-std-button ppiq-std-button--secondary ppiq-std-button--lg" disabled="" aria-busy="true" aria-disabled="true"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-loader-circle ppiq-std-button__spinner" aria-hidden="true"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg><span class="ppiq-std-button__label--loading">Loading</span></button>"`;
+
+exports[`StandardButton > renders loading snapshot for secondary md 1`] = `"<button type="button" class="ppiq-std-button ppiq-std-button--secondary ppiq-std-button--md" disabled="" aria-busy="true" aria-disabled="true"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-loader-circle ppiq-std-button__spinner" aria-hidden="true"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg><span class="ppiq-std-button__label--loading">Loading</span></button>"`;
+
+exports[`StandardButton > renders loading snapshot for secondary sm 1`] = `"<button type="button" class="ppiq-std-button ppiq-std-button--secondary ppiq-std-button--sm" disabled="" aria-busy="true" aria-disabled="true"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-loader-circle ppiq-std-button__spinner" aria-hidden="true"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg><span class="ppiq-std-button__label--loading">Loading</span></button>"`;
+
+exports[`StandardButton > renders loading snapshot for success lg 1`] = `"<button type="button" class="ppiq-std-button ppiq-std-button--success ppiq-std-button--lg" disabled="" aria-busy="true" aria-disabled="true"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-loader-circle ppiq-std-button__spinner" aria-hidden="true"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg><span class="ppiq-std-button__label--loading">Loading</span></button>"`;
+
+exports[`StandardButton > renders loading snapshot for success md 1`] = `"<button type="button" class="ppiq-std-button ppiq-std-button--success ppiq-std-button--md" disabled="" aria-busy="true" aria-disabled="true"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-loader-circle ppiq-std-button__spinner" aria-hidden="true"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg><span class="ppiq-std-button__label--loading">Loading</span></button>"`;
+
+exports[`StandardButton > renders loading snapshot for success sm 1`] = `"<button type="button" class="ppiq-std-button ppiq-std-button--success ppiq-std-button--sm" disabled="" aria-busy="true" aria-disabled="true"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-loader-circle ppiq-std-button__spinner" aria-hidden="true"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg><span class="ppiq-std-button__label--loading">Loading</span></button>"`;
+
+exports[`StandardButton > renders snapshot for danger lg 1`] = `"<button type="button" class="ppiq-std-button ppiq-std-button--danger ppiq-std-button--lg"><span>Button</span></button>"`;
+
+exports[`StandardButton > renders snapshot for danger md 1`] = `"<button type="button" class="ppiq-std-button ppiq-std-button--danger ppiq-std-button--md"><span>Button</span></button>"`;
+
+exports[`StandardButton > renders snapshot for danger sm 1`] = `"<button type="button" class="ppiq-std-button ppiq-std-button--danger ppiq-std-button--sm"><span>Button</span></button>"`;
+
+exports[`StandardButton > renders snapshot for ghost lg 1`] = `"<button type="button" class="ppiq-std-button ppiq-std-button--ghost ppiq-std-button--lg"><span>Button</span></button>"`;
+
+exports[`StandardButton > renders snapshot for ghost md 1`] = `"<button type="button" class="ppiq-std-button ppiq-std-button--ghost ppiq-std-button--md"><span>Button</span></button>"`;
+
+exports[`StandardButton > renders snapshot for ghost sm 1`] = `"<button type="button" class="ppiq-std-button ppiq-std-button--ghost ppiq-std-button--sm"><span>Button</span></button>"`;
+
+exports[`StandardButton > renders snapshot for primary lg 1`] = `"<button type="button" class="ppiq-std-button ppiq-std-button--primary ppiq-std-button--lg"><span>Button</span></button>"`;
+
+exports[`StandardButton > renders snapshot for primary md 1`] = `"<button type="button" class="ppiq-std-button ppiq-std-button--primary ppiq-std-button--md"><span>Button</span></button>"`;
+
+exports[`StandardButton > renders snapshot for primary sm 1`] = `"<button type="button" class="ppiq-std-button ppiq-std-button--primary ppiq-std-button--sm"><span>Button</span></button>"`;
+
+exports[`StandardButton > renders snapshot for secondary lg 1`] = `"<button type="button" class="ppiq-std-button ppiq-std-button--secondary ppiq-std-button--lg"><span>Button</span></button>"`;
+
+exports[`StandardButton > renders snapshot for secondary md 1`] = `"<button type="button" class="ppiq-std-button ppiq-std-button--secondary ppiq-std-button--md"><span>Button</span></button>"`;
+
+exports[`StandardButton > renders snapshot for secondary sm 1`] = `"<button type="button" class="ppiq-std-button ppiq-std-button--secondary ppiq-std-button--sm"><span>Button</span></button>"`;
+
+exports[`StandardButton > renders snapshot for success lg 1`] = `"<button type="button" class="ppiq-std-button ppiq-std-button--success ppiq-std-button--lg"><span>Button</span></button>"`;
+
+exports[`StandardButton > renders snapshot for success md 1`] = `"<button type="button" class="ppiq-std-button ppiq-std-button--success ppiq-std-button--md"><span>Button</span></button>"`;
+
+exports[`StandardButton > renders snapshot for success sm 1`] = `"<button type="button" class="ppiq-std-button ppiq-std-button--success ppiq-std-button--sm"><span>Button</span></button>"`;
