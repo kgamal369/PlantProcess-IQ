@@ -268,7 +268,7 @@ try
     // AUTO-MIGRATE: Apply all pending EF Core migrations at startup.
     //
     // Runs BEFORE RegisterSystemJobsAsync so the schema is always in place
-    // on fresh deployments — no manual SQL scripts or dotnet-ef commands
+    // on fresh deployments â€” no manual SQL scripts or dotnet-ef commands
     // needed on the server. Idempotent: already-applied migrations are
     // skipped automatically by EF Core.
     // =====================================================================
@@ -324,7 +324,7 @@ try
     app.UseAuthentication();
     app.UseAuthorization();
 
-    // Audit log — wraps every request matching the audited prefix allow-list (BE-ADD-001).
+    // Audit log â€” wraps every request matching the audited prefix allow-list (BE-ADD-001).
     // Must run AFTER UseAuthentication so context.User is available, and BEFORE endpoints.
     app.UseAuditLog();
 
@@ -364,6 +364,7 @@ try
     app.MapCorrelationEndpoints();
     app.MapFeatureEngineeringEndpoints();
     app.MapMlReadinessEndpoints();
+app.MapMlFoundationEndpoints();
 
     app.MapDashboardEndpoints();
     app.MapReportingEndpoints();

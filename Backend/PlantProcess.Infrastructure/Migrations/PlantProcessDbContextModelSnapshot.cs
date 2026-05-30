@@ -1102,6 +1102,13 @@ namespace PlantProcess.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<string>("AdvancedExpressionJson")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("jsonb")
+                        .HasDefaultValue("{}")
+                        .HasColumnName("advanced_expression_json");
+
                     b.Property<string>("ChartType")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -1136,6 +1143,32 @@ namespace PlantProcess.Infrastructure.Migrations
                         .HasColumnType("jsonb")
                         .HasColumnName("display_options_json");
 
+                    b.Property<bool>("ExpressionEnabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("expression_enabled");
+
+                    b.Property<DateTime?>("ExpressionLastValidatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expression_last_validated_at_utc");
+
+                    b.Property<string>("ExpressionLastValidationMessage")
+                        .HasColumnType("text")
+                        .HasColumnName("expression_last_validation_message");
+
+                    b.Property<short>("ExpressionLastValidationStatus")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("smallint")
+                        .HasDefaultValue((short)0)
+                        .HasColumnName("expression_last_validation_status");
+
+                    b.Property<short>("ExpressionVersion")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("smallint")
+                        .HasDefaultValue((short)1)
+                        .HasColumnName("expression_version");
+
                     b.Property<string>("FilterJson")
                         .IsRequired()
                         .HasColumnType("jsonb")
@@ -1168,6 +1201,10 @@ namespace PlantProcess.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
                         .HasColumnName("parameter_code");
+
+                    b.Property<string>("QueryExpression")
+                        .HasColumnType("text")
+                        .HasColumnName("query_expression");
 
                     b.Property<int>("SortOrder")
                         .HasColumnType("integer")
@@ -1226,6 +1263,9 @@ namespace PlantProcess.Infrastructure.Migrations
                     b.HasIndex("DashboardDefinitionId", "WidgetCode")
                         .IsUnique()
                         .HasDatabaseName("ix_dashboard_widget_definitions_widget_code");
+
+                    b.HasIndex("ExpressionEnabled", "ExpressionLastValidatedAtUtc")
+                        .HasDatabaseName("ix_dashboard_widget_definitions_expression_refresh");
 
                     b.HasIndex("ChartType", "DimensionCode", "MeasureCode")
                         .HasDatabaseName("ix_dashboard_widget_definitions_chart_type_dimension_code_meas");

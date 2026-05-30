@@ -1,4 +1,4 @@
-﻿// ============================================================
+// ============================================================
 // FILE: Backend/PlantProcess.Application/DependencyInjection.cs
 // FIX: Removed duplicate using directives for
 //      PlantProcess.Application.Analytics.Interfaces
@@ -110,6 +110,7 @@ public static class DependencyInjection
         services.AddScoped<IFeatureEngineeringService, FeatureEngineeringService>();
         services.AddScoped<IQualityLabelBuilderService, QualityLabelBuilderService>();
         services.AddScoped<IMlReadinessService, MlReadinessService>();
+        services.AddSingleton<IEmbeddingProvider, DeterministicEmbeddingProvider>();
         services.AddScoped<IWidgetQueryExpressionService, WidgetQueryExpressionService>();
         
         // Reporting / customer demo pack

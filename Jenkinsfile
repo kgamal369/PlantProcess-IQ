@@ -1,5 +1,5 @@
 // ============================================================
-// PlantProcess IQ — CI/CD pipeline
+// PlantProcess IQ â€” CI/CD pipeline
 //
 // What this does on every git push to main:
 //   1. Pull latest source on the deploy server (/opt/PlantProcess-IQ),
@@ -93,7 +93,7 @@ pipeline {
                     cd ${REPO_DIR}/Backend/database/scripts
                     for f in $(ls -1 [0-9]*.sql | sort); do
                         echo "==> Applying $f"
-                        docker exec -i ${DB_CONTAINER} psql -U "$PGUSER" -d "$PGDB" -v ON_ERROR_STOP=0 < "$f" || \
+                        docker exec -i ${DB_CONTAINER} psql -U "$PGUSER" -d "$PGDB" -v ON_ERROR_STOP=1 < "$f" || \
                             echo "    (warning: $f had errors -- continuing)"
                     done
                 '''
@@ -106,18 +106,19 @@ pipeline {
                     set -e
                     cd ${REPO_DIR}/Frontend/PlantProcess.Web
 
-                    if [ -f package-lock.json ]; then
-                        npm ci
-                    else
-                        npm install
-                    fi
-
-                    npm run validate:phase5-phase6:strict
-
-                    echo "Phase 5/6 visual, e2e and accessibility scripts are wired:"
-                    npm run test:visual -- --list
-                    npm run test:phase56:e2e -- --list
-                    npm run test:a11y -- --list
+                    docker run --rm \
+                      -v "$PWD:/app" \
+                      -w /app \
+                      node:20-alpine \
+                      sh -lc '
+                        node --version
+                        npm --version
+                        if [ -f package-lock.json ]; then npm ci; else npm install; fi
+                        npm run validate:phase5-phase6:strict
+                        npm run test:visual -- --list
+                        npm run test:phase56:e2e -- --list
+                        npm run test:a11y -- --list
+                      '
                 '''
             }
         }
@@ -135,6 +136,34 @@ pipeline {
             }
         }
 
+        
+        stage('2d. v5 Phase 01/02 ML foundation gates') {
+            steps {
+                sh '''
+                    set -e
+                    cd ${REPO_DIR}
+
+                    node tools/validation/validate-phase01-phase02-v5-gates.mjs
+
+                    cd Frontend/PlantProcess.Web
+                    docker run --rm \
+                      -v "$PWD:/app" \
+                      -w /app \
+                      -e PPIQ_API_BASE_URL=https://api.178.105.152.180.sslip.io \
+                      -e PPIQ_ADMIN_USER=${PPIQ_ADMIN_USER:-admin} \
+                      -e PPIQ_ADMIN_PASSWORD=${PPIQ_ADMIN_PASSWORD:-} \
+                      -e PPIQ_OPERATOR_USER=${PPIQ_OPERATOR_USER:-datamanager} \
+                      -e PPIQ_OPERATOR_PASSWORD=${PPIQ_OPERATOR_PASSWORD:-} \
+                      node:20-alpine \
+                      sh -lc '
+                        if [ -f package-lock.json ]; then npm ci; else npm install; fi
+                        npm run validate:copy
+                        npm run validate:standard-imports
+                        npm run test:auth-matrix
+                      '
+                '''
+            }
+        }
         stage('3. Build images') {
             steps {
                 sh '''
@@ -196,10 +225,10 @@ pipeline {
 
     post {
         success {
-            echo '✓ Deployment succeeded — all stages green'
+            echo 'âœ“ Deployment succeeded â€” all stages green'
         }
         failure {
-            echo '✗ Deployment FAILED — see console output for the stage that failed'
+            echo 'âœ— Deployment FAILED â€” see console output for the stage that failed'
         }
         always {
             echo 'Build complete.'

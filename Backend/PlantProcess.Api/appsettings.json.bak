@@ -1,0 +1,29 @@
+{
+  "PlantProcess": {
+    "RequireDatabaseConnectionString": true,
+    "PlantTimeZoneId": "Europe/Berlin",
+    "PlantUtcOffsetMinutes": 60,
+    "AllowedOrigins": [],
+    "Auth": {
+      "Issuer": "PlantProcessIQ",
+      "Audience": "PlantProcessIQ.Client",
+      "AccessTokenMinutes": 60
+    },
+    "License": {
+    "Tier": "ProPlus",
+    "IsTrial": false,
+    "DisplayName": "Pro Plus Demo License"
+  }
+  },
+  "ConnectionStrings": {
+    "PlantProcessDb": ""
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning",
+      "Microsoft.EntityFrameworkCore.Database.Command": "Warning"
+    }
+  },
+  "AllowedHosts": "*"
+}

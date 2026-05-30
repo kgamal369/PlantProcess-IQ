@@ -1,4 +1,4 @@
-﻿// ============================================================
+// ============================================================
 // FILE: Backend/PlantProcess.Infrastructure/DependencyInjection.cs
 // CHANGES: Registered MsSqlConnector and MySqlConnector alongside
 //          the existing CSV, Excel and PostgreSQL connectors.
@@ -9,9 +9,11 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
 using PlantProcess.Application.Common.Persistence;
+using PlantProcess.Application.Analytics.Interfaces;
 using PlantProcess.Application.Integration.Interfaces.SchemaConfiguration;
 using PlantProcess.Application.Integration.Interfaces.SourceSystems;
 using PlantProcess.Infrastructure.Persistence;
+using PlantProcess.Infrastructure.Analytics;
 using PlantProcess.Infrastructure.Connectors.Common;
 using PlantProcess.Infrastructure.Connectors.Csv;
 using PlantProcess.Infrastructure.Connectors.Excel;
@@ -50,6 +52,7 @@ public static class DependencyInjection
             provider => provider.GetRequiredService<PlantProcessDbContext>());
 
         services.AddSingleton(_ => NpgsqlDataSource.Create(connectionString));
+        services.AddScoped<ICorrelationComputeEngine, PostgresCorrelationComputeEngine>();
 
         // --------------------------------------------------------------------
         // Data source connectors.

@@ -1,4 +1,4 @@
-﻿name: plantprocessiq-demo
+name: plantprocessiq-demo
 
 services:
   caddy:

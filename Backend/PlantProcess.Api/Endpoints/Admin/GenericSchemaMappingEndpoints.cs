@@ -179,7 +179,10 @@ public static class GenericSchemaMappingEndpoints
         {
             return Results.BadRequest(new
             {
-                message = "Provide either viewCode or targetEntity."
+                errorType = "NoSuchView",
+                message = "Provide either viewCode or targetEntity.",
+                request.ViewCode,
+                request.TargetEntity
             });
         }
 
@@ -238,6 +241,7 @@ public static class GenericSchemaMappingEndpoints
         {
             return Results.NotFound(new
             {
+                errorType = "NoSuchView",
                 message = "No active approved canonical schema view matched the resolver request.",
                 request.ViewCode,
                 request.TargetEntity
@@ -245,6 +249,11 @@ public static class GenericSchemaMappingEndpoints
         }
 
         var resolved = rows[0];
+
+        var resolverColumnError = ValidateRequestedResolverColumns(request, Convert.ToString(resolved["output_schema_json"]) ?? "[]");
+        if (resolverColumnError is not null)
+            return Results.BadRequest(resolverColumnError);
+
         var qualifiedName = $"{resolved["physical_schema"]}.{resolved["physical_view_name"]}";
 
         return Results.Ok(new
@@ -689,6 +698,97 @@ public static class GenericSchemaMappingEndpoints
         return null;
     }
 
+
+    private static object? ValidateRequestedResolverColumns(
+        ResolveSchemaViewRequest request,
+        string outputSchemaJson)
+    {
+        if (string.IsNullOrWhiteSpace(outputSchemaJson))
+            return null;
+
+        using var document = JsonDocument.Parse(outputSchemaJson);
+
+        var columns = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+        if (document.RootElement.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var item in document.RootElement.EnumerateArray())
+            {
+                var name = item.TryGetProperty("columnName", out var c1)
+                    ? c1.GetString()
+                    : item.TryGetProperty("ColumnName", out var c2)
+                        ? c2.GetString()
+                        : item.TryGetProperty("name", out var c3)
+                            ? c3.GetString()
+                            : null;
+
+                var type = item.TryGetProperty("dataType", out var t1)
+                    ? t1.GetString()
+                    : item.TryGetProperty("DataType", out var t2)
+                        ? t2.GetString()
+                        : item.TryGetProperty("type", out var t3)
+                            ? t3.GetString()
+                            : "unknown";
+
+                if (!string.IsNullOrWhiteSpace(name))
+                    columns[name.Trim()] = string.IsNullOrWhiteSpace(type) ? "unknown" : type!;
+            }
+        }
+
+        var dimension = request.DimensionCode?.Trim();
+        if (!string.IsNullOrWhiteSpace(dimension) && !columns.ContainsKey(dimension))
+        {
+            return new
+            {
+                errorType = "NoSuchColumn",
+                message = $"Dimension column ''{dimension}'' does not exist in the resolved canonical view.",
+                offendingColumn = dimension
+            };
+        }
+
+        var measure = request.MeasureCode?.Trim();
+        if (string.IsNullOrWhiteSpace(measure))
+            return null;
+
+        var aggregate = "raw";
+        var column = measure;
+
+        var match = Regex.Match(measure, @"^(?<agg>sum|avg|mean|min|max|count)\((?<col>[A-Za-z_][A-Za-z0-9_]*)\)$", RegexOptions.IgnoreCase);
+        if (match.Success)
+        {
+            aggregate = match.Groups["agg"].Value.ToLowerInvariant();
+            column = match.Groups["col"].Value;
+        }
+
+        if (!columns.TryGetValue(column, out var dataType))
+        {
+            return new
+            {
+                errorType = "NoSuchColumn",
+                message = $"Measure column ''{column}'' does not exist in the resolved canonical view.",
+                offendingColumn = column
+            };
+        }
+
+        var numeric = dataType.Contains("int", StringComparison.OrdinalIgnoreCase) ||
+                      dataType.Contains("numeric", StringComparison.OrdinalIgnoreCase) ||
+                      dataType.Contains("decimal", StringComparison.OrdinalIgnoreCase) ||
+                      dataType.Contains("double", StringComparison.OrdinalIgnoreCase) ||
+                      dataType.Contains("real", StringComparison.OrdinalIgnoreCase);
+
+        if ((aggregate is "sum" or "avg" or "mean") && !numeric)
+        {
+            return new
+            {
+                errorType = "InvalidAggregateForType",
+                message = $"Aggregate ''{aggregate}'' is not valid for non-numeric column ''{column}''.",
+                offendingColumn = column,
+                dataType
+            };
+        }
+
+        return null;
+    }
     private static string BuildJoinSql(CrossSourceJoinRequest request, bool includeLimit)
     {
         var leftSchema = CleanIdentifier(request.LeftSchema, "leftSchema");

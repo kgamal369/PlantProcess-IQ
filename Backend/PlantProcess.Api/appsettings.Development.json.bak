@@ -1,0 +1,55 @@
+{
+  "ConnectionStrings": {
+    "PlantProcessDb": ""
+  },
+  "PlantProcess": {
+    "RequireDatabaseConnectionString": true,
+    "PlantTimeZoneId": "Europe/Berlin",
+    "PlantUtcOffsetMinutes": 60,
+    "AllowedOrigins": [
+      "http://localhost:5173",
+      "http://localhost:3000"
+    ],
+    "Auth": {
+      "Issuer": "PlantProcessIQ",
+      "Audience": "PlantProcessIQ.Client",
+      "SigningKey": "DEV_ONLY_CHANGE_THIS_KEY_1234567890_ABCDEF",
+      "AccessTokenMinutes": 120,
+      "BootstrapAdminUser": "admin",
+      "BootstrapAdminPassword": "SET_BY_USER_SECRETS_OR_ENV",
+      "Users": [
+        {
+          "UserName": "admin",
+          "Password": "SET_BY_USER_SECRETS_OR_ENV",
+          "Role": "Admin",
+          "DisplayName": "Development Admin"
+        },
+        {
+          "UserName": "engineer",
+          "Password": "Engineer123!",
+          "Role": "Engineer",
+          "DisplayName": "Development Engineer"
+        },
+        {
+          "UserName": "datamanager",
+          "Password": "DataManager123!",
+          "Role": "DataManager",
+          "DisplayName": "Development Data Manager"
+        },
+        {
+          "UserName": "viewer",
+          "Password": "Viewer123!",
+          "Role": "Viewer",
+          "DisplayName": "Development Viewer"
+        }
+      ]
+    }
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Information",
+      "Microsoft.EntityFrameworkCore.Database.Command": "Information"
+    }
+  }
+}
