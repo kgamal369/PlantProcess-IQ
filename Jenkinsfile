@@ -100,6 +100,28 @@ pipeline {
             }
         }
 
+        stage('2b. Phase 5/6 UI quality gates') {
+            steps {
+                sh '''
+                    set -e
+                    cd ${REPO_DIR}/Frontend/PlantProcess.Web
+
+                    if [ -f package-lock.json ]; then
+                        npm ci
+                    else
+                        npm install
+                    fi
+
+                    npm run validate:phase5-phase6:strict
+
+                    echo "Phase 5/6 visual, e2e and accessibility scripts are wired:"
+                    npm run test:visual -- --list
+                    npm run test:phase56:e2e -- --list
+                    npm run test:a11y -- --list
+                '''
+            }
+        }
+
         stage('3. Build images') {
             steps {
                 sh '''

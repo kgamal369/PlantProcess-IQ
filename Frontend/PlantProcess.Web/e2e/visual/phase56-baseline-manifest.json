@@ -1,0 +1,31 @@
+{
+  "generatedAtUtc": "2026-05-30T08:14:59.637Z",
+  "phase": "P05-P06",
+  "viewports": [
+    "1920x1080",
+    "1440x900",
+    "768x1024"
+  ],
+  "themes": [
+    "dark",
+    "light"
+  ],
+  "routes": [
+    "/dashboard",
+    "/materials",
+    "/risk",
+    "/data-quality",
+    "/correlations",
+    "/ml-readiness",
+    "/demo-lifecycle",
+    "/admin-preview",
+    "/admin",
+    "/brand",
+    "/materials?tab=genealogy",
+    "/materials?tab=process-history",
+    "/materials?tab=quality-events",
+    "/materials?tab=feature-vector",
+    "/materials?tab=risk"
+  ],
+  "expectedSnapshotCount": 90
+}

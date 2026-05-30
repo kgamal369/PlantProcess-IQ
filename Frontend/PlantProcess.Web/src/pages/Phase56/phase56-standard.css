@@ -1,0 +1,210 @@
+.phase56-page {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.phase56-page__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.phase56-page__title {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.phase56-page__eyebrow {
+  margin: 0;
+  color: var(--ppiq-std-accent, #00d4ff);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.phase56-page__title h1 {
+  margin: 0;
+  font-size: clamp(1.55rem, 2vw, 2.35rem);
+  color: var(--ppiq-std-text, #eaf6ff);
+}
+
+.phase56-page__title p {
+  margin: 0;
+  max-width: 74rem;
+  color: var(--ppiq-std-text-soft, #92a9bf);
+  line-height: 1.6;
+}
+
+.phase56-toolbar {
+  display: flex;
+  gap: 0.65rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.phase56-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.phase56-grid--2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.phase56-grid--3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.phase56-grid--4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.phase56-kpi {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.phase56-kpi span {
+  color: var(--ppiq-std-text-soft, #92a9bf);
+  font-size: 0.78rem;
+}
+
+.phase56-kpi strong {
+  font-size: 1.75rem;
+  color: var(--ppiq-std-text, #eaf6ff);
+}
+
+.phase56-kpi small {
+  color: var(--ppiq-std-text-muted, #67829d);
+  line-height: 1.5;
+}
+
+.phase56-chip-list {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.phase56-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 1.65rem;
+  padding: 0.18rem 0.58rem;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 212, 255, 0.22);
+  background: rgba(0, 212, 255, 0.08);
+  color: #bfefff;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.phase56-chip--low,
+.phase56-chip--passing,
+.phase56-chip--success {
+  border-color: rgba(34, 197, 94, 0.34);
+  background: rgba(34, 197, 94, 0.12);
+  color: #9ff7ba;
+}
+
+.phase56-chip--medium,
+.phase56-chip--warning,
+.phase56-chip--amber {
+  border-color: rgba(245, 158, 11, 0.38);
+  background: rgba(245, 158, 11, 0.13);
+  color: #ffd890;
+}
+
+.phase56-chip--high,
+.phase56-chip--critical,
+.phase56-chip--error,
+.phase56-chip--failing {
+  border-color: rgba(239, 68, 68, 0.42);
+  background: rgba(239, 68, 68, 0.14);
+  color: #ffb4b4;
+}
+
+.phase56-chip--muted {
+  border-color: rgba(148, 163, 184, 0.28);
+  background: rgba(148, 163, 184, 0.1);
+  color: #c8d6e4;
+}
+
+.phase56-chart-box {
+  min-height: 260px;
+  border-radius: 1rem;
+  border: 1px solid rgba(0, 212, 255, 0.14);
+  background:
+    radial-gradient(circle at 18% 20%, rgba(0, 212, 255, 0.12), transparent 28%),
+    linear-gradient(180deg, rgba(8, 20, 38, 0.88), rgba(5, 11, 24, 0.92));
+  display: grid;
+  place-items: center;
+  color: var(--ppiq-std-text-soft, #92a9bf);
+  text-align: center;
+  padding: 1rem;
+}
+
+.phase56-matrix {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(1.75rem, 1fr));
+  gap: 0.35rem;
+  width: min(100%, 720px);
+}
+
+.phase56-matrix span {
+  height: 2rem;
+  border-radius: 0.45rem;
+  background: rgba(0, 212, 255, calc(0.08 + var(--i) * 0.018));
+  border: 1px solid rgba(0, 212, 255, 0.14);
+}
+
+.phase56-progress {
+  height: 0.55rem;
+  border-radius: 999px;
+  background: rgba(0, 212, 255, 0.12);
+  overflow: hidden;
+}
+
+.phase56-progress span {
+  display: block;
+  height: 100%;
+  width: var(--value);
+  background: linear-gradient(90deg, #00d4ff, #0a84ff);
+  border-radius: inherit;
+}
+
+.phase56-token-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 0.75rem;
+}
+
+.phase56-token {
+  padding: 0.85rem;
+  border-radius: 0.85rem;
+  border: 1px solid rgba(0, 212, 255, 0.14);
+  background: rgba(5, 11, 24, 0.58);
+}
+
+.phase56-token strong {
+  display: block;
+  color: var(--ppiq-std-text, #eaf6ff);
+}
+
+.phase56-token span {
+  color: var(--ppiq-std-text-soft, #92a9bf);
+  font-size: 0.8rem;
+}
+
+@media (max-width: 1100px) {
+  .phase56-grid--2,
+  .phase56-grid--3,
+  .phase56-grid--4 {
+    grid-template-columns: 1fr;
+  }
+}

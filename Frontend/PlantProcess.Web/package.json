@@ -47,7 +47,13 @@
     "validate:phase2:ui-standards-full": "npm run ui:inventory && npm run ui:validate:phase2-full && npm run test:ui-standards && npm run build && npm run build:storybook",
     "validate:phase3-phase4:material": "npm run build && npm run lint",
     "phase34:acceptance": "node tools/phase3/validate-phase3-phase4-acceptance.cjs",
-    "validate:phase3-phase4:strict": "npm run build && npm run lint && npm run phase34:acceptance"
+    "validate:phase3-phase4:strict": "npm run build && npm run lint && npm run phase34:acceptance",
+    "phase56:acceptance": "node tools/phase56/validate-phase5-phase6-acceptance.cjs",
+    "validate:phase5-phase6:strict": "npm run build && npm run lint && npm run phase56:acceptance",
+    "test:visual": "playwright test e2e/visual/phase56-analytics-system.visual.spec.ts --project=chromium",
+    "test:visual:update": "playwright test e2e/visual/phase56-analytics-system.visual.spec.ts --project=chromium --update-snapshots",
+    "test:phase56:e2e": "playwright test e2e/phase56-primary-flows.spec.ts --project=chromium",
+    "test:a11y": "playwright test e2e/a11y/phase56-accessibility.spec.ts --project=chromium"
   },
   "dependencies": {
     "lucide-react": "^1.14.0",

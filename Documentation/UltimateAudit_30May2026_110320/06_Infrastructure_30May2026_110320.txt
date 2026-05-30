@@ -1,0 +1,693 @@
+================================================================================================
+PLANTPROCESS IQ INFRASTRUCTURE AUDIT - DEPLOYMENT / DOCKER / CADDY / CI-CD
+================================================================================================
+
+Product Name          : PlantProcess IQ
+Generated At          : 2026-05-30 11:04:06
+Repository Root       : C:\Workspace\PlantProcess-IQ
+Output Folder         : C:\Workspace\PlantProcess-IQ\Documentation\UltimateAudit_30May2026_110320
+Included Files        : 7
+Total Lines           : 583
+Total Size            : 0.02 MB
+Mask Secrets          : True
+Max File Size         : 8 MB
+PowerShell Version    : 5.1.26100.7920
+Machine Name          : WAP174432
+User Name             : elka01
+
+------------------------------------------------------------------------------------------------
+CATEGORY SUMMARY
+------------------------------------------------------------------------------------------------
+
+Infrastructure: Deployment, Docker, Caddy, CI/CD Runtime Files:     7 | Lines:      583 | Size:     0.02 MB
+
+------------------------------------------------------------------------------------------------
+CLASSIFICATION SUMMARY
+------------------------------------------------------------------------------------------------
+
+Deployment / Infrastructure                Files:     7 | Lines:      583
+
+------------------------------------------------------------------------------------------------
+EXTENSION / SPECIAL FILE SUMMARY
+------------------------------------------------------------------------------------------------
+
+.env                 Files:     1 | Lines:      121 | Size:     4.88 KB
+.example             Files:     1 | Lines:       81 | Size:     3.31 KB
+.production          Files:     1 | Lines:       92 | Size:     3.96 KB
+.snippet             Files:     1 | Lines:       30 | Size:     0.89 KB
+.yml                 Files:     1 | Lines:      167 | Size:     5.08 KB
+[NO_EXTENSION]       Files:     2 | Lines:       92 | Size:      2.8 KB
+
+------------------------------------------------------------------------------------------------
+TABLE OF CONTENTS
+------------------------------------------------------------------------------------------------
+
+    1. Infrastructure\deploy\.env | Deployment / Infrastructure | 121 lines | 4.88 KB
+    2. Infrastructure\deploy\.env.example | Deployment / Infrastructure | 81 lines | 3.31 KB
+    3. Infrastructure\deploy\.env.production | Deployment / Infrastructure | 92 lines | 3.96 KB
+    4. Infrastructure\deploy\Caddyfile | Deployment / Infrastructure | 71 lines | 2.02 KB
+    5. Infrastructure\deploy\docker-compose.demo.yml | Deployment / Infrastructure | 167 lines | 5.08 KB
+    6. Infrastructure\deploy\jenkins\Dockerfile | Deployment / Infrastructure | 21 lines | 0.78 KB
+    7. Infrastructure\deploy\storybook.caddy.snippet | Deployment / Infrastructure | 30 lines | 0.89 KB
+
+------------------------------------------------------------------------------------------------
+INCLUDED FILE TREE
+------------------------------------------------------------------------------------------------
+
+ - Infrastructure\deploy\.env
+ - Infrastructure\deploy\.env.example
+ - Infrastructure\deploy\.env.production
+ - Infrastructure\deploy\Caddyfile
+ - Infrastructure\deploy\docker-compose.demo.yml
+ - Infrastructure\deploy\jenkins\Dockerfile
+ - Infrastructure\deploy\storybook.caddy.snippet
+
+================================================================================================
+FULL FILE CONTENT
+================================================================================================
+
+[FILE_START]
+[METADATA: Path='Infrastructure\deploy\.env', Category='Infrastructure: Deployment, Docker, Caddy, CI/CD Runtime', Classification='Deployment / Infrastructure', Lines=121, SizeKB=4.88, Modified='2026-05-30 08:56:45']
+
+# ============================================================
+# PlantProcess IQ - Unified Demo / GTM Deployment Environment
+# LOCAL DEMO ONLY - Do not commit this file.
+# ============================================================
+
+# ------------------------------------------------------------
+# Deployment identity
+# ------------------------------------------------------------
+COMPOSE_PROJECT_NAME=plantprocessiq
+DEPLOYMENT_ENVIRONMENT=Demo
+
+# ------------------------------------------------------------
+# Domains
+# Replace later with real domain:
+# plantprocessiq.com
+# app.plantprocessiq.com
+# api.plantprocessiq.com
+# jenkins.plantprocessiq.com
+# ------------------------------------------------------------
+PUBLIC_WEBSITE_HOST=website.localhost
+APP_FRONTEND_HOST=app.localhost
+APP_API_HOST=api.localhost
+WEBSITE_API_HOST=website-api.localhost
+JENKINS_HOST=jenkins.localhost
+
+# ------------------------------------------------------------
+# PostgreSQL
+# One PostgreSQL instance, two databases:
+# 1. plantprocess_app_db
+# 2. plantprocess_website_db
+#
+# Note:
+# Website DB is reserved for later. Current website is static.
+# ------------------------------------------------------------
+POSTGRES_USER=plantprocess_admin
+POSTGRES_PASSWORD=[MASKED_FOR_AI_AUDIT]
+POSTGRES_APP_DB=plantprocess_app_db
+POSTGRES_WEBSITE_DB=plantprocess_website_db
+POSTGRES_PORT=5432
+
+# App DB connection used by API and Workers
+ConnectionStrings__PlantProcessDb=[MASKED_FOR_AI_AUDIT]
+
+# Website DB connection reserved for future website backend
+ConnectionStrings__WebsiteDb=[MASKED_FOR_AI_AUDIT]
+
+# ------------------------------------------------------------
+# App backend
+# ------------------------------------------------------------
+ASPNETCORE_ENVIRONMENT=Production
+DOTNET_ENVIRONMENT=Production
+ASPNETCORE_URLS=http://0.0.0.0:5063
+
+PlantProcess__Auth__Issuer=PlantProcessIQ
+PlantProcess__Auth__Audience=PlantProcessIQ.Client
+
+# Must be at least 32 characters. Local demo only.
+PlantProcess__Auth__SigningKey=[MASKED_FOR_AI_AUDIT]
+
+PlantProcess__Auth__BootstrapAdminUser=admin
+PlantProcess__Auth__BootstrapAdminPassword=[MASKED_FOR_AI_AUDIT]
+
+PlantProcess__PlantTimeZoneId=Europe/Berlin
+PlantProcess__PlantUtcOffsetMinutes=60
+
+PLANTPROCESS_ALLOWED_ORIGINS=https://app.localhost,http://app.localhost,http://localhost:5173
+
+# ------------------------------------------------------------
+# Frontend
+# ------------------------------------------------------------
+VITE_API_BASE_URL=http://api.localhost
+
+# ------------------------------------------------------------
+# Jenkins
+# ------------------------------------------------------------
+JENKINS_ADMIN_ID=admin
+JENKINS_ADMIN_PASSWORD=[MASKED_FOR_AI_AUDIT]
+
+# ------------------------------------------------------------
+# Storage paths inside host machine
+# Windows local demo paths.
+# Later on Linux VPS, change back to /data/plantprocess-iq/...
+# ------------------------------------------------------------
+HOST_DATA_ROOT=C:/Workspace/PlantProcess-IQ/.runtime/plantprocess-iq
+HOST_POSTGRES_DATA=C:/Workspace/PlantProcess-IQ/.runtime/plantprocess-iq/postgres
+HOST_APP_DUMPS=C:/Workspace/PlantProcess-IQ/.runtime/plantprocess-iq/app-dumps
+HOST_LOGS=C:/Workspace/PlantProcess-IQ/.runtime/plantprocess-iq/logs
+HOST_REPORTS=C:/Workspace/PlantProcess-IQ/.runtime/plantprocess-iq/reports
+HOST_BACKUPS=C:/Workspace/PlantProcess-IQ/.runtime/plantprocess-iq/backups
+HOST_JENKINS_HOME=C:/Workspace/PlantProcess-IQ/.runtime/plantprocess-iq/jenkins
+
+# ============================================================
+# CI/CD / Jenkins / Deployment Validation
+# ============================================================
+
+# Internal URLs from Jenkins container to services on the Docker network.
+# These use Docker Compose service names, not public domains.
+PPIQ_INTERNAL_API_HEALTH_URL=http://plantprocess-api:5063/health
+PPIQ_INTERNAL_API_DB_HEALTH_URL=http://plantprocess-api:5063/db-health
+PPIQ_INTERNAL_APP_HEALTH_URL=http://plantprocess-app-web/health
+PPIQ_INTERNAL_WEBSITE_HEALTH_URL=http://plantprocess-website/health
+
+# Public URLs can be filled after DNS publishing.
+# Keep empty or localhost while still private.
+PPIQ_PUBLIC_WEBSITE_URL=
+PPIQ_PUBLIC_APP_URL=
+PPIQ_PUBLIC_API_URL=
+
+# Jenkins notification
+PPIQ_CI_NOTIFY_EMAIL=your-email@example.com
+
+# Image tag used by CI/CD. Jenkins overrides this per build.
+PPIQ_IMAGE_TAG=local
+
+# Last successful image tag file. Jenkins writes to this file on successful deployment.
+PPIQ_LAST_SUCCESSFUL_TAG_FILE=/data/plantprocess-iq/last-successful-image-tag.txt
+
+# CI smoke credentials
+# Use a dedicated demo/admin test user. Do not use real production passwords.
+PPIQ_SMOKE_USERNAME=admin
+PPIQ_SMOKE_PASSWORD=[MASKED_FOR_AI_AUDIT]
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Infrastructure\deploy\.env.example', Category='Infrastructure: Deployment, Docker, Caddy, CI/CD Runtime', Classification='Deployment / Infrastructure', Lines=81, SizeKB=3.31, Modified='2026-05-19 15:10:20']
+
+# ============================================================
+# PlantProcess IQ - Unified Demo / GTM Deployment Environment
+# Copy to .env and fill real values. Never commit .env.
+# ============================================================
+
+# ------------------------------------------------------------
+# Deployment identity
+# ------------------------------------------------------------
+COMPOSE_PROJECT_NAME=plantprocessiq
+DEPLOYMENT_ENVIRONMENT=Demo
+
+# ------------------------------------------------------------
+# Domains
+# Replace later with real domain:
+# plantprocessiq.com
+# app.plantprocessiq.com
+# api.plantprocessiq.com
+# jenkins.plantprocessiq.com
+# ------------------------------------------------------------
+PUBLIC_WEBSITE_HOST=website.localhost
+APP_FRONTEND_HOST=app.localhost
+APP_API_HOST=api.localhost
+WEBSITE_API_HOST=website-api.localhost
+JENKINS_HOST=jenkins.localhost
+
+# ------------------------------------------------------------
+# PostgreSQL
+# One PostgreSQL instance, two databases:
+# 1. plantprocess_app_db
+# 2. plantprocess_website_db
+# ------------------------------------------------------------
+POSTGRES_USER=plantprocess_admin
+POSTGRES_PASSWORD=[MASKED_FOR_AI_AUDIT]
+POSTGRES_APP_DB=plantprocess_app_db
+POSTGRES_WEBSITE_DB=plantprocess_website_db
+POSTGRES_PORT=5432
+
+# App DB connection used by API and Workers
+ConnectionStrings__PlantProcessDb=[MASKED_FOR_AI_AUDIT]
+
+# Website DB connection used by website backend
+ConnectionStrings__WebsiteDb=[MASKED_FOR_AI_AUDIT]
+
+# ------------------------------------------------------------
+# App backend
+# ------------------------------------------------------------
+ASPNETCORE_ENVIRONMENT=Production
+DOTNET_ENVIRONMENT=Production
+ASPNETCORE_URLS=http://0.0.0.0:5063
+
+PlantProcess__Auth__Issuer=PlantProcessIQ
+PlantProcess__Auth__Audience=PlantProcessIQ.Client
+PlantProcess__Auth__SigningKey=[MASKED_FOR_AI_AUDIT]
+PlantProcess__Auth__BootstrapAdminUser=admin
+PlantProcess__Auth__BootstrapAdminPassword=[MASKED_FOR_AI_AUDIT]
+
+PlantProcess__PlantTimeZoneId=Europe/Berlin
+PlantProcess__PlantUtcOffsetMinutes=60
+
+PLANTPROCESS_ALLOWED_ORIGINS=https://app.localhost,http://app.localhost,http://localhost:5173
+
+# ------------------------------------------------------------
+# Frontend
+# ------------------------------------------------------------
+VITE_API_BASE_URL=http://api.localhost
+# ------------------------------------------------------------
+# Jenkins
+# ------------------------------------------------------------
+JENKINS_ADMIN_ID=admin
+JENKINS_ADMIN_PASSWORD=[MASKED_FOR_AI_AUDIT]
+
+# ------------------------------------------------------------
+# Storage paths inside host machine
+# ------------------------------------------------------------
+HOST_DATA_ROOT=/data/plantprocess-iq
+HOST_POSTGRES_DATA=/data/plantprocess-iq/postgres
+HOST_APP_DUMPS=/data/plantprocess-iq/app-dumps
+HOST_LOGS=/data/plantprocess-iq/logs
+HOST_REPORTS=/data/plantprocess-iq/reports
+HOST_BACKUPS=/data/plantprocess-iq/backups
+HOST_JENKINS_HOME=/data/plantprocess-iq/jenkins
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Infrastructure\deploy\.env.production', Category='Infrastructure: Deployment, Docker, Caddy, CI/CD Runtime', Classification='Deployment / Infrastructure', Lines=92, SizeKB=3.96, Modified='2026-05-30 08:56:45']
+
+# ============================================================
+# PlantProcess IQ - Production Deployment Environment
+# DO NOT COMMIT REAL SECRETS.
+# ============================================================
+
+COMPOSE_PROJECT_NAME=plantprocessiq
+DEPLOYMENT_ENVIRONMENT=Production
+
+# ------------------------------------------------------------
+# Domains
+# ------------------------------------------------------------
+PUBLIC_WEBSITE_HOST=plantprocessiq.com
+APP_FRONTEND_HOST=app.plantprocessiq.com
+APP_API_HOST=api.plantprocessiq.com
+WEBSITE_API_HOST=plantprocessiq.com
+JENKINS_HOST=jenkins.plantprocessiq.com
+
+# ------------------------------------------------------------
+# PostgreSQL
+# Use a separate owner/migration role and app runtime role for
+# audit-log immutability. The app runtime role must NOT own tables.
+# ------------------------------------------------------------
+POSTGRES_USER=plantprocess_owner
+POSTGRES_PASSWORD=[MASKED_FOR_AI_AUDIT]
+POSTGRES_APP_DB=plantprocess_app_db
+POSTGRES_WEBSITE_DB=plantprocess_website_db
+POSTGRES_PORT=5432
+
+# Runtime app role connection.
+# Important: this role should have INSERT/SELECT on audit_log_entries,
+# but no UPDATE/DELETE/TRUNCATE.
+ConnectionStrings__PlantProcessDb=[MASKED_FOR_AI_AUDIT]
+
+ConnectionStrings__WebsiteDb=[MASKED_FOR_AI_AUDIT]
+
+# ------------------------------------------------------------
+# Backend
+# ------------------------------------------------------------
+ASPNETCORE_ENVIRONMENT=Production
+DOTNET_ENVIRONMENT=Production
+ASPNETCORE_URLS=http://0.0.0.0:5063
+
+PlantProcess__Auth__Issuer=PlantProcessIQ
+PlantProcess__Auth__Audience=PlantProcessIQ.Client
+PlantProcess__Auth__SigningKey=[MASKED_FOR_AI_AUDIT]
+PlantProcess__Auth__BootstrapAdminUser=admin
+PlantProcess__Auth__BootstrapAdminPassword=[MASKED_FOR_AI_AUDIT]
+
+PlantProcess__PlantTimeZoneId=Europe/Berlin
+PlantProcess__PlantUtcOffsetMinutes=60
+
+# Exact origins only. Never use wildcard with Authorization headers.
+PLANTPROCESS_ALLOWED_ORIGINS=https://app.plantprocessiq.com,https://plantprocessiq.com,https://www.plantprocessiq.com
+
+# ------------------------------------------------------------
+# Frontend build-time value
+# Rebuild frontend image after changing this.
+# ------------------------------------------------------------
+VITE_API_BASE_URL=https://api.plantprocessiq.com
+
+# ------------------------------------------------------------
+# Jenkins
+# ------------------------------------------------------------
+JENKINS_ADMIN_ID=admin
+JENKINS_ADMIN_PASSWORD=[MASKED_FOR_AI_AUDIT]
+
+# ------------------------------------------------------------
+# Linux host storage paths
+# ------------------------------------------------------------
+HOST_DATA_ROOT=/data/plantprocess-iq
+HOST_POSTGRES_DATA=/data/plantprocess-iq/postgres
+HOST_APP_DUMPS=/data/plantprocess-iq/app-dumps
+HOST_LOGS=/data/plantprocess-iq/logs
+HOST_REPORTS=/data/plantprocess-iq/reports
+HOST_BACKUPS=/data/plantprocess-iq/backups
+HOST_JENKINS_HOME=/data/plantprocess-iq/jenkins
+
+# ------------------------------------------------------------
+# CI/CD / smoke tests
+# ------------------------------------------------------------
+PPIQ_INTERNAL_API_HEALTH_URL=http://plantprocess-api:5063/health
+PPIQ_PUBLIC_API_HEALTH_URL=https://api.plantprocessiq.com/health
+PPIQ_PUBLIC_APP_URL=https://app.plantprocessiq.com
+PPIQ_PUBLIC_WEBSITE_URL=https://plantprocessiq.com
+
+PPIQ_IMAGE_TAG=local
+PPIQ_LAST_SUCCESSFUL_TAG_FILE=/data/plantprocess-iq/last-successful-image-tag.txt
+
+PPIQ_SMOKE_USERNAME=admin
+PPIQ_SMOKE_PASSWORD=[MASKED_FOR_AI_AUDIT]
+
+PPIQ_CI_NOTIFY_EMAIL=admin@plantprocessiq.com
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Infrastructure\deploy\Caddyfile', Category='Infrastructure: Deployment, Docker, Caddy, CI/CD Runtime', Classification='Deployment / Infrastructure', Lines=71, SizeKB=2.02, Modified='2026-05-30 08:31:27']
+
+{
+    email {$ACME_EMAIL:admin@plantprocessiq.com}
+}
+
+(security_headers_common) {
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "SAMEORIGIN"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Permissions-Policy "geolocation=(), microphone=(), camera=()"
+        -Server
+    }
+}
+
+(web_csp) {
+    header {
+        Content-Security-Policy "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; img-src 'self' data: https:; font-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self' https://api.plantprocessiq.com wss://api.plantprocessiq.com;"
+    }
+}
+
+(api_csp) {
+    header {
+        Content-Security-Policy "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none';"
+        X-Frame-Options "DENY"
+    }
+}
+
+(jenkins_csp) {
+    header {
+        Content-Security-Policy "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; img-src 'self' data:; font-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self';"
+        X-Frame-Options "DENY"
+        Referrer-Policy "no-referrer"
+    }
+}
+
+plantprocessiq.com, www.plantprocessiq.com {
+    import security_headers_common
+    import web_csp
+
+    encode gzip zstd
+    reverse_proxy plantprocess-website:80
+}
+
+app.plantprocessiq.com {
+    import security_headers_common
+    import web_csp
+
+    encode gzip zstd
+    reverse_proxy plantprocess-app-web:80
+}
+
+api.plantprocessiq.com {
+    import security_headers_common
+    import api_csp
+
+    encode gzip zstd
+    reverse_proxy plantprocess-api:8080
+}
+
+jenkins.plantprocessiq.com {
+    import security_headers_common
+    import jenkins_csp
+
+    basicauth {
+        {$JENKINS_BASIC_AUTH_USER:ppiq_jenkins_admin} {$JENKINS_BASIC_AUTH_HASH}
+    }
+
+    encode gzip zstd
+    reverse_proxy jenkins:8080
+}
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Infrastructure\deploy\docker-compose.demo.yml', Category='Infrastructure: Deployment, Docker, Caddy, CI/CD Runtime', Classification='Deployment / Infrastructure', Lines=167, SizeKB=5.08, Modified='2026-05-30 08:31:27']
+
+name: plantprocessiq-demo
+
+services:
+  caddy:
+    image: caddy:2.8-alpine
+    container_name: ppiq-caddy
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - plantprocess-website
+      - plantprocess-app-web
+      - plantprocess-api
+      - jenkins
+    networks:
+      - ppiq-net
+
+  postgres:
+    image: postgres:17-alpine
+    container_name: ppiq-postgres
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: [MASKED_FOR_AI_AUDIT]
+      POSTGRES_DB: ${POSTGRES_APP_DB}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - ${HOST_POSTGRES_DATA:-/data/plantprocess-iq/postgres}:/var/lib/postgresql/data
+    shm_size: "512mb"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_APP_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    networks:
+      - ppiq-net
+
+  plantprocess-api:
+    image: plantprocessiq/api:${PPIQ_IMAGE_TAG:-local}
+    build:
+      context: ../../Backend
+      dockerfile: PlantProcess.Api/Dockerfile
+    container_name: ppiq-app-api
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
+      DOTNET_ENVIRONMENT: ${DOTNET_ENVIRONMENT}
+      ASPNETCORE_URLS: ${ASPNETCORE_URLS}
+      ConnectionStrings__PlantProcessDb: [MASKED_FOR_AI_AUDIT]
+      PLANTPROCESS_ALLOWED_ORIGINS: ${PLANTPROCESS_ALLOWED_ORIGINS}
+      PlantProcess__Auth__Issuer: ${PlantProcess__Auth__Issuer}
+      PlantProcess__Auth__Audience: ${PlantProcess__Auth__Audience}
+      PlantProcess__Auth__SigningKey: [MASKED_FOR_AI_AUDIT]
+      PlantProcess__Auth__BootstrapAdminUser: ${PlantProcess__Auth__BootstrapAdminUser}
+      PlantProcess__Auth__BootstrapAdminPassword: [MASKED_FOR_AI_AUDIT]
+      PlantProcess__PlantTimeZoneId: ${PlantProcess__PlantTimeZoneId}
+      PlantProcess__PlantUtcOffsetMinutes: ${PlantProcess__PlantUtcOffsetMinutes}
+    volumes:
+      - ${HOST_LOGS:-/data/plantprocess-iq/logs}/api:/app/logs
+      - ${HOST_REPORTS:-/data/plantprocess-iq/reports}:/app/reports
+      - ${HOST_APP_DUMPS:-/data/plantprocess-iq/app-dumps}:/app/app-dumps
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - ppiq-net
+
+  plantprocess-workers:
+    image: plantprocessiq/workers:${PPIQ_IMAGE_TAG:-local}
+    build:
+      context: ../../Backend
+      dockerfile: PlantProcess.Workers/Dockerfile
+    container_name: ppiq-app-workers
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DOTNET_ENVIRONMENT: ${DOTNET_ENVIRONMENT}
+      ConnectionStrings__PlantProcessDb: [MASKED_FOR_AI_AUDIT]
+      PlantProcess__PlantTimeZoneId: ${PlantProcess__PlantTimeZoneId}
+      PlantProcess__PlantUtcOffsetMinutes: ${PlantProcess__PlantUtcOffsetMinutes}
+    volumes:
+      - ${HOST_LOGS:-/data/plantprocess-iq/logs}/workers:/app/logs
+      - ${HOST_REPORTS:-/data/plantprocess-iq/reports}:/app/reports
+      - ${HOST_APP_DUMPS:-/data/plantprocess-iq/app-dumps}:/app/app-dumps
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - ppiq-net
+
+  plantprocess-app-web:
+    image: plantprocessiq/app-web:${PPIQ_IMAGE_TAG:-local}
+    build:
+      context: ../../Frontend/PlantProcess.Web
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL}
+    container_name: ppiq-app-web
+    restart: unless-stopped
+    networks:
+      - ppiq-net
+
+  plantprocess-website:
+    image: plantprocessiq/website:${PPIQ_IMAGE_TAG:-local}
+    build:
+      context: ../../Website/PlantProcess.Website
+      dockerfile: Dockerfile
+      args:
+        VITE_WEBSITE_API_BASE_URL: ${VITE_WEBSITE_API_BASE_URL:-}
+    container_name: ppiq-website-web
+    restart: unless-stopped
+    networks:
+      - ppiq-net
+
+  jenkins:
+    build:
+      context: ./jenkins
+      dockerfile: Dockerfile
+    container_name: ppiq-jenkins
+    restart: unless-stopped
+    user: root
+    environment:
+      JENKINS_OPTS: "--prefix=/"
+    volumes:
+      - ${HOST_JENKINS_HOME:-/data/plantprocess-iq/jenkins}:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - ppiq-net
+
+  backup-runner:
+    image: alpine:3.20
+    container_name: ppiq-backup-runner
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ${HOST_BACKUPS:-/data/plantprocess-iq/backups}:/backups
+      - ${HOST_APP_DUMPS:-/data/plantprocess-iq/app-dumps}:/app-dumps:ro
+      - ${HOST_LOGS:-/data/plantprocess-iq/logs}:/logs:ro
+    command: >
+      sh -c "while true; do
+      echo '[backup-runner] placeholder alive at' $$(date -u);
+      sleep 3600;
+      done"
+    networks:
+      - ppiq-net
+
+networks:
+  ppiq-net:
+    driver: bridge
+
+volumes:
+  caddy_data:
+  caddy_config:
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Infrastructure\deploy\jenkins\Dockerfile', Category='Infrastructure: Deployment, Docker, Caddy, CI/CD Runtime', Classification='Deployment / Infrastructure', Lines=21, SizeKB=0.78, Modified='2026-05-19 15:49:34']
+
+FROM jenkins/jenkins:lts-jdk21
+
+USER root
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+       ca-certificates \
+       curl \
+       gnupg \
+       git \
+       lsb-release \
+    && install -m 0755 -d /etc/apt/keyrings \
+    && curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc \
+    && chmod a+r /etc/apt/keyrings/docker.asc \
+    && . /etc/os-release \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian ${VERSION_CODENAME} stable" > /etc/apt/sources.list.d/docker.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends docker-ce-cli docker-compose-plugin \
+    && rm -rf /var/lib/apt/lists/*
+
+USER jenkins
+
+[FILE_END]
+
+[FILE_START]
+[METADATA: Path='Infrastructure\deploy\storybook.caddy.snippet', Category='Infrastructure: Deployment, Docker, Caddy, CI/CD Runtime', Classification='Deployment / Infrastructure', Lines=30, SizeKB=0.89, Modified='2026-05-30 10:16:06']
+
+
+# ============================================================
+# PlantProcess IQ Storybook static standards reference
+# Include this snippet in Caddy deployment after copying:
+#   Frontend/PlantProcess.Web/storybook-static
+# to:
+#   /opt/PlantProcess-IQ/Website/storybook
+#
+# Requires:
+#   STORYBOOK_BASIC_AUTH_USER
+#   STORYBOOK_BASIC_AUTH_HASH
+# ============================================================
+
+storybook.178.105.152.180.sslip.io {
+    root * /opt/PlantProcess-IQ/Website/storybook
+    file_server
+
+    basicauth {
+        {$STORYBOOK_BASIC_AUTH_USER} {$STORYBOOK_BASIC_AUTH_HASH}
+    }
+
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "SAMEORIGIN"
+        Referrer-Policy "no-referrer"
+        Permissions-Policy "geolocation=(), microphone=(), camera=()"
+        -Server
+    }
+}
+
+[FILE_END]
+
