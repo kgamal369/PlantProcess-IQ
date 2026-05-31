@@ -1,4 +1,19 @@
 import { API_BASE_URL } from "../apiConfig";
+import { getAccessToken } from "../http/apiClient";
+
+function buildAuthHeaders(headers: Record<string, string> = {}): Record<string, string> {
+  const token = getAccessToken();
+
+  if (!token) {
+    return headers;
+  }
+
+  return {
+    ...headers,
+    Authorization: `Bearer ${token}`,
+  };
+}
+
 
 async function getJson<T>(path: string): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
