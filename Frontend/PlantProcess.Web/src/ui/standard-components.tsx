@@ -457,7 +457,6 @@ export function StandardModal({ open, title, description, children, footer, onCl
             {description ? <p>{description}</p> : null}
           </div>
           <StandardButton variant="ghost" size="sm" onClick={onClose} aria-label="Close modal">
-            Ã—
           </StandardButton>
         </header>
         <div className="ppiq-modal__body">{children}</div>
@@ -512,7 +511,6 @@ export function StandardToastProvider({ children }: { children: ReactNode }) {
               {message.description ? <p className="ppiq-toast__description">{message.description}</p> : null}
             </div>
             <StandardButton variant="ghost" size="xs" onClick={() => dismiss(message.id)} aria-label="Dismiss notification">
-              Ã—
             </StandardButton>
           </article>
         ))}

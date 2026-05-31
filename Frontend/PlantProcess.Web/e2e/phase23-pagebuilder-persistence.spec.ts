@@ -33,7 +33,7 @@ function headers(token: string) {
 }
 
 async function responseDetails(response: { status: () => number; text: () => Promise<string> }) {
-  let body = "";
+  let body: string;
   try {
     body = await response.text();
   } catch {

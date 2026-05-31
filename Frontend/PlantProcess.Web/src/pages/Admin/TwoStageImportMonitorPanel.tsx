@@ -120,7 +120,7 @@ export function TwoStageImportMonitorPanel() {
   return (
     <AdminPanel
       title="Two-Stage Delta Import"
-      subtitle="Source-shaped dump copies Ã¢â€ â€™ generic canonical refresh Ã¢â€ â€™ unified job telemetry"
+      subtitle="Source-shaped dump copies &rarr; generic canonical refresh &rarr; unified job telemetry"
       icon={<DatabaseZap size={18} />}
       wide
     >
@@ -172,7 +172,7 @@ export function TwoStageImportMonitorPanel() {
           onClick={() => void runAction("stage1")}
         >
           <PlayCircle size={14} />
-          {working === "stage1" ? "RunningÃ¢â‚¬Â¦" : "Run Stage 1"}
+          {working === "stage1" ? "Running..." : "Run Stage 1"}
         </StandardPageButton>
 
         <StandardPageButton
@@ -182,7 +182,7 @@ export function TwoStageImportMonitorPanel() {
           onClick={() => void runAction("stage2")}
         >
           <GitBranch size={14} />
-          {working === "stage2" ? "RunningÃ¢â‚¬Â¦" : "Run Stage 2"}
+          {working === "stage2" ? "Running..." : "Run Stage 2"}
         </StandardPageButton>
 
         <StandardPageButton
@@ -192,7 +192,7 @@ export function TwoStageImportMonitorPanel() {
           onClick={() => void runAction("full")}
         >
           <PlayCircle size={14} />
-          {working === "full" ? "RunningÃ¢â‚¬Â¦" : "Run Full Cycle"}
+          {working === "full" ? "Running..." : "Run Full Cycle"}
         </StandardPageButton>
       </div>
 
@@ -205,7 +205,7 @@ export function TwoStageImportMonitorPanel() {
           >
             {overview.sourceTables.map((table) => (
               <option key={table.id} value={table.id}>
-                {tableLabel(table)} Ã¢â€ â€™ {table.dumpSchemaName}.{table.dumpTableName}
+                {tableLabel(table)} &rarr; {table.dumpSchemaName}.{table.dumpTableName}
               </option>
             ))}
           </StandardPageSelect>
@@ -216,7 +216,7 @@ export function TwoStageImportMonitorPanel() {
             <strong>Selected:</strong> {tableLabel(selectedTable)} | PK:{" "}
             {Array.isArray(selectedTable.primaryKeyColumns)
               ? selectedTable.primaryKeyColumns.join(", ")
-              : selectedTable.primaryKeyColumns ?? "Ã¢â‚¬â€"}{" "}
+              : selectedTable.primaryKeyColumns ?? "\u2014"}{" "}
             | Last index: {selectedTable.lastIndexColumn} ={" "}
             {selectedTable.lastIndexValueText ?? "not imported yet"}
           </div>
@@ -266,7 +266,7 @@ export function TwoStageImportMonitorPanel() {
                 </td>
                 <td>
                   <strong>{table.lastIndexColumn}</strong>
-                  <small>{table.lastIndexValueText ?? "Ã¢â‚¬â€"}</small>
+                  <small>{table.lastIndexValueText ?? "\u2014"}</small>
                 </td>
                 <td>
                   <strong>Dump +{table.lastStage1InsertedRows}</strong>
@@ -352,8 +352,8 @@ export function TwoStageImportMonitorPanel() {
                   />
                 </td>
                 <td>
-                  <strong>{run.sourceSchemaName ?? "Ã¢â‚¬â€"}</strong>
-                  <small>{run.sourceTableName ?? "Ã¢â‚¬â€"}</small>
+                  <strong>{run.sourceSchemaName ?? "\u2014"}</strong>
+                  <small>{run.sourceTableName ?? "\u2014"}</small>
                 </td>
                 <td>{formatDate(run.startedAtUtc)}</td>
                 <td>{formatDuration(run.durationMs)}</td>
@@ -362,10 +362,10 @@ export function TwoStageImportMonitorPanel() {
                   <small>Canonical +{run.canonicalRows ?? 0}</small>
                 </td>
                 <td>
-                  <strong>{run.lastIndexAfter ?? "Ã¢â‚¬â€"}</strong>
-                  <small>before: {run.lastIndexBefore ?? "Ã¢â‚¬â€"}</small>
+                  <strong>{run.lastIndexAfter ?? "\u2014"}</strong>
+                  <small>before: {run.lastIndexBefore ?? "\u2014"}</small>
                 </td>
-                <td>{run.failureReason ?? run.message ?? "Ã¢â‚¬â€"}</td>
+                <td>{run.failureReason ?? run.message ?? "\u2014"}</td>
               </tr>
             ))}
           </tbody>
