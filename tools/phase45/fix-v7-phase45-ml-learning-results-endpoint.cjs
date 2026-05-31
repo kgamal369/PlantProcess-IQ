@@ -1,4 +1,9 @@
-using System.Data;
+﻿const fs = require("node:fs");
+const path = require("node:path");
+
+const file = "Backend/PlantProcess.Api/Endpoints/Analytics/MlLearningEndpoints.cs";
+
+const content = `using System.Data;
 using System.Data.Common;
 using Microsoft.EntityFrameworkCore;
 using PlantProcess.Infrastructure.Persistence;
@@ -302,3 +307,9 @@ public static class MlLearningEndpoints
         string? OutcomeFamily,
         int? WindowDays);
 }
+`;
+
+fs.mkdirSync(path.dirname(file), { recursive: true });
+fs.writeFileSync(file, content.replace(/\r\n/g, "\n"), "utf8");
+
+console.log("Replaced MlLearningEndpoints.cs with defensive SQL reader implementation.");
