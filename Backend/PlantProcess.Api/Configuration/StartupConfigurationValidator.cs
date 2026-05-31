@@ -34,6 +34,8 @@ public static class StartupConfigurationValidator
 
         ValidateDatabaseConnectionString(configuration, options, errors);
         ValidateAuthentication(configuration, environment, errors);
+        ValidateV7Phase1AuthHardening(configuration, environment, errors);
+        ValidateV7Phase1ProductionSecretGuard(configuration, environment, errors);
         ValidateCorsOrigins(environment, options, effectiveAllowedOrigins, errors);
         ValidatePlantTimeZone(options, errors);
         ValidatePlantUtcOffset(options, errors);
@@ -107,6 +109,37 @@ public static class StartupConfigurationValidator
         var bootstrapPassword = configuration["PlantProcess:Auth:BootstrapAdminPassword"];
         var issuer = configuration["PlantProcess:Auth:Issuer"];
         var audience = configuration["PlantProcess:Auth:Audience"];
+        var legacyAuthKeys = new[]
+        {
+            "Auth:SigningKey",
+            "Auth:Issuer",
+            "Auth:Audience",
+            "Auth:BootstrapAdminUser",
+            "Auth:BootstrapAdminPassword"
+        };
+
+        if (legacyAuthKeys.Any(key => !string.IsNullOrWhiteSpace(configuration[key])))
+        {
+            errors.Add(
+                "Legacy Auth:* configuration is not supported. " +
+                "Use PlantProcess:Auth:* or PlantProcess__Auth__* environment variables only.");
+        }
+
+        var configuredUsers = configuration
+            .GetSection("PlantProcess:Auth:Users")
+            .GetChildren()
+            .ToList();
+
+        var realAdminCount = configuredUsers.Count(user =>
+            !string.Equals(user["IsBootstrapAdmin"], "true", StringComparison.OrdinalIgnoreCase) &&
+            string.Equals(user["Role"], "Admin", StringComparison.OrdinalIgnoreCase) &&
+            !string.IsNullOrWhiteSpace(user["UserName"]) &&
+            !string.IsNullOrWhiteSpace(user["Password"]));
+
+        var bootstrapCollidesWithConfiguredUser =
+            !string.IsNullOrWhiteSpace(bootstrapUser) &&
+            configuredUsers.Any(user =>
+                string.Equals(user["UserName"], bootstrapUser, StringComparison.OrdinalIgnoreCase));
 
         if (string.IsNullOrWhiteSpace(issuer))
         {
@@ -282,4 +315,121 @@ public static class StartupConfigurationValidator
             options.PlantUtcOffsetMinutes,
             effectiveAllowedOrigins.Count);
     }
+
+    private static void ValidateV7Phase1AuthHardening(
+        IConfiguration configuration,
+        IWebHostEnvironment environment,
+        List<string> errors)
+    {
+        var legacyAuthKeys = new[]
+        {
+            "Auth:SigningKey",
+            "Auth:Issuer",
+            "Auth:Audience",
+            "Auth:BootstrapAdminUser",
+            "Auth:BootstrapAdminPassword"
+        };
+
+        if (legacyAuthKeys.Any(key => !string.IsNullOrWhiteSpace(configuration[key])))
+        {
+            errors.Add(
+                "Legacy Auth:* configuration is not supported. " +
+                "Use PlantProcess:Auth:* or PlantProcess__Auth__* environment variables only.");
+        }
+
+        var configuredUsers = configuration
+            .GetSection("PlantProcess:Auth:Users")
+            .GetChildren()
+            .ToList();
+
+        var bootstrapUser = configuration["PlantProcess:Auth:BootstrapAdminUser"];
+
+        var realAdminCount = configuredUsers.Count(user =>
+            !string.Equals(user["IsBootstrapAdmin"], "true", StringComparison.OrdinalIgnoreCase) &&
+            string.Equals(user["Role"], "Admin", StringComparison.OrdinalIgnoreCase) &&
+            !string.IsNullOrWhiteSpace(user["UserName"]) &&
+            !string.IsNullOrWhiteSpace(user["Password"]));
+
+        var bootstrapCollidesWithConfiguredUser =
+            !string.IsNullOrWhiteSpace(bootstrapUser) &&
+            configuredUsers.Any(user =>
+                string.Equals(user["UserName"], bootstrapUser, StringComparison.OrdinalIgnoreCase));
+
+        if (!environment.IsDevelopment())
+        {
+            if (realAdminCount == 0)
+            {
+                errors.Add(
+                    "Non-development requires at least one real configured admin under " +
+                    "PlantProcess:Auth:Users with Role=Admin and IsBootstrapAdmin=false.");
+            }
+
+            if (bootstrapCollidesWithConfiguredUser)
+            {
+                errors.Add(
+                    "Bootstrap admin user must not collide with any configured real user. " +
+                    "Use a disabled sentinel bootstrap user outside Development.");
+            }
+        }
+    }
+
+    private static void ValidateV7Phase1ProductionSecretGuard(
+        IConfiguration configuration,
+        IWebHostEnvironment environment,
+        List<string> errors)
+    {
+        if (environment.IsDevelopment())
+        {
+            return;
+        }
+
+        var auth = configuration.GetSection("PlantProcess:Auth");
+        var signingKey = auth["SigningKey"] ?? string.Empty;
+        var bootstrapPassword = auth["BootstrapAdminPassword"] ?? string.Empty;
+
+        var dangerousPasswords = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "ChangeMe123!",
+            "Admin123!",
+            "admin",
+            "password",
+            "Password123!",
+            "plantprocess123"
+        };
+
+        var configuredUsers = auth
+            .GetSection("Users")
+            .GetChildren()
+            .ToList();
+
+        foreach (var user in configuredUsers)
+        {
+            var userName = user["UserName"] ?? "(unknown)";
+            var password = user["Password"] ?? string.Empty;
+
+            if (dangerousPasswords.Contains(password))
+            {
+                errors.Add(
+                    $"Production user '{userName}' uses a development/default password. " +
+                    "Set a strong unique secret via environment variables or production secret storage.");
+            }
+        }
+
+        if (signingKey.Contains("DEV_ONLY", StringComparison.OrdinalIgnoreCase) ||
+            signingKey.Contains("CHANGE_THIS", StringComparison.OrdinalIgnoreCase) ||
+            signingKey.Length < 32)
+        {
+            errors.Add(
+                "Production PlantProcess:Auth:SigningKey must be a strong non-development key with at least 32 characters.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(bootstrapPassword) &&
+            !bootstrapPassword.Equals("__DISABLED__", StringComparison.OrdinalIgnoreCase) &&
+            !bootstrapPassword.StartsWith("DISABLED-", StringComparison.OrdinalIgnoreCase))
+        {
+            errors.Add(
+                "Production bootstrap password must be a disabled sentinel, for example '__DISABLED__' or 'DISABLED-<random>'.");
+        }
+    }
+
 }

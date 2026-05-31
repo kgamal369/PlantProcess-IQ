@@ -39,3 +39,41 @@ Run:
     node tools/validation/validate-t208-exposure.cjs
 
 This catches accidental Compose host-port exposure before deployment. The external nmap proof must still be captured from a machine outside the host.
+
+
+## V7 Phase 1 exposure and server DB proof
+
+### Public exposure rule
+
+Only the reverse proxy should be public. PostgreSQL and internal services must not be reachable from the public internet.
+
+Expected public exposure:
+
+- 80/tcp: open
+- 443/tcp: open
+- 9090/tcp: optional, only when protected by Caddy basicauth
+- 5432/tcp PostgreSQL: closed or filtered
+- Redis/Grafana/Prometheus/Jaeger/direct API/internal ports: closed or filtered
+
+Run from an external network:
+
+```bash
+bash Infrastructure/deploy/verify-server-exposure.sh 178.105.152.180
+```
+
+### Server DB deployment
+
+Local PostgreSQL changes are not pushed automatically by Git. Server Docker PostgreSQL must receive SQL scripts explicitly with server credentials.
+
+Apply:
+
+```bash
+cd /opt/plantprocess-iq
+set -a
+source Infrastructure/deploy/.env
+set +a
+bash Infrastructure/deploy/apply-server-db-scripts.sh
+```
+
+Never reuse local laptop credentials on the server.
+

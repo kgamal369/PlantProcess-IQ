@@ -9,6 +9,7 @@
 import { Fragment, useMemo, useState } from "react";
 import { TwoStageImportMonitorPanel } from "./TwoStageImportMonitorPanel";
 import { Activity, PlayCircle } from "lucide-react";
+import { StandardPageButton, StandardPageTable } from "@/components/standard/StandardPageCompat";
 import {
   plantProcessApi,
   type AdminJobsMonitor,
@@ -161,7 +162,7 @@ export function JobsMonitorTab({
 
         {/* Jobs table */}
         <div className="admin-table-wrap">
-          <table>
+          <StandardPageTable>
             <thead>
               <tr>
                 <th>Job</th>
@@ -215,7 +216,7 @@ export function JobsMonitorTab({
                       </td>
                       <td>
                         <div className="admin-action-row compact">
-                          <button
+                          <StandardPageButton
                             className="secondary-button"
                             type="button"
                             disabled={isWorking || isPaused}
@@ -223,34 +224,34 @@ export function JobsMonitorTab({
                           >
                             <PlayCircle size={14} />
                             {isWorking ? "Working…" : "Run Now"}
-                          </button>
+                          </StandardPageButton>
                           {isPaused ? (
-                            <button
+                            <StandardPageButton
                               className="secondary-button"
                               type="button"
                               disabled={isWorking}
                               onClick={() => void resume(job.id)}
                             >
                               Resume
-                            </button>
+                            </StandardPageButton>
                           ) : (
-                            <button
+                            <StandardPageButton
                               className="secondary-button"
                               type="button"
                               disabled={isWorking}
                               onClick={() => void pause(job.id)}
                             >
                               Pause
-                            </button>
+                            </StandardPageButton>
                           )}
-                          <button
+                          <StandardPageButton
                             className="secondary-button"
                             type="button"
                             disabled={isWorking}
                             onClick={() => void toggleHistory(job.id)}
                           >
                             {isHistoryOpen ? "Hide History" : "History"}
-                          </button>
+                          </StandardPageButton>
                         </div>
                       </td>
                     </tr>
@@ -268,19 +269,19 @@ export function JobsMonitorTab({
                                   <strong>{job.jobCode}</strong>
                                 </p>
                               </div>
-                              <button
+                              <StandardPageButton
                                 type="button"
                                 className="ghost-button"
                                 onClick={() => setExpandedJobId(null)}
                               >
                                 Close
-                              </button>
+                              </StandardPageButton>
                             </div>
 
                             {history.length === 0 ? (
                               <p>No run history found for this job yet.</p>
                             ) : (
-                              <table>
+                              <StandardPageTable>
                                 <thead>
                                   <tr>
                                     <th>Status</th>
@@ -321,7 +322,7 @@ export function JobsMonitorTab({
                                     </tr>
                                   ))}
                                 </tbody>
-                              </table>
+                              </StandardPageTable>
                             )}
                           </div>
                         </td>
@@ -340,7 +341,7 @@ export function JobsMonitorTab({
                 </tr>
               ) : null}
             </tbody>
-          </table>
+          </StandardPageTable>
         </div>
       </AdminPanel>
       <TwoStageImportMonitorPanel />

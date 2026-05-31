@@ -59,7 +59,10 @@
     "test:phase78:e2e": "playwright test e2e/phase78-workflow-widget.spec.ts --project=chromium",
     "test:auth-matrix": "playwright test e2e/security/auth-matrix-admin.spec.ts --project=chromium --workers=1",
     "validate:standard-imports": "node scripts/validate-standard-imports.mjs",
-    "validate:v6-phase01-phase02": "node ../../tools/validation/validate-v6-phase01-phase02-completion.cjs"
+    "validate:v6-phase01-phase02": "node ../../tools/validation/validate-v6-phase01-phase02-completion.cjs",
+    "test:standard-import-gate": "node ../../tools/validation/prove-standard-import-gate.cjs",
+    "validate:auth-env": "node ../../tools/validation/validate-v7-phase01.cjs",
+    "validate:v7-phase01-frontend": "npm run validate:standard-imports && npm run test:standard-import-gate && npm run build"
   },
   "dependencies": {
     "lucide-react": "^1.14.0",

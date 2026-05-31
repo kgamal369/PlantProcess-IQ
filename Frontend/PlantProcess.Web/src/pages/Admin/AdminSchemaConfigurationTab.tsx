@@ -39,6 +39,7 @@ import { AdminPanel, MiniKpi, StatusPill, formatDate } from "./AdminSharedCompon
 import { useOptimisticSave } from "@/hooks/useOptimisticSave";
 import { InlineFieldError } from "@/components/forms/InlineFieldError";
 import { CanonicalSchemaMappingPanel } from "./CanonicalSchemaMappingPanel";
+import { StandardPageButton, StandardPageInput, StandardPageSelect, StandardPageTable, StandardPageTextArea } from "@/components/standard/StandardPageCompat";
 import {
   useInlineFormValidation,
   validateCode,
@@ -310,7 +311,7 @@ LIMIT 100`,
         <div className="admin-form-row" style={{ marginBottom: "1rem" }}>
           <label className="admin-form-label">Load existing view</label>
           <div className="admin-form-inline">
-            <select
+            <StandardPageSelect
               className="admin-select"
               value={selectedViewId}
               onChange={(e) => loadSelectedViewIntoEditor(e.target.value)}
@@ -322,7 +323,7 @@ LIMIT 100`,
                   {v.isApproved ? " ✅" : ""}
                 </option>
               ))}
-            </select>
+            </StandardPageSelect>
             {selectedView ? (
               <span className="admin-copy" style={{ fontSize: 12 }}>
                 Status: {selectedView.lastValidationStatus ?? "Not run"} ·
@@ -338,7 +339,7 @@ LIMIT 100`,
       <div className="admin-form-grid" style={{ marginBottom: "1rem" }}>
         <label className="admin-form-label">
           View Code *
-          <input
+          <StandardPageInput
             className="admin-input"
             value={form.schemaViewCode}
             onChange={(e) => setField("schemaViewCode", e.target.value)}
@@ -348,7 +349,7 @@ LIMIT 100`,
         </label>
         <label className="admin-form-label">
           View Name *
-          <input
+          <StandardPageInput
             className="admin-input"
             value={form.schemaViewName}
             onChange={(e) => setField("schemaViewName", e.target.value)}
@@ -357,7 +358,7 @@ LIMIT 100`,
         </label>
         <label className="admin-form-label">
           View Kind
-          <select
+          <StandardPageSelect
             className="admin-select"
             value={form.viewKind}
             onChange={(e) => setField("viewKind", e.target.value)}
@@ -366,11 +367,11 @@ LIMIT 100`,
             <option value="JoinView">Join View — multi-table JOIN</option>
             <option value="KpiView">KPI View — aggregation for KPI</option>
             <option value="MappingPreparationView">Mapping Prep — pre-canonical transform</option>
-          </select>
+          </StandardPageSelect>
         </label>
         <label className="admin-form-label">
           Max Preview Rows
-          <select
+          <StandardPageSelect
             className="admin-select admin-select--narrow"
             value={form.maxPreviewRows}
             onChange={(e) => setField("maxPreviewRows", Number(e.target.value))}
@@ -378,7 +379,7 @@ LIMIT 100`,
             {[10, 25, 50, 100, 200].map((v) => (
               <option key={v} value={v}>{v} rows</option>
             ))}
-          </select>
+          </StandardPageSelect>
         </label>
       </div>
 
@@ -389,7 +390,7 @@ LIMIT 100`,
           <div className="admin-sql-editor-hint">
             Supported: SELECT, WITH (CTE), JOINs on staging_records. Blocked: INSERT, UPDATE, DELETE, DROP, TRUNCATE.
           </div>
-          <textarea
+          <StandardPageTextArea
             className="admin-sql-editor admin-sql-editor--large"
             value={form.sqlText}
             onChange={(e) => setField("sqlText", e.target.value)}
@@ -402,7 +403,7 @@ LIMIT 100`,
       {/* Description */}
       <label className="admin-form-label">
         Description
-        <input
+        <StandardPageInput
           className="admin-input"
           value={form.description}
           onChange={(e) => setField("description", e.target.value)}
@@ -412,7 +413,7 @@ LIMIT 100`,
 
       {/* Actions */}
       <div className="admin-action-row" style={{ marginTop: "1rem", flexWrap: "wrap" }}>
-        <button
+        <StandardPageButton
           className="secondary-button"
           type="button"
           onClick={previewSql}
@@ -420,8 +421,8 @@ LIMIT 100`,
         >
           {isBusy ? <Loader2 size={14} className="spin" /> : <PlayCircle size={14} />}
           Preview SQL
-        </button>
-        <button
+        </StandardPageButton>
+        <StandardPageButton
           className="primary-button"
           type="button"
           onClick={saveView}
@@ -430,9 +431,9 @@ LIMIT 100`,
           {isSavingView
             ? <><Loader2 size={14} className="spin" /> Saving…</>
             : <><Save size={14} /> {selectedView ? "Update View" : "Save View"}</>}
-        </button>
+        </StandardPageButton>
         {selectedView && !selectedView.isApproved ? (
-          <button
+          <StandardPageButton
             className="secondary-button"
             type="button"
             onClick={approveView}
@@ -441,7 +442,7 @@ LIMIT 100`,
             {isApproving
               ? <><Loader2 size={14} className="spin" /> Approving…</>
               : <><CheckCircle2 size={14} /> Approve for Mapping</>}
-          </button>
+          </StandardPageButton>
         ) : null}
       </div>
 
@@ -463,7 +464,7 @@ LIMIT 100`,
 
           {preview.columns.length > 0 ? (
             <div className="admin-table-wrap" style={{ maxHeight: 300, overflowY: "auto" }}>
-              <table>
+              <StandardPageTable>
                 <thead>
                   <tr>
                     {preview.columns.map((c) => (
@@ -485,7 +486,7 @@ LIMIT 100`,
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </StandardPageTable>
             </div>
           ) : null}
         </div>
@@ -497,7 +498,7 @@ LIMIT 100`,
           <strong style={{ fontSize: 12, color: "var(--ppiq-text-muted)", display: "block", marginBottom: 8 }}>
             All Schema Views ({schemaViews.length})
           </strong>
-          <table>
+          <StandardPageTable>
             <thead>
               <tr>
                 <th>View</th><th>Kind</th><th>Validation</th><th>Approved</th><th>Max Rows</th><th>Last Run</th>
@@ -528,7 +529,7 @@ LIMIT 100`,
                 </tr>
               ))}
             </tbody>
-          </table>
+          </StandardPageTable>
         </div>
       ) : null}
     </AdminPanel>
@@ -625,13 +626,13 @@ function KpiDefinitionPanel() {
       {createKpiError instanceof Error ? <div className="admin-inline-error">{createKpiError.message}</div> : null}
 
       <div className="admin-action-row" style={{ marginBottom: "1rem" }}>
-        <button
+        <StandardPageButton
           className="primary-button"
           type="button"
           onClick={() => { setShowForm(!showForm); setError(null); }}
         >
           <Plus size={14} /> {showForm ? "Cancel" : "New KPI"}
-        </button>
+        </StandardPageButton>
       </div>
 
       {/* Create form */}
@@ -642,7 +643,7 @@ function KpiDefinitionPanel() {
 
             <label className="admin-form-label">
               KPI Code *
-              <input
+              <StandardPageInput
                 className="admin-input"
                 value={form.kpiCode}
                 onChange={(e) => setField("kpiCode", e.target.value)}
@@ -652,7 +653,7 @@ function KpiDefinitionPanel() {
 
             <label className="admin-form-label">
               KPI Name *
-              <input
+              <StandardPageInput
                 className="admin-input"
                 value={form.kpiName}
                 onChange={(e) => setField("kpiName", e.target.value)}
@@ -662,7 +663,7 @@ function KpiDefinitionPanel() {
 
             <label className="admin-form-label">
               Category
-              <select
+              <StandardPageSelect
                 className="admin-select"
                 value={form.kpiCategory}
                 onChange={(e) => setField("kpiCategory", e.target.value)}
@@ -670,12 +671,12 @@ function KpiDefinitionPanel() {
                 {["Quality", "Production", "Process", "Downtime", "Energy", "Maintenance", "Safety"].map((c) => (
                   <option key={c} value={c}>{c}</option>
                 ))}
-              </select>
+              </StandardPageSelect>
             </label>
 
             <label className="admin-form-label">
               Aggregation Type
-              <select
+              <StandardPageSelect
                 className="admin-select"
                 value={form.aggregationType}
                 onChange={(e) => setField("aggregationType", e.target.value)}
@@ -683,12 +684,12 @@ function KpiDefinitionPanel() {
                 {["Count", "Sum", "Average", "Min", "Max", "Rate", "Ratio", "Custom"].map((a) => (
                   <option key={a} value={a}>{a}</option>
                 ))}
-              </select>
+              </StandardPageSelect>
             </label>
 
             <label className="admin-form-label">
               Value Expression *
-              <input
+              <StandardPageInput
                 className="admin-input admin-input--mono"
                 value={form.valueExpression}
                 onChange={(e) => setField("valueExpression", e.target.value)}
@@ -699,7 +700,7 @@ function KpiDefinitionPanel() {
 
             <label className="admin-form-label">
               Dimension Expression
-              <input
+              <StandardPageInput
                 className="admin-input admin-input--mono"
                 value={form.dimensionExpression}
                 onChange={(e) => setField("dimensionExpression", e.target.value)}
@@ -710,7 +711,7 @@ function KpiDefinitionPanel() {
 
             <label className="admin-form-label">
               Filter Expression
-              <input
+              <StandardPageInput
                 className="admin-input admin-input--mono"
                 value={form.filterExpression}
                 onChange={(e) => setField("filterExpression", e.target.value)}
@@ -721,7 +722,7 @@ function KpiDefinitionPanel() {
 
             <label className="admin-form-label">
               Unit
-              <input
+              <StandardPageInput
                 className="admin-input admin-input--narrow"
                 value={form.unit}
                 onChange={(e) => setField("unit", e.target.value)}
@@ -731,7 +732,7 @@ function KpiDefinitionPanel() {
 
             <label className="admin-form-label">
               Source Schema View (optional)
-              <select
+              <StandardPageSelect
                 className="admin-select"
                 value={form.schemaViewDefinitionId}
                 onChange={(e) => setField("schemaViewDefinitionId", e.target.value)}
@@ -742,7 +743,7 @@ function KpiDefinitionPanel() {
                     {v.schemaViewCode} — {v.schemaViewName}
                   </option>
                 ))}
-              </select>
+              </StandardPageSelect>
               {schemaViews.length === 0 ? (
                 <small className="admin-form-hint">
                   <AlertTriangle size={11} /> No approved views yet. Approve a SQL View above first.
@@ -752,7 +753,7 @@ function KpiDefinitionPanel() {
 
             <label className="admin-form-label" style={{ gridColumn: "1 / -1" }}>
               Description
-              <input
+              <StandardPageInput
                 className="admin-input"
                 value={form.description}
                 onChange={(e) => setField("description", e.target.value)}
@@ -762,7 +763,7 @@ function KpiDefinitionPanel() {
           </div>
 
           <div className="admin-form-actions">
-            <button
+            <StandardPageButton
               className="primary-button"
               type="button"
               onClick={createKpi}
@@ -771,7 +772,7 @@ function KpiDefinitionPanel() {
               {isCreatingKpi
                 ? <><Loader2 size={14} className="spin" /> Creating…</>
                 : <><Save size={14} /> Create KPI</>}
-            </button>
+            </StandardPageButton>
           </div>
         </div>
       ) : null}
@@ -779,7 +780,7 @@ function KpiDefinitionPanel() {
       {/* KPI list */}
       {kpis.length > 0 ? (
         <div className="admin-table-wrap">
-          <table>
+          <StandardPageTable>
             <thead>
               <tr>
                 <th>KPI</th><th>Category</th><th>Expression</th><th>Unit</th><th>Aggregation</th><th>Status</th>
@@ -807,7 +808,7 @@ function KpiDefinitionPanel() {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </StandardPageTable>
         </div>
       ) : (
         <div className="empty-insight">
@@ -880,7 +881,7 @@ function FieldMapperPanel({
           <strong style={{ fontSize: 12, color: "var(--ppiq-text-muted)", display: "block", marginBottom: 8 }}>
             Configured Mappings ({mappings.length})
           </strong>
-          <table>
+          <StandardPageTable>
             <thead>
               <tr>
                 <th>Mapping</th><th>Source Object</th><th>→ Target Entity</th><th>Version</th><th>Status</th>
@@ -909,7 +910,7 @@ function FieldMapperPanel({
                 </tr>
               ))}
             </tbody>
-          </table>
+          </StandardPageTable>
         </div>
       ) : null}
 

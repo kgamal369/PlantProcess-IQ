@@ -262,7 +262,31 @@ try
     // ---------------------------------------------------------------------
     // Build app
     // ---------------------------------------------------------------------
-    var app = builder.Build();
+    
+
+// PPIQ-T282: startup auth self-check with no secret leakage.
+var ppiqV7AuthSection = builder.Configuration.GetSection("PlantProcess:Auth");
+var ppiqV7AuthUsers = ppiqV7AuthSection.GetSection("Users").GetChildren().ToList();
+var ppiqV7SigningKey = ppiqV7AuthSection["SigningKey"] ?? string.Empty;
+var ppiqV7BootstrapPassword = ppiqV7AuthSection["BootstrapAdminPassword"] ?? string.Empty;
+var ppiqV7BootstrapCollision =
+    !string.IsNullOrWhiteSpace(ppiqV7BootstrapPassword) &&
+    ppiqV7AuthUsers.Any(user =>
+        string.Equals(user["Password"], ppiqV7BootstrapPassword, StringComparison.Ordinal));
+
+Log.Information(
+    "Auth bound from PlantProcess:Auth — {UserCount} users, signingKeyLen={SigningKeyLen}, bootstrapCollision={BootstrapCollision}",
+    ppiqV7AuthUsers.Count,
+    ppiqV7SigningKey.Length,
+    ppiqV7BootstrapCollision);
+
+if (ppiqV7BootstrapCollision)
+{
+    Log.Warning(
+        "Auth bootstrap collision detected: at least one configured user password equals BootstrapAdminPassword. Use a real admin password distinct from the bootstrap password.");
+}
+
+var app = builder.Build();
 
     // =====================================================================
     // AUTO-MIGRATE: Apply all pending EF Core migrations at startup.

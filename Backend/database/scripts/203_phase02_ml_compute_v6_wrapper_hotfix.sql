@@ -1,4 +1,4 @@
-﻿DO $$
+DO $$
 DECLARE
     v_def text;
     v_new text;

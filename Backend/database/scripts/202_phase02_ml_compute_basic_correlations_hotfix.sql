@@ -1,4 +1,4 @@
-﻿CREATE OR REPLACE FUNCTION public.ppiq_ml_compute_basic_correlations(
+CREATE OR REPLACE FUNCTION public.ppiq_ml_compute_basic_correlations(
     p_outcome_key text,
     p_grain text DEFAULT 'coil',
     p_window_days integer DEFAULT 90)

@@ -16,6 +16,7 @@ import {
   type TwoStageImportModel,
 } from "@/api/plantProcessApi";
 import { useOptimisticSave } from "@/hooks/useOptimisticSave";
+import { StandardPageButton, StandardPageSelect, StandardPageTable } from "@/components/standard/StandardPageCompat";
 import {
   AdminPanel,
   StatusPill,
@@ -112,7 +113,7 @@ export function ImportingDataTab({
           <label className="admin-form-label">
             Mapping definition
           </label>
-          <select
+          <StandardPageSelect
             className="admin-select"
             value={selectedMappingId}
             onChange={(e) => setSelectedMappingId(e.target.value)}
@@ -123,14 +124,14 @@ export function ImportingDataTab({
                 {mapping.mappingCode} · {mapping.mappingName}
               </option>
             ))}
-          </select>
+          </StandardPageSelect>
         </div>
 
         <div className="admin-form-row">
           <label className="admin-form-label">
             Refresh interval (minutes)
           </label>
-          <select
+          <StandardPageSelect
             className="admin-select admin-select--narrow"
             value={refreshIntervalMinutes}
             onChange={(e) => setRefreshIntervalMinutes(Number(e.target.value))}
@@ -140,11 +141,11 @@ export function ImportingDataTab({
                 {v < 60 ? `${v} min` : v < 1440 ? `${v / 60}h` : "24h"}
               </option>
             ))}
-          </select>
+          </StandardPageSelect>
         </div>
 
         <div className="admin-action-row">
-          <button
+          <StandardPageButton
             className="primary-button"
             type="button"
             onClick={saveMappingRefreshSchedule}
@@ -153,12 +154,12 @@ export function ImportingDataTab({
             {isSaving
               ? <><Loader2 size={16} className="spin" /> Saving…</>
               : <><Clock size={16} /> Save Refresh Schedule</>}
-          </button>
+          </StandardPageButton>
         </div>
 
         {/* Canonical jobs table */}
         <div className="admin-table-wrap">
-          <table>
+          <StandardPageTable>
             <thead>
               <tr>
                 <th>Job</th>
@@ -192,7 +193,7 @@ export function ImportingDataTab({
                 </tr>
               ) : null}
             </tbody>
-          </table>
+          </StandardPageTable>
         </div>
       </AdminPanel>
 

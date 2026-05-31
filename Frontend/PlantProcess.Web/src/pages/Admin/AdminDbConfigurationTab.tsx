@@ -48,6 +48,7 @@ import { useOptimisticSave } from "@/hooks/useOptimisticSave";
 import { AdminPanel, StatusPill, formatDate } from "./AdminSharedComponents";
 
 import { InlineFieldError } from "@/components/forms/InlineFieldError";
+import { StandardPageButton, StandardPageInput, StandardPageSelect, StandardPageTable } from "@/components/standard/StandardPageCompat";
 import {
   useInlineFormValidation,
   validateCode,
@@ -138,13 +139,13 @@ export function DbConfigurationTab({
         {/* Toolbar */}
         <div className="admin-action-row" style={{ marginBottom: "1rem" }}>
           {viewMode !== "list" ? (
-            <button className="secondary-button" onClick={backToList} type="button">
+            <StandardPageButton className="secondary-button" onClick={backToList} type="button">
               <X size={14} /> Back to list
-            </button>
+            </StandardPageButton>
           ) : (
-            <button className="primary-button" onClick={openCreate} type="button">
+            <StandardPageButton className="primary-button" onClick={openCreate} type="button">
               <Plus size={14} /> New Connection Profile
-            </button>
+            </StandardPageButton>
           )}
         </div>
 
@@ -217,7 +218,7 @@ export function DbConfigurationTab({
           wide
         >
           <div className="admin-table-wrap">
-            <table>
+            <StandardPageTable>
               <thead>
                 <tr>
                   <th>Code</th><th>Name</th><th>Type</th>
@@ -242,7 +243,7 @@ export function DbConfigurationTab({
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </StandardPageTable>
           </div>
         </AdminPanel>
       ) : null}
@@ -305,7 +306,7 @@ function ConnectionProfileList({
 
   return (
     <div className="admin-table-wrap">
-      <table>
+      <StandardPageTable>
         <thead>
           <tr>
             <th>Name</th><th>Provider</th><th>Host / File</th>
@@ -350,7 +351,7 @@ function ConnectionProfileList({
                 </td>
                 <td>
                   <div className="admin-action-row compact">
-                    <button
+                    <StandardPageButton
                       className="secondary-button"
                       type="button"
                       disabled={testingId === conn.id}
@@ -360,23 +361,23 @@ function ConnectionProfileList({
                       {testingId === conn.id
                         ? <><Loader2 size={13} className="spin" /> Testing…</>
                         : <><Link2 size={13} /> Test</>}
-                    </button>
-                    <button
+                    </StandardPageButton>
+                    <StandardPageButton
                       className="secondary-button"
                       type="button"
                       onClick={() => onBrowseTables(conn.id)}
                       title="Browse tables and datasets"
                     >
                       <TableProperties size={13} /> Tables
-                    </button>
-                    <button
+                    </StandardPageButton>
+                    <StandardPageButton
                       className="secondary-button"
                       type="button"
                       onClick={() => onEdit(conn)}
                       title="Edit connection profile"
                     >
                       <Edit2 size={13} /> Edit
-                    </button>
+                    </StandardPageButton>
                   </div>
                 </td>
               </tr>
@@ -390,7 +391,7 @@ function ConnectionProfileList({
             </>
           ))}
         </tbody>
-      </table>
+      </StandardPageTable>
     </div>
   );
 }
@@ -545,7 +546,7 @@ function ConnectionProfileForm({
         {/* Provider type */}
         <label className="admin-form-label">
           Provider Type *
-          <select
+          <StandardPageSelect
             className="admin-select"
             value={form.providerType}
             onChange={(e) => handleProviderChange(e.target.value)}
@@ -556,7 +557,7 @@ function ConnectionProfileForm({
                 {pt.displayName ?? pt.providerType}{!pt.isAvailableNow ? " (planned)" : ""}
               </option>
             ))}
-          </select>
+          </StandardPageSelect>
         </label>
 
         {/* Profile name */}
@@ -566,7 +567,7 @@ function ConnectionProfileForm({
           }`}
         >
           Profile Name *
-          <input
+          <StandardPageInput
             className="admin-input"
             value={form.connectionProfileName}
             aria-invalid={Boolean(validation.getError("connectionProfileName"))}
@@ -588,7 +589,7 @@ function ConnectionProfileForm({
           }`}
         >
           Profile Code
-          <input
+          <StandardPageInput
             className="admin-input"
             value={form.connectionProfileCode}
             aria-invalid={Boolean(validation.getError("connectionProfileCode"))}
@@ -613,7 +614,7 @@ function ConnectionProfileForm({
               }`}
             >
               Host / Server *
-              <input
+              <StandardPageInput
                 className="admin-input"
                 value={form.hostName}
                 aria-invalid={Boolean(validation.getError("hostName"))}
@@ -630,7 +631,7 @@ function ConnectionProfileForm({
 
             <label className="admin-form-label">
               Database Name
-              <input
+              <StandardPageInput
                 className="admin-input"
                 value={form.databaseName}
                 onChange={(e) => set("databaseName", e.target.value)}
@@ -640,7 +641,7 @@ function ConnectionProfileForm({
 
             <label className="admin-form-label">
               Schema Name
-              <input
+              <StandardPageInput
                 className="admin-input"
                 value={form.schemaName}
                 onChange={(e) => set("schemaName", e.target.value)}
@@ -655,7 +656,7 @@ function ConnectionProfileForm({
           }`}
         >
           File Root Path *
-          <input
+          <StandardPageInput
             className="admin-input"
             value={form.fileRootPath}
             aria-invalid={Boolean(validation.getError("fileRootPath"))}
@@ -678,7 +679,7 @@ function ConnectionProfileForm({
           }`}
         >
           Secret Reference
-          <input
+          <StandardPageInput
             className="admin-input"
             value={form.secretReference}
             aria-invalid={Boolean(validation.getError("secretReference"))}
@@ -699,7 +700,7 @@ function ConnectionProfileForm({
         {/* Description */}
         <label className="admin-form-label" style={{ gridColumn: "1 / -1" }}>
           Description
-          <input
+          <StandardPageInput
             className="admin-input"
             value={form.description}
             onChange={(e) => set("description", e.target.value)}
@@ -709,7 +710,7 @@ function ConnectionProfileForm({
 
         {/* Read-only enforcement */}
         <label className="admin-form-label admin-form-label--checkbox">
-          <input
+          <StandardPageInput
             type="checkbox"
             checked={form.readOnlyEnforced}
             onChange={(e) => set("readOnlyEnforced", e.target.checked)}
@@ -719,17 +720,17 @@ function ConnectionProfileForm({
       </div>
 
       <div className="admin-form-actions">
-        <button
+        <StandardPageButton
           className="primary-button"
           type="button"
           onClick={save}
           disabled={isSaving}
         >
           {isSaving ? <><Loader2 size={14} className="spin" /> Saving…</> : <><PlayCircle size={14} /> {isEdit ? "Save Changes" : "Create Profile"}</>}
-        </button>
-        <button className="secondary-button" type="button" onClick={onCancel} disabled={isSaving}>
+        </StandardPageButton>
+        <StandardPageButton className="secondary-button" type="button" onClick={onCancel} disabled={isSaving}>
           Cancel
-        </button>
+        </StandardPageButton>
       </div>
     </div>
   );
@@ -853,7 +854,7 @@ function TableBrowser({
         <div className="admin-form-grid">
           <label className="admin-form-label">
             Table / View Name *
-            <input
+            <StandardPageInput
               className="admin-input"
               value={newDatasetForm.sourceObjectName}
               onChange={(e) => setNewDatasetForm((f) => ({ ...f, sourceObjectName: e.target.value }))}
@@ -862,7 +863,7 @@ function TableBrowser({
           </label>
           <label className="admin-form-label">
             Schema
-            <input
+            <StandardPageInput
               className="admin-input"
               value={newDatasetForm.schemaName}
               onChange={(e) => setNewDatasetForm((f) => ({ ...f, schemaName: e.target.value }))}
@@ -871,7 +872,7 @@ function TableBrowser({
           </label>
           <label className="admin-form-label">
             Incremental Cursor Field
-            <input
+            <StandardPageInput
               className="admin-input"
               value={newDatasetForm.incrementalCursorField}
               onChange={(e) => setNewDatasetForm((f) => ({ ...f, incrementalCursorField: e.target.value }))}
@@ -883,7 +884,7 @@ function TableBrowser({
           </label>
           <label className="admin-form-label">
             Refresh Interval (seconds)
-            <select
+            <StandardPageSelect
               className="admin-select admin-select--narrow"
               value={newDatasetForm.refreshIntervalSeconds}
               onChange={(e) => setNewDatasetForm((f) => ({ ...f, refreshIntervalSeconds: Number(e.target.value) }))}
@@ -893,11 +894,11 @@ function TableBrowser({
                   {v < 60 ? `${v}s` : v < 3600 ? `${v / 60}min` : `${v / 3600}h`}
                 </option>
               ))}
-            </select>
+            </StandardPageSelect>
           </label>
           <label className="admin-form-label" style={{ gridColumn: "1 / -1" }}>
             Description
-            <input
+            <StandardPageInput
               className="admin-input"
               value={newDatasetForm.description}
               onChange={(e) => setNewDatasetForm((f) => ({ ...f, description: e.target.value }))}
@@ -906,7 +907,7 @@ function TableBrowser({
           </label>
         </div>
         <div className="admin-form-actions">
-          <button
+          <StandardPageButton
             className="primary-button"
             type="button"
             onClick={registerDataset}
@@ -915,7 +916,7 @@ function TableBrowser({
             {isCreating
               ? <><Loader2 size={14} className="spin" /> Registering…</>
               : <><Plus size={14} /> Register Dataset</>}
-          </button>
+          </StandardPageButton>
         </div>
         {message ? <p className="admin-test-result" style={{ marginTop: 8 }}>{message}</p> : null}
       </div>
@@ -935,7 +936,7 @@ function TableBrowser({
         </div>
       ) : (
         <div className="admin-table-wrap">
-          <table>
+          <StandardPageTable>
             <thead>
               <tr>
                 <th></th>
@@ -952,7 +953,7 @@ function TableBrowser({
                 <>
                   <tr key={ds.id} className={expandedDatasetId === ds.id ? "selected-row" : ""}>
                     <td>
-                      <button
+                      <StandardPageButton
                         className="ghost-button"
                         type="button"
                         onClick={() => toggleFields(ds.id)}
@@ -961,7 +962,7 @@ function TableBrowser({
                         {expandedDatasetId === ds.id
                           ? <ChevronDown size={14} />
                           : <ChevronRight size={14} />}
-                      </button>
+                      </StandardPageButton>
                     </td>
                     <td>
                       <strong>{ds.datasetName}</strong>
@@ -987,7 +988,7 @@ function TableBrowser({
                       <td colSpan={7}>
                         <div className="admin-dataset-detail">
                           {fields[ds.id]?.length > 0 ? (
-                            <table>
+                            <StandardPageTable>
                               <thead>
                                 <tr><th>#</th><th>Field</th><th>Type</th><th>Nullable</th><th>PK</th><th>Timestamp</th></tr>
                               </thead>
@@ -1003,7 +1004,7 @@ function TableBrowser({
                                   </tr>
                                 ))}
                               </tbody>
-                            </table>
+                            </StandardPageTable>
                           ) : (
                             <p className="admin-copy">
                               Field schema discovery via the Integration API populates this section.
@@ -1017,7 +1018,7 @@ function TableBrowser({
                 </>
               ))}
             </tbody>
-          </table>
+          </StandardPageTable>
         </div>
       )}
     </div>
@@ -1077,7 +1078,7 @@ function ImportJobSchedulePanel({
 
       <div className="admin-form-row">
         <label className="admin-form-label">Connection Profile</label>
-        <select
+        <StandardPageSelect
           className="admin-select"
           value={selectedConnectionId}
           onChange={(e) => setSelectedConnectionId(e.target.value)}
@@ -1090,12 +1091,12 @@ function ImportJobSchedulePanel({
                 {conn.connectionProfileName} ({conn.providerType})
               </option>
             ))}
-        </select>
+        </StandardPageSelect>
       </div>
 
       <div className="admin-form-row">
         <label className="admin-form-label">Import Frequency</label>
-        <select
+        <StandardPageSelect
           className="admin-select admin-select--narrow"
           value={intervalMinutes}
           onChange={(e) => setIntervalMinutes(Number(e.target.value))}
@@ -1105,11 +1106,11 @@ function ImportJobSchedulePanel({
               {v < 60 ? `Every ${v} min` : v < 1440 ? `Every ${v / 60}h` : "Once daily"}
             </option>
           ))}
-        </select>
+        </StandardPageSelect>
       </div>
 
       <div className="admin-form-actions">
-        <button
+        <StandardPageButton
           className="primary-button"
           type="button"
           onClick={save}
@@ -1118,7 +1119,7 @@ function ImportJobSchedulePanel({
           {isSaving
             ? <><Loader2 size={14} className="spin" /> Saving…</>
             : <><Settings2 size={14} /> Save Import Schedule</>}
-        </button>
+        </StandardPageButton>
       </div>
     </AdminPanel>
   );

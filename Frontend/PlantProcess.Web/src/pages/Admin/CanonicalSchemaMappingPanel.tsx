@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 
 import { AdminPanel, EmptyAdminState, StatusPill, formatDate } from "./AdminSharedComponents";
+import { StandardPageButton, StandardPageInput, StandardPageSelect, StandardPageTable, StandardPageTextArea } from "@/components/standard/StandardPageCompat";
 import {
   schemaMappingApi,
   type CanonicalSchemaViewRow,
@@ -241,12 +242,12 @@ export function CanonicalSchemaMappingPanel() {
       ) : null}
 
       <div className="admin-action-row">
-        <button className="admin-action-button" onClick={load} disabled={isBusy}>
+        <StandardPageButton className="admin-action-button" onClick={load} disabled={isBusy}>
           {isBusy ? <Loader2 size={16} className="spin" /> : <RefreshCw size={16} />}
           Refresh catalog
-        </button>
+        </StandardPageButton>
 
-        <select
+        <StandardPageSelect
           className="admin-input"
           value={selectedViewCode}
           onChange={(event) => setSelectedViewCode(event.target.value)}
@@ -257,16 +258,16 @@ export function CanonicalSchemaMappingPanel() {
               {row.view_code} · {row.target_entity}
             </option>
           ))}
-        </select>
+        </StandardPageSelect>
 
-        <button
+        <StandardPageButton
           className="admin-action-button admin-action-button--primary"
           onClick={executeSelected}
           disabled={!selectedViewCode || isBusy}
         >
           <PlayCircle size={16} />
           Execute selected mapping
-        </button>
+        </StandardPageButton>
       </div>
 
       <div className="admin-subgrid">
@@ -277,21 +278,21 @@ export function CanonicalSchemaMappingPanel() {
           <div className="admin-form-grid">
             <label>
               View code
-              <input
+              <StandardPageInput
                 value={joinForm.viewCode}
                 onChange={(event) => setJoinForm((f) => ({ ...f, viewCode: event.target.value }))}
               />
             </label>
             <label>
               View name
-              <input
+              <StandardPageInput
                 value={joinForm.viewName}
                 onChange={(event) => setJoinForm((f) => ({ ...f, viewName: event.target.value }))}
               />
             </label>
             <label>
               Left source
-              <input
+              <StandardPageInput
                 value={`${joinForm.leftSchema}.${joinForm.leftTable}`}
                 onChange={(event) => {
                   const [schema, table] = event.target.value.split(".");
@@ -305,7 +306,7 @@ export function CanonicalSchemaMappingPanel() {
             </label>
             <label>
               Right source
-              <input
+              <StandardPageInput
                 value={`${joinForm.rightSchema}.${joinForm.rightTable}`}
                 onChange={(event) => {
                   const [schema, table] = event.target.value.split(".");
@@ -319,7 +320,7 @@ export function CanonicalSchemaMappingPanel() {
             </label>
             <label>
               Join keys
-              <input
+              <StandardPageInput
                 value={`${joinForm.leftJoinColumn} = ${joinForm.rightJoinColumn}`}
                 onChange={(event) => {
                   const [left, right] = event.target.value.split("=").map((x) => x.trim());
@@ -333,7 +334,7 @@ export function CanonicalSchemaMappingPanel() {
             </label>
             <label>
               Physical view
-              <input
+              <StandardPageInput
                 value={joinForm.physicalViewName}
                 onChange={(event) =>
                   setJoinForm((f) => ({ ...f, physicalViewName: event.target.value }))
@@ -344,7 +345,7 @@ export function CanonicalSchemaMappingPanel() {
 
           <label className="admin-textarea-label">
             Selected columns: side,column,alias
-            <textarea
+            <StandardPageTextArea
               value={joinForm.columnsText}
               onChange={(event) =>
                 setJoinForm((f) => ({ ...f, columnsText: event.target.value }))
@@ -354,14 +355,14 @@ export function CanonicalSchemaMappingPanel() {
           </label>
 
           <div className="admin-action-row">
-            <button className="admin-action-button" onClick={previewJoin} disabled={isBusy}>
+            <StandardPageButton className="admin-action-button" onClick={previewJoin} disabled={isBusy}>
               <PlayCircle size={16} />
               Preview join
-            </button>
-            <button className="admin-action-button admin-action-button--primary" onClick={saveJoin} disabled={isBusy}>
+            </StandardPageButton>
+            <StandardPageButton className="admin-action-button admin-action-button--primary" onClick={saveJoin} disabled={isBusy}>
               <Save size={16} />
               Save canonical join
-            </button>
+            </StandardPageButton>
           </div>
         </section>
 
@@ -373,21 +374,21 @@ export function CanonicalSchemaMappingPanel() {
           <div className="admin-form-grid">
             <label>
               KPI view code
-              <input
+              <StandardPageInput
                 value={kpiForm.viewCode}
                 onChange={(event) => setKpiForm((f) => ({ ...f, viewCode: event.target.value }))}
               />
             </label>
             <label>
               KPI code
-              <input
+              <StandardPageInput
                 value={kpiForm.kpiCode}
                 onChange={(event) => setKpiForm((f) => ({ ...f, kpiCode: event.target.value }))}
               />
             </label>
             <label>
               Scope
-              <input
+              <StandardPageInput
                 value={`${kpiForm.attachedScopeType}:${kpiForm.attachedScopeCode}`}
                 onChange={(event) => {
                   const [type, code] = event.target.value.split(":");
@@ -401,7 +402,7 @@ export function CanonicalSchemaMappingPanel() {
             </label>
             <label>
               Physical view
-              <input
+              <StandardPageInput
                 value={kpiForm.physicalViewName}
                 onChange={(event) =>
                   setKpiForm((f) => ({ ...f, physicalViewName: event.target.value }))
@@ -412,7 +413,7 @@ export function CanonicalSchemaMappingPanel() {
 
           <label className="admin-textarea-label">
             KPI SELECT SQL
-            <textarea
+            <StandardPageTextArea
               value={kpiForm.sqlText}
               onChange={(event) => setKpiForm((f) => ({ ...f, sqlText: event.target.value }))}
               rows={9}
@@ -420,10 +421,10 @@ export function CanonicalSchemaMappingPanel() {
           </label>
 
           <div className="admin-action-row">
-            <button className="admin-action-button admin-action-button--primary" onClick={saveKpiView} disabled={isBusy}>
+            <StandardPageButton className="admin-action-button admin-action-button--primary" onClick={saveKpiView} disabled={isBusy}>
               <Save size={16} />
               Save KPI view
-            </button>
+            </StandardPageButton>
           </div>
         </section>
       </div>
@@ -438,7 +439,7 @@ export function CanonicalSchemaMappingPanel() {
           </p>
 
           <div className="admin-table-scroll">
-            <table className="admin-table">
+            <StandardPageTable className="admin-table">
               <thead>
                 <tr>
                   {preview.columns.map((column) => (
@@ -455,7 +456,7 @@ export function CanonicalSchemaMappingPanel() {
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </StandardPageTable>
           </div>
         </section>
       ) : null}
@@ -466,7 +467,7 @@ export function CanonicalSchemaMappingPanel() {
           <EmptyAdminState text="No canonical schema views registered yet. Apply SQL script 120 or save a join/KPI view." />
         ) : (
           <div className="admin-table-scroll">
-            <table className="admin-table">
+            <StandardPageTable className="admin-table">
               <thead>
                 <tr>
                   <th>Code</th>
@@ -504,7 +505,7 @@ export function CanonicalSchemaMappingPanel() {
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </StandardPageTable>
           </div>
         )}
       </section>

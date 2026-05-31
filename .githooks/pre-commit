@@ -1,0 +1,14 @@
+#!/usr/bin/env sh
+set -e
+
+echo "[PPIQ] Running Phase 1 pre-commit quality gates..."
+
+cd Frontend/PlantProcess.Web
+npm run validate:standard-imports
+cd ../..
+
+node tools/validation/validate-sql-script-hygiene.cjs
+node tools/validation/validate-v7-phase01.cjs
+node tools/validation/validate-v7-phase01-acceptance.cjs
+
+echo "[PPIQ] Pre-commit gates passed."

@@ -73,10 +73,32 @@ $env:PLANTPROCESS_DB = $ConnString     # design-time connection (this repo's fac
 
 # ---- psql wrappers (capture output, print indented, return only the exit code/scalar) ----
 function Invoke-PsqlFile([string]$file){
-    $out = & psql -h $DbHost -p $DbPort -U $DbUser -d $DbName -v ON_ERROR_STOP=1 -q -f $file 2>&1
-    $code = $LASTEXITCODE
-    if($out){ $out | ForEach-Object { Write-Host "      $_" -ForegroundColor DarkGray } }
-    return $code
+    $previousErrorActionPreference = $ErrorActionPreference
+    $previousPgOptions = $env:PGOPTIONS
+
+    # PPIQ-T283: suppress benign NOTICE output while keeping real SQL failures fatal.
+    $ErrorActionPreference = "Continue"
+    $env:PGOPTIONS = "-c client_min_messages=warning"
+
+    try {
+        $out = & psql -h $DbHost -p $DbPort -U $DbUser -d $DbName -v ON_ERROR_STOP=1 -q -f $file 2>&1
+        $code = $LASTEXITCODE
+
+        if($out){
+            $out | ForEach-Object { Write-Host "      $_" -ForegroundColor DarkGray }
+        }
+
+        return $code
+    }
+    finally {
+        $ErrorActionPreference = $previousErrorActionPreference
+        if($null -eq $previousPgOptions){
+            Remove-Item Env:\PGOPTIONS -ErrorAction SilentlyContinue
+        }
+        else {
+            $env:PGOPTIONS = $previousPgOptions
+        }
+    }
 }
 function Invoke-PsqlScalar([string]$sql){
     $out = & psql -h $DbHost -p $DbPort -U $DbUser -d $DbName -tAc $sql 2>&1
@@ -184,8 +206,9 @@ if(-not $SkipSecrets){
     try {
         Push-Location $ApiProj
         & dotnet user-secrets init *> $null
-        & dotnet user-secrets set "Auth:BootstrapAdminPassword" $AdminPassword | Out-Null
-        & dotnet user-secrets set "Auth:Users:0:Password"       $AdminPassword | Out-Null
+        & dotnet user-secrets set "PlantProcess:Auth:BootstrapAdminPassword" $AdminPassword | Out-Null
+        & dotnet user-secrets set "PlantProcess:Auth:Users:0:Password"       $AdminPassword | Out-Null
+        & dotnet user-secrets set "PlantProcess:Auth:SigningKey"             "DEV_LOCAL_SIGNING_KEY_1234567890_ABCDEF_PPIQ" | Out-Null
         $code = $LASTEXITCODE
     } finally { Pop-Location }
     if($code -ne 0){ Fail "Failed to set user-secrets (exit $code)." }

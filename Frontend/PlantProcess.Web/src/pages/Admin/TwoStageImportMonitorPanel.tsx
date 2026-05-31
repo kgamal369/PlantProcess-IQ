@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { DatabaseZap, GitBranch, PlayCircle, RefreshCw } from "lucide-react";
+import { StandardPageButton, StandardPageSelect, StandardPageTable } from "@/components/standard/StandardPageCompat";
 import {
   twoStageImportApi,
   type TwoStageImportOverview,
@@ -144,7 +145,7 @@ export function TwoStageImportMonitorPanel() {
       ) : null}
 
       <div className="admin-action-row">
-        <button
+        <StandardPageButton
           type="button"
           className="secondary-button"
           disabled={working !== null}
@@ -152,9 +153,9 @@ export function TwoStageImportMonitorPanel() {
         >
           <RefreshCw size={14} />
           Refresh
-        </button>
+        </StandardPageButton>
 
-        <button
+        <StandardPageButton
           type="button"
           className="secondary-button"
           disabled={working !== null}
@@ -162,9 +163,9 @@ export function TwoStageImportMonitorPanel() {
         >
           <DatabaseZap size={14} />
           Re-Provision Registry
-        </button>
+        </StandardPageButton>
 
-        <button
+        <StandardPageButton
           type="button"
           className="secondary-button"
           disabled={working !== null || !selectedRegistryId}
@@ -172,9 +173,9 @@ export function TwoStageImportMonitorPanel() {
         >
           <PlayCircle size={14} />
           {working === "stage1" ? "RunningÃ¢â‚¬Â¦" : "Run Stage 1"}
-        </button>
+        </StandardPageButton>
 
-        <button
+        <StandardPageButton
           type="button"
           className="secondary-button"
           disabled={working !== null || !selectedRegistryId}
@@ -182,9 +183,9 @@ export function TwoStageImportMonitorPanel() {
         >
           <GitBranch size={14} />
           {working === "stage2" ? "RunningÃ¢â‚¬Â¦" : "Run Stage 2"}
-        </button>
+        </StandardPageButton>
 
-        <button
+        <StandardPageButton
           type="button"
           className="primary-button"
           disabled={working !== null}
@@ -192,13 +193,13 @@ export function TwoStageImportMonitorPanel() {
         >
           <PlayCircle size={14} />
           {working === "full" ? "RunningÃ¢â‚¬Â¦" : "Run Full Cycle"}
-        </button>
+        </StandardPageButton>
       </div>
 
       <div className="admin-form-grid">
         <label>
           Source table
-          <select
+          <StandardPageSelect
             value={selectedRegistryId ?? ""}
             onChange={(event) => setSelectedRegistryId(event.target.value || null)}
           >
@@ -207,7 +208,7 @@ export function TwoStageImportMonitorPanel() {
                 {tableLabel(table)} Ã¢â€ â€™ {table.dumpSchemaName}.{table.dumpTableName}
               </option>
             ))}
-          </select>
+          </StandardPageSelect>
         </label>
 
         {selectedTable ? (
@@ -223,7 +224,7 @@ export function TwoStageImportMonitorPanel() {
       </div>
 
       <div className="admin-table-wrap">
-        <table>
+        <StandardPageTable>
           <thead>
             <tr>
               <th>Source Table</th>
@@ -278,11 +279,11 @@ export function TwoStageImportMonitorPanel() {
               </tr>
             ))}
           </tbody>
-        </table>
+        </StandardPageTable>
       </div>
 
       <div className="admin-table-wrap">
-        <table>
+        <StandardPageTable>
           <thead>
             <tr>
               <th>Unified Job</th>
@@ -320,11 +321,11 @@ export function TwoStageImportMonitorPanel() {
               </tr>
             ))}
           </tbody>
-        </table>
+        </StandardPageTable>
       </div>
 
       <div className="admin-table-wrap">
-        <table>
+        <StandardPageTable>
           <thead>
             <tr>
               <th>Run</th>
@@ -368,7 +369,7 @@ export function TwoStageImportMonitorPanel() {
               </tr>
             ))}
           </tbody>
-        </table>
+        </StandardPageTable>
       </div>
     </AdminPanel>
   );
