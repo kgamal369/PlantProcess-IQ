@@ -524,7 +524,7 @@ public static class TwoStageImportEndpoints
     {
         var value = await ExecuteScalarAsync(
             connection,
-            "SELECT to_regclass(@relationName);",
+            "SELECT to_regclass(@relationName)::text;",
             cancellationToken,
             command => AddParameter(command, "relationName", relationName));
 

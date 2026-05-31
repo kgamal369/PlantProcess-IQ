@@ -381,6 +381,7 @@ app.MapMlFoundationEndpoints();
     }
 
     app.MapAdminEndpoints();
+    app.MapAdminProofEndpoints();
     app.MapLicenseAdminEndpoints();
     app.MapJobAdminEndpoints();
     app.MapConnectorAdminEndpoints();

@@ -8,8 +8,8 @@ The demo deployment is intentionally single-tenant and customer-pilot oriented. 
 |---|---:|---|---|
 | Caddy | Yes | 0.0.0.0:80, 0.0.0.0:443 | Public reverse proxy for website, app and API. |
 | PostgreSQL | No | 127.0.0.1:${POSTGRES_PORT:-5432}:5432 | Database must never be public. |
-| Jenkins | Limited | 127.0.0.1:${JENKINS_PORT:-9090}:8080 or Caddy-protected admin route | Build console must not expose app/data services. |
-| API | No direct host port | Internal Docker network only; Caddy routes public API traffic. |
+| Jenkins | No direct public host port by default | Internal Docker network only; expose only through protected Caddy route or SSH tunnel | Build console must not expose app/data services. |
+| API | No direct host port | Internal Docker network only; Caddy routes public API traffic. | Prevents bypass of TLS/auth/logging controls. |
 | Workers | No | Internal only | Background processor. |
 | App web | No | Internal only; Caddy routes traffic | Static SPA behind Caddy. |
 | Website | No | Internal only; Caddy routes traffic | Public site through Caddy only. |
@@ -17,20 +17,25 @@ The demo deployment is intentionally single-tenant and customer-pilot oriented. 
 
 ## External scan acceptance
 
-For the current server, the expected external scan is:
+Expected external scan from outside the server/VPN:
 
-nmap -Pn 178.105.152.180
+    nmap -Pn 178.105.152.180
 
-Expected open ports:
+Acceptance result for the normal public demo posture:
 
-- 80
-- 443
-- 9090 only if intentionally exposed and protected
+- 80/tcp open
+- 443/tcp open
+- 5432/tcp closed or filtered
+- 5063/tcp closed or filtered
+- 5173/tcp closed or filtered
+- 8080/tcp closed or filtered
+- 9090/tcp closed or filtered unless Jenkins is intentionally exposed behind authentication
+- Observability/data/internal ports closed or filtered
 
-All data, observability, database, source-system and internal service ports must be filtered or closed externally.
+## Local static validation
 
-## Operational rule
+Run:
 
-If a service does not need public inbound traffic, it must remain either unbound to the host or bound to 127.0.0.1 only.
+    node tools/validation/validate-t208-exposure.cjs
 
-This protects PlantProcess IQ from bypassing Caddy, TLS, auth headers, request logging, and rate-limit/security controls.
+This catches accidental Compose host-port exposure before deployment. The external nmap proof must still be captured from a machine outside the host.

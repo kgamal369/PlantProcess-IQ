@@ -1,6 +1,6 @@
 -- =================================================================================================
 -- PlantProcess IQ v5
--- Phase 02                                        ML Engine Data Foundation & Feature Store
+-- Phase 02 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â ML Engine Data Foundation & Feature Store
 -- Tasks: PPIQ-T209 .. PPIQ-T213
 --
 -- Product guard:
@@ -13,15 +13,15 @@ SET TIME ZONE 'UTC';
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
-DO $$
+DO $
 BEGIN
     BEGIN
         CREATE EXTENSION IF NOT EXISTS vector;
     EXCEPTION
         WHEN OTHERS THEN
-            RAISE NOTICE 'pgvector extension unavailable; JSONB embedding fallback remains active. SQLSTATE=%, message=%', SQLSTATE, SQLERRM;
+            RAISE NOTICE 'pgvector extension is not installed or cannot be created in this PostgreSQL instance. SQLSTATE=%, message=%. JSONB embedding fallback remains available.', SQLSTATE, SQLERRM;
     END;
-END $$;
+END $;
 
 BEGIN;
 

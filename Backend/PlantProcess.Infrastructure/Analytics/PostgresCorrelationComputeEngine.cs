@@ -13,7 +13,7 @@ public sealed class PostgresCorrelationComputeEngine : ICorrelationComputeEngine
         _dataSource = dataSource;
     }
 
-    public string EngineKey => "postgres-default-v1";
+    public string EngineKey => "postgres-v6-type-aware";
 
     public async Task<CorrelationComputeResult> ComputeAsync(
         CorrelationComputeRequest request,
@@ -23,40 +23,69 @@ public sealed class PostgresCorrelationComputeEngine : ICorrelationComputeEngine
             throw new ArgumentException("Outcome key is required.", nameof(request));
 
         var grain = string.IsNullOrWhiteSpace(request.Grain) ? "coil" : request.Grain.Trim();
-        var windowDays = Math.Clamp(request.WindowDays <= 0 ? 90 : request.WindowDays, 1, 3650);
+        var windowDays = Math.Clamp(request.WindowDays <= 0 ? 3650 : request.WindowDays, 1, 3650);
+        var functionName = await FunctionExistsAsync("ppiq_ml_compute_correlations_v6", cancellationToken)
+            ? "ppiq_ml_compute_correlations_v6"
+            : "ppiq_ml_compute_basic_correlations";
 
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken);
-
-        await using (var refresh = connection.CreateCommand())
-        {
-            refresh.CommandText = "SELECT * FROM public.ppiq_ml_refresh_feature_store(@window_days);";
-            refresh.Parameters.AddWithValue("window_days", windowDays);
-            await refresh.ExecuteNonQueryAsync(cancellationToken);
-        }
-
         await using var command = connection.CreateCommand();
-        command.CommandText = "SELECT compute_run_id, result_count FROM public.ppiq_ml_compute_basic_correlations(@outcome_key, @grain, @window_days);";
-        command.Parameters.AddWithValue("outcome_key", request.OutcomeKey.Trim());
+        command.CommandText = $"SELECT * FROM public.{functionName}(@outcomeKey, @grain, @windowDays);";
+        command.Parameters.AddWithValue("outcomeKey", request.OutcomeKey.Trim());
         command.Parameters.AddWithValue("grain", grain);
-        command.Parameters.AddWithValue("window_days", windowDays);
+        command.Parameters.AddWithValue("windowDays", windowDays);
 
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-
         if (!await reader.ReadAsync(cancellationToken))
-        {
-            return new CorrelationComputeResult(
-                Guid.Empty,
-                0,
-                EngineKey,
-                "NoResult",
-                "The compute function returned no rows.");
-        }
+            return new CorrelationComputeResult(Guid.Empty, 0, EngineKey, "Empty", "Correlation compute returned no rows.");
 
-        return new CorrelationComputeResult(
-            reader.GetGuid(0),
-            reader.GetInt32(1),
-            EngineKey,
-            "Success",
-            "Correlation compute completed against the ML feature store.");
+        var runId = GetGuid(reader, "compute_run_id");
+        var resultCount = GetInt(reader, "result_count");
+        var methodCount = HasColumn(reader, "method_count") ? GetInt(reader, "method_count") : 1;
+        var status = resultCount > 0 ? "Ok" : "NoData";
+        var message = functionName == "ppiq_ml_compute_correlations_v6"
+            ? $"Type-aware PostgreSQL compute finished. ResultCount={resultCount}, MethodCount={methodCount}."
+            : $"Basic PostgreSQL compute finished. ResultCount={resultCount}. Apply 201_phase02_ml_feature_store_v6_completion.sql for type-aware methods.";
+
+        return new CorrelationComputeResult(runId, resultCount, EngineKey, status, message);
+    }
+
+    private async Task<bool> FunctionExistsAsync(string functionName, CancellationToken cancellationToken)
+    {
+        await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken);
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT EXISTS (
+                SELECT 1
+                FROM pg_proc p
+                JOIN pg_namespace n ON n.oid = p.pronamespace
+                WHERE n.nspname = 'public'
+                  AND p.proname = @functionName
+            );
+            """;
+        command.Parameters.AddWithValue("functionName", functionName);
+        var value = await command.ExecuteScalarAsync(cancellationToken);
+        return value is bool exists && exists;
+    }
+
+    private static bool HasColumn(NpgsqlDataReader reader, string columnName)
+    {
+        for (var i = 0; i < reader.FieldCount; i++)
+            if (string.Equals(reader.GetName(i), columnName, StringComparison.OrdinalIgnoreCase))
+                return true;
+
+        return false;
+    }
+
+    private static Guid GetGuid(NpgsqlDataReader reader, string columnName)
+    {
+        var ordinal = reader.GetOrdinal(columnName);
+        return reader.IsDBNull(ordinal) ? Guid.Empty : reader.GetGuid(ordinal);
+    }
+
+    private static int GetInt(NpgsqlDataReader reader, string columnName)
+    {
+        var ordinal = reader.GetOrdinal(columnName);
+        return reader.IsDBNull(ordinal) ? 0 : Convert.ToInt32(reader.GetValue(ordinal));
     }
 }

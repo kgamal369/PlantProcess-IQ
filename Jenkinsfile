@@ -164,6 +164,21 @@ pipeline {
                 '''
             }
         }
+        stage('2e. v6 Phase 01/02 completion gates') {
+            steps {
+                sh '''
+                    set -e
+                    cd ${REPO_DIR}
+                    node tools/validation/validate-v6-phase01-phase02-completion.cjs
+                    node tools/validation/validate-t208-exposure.cjs
+                    cd ${REPO_DIR}/Frontend/PlantProcess.Web
+                    docker run --rm -v "$PWD:/app" -w /app -e PPIQ_API_BASE_URL=${PPIQ_PUBLIC_API_URL:-http://plantprocess-api:5063} -e PPIQ_ADMIN_USER=${PPIQ_SMOKE_USERNAME:-admin} -e PPIQ_ADMIN_PASSWORD=${PPIQ_SMOKE_PASSWORD:-} -e PPIQ_OPERATOR_USER=${PPIQ_OPERATOR_USER:-datamanager} -e PPIQ_OPERATOR_PASSWORD=${PPIQ_OPERATOR_PASSWORD:-} node:20-alpine sh -lc 'if [ -f package-lock.json ]; then npm ci; else npm install; fi && npm run test:auth-matrix'
+                '''
+            }
+            post {
+                always { archiveArtifacts artifacts: 'Frontend/PlantProcess.Web/test-results/auth-matrix/**', allowEmptyArchive: true }
+            }
+        }
         stage('3. Build images') {
             steps {
                 sh '''

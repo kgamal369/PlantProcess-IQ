@@ -1,103 +1,146 @@
-import { expect, request, test } from "@playwright/test";
+import fs from "node:fs";
+import path from "node:path";
+import { expect, request, test, type APIRequestContext } from "@playwright/test";
 
 const apiBaseUrl = process.env.PPIQ_API_BASE_URL ?? process.env.VITE_API_BASE_URL ?? "http://localhost:5063";
-
-const adminUser = process.env.PPIQ_ADMIN_USER ?? "admin";
+const adminUser = process.env.PPIQ_ADMIN_USER ?? process.env.PPIQ_SMOKE_USERNAME ?? "admin";
 const adminPassword = process.env.PPIQ_ADMIN_PASSWORD ?? process.env.PPIQ_SMOKE_PASSWORD ?? "";
-
-const operatorUser = process.env.PPIQ_OPERATOR_USER ?? "datamanager";
+const operatorUser = process.env.PPIQ_OPERATOR_USER ?? process.env.PPIQ_DATAMANAGER_USER ?? "datamanager";
 const operatorPassword = process.env.PPIQ_OPERATOR_PASSWORD ?? process.env.PPIQ_DATAMANAGER_PASSWORD ?? "";
 
 type Expected = readonly number[];
+type MatrixRow = { group: string; path: string; anonymous: Expected; operator: Expected; admin: Expected; };
 
-type MatrixRow = {
-  area: string;
-  path: string;
-  anonymous: Expected;
-  operator: Expected;
-  admin: Expected;
-};
+const unauthorized: Expected = [401, 403];
+const adminOnlyOperator: Expected = [403];
+const dataManagerOk: Expected = [200];
+const adminOk: Expected = [200];
 
 const rows: MatrixRow[] = [
-  { area: "Admin overview", path: "/admin/overview", anonymous: [401, 403], operator: [403], admin: [200] },
-  { area: "Jobs monitor", path: "/admin/jobs-monitor/summary", anonymous: [401, 403], operator: [200], admin: [200] },
-  { area: "Schema mapping catalog", path: "/admin/schema-mapping/catalog", anonymous: [401, 403], operator: [200], admin: [200] },
-  { area: "Schema mapping readiness", path: "/admin/schema-mapping/readiness", anonymous: [401, 403], operator: [200], admin: [200] },
-  { area: "Two-stage import readiness", path: "/admin/two-stage-import/readiness", anonymous: [401, 403, 404], operator: [200, 404], admin: [200, 404] },
-  { area: "License current", path: "/admin/license/current", anonymous: [401, 403], operator: [200], admin: [200] },
-  { area: "Phase 1 connector truth", path: "/admin/phase1/connector-truth", anonymous: [401, 403, 404], operator: [403, 404], admin: [200, 404] },
-  { area: "Phase 2 operation readiness", path: "/admin/phase2/operations/readiness", anonymous: [401, 403, 404], operator: [403, 404], admin: [200, 404] },
-  { area: "Diagnostics", path: "/diagnostics/client-errors/summary", anonymous: [401, 403, 404], operator: [403, 404], admin: [200, 404] },
-  { area: "ML readiness", path: "/api/ml/readiness", anonymous: [401, 403, 404], operator: [200, 404], admin: [200, 404] },
-  { area: "ML foundation readiness", path: "/api/ml/foundation/readiness", anonymous: [401, 403], operator: [200], admin: [200] },
-  { area: "Demo lifecycle status", path: "/admin/demo-lifecycle/status", anonymous: [401, 403, 404], operator: [200, 404], admin: [200, 404] },
+  { group: "admin-overview", path: "/admin/overview", anonymous: unauthorized, operator: adminOnlyOperator, admin: adminOk },
+  { group: "admin-jobs-monitor", path: "/admin/jobs-monitor/summary", anonymous: unauthorized, operator: dataManagerOk, admin: adminOk },
+  { group: "admin-schema-mapping", path: "/admin/schema-mapping/catalog", anonymous: unauthorized, operator: dataManagerOk, admin: adminOk },
+  { group: "admin-schema-mapping", path: "/admin/schema-mapping/readiness", anonymous: unauthorized, operator: dataManagerOk, admin: adminOk },
+  { group: "admin-two-stage-import", path: "/admin/two-stage-import/overview", anonymous: unauthorized, operator: dataManagerOk, admin: adminOk },
+  { group: "admin-two-stage-import", path: "/admin/two-stage-import/source-tables", anonymous: unauthorized, operator: dataManagerOk, admin: adminOk },
+  { group: "admin-two-stage-import", path: "/admin/two-stage-import/runs", anonymous: unauthorized, operator: dataManagerOk, admin: adminOk },
+  { group: "admin-license", path: "/admin/license/current", anonymous: unauthorized, operator: dataManagerOk, admin: adminOk },
+  { group: "admin-phase1", path: "/admin/phase1/workflow-truth", anonymous: unauthorized, operator: adminOnlyOperator, admin: adminOk },
+  { group: "admin-phase2", path: "/admin/phase2/operations/readiness", anonymous: unauthorized, operator: adminOnlyOperator, admin: adminOk },
+  { group: "admin-phase2", path: "/admin/phase2/pilot-readiness", anonymous: unauthorized, operator: adminOnlyOperator, admin: adminOk },
+  { group: "admin-widgets", path: "/admin/widgets/proof", anonymous: unauthorized, operator: adminOnlyOperator, admin: adminOk },
+  { group: "admin-users", path: "/admin/users/configured-summary", anonymous: unauthorized, operator: adminOnlyOperator, admin: adminOk },
+  { group: "demo-lifecycle", path: "/admin/demo-lifecycle/status", anonymous: unauthorized, operator: dataManagerOk, admin: adminOk },
+  { group: "diagnostics", path: "/diagnostics/client-errors/summary", anonymous: unauthorized, operator: adminOnlyOperator, admin: adminOk },
+  { group: "ml-readiness", path: "/api/ml/readiness", anonymous: unauthorized, operator: dataManagerOk, admin: adminOk },
+  { group: "ml-foundation", path: "/api/ml/foundation/readiness", anonymous: unauthorized, operator: dataManagerOk, admin: adminOk },
+  { group: "ml-foundation", path: "/api/ml/foundation/feature-definitions", anonymous: unauthorized, operator: dataManagerOk, admin: adminOk },
+  { group: "ml-foundation", path: "/api/ml/foundation/outcomes", anonymous: unauthorized, operator: dataManagerOk, admin: adminOk }
 ];
 
 async function login(userName: string, password: string): Promise<string> {
   const ctx = await request.newContext({ baseURL: apiBaseUrl });
-  const response = await ctx.post("/auth/login", {
-    data: { userName, password },
-  });
+  const response = await ctx.post("/auth/login", { data: { userName, password } });
+  const bodyText = await response.text();
+  expect(response.ok(), userName + " login failed. Status=" + response.status() + " Body=" + bodyText).toBeTruthy();
 
-  expect(response.ok(), `${userName} login returned ${response.status()}`).toBeTruthy();
-
-  const body = await response.json();
+  const body = JSON.parse(bodyText) as { accessToken?: string; token?: string; jwt?: string; bearerToken?: string };
   const token = body.accessToken ?? body.token ?? body.jwt ?? body.bearerToken;
-  expect(token, `${userName} login must return an access token`).toBeTruthy();
+  expect(token, userName + " login must return an access token").toBeTruthy();
 
   await ctx.dispose();
-  return token;
+  return token!;
+}
+
+function makeContext(token?: string): Promise<APIRequestContext> {
+  return request.newContext({
+    baseURL: apiBaseUrl,
+    extraHTTPHeaders: token ? { Authorization: "Bearer " + token } : undefined
+  });
+}
+
+async function getStatus(ctx: APIRequestContext, url: string): Promise<number> {
+  const response = await ctx.get(url, { failOnStatusCode: false });
+  return response.status();
+}
+
+function writeArtifacts(resultRows: Array<Record<string, unknown>>) {
+  const outDir = path.resolve(process.cwd(), "test-results", "auth-matrix");
+  fs.mkdirSync(outDir, { recursive: true });
+
+  const now = new Date().toISOString();
+  const jsonPath = path.join(outDir, "auth-matrix.json");
+  const mdPath = path.join(outDir, "auth-matrix.md");
+
+  fs.writeFileSync(jsonPath, JSON.stringify({ generatedAtUtc: now, apiBaseUrl, rows: resultRows }, null, 2));
+
+  const lines = [
+    "# PlantProcess IQ JWT Auth Matrix",
+    "",
+    "Generated: " + now,
+    "API: " + apiBaseUrl,
+    "",
+    "| Group | Path | Anonymous | Operator | Admin | Result |",
+    "|---|---|---:|---:|---:|---|"
+  ];
+
+  for (const row of resultRows) {
+    lines.push("| " + row.group + " | " + row.path + " | " + row.anonymousStatus + " | " + row.operatorStatus + " | " + row.adminStatus + " | " + row.result + " |");
+  }
+
+  fs.writeFileSync(mdPath, lines.join("\n"));
+  return { markdown: lines.join("\n") };
 }
 
 test.describe("PPIQ-T204 full JWT auth matrix", () => {
-  test("anonymous, operator and admin identities match expected route authorization", async () => {
+  test("anonymous, operator and admin route authorization is stable", async () => {
     test.skip(!adminPassword, "Set PPIQ_ADMIN_PASSWORD or PPIQ_SMOKE_PASSWORD.");
     test.skip(!operatorPassword, "Set PPIQ_OPERATOR_PASSWORD or PPIQ_DATAMANAGER_PASSWORD.");
 
-    const now = new Date().toISOString().replace(/[:.]/g, "-");
-    const matrix: string[] = [
-      `# PlantProcess IQ Auth Matrix`,
-      ``,
-      `Generated: ${new Date().toISOString()}`,
-      `API: ${apiBaseUrl}`,
-      ``,
-      `| Area | Path | Anonymous | Operator | Admin |`,
-      `|---|---:|---:|---:|---:|`,
-    ];
-
-    const anonymous = await request.newContext({ baseURL: apiBaseUrl });
-
-    const operatorToken = await login(operatorUser, operatorPassword);
-    const operator = await request.newContext({
-      baseURL: apiBaseUrl,
-      extraHTTPHeaders: { Authorization: `Bearer ${operatorToken}` },
-    });
-
     const adminToken = await login(adminUser, adminPassword);
-    const admin = await request.newContext({
-      baseURL: apiBaseUrl,
-      extraHTTPHeaders: { Authorization: `Bearer ${adminToken}` },
-    });
+    const operatorToken = await login(operatorUser, operatorPassword);
 
-    for (const row of rows) {
-      const a = await anonymous.get(row.path);
-      const o = await operator.get(row.path);
-      const ad = await admin.get(row.path);
+    const anonymous = await makeContext();
+    const operator = await makeContext(operatorToken);
+    const admin = await makeContext(adminToken);
 
-      matrix.push(`| ${row.area} | \`${row.path}\` | ${a.status()} | ${o.status()} | ${ad.status()} |`);
+    const resultRows: Array<Record<string, unknown>> = [];
 
-      expect(row.anonymous, `${row.area} anonymous ${row.path}`).toContain(a.status());
-      expect(row.operator, `${row.area} operator ${row.path}`).toContain(o.status());
-      expect(row.admin, `${row.area} admin ${row.path}`).toContain(ad.status());
+    try {
+      for (const row of rows) {
+        const anonymousStatus = await getStatus(anonymous, row.path);
+        const operatorStatus = await getStatus(operator, row.path);
+        const adminStatus = await getStatus(admin, row.path);
+
+        const result =
+          row.anonymous.includes(anonymousStatus) &&
+          row.operator.includes(operatorStatus) &&
+          row.admin.includes(adminStatus)
+            ? "PASS"
+            : "FAIL";
+
+        resultRows.push({
+          group: row.group,
+          path: row.path,
+          anonymousStatus,
+          operatorStatus,
+          adminStatus,
+          expectedAnonymous: row.anonymous,
+          expectedOperator: row.operator,
+          expectedAdmin: row.admin,
+          result
+        });
+
+        expect(row.anonymous, row.group + " anonymous " + row.path).toContain(anonymousStatus);
+        expect(row.operator, row.group + " operator " + row.path).toContain(operatorStatus);
+        expect(row.admin, row.group + " admin " + row.path).toContain(adminStatus);
+      }
+    } finally {
+      const artifacts = writeArtifacts(resultRows);
+      await test.info().attach("auth-matrix.md", { body: artifacts.markdown, contentType: "text/markdown" });
+      await anonymous.dispose();
+      await operator.dispose();
+      await admin.dispose();
     }
-
-    await anonymous.dispose();
-    await operator.dispose();
-    await admin.dispose();
-
-    await test.info().attach(`auth-matrix-${now}.md`, {
-      body: matrix.join("\n"),
-      contentType: "text/markdown",
-    });
   });
 });
