@@ -107,8 +107,14 @@ pipeline {
                     set -e
                     cd ${REPO_DIR}/Frontend/PlantProcess.Web
 
+                    # The phase56 acceptance validator resolves ../../Jenkinsfile
+                    # from this web-app dir (i.e. /app/../../Jenkinsfile = /Jenkinsfile
+                    # inside the container). We only mount the web app at /app, so we
+                    # additionally bind the repo-root Jenkinsfile to /Jenkinsfile (ro)
+                    # so that validator can read it.
                     docker run --rm \
                       -v "$PWD:/app" \
+                      -v "${REPO_DIR}/Jenkinsfile:/Jenkinsfile:ro" \
                       -w /app \
                       node:20-alpine \
                       sh -lc '
