@@ -22,6 +22,7 @@ import {
 } from "react";
 import type { ReactNode } from "react";
 
+import { recordFrontendDiagnostic } from "@/utils/frontendDiagnostics";
 export type GridBreakpoint = "lg" | "md" | "sm" | "xs" | "xxs";
 
 export interface DashboardGridItem {
@@ -494,7 +495,7 @@ export function DashboardGridLayoutProvider({
         const normalized = enforceConstraints(parsed, defaultLayouts);
         setLayoutsState(normalized);
       } catch {
-        console.warn("Invalid backend dashboard layout JSON ignored.");
+        recordFrontendDiagnostic("warn", "src/state/DashboardGridLayoutContext.tsx", () => ["Invalid backend dashboard layout JSON ignored."]);
       }
     },
     []

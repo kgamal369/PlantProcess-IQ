@@ -1,3 +1,8 @@
+// P00A-TEST-REGISTER: DELETE-ARCHIVED
+// ArchivedAtUtc: 2026-05-31T11:07:14.744Z
+// OriginalPath: Backend/tests/PlantProcess.Infrastructure.IntegrationTests/InfrastructureTestEnvironmentTests.cs
+// Reason: Assembly-load smoke only; superseded by real infrastructure integration tests.
+
 ﻿using FluentAssertions;
 using PlantProcess.Infrastructure.Persistence;
 

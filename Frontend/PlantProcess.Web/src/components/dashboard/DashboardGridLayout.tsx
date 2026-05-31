@@ -10,6 +10,7 @@ import {
   stopDragPerformanceProbe,
 } from "@/utils/dragPerformance";
 
+import { recordFrontendDiagnostic } from "@/utils/frontendDiagnostics";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const ResponsiveGridLayout = Responsive as any;
 
@@ -55,7 +56,7 @@ export function DashboardGridLayout({ children }: { children: ReactNode }) {
     endDrag();
 
     if (result && !result.passed) {
-      console.warn("Dashboard grid drag smoothness below target", result);
+      recordFrontendDiagnostic("warn", "src/components/dashboard/DashboardGridLayout.tsx", () => ["Dashboard grid drag smoothness below target", result]);
     }
   }, [endDrag]);
 
@@ -69,7 +70,7 @@ export function DashboardGridLayout({ children }: { children: ReactNode }) {
     endDrag();
 
     if (result && !result.passed) {
-      console.warn("Dashboard grid resize smoothness below target", result);
+      recordFrontendDiagnostic("warn", "src/components/dashboard/DashboardGridLayout.tsx", () => ["Dashboard grid resize smoothness below target", result]);
     }
   }, [endDrag]);
 

@@ -1,3 +1,4 @@
+import { recordFrontendDiagnostic } from "@/utils/frontendDiagnostics";
 type DragMetric = {
   name: string;
   startedAt: number;
@@ -70,7 +71,7 @@ export function stopDragPerformanceProbe(name: string) {
   active.delete(name);
 
   if (!result.passed) {
-    console.warn("[PPIQ drag performance warning]", result);
+    recordFrontendDiagnostic("warn", "src/utils/dragPerformance.ts", () => ["[PPIQ drag performance warning]", result]);
   } else {
     console.info("[PPIQ drag performance ok]", result);
   }

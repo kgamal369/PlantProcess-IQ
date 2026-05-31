@@ -1,3 +1,8 @@
+// P00A-TEST-REGISTER: KEEP-AS-STRUCTURAL-CI-GATE
+// Date: 2026-05-31T11:07:14.744Z
+// Replacement: Keep as meta-gate proving import-gate enforcement
+// Reason: This file is tracked by the P00A Test Register and should not be treated as a final behavioural test.
+
 const fs = require("node:fs");
 const path = require("node:path");
 const cp = require("node:child_process");

@@ -1,3 +1,8 @@
+// P00A-TEST-REGISTER: DELETE-ARCHIVED
+// ArchivedAtUtc: 2026-05-31T11:07:14.744Z
+// OriginalPath: Frontend/PlantProcess.Web/e2e/phase1-route-refresh.spec.ts
+// Reason: Duplicate route refresh coverage; consolidate into refresh-survival journey.
+
 import { test } from "@playwright/test";
 import { phase1RouteContracts } from "../src/hardening/routeContracts";
 import {

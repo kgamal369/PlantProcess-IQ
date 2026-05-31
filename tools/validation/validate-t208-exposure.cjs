@@ -1,3 +1,8 @@
+// P00A-TEST-REGISTER: TRANSFER-TO-REAL-TEST
+// Date: 2026-05-31T11:07:14.744Z
+// Replacement: Deployment exposure integration test / deploy check
+// Reason: This file is tracked by the P00A Test Register and should not be treated as a final behavioural test.
+
 const fs = require("node:fs");
 const path = require("node:path");
 

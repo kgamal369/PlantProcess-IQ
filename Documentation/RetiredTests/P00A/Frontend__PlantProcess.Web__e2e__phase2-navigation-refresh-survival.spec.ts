@@ -1,3 +1,8 @@
+// P00A-TEST-REGISTER: DELETE-ARCHIVED
+// ArchivedAtUtc: 2026-05-31T11:07:14.744Z
+// OriginalPath: Frontend/PlantProcess.Web/e2e/phase2-navigation-refresh-survival.spec.ts
+// Reason: Duplicate refresh-survival coverage; consolidate into nav-graph-refresh-survival journey.
+
 // ============================================================
 // FILE: Frontend/PlantProcess.Web/e2e/phase2-navigation-refresh-survival.spec.ts
 // Task: PPIQ-HARD-031

@@ -63,7 +63,8 @@
     "test:standard-import-gate": "node ../../tools/validation/prove-standard-import-gate.cjs",
     "validate:auth-env": "node ../../tools/validation/validate-v7-phase01.cjs",
     "validate:v7-phase01-frontend": "npm run validate:standard-imports && npm run test:standard-import-gate && npm run build",
-    "test:phase23-page-builder": "npx playwright test e2e/page-builder-v7.spec.ts --project=chromium --workers=1"
+    "test:phase23-page-builder": "npx playwright test e2e/page-builder-v7.spec.ts --project=chromium --workers=1",
+    "test:run": "vitest run"
   },
   "dependencies": {
     "lucide-react": "^1.14.0",

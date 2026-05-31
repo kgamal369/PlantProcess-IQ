@@ -1,3 +1,8 @@
+// P00A-TEST-REGISTER: KEEP-AS-STRUCTURAL-CI-GATE
+// Date: 2026-05-31T11:07:14.744Z
+// Replacement: Keep as forbidden-copy CI gate
+// Reason: This file is tracked by the P00A Test Register and should not be treated as a final behavioural test.
+
 ﻿import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 

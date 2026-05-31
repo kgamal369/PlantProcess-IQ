@@ -28,6 +28,7 @@ import { AlertTriangle, RefreshCw } from "lucide-react";
 import { API_BASE_URL } from "../../api/apiConfig";
 import "../ErrorBoundary.css";
 
+import { recordFrontendDiagnostic } from "@/utils/frontendDiagnostics";
 interface ErrorBoundaryProps {
   children: ReactNode;
   /** Optional custom title shown in the fallback panel. */
@@ -98,7 +99,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
     // Also write to console for local dev visibility.
     if (typeof console !== "undefined") {
-      console.error("[ErrorBoundary]", errorId, error, info);
+      recordFrontendDiagnostic("error", "src/components/standard/ErrorBoundary.tsx", () => ["[ErrorBoundary]", errorId, error, info]);
     }
   }
 

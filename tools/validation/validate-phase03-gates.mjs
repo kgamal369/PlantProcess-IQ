@@ -1,3 +1,8 @@
+// P00A-TEST-REGISTER: RETIRE-PENDING-REPLACEMENT
+// Date: 2026-05-31T11:07:14.744Z
+// Replacement: Delta import integration tests
+// Reason: This file is tracked by the P00A Test Register and should not be treated as a final behavioural test.
+
 import fs from "node:fs";
 import path from "node:path";
 
