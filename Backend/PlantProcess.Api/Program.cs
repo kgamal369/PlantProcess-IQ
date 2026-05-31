@@ -389,6 +389,8 @@ var app = builder.Build();
     app.MapFeatureEngineeringEndpoints();
     app.MapMlReadinessEndpoints();
 app.MapMlFoundationEndpoints();
+app.MapMlLearningEndpoints();
+app.MapMlProviderEndpoints();
 
     app.MapDashboardEndpoints();
     app.MapReportingEndpoints();

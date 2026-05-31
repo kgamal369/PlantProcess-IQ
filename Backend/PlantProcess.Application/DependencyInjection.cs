@@ -111,6 +111,9 @@ public static class DependencyInjection
         services.AddScoped<IQualityLabelBuilderService, QualityLabelBuilderService>();
         services.AddScoped<IMlReadinessService, MlReadinessService>();
         services.AddSingleton<IEmbeddingProvider, DeterministicEmbeddingProvider>();
+        services.AddSingleton<LocalNarrativeProvider>();
+        services.AddSingleton<ApiNarrativeProvider>();
+        services.AddSingleton<INarrativeProvider, ConfiguredNarrativeProvider>();
         services.AddScoped<IWidgetQueryExpressionService, WidgetQueryExpressionService>();
         
         // Reporting / customer demo pack
