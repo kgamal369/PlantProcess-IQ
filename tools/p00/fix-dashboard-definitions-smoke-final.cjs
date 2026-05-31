@@ -1,4 +1,18 @@
-using System.Net;
+﻿const fs = require("node:fs");
+const path = require("node:path");
+
+const root = process.cwd();
+
+const file = path.join(
+  root,
+  "Backend",
+  "tests",
+  "PlantProcess.Api.IntegrationTests",
+  "Smoke",
+  "ApiEndpointCatalogSmokeTests.cs"
+);
+
+const content = `using System.Net;
 using System.Net.Http.Json;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -133,3 +147,8 @@ public sealed class ApiEndpointCatalogSmokeTests : AuthenticatedApiTestBase
             .NotBe(HttpStatusCode.NotFound, $"dashboard template repair route must exist. Body: {repairBody}");
     }
 }
+`;
+
+fs.writeFileSync(file, content.replace(/\r\n/g, "\n"), "utf8");
+
+console.log("Replaced ApiEndpointCatalogSmokeTests.cs with canonical dashboard definitions preflight smoke test.");

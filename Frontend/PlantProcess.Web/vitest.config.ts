@@ -9,6 +9,11 @@ export default defineConfig({
       "@": path.resolve(__dirname, "src")
     }
   },
+  define: {
+    "import.meta.env.VITE_API_BASE_URL": JSON.stringify("http://localhost:5063"),
+    "import.meta.env.VITE_SMOKE_USERNAME": JSON.stringify("e2eadmin"),
+    "import.meta.env.VITE_SMOKE_PASSWORD": JSON.stringify("E2EAdmin123!"),
+  },
   test: {
     globals: true,
     environment: "jsdom",

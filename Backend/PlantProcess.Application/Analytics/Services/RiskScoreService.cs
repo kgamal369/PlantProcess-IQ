@@ -67,7 +67,7 @@ public sealed class RiskScoreService : IRiskScoreService
         riskType: command.RiskType,
         score: command.Score,
         isSynthetic: material.IsSynthetic,
-        riskClass: command.RiskClass,
+        riskClass: riskClass,
         mainContributorsJson: command.MainContributorsJson,
         explanationJson: command.MainContributorsJson,
         modelVersion: command.ModelVersion,

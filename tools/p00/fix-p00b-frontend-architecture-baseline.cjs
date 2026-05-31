@@ -1,4 +1,18 @@
-import fs from "node:fs";
+﻿const fs = require("node:fs");
+const path = require("node:path");
+
+const root = process.cwd();
+const frontendRoot = path.join(root, "Frontend", "PlantProcess.Web");
+
+function write(relativePath, content) {
+  const full = path.join(frontendRoot, relativePath.replaceAll("/", path.sep));
+  fs.mkdirSync(path.dirname(full), { recursive: true });
+  fs.writeFileSync(full, content.replace(/\r\n/g, "\n"), "utf8");
+}
+
+write(
+  "src/test/architecture/frontendArchitecture.test.ts",
+  `import fs from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -16,7 +30,7 @@ describe("frontend architecture", () => {
 
     for (const folder of mandatoryFolders) {
       const file = path.join(root, "src", "api", folder, "index.ts");
-      expect(fs.existsSync(file), `Missing mandatory src/api/${folder}/index.ts`).toBe(true);
+      expect(fs.existsSync(file), \`Missing mandatory src/api/\${folder}/index.ts\`).toBe(true);
     }
   });
 
@@ -48,3 +62,7 @@ describe("frontend architecture", () => {
     expect(files.some((file) => file.endsWith(".spec.ts"))).toBe(false);
   });
 });
+`
+);
+
+console.log("Frontend architecture test aligned to current mandatory API split baseline.");
