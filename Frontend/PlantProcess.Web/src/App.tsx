@@ -116,8 +116,8 @@ const SuggestionsPage = lazy(() =>
 );
 
 const DynamicPage = lazy(() =>
-  import("./pages/Phase78/Phase78Pages").then((m) => ({
-    default: m.Phase78DynamicPage,
+  import("./pages/DynamicPage/DynamicPage").then((m) => ({
+    default: m.DynamicPage,
   }))
 );
 

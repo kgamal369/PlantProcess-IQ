@@ -41,6 +41,7 @@ using Serilog.Events;
 using Serilog.Exceptions;
 using PlantProcess.Api.Endpoints.PageBuilder;
 using PlantProcess.Api.Endpoints.Phase2;
+using PlantProcess.Api.Endpoints.Phase45;
 
 // Resolve a stable absolute log path regardless of working directory.
 var logDirectory = Path.Combine(AppContext.BaseDirectory, "logs");
@@ -431,6 +432,8 @@ app.MapTwoStageImportEndpoints();
     app.MapPageDefinitionEndpoints();
 
 app.MapPhase2LifecycleProofEndpoints();
+
+app.MapPhase45ClosureEndpoints();
 
 app.Run();
 }
