@@ -1,22 +1,15 @@
-﻿import { useMemo, useState } from "react";
+import { useMemo, useReducer } from "react";
 import { StandardButton } from "@/components/standard/StandardButton";
 import { StandardInput, StandardSelect, StandardTextArea } from "@/components/standard/StandardFields";
 import { StandardCard } from "@/components/standard/StandardSurface";
+import {
+  createInitialPageBuilderState,
+  createPageBuilderPayload,
+  normalizePageVisibility,
+  pageBuilderReducer,
+  type WidgetKind,
+} from "./pageBuilderReducer";
 import "./page-builder.css";
-
-type PageVisibility = "Private" | "Shared" | "Public";
-type WidgetKind = "kpi" | "bar" | "line" | "filter-date" | "filter-list";
-
-type BuilderWidget = {
-  id: string;
-  kind: WidgetKind;
-  title: string;
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-  source: string;
-};
 
 const visibilityOptions = [
   { value: "Private", label: "Private" },
@@ -32,92 +25,13 @@ const library: Array<{ kind: WidgetKind; title: string; source: string }> = [
   { kind: "filter-list", title: "List-of-values filter", source: "filter:list-of-values" },
 ];
 
-function normalizeVisibility(value: string | string[]): PageVisibility {
-  const raw = Array.isArray(value) ? value[0] : value;
-
-  if (raw === "Private" || raw === "Shared" || raw === "Public") {
-    return raw;
-  }
-
-  return "Shared";
-}
-
 export function PageBuilderPage() {
-  const [title, setTitle] = useState("Demo Quality Investigation");
-  const [slug, setSlug] = useState("demo-quality-investigation");
-  const [visibility, setVisibility] = useState<PageVisibility>("Shared");
-
-  const [widgets, setWidgets] = useState<BuilderWidget[]>([
-    {
-      id: "w-risk",
-      kind: "kpi",
-      title: "Risk KPI",
-      x: 0,
-      y: 0,
-      w: 3,
-      h: 2,
-      source: "schema_view:risk_summary",
-    },
-    {
-      id: "w-defects",
-      kind: "bar",
-      title: "Defect breakdown",
-      x: 3,
-      y: 0,
-      w: 5,
-      h: 3,
-      source: "schema_view:defect_breakdown",
-    },
-    {
-      id: "w-trend",
-      kind: "line",
-      title: "Defect trend",
-      x: 8,
-      y: 0,
-      w: 4,
-      h: 3,
-      source: "schema_view:quality_daily",
-    },
-  ]);
-
-  const payload = useMemo(
-    () => ({
-      slug,
-      title,
-      visibility,
-      layoutJson: {
-        grid: { columns: 12, rowHeight: 80 },
-        widgets,
-      },
-      widgetBindingsJson: {
-        bindings: widgets.map((widget) => ({
-          widgetId: widget.id,
-          source: widget.source,
-        })),
-      },
-    }),
-    [slug, title, visibility, widgets],
+  const [state, dispatch] = useReducer(
+    pageBuilderReducer,
+    createInitialPageBuilderState(),
   );
 
-  function addWidget(kind: WidgetKind, widgetTitle: string, source: string) {
-    setWidgets((current) => [
-      ...current,
-      {
-        id: "w-" + Date.now(),
-        kind,
-        title: widgetTitle,
-        x: (current.length * 3) % 12,
-        y: Math.floor(current.length / 3) * 3,
-        w: kind.startsWith("filter") ? 3 : 4,
-        h: kind === "kpi" ? 2 : 3,
-        source,
-      },
-    ]);
-  }
-
-  function removeWidget(id: string) {
-    setWidgets((current) => current.filter((widget) => widget.id !== id));
-  }
+  const payload = useMemo(() => createPageBuilderPayload(state), [state]);
 
   return (
     <main className="page-builder-page">
@@ -136,14 +50,38 @@ export function PageBuilderPage() {
 
       <section className="page-builder-page__grid">
         <StandardCard className="page-builder-page__panel" title="Page properties">
-          <StandardInput label="Title" value={title} onChange={setTitle} />
-          <StandardInput label="Slug" value={slug} onChange={setSlug} />
+          <StandardInput
+            label="Title"
+            value={state.title}
+            onChange={(value) =>
+              dispatch({
+                type: "updateMeta",
+                patch: { title: value },
+              })
+            }
+          />
+
+          <StandardInput
+            label="Slug"
+            value={state.slug}
+            onChange={(value) =>
+              dispatch({
+                type: "updateMeta",
+                patch: { slug: value },
+              })
+            }
+          />
 
           <StandardSelect
             label="Visibility"
-            value={visibility}
+            value={state.visibility}
             options={visibilityOptions}
-            onChange={(value) => setVisibility(normalizeVisibility(value))}
+            onChange={(value) =>
+              dispatch({
+                type: "updateMeta",
+                patch: { visibility: normalizePageVisibility(value) },
+              })
+            }
           />
 
           <StandardTextArea
@@ -160,7 +98,15 @@ export function PageBuilderPage() {
               <StandardButton
                 key={item.kind}
                 variant="secondary"
-                onClick={() => addWidget(item.kind, item.title, item.source)}
+                onClick={() =>
+                  dispatch({
+                    type: "addWidget",
+                    kind: item.kind,
+                    title: item.title,
+                    source: item.source,
+                    idSeed: Date.now(),
+                  })
+                }
               >
                 Add {item.title}
               </StandardButton>
@@ -172,11 +118,11 @@ export function PageBuilderPage() {
       <StandardCard className="page-builder-page__canvas" title="Canvas">
         <div className="page-builder-page__canvas-header">
           <span>Metadata-driven canvas</span>
-          <span>{widgets.length} widgets</span>
+          <span>{state.widgets.length} widgets</span>
         </div>
 
         <div className="page-builder-page__widgets">
-          {widgets.map((widget) => (
+          {state.widgets.map((widget) => (
             <article key={widget.id} className="page-builder-page__widget">
               <div>
                 <strong>{widget.title}</strong>
@@ -185,7 +131,15 @@ export function PageBuilderPage() {
                 </small>
               </div>
 
-              <StandardButton variant="ghost" onClick={() => removeWidget(widget.id)}>
+              <StandardButton
+                variant="ghost"
+                onClick={() =>
+                  dispatch({
+                    type: "removeWidget",
+                    id: widget.id,
+                  })
+                }
+              >
                 Remove
               </StandardButton>
             </article>

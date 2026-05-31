@@ -3,8 +3,7 @@ import { API_BASE_URL } from "../apiConfig";
 async function getJson<T>(path: string): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     method: "GET",
-    headers: { Accept: "application/json" },
-    credentials: "include",
+    headers: buildAuthHeaders({ Accept: "application/json" }),
   });
 
   if (!response.ok) {
@@ -21,11 +20,10 @@ async function postJson<TResponse, TBody = unknown>(
 ): Promise<TResponse> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     method: "POST",
-    headers: {
+    headers: buildAuthHeaders({
       Accept: "application/json",
       "Content-Type": "application/json",
-    },
-    credentials: "include",
+    }),
     body: JSON.stringify(body ?? {}),
   });
 

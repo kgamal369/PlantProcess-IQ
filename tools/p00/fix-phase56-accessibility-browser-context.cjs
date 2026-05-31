@@ -1,4 +1,16 @@
-import { expect, test } from "@playwright/test";
+﻿const fs = require("node:fs");
+const path = require("node:path");
+
+const file = path.join(
+  process.cwd(),
+  "Frontend",
+  "PlantProcess.Web",
+  "e2e",
+  "a11y",
+  "phase56-accessibility.spec.ts"
+);
+
+const content = `import { expect, test } from "@playwright/test";
 import { prepareAuthenticatedPage } from "../helpers/hardening";
 
 const routes = [
@@ -68,7 +80,7 @@ test.describe("PPIQ Phase 6 accessibility smoke", () => {
           const labelledBy = element.getAttribute("aria-labelledby")?.trim();
           if (labelledBy) {
             const labelText = labelledBy
-              .split(/\s+/)
+              .split(/\\s+/)
               .map((id) => document.getElementById(id)?.textContent?.trim() ?? "")
               .filter(Boolean)
               .join(" ")
@@ -114,7 +126,7 @@ test.describe("PPIQ Phase 6 accessibility smoke", () => {
             const labelledBy = element.getAttribute("aria-labelledby")?.trim();
             if (labelledBy) {
               const labelText = labelledBy
-                .split(/\s+/)
+                .split(/\\s+/)
                 .map((id) => document.getElementById(id)?.textContent?.trim() ?? "")
                 .filter(Boolean)
                 .join(" ")
@@ -157,3 +169,8 @@ test.describe("PPIQ Phase 6 accessibility smoke", () => {
     });
   }
 });
+`;
+
+fs.writeFileSync(file, content.replace(/\r\n/g, "\n"), "utf8");
+
+console.log("Fixed phase56-accessibility.spec.ts: evaluateAll callbacks are now browser-context-safe.");

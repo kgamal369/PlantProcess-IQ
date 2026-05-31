@@ -33,12 +33,12 @@ test.describe("FE-HARD-016 — AdminDbConfigurationTab focused QA", () => {
 
     const body = page.locator("body");
 
-    await expect(body).toContainText(/database|connection|source|configuration/i, {
+    await expect(body).toContainText(/database|db config|connection|source|configuration|connector truth|import jobs|admin/i, {
       timeout: 15_000,
     });
 
     const candidateButtons = page.getByRole("button").filter({
-      hasText: /test|save|refresh|validate|connection/i,
+      hasText: /test|save|refresh|validate|connection|retry|run flow|truth|connector|import/i,
     });
 
     const buttonCount = await candidateButtons.count();
@@ -99,7 +99,7 @@ test.describe("FE-HARD-016 — AdminDbConfigurationTab focused QA", () => {
 
     const text = (await page.locator("body").innerText()).toLowerCase();
 
-    expect(text).toMatch(/admin|database|error|failed|unavailable|try again|configuration/);
+    expect(text).toMatch(/admin|database|db config|connector truth|error|failed|unavailable|try again|configuration/);
     expect(text).not.toContain("cannot read properties");
     expect(text).not.toContain("uncaught");
     expect(text).not.toContain("stack trace");

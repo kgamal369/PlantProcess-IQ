@@ -1,0 +1,121 @@
+{
+  "version": "P00D-2026-05-31",
+  "purpose": "Close P00 register E2E consolidation without deleting historical evidence. Phase-named specs are mapped into canonical behavioural journeys; future P06/P09 journeys are explicitly deferred until routes exist.",
+  "canonicalJourneys": [
+    {
+      "id": "journey-golden-path",
+      "title": "Canonical demo happy path",
+      "keepSpecs": [
+        "e2e/golden-path.spec.ts"
+      ],
+      "absorbs": [
+        "e2e/phase1-golden-demo.spec.ts"
+      ],
+      "status": "mapped"
+    },
+    {
+      "id": "journey-dashboard-refresh",
+      "title": "Dashboard refresh, filters and chart interaction",
+      "keepSpecs": [
+        "e2e/dashboard-refresh-filter.spec.ts",
+        "e2e/nav-graph-refresh-survival.spec.ts"
+      ],
+      "absorbs": [
+        "e2e/phase1-route-refresh.spec.ts",
+        "e2e/phase2-navigation-refresh-survival.spec.ts",
+        "e2e/phase2-chart-interaction.spec.ts"
+      ],
+      "status": "mapped"
+    },
+    {
+      "id": "journey-security-hardening",
+      "title": "Authentication, authorization and resilience hardening",
+      "keepSpecs": [
+        "e2e/hardening-matrix.spec.ts",
+        "e2e/security/auth-matrix-admin.spec.ts"
+      ],
+      "absorbs": [
+        "e2e/phase1-security-hardening.spec.ts",
+        "e2e/p0-auth-pages-contract.spec.ts",
+        "e2e/phase2-backend-outage.spec.ts",
+        "e2e/phase1-toast-mapping.spec.ts"
+      ],
+      "status": "mapped"
+    },
+    {
+      "id": "journey-page-builder",
+      "title": "Widget builder and metadata page-builder journey",
+      "keepSpecs": [
+        "e2e/widget-builder-focused.spec.ts",
+        "e2e/page-builder-v7.spec.ts"
+      ],
+      "absorbs": [
+        "e2e/phase78-workflow-widget.spec.ts",
+        "e2e/phase1-button-action-matrix.spec.ts"
+      ],
+      "status": "mapped"
+    },
+    {
+      "id": "journey-data-lifecycle",
+      "title": "Database, connector, import and data lifecycle",
+      "keepSpecs": [
+        "e2e/admin-db-focused.spec.ts",
+        "e2e/admin-schema-focused.spec.ts",
+        "e2e/api/phase03-two-stage-import.spec.ts"
+      ],
+      "absorbs": [
+        "e2e/api/phase02-data-lifecycle-contract.spec.ts"
+      ],
+      "status": "mapped"
+    },
+    {
+      "id": "journey-license-demo",
+      "title": "License gate and demo lifecycle",
+      "keepSpecs": [
+        "e2e/license-and-demo-lifecycle.spec.ts"
+      ],
+      "absorbs": [
+        "e2e/license-gate-ux.spec.ts"
+      ],
+      "status": "mapped"
+    },
+    {
+      "id": "journey-accessibility-visual-brand",
+      "title": "Accessibility, visual regression and brand identity",
+      "keepSpecs": [
+        "e2e/a11y/phase56-accessibility.spec.ts",
+        "e2e/visual/phase56-analytics-system.visual.spec.ts",
+        "e2e/dimension7-brand-identity.spec.ts"
+      ],
+      "absorbs": [
+        "e2e/dimension2-dimension6-readiness.spec.ts"
+      ],
+      "status": "mapped"
+    },
+    {
+      "id": "journey-fast-gates",
+      "title": "Fast API, route and full-stack smoke gates",
+      "keepSpecs": [
+        "e2e/api-smoke.spec.ts",
+        "e2e/route-smoke.spec.ts",
+        "e2e/full-stack-smoke.spec.ts"
+      ],
+      "absorbs": [],
+      "status": "mapped"
+    }
+  ],
+  "futureDeferredJourneys": [
+    {
+      "id": "journey-inspection-to-generated-page",
+      "plannedSpec": "e2e/journeys/inspection-to-generated-page.spec.ts",
+      "blockedBy": "P06 inspection job/generated analysis page lifecycle",
+      "status": "deferred-not-fake-passing"
+    },
+    {
+      "id": "journey-assistant-conversation",
+      "plannedSpec": "e2e/journeys/assistant-conversation.spec.ts",
+      "blockedBy": "P09 assistant conversation API and evidence-cited answer lifecycle",
+      "status": "deferred-not-fake-passing"
+    }
+  ]
+}

@@ -1,5 +1,16 @@
+import { fileURLToPath } from "node:url";
+import path from "node:path";
+import fs from "node:fs";
 import { expect, test } from "@playwright/test";
-import manifest from "./phase56-baseline-manifest.json";
+
+
+const phase56VisualSpecDir = path.dirname(fileURLToPath(import.meta.url));
+const manifest = JSON.parse(
+  fs.readFileSync(
+    path.join(phase56VisualSpecDir, "phase56-baseline-manifest.json"),
+    "utf8",
+  ),
+);
 
 const viewports: Record<string, { width: number; height: number }> = {
   "1920x1080": { width: 1920, height: 1080 },
