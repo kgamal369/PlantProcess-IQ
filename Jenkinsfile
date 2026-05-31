@@ -1,5 +1,5 @@
 // ============================================================
-// PlantProcess IQ â€” CI/CD pipeline
+// PlantProcess IQ - CI/CD pipeline
 //
 // What this does on every git push to main:
 //   1. Pull latest source on the deploy server (/opt/PlantProcess-IQ),
@@ -35,6 +35,7 @@ pipeline {
     }
 
     stages {
+
         stage('1. Pull latest code') {
             steps {
                 sh '''
@@ -111,6 +112,7 @@ pipeline {
                       -w /app \
                       node:20-alpine \
                       sh -lc '
+                        set -e
                         node --version
                         npm --version
                         if [ -f package-lock.json ]; then npm ci; else npm install; fi
@@ -129,21 +131,28 @@ pipeline {
                     set -e
                     cd ${REPO_DIR}
 
-                    node tools/validation/validate-phase01-phase02-gates.mjs
+                    docker run --rm \
+                      -v "$PWD:/app" \
+                      -w /app \
+                      node:20-alpine \
+                      node tools/validation/validate-phase01-phase02-gates.mjs
 
                     echo "Phase 01/02 gate passed: PPIQ-T101..PPIQ-T112"
                 '''
             }
         }
 
-        
         stage('2d. v5 Phase 01/02 ML foundation gates') {
             steps {
                 sh '''
                     set -e
                     cd ${REPO_DIR}
 
-                    node tools/validation/validate-phase01-phase02-v5-gates.mjs
+                    docker run --rm \
+                      -v "$PWD:/app" \
+                      -w /app \
+                      node:20-alpine \
+                      node tools/validation/validate-phase01-phase02-v5-gates.mjs
 
                     cd Frontend/PlantProcess.Web
                     docker run --rm \
@@ -156,6 +165,7 @@ pipeline {
                       -e PPIQ_OPERATOR_PASSWORD=${PPIQ_OPERATOR_PASSWORD:-} \
                       node:20-alpine \
                       sh -lc '
+                        set -e
                         if [ -f package-lock.json ]; then npm ci; else npm install; fi
                         npm run validate:copy
                         npm run validate:standard-imports
@@ -164,21 +174,28 @@ pipeline {
                 '''
             }
         }
+
         stage('2e. v6 Phase 01/02 completion gates') {
             steps {
                 sh '''
                     set -e
                     cd ${REPO_DIR}
-                    node tools/validation/validate-v6-phase01-phase02-completion.cjs
-                    node tools/validation/validate-t208-exposure.cjs
+
+                    docker run --rm \
+                      -v "$PWD:/app" \
+                      -w /app \
+                      node:20-alpine \
+                      sh -lc 'node tools/validation/validate-v6-phase01-phase02-completion.cjs && node tools/validation/validate-t208-exposure.cjs'
+
                     cd ${REPO_DIR}/Frontend/PlantProcess.Web
-                    docker run --rm -v "$PWD:/app" -w /app -e PPIQ_API_BASE_URL=${PPIQ_PUBLIC_API_URL:-http://plantprocess-api:5063} -e PPIQ_ADMIN_USER=${PPIQ_SMOKE_USERNAME:-admin} -e PPIQ_ADMIN_PASSWORD=${PPIQ_SMOKE_PASSWORD:-} -e PPIQ_OPERATOR_USER=${PPIQ_OPERATOR_USER:-datamanager} -e PPIQ_OPERATOR_PASSWORD=${PPIQ_OPERATOR_PASSWORD:-} node:20-alpine sh -lc 'if [ -f package-lock.json ]; then npm ci; else npm install; fi && npm run test:auth-matrix'
+                    docker run --rm -v "$PWD:/app" -w /app -e PPIQ_API_BASE_URL=${PPIQ_PUBLIC_API_URL:-http://plantprocess-api:5063} -e PPIQ_ADMIN_USER=${PPIQ_SMOKE_USERNAME:-admin} -e PPIQ_ADMIN_PASSWORD=${PPIQ_SMOKE_PASSWORD:-} -e PPIQ_OPERATOR_USER=${PPIQ_OPERATOR_USER:-datamanager} -e PPIQ_OPERATOR_PASSWORD=${PPIQ_SMOKE_PASSWORD:-} node:20-alpine sh -lc 'if [ -f package-lock.json ]; then npm ci; else npm install; fi && npm run test:auth-matrix'
                 '''
             }
             post {
                 always { archiveArtifacts artifacts: 'Frontend/PlantProcess.Web/test-results/auth-matrix/**', allowEmptyArchive: true }
             }
         }
+
         stage('3. Build images') {
             steps {
                 sh '''
@@ -240,10 +257,10 @@ pipeline {
 
     post {
         success {
-            echo 'âœ“ Deployment succeeded â€” all stages green'
+            echo 'Deployment succeeded - all stages green'
         }
         failure {
-            echo 'âœ— Deployment FAILED â€” see console output for the stage that failed'
+            echo 'Deployment FAILED - see console output for the stage that failed'
         }
         always {
             echo 'Build complete.'
