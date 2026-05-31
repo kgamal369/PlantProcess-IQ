@@ -1,0 +1,33 @@
+﻿import { expect, test } from "@playwright/test";
+
+test.describe("P03 page builder smoke", () => {
+  test("page builder route can be smoke-tested after route wiring", async ({ page }) => {
+    await page.goto("/page-builder");
+
+    await expect(
+      page.getByRole("heading", { name: /User-created pages, not coded pages/i }),
+    ).toBeVisible({ timeout: 10000 });
+
+    await expect(page.getByText("Page Builder", { exact: true })).toBeVisible();
+
+    await expect(
+      page.getByRole("heading", { name: /^Page properties$/i }),
+    ).toBeVisible();
+
+    await expect(
+      page.getByRole("heading", { name: /^Widget library$/i }),
+    ).toBeVisible();
+
+    await expect(
+      page.getByRole("heading", { name: /^Canvas$/i }),
+    ).toBeVisible();
+
+    await expect(page.getByLabel("Title", { exact: true })).toHaveValue(
+      "Demo Quality Investigation",
+    );
+
+    await expect(page.getByLabel("Slug", { exact: true })).toHaveValue(
+      "demo-quality-investigation",
+    );
+  });
+});

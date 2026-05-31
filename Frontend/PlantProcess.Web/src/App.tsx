@@ -127,6 +127,13 @@ const WidgetScriptCompilerPage = lazy(() =>
   }))
 );
 
+
+const PageBuilderPage = lazy(() =>
+  import("./pages/PageBuilder/PageBuilderPage").then((m) => ({
+    default: m.PageBuilderPage,
+  }))
+);
+
 const MlReadinessPage = lazy(() =>
   import("./pages/MlReadiness/MlReadinessPage").then((m) => ({
     default: m.MlReadinessPage,
@@ -473,6 +480,15 @@ function AppRoutes() {
                         "/suggestions",
                         "Suggestions are refreshing",
                         <SuggestionsPage />
+                      )}
+                    />
+
+                    <Route
+                      path="/page-builder"
+                      element={withPageBoundary(
+                        "/page-builder",
+                        "Page builder is refreshing",
+                        <PageBuilderPage />
                       )}
                     />
 

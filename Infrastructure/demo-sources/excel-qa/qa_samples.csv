@@ -1,0 +1,2 @@
+qa_sample_id,coil_id,sample_time_utc,qa_decision,defect_rate_per_m2,tensile_mpa,yield_mpa,elongation_pct
+ADV_QA4002,ADV_COIL4002,2026-05-01T16:00:00Z,Hold,0.018,512,386,24.7
