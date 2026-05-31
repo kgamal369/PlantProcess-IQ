@@ -39,6 +39,8 @@ using PlantProcess.Infrastructure.Persistence;
 using Serilog;
 using Serilog.Events;
 using Serilog.Exceptions;
+using PlantProcess.Api.Endpoints.PageBuilder;
+using PlantProcess.Api.Endpoints.Phase2;
 
 // Resolve a stable absolute log path regardless of working directory.
 var logDirectory = Path.Combine(AppContext.BaseDirectory, "logs");
@@ -426,7 +428,11 @@ app.MapMlProviderEndpoints();
     app.MapGenericSchemaMappingEndpoints();
 app.MapTwoStageImportEndpoints();
     
-    app.Run();
+    app.MapPageDefinitionEndpoints();
+
+app.MapPhase2LifecycleProofEndpoints();
+
+app.Run();
 }
 catch (Exception ex) when (ex.GetType().Name == "HostAbortedException")
 {

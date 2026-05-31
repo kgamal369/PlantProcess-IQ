@@ -14,7 +14,6 @@ function buildAuthHeaders(headers: Record<string, string> = {}): Record<string, 
   };
 }
 
-
 async function getJson<T>(path: string): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     method: "GET",

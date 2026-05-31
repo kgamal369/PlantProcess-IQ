@@ -1,12 +1,19 @@
-﻿import { expect, test } from "@playwright/test";
+import { expect, test } from "@playwright/test";
+import { login } from "./helpers/auth";
 
 test.describe("P03 page builder smoke", () => {
-  test("page builder route can be smoke-tested after route wiring", async ({ page }) => {
+  test("page builder route exposes persisted metadata actions", async ({ page, request }) => {
+    const token = await login(request);
+
+    await page.addInitScript((accessToken) => {
+      window.localStorage.setItem("plantprocess.auth.accessToken", accessToken);
+    }, token);
+
     await page.goto("/page-builder");
 
     await expect(
       page.getByRole("heading", { name: /User-created pages, not coded pages/i }),
-    ).toBeVisible({ timeout: 10000 });
+    ).toBeVisible({ timeout: 10_000 });
 
     await expect(page.getByText("Page Builder", { exact: true })).toBeVisible();
 
@@ -29,5 +36,9 @@ test.describe("P03 page builder smoke", () => {
     await expect(page.getByLabel("Slug", { exact: true })).toHaveValue(
       "demo-quality-investigation",
     );
+
+    await expect(page.getByRole("button", { name: /^Save page definition$/i })).toBeVisible();
+    await expect(page.getByRole("button", { name: /^Load by slug$/i })).toBeVisible();
+    await expect(page.getByRole("button", { name: /^Delete owned page$/i })).toBeVisible();
   });
 });
