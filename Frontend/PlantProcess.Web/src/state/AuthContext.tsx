@@ -1,12 +1,3 @@
-// ============================================================
-// FILE: Frontend/PlantProcess.Web/src/state/AuthContext.tsx
-//
-// V7 Phase 1 hardening:
-// - PPIQ-T280: auth-failure retry storm capped with backoff.
-// - PPIQ-T281: distinct invalid-credentials / forbidden / network errors.
-// - PPIQ-T285: VITE_SMOKE_* env contract is explicit and safe.
-// ============================================================
-
 import {
   createContext,
   useCallback,
@@ -55,9 +46,7 @@ function isTokenStillValid(user: AuthenticatedUser | null): boolean {
   if (!user) return false;
 
   try {
-    return (
-      new Date(user.expiresAtUtc).getTime() - Date.now() > EXPIRY_BUFFER_MS
-    );
+    return new Date(user.expiresAtUtc).getTime() - Date.now() > EXPIRY_BUFFER_MS;
   } catch {
     return false;
   }
@@ -89,40 +78,22 @@ function buildAuthMessage(kind: AuthErrorKind, err?: unknown): string {
     case "missing-smoke-password":
       return (
         "Demo login is not configured. Set VITE_SMOKE_USERNAME and " +
-        "VITE_SMOKE_PASSWORD in Frontend/PlantProcess.Web/.env.local. " +
-        "The frontend no longer falls back to an insecure default password."
+        "VITE_SMOKE_PASSWORD in Frontend/PlantProcess.Web/.env.local."
       );
-
     case "invalid-credentials":
-      return (
-        "Invalid demo login credentials. Check that VITE_SMOKE_PASSWORD " +
-        "matches the backend admin or seeded demo-user password."
-      );
-
+      return "Invalid login credentials or refresh session expired.";
     case "forbidden":
-      return (
-        "Your account is authenticated but not allowed to access this view. " +
-        "Use an Admin/DataManager account for administrative pages."
-      );
-
+      return "Your account is authenticated but not allowed to access this view.";
     case "backend-unreachable":
       return (
-        "Backend API is unreachable. Confirm PlantProcess.Api is running on " +
-        "http://localhost:5063 and VITE_API_BASE_URL points to the same URL." +
+        "Backend API is unreachable. Confirm PlantProcess.Api is running and " +
+        "VITE_API_BASE_URL points to it." +
         (detail ? ` Details: ${detail}` : "")
       );
-
     case "server-error":
-      return (
-        "Backend API returned a server error during login. Check the API console " +
-        "and database connectivity, then retry."
-      );
-
+      return "Backend API returned a server error during authentication.";
     default:
-      return (
-        "Authentication failed for an unexpected reason." +
-        (detail ? ` Details: ${detail}` : "")
-      );
+      return "Authentication failed unexpectedly." + (detail ? ` Details: ${detail}` : "");
   }
 }
 
@@ -152,16 +123,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     userName: string;
     displayName?: string | null;
     role: string;
+    plantRole?: string;
+    tenantId?: string;
+    tenantCode?: string;
     expiresAtUtc: string;
     scopes?: string[];
+    entitlements?: AuthenticatedUser["entitlements"];
   }) => {
-    setUser({
+    const nextUser: AuthenticatedUser = {
       userName: response.userName,
       displayName: response.displayName,
       role: response.role,
+      plantRole: response.plantRole,
+      tenantId: response.tenantId,
+      tenantCode: response.tenantCode,
       expiresAtUtc: response.expiresAtUtc,
-      scopes: response.scopes ?? [],
-    });
+      scopes: response.scopes ?? response.entitlements?.permissions ?? [],
+      entitlements: response.entitlements,
+    };
+
+    setUser(nextUser);
+    apiClient.setAuthenticatedUser(nextUser);
+
     setBootstrapError(null);
     automaticAttemptsRef.current = 0;
     setBootstrapAttemptCount(0);
@@ -186,11 +169,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             return;
           }
 
+          const refreshResponse = await apiClient.refresh();
+          if (refreshResponse) {
+            applyAuthenticatedUser(refreshResponse);
+            return;
+          }
+
           if (!DEMO_PASS.trim()) {
-            const message = buildAuthMessage("missing-smoke-password");
             apiClient.clearAuthentication();
             setUser(null);
-            setBootstrapError(message);
+            setBootstrapError(buildAuthMessage("missing-smoke-password"));
             lastErrorKindRef.current = "missing-smoke-password";
             return;
           }
@@ -199,7 +187,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (automaticAttemptsRef.current >= MAX_AUTO_BOOTSTRAP_ATTEMPTS) {
               setBootstrapError(
                 "Automatic login stopped after 3 failed attempts. " +
-                "Fix the credentials or backend connection, then press Retry."
+                "Fix credentials/backend connection, then press Retry.",
               );
               return;
             }
@@ -222,9 +210,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const kind = classifyAuthError(err);
           lastErrorKindRef.current = kind;
 
-          if (kind === "invalid-credentials" || kind === "forbidden") {
+          if (kind === "invalid-credentials") {
             automaticAttemptsRef.current = MAX_AUTO_BOOTSTRAP_ATTEMPTS;
             setBootstrapAttemptCount(MAX_AUTO_BOOTSTRAP_ATTEMPTS);
+            apiClient.clearAuthentication();
+            setUser(null);
+            setBootstrapError(buildAuthMessage("invalid-credentials"));
+            return;
+          }
+
+          if (kind === "forbidden") {
+            automaticAttemptsRef.current = MAX_AUTO_BOOTSTRAP_ATTEMPTS;
+            setBootstrapAttemptCount(MAX_AUTO_BOOTSTRAP_ATTEMPTS);
+            apiClient.clearAuthentication();
+            setUser(null);
+            setBootstrapError(buildAuthMessage("forbidden"));
+            return;
           }
 
           apiClient.clearAuthentication();
@@ -251,40 +252,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     function handleAuthFailure(event: Event) {
-      const customEvent = event as CustomEvent<{
-        status?: number;
-        path?: string;
-        responseText?: string;
-      }>;
-
+      const customEvent = event as CustomEvent<{ status?: number }>;
       const status = customEvent.detail?.status;
+
+      if (status === 403) {
+        setBootstrapError(buildAuthMessage("forbidden"));
+        return;
+      }
 
       if (status === 401) {
         apiClient.clearAuthentication();
         setUser(null);
-        setBootstrapError(buildAuthMessage("invalid-credentials"));
-        automaticAttemptsRef.current = MAX_AUTO_BOOTSTRAP_ATTEMPTS;
-        setBootstrapAttemptCount(MAX_AUTO_BOOTSTRAP_ATTEMPTS);
-        return;
-      }
-
-      if (status === 403) {
-        apiClient.clearAuthentication();
-        setUser(null);
-        setBootstrapError(buildAuthMessage("forbidden"));
-        automaticAttemptsRef.current = MAX_AUTO_BOOTSTRAP_ATTEMPTS;
-        setBootstrapAttemptCount(MAX_AUTO_BOOTSTRAP_ATTEMPTS);
-        return;
-      }
-
-      if (lastErrorKindRef.current !== "invalid-credentials") {
         void bootstrap("auth-failure", true);
       }
     }
 
     window.addEventListener("plantprocess:auth-failure", handleAuthFailure);
-    return () =>
-      window.removeEventListener("plantprocess:auth-failure", handleAuthFailure);
+    return () => window.removeEventListener("plantprocess:auth-failure", handleAuthFailure);
   }, [bootstrap]);
 
   useEffect(() => {
@@ -304,7 +288,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user, bootstrap]);
 
   const logout = useCallback(() => {
-    apiClient.logout();
+    void apiClient.logout();
     setUser(null);
     setBootstrapError("Signed out.");
     automaticAttemptsRef.current = 0;
@@ -327,19 +311,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       logout,
       retryBootstrap,
     }),
-    [
-      user,
-      isBootstrapping,
-      bootstrapError,
-      bootstrapAttemptCount,
-      logout,
-      retryBootstrap,
-    ],
+    [user, isBootstrapping, bootstrapError, bootstrapAttemptCount, logout, retryBootstrap],
   );
 
-  return (
-    <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {

@@ -1,4 +1,4 @@
-import { defineConfig } from "vitest/config";
+﻿import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import path from "node:path";
 
@@ -9,16 +9,26 @@ export default defineConfig({
       "@": path.resolve(__dirname, "src")
     }
   },
-  define: {
-    "import.meta.env.VITE_API_BASE_URL": JSON.stringify("http://localhost:5063"),
-    "import.meta.env.VITE_SMOKE_USERNAME": JSON.stringify("e2eadmin"),
-    "import.meta.env.VITE_SMOKE_PASSWORD": JSON.stringify("E2EAdmin123!"),
-  },
   test: {
     globals: true,
     environment: "jsdom",
     setupFiles: "./src/test/setupTests.ts",
     css: true,
+
+    /*
+     * P01/P02 validation stability:
+     * On Windows + Vitest 4, the default forks pool can timeout while starting
+     * many workers in parallel. This is not a product-code failure; it is a
+     * worker orchestration failure. Use one threads worker for deterministic CI/local proof.
+     */
+    pool: "threads",
+    fileParallelism: false,
+    maxWorkers: 1,
+    minWorkers: 1,
+    testTimeout: 30000,
+    hookTimeout: 30000,
+    teardownTimeout: 30000,
+
     include: [
       "src/**/*.test.ts",
       "src/**/*.test.tsx",

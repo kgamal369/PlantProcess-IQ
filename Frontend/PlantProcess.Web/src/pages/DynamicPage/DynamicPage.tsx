@@ -54,7 +54,7 @@ export function DynamicPage() {
         }
       } catch (error) {
         if (!cancelled) {
-          const text = error instanceof Error ? error.message : "Failed to load page.";
+          const text = error instanceof Error ? error.message : "This page is currently unavailable.";
           setPage(null);
           setStatus(text.includes("404") ? "not-found" : "error");
           setMessage(text);
@@ -112,7 +112,7 @@ export function DynamicPage() {
           <span>Slug</span>
           <strong>{page.slug}</strong>
           <small>
-            {page.visibility} · v{page.version}
+            {page.visibility} &middot; v{page.version}
           </small>
         </div>
       </section>

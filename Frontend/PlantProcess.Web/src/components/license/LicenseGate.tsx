@@ -1,81 +1,88 @@
-import type { ReactNode } from "react";
-import { LockedFeatureOverlay } from "@/components/demo/LockedFeatureOverlay";
-import { useDemoMode } from "@/state/DemoModeContext";
-import { useLicense } from "@/state/LicenseContext";
-import type { DemoLicensePlan } from "@/demo/plantProcessDemoScenario";
+﻿import type { ReactNode } from "react";
+import { useAuth } from "@/state/AuthContext";
 import "./license-components.css";
 
-type DemoPlanGateProps = {
-  featureName: string;
-  requiredPlan: DemoLicensePlan | "Pro Plus";
+export interface LicenseGateProps {
+  feature?: string;
+  permission?: string;
   children: ReactNode;
-  compact?: boolean;
-};
 
-type BackendFeatureGateProps = {
-  feature: string;
-  children: ReactNode;
+  /**
+   * Backward-compatible props used by existing pages such as CommercialLicensePage.
+   */
   fallbackTitle?: string;
   fallbackDescription?: string;
-};
 
-type LicenseGateProps = DemoPlanGateProps | BackendFeatureGateProps;
+  /**
+   * Optional custom fallback.
+   */
+  fallback?: ReactNode;
 
-function normalizePlan(plan: DemoLicensePlan | "Pro Plus") {
-  return plan === "Pro Plus" ? "ProPlus" : plan;
+  /**
+   * hide = remove locked content completely
+   * lock = show content with locked overlay
+   */
+  mode?: "hide" | "lock";
 }
 
-function isBackendFeatureGate(
-  props: LicenseGateProps
-): props is BackendFeatureGateProps {
-  return "feature" in props && typeof props.feature === "string";
-}
+export function LicenseGate({
+  feature,
+  permission,
+  children,
+  fallbackTitle,
+  fallbackDescription,
+  fallback,
+  mode = "lock",
+}: LicenseGateProps) {
+  const { user } = useAuth();
+  const entitlements = user?.entitlements;
 
-export function LicenseGate(props: LicenseGateProps) {
-  const demoMode = useDemoMode();
-  const license = useLicense();
+  const hasFeature = !feature || !!entitlements?.features?.includes(feature);
+  const hasPermission =
+    !permission || !!entitlements?.permissions?.includes(permission);
 
-  if (isBackendFeatureGate(props)) {
-    const featureStatus = license.getFeature(props.feature);
+  const allowed = hasFeature && hasPermission;
 
-    if (license.isLoading) {
-      return (
-        <section className="license-gate-card license-gate-card--loading">
-          <strong>Checking license...</strong>
-          <span>Loading commercial feature gates from backend.</span>
-        </section>
-      );
-    }
+  if (allowed) return <>{children}</>;
 
-    if (!featureStatus?.isEnabled) {
-      return (
-        <section className="license-gate-card license-gate-card--locked">
-          <strong>{props.fallbackTitle ?? `${props.feature} is locked`}</strong>
-          <span>
-            {props.fallbackDescription ??
-              featureStatus?.message ??
-              "This capability requires a higher license tier."}
-          </span>
-        </section>
-      );
-    }
+  const reason =
+    fallbackDescription ||
+    (feature && entitlements?.lockReasons?.[feature]) ||
+    (permission && `Requires permission: ${permission}`) ||
+    "This action is locked for your current role or license.";
 
-    return <>{props.children}</>;
-  }
+  const title =
+    fallbackTitle ||
+    (feature ? `Feature locked: ${feature}` : "Locked feature");
 
-  const unlocked = demoMode.isFeatureAvailable(
-    normalizePlan(props.requiredPlan)
-  );
+  if (mode === "hide") {
+    if (fallback) return <>{fallback}</>;
 
-  if (!unlocked) {
     return (
-      <LockedFeatureOverlay
-        featureName={props.featureName}
-        requiredPlan={props.requiredPlan}
-        compact={props.compact ?? false}
-      />
+      <div className="license-locked-inline" aria-disabled="true">
+        <div className="license-locked-inline__overlay">
+          <span>{title}</span>
+          <small>{reason}</small>
+        </div>
+      </div>
     );
   }
 
-  return <>{props.children}</>;
+  if (fallback) return <>{fallback}</>;
+
+  return (
+    <div
+      className="license-locked-inline"
+      title={reason}
+      aria-disabled="true"
+      data-locked-feature={feature ?? ""}
+      data-required-permission={permission ?? ""}
+    >
+      <div className="license-locked-inline__content">{children}</div>
+      <div className="license-locked-inline__overlay">
+        <span>{title}</span>
+        <small>{reason}</small>
+      </div>
+    </div>
+  );
 }

@@ -1,0 +1,740 @@
+﻿PlantProcess IQ — P03/P04 Readiness Audit
+Generated: 2026-06-01 15:43:58
+Root     : C:\Workspace\PlantProcess-IQ
+
+============================================================
+1. Backend compile status
+============================================================
+dotnet build exit code: 0
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  PlantProcess.PerformanceTests -> C:\Workspace\PlantProcess-IQ\Backend\tests\PlantProcess.PerformanceTests\bin\Debug\net9.0\PlantProcess.PerformanceTests.dll
+  PlantProcess.Domain -> C:\Workspace\PlantProcess-IQ\Backend\PlantProcess.Domain\bin\Debug\net9.0\PlantProcess.Domain.dll
+  PlantProcess.Domain.Tests -> C:\Workspace\PlantProcess-IQ\Backend\tests\PlantProcess.Domain.Tests\bin\Debug\net9.0\PlantProcess.Domain.Tests.dll
+  PlantProcess.Application -> C:\Workspace\PlantProcess-IQ\Backend\PlantProcess.Application\bin\Debug\net9.0\PlantProcess.Application.dll
+  PlantProcess.Infrastructure -> C:\Workspace\PlantProcess-IQ\Backend\PlantProcess.Infrastructure\bin\Debug\net9.0\PlantProcess.Infrastructure.dll
+  PlantProcess.Workers -> C:\Workspace\PlantProcess-IQ\Backend\PlantProcess.Workers\bin\Debug\net9.0\PlantProcess.Workers.dll
+  PlantProcess.Infrastructure.IntegrationTests -> C:\Workspace\PlantProcess-IQ\Backend\tests\PlantProcess.Infrastructure.IntegrationTests\bin\Debug\net9.0\PlantProcess.Infrastructure.IntegrationTests.dll
+  PlantProcess.Application.UnitTests -> C:\Workspace\PlantProcess-IQ\Backend\tests\PlantProcess.Application.UnitTests\bin\Debug\net9.0\PlantProcess.Application.UnitTests.dll
+  PlantProcess.Api -> C:\Workspace\PlantProcess-IQ\Backend\PlantProcess.Api\bin\Debug\net9.0\PlantProcess.Api.dll
+  PlantProcess.Api.IntegrationTests -> C:\Workspace\PlantProcess-IQ\Backend\tests\PlantProcess.Api.IntegrationTests\bin\Debug\net9.0\PlantProcess.Api.IntegrationTests.dll
+
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:04.79
+
+============================================================
+2. Frontend compile status
+============================================================
+npm run build exit code: 0
+
+> plantprocess-web@0.0.0 build
+> tsc -b && vite build
+
+[36mvite v8.0.12 [32mbuilding client environment for production...[36m[39m
+[2K
+transforming...Ô£ô 1834 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                                      1.09 kB Ôöé gzip:  0.54 kB
+dist/assets/Phase78Pages-Bu2iISaT.css                1.28 kB Ôöé gzip:  0.54 kB
+dist/assets/PageBuilderPage-Bf8tJvAO.css             1.56 kB Ôöé gzip:  0.50 kB
+dist/assets/DynamicPage-DCqfTtje.css                 1.85 kB Ôöé gzip:  0.65 kB
+dist/assets/Phase56Pages-Cjcwl8dV.css                3.11 kB Ôöé gzip:  1.03 kB
+dist/assets/CommercialLicensePage-CQLOghsi.css       6.70 kB Ôöé gzip:  1.42 kB
+dist/assets/StandardSurface-Ck-8nXiy.css            12.46 kB Ôöé gzip:  2.99 kB
+dist/assets/index-BL1gB8Nk.css                      57.95 kB Ôöé gzip: 11.53 kB
+dist/assets/http-DN8cTLp1.js                         0.03 kB Ôöé gzip:  0.05 kB
+dist/assets/CorrelationPage-Cjaosw5E.js              0.16 kB Ôöé gzip:  0.15 kB
+dist/assets/DataQualityPage-D6Pc6A_8.js              0.16 kB Ôöé gzip:  0.15 kB
+dist/assets/MlReadinessPage-KRB37J9x.js              0.16 kB Ôöé gzip:  0.15 kB
+dist/assets/BrandIdentityPage-D9_XR5rG.js            0.16 kB Ôöé gzip:  0.15 kB
+dist/assets/DemoLifecyclePage-Bx6kXT31.js            0.16 kB Ôöé gzip:  0.15 kB
+dist/assets/RiskDashboardPage-MF-s4sqc.js            0.16 kB Ôöé gzip:  0.15 kB
+dist/assets/AdminPreviewWorkspacePage-DVk4Yikd.js    0.17 kB Ôöé gzip:  0.16 kB
+dist/assets/MaterialInvestigationPage-vzDF7fVv.js    0.17 kB Ôöé gzip:  0.16 kB
+dist/assets/AdminPage-D4vsR-SB.js                    0.19 kB Ôöé gzip:  0.15 kB
+dist/assets/DashboardPage-CPg-scLH.js                0.20 kB Ôöé gzip:  0.16 kB
+dist/assets/pageBuilder-BX729iIx.js                  0.22 kB Ôöé gzip:  0.16 kB
+dist/assets/license-CoWUleIC.js                      0.36 kB Ôöé gzip:  0.21 kB
+dist/assets/search-CMFzAJ17.js                       1.50 kB Ôöé gzip:  0.85 kB
+dist/assets/DynamicPage-DPZUT54C.js                  3.52 kB Ôöé gzip:  1.33 kB
+dist/assets/PageBuilderPage-B_iB0ABN.js              7.99 kB Ôöé gzip:  2.76 kB
+dist/assets/StandardSurface-DfevaoR-.js              8.46 kB Ôöé gzip:  2.98 kB
+dist/assets/Phase78Pages-D_KDmo1o.js                12.35 kB Ôöé gzip:  4.62 kB
+dist/assets/CommercialLicensePage-BAkANjt7.js       13.35 kB Ôöé gzip:  3.54 kB
+dist/assets/OperationProgressPanel-BWrEIGH8.js      15.46 kB Ôöé gzip:  5.57 kB
+dist/assets/Phase56Pages-sZ39e4rP.js                29.10 kB Ôöé gzip:  8.72 kB
+dist/assets/jsx-runtime-Bzz9aCuY.js                 50.54 kB Ôöé gzip: 15.45 kB
+dist/assets/index-CfWXPd4S.js                      290.93 kB Ôöé gzip: 92.12 kB
+
+[32mÔ£ô built in 1.14s[39m
+
+============================================================
+3. P03 backend anchor search
+============================================================
+PATTERN: SchemaConfiguration
+COUNT  : 18
+  - .\Backend\PlantProcess.Api\Program.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Admin\AdminEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Admin\SchemaConfigurationEndpoints.cs
+  - .\Backend\PlantProcess.Application\DependencyInjection.cs
+  - .\Backend\PlantProcess.Application\PlantProcess.Application.csproj
+  - .\Backend\PlantProcess.Application\Integration\Interfaces\SchemaConfiguration\ISchemaConfigurationService.cs
+  - .\Backend\PlantProcess.Application\Integration\Interfaces\SchemaConfiguration\ISchemaReader.cs
+  - .\Backend\PlantProcess.Application\Integration\Interfaces\SourceSystems\IDataSourceConnectorFactory.cs
+  - .\Backend\PlantProcess.Application\Integration\Services\SchemaConfiguration\SchemaConfigurationService.cs
+  - .\Backend\PlantProcess.Infrastructure\DependencyInjection.cs
+  - .\Backend\PlantProcess.Infrastructure\Connectors\Common\DataSourceConnectorFactory.cs
+  - .\Backend\PlantProcess.Infrastructure\Connectors\Csv\CsvConnector.cs
+  - .\Backend\PlantProcess.Infrastructure\Connectors\Excel\ExcelConnector.cs
+  - .\Backend\PlantProcess.Infrastructure\Connectors\MySql\MySqlConnector.cs
+  - .\Backend\PlantProcess.Infrastructure\Connectors\Oracle\OracleConnector.cs
+  - .\Backend\PlantProcess.Infrastructure\Connectors\PostgreSql\PostgreSqlConnector.cs
+  - .\Backend\PlantProcess.Infrastructure\Connectors\SqlServer\MsSqlConnector.cs
+  - .\Backend\tests\PlantProcess.Api.IntegrationTests\Security\SchemaConfigurationSafetyEndpointTests.cs
+
+PATTERN: SqlView
+COUNT  : 9
+  - .\Backend\PlantProcess.Api\Endpoints\Admin\SchemaConfigurationEndpoints.cs
+  - .\Backend\PlantProcess.Application\Licensing\Contracts\LicenseFeature.cs
+  - .\Backend\PlantProcess.Application\Licensing\Services\LicenseService.cs
+  - .\Backend\PlantProcess.Domain\Entities\Integration\SchemaViewDefinition.cs
+  - .\Backend\PlantProcess.Domain\Entities\Integration\SourceDatasetDefinition.cs
+  - .\Backend\PlantProcess.Infrastructure\Connectors\MySql\MySqlConnector.cs
+  - .\Backend\PlantProcess.Infrastructure\Connectors\PostgreSql\PostgreSqlConnector.cs
+  - .\Backend\tests\PlantProcess.Application.UnitTests\Licensing\LicenseServiceTests.cs
+  - .\Backend\tools\validation\Validate-Dimension5-Dimension8.ps1
+
+PATTERN: SafeSqlValidator
+COUNT  : 4
+  - .\Backend\PlantProcess.Api\Endpoints\Admin\SchemaConfigurationEndpoints.cs
+  - .\Backend\PlantProcess.Application\Integration\Security\SafeSqlValidator.cs
+  - .\Backend\tests\PlantProcess.Api.IntegrationTests\Security\SchemaConfigurationSafetyEndpointTests.cs
+  - .\Backend\tests\PlantProcess.Application.UnitTests\Security\SafeSqlPolicyTests.cs
+
+PATTERN: BusinessKey
+COUNT  : 0
+
+PATTERN: Canonical
+COUNT  : 76
+  - .\Backend\database\scripts\060_phase_8_9_dashboard_materialized_views.sql
+  - .\Backend\database\scripts\080_phase_3_4_connector_schema_foundation.sql
+  - .\Backend\database\scripts\110_phase1_demo_source_shapes.sql
+  - .\Backend\database\scripts\117_phase8_widget_script_layer_entity_mapping.sql
+  - .\Backend\database\scripts\120_phase02_canonical_schema_mapping_engine.sql
+  - .\Backend\database\scripts\130_phase03_two_stage_delta_import_architecture.sql
+  - .\Backend\database\scripts\140_phase02_demo_sources_genealogy_spine.sql
+  - .\Backend\database\scripts\142_phase02_phase03_page_definition_and_demo_source_completion.sql
+  - .\Backend\database\scripts\200_phase02_ml_foundation_feature_store_pgvector.sql
+  - .\Backend\database\scripts\200_phase02_ml_foundation_feature_store_pgvector.sql.before-direct-dollar-fix.bak
+  - .\Backend\database\scripts\200_phase02_ml_foundation_feature_store_pgvector.sql.before-local-safe-repair.bak
+  - .\Backend\database\scripts\205_phase04_phase05_completion_governance_jobs_tests.sql
+  - .\Backend\database\scripts\206_fix_dashboard_widget_definition_schema_drift.sql
+  - .\Backend\database\seed\000_plantprocessiq_unified_advanced_realistic_demo_seed.sql
+  - .\Backend\database\seed\002_full_feature_demo_seed.sql
+  - .\Backend\database\seed\002_full_feature_demo_seed.txt
+  - .\Backend\database\seed\005_phase0_job_definitions.sql
+  - .\Backend\database\seed\20260511_phase_c_staging_records.sql
+  - .\Backend\database\seed\source-systems\synthetic_hsm_source_insert.sql
+  - .\Backend\database\seed\source-systems\synthetic_inspection_source_insert.sql
+  - .\Backend\database\seed\source-systems\synthetic_qms_source_insert.sql
+  - .\Backend\PlantProcess.Api\Endpoints\Admin\AdminEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Admin\GenericSchemaMappingEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Admin\JobAdminEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Admin\Phase1WorkflowTruthEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Admin\TwoStageImportEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Analytics\MlFoundationEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Analytics\MlReadinessEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Demo\DemoLifecycleEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Integration\IntegrationEndpoints.cs
+
+PATTERN: Mapping
+COUNT  : 85
+  - .\Backend\database\scripts\110_phase1_demo_source_shapes.sql
+  - .\Backend\database\scripts\111_phase1_demo_mapping_views.sql
+  - .\Backend\database\scripts\117_phase8_widget_script_layer_entity_mapping.sql
+  - .\Backend\database\scripts\120_phase02_canonical_schema_mapping_engine.sql
+  - .\Backend\database\scripts\130_phase03_two_stage_delta_import_architecture.sql
+  - .\Backend\database\scripts\140_phase02_demo_sources_genealogy_spine.sql
+  - .\Backend\database\scripts\142_phase02_phase03_page_definition_and_demo_source_completion.sql
+  - .\Backend\database\scripts\300_p01_p02_security_access_control_spine.sql
+  - .\Backend\database\scripts\300_p01_p02_security_access_control_spine.sql.bak_20260601_154004
+  - .\Backend\database\seed\000_plantprocessiq_unified_advanced_realistic_demo_seed.sql
+  - .\Backend\database\seed\002_full_feature_demo_seed.sql
+  - .\Backend\database\seed\002_full_feature_demo_seed.txt
+  - .\Backend\PlantProcess.Api\Program.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Admin\AdminEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Admin\GenericSchemaMappingEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Admin\JobAdminEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Admin\LicenseAdminEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Admin\Phase1WorkflowTruthEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Demo\DemoLifecycleEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Development\DevSeedEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\DynamicContent\DynamicContentEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Integration\ImportWorkflowEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Integration\IntegrationEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Phase2\Phase2LifecycleProofEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Reporting\CustomerDemoReportEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Validation\ValidationEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Workflow\WorkflowEndpoints.cs
+  - .\Backend\PlantProcess.Api\Security\P01P02SecuritySchema.cs
+  - .\Backend\PlantProcess.Api\Security\PlantAccessControl.cs
+  - .\Backend\PlantProcess.Api\Swagger\SwaggerExamplesOperationFilter.cs
+
+PATTERN: DryRun
+COUNT  : 0
+
+PATTERN: Publish
+COUNT  : 2
+  - .\Backend\PlantProcess.Api\Dockerfile
+  - .\Backend\PlantProcess.Workers\Dockerfile
+
+PATTERN: Rollback
+COUNT  : 2
+  - .\Backend\PlantProcess.Api\Endpoints\Admin\SchemaConfigurationEndpoints.cs
+  - .\Backend\PlantProcess.Infrastructure\Migrations\20260519083512_AddCriticalQueryIndexes.cs
+
+PATTERN: Version
+COUNT  : 116
+  - .\Backend\coverlet.runsettings
+  - .\Backend\PlantProcessIQ.sln
+  - .\Backend\database\scripts\113_phase1_widget_script_layer.sql
+  - .\Backend\database\scripts\117_phase8_widget_script_layer_entity_mapping.sql
+  - .\Backend\database\scripts\141_phase03_page_builder_foundation.sql
+  - .\Backend\database\scripts\142_phase02_phase03_page_definition_and_demo_source_completion.sql
+  - .\Backend\database\scripts\200_phase02_ml_foundation_feature_store_pgvector.sql
+  - .\Backend\database\scripts\200_phase02_ml_foundation_feature_store_pgvector.sql.before-direct-dollar-fix.bak
+  - .\Backend\database\scripts\200_phase02_ml_foundation_feature_store_pgvector.sql.before-local-safe-repair.bak
+  - .\Backend\database\scripts\201_phase02_ml_feature_store_v6_completion.sql
+  - .\Backend\database\scripts\207_fix_dashboard_widget_expression_smallint_schema_drift.sql
+  - .\Backend\database\scripts\300_p01_p02_security_access_control_spine.sql.bak_20260601_154004
+  - .\Backend\database\seed\000_plantprocessiq_unified_advanced_realistic_demo_seed.sql
+  - .\Backend\database\seed\002_full_feature_demo_seed.sql
+  - .\Backend\database\seed\002_full_feature_demo_seed.txt
+  - .\Backend\database\seed\003_additional_demo_seed.sql
+  - .\Backend\database\views\006_dashboard_dataset_views.sql
+  - .\Backend\PlantProcess.Api\PlantProcess.Api.csproj
+  - .\Backend\PlantProcess.Api\PlantProcess.Api.csproj.Backup (1).tmp
+  - .\Backend\PlantProcess.Api\PlantProcess.Api.csproj.Backup.tmp
+  - .\Backend\PlantProcess.Api\PlantProcess.Api.csproj.user
+  - .\Backend\PlantProcess.Api\PlantProcess.PhaseH_I.http
+  - .\Backend\PlantProcess.Api\Program.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Admin\AdminEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Admin\Phase1WorkflowTruthEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Analytics\MlFoundationEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Analytics\RiskScoreEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Configuration\ConfigurationEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Integration\IntegrationEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Materials\MaterialInvestigationEndpoints.cs
+
+============================================================
+4. P04 backend anchor search
+============================================================
+PATTERN: Genealogy
+COUNT  : 76
+  - .\Backend\database\scripts\050_dashboard_phase8_9_10_indexes.sql
+  - .\Backend\database\scripts\111_phase1_demo_mapping_views.sql
+  - .\Backend\database\scripts\115_phase2_integrity_audit.sql
+  - .\Backend\database\scripts\120_phase02_canonical_schema_mapping_engine.sql
+  - .\Backend\database\scripts\130_phase03_two_stage_delta_import_architecture.sql
+  - .\Backend\database\scripts\140_phase02_demo_sources_genealogy_spine.sql
+  - .\Backend\database\scripts\142_phase02_phase03_page_definition_and_demo_source_completion.sql
+  - .\Backend\database\scripts\200_phase02_ml_foundation_feature_store_pgvector.sql
+  - .\Backend\database\scripts\200_phase02_ml_foundation_feature_store_pgvector.sql.before-direct-dollar-fix.bak
+  - .\Backend\database\scripts\200_phase02_ml_foundation_feature_store_pgvector.sql.before-local-safe-repair.bak
+  - .\Backend\database\scripts\201_phase02_ml_feature_store_v6_completion.sql
+  - .\Backend\database\scripts\300_p01_p02_security_access_control_spine.sql.bak_20260601_154004
+  - .\Backend\database\seed\000_plantprocessiq_unified_advanced_realistic_demo_seed.sql
+  - .\Backend\database\seed\001_basic_genealogy_seed.sql
+  - .\Backend\database\seed\002_full_feature_demo_seed.sql
+  - .\Backend\database\seed\002_full_feature_demo_seed.txt
+  - .\Backend\database\seed\003_additional_demo_seed.sql
+  - .\Backend\PlantProcess.Api\Endpoints\Admin\AdminEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Admin\Phase1WorkflowTruthEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Analytics\CorrelationEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Analytics\MlFoundationEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Analytics\MlReadinessEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Development\DevSeedEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Materials\MaterialEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Materials\MaterialInvestigationEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Phase2\Phase2LifecycleProofEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Phase45\Phase45ClosureEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Validation\ValidationEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Workflow\WorkflowEndpoints.cs
+  - .\Backend\PlantProcess.Application\DependencyInjection.cs
+
+PATTERN: InvestigateMaterial
+COUNT  : 2
+  - .\Backend\PlantProcess.Api\Endpoints\Materials\MaterialInvestigationEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Workflow\WorkflowEndpoints.cs
+
+PATTERN: MaterialInvestigation
+COUNT  : 7
+  - .\Backend\PlantProcess.Api\Program.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Materials\MaterialInvestigationEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Reporting\ReportingEndpoints.cs
+  - .\Backend\PlantProcess.Application\Dashboarding\Contracts\DashboardMetadataDtos.cs
+  - .\Backend\PlantProcess.Application\Dashboarding\Services\Metadata\DashboardMetadataService.cs
+  - .\Backend\PlantProcess.Application\Services\Reporting\IInvestigationReportService.cs
+  - .\Backend\PlantProcess.Application\Services\Reporting\InvestigationReportService.cs
+
+PATTERN: Downtime
+COUNT  : 74
+  - .\Backend\database\scripts\110_phase1_demo_source_shapes.sql
+  - .\Backend\database\scripts\112_phase1_golden_demo_data.sql
+  - .\Backend\database\scripts\130_phase03_two_stage_delta_import_architecture.sql
+  - .\Backend\database\scripts\140_phase02_demo_sources_genealogy_spine.sql
+  - .\Backend\database\scripts\142_phase02_phase03_page_definition_and_demo_source_completion.sql
+  - .\Backend\database\scripts\200_phase02_ml_foundation_feature_store_pgvector.sql
+  - .\Backend\database\scripts\200_phase02_ml_foundation_feature_store_pgvector.sql.before-direct-dollar-fix.bak
+  - .\Backend\database\scripts\200_phase02_ml_foundation_feature_store_pgvector.sql.before-local-safe-repair.bak
+  - .\Backend\database\scripts\201_phase02_ml_feature_store_v6_completion.sql
+  - .\Backend\database\scripts\204_phase04_phase05_ml_learning_core.sql
+  - .\Backend\database\scripts\205_phase04_phase05_completion_governance_jobs_tests.sql
+  - .\Backend\database\scripts\300_p01_p02_security_access_control_spine.sql.bak_20260601_154004
+  - .\Backend\database\seed\000_plantprocessiq_unified_advanced_realistic_demo_seed.sql
+  - .\Backend\database\seed\002_full_feature_demo_seed.sql
+  - .\Backend\database\seed\002_full_feature_demo_seed.txt
+  - .\Backend\PlantProcess.Api\Endpoints\Admin\AdminEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Admin\JobAdminEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Admin\Phase1WorkflowTruthEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Admin\TwoStageImportEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Development\DevSeedEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Materials\MaterialInvestigationEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Phase2\Phase2LifecycleProofEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Phase45\Phase45ClosureEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Process\ProcessEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Reporting\CustomerDemoReportEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Validation\ValidationEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Workflow\WorkflowEndpoints.cs
+  - .\Backend\PlantProcess.Application\Analytics\Contracts\MaterialFeatureVector.cs
+  - .\Backend\PlantProcess.Application\Analytics\Services\FeatureEngineeringService.cs
+  - .\Backend\PlantProcess.Application\Analytics\Services\MlReadinessService.cs
+
+PATTERN: ProductionStoppage
+COUNT  : 0
+
+PATTERN: EquipmentStoppage
+COUNT  : 0
+
+PATTERN: ParameterObservation
+COUNT  : 69
+  - .\Backend\database\seed\000_plantprocessiq_unified_advanced_realistic_demo_seed.sql
+  - .\Backend\database\seed\002_full_feature_demo_seed.sql
+  - .\Backend\database\seed\002_full_feature_demo_seed.txt
+  - .\Backend\database\seed\090_phase1_dashboard_builder_indexes.sql
+  - .\Backend\PlantProcess.Api\Endpoints\Admin\AdminEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Admin\Phase1WorkflowTruthEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Analytics\CorrelationEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Analytics\Phase2InvestigationEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\DataQuality\DataQualityScanEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Development\DevSeedEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Materials\MaterialInvestigationEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Process\ProcessEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Reporting\CustomerDemoReportEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Validation\ValidationEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Workflow\WorkflowEndpoints.cs
+  - .\Backend\PlantProcess.Application\Analytics\Contracts\MaterialFeatureVector.cs
+  - .\Backend\PlantProcess.Application\Analytics\Services\CorrelationService.cs
+  - .\Backend\PlantProcess.Application\Analytics\Services\FeatureEngineeringService.cs
+  - .\Backend\PlantProcess.Application\Analytics\Services\MlReadinessService.cs
+  - .\Backend\PlantProcess.Application\Analytics\Services\QualityLabelBuilderService.cs
+  - .\Backend\PlantProcess.Application\Analytics\Services\RiskScoreService.cs
+  - .\Backend\PlantProcess.Application\Common\Persistence\IPlantProcessDbContext.cs
+  - .\Backend\PlantProcess.Application\Contracts\Process\AddParameterObservationCommand.cs
+  - .\Backend\PlantProcess.Application\Contracts\Readiness\ApplicationReadinessDto.cs
+  - .\Backend\PlantProcess.Application\Dashboarding\Contracts\DashboardDtos.cs
+  - .\Backend\PlantProcess.Application\Dashboarding\Services\Queries\DashboardQueryService.cs
+  - .\Backend\PlantProcess.Application\Dashboarding\Services\Queries\DashboardWidgetQueryService.cs
+  - .\Backend\PlantProcess.Application\Demo\Contracts\DemoLifecycleDtos.cs
+  - .\Backend\PlantProcess.Application\Demo\Services\DemoLifecycleService.cs
+  - .\Backend\PlantProcess.Application\Integration\Services\Jobs\JobRegistrationService.cs
+
+PATTERN: QualityEvent
+COUNT  : 73
+  - .\Backend\database\scripts\120_phase02_canonical_schema_mapping_engine.sql
+  - .\Backend\database\scripts\130_phase03_two_stage_delta_import_architecture.sql
+  - .\Backend\database\seed\000_plantprocessiq_unified_advanced_realistic_demo_seed.sql
+  - .\Backend\database\seed\002_full_feature_demo_seed.sql
+  - .\Backend\database\seed\002_full_feature_demo_seed.txt
+  - .\Backend\database\seed\090_phase1_dashboard_builder_indexes.sql
+  - .\Backend\PlantProcess.Api\Endpoints\Admin\AdminEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Admin\Phase1WorkflowTruthEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Analytics\CorrelationEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Analytics\Phase2InvestigationEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\DataQuality\DataQualityScanEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Development\DevSeedEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\DynamicContent\DynamicContentEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Materials\MaterialInvestigationEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Quality\QualityEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Reporting\CustomerDemoReportEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Validation\ValidationEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Workflow\WorkflowEndpoints.cs
+  - .\Backend\PlantProcess.Api\Swagger\SwaggerExamplesOperationFilter.cs
+  - .\Backend\PlantProcess.Application\Analytics\Contracts\MaterialFeatureVector.cs
+  - .\Backend\PlantProcess.Application\Analytics\Contracts\MlReadinessDtos.cs
+  - .\Backend\PlantProcess.Application\Analytics\Services\CorrelationService.cs
+  - .\Backend\PlantProcess.Application\Analytics\Services\FeatureEngineeringService.cs
+  - .\Backend\PlantProcess.Application\Analytics\Services\MlReadinessService.cs
+  - .\Backend\PlantProcess.Application\Analytics\Services\QualityLabelBuilderService.cs
+  - .\Backend\PlantProcess.Application\Analytics\Services\RiskScoreService.cs
+  - .\Backend\PlantProcess.Application\Common\Persistence\IPlantProcessDbContext.cs
+  - .\Backend\PlantProcess.Application\Contracts\Quality\AddQualityEventCommand.cs
+  - .\Backend\PlantProcess.Application\Contracts\Quality\QualityReadDtos.cs
+  - .\Backend\PlantProcess.Application\Contracts\Readiness\ApplicationReadinessDto.cs
+
+PATTERN: RiskScore
+COUNT  : 70
+  - .\Backend\database\scripts\070_fix_system_template_widget_codes.sql
+  - .\Backend\database\seed\000_plantprocessiq_unified_advanced_realistic_demo_seed.sql
+  - .\Backend\database\seed\002_full_feature_demo_seed.sql
+  - .\Backend\database\seed\002_full_feature_demo_seed.txt
+  - .\Backend\database\seed\090_phase1_dashboard_builder_indexes.sql
+  - .\Backend\database\seed\090_phase1_system_dashboard_templates.sql
+  - .\Backend\PlantProcess.Api\Program.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Admin\AdminEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Analytics\RiskScoreEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Dashboarding\DashboardEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\DataQuality\DataQualityScanEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Development\DevSeedEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\DynamicContent\DynamicContentEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Materials\MaterialInvestigationEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Reporting\CustomerDemoReportEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Validation\ValidationEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Workflow\WorkflowEndpoints.cs
+  - .\Backend\PlantProcess.Api\Middleware\AuditLogMiddleware.cs
+  - .\Backend\PlantProcess.Api\Swagger\SwaggerExamplesOperationFilter.cs
+  - .\Backend\PlantProcess.Application\DependencyInjection.cs
+  - .\Backend\PlantProcess.Application\Analytics\Contracts\RiskPredictionDtos.cs
+  - .\Backend\PlantProcess.Application\Analytics\Contracts\StoreRiskScoreCommand.cs
+  - .\Backend\PlantProcess.Application\Analytics\Interfaces\IRiskScoreService.cs
+  - .\Backend\PlantProcess.Application\Analytics\Services\RiskScoreService.cs
+  - .\Backend\PlantProcess.Application\Common\Persistence\IPlantProcessDbContext.cs
+  - .\Backend\PlantProcess.Application\Contracts\Readiness\ApplicationReadinessDto.cs
+  - .\Backend\PlantProcess.Application\Dashboarding\Contracts\DashboardDtos.cs
+  - .\Backend\PlantProcess.Application\Dashboarding\Contracts\DashboardMetadataDtos.cs
+  - .\Backend\PlantProcess.Application\Dashboarding\Services\Dashboards\DashboardDefinitionService.cs
+  - .\Backend\PlantProcess.Application\Dashboarding\Services\Metadata\DashboardMetadataService.cs
+
+PATTERN: Suggestion
+COUNT  : 7
+  - .\Backend\database\scripts\300_p01_p02_security_access_control_spine.sql.bak_20260601_154004
+  - .\Backend\PlantProcess.Api\Endpoints\DynamicContent\DynamicContentEndpoints.cs
+  - .\Backend\PlantProcess.Api\Security\P01P02SecuritySchema.cs
+  - .\Backend\PlantProcess.Api\Security\PlantAccessControl.cs
+  - .\Backend\PlantProcess.Application\Licensing\Contracts\LicenseFeature.cs
+  - .\Backend\PlantProcess.Application\Licensing\Services\LicenseService.cs
+  - .\Backend\tests\PlantProcess.Api.IntegrationTests\OpenApi\OpenApiMlAndDynamicEndpointContractTests.cs
+
+PATTERN: ValueImpact
+COUNT  : 0
+
+PATTERN: ParentAreaId
+COUNT  : 25
+  - .\Backend\PlantProcess.Api\Endpoints\PlantLayout\PlantLayoutEndpoints.cs
+  - .\Backend\PlantProcess.Application\Contracts\PlantLayout\PlantLayoutDtos.cs
+  - .\Backend\PlantProcess.Application\Services\PlantLayout\PlantLayoutQueryService.cs
+  - .\Backend\PlantProcess.Domain\Entities\PlantLayout\Area.cs
+  - .\Backend\PlantProcess.Infrastructure\Migrations\20260507092434_AddPlantLayoutAndIntegrationMasterData.Designer.cs
+  - .\Backend\PlantProcess.Infrastructure\Migrations\20260510091155_Add2ndDayDomain.Designer.cs
+  - .\Backend\PlantProcess.Infrastructure\Migrations\20260510132030_Phase3_ModelConsistencyFixes.Designer.cs
+  - .\Backend\PlantProcess.Infrastructure\Migrations\20260511081726_AddOperationDefinitionIdToProcessStep.Designer.cs
+  - .\Backend\PlantProcess.Infrastructure\Migrations\20260511092313_AddStagingRecordEntity.Designer.cs
+  - .\Backend\PlantProcess.Infrastructure\Migrations\20260511115023_AddPhaseGCorrelationResults.Designer.cs
+  - .\Backend\PlantProcess.Infrastructure\Migrations\20260511124245_AddModelRegistry.Designer.cs
+  - .\Backend\PlantProcess.Infrastructure\Migrations\20260512085506_AddDashboardDefinitions.Designer.cs
+  - .\Backend\PlantProcess.Infrastructure\Migrations\20260516080826_AddPhase3ConnectorFoundation.Designer.cs
+  - .\Backend\PlantProcess.Infrastructure\Migrations\20260516094248_AddJobDefinition.Designer.cs
+  - .\Backend\PlantProcess.Infrastructure\Migrations\20260519064446_AddRiskScoreExplanationAndCriticalIndexes.Designer.cs
+  - .\Backend\PlantProcess.Infrastructure\Migrations\20260519075125_TodayAddRiskScoreExplanationAndCriticalIndexes.Designer.cs
+  - .\Backend\PlantProcess.Infrastructure\Migrations\20260519083512_AddCriticalQueryIndexes.Designer.cs
+  - .\Backend\PlantProcess.Infrastructure\Migrations\20260521182857_Fix_WidgetCode_UniqueIndex_PerDashboard.Designer.cs
+  - .\Backend\PlantProcess.Infrastructure\Migrations\20260521221629_Fix_PendingModelChanges.Designer.cs
+  - .\Backend\PlantProcess.Infrastructure\Migrations\20260524061000_AddAuditLogAndPerSourceScheduling.Designer.cs
+  - .\Backend\PlantProcess.Infrastructure\Migrations\20260524110553_HardenAuditLogEntrySchemaAndImmutability.Designer.cs
+  - .\Backend\PlantProcess.Infrastructure\Migrations\20260525082545_Phase1WorkflowTruth.Designer.cs
+  - .\Backend\PlantProcess.Infrastructure\Migrations\20260530130708_Phase03_ModelSnapshotSync.Designer.cs
+  - .\Backend\PlantProcess.Infrastructure\Migrations\PlantProcessDbContextModelSnapshot.cs
+  - .\Backend\PlantProcess.Infrastructure\Persistence\Configurations\PlantLayout\AreaConfiguration.cs
+
+PATTERN: ParentEquipmentId
+COUNT  : 25
+  - .\Backend\PlantProcess.Api\Endpoints\PlantLayout\PlantLayoutEndpoints.cs
+  - .\Backend\PlantProcess.Application\Contracts\PlantLayout\PlantLayoutDtos.cs
+  - .\Backend\PlantProcess.Application\Services\PlantLayout\PlantLayoutQueryService.cs
+  - .\Backend\PlantProcess.Domain\Entities\PlantLayout\Equipment.cs
+  - .\Backend\PlantProcess.Infrastructure\Migrations\20260507092434_AddPlantLayoutAndIntegrationMasterData.Designer.cs
+  - .\Backend\PlantProcess.Infrastructure\Migrations\20260510091155_Add2ndDayDomain.Designer.cs
+  - .\Backend\PlantProcess.Infrastructure\Migrations\20260510132030_Phase3_ModelConsistencyFixes.Designer.cs
+  - .\Backend\PlantProcess.Infrastructure\Migrations\20260511081726_AddOperationDefinitionIdToProcessStep.Designer.cs
+  - .\Backend\PlantProcess.Infrastructure\Migrations\20260511092313_AddStagingRecordEntity.Designer.cs
+  - .\Backend\PlantProcess.Infrastructure\Migrations\20260511115023_AddPhaseGCorrelationResults.Designer.cs
+  - .\Backend\PlantProcess.Infrastructure\Migrations\20260511124245_AddModelRegistry.Designer.cs
+  - .\Backend\PlantProcess.Infrastructure\Migrations\20260512085506_AddDashboardDefinitions.Designer.cs
+  - .\Backend\PlantProcess.Infrastructure\Migrations\20260516080826_AddPhase3ConnectorFoundation.Designer.cs
+  - .\Backend\PlantProcess.Infrastructure\Migrations\20260516094248_AddJobDefinition.Designer.cs
+  - .\Backend\PlantProcess.Infrastructure\Migrations\20260519064446_AddRiskScoreExplanationAndCriticalIndexes.Designer.cs
+  - .\Backend\PlantProcess.Infrastructure\Migrations\20260519075125_TodayAddRiskScoreExplanationAndCriticalIndexes.Designer.cs
+  - .\Backend\PlantProcess.Infrastructure\Migrations\20260519083512_AddCriticalQueryIndexes.Designer.cs
+  - .\Backend\PlantProcess.Infrastructure\Migrations\20260521182857_Fix_WidgetCode_UniqueIndex_PerDashboard.Designer.cs
+  - .\Backend\PlantProcess.Infrastructure\Migrations\20260521221629_Fix_PendingModelChanges.Designer.cs
+  - .\Backend\PlantProcess.Infrastructure\Migrations\20260524061000_AddAuditLogAndPerSourceScheduling.Designer.cs
+  - .\Backend\PlantProcess.Infrastructure\Migrations\20260524110553_HardenAuditLogEntrySchemaAndImmutability.Designer.cs
+  - .\Backend\PlantProcess.Infrastructure\Migrations\20260525082545_Phase1WorkflowTruth.Designer.cs
+  - .\Backend\PlantProcess.Infrastructure\Migrations\20260530130708_Phase03_ModelSnapshotSync.Designer.cs
+  - .\Backend\PlantProcess.Infrastructure\Migrations\PlantProcessDbContextModelSnapshot.cs
+  - .\Backend\PlantProcess.Infrastructure\Persistence\Configurations\PlantLayout\EquipmentConfiguration.cs
+
+============================================================
+5. Frontend P03/P04 page/component search
+============================================================
+PATTERN: Mapping
+COUNT  : 20
+  - .\Frontend\PlantProcess.Web\src\api\demo\demoLifecycle.api.ts
+  - .\Frontend\PlantProcess.Web\src\api\http\apiClient.ts
+  - .\Frontend\PlantProcess.Web\src\api\integration\integration.api.ts
+  - .\Frontend\PlantProcess.Web\src\api\legacy\legacyApiHardening.ts
+  - .\Frontend\PlantProcess.Web\src\api\legacy\plantProcessApi.ts
+  - .\Frontend\PlantProcess.Web\src\api\license\licenseUsage.api.ts
+  - .\Frontend\PlantProcess.Web\src\api\phase1\phase1Workflow.api.ts
+  - .\Frontend\PlantProcess.Web\src\api\schemaMapping\schemaMapping.api.ts
+  - .\Frontend\PlantProcess.Web\src\components\AppLayout.tsx
+  - .\Frontend\PlantProcess.Web\src\components\demo\DimensionCompletionPanel.tsx
+  - .\Frontend\PlantProcess.Web\src\demo\plantProcessDemoScenario.ts
+  - .\Frontend\PlantProcess.Web\src\pages\Admin\AdminImportingDataTab.tsx
+  - .\Frontend\PlantProcess.Web\src\pages\Admin\AdminSchemaConfigurationTab.tsx
+  - .\Frontend\PlantProcess.Web\src\pages\Admin\CanonicalSchemaMappingPanel.tsx
+  - .\Frontend\PlantProcess.Web\src\pages\CommercialLicense\CommercialLicensePage.tsx
+  - .\Frontend\PlantProcess.Web\src\pages\Phase56\Phase56Pages.tsx
+  - .\Frontend\PlantProcess.Web\src\pages\Phase78\Phase78Pages.tsx
+  - .\Frontend\PlantProcess.Web\src\state\DemoModeContext.tsx
+  - .\Frontend\PlantProcess.Web\src\styles\pages\admin.css
+  - .\Frontend\PlantProcess.Web\src\utils\errorMapping.ts
+
+PATTERN: Workbench
+COUNT  : 1
+  - .\Frontend\PlantProcess.Web\src\api\phase1\phase1Workflow.api.ts
+
+PATTERN: BusinessKey
+COUNT  : 0
+
+PATTERN: SqlView
+COUNT  : 2
+  - .\Frontend\PlantProcess.Web\src\pages\Admin\AdminSchemaConfigurationTab.tsx
+  - .\Frontend\PlantProcess.Web\src\pages\CommercialLicense\CommercialLicensePage.tsx
+
+PATTERN: Canonical
+COUNT  : 21
+  - .\Frontend\PlantProcess.Web\src\App.tsx
+  - .\Frontend\PlantProcess.Web\src\api\phase1\phase1Workflow.api.ts
+  - .\Frontend\PlantProcess.Web\src\api\schemaMapping\schemaMapping.api.ts
+  - .\Frontend\PlantProcess.Web\src\api\twoStageImport\twoStageImport.api.ts
+  - .\Frontend\PlantProcess.Web\src\brand\plantProcessBrand.ts
+  - .\Frontend\PlantProcess.Web\src\components\BrandProofSection.tsx
+  - .\Frontend\PlantProcess.Web\src\components\standard\StandardFields.stories.tsx
+  - .\Frontend\PlantProcess.Web\src\demo\plantProcessDemoScenario.ts
+  - .\Frontend\PlantProcess.Web\src\pages\Admin\AdminImportingDataTab.tsx
+  - .\Frontend\PlantProcess.Web\src\pages\Admin\AdminSchemaConfigurationTab.tsx
+  - .\Frontend\PlantProcess.Web\src\pages\Admin\AdminSharedComponents.tsx
+  - .\Frontend\PlantProcess.Web\src\pages\Admin\CanonicalSchemaMappingPanel.tsx
+  - .\Frontend\PlantProcess.Web\src\pages\Admin\TwoStageImportMonitorPanel.tsx
+  - .\Frontend\PlantProcess.Web\src\pages\PageBuilder\PageBuilderPage.tsx
+  - .\Frontend\PlantProcess.Web\src\pages\PageBuilder\__tests__\pageBuilderReducer.test.ts
+  - .\Frontend\PlantProcess.Web\src\pages\Phase56\Phase56Pages.tsx
+  - .\Frontend\PlantProcess.Web\src\pages\Phase78\Phase78Pages.tsx
+  - .\Frontend\PlantProcess.Web\src\state\DashboardSelectionContext.tsx
+  - .\Frontend\PlantProcess.Web\src\styles\pages\admin.css
+  - .\Frontend\PlantProcess.Web\src\ui\standard-components.stories.tsx
+  - .\Frontend\PlantProcess.Web\src\ui\standards\ui-component-specs.md
+
+PATTERN: Genealogy
+COUNT  : 13
+  - .\Frontend\PlantProcess.Web\src\api\analytics\analytics.api.ts
+  - .\Frontend\PlantProcess.Web\src\api\demo\demoLifecycle.api.ts
+  - .\Frontend\PlantProcess.Web\src\api\legacy\plantProcessApi.ts
+  - .\Frontend\PlantProcess.Web\src\api\ml\mlReadiness.api.ts
+  - .\Frontend\PlantProcess.Web\src\components\ActiveFilterChips.tsx
+  - .\Frontend\PlantProcess.Web\src\components\AppLayout.tsx
+  - .\Frontend\PlantProcess.Web\src\components\DashboardFilterBar.tsx
+  - .\Frontend\PlantProcess.Web\src\components\standard\StandardTabs.stories.tsx
+  - .\Frontend\PlantProcess.Web\src\demo\plantProcessDemoScenario.ts
+  - .\Frontend\PlantProcess.Web\src\hardening\routeContracts.ts
+  - .\Frontend\PlantProcess.Web\src\pages\CommercialLicense\CommercialLicensePage.tsx
+  - .\Frontend\PlantProcess.Web\src\pages\Phase56\Phase56Pages.tsx
+  - .\Frontend\PlantProcess.Web\src\state\DashboardFilterContext.tsx
+
+PATTERN: MaterialInvestigation
+COUNT  : 4
+  - .\Frontend\PlantProcess.Web\src\App.tsx
+  - .\Frontend\PlantProcess.Web\src\api\legacy\plantProcessApi.ts
+  - .\Frontend\PlantProcess.Web\src\pages\MaterialInvestigationPage.tsx
+  - .\Frontend\PlantProcess.Web\src\pages\Phase56\Phase56Pages.tsx
+
+PATTERN: InvestigateMaterial
+COUNT  : 0
+
+PATTERN: Downtime
+COUNT  : 1
+  - .\Frontend\PlantProcess.Web\src\pages\Admin\AdminSchemaConfigurationTab.tsx
+
+PATTERN: StandardSurface
+COUNT  : 7
+  - .\Frontend\PlantProcess.Web\src\components\standard\DesignTokens.stories.tsx
+  - .\Frontend\PlantProcess.Web\src\components\standard\DoDont.stories.tsx
+  - .\Frontend\PlantProcess.Web\src\components\standard\index.ts
+  - .\Frontend\PlantProcess.Web\src\components\standard\Onboarding.stories.tsx
+  - .\Frontend\PlantProcess.Web\src\components\standard\StandardSurface.stories.tsx
+  - .\Frontend\PlantProcess.Web\src\components\standard\StandardTabs.stories.tsx
+  - .\Frontend\PlantProcess.Web\src\pages\PageBuilder\PageBuilderPage.tsx
+
+PATTERN: StandardTabs
+COUNT  : 9
+  - .\Frontend\PlantProcess.Web\src\components\standard\index.ts
+  - .\Frontend\PlantProcess.Web\src\components\standard\StandardTabs.stories.tsx
+  - .\Frontend\PlantProcess.Web\src\components\standard\StandardTabs.tsx
+  - .\Frontend\PlantProcess.Web\src\components\standard\__tests__\StandardTabs.test.tsx
+  - .\Frontend\PlantProcess.Web\src\pages\Phase56\Phase56Pages.tsx
+  - .\Frontend\PlantProcess.Web\src\pages\Phase78\Phase78Pages.tsx
+  - .\Frontend\PlantProcess.Web\src\ui\standard-components.stories.tsx
+  - .\Frontend\PlantProcess.Web\src\ui\standard-components.tsx
+  - .\Frontend\PlantProcess.Web\src\ui\standards\ui-component-specs.md
+
+============================================================
+6. File-name search
+============================================================
+NAME PATTERN: Mapping
+COUNT       : 18
+  - .\Backend\database\scripts\111_phase1_demo_mapping_views.sql
+  - .\Backend\database\scripts\117_phase8_widget_script_layer_entity_mapping.sql
+  - .\Backend\database\scripts\120_phase02_canonical_schema_mapping_engine.sql
+  - .\Backend\PlantProcess.Api\Endpoints\Admin\GenericSchemaMappingEndpoints.cs
+  - .\Backend\PlantProcess.Application\Integration\Contracts\Mapping\CreateMappingDefinitionCommand.cs
+  - .\Backend\PlantProcess.Application\Integration\Contracts\Mapping\MappingDefinitionDtos.cs
+  - .\Backend\PlantProcess.Application\Integration\Contracts\Mapping\MappingExecutionResult.cs
+  - .\Backend\PlantProcess.Application\Integration\Interfaces\Mapping\IMappingDefinitionService.cs
+  - .\Backend\PlantProcess.Application\Integration\Interfaces\Mapping\IMappingExecutionService.cs
+  - .\Backend\PlantProcess.Application\Integration\Services\Mapping\MappingDefinitionService.cs
+  - .\Backend\PlantProcess.Application\Integration\Services\Mapping\MappingExecutionService.cs
+  - .\Backend\PlantProcess.Domain\Entities\Integration\MappingDefinition.cs
+  - .\Backend\PlantProcess.Infrastructure\Persistence\Configurations\Integration\MappingDefinitionConfiguration.cs
+  - .\Documentation\docs\MappingJsonStandard.md
+  - .\Frontend\PlantProcess.Web\e2e\phase1-toast-mapping.spec.ts
+  - .\Frontend\PlantProcess.Web\src\api\schemaMapping\schemaMapping.api.ts
+  - .\Frontend\PlantProcess.Web\src\pages\Admin\CanonicalSchemaMappingPanel.tsx
+  - .\Frontend\PlantProcess.Web\src\utils\errorMapping.ts
+
+NAME PATTERN: SchemaConfiguration
+COUNT       : 7
+  - .\Backend\PlantProcess.Api\Endpoints\Admin\SchemaConfigurationEndpoints.cs
+  - .\Backend\PlantProcess.Application\Integration\Contracts\Dtos\SchemaConfigurationDtos.cs
+  - .\Backend\PlantProcess.Application\Integration\Interfaces\SchemaConfiguration\ISchemaConfigurationService.cs
+  - .\Backend\PlantProcess.Application\Integration\Interfaces\SchemaConfiguration\ISchemaReader.cs
+  - .\Backend\PlantProcess.Application\Integration\Services\SchemaConfiguration\SchemaConfigurationService.cs
+  - .\Backend\tests\PlantProcess.Api.IntegrationTests\Security\SchemaConfigurationSafetyEndpointTests.cs
+  - .\Frontend\PlantProcess.Web\src\pages\Admin\AdminSchemaConfigurationTab.tsx
+
+NAME PATTERN: SqlView
+COUNT       : 0
+
+NAME PATTERN: SafeSql
+COUNT       : 2
+  - .\Backend\PlantProcess.Application\Integration\Security\SafeSqlValidator.cs
+  - .\Backend\tests\PlantProcess.Application.UnitTests\Security\SafeSqlPolicyTests.cs
+
+NAME PATTERN: Genealogy
+COUNT       : 8
+  - .\Backend\database\scripts\140_phase02_demo_sources_genealogy_spine.sql
+  - .\Backend\database\seed\001_basic_genealogy_seed.sql
+  - .\Backend\PlantProcess.Application\Contracts\Materials\CreateGenealogyEdgeCommand.cs
+  - .\Backend\PlantProcess.Application\Services\Materials\GenealogyService.cs
+  - .\Backend\PlantProcess.Application\Services\Materials\IGenealogyService.cs
+  - .\Backend\PlantProcess.Domain\Entities\Materials\GenealogyEdge.cs
+  - .\Backend\PlantProcess.Infrastructure\Persistence\Configurations\Materials\GenealogyEdgeConfiguration.cs
+  - .\tools\phase25\fix-pack3-p02-genealogy-source-count.cjs
+
+NAME PATTERN: MaterialInvestigation
+COUNT       : 2
+  - .\Backend\PlantProcess.Api\Endpoints\Materials\MaterialInvestigationEndpoints.cs
+  - .\Frontend\PlantProcess.Web\src\pages\MaterialInvestigationPage.tsx
+
+NAME PATTERN: Downtime
+COUNT       : 4
+  - .\Backend\PlantProcess.Application\Contracts\Process\AddDowntimeEventCommand.cs
+  - .\Backend\PlantProcess.Domain\Entities\Process\DowntimeEvent.cs
+  - .\Backend\PlantProcess.Infrastructure\Persistence\Configurations\Process\DowntimeEventConfiguration.cs
+  - .\Infrastructure\demo-sources\downtime-mysql\init\001_schema_seed.sql
+
+NAME PATTERN: Canonical
+COUNT       : 5
+  - .\Backend\database\scripts\120_phase02_canonical_schema_mapping_engine.sql
+  - .\Backend\PlantProcess.Infrastructure\Migrations\20260507074459_InitialCanonicalModel.cs
+  - .\Backend\PlantProcess.Infrastructure\Migrations\20260507074459_InitialCanonicalModel.Designer.cs
+  - .\docs\demo\canonical-layout.md
+  - .\Frontend\PlantProcess.Web\src\pages\Admin\CanonicalSchemaMappingPanel.tsx
+
+NAME PATTERN: Investigation
+COUNT       : 7
+  - .\Backend\PlantProcess.Api\Endpoints\Analytics\Phase2InvestigationEndpoints.cs
+  - .\Backend\PlantProcess.Api\Endpoints\Materials\MaterialInvestigationEndpoints.cs
+  - .\Backend\PlantProcess.Application\Reporting\InvestigationReportDtos.cs
+  - .\Backend\PlantProcess.Application\Services\Reporting\IInvestigationReportService.cs
+  - .\Backend\PlantProcess.Application\Services\Reporting\InvestigationReportService.cs
+  - .\Frontend\PlantProcess.Web\scripts\probes\material-search\02-load-investigation.ps1
+  - .\Frontend\PlantProcess.Web\src\pages\MaterialInvestigationPage.tsx
+
+============================================================
+7. Database script inventory
+============================================================
+Script count: 32
+  - 050_dashboard_phase8_9_10_indexes.sql
+  - 060_phase_8_9_dashboard_materialized_views.sql
+  - 070_fix_system_template_widget_codes.sql
+  - 071_validate_dashboard_performance.sql
+  - 080_phase_3_4_connector_schema_foundation.sql
+  - 095_create_runtime_app_role_admin_only.sql
+  - 096_harden_audit_log_immutability.sql
+  - 110_phase1_demo_source_shapes.sql
+  - 111_phase1_demo_mapping_views.sql
+  - 112_phase1_golden_demo_data.sql
+  - 113_phase1_widget_script_layer.sql
+  - 115_phase2_integrity_audit.sql
+  - 116_phase2_operation_analytics_pilot_foundation.sql
+  - 117_phase8_widget_script_layer_entity_mapping.sql
+  - 120_phase02_canonical_schema_mapping_engine.sql
+  - 121_phase01_bootstrap_token_sweep.sql
+  - 130_phase03_two_stage_delta_import_architecture.sql
+  - 140_phase02_demo_sources_genealogy_spine.sql
+  - 141_phase03_page_builder_foundation.sql
+  - 142_phase02_phase03_page_definition_and_demo_source_completion.sql
+  - 200_phase02_ml_foundation_feature_store_pgvector.sql
+  - 200_phase02_ml_foundation_feature_store_pgvector.sql.before-direct-dollar-fix.bak
+  - 200_phase02_ml_foundation_feature_store_pgvector.sql.before-local-safe-repair.bak
+  - 201_phase02_ml_feature_store_v6_completion.sql
+  - 202_phase02_ml_compute_basic_correlations_hotfix.sql
+  - 203_phase02_ml_compute_v6_wrapper_hotfix.sql
+  - 204_phase04_phase05_ml_learning_core.sql
+  - 205_phase04_phase05_completion_governance_jobs_tests.sql
+  - 206_fix_dashboard_widget_definition_schema_drift.sql
+  - 207_fix_dashboard_widget_expression_smallint_schema_drift.sql
+  - 300_p01_p02_security_access_control_spine.sql
+  - 300_p01_p02_security_access_control_spine.sql.bak_20260601_154004
+
+============================================================
+8. Local DB object probe
+============================================================
+ ppiq_tenants | ppiq_auth_users | v_ppiq_effective_entitlements | canonical_material_units | canonical_genealogy_edges | canonical_process_step_executions | canonical_parameter_observations | canonical_quality_events | ppiq_business_key_definitions | ppiq_mapping_versions 
+--------------+-----------------+-------------------------------+--------------------------+---------------------------+-----------------------------------+----------------------------------+--------------------------+-------------------------------+-----------------------
+ ppiq_tenants | ppiq_auth_users | v_ppiq_effective_entitlements |                          |                           |                                   |                                  |                          |                               | 
+(1 row)
+
+
+============================================================
+9. Recommended next step
+============================================================
+Do not implement P03/P04 blindly. Use this audit report to attach the mapping/genealogy patch to existing code surfaces instead of creating duplicate subsystems.
+P03 must extend existing DB-link/table-browser/SQL-view-editor/schema configuration.
+P04 must extend existing genealogy/material investigation work and recursive area/equipment model.
+
