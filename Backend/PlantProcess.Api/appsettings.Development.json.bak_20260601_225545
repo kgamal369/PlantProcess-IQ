@@ -14,7 +14,7 @@
       "Issuer": "PlantProcessIQ",
       "Audience": "PlantProcessIQ.Client",
       "SigningKey": "dev-local-signing-key-please-change-0123456789ABCDEF",
-      "AccessTokenMinutes": 60,
+      "AccessTokenMinutes": 120,
       "BootstrapAdminUser": "admin",
       "BootstrapAdminPassword": "Admin123!",
       "Users": [

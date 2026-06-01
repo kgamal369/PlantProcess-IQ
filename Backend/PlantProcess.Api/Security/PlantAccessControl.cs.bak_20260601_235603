@@ -190,7 +190,6 @@ public sealed class AccessControlMiddleware
         ("/workflow", All(), "job.manage", false),
         ("/analytics/correlations", new[] { "GET", "POST" }, "analysis.execute", false),
         ("/analytics/ml", new[] { "GET", "POST" }, "analysis.execute", false),
-        ("/api/ml/learning", new[] { "GET", "POST" }, "job.manage", false),
         ("/analytics/dashboard/definitions", All(), "page.design", false),
         ("/analytics/dashboard", new[] { "GET", "POST" }, "assistant.use", false),
         ("/page-definitions", All(), "page.design", false),

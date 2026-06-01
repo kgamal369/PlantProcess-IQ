@@ -69,7 +69,7 @@ public sealed class AuthGateMatrixTests : AuthenticatedApiTestBase
         json.GetProperty("scopes").EnumerateArray()
             .Select(x => x.GetString())
             .Should()
-            .Contain("source.configure");
+            .Contain("plantprocess.data.manage");
     }
 
     [Fact]
