@@ -1,4 +1,4 @@
-﻿{
+{
     email {$ACME_EMAIL:admin@plantprocessiq.com}
 }
 
