@@ -1,7 +1,7 @@
-// ============================================================
+﻿// ============================================================
 // FILE: Backend/PlantProcess.Infrastructure/Connectors/SqlServer/MsSqlConnector.cs
 //
-// Full SQL Server / MSSQL connector — matches the PostgreSqlConnector
+// Full SQL Server / MSSQL connector â€” matches the PostgreSqlConnector
 // interface contract exactly.
 //
 // REQUIRED NuGet package (add to PlantProcess.Infrastructure.csproj):
@@ -31,7 +31,7 @@ public sealed class MsSqlConnector : IDataSourceConnector, ISchemaReader, IDataS
 
     public string ProviderType => "SqlServer";
 
-    // ── Connection Test ───────────────────────────────────────────────────
+    // â”€â”€ Connection Test â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     public async Task<DataSourceConnectionTestResult> TestConnectionAsync(
         ConnectionProfile connectionProfile,
@@ -41,6 +41,7 @@ public sealed class MsSqlConnector : IDataSourceConnector, ISchemaReader, IDataS
         {
             await using var connection = new SqlConnection(BuildConnectionString(connectionProfile));
             await connection.OpenAsync(cancellationToken);
+            await PlantProcess.Infrastructure.Connectors.Common.ConnectorReadOnlySession.ApplyAsync(connection, cancellationToken);
 
             await using var command = new SqlCommand(
                 "SELECT DB_NAME(), SYSTEM_USER, @@VERSION;",
@@ -68,7 +69,7 @@ public sealed class MsSqlConnector : IDataSourceConnector, ISchemaReader, IDataS
         }
     }
 
-    // ── Dataset Discovery ─────────────────────────────────────────────────
+    // â”€â”€ Dataset Discovery â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     public async Task<IReadOnlyList<DiscoveredSourceDataset>> DiscoverDatasetsAsync(
         ConnectionProfile connectionProfile,
@@ -94,6 +95,7 @@ public sealed class MsSqlConnector : IDataSourceConnector, ISchemaReader, IDataS
 
         await using var connection = new SqlConnection(BuildConnectionString(connectionProfile));
         await connection.OpenAsync(cancellationToken);
+        await PlantProcess.Infrastructure.Connectors.Common.ConnectorReadOnlySession.ApplyAsync(connection, cancellationToken);
 
         await using var command = new SqlCommand(sql, connection);
         command.Parameters.AddWithValue("@schema", schemaName);
@@ -125,7 +127,7 @@ public sealed class MsSqlConnector : IDataSourceConnector, ISchemaReader, IDataS
         return datasets;
     }
 
-    // ── Field Discovery ───────────────────────────────────────────────────
+    // â”€â”€ Field Discovery â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     public async Task<IReadOnlyList<DiscoveredSourceField>> DiscoverFieldsForDatasetAsync(
         ConnectionProfile connectionProfile,
@@ -165,6 +167,7 @@ public sealed class MsSqlConnector : IDataSourceConnector, ISchemaReader, IDataS
 
         await using var connection = new SqlConnection(BuildConnectionString(connectionProfile));
         await connection.OpenAsync(cancellationToken);
+        await PlantProcess.Infrastructure.Connectors.Common.ConnectorReadOnlySession.ApplyAsync(connection, cancellationToken);
 
         await using var command = new SqlCommand(sql, connection);
         command.Parameters.AddWithValue("@schema", schemaName);
@@ -202,7 +205,7 @@ public sealed class MsSqlConnector : IDataSourceConnector, ISchemaReader, IDataS
         return fields;
     }
 
-    // ── Full Read ─────────────────────────────────────────────────────────
+    // â”€â”€ Full Read â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     public async Task<IReadOnlyList<DataSourceRow>> ReadRowsAsync(
         ConnectionProfile connectionProfile,
@@ -224,7 +227,7 @@ public sealed class MsSqlConnector : IDataSourceConnector, ISchemaReader, IDataS
         }, cancellationToken);
     }
 
-    // ── Incremental (cursor) Read ─────────────────────────────────────────
+    // â”€â”€ Incremental (cursor) Read â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     public async Task<IReadOnlyList<DataSourceRow>> ReadRowsSinceKeyAsync(
         ConnectionProfile connectionProfile,
@@ -258,7 +261,7 @@ public sealed class MsSqlConnector : IDataSourceConnector, ISchemaReader, IDataS
 
     public string? GetLastError() => _lastError;
 
-    // ── Private Helpers ───────────────────────────────────────────────────
+    // â”€â”€ Private Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     private static async Task<IReadOnlyList<DataSourceRow>> ExecuteReadAsync(
         ConnectionProfile profile,
@@ -270,6 +273,7 @@ public sealed class MsSqlConnector : IDataSourceConnector, ISchemaReader, IDataS
 
         await using var connection = new SqlConnection(BuildConnectionString(profile));
         await connection.OpenAsync(cancellationToken);
+        await PlantProcess.Infrastructure.Connectors.Common.ConnectorReadOnlySession.ApplyAsync(connection, cancellationToken);
 
         await using var command = new SqlCommand(sql, connection);
         configure(command);
@@ -371,7 +375,7 @@ public sealed class MsSqlConnector : IDataSourceConnector, ISchemaReader, IDataS
 
         if (clean.Contains('[') || clean.Contains(']'))
             throw new InvalidOperationException(
-                $"Unsafe SQL Server identifier '{value}' — contains bracket characters.");
+                $"Unsafe SQL Server identifier '{value}' â€” contains bracket characters.");
 
         // Allow letters, digits, underscores, spaces and dots (schema.table patterns)
         if (clean.Any(ch => !(char.IsLetterOrDigit(ch) || ch is '_' or ' ' or '.')))
@@ -399,3 +403,4 @@ public sealed class MsSqlConnector : IDataSourceConnector, ISchemaReader, IDataS
     private static DataSourceConnectionTestResult Failure(string message)
         => new(false, message, DateTime.UtcNow, new Dictionary<string, string?>());
 }
+

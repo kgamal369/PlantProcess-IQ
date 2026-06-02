@@ -38,4 +38,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\PlantProcess.Analytics.Core\PlantProcess.Analytics.Core.csproj" />
+  </ItemGroup>
 </Project>
+

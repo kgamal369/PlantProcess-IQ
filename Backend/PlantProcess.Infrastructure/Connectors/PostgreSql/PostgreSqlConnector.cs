@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Text.Json;
 using Npgsql;
 using PlantProcess.Application.Integration.Contracts.Dtos;
@@ -22,6 +22,7 @@ public sealed class PostgreSqlConnector : IDataSourceConnector, ISchemaReader, I
         {
             await using var connection = new NpgsqlConnection(BuildConnectionString(connectionProfile));
             await connection.OpenAsync(cancellationToken);
+            await PlantProcess.Infrastructure.Connectors.Common.ConnectorReadOnlySession.ApplyAsync(connection, cancellationToken);
 
             await using var command = new NpgsqlCommand("SELECT current_database(), current_user, version();", connection);
             await using var reader = await command.ExecuteReaderAsync(cancellationToken);
@@ -66,6 +67,7 @@ public sealed class PostgreSqlConnector : IDataSourceConnector, ISchemaReader, I
 
         await using var connection = new NpgsqlConnection(BuildConnectionString(connectionProfile));
         await connection.OpenAsync(cancellationToken);
+        await PlantProcess.Infrastructure.Connectors.Common.ConnectorReadOnlySession.ApplyAsync(connection, cancellationToken);
 
         await using var command = new NpgsqlCommand(sql, connection);
         command.Parameters.AddWithValue("schema", schemaName);
@@ -125,6 +127,7 @@ public sealed class PostgreSqlConnector : IDataSourceConnector, ISchemaReader, I
 
         await using var connection = new NpgsqlConnection(BuildConnectionString(connectionProfile));
         await connection.OpenAsync(cancellationToken);
+        await PlantProcess.Infrastructure.Connectors.Common.ConnectorReadOnlySession.ApplyAsync(connection, cancellationToken);
 
         await using var command = new NpgsqlCommand(sql, connection);
         command.Parameters.AddWithValue("schema", schemaName);
@@ -215,6 +218,7 @@ public sealed class PostgreSqlConnector : IDataSourceConnector, ISchemaReader, I
 
         await using var connection = new NpgsqlConnection(BuildConnectionString(profile));
         await connection.OpenAsync(cancellationToken);
+        await PlantProcess.Infrastructure.Connectors.Common.ConnectorReadOnlySession.ApplyAsync(connection, cancellationToken);
 
         await using var command = new NpgsqlCommand(sql, connection);
         configure(command);

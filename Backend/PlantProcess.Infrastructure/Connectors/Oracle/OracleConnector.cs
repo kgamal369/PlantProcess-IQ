@@ -1,4 +1,4 @@
-using System.Data;
+﻿using System.Data;
 using System.Globalization;
 using System.Text.Json;
 using Oracle.ManagedDataAccess.Client;
@@ -50,6 +50,7 @@ public sealed class OracleConnector :
         {
             await using var connection = new OracleConnection(BuildConnectionString(connectionProfile));
             await connection.OpenAsync(cancellationToken);
+            await PlantProcess.Infrastructure.Connectors.Common.ConnectorReadOnlySession.ApplyAsync(connection, cancellationToken);
 
             await using var command = connection.CreateCommand();
             command.CommandText =
@@ -113,6 +114,7 @@ public sealed class OracleConnector :
 
         await using var connection = new OracleConnection(BuildConnectionString(connectionProfile));
         await connection.OpenAsync(cancellationToken);
+        await PlantProcess.Infrastructure.Connectors.Common.ConnectorReadOnlySession.ApplyAsync(connection, cancellationToken);
 
         await using var command = connection.CreateCommand();
 
@@ -177,6 +179,7 @@ public sealed class OracleConnector :
 
         await using var connection = new OracleConnection(BuildConnectionString(connectionProfile));
         await connection.OpenAsync(cancellationToken);
+        await PlantProcess.Infrastructure.Connectors.Common.ConnectorReadOnlySession.ApplyAsync(connection, cancellationToken);
 
         await using var command = connection.CreateCommand();
 
@@ -306,6 +309,7 @@ public sealed class OracleConnector :
     {
         await using var connection = new OracleConnection(BuildConnectionString(profile));
         await connection.OpenAsync(cancellationToken);
+        await PlantProcess.Infrastructure.Connectors.Common.ConnectorReadOnlySession.ApplyAsync(connection, cancellationToken);
 
         await using var command = connection.CreateCommand();
         command.CommandText = sql;
