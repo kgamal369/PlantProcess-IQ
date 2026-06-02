@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
@@ -24,6 +24,7 @@
     <ProjectReference Include="..\PlantProcess.Infrastructure\PlantProcess.Infrastructure.csproj" />
     <ProjectReference Include="..\PlantProcess.Workers\PlantProcess.Workers.csproj" />
     <ProjectReference Include="..\PlantProcess.Application\PlantProcess.Application.csproj" />
+    <ProjectReference Include="..\PlantProcess.Analytics.Engine\PlantProcess.Analytics.Engine.csproj" />
   </ItemGroup>
 
 </Project>

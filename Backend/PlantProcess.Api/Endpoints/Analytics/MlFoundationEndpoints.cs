@@ -143,9 +143,19 @@ public static class MlFoundationEndpoints
     private static async Task<IResult> ComputeCorrelationAsync(
         [FromBody] CorrelationComputeRequest request,
         ICorrelationComputeEngine engine,
+        IServiceProvider serviceProvider,
         CancellationToken cancellationToken)
     {
-        var result = await engine.ComputeAsync(request, cancellationToken);
+        var selected = engine;
+        if (request.Filters is not null
+            && request.Filters.TryGetValue("engine", out var engineKey)
+            && string.Equals(engineKey, "managed", StringComparison.OrdinalIgnoreCase))
+        {
+            selected = Microsoft.Extensions.DependencyInjection.ServiceProviderKeyedServiceExtensions
+                .GetRequiredKeyedService<ICorrelationComputeEngine>(serviceProvider, "managed");
+        }
+
+        var result = await selected.ComputeAsync(request, cancellationToken);
         return Results.Ok(result);
     }
 

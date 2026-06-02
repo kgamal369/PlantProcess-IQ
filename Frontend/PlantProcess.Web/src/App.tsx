@@ -1,4 +1,4 @@
-﻿// ============================================================
+// ============================================================
 // FILE: Frontend/PlantProcess.Web/src/App.tsx
 //
 // Phase 2 E2E Stability Update:
@@ -134,6 +134,11 @@ const PageBuilderPage = lazy(() =>
   }))
 );
 
+const AnalyticsWidgetsPage = lazy(() =>
+  import("./pages/Analytics/AnalyticsWidgetsPage").then((m) => ({
+    default: m.AnalyticsWidgetsPage,
+  }))
+);
 const MlReadinessPage = lazy(() =>
   import("./pages/MlReadiness/MlReadinessPage").then((m) => ({
     default: m.MlReadinessPage,
@@ -430,6 +435,15 @@ function AppRoutes() {
                         "/ml-readiness",
                         "ML readiness view is refreshing",
                         <MlReadinessPage />
+                      )}
+                    />
+
+                    <Route
+                      path="/analytics-widgets"
+                      element={withPageBoundary(
+                        "/analytics-widgets",
+                        "Analytics widgets are loading",
+                        <AnalyticsWidgetsPage />
                       )}
                     />
 

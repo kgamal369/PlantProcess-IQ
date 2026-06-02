@@ -49,8 +49,6 @@ public sealed class PostgresCanonicalFeatureSource : ICanonicalFeatureSource
                        max(o.heat_id)         AS heat,
                        max(o.observed_at_utc) AS obs
                 FROM public.ml_outcome_values o
-                JOIN public.ml_outcome_definitions od
-                  ON lower(od.outcome_key) = lower(@outcomeKey) AND od.is_deleted = false
                 WHERE lower(o.outcome_key) = lower(@outcomeKey)
                   AND (@grain = 'generic' OR o.grain = @grain)
                   AND o.numeric_value IS NOT NULL
