@@ -55,7 +55,7 @@ api.plantprocessiq.com {
     import api_csp
 
     encode gzip zstd
-    reverse_proxy plantprocess-api:5063
+    reverse_proxy plantprocess-api:8080
 }
 
 jenkins.plantprocessiq.com {
@@ -70,7 +70,3 @@ jenkins.plantprocessiq.com {
     reverse_proxy jenkins:8080
 }
 
-
-# Validation sync: 1780405672027
-
-# Validation sync: 1780406527983
