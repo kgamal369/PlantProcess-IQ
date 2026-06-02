@@ -329,6 +329,8 @@ if (ppiqV7BootstrapCollision)
 
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<PlantProcess.Api.ErrorHandling.GlobalExceptionHandler>();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<PlantProcess.Application.Security.Tenancy.ITenantAccessor, PlantProcess.Api.Security.HttpTenantAccessor>();
 var app = builder.Build();
 if (!app.Environment.IsDevelopment()) { app.UseHsts(); }
 app.UseMiddleware<PlantProcess.Api.Middleware.SecurityHeadersMiddleware>();
@@ -503,6 +505,7 @@ finally
 public partial class Program
 {
 }
+
 
 
 

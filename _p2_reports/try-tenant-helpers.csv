@@ -1,0 +1,6 @@
+﻿"File","Line","Text"
+"\Backend\PlantProcess.Api\Endpoints\Analytics\KpiEvaluationEndpoints.cs","135","private static bool TryTenant(ClaimsPrincipal user, out Guid tenantId)"
+"\Backend\PlantProcess.Api\Endpoints\Analytics\SuggestionEndpoints.cs","57","private static bool TryTenant(ClaimsPrincipal u, out Guid t)"
+"\Backend\PlantProcess.Api\Endpoints\Analytics\ValueEndpoints.cs","70","private static bool TryTenant(ClaimsPrincipal user, out Guid tenantId)"
+"\Backend\PlantProcess.Api\Endpoints\Assistant\AssistantEndpoints.cs","46","private static bool TryTenant(ClaimsPrincipal u, out Guid t)"
+"\Backend\PlantProcess.Api\Endpoints\PageBuilder\PageDefinitionEndpoints.cs","366","private static string ResolveTenant(ClaimsPrincipal user)"

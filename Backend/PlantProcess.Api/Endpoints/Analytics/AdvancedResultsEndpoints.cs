@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Builder;
+﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Npgsql;
@@ -15,6 +15,8 @@ public static class AdvancedResultsEndpoints
         var group = app.MapGroup("/api/analytics/advanced")
             .WithTags("Analytics Advanced")
             .RequireAuthorization();
+        group.MapGet("/readiness", async (string outcomeKey, string? grain, int? windowDays, System.Guid? tenantId, PlantProcess.Application.Analytics.Advanced.IAnalysisReadinessService readiness, System.Threading.CancellationToken ct) =>
+            Results.Ok(await readiness.EvaluateAsync(new PlantProcess.Application.Analytics.Advanced.AdvancedAnalysisRequest(outcomeKey, string.IsNullOrWhiteSpace(grain) ? "coil" : grain!, windowDays ?? 3650, tenantId ?? PlantProcess.Application.Analytics.Advanced.AdvancedDefaults.DemoTenant), ct)));
 
         group.MapGet("/runs", async (NpgsqlDataSource ds, CancellationToken ct) =>
             Results.Ok(await ReadAsync(ds,
@@ -27,7 +29,7 @@ public static class AdvancedResultsEndpoints
             if (resolvedRun is null)
             {
                 await using var rc = ds.CreateCommand(
-                    "SELECT id FROM public.ml_correlation_compute_runs WHERE engine_key = 'managed-stat-v1' " +
+                    "SELECT id FROM public.ml_correlation_compute_runs WHERE engine_key IN ('dotnet-analytics-core-v1','managed-stat-v1') " +
                     (string.IsNullOrWhiteSpace(outcomeKey) ? "" : "AND target_outcome_key = @o ") +
                     "ORDER BY completed_at_utc DESC NULLS LAST LIMIT 1");
                 if (!string.IsNullOrWhiteSpace(outcomeKey)) rc.Parameters.AddWithValue("o", outcomeKey!);
@@ -66,7 +68,9 @@ public static class AdvancedResultsEndpoints
                     stabilityConsistency = row.GetValueOrDefault("stability_score"),
                     isStable = row.GetValueOrDefault("is_stable"),
                     stratum,
-                    survivesStratification = stratum is not null,
+                    survivesStratification = EvidenceBool(row, "survivesStratification", true),
+                    significant = EvidenceBool(row, "significant", false),
+                    provenanceHandle = EvidenceString(row, "provenanceHandle"),
                     windowDays = row.GetValueOrDefault("window_days"),
                     evidence = row.GetValueOrDefault("evidence_json")?.ToString(),
                     honestyCaveat = Caveat,
@@ -80,9 +84,26 @@ public static class AdvancedResultsEndpoints
         return app;
     }
 
+    private static bool EvidenceBool(System.Collections.Generic.Dictionary<string, object?> row, string key, bool fallback)
+    {
+        try { var t = row.GetValueOrDefault("evidence_json")?.ToString(); if (string.IsNullOrWhiteSpace(t)) return fallback;
+              using var d = System.Text.Json.JsonDocument.Parse(t);
+              return d.RootElement.TryGetProperty(key, out var v) && v.ValueKind != System.Text.Json.JsonValueKind.Null ? v.GetBoolean() : fallback; }
+        catch { return fallback; }
+    }
+    private static string? EvidenceString(System.Collections.Generic.Dictionary<string, object?> row, string key)
+    {
+        try { var t = row.GetValueOrDefault("evidence_json")?.ToString(); if (string.IsNullOrWhiteSpace(t)) return null;
+              using var d = System.Text.Json.JsonDocument.Parse(t);
+              return d.RootElement.TryGetProperty(key, out var v) ? v.GetString() : null; }
+        catch { return null; }
+    }
+
     private static async Task<List<Dictionary<string, object?>>> ReadAsync(
         NpgsqlDataSource ds, string sql, (string Name, object Value)? p, CancellationToken ct)
     {
+
+
         var rows = new List<Dictionary<string, object?>>();
         await using var cmd = ds.CreateCommand(sql);
         if (p.HasValue) cmd.Parameters.AddWithValue(p.Value.Name, p.Value.Value);
@@ -97,3 +118,7 @@ public static class AdvancedResultsEndpoints
         return rows;
     }
 }
+
+
+
+

@@ -17,6 +17,8 @@ public static class AdvancedAnalysisExtensions
         services.AddScoped<IFeatureVectorLoader, NpgsqlFeatureVectorLoader>();
         services.AddScoped<IAdvancedResultWriter, NpgsqlAdvancedResultWriter>();
         services.AddScoped<IAdvancedCorrelationService, AdvancedCorrelationComputeService>();
+        services.AddScoped<IAnalysisReadinessService, AnalysisReadinessService>();
         return services;
     }
 }
+

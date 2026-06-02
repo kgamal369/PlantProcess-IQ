@@ -89,7 +89,24 @@ public sealed class NpgsqlAdvancedResultWriter : IAdvancedResultWriter
             await c.ExecuteNonQueryAsync(ct);
         }
 
+        foreach (var ex in result.Excluded)
+        {
+            var exEvidence = System.Text.Json.JsonSerializer.Serialize(new { excluded = true, reason = ex.Reason });
+            await using var ce = new NpgsqlCommand(
+                @"INSERT INTO public.ml_correlation_results_v2
+                  (id, compute_run_id, feature_key, feature_grain, outcome_key, outcome_type, method, sample_size, effective_n, evidence_json, tenant_id)
+                  VALUES (gen_random_uuid(), @run, @fk, @fg, @ok, @ot, 'NotApplicable', 0, 0, @ev::jsonb, @tid)", conn, (NpgsqlTransaction)tx);
+            ce.Parameters.AddWithValue("run", result.RunId);
+            ce.Parameters.AddWithValue("fk", ex.FeatureKey);
+            ce.Parameters.AddWithValue("fg", result.Grain);
+            ce.Parameters.AddWithValue("ok", result.OutcomeKey);
+            ce.Parameters.AddWithValue("ot", outType);
+            ce.Parameters.AddWithValue("ev", exEvidence);
+            ce.Parameters.AddWithValue("tid", req.TenantId);
+            await ce.ExecuteNonQueryAsync(ct);
+        }
         await tx.CommitAsync(ct);
         return result.RunId;
     }
 }
+

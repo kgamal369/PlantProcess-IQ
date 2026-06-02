@@ -52,7 +52,16 @@ public static class DependencyInjection
             provider => provider.GetRequiredService<PlantProcessDbContext>());
 
         services.AddSingleton(_ => NpgsqlDataSource.Create(connectionString));
-        services.AddScoped<ICorrelationComputeEngine, PostgresCorrelationComputeEngine>();
+                // P4-01: route the live correlation path to the .NET Analytics.Core engine.
+        services.AddScoped<PlantProcess.Infrastructure.Analytics.PostgresCorrelationComputeEngine>();
+        services.AddScoped<PlantProcess.Infrastructure.Analytics.DotNetAdvancedCorrelationEngine>();
+        services.AddScoped<ICorrelationComputeEngine>(sp =>
+            sp.GetRequiredService<Microsoft.Extensions.Configuration.IConfiguration>()
+                .GetValue<bool>("Analytics:AdvancedEngine:Enabled", true)
+                ? (ICorrelationComputeEngine)sp.GetRequiredService<PlantProcess.Infrastructure.Analytics.DotNetAdvancedCorrelationEngine>()
+                : sp.GetRequiredService<PlantProcess.Infrastructure.Analytics.PostgresCorrelationComputeEngine>());
+        services.AddKeyedScoped<ICorrelationComputeEngine>("managed", (sp, key) =>
+            sp.GetRequiredService<PlantProcess.Infrastructure.Analytics.DotNetAdvancedCorrelationEngine>());
 
         // --------------------------------------------------------------------
         // Data source connectors.
@@ -102,4 +111,5 @@ public static class DependencyInjection
         return services;
     }
 }
+
 
