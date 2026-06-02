@@ -1,3 +1,4 @@
+﻿/* eslint-disable react-refresh/only-export-components */
 import type { ReactNode } from "react";
 
 export type AdvancedResult = {
@@ -59,7 +60,7 @@ export function AdvancedResultPanel({ result }: { result: AdvancedResult }) {
         {row("Effect size", fmt(result.effectSize))}
         {row("q-value (FDR)", fmt(result.qValue))}
         {row("Sample size", String(result.sampleSize))}
-        {row("Stability", `${fmt(result.stabilityLower)} … ${fmt(result.stabilityUpper)} (consistency ${fmt(result.stabilityConsistency, 2)})`)}
+        {row("Stability", `${fmt(result.stabilityLower)} â€¦ ${fmt(result.stabilityUpper)} (consistency ${fmt(result.stabilityConsistency, 2)})`)}
         {result.isStable != null ? row("Stable", result.isStable ? "yes" : "no") : null}
         {result.survivesStratification != null ? row("Survives stratification", result.survivesStratification ? "yes" : "no") : null}
         {result.excludedRecords != null ? row("Excluded records", String(result.excludedRecords)) : null}
