@@ -1,0 +1,38 @@
+# PlantProcess IQ audit/export exclusions
+# Purpose: keep UltimateAudit focused on real maintained source, not backup/generated noise.
+
+# generated build outputs
+**/bin/**
+**/obj/**
+**/dist/**
+**/build/**
+**/coverage/**
+**/.vite/**
+**/storybook-static/**
+**/playwright-report/**
+**/test-results/**
+
+# dependency folders
+**/node_modules/**
+
+# backup/temp folders created during implementation/hotfixes
+_*/
+**/_*_backup*/**
+**/_p*_backup*/**
+**/_phase*_backup*/**
+**/_v5_*_backup*/**
+**/_v5_*_hotfix*/**
+**/_fin_backup*/**
+**/_remaining_pack*/**
+
+# backup/temp files
+*.bak
+*.bak_*
+*.fixbak
+*.tmp
+*.old
+*.orig
+
+# old audit exports
+Documentation/UltimateAudit_*/**
+Documentation/**/09_FullStack_Combined_*.txt

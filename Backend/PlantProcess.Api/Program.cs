@@ -55,6 +55,7 @@ using PlantProcess.Api.SignedLicensing;
 using PlantProcess.Api.OutboundLeadSystem;
 using PlantProcess.Api.DeploymentPortability;
 using PlantProcess.Api.ComplianceControls;
+using PlantProcess.Application.Licensing.Interfaces;
 // Resolve a stable absolute log path regardless of working directory.
 var logDirectory = Path.Combine(AppContext.BaseDirectory, "logs");
 var logFilePath = Path.Combine(logDirectory, "plantprocess-api-.log");
@@ -344,6 +345,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<PlantProcess.Application.Security.Tenancy.ITenantAccessor, PlantProcess.Api.Security.HttpTenantAccessor>();
 builder.Services.AddV5AssistantGateway(builder.Configuration);
 
+builder.Services.AddScoped<ILicenseService, VerifiedEd25519LicenseService>();
 var app = builder.Build();
 if (!app.Environment.IsDevelopment()) { app.UseHsts(); }
 app.UseMiddleware<PlantProcess.Api.Middleware.SecurityHeadersMiddleware>();
@@ -510,6 +512,9 @@ app.MapV5SignedLicensingEndpoints();
 app.MapV5OutboundLeadSystemEndpoints();
 app.MapV5DeploymentPortabilityEndpoints();
 app.MapV5ComplianceControlsEndpoints();
+app.MapV5Ed25519LicenseEndpoints();
+app.MapV5LicenseResolverProofEndpoints();
+app.MapV5IdentityRuntimeCertificationEndpoints();
 app.Run();
 }
 catch (Exception ex) when (ex.GetType().Name == "HostAbortedException")

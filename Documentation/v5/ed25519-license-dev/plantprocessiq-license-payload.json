@@ -1,0 +1,31 @@
+{
+  "tenantId": "00000000-0000-0000-0000-000000000001",
+  "licenseKey": "PPIQ-00000000-1780491418081",
+  "tier": "ProPlus",
+  "issuedAtUtc": "2026-06-03T12:56:58.081Z",
+  "expiresAtUtc": "2027-06-03T12:56:58.081Z",
+  "features": [
+    "ReadOnlySourceRegistry",
+    "CsvImport",
+    "ExcelImport",
+    "PostgreSqlConnector",
+    "SchemaSqlViewBuilder",
+    "CrossSourceJoinExecution",
+    "KpiViewBuilder",
+    "WidgetScriptLayer",
+    "DashboardPageBuilder",
+    "DataQualityFullScan",
+    "RiskDashboardView",
+    "CorrelationManualRun",
+    "InvestigationWorkflow",
+    "MlLearningJobs"
+  ],
+  "limits": {
+    "maxUsers": 25,
+    "maxDataSources": 8,
+    "maxScheduledJobs": 25,
+    "maxDashboards": 20,
+    "minRefreshIntervalMinutes": 2,
+    "maxPreviewRows": 10000
+  }
+}

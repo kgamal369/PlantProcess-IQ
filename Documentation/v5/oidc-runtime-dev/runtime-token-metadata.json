@@ -1,0 +1,12 @@
+{
+  "tenantId": "00000000-0000-0000-0000-000000000001",
+  "providerCode": "runtime-keycloak",
+  "issuer": "http://localhost:18080/realms/plantprocessiq",
+  "audience": "plantprocessiq-web",
+  "kid": "ppiq-runtime-rs256-20260603",
+  "subject": "keycloak-user-001",
+  "email": "quality.engineer@customer.example",
+  "groups": [
+    "QualityEngineers"
+  ]
+}
