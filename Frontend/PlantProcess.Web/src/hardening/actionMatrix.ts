@@ -7,7 +7,7 @@ export type ActionMatrixItem = {
   notes: string;
 };
 
-export const phase1ActionMatrix: ActionMatrixItem[] = [
+export const workflowActionMatrix: ActionMatrixItem[] = [
   {
     id: "dashboard-add-widget",
     route: "/dashboard",

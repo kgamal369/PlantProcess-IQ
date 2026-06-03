@@ -24,7 +24,7 @@ export const ContributorOnboarding: Story = {
           <li>Use Standard* components for all new buttons, tables, tabs, fields, cards, modals, and toasts.</li>
           <li>Do not hard-code steel-only terminology into base UI components.</li>
           <li>Keep manufacturing-specific wording in page content, metadata, demo data, or configuration.</li>
-          <li>Run npm run validate:phase2:ui-standards-full before submitting.</li>
+          <li>Run npm run validate:inspection:ui-standards-full before submitting.</li>
         </ol>
 
         <h3>Checklist</h3>

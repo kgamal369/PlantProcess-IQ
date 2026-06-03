@@ -1,5 +1,5 @@
-import { Phase56RiskIntelligencePage } from "../Phase56/Phase56Pages";
+import { MaterialAnalyticsRiskIntelligencePage } from "../MaterialAnalytics/MaterialAnalyticsPages";
 
 export function RiskDashboardPage() {
-  return <Phase56RiskIntelligencePage />;
+  return <MaterialAnalyticsRiskIntelligencePage />;
 }

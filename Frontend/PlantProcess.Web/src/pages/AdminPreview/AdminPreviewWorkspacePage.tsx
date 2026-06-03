@@ -1,5 +1,5 @@
-import { Phase56AdminPreviewPage } from "../Phase56/Phase56Pages";
+import { MaterialAnalyticsAdminPreviewPage } from "../MaterialAnalytics/MaterialAnalyticsPages";
 
 export function AdminPreviewWorkspacePage() {
-  return <Phase56AdminPreviewPage />;
+  return <MaterialAnalyticsAdminPreviewPage />;
 }

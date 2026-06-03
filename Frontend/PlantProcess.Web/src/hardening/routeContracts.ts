@@ -9,7 +9,7 @@ export type RouteContract = {
   customerVisible: boolean;
 };
 
-export const phase1RouteContracts: RouteContract[] = [
+export const workflowRouteContracts: RouteContract[] = [
   {
     route: "/dashboard",
     name: "Dashboard",
@@ -85,5 +85,5 @@ export const phase1RouteContracts: RouteContract[] = [
 ];
 
 export function getCriticalRouteContracts() {
-  return phase1RouteContracts.filter((x) => x.severity === "critical");
+  return workflowRouteContracts.filter((x) => x.severity === "critical");
 }

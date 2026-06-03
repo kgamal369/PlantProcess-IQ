@@ -1,5 +1,5 @@
-import { Phase56CorrelationPage } from "../Phase56/Phase56Pages";
+import { MaterialAnalyticsCorrelationPage } from "../MaterialAnalytics/MaterialAnalyticsPages";
 
 export function CorrelationPage() {
-  return <Phase56CorrelationPage />;
+  return <MaterialAnalyticsCorrelationPage />;
 }

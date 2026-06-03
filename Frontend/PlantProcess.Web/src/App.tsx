@@ -111,8 +111,8 @@ const BrandIdentityPage = lazy(() =>
 );
 
 const SuggestionsPage = lazy(() =>
-  import("./pages/Phase78/Phase78Pages").then((m) => ({
-    default: m.Phase78SuggestionsPage,
+  import("./pages/DemoAnalytics/DemoAnalyticsPages").then((m) => ({
+    default: m.DemoAnalyticsSuggestionsPage,
   }))
 );
 
@@ -123,8 +123,8 @@ const DynamicPage = lazy(() =>
 );
 
 const WidgetScriptCompilerPage = lazy(() =>
-  import("./pages/Phase78/Phase78Pages").then((m) => ({
-    default: m.Phase78WidgetScriptCompilerPage,
+  import("./pages/DemoAnalytics/DemoAnalyticsPages").then((m) => ({
+    default: m.DemoAnalyticsWidgetScriptCompilerPage,
   }))
 );
 

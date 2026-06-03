@@ -59,7 +59,7 @@ export function CanonicalSchemaMappingPanel() {
     unit: "%",
     physicalViewName: "cv_kpi_hsm_temperature_quality",
     sqlText:
-      "SELECT\n  mill_line,\n  production_day_utc,\n  coil_count,\n  avg_fdt_c,\n  avg_ct_c,\n  defect_count,\n  defects_per_100_coils\nFROM public.v_phase1_kpi_quality_temperature_window",
+      "SELECT\n  mill_line,\n  production_day_utc,\n  coil_count,\n  avg_fdt_c,\n  avg_ct_c,\n  defect_count,\n  defects_per_100_coils\nFROM public.v_workflow-foundation_kpi_quality_temperature_window",
   });
 
   const activeViews = useMemo(

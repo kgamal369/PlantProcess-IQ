@@ -1,0 +1,49 @@
+{
+  "generatedAtUtc": "2026-06-03T13:51:06.750Z",
+  "moved": [
+    {
+      "from": "Frontend/PlantProcess.Web/src/api/product-module-1/product-module-1Workflow.api.ts",
+      "to": "Frontend/PlantProcess.Web/src/api/workflow-foundation/workflowFoundation.api.ts",
+      "moved": false,
+      "reason": "source-missing"
+    },
+    {
+      "from": "Frontend/PlantProcess.Web/src/api/product-module-78/product-module-78.api.ts",
+      "to": "Frontend/PlantProcess.Web/src/api/demo-analytics/demoAnalytics.api.ts",
+      "moved": false,
+      "reason": "source-missing"
+    }
+  ],
+  "changedFiles": [
+    "Frontend/PlantProcess.Web/src/api/workflow-foundation/workflowFoundation.api.ts",
+    "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/WidgetBuilderWizardContent.tsx",
+    "Frontend/PlantProcess.Web/src/components/inspection/SaveInspectionJobModal.tsx",
+    "Frontend/PlantProcess.Web/src/pages/Admin/CanonicalSchemaMappingPanel.tsx",
+    "Frontend/PlantProcess.Web/src/pages/DemoAnalytics/DemoAnalyticsPages.tsx",
+    "Frontend/PlantProcess.Web/src/pages/DemoAnalytics/product-module-78.css"
+  ],
+  "invalidIdentifierOffenders": [
+    {
+      "file": "Frontend/PlantProcess.Web/src/components/inspection/OperationProgressPanel.tsx",
+      "matches": [
+        "product-module-56"
+      ]
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/MaterialAnalytics/MaterialAnalyticsPages.tsx",
+      "matches": [
+        "product-module-56"
+      ]
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/MaterialAnalytics/product-module-56-standard.css",
+      "matches": [
+        "product-module-56"
+      ]
+    }
+  ],
+  "pathOffenders": [],
+  "importOffenders": [],
+  "contentFindings": [],
+  "note": "C2 requires invalidIdentifierOffenders/pathOffenders/importOffenders to be zero. contentFindings are allowed only for C4."
+}

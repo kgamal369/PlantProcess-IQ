@@ -1,5 +1,5 @@
-import { Phase56DataQualityPage } from "../Phase56/Phase56Pages";
+import { MaterialAnalyticsDataQualityPage } from "../MaterialAnalytics/MaterialAnalyticsPages";
 
 export function DataQualityPage() {
-  return <Phase56DataQualityPage />;
+  return <MaterialAnalyticsDataQualityPage />;
 }

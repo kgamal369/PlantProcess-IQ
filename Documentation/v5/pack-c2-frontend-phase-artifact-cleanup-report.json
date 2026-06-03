@@ -1,0 +1,238 @@
+{
+  "generatedAtUtc": "2026-06-03T13:44:37.748Z",
+  "moveResults": [
+    {
+      "oldRelative": "Frontend/PlantProcess.Web/src/pages/Admin/Phase1WorkflowTruthPanel.tsx",
+      "newRelative": "Frontend/PlantProcess.Web/src/pages/Admin/WorkflowTruthPanel.tsx",
+      "moved": false,
+      "reason": "source-missing"
+    },
+    {
+      "oldRelative": "Frontend/PlantProcess.Web/src/pages/Phase56/Phase56Pages.tsx",
+      "newRelative": "Frontend/PlantProcess.Web/src/pages/MaterialAnalytics/MaterialAnalyticsPages.tsx",
+      "moved": true,
+      "reason": "moved"
+    },
+    {
+      "oldRelative": "Frontend/PlantProcess.Web/src/pages/Phase78/Phase78Pages.tsx",
+      "newRelative": "Frontend/PlantProcess.Web/src/pages/DemoAnalytics/DemoAnalyticsPages.tsx",
+      "moved": true,
+      "reason": "moved"
+    },
+    {
+      "oldRelative": "Frontend/PlantProcess.Web/src/pages/Phase910/Phase910Pages.tsx",
+      "newRelative": "Frontend/PlantProcess.Web/src/pages/CommercialReadiness/CommercialReadinessPages.tsx",
+      "moved": false,
+      "reason": "source-missing"
+    },
+    {
+      "oldRelative": "Frontend/PlantProcess.Web/src/pages/Phase1112/Phase1112Pages.tsx",
+      "newRelative": "Frontend/PlantProcess.Web/src/pages/ActionInternationalization/ActionInternationalizationPages.tsx",
+      "moved": false,
+      "reason": "source-missing"
+    },
+    {
+      "oldRelative": "Frontend/PlantProcess.Web/src/pages/Phase1314/Phase1314Pages.tsx",
+      "newRelative": "Frontend/PlantProcess.Web/src/pages/DeploymentCompliance/DeploymentCompliancePages.tsx",
+      "moved": false,
+      "reason": "source-missing"
+    },
+    {
+      "oldRelative": "Frontend/PlantProcess.Web/src/components/phase2/SaveInspectionJobModal.tsx",
+      "newRelative": "Frontend/PlantProcess.Web/src/components/inspection/SaveInspectionJobModal.tsx",
+      "moved": true,
+      "reason": "moved"
+    }
+  ],
+  "changedFiles": [
+    "Frontend/PlantProcess.Web/src/App.tsx",
+    "Frontend/PlantProcess.Web/src/pages/Admin/AdminPageContent.tsx",
+    "Frontend/PlantProcess.Web/src/pages/AdminPreview/AdminPreviewWorkspacePage.tsx",
+    "Frontend/PlantProcess.Web/src/pages/BrandIdentity/BrandIdentityPage.tsx",
+    "Frontend/PlantProcess.Web/src/pages/Correlation/CorrelationPage.tsx",
+    "Frontend/PlantProcess.Web/src/pages/Dashboard/DashboardPageContent.tsx",
+    "Frontend/PlantProcess.Web/src/pages/DataQuality/DataQualityPage.tsx",
+    "Frontend/PlantProcess.Web/src/pages/DemoLifecycle/DemoLifecyclePage.tsx",
+    "Frontend/PlantProcess.Web/src/pages/MaterialAnalytics/MaterialAnalyticsPages.tsx",
+    "Frontend/PlantProcess.Web/src/pages/MaterialInvestigationPage.tsx",
+    "Frontend/PlantProcess.Web/src/pages/MlReadiness/MlReadinessPage.tsx",
+    "Frontend/PlantProcess.Web/src/pages/RiskDashboard/RiskDashboardPage.tsx"
+  ],
+  "rootWizardRetired": false,
+  "pathOffenders": [
+    "Frontend/PlantProcess.Web/src/api/phase1/phase1Workflow.api.ts",
+    "Frontend/PlantProcess.Web/src/api/phase78/phase78.api.ts",
+    "Frontend/PlantProcess.Web/src/components/phase2/index.ts",
+    "Frontend/PlantProcess.Web/src/components/phase2/OperationProgressPanel.css",
+    "Frontend/PlantProcess.Web/src/components/phase2/OperationProgressPanel.tsx",
+    "Frontend/PlantProcess.Web/src/pages/Phase56/phase56-standard.css",
+    "Frontend/PlantProcess.Web/src/pages/Phase78/phase78.css"
+  ],
+  "importOffenders": [
+    {
+      "file": "Frontend/PlantProcess.Web/src/api/phase2WorkflowApi.ts",
+      "pattern": "/phase2/"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/DemoAnalytics/DemoAnalyticsPages.tsx",
+      "pattern": "@/components/phase2"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/DemoAnalytics/DemoAnalyticsPages.tsx",
+      "pattern": "/phase2/"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/MaterialAnalytics/MaterialAnalyticsPages.tsx",
+      "pattern": "@/components/phase2"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/MaterialAnalytics/MaterialAnalyticsPages.tsx",
+      "pattern": "/phase2/"
+    }
+  ],
+  "contentFindings": [
+    {
+      "file": "Frontend/PlantProcess.Web/src/api/phase1/phase1Workflow.api.ts",
+      "matches": [
+        "phase1"
+      ]
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/api/phase2WorkflowApi.ts",
+      "matches": [
+        "phase2"
+      ]
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/App.tsx",
+      "matches": [
+        "Phase78"
+      ]
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/WidgetBuilderWizardContent.tsx",
+      "matches": [
+        "phase1"
+      ]
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/components/inspection/SaveInspectionJobModal.tsx",
+      "matches": [
+        "phase78"
+      ]
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/components/phase2/OperationProgressPanel.css",
+      "matches": [
+        "phase2"
+      ]
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/components/phase2/OperationProgressPanel.tsx",
+      "matches": [
+        "phase56",
+        "phase78"
+      ]
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/components/standard/Onboarding.stories.tsx",
+      "matches": [
+        "phase2"
+      ]
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/Admin/AdminPageContent.tsx",
+      "matches": [
+        "Phase78"
+      ]
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/AdminPreview/AdminPreviewWorkspacePage.tsx",
+      "matches": [
+        "Phase56"
+      ]
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/BrandIdentity/BrandIdentityPage.tsx",
+      "matches": [
+        "Phase56"
+      ]
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/Correlation/CorrelationPage.tsx",
+      "matches": [
+        "Phase56"
+      ]
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/Dashboard/DashboardPageContent.tsx",
+      "matches": [
+        "Phase56"
+      ]
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/DataQuality/DataQualityPage.tsx",
+      "matches": [
+        "Phase56"
+      ]
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/DemoAnalytics/DemoAnalyticsPages.tsx",
+      "matches": [
+        "phase1",
+        "phase2",
+        "phase78"
+      ]
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/DemoLifecycle/DemoLifecyclePage.tsx",
+      "matches": [
+        "Phase78"
+      ]
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/MaterialAnalytics/MaterialAnalyticsPages.tsx",
+      "matches": [
+        "phase2",
+        "phase56"
+      ]
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/MaterialInvestigationPage.tsx",
+      "matches": [
+        "Phase56"
+      ]
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/MlReadiness/MlReadinessPage.tsx",
+      "matches": [
+        "Phase56"
+      ]
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/PageBuilder/PageBuilderPage.tsx",
+      "matches": [
+        "phase23"
+      ]
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/Phase56/phase56-standard.css",
+      "matches": [
+        "phase56"
+      ]
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/Phase78/phase78.css",
+      "matches": [
+        "phase78"
+      ]
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/RiskDashboard/RiskDashboardPage.tsx",
+      "matches": [
+        "Phase56"
+      ]
+    }
+  ],
+  "note": "Pack C2 fails only path/import offenders. Content findings are C4 cleanup after backend/frontend refactor."
+}

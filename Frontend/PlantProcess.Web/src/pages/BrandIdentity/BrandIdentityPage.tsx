@@ -1,5 +1,5 @@
-import { Phase56BrandIdentityPage } from "../Phase56/Phase56Pages";
+import { MaterialAnalyticsBrandIdentityPage } from "../MaterialAnalytics/MaterialAnalyticsPages";
 
 export function BrandIdentityPage() {
-  return <Phase56BrandIdentityPage />;
+  return <MaterialAnalyticsBrandIdentityPage />;
 }

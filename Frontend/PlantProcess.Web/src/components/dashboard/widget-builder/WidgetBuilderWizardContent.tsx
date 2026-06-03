@@ -694,7 +694,7 @@ export function WidgetBuilderWizardContent({
         expressionEnabled:
           builderState.expressionEnabled &&
           builderState.queryExpression.trim().length > 0,
-        expressionVersion: "phase1.v1",
+        expressionVersion: "workflow-foundation.v1",
       });
 
       if (existingWidget) {

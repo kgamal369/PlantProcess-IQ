@@ -1,5 +1,5 @@
-import { Phase56MlReadinessPage } from "../Phase56/Phase56Pages";
+import { MaterialAnalyticsMlReadinessPage } from "../MaterialAnalytics/MaterialAnalyticsPages";
 
 export function MlReadinessPage() {
-  return <Phase56MlReadinessPage />;
+  return <MaterialAnalyticsMlReadinessPage />;
 }

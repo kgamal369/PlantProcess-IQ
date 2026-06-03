@@ -1,0 +1,11 @@
+{
+  "generatedAtUtc": "2026-06-03T13:53:32.932Z",
+  "moved": [],
+  "deleted": [],
+  "conflicts": [],
+  "changedFiles": [],
+  "pathOffenders": [],
+  "importOffenders": [],
+  "contentFindings": [],
+  "note": "Path/import offenders must be zero for C2. Content findings are allowed and belong to C4."
+}

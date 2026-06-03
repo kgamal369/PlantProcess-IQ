@@ -124,7 +124,7 @@ export function PageBuilderPage() {
   }
 
   return (
-    <main className="page-builder-page" data-phase23-page="page-builder">
+    <main className="page-builder-page" data-inspection3-page="page-builder">
       <section className="page-builder-page__header">
         <div>
           <p className="eyebrow">Page Builder</p>

@@ -1,5 +1,5 @@
-import { Phase56CommandDashboardPage } from "../Phase56/Phase56Pages";
+import { MaterialAnalyticsCommandDashboardPage } from "../MaterialAnalytics/MaterialAnalyticsPages";
 
 export function DashboardPageContent() {
-  return <Phase56CommandDashboardPage />;
+  return <MaterialAnalyticsCommandDashboardPage />;
 }
