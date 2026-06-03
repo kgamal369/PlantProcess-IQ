@@ -1,6 +1,7 @@
 import { X } from "lucide-react";
 import { useDashboardFilters } from "../state/DashboardFilterContext";
 import type { DashboardFilters } from "../api/plantProcessApi";
+import { StandardButton } from "@/components/standard";
 
 const labels: Record<keyof DashboardFilters, string> = {
   siteId: "Site",
@@ -46,7 +47,7 @@ export function ActiveFilterChips() {
   return (
     <div className="chip-row">
       {entries.map(([key, value]) => (
-        <button
+        <StandardButton
           key={key}
           className="filter-chip"
           onClick={() => clearFilter(key)}
@@ -54,7 +55,7 @@ export function ActiveFilterChips() {
         >
           <strong>{labels[key]}:</strong> {formatValue(key, value)}
           <X size={13} />
-        </button>
+        </StandardButton>
       ))}
     </div>
   );

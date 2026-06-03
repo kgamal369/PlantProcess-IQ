@@ -176,7 +176,7 @@ export function StandardModal({
             ) : null}
           </div>
 
-          <StandardButton variant="ghost" size="sm" iconOnly ariaLabel="Close modal" onClick={onClose}>
+          <StandardButton variant="ghost" size="sm" iconOnly aria-label="Close modal" onClick={onClose}>
             <X size={18} />
           </StandardButton>
         </header>
@@ -258,7 +258,7 @@ export function StandardToastProvider({ children }: { children: ReactNode }) {
                 {message.action ? <div style={{ marginTop: 8 }}>{message.action}</div> : null}
               </div>
             </div>
-            <StandardButton variant="ghost" size="sm" iconOnly ariaLabel="Dismiss notification" onClick={() => dismiss(message.id)}>
+            <StandardButton variant="ghost" size="sm" iconOnly aria-label="Dismiss notification" onClick={() => dismiss(message.id)}>
               <X size={14} />
             </StandardButton>
           </article>

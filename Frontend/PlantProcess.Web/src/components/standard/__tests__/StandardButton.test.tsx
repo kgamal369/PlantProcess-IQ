@@ -54,7 +54,7 @@ describe("StandardButton", () => {
 
   it("renders icon-only accessible label", () => {
     const html = renderToString(
-      <StandardButton iconOnly ariaLabel="Refresh">
+      <StandardButton iconOnly aria-label="Refresh">
         R
       </StandardButton>,
     );

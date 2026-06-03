@@ -2,6 +2,7 @@
 import { SOUBrand } from "./SOUBrand";
 import { ProductBrand } from "./ProductBrand";
 import "./app-command-header.css";
+import { StandardButton } from "@/components/standard";
 
 type AppCommandHeaderProps = {
   licenseTier?: "Light" | "Pro" | "Pro Plus" | "Enterprise" | "Demo";
@@ -53,15 +54,15 @@ export function AppCommandHeader({
           {licenseTier}
         </span>
 
-        <button className="app-command-header__icon-button" type="button" aria-label="Notifications">
+        <StandardButton className="app-command-header__icon-button" type="button" ariaLabel="Notifications">
           <Bell size={17} aria-hidden="true" />
           <span className="app-command-header__notification-dot" aria-hidden="true" />
-        </button>
+        </StandardButton>
 
-        <button className="app-command-header__user" type="button" aria-label="User menu">
+        <StandardButton className="app-command-header__user" type="button" ariaLabel="User menu">
           <CircleUserRound size={18} aria-hidden="true" />
           <span>{userName}</span>
-        </button>
+        </StandardButton>
       </div>
     </header>
   );

@@ -1,6 +1,7 @@
 import { BadgeEuro, FlaskConical, PlayCircle } from "lucide-react";
 
 import { licensePlans, useDemoMode } from "@/state/DemoModeContext";
+import { StandardButton } from "@/components/standard";
 
 export function DemoModeControl() {
   const {
@@ -12,7 +13,7 @@ export function DemoModeControl() {
 
   return (
     <div className="demo-mode-control">
-      <button
+      <StandardButton
         className={`demo-mode-toggle ${demoModeEnabled ? "active" : ""}`}
         type="button"
         onClick={() => setDemoModeEnabled(!demoModeEnabled)}
@@ -20,7 +21,7 @@ export function DemoModeControl() {
       >
         <FlaskConical size={15} />
         {demoModeEnabled ? "Demo mode on" : "Demo mode off"}
-      </button>
+      </StandardButton>
 
       <label className="demo-plan-select">
         <BadgeEuro size={15} />

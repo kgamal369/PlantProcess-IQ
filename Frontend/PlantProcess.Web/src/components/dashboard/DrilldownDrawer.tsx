@@ -1,5 +1,6 @@
 import { X } from "lucide-react";
 import { useDashboardSelections } from "../../state/DashboardSelectionContext";
+import { StandardButton } from "@/components/standard";
 
 export function DrilldownDrawer() {
   const { drilldown, closeDrilldown } = useDashboardSelections();
@@ -17,9 +18,9 @@ export function DrilldownDrawer() {
           {drilldown.subtitle ? <p>{drilldown.subtitle}</p> : null}
         </div>
 
-        <button className="icon-button" onClick={closeDrilldown} type="button">
+        <StandardButton className="icon-button" onClick={closeDrilldown} type="button">
           <X size={18} />
-        </button>
+        </StandardButton>
       </div>
 
       <div className="drilldown-drawer__body">

@@ -22,6 +22,7 @@ import {
 import { plantProcessApi, type DashboardReferenceData } from "../api/plantProcessApi";
 import { useDashboardFilters } from "../state/DashboardFilterContext";
 import "./DashboardFilterBar.css";
+import { StandardButton } from "@/components/standard";
 
 // ── FilterSelect ──────────────────────────────────────────────
 function FilterSelect({
@@ -127,16 +128,16 @@ export function DashboardFilterBar() {
             <span className="piq-filter-bar__count">{activeFilterCount} active</span>
           )}
         </div>
-        <button
+        <StandardButton
           className={`piq-filter-clear ${hasActiveFilters ? "piq-filter-clear--visible" : ""}`}
           onClick={clearAllFilters}
           type="button"
           title="Clear all filters"
-          disabled={!hasActiveFilters}
+          isDisabled={!hasActiveFilters}
         >
           <RotateCcw size={12} />
           Clear all
-        </button>
+        </StandardButton>
       </div>
 
       {/* Filter row — Group 1: Location */}

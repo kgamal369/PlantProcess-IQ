@@ -31,6 +31,7 @@ import { DemoModeControl } from "./demo/DemoModeControl";
 import { AppToaster } from "../notifications/Toaster";
 
 import "./AppLayout.css";
+import { StandardButton } from "@/components/standard";
 
 // ── Navigation definition ─────────────────────────────────────
 const NAV_ANALYTICS = [
@@ -156,11 +157,11 @@ export function AppLayout() {
             <Network size={11} aria-hidden="true" />
             <span>Phase 8–10 Interactive MVP</span>
           </div>
-          <button className="piq-theme-btn" type="button" onClick={toggleTheme}
+          <StandardButton className="piq-theme-btn" type="button" onClick={toggleTheme}
             title={`Switch to ${isDark ? "light" : "dark"} mode`}>
             {isDark ? <Sun size={14} /> : <Moon size={14} />}
             {isDark ? "Light mode" : "Dark mode"}
-          </button>
+          </StandardButton>
         </div>
       </aside>
 
@@ -187,12 +188,12 @@ export function AppLayout() {
           <div className="piq-cmd-header__right">
             <span className={envClass}>{env}</span>
             <span className="piq-tier-badge">Demo</span>
-            <button className="piq-user-btn" type="button"
-              onClick={logout} title="Logout" aria-label="Logout">
+            <StandardButton className="piq-user-btn" type="button"
+              onClick={logout} title="Logout" ariaLabel="Logout">
               <CircleUserRound size={14} aria-hidden="true" />
               {displayName}
               <LogOut size={12} aria-hidden="true" style={{ opacity: 0.6 }} />
-            </button>
+            </StandardButton>
           </div>
         </header>
 

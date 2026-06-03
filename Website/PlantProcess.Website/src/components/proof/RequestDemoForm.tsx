@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import { requestDemoMail } from "../../content/phase1WebsiteProof";
 
 type FormState = {
@@ -7,8 +7,20 @@ type FormState = {
   email: string;
   role: string;
   plantType: string;
+  sourceSystems: string;
+  pain: string;
+  timeline: string;
   message: string;
 };
+
+type StoredLead = FormState & {
+  id: string;
+  capturedAtUtc: string;
+  fitScore: number;
+  status: "captured" | "notification-draft-ready";
+};
+
+const storageKey = "ppiq.website.demoLeads.v1";
 
 const initialState: FormState = {
   name: "",
@@ -16,6 +28,9 @@ const initialState: FormState = {
   email: "",
   role: "",
   plantType: "",
+  sourceSystems: "",
+  pain: "",
+  timeline: "",
   message: "",
 };
 
@@ -23,9 +38,57 @@ function encode(value: string) {
   return encodeURIComponent(value);
 }
 
+function readLeads(): StoredLead[] {
+  if (typeof window === "undefined") return [];
+
+  try {
+    const raw = window.localStorage.getItem(storageKey);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeLeads(leads: StoredLead[]) {
+  window.localStorage.setItem(storageKey, JSON.stringify(leads.slice(-50)));
+}
+
+function scoreFit(form: FormState) {
+  let score = 0;
+
+  if (form.company.trim()) score += 15;
+  if (form.email.includes("@")) score += 15;
+  if (form.role.trim()) score += 10;
+  if (form.plantType.trim()) score += 15;
+  if (form.sourceSystems.trim()) score += 20;
+  if (form.pain.trim()) score += 20;
+  if (form.timeline.trim()) score += 5;
+
+  return Math.min(score, 100);
+}
+
+function validate(form: FormState) {
+  const errors: Partial<Record<keyof FormState, string>> = {};
+
+  if (!form.name.trim()) errors.name = "Name is required.";
+  if (!form.company.trim()) errors.company = "Company is required.";
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(form.email.trim())) {
+    errors.email = "A valid work email is required.";
+  }
+  if (!form.plantType.trim()) errors.plantType = "Plant / industry type is required.";
+  if (!form.sourceSystems.trim()) errors.sourceSystems = "At least one source system is required.";
+  if (!form.pain.trim()) errors.pain = "Main quality or process pain is required.";
+
+  return errors;
+}
+
 export function RequestDemoForm() {
   const [form, setForm] = useState<FormState>(initialState);
-  const [submitted, setSubmitted] = useState(false);
+  const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
+  const [submittedLead, setSubmittedLead] = useState<StoredLead | null>(null);
+  const [leads, setLeads] = useState<StoredLead[]>(() => readLeads());
 
   const mailtoHref = useMemo(() => {
     const subject = `PlantProcess IQ demo request - ${form.company || form.name || "New inquiry"}`;
@@ -38,11 +101,14 @@ export function RequestDemoForm() {
       `Email: ${form.email}`,
       `Role: ${form.role}`,
       `Plant / industry type: ${form.plantType}`,
+      `Source systems: ${form.sourceSystems}`,
+      `Main pain: ${form.pain}`,
+      `Timeline: ${form.timeline}`,
       "",
       "Message:",
       form.message,
       "",
-      "Requested from website Phase 1 demo form.",
+      "Captured by website lead form.",
     ].join("\n");
 
     return `mailto:${requestDemoMail}?subject=${encode(subject)}&body=${encode(body)}`;
@@ -53,12 +119,38 @@ export function RequestDemoForm() {
       ...current,
       [key]: value,
     }));
+
+    setErrors((current) => ({
+      ...current,
+      [key]: undefined,
+    }));
   }
 
-  function onSubmit(event: React.FormEvent<HTMLFormElement>) {
+  function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setSubmitted(true);
-    window.location.href = mailtoHref;
+
+    const nextErrors = validate(form);
+    setErrors(nextErrors);
+
+    if (Object.keys(nextErrors).length > 0) {
+      setSubmittedLead(null);
+      return;
+    }
+
+    const lead: StoredLead = {
+      ...form,
+      id: `lead-${Date.now()}`,
+      capturedAtUtc: new Date().toISOString(),
+      fitScore: scoreFit(form),
+      status: "notification-draft-ready",
+    };
+
+    const nextLeads = [...readLeads(), lead];
+    writeLeads(nextLeads);
+    setLeads(nextLeads);
+    setSubmittedLead(lead);
+
+    window.dispatchEvent(new CustomEvent("ppiq:demo-lead-captured", { detail: lead }));
   }
 
   return (
@@ -67,92 +159,104 @@ export function RequestDemoForm() {
 
       <div className="request-demo-layout">
         <div>
-          <h2>Request a Phase 1 Golden Demo or data diagnostic.</h2>
+          <h2>Request a product fit check or PlantProcess IQ data diagnostic.</h2>
           <p>
-            Best fit: manufacturing teams with scattered process, quality,
-            genealogy, inspection, downtime or lab data who need a clear
-            investigation layer without replacing MES, SCADA or Level 2 systems.
+            Best fit: manufacturing teams with scattered process, quality, genealogy,
+            inspection, downtime, energy, lab or warehouse data who need a clear
+            investigation layer without replacing existing operational systems.
           </p>
 
-          <div className="request-demo-proof">
-            <strong>Email delivery path</strong>
-            <span>{requestDemoMail}</span>
-            <p>
-              The form opens a prepared email so the inquiry can be sent from the
-              user’s mail client immediately. A backend CRM form can be added later.
-            </p>
-          </div>
+          {submittedLead ? (
+            <div className="lead-success" role="status" data-testid="lead-capture-success">
+              <strong>Lead captured.</strong>
+              <span>
+                Fit score {submittedLead.fitScore}/100. The lead is stored in the local commercial queue
+                and the notification email draft is ready.
+              </span>
+              <a className="website-button website-button--secondary" href={mailtoHref}>
+                Open notification email
+              </a>
+            </div>
+          ) : null}
+
+          <details className="commercial-lead-queue" data-testid="commercial-admin-lead-queue">
+            <summary>Commercial Admin lead queue ({leads.length})</summary>
+            {leads.length === 0 ? (
+              <p>No captured website leads yet.</p>
+            ) : (
+              <ul>
+                {leads.slice().reverse().map((lead) => (
+                  <li key={lead.id}>
+                    <strong>{lead.company}</strong>
+                    <span>{lead.email} · {lead.plantType} · score {lead.fitScore}/100</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </details>
         </div>
 
-        <form className="request-demo-form" onSubmit={onSubmit}>
+        <form className="request-demo-form" onSubmit={onSubmit} noValidate data-testid="demo-request-form">
           <label>
-            Name
-            <input
-              required
-              value={form.name}
-              onChange={(event) => patch("name", event.target.value)}
-              placeholder="Your name"
-            />
+            Your name
+            <input value={form.name} onChange={(event) => patch("name", event.target.value)} required />
+            {errors.name ? <span className="form-error">{errors.name}</span> : null}
           </label>
 
           <label>
             Company
-            <input
-              required
-              value={form.company}
-              onChange={(event) => patch("company", event.target.value)}
-              placeholder="Company / plant group"
-            />
+            <input value={form.company} onChange={(event) => patch("company", event.target.value)} required />
+            {errors.company ? <span className="form-error">{errors.company}</span> : null}
           </label>
 
           <label>
             Work email
-            <input
-              required
-              type="email"
-              value={form.email}
-              onChange={(event) => patch("email", event.target.value)}
-              placeholder="name@company.com"
-            />
+            <input type="email" value={form.email} onChange={(event) => patch("email", event.target.value)} required />
+            {errors.email ? <span className="form-error">{errors.email}</span> : null}
           </label>
 
           <label>
             Role
-            <input
-              value={form.role}
-              onChange={(event) => patch("role", event.target.value)}
-              placeholder="Quality, process, operations, automation, IT..."
-            />
+            <input value={form.role} onChange={(event) => patch("role", event.target.value)} placeholder="QA lead, process engineer, plant manager..." />
           </label>
 
           <label>
             Plant / industry type
-            <input
-              value={form.plantType}
-              onChange={(event) => patch("plantType", event.target.value)}
-              placeholder="Steel, paper, aluminum, food, pharma, tire..."
-            />
+            <input value={form.plantType} onChange={(event) => patch("plantType", event.target.value)} required placeholder="Steel, paper, pharma, food, aluminum..." />
+            {errors.plantType ? <span className="form-error">{errors.plantType}</span> : null}
           </label>
 
           <label>
-            What do you want to investigate?
-            <textarea
-              value={form.message}
-              onChange={(event) => patch("message", event.target.value)}
-              placeholder="Example: surface defects, downtime impact, quality claims, genealogy gaps, process parameter correlation..."
-              rows={5}
-            />
+            Source systems
+            <input value={form.sourceSystems} onChange={(event) => patch("sourceSystems", event.target.value)} required placeholder="MES, QMS, Oracle, SQL Server, Excel, inspection DB..." />
+            {errors.sourceSystems ? <span className="form-error">{errors.sourceSystems}</span> : null}
+          </label>
+
+          <label>
+            Main quality / process pain
+            <textarea value={form.pain} onChange={(event) => patch("pain", event.target.value)} required rows={3} />
+            {errors.pain ? <span className="form-error">{errors.pain}</span> : null}
+          </label>
+
+          <label>
+            Timeline
+            <select value={form.timeline} onChange={(event) => patch("timeline", event.target.value)}>
+              <option value="">Select timeline</option>
+              <option value="Discovery only">Discovery only</option>
+              <option value="This month">This month</option>
+              <option value="This quarter">This quarter</option>
+              <option value="Pilot planning">Pilot planning</option>
+            </select>
+          </label>
+
+          <label>
+            Optional message
+            <textarea value={form.message} onChange={(event) => patch("message", event.target.value)} rows={3} />
           </label>
 
           <button className="website-button website-button--primary" type="submit">
-            Send demo request
+            Capture lead and prepare notification
           </button>
-
-          {submitted ? (
-            <p className="request-demo-form__confirmation">
-              Your email client should now open with a prepared request.
-            </p>
-          ) : null}
         </form>
       </div>
     </section>

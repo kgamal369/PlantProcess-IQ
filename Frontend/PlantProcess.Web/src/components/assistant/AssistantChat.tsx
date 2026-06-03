@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { StandardButton } from "@/components/standard";
 
 export type ProvenanceHandleRef = { kind: string; id: string; detail?: string | null };
 
@@ -49,7 +50,7 @@ export function AssistantChat({
 
       <div style={{ display: "flex", gap: 6, marginTop: 10, flexWrap: "wrap" }}>
         {SUGGESTED.map((s) => (
-          <button key={s} type="button" onClick={() => onAsk?.(s)} style={chip}>{s}</button>
+          <StandardButton key={s} type="button" onClick={() => onAsk?.(s)} style={chip}>{s}</StandardButton>
         ))}
       </div>
 
@@ -60,7 +61,7 @@ export function AssistantChat({
           placeholder="Ask about your approved findings..."
           style={{ flex: 1, background: "#161a22", border: "1px solid #2a3142", borderRadius: 8, padding: "8px 10px", color: "#e6e9ef" }}
         />
-        <button type="button" onClick={() => { if (text.trim()) { onAsk?.(text.trim()); setText(""); } }} style={{ ...chip, background: "#1f6feb", color: "#fff" }}>Ask</button>
+        <StandardButton type="button" onClick={() => { if (text.trim()) { onAsk?.(text.trim()); setText(""); } }} style={{ ...chip, background: "#1f6feb", color: "#fff" }}>Ask</StandardButton>
       </div>
     </div>
   );
@@ -81,9 +82,9 @@ function AssistantBubble({ answer, onOpenEvidence }: { answer: AssistantAnswer; 
       {answer.citations.length > 0 ? (
         <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 4 }}>
           {answer.citations.map((h, i) => (
-            <button key={i} type="button" data-testid="assistant-citation" onClick={() => onOpenEvidence?.(h)} style={{ ...chip, textAlign: "left" }}>
+            <StandardButton key={i} type="button" data-testid="assistant-citation" onClick={() => onOpenEvidence?.(h)} style={{ ...chip, textAlign: "left" }}>
               Source: {h.kind} ({h.id.slice(0, 8)})
-            </button>
+            </StandardButton>
           ))}
         </div>
       ) : null}

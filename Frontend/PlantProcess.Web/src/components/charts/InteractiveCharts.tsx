@@ -24,6 +24,7 @@ import {
   type DashboardSelectionType,
 } from "../../state/DashboardSelectionContext";
 import { EmptyInsightState } from "../dashboard/EmptyInsightState";
+import { StandardButton } from "@/components/standard";
 
 export interface ChartRow {
   [key: string]: string | number | null | undefined;
@@ -404,7 +405,7 @@ export function InteractiveHeatmap({
             const intensity = Math.max(0.08, value / maxValue);
 
             return (
-              <button
+              <StandardButton
                 key={`${x}-${y}`}
                 className="heatmap__cell"
                 style={{
@@ -415,7 +416,7 @@ export function InteractiveHeatmap({
                 title={`${x} / ${y}: ${value}`}
               >
                 {value}
-              </button>
+              </StandardButton>
             );
           })}
         </div>

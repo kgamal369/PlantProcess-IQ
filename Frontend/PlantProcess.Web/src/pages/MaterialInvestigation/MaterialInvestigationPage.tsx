@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { apiClient } from "@/api/http";
 import "./p03p04-workbench.css";
+import { StandardButton } from "@/components/standard";
 
 type ApiRows<T> = {
   generatedAtUtc?: string;
@@ -259,10 +260,10 @@ export function MaterialInvestigationPage() {
           </p>
         </div>
 
-        <button className="p03p04-primary" type="button" onClick={refreshAll} disabled={isLoading}>
+        <StandardButton className="p03p04-primary" type="button" onClick={refreshAll} isDisabled={isLoading}>
           <RefreshCw size={16} />
           {isLoading ? "Refreshing..." : "Refresh proof"}
-        </button>
+        </StandardButton>
       </section>
 
       <StatusStrip rows={statusRows} />
@@ -276,7 +277,7 @@ export function MaterialInvestigationPage() {
 
       <section className="p03p04-tabs">
         {tabs.map((tab) => (
-          <button
+          <StandardButton
             key={tab.key}
             className={activeTab === tab.key ? "p03p04-tab p03p04-tab--active" : "p03p04-tab"}
             type="button"
@@ -284,7 +285,7 @@ export function MaterialInvestigationPage() {
           >
             <strong>{tab.label}</strong>
             <span>{tab.subtitle}</span>
-          </button>
+          </StandardButton>
         ))}
       </section>
 
@@ -317,10 +318,10 @@ export function MaterialInvestigationPage() {
                 <h2>Business-Key Dictionary Validation</h2>
                 <p>Detects missing members, duplicate normalized samples and nullable key members.</p>
               </div>
-              <button className="p03p04-secondary" type="button" onClick={loadBusinessKeys}>
+              <StandardButton className="p03p04-secondary" type="button" onClick={loadBusinessKeys}>
                 <RefreshCw size={14} />
                 Validate
-              </button>
+              </StandardButton>
             </div>
             <ProofTable rows={businessKeyRows} />
           </>
@@ -333,10 +334,10 @@ export function MaterialInvestigationPage() {
                 <h2>Canonical Entity Mapper</h2>
                 <p>Runs required-field, type, unit-conversion and mapping lifecycle proof.</p>
               </div>
-              <button className="p03p04-secondary" type="button" onClick={runMappingLifecycle}>
+              <StandardButton className="p03p04-secondary" type="button" onClick={runMappingLifecycle}>
                 <Play size={14} />
                 Run proof
-              </button>
+              </StandardButton>
             </div>
             <ProofTable rows={mappingRows} />
           </>
@@ -357,10 +358,10 @@ export function MaterialInvestigationPage() {
                 onChange={(event) => setSqlText(event.target.value)}
                 spellCheck={false}
               />
-              <button className="p03p04-primary" type="submit">
+              <StandardButton className="p03p04-primary" type="submit">
                 <Search size={14} />
                 Resolve SQL
-              </button>
+              </StandardButton>
             </form>
 
             <ProofTable rows={safeSqlRows} />
@@ -374,10 +375,10 @@ export function MaterialInvestigationPage() {
                 <h2>Genealogy Builder Proof</h2>
                 <p>Recursive graph validation with cycle and orphan checks.</p>
               </div>
-              <button className="p03p04-secondary" type="button" onClick={loadGenealogy}>
+              <StandardButton className="p03p04-secondary" type="button" onClick={loadGenealogy}>
                 <GitBranch size={14} />
                 Validate graph
-              </button>
+              </StandardButton>
             </div>
             <ProofTable rows={genealogyRows} />
           </>
@@ -390,10 +391,10 @@ export function MaterialInvestigationPage() {
                 <h2>Validation & Publish</h2>
                 <p>Dry-run, publish and rollback proof for versioned mappings.</p>
               </div>
-              <button className="p03p04-primary" type="button" onClick={runMappingLifecycle}>
+              <StandardButton className="p03p04-primary" type="button" onClick={runMappingLifecycle}>
                 <Play size={14} />
                 Run lifecycle
-              </button>
+              </StandardButton>
             </div>
             <ProofTable rows={mappingRows} />
           </>
@@ -414,10 +415,10 @@ export function MaterialInvestigationPage() {
                 onChange={(event) => setMaterialKey(event.target.value)}
                 placeholder="Material key, for example ADV_COIL4002"
               />
-              <button className="p03p04-primary" type="submit">
+              <StandardButton className="p03p04-primary" type="submit">
                 <Search size={14} />
                 Investigate
-              </button>
+              </StandardButton>
             </form>
 
             <ProofTable rows={materialRows} />

@@ -51,8 +51,8 @@ export const States: Story = {
 export const IconOnly: Story = {
   render: () => (
     <div style={{ display: "flex", gap: 12 }}>
-      <StandardButton iconOnly ariaLabel="Refresh" leadingIcon={<RefreshCw size={16} />} />
-      <StandardButton iconOnly ariaLabel="Delete" variant="danger" leadingIcon={<Trash2 size={16} />} />
+      <StandardButton iconOnly aria-label="Refresh" leadingIcon={<RefreshCw size={16} />} />
+      <StandardButton iconOnly aria-label="Delete" variant="danger" leadingIcon={<Trash2 size={16} />} />
     </div>
   ),
 };

@@ -13,6 +13,7 @@ import {
   useStandardToast,
   type StandardTableColumn,
 } from "./standard-components";
+import { StandardButton } from "@/components/standard";
 
 type DemoSignal = {
   id: string;

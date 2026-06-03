@@ -35,7 +35,7 @@ import {
 import type { ChartRow } from "@/components/charts/InteractiveCharts";
 import { EmptyInsightState } from "@/components/dashboard/EmptyInsightState";
 import { WidgetScriptStep } from "./WidgetScriptStep";
-
+import { StandardButton } from "@/components/standard";
 
 interface WidgetBuilderWizardProps {
   isOpen: boolean;
@@ -719,25 +719,25 @@ export function WidgetBuilderWizardContent({
             </p>
           </div>
 
-          <button className="icon-button" onClick={onClose} type="button">
+          <StandardButton className="icon-button" onClick={onClose} type="button">
             <X size={18} />
-          </button>
+          </StandardButton>
         </header>
 
         <div className="wizard-progress">
           {stepOrder.map((item, index) => (
-            <button
+            <StandardButton
               key={item}
               type="button"
               className={`wizard-progress-step ${
                 item === step ? "active" : index < currentStepIndex ? "done" : ""
               }`}
               onClick={() => setStep(item)}
-              disabled={index > currentStepIndex + 1}
+              isDisabled={index > currentStepIndex + 1}
             >
               <span>{index + 1}</span>
               {item}
-            </button>
+            </StandardButton>
           ))}
         </div>
 
@@ -866,49 +866,49 @@ export function WidgetBuilderWizardContent({
         ) : null}
 
         <footer className="widget-builder-footer">
-          <button
+          <StandardButton
             className="secondary-button"
             onClick={goBack}
-            disabled={!canGoBack}
+            isDisabled={!canGoBack}
             type="button"
           >
             <ArrowLeft size={16} />
             Back
-          </button>
+          </StandardButton>
 
           <div className="wizard-footer-actions">
             {step === "preview" ? (
               <>
-                <button
+                <StandardButton
                   className="secondary-button"
                   onClick={runPreview}
-                  disabled={isPreviewing}
+                  isDisabled={isPreviewing}
                   type="button"
                 >
                   <Eye size={16} />
                   {isPreviewing ? "Previewing..." : "Refresh preview"}
-                </button>
+                </StandardButton>
 
-                <button
+                <StandardButton
                   className="primary-button"
                   onClick={saveWidget}
-                  disabled={isSaving || validationIssues.length > 0}
+                  isDisabled={isSaving || validationIssues.length > 0}
                   type="button"
                 >
                   <Save size={16} />
                   {isSaving ? "Saving..." : existingWidget ? "Update widget" : "Save widget"}
-                </button>
+                </StandardButton>
               </>
             ) : (
-              <button
+              <StandardButton
                 className="primary-button"
                 onClick={goNext}
-                disabled={!canGoNext}
+                isDisabled={!canGoNext}
                 type="button"
               >
                 Next
                 <ArrowRight size={16} />
-              </button>
+              </StandardButton>
             )}
           </div>
         </footer>
@@ -934,7 +934,7 @@ function PurposeStep({
     >
       <div className="wizard-card-grid">
         {(metadata?.purposes ?? []).map((purpose) => (
-          <button
+          <StandardButton
             key={purpose.code}
             className={`wizard-choice-card ${
               selectedPurposeCode === purpose.code ? "selected" : ""
@@ -944,7 +944,7 @@ function PurposeStep({
           >
             <strong>{purpose.label}</strong>
             <span>{purpose.description}</span>
-          </button>
+          </StandardButton>
         ))}
       </div>
     </WizardSection>
@@ -968,7 +968,7 @@ function ChartTypeStep({
     >
       <div className="wizard-card-grid">
         {chartTypes.map((chartType) => (
-          <button
+          <StandardButton
             key={chartType.code}
             className={`wizard-choice-card ${
               selectedChartTypeCode === chartType.code ? "selected" : ""
@@ -978,7 +978,7 @@ function ChartTypeStep({
           >
             <strong>{chartType.label}</strong>
             <span>{chartType.description ?? chartType.category}</span>
-          </button>
+          </StandardButton>
         ))}
       </div>
     </WizardSection>
@@ -1370,15 +1370,15 @@ function PreviewStep({
       description="The preview calls the backend widget query endpoint with the complete DTO."
     >
       <div className="preview-toolbar">
-        <button
+        <StandardButton
           className="secondary-button"
           onClick={onPreview}
-          disabled={isPreviewing}
+          isDisabled={isPreviewing}
           type="button"
         >
           <Eye size={16} />
           {isPreviewing ? "Previewing..." : "Run preview"}
-        </button>
+        </StandardButton>
 
         {preview ? (
           <span className="muted-text">

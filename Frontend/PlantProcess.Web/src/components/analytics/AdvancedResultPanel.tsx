@@ -1,5 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import type { ReactNode } from "react";
+import { StandardButton } from "@/components/standard";
 
 export type ProvenanceHandleRef = { kind: string; id: string };
 
@@ -91,14 +92,14 @@ export function AdvancedResultPanel({
         </ul>
       ) : null}
       {result.evidenceHandle ? (
-        <button
+        <StandardButton
           type="button"
           data-testid="advanced-result-evidence"
           onClick={() => onOpenEvidence?.(result.evidenceHandle as ProvenanceHandleRef)}
           style={{ marginTop: 10, fontSize: 12, color: "#3b6fb5", background: "none", border: "none", padding: 0, cursor: "pointer", textDecoration: "underline" }}
         >
           View evidence ({result.evidenceHandle.kind})
-        </button>
+        </StandardButton>
       ) : null}
       <p style={{ margin: "10px 0 0", fontSize: 12, fontStyle: "italic", color: "#6b7280" }}>{caveat}</p>
     </section>

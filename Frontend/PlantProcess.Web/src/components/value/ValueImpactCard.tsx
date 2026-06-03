@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { StandardButton } from "@/components/standard";
 
 export type ProvenanceHandleRef = { kind: string; id: string; detail?: string | null };
 
@@ -64,7 +65,7 @@ export function ValueImpactCard({
           .filter((t) => !!t.handle) /* guard: a term with no resolvable handle is not rendered */
           .map((t) => (
             <div key={t.name} style={{ borderTop: "1px solid #eef1f5", padding: "6px 0" }}>
-              <button
+              <StandardButton
                 type="button"
                 onClick={() => setOpen(open === t.name ? null : t.name)}
                 style={{ display: "flex", justifyContent: "space-between", width: "100%", background: "none", border: "none", padding: 0, cursor: "pointer", fontSize: 13 }}
@@ -73,7 +74,7 @@ export function ValueImpactCard({
                 <span style={{ fontWeight: 600 }}>
                   {money(t.low, impact.currency)} &ndash; {money(t.high, impact.currency)}
                 </span>
-              </button>
+              </StandardButton>
               {open === t.name ? (
                 <div style={{ marginTop: 6, fontSize: 12, color: "#6b7280" }}>
                   <div>Inputs: <code>{t.inputsJson}</code></div>
@@ -82,14 +83,14 @@ export function ValueImpactCard({
                     {t.handle ? (
                       <>
                         {" · "}
-                        <button
+                        <StandardButton
                           type="button"
                           data-testid="value-term-evidence"
                           onClick={() => onOpenEvidence?.(t.handle as ProvenanceHandleRef)}
                           style={{ color: "#3b6fb5", background: "none", border: "none", padding: 0, cursor: "pointer", textDecoration: "underline" }}
                         >
                           source finding ({t.handle.kind})
-                        </button>
+                        </StandardButton>
                       </>
                     ) : null}
                   </div>

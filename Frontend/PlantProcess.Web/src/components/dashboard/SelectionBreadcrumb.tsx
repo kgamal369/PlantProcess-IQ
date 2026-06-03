@@ -1,6 +1,7 @@
 import { RotateCcw, Trash2, Undo2 } from "lucide-react";
 import { useDashboardSelections } from "../../state/DashboardSelectionContext";
 import { useDashboardGridLayout } from "../../state/DashboardGridLayoutContext";
+import { StandardButton } from "@/components/standard";
 
 export function SelectionBreadcrumb() {
   const { selections, undoSelection, clearSelections, showAllWidgets, resetLayout } =
@@ -19,38 +20,38 @@ export function SelectionBreadcrumb() {
       </div>
 
       <div className="selection-breadcrumb__actions">
-        <button
+        <StandardButton
           className="secondary-button"
           onClick={undoSelection}
-          disabled={selections.length === 0}
+          isDisabled={selections.length === 0}
           type="button"
         >
           <Undo2 size={15} />
           Undo
-        </button>
+        </StandardButton>
 
-        <button
+        <StandardButton
           className="secondary-button"
           onClick={clearSelections}
-          disabled={selections.length === 0}
+          isDisabled={selections.length === 0}
           type="button"
         >
           <Trash2 size={15} />
           Clear visual selections
-        </button>
+        </StandardButton>
 
-        <button className="secondary-button" onClick={showAllWidgets} type="button">
+        <StandardButton className="secondary-button" onClick={showAllWidgets} type="button">
           Show widgets
-        </button>
+        </StandardButton>
 
-        <button className="secondary-button" onClick={resetLayout} type="button">
+        <StandardButton className="secondary-button" onClick={resetLayout} type="button">
           <RotateCcw size={15} />
           Reset layout
-        </button>
+        </StandardButton>
 
-        <button className="secondary-button" onClick={resetGridLayout} type="button">
+        <StandardButton className="secondary-button" onClick={resetGridLayout} type="button">
             Reset grid
-        </button>
+        </StandardButton>
       </div>
 
       {selections.length > 0 ? (

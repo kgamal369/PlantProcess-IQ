@@ -48,6 +48,7 @@ import { DemoModeProvider } from "./state/DemoModeContext";
 import { ThemeProvider } from "./state/ThemeContext";
 import { LicenseProvider } from "./state/LicenseContext";
 import "./index.css";
+import { StandardButton } from "@/components/standard";
 
 // Ã¢â€â‚¬Ã¢â€â‚¬ Lazy pages Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
@@ -126,7 +127,6 @@ const WidgetScriptCompilerPage = lazy(() =>
     default: m.Phase78WidgetScriptCompilerPage,
   }))
 );
-
 
 const PageBuilderPage = lazy(() =>
   import("./pages/PageBuilder/PageBuilderPage").then((m) => ({
@@ -292,7 +292,7 @@ function BootstrapScreen() {
             {bootstrapError}
           </p>
 
-          <button
+          <StandardButton
             type="button"
             onClick={retryBootstrap}
             style={{
@@ -307,7 +307,7 @@ function BootstrapScreen() {
             }}
           >
             Retry connection
-          </button>
+          </StandardButton>
         </div>
       </div>
     );
@@ -585,5 +585,4 @@ export default function App() {
     </ThemeProvider>
   );
 }
-
 

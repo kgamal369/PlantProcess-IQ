@@ -65,7 +65,15 @@
                     "validate:v7-phase01-frontend":  "npm run validate:standard-imports \u0026\u0026 npm run test:standard-import-gate \u0026\u0026 npm run build",
                     "test:phase23-page-builder":  "npx playwright test e2e/page-builder-v7.spec.ts --project=chromium --workers=1",
                     "test:run":  "vitest run",
-                    "lint:pages":  "node tools/dup-pages-guard.mjs"
+                    "lint:pages":  "node tools/dup-pages-guard.mjs",
+                    "phase9:standardize-buttons":  "node tools/phase9/standardize-phase9-buttons.cjs",
+                    "phase9:ui-quality":  "node tools/phase9/validate-phase9-ui-quality.mjs",
+                    "qa:phase9:action":  "playwright test -c playwright.phase9.config.ts e2e/phase9-action-matrix.spec.ts",
+                    "qa:phase9:responsive":  "playwright test -c playwright.phase9.config.ts e2e/phase9-responsive-states.spec.ts",
+                    "qa:phase9:visual":  "playwright test -c playwright.phase9.config.ts e2e/visual/phase9-core.visual.spec.ts",
+                    "qa:phase9:visual:update":  "playwright test -c playwright.phase9.config.ts e2e/visual/phase9-core.visual.spec.ts --update-snapshots",
+                    "qa:phase9":  "npm run phase9:ui-quality \u0026\u0026 npm run qa:phase9:action \u0026\u0026 npm run qa:phase9:responsive",
+                    "validate:phase9":  "npm run phase9:standardize-buttons \u0026\u0026 npm run phase9:ui-quality \u0026\u0026 npm run build \u0026\u0026 npm run test \u0026\u0026 npm run qa:phase9"
                 },
     "dependencies":  {
                          "lucide-react":  "^1.14.0",

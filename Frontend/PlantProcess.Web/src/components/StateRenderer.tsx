@@ -29,6 +29,7 @@
 import { ReactNode } from "react";
 import { AlertTriangle, RefreshCw, InboxIcon } from "lucide-react";
 import { LoadingPanel } from "./AsyncState";
+import { StandardButton } from "@/components/standard";
 
 interface StateRendererProps<T> {
   /** True while data is being fetched. */
@@ -81,9 +82,9 @@ export function StateRenderer<T>({
           {error instanceof Error ? error.message : "An unexpected error occurred."}
         </span>
         {onRetry && (
-          <button type="button" className="ppiq-state-panel__action" onClick={onRetry}>
+          <StandardButton type="button" className="ppiq-state-panel__action" onClick={onRetry}>
             <RefreshCw size={14} /> Retry
-          </button>
+          </StandardButton>
         )}
       </div>
     );
@@ -108,9 +109,9 @@ export function StateRenderer<T>({
         <strong className="ppiq-state-panel__title">{emptyTitle}</strong>
         <span className="ppiq-state-panel__message">{emptyHint}</span>
         {onRetry && (
-          <button type="button" className="ppiq-state-panel__action" onClick={onRetry}>
+          <StandardButton type="button" className="ppiq-state-panel__action" onClick={onRetry}>
             <RefreshCw size={14} /> Refresh
-          </button>
+          </StandardButton>
         )}
       </div>
     );

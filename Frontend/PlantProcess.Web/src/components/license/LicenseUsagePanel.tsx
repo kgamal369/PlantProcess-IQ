@@ -1,6 +1,7 @@
 import { useLicense } from "../../state/LicenseContext";
 import { LicenseBadge } from "./LicenseBadge";
 import "./license-components.css";
+import { StandardButton } from "@/components/standard";
 
 function limitText(value: number | null | undefined) {
   return value === null || value === undefined ? "Unlimited" : String(value);
@@ -28,9 +29,9 @@ export function LicenseUsagePanel() {
         <p className="license-eyebrow">Commercial gates</p>
         <h2>License usage unavailable</h2>
         <p>{error}</p>
-        <button type="button" onClick={() => void refresh()}>
+        <StandardButton type="button" onClick={() => void refresh()}>
           Retry
-        </button>
+        </StandardButton>
       </section>
     );
   }

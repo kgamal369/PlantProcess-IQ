@@ -5,10 +5,12 @@ import {
   type WidgetScriptValidationRequest,
 } from "@/api/widgetScript";
 import type {
+
   DashboardWidgetFilters,
   DashboardWidgetQueryOptions,
   DashboardWidgetQueryResult,
 } from "@/api/plantProcessApi";
+import { StandardButton } from "@/components/standard";
 
 type WidgetScriptStepProps = {
   initialExpression?: string;
@@ -85,19 +87,19 @@ export function WidgetScriptStep({
           </p>
         </div>
 
-        <button
+        <StandardButton
           type="button"
           className="primary-button"
-          disabled={isPreviewing || expression.trim().length === 0}
+          isDisabled={isPreviewing || expression.trim().length === 0}
           onClick={() => void runPreview()}
         >
           {isPreviewing ? "Running preview..." : "Run expression preview"}
-        </button>
+        </StandardButton>
       </div>
 
       <div className="widget-script-step__templates">
         {widgetScriptTemplates.map((template) => (
-          <button
+          <StandardButton
             key={template.title}
             type="button"
             className="secondary-button"
@@ -109,7 +111,7 @@ export function WidgetScriptStep({
             title={template.description}
           >
             {template.title}
-          </button>
+          </StandardButton>
         ))}
       </div>
 

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { StandardButton } from "@/components/standard";
 
 export type ProvenanceHandleRef = { kind: string; id: string; detail?: string | null };
 
@@ -67,19 +68,19 @@ export function SuggestionCardsPanel({
           ) : null}
 
           <div style={{ marginTop: 8, display: "flex", gap: 8 }}>
-            <button type="button" onClick={() => setDrawer(c)} style={btn}>Evidence</button>
-            <button type="button" onClick={() => onAct?.(c.id, "assign")} style={btn}>Acknowledge</button>
-            <button
+            <StandardButton type="button" onClick={() => setDrawer(c)} style={btn}>Evidence</StandardButton>
+            <StandardButton type="button" onClick={() => onAct?.(c.id, "assign")} style={btn}>Acknowledge</StandardButton>
+            <StandardButton
               type="button"
-              disabled={!isManager}
+              isDisabled={!isManager}
               title={!isManager ? "Requires engineer/admin" : undefined}
               data-testid="accept-button"
               onClick={() => isManager && onAct?.(c.id, "accept")}
               style={{ ...btn, opacity: isManager ? 1 : 0.4, cursor: isManager ? "pointer" : "not-allowed" }}
             >
               Accept
-            </button>
-            <button type="button" disabled={!isManager} onClick={() => isManager && onAct?.(c.id, "reject")} style={{ ...btn, opacity: isManager ? 1 : 0.4 }}>Reject</button>
+            </StandardButton>
+            <StandardButton type="button" isDisabled={!isManager} onClick={() => isManager && onAct?.(c.id, "reject")} style={{ ...btn, opacity: isManager ? 1 : 0.4 }}>Reject</StandardButton>
           </div>
           <p style={{ margin: "8px 0 0", fontSize: 11, fontStyle: "italic", color: "#6b7280" }}>{c.honestyText}</p>
         </section>
@@ -89,16 +90,16 @@ export function SuggestionCardsPanel({
         <aside data-testid="evidence-drawer" style={{ position: "fixed", right: 0, top: 0, bottom: 0, width: 360, background: "#fff", borderLeft: "1px solid #d8dee9", padding: 16, overflowY: "auto" }}>
           <div style={{ display: "flex", justifyContent: "space-between" }}>
             <strong>Evidence</strong>
-            <button type="button" onClick={() => setDrawer(null)} style={btn}>Close</button>
+            <StandardButton type="button" onClick={() => setDrawer(null)} style={btn}>Close</StandardButton>
           </div>
           <p style={{ fontSize: 13, color: "#374151" }}>{drawer.title}</p>
           {drawer.evidence.length === 0 ? (
             <p style={{ fontSize: 12, color: "#c0563b" }}>No resolvable evidence.</p>
           ) : (
             drawer.evidence.map((h, i) => (
-              <button key={i} type="button" data-testid="evidence-link" onClick={() => onOpenEvidence?.(h)} style={{ ...btn, display: "block", width: "100%", textAlign: "left", marginBottom: 6 }}>
+              <StandardButton key={i} type="button" data-testid="evidence-link" onClick={() => onOpenEvidence?.(h)} style={{ ...btn, display: "block", width: "100%", textAlign: "left", marginBottom: 6 }}>
                 Open {h.kind} ({h.id.slice(0, 8)})
-              </button>
+              </StandardButton>
             ))
           )}
         </aside>

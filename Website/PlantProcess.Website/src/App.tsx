@@ -1,4 +1,5 @@
-﻿import { NavLink, Route, Routes } from "react-router-dom";
+import type { ReactNode } from "react";
+import { NavLink, Route, Routes, useParams } from "react-router-dom";
 import {
   BadgeEuro,
   BarChart3,
@@ -23,510 +24,515 @@ import PricingLicenseMatrix from "./components/proof/PricingLicenseMatrix";
 import PositioningTruthBlock from "./components/proof/PositioningTruthBlock";
 import ConnectorHonestyBlock from "./components/proof/ConnectorHonestyBlock";
 import RequestDemoForm from "./components/proof/RequestDemoForm";
+import { licensePlans } from "./content/phase1WebsiteProof";
+import "./styles/phase10.css";
 
-const demoMailto =
-  "mailto:info@plantprocessiq.com?subject=PlantProcess%20IQ%20Demo%20Request&body=Hello%20Karim%2C%0A%0AI%20would%20like%20to%20book%20a%2020-minute%20PlantProcess%20IQ%20demo.%0A%0ACompany%3A%0APlant%20type%3A%0AData%20sources%3A%0AMain%20quality%20problem%3A%0APreferred%20time%3A%0A";
+type ProductCode = "plantprocess-iq" | "mes" | "qes" | "yard" | "energy";
 
-const screenshotCards = [
+type EcosystemProduct = {
+  code: ProductCode;
+  name: string;
+  shortName: string;
+  eyebrow: string;
+  headline: string;
+  description: string;
+  benefit: string;
+  licenseDetail: string;
+  bestFor: string[];
+  workflow: string[];
+  proofPoints: string[];
+};
+
+const productEcosystem: EcosystemProduct[] = [
   {
-    title: "Command dashboard",
-    image: "/screenshots/plantprocess-dashboard.png",
-    description: "Cross-filtered quality, risk, and process intelligence.",
+    code: "plantprocess-iq",
+    name: "PlantProcess IQ",
+    shortName: "PPIQ",
+    eyebrow: "Quality Intelligence Layer",
+    headline: "Evidence-grade process and quality intelligence without replacing MES, SCADA or Level 2.",
+    description:
+      "PlantProcess IQ connects source-shaped plant data, maps it into a generic canonical model, and gives engineers a disciplined investigation workspace for quality, genealogy, risk, correlation and reporting.",
+    benefit:
+      "Reduce manual quality forensics and make scattered manufacturing data usable for process, quality and management decisions.",
+    licenseDetail:
+      "Available from Light diagnostic through Enterprise rollout. Advanced correlation, widget scripting and governed jobs unlock progressively by tier.",
+    bestFor: ["Quality teams", "Process engineers", "Plant managers", "MES / data teams"],
+    workflow: ["Connect sources", "Stage raw data", "Map model", "Investigate", "Score risk", "Report"],
+    proofPoints: [
+      "Read-only data philosophy",
+      "Generic manufacturing model",
+      "Evidence-first analytics",
+      "Honest AI readiness gates",
+    ],
   },
   {
-    title: "Admin DB configuration",
-    image: "/screenshots/admin-db-configuration.png",
-    description: "Source links, import cycles, and staging/dump visibility.",
+    code: "mes",
+    name: "SOU MES",
+    shortName: "MES",
+    eyebrow: "Execution Backbone",
+    headline: "A practical MES direction for production execution, order tracking and operational visibility.",
+    description:
+      "The MES product line focuses on production execution, material tracking, order progress and operator-facing workflows. It is positioned as a separate execution system, not mixed into PlantProcess IQ.",
+    benefit:
+      "Create a clear path from shop-floor execution to management visibility while keeping quality intelligence as a complementary layer.",
+    licenseDetail:
+      "MES is an Enterprise / project-scoped product. Licensing depends on plant lines, execution scope, integrations and rollout model.",
+    bestFor: ["Manufacturing execution", "Order tracking", "Operator workflows", "Production booking"],
+    workflow: ["Receive orders", "Track execution", "Book production", "Handle exceptions", "Expose status"],
+    proofPoints: [
+      "Separate from PlantProcess IQ",
+      "Execution-focused",
+      "Integration-ready",
+      "Project-scoped rollout",
+    ],
   },
   {
-    title: "Schema mapping workspace",
-    image: "/screenshots/schema-mapping.png",
-    description: "Customer tables mapped into the generic canonical model.",
+    code: "qes",
+    name: "SOU QES",
+    shortName: "QES",
+    eyebrow: "Quality Execution",
+    headline: "Quality execution workflows for inspections, samples, decisions and nonconformance follow-up.",
+    description:
+      "QES focuses on operational quality execution: inspection plans, sample checks, lab handover, decision records and structured nonconformance workflows.",
+    benefit:
+      "Move quality teams from scattered spreadsheets and informal follow-ups into a controlled workflow with clear decision history.",
+    licenseDetail:
+      "QES can be sold as Pro Plus or Enterprise depending on inspection volume, lab integration and approval workflow complexity.",
+    bestFor: ["QA leads", "Lab teams", "Inspection teams", "Nonconformance management"],
+    workflow: ["Plan inspection", "Capture sample", "Record result", "Decide", "Escalate", "Close loop"],
+    proofPoints: [
+      "Inspection workflow discipline",
+      "Decision traceability",
+      "Lab integration direction",
+      "Quality governance",
+    ],
   },
   {
-    title: "Jobs monitor",
-    image: "/screenshots/jobs-monitor.png",
-    description: "Source snapshot, canonical import, quality, risk, and ML jobs.",
+    code: "yard",
+    name: "SOU Yard & Warehouse Management",
+    shortName: "Yard",
+    eyebrow: "Material Logistics",
+    headline: "Yard and warehouse visibility for material location, movements, inventory and operational bottlenecks.",
+    description:
+      "The Yard product direction supports material movement planning, inventory visibility, location truth, equipment constraints and dispatch coordination.",
+    benefit:
+      "Improve confidence in where materials are, what is available, what is blocked and what movement should happen next.",
+    licenseDetail:
+      "Usually Enterprise scoped because yard logic depends on site topology, equipment, transport routes and integration requirements.",
+    bestFor: ["Yard managers", "Warehouse teams", "Logistics coordinators", "Material planners"],
+    workflow: ["Locate", "Reserve", "Move", "Confirm", "Handle exception", "Optimize"],
+    proofPoints: [
+      "Site topology aware",
+      "Inventory truth",
+      "Movement confirmation",
+      "Exception handling",
+    ],
   },
   {
-    title: "ML readiness workspace",
-    image: "/screenshots/ml-readiness.png",
-    description: "Honest readiness gates before real model training starts.",
-  },
-  {
-    title: "Investigation report",
-    image: "/screenshots/investigation-report.png",
-    description: "Data Diagnostic output for customer decision-making.",
+    code: "energy",
+    name: "SOU Energy Management",
+    shortName: "Energy",
+    eyebrow: "Energy Intelligence",
+    headline: "Energy monitoring and process-aware consumption intelligence for manufacturing operations.",
+    description:
+      "Energy Management connects process context with consumption signals to show where energy is used, wasted or becoming a process-risk indicator.",
+    benefit:
+      "Help plant teams connect consumption patterns with equipment, products, shifts and operating conditions.",
+    licenseDetail:
+      "Pro Plus for site-level dashboards; Enterprise for multi-line integration, energy KPIs and governed reporting.",
+    bestFor: ["Energy managers", "Operations leaders", "Process engineers", "Sustainability teams"],
+    workflow: ["Collect meters", "Map context", "Calculate KPIs", "Compare shifts", "Detect outliers", "Report"],
+    proofPoints: [
+      "Process-context energy view",
+      "KPI-ready",
+      "Outlier investigation",
+      "Sustainability reporting direction",
+    ],
   },
 ];
 
-const lifecycleSteps = [
-  ["Connect", "Configure file and database source connectors honestly."],
-  ["Stage", "Copy raw source-shaped data into a safe staging/dump layer."],
-  ["Map", "Use schema views and mapping rules to fit the generic canonical model."],
-  ["Monitor", "Track jobs, refresh cycles, failures, duration, and next run."],
-  ["Analyze", "Use dashboards, quality, risk, correlation, and investigation workflows."],
-  ["Report", "Export a customer-grade Data Diagnostic report with limitations stated clearly."],
+const trustPillars = [
+  {
+    title: "Read-only source layer",
+    text: "PlantProcess IQ reads source data into a controlled staging layer. It does not write back to MES, SCADA, PLC, Level 2 or customer source systems.",
+    icon: <DatabaseZap size={24} />,
+  },
+  {
+    title: "Data handling",
+    text: "The platform separates raw source-shaped data, mapping logic, canonical records, read models and customer-facing reports.",
+    icon: <Network size={24} />,
+  },
+  {
+    title: "Deployment models",
+    text: "Supported deployment directions include local demo, private customer environment and enterprise-controlled rollout. Production rollout requires customer security review.",
+    icon: <MonitorCheck size={24} />,
+  },
+  {
+    title: "AI honesty",
+    text: "Correlations, risk indicators and suggestions are presented as investigation evidence, not automatic root-cause proof or process-control commands.",
+    icon: <BrainCircuit size={24} />,
+  },
+  {
+    title: "Enterprise controls",
+    text: "RBAC, audit logs, tenant-aware access and license-feature gates are treated as product controls, not decorative UI.",
+    icon: <ShieldCheck size={24} />,
+  },
 ];
 
-function Layout({ children }: { children: React.ReactNode }) {
+function productIcon(code: ProductCode): ReactNode {
+  switch (code) {
+    case "plantprocess-iq":
+      return <BrainCircuit size={30} />;
+    case "mes":
+      return <Workflow size={30} />;
+    case "qes":
+      return <CheckCircle2 size={30} />;
+    case "yard":
+      return <GitBranch size={30} />;
+    case "energy":
+      return <BarChart3 size={30} />;
+    default:
+      return <Factory size={30} />;
+  }
+}
+
+function Layout({ children }: { children: ReactNode }) {
   return (
-    <div className="site-shell">
-      <header className="site-header">
-        <NavLink to="/" className="brand-link">
+    <div className="site-shell phase10-shell">
+      <header className="site-header phase10-header">
+        <NavLink to="/" className="brand-link" aria-label="PlantProcess IQ home">
           <span className="sou-mark">
-            <img src="/brand/sou-icon.svg" alt="SOU" width={38} height={38} />
+            <img src="/brand/sou-icon.svg" alt="SOU Industrial Software" width={38} height={38} />
           </span>
           <span className="brand-text">
-            PlantProcess <strong>IQ</strong>
+            <strong>PlantProcess IQ</strong>
+            <small>SOU Industrial Software</small>
           </span>
         </NavLink>
 
-        <nav className="nav-links">
+        <nav className="site-nav phase10-nav" aria-label="Main website navigation">
           <NavLink to="/">Home</NavLink>
-          <NavLink to="/product">Product</NavLink>
+          <NavLink to="/product">PPIQ</NavLink>
+          <NavLink to="/products/mes">MES</NavLink>
+          <NavLink to="/products/qes">QES</NavLink>
+          <NavLink to="/products/yard">Yard</NavLink>
+          <NavLink to="/products/energy">Energy</NavLink>
           <NavLink to="/pricing">Pricing</NavLink>
           <NavLink to="/security">Security</NavLink>
           <NavLink to="/contact">Contact</NavLink>
         </nav>
 
-        <a className="header-cta" href={demoMailto}>
-          Request founder demo
+        <a className="website-button website-button--primary header-cta" href="#request-demo">
+          Request demo
         </a>
       </header>
 
-      {children}
+      <main>{children}</main>
 
-      <footer className="site-footer">
+      <footer className="site-footer phase10-footer">
         <div>
           <strong>PlantProcess IQ</strong>
-          <span>Process-to-quality intelligence for manufacturing plants.</span>
+          <p>Manufacturing quality intelligence, evidence-first analytics and customer-safe data diagnostics.</p>
         </div>
-        <div>
-          <span>Düsseldorf, Germany</span>
-          <span>EU / MENA industrial focus</span>
+        <div className="footer-contact">
+          <span><Mail size={16} /> info@plantprocessiq.com</span>
+          <span><MapPin size={16} /> Düsseldorf / MENA industrial network</span>
+          <span><FileText size={16} /> Engineer brief and demo pack ready for customer conversations</span>
         </div>
       </footer>
     </div>
   );
 }
 
-function HomePage() {
+function EcosystemGraphic({ product }: { product: EcosystemProduct }) {
   return (
-    <Layout>
-      <section className="hero-section">
-        <div className="hero-copy">
-          <div className="status-pill">
-            <Factory size={16} />
-            Generic manufacturing intelligence layer
-          </div>
+    <div className="ecosystem-graphic" aria-label={`${product.name} workflow graphic`}>
+      <div className="ecosystem-graphic__center">
+        {productIcon(product.code)}
+        <strong>{product.shortName}</strong>
+      </div>
 
-          <h1>
-            Connect plant data. Understand your process.
-            <span> Act with evidence.</span>
-          </h1>
-
-          <p>
-            PlantProcess IQ is a read-only intelligence layer for manufacturing
-            plants. It connects plant data, maps it into a generic
-            process-to-quality model, detects data readiness gaps, highlights
-            suspected contributors, and prepares customer-grade Data Diagnostic
-            reports.
-          </p>
-
-          <div className="hero-actions">
-            <a className="button button-primary" href={demoMailto}>
-              <CalendarCheck size={18} />
-              Request 20-minute demo
-            </a>
-
-            <a className="button button-secondary" href="#how-it-works">
-              <Workflow size={18} />
-              See how it works
-            </a>
-          </div>
+      {product.workflow.map((step, index) => (
+        <div className={`ecosystem-node ecosystem-node--${index + 1}`} key={step}>
+          <span>{String(index + 1).padStart(2, "0")}</span>
+          <strong>{step}</strong>
         </div>
-
-        <div className="hero-real-screenshot">
-          <div className="screenshot-browser-bar">
-            <span />
-            <span />
-            <span />
-            <strong>PlantProcess IQ Command Center</strong>
-          </div>
-
-          <img
-            src="/screenshots/plantprocess-dashboard.png"
-            alt="PlantProcess IQ dashboard screenshot"
-            onError={(event) => {
-              event.currentTarget.style.display = "none";
-            }}
-          />
-
-          <div className="screenshot-fallback">
-            <MonitorCheck size={42} />
-            <strong>Replace with real deployed app screenshot</strong>
-            <p>
-              Save your real screenshot here:
-              <br />
-              <code>/public/screenshots/plantprocess-dashboard.png</code>
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <section className="website-section" id="how-it-works">
-        <div className="section-heading">
-          <div>
-            <div className="eyebrow">
-              <Workflow size={15} />
-              How it works
-            </div>
-            <h2>One lifecycle: connect → stage → map → monitor → analyze → report.</h2>
-          </div>
-        </div>
-
-        <div className="lifecycle-flow">
-          {lifecycleSteps.map(([title, description], index) => (
-            <article className="flow-card" key={title}>
-              <span>{index + 1}</span>
-              <h3>{title}</h3>
-              <p>{description}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <ProductScreenshotShowcase />
-
-      <section className="website-section screenshot-section">
-        <div className="section-heading">
-          <div>
-            <div className="eyebrow">
-              <MonitorCheck size={15} />
-              Screenshot gallery
-            </div>
-            <h2>Proof screens for engineers before they book a demo.</h2>
-          </div>
-        </div>
-
-        <div className="screenshot-gallery-grid">
-          {screenshotCards.map((card) => (
-            <article className="screenshot-card" key={card.title}>
-              <img
-                src={card.image}
-                alt={card.title}
-                onError={(event) => {
-                  event.currentTarget.style.display = "none";
-                }}
-              />
-
-              <div className="screenshot-card-fallback">
-                <MonitorCheck size={22} />
-                <strong>{card.title}</strong>
-                <span>{card.description}</span>
-                <code>{card.image}</code>
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="website-section" id="demo-lifecycle">
-        <div className="section-heading">
-          <div>
-            <div className="eyebrow">
-              <GitBranch size={15} />
-              Demo lifecycle
-            </div>
-            <h2>The demo follows the real product flow, not a fake isolated page.</h2>
-          </div>
-        </div>
-
-        <div className="proof-grid">
-          <article className="proof-card">
-            <DatabaseZap size={24} />
-            <h3>1. Configure source</h3>
-            <p>Show read-only source setup, provider honesty, and refresh cycle.</p>
-          </article>
-
-          <article className="proof-card">
-            <Network size={24} />
-            <h3>2. Map schema</h3>
-            <p>Show how plant-specific tables become generic canonical data.</p>
-          </article>
-
-          <article className="proof-card">
-            <BarChart3 size={24} />
-            <h3>3. Analyze</h3>
-            <p>Show dashboards, risk, correlation, investigation, and job status.</p>
-          </article>
-
-          <article className="proof-card">
-            <FileText size={24} />
-            <h3>4. Report</h3>
-            <p>Close with a Data Diagnostic report and ML readiness status.</p>
-          </article>
-        </div>
-      </section>
-
-      <PositioningTruthBlock />
-      <ConnectorHonestyBlock />
-      <PricingLicenseMatrix />
-      <DataDiagnosticSection />
-      <MlHonestySection />
-      <BrandProofSection />
-      <RequestDemoForm />
-    </Layout>
+      ))}
+    </div>
   );
 }
 
-function ProductPage() {
+function ProductCard({ product }: { product: EcosystemProduct }) {
+  const href = product.code === "plantprocess-iq" ? "/product" : `/products/${product.code}`;
+
   return (
-    <Layout>
-      <section className="page-hero">
-        <div className="eyebrow">
-          <Factory size={15} />
-          Product
+    <NavLink className="ecosystem-product-card" to={href}>
+      <span className="ecosystem-product-card__icon">{productIcon(product.code)}</span>
+      <span className="section-kicker">{product.eyebrow}</span>
+      <strong>{product.name}</strong>
+      <p>{product.description}</p>
+      <span className="card-link-text">Open product page →</span>
+    </NavLink>
+  );
+}
+
+function HomePage() {
+  return (
+    <>
+      <section className="page-hero phase10-hero">
+        <div className="hero-copy">
+          <div className="section-kicker">Manufacturing intelligence ecosystem</div>
+          <h1>One industrial software brand. Clear product lines. No fake AI promises.</h1>
+          <p>
+            PlantProcess IQ is the first commercial wedge: a read-only intelligence layer for quality,
+            genealogy, risk and data diagnostics. The wider SOU ecosystem can later expand into MES,
+            QES, Yard and Energy products without confusing the core message.
+          </p>
+
+          <div className="hero-actions">
+            <a className="website-button website-button--primary" href="#request-demo">
+              Request a demo
+            </a>
+            <NavLink className="website-button website-button--secondary" to="/security">
+              Read trust model
+            </NavLink>
+          </div>
         </div>
-        <h1>Generic process-to-quality intelligence for plants.</h1>
-        <p>
-          PlantProcess IQ is designed for different database types, different
-          inspection devices, different process structures, and different KPIs —
-          without hard-coding one plant or one industry.
-        </p>
+
+        <div className="hero-command-card">
+          <Factory size={34} />
+          <strong>Generic manufacturing scope</strong>
+          <p>Steel, aluminum, paper, tires, pharma, food, chemicals and automotive-ready model direction.</p>
+          <div className="hero-mini-grid">
+            <span>Read-only</span>
+            <span>Evidence-first</span>
+            <span>Configurable</span>
+            <span>License-gated</span>
+          </div>
+        </div>
       </section>
 
-      <section className="website-section">
-        <div className="feature-grid">
-          {[
-            [
-              "Generic source layer",
-              "CSV and Excel are starter-friendly; database connectors are shown honestly according to certification status.",
-            ],
-            [
-              "Staging / dump copy",
-              "Keeps a latest safe copy of customer source-shaped data before canonical mapping.",
-            ],
-            [
-              "Schema mapping",
-              "Maps plant-specific tables into a generic manufacturing data model.",
-            ],
-            [
-              "Jobs monitor",
-              "Shows import, refresh, mapping, quality, risk, correlation, and readiness jobs.",
-            ],
-            [
-              "Dashboard builder",
-              "Creates pages and widgets from configured canonical data.",
-            ],
-            [
-              "ML readiness",
-              "Prepares labels and feature vectors before real training starts.",
-            ],
-          ].map(([title, text]) => (
-            <article className="feature-card" key={title}>
-              <CheckCircle2 size={22} />
-              <h3>{title}</h3>
-              <p>{text}</p>
-            </article>
+      <section className="website-section product-ecosystem-section">
+        <div className="section-kicker">Product ecosystem</div>
+        <div className="section-heading-row">
+          <div>
+            <h2>Five product stories, one industrial brand architecture.</h2>
+            <p>
+              Each product page has its own benefit, workflow, license logic and inquiry CTA,
+              while PlantProcess IQ stays the flagship quality-intelligence product.
+            </p>
+          </div>
+        </div>
+
+        <div className="ecosystem-card-grid">
+          {productEcosystem.map((product) => (
+            <ProductCard product={product} key={product.code} />
           ))}
         </div>
       </section>
 
       <ProductScreenshotShowcase />
-      <PositioningTruthBlock />
       <ConnectorHonestyBlock />
+      <PositioningTruthBlock />
       <BrandProofSection />
-    </Layout>
+      <RequestDemoForm />
+    </>
+  );
+}
+
+function ProductPage({ fixedCode }: { fixedCode?: ProductCode }) {
+  const params = useParams<{ code?: string }>();
+  const requestedCode = fixedCode ?? params.code;
+  const product = productEcosystem.find((item) => item.code === requestedCode) ?? productEcosystem[0];
+
+  return (
+    <>
+      <section className="page-hero product-detail-hero">
+        <div>
+          <div className="section-kicker">{product.eyebrow}</div>
+          <h1>{product.headline}</h1>
+          <p>{product.description}</p>
+
+          <div className="hero-actions">
+            <a className="website-button website-button--primary" href="#request-demo">
+              Discuss {product.shortName}
+            </a>
+            <NavLink className="website-button website-button--secondary" to="/pricing">
+              View license logic
+            </NavLink>
+          </div>
+        </div>
+
+        <EcosystemGraphic product={product} />
+      </section>
+
+      <section className="website-section product-detail-section">
+        <div className="product-detail-grid">
+          <article>
+            <span className="section-kicker">Business benefit</span>
+            <h2>{product.benefit}</h2>
+            <ul className="phase10-check-list">
+              {product.proofPoints.map((point) => (
+                <li key={point}><CheckCircle2 size={18} /> {point}</li>
+              ))}
+            </ul>
+          </article>
+
+          <article>
+            <span className="section-kicker">Best fit</span>
+            <h2>Designed for teams who own the workflow.</h2>
+            <ul className="phase10-pill-list">
+              {product.bestFor.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </article>
+
+          <article>
+            <span className="section-kicker">License detail</span>
+            <h2>Commercial packaging stays honest.</h2>
+            <p>{product.licenseDetail}</p>
+            <a className="website-button website-button--secondary" href="#request-demo">
+              Ask for fit check
+            </a>
+          </article>
+        </div>
+      </section>
+
+      <RequestDemoForm />
+    </>
   );
 }
 
 function PricingPage() {
   return (
-    <Layout>
-      <section className="page-hero">
-        <div className="eyebrow">
-          <BadgeEuro size={15} />
-          License architecture
+    <>
+      <section className="page-hero pricing-hero">
+        <div>
+          <div className="section-kicker">Pricing and license architecture</div>
+          <h1>Light → Pro → Pro Plus → Enterprise, aligned to feature depth and usage maturity.</h1>
+          <p>
+            The website pricing story mirrors the in-app license gates: users, connectors,
+            refresh cadence, dashboards, widget scripting, analysis allowance and enterprise controls.
+          </p>
         </div>
-        <h1>Start with a diagnostic. Grow into a licensed platform.</h1>
-        <p>
-          Pricing is staged to match product maturity: data diagnostic first,
-          pilot next, then annual license after workflow proof.
-        </p>
+
+        <div className="pricing-proof-card">
+          <BadgeEuro size={36} />
+          <strong>Diagnostic-first commercialization</strong>
+          <p>Start with data diagnostic / pilot scope, then expand only when the workflow proves value.</p>
+        </div>
       </section>
 
       <PricingLicenseMatrix />
 
-      <p className="pricing-note">
-        Pricing labels are demo-stage positioning. Final pilot/SOW pricing
-        depends on scope, deployment model, connectors, support, and data volume.
-      </p>
+      <section className="website-section phase10-feature-matrix">
+        <div className="section-kicker">Feature and usage tiers</div>
+        <div className="phase10-matrix">
+          <div className="phase10-matrix__row phase10-matrix__head">
+            <span>Tier</span>
+            <span>Best for</span>
+            <span>Users</span>
+            <span>Connectors</span>
+            <span>Analysis / automation</span>
+          </div>
 
-      <DataDiagnosticSection />
+          {licensePlans.map((plan) => (
+            <div className="phase10-matrix__row" key={plan.code}>
+              <strong>{plan.name}</strong>
+              <span>{plan.idealFor}</span>
+              <span>{plan.users}</span>
+              <span>{plan.connectors}</span>
+              <span>{plan.tokens}; {plan.refresh}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
       <RequestDemoForm />
-    </Layout>
+    </>
   );
 }
 
 function SecurityPage() {
   return (
-    <Layout>
-      <section className="page-hero">
-        <div className="eyebrow">
-          <ShieldCheck size={15} />
-          Security and data handling
+    <>
+      <section className="page-hero security-hero">
+        <div>
+          <div className="section-kicker">Security, trust and AI honesty</div>
+          <h1>Built for industrial credibility: read-only first, governed data, controlled rollout.</h1>
+          <p>
+            PlantProcess IQ must earn trust before it touches real customer production data.
+            The public website states what the system does, what it does not do, and where
+            enterprise controls belong.
+          </p>
         </div>
-        <h1>Read-only by design. No plant control. No write-back.</h1>
-        <p>
-          PlantProcess IQ is positioned as a safe evidence layer. It reads data,
-          stages it, maps it, analyzes it, and reports findings without replacing
-          operational systems.
-        </p>
-      </section>
 
-      <section className="website-section">
-        <div className="proof-grid">
-          <article className="proof-card">
-            <ShieldCheck size={24} />
-            <h3>Read-only source contract</h3>
-            <p>Source links should be configured as read-only wherever possible.</p>
-          </article>
-
-          <article className="proof-card">
-            <DatabaseZap size={24} />
-            <h3>Staging before canonical</h3>
-            <p>Raw source-shaped data lands in staging before canonical mapping.</p>
-          </article>
-
-          <article className="proof-card">
-            <FileText size={24} />
-            <h3>Audit-friendly reporting</h3>
-            <p>Reports include data readiness, evidence, and limitation statements.</p>
-          </article>
+        <div className="trust-stack-card">
+          <ShieldCheck size={38} />
+          <strong>Trust contract</strong>
+          <span>Read-only • auditable • license-gated • evidence-first</span>
         </div>
       </section>
 
-      <PositioningTruthBlock />
+      <section className="website-section trust-pillar-section">
+        <div className="trust-pillar-grid">
+          {trustPillars.map((pillar) => (
+            <article className="trust-pillar-card" key={pillar.title}>
+              {pillar.icon}
+              <h2>{pillar.title}</h2>
+              <p>{pillar.text}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
       <ConnectorHonestyBlock />
-    </Layout>
+      <PositioningTruthBlock />
+      <RequestDemoForm />
+    </>
   );
 }
 
 function ContactPage() {
   return (
-    <Layout>
-      <section className="page-hero">
-        <div className="eyebrow">
-          <Mail size={15} />
-          Contact
+    <>
+      <section className="page-hero contact-hero">
+        <div>
+          <div className="section-kicker">Request demo / lead capture</div>
+          <h1>Book a practical discovery call around your plant data problem.</h1>
+          <p>
+            The best first conversation is specific: source systems, quality pain, plant type,
+            current investigation effort and who owns the decision.
+          </p>
         </div>
-        <h1>Book a founder-led PlantProcess IQ walkthrough.</h1>
-        <p>
-          Send a short note with your plant type, quality problem, data sources,
-          and preferred time.
-        </p>
-      </section>
 
-      <section className="website-section contact-grid">
-        <article className="contact-card">
-          <Mail size={24} />
-          <h3>Email</h3>
-          <a href={demoMailto}>info@plantprocessiq.com</a>
-        </article>
-
-        <article className="contact-card">
-          <MapPin size={24} />
-          <h3>Location</h3>
-          <p>Düsseldorf, Germany — EU / MENA industrial focus.</p>
-        </article>
-
-        <article className="contact-card">
-          <CalendarCheck size={24} />
-          <h3>Demo request</h3>
-          <a className="button button-primary" href={demoMailto}>
-            Open email request
-          </a>
-        </article>
+        <div className="contact-proof-card">
+          <CalendarCheck size={38} />
+          <strong>20-minute fit check</strong>
+          <span>Problem → data sources → demo fit → next step</span>
+        </div>
       </section>
 
       <RequestDemoForm />
-    </Layout>
-  );
-}
-
-function DataDiagnosticSection() {
-  return (
-    <section className="website-section diagnostic-section">
-      <div>
-        <div className="eyebrow">
-          <FileText size={15} />
-          Data Diagnostic offer
-        </div>
-
-        <h2>The first realistic paid offer before pilot/license.</h2>
-
-        <p>
-          A short paid diagnostic can validate data availability, source
-          structure, mapping effort, quality gaps, risk/correlation potential,
-          and ML readiness before committing to a larger pilot.
-        </p>
-      </div>
-
-      <div className="diagnostic-card">
-        <strong>Typical deliverable</strong>
-        <ul>
-          <li>Source and connector inventory</li>
-          <li>Schema mapping coverage</li>
-          <li>Data quality findings</li>
-          <li>Risk/correlation evidence</li>
-          <li>ML readiness score</li>
-          <li>Recommended pilot scope</li>
-        </ul>
-      </div>
-    </section>
-  );
-}
-
-function MlHonestySection() {
-  return (
-    <section className="website-section ml-truth-section">
-      <div>
-        <div className="eyebrow">
-          <BrainCircuit size={15} />
-          ML preview honesty
-        </div>
-
-        <h2>ML workspace is readiness-first, not a production ML claim.</h2>
-
-        <p>
-          Today the product uses rule-based risk scoring, correlation analysis,
-          and suspected contributor ranking. ML training starts only after enough
-          validated labeled historical quality data exists.
-        </p>
-      </div>
-
-      <div className="ml-truth-card">
-        <BrainCircuit size={30} />
-        <strong>No trained production model active</strong>
-        <span>No AI prediction claim. No guaranteed root cause claim.</span>
-      </div>
-    </section>
+    </>
   );
 }
 
 export function App() {
   return (
-    <Routes>
-      <Route path="/" element={<HomePage />} />
-      <Route path="/product" element={<ProductPage />} />
-      <Route path="/services" element={<ProductPage />} />
-      <Route path="/pricing" element={<PricingPage />} />
-      <Route path="/security" element={<SecurityPage />} />
-      <Route path="/about" element={<ProductPage />} />
-      <Route path="/contact" element={<ContactPage />} />
-    </Routes>
+    <Layout>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/product" element={<ProductPage fixedCode="plantprocess-iq" />} />
+        <Route path="/services" element={<ProductPage fixedCode="plantprocess-iq" />} />
+        <Route path="/products/:code" element={<ProductPage />} />
+        <Route path="/pricing" element={<PricingPage />} />
+        <Route path="/security" element={<SecurityPage />} />
+        <Route path="/about" element={<ProductPage fixedCode="plantprocess-iq" />} />
+        <Route path="/contact" element={<ContactPage />} />
+      </Routes>
+    </Layout>
   );
 }
 

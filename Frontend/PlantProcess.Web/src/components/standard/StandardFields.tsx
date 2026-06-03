@@ -121,7 +121,7 @@ export const StandardInput = forwardRef<HTMLInputElement, StandardInputProps>(
               variant="ghost"
               size="sm"
               iconOnly
-              ariaLabel="Clear search"
+              aria-label="Clear search"
               onClick={() => {
                 const synthetic = { target: { value: "" } } as ChangeEvent<HTMLInputElement>;
                 onChange?.("", synthetic);

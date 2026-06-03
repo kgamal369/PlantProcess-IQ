@@ -37,6 +37,7 @@ import {
   type DashboardWidgetId,
 } from "../../state/DashboardSelectionContext";
 import { useDashboardGridLayout } from "../../state/DashboardGridLayoutContext";
+import { StandardButton } from "@/components/standard";
 
 interface DashboardWidgetCardProps {
   widgetId: DashboardWidgetId;
@@ -175,7 +176,7 @@ export function DashboardWidgetCard({
           {chartTypes.length > 1 ? (
             <div className="widget-chart-switcher" role="group" aria-label="Chart type">
               {chartTypes.map((ct) => (
-                <button
+                <StandardButton
                   key={ct}
                   type="button"
                   className={`widget-chart-btn ${activeChartType === ct ? "widget-chart-btn--active" : ""}`}
@@ -183,13 +184,13 @@ export function DashboardWidgetCard({
                   title={`Switch to ${ct} chart`}
                 >
                   {CHART_TYPE_LABELS[ct] ?? ct}
-                </button>
+                </StandardButton>
               ))}
             </div>
           ) : null}
 
           {/* Resize: half row */}
-          <button
+          <StandardButton
             type="button"
             className="icon-button"
             onClick={() =>
@@ -201,10 +202,10 @@ export function DashboardWidgetCard({
             aria-label="Half-row width"
           >
             <PanelTop size={15} />
-          </button>
+          </StandardButton>
 
           {/* Resize: full row */}
-          <button
+          <StandardButton
             type="button"
             className="icon-button"
             onClick={() => expandWidgetToFullRow(String(widgetId))}
@@ -212,10 +213,10 @@ export function DashboardWidgetCard({
             aria-label="Full-row width"
           >
             <Maximize2 size={15} />
-          </button>
+          </StandardButton>
 
           {/* Compact */}
-          <button
+          <StandardButton
             type="button"
             className="icon-button"
             onClick={() => compactWidget(String(widgetId))}
@@ -223,22 +224,22 @@ export function DashboardWidgetCard({
             aria-label="Compact size"
           >
             <Shrink size={15} />
-          </button>
+          </StandardButton>
 
           {/* Export CSV */}
-          <button
+          <StandardButton
             type="button"
             className="icon-button"
             onClick={exportCsv}
-            disabled={!exportRows?.length}
+            isDisabled={!exportRows?.length}
             title="Export CSV"
-            aria-label="Export CSV"
+            ariaLabel="Export CSV"
           >
             <Download size={15} />
-          </button>
+          </StandardButton>
 
           {/* Collapse / Expand body */}
-          <button
+          <StandardButton
             type="button"
             className="icon-button"
             onClick={() => setIsCollapsed((v) => !v)}
@@ -246,10 +247,10 @@ export function DashboardWidgetCard({
             aria-label={isCollapsed ? "Expand widget" : "Collapse widget"}
           >
             {isCollapsed ? <ChevronDown size={15} /> : <ChevronUp size={15} />}
-          </button>
+          </StandardButton>
 
           {/* Fullscreen overlay toggle */}
-          <button
+          <StandardButton
             type="button"
             className="icon-button"
             onClick={() => setIsFullscreen((v) => !v)}
@@ -257,12 +258,12 @@ export function DashboardWidgetCard({
             aria-label={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
           >
             {isFullscreen ? <Minimize2 size={15} /> : <Scan size={15} />}
-          </button>
+          </StandardButton>
 
           {/* Action menu */}
           {!disableActions ? (
             <div className="widget-action-menu" ref={menuRef}>
-              <button
+              <StandardButton
                 type="button"
                 className="icon-button"
                 onClick={() => setIsActionMenuOpen((v) => !v)}
@@ -271,40 +272,40 @@ export function DashboardWidgetCard({
                 aria-expanded={isActionMenuOpen}
               >
                 <MoreVertical size={15} />
-              </button>
+              </StandardButton>
 
               {isActionMenuOpen ? (
                 <div className="widget-action-menu__panel" role="menu">
                   {onRename ? (
-                    <button type="button" role="menuitem" onClick={() => execute(onRename)}>
+                    <StandardButton type="button" role="menuitem" onClick={() => execute(onRename)}>
                       <Edit3 size={14} />
                       Rename
-                    </button>
+                    </StandardButton>
                   ) : null}
 
                   {onEdit ? (
-                    <button type="button" role="menuitem" onClick={() => execute(onEdit)}>
+                    <StandardButton type="button" role="menuitem" onClick={() => execute(onEdit)}>
                       <Edit3 size={14} />
                       Edit widget
-                    </button>
+                    </StandardButton>
                   ) : null}
 
                   {onClone ? (
-                    <button type="button" role="menuitem" onClick={() => execute(onClone)}>
+                    <StandardButton type="button" role="menuitem" onClick={() => execute(onClone)}>
                       <Copy size={14} />
                       Duplicate
-                    </button>
+                    </StandardButton>
                   ) : null}
 
                   {onHide ? (
-                    <button type="button" role="menuitem" onClick={() => execute(onHide)}>
+                    <StandardButton type="button" role="menuitem" onClick={() => execute(onHide)}>
                       <EyeOff size={14} />
                       Hide
-                    </button>
+                    </StandardButton>
                   ) : null}
 
                   {onRemove ? (
-                    <button
+                    <StandardButton
                       type="button"
                       role="menuitem"
                       className="danger"
@@ -320,7 +321,7 @@ export function DashboardWidgetCard({
                     >
                       <Trash2 size={14} />
                       Remove
-                    </button>
+                    </StandardButton>
                   ) : null}
                 </div>
               ) : null}
