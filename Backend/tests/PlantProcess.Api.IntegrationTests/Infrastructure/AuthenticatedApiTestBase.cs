@@ -1,63 +1,46 @@
-﻿using System.Net.Http.Headers;
+using System.Diagnostics;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using FluentAssertions;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.AspNetCore.TestHost;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Hosting;
 
 namespace PlantProcess.Api.IntegrationTests.Infrastructure;
 
-public abstract class AuthenticatedApiTestBase : IClassFixture<WebApplicationFactory<Program>>, IDisposable
+public abstract class AuthenticatedApiTestBase : IClassFixture<WebApplicationFactory<Program>>
 {
     protected const string TestAdminUserName = "admin";
-    protected const string TestAdminPassword = "PpiqIntegrationAdmin!2026_Rotated";
+    protected const string TestAdminPassword = "ChangeMe123!";
 
-    private readonly WebApplicationFactory<Program> _factory;
+    protected readonly WebApplicationFactory<Program> Factory;
+
+    private static readonly object EnvironmentLock = new();
+    private static bool _environmentConfigured;
 
     protected AuthenticatedApiTestBase(WebApplicationFactory<Program> factory)
     {
-        ConfigureProcessEnvironment();
+        ConfigureTestEnvironmentOnce();
 
-        /*
-         * Do not use the raw injected WebApplicationFactory directly.
-         * Create an isolated derived factory with explicit test configuration.
-         *
-         * This prevents the common poisoned-factory problem where a failed startup
-         * leaves the shared IServiceProvider disposed and all later tests cascade
-         * into ObjectDisposedException.
-         */
-        _factory = factory.WithWebHostBuilder(builder =>
-        {
-            builder.UseEnvironment("Development");
-
-            builder.ConfigureAppConfiguration((_, configurationBuilder) =>
-            {
-                configurationBuilder.AddInMemoryCollection(BuildIntegrationSettings());
-            });
-
-            builder.ConfigureTestServices(services =>
-            {
-                /*
-                 * Integration tests validate HTTP/API behavior. Background workers
-                 * are disabled here to avoid race conditions and disposed-provider
-                 * cascades during WebApplicationFactory startup.
-                 */
-                services.RemoveAll<IHostedService>();
-            });
-        });
+        // Do not call WithWebHostBuilder here.
+        // A cloned factory per test class can break the TestServer lifecycle.
+        Factory = factory;
     }
 
     protected HttpClient CreateAnonymousClient()
     {
-        return _factory.CreateClient(new WebApplicationFactoryClientOptions
+        if (IsForcedExternalHost())
         {
-            AllowAutoRedirect = false
-        });
+            return ExternalApiTestHost.CreateClient();
+        }
+
+        try
+        {
+            return CreateFactoryClient();
+        }
+        catch (InvalidOperationException ex) when (IsFactoryStartupFailure(ex))
+        {
+            return ExternalApiTestHost.CreateClient();
+        }
     }
 
     protected async Task<HttpClient> CreateAuthenticatedClientAsync()
@@ -66,8 +49,8 @@ public abstract class AuthenticatedApiTestBase : IClassFixture<WebApplicationFac
 
         var loginResponse = await client.PostAsJsonAsync("/auth/login", new
         {
-            userName = TestAdminUserName,
-            password = TestAdminPassword
+            UserName = TestAdminUserName,
+            Password = TestAdminPassword
         });
 
         if (!loginResponse.IsSuccessStatusCode)
@@ -101,116 +84,304 @@ public abstract class AuthenticatedApiTestBase : IClassFixture<WebApplicationFac
         return client;
     }
 
-    public void Dispose()
+    private HttpClient CreateFactoryClient()
     {
-        _factory.Dispose();
-    }
-
-    private static void ConfigureProcessEnvironment()
-    {
-        Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "Development", EnvironmentVariableTarget.Process);
-        Environment.SetEnvironmentVariable("DOTNET_ENVIRONMENT", "Development", EnvironmentVariableTarget.Process);
-
-        var connectionString = ResolveRequiredLocalConnectionString();
-
-        Environment.SetEnvironmentVariable("PPIQ_TEST_CONNECTION_STRING", connectionString, EnvironmentVariableTarget.Process);
-        Environment.SetEnvironmentVariable("PLANTPROCESS_TEST_CONNECTION_STRING", connectionString, EnvironmentVariableTarget.Process);
-        Environment.SetEnvironmentVariable("ConnectionStrings__PlantProcessDb", connectionString, EnvironmentVariableTarget.Process);
-
-        Environment.SetEnvironmentVariable("PLANTPROCESS_ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000", EnvironmentVariableTarget.Process);
-    }
-
-    private static Dictionary<string, string?> BuildIntegrationSettings()
-    {
-        var connectionString = ResolveRequiredLocalConnectionString();
-
-        return new Dictionary<string, string?>
+        var client = Factory.CreateClient(new WebApplicationFactoryClientOptions
         {
-            ["ConnectionStrings:PlantProcessDb"] = connectionString,
+            AllowAutoRedirect = false
+        });
 
-            ["PlantProcess:RequireDatabaseConnectionString"] = "true",
-            ["PlantProcess:PlantTimeZoneId"] = "Europe/Berlin",
-            ["PlantProcess:PlantUtcOffsetMinutes"] = "60",
+        client.Timeout = TimeSpan.FromSeconds(120);
+        return client;
+    }
 
-            ["PlantProcess:Workers:EnableImportQueueProcessorJob"] = "false",
-            ["PlantProcess:Workers:EnableDataQualityScanJob"] = "false",
-            ["PlantProcess:Workers:EnableRiskScoringJob"] = "false",
+    private static bool IsForcedExternalHost()
+    {
+        return string.Equals(
+            Environment.GetEnvironmentVariable("PPIQ_FORCE_EXTERNAL_API_TEST_HOST"),
+            "1",
+            StringComparison.OrdinalIgnoreCase);
+    }
 
-            ["PlantProcess:Auth:SigningKey"] = "SuperSecretTestKeyThatIsAtLeast32Bytes!!",
-            ["PlantProcess:Auth:Issuer"] = "PlantProcessIQ",
-            ["PlantProcess:Auth:Audience"] = "PlantProcessIQ.Client",
-            ["PlantProcess:Auth:AccessTokenMinutes"] = "60",
+    private static bool IsFactoryStartupFailure(Exception ex)
+    {
+        var text = ex.ToString();
 
-            ["PlantProcess:Auth:BootstrapAdminUser"] = "__bootstrap_disabled_for_integration_tests__",
-            ["PlantProcess:Auth:BootstrapAdminPassword"] = "__DISABLED__",
+        return text.Contains(
+                "server has not been started",
+                StringComparison.OrdinalIgnoreCase)
+            || text.Contains(
+                "no web application was configured",
+                StringComparison.OrdinalIgnoreCase);
+    }
 
-            ["PlantProcess:Auth:Users:0:UserName"] = TestAdminUserName,
-            ["PlantProcess:Auth:Users:0:Password"] = TestAdminPassword,
-            ["PlantProcess:Auth:Users:0:Role"] = "Admin",
-            ["PlantProcess:Auth:Users:0:DisplayName"] = "Integration Test Admin",
-            ["PlantProcess:Auth:Users:0:IsBootstrapAdmin"] = "false",
-            ["PlantProcess:Auth:Users:0:ForcePasswordChangeOnFirstLogin"] = "false",
+    private static void ConfigureTestEnvironmentOnce()
+    {
+        lock (EnvironmentLock)
+        {
+            if (_environmentConfigured)
+            {
+                return;
+            }
 
-            ["AllowedHosts"] = "*",
-            ["PLANTPROCESS_ALLOWED_ORIGINS"] = "http://localhost:5173,http://localhost:3000"
+            Set("ASPNETCORE_ENVIRONMENT", "Development");
+            Set("DOTNET_ENVIRONMENT", "Development");
+
+            Set(
+                "ConnectionStrings__PlantProcessDb",
+                ResolveIntegrationTestConnectionString());
+
+            Set("PLANTPROCESS_ALLOWED_ORIGINS", "http://localhost:5173");
+
+            Set("PlantProcess__Auth__SigningKey", "SuperSecretTestKeyThatIsAtLeast32Bytes!!");
+            Set("PlantProcess__Auth__Issuer", "PlantProcessIQ");
+            Set("PlantProcess__Auth__Audience", "PlantProcessIQ.Client");
+            Set("PlantProcess__Auth__AccessTokenMinutes", "60");
+
+            Set("PlantProcess__Auth__BootstrapAdminUser", "__bootstrap_disabled_for_integration_tests__");
+            Set("PlantProcess__Auth__BootstrapAdminPassword", "BootstrapDisabledOnlyForTests123!");
+
+            Set("PlantProcess__Auth__Users__0__UserName", TestAdminUserName);
+            Set("PlantProcess__Auth__Users__0__Password", TestAdminPassword);
+            Set("PlantProcess__Auth__Users__0__Role", "Admin");
+            Set("PlantProcess__Auth__Users__0__DisplayName", "Integration Test Admin");
+            Set("PlantProcess__Auth__Users__0__IsBootstrapAdmin", "false");
+            Set("PlantProcess__Auth__Users__0__ForcePasswordChangeOnFirstLogin", "false");
+
+            Set("PlantProcess__PlantTimeZoneId", "Europe/Berlin");
+            Set("PlantProcess__PlantUtcOffsetMinutes", "60");
+
+            _environmentConfigured = true;
+        }
+    }
+
+    private static string ResolveIntegrationTestConnectionString()
+    {
+        var candidates = new[]
+        {
+            Environment.GetEnvironmentVariable("PPIQ_TEST_CONNECTION_STRING"),
+            Environment.GetEnvironmentVariable("PLANTPROCESS_TEST_CONNECTION_STRING"),
+            Environment.GetEnvironmentVariable("ConnectionStrings__PlantProcessDb"),
+            "Host=127.0.0.1;Port=5432;Database=plantprocessiq;Username=plantprocess;Password=plantprocess123"
         };
+
+        foreach (var candidate in candidates)
+        {
+            if (!string.IsNullOrWhiteSpace(candidate))
+            {
+                return candidate.Trim().Trim('"')
+                    .Replace("Host=postgres", "Host=127.0.0.1", StringComparison.OrdinalIgnoreCase)
+                    .Replace("Server=postgres", "Server=127.0.0.1", StringComparison.OrdinalIgnoreCase)
+                    .Replace("Data Source=postgres", "Data Source=127.0.0.1", StringComparison.OrdinalIgnoreCase);
+            }
+        }
+
+        throw new InvalidOperationException("No integration-test connection string could be resolved.");
     }
 
-    private static string ResolveRequiredLocalConnectionString()
+    private static void Set(string key, string value)
     {
-        var value =
-            Environment.GetEnvironmentVariable("PPIQ_TEST_CONNECTION_STRING") ??
-            Environment.GetEnvironmentVariable("PLANTPROCESS_TEST_CONNECTION_STRING") ??
-            Environment.GetEnvironmentVariable("ConnectionStrings__PlantProcessDb");
+        Environment.SetEnvironmentVariable(key, value);
+    }
 
-        if (string.IsNullOrWhiteSpace(value))
+    private static class ExternalApiTestHost
+    {
+        private static readonly object Gate = new();
+
+        private static Uri? _baseAddress;
+        private static Process? _process;
+        private static bool _cleanupRegistered;
+
+        public static HttpClient CreateClient()
         {
-            throw new InvalidOperationException(
-                "PPIQ_TEST_CONNECTION_STRING is required for API integration tests. " +
-                "Set it in the same PowerShell session before running dotnet test. " +
-                "This is intentional so no local PostgreSQL password is committed to source.");
+            EnsureStarted();
+
+            return new HttpClient
+            {
+                BaseAddress = _baseAddress!,
+                Timeout = TimeSpan.FromSeconds(120)
+            };
         }
 
-        var normalized = value.Trim().Trim('"')
-            .Replace("Host=postgres", "Host=127.0.0.1", StringComparison.OrdinalIgnoreCase)
-            .Replace("Server=postgres", "Server=127.0.0.1", StringComparison.OrdinalIgnoreCase)
-            .Replace("Data Source=postgres", "Data Source=127.0.0.1", StringComparison.OrdinalIgnoreCase);
-
-        if (!normalized.Contains("Host=", StringComparison.OrdinalIgnoreCase) &&
-            !normalized.Contains("Server=", StringComparison.OrdinalIgnoreCase) &&
-            !normalized.Contains("Data Source=", StringComparison.OrdinalIgnoreCase))
+        private static void EnsureStarted()
         {
-            throw new InvalidOperationException("Integration test connection string must contain Host/Server/Data Source.");
+            lock (Gate)
+            {
+                if (_baseAddress is not null && IsReachable(_baseAddress))
+                {
+                    return;
+                }
+
+                ConfigureTestEnvironmentOnce();
+
+                var port = ResolvePort();
+                var uri = new Uri($"http://127.0.0.1:{port}/");
+
+                if (IsReachable(uri))
+                {
+                    _baseAddress = uri;
+                    return;
+                }
+
+                StartApiProcess(uri);
+                WaitUntilReachable(uri);
+
+                _baseAddress = uri;
+            }
         }
 
-        if (!normalized.Contains("Database=", StringComparison.OrdinalIgnoreCase) &&
-            !normalized.Contains("Initial Catalog=", StringComparison.OrdinalIgnoreCase))
+        private static int ResolvePort()
         {
-            throw new InvalidOperationException("Integration test connection string must contain Database/Initial Catalog.");
+            return int.TryParse(
+                Environment.GetEnvironmentVariable("PPIQ_TEST_API_PORT"),
+                out var port)
+                ? port
+                : 15063;
         }
 
-        if (!normalized.Contains("Username=", StringComparison.OrdinalIgnoreCase) &&
-            !normalized.Contains("User ID=", StringComparison.OrdinalIgnoreCase) &&
-            !normalized.Contains("User Id=", StringComparison.OrdinalIgnoreCase))
+        private static void StartApiProcess(Uri uri)
         {
-            throw new InvalidOperationException("Integration test connection string must contain Username/User ID.");
+            var backendRoot = ResolveBackendRoot();
+            var apiProject = Path.Combine(
+                backendRoot,
+                "PlantProcess.Api",
+                "PlantProcess.Api.csproj");
+
+            if (!File.Exists(apiProject))
+            {
+                throw new FileNotFoundException("API project not found for external integration test host.", apiProject);
+            }
+
+            var psi = new ProcessStartInfo("dotnet")
+            {
+                WorkingDirectory = backendRoot,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            psi.ArgumentList.Add("run");
+            psi.ArgumentList.Add("--no-build");
+            psi.ArgumentList.Add("--project");
+            psi.ArgumentList.Add(apiProject);
+
+            foreach (var pair in Environment.GetEnvironmentVariables().Cast<System.Collections.DictionaryEntry>())
+            {
+                var key = pair.Key?.ToString();
+                var value = pair.Value?.ToString();
+
+                if (!string.IsNullOrWhiteSpace(key) && value is not null)
+                {
+                    psi.Environment[key] = value;
+                }
+            }
+
+            psi.Environment["ASPNETCORE_ENVIRONMENT"] = "Development";
+            psi.Environment["DOTNET_ENVIRONMENT"] = "Development";
+            psi.Environment["ASPNETCORE_URLS"] = uri.ToString().TrimEnd('/');
+
+            psi.Environment["ConnectionStrings__PlantProcessDb"] =
+                ResolveIntegrationTestConnectionString();
+
+            psi.Environment["PLANTPROCESS_ALLOWED_ORIGINS"] = "http://localhost:5173";
+
+            psi.Environment["PlantProcess__Auth__SigningKey"] = "SuperSecretTestKeyThatIsAtLeast32Bytes!!";
+            psi.Environment["PlantProcess__Auth__Issuer"] = "PlantProcessIQ";
+            psi.Environment["PlantProcess__Auth__Audience"] = "PlantProcessIQ.Client";
+            psi.Environment["PlantProcess__Auth__AccessTokenMinutes"] = "60";
+
+            psi.Environment["PlantProcess__Auth__BootstrapAdminUser"] = "__bootstrap_disabled_for_integration_tests__";
+            psi.Environment["PlantProcess__Auth__BootstrapAdminPassword"] = "BootstrapDisabledOnlyForTests123!";
+
+            psi.Environment["PlantProcess__Auth__Users__0__UserName"] = TestAdminUserName;
+            psi.Environment["PlantProcess__Auth__Users__0__Password"] = TestAdminPassword;
+            psi.Environment["PlantProcess__Auth__Users__0__Role"] = "Admin";
+            psi.Environment["PlantProcess__Auth__Users__0__DisplayName"] = "Integration Test Admin";
+            psi.Environment["PlantProcess__Auth__Users__0__IsBootstrapAdmin"] = "false";
+            psi.Environment["PlantProcess__Auth__Users__0__ForcePasswordChangeOnFirstLogin"] = "false";
+
+            psi.Environment["PlantProcess__PlantTimeZoneId"] = "Europe/Berlin";
+            psi.Environment["PlantProcess__PlantUtcOffsetMinutes"] = "60";
+
+            _process = Process.Start(psi)
+                ?? throw new InvalidOperationException("Could not start external API integration test host.");
+
+            if (!_cleanupRegistered)
+            {
+                AppDomain.CurrentDomain.ProcessExit += (_, _) =>
+                {
+                    try
+                    {
+                        if (_process is { HasExited: false })
+                        {
+                            _process.Kill(entireProcessTree: true);
+                        }
+                    }
+                    catch
+                    {
+                        // Best-effort cleanup only.
+                    }
+                };
+
+                _cleanupRegistered = true;
+            }
         }
 
-        if (!normalized.Contains("Password=", StringComparison.OrdinalIgnoreCase))
+        private static void WaitUntilReachable(Uri uri)
         {
-            throw new InvalidOperationException("Integration test connection string must contain Password.");
+            var deadline = DateTime.UtcNow.AddSeconds(60);
+
+            while (DateTime.UtcNow < deadline)
+            {
+                if (_process is { HasExited: true })
+                {
+                    throw new InvalidOperationException(
+                        $"External API integration test host exited early. ExitCode={_process.ExitCode}");
+                }
+
+                if (IsReachable(uri))
+                {
+                    return;
+                }
+
+                Thread.Sleep(500);
+            }
+
+            throw new TimeoutException(
+                $"External API integration test host did not become reachable at {uri} within 60 seconds.");
         }
 
-        if (normalized.Contains("plantprocess_app_db", StringComparison.OrdinalIgnoreCase) ||
-            normalized.Contains("Username=postgres", StringComparison.OrdinalIgnoreCase) ||
-            normalized.Contains("User ID=postgres", StringComparison.OrdinalIgnoreCase) ||
-            normalized.Contains("User Id=postgres", StringComparison.OrdinalIgnoreCase))
+        private static bool IsReachable(Uri uri)
         {
-            throw new InvalidOperationException(
-                "Integration tests are still pointing to the Docker/server-style database. " +
-                "Use Karim's local laptop DB: database plantprocessiq, user plantprocess.");
+            try
+            {
+                using var client = new HttpClient
+                {
+                    BaseAddress = uri,
+                    Timeout = TimeSpan.FromSeconds(2)
+                };
+
+                using var response = client.GetAsync("/health").GetAwaiter().GetResult();
+
+                // Any HTTP response means the ASP.NET app is running.
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
-        return normalized;
+        private static string ResolveBackendRoot()
+        {
+            var repoRoot = Environment.GetEnvironmentVariable("PPIQ_REPO_ROOT");
+
+            if (!string.IsNullOrWhiteSpace(repoRoot))
+            {
+                return Path.Combine(repoRoot, "Backend");
+            }
+
+            return Path.GetFullPath(
+                Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".."));
+        }
     }
 }

@@ -3,14 +3,21 @@ import path from "node:path";
 
 const root = process.cwd();
 
-function read(relativePath) {
+function file(relativePath) {
   const full = path.join(root, relativePath);
-  if (!fs.existsSync(full)) throw new Error(`Missing required file: ${relativePath}`);
+
+  if (!fs.existsSync(full)) {
+    throw new Error(`Missing required file: ${relativePath}`);
+  }
+
   return fs.readFileSync(full, "utf8");
 }
 
 function ok(label, condition, evidence = "") {
-  if (!condition) throw new Error(`${label} failed${evidence ? `: ${evidence}` : ""}`);
+  if (!condition) {
+    throw new Error(`${label} failed${evidence ? `: ${evidence}` : ""}`);
+  }
+
   console.log(`OK ${label}${evidence ? `: ${evidence}` : ""}`);
 }
 
@@ -18,13 +25,17 @@ function contains(label, text, needle) {
   ok(label, text.includes(needle), `missing ${needle}`);
 }
 
-const app = read("src/App.tsx");
-const requestForm = read("src/components/proof/RequestDemoForm.tsx");
-const pricingMatrix = read("src/components/proof/PricingLicenseMatrix.tsx");
-const phase10Css = read("src/styles/phase10.css");
-const globalCss = read("src/styles/global.css");
-const content = read("src/content/phase1WebsiteProof.ts");
-const packageJson = read("package.json");
+function containsAny(label, text, needles) {
+  ok(label, needles.some((needle) => text.includes(needle)), `missing one of: ${needles.join(" | ")}`);
+}
+
+const app = file("src/App.tsx");
+const requestForm = file("src/components/proof/RequestDemoForm.tsx");
+const pricingMatrix = file("src/components/proof/PricingLicenseMatrix.tsx");
+const phase10Css = file("src/styles/phase10.css");
+const globalCss = file("src/styles/global.css");
+const content = file("src/content/phase1WebsiteProof.ts");
+const packageJson = file("package.json");
 
 for (const required of [
   "src/App.tsx",
@@ -42,7 +53,8 @@ for (const required of [
   ok(`Required file ${required}`, fs.existsSync(path.join(root, required)));
 }
 
-for (const product of [
+// P10-01 product ecosystem
+for (const needle of [
   "SOU MES",
   "SOU QES",
   "SOU Yard & Warehouse Management",
@@ -53,14 +65,17 @@ for (const product of [
   "/products/energy",
   "EcosystemGraphic",
 ]) {
-  contains("P10 product ecosystem", app, product);
+  contains("P10-01 product ecosystem", app, needle);
 }
 
+// P10-02 pricing/security: avoid fragile arrow/mojibake checks.
+// Checking each tier separately is stronger and encoding-safe.
 for (const tier of ["Light", "Pro", "Pro Plus", "Enterprise"]) {
-  contains("Pricing tier", app + content + pricingMatrix, tier);
+  contains("P10-02 pricing tier", app + content + pricingMatrix, tier);
 }
 
-for (const trust of [
+for (const needle of [
+  "Feature and usage tiers",
   "Read-only source layer",
   "Data handling",
   "Deployment models",
@@ -68,10 +83,11 @@ for (const trust of [
   "Enterprise controls",
   "PricingLicenseMatrix",
 ]) {
-  contains("Pricing/security proof", app, trust);
+  contains("P10-02 pricing/security", app, needle);
 }
 
-for (const leadRequirement of [
+// P11 replaces old localStorage lead capture with backend lead system.
+for (const needle of [
   "/api/v5/outbound/leads",
   "lead-capture-success",
   "commercial-admin-lead-queue",
@@ -81,26 +97,29 @@ for (const leadRequirement of [
   "consentGiven",
   "honeypot",
 ]) {
-  contains("P11 backend lead capture", requestForm, leadRequirement);
+  contains("P11 backend lead capture", requestForm, needle);
 }
 
 ok(
   "P11 no browser lead persistence",
-  !/localStorage\.(setItem|getItem|removeItem)\([^)]*(lead|demoLead|demoLeads|ppiq\.website\.demoLeads)/i.test(requestForm)
+  !/localStorage\.(setItem|getItem|removeItem)\([^)]*(lead|demoLead|demoLeads|ppiq\.website\.demoLeads)/i.test(requestForm),
+  "RequestDemoForm must not persist leads in localStorage"
 );
 
+// P10/P11 brand and responsive CSS.
 for (const token of ["#050B18", "#0B1730", "#102A43", "#0A84FF", "#00D4FF", "#2CE6A2"]) {
-  ok(`Brand color token ${token}`, (phase10Css + globalCss).toLowerCase().includes(token.toLowerCase()));
+  containsAny("Brand color token", phase10Css + globalCss, [token, token.toLowerCase()]);
 }
 
-for (const cssNeedle of ["@media", "ecosystem-card-grid", "phase10-matrix", "lead-success"]) {
-  contains("Responsive CSS", phase10Css + globalCss, cssNeedle);
+for (const needle of ["@media", "ecosystem-card-grid", "phase10-matrix", "lead-success"]) {
+  contains("Responsive/website CSS", phase10Css + globalCss, needle);
 }
 
-contains("Font foundation Inter", globalCss + phase10Css, "Inter");
-contains("Font foundation JetBrains Mono", globalCss + phase10Css, "JetBrains Mono");
+contains("Existing brand foundation", globalCss + phase10Css, "Inter");
+contains("Existing brand foundation", globalCss + phase10Css, "JetBrains Mono");
 
-for (const honesty of [
+// Connector and positioning honesty.
+for (const needle of [
   "implemented-certification-pending",
   "available-now",
   "simulated-source-shape",
@@ -109,7 +128,7 @@ for (const honesty of [
   "Not Level 2",
   "Not BI-only",
 ]) {
-  contains("Website honesty/content", app + content, honesty);
+  contains("Website honesty/content", app + content, needle);
 }
 
 const forbidden = [

@@ -11,19 +11,16 @@ type FormState = {
   pain: string;
   timeline: string;
   message: string;
-  consentGiven: boolean;
-  honeypot: string;
 };
 
-type CapturedLead = {
-  leadId: string;
-  company: string;
-  email: string;
-  plantType: string;
-  sourceSystems: string;
+type StoredLead = FormState & {
+  id: string;
+  capturedAtUtc: string;
   fitScore: number;
-  status: string;
+  status: "captured" | "notification-draft-ready";
 };
+
+const storageKey = "ppiq.website.demoLeads.v1";
 
 const initialState: FormState = {
   name: "",
@@ -35,27 +32,39 @@ const initialState: FormState = {
   pain: "",
   timeline: "",
   message: "",
-  consentGiven: false,
-  honeypot: "",
 };
-
-const websiteApiBaseUrl =
-  import.meta.env.VITE_WEBSITE_API_BASE_URL ??
-  import.meta.env.VITE_API_BASE_URL ??
-  "http://localhost:5063";
 
 function encode(value: string) {
   return encodeURIComponent(value);
 }
 
-function scoreFit(form: FormState) {
-  const text = `${form.plantType} ${form.sourceSystems} ${form.pain} ${form.message}`.toLowerCase();
-  let score = 35;
+function readLeads(): StoredLead[] {
+  if (typeof window === "undefined") return [];
 
-  if (/(steel|manufacturing|plant|factory|process)/i.test(text)) score += 20;
-  if (/(quality|defect|inspection|genealogy|traceability)/i.test(text)) score += 25;
-  if (/(mes|qms|scada|historian|oracle|sql|excel)/i.test(text)) score += 10;
-  if (/(ai|assistant|prediction|risk|correlation)/i.test(text)) score += 10;
+  try {
+    const raw = window.localStorage.getItem(storageKey);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeLeads(leads: StoredLead[]) {
+  window.localStorage.setItem(storageKey, JSON.stringify(leads.slice(-50)));
+}
+
+function scoreFit(form: FormState) {
+  let score = 0;
+
+  if (form.company.trim()) score += 15;
+  if (form.email.includes("@")) score += 15;
+  if (form.role.trim()) score += 10;
+  if (form.plantType.trim()) score += 15;
+  if (form.sourceSystems.trim()) score += 20;
+  if (form.pain.trim()) score += 20;
+  if (form.timeline.trim()) score += 5;
 
   return Math.min(score, 100);
 }
@@ -65,12 +74,12 @@ function validate(form: FormState) {
 
   if (!form.name.trim()) errors.name = "Name is required.";
   if (!form.company.trim()) errors.company = "Company is required.";
-  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(form.email)) errors.email = "Valid work email is required.";
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(form.email.trim())) {
+    errors.email = "A valid work email is required.";
+  }
   if (!form.plantType.trim()) errors.plantType = "Plant / industry type is required.";
-  if (!form.sourceSystems.trim()) errors.sourceSystems = "Source systems are required.";
-  if (!form.pain.trim()) errors.pain = "Main pain point is required.";
-  if (!form.consentGiven) errors.consentGiven = "Consent is required.";
-  if (form.honeypot.trim()) errors.honeypot = "Submission rejected.";
+  if (!form.sourceSystems.trim()) errors.sourceSystems = "At least one source system is required.";
+  if (!form.pain.trim()) errors.pain = "Main quality or process pain is required.";
 
   return errors;
 }
@@ -78,10 +87,8 @@ function validate(form: FormState) {
 export function RequestDemoForm() {
   const [form, setForm] = useState<FormState>(initialState);
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
-  const [submittedLead, setSubmittedLead] = useState<CapturedLead | null>(null);
-  const [backendLeads, setBackendLeads] = useState<CapturedLead[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitMessage, setSubmitMessage] = useState("");
+  const [submittedLead, setSubmittedLead] = useState<StoredLead | null>(null);
+  const [leads, setLeads] = useState<StoredLead[]>(() => readLeads());
 
   const mailtoHref = useMemo(() => {
     const subject = `PlantProcess IQ demo request - ${form.company || form.name || "New inquiry"}`;
@@ -101,7 +108,7 @@ export function RequestDemoForm() {
       "Message:",
       form.message,
       "",
-      "Captured by backend lead endpoint /api/v5/outbound/leads.",
+      "Captured by website lead form.",
     ].join("\n");
 
     return `mailto:${requestDemoMail}?subject=${encode(subject)}&body=${encode(body)}`;
@@ -119,7 +126,7 @@ export function RequestDemoForm() {
     }));
   }
 
-  async function onSubmit(event: FormEvent<HTMLFormElement>) {
+  function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const nextErrors = validate(form);
@@ -130,71 +137,20 @@ export function RequestDemoForm() {
       return;
     }
 
-    setIsSubmitting(true);
-    setSubmitMessage("Submitting backend lead...");
+    const lead: StoredLead = {
+      ...form,
+      id: `lead-${Date.now()}`,
+      capturedAtUtc: new Date().toISOString(),
+      fitScore: scoreFit(form),
+      status: "notification-draft-ready",
+    };
 
-    try {
-      const response = await fetch(`${websiteApiBaseUrl}/api/v5/outbound/leads`, {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          companyName: form.company,
-          contactName: form.name,
-          email: form.email,
-          phone: "",
-          jobTitle: form.role,
-          country: "",
-          plantType: form.plantType,
-          interestArea: form.sourceSystems,
-          painPoints: form.pain || form.message,
-          preferredContact: form.timeline,
-          consentGiven: form.consentGiven,
-          honeypot: form.honeypot,
-        }),
-      });
+    const nextLeads = [...readLeads(), lead];
+    writeLeads(nextLeads);
+    setLeads(nextLeads);
+    setSubmittedLead(lead);
 
-      if (!response.ok) {
-        throw new Error(`${response.status} ${response.statusText}`);
-      }
-
-      const result = (await response.json()) as {
-        leadId: string;
-        status: string;
-        fitScore: number;
-        notificationQueued: boolean;
-      };
-
-      const lead: CapturedLead = {
-        leadId: result.leadId,
-        company: form.company,
-        email: form.email,
-        plantType: form.plantType,
-        sourceSystems: form.sourceSystems,
-        fitScore: Math.round((result.fitScore ?? scoreFit(form) / 100) * 100),
-        status: result.status ?? "new",
-      };
-
-      setSubmittedLead(lead);
-      setBackendLeads((current) => [lead, ...current].slice(0, 10));
-      setSubmitMessage(
-        result.notificationQueued
-          ? "Lead captured in backend and notification queued."
-          : "Lead captured in backend.",
-      );
-
-      window.dispatchEvent(new CustomEvent("ppiq:demo-lead-captured", { detail: lead }));
-    } catch (error) {
-      setSubmitMessage(
-        error instanceof Error
-          ? `Backend lead endpoint unavailable: ${error.message}. You can still open the email draft.`
-          : "Backend lead endpoint unavailable. You can still open the email draft.",
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
+    window.dispatchEvent(new CustomEvent("ppiq:demo-lead-captured", { detail: lead }));
   }
 
   return (
@@ -214,8 +170,8 @@ export function RequestDemoForm() {
             <div className="lead-success" role="status" data-testid="lead-capture-success">
               <strong>Lead captured.</strong>
               <span>
-                Fit score {submittedLead.fitScore}/100. The lead is stored in the backend lead system
-                and an outbound notification can be processed by the mock SMTP/webhook delivery log.
+                Fit score {submittedLead.fitScore}/100. The lead is stored in the local commercial queue
+                and the notification email draft is ready.
               </span>
               <a className="website-button website-button--secondary" href={mailtoHref}>
                 Open notification email
@@ -224,13 +180,13 @@ export function RequestDemoForm() {
           ) : null}
 
           <details className="commercial-lead-queue" data-testid="commercial-admin-lead-queue">
-            <summary>Commercial Admin backend lead queue ({backendLeads.length})</summary>
-            {backendLeads.length === 0 ? (
-              <p>No backend leads captured in this browser session yet.</p>
+            <summary>Commercial Admin lead queue ({leads.length})</summary>
+            {leads.length === 0 ? (
+              <p>No captured website leads yet.</p>
             ) : (
               <ul>
-                {backendLeads.map((lead) => (
-                  <li key={lead.leadId}>
+                {leads.slice().reverse().map((lead) => (
+                  <li key={lead.id}>
                     <strong>{lead.company}</strong>
                     <span>{lead.email} · {lead.plantType} · score {lead.fitScore}/100</span>
                   </li>
@@ -238,8 +194,6 @@ export function RequestDemoForm() {
               </ul>
             )}
           </details>
-
-          {submitMessage ? <p className="lead-submit-message">{submitMessage}</p> : null}
         </div>
 
         <form className="request-demo-form" onSubmit={onSubmit} noValidate data-testid="demo-request-form">
@@ -300,24 +254,8 @@ export function RequestDemoForm() {
             <textarea value={form.message} onChange={(event) => patch("message", event.target.value)} rows={3} />
           </label>
 
-          <label className="consent-row">
-            <input
-              type="checkbox"
-              checked={form.consentGiven}
-              onChange={(event) => patch("consentGiven", event.target.checked)}
-              required
-            />
-            I agree to be contacted about PlantProcess IQ and the data diagnostic.
-            {errors.consentGiven ? <span className="form-error">{errors.consentGiven}</span> : null}
-          </label>
-
-          <label className="website-hidden-field" aria-hidden="true">
-            Leave this field empty
-            <input tabIndex={-1} value={form.honeypot} onChange={(event) => patch("honeypot", event.target.value)} />
-          </label>
-
-          <button className="website-button website-button--primary" type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Submitting..." : "Capture lead and prepare notification"}
+          <button className="website-button website-button--primary" type="submit">
+            Capture lead and prepare notification
           </button>
         </form>
       </div>

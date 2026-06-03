@@ -1,5 +1,5 @@
 /* ============================================================
-   PlantProcess IQ â€” Phase 10 Website Ecosystem + Lead Capture
+   PlantProcess IQ — Phase 10 Website Ecosystem + Lead Capture
    Dark industrial / AI manufacturing command-center identity
    ============================================================ */
 
@@ -394,28 +394,4 @@
   .phase10-footer {
     display: grid;
   }
-}
-.website-hidden-field {
-  position: absolute;
-  left: -10000px;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-}
-
-.consent-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.65rem;
-}
-
-.consent-row input {
-  width: 18px;
-  min-width: 18px;
-  margin-top: 0.2rem;
-}
-
-.lead-submit-message {
-  margin-top: 1rem;
-  color: var(--text-muted);
 }

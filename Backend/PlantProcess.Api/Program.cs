@@ -48,6 +48,11 @@ using PlantProcess.Api.Endpoints.Phase45;
 using PlantProcess.Api.AssistantGateway;
 using PlantProcess.Api.VisualMapper;
 using PlantProcess.Api.BlendedProvenance;
+using PlantProcess.Api.PlantConnectors;
+using PlantProcess.Api.EnterpriseIdentity;
+using PlantProcess.Api.EnterpriseSsoScim;
+using PlantProcess.Api.SignedLicensing;
+using PlantProcess.Api.OutboundLeadSystem;
 // Resolve a stable absolute log path regardless of working directory.
 var logDirectory = Path.Combine(AppContext.BaseDirectory, "logs");
 var logFilePath = Path.Combine(logDirectory, "plantprocess-api-.log");
@@ -496,6 +501,11 @@ app.MapV5AssistantGatewayEndpoints();
 
 app.MapV5VisualMapperEndpoints();
 app.MapV5BlendedProvenanceEndpoints();
+app.MapV5PlantConnectorEndpoints();
+app.MapV5EnterpriseIdentityEndpoints();
+app.MapV5EnterpriseSsoScimEndpoints();
+app.MapV5SignedLicensingEndpoints();
+app.MapV5OutboundLeadSystemEndpoints();
 app.Run();
 }
 catch (Exception ex) when (ex.GetType().Name == "HostAbortedException")

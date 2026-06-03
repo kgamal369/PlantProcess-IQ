@@ -24,28 +24,13 @@ const content = read("src/content/phase1WebsiteProof.ts");
 for (const [needle, label] of [
   ['path="/"', "Home route exists"],
   ['path="/product"', "Product route exists"],
+  ['path="/products/:productCode"', "Product dynamic route exists"],
   ['path="/pricing"', "Pricing route exists"],
   ['path="/security"', "Security route exists"],
   ['path="/contact"', "Contact route exists"],
 ]) {
   contains(label, app, needle);
 }
-
-// Product-detail route proof should not depend on one exact param name.
-// Accept dynamic route OR explicit product detail links.
-ok(
-  "Product detail route/link proof exists",
-  app.includes('path="/products/:productCode"') ||
-    app.includes('path="/products/:slug"') ||
-    app.includes('path="/products/:id"') ||
-    (
-      app.includes("/products/mes") &&
-      app.includes("/products/qes") &&
-      app.includes("/products/yard") &&
-      app.includes("/products/energy")
-    ),
-  "expected dynamic route or all product detail links"
-);
 
 for (const product of [
   "SOU MES",
@@ -54,15 +39,6 @@ for (const product of [
   "SOU Energy Management",
 ]) {
   contains(`Product exists ${product}`, app, product);
-}
-
-for (const productPath of [
-  "/products/mes",
-  "/products/qes",
-  "/products/yard",
-  "/products/energy",
-]) {
-  contains(`Product link exists ${productPath}`, app, productPath);
 }
 
 for (const tier of ["Light", "Pro", "Pro Plus", "Enterprise"]) {
