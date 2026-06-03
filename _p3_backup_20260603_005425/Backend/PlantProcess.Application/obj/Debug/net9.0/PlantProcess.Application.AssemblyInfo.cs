@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("SMS group GmbH")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+98ac035a29b91e8008b247c76058633fe330fee8")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b162a3d0181e44e71acd3efada14a69f83081f8d")]
 [assembly: System.Reflection.AssemblyProductAttribute("PlantProcess.Application")]
 [assembly: System.Reflection.AssemblyTitleAttribute("PlantProcess.Application")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -1,0 +1,60 @@
+﻿using Microsoft.EntityFrameworkCore.Migrations;
+
+#nullable disable
+
+namespace PlantProcess.Infrastructure.Migrations
+{
+    /// <inheritdoc />
+    public partial class SyncModel_20260603 : Migration
+    {
+        /// <inheritdoc />
+        protected override void Up(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.AddColumn<decimal>(
+                name: "contribution_weight",
+                table: "genealogy_edges",
+                type: "numeric(9,6)",
+                nullable: false,
+                defaultValue: 1.0m);
+
+            migrationBuilder.AddColumn<bool>(
+                name: "is_transition",
+                table: "genealogy_edges",
+                type: "boolean",
+                nullable: false,
+                defaultValue: false);
+
+            migrationBuilder.AddColumn<decimal>(
+                name: "provenance_confidence",
+                table: "genealogy_edges",
+                type: "numeric(9,6)",
+                nullable: false,
+                defaultValue: 1.0m);
+
+            migrationBuilder.CreateIndex(
+                name: "ix_genealogy_edges_child_material_unit_id_is_transition_contri",
+                table: "genealogy_edges",
+                columns: new[] { "child_material_unit_id", "is_transition", "contribution_weight" });
+        }
+
+        /// <inheritdoc />
+        protected override void Down(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.DropIndex(
+                name: "ix_genealogy_edges_child_material_unit_id_is_transition_contri",
+                table: "genealogy_edges");
+
+            migrationBuilder.DropColumn(
+                name: "contribution_weight",
+                table: "genealogy_edges");
+
+            migrationBuilder.DropColumn(
+                name: "is_transition",
+                table: "genealogy_edges");
+
+            migrationBuilder.DropColumn(
+                name: "provenance_confidence",
+                table: "genealogy_edges");
+        }
+    }
+}
