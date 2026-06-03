@@ -160,12 +160,12 @@
 [FILE_START]
 [METADATA: Path='Backend\PlantProcess.Api\Configuration\StartupConfigurationValidator.cs', Lines=173, Size=8257 bytes]
 // ============================================================
-// TASK 13 â€” Confirm CORS origins are configurable
+// TASK 13 €” Confirm CORS origins are configurable
 // FILE: Backend/PlantProcess.Api/Configuration/StartupConfigurationValidator.cs
 //
 // CHANGES vs current version:
 //  1. Production check now also rejects *:// wildcard origins.
-//  2. Validates that AllowedOrigins are parseable URIs â€” prevents
+//  2. Validates that AllowedOrigins are parseable URIs €” prevents
 //     typos like "http//localhost" from silently being accepted by
 //     the CORS middleware and causing 403 errors.
 //  3. Added PlantTimeZoneId validation with a descriptive error.
@@ -186,7 +186,7 @@ public static class StartupConfigurationValidator
     {
         var errors = new List<string>();
 
-        // â”€â”€ 1. Database connection string â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ”€”€ 1. Database connection string ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€
         var connectionString = configuration.GetConnectionString("PlantProcessDb");
 
         if (options.RequireDatabaseConnectionString &&
@@ -198,7 +198,7 @@ public static class StartupConfigurationValidator
                 "or environment variable ConnectionStrings__PlantProcessDb.");
         }
 
-        // â”€â”€ 2. CORS allowed origins â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ”€”€ 2. CORS allowed origins ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€
         if (options.RequireConfiguredCors && effectiveAllowedOrigins.Count == 0)
         {
             errors.Add(
@@ -240,7 +240,7 @@ public static class StartupConfigurationValidator
             }
         }
 
-        // â”€â”€ 3. Time zone â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ”€”€ 3. Time zone ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€
         if (string.IsNullOrWhiteSpace(options.PlantTimeZoneId))
         {
             errors.Add(
@@ -261,14 +261,14 @@ public static class StartupConfigurationValidator
             }
         }
 
-        // â”€â”€ 4. UTC offset range â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ”€”€ 4. UTC offset range ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€
         if (options.PlantUtcOffsetMinutes is < -720 or > 840)
         {
             errors.Add(
                 "PlantProcess:PlantUtcOffsetMinutes must be between -720 and 840.");
         }
 
-        // â”€â”€ Fail fast â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        // ”€”€ Fail fast ”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€”€
         if (errors.Count > 0)
         {
             var message =
@@ -342,7 +342,7 @@ using PlantProcess.Infrastructure.Persistence;
 namespace PlantProcess.Api.Endpoints.Admin;
 
 /// <summary>
-/// Phase 2 â€” Admin Area Foundation.
+/// Phase 2 €” Admin Area Foundation.
 /// 
 /// Purpose:
 /// This endpoint group supports the Administrator shell required before
@@ -925,7 +925,7 @@ using PlantProcess.Application.Integration.Interfaces.Connectors;
 namespace PlantProcess.Api.Endpoints.Admin;
 
 /// <summary>
-/// Phase 3 â€” Connector Foundation API.
+/// Phase 3 €” Connector Foundation API.
 /// 
 /// This group powers the Admin / DB Configuration page.
 /// It introduces generic connection profiles, source datasets,
@@ -936,7 +936,7 @@ public static class ConnectorAdminEndpoints
     public static IEndpointRouteBuilder MapConnectorAdminEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/admin/connectors")
-            .WithTags("Admin â€” Connectors");
+            .WithTags("Admin €” Connectors");
 
         group.MapGet("/provider-types", GetProviderTypes)
             .WithSummary("Get supported connector provider types");
@@ -1347,7 +1347,7 @@ using PlantProcess.Infrastructure.Persistence;
 namespace PlantProcess.Api.Endpoints.Admin;
 
 /// <summary>
-/// Phase 4 â€” Schema Configuration / SQL View Layer.
+/// Phase 4 €” Schema Configuration / SQL View Layer.
 /// 
 /// This endpoint group supports:
 /// - schema view metadata CRUD,
@@ -1362,7 +1362,7 @@ public static class SchemaConfigurationEndpoints
     public static IEndpointRouteBuilder MapSchemaConfigurationEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/admin/schema-configuration")
-            .WithTags("Admin â€” Schema Configuration");
+            .WithTags("Admin €” Schema Configuration");
 
         group.MapGet("/views", GetSchemaViewsAsync)
             .WithSummary("Get schema views");
@@ -9242,11 +9242,11 @@ using Serilog.Exceptions;
 using PlantProcess.Api.Swagger;
 using PlantProcess.Application.Integration.Interfaces.Jobs;
 
-//  Resolve a stable absolute log path regardless of working directory â
+//  Resolve a stable absolute log path regardless of working directory 
 var logDirectory = Path.Combine(AppContext.BaseDirectory, "logs");
 var logFilePath = Path.Combine(logDirectory, "plantprocess-api-.log");
 
-//  Bootstrap logger âââ
+//  Bootstrap logger 
 var appVersion = Assembly
     .GetEntryAssembly()
     ?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()
@@ -9406,7 +9406,7 @@ if (authOptions.SigningKey.Length < 32)
     
     var app = builder.Build();
 
-    //  Phase 2: Register DB-backed system jobs at API startup ââââ€
+    //  Phase 2: Register DB-backed system jobs at API startup €
     await using (var scope = app.Services.CreateAsyncScope())
     {
         var jobRegistration = scope.ServiceProvider.GetRequiredService<IJobRegistrationService>();
@@ -9419,14 +9419,14 @@ if (authOptions.SigningKey.Length < 32)
         }
     }
 
-    //  CORS must be early enough before browser calls endpoints âââ€
+    //  CORS must be early enough before browser calls endpoints €
     app.UseCors("PlantProcessFrontend");
 
-    //  Middleware pipeline â
+    //  Middleware pipeline 
     app.UseMiddleware<CorrelationIdMiddleware>();
     app.UseMiddleware<RequestResponseLoggingMiddleware>();
 
-    //  Swagger ââââ
+    //  Swagger 
     if (app.Environment.IsDevelopment())
     {
         app.UseSwagger();
@@ -9438,10 +9438,10 @@ if (authOptions.SigningKey.Length < 32)
         });
     }
 
-    //  Root redirect ââ€
+    //  Root redirect €
     app.MapGet("/", () => Results.Redirect("/swagger"));
 
-    //  HTTPS only outside development âââââââââ
+    //  HTTPS only outside development 
     if (!app.Environment.IsDevelopment())
     {
         app.UseHttpsRedirection();
@@ -9648,7 +9648,7 @@ public sealed class AuthOptions
 [FILE_START]
 [METADATA: Path='Backend\PlantProcess.Api\Swagger\SwaggerExamplesOperationFilter.cs', Lines=238, Size=8592 bytes]
 // ============================================================
-// PHASE 0 â€” TASK 17
+// PHASE 0 €” TASK 17
 // FILE: Backend/PlantProcess.Api/Swagger/SwaggerExamplesOperationFilter.cs
 //
 // PURPOSE:
@@ -9848,10 +9848,10 @@ public sealed class SwaggerTagGroupingOperationFilter : IOperationFilter
     {
         ["health"] = ["Health"],
         ["db-health"] = ["Health"],
-        ["analytics/dashboard"] = ["Analytics â€” Dashboard"],
-        ["analytics/correlations"] = ["Analytics â€” Correlation"],
-        ["analytics/risk-scores"] = ["Analytics â€” Risk Scores"],
-        ["analytics/features"] = ["Analytics â€” Feature Engineering"],
+        ["analytics/dashboard"] = ["Analytics €” Dashboard"],
+        ["analytics/correlations"] = ["Analytics €” Correlation"],
+        ["analytics/risk-scores"] = ["Analytics €” Risk Scores"],
+        ["analytics/features"] = ["Analytics €” Feature Engineering"],
         ["integrations"] = ["Integration"],
         ["workflow"] = ["Workflow"],
         ["materials"] = ["Materials"],
@@ -9862,8 +9862,8 @@ public sealed class SwaggerTagGroupingOperationFilter : IOperationFilter
         ["reporting"] = ["Reporting"],
         ["validation"] = ["Validation"],
         ["admin"] = ["Admin"],
-        ["admin/connectors"] = ["Admin â€” Connectors"],
-        ["admin/schema-configuration"] = ["Admin â€” Schema Configuration"],
+        ["admin/connectors"] = ["Admin €” Connectors"],
+        ["admin/schema-configuration"] = ["Admin €” Schema Configuration"],
         ["dev"] = ["Development"]
     };
 

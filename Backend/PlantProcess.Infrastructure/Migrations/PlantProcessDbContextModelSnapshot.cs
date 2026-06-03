@@ -2751,6 +2751,12 @@ namespace PlantProcess.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("child_material_unit_id");
 
+                    b.Property<decimal>("ContributionWeight")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("numeric(9,6)")
+                        .HasDefaultValue(1.0m)
+                        .HasColumnName("contribution_weight");
+
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at_utc");
@@ -2780,9 +2786,21 @@ namespace PlantProcess.Infrastructure.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("is_synthetic");
 
+                    b.Property<bool>("IsTransition")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_transition");
+
                     b.Property<Guid>("ParentMaterialUnitId")
                         .HasColumnType("uuid")
                         .HasColumnName("parent_material_unit_id");
+
+                    b.Property<decimal>("ProvenanceConfidence")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("numeric(9,6)")
+                        .HasDefaultValue(1.0m)
+                        .HasColumnName("provenance_confidence");
 
                     b.Property<string>("RelationshipType")
                         .IsRequired()
@@ -2822,6 +2840,9 @@ namespace PlantProcess.Infrastructure.Migrations
                     b.HasIndex("ParentMaterialUnitId", "ChildMaterialUnitId")
                         .IsUnique()
                         .HasDatabaseName("ix_genealogy_edges_parent_material_unit_id_child_material_unit");
+
+                    b.HasIndex("ChildMaterialUnitId", "IsTransition", "ContributionWeight")
+                        .HasDatabaseName("ix_genealogy_edges_child_material_unit_id_is_transition_contri");
 
                     b.ToTable("genealogy_edges", (string)null);
                 });

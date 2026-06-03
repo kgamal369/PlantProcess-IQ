@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -12,7 +12,7 @@ namespace PlantProcess.Api.Hosting;
 /// <summary>T-028 drop 3: periodically refreshes the dashboard read models and records a JobRunHistory row.</summary>
 public sealed class ReadModelRefreshHostedService : BackgroundService
 {
-    private const string JobCode = "read-model-refresh";
+    private const string JobCode = "READ-MODEL-REFRESH"; // normalized form - must match JobDefinition.NormalizeCode
     private static readonly TimeSpan Interval = TimeSpan.FromMinutes(15);
 
     private readonly IServiceScopeFactory _scopeFactory;
@@ -56,7 +56,18 @@ public sealed class ReadModelRefreshHostedService : BackgroundService
                 isSynthetic: false,
                 description: "Refreshes mv_dashboard_* materialized views (T-028).");
             db.JobDefinitions.Add(def);
-            await db.SaveChangesAsync(ct);
+            try
+            {
+                await db.SaveChangesAsync(ct);
+            }
+            catch (DbUpdateException)
+            {
+                // PPIQ: lost a race with another instance that just created it - reuse the existing row.
+                db.ChangeTracker.Clear();
+                var existing = await db.JobDefinitions.FirstOrDefaultAsync(j => j.JobCode == JobCode, ct);
+                if (existing is null) throw;
+                def = existing;
+            }
         }
 
         var history = new JobRunHistory(

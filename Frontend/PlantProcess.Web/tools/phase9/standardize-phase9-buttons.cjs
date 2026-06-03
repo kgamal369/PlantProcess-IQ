@@ -1,8 +1,14 @@
 /* ============================================================
- * PlantProcess IQ — Phase 9 safe button standardization codemod
+ * PlantProcess IQ — Phase 9 button standardization codemod
  *
- * Converts raw <button> to <StandardButton> without creating duplicate
- * imports and without touching standard component internals.
+ * Converts remaining raw JSX <button> usage in application .tsx files
+ * to <StandardButton>. This keeps visual styling and old className values
+ * while moving controls to the standard component foundation.
+ *
+ * Exclusions:
+ * - standard component library itself
+ * - tests/stories
+ * - generated snapshots
  * ============================================================ */
 
 const fs = require("fs");
@@ -12,23 +18,14 @@ const root = process.cwd();
 const srcRoot = path.join(root, "src");
 
 const excludedFragments = [
-  "/src/components/standard/",
-  "/src/ui/standard-components.tsx",
-  "/__tests__/",
+  `${path.sep}components${path.sep}standard${path.sep}`,
+  `${path.sep}__tests__${path.sep}`,
   ".test.tsx",
   ".spec.tsx",
   ".stories.tsx",
   ".snap",
+  `${path.sep}ui${path.sep}standard-components.tsx`,
 ];
-
-function norm(file) {
-  return file.replaceAll("\\", "/");
-}
-
-function shouldSkip(file) {
-  const n = norm(file);
-  return excludedFragments.some((fragment) => n.includes(fragment));
-}
 
 function walk(dir) {
   if (!fs.existsSync(dir)) return [];
@@ -41,7 +38,10 @@ function walk(dir) {
 
     if (entry.isDirectory()) {
       files.push(...walk(full));
-    } else if (entry.isFile() && full.endsWith(".tsx")) {
+      continue;
+    }
+
+    if (entry.isFile() && full.endsWith(".tsx")) {
       files.push(full);
     }
   }
@@ -49,79 +49,27 @@ function walk(dir) {
   return files;
 }
 
-function hasAnyStandardButtonImport(content) {
-  return /import\s+\{[^}]*\bStandardButton\b[^}]*\}\s+from\s+["'][^"']*components\/standard(?:\/StandardButton)?["'];?/m.test(content);
+function shouldSkip(file) {
+  return excludedFragments.some((fragment) => file.includes(fragment));
 }
 
-function insertAfterCompleteImportSection(content) {
-  if (hasAnyStandardButtonImport(content)) {
-    return content;
-  }
-
-  const lines = content.split(/\r?\n/);
-
-  let inImport = false;
-  let sawImport = false;
-  let lastImportEndIndex = -1;
-
-  for (let i = 0; i < lines.length; i += 1) {
-    const trimmed = lines[i].trim();
-
-    if (inImport) {
-      if (trimmed.endsWith(";") || trimmed.includes(";")) {
-        inImport = false;
-        lastImportEndIndex = i;
-      }
-      continue;
-    }
-
-    if (
-      trimmed === "" ||
-      trimmed.startsWith("//") ||
-      trimmed.startsWith("/*") ||
-      trimmed.startsWith("*") ||
-      trimmed.startsWith("*/")
-    ) {
-      continue;
-    }
-
-    if (trimmed.startsWith("import ")) {
-      sawImport = true;
-
-      if (trimmed.endsWith(";") || trimmed.includes(";")) {
-        lastImportEndIndex = i;
-      } else {
-        inImport = true;
-      }
-
-      continue;
-    }
-
-    if (sawImport) {
-      break;
-    }
-  }
+function addStandardButtonImport(content) {
+  if (content.includes("StandardButton")) return content;
 
   const importLine = 'import { StandardButton } from "@/components/standard";';
+  const lines = content.split(/\r?\n/);
+  let insertIndex = -1;
 
-  if (lastImportEndIndex >= 0) {
-    lines.splice(lastImportEndIndex + 1, 0, importLine);
+  for (let i = 0; i < lines.length; i += 1) {
+    if (/^import\s/.test(lines[i])) insertIndex = i;
+  }
+
+  if (insertIndex >= 0) {
+    lines.splice(insertIndex + 1, 0, importLine);
     return lines.join("\n");
   }
 
   return `${importLine}\n${content}`;
-}
-
-function patchStandardButtonProps(content) {
-  return content.replace(/<StandardButton\b([\s\S]*?)(\/?>)/g, (_full, attrs, end) => {
-    let patched = attrs;
-
-    patched = patched.replace(/\baria-label=/g, "ariaLabel=");
-    patched = patched.replace(/\bdisabled=/g, "isDisabled=");
-    patched = patched.replace(/(\s)disabled(\s|>|\/)/g, "$1isDisabled$2");
-
-    return `<StandardButton${patched}${end}`;
-  });
 }
 
 let changed = 0;
@@ -130,17 +78,14 @@ for (const file of walk(srcRoot)) {
   if (shouldSkip(file)) continue;
 
   const original = fs.readFileSync(file, "utf8");
-  let next = original;
+  if (!/<button\b/.test(original) && !/<\/button>/.test(original)) continue;
 
-  if (/<button\b/.test(next) || /<\/button>/.test(next)) {
-    next = next.replace(/<button\b/g, "<StandardButton");
-    next = next.replace(/<\/button>/g, "</StandardButton>");
-  }
+  let next = original
+    .replace(/<button\b/g, "<StandardButton")
+    .replace(/<\/button>/g, "</StandardButton>")
+    .replace(/(\s)disabled(?=\s|=|>)/g, "$1isDisabled");
 
-  if (/<StandardButton\b|<\/StandardButton>/.test(next)) {
-    next = insertAfterCompleteImportSection(next);
-    next = patchStandardButtonProps(next);
-  }
+  next = addStandardButtonImport(next);
 
   if (next !== original) {
     fs.writeFileSync(file, next, "utf8");
@@ -150,9 +95,3 @@ for (const file of walk(srcRoot)) {
 }
 
 console.log(`[phase9-button-standardize] Changed files: ${changed}`);
-
-// Always run final dedupe if available.
-const dedupe = path.join(root, "tools", "phase9", "fix-standardbutton-dedupe-and-props.cjs");
-if (fs.existsSync(dedupe)) {
-  require(dedupe);
-}

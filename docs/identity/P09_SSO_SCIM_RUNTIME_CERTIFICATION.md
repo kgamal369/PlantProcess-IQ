@@ -1,4 +1,4 @@
-# PlantProcess IQ â€” P09 SSO / SCIM Runtime Certification
+# PlantProcess IQ €” P09 SSO / SCIM Runtime Certification
 
 ## Scope
 

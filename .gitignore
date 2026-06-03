@@ -1,0 +1,7 @@
+
+# PPIQ Phase 1 - backup hygiene
+*.bak
+*.bak_*
+*.fixbak
+*_225545
+**/.ppiq-phase1-backup/

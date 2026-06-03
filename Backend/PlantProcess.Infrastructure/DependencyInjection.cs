@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // FILE: Backend/PlantProcess.Infrastructure/DependencyInjection.cs
 // CHANGES: Registered MsSqlConnector and MySqlConnector alongside
 //          the existing CSV, Excel and PostgreSQL connectors.
@@ -116,6 +116,7 @@ public static class DependencyInjection
         services.AddScoped<IDataSourceReader, OracleConnector>();
 
                 PlantProcess.Infrastructure.Analytics.AdvancedAnalysisExtensions.AddAdvancedAnalysis(services);
+        services.AddScoped<PlantProcess.Application.Integration.Security.ITableAllowlistProvider, PlantProcess.Infrastructure.Integration.Security.NpgsqlTableAllowlistProvider>(); // PPIQ-T005
         return services;
     }
 }

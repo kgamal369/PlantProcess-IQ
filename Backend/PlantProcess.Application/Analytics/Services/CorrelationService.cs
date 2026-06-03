@@ -13,6 +13,7 @@ namespace PlantProcess.Application.Analytics.Services;
 /// Correlation engine MVP.
 /// It intentionally reports suspected contributors / risk indicators, not guaranteed root cause.
 /// </summary>
+[System.Obsolete("PPIQ-T012: superseded by the canonical Analytics.Core engine; not for inferential claims.")]
 public sealed class CorrelationService : ICorrelationService
 {
     private readonly IPlantProcessDbContext _dbContext;
@@ -343,6 +344,9 @@ public sealed class CorrelationService : ICorrelationService
         string defectType,
         CancellationToken cancellationToken)
     {
+        // PPIQ-T012-CONTEXT: real binning context. For each parameter the material carries, the parameter-defect
+        // binning is computed for the requested defect type and the bin this material's value falls into is reported
+        // with that bin's defect rate and lift vs overall. Replaces the previous null RiskBin* MVP stub.
         if (materialUnitId == Guid.Empty)
             return ApplicationResult<MaterialCorrelationContextResult>.Failure(ApplicationError.Validation("MaterialUnitId is required."));
 
@@ -352,33 +356,58 @@ public sealed class CorrelationService : ICorrelationService
         var material = await _dbContext.MaterialUnits
             .AsNoTracking()
             .Where(x => x.Id == materialUnitId)
-            .Select(x => new { x.Id, x.MaterialCode })
+            .Select(x => new { x.Id, x.MaterialCode, x.SiteId })
             .FirstOrDefaultAsync(cancellationToken);
 
         if (material is null)
             return ApplicationResult<MaterialCorrelationContextResult>.Failure(ApplicationError.NotFound("Material unit does not exist."));
 
-        // MVP context: returns the latest numeric parameters and equipment exposures.
-        // Full statistical matching against persisted correlation results comes later.
-        var parameterIndicators = await _dbContext.ParameterObservations
+        var materialObservations = await _dbContext.ParameterObservations
             .AsNoTracking()
             .Where(x => x.MaterialUnitId == materialUnitId && x.NumericValue.HasValue)
             .Join(
                 _dbContext.ParameterDefinitions.AsNoTracking(),
                 obs => obs.ParameterDefinitionId,
                 def => def.Id,
-                (obs, def) => new MaterialParameterRiskIndicator(
+                (obs, def) => new
+                {
                     def.ParameterCode,
                     def.ParameterName,
-                    obs.NumericValue!.Value,
-                    obs.UnitOfMeasure,
-                    null,
-                    null,
-                    null,
-                    obs.ObservedAtUtc))
+                    Value = obs.NumericValue!.Value,
+                    Unit = obs.UnitOfMeasure,
+                    obs.ObservedAtUtc
+                })
             .OrderByDescending(x => x.ObservedAtUtc)
             .Take(50)
             .ToListAsync(cancellationToken);
+
+        var binsByParameter = new Dictionary<string, IReadOnlyList<ParameterDefectCorrelationBin>>(StringComparer.OrdinalIgnoreCase);
+        foreach (var parameterCode in materialObservations.Select(x => x.ParameterCode).Distinct(StringComparer.OrdinalIgnoreCase))
+        {
+            binsByParameter[parameterCode] = await BuildParameterBinsAsync(parameterCode, defectType, material.SiteId, cancellationToken);
+        }
+
+        var parameterIndicators = materialObservations
+            .Select(x =>
+            {
+                ParameterDefectCorrelationBin? bin = null;
+                if (binsByParameter.TryGetValue(x.ParameterCode, out var paramBins) && paramBins.Count > 0)
+                {
+                    bin = paramBins.FirstOrDefault(b => x.Value >= b.MinValue && x.Value <= b.MaxValue)
+                          ?? paramBins.OrderBy(b => Math.Abs(b.MinValue - x.Value)).First();
+                }
+
+                return new MaterialParameterRiskIndicator(
+                    x.ParameterCode,
+                    x.ParameterName,
+                    x.Value,
+                    x.Unit,
+                    bin?.BinLabel,
+                    bin?.DefectRate,
+                    bin?.LiftVsOverall,
+                    x.ObservedAtUtc);
+            })
+            .ToList();
 
         var equipmentIndicators = await _dbContext.ProcessStepExecutions
             .AsNoTracking()
@@ -396,6 +425,102 @@ public sealed class CorrelationService : ICorrelationService
             material.MaterialCode,
             parameterIndicators,
             equipmentIndicators));
+    }
+
+    private async Task<IReadOnlyList<ParameterDefectCorrelationBin>> BuildParameterBinsAsync(
+        string parameterCode,
+        string defectType,
+        Guid? siteId,
+        CancellationToken cancellationToken)
+    {
+        var parameterDefinitionIds = await _dbContext.ParameterDefinitions
+            .AsNoTracking()
+            .Where(x => x.ParameterCode == parameterCode)
+            .Select(x => x.Id)
+            .ToListAsync(cancellationToken);
+
+        if (parameterDefinitionIds.Count == 0)
+            return Array.Empty<ParameterDefectCorrelationBin>();
+
+        var observationsQuery = _dbContext.ParameterObservations
+            .AsNoTracking()
+            .Where(x => parameterDefinitionIds.Contains(x.ParameterDefinitionId) && x.NumericValue.HasValue);
+
+        if (siteId.HasValue)
+        {
+            observationsQuery = observationsQuery.Join(
+                _dbContext.MaterialUnits.AsNoTracking().Where(m => m.SiteId == siteId.Value),
+                observation => observation.MaterialUnitId,
+                materialUnit => materialUnit.Id,
+                (observation, _) => observation);
+        }
+
+        var observations = await observationsQuery
+            .Select(x => new { x.MaterialUnitId, NumericValue = x.NumericValue!.Value })
+            .ToListAsync(cancellationToken);
+
+        if (observations.Count == 0)
+            return Array.Empty<ParameterDefectCorrelationBin>();
+
+        var materialIds = observations.Select(x => x.MaterialUnitId).Distinct().ToList();
+        var defectSet = (await BuildDefectMaterialQuery(defectType, null, null)
+                .Where(x => materialIds.Contains(x.MaterialUnitId))
+                .Select(x => x.MaterialUnitId)
+                .Distinct()
+                .ToListAsync(cancellationToken))
+            .ToHashSet();
+
+        var overallDefectRate = materialIds.Count == 0
+            ? 0m
+            : Math.Round((decimal)defectSet.Count / materialIds.Count, 6);
+
+        const int bins = 8;
+        const int minimumObservationsPerBin = 5;
+        var min = observations.Min(x => x.NumericValue);
+        var max = observations.Max(x => x.NumericValue);
+        var result = new List<ParameterDefectCorrelationBin>();
+
+        if (min == max)
+        {
+            var singleMaterials = observations.Select(x => x.MaterialUnitId).Distinct().ToList();
+            var singleDefects = singleMaterials.Count(defectSet.Contains);
+            var singleRate = singleMaterials.Count == 0 ? 0m : Math.Round((decimal)singleDefects / singleMaterials.Count, 6);
+            result.Add(new ParameterDefectCorrelationBin(1, $"{min:F3}", min, max, observations.Count, singleMaterials.Count, singleDefects, singleRate, CalculateLift(singleRate, overallDefectRate)));
+            return result;
+        }
+
+        var width = (max - min) / bins;
+        for (var i = 0; i < bins; i++)
+        {
+            var binMin = min + (width * i);
+            var binMax = i == bins - 1 ? max : min + (width * (i + 1));
+            var binObservations = observations
+                .Where(x => i == bins - 1
+                    ? x.NumericValue >= binMin && x.NumericValue <= binMax
+                    : x.NumericValue >= binMin && x.NumericValue < binMax)
+                .ToList();
+
+            if (binObservations.Count < minimumObservationsPerBin)
+                continue;
+
+            var binMaterials = binObservations.Select(x => x.MaterialUnitId).Distinct().ToList();
+            var binDefects = binMaterials.Count(defectSet.Contains);
+            var binRate = binMaterials.Count == 0 ? 0m : Math.Round((decimal)binDefects / binMaterials.Count, 6);
+            var label = $"[{binMin:F3}, {binMax:F3}{(i == bins - 1 ? "]" : ")")}";
+
+            result.Add(new ParameterDefectCorrelationBin(
+                i + 1,
+                label,
+                Math.Round(binMin, 6),
+                Math.Round(binMax, 6),
+                binObservations.Count,
+                binMaterials.Count,
+                binDefects,
+                binRate,
+                CalculateLift(binRate, overallDefectRate)));
+        }
+
+        return result;
     }
 
     private IQueryable<PlantProcess.Domain.Entities.Quality.QualityEvent> BuildDefectMaterialQuery(

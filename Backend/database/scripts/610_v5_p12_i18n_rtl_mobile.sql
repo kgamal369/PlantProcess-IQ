@@ -3,7 +3,7 @@ SET client_encoding = 'UTF8';
 
 -- ============================================================
 -- PlantProcess IQ Doctrine v5
--- P12 Â· Internationalization, RTL & Mobile
+-- P12 · Internationalization, RTL & Mobile
 --
 -- Installs:
 --   - locale registry

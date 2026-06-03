@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("SMS group GmbH")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b162a3d0181e44e71acd3efada14a69f83081f8d")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+67ecfe50eda207c5313f36a98e8b50c0a0717087")]
 [assembly: System.Reflection.AssemblyProductAttribute("PlantProcess.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("PlantProcess.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

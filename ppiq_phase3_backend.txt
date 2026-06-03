@@ -1,0 +1,573 @@
+===== FILE: C:\Workspace\PlantProcess-IQ\Backend\PlantProcess.Analytics.Core\Kpi\KpiEngine.cs =====
+using System.Collections.Generic;
+using System.Linq;
+using PlantProcess.Analytics.Core.Primitives;
+namespace PlantProcess.Analytics.Core.Kpi;
+public enum KpiKind { Formula, SqlView, MappedMeasure }
+public enum AlertDirection { AboveTargetIsBad, BelowTargetIsBad }
+public enum KpiSeverity { Ok, Warning, Critical }
+public sealed record KpiThreshold(double? WarningAt, double? CriticalAt, AlertDirection Direction);
+public sealed record KpiDefinition(
+string Code,
+string Name,
+KpiKind Kind,
+string? Expression,
+string? SqlView,
+string? MeasureCode,
+string? Unit,
+IReadOnlyDictionary<string, double>? TenantTargets,
+KpiThreshold? Threshold);
+public sealed record KpiResult(
+string Code,
+double Value,
+double? Target,
+KpiSeverity Severity,
+bool AlertRaised,
+AnalysisMetadata Metadata,
+string? Message = null);
+/// <summary>Minimal SELECT-only guard mirroring SafeSqlValidator intent for SQL-view KPIs.</summary>
+public static class BasicSqlGuard
+{
+private static readonly string[] Forbidden =
+{ "insert", "update", "delete", "drop", "alter", "truncate", "grant", "revoke", "exec", "execute", "call", "copy", "merge", "create", "pg_", "information_schema" };
+public static void Validate(string? sql)
+{
+    if (string.IsNullOrWhiteSpace(sql)) throw new KpiFormulaException("KPI SQL view text is empty.");
+    var trimmed = sql.Trim();
+    var lower = trimmed.ToLowerInvariant();
+    if (!(lower.StartsWith("select") || lower.StartsWith("with")))
+        throw new KpiFormulaException("KPI SQL view must be a read-only SELECT/WITH query.");
+    if (trimmed.Contains(';')) throw new KpiFormulaException("KPI SQL view must be a single statement (no semicolons).");
+    foreach (var bad in Forbidden)
+        if (lower.Contains(bad)) throw new KpiFormulaException($"KPI SQL view contains a forbidden token: '{bad}'.");
+}
+}
+public sealed class KpiEngine
+{
+private readonly ExpressionEvaluator _evaluator = new();
+/// <summary>Formula KPI: evaluates the expression over named inputs.</summary>
+public KpiResult EvaluateFormula(
+    KpiDefinition def, string tenantId, IReadOnlyDictionary<string, double> inputs,
+    string dataset, IReadOnlyList<string> filters, string timeWindow, DateTimeOffset refreshedAtUtc, int sampleSize)
+{
+    if (def.Kind != KpiKind.Formula) throw new KpiFormulaException($"KPI '{def.Code}' is not a formula KPI.");
+    double value = _evaluator.Evaluate(def.Expression, inputs);
+    return Finalize(def, tenantId, value, def.Expression ?? "<formula>", dataset, filters, timeWindow, refreshedAtUtc, sampleSize);
+}
+
+/// <summary>SQL-view or mapped-measure KPI: the measured value is computed by the integration layer (validated here).</summary>
+public KpiResult EvaluateMeasured(
+    KpiDefinition def, string tenantId, double measuredValue,
+    string dataset, IReadOnlyList<string> filters, string timeWindow, DateTimeOffset refreshedAtUtc, int sampleSize)
+{
+    string formula;
+    if (def.Kind == KpiKind.SqlView) { BasicSqlGuard.Validate(def.SqlView); formula = $"SQL:{def.SqlView}"; }
+    else if (def.Kind == KpiKind.MappedMeasure) { formula = $"MEASURE:{def.MeasureCode}"; }
+    else throw new KpiFormulaException($"KPI '{def.Code}' is not a measured KPI.");
+    return Finalize(def, tenantId, measuredValue, formula, dataset, filters, timeWindow, refreshedAtUtc, sampleSize);
+}
+
+private static KpiResult Finalize(
+    KpiDefinition def, string tenantId, double value, string formula,
+    string dataset, IReadOnlyList<string> filters, string timeWindow, DateTimeOffset refreshedAtUtc, int sampleSize)
+{
+    double? target = null;
+    if (def.TenantTargets != null && def.TenantTargets.TryGetValue(tenantId, out var t)) target = t;
+
+    var severity = KpiSeverity.Ok;
+    if (def.Threshold is { } th)
+    {
+        bool above = th.Direction == AlertDirection.AboveTargetIsBad;
+        if (th.CriticalAt is { } crit && Breached(value, crit, above)) severity = KpiSeverity.Critical;
+        else if (th.WarningAt is { } warn && Breached(value, warn, above)) severity = KpiSeverity.Warning;
+    }
+
+    var meta = new AnalysisMetadata(formula, dataset, filters, timeWindow, refreshedAtUtc, sampleSize, def.Unit);
+    return new KpiResult(def.Code, value, target, severity, severity != KpiSeverity.Ok, meta);
+}
+
+private static bool Breached(double value, double bound, bool aboveIsBad) => aboveIsBad ? value >= bound : value <= bound;
+}
+
+===== FILE: C:\Workspace\PlantProcess-IQ\Backend\PlantProcess.Application\Analytics\Value\ICostAssumptionStore.cs =====
+namespace PlantProcess.Application.Analytics.Value;
+
+/// <summary>Versioned, tenant-scoped cost-assumption store. Every edit creates a new version and an audit row.</summary>
+public interface ICostAssumptionStore
+{
+    Task<CostAssumptionSet?> GetActiveAsync(Guid tenantId, CancellationToken cancellationToken);
+
+    /// <summary>Creates a new version for the tenant and returns its version number.</summary>
+    Task<int> CreateVersionAsync(Guid tenantId, CostAssumptionSet set, string actor, CancellationToken cancellationToken);
+}
+
+===== FILE: C:\Workspace\PlantProcess-IQ\Backend\PlantProcess.Application\Analytics\Value\IValueImpactEngine.cs =====
+namespace PlantProcess.Application.Analytics.Value;
+
+public interface IValueImpactEngine
+{
+    ValueImpactResult Compute(ValueImpactInputs inputs, CostAssumptionSet assumptions);
+}
+
+===== FILE: C:\Workspace\PlantProcess-IQ\Backend\PlantProcess.Application\Analytics\Value\ValueContracts.cs =====
+using PlantProcess.Application.Provenance;
+
+namespace PlantProcess.Application.Analytics.Value;
+
+/// <summary>A low/mid/high assumption band. Complete only when Low &lt;= Mid &lt;= High.</summary>
+public sealed record CostBand(decimal Low, decimal Mid, decimal High)
+{
+    public bool IsComplete => Low <= Mid && Mid <= High;
+}
+
+/// <summary>A versioned, tenant-scoped set of cost assumptions (each a band). Nulls mean "missing basis".</summary>
+public sealed record CostAssumptionSet(
+    int Version,
+    string Currency,
+    CostBand? CostPerTon,
+    CostBand? DowngradeDeltaPerTon,
+    CostBand? ScrapCostPerTon,
+    CostBand? DowntimeCostPerMin,
+    CostBand? GradePremiumPerTon,
+    CostBand? EnergyPricePerMwh);
+
+/// <summary>
+/// Measured inputs for ONE finding. ProductionStopMinutes is the §5.2 production-stop figure (T-023),
+/// never raw equipment-stop minutes.
+/// </summary>
+public sealed record ValueImpactInputs(
+    string FindingRef,
+    string? CoilId,
+    string? DefectCode,
+    decimal DefectRateDelta,
+    decimal MonthlyVolumeTons,
+    decimal ProductionStopMinutes,
+    decimal YieldLossTons,
+    bool UseScrapCost = false);
+
+public sealed record ValueImpactTerm(
+    string Name,
+    string InputsJson,
+    decimal Low,
+    decimal Mid,
+    decimal High,
+    ProvenanceHandle Handle);
+
+public sealed record ValueImpactResult(
+    string Currency,
+    decimal Low,
+    decimal Mid,
+    decimal High,
+    IReadOnlyList<ValueImpactTerm> Terms,
+    int AssumptionVersion,
+    bool IsAbstained,
+    string? AbstainReason)
+{
+    public static ValueImpactResult Abstained(string currency, int version, string reason)
+        => new(currency, 0m, 0m, 0m, Array.Empty<ValueImpactTerm>(), version, true, reason);
+}
+
+===== FILE: C:\Workspace\PlantProcess-IQ\Backend\PlantProcess.Application\Analytics\Value\ValueImpactEngine.cs =====
+using PlantProcess.Application.Provenance;
+
+namespace PlantProcess.Application.Analytics.Value;
+
+/// <summary>
+/// T-041: deterministic §7.5 impact computation. Produces a RANGE from the assumption bands (never a
+/// single guaranteed number), attaches inputs + a provenance handle (T-101) to every term, and ABSTAINS
+/// when any required assumption band is missing (T-043).
+///
+///   Impact = defect_rate_delta * monthly_volume_tons * (downgrade|scrap)_cost_per_ton
+///          + production_stop_minutes * downtime_cost_per_min        (production-stop, NOT raw downtime)
+///          + yield_loss_tons * grade_premium_per_ton
+/// </summary>
+public sealed class ValueImpactEngine : IValueImpactEngine
+{
+    public ValueImpactResult Compute(ValueImpactInputs inputs, CostAssumptionSet a)
+    {
+        var currency = string.IsNullOrWhiteSpace(a.Currency) ? "EUR" : a.Currency;
+
+        var defectCostBand = inputs.UseScrapCost ? a.ScrapCostPerTon : a.DowngradeDeltaPerTon;
+        var missing = new List<string>();
+        if (defectCostBand is null || !defectCostBand.IsComplete) missing.Add(inputs.UseScrapCost ? "scrap_cost_per_ton" : "downgrade_delta_per_ton");
+        if (a.DowntimeCostPerMin is null || !a.DowntimeCostPerMin.IsComplete) missing.Add("downtime_cost_per_min");
+        if (a.GradePremiumPerTon is null || !a.GradePremiumPerTon.IsComplete) missing.Add("grade_premium_per_ton");
+
+        if (missing.Count > 0)
+            return ValueImpactResult.Abstained(currency, a.Version,
+                $"Insufficient basis: missing required assumption(s): {string.Join(", ", missing)}.");
+
+        var findingHandle = ProvenanceHandle.Finding(inputs.FindingRef, inputs.CoilId is null ? null : $"coil:{inputs.CoilId}");
+
+        var defect = Term("DefectDowngradeOrScrap",
+            $"{{\"defectRateDelta\":{inputs.DefectRateDelta},\"monthlyVolumeTons\":{inputs.MonthlyVolumeTons},\"costType\":\"{(inputs.UseScrapCost ? "scrap" : "downgrade")}\"}}",
+            inputs.DefectRateDelta * inputs.MonthlyVolumeTons, defectCostBand!, findingHandle);
+
+        var downtime = Term("AttributableDowntime",
+            $"{{\"productionStopMinutes\":{inputs.ProductionStopMinutes}}}",
+            inputs.ProductionStopMinutes, a.DowntimeCostPerMin!, findingHandle);
+
+        var yieldLoss = Term("YieldLoss",
+            $"{{\"yieldLossTons\":{inputs.YieldLossTons}}}",
+            inputs.YieldLossTons, a.GradePremiumPerTon!, findingHandle);
+
+        var terms = new[] { defect, downtime, yieldLoss };
+        decimal low = 0m, mid = 0m, high = 0m;
+        foreach (var t in terms) { low += t.Low; mid += t.Mid; high += t.High; }
+
+        return new ValueImpactResult(currency, Round(low), Round(mid), Round(high), terms, a.Version, false, null);
+    }
+
+    private static ValueImpactTerm Term(string name, string inputsJson, decimal quantity, CostBand cost, ProvenanceHandle handle)
+        => new(name, inputsJson, Round(quantity * cost.Low), Round(quantity * cost.Mid), Round(quantity * cost.High), handle);
+
+    private static decimal Round(decimal v) => Math.Round(v, 2, MidpointRounding.AwayFromZero);
+}
+
+===== FILE: C:\Workspace\PlantProcess-IQ\Backend\PlantProcess.Application\Common\Persistence\IPlantProcessDbContext.cs =====
+using Microsoft.EntityFrameworkCore;
+using PlantProcess.Domain.Entities.Analytics;
+using PlantProcess.Domain.Entities.Configuration;
+using PlantProcess.Domain.Entities.Dashboarding;
+using PlantProcess.Domain.Entities.Integration;
+using PlantProcess.Domain.Entities.Materials;
+using PlantProcess.Domain.Entities.PlantLayout;
+using PlantProcess.Domain.Entities.Process;
+using PlantProcess.Domain.Entities.Quality;
+
+namespace PlantProcess.Application.Common.Persistence;
+
+public interface IPlantProcessDbContext
+{
+    DbSet<Site> Sites { get; }
+    DbSet<Area> Areas { get; }
+    DbSet<Equipment> Equipment { get; }
+    DbSet<Equipment> Equipments { get; }
+
+    DbSet<IndustryTemplate> IndustryTemplates { get; }
+    DbSet<MaterialUnitTypeDefinition> MaterialUnitTypeDefinitions { get; }
+    DbSet<OperationDefinition> OperationDefinitions { get; }
+    DbSet<Route> Routes { get; }
+    DbSet<RouteStep> RouteSteps { get; }
+
+
+    DbSet<SourceSystemDefinition> SourceSystemDefinitions { get; }
+    DbSet<ImportBatch> ImportBatches { get; }
+    DbSet<MappingDefinition> MappingDefinitions { get; }
+    DbSet<StagingRecord> StagingRecords { get; }
+    DbSet<ConnectionProfile> ConnectionProfiles { get; }
+    DbSet<SourceDatasetDefinition> SourceDatasetDefinitions { get; }
+    DbSet<SourceFieldDefinition> SourceFieldDefinitions { get; }
+    DbSet<SchemaViewDefinition> SchemaViewDefinitions { get; }
+    DbSet<KpiDefinition> KpiDefinitions { get; }
+    DbSet<JobDefinition> JobDefinitions { get; }
+    DbSet<JobRunHistory> JobRunHistories { get; }
+
+    DbSet<MaterialUnit> MaterialUnits { get; }
+    DbSet<MaterialAlias> MaterialAliases { get; }
+    DbSet<GenealogyEdge> GenealogyEdges { get; }
+
+
+    DbSet<ProcessStepExecution> ProcessStepExecutions { get; }
+    DbSet<ParameterDefinition> ParameterDefinitions { get; }
+    DbSet<ParameterObservation> ParameterObservations { get; }
+    DbSet<ProcessEvent> ProcessEvents { get; }
+    DbSet<DowntimeEvent> DowntimeEvents { get; }
+
+    DbSet<DefectCatalog> DefectCatalogs { get; }
+    DbSet<QualityEvent> QualityEvents { get; }
+    DbSet<DataQualityIssue> DataQualityIssues { get; }
+
+    DbSet<RiskScore> RiskScores { get; }
+    DbSet<CorrelationResult> CorrelationResults { get; }
+    DbSet<ModelRegistry> ModelRegistries { get; }
+
+    DbSet<DashboardDefinition> DashboardDefinitions { get; }
+    DbSet<DashboardWidgetDefinition> DashboardWidgetDefinitions { get; }
+
+    Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
+}
+
+
+
+
+
+===== FILE: C:\Workspace\PlantProcess-IQ\Backend\PlantProcess.Application\Integration\Contracts\Dtos\SchemaConfigurationDtos.cs =====
+namespace PlantProcess.Application.Integration.Contracts.Dtos;
+
+public sealed record SchemaViewDefinitionDto(
+    Guid Id,
+    string SchemaViewCode,
+    string SchemaViewName,
+    string ViewKind,
+    Guid? PrimarySourceDatasetDefinitionId,
+    string SqlText,
+    string SourceDatasetIdsJson,
+    string OutputSchemaJson,
+    int MaxPreviewRows,
+    int TimeoutSeconds,
+    bool IsApproved,
+    bool IsActive,
+    DateTime? LastValidatedAtUtc,
+    string? LastValidationStatus,
+    string? LastValidationMessage,
+    string? Description,
+    bool IsSynthetic,
+    DateTime CreatedAtUtc,
+    DateTime? UpdatedAtUtc);
+
+public sealed record CreateSchemaViewDefinitionRequest(
+    string SchemaViewCode,
+    string SchemaViewName,
+    string ViewKind,
+    Guid? PrimarySourceDatasetDefinitionId,
+    string SqlText,
+    string? SourceDatasetIdsJson,
+    int? MaxPreviewRows,
+    int? TimeoutSeconds,
+    string? Description,
+    bool IsSynthetic,
+    string? SourceSystem,
+    string? SourceRecordId);
+
+public sealed record UpdateSchemaViewDefinitionRequest(
+    string SchemaViewName,
+    string ViewKind,
+    Guid? PrimarySourceDatasetDefinitionId,
+    string SqlText,
+    string? SourceDatasetIdsJson,
+    int? MaxPreviewRows,
+    int? TimeoutSeconds,
+    string? Description);
+
+public sealed record SchemaViewPreviewRequest(
+    string? SqlText,
+    int? MaxRows,
+    int? TimeoutSeconds);
+
+public sealed record SchemaViewPreviewColumnDto(
+    string ColumnName,
+    string DataType,
+    int Ordinal);
+
+public sealed record SchemaViewPreviewResult(
+    bool IsSuccess,
+    string Message,
+    int RowCount,
+    long DurationMs,
+    IReadOnlyList<SchemaViewPreviewColumnDto> Columns,
+    IReadOnlyList<IReadOnlyDictionary<string, object?>> Rows);
+
+public sealed record SqlSafetyValidationResultDto(
+    bool IsValid,
+    IReadOnlyList<string> Errors,
+    IReadOnlyList<string> Warnings,
+    IReadOnlyList<string> ReferencedTables);
+
+public sealed record KpiDefinitionDto(
+    Guid Id,
+    Guid? SchemaViewDefinitionId,
+    string KpiCode,
+    string KpiName,
+    string KpiCategory,
+    string ValueExpression,
+    string? Unit,
+    string? DimensionExpression,
+    string? FilterExpression,
+    string AggregationType,
+    string KpiOptionsJson,
+    bool IsActive,
+    string? Description,
+    bool IsSynthetic,
+    DateTime CreatedAtUtc,
+    DateTime? UpdatedAtUtc);
+
+public sealed record CreateKpiDefinitionRequest(
+    Guid? SchemaViewDefinitionId,
+    string KpiCode,
+    string KpiName,
+    string KpiCategory,
+    string ValueExpression,
+    string? Unit,
+    string? DimensionExpression,
+    string? FilterExpression,
+    string? AggregationType,
+    string? KpiOptionsJson,
+    string? Description,
+    bool IsSynthetic,
+    string? SourceSystem,
+    string? SourceRecordId);
+
+
+
+
+
+===== FILE: C:\Workspace\PlantProcess-IQ\Backend\PlantProcess.Infrastructure\Analytics\NpgsqlCostAssumptionStore.cs =====
+using System.Text.Json;
+using Npgsql;
+using PlantProcess.Application.Analytics.Value;
+
+namespace PlantProcess.Infrastructure.Analytics;
+
+/// <summary>
+/// T-042: reads the active (highest-version) assumptions for a tenant and writes a new version plus a
+/// before/after audit row on every edit. All queries are tenant-scoped, enforcing isolation.
+/// </summary>
+public sealed class NpgsqlCostAssumptionStore : ICostAssumptionStore
+{
+    private readonly NpgsqlDataSource _dataSource;
+
+    public NpgsqlCostAssumptionStore(NpgsqlDataSource dataSource) => _dataSource = dataSource;
+
+    private const string SelectColumns =
+        "version, currency, " +
+        "cost_per_ton_low, cost_per_ton_mid, cost_per_ton_high, " +
+        "downgrade_delta_low, downgrade_delta_mid, downgrade_delta_high, " +
+        "scrap_cost_low, scrap_cost_mid, scrap_cost_high, " +
+        "downtime_cost_min_low, downtime_cost_min_mid, downtime_cost_min_high, " +
+        "grade_premium_low, grade_premium_mid, grade_premium_high, " +
+        "energy_price_low, energy_price_mid, energy_price_high";
+
+    public async Task<CostAssumptionSet?> GetActiveAsync(Guid tenantId, CancellationToken ct)
+    {
+        await using var cmd = _dataSource.CreateCommand(
+            $"SELECT {SelectColumns} FROM canon.cost_assumption WHERE tenant_id = @t ORDER BY version DESC LIMIT 1");
+        cmd.Parameters.AddWithValue("t", tenantId);
+        await using var reader = await cmd.ExecuteReaderAsync(ct);
+        if (!await reader.ReadAsync(ct)) return null;
+        return Map(reader);
+    }
+
+    public async Task<int> CreateVersionAsync(Guid tenantId, CostAssumptionSet set, string actor, CancellationToken ct)
+    {
+        var before = await GetActiveAsync(tenantId, ct);
+        var nextVersion = (before?.Version ?? 0) + 1;
+
+        await using var conn = await _dataSource.OpenConnectionAsync(ct);
+        await using var tx = await conn.BeginTransactionAsync(ct);
+
+        await using (var insert = conn.CreateCommand())
+        {
+            insert.Transaction = tx;
+            insert.CommandText =
+                "INSERT INTO canon.cost_assumption (tenant_id, version, currency, " +
+                "cost_per_ton_low, cost_per_ton_mid, cost_per_ton_high, " +
+                "downgrade_delta_low, downgrade_delta_mid, downgrade_delta_high, " +
+                "scrap_cost_low, scrap_cost_mid, scrap_cost_high, " +
+                "downtime_cost_min_low, downtime_cost_min_mid, downtime_cost_min_high, " +
+                "grade_premium_low, grade_premium_mid, grade_premium_high, " +
+                "energy_price_low, energy_price_mid, energy_price_high, created_by) " +
+                "VALUES (@t, @v, @ccy, " +
+                "@cptl,@cptm,@cpth, @ddl,@ddm,@ddh, @scl,@scm,@sch, " +
+                "@dcl,@dcm,@dch, @gpl,@gpm,@gph, @epl,@epm,@eph, @actor)";
+            insert.Parameters.AddWithValue("t", tenantId);
+            insert.Parameters.AddWithValue("v", nextVersion);
+            insert.Parameters.AddWithValue("ccy", string.IsNullOrWhiteSpace(set.Currency) ? "EUR" : set.Currency);
+            AddBand(insert, "cpt", set.CostPerTon);
+            AddBand(insert, "dd", set.DowngradeDeltaPerTon);
+            AddBand(insert, "sc", set.ScrapCostPerTon);
+            AddBand(insert, "dc", set.DowntimeCostPerMin);
+            AddBand(insert, "gp", set.GradePremiumPerTon);
+            AddBand(insert, "ep", set.EnergyPricePerMwh);
+            insert.Parameters.AddWithValue("actor", string.IsNullOrWhiteSpace(actor) ? "system" : actor);
+            await insert.ExecuteNonQueryAsync(ct);
+        }
+
+        await using (var audit = conn.CreateCommand())
+        {
+            audit.Transaction = tx;
+            audit.CommandText =
+                "INSERT INTO canon.cost_assumption_audit (tenant_id, from_version, to_version, actor, before_json, after_json) " +
+                "VALUES (@t, @from, @to, @actor, @before::jsonb, @after::jsonb)";
+            audit.Parameters.AddWithValue("t", tenantId);
+            audit.Parameters.AddWithValue("from", (object?)before?.Version ?? DBNull.Value);
+            audit.Parameters.AddWithValue("to", nextVersion);
+            audit.Parameters.AddWithValue("actor", string.IsNullOrWhiteSpace(actor) ? "system" : actor);
+            audit.Parameters.AddWithValue("before", before is null ? "{}" : JsonSerializer.Serialize(before));
+            audit.Parameters.AddWithValue("after", JsonSerializer.Serialize(set with { Version = nextVersion }));
+            await audit.ExecuteNonQueryAsync(ct);
+        }
+
+        await tx.CommitAsync(ct);
+        return nextVersion;
+    }
+
+    private static void AddBand(NpgsqlCommand cmd, string prefix, CostBand? band)
+    {
+        cmd.Parameters.AddWithValue($"{prefix}l", (object?)band?.Low ?? DBNull.Value);
+        cmd.Parameters.AddWithValue($"{prefix}m", (object?)band?.Mid ?? DBNull.Value);
+        cmd.Parameters.AddWithValue($"{prefix}h", (object?)band?.High ?? DBNull.Value);
+    }
+
+    private static CostAssumptionSet Map(NpgsqlDataReader r)
+    {
+        var i = 0;
+        var version = r.GetInt32(i++);
+        var currency = r.GetString(i++);
+        CostBand? Band()
+        {
+            var lo = r.IsDBNull(i) ? (decimal?)null : r.GetDecimal(i); i++;
+            var md = r.IsDBNull(i) ? (decimal?)null : r.GetDecimal(i); i++;
+            var hi = r.IsDBNull(i) ? (decimal?)null : r.GetDecimal(i); i++;
+            return lo.HasValue && md.HasValue && hi.HasValue ? new CostBand(lo.Value, md.Value, hi.Value) : null;
+        }
+        return new CostAssumptionSet(version, currency, Band(), Band(), Band(), Band(), Band(), Band());
+    }
+}
+
+===== FILE: C:\Workspace\PlantProcess-IQ\Backend\PlantProcess.Infrastructure\Persistence\Configurations\Integration\KpiDefinitionConfiguration.cs =====
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using PlantProcess.Domain.Entities.Integration;
+using PlantProcess.Infrastructure.Persistence.Configurations.Common;
+
+namespace PlantProcess.Infrastructure.Persistence.Configurations.Integration;
+
+public sealed class KpiDefinitionConfiguration : IEntityTypeConfiguration<KpiDefinition>
+{
+    public void Configure(EntityTypeBuilder<KpiDefinition> builder)
+    {
+        builder.ToTable("kpi_definitions");
+
+        builder.HasKey(x => x.Id);
+
+        builder.Property(x => x.KpiCode).IsRequired().HasMaxLength(120);
+        builder.Property(x => x.KpiName).IsRequired().HasMaxLength(250);
+        builder.Property(x => x.KpiCategory).IsRequired().HasMaxLength(80);
+        builder.Property(x => x.ValueExpression).IsRequired().HasMaxLength(2000);
+        builder.Property(x => x.Unit).HasMaxLength(80);
+        builder.Property(x => x.DimensionExpression).HasMaxLength(1000);
+        builder.Property(x => x.FilterExpression).HasMaxLength(2000);
+        builder.Property(x => x.AggregationType).IsRequired().HasMaxLength(80);
+        builder.Property(x => x.Description).HasMaxLength(1000);
+
+        builder.Property(x => x.KpiOptionsJson)
+            .IsRequired()
+            .HasColumnType("jsonb")
+            .HasDefaultValue("{}");
+
+        builder.Property(x => x.CreatedAtUtc).HasColumnType("timestamp with time zone");
+        builder.Property(x => x.UpdatedAtUtc).HasColumnType("timestamp with time zone");
+        builder.Property(x => x.DeletedAtUtc).HasColumnType("timestamp with time zone");
+
+        builder.Property(x => x.SourceSystem).HasMaxLength(100);
+        builder.Property(x => x.SourceRecordId).HasMaxLength(100);
+        builder.Property(x => x.DeletedReason).HasMaxLength(500);
+
+        builder.HasOne<SchemaViewDefinition>()
+            .WithMany()
+            .HasForeignKey(x => x.SchemaViewDefinitionId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.HasIndex(x => x.KpiCode)
+            .IsUnique()
+            .HasFilter("is_deleted = FALSE");
+
+        builder.HasIndex(x => x.KpiCategory);
+        builder.HasIndex(x => x.SchemaViewDefinitionId);
+        builder.HasIndex(x => x.IsActive);
+
+        builder.UsePostgresXminConcurrencyToken();
+    }
+}
+
