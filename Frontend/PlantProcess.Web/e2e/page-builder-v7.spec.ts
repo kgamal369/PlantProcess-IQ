@@ -5,9 +5,7 @@ test.describe("P03 page builder smoke", () => {
   test("page builder route exposes persisted metadata actions", async ({ page, request }) => {
     const token = await login(request);
 
-    await page.addInitScript((accessToken) => {
-      window.localStorage.setItem("plantprocess.auth.accessToken", accessToken);
-    }, token);
+    /* P01: no browser token seeding; AuthProvider performs cookie refresh/login bootstrap. */
 
     await page.goto("/page-builder");
 

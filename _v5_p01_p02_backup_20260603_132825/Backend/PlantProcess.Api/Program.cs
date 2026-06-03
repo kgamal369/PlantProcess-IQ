@@ -1,5 +1,4 @@
-
-using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Options;
 using System.Reflection;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
@@ -259,7 +258,7 @@ builder.Services.AddScoped(typeof(PlantProcess.Api.Security.IAuditLogger<>), typ
         {
             jwt.TokenValidationParameters.IssuerSigningKeyResolver =
                 (token, securityToken, kid, parameters) =>
-                    BuildSigningKeys(authMonitor.CurrentValue);
+                    new[] { new SymmetricSecurityKey(Encoding.UTF8.GetBytes(authMonitor.CurrentValue.SigningKey)) };
             jwt.TokenValidationParameters.ValidIssuer = authMonitor.CurrentValue.Issuer;
             jwt.TokenValidationParameters.ValidAudience = authMonitor.CurrentValue.Audience;
         });
@@ -502,27 +501,6 @@ finally
     Log.Information("PlantProcess IQ API stopped. Version={AppVersion}", appVersion);
     Log.CloseAndFlush();
 }
-
-static System.Collections.Generic.IEnumerable<Microsoft.IdentityModel.Tokens.SecurityKey> BuildSigningKeys(PlantProcess.Api.Security.AuthOptions auth)
-{
-    var keys = new System.Collections.Generic.List<Microsoft.IdentityModel.Tokens.SecurityKey>();
-
-    if (!string.IsNullOrWhiteSpace(auth.SigningKey))
-    {
-        keys.Add(new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(auth.SigningKey)));
-    }
-
-    foreach (var oldKey in auth.SecondarySigningKeys ?? new System.Collections.Generic.List<string>())
-    {
-        if (!string.IsNullOrWhiteSpace(oldKey) && oldKey.Length >= 32)
-        {
-            keys.Add(new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(oldKey)));
-        }
-    }
-
-    return keys;
-}
-
 
 public partial class Program
 {

@@ -43,9 +43,7 @@ test.describe("P03 dynamic /pages/{slug} rendering", () => {
 
     expect(create.ok(), "create failed: " + create.status() + " " + await create.text()).toBeTruthy();
 
-    await page.addInitScript((accessToken) => {
-      window.localStorage.setItem("plantprocess.auth.accessToken", accessToken);
-    }, token);
+    /* P01: no browser token seeding; AuthProvider performs cookie refresh/login bootstrap. */
 
     await page.goto("/pages/" + slug);
 

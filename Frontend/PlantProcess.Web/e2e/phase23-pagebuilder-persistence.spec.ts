@@ -127,9 +127,7 @@ test.describe("P03 PageDefinition persistence acceptance", () => {
   test("UI saves and reloads the metadata page definition through the backend", async ({ page, request }) => {
     const token = await login(request);
 
-    await page.addInitScript((accessToken) => {
-      window.localStorage.setItem("plantprocess.auth.accessToken", accessToken);
-    }, token);
+    /* P01: no browser token seeding; AuthProvider performs cookie refresh/login bootstrap. */
 
     await page.goto("/page-builder");
 

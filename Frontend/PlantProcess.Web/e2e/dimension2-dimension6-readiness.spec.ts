@@ -45,12 +45,10 @@ test.describe("Dimension 6 ML readiness", () => {
     const token = await login(request);
 
     await page.addInitScript((accessToken) => {
-      window.localStorage.setItem("plantprocess.auth.accessToken", accessToken);
-      window.localStorage.setItem("plantprocess.auth.userName", "admin");
-      window.localStorage.setItem("plantprocess.auth.role", "Admin");
-      window.localStorage.setItem(
-        "plantprocess.auth.expiresAtUtc",
-        new Date(Date.now() + 60 * 60 * 1000).toISOString()
+      /* P01: access token is memory-only; UI bootstraps via HttpOnly refresh cookie. */
+      /* P01: removed forbidden browser auth-token storage. */
+      /* P01: removed forbidden browser auth-token storage. */
+      /* P01: removed forbidden browser auth-token storage. */ + 60 * 60 * 1000).toISOString()
       );
     }, token);
 

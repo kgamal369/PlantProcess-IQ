@@ -1,7 +1,11 @@
 using System.Data;
 using System.Data.Common;
 using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
+using Konscious.Security.Cryptography;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using PlantProcess.Infrastructure.Persistence;
 
 namespace PlantProcess.Api.Security;
@@ -20,15 +24,18 @@ public sealed record AppUserRecord(
 public sealed class AuthStore
 {
     private readonly PlantProcessDbContext _db;
+    private readonly AuthOptions _auth;
 
-    public AuthStore(PlantProcessDbContext db)
+    public AuthStore(PlantProcessDbContext db, IOptions<AuthOptions> authOptions)
     {
         _db = db;
+        _auth = authOptions.Value;
     }
 
     public async Task<bool> HasAnyUserAsync(CancellationToken cancellationToken)
     {
         await EnsureOpenAsync(cancellationToken);
+
         await using var cmd = _db.Database.GetDbConnection().CreateCommand();
         cmd.CommandText = "SELECT EXISTS (SELECT 1 FROM app_users WHERE is_enabled = true)";
         var result = await cmd.ExecuteScalarAsync(cancellationToken);
@@ -44,9 +51,21 @@ public sealed class AuthStore
 
         await using var cmd = _db.Database.GetDbConnection().CreateCommand();
         cmd.CommandText = """
-SELECT u.id, u.tenant_id, t.tenant_code, u.user_name, COALESCE(u.display_name, u.user_name) AS display_name,
-       u.password_hash, u.password_salt, u.password_iterations,
-       u.plant_role, u.compatibility_role, u.force_password_change, u.is_owner
+SELECT
+    u.id,
+    u.tenant_id,
+    t.tenant_code,
+    u.user_name,
+    COALESCE(u.display_name, u.user_name) AS display_name,
+    u.password_hash,
+    u.password_salt,
+    u.password_iterations,
+    COALESCE(u.password_algorithm, 'pbkdf2-sha256') AS password_algorithm,
+    COALESCE(u.password_hash_parameters, '{}'::jsonb)::text AS password_hash_parameters,
+    u.plant_role,
+    u.compatibility_role,
+    u.force_password_change,
+    u.is_owner
 FROM app_users u
 JOIN tenants t ON t.id = u.tenant_id
 WHERE u.normalized_user_name = lower(@user_name)
@@ -56,17 +75,66 @@ LIMIT 1
 """;
         Add(cmd, "user_name", userName.Trim().ToLowerInvariant());
 
-        await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
-        if (!await reader.ReadAsync(cancellationToken)) return null;
+        Guid id;
+        Guid tenantId;
+        string tenantCode;
+        string storedUserName;
+        string displayName;
+        string passwordHash;
+        string salt;
+        int iterations;
+        string algorithm;
+        string parameterJson;
+        string plantRole;
+        string compatibilityRole;
+        bool forcePasswordChange;
+        bool isOwner;
 
-        var passwordHash = reader.GetString(reader.GetOrdinal("password_hash"));
-        var salt = reader.GetString(reader.GetOrdinal("password_salt"));
-        var iterations = reader.GetInt32(reader.GetOrdinal("password_iterations"));
+        await using (var reader = await cmd.ExecuteReaderAsync(cancellationToken))
+        {
+            if (!await reader.ReadAsync(cancellationToken)) return null;
 
-        if (!PasswordHasher.Verify(password, salt, passwordHash, iterations))
+            id = reader.GetGuid(reader.GetOrdinal("id"));
+            tenantId = reader.GetGuid(reader.GetOrdinal("tenant_id"));
+            tenantCode = reader.GetString(reader.GetOrdinal("tenant_code"));
+            storedUserName = reader.GetString(reader.GetOrdinal("user_name"));
+            displayName = reader.GetString(reader.GetOrdinal("display_name"));
+            passwordHash = reader.GetString(reader.GetOrdinal("password_hash"));
+            salt = reader.GetString(reader.GetOrdinal("password_salt"));
+            iterations = reader.GetInt32(reader.GetOrdinal("password_iterations"));
+            algorithm = reader.GetString(reader.GetOrdinal("password_algorithm"));
+            parameterJson = reader.GetString(reader.GetOrdinal("password_hash_parameters"));
+            plantRole = reader.GetString(reader.GetOrdinal("plant_role"));
+            compatibilityRole = reader.GetString(reader.GetOrdinal("compatibility_role"));
+            forcePasswordChange = reader.GetBoolean(reader.GetOrdinal("force_password_change"));
+            isOwner = reader.GetBoolean(reader.GetOrdinal("is_owner"));
+        }
+
+        var verification = PasswordHasher.Verify(
+            password,
+            salt,
+            passwordHash,
+            iterations,
+            algorithm,
+            parameterJson,
+            _auth);
+
+        if (!verification.Succeeded)
             return null;
 
-        return MapUser(reader);
+        if (verification.NeedsRehash)
+            await UpdatePasswordHashAsync(id, password, cancellationToken);
+
+        return new AppUserRecord(
+            id,
+            tenantId,
+            tenantCode,
+            storedUserName,
+            displayName,
+            plantRole,
+            compatibilityRole,
+            forcePasswordChange,
+            isOwner);
     }
 
     public async Task<AppUserRecord> CreateOwnerAsync(
@@ -78,23 +146,53 @@ LIMIT 1
         await EnsureOpenAsync(cancellationToken);
 
         var salt = PasswordHasher.CreateSalt();
-        var hash = PasswordHasher.Hash(password, salt);
+        var hash = PasswordHasher.HashArgon2id(password, salt, _auth);
+        var parameters = PasswordHasher.BuildArgon2idParameterJson(_auth);
 
         await using var cmd = _db.Database.GetDbConnection().CreateCommand();
         cmd.CommandText = """
 INSERT INTO app_users
-(tenant_id, user_name, normalized_user_name, display_name, password_hash, password_salt, password_iterations,
- plant_role, compatibility_role, is_owner, is_enabled, force_password_change)
+(
+    tenant_id,
+    user_name,
+    normalized_user_name,
+    display_name,
+    password_hash,
+    password_salt,
+    password_iterations,
+    password_algorithm,
+    password_hash_parameters,
+    plant_role,
+    compatibility_role,
+    is_owner,
+    is_enabled,
+    force_password_change
+)
 VALUES
-('00000000-0000-0000-0000-000000000001', @user_name, lower(@user_name), @display_name, @hash, @salt, @iterations,
- 'TenantOwner', 'Admin', true, true, true)
+(
+    '00000000-0000-0000-0000-000000000001',
+    @user_name,
+    lower(@user_name),
+    @display_name,
+    @hash,
+    @salt,
+    @iterations,
+    'argon2id',
+    @parameters::jsonb,
+    'TenantOwner',
+    'Admin',
+    true,
+    true,
+    true
+)
 RETURNING id, tenant_id
 """;
         Add(cmd, "user_name", userName.Trim());
         Add(cmd, "display_name", string.IsNullOrWhiteSpace(displayName) ? "Tenant Owner" : displayName.Trim());
         Add(cmd, "hash", hash);
         Add(cmd, "salt", salt);
-        Add(cmd, "iterations", PasswordHasher.DefaultIterations);
+        Add(cmd, "iterations", _auth.Argon2Iterations);
+        Add(cmd, "parameters", parameters);
 
         await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
         await reader.ReadAsync(cancellationToken);
@@ -104,7 +202,7 @@ RETURNING id, tenant_id
             reader.GetGuid(1),
             "default-demo",
             userName.Trim(),
-            displayName.Trim(),
+            string.IsNullOrWhiteSpace(displayName) ? "Tenant Owner" : displayName.Trim(),
             "TenantOwner",
             "Admin",
             true,
@@ -145,9 +243,16 @@ VALUES (@tenant_id, @user_id, @token_hash, @expires_at_utc, @user_agent, @client
 
         await using var cmd = _db.Database.GetDbConnection().CreateCommand();
         cmd.CommandText = """
-SELECT u.id, u.tenant_id, t.tenant_code, u.user_name, COALESCE(u.display_name, u.user_name) AS display_name,
-       u.password_hash, u.password_salt, u.password_iterations,
-       u.plant_role, u.compatibility_role, u.force_password_change, u.is_owner
+SELECT
+    u.id,
+    u.tenant_id,
+    t.tenant_code,
+    u.user_name,
+    COALESCE(u.display_name, u.user_name) AS display_name,
+    u.plant_role,
+    u.compatibility_role,
+    u.force_password_change,
+    u.is_owner
 FROM auth_refresh_tokens rt
 JOIN app_users u ON u.id = rt.user_id
 JOIN tenants t ON t.id = u.tenant_id
@@ -183,6 +288,36 @@ WHERE token_hash = @token_hash
         await cmd.ExecuteNonQueryAsync(cancellationToken);
     }
 
+    private async Task UpdatePasswordHashAsync(
+        Guid userId,
+        string password,
+        CancellationToken cancellationToken)
+    {
+        var salt = PasswordHasher.CreateSalt();
+        var hash = PasswordHasher.HashArgon2id(password, salt, _auth);
+        var parameters = PasswordHasher.BuildArgon2idParameterJson(_auth);
+
+        await using var cmd = _db.Database.GetDbConnection().CreateCommand();
+        cmd.CommandText = """
+UPDATE app_users
+SET
+    password_hash = @hash,
+    password_salt = @salt,
+    password_iterations = @iterations,
+    password_algorithm = 'argon2id',
+    password_hash_parameters = @parameters::jsonb,
+    updated_at_utc = now()
+WHERE id = @id
+""";
+        Add(cmd, "id", userId);
+        Add(cmd, "hash", hash);
+        Add(cmd, "salt", salt);
+        Add(cmd, "iterations", _auth.Argon2Iterations);
+        Add(cmd, "parameters", parameters);
+
+        await cmd.ExecuteNonQueryAsync(cancellationToken);
+    }
+
     private static AppUserRecord MapUser(DbDataReader reader)
     {
         return new AppUserRecord(
@@ -215,9 +350,13 @@ WHERE token_hash = @token_hash
     }
 }
 
+public sealed record PasswordVerificationResult(bool Succeeded, bool NeedsRehash);
+
 public static class PasswordHasher
 {
-    public const int DefaultIterations = 210000;
+    public const int LegacyPbkdf2DefaultIterations = 210000;
+    public const string AlgorithmArgon2id = "argon2id";
+    public const string AlgorithmLegacyPbkdf2 = "pbkdf2-sha256";
 
     public static string CreateSalt()
     {
@@ -225,7 +364,66 @@ public static class PasswordHasher
         return Convert.ToBase64String(bytes);
     }
 
-    public static string Hash(string password, string saltBase64, int iterations = DefaultIterations)
+    public static string HashArgon2id(string password, string saltBase64, AuthOptions options)
+    {
+        var salt = Convert.FromBase64String(saltBase64);
+        var argon = new Argon2id(Encoding.UTF8.GetBytes(password))
+        {
+            Salt = salt,
+            DegreeOfParallelism = Math.Max(1, options.Argon2Parallelism),
+            Iterations = Math.Max(1, options.Argon2Iterations),
+            MemorySize = Math.Max(8192, options.Argon2MemoryKb)
+        };
+
+        return Convert.ToBase64String(argon.GetBytes(Math.Clamp(options.Argon2HashBytes, 16, 64)));
+    }
+
+    public static string BuildArgon2idParameterJson(AuthOptions options)
+    {
+        return JsonSerializer.Serialize(new
+        {
+            algorithm = AlgorithmArgon2id,
+            memoryKb = Math.Max(8192, options.Argon2MemoryKb),
+            iterations = Math.Max(1, options.Argon2Iterations),
+            parallelism = Math.Max(1, options.Argon2Parallelism),
+            hashBytes = Math.Clamp(options.Argon2HashBytes, 16, 64)
+        });
+    }
+
+    public static PasswordVerificationResult Verify(
+        string password,
+        string saltBase64,
+        string expectedHashBase64,
+        int iterations,
+        string? algorithm,
+        string? parameterJson,
+        AuthOptions options)
+    {
+        var normalizedAlgorithm = string.IsNullOrWhiteSpace(algorithm)
+            ? AlgorithmLegacyPbkdf2
+            : algorithm.Trim().ToLowerInvariant();
+
+        if (normalizedAlgorithm == AlgorithmArgon2id)
+        {
+            var actual = Convert.FromBase64String(HashArgon2id(password, saltBase64, options));
+            var expected = Convert.FromBase64String(expectedHashBase64);
+            return new PasswordVerificationResult(
+                CryptographicOperations.FixedTimeEquals(actual, expected),
+                false);
+        }
+
+        var legacyActual = Convert.FromBase64String(HashLegacyPbkdf2(password, saltBase64, iterations));
+        var legacyExpected = Convert.FromBase64String(expectedHashBase64);
+
+        return new PasswordVerificationResult(
+            CryptographicOperations.FixedTimeEquals(legacyActual, legacyExpected),
+            true);
+    }
+
+    public static string HashLegacyPbkdf2(
+        string password,
+        string saltBase64,
+        int iterations = LegacyPbkdf2DefaultIterations)
     {
         var salt = Convert.FromBase64String(saltBase64);
         var hash = Rfc2898DeriveBytes.Pbkdf2(
@@ -238,13 +436,6 @@ public static class PasswordHasher
         return Convert.ToBase64String(hash);
     }
 
-    public static bool Verify(string password, string saltBase64, string expectedHashBase64, int iterations)
-    {
-        var actual = Convert.FromBase64String(Hash(password, saltBase64, iterations));
-        var expected = Convert.FromBase64String(expectedHashBase64);
-        return CryptographicOperations.FixedTimeEquals(actual, expected);
-    }
-
     public static string CreateSecureToken(int bytes = 64)
     {
         return Convert.ToBase64String(RandomNumberGenerator.GetBytes(bytes))
@@ -255,7 +446,7 @@ public static class PasswordHasher
 
     public static string Sha256(string raw)
     {
-        var bytes = SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(raw));
+        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(raw));
         return Convert.ToHexString(bytes).ToLowerInvariant();
     }
 }

@@ -27,22 +27,21 @@ export async function prepareAuthenticatedPage(
   page: Page,
   request: APIRequestContext
 ): Promise<string> {
-  const token = await login(request);
+  /*
+   * Doctrine v5 P01:
+   * Browser auth-token storage is retired. Login must happen through the
+   * browser context request client so the HttpOnly refresh cookie belongs to
+   * the same browser context that will open the HMI page.
+   *
+   * The returned access token is only for API-level assertions in Playwright.
+   * It is never written to localStorage/sessionStorage.
+   */
+  const token = await login(page.context().request);
 
-  await page.addInitScript(
-    ({ accessToken, baseUrl }) => {
-      localStorage.setItem("plantprocess.auth.accessToken", accessToken);
-      localStorage.setItem("plantprocess.auth.token", accessToken);
-      localStorage.setItem("plantprocess.accessToken", accessToken);
-      localStorage.setItem("accessToken", accessToken);
-      localStorage.setItem("ppiq-demo-mode", "true");
-      localStorage.setItem("VITE_API_BASE_URL", baseUrl);
-    },
-    {
-      accessToken: token,
-      baseUrl: apiBaseUrl,
-    }
-  );
+  await page.addInitScript((baseUrl) => {
+    localStorage.setItem("ppiq-demo-mode", "true");
+    localStorage.setItem("VITE_API_BASE_URL", baseUrl);
+  }, apiBaseUrl);
 
   return token;
 }

@@ -22,9 +22,7 @@ test.describe("PlantProcess IQ P0 authenticated page contract", () => {
   test("core pages load without auth, route, DTO, or console failures", async ({ page, request }) => {
     const token = await login(request);
 
-    await page.addInitScript((accessToken) => {
-      window.localStorage.setItem("plantprocess.auth.accessToken", accessToken);
-    }, token);
+    /* P01: no browser token seeding; AuthProvider performs cookie refresh/login bootstrap. */
 
     const assertNoNetworkFailures = installNetworkGuard(page);
 
