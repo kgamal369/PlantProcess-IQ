@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using PlantProcess.Domain.Entities.Materials;
 using PlantProcess.Infrastructure.Persistence.Configurations.Common;
@@ -25,21 +25,6 @@ public class GenealogyEdgeConfiguration : IEntityTypeConfiguration<GenealogyEdge
         builder.Property(x => x.EffectiveFromUtc).HasColumnType("timestamp with time zone");
         builder.Property(x => x.EffectiveToUtc).HasColumnType("timestamp with time zone");
 
-        // Doctrine v5 P06 blended provenance fields.
-        builder.Property(x => x.ContributionWeight)
-            .HasColumnType("numeric(9,6)")
-            .IsRequired()
-            .HasDefaultValue(1.0m);
-
-        builder.Property(x => x.IsTransition)
-            .IsRequired()
-            .HasDefaultValue(false);
-
-        builder.Property(x => x.ProvenanceConfidence)
-            .HasColumnType("numeric(9,6)")
-            .IsRequired()
-            .HasDefaultValue(1.0m);
-
         builder.HasOne<MaterialUnit>()
             .WithMany()
             .HasForeignKey(x => x.ParentMaterialUnitId)
@@ -53,7 +38,6 @@ public class GenealogyEdgeConfiguration : IEntityTypeConfiguration<GenealogyEdge
         builder.HasIndex(x => x.ParentMaterialUnitId);
         builder.HasIndex(x => x.ChildMaterialUnitId);
         builder.HasIndex(x => new { x.ParentMaterialUnitId, x.ChildMaterialUnitId }).IsUnique();
-        builder.HasIndex(x => new { x.ChildMaterialUnitId, x.IsTransition, x.ContributionWeight });
 
         builder.UsePostgresXminConcurrencyToken();
     }

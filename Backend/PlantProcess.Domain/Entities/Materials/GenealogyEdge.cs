@@ -1,4 +1,4 @@
-﻿using PlantProcess.Domain.Common;
+using PlantProcess.Domain.Common;
 
 namespace PlantProcess.Domain.Entities.Materials;
 
@@ -15,6 +15,24 @@ public class GenealogyEdge : BaseEntity
 
     public DateTime? EffectiveToUtc { get; private set; }
 
+    /// <summary>
+    /// Doctrine v5 P06: contribution of this parent to the child material.
+    /// Single-parent edges default to 1.0. Transition/blended children have
+    /// multiple edges whose weights must sum to approximately 1.0.
+    /// </summary>
+    public decimal ContributionWeight { get; private set; } = 1.0m;
+
+    /// <summary>
+    /// True when the edge participates in blended/transition provenance.
+    /// Example: transition coil receives 0.62 from heat A and 0.38 from heat B.
+    /// </summary>
+    public bool IsTransition { get; private set; }
+
+    /// <summary>
+    /// Confidence in the provenance allocation, 0..1.
+    /// </summary>
+    public decimal ProvenanceConfidence { get; private set; } = 1.0m;
+
     private GenealogyEdge()
     {
     }
@@ -25,7 +43,10 @@ public class GenealogyEdge : BaseEntity
         string relationshipType,
         bool isSynthetic,
         string? sourceSystem = null,
-        string? sourceRecordId = null)
+        string? sourceRecordId = null,
+        decimal contributionWeight = 1.0m,
+        bool isTransition = false,
+        decimal provenanceConfidence = 1.0m)
     {
         if (parentMaterialUnitId == Guid.Empty)
             throw new ArgumentException("Parent material unit ID is required.", nameof(parentMaterialUnitId));
@@ -45,6 +66,8 @@ public class GenealogyEdge : BaseEntity
         IsSynthetic = isSynthetic;
         SourceSystem = sourceSystem?.Trim();
         SourceRecordId = sourceRecordId?.Trim();
+
+        SetProvenance(contributionWeight, isTransition, provenanceConfidence);
     }
 
     public void SetEffectiveWindow(DateTime? fromUtc, DateTime? toUtc)
@@ -55,6 +78,46 @@ public class GenealogyEdge : BaseEntity
         EffectiveFromUtc = fromUtc.HasValue ? EnsureUtc(fromUtc.Value) : null;
         EffectiveToUtc = toUtc.HasValue ? EnsureUtc(toUtc.Value) : null;
         MarkAsUpdated();
+    }
+
+    public void SetProvenance(
+        decimal contributionWeight,
+        bool isTransition,
+        decimal provenanceConfidence)
+    {
+        if (contributionWeight <= 0m || contributionWeight > 1m)
+            throw new InvalidOperationException("Contribution weight must be > 0 and <= 1.");
+
+        if (provenanceConfidence < 0m || provenanceConfidence > 1m)
+            throw new InvalidOperationException("Provenance confidence must be between 0 and 1.");
+
+        ContributionWeight = decimal.Round(contributionWeight, 6);
+        IsTransition = isTransition;
+        ProvenanceConfidence = decimal.Round(provenanceConfidence, 6);
+        MarkAsUpdated();
+    }
+
+    public static void ValidateChildContributionWeights(IEnumerable<GenealogyEdge> childEdges, decimal tolerance = 0.015m)
+    {
+        var activeEdges = childEdges
+            .Where(x => !x.IsDeleted)
+            .ToArray();
+
+        if (activeEdges.Length == 0)
+            return;
+
+        var childIds = activeEdges
+            .Select(x => x.ChildMaterialUnitId)
+            .Distinct()
+            .ToArray();
+
+        if (childIds.Length != 1)
+            throw new InvalidOperationException("Contribution-weight validation must be executed for one child material at a time.");
+
+        var sum = activeEdges.Sum(x => x.ContributionWeight);
+
+        if (Math.Abs(sum - 1.0m) > tolerance)
+            throw new InvalidOperationException($"Contribution weights must sum to 1.0 per child. Current sum: {sum}.");
     }
 
     private static DateTime EnsureUtc(DateTime value)

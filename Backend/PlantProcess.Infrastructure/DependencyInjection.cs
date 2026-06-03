@@ -13,6 +13,7 @@ using PlantProcess.Application.Analytics.Interfaces;
 using PlantProcess.Application.Integration.Interfaces.SchemaConfiguration;
 using PlantProcess.Application.Integration.Interfaces.SourceSystems;
 using PlantProcess.Infrastructure.Persistence;
+using PlantProcess.Infrastructure.TimeSeries;
 using PlantProcess.Infrastructure.Analytics;
 using PlantProcess.Infrastructure.Security;
 using PlantProcess.Infrastructure.Connectors.Common;
@@ -56,6 +57,9 @@ public static class DependencyInjection
             provider => provider.GetRequiredService<PlantProcessDbContext>());
 
         services.AddSingleton(_ => NpgsqlDataSource.Create(connectionString));
+
+        // Doctrine v5 P03: bounded telemetry ingestion queue with backpressure.
+        services.AddSingleton<ITelemetryIngestionQueue, TelemetryIngestionQueue>();
                 // P4-01: route the live correlation path to the .NET Analytics.Core engine.
         services.AddScoped<PlantProcess.Infrastructure.Analytics.PostgresCorrelationComputeEngine>();
         services.AddScoped<PlantProcess.Infrastructure.Analytics.DotNetAdvancedCorrelationEngine>();

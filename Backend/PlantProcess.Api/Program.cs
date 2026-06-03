@@ -45,6 +45,9 @@ using PlantProcess.Api.Endpoints.PageBuilder;
 using PlantProcess.Api.Endpoints.Phase2;
 using PlantProcess.Api.Endpoints.Phase45;
 
+using PlantProcess.Api.AssistantGateway;
+using PlantProcess.Api.VisualMapper;
+using PlantProcess.Api.BlendedProvenance;
 // Resolve a stable absolute log path regardless of working directory.
 var logDirectory = Path.Combine(AppContext.BaseDirectory, "logs");
 var logFilePath = Path.Combine(logDirectory, "plantprocess-api-.log");
@@ -332,6 +335,8 @@ builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<PlantProcess.Api.ErrorHandling.GlobalExceptionHandler>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<PlantProcess.Application.Security.Tenancy.ITenantAccessor, PlantProcess.Api.Security.HttpTenantAccessor>();
+builder.Services.AddV5AssistantGateway(builder.Configuration);
+
 var app = builder.Build();
 if (!app.Environment.IsDevelopment()) { app.UseHsts(); }
 app.UseMiddleware<PlantProcess.Api.Middleware.SecurityHeadersMiddleware>();
@@ -487,6 +492,10 @@ app.MapReadModelEndpoints();
 app.MapSimpleAnalysisEndpoints();
 app.MapAdvancedResultsEndpoints();
 app.MapKpiEvaluationEndpoints();
+app.MapV5AssistantGatewayEndpoints();
+
+app.MapV5VisualMapperEndpoints();
+app.MapV5BlendedProvenanceEndpoints();
 app.Run();
 }
 catch (Exception ex) when (ex.GetType().Name == "HostAbortedException")
