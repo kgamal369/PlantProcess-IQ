@@ -1,0 +1,32 @@
+services:
+  postgres-primary:
+    image: postgres:16.13
+    environment:
+      POSTGRES_DB: plantprocessiq
+      POSTGRES_USER: plantprocess
+      POSTGRES_PASSWORD: example
+    volumes:
+      - primary_data:/var/lib/postgresql/data
+
+  postgres-replica:
+    image: postgres:16.13
+    environment:
+      POSTGRES_DB: plantprocessiq
+      POSTGRES_USER: plantprocess
+      POSTGRES_PASSWORD: example
+    volumes:
+      - replica_data:/var/lib/postgresql/data
+
+  plantprocess-api-1:
+    image: plantprocessiq/api:v5-p13
+    environment:
+      ConnectionStrings__PlantProcessDb: Host=postgres-primary;Port=5432;Database=plantprocessiq;Username=plantprocess;Password=example
+
+  plantprocess-api-2:
+    image: plantprocessiq/api:v5-p13
+    environment:
+      ConnectionStrings__PlantProcessDb: Host=postgres-primary;Port=5432;Database=plantprocessiq;Username=plantprocess;Password=example
+
+volumes:
+  primary_data:
+  replica_data:

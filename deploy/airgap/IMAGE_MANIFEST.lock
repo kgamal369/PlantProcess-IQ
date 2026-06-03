@@ -1,0 +1,7 @@
+# PlantProcess IQ P13 air-gap image manifest
+# Pin digests during release packaging.
+
+plantprocessiq/api:v5-p13@sha256:PIN_AT_RELEASE
+plantprocessiq/web:v5-p13@sha256:PIN_AT_RELEASE
+plantprocessiq/website:v5-p13@sha256:PIN_AT_RELEASE
+postgres:16.13@sha256:PIN_AT_RELEASE

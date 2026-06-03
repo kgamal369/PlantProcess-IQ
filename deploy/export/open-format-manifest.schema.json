@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PlantProcess IQ Open Format Export Manifest",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "generatedAtUtc",
+    "tables",
+    "files"
+  ],
+  "properties": {
+    "schemaVersion": { "type": "string" },
+    "generatedAtUtc": { "type": "string", "format": "date-time" },
+    "tables": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "format", "path"],
+        "properties": {
+          "name": { "type": "string" },
+          "format": { "enum": ["csv", "json", "parquet-compatible"] },
+          "path": { "type": "string" },
+          "description": { "type": "string" }
+        }
+      }
+    },
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "checksum"],
+        "properties": {
+          "path": { "type": "string" },
+          "checksum": { "type": "string" }
+        }
+      }
+    }
+  }
+}

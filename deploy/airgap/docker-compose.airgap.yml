@@ -1,0 +1,61 @@
+services:
+  plantprocess-api:
+    image: plantprocessiq/api:v5-p13
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:5063
+      ConnectionStrings__PlantProcessDb: Host=postgres;Port=5432;Database=plantprocessiq;Username=plantprocess;Password=${PPIQ_DB_PASSWORD}
+      PLANTPROCESS_DISABLE_EXTERNAL_EGRESS: "true"
+      PLANTPROCESS_MODEL_MODE: self-hosted
+    ports:
+      - "5063:5063"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - ppiq_airgap
+
+  plantprocess-web:
+    image: plantprocessiq/web:v5-p13
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    depends_on:
+      - plantprocess-api
+    networks:
+      - ppiq_airgap
+
+  plantprocess-website:
+    image: plantprocessiq/website:v5-p13
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    networks:
+      - ppiq_airgap
+
+  postgres:
+    image: postgres:16.13
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: plantprocessiq
+      POSTGRES_USER: plantprocess
+      POSTGRES_PASSWORD: ${PPIQ_DB_PASSWORD}
+    volumes:
+      - ppiq_postgres_data:/var/lib/postgresql/data
+      - ./database:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U plantprocess -d plantprocessiq"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - ppiq_airgap
+
+networks:
+  ppiq_airgap:
+    driver: bridge
+    internal: true
+
+volumes:
+  ppiq_postgres_data:

@@ -53,6 +53,8 @@ using PlantProcess.Api.EnterpriseIdentity;
 using PlantProcess.Api.EnterpriseSsoScim;
 using PlantProcess.Api.SignedLicensing;
 using PlantProcess.Api.OutboundLeadSystem;
+using PlantProcess.Api.DeploymentPortability;
+using PlantProcess.Api.ComplianceControls;
 // Resolve a stable absolute log path regardless of working directory.
 var logDirectory = Path.Combine(AppContext.BaseDirectory, "logs");
 var logFilePath = Path.Combine(logDirectory, "plantprocess-api-.log");
@@ -506,6 +508,8 @@ app.MapV5EnterpriseIdentityEndpoints();
 app.MapV5EnterpriseSsoScimEndpoints();
 app.MapV5SignedLicensingEndpoints();
 app.MapV5OutboundLeadSystemEndpoints();
+app.MapV5DeploymentPortabilityEndpoints();
+app.MapV5ComplianceControlsEndpoints();
 app.Run();
 }
 catch (Exception ex) when (ex.GetType().Name == "HostAbortedException")

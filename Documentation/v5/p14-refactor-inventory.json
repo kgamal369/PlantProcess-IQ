@@ -1,0 +1,83 @@
+[
+  {
+    "artifactPath": "Backend/PlantProcess.Api/Endpoints/Workflow/Phase1WorkflowTruthEndpoints.cs",
+    "exists": false,
+    "currentLineCount": 0,
+    "targetModule": "Suggestions",
+    "legacyImportCount": 0,
+    "phaseNamedArtifact": true,
+    "refactorStatus": "missing"
+  },
+  {
+    "artifactPath": "Backend/PlantProcess.Api/Endpoints/Workflow/WorkflowEndpoints.cs",
+    "exists": true,
+    "currentLineCount": 1031,
+    "targetModule": "Suggestions",
+    "legacyImportCount": 0,
+    "phaseNamedArtifact": false,
+    "refactorStatus": "inventory"
+  },
+  {
+    "artifactPath": "Backend/PlantProcess.Infrastructure/Services/ConnectorConfigurationService.cs",
+    "exists": false,
+    "currentLineCount": 0,
+    "targetModule": "Acquisition",
+    "legacyImportCount": 0,
+    "phaseNamedArtifact": false,
+    "refactorStatus": "missing"
+  },
+  {
+    "artifactPath": "Frontend/PlantProcess.Web/src/pages/Admin/AdminDbConfigurationTab.tsx",
+    "exists": true,
+    "currentLineCount": 1128,
+    "targetModule": "Acquisition",
+    "legacyImportCount": 12,
+    "phaseNamedArtifact": false,
+    "refactorStatus": "inventory"
+  },
+  {
+    "artifactPath": "Frontend/PlantProcess.Web/src/pages/Phase56Pages.tsx",
+    "exists": false,
+    "currentLineCount": 0,
+    "targetModule": "Canonical",
+    "legacyImportCount": 0,
+    "phaseNamedArtifact": true,
+    "refactorStatus": "missing"
+  },
+  {
+    "artifactPath": "Frontend/PlantProcess.Web/src/pages/Admin/AdminSchemaConfigurationTab.tsx",
+    "exists": true,
+    "currentLineCount": 948,
+    "targetModule": "Acquisition",
+    "legacyImportCount": 12,
+    "phaseNamedArtifact": false,
+    "refactorStatus": "inventory"
+  },
+  {
+    "artifactPath": "Backend/PlantProcess.Application/Services/DashboardDefinitionService.cs",
+    "exists": false,
+    "currentLineCount": 0,
+    "targetModule": "Analytics",
+    "legacyImportCount": 0,
+    "phaseNamedArtifact": false,
+    "refactorStatus": "missing"
+  },
+  {
+    "artifactPath": "Frontend/PlantProcess.Web/src/components/widgets/WidgetBuilderWizard.tsx",
+    "exists": false,
+    "currentLineCount": 0,
+    "targetModule": "Analytics",
+    "legacyImportCount": 0,
+    "phaseNamedArtifact": false,
+    "refactorStatus": "missing"
+  },
+  {
+    "artifactPath": "Frontend/PlantProcess.Web/src/api/plantProcessApi.ts",
+    "exists": true,
+    "currentLineCount": 169,
+    "targetModule": "Feature API Clients",
+    "legacyImportCount": 4,
+    "phaseNamedArtifact": false,
+    "refactorStatus": "complete"
+  }
+]
