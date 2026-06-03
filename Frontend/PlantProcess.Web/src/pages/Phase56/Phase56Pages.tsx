@@ -36,7 +36,7 @@ import {
   type StandardTabItem,
 } from "@/components/standard";
 
-import { plantProcessApi, type DashboardMaterialRow } from "@/api/plantProcessApi";
+import { productApi, type DashboardMaterialRow } from "../../api/productApiClient";
 import { apiClient } from "@/api/http";
 import { mlReadinessApi } from "@/api/ml";
 import { demoLifecycleApi } from "@/api/demo";
@@ -335,7 +335,7 @@ export function Phase56CommandDashboardPage() {
   const navigate = useNavigate();
 
   const workspace = useResource(
-    () => plantProcessApi.getDashboardWorkspace({ materialCode: query || undefined, pageSize: 25 }),
+    () => productApi.getDashboardWorkspace({ materialCode: query || undefined, pageSize: 25 }),
     {
       generatedAtUtc: new Date().toISOString(),
       query: {},
@@ -416,13 +416,13 @@ export function Phase56MaterialInvestigationPage() {
   const [saveOpen, setSaveOpen] = useState(false);
 
   const materials = useResource(
-    () => plantProcessApi.searchDashboardMaterials({ materialCode: query || undefined, pageSize: 25 }),
+    () => productApi.searchDashboardMaterials({ materialCode: query || undefined, pageSize: 25 }),
     { items: [], page: 1, pageSize: 25, totalCount: 0, totalPages: 0 }
   );
 
   const selectedMaterialId = materialUnitId ?? selected?.materialUnitId ?? materials.data.items[0]?.materialUnitId ?? "";
   const investigation = useResource(
-    () => selectedMaterialId ? plantProcessApi.getMaterialInvestigation(selectedMaterialId, { maxDepth: 5, parameterPageSize: 100 }) : Promise.resolve({}),
+    () => selectedMaterialId ? productApi.getMaterialInvestigation(selectedMaterialId, { maxDepth: 5, parameterPageSize: 100 }) : Promise.resolve({}),
     {}
   );
 
@@ -484,7 +484,7 @@ export function Phase56MaterialInvestigationPage() {
           <StandardButton variant="primary" leadingIcon={<Search size={16} />} onClick={materials.reload} isLoading={materials.isLoading}>Search</StandardButton>
           <StandardButton variant="secondary" leadingIcon={<Save size={16} />} onClick={() => setSaveOpen(true)} isDisabled={!selectedMaterialId}>Save Investigation</StandardButton>
           <StandardButton variant="ghost" leadingIcon={<Share2 size={16} />} onClick={() => void navigator.clipboard?.writeText(window.location.href)}>Share</StandardButton>
-          <StandardButton as="a" href={selectedMaterialId ? plantProcessApi.getInvestigationPdfUrl(selectedMaterialId) : "#"} variant="ghost" leadingIcon={<Download size={16} />} isDisabled={!selectedMaterialId}>Export PDF</StandardButton>
+          <StandardButton as="a" href={selectedMaterialId ? productApi.getInvestigationPdfUrl(selectedMaterialId) : "#"} variant="ghost" leadingIcon={<Download size={16} />} isDisabled={!selectedMaterialId}>Export PDF</StandardButton>
         </>
       }
     >
@@ -514,7 +514,7 @@ export function Phase56MaterialInvestigationPage() {
       <StandardCard
         title={selected?.materialCode ?? selectedMaterialId ?? "Selected material"}
         subtitle="Genealogy, process history, quality events, feature vector and risk are lazy-mounted in standard tab panels."
-        actions={<StandardButton variant="primary" leadingIcon={<ShieldCheck size={16} />} onClick={() => selectedMaterialId && plantProcessApi.calculateRisk(selectedMaterialId)}>Calculate Risk</StandardButton>}
+        actions={<StandardButton variant="primary" leadingIcon={<ShieldCheck size={16} />} onClick={() => selectedMaterialId && productApi.calculateRisk(selectedMaterialId)}>Calculate Risk</StandardButton>}
       >
         <StandardDataState state={investigation} title="Material drilldown">
           <StandardTabs items={tabItems} value={tab} onChange={setTab} searchParam="tab" ariaLabel="Material investigation tabs" lazy />
@@ -550,7 +550,7 @@ export function Phase56MaterialInvestigationPage() {
 
 export function Phase56RiskIntelligencePage() {
   const [riskClass, setRiskClass] = useState("Medium");
-  const risk = useResource(() => plantProcessApi.getRiskDashboard({ riskClass, pageSize: 25 }), { highRisk: [], riskClassBreakdown: [], topContributors: [], trend: [] } as Row);
+  const risk = useResource(() => productApi.getRiskDashboard({ riskClass, pageSize: 25 }), { highRisk: [], riskClassBreakdown: [], topContributors: [], trend: [] } as Row);
 
   const highRisk = rows((risk.data as Row).highRisk ?? (risk.data as Row).materials);
 
@@ -667,7 +667,7 @@ export function Phase56CorrelationPage() {
   const [threshold, setThreshold] = useState(1.25);
 
   const correlation = useResource(
-    () => plantProcessApi.getGenealogyAwareCorrelation({
+    () => productApi.getGenealogyAwareCorrelation({
       parameterCode,
       defectType,
       minimumObservationsPerBin: 3,
@@ -980,10 +980,10 @@ export function Phase56AdministratorPage() {
   const admin = useResource(
     async () => {
       const [overview, db, schema, jobs] = await Promise.allSettled([
-        plantProcessApi.getAdminOverview(),
-        plantProcessApi.getAdminDbConfigurationSummary(),
-        plantProcessApi.getAdminSchemaConfigurationSummary(),
-        plantProcessApi.getAdminJobsMonitor(),
+        productApi.getAdminOverview(),
+        productApi.getAdminDbConfigurationSummary(),
+        productApi.getAdminSchemaConfigurationSummary(),
+        productApi.getAdminJobsMonitor(),
       ]);
 
       return {

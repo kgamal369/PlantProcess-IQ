@@ -24,7 +24,7 @@ import {
   Sparkles,
   Sun,
 } from "lucide-react";
-import { plantProcessApi } from "../api/plantProcessApi";
+import { productApi } from "../api/productApiClient";
 import { useAuth } from "../state/AuthContext";
 import { usePlantProcessTheme } from "../state/ThemeContext";
 import { DemoModeControl } from "./demo/DemoModeControl";
@@ -151,7 +151,7 @@ export function AppLayout() {
           <div className="piq-sidebar-stat">
             <DatabaseZap size={11} aria-hidden="true" />
             <span>API</span>
-            <code>{plantProcessApi.apiBaseUrl}</code>
+            <code>{productApi.apiBaseUrl}</code>
           </div>
           <div className="piq-sidebar-stat">
             <Network size={11} aria-hidden="true" />

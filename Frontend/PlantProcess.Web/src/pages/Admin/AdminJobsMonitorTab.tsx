@@ -11,10 +11,10 @@ import { TwoStageImportMonitorPanel } from "./TwoStageImportMonitorPanel";
 import { Activity, PlayCircle } from "lucide-react";
 import { StandardPageButton, StandardPageTable } from "@/components/standard/StandardPageCompat";
 import {
-  plantProcessApi,
+  productApi,
   type AdminJobsMonitor,
   type JobRunHistoryRecord,
-} from "@/api/plantProcessApi";
+} from "../../api/productApiClient";
 import {
   AdminPanel,
   MiniKpi,
@@ -64,7 +64,7 @@ export function JobsMonitorTab({
   }
 
   async function refreshJobHistory(jobId: string) {
-    const history = await plantProcessApi.getJobHistory(jobId, 20);
+    const history = await productApi.getJobHistory(jobId, 20);
     setHistoryByJobId((current) => ({ ...current, [jobId]: history }));
     return history;
   }
@@ -91,7 +91,7 @@ export function JobsMonitorTab({
     setMessage(null);
     setMessageKind(null);
     try {
-      const response = await plantProcessApi.runJobNow(jobId, "Admin UI");
+      const response = await productApi.runJobNow(jobId, "Admin UI");
       setSuccess(response.message ?? "Job triggered successfully.");
       await onRefresh();
       await refreshJobHistory(jobId);
@@ -107,7 +107,7 @@ export function JobsMonitorTab({
     setMessage(null);
     setMessageKind(null);
     try {
-      const response = await plantProcessApi.pauseJob(jobId);
+      const response = await productApi.pauseJob(jobId);
       setSuccess(response.message ?? "Job paused.");
       await onRefresh();
       if (expandedJobId === jobId) await refreshJobHistory(jobId);
@@ -123,7 +123,7 @@ export function JobsMonitorTab({
     setMessage(null);
     setMessageKind(null);
     try {
-      const response = await plantProcessApi.resumeJob(jobId);
+      const response = await productApi.resumeJob(jobId);
       setSuccess(response.message ?? "Job resumed.");
       await onRefresh();
       if (expandedJobId === jobId) await refreshJobHistory(jobId);

@@ -1,4 +1,4 @@
-﻿import { API_BASE_URL } from "../apiConfig";
+﻿import { API_BASE_URL } from "./apiConfig";
 import {
   buildQuery,
   deleteJson,
@@ -8,7 +8,7 @@ import {
   putJson,
   requestJson,
   type QueryParams,
-} from "./legacyApiHardening";
+} from "./productApiHardening";
 export type SortDirection = "asc" | "desc";
 
 export interface DashboardFilters {
@@ -839,7 +839,7 @@ function createClientCorrelationId(): string {
 }
 
 
-export const plantProcessApi = {
+export const productApi = {
   apiBaseUrl: API_BASE_URL,
 
   getAdminOverview: () =>

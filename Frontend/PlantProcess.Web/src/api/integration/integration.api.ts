@@ -1,5 +1,5 @@
-﻿import { plantProcessApi as legacyApi } from "../legacy/plantProcessApi";
-export type * from "../legacy/plantProcessApi";
+﻿import { productApi as legacyApi } from "../productApiClient";
+export type * from "../productApiClient";
 
 type LegacyFunction = (...args: any[]) => unknown;
 const legacy = legacyApi as unknown as Record<string, LegacyFunction>;

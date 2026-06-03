@@ -1,0 +1,19 @@
+{
+  "generatedAtUtc": "2026-06-03T13:36:45.654Z",
+  "recoveredApiSource": {
+    "kind": "git",
+    "path": "Frontend/PlantProcess.Web/src/api/legacy/plantProcessApi.ts"
+  },
+  "recoveredHardeningSource": {
+    "kind": "git",
+    "path": "Frontend/PlantProcess.Web/src/api/legacy/legacyApiHardening.ts"
+  },
+  "productCoreFile": "Frontend/PlantProcess.Web/src/api/productCoreApiClient.ts",
+  "productFacadeFile": "Frontend/PlantProcess.Web/src/api/productApiClient.ts",
+  "productHardeningFile": "Frontend/PlantProcess.Web/src/api/productApiHardening.ts",
+  "replacements": [],
+  "deleted": [
+    "Frontend/PlantProcess.Web/src/api/legacy/legacyApiHardening.ts"
+  ],
+  "offenders": []
+}

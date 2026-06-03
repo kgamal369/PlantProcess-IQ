@@ -1,0 +1,46 @@
+### Pack B5 health
+GET http://localhost:5063/api/v5/ai/private-model-gateway/health
+
+### Validate local private endpoint
+POST http://localhost:5063/api/v5/ai/private-model-gateway/policies/validate-endpoint
+Content-Type: application/json
+
+{
+  "endpointCode": "local-private-mock",
+  "providerType": "local-mock-private",
+  "modelVersion": "local-private-mock-v1",
+  "baseUrl": "http://127.0.0.1/private-model-gateway/mock",
+  "networkBoundary": "local-airgap-mock",
+  "zeroDataRetentionConfirmed": true,
+  "dataResidencyRegion": "local-dev",
+  "customerKeyReference": "local-dev-no-secret-key-reference",
+  "isByom": true
+}
+
+### Prove public AI endpoint is rejected
+POST http://localhost:5063/api/v5/ai/private-model-gateway/policies/no-public-ai-proof
+
+### Record governance event
+POST http://localhost:5063/api/v5/ai/private-model-gateway/governance/record
+Content-Type: application/json
+
+{
+  "endpointCode": "local-private-mock",
+  "modelVersion": "local-private-mock-v1",
+  "prompt": "Why did ADV_COIL4002 receive hold decision?",
+  "response": "The hold decision is linked to the QA sample and surface signal. [qa:ADV_QA4002]",
+  "retrievedHandles": ["qa:ADV_QA4002", "coil:ADV_COIL4002"],
+  "citations": ["qa:ADV_QA4002"],
+  "grounded": true,
+  "abstained": false
+}
+
+### Run golden eval
+POST http://localhost:5063/api/v5/ai/private-model-gateway/eval/run-golden
+Content-Type: application/json
+
+{
+  "endpointCode": "local-private-mock",
+  "modelVersion": "local-private-mock-v1",
+  "threshold": 0.95
+}

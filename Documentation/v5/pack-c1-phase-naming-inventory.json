@@ -1,0 +1,223 @@
+{
+  "generatedAtUtc": "2026-06-03T13:40:13.692Z",
+  "count": 43,
+  "status": "pack-c2-required",
+  "note": "Pack C1 reports phase-named artifacts. Pack C2/C3 will rename them after characterization tests.",
+  "findings": [
+    {
+      "type": "path",
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/P03P04CompletionProofEndpoints.cs",
+      "match": "P03P04"
+    },
+    {
+      "type": "path",
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/P03P04MappingGenealogyEndpoints.cs",
+      "match": "P03P04"
+    },
+    {
+      "type": "path",
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/Phase1WorkflowTruthEndpoints.cs",
+      "match": "Phase1"
+    },
+    {
+      "type": "content",
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/Phase1WorkflowTruthEndpoints.cs",
+      "match": "Phase1"
+    },
+    {
+      "type": "path",
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/Phase2OperationEndpoints.cs",
+      "match": "Phase2"
+    },
+    {
+      "type": "content",
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/Phase2OperationEndpoints.cs",
+      "match": "Phase2"
+    },
+    {
+      "type": "content",
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/Phase2OperationEndpoints.cs",
+      "match": "Phase2"
+    },
+    {
+      "type": "content",
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/Phase2OperationEndpoints.cs",
+      "match": "Phase2"
+    },
+    {
+      "type": "path",
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/Phase2PilotReadinessEndpoints.cs",
+      "match": "Phase2"
+    },
+    {
+      "type": "path",
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/Phase2InvestigationEndpoints.cs",
+      "match": "Phase2"
+    },
+    {
+      "type": "content",
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/Phase2InvestigationEndpoints.cs",
+      "match": "Phase2"
+    },
+    {
+      "type": "path",
+      "file": "Backend/PlantProcess.Api/Endpoints/Phase2/Phase2LifecycleProofEndpoints.cs",
+      "match": "Phase2"
+    },
+    {
+      "type": "content",
+      "file": "Backend/PlantProcess.Api/Endpoints/Phase2/Phase2LifecycleProofEndpoints.cs",
+      "match": "Phase2"
+    },
+    {
+      "type": "path",
+      "file": "Backend/PlantProcess.Api/Endpoints/Phase45/Phase45ClosureEndpoints.cs",
+      "match": "Phase45"
+    },
+    {
+      "type": "content",
+      "file": "Backend/PlantProcess.Api/Endpoints/Phase45/Phase45ClosureEndpoints.cs",
+      "match": "Phase45"
+    },
+    {
+      "type": "content",
+      "file": "Backend/PlantProcess.Api/Program.cs",
+      "match": "Phase2"
+    },
+    {
+      "type": "content",
+      "file": "Backend/PlantProcess.Api/Program.cs",
+      "match": "Phase45"
+    },
+    {
+      "type": "path",
+      "file": "Backend/PlantProcess.Api/Security/P01P02SecuritySchema.cs",
+      "match": "P01P02"
+    },
+    {
+      "type": "path",
+      "file": "Backend/PlantProcess.Api/Security/P01P02StartupGuard.cs",
+      "match": "P01P02"
+    },
+    {
+      "type": "path",
+      "file": "Backend/PlantProcess.Infrastructure/Migrations/20260510132030_Phase3_ModelConsistencyFixes.cs",
+      "match": "Phase3"
+    },
+    {
+      "type": "path",
+      "file": "Backend/PlantProcess.Infrastructure/Migrations/20260510132030_Phase3_ModelConsistencyFixes.Designer.cs",
+      "match": "Phase3"
+    },
+    {
+      "type": "path",
+      "file": "Backend/PlantProcess.Infrastructure/Migrations/20260516080826_AddPhase3ConnectorFoundation.cs",
+      "match": "Phase3"
+    },
+    {
+      "type": "path",
+      "file": "Backend/PlantProcess.Infrastructure/Migrations/20260516080826_AddPhase3ConnectorFoundation.Designer.cs",
+      "match": "Phase3"
+    },
+    {
+      "type": "path",
+      "file": "Backend/PlantProcess.Infrastructure/Migrations/20260525082545_Phase1WorkflowTruth.cs",
+      "match": "Phase1"
+    },
+    {
+      "type": "path",
+      "file": "Backend/PlantProcess.Infrastructure/Migrations/20260525082545_Phase1WorkflowTruth.Designer.cs",
+      "match": "Phase1"
+    },
+    {
+      "type": "path",
+      "file": "Backend/PlantProcess.Infrastructure/Migrations/20260530130708_Phase03_ModelSnapshotSync.cs",
+      "match": "Phase03"
+    },
+    {
+      "type": "path",
+      "file": "Backend/PlantProcess.Infrastructure/Migrations/20260530130708_Phase03_ModelSnapshotSync.Designer.cs",
+      "match": "Phase03"
+    },
+    {
+      "type": "content",
+      "file": "Frontend/PlantProcess.Web/src/App.tsx",
+      "match": "Phase78"
+    },
+    {
+      "type": "content",
+      "file": "Frontend/PlantProcess.Web/src/App.tsx",
+      "match": "Phase78"
+    },
+    {
+      "type": "content",
+      "file": "Frontend/PlantProcess.Web/src/pages/Admin/AdminPageContent.tsx",
+      "match": "Phase78"
+    },
+    {
+      "type": "content",
+      "file": "Frontend/PlantProcess.Web/src/pages/AdminPreview/AdminPreviewWorkspacePage.tsx",
+      "match": "Phase56"
+    },
+    {
+      "type": "content",
+      "file": "Frontend/PlantProcess.Web/src/pages/BrandIdentity/BrandIdentityPage.tsx",
+      "match": "Phase56"
+    },
+    {
+      "type": "content",
+      "file": "Frontend/PlantProcess.Web/src/pages/Correlation/CorrelationPage.tsx",
+      "match": "Phase56"
+    },
+    {
+      "type": "content",
+      "file": "Frontend/PlantProcess.Web/src/pages/Dashboard/DashboardPageContent.tsx",
+      "match": "Phase56"
+    },
+    {
+      "type": "content",
+      "file": "Frontend/PlantProcess.Web/src/pages/DataQuality/DataQualityPage.tsx",
+      "match": "Phase56"
+    },
+    {
+      "type": "content",
+      "file": "Frontend/PlantProcess.Web/src/pages/DemoLifecycle/DemoLifecyclePage.tsx",
+      "match": "Phase78"
+    },
+    {
+      "type": "content",
+      "file": "Frontend/PlantProcess.Web/src/pages/MaterialInvestigationPage.tsx",
+      "match": "Phase56"
+    },
+    {
+      "type": "content",
+      "file": "Frontend/PlantProcess.Web/src/pages/MlReadiness/MlReadinessPage.tsx",
+      "match": "Phase56"
+    },
+    {
+      "type": "path",
+      "file": "Frontend/PlantProcess.Web/src/pages/Phase56/phase56-standard.css",
+      "match": "Phase56"
+    },
+    {
+      "type": "path",
+      "file": "Frontend/PlantProcess.Web/src/pages/Phase56/Phase56Pages.tsx",
+      "match": "Phase56"
+    },
+    {
+      "type": "path",
+      "file": "Frontend/PlantProcess.Web/src/pages/Phase78/phase78.css",
+      "match": "Phase78"
+    },
+    {
+      "type": "path",
+      "file": "Frontend/PlantProcess.Web/src/pages/Phase78/Phase78Pages.tsx",
+      "match": "Phase78"
+    },
+    {
+      "type": "content",
+      "file": "Frontend/PlantProcess.Web/src/pages/RiskDashboard/RiskDashboardPage.tsx",
+      "match": "Phase56"
+    }
+  ]
+}

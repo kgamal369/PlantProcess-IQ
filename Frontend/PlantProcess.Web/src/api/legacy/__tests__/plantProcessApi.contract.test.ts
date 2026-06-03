@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { plantProcessApi } from "@/api/plantProcessApi";
+import { productApi } from "../../productApiClient";
 
 const requiredApiMethods = [
   "getDashboardMetadata",
@@ -38,9 +38,9 @@ const requiredApiMethods = [
   "getDemoLifecycle",
 ] as const;
 
-describe("legacy plantProcessApi public contract", () => {
+describe("legacy productApi public contract", () => {
   it("keeps all high-risk API methods exported", () => {
-    const api = plantProcessApi as unknown as Record<string, unknown>;
+    const api = productApi as unknown as Record<string, unknown>;
 
     for (const method of requiredApiMethods) {
       expect(api, method).toHaveProperty(method);
@@ -50,7 +50,7 @@ describe("legacy plantProcessApi public contract", () => {
 
   it("does not expose undefined members", () => {
     const entries = Object.entries(
-      plantProcessApi as unknown as Record<string, unknown>
+      productApi as unknown as Record<string, unknown>
     );
 
     expect(entries.length).toBeGreaterThan(25);

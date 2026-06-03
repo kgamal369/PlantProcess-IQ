@@ -1,0 +1,304 @@
+{
+  "generatedAtUtc": "2026-06-03T13:27:41.914Z",
+  "createdProductClient": true,
+  "replacements": [
+    {
+      "file": "Frontend/PlantProcess.Web/src/api/admin/admin.api.ts",
+      "from": "../legacy/plantProcessApi",
+      "to": "../productApiClient"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/api/admin/admin.api.ts",
+      "from": "../legacy/plantProcessApi",
+      "to": "../productApiClient"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/api/admin/index.ts",
+      "from": "../legacy/plantProcessApi",
+      "to": "../productApiClient"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/api/analytics/analytics.api.ts",
+      "from": "../legacy/plantProcessApi",
+      "to": "../productApiClient"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/api/analytics/analytics.api.ts",
+      "from": "../legacy/plantProcessApi",
+      "to": "../productApiClient"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/api/analytics/index.ts",
+      "from": "../legacy/plantProcessApi",
+      "to": "../productApiClient"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/api/dashboarding/dashboarding.api.ts",
+      "from": "../legacy/plantProcessApi",
+      "to": "../productApiClient"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/api/dashboarding/dashboarding.api.ts",
+      "from": "../legacy/plantProcessApi",
+      "to": "../productApiClient"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/api/dashboarding/index.ts",
+      "from": "../legacy/plantProcessApi",
+      "to": "../productApiClient"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/api/integration/index.ts",
+      "from": "../legacy/plantProcessApi",
+      "to": "../productApiClient"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/api/integration/integration.api.ts",
+      "from": "../legacy/plantProcessApi",
+      "to": "../productApiClient"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/api/integration/integration.api.ts",
+      "from": "../legacy/plantProcessApi",
+      "to": "../productApiClient"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/api/legacy/__tests__/plantProcessApi.contract.test.ts",
+      "from": "@/api/plantProcessApi",
+      "to": "../../productApiClient"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/api/plantProcessApi.ts",
+      "from": "./legacy/plantProcessApi",
+      "to": "./productApiClient"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/api/plantProcessApi.ts",
+      "from": "./legacy/plantProcessApi",
+      "to": "./productApiClient"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/api/productApiClient.ts",
+      "from": "./legacy/plantProcessApi",
+      "to": "./productApiClient"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/api/productApiClient.ts",
+      "from": "./legacy/plantProcessApi",
+      "to": "./productApiClient"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/api/widgetScript/widgetScript.api.ts",
+      "from": "../plantProcessApi",
+      "to": "../productApiClient"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/components/ActiveFilterChips.tsx",
+      "from": "../api/plantProcessApi",
+      "to": "../api/productApiClient"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/components/AppLayout.tsx",
+      "from": "../api/plantProcessApi",
+      "to": "../api/productApiClient"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/components/charts/InteractiveCharts.tsx",
+      "from": "../../api/plantProcessApi",
+      "to": "../../api/productApiClient"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/components/dashboard/SavedDashboardWidget.tsx",
+      "from": "../../api/plantProcessApi",
+      "to": "../../api/productApiClient"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/components/dashboard/SavedDashboardWidget.tsx",
+      "from": "../../api/plantProcessApi",
+      "to": "../../api/productApiClient"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/WidgetBuilderWizard.tsx",
+      "from": "@/api/plantProcessApi",
+      "to": "../../../api/productApiClient"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/WidgetBuilderWizard.tsx",
+      "from": "@/api/plantProcessApi",
+      "to": "../../../api/productApiClient"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/WidgetBuilderWizardContent.tsx",
+      "from": "@/api/plantProcessApi",
+      "to": "../../../api/productApiClient"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/WidgetBuilderWizardContent.tsx",
+      "from": "@/api/plantProcessApi",
+      "to": "../../../api/productApiClient"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/WidgetScriptStep.tsx",
+      "from": "@/api/plantProcessApi",
+      "to": "../../../api/productApiClient"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/components/DashboardFilterBar.tsx",
+      "from": "../api/plantProcessApi",
+      "to": "../api/productApiClient"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/components/SortableDataTable.tsx",
+      "from": "@/api/plantProcessApi",
+      "to": "../api/productApiClient"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/Admin/AdminDbConfigurationTab.tsx",
+      "from": "@/api/plantProcessApi",
+      "to": "../../api/productApiClient"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/Admin/AdminImportingDataTab.tsx",
+      "from": "@/api/plantProcessApi",
+      "to": "../../api/productApiClient"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/Admin/AdminJobsMonitorTab.tsx",
+      "from": "@/api/plantProcessApi",
+      "to": "../../api/productApiClient"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/Admin/AdminSchemaConfigurationTab.tsx",
+      "from": "@/api/plantProcessApi",
+      "to": "../../api/productApiClient"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/Admin/AdminSchemaConfigurationTab.tsx",
+      "from": "@/api/plantProcessApi",
+      "to": "../../api/productApiClient"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/Admin/AdminSchemaConfigurationTab.tsx",
+      "from": "@/api/plantProcessApi",
+      "to": "../../api/productApiClient"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/Admin/AdminSharedComponents.tsx",
+      "from": "@/api/plantProcessApi",
+      "to": "../../api/productApiClient"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/Admin/AdminSharedComponents.tsx",
+      "from": "@/api/plantProcessApi",
+      "to": "../../api/productApiClient"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/Admin/AdminSharedComponents.tsx",
+      "from": "@/api/plantProcessApi",
+      "to": "../../api/productApiClient"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/Admin/AdminSharedComponents.tsx",
+      "from": "@/api/plantProcessApi",
+      "to": "../../api/productApiClient"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/Admin/AdminSharedComponents.tsx",
+      "from": "@/api/plantProcessApi",
+      "to": "../../api/productApiClient"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/Phase56/Phase56Pages.tsx",
+      "from": "@/api/plantProcessApi",
+      "to": "../../api/productApiClient"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/state/DashboardFilterContext.tsx",
+      "from": "../api/plantProcessApi",
+      "to": "../api/productApiClient"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/state/DashboardSelectionContext.tsx",
+      "from": "../api/plantProcessApi",
+      "to": "../api/productApiClient"
+    }
+  ],
+  "deleted": [
+    "Frontend/PlantProcess.Web/src/api/plantProcessApi.ts",
+    "Frontend/PlantProcess.Web/src/api/legacy/plantProcessApi.ts"
+  ],
+  "remainingPlantProcessApiReferences": [
+    {
+      "file": "Frontend/PlantProcess.Web/src/api/admin/admin.api.ts",
+      "matches": 1
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/api/analytics/analytics.api.ts",
+      "matches": 1
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/api/dashboarding/dashboarding.api.ts",
+      "matches": 1
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/api/integration/integration.api.ts",
+      "matches": 1
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/api/legacy/legacyApiHardening.ts",
+      "matches": 2
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/api/legacy/__tests__/plantProcessApi.contract.test.ts",
+      "matches": 4
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/api/productApiClient.ts",
+      "matches": 2
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/components/AppLayout.tsx",
+      "matches": 2
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/components/dashboard/SavedDashboardWidget.tsx",
+      "matches": 2
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/WidgetBuilderWizard.tsx",
+      "matches": 7
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/WidgetBuilderWizardContent.tsx",
+      "matches": 7
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/components/DashboardFilterBar.tsx",
+      "matches": 2
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/Admin/AdminDbConfigurationTab.tsx",
+      "matches": 11
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/Admin/AdminImportingDataTab.tsx",
+      "matches": 2
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/Admin/AdminJobsMonitorTab.tsx",
+      "matches": 5
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/Admin/AdminSchemaConfigurationTab.tsx",
+      "matches": 9
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/Phase56/Phase56Pages.tsx",
+      "matches": 12
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/test/architecture/noLegacyApiGrowth.test.ts",
+      "matches": 2
+    }
+  ]
+}

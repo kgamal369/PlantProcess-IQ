@@ -9,7 +9,7 @@
 //  9. Import Job Configuration UI — Schedule import per dataset
 //
 // Replaces the previous read-only version.
-// All API calls match the existing plantProcessApi methods exactly.
+// All API calls match the existing productApi methods exactly.
 // ============================================================
 
 import { useEffect, useState } from "react";
@@ -34,7 +34,7 @@ import {
 } from "lucide-react";
 
 import {
-  plantProcessApi,
+  productApi,
   type ConnectionProfileRecord,
   type CreateConnectionProfileRequest,
   type DbConfigurationSummary,
@@ -42,7 +42,7 @@ import {
   type SourceDatasetDefinitionRecord,
   type SourceFieldDefinitionRecord,
   type UpdateConnectionImportScheduleRequest,
-} from "@/api/plantProcessApi";
+} from "../../api/productApiClient";
 import { ErrorPanel } from "@/components/AsyncState";
 import { useOptimisticSave } from "@/hooks/useOptimisticSave";
 import { AdminPanel, StatusPill, formatDate } from "./AdminSharedComponents";
@@ -98,8 +98,8 @@ export function DbConfigurationTab({
     setError(null);
     try {
       const [profiles, types] = await Promise.all([
-        plantProcessApi.getConnectionProfiles(true),
-        plantProcessApi.getConnectorProviderTypes(),
+        productApi.getConnectionProfiles(true),
+        productApi.getConnectorProviderTypes(),
       ]);
       setConnections(profiles);
       setProviderTypes(types);
@@ -272,7 +272,7 @@ function ConnectionProfileList({
   async function testConnection(id: string) {
     setTestingId(id);
     try {
-      const result = await plantProcessApi.testConnectionProfile(id) as unknown as ConnectionTestResult;
+      const result = await productApi.testConnectionProfile(id) as unknown as ConnectionTestResult;
       setTestResults((r) => ({
         ...r,
         [id]: result.isSuccess
@@ -491,7 +491,7 @@ function ConnectionProfileForm({
       }
 
       if (isEdit && profile) {
-        await plantProcessApi.updateConnectionProfile(profile.id, {
+        await productApi.updateConnectionProfile(profile.id, {
           connectionProfileName: form.connectionProfileName,
           connectionMode: null,
           hostName: isDbProvider ? form.hostName : null,
@@ -527,7 +527,7 @@ function ConnectionProfileForm({
           sourceSystem: "PlantProcessIQ.Admin",
           sourceRecordId: null,
         };
-        await plantProcessApi.createConnectionProfile(request);
+        await productApi.createConnectionProfile(request);
       }
     },
     onSuccess: () => {
@@ -767,7 +767,7 @@ function TableBrowser({
     setIsLoading(true);
     setError(null);
     try {
-      const result = await plantProcessApi.getSourceDatasets(connectionProfileId, true);
+      const result = await productApi.getSourceDatasets(connectionProfileId, true);
       setDatasets(result);
     } catch (err) {
       setError(err);
@@ -787,7 +787,7 @@ function TableBrowser({
     setMessage(null);
     try {
       const tableName = newDatasetForm.sourceObjectName.trim();
-      await plantProcessApi.createSourceDataset({
+      await productApi.createSourceDataset({
         connectionProfileId,
         datasetCode: tableName.toUpperCase().replace(/[^A-Z0-9]/g, "_"),
         datasetName: tableName,
@@ -1037,7 +1037,7 @@ function ImportJobSchedulePanel({
   const [intervalMinutes, setIntervalMinutes] = useState(15);
 
   useEffect(() => {
-    plantProcessApi.getConnectionProfiles(true).then((result) => {
+    productApi.getConnectionProfiles(true).then((result) => {
       setConnections(result);
       if (result.length > 0) setSelectedConnectionId(result[0].id);
     });
@@ -1058,7 +1058,7 @@ function ImportJobSchedulePanel({
         scheduleExpression: `Every ${intervalMinutes} minutes`,
         importIntervalMinutes: intervalMinutes,
       };
-      await plantProcessApi.updateConnectionImportSchedule(selectedConnectionId, request);
+      await productApi.updateConnectionImportSchedule(selectedConnectionId, request);
     },
     onSuccess: async () => {
       await onRefresh();

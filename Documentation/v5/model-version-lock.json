@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "ppiq-model-version-lock-v1",
+  "generatedFor": "Pack B5",
+  "defaultEndpointCode": "local-private-mock",
+  "defaultModelVersion": "local-private-mock-v1",
+  "policy": {
+    "publicAiEgressAllowed": false,
+    "zeroDataRetentionRequired": true,
+    "customerKeyReferenceRequiredForPrivateProviders": true,
+    "rawPromptResponseStorageAllowed": false
+  },
+  "eval": {
+    "threshold": 0.95,
+    "mustRejectPublicEndpoint": true,
+    "mustAbstainWhenEvidenceInsufficient": true,
+    "mustRequireCitationsForGroundedAnswers": true
+  }
+}

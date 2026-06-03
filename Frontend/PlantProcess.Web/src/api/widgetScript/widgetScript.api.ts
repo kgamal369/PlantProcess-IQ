@@ -3,7 +3,7 @@ import type {
   DashboardWidgetFilters,
   DashboardWidgetQueryOptions,
   DashboardWidgetQueryResult,
-} from "../plantProcessApi";
+} from "../productApiClient";
 
 export type WidgetScriptValidationRequest = {
   expression: string;

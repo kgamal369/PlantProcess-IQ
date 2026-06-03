@@ -1,10 +1,10 @@
 // ============================================================
-// TASK 7 — Validate filter interaction
+// TASK 7 â€” Validate filter interaction
 // FILE: Frontend/PlantProcess.Web/src/state/DashboardFilterContext.tsx
 //
 // CHANGES vs current version:
 //  1. activeFilterCount excludes pagination and sort params (page,
-//     pageSize, sortBy, sortDirection) — these are not user filters.
+//     pageSize, sortBy, sortDirection) â€” these are not user filters.
 //  2. clearAllFilters preserves sort/pagination params when clearing.
 //  3. setFilter now resets page to 1 automatically so users always
 //     see the first page after applying a new filter.
@@ -19,7 +19,7 @@ import {
 } from "react";
 import type { ReactNode } from "react";
 import { useSearchParams } from "react-router-dom";
-import type { DashboardFilters } from "../api/plantProcessApi";
+import type { DashboardFilters } from "../api/productApiClient";
 
 interface DashboardFilterContextValue {
   filters: DashboardFilters;
@@ -46,7 +46,7 @@ const filterKeys: (keyof DashboardFilters)[] = [
   "page", "pageSize", "sortBy", "sortDirection",
 ];
 
-// These are not user-facing filters — excluded from activeFilterCount.
+// These are not user-facing filters â€” excluded from activeFilterCount.
 const paginationKeys = new Set<keyof DashboardFilters>([
   "page", "pageSize", "sortBy", "sortDirection",
 ]);
@@ -59,16 +59,16 @@ function parseFilters(searchParams: URLSearchParams): DashboardFilters {
   const filters: DashboardFilters = {};
 
   for (const key of filterKeys) {
-    const value = searchParams.get(key);
+    const value = searchParams.get(String(key));
     if (!value) continue;
 
     if (numericKeys.has(key)) {
       const parsed = Number(value);
       if (!Number.isNaN(parsed)) {
-        (filters as Record<string, unknown>)[key] = parsed;
+        (filters as Record<string, unknown>)[String(key)] = parsed;
       }
     } else {
-      (filters as Record<string, unknown>)[key] = value;
+      (filters as Record<string, unknown>)[String(key)] = value;
     }
   }
 
@@ -79,9 +79,9 @@ function writeFiltersToSearchParams(filters: DashboardFilters): URLSearchParams 
   const next = new URLSearchParams();
 
   for (const key of filterKeys) {
-    const value = filters[key];
+    const value = (filters as Record<string, unknown>)[String(key)];
     if (value === undefined || value === null || value === "") continue;
-    next.set(key, String(value));
+    next.set(String(key), String(value));
   }
 
   return next;
@@ -97,14 +97,14 @@ export function DashboardFilterProvider({ children }: { children: ReactNode }) {
       const nextFilters = replace ? patch : { ...filters, ...patch };
 
       // Purge undefined / null / empty values.
-      Object.keys(nextFilters).forEach((key) => {
+      (Object.keys(nextFilters) as string[]).forEach((key) => {
         const k = key as keyof DashboardFilters;
         if (
           nextFilters[k] === undefined ||
           nextFilters[k] === null ||
           nextFilters[k] === ""
         ) {
-          delete (nextFilters as Record<string, unknown>)[key];
+          delete (nextFilters as Record<string, unknown>)[String(key)];
         }
       });
 
@@ -121,7 +121,7 @@ export function DashboardFilterProvider({ children }: { children: ReactNode }) {
       value: DashboardFilters[K] | undefined
     ) => {
       // Reset to page 1 whenever a filter changes.
-      update({ [key]: value, page: 1 } as Partial<DashboardFilters>);
+      update({ [String(key)]: value, page: 1 } as Partial<DashboardFilters>);
     },
     [update]
   );
@@ -136,7 +136,7 @@ export function DashboardFilterProvider({ children }: { children: ReactNode }) {
   const clearFilter = useCallback(
     (key: keyof DashboardFilters) => {
       const next = { ...filters };
-      delete (next as Record<string, unknown>)[key];
+      delete (next as Record<string, unknown>)[String(key)];
       update(next, true);
     },
     [filters, update]

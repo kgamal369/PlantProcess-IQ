@@ -1,0 +1,38 @@
+### Pack B4 health
+GET http://localhost:5063/api/v5/connectors/runtime-certification/health
+
+### Register mock historian source
+POST http://localhost:5063/api/v5/connectors/runtime-certification/mock-historian/register-source
+Content-Type: application/json
+
+{
+  "providerCode": "mock-historian-runtime",
+  "displayName": "Mock Historian Runtime Connector",
+  "markAsCertifiedProof": false
+}
+
+### Read time window
+POST http://localhost:5063/api/v5/connectors/runtime-certification/mock-historian/read-window
+Content-Type: application/json
+
+{
+  "providerCode": "mock-historian-runtime",
+  "fromUtc": "2026-05-01T08:00:00Z",
+  "toUtc": "2026-05-01T08:30:00Z",
+  "maxPoints": 500
+}
+
+### Backfill interrupted run
+POST http://localhost:5063/api/v5/connectors/runtime-certification/backfill/run
+Content-Type: application/json
+
+{
+  "providerCode": "mock-historian-runtime",
+  "fromUtc": "2026-05-01T08:00:00Z",
+  "toUtc": "2026-05-01T10:00:00Z",
+  "batchSize": 100,
+  "simulateKillAfterFirstBatch": true
+}
+
+### Truth state
+GET http://localhost:5063/api/v5/connectors/runtime-certification/truth-state/mock-historian-runtime

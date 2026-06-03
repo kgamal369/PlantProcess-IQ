@@ -25,7 +25,7 @@ import {
   useState,
 } from "react";
 import type { ReactNode } from "react";
-import type { DashboardFilters } from "../api/plantProcessApi";
+import type { DashboardFilters } from "../api/productApiClient";
 import { useDashboardFilters } from "./DashboardFilterContext";
 
 export type DashboardSelectionType =

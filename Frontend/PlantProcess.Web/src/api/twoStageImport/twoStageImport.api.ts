@@ -1,4 +1,4 @@
-import { getJson, postJson } from "@/api/legacy/legacyApiHardening";
+import { getJson, postJson } from "@/api/productApiHardening";
 
 export type TwoStageImportOverview = {
   isReady: boolean;

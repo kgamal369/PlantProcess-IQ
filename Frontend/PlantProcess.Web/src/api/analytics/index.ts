@@ -1,2 +1,2 @@
-﻿export type * from "../legacy/plantProcessApi";
+﻿export type * from "../productApiClient";
 export { analyticsApi } from "./analytics.api";

@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "ppiq-pack-b35-export-evidence-v1",
+  "generatedAtUtc": "2026-06-03T13:17:49.159Z",
+  "purpose": "P13-T03/P13-T04 local evidence checksum manifest",
+  "entries": [
+    {
+      "path": "deploy/export/open-format-manifest.schema.json",
+      "exists": true,
+      "sha256": "c90f7bd9a6590fef376f3bf41be8553233a3c703f195d24a4feb206c3a77bc9e",
+      "bytes": 994
+    },
+    {
+      "path": "deploy/export/export-open-format.ps1",
+      "exists": true,
+      "sha256": "f6ae1a02e4d8b1aa4ce35c90bee76180f0cb2d50aaaf5afd4cdaeba5af611e1e",
+      "bytes": 1179
+    },
+    {
+      "path": "docs/escrow/SOURCE_CODE_ESCROW_PROCESS.md",
+      "exists": true,
+      "sha256": "11967d3d85ec4caa7f415d7a1d97b7c9e5f4cec2c357d41476bdee209b523955",
+      "bytes": 611
+    },
+    {
+      "path": "deploy/dr/RPO_RTO_RUNBOOK.md",
+      "exists": true,
+      "sha256": "6718a61d62df6438a660ed0c993a5eb7d8d21f98d7cb293e293d1d9c72691950",
+      "bytes": 742
+    },
+    {
+      "path": "deploy/airgap/docker-compose.airgap.yml",
+      "exists": true,
+      "sha256": "b6289d506191d9e1138efe4132c23184fce1f5e3cdded6d8a18608d2022a12a7",
+      "bytes": 1491
+    },
+    {
+      "path": "deploy/airgap/preflight-airgap.ps1",
+      "exists": true,
+      "sha256": "7089295109be2d57ac1c2868b145cb26208919ae260834c8fdd91c48bab93a33",
+      "bytes": 718
+    }
+  ]
+}

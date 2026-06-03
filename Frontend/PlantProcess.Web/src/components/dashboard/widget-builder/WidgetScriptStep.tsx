@@ -9,7 +9,7 @@ import type {
   DashboardWidgetFilters,
   DashboardWidgetQueryOptions,
   DashboardWidgetQueryResult,
-} from "@/api/plantProcessApi";
+} from "../../../api/productApiClient";
 import { StandardButton } from "@/components/standard";
 
 type WidgetScriptStepProps = {

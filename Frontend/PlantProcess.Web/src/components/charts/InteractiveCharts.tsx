@@ -18,7 +18,7 @@ import {
   YAxis,
   ZAxis,
 } from "recharts";
-import type { DashboardFilters } from "../../api/plantProcessApi";
+import type { DashboardFilters } from "../../api/productApiClient";
 import {
   useDashboardSelections,
   type DashboardSelectionType,

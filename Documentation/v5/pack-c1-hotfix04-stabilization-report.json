@@ -1,0 +1,11 @@
+{
+  "generatedAtUtc": "2026-06-03T13:40:11.963Z",
+  "changed": [
+    "Frontend/PlantProcess.Web/src/api/productApiClient.ts",
+    "Frontend/PlantProcess.Web/src/api/schemaMapping/schemaMapping.api.ts",
+    "Frontend/PlantProcess.Web/src/api/twoStageImport/twoStageImport.api.ts",
+    "Frontend/PlantProcess.Web/src/state/DashboardFilterContext.tsx"
+  ],
+  "deleted": [],
+  "offenders": []
+}

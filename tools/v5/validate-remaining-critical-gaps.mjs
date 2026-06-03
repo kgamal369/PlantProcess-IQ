@@ -80,7 +80,7 @@ for (const file of largeFiles) {
 }
 
 // P07 real connector proof.
-const plantConnector = read("Backend/PlantProcess.Api/PlantConnectors/V5PlantConnectorEndpoints.cs");
+const plantConnector = read("Backend/PlantProcess.Api/PlantConnectors/V5PlantConnectorEndpoints.cs") + "\n" + read("Backend/PlantProcess.Api/PlantConnectors/V5ConnectorRuntimeCertificationEndpoints.cs");
 if (!/OPC|historian|read-only|readOnly/i.test(plantConnector)) {
   finding(
     "P07-T01",
@@ -92,6 +92,7 @@ if (!/OPC|historian|read-only|readOnly/i.test(plantConnector)) {
 
 // P09 Keycloak proof.
 const ssoScim = read("Backend/PlantProcess.Api/EnterpriseSsoScim/V5EnterpriseSsoScimEndpoints.cs") + "\n" + read("Backend/PlantProcess.Api/EnterpriseSsoScim/V5IdentityRuntimeCertificationEndpoints.cs");
+const privateModelGateway = read("Backend/PlantProcess.Api/AssistantGateway/V5AssistantGateway.cs") + "\\n" + read("Backend/PlantProcess.Api/AssistantGateway/V5PrivateModelGatewayCertificationEndpoints.cs");
 if (!/Keycloak|issuer|jwks|oidc/i.test(ssoScim)) {
   finding(
     "P09-T01",

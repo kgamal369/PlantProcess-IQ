@@ -19,7 +19,7 @@ import {
   Thermometer,
   Wrench,
 } from "lucide-react";
-import { plantProcessApi, type DashboardReferenceData } from "../api/plantProcessApi";
+import { productApi, type DashboardReferenceData } from "../api/productApiClient";
 import { useDashboardFilters } from "../state/DashboardFilterContext";
 import "./DashboardFilterBar.css";
 import { StandardButton } from "@/components/standard";
@@ -108,7 +108,7 @@ export function DashboardFilterBar() {
 
   useEffect(() => {
     let ignore = false;
-    plantProcessApi
+    productApi
       .getDashboardReferenceData(filters)
       .then((data) => { if (!ignore) setReferenceData(data); })
       .catch(() => { if (!ignore) setReferenceData(null); });

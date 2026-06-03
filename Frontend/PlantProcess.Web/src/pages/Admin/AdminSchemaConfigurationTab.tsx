@@ -27,14 +27,14 @@ import {
 } from "lucide-react";
 
 import {
-  plantProcessApi,
+  productApi,
   type CreateKpiDefinitionRequest,
   type CreateSchemaViewDefinitionRequest,
   type KpiDefinitionRecord,
   type SchemaConfigurationSummary,
   type SchemaViewDefinitionRecord,
   type SchemaViewPreviewResult,
-} from "@/api/plantProcessApi";
+} from "../../api/productApiClient";
 import { AdminPanel, MiniKpi, StatusPill, formatDate } from "./AdminSharedComponents";
 import { useOptimisticSave } from "@/hooks/useOptimisticSave";
 import { InlineFieldError } from "@/components/forms/InlineFieldError";
@@ -173,7 +173,7 @@ LIMIT 100`,
   async function load() {
     setIsBusy(true);
     try {
-      const views = await plantProcessApi.getSchemaViews(true);
+      const views = await productApi.getSchemaViews(true);
       setSchemaViews(views);
       if (!selectedViewId && views.length > 0) setSelectedViewId(views[0].id);
     } catch (err) {
@@ -211,7 +211,7 @@ LIMIT 100`,
       return;
     }
     try {
-      const result = await plantProcessApi.previewAdHocSchemaSql({
+      const result = await productApi.previewAdHocSchemaSql({
         sqlText: form.sqlText,
         maxRows: form.maxPreviewRows,
         timeoutSeconds: form.timeoutSeconds,
@@ -239,7 +239,7 @@ LIMIT 100`,
 
       const existing = schemaViews.find((v) => v.id === selectedViewId);
       if (existing) {
-        await plantProcessApi.updateSchemaView(existing.id, {
+        await productApi.updateSchemaView(existing.id, {
           schemaViewName: form.schemaViewName,
           viewKind: form.viewKind,
           primarySourceDatasetDefinitionId: null,
@@ -263,7 +263,7 @@ LIMIT 100`,
           sourceSystem: "PlantProcessIQ.Admin",
           sourceRecordId: null,
         };
-        const created = await plantProcessApi.createSchemaView(request);
+        const created = await productApi.createSchemaView(request);
         setSelectedViewId(created.id);
       }
     },
@@ -280,7 +280,7 @@ LIMIT 100`,
       if (!selectedViewId) {
         throw new Error("Select a view first.");
       }
-      await plantProcessApi.approveSchemaView(selectedViewId);
+      await productApi.approveSchemaView(selectedViewId);
     },
     onSuccess: async () => {
       await load();
@@ -564,8 +564,8 @@ function KpiDefinitionPanel() {
   async function load() {
     try {
       const [kpiList, views] = await Promise.all([
-        plantProcessApi.getKpiDefinitions(true),
-        plantProcessApi.getSchemaViews(true),
+        productApi.getKpiDefinitions(true),
+        productApi.getSchemaViews(true),
       ]);
       setKpis(kpiList);
       setSchemaViews(views.filter((v) => v.isApproved));
@@ -601,7 +601,7 @@ function KpiDefinitionPanel() {
         sourceSystem: "PlantProcessIQ.Admin",
         sourceRecordId: null,
       };
-      await plantProcessApi.createKpiDefinition(request);
+      await productApi.createKpiDefinition(request);
     },
     onSuccess: async () => {
       setShowForm(false);
@@ -826,8 +826,8 @@ function KpiDefinitionPanel() {
 function FieldMapperPanel({
   mappings, coverage,
 }: {
-  mappings: import("@/api/plantProcessApi").SchemaMappingSummary[];
-  coverage: import("@/api/plantProcessApi").SourceObjectCoverage[];
+  mappings: import("../../api/productApiClient").SchemaMappingSummary[];
+  coverage: import("../../api/productApiClient").SourceObjectCoverage[];
 }) {
   const [expandedMapping, setExpandedMapping] = useState<string | null>(null);
 

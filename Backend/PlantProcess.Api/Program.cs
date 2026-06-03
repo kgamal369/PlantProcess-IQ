@@ -515,6 +515,8 @@ app.MapV5ComplianceControlsEndpoints();
 app.MapV5Ed25519LicenseEndpoints();
 app.MapV5LicenseResolverProofEndpoints();
 app.MapV5IdentityRuntimeCertificationEndpoints();
+app.MapV5ConnectorRuntimeCertificationEndpoints();
+app.MapV5PrivateModelGatewayCertificationEndpoints();
 app.Run();
 }
 catch (Exception ex) when (ex.GetType().Name == "HostAbortedException")

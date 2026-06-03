@@ -10,11 +10,11 @@
 import { useState } from "react";
 import { Clock, Layers3, Loader2, PlayCircle, Workflow } from "lucide-react";
 import {
-  plantProcessApi,
+  productApi,
   type AdminJobsMonitor,
   type SchemaConfigurationSummary,
   type TwoStageImportModel,
-} from "@/api/plantProcessApi";
+} from "../../api/productApiClient";
 import { useOptimisticSave } from "@/hooks/useOptimisticSave";
 import { StandardPageButton, StandardPageSelect, StandardPageTable } from "@/components/standard/StandardPageCompat";
 import {
@@ -56,7 +56,7 @@ export function ImportingDataTab({
       if (!selectedMappingId) {
         throw new Error("Select a mapping first.");
       }
-      await plantProcessApi.updateMappingRefreshSchedule(selectedMappingId, {
+      await productApi.updateMappingRefreshSchedule(selectedMappingId, {
         scheduleExpression: `Every ${refreshIntervalMinutes} minutes`,
         refreshIntervalMinutes,
       });

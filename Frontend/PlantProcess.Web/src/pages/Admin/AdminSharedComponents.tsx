@@ -22,11 +22,11 @@ import type { ReactNode } from "react";
 // ── Types ────────────────────────────────────────────────────────────────────
 
 export type AdminData = {
-  overview: import("@/api/plantProcessApi").AdminOverview | null;
-  model: import("@/api/plantProcessApi").TwoStageImportModel | null;
-  dbConfig: import("@/api/plantProcessApi").DbConfigurationSummary | null;
-  schemaConfig: import("@/api/plantProcessApi").SchemaConfigurationSummary | null;
-  jobs: import("@/api/plantProcessApi").AdminJobsMonitor | null;
+  overview: import("../../api/productApiClient").AdminOverview | null;
+  model: import("../../api/productApiClient").TwoStageImportModel | null;
+  dbConfig: import("../../api/productApiClient").DbConfigurationSummary | null;
+  schemaConfig: import("../../api/productApiClient").SchemaConfigurationSummary | null;
+  jobs: import("../../api/productApiClient").AdminJobsMonitor | null;
 };
 
 export const emptyAdminData: AdminData = {

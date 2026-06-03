@@ -1,11 +1,11 @@
 import { BarChart3 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
-import { plantProcessApi } from "../../api/plantProcessApi";
+import { productApi } from "../../api/productApiClient";
 import type {
   DashboardWidgetDefinitionRecord,
   DashboardWidgetQueryResult,
-} from "../../api/plantProcessApi";
+} from "../../api/productApiClient";
 
 import {
   InteractiveBarChart,
@@ -60,7 +60,7 @@ export function SavedDashboardWidget({
       setError(null);
 
       try {
-        const response = await plantProcessApi.queryDashboardWidget({
+        const response = await productApi.queryDashboardWidget({
           widgetType: widget.widgetType,
           chartType: widget.chartType,
           dimensionCode: widget.dimensionCode,

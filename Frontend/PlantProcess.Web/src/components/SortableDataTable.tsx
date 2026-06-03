@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef, useState, type ReactNode } from "react";
-import type { SortDirection } from "@/api/plantProcessApi";
+import type { SortDirection } from "../api/productApiClient";
 
 export interface SortableColumn<T> {
   key: string;

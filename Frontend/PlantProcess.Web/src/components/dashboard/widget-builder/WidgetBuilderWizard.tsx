@@ -12,7 +12,7 @@ import {
   X,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { plantProcessApi } from "@/api/plantProcessApi";
+import { productApi } from "../../../api/productApiClient";
 import { useOptimisticSave } from "@/hooks/useOptimisticSave";
 import type {
   DashboardChartTypeMetadata,
@@ -25,7 +25,7 @@ import type {
   DashboardWidgetFilters,
   DashboardWidgetQuery,
   DashboardWidgetQueryResult,
-} from "@/api/plantProcessApi";
+} from "../../../api/productApiClient";
 
 import {
   InteractiveBarChart,
@@ -315,9 +315,9 @@ export function WidgetBuilderWizardContent({
       try {
         const [metadataResult, referenceResult, dashboardResult] =
           await Promise.all([
-            plantProcessApi.getDashboardMetadata(),
-            plantProcessApi.getDashboardReferenceData(),
-            plantProcessApi.getDashboardDefinitions(false, true),
+            productApi.getDashboardMetadata(),
+            productApi.getDashboardReferenceData(),
+            productApi.getDashboardDefinitions(false, true),
           ]);
 
         if (ignore) return;
@@ -593,7 +593,7 @@ export function WidgetBuilderWizardContent({
     setPreviewError(null);
 
     try {
-      const result = await plantProcessApi.queryDashboardWidget(buildQuery());
+      const result = await productApi.queryDashboardWidget(buildQuery());
       setPreview(result);
     } catch (error) {
       setPreview(null);
@@ -629,7 +629,7 @@ export function WidgetBuilderWizardContent({
       });
 
       if (existingWidget) {
-        await plantProcessApi.updateDashboardWidgetDefinition(
+        await productApi.updateDashboardWidgetDefinition(
           effectiveDashboardDefinitionId,
           existingWidget.id,
           {
@@ -648,7 +648,7 @@ export function WidgetBuilderWizardContent({
 
         await onWidgetSaved?.(existingWidget.id);
       } else {
-        const saved = await plantProcessApi.createDashboardWidgetDefinition(
+        const saved = await productApi.createDashboardWidgetDefinition(
           effectiveDashboardDefinitionId,
           {
             widgetCode: generateWidgetCode(builderState.widgetTitle),

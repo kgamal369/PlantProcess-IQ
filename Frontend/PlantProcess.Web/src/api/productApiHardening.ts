@@ -1,5 +1,5 @@
-﻿import { API_BASE_URL } from "../apiConfig";
-import { getAccessToken } from "../http";
+﻿import { API_BASE_URL } from "./apiConfig";
+import { getAccessToken } from "./http";
 import { toast } from "@/notifications/toast";
 import { mapErrorToFriendly } from "@/utils/errorMapping";
 
@@ -9,10 +9,10 @@ import { mapErrorToFriendly } from "@/utils/errorMapping";
 //
 // Why this file exists:
 // The project already has a modern api/http/apiClient.ts, but many
-// existing production/demo pages still call plantProcessApi from the
+// existing production/demo pages still call productApi from the
 // legacy module.
 //
-// This file keeps the hardening behavior OUTSIDE plantProcessApi.ts so
+// This file keeps the hardening behavior OUTSIDE productApi.ts so
 // the noLegacyApiGrowth architecture guard remains meaningful.
 // ============================================================
 

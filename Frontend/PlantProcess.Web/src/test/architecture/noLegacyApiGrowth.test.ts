@@ -3,13 +3,13 @@ import { readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 
 describe("frontend architecture guard", () => {
-  it("legacy plantProcessApi.ts should not grow again", () => {
+  it("legacy productApi.ts should not grow again", () => {
     const legacyPath = join(
       process.cwd(),
       "src",
       "api",
       "legacy",
-      "plantProcessApi.ts"
+      "productApi.ts"
     );
 
     const file = readFileSync(legacyPath, "utf8");
