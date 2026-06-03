@@ -1,6 +1,6 @@
 -- ============================================================
 -- PlantProcess IQ Doctrine v5
--- P11 Â· Outbound Notifications, Closed Loop & Lead System
+-- P11 · Outbound Notifications, Closed Loop & Lead System
 --
 -- Installs:
 --   - backend lead capture table

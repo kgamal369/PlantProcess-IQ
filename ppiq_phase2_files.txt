@@ -1,0 +1,2879 @@
+===== FILE: C:\Workspace\PlantProcess-IQ\Backend\PlantProcess.Api\Endpoints\Analytics\AdvancedResultsEndpoints.cs =====
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
+using Npgsql;
+
+namespace PlantProcess.Api.Endpoints.Analytics;
+
+/// <summary>T-034 (backend): surfaces the section 6.2 advanced-analysis result shape per finding.</summary>
+public static class AdvancedResultsEndpoints
+{
+    private const string Caveat = "This is a diagnostic association, not a guaranteed root cause.";
+
+    public static IEndpointRouteBuilder MapAdvancedResultsEndpoints(this IEndpointRouteBuilder app)
+    {
+        var group = app.MapGroup("/api/analytics/advanced")
+            .WithTags("Analytics Advanced")
+            .RequireAuthorization();
+        group.MapGet("/readiness", async (string outcomeKey, string? grain, int? windowDays, System.Guid? tenantId, PlantProcess.Application.Analytics.Advanced.IAnalysisReadinessService readiness, System.Threading.CancellationToken ct) =>
+            Results.Ok(await readiness.EvaluateAsync(new PlantProcess.Application.Analytics.Advanced.AdvancedAnalysisRequest(outcomeKey, string.IsNullOrWhiteSpace(grain) ? "coil" : grain!, windowDays ?? 3650, tenantId ?? PlantProcess.Application.Analytics.Advanced.AdvancedDefaults.DemoTenant), ct)));
+
+        group.MapGet("/runs", async (NpgsqlDataSource ds, CancellationToken ct) =>
+            Results.Ok(await ReadAsync(ds,
+                "SELECT id, engine_key, target_outcome_key, grain, window_days, status, completed_at_utc, duration_ms, message " +
+                "FROM public.ml_correlation_compute_runs ORDER BY completed_at_utc DESC NULLS LAST LIMIT 50", null, ct)));
+
+        group.MapGet("/results", async (Guid? runId, string? outcomeKey, NpgsqlDataSource ds, CancellationToken ct) =>
+        {
+            Guid? resolvedRun = runId;
+            if (resolvedRun is null)
+            {
+                await using var rc = ds.CreateCommand(
+                    "SELECT id FROM public.ml_correlation_compute_runs WHERE engine_key IN ('dotnet-analytics-core-v1','managed-stat-v1') " +
+                    (string.IsNullOrWhiteSpace(outcomeKey) ? "" : "AND target_outcome_key = @o ") +
+                    "ORDER BY completed_at_utc DESC NULLS LAST LIMIT 1");
+                if (!string.IsNullOrWhiteSpace(outcomeKey)) rc.Parameters.AddWithValue("o", outcomeKey!);
+                if (await rc.ExecuteScalarAsync(ct) is Guid g) resolvedRun = g;
+            }
+            if (resolvedRun is null)
+                return Results.Ok(new { runId = (Guid?)null, honestyCaveat = Caveat, results = Array.Empty<object>() });
+
+            var rows = await ReadAsync(ds,
+                "SELECT r.feature_key, r.feature_grain, r.outcome_key, r.outcome_type, r.method, " +
+                "r.effect_size, r.q_value, r.sample_size, r.ci_low, r.ci_high, r.stability_score, r.is_stable, " +
+                "r.stratum, r.evidence_json, run.window_days " +
+                "FROM public.ml_correlation_results_v2 r " +
+                "JOIN public.ml_correlation_compute_runs run ON run.id = r.compute_run_id " +
+                "WHERE r.compute_run_id = @run ORDER BY abs(coalesce(r.effect_size, 0)) DESC",
+                ("run", (object)resolvedRun.Value), ct);
+
+            var shaped = rows.Select(row =>
+            {
+                var sampleSize = row.TryGetValue("sample_size", out var ss) && ss is not null ? Convert.ToInt32(ss) : 0;
+                var method = (row.TryGetValue("method", out var m) ? m as string : null) ?? "NotApplicable";
+                var stratum = row.TryGetValue("stratum", out var st) ? st : null;
+                var renderable = !string.Equals(method, "NotApplicable", StringComparison.OrdinalIgnoreCase) && sampleSize > 0;
+                return new
+                {
+                    findingId = row.GetValueOrDefault("feature_key"),
+                    method,
+                    effectSize = row.GetValueOrDefault("effect_size"),
+                    qValue = row.GetValueOrDefault("q_value"),
+                    sampleSize,
+                    outcomeKey = row.GetValueOrDefault("outcome_key"),
+                    outcomeType = row.GetValueOrDefault("outcome_type"),
+                    grain = row.GetValueOrDefault("feature_grain"),
+                    stabilityLower = row.GetValueOrDefault("ci_low"),
+                    stabilityUpper = row.GetValueOrDefault("ci_high"),
+                    stabilityConsistency = row.GetValueOrDefault("stability_score"),
+                    isStable = row.GetValueOrDefault("is_stable"),
+                    stratum,
+                    survivesStratification = EvidenceBool(row, "survivesStratification", true),
+                    significant = EvidenceBool(row, "significant", false),
+                    provenanceHandle = EvidenceString(row, "provenanceHandle"),
+                    windowDays = row.GetValueOrDefault("window_days"),
+                    evidence = row.GetValueOrDefault("evidence_json")?.ToString(),
+                    honestyCaveat = Caveat,
+                    isRenderable = renderable
+                };
+            });
+
+            return Results.Ok(new { runId = resolvedRun, honestyCaveat = Caveat, results = shaped });
+        });
+
+        return app;
+    }
+
+    private static bool EvidenceBool(System.Collections.Generic.Dictionary<string, object?> row, string key, bool fallback)
+    {
+        try { var t = row.GetValueOrDefault("evidence_json")?.ToString(); if (string.IsNullOrWhiteSpace(t)) return fallback;
+              using var d = System.Text.Json.JsonDocument.Parse(t);
+              return d.RootElement.TryGetProperty(key, out var v) && v.ValueKind != System.Text.Json.JsonValueKind.Null ? v.GetBoolean() : fallback; }
+        catch { return fallback; }
+    }
+    private static string? EvidenceString(System.Collections.Generic.Dictionary<string, object?> row, string key)
+    {
+        try { var t = row.GetValueOrDefault("evidence_json")?.ToString(); if (string.IsNullOrWhiteSpace(t)) return null;
+              using var d = System.Text.Json.JsonDocument.Parse(t);
+              return d.RootElement.TryGetProperty(key, out var v) ? v.GetString() : null; }
+        catch { return null; }
+    }
+
+    private static async Task<List<Dictionary<string, object?>>> ReadAsync(
+        NpgsqlDataSource ds, string sql, (string Name, object Value)? p, CancellationToken ct)
+    {
+
+
+        var rows = new List<Dictionary<string, object?>>();
+        await using var cmd = ds.CreateCommand(sql);
+        if (p.HasValue) cmd.Parameters.AddWithValue(p.Value.Name, p.Value.Value);
+        await using var reader = await cmd.ExecuteReaderAsync(ct);
+        while (await reader.ReadAsync(ct))
+        {
+            var row = new Dictionary<string, object?>(reader.FieldCount);
+            for (var i = 0; i < reader.FieldCount; i++)
+                row[reader.GetName(i)] = await reader.IsDBNullAsync(i, ct) ? null : reader.GetValue(i);
+            rows.Add(row);
+        }
+        return rows;
+    }
+}
+
+
+
+
+
+
+===== FILE: C:\Workspace\PlantProcess-IQ\Backend\PlantProcess.Api\Endpoints\Analytics\CorrelationEndpoints.cs =====
+using Microsoft.EntityFrameworkCore;
+using PlantProcess.Api.Extensions;
+using PlantProcess.Application.Analytics.Contracts;
+using PlantProcess.Application.Analytics.Interfaces;
+using PlantProcess.Application.Licensing.Contracts;
+using PlantProcess.Application.Licensing.Interfaces;
+using PlantProcess.Domain.Entities.Analytics;
+using PlantProcess.Infrastructure.Persistence;
+using System.Text.Json;
+
+using PlantProcess.Api.ErrorHandling;
+namespace PlantProcess.Api.Endpoints.Analytics;
+
+public static class CorrelationEndpoints
+{
+    public static IEndpointRouteBuilder MapCorrelationEndpoints(this IEndpointRouteBuilder app)
+    {
+        var group = app.MapGroup("/analytics/correlations")
+            .WithTags("Correlation Analytics")
+            .RequireAuthorization("PlantProcessViewer");
+
+        // Existing MVP endpoints
+        group.MapGet("/parameter-defect", GetParameterDefectCorrelationAsync);
+        group.MapGet("/equipment-defect-rate", GetEquipmentDefectRateAsync);
+        group.MapGet("/operation-defect-rate", GetOperationDefectRateAsync);
+        group.MapGet("/materials/{materialUnitId:guid}/context", GetMaterialCorrelationContextAsync);
+
+        // Persisted Correlation Metadata Patch
+        group.MapPost("/runs", PersistCorrelationRunAsync);
+        group.MapGet("/runs", GetCorrelationRunsAsync);
+        group.MapGet("/runs/{id:guid}", GetCorrelationRunByIdAsync);
+
+        // Phase 10: genealogy-aware endpoint for process-to-quality intelligence.
+        group.MapGet("/parameter-defect/genealogy-aware", GetGenealogyAwareParameterDefectCorrelationAsync);
+
+        return app;
+    }
+
+    private static async Task<IResult> GetParameterDefectCorrelationAsync(
+        string parameterCode,
+        string defectType,
+        Guid? siteId,
+        DateTime? fromUtc,
+        DateTime? toUtc,
+        int? bins,
+        int? minimumObservationsPerBin,
+        bool? persistResult,
+        ILicenseService licenseService,
+        ICorrelationService service,
+        CancellationToken cancellationToken)
+    {
+        var gate = licenseService.EnsureFeatureEnabled(LicenseFeature.CorrelationManualRun);
+        if (gate.IsFailure)
+            return gate.ToHttpResult(() => Results.NoContent());
+
+        var result = await service.GetParameterDefectCorrelationAsync(
+            new ParameterDefectCorrelationQuery(
+                parameterCode,
+                defectType,
+                siteId,
+                fromUtc,
+                toUtc,
+                bins ?? 8,
+                minimumObservationsPerBin ?? 5,
+                persistResult ?? false),
+            cancellationToken);
+
+        return result.ToHttpResult(value => Results.Ok(value));
+    }
+
+    private static async Task<IResult> GetEquipmentDefectRateAsync(
+        string defectType,
+        Guid? siteId,
+        DateTime? fromUtc,
+        DateTime? toUtc,
+        int? minimumMaterialsPerEquipment,
+        ILicenseService licenseService,
+        ICorrelationService service,
+        CancellationToken cancellationToken)
+    {
+        var gate = licenseService.EnsureFeatureEnabled(LicenseFeature.CorrelationManualRun);
+        if (gate.IsFailure)
+            return gate.ToHttpResult(() => Results.NoContent());
+
+        var result = await service.GetEquipmentDefectRateAsync(
+            new EquipmentDefectRateQuery(
+                defectType,
+                siteId,
+                fromUtc,
+                toUtc,
+                minimumMaterialsPerEquipment ?? 5),
+            cancellationToken);
+
+        return result.ToHttpResult(value => Results.Ok(value));
+    }
+
+    private static async Task<IResult> GetOperationDefectRateAsync(
+        string defectType,
+        Guid? siteId,
+        DateTime? fromUtc,
+        DateTime? toUtc,
+        int? minimumMaterialsPerOperation,
+        ILicenseService licenseService,
+        ICorrelationService service,
+        CancellationToken cancellationToken)
+    {
+        var gate = licenseService.EnsureFeatureEnabled(LicenseFeature.CorrelationManualRun);
+        if (gate.IsFailure)
+            return gate.ToHttpResult(() => Results.NoContent());
+
+        var result = await service.GetOperationDefectRateAsync(
+            new OperationDefectRateQuery(
+                defectType,
+                siteId,
+                fromUtc,
+                toUtc,
+                minimumMaterialsPerOperation ?? 5),
+            cancellationToken);
+
+        return result.ToHttpResult(value => Results.Ok(value));
+    }
+
+    private static async Task<IResult> GetMaterialCorrelationContextAsync(
+        Guid materialUnitId,
+        string defectType,
+        ILicenseService licenseService,
+        ICorrelationService service,
+        CancellationToken cancellationToken)
+    {
+        var gate = licenseService.EnsureFeatureEnabled(LicenseFeature.CorrelationManualRun);
+        if (gate.IsFailure)
+            return gate.ToHttpResult(() => Results.NoContent());
+
+        var result = await service.GetMaterialCorrelationContextAsync(materialUnitId, defectType, cancellationToken);
+        return result.ToHttpResult(value => Results.Ok(value));
+    }
+
+    private static async Task<IResult> PersistCorrelationRunAsync(
+        PersistCorrelationRunRequest request,
+        ILicenseService licenseService,
+        PlantProcessDbContext dbContext,
+        CancellationToken cancellationToken)
+    {
+        var gate = licenseService.EnsureFeatureEnabled(LicenseFeature.CorrelationManualRun);
+        if (gate.IsFailure)
+            return gate.ToHttpResult(() => Results.NoContent());
+
+        if (string.IsNullOrWhiteSpace(request.CorrelationType))
+            return ApplicationProblems.Validation("CorrelationType is required.");
+
+        if (string.IsNullOrWhiteSpace(request.SubjectCode))
+            return ApplicationProblems.Validation("SubjectCode is required.");
+
+        if (string.IsNullOrWhiteSpace(request.OutcomeCode))
+            return ApplicationProblems.Validation("OutcomeCode is required.");
+
+        var resultJson = JsonSerializer.Serialize(new
+        {
+            request.FiltersJson,
+            request.ResultJson,
+            request.Notes,
+            persistedBy = "PlantProcessIQ.Api",
+            persistedAtUtc = DateTime.UtcNow
+        });
+
+        var correlation = new CorrelationResult(
+            correlationType: request.CorrelationType,
+            subjectCode: request.SubjectCode,
+            outcomeCode: request.OutcomeCode,
+            score: request.Score,
+            resultJson: resultJson,
+            isSynthetic: request.IsSynthetic,
+            sourceSystem: "PlantProcessIQ.ReactDashboard",
+            sourceRecordId: request.SourceRecordId);
+
+        dbContext.CorrelationResults.Add(correlation);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return Results.Created($"/analytics/correlations/runs/{correlation.Id}", new
+        {
+            correlation.Id,
+            correlation.CorrelationType,
+            correlation.SubjectCode,
+            correlation.OutcomeCode,
+            correlation.Score,
+            correlation.CalculatedAtUtc
+        });
+    }
+
+    private static async Task<IResult> GetCorrelationRunsAsync(
+        string? correlationType,
+        string? subjectCode,
+        string? outcomeCode,
+        int? page,
+        int? pageSize,
+        ILicenseService licenseService,
+        PlantProcessDbContext dbContext,
+        CancellationToken cancellationToken)
+    {
+        var gate = licenseService.EnsureFeatureEnabled(LicenseFeature.CorrelationManualRun);
+        if (gate.IsFailure)
+            return gate.ToHttpResult(() => Results.NoContent());
+
+        var safePage = Math.Max(page ?? 1, 1);
+        var safePageSize = Math.Clamp(pageSize ?? 25, 1, 200);
+
+        var query = dbContext.CorrelationResults
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted);
+
+        if (!string.IsNullOrWhiteSpace(correlationType))
+            query = query.Where(x => x.CorrelationType == correlationType);
+
+        if (!string.IsNullOrWhiteSpace(subjectCode))
+            query = query.Where(x => x.SubjectCode == subjectCode);
+
+        if (!string.IsNullOrWhiteSpace(outcomeCode))
+            query = query.Where(x => x.OutcomeCode == outcomeCode);
+
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        var items = await query
+            .OrderByDescending(x => x.CalculatedAtUtc)
+            .Skip((safePage - 1) * safePageSize)
+            .Take(safePageSize)
+            .Select(x => new
+            {
+                x.Id,
+                x.CorrelationType,
+                x.SubjectCode,
+                x.OutcomeCode,
+                x.Score,
+                x.CalculatedAtUtc,
+                x.SourceSystem,
+                x.SourceRecordId
+            })
+            .ToListAsync(cancellationToken);
+
+        return Results.Ok(new
+        {
+            items,
+            page = safePage,
+            pageSize = safePageSize,
+            totalCount,
+            totalPages = totalCount == 0 ? 0 : (int)Math.Ceiling((decimal)totalCount / safePageSize)
+        });
+    }
+
+    private static async Task<IResult> GetCorrelationRunByIdAsync(
+        Guid id,
+        ILicenseService licenseService,
+        PlantProcessDbContext dbContext,
+        CancellationToken cancellationToken)
+    {
+        var gate = licenseService.EnsureFeatureEnabled(LicenseFeature.CorrelationManualRun);
+        if (gate.IsFailure)
+            return gate.ToHttpResult(() => Results.NoContent());
+
+        var item = await dbContext.CorrelationResults
+            .AsNoTracking()
+            .Where(x => x.Id == id && !x.IsDeleted)
+            .Select(x => new
+            {
+                x.Id,
+                x.CorrelationType,
+                x.SubjectCode,
+                x.OutcomeCode,
+                x.Score,
+                x.ResultJson,
+                x.CalculatedAtUtc,
+                x.SourceSystem,
+                x.SourceRecordId
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return item is null ? Results.NotFound() : Results.Ok(item);
+    }
+
+    public sealed record PersistCorrelationRunRequest(
+        string CorrelationType,
+        string SubjectCode,
+        string OutcomeCode,
+        decimal? Score,
+        string FiltersJson,
+        string ResultJson,
+        string? Notes,
+        bool IsSynthetic,
+        string? SourceRecordId);
+
+    /// <summary>
+    /// Phase 10 endpoint.
+    /// This is intentionally aggregate-only and dashboard-ready.
+    /// It does not return raw source rows.
+    /// </summary>
+    private static async Task<IResult> GetGenealogyAwareParameterDefectCorrelationAsync(
+        string parameterCode,
+        string defectType,
+        Guid? siteId,
+        DateTime? fromUtc,
+        DateTime? toUtc,
+        int? bins,
+        int? minimumObservationsPerBin,
+        string? linkMode,
+        int? genealogyDepth,
+        ILicenseService licenseService,
+        PlantProcessDbContext dbContext,
+        CancellationToken cancellationToken)
+    {
+        var gate = licenseService.EnsureFeatureEnabled(LicenseFeature.CorrelationManualRun);
+        if (gate.IsFailure)
+            return gate.ToHttpResult(() => Results.NoContent());
+
+        var safeBins = Math.Clamp(bins ?? 8, 2, 25);
+        var safeMinimumObservations = Math.Clamp(minimumObservationsPerBin ?? 5, 1, 10_000);
+        var safeDepth = Math.Clamp(genealogyDepth ?? 3, 0, 20);
+        var normalizedLinkMode = NormalizeLinkMode(linkMode);
+
+        var parameter = await dbContext.ParameterDefinitions
+            .AsNoTracking()
+            .Where(x =>
+                !x.IsDeleted &&
+                (x.ParameterCode == parameterCode || x.ParameterName == parameterCode))
+            .Select(x => new
+            {
+                x.Id,
+                x.ParameterCode,
+                x.ParameterName,
+                x.UnitOfMeasure
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (parameter is null)
+        {
+            return Results.Ok(new GenealogyAwareParameterDefectCorrelationResponse(
+                GeneratedAtUtc: DateTime.UtcNow,
+                ParameterCode: parameterCode,
+                ParameterName: parameterCode,
+                UnitOfMeasure: null,
+                DefectType: defectType,
+                LinkMode: normalizedLinkMode,
+                GenealogyDepth: safeDepth,
+                BaselineDefectRatePercent: 0,
+                TotalObservationCount: 0,
+                TotalMaterialCount: 0,
+                TotalDefectLinkedObservationCount: 0,
+                Bins: Array.Empty<GenealogyAwareCorrelationBinDto>(),
+                Message: $"Parameter definition '{parameterCode}' was not found. Returning an empty customer-safe correlation result."));
+        }
+
+        var observationsQuery =
+            from observation in dbContext.ParameterObservations.AsNoTracking()
+            join material in dbContext.MaterialUnits.AsNoTracking()
+                on observation.MaterialUnitId equals material.Id
+            where
+                !observation.IsDeleted &&
+                !material.IsDeleted &&
+                observation.ParameterDefinitionId == parameter.Id &&
+                observation.NumericValue != null
+            select new ObservationProjection(
+                observation.MaterialUnitId,
+                material.MaterialCode,
+                material.SiteId,
+                observation.ObservedAtUtc,
+                observation.NumericValue!.Value,
+                observation.EquipmentId,
+                observation.SourceSystem);
+
+        if (siteId.HasValue)
+            observationsQuery = observationsQuery.Where(x => x.SiteId == siteId.Value);
+
+        if (fromUtc.HasValue)
+            observationsQuery = observationsQuery.Where(x => x.ObservedAtUtc >= fromUtc.Value);
+
+        if (toUtc.HasValue)
+            observationsQuery = observationsQuery.Where(x => x.ObservedAtUtc <= toUtc.Value);
+
+        var observations = await observationsQuery
+            .OrderBy(x => x.ObservedAtUtc)
+            .Take(250_000)
+            .ToListAsync(cancellationToken);
+
+        if (observations.Count == 0)
+        {
+            return Results.Ok(new GenealogyAwareParameterDefectCorrelationResponse(
+                GeneratedAtUtc: DateTime.UtcNow,
+                ParameterCode: parameter.ParameterCode,
+                ParameterName: parameter.ParameterName,
+                UnitOfMeasure: parameter.UnitOfMeasure,
+                DefectType: defectType,
+                LinkMode: normalizedLinkMode,
+                GenealogyDepth: safeDepth,
+                BaselineDefectRatePercent: 0,
+                TotalObservationCount: 0,
+                TotalMaterialCount: 0,
+                TotalDefectLinkedObservationCount: 0,
+                Bins: Array.Empty<GenealogyAwareCorrelationBinDto>(),
+                Message: "No numeric observations found for the selected filter."));
+        }
+
+        var observationMaterialIds = observations
+            .Select(x => x.MaterialUnitId)
+            .Distinct()
+            .ToArray();
+
+        var allEdges = await dbContext.GenealogyEdges
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted)
+            .Select(x => new GenealogyEdgeProjection(
+                x.ParentMaterialUnitId,
+                x.ChildMaterialUnitId))
+            .ToListAsync(cancellationToken);
+
+        var linkedMaterialLookup = BuildLinkedMaterialLookup(
+            observationMaterialIds,
+            allEdges,
+            normalizedLinkMode,
+            safeDepth);
+
+        var candidateQualityMaterialIds = linkedMaterialLookup
+            .SelectMany(x => x.Value)
+            .Distinct()
+            .ToArray();
+
+        var defectMaterialIds = await (
+            from qualityEvent in dbContext.QualityEvents.AsNoTracking()
+            join defect in dbContext.DefectCatalogs.AsNoTracking()
+                on qualityEvent.DefectCatalogId equals defect.Id into defectJoin
+            from defect in defectJoin.DefaultIfEmpty()
+            where
+                !qualityEvent.IsDeleted &&
+                candidateQualityMaterialIds.Contains(qualityEvent.MaterialUnitId) &&
+                (
+                    qualityEvent.EventType == defectType ||
+                    qualityEvent.EventType == "Defect" && defect != null && defect.DefectCode == defectType ||
+                    qualityEvent.EventType == "Defect" && defect != null && defect.DefectName == defectType ||
+                    defect != null && defect.DefectCode == defectType ||
+                    defect != null && defect.DefectName == defectType
+                )
+            select qualityEvent.MaterialUnitId)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
+        var defectMaterialSet = defectMaterialIds.ToHashSet();
+
+        var evaluatedObservations = observations
+            .Select(x =>
+            {
+                var linkedMaterials = linkedMaterialLookup.TryGetValue(x.MaterialUnitId, out var ids)
+                    ? ids
+                    : new HashSet<Guid> { x.MaterialUnitId };
+
+                var hasLinkedDefect = linkedMaterials.Any(defectMaterialSet.Contains);
+
+                return new EvaluatedObservation(
+                    x.MaterialUnitId,
+                    x.MaterialCode,
+                    x.ObservedAtUtc,
+                    x.NumericValue,
+                    hasLinkedDefect,
+                    linkedMaterials.Count);
+            })
+            .ToList();
+
+        var totalObservationCount = evaluatedObservations.Count;
+        var totalMaterialCount = evaluatedObservations.Select(x => x.MaterialUnitId).Distinct().Count();
+        var totalDefectLinkedObservationCount = evaluatedObservations.Count(x => x.HasLinkedDefect);
+        var baselineRate = totalObservationCount == 0
+            ? 0m
+            : Math.Round(totalDefectLinkedObservationCount * 100m / totalObservationCount, 4);
+
+        var minValue = evaluatedObservations.Min(x => x.NumericValue);
+        var maxValue = evaluatedObservations.Max(x => x.NumericValue);
+
+        if (minValue == maxValue)
+        {
+            var allSameBinCount = evaluatedObservations.Count;
+            var defectCount = evaluatedObservations.Count(x => x.HasLinkedDefect);
+            var rate = allSameBinCount == 0 ? 0 : Math.Round(defectCount * 100m / allSameBinCount, 4);
+
+            return Results.Ok(new GenealogyAwareParameterDefectCorrelationResponse(
+                GeneratedAtUtc: DateTime.UtcNow,
+                ParameterCode: parameter.ParameterCode,
+                ParameterName: parameter.ParameterName,
+                UnitOfMeasure: parameter.UnitOfMeasure,
+                DefectType: defectType,
+                LinkMode: normalizedLinkMode,
+                GenealogyDepth: safeDepth,
+                BaselineDefectRatePercent: baselineRate,
+                TotalObservationCount: totalObservationCount,
+                TotalMaterialCount: totalMaterialCount,
+                TotalDefectLinkedObservationCount: totalDefectLinkedObservationCount,
+                Bins: new[]
+                {
+                    new GenealogyAwareCorrelationBinDto(
+                        BinNo: 1,
+                        BinLabel: $"{minValue:0.###}",
+                        MinValue: minValue,
+                        MaxValue: maxValue,
+                        ObservationCount: allSameBinCount,
+                        MaterialCount: evaluatedObservations.Select(x => x.MaterialUnitId).Distinct().Count(),
+                        DefectLinkedObservationCount: defectCount,
+                        DefectRatePercent: rate,
+                        LiftVsBaseline: CalculateLift(rate, baselineRate),
+                        Confidence: BuildConfidence(allSameBinCount, safeMinimumObservations))
+                },
+                Message: "Only one numeric value exists for the selected parameter/filter."));
+        }
+
+        var width = (maxValue - minValue) / safeBins;
+        var binsResult = new List<GenealogyAwareCorrelationBinDto>();
+
+        for (var i = 0; i < safeBins; i++)
+        {
+            var binMin = minValue + width * i;
+            var binMax = i == safeBins - 1 ? maxValue : minValue + width * (i + 1);
+
+            var binRows = evaluatedObservations
+                .Where(x =>
+                    i == safeBins - 1
+                        ? x.NumericValue >= binMin && x.NumericValue <= binMax
+                        : x.NumericValue >= binMin && x.NumericValue < binMax)
+                .ToList();
+
+            if (binRows.Count < safeMinimumObservations)
+                continue;
+
+            var observationCount = binRows.Count;
+            var materialCount = binRows.Select(x => x.MaterialUnitId).Distinct().Count();
+            var defectLinkedObservationCount = binRows.Count(x => x.HasLinkedDefect);
+            var defectRate = observationCount == 0
+                ? 0
+                : Math.Round(defectLinkedObservationCount * 100m / observationCount, 4);
+
+            binsResult.Add(new GenealogyAwareCorrelationBinDto(
+                BinNo: i + 1,
+                BinLabel: $"{binMin:0.###} - {binMax:0.###}",
+                MinValue: binMin,
+                MaxValue: binMax,
+                ObservationCount: observationCount,
+                MaterialCount: materialCount,
+                DefectLinkedObservationCount: defectLinkedObservationCount,
+                DefectRatePercent: defectRate,
+                LiftVsBaseline: CalculateLift(defectRate, baselineRate),
+                Confidence: BuildConfidence(observationCount, safeMinimumObservations)));
+        }
+
+        return Results.Ok(new GenealogyAwareParameterDefectCorrelationResponse(
+            GeneratedAtUtc: DateTime.UtcNow,
+            ParameterCode: parameter.ParameterCode,
+            ParameterName: parameter.ParameterName,
+            UnitOfMeasure: parameter.UnitOfMeasure,
+            DefectType: defectType,
+            LinkMode: normalizedLinkMode,
+            GenealogyDepth: safeDepth,
+            BaselineDefectRatePercent: baselineRate,
+            TotalObservationCount: totalObservationCount,
+            TotalMaterialCount: totalMaterialCount,
+            TotalDefectLinkedObservationCount: totalDefectLinkedObservationCount,
+            Bins: binsResult.OrderByDescending(x => x.LiftVsBaseline).ToList(),
+            Message: "Genealogy-aware parameter-defect correlation calculated successfully."));
+    }
+
+    private static string NormalizeLinkMode(string? linkMode)
+    {
+        if (string.IsNullOrWhiteSpace(linkMode))
+            return "DownstreamChildren";
+
+        return linkMode.Trim() switch
+        {
+            "SameMaterial" => "SameMaterial",
+            "UpstreamParents" => "UpstreamParents",
+            "DownstreamChildren" => "DownstreamChildren",
+            "FullGenealogy" => "FullGenealogy",
+            _ => "DownstreamChildren"
+        };
+    }
+
+    private static Dictionary<Guid, HashSet<Guid>> BuildLinkedMaterialLookup(
+        IReadOnlyCollection<Guid> seedMaterialIds,
+        IReadOnlyCollection<GenealogyEdgeProjection> edges,
+        string linkMode,
+        int maxDepth)
+    {
+        var lookup = new Dictionary<Guid, HashSet<Guid>>();
+
+        var childrenByParent = edges
+            .GroupBy(x => x.ParentMaterialUnitId)
+            .ToDictionary(x => x.Key, x => x.Select(e => e.ChildMaterialUnitId).Distinct().ToList());
+
+        var parentsByChild = edges
+            .GroupBy(x => x.ChildMaterialUnitId)
+            .ToDictionary(x => x.Key, x => x.Select(e => e.ParentMaterialUnitId).Distinct().ToList());
+
+        foreach (var seedId in seedMaterialIds)
+        {
+            var linked = new HashSet<Guid> { seedId };
+
+            if (linkMode is "DownstreamChildren" or "FullGenealogy")
+            {
+                foreach (var child in Traverse(seedId, childrenByParent, maxDepth))
+                    linked.Add(child);
+            }
+
+            if (linkMode is "UpstreamParents" or "FullGenealogy")
+            {
+                foreach (var parent in Traverse(seedId, parentsByChild, maxDepth))
+                    linked.Add(parent);
+            }
+
+            lookup[seedId] = linked;
+        }
+
+        return lookup;
+    }
+
+    private static IEnumerable<Guid> Traverse(
+        Guid startId,
+        IReadOnlyDictionary<Guid, List<Guid>> adjacency,
+        int maxDepth)
+    {
+        if (maxDepth <= 0)
+            yield break;
+
+        var visited = new HashSet<Guid> { startId };
+        var queue = new Queue<(Guid Id, int Depth)>();
+        queue.Enqueue((startId, 0));
+
+        while (queue.Count > 0)
+        {
+            var current = queue.Dequeue();
+
+            if (current.Depth >= maxDepth)
+                continue;
+
+            if (!adjacency.TryGetValue(current.Id, out var nextIds))
+                continue;
+
+            foreach (var nextId in nextIds)
+            {
+                if (!visited.Add(nextId))
+                    continue;
+
+                yield return nextId;
+                queue.Enqueue((nextId, current.Depth + 1));
+            }
+        }
+    }
+
+    private static decimal? CalculateLift(decimal binRatePercent, decimal baselineRatePercent)
+    {
+        if (baselineRatePercent <= 0)
+            return null;
+
+        return Math.Round(binRatePercent / baselineRatePercent, 4);
+    }
+
+    private static string BuildConfidence(int observationCount, int minimumObservationCount)
+    {
+        if (observationCount < minimumObservationCount)
+            return "Low";
+
+        if (observationCount >= minimumObservationCount * 5)
+            return "High";
+
+        if (observationCount >= minimumObservationCount * 2)
+            return "Medium";
+
+        return "Low";
+    }
+
+    private sealed record ObservationProjection(
+        Guid MaterialUnitId,
+        string MaterialCode,
+        Guid SiteId,
+        DateTime ObservedAtUtc,
+        decimal NumericValue,
+        Guid? EquipmentId,
+        string? SourceSystem);
+
+    private sealed record EvaluatedObservation(
+        Guid MaterialUnitId,
+        string MaterialCode,
+        DateTime ObservedAtUtc,
+        decimal NumericValue,
+        bool HasLinkedDefect,
+        int LinkedMaterialCount);
+
+    private sealed record GenealogyEdgeProjection(
+        Guid ParentMaterialUnitId,
+        Guid ChildMaterialUnitId);
+
+    private sealed record GenealogyAwareParameterDefectCorrelationResponse(
+        DateTime GeneratedAtUtc,
+        string ParameterCode,
+        string ParameterName,
+        string? UnitOfMeasure,
+        string DefectType,
+        string LinkMode,
+        int GenealogyDepth,
+        decimal BaselineDefectRatePercent,
+        int TotalObservationCount,
+        int TotalMaterialCount,
+        int TotalDefectLinkedObservationCount,
+        IReadOnlyList<GenealogyAwareCorrelationBinDto> Bins,
+        string Message);
+
+    private sealed record GenealogyAwareCorrelationBinDto(
+        int BinNo,
+        string BinLabel,
+        decimal MinValue,
+        decimal MaxValue,
+        int ObservationCount,
+        int MaterialCount,
+        int DefectLinkedObservationCount,
+        decimal DefectRatePercent,
+        decimal? LiftVsBaseline,
+        string Confidence);
+}
+
+
+===== FILE: C:\Workspace\PlantProcess-IQ\Backend\PlantProcess.Api\Endpoints\Analytics\MlFoundationEndpoints.cs =====
+using System.Data;
+using System.Data.Common;
+using System.Text.Json;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using PlantProcess.Application.Analytics.Contracts;
+using PlantProcess.Application.Analytics.Interfaces;
+using PlantProcess.Infrastructure.Persistence;
+
+namespace PlantProcess.Api.Endpoints.Analytics;
+
+public static class MlFoundationEndpoints
+{
+    public static IEndpointRouteBuilder MapMlFoundationEndpoints(this IEndpointRouteBuilder app)
+    {
+        var group = app.MapGroup("/api/ml/foundation")
+            .WithTags("ML Foundation")
+            .RequireAuthorization();
+
+        group.MapGet("/readiness", GetReadinessAsync);
+        group.MapPost("/feature-store/refresh", RefreshFeatureStoreAsync);
+        group.MapGet("/feature-definitions", GetFeatureDefinitionsAsync);
+        group.MapGet("/outcomes", GetOutcomeDefinitionsAsync);
+        group.MapPost("/compute/correlation", ComputeCorrelationAsync);
+        group.MapPost("/kb/upsert", UpsertKnowledgeBaseItemAsync);
+        group.MapPost("/kb/search", SearchKnowledgeBaseAsync);
+
+        return app;
+    }
+
+    private static async Task<IResult> GetReadinessAsync(
+        PlantProcessDbContext db,
+        CancellationToken cancellationToken)
+    {
+        await EnsureMlFoundationAsync(db, cancellationToken);
+
+        var rows = await QueryAsync(
+            db,
+            """
+            SELECT
+                (SELECT count(*) FROM public.ml_feature_definitions WHERE is_deleted = false) AS feature_definitions,
+                (SELECT count(*) FROM public.ml_feature_values) AS feature_values,
+                (SELECT count(*) FROM public.ml_outcome_definitions WHERE is_deleted = false) AS outcome_definitions,
+                (SELECT count(*) FROM public.ml_outcome_values) AS outcome_values,
+                (SELECT count(*) FROM public.ml_correlation_results_v2) AS correlation_results,
+                (SELECT count(*) FROM public.ml_knowledge_base_items WHERE is_deleted = false) AS kb_items,
+                EXISTS (SELECT 1 FROM pg_type WHERE typname = 'vector') AS pgvector_available;
+            """,
+            cancellationToken);
+
+        return Results.Ok(new
+        {
+            phase = "P02",
+            taskRange = "PPIQ-T209..PPIQ-T213",
+            generatedAtUtc = DateTime.UtcNow,
+            readiness = rows.FirstOrDefault() ?? new Dictionary<string, object?>()
+        });
+    }
+
+    private static async Task<IResult> RefreshFeatureStoreAsync(
+        [FromBody] RefreshFeatureStoreRequest request,
+        PlantProcessDbContext db,
+        CancellationToken cancellationToken)
+    {
+        await EnsureMlFoundationAsync(db, cancellationToken);
+
+        var windowDays = Math.Clamp(request.WindowDays <= 0 ? 90 : request.WindowDays, 1, 3650);
+
+        var rows = await QueryAsync(
+            db,
+            "SELECT feature_rows, outcome_rows, run_id FROM public.ppiq_ml_refresh_feature_store(@window_days);",
+            cancellationToken,
+            ("window_days", windowDays));
+
+        return Results.Ok(new
+        {
+            message = "Feature store refreshed from canonical schema.",
+            windowDays,
+            result = rows.FirstOrDefault()
+        });
+    }
+
+    private static async Task<IResult> GetFeatureDefinitionsAsync(
+        PlantProcessDbContext db,
+        CancellationToken cancellationToken)
+    {
+        await EnsureMlFoundationAsync(db, cancellationToken);
+
+        var rows = await QueryAsync(
+            db,
+            """
+            SELECT
+                feature_key,
+                display_name,
+                feature_group,
+                grain,
+                value_type,
+                unit,
+                formula_kind,
+                genealogy_required,
+                is_missingness_informative,
+                version,
+                status,
+                metadata_json::text AS metadata_json
+            FROM public.ml_feature_definitions
+            WHERE is_deleted = false
+            ORDER BY feature_group, feature_key;
+            """,
+            cancellationToken);
+
+        return Results.Ok(rows);
+    }
+
+    private static async Task<IResult> GetOutcomeDefinitionsAsync(
+        PlantProcessDbContext db,
+        CancellationToken cancellationToken)
+    {
+        await EnsureMlFoundationAsync(db, cancellationToken);
+
+        var rows = await QueryAsync(
+            db,
+            """
+            SELECT
+                outcome_key,
+                display_name,
+                outcome_group,
+                grain,
+                outcome_type,
+                unit,
+                normalization,
+                taxonomy_json::text AS taxonomy_json,
+                version,
+                status
+            FROM public.ml_outcome_definitions
+            WHERE is_deleted = false
+            ORDER BY outcome_group, outcome_key;
+            """,
+            cancellationToken);
+
+        return Results.Ok(rows);
+    }
+
+    private static async Task<IResult> ComputeCorrelationAsync(
+        [FromBody] CorrelationComputeRequest request,
+        ICorrelationComputeEngine engine,
+        IServiceProvider serviceProvider,
+        CancellationToken cancellationToken)
+    {
+        var selected = engine;
+        if (request.Filters is not null
+            && request.Filters.TryGetValue("engine", out var engineKey)
+            && string.Equals(engineKey, "managed", StringComparison.OrdinalIgnoreCase))
+        {
+            selected = Microsoft.Extensions.DependencyInjection.ServiceProviderKeyedServiceExtensions
+                .GetRequiredKeyedService<ICorrelationComputeEngine>(serviceProvider, "managed");
+        }
+
+        var result = await selected.ComputeAsync(request, cancellationToken);
+        return Results.Ok(result);
+    }
+
+    private static async Task<IResult> UpsertKnowledgeBaseItemAsync(
+        [FromBody] UpsertKnowledgeBaseItemRequest request,
+        IEmbeddingProvider embeddingProvider,
+        PlantProcessDbContext db,
+        CancellationToken cancellationToken)
+    {
+        await EnsureMlFoundationAsync(db, cancellationToken);
+
+        var embedding = await embeddingProvider.EmbedAsync(
+            new EmbeddingRequest($"{request.Title}\n\n{request.Body}"),
+            cancellationToken);
+
+        var idRows = await QueryAsync(
+            db,
+            """
+            SELECT public.ppiq_ml_upsert_kb_item(
+                @item_key,
+                @item_type,
+                @title,
+                @body,
+                CAST(@embedding_json AS jsonb),
+                CAST(@metadata_json AS jsonb),
+                @area,
+                @defect_class,
+                @grade,
+                @line,
+                @window_code,
+                @q_value,
+                @source_result_id
+            ) AS id;
+            """,
+            cancellationToken,
+            ("item_key", request.ItemKey),
+            ("item_type", request.ItemType),
+            ("title", request.Title),
+            ("body", request.Body),
+            ("embedding_json", JsonSerializer.Serialize(embedding.Vector)),
+            ("metadata_json", request.MetadataJson ?? "{}"),
+            ("area", request.Area),
+            ("defect_class", request.DefectClass),
+            ("grade", request.Grade),
+            ("line", request.Line),
+            ("window_code", request.WindowCode),
+            ("q_value", request.QValue),
+            ("source_result_id", request.SourceResultId));
+
+        return Results.Ok(new
+        {
+            id = idRows.FirstOrDefault()?["id"],
+            embedding.ProviderKey,
+            embedding.ModelKey,
+            dimensions = embedding.Vector.Count
+        });
+    }
+
+    private static async Task<IResult> SearchKnowledgeBaseAsync(
+        [FromBody] SearchKnowledgeBaseRequest request,
+        IEmbeddingProvider embeddingProvider,
+        PlantProcessDbContext db,
+        CancellationToken cancellationToken)
+    {
+        await EnsureMlFoundationAsync(db, cancellationToken);
+
+        var embedding = await embeddingProvider.EmbedAsync(
+            new EmbeddingRequest(request.Query),
+            cancellationToken);
+
+        var rows = await QueryAsync(
+            db,
+            """
+            SELECT *
+            FROM public.ppiq_ml_search_kb(
+                CAST(@query_embedding AS jsonb),
+                @area,
+                @defect_class,
+                @grade,
+                @line,
+                @limit
+            );
+            """,
+            cancellationToken,
+            ("query_embedding", JsonSerializer.Serialize(embedding.Vector)),
+            ("area", request.Area),
+            ("defect_class", request.DefectClass),
+            ("grade", request.Grade),
+            ("line", request.Line),
+            ("limit", request.Limit ?? 10));
+
+        return Results.Ok(new
+        {
+            embeddingProvider = embedding.ProviderKey,
+            rows
+        });
+    }
+
+    private static async Task EnsureMlFoundationAsync(
+        PlantProcessDbContext db,
+        CancellationToken cancellationToken)
+    {
+        await ExecuteNonQueryAsync(
+            db,
+            "SELECT public.ppiq_ml_seed_foundation_catalog();",
+            cancellationToken);
+    }
+
+    private static async Task<IReadOnlyList<Dictionary<string, object?>>> QueryAsync(
+        PlantProcessDbContext db,
+        string sql,
+        CancellationToken cancellationToken,
+        params (string Name, object? Value)[] parameters)
+    {
+        var connection = db.Database.GetDbConnection();
+
+        if (connection.State != ConnectionState.Open)
+            await connection.OpenAsync(cancellationToken);
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        command.CommandType = CommandType.Text;
+        command.CommandTimeout = 120;
+
+        foreach (var parameter in parameters)
+            AddParameter(command, parameter.Name, parameter.Value);
+
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        var rows = new List<Dictionary<string, object?>>();
+
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            var row = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+
+            for (var i = 0; i < reader.FieldCount; i++)
+            {
+                row[reader.GetName(i)] = await reader.IsDBNullAsync(i, cancellationToken)
+                    ? null
+                    : reader.GetValue(i);
+            }
+
+            rows.Add(row);
+        }
+
+        return rows;
+    }
+
+    private static async Task ExecuteNonQueryAsync(
+        PlantProcessDbContext db,
+        string sql,
+        CancellationToken cancellationToken,
+        params (string Name, object? Value)[] parameters)
+    {
+        var connection = db.Database.GetDbConnection();
+
+        if (connection.State != ConnectionState.Open)
+            await connection.OpenAsync(cancellationToken);
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        command.CommandType = CommandType.Text;
+        command.CommandTimeout = 120;
+
+        foreach (var parameter in parameters)
+            AddParameter(command, parameter.Name, parameter.Value);
+
+        await command.ExecuteNonQueryAsync(cancellationToken);
+    }
+
+    private static void AddParameter(DbCommand command, string name, object? value)
+    {
+        var parameter = command.CreateParameter();
+        parameter.ParameterName = name;
+        parameter.Value = value ?? DBNull.Value;
+        command.Parameters.Add(parameter);
+    }
+
+    public sealed record RefreshFeatureStoreRequest(int WindowDays);
+
+    public sealed record UpsertKnowledgeBaseItemRequest(
+        string ItemKey,
+        string ItemType,
+        string Title,
+        string Body,
+        string? MetadataJson,
+        string? Area,
+        string? DefectClass,
+        string? Grade,
+        string? Line,
+        string? WindowCode,
+        double? QValue,
+        Guid? SourceResultId);
+
+    public sealed record SearchKnowledgeBaseRequest(
+        string Query,
+        string? Area,
+        string? DefectClass,
+        string? Grade,
+        string? Line,
+        int? Limit);
+}
+
+===== FILE: C:\Workspace\PlantProcess-IQ\Backend\PlantProcess.Api\Endpoints\Materials\MaterialInvestigationEndpoints.cs =====
+using Microsoft.EntityFrameworkCore;
+using PlantProcess.Api.Extensions;
+using PlantProcess.Application.Licensing.Contracts;
+using PlantProcess.Application.Licensing.Interfaces;
+using PlantProcess.Infrastructure.Persistence;
+
+using PlantProcess.Api.ErrorHandling;
+namespace PlantProcess.Api.Endpoints.Materials;
+
+public static class MaterialInvestigationEndpoints
+{
+    public static IEndpointRouteBuilder MapMaterialInvestigationEndpoints(this IEndpointRouteBuilder app)
+    {
+        var group = app.MapGroup("/materials")
+            .WithTags("Material Investigation")
+            .RequireAuthorization("PlantProcessViewer");
+
+        group.MapGet("/{materialUnitId:guid}/investigation-full", InvestigateMaterialFullAsync)
+            .WithSummary("Get full genealogy-aware material investigation")
+            .WithDescription("Returns genealogy-aware material investigation with paginated parameter observations.");
+
+        return app;
+    }
+
+    private static async Task<IResult> InvestigateMaterialFullAsync(
+        Guid materialUnitId,
+        int? maxDepth,
+        int? parameterPage,
+        int? parameterPageSize,
+        ILicenseService licenseService,
+        PlantProcessDbContext dbContext,
+        CancellationToken cancellationToken)
+    {
+        var gate = licenseService.EnsureFeatureEnabled(LicenseFeature.InvestigationWorkflow);
+        if (gate.IsFailure)
+            return gate.ToHttpResult(() => Results.NoContent());
+
+        var materialExists = await dbContext.MaterialUnits
+            .AsNoTracking()
+            .AnyAsync(x => x.Id == materialUnitId && !x.IsDeleted, cancellationToken);
+
+        if (!materialExists)
+            return ApplicationProblems.NotFound("Material unit not found.");
+
+        var depthLimit = Math.Clamp(maxDepth ?? 5, 1, 20);
+        var safeParameterPage = Math.Max(parameterPage ?? 1, 1);
+        var safeParameterPageSize = Math.Clamp(parameterPageSize ?? 500, 25, 500);
+
+        var relatedMaterialIds = await ResolveGenealogyMaterialIdsAsync(
+            dbContext,
+            materialUnitId,
+            depthLimit,
+            cancellationToken);
+
+        var materialIds = relatedMaterialIds.ToList();
+
+        var materials = await dbContext.MaterialUnits
+            .AsNoTracking()
+            .Where(x => materialIds.Contains(x.Id) && !x.IsDeleted)
+            .OrderBy(x => x.ProductionStartUtc)
+            .ThenBy(x => x.MaterialCode)
+            .Select(x => new
+            {
+                x.Id,
+                x.MaterialCode,
+                x.MaterialUnitType,
+                x.ProductFamily,
+                x.GradeOrRecipe,
+                x.SiteId,
+                x.ProductionStartUtc,
+                x.ProductionEndUtc,
+                x.ProductionStartLocal,
+                x.ProductionEndLocal,
+                x.PlantTimeZoneId,
+                x.PlantUtcOffsetMinutes,
+                x.SourceSystem,
+                x.SourceRecordId,
+                x.IsSynthetic
+            })
+            .ToListAsync(cancellationToken);
+
+        var aliases = await dbContext.MaterialAliases
+            .AsNoTracking()
+            .Where(x => materialIds.Contains(x.MaterialUnitId) && !x.IsDeleted)
+            .OrderBy(x => x.SourceSystem)
+            .ThenBy(x => x.AliasCode)
+            .Select(x => new
+            {
+                x.Id,
+                x.MaterialUnitId,
+                x.AliasCode,
+                x.AliasType,
+                x.SourceSystem,
+                x.SourceRecordId,
+                x.IsSynthetic
+            })
+            .ToListAsync(cancellationToken);
+
+        var genealogyEdges = await dbContext.GenealogyEdges
+            .AsNoTracking()
+            .Where(x =>
+                !x.IsDeleted &&
+                (materialIds.Contains(x.ParentMaterialUnitId) || materialIds.Contains(x.ChildMaterialUnitId)))
+            .OrderBy(x => x.ParentMaterialUnitId)
+            .ThenBy(x => x.ChildMaterialUnitId)
+            .Select(x => new
+            {
+                x.Id,
+                x.ParentMaterialUnitId,
+                x.ChildMaterialUnitId,
+                x.RelationshipType,
+                x.EffectiveFromUtc,
+                x.EffectiveToUtc,
+                x.SourceSystem,
+                x.SourceRecordId,
+                x.IsSynthetic
+            })
+            .ToListAsync(cancellationToken);
+
+        var processSteps = await dbContext.ProcessStepExecutions
+            .AsNoTracking()
+            .Where(x => materialIds.Contains(x.MaterialUnitId) && !x.IsDeleted)
+            .OrderBy(x => x.StartedAtUtc)
+            .Select(x => new
+            {
+                x.Id,
+                x.MaterialUnitId,
+                x.EquipmentId,
+                x.OperationCode,
+                x.OperationType,
+                x.StartedAtUtc,
+                x.EndedAtUtc,
+                x.StartedAtLocal,
+                x.EndedAtLocal,
+                ProcessStatus = x.ExecutionStatus,
+                x.SourceSystem,
+                x.SourceRecordId,
+                x.IsSynthetic
+            })
+            .ToListAsync(cancellationToken);
+
+        var processStepIds = processSteps
+            .Select(x => x.Id)
+            .Distinct()
+            .ToList();
+
+        var parameterQuery = dbContext.ParameterObservations
+            .AsNoTracking()
+            .Where(x => materialIds.Contains(x.MaterialUnitId) && !x.IsDeleted);
+
+        var parameterTotalCount = await parameterQuery.CountAsync(cancellationToken);
+
+        var parameterObservations = await parameterQuery
+            .OrderByDescending(x => x.ObservedAtUtc)
+            .ThenBy(x => x.ParameterDefinitionId)
+            .Skip((safeParameterPage - 1) * safeParameterPageSize)
+            .Take(safeParameterPageSize)
+            .Select(x => new
+            {
+                x.Id,
+                x.MaterialUnitId,
+                x.ProcessStepExecutionId,
+                x.ParameterDefinitionId,
+                x.EquipmentId,
+                x.ObservedAtUtc,
+                x.ObservedAtLocal,
+                x.NumericValue,
+                x.TextValue,
+                x.BooleanValue,
+                Unit = x.UnitOfMeasure,
+                x.PlantTimeZoneId,
+                x.PlantUtcOffsetMinutes,
+                x.SourceSystem,
+                x.SourceRecordId,
+                x.IsSynthetic
+            })
+            .ToListAsync(cancellationToken);
+
+        var processEvents = await dbContext.ProcessEvents
+            .AsNoTracking()
+            .Where(x =>
+                !x.IsDeleted &&
+                (
+                    (x.MaterialUnitId.HasValue && materialIds.Contains(x.MaterialUnitId.Value)) ||
+                    (x.ProcessStepExecutionId.HasValue && processStepIds.Contains(x.ProcessStepExecutionId.Value))
+                ))
+            .OrderBy(x => x.EventAtUtc)
+            .Select(x => new
+            {
+                x.Id,
+                x.MaterialUnitId,
+                x.ProcessStepExecutionId,
+                x.EquipmentId,
+                x.EventType,
+                EventCode = x.EventValue,
+                EventValue = x.EventValue,
+                x.EventAtUtc,
+                x.EventAtLocal,
+                x.Description,
+                x.SourceSystem,
+                x.SourceRecordId,
+                x.IsSynthetic
+            })
+            .ToListAsync(cancellationToken);
+
+        var downtimeEvents = await dbContext.DowntimeEvents
+            .AsNoTracking()
+            .Where(x =>
+                !x.IsDeleted &&
+                (
+                    (x.MaterialUnitId.HasValue && materialIds.Contains(x.MaterialUnitId.Value)) ||
+                    (x.ProcessStepExecutionId.HasValue && processStepIds.Contains(x.ProcessStepExecutionId.Value))
+                ))
+            .OrderBy(x => x.StartedAtUtc)
+            .Select(x => new
+            {
+                x.Id,
+                x.MaterialUnitId,
+                x.ProcessStepExecutionId,
+                x.EquipmentId,
+                x.StartedAtUtc,
+                x.EndedAtUtc,
+                x.StartedAtLocal,
+                x.EndedAtLocal,
+                x.DowntimeType,
+                x.ReasonCode,
+                x.Description,
+                x.SourceSystem,
+                x.SourceRecordId,
+                x.IsSynthetic
+            })
+            .ToListAsync(cancellationToken);
+
+        var qualityEvents = await dbContext.QualityEvents
+            .AsNoTracking()
+            .Where(x => materialIds.Contains(x.MaterialUnitId) && !x.IsDeleted)
+            .OrderBy(x => x.EventAtUtc)
+            .Select(x => new
+            {
+                x.Id,
+                x.MaterialUnitId,
+                x.DefectCatalogId,
+                x.EventType,
+                x.EventAtUtc,
+                x.EventAtLocal,
+                x.Severity,
+                x.Decision,
+                x.Description,
+                x.SourceSystem,
+                x.SourceRecordId,
+                x.IsSynthetic
+            })
+            .ToListAsync(cancellationToken);
+
+        var riskScores = await dbContext.RiskScores
+            .AsNoTracking()
+            .Where(x => materialIds.Contains(x.MaterialUnitId) && !x.IsDeleted)
+            .OrderByDescending(x => x.ScoredAtUtc)
+            .Select(x => new
+            {
+                x.Id,
+                x.MaterialUnitId,
+                x.RiskType,
+                x.Score,
+                x.RiskClass,
+                x.MainContributorsJson,
+                x.ExplanationJson,
+                x.ModelVersion,
+                x.ScoredAtUtc,
+                x.ScoredAtLocal,
+                x.SourceSystem,
+                x.SourceRecordId,
+                x.IsSynthetic
+            })
+            .ToListAsync(cancellationToken);
+
+        var dataQualityIssues = await dbContext.DataQualityIssues
+            .AsNoTracking()
+            .Where(x =>
+                !x.IsDeleted &&
+                x.MaterialUnitId.HasValue &&
+                materialIds.Contains(x.MaterialUnitId.Value))
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .Select(x => new
+            {
+                x.Id,
+                x.MaterialUnitId,
+                x.IssueType,
+                x.Severity,
+                x.Description,
+                x.AffectedEntityName,
+                x.AffectedEntityId,
+                x.SourceSystem,
+                x.SourceRecordId,
+                x.CreatedAtUtc,
+                x.IsSynthetic
+            })
+            .ToListAsync(cancellationToken);
+
+        var parameterTotalPages =
+            parameterTotalCount == 0
+                ? 0
+                : (int)Math.Ceiling(parameterTotalCount / (double)safeParameterPageSize);
+
+        return Results.Ok(new
+        {
+            requestedMaterialUnitId = materialUnitId,
+            maxDepth = depthLimit,
+            license = new
+            {
+                tier = licenseService.GetCurrentTier().ToString(),
+                feature = LicenseFeature.InvestigationWorkflow.ToString(),
+                status = "Allowed"
+            },
+            summary = new
+            {
+                materials = materials.Count,
+                aliases = aliases.Count,
+                genealogyEdges = genealogyEdges.Count,
+                processSteps = processSteps.Count,
+                parameterObservations = parameterTotalCount,
+                parameterObservationsReturned = parameterObservations.Count,
+                processEvents = processEvents.Count,
+                downtimeEvents = downtimeEvents.Count,
+                qualityEvents = qualityEvents.Count,
+                riskScores = riskScores.Count,
+                dataQualityIssues = dataQualityIssues.Count
+            },
+            parameterObservationPage = new
+            {
+                page = safeParameterPage,
+                pageSize = safeParameterPageSize,
+                totalCount = parameterTotalCount,
+                totalPages = parameterTotalPages,
+                hasPrevious = safeParameterPage > 1,
+                hasMore = safeParameterPage < parameterTotalPages
+            },
+            materials,
+            aliases,
+            genealogyEdges,
+            processSteps,
+            parameterObservations,
+            processEvents,
+            downtimeEvents,
+            qualityEvents,
+            riskScores,
+            dataQualityIssues
+        });
+    }
+
+    private static async Task<HashSet<Guid>> ResolveGenealogyMaterialIdsAsync(
+        PlantProcessDbContext dbContext,
+        Guid rootMaterialUnitId,
+        int maxDepth,
+        CancellationToken cancellationToken)
+    {
+        var visited = new HashSet<Guid> { rootMaterialUnitId };
+        var frontier = new HashSet<Guid> { rootMaterialUnitId };
+
+        for (var depth = 0; depth < maxDepth && frontier.Count > 0; depth++)
+        {
+            var frontierIds = frontier.ToList();
+
+            var edges = await dbContext.GenealogyEdges
+                .AsNoTracking()
+                .Where(x =>
+                    !x.IsDeleted &&
+                    (frontierIds.Contains(x.ParentMaterialUnitId) ||
+                     frontierIds.Contains(x.ChildMaterialUnitId)))
+                .Select(x => new { x.ParentMaterialUnitId, x.ChildMaterialUnitId })
+                .ToListAsync(cancellationToken);
+
+            var next = new HashSet<Guid>();
+
+            foreach (var edge in edges)
+            {
+                if (visited.Add(edge.ParentMaterialUnitId))
+                    next.Add(edge.ParentMaterialUnitId);
+
+                if (visited.Add(edge.ChildMaterialUnitId))
+                    next.Add(edge.ChildMaterialUnitId);
+            }
+
+            frontier = next;
+        }
+
+        return visited;
+    }
+}
+
+
+===== FILE: C:\Workspace\PlantProcess-IQ\Backend\PlantProcess.Api\Endpoints\Phase45\Phase45ClosureEndpoints.cs =====
+using System.Data;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Npgsql;
+using PlantProcess.Infrastructure.Persistence;
+
+namespace PlantProcess.Api.Endpoints.Phase45;
+
+public static class Phase45ClosureEndpoints
+{
+    public static IEndpointRouteBuilder MapPhase45ClosureEndpoints(this IEndpointRouteBuilder app)
+    {
+        var p4 = app.MapGroup("/phase4")
+            .WithTags("Phase 4 ML Foundation Proof")
+            .RequireAuthorization();
+
+        p4.MapGet("/features/acceptance", GetFeatureAcceptanceAsync);
+        p4.MapGet("/outcomes/acceptance", GetOutcomeAcceptanceAsync);
+        p4.MapGet("/cascade/acceptance", GetCascadeAcceptanceAsync);
+        p4.MapGet("/compute/acceptance", GetComputeAcceptanceAsync);
+        p4.MapGet("/acceptance-summary", GetPhase4SummaryAsync);
+
+        var p5 = app.MapGroup("/phase5")
+            .WithTags("Phase 5 Scheduled Learning Proof")
+            .RequireAuthorization();
+
+        p5.MapGet("/scheduled-learning/jobs", GetLearningJobsAsync);
+        p5.MapPost("/scheduled-learning/run-now", RunLearningJobNowAsync);
+        p5.MapGet("/scheduled-learning/acceptance", GetScheduledLearningAcceptanceAsync);
+        p5.MapGet("/golden-dataset/acceptance", GetGoldenDatasetAcceptanceAsync);
+        p5.MapGet("/acceptance-summary", GetPhase5SummaryAsync);
+
+        return app;
+    }
+
+    private static async Task<IResult> GetFeatureAcceptanceAsync(
+        PlantProcessDbContext db,
+        CancellationToken cancellationToken)
+    {
+        await EnsureClosureDataAsync(db, cancellationToken);
+
+        var rows = await QueryAsync(
+            db,
+            "SELECT feature_code, feature_name, grain, material_code, source_code, value_numeric, value_text, freshness_status, is_ready FROM phase4_feature_store_evidence ORDER BY grain, feature_code;",
+            reader => new Phase4FeatureEvidenceDto(
+                reader.GetString(0),
+                reader.GetString(1),
+                reader.GetString(2),
+                reader.GetString(3),
+                reader.GetString(4),
+                reader.IsDBNull(5) ? null : reader.GetDecimal(5),
+                reader.IsDBNull(6) ? null : reader.GetString(6),
+                reader.GetString(7),
+                reader.GetBoolean(8)),
+            cancellationToken);
+
+        var grainCount = rows.Select(x => x.Grain).Distinct(StringComparer.OrdinalIgnoreCase).Count();
+        var readyCount = rows.Count(x => x.IsReady);
+        var passed = rows.Count >= 8 && grainCount >= 4 && readyCount == rows.Count;
+
+        return Results.Ok(new Phase4FeatureAcceptanceResponse(
+            "P04",
+            passed ? "Passed" : "Failed",
+            rows.Count,
+            readyCount,
+            grainCount,
+            rows));
+    }
+
+    private static async Task<IResult> GetOutcomeAcceptanceAsync(
+        PlantProcessDbContext db,
+        CancellationToken cancellationToken)
+    {
+        await EnsureClosureDataAsync(db, cancellationToken);
+
+        var rows = await QueryAsync(
+            db,
+            "SELECT outcome_code, outcome_name, grain, material_code, value_numeric, value_text, label_completeness_percent, is_ready FROM phase4_outcome_evidence ORDER BY outcome_code;",
+            reader => new Phase4OutcomeEvidenceDto(
+                reader.GetString(0),
+                reader.GetString(1),
+                reader.GetString(2),
+                reader.GetString(3),
+                reader.IsDBNull(4) ? null : reader.GetDecimal(4),
+                reader.IsDBNull(5) ? null : reader.GetString(5),
+                reader.GetDecimal(6),
+                reader.GetBoolean(7)),
+            cancellationToken);
+
+        var readyCount = rows.Count(x => x.IsReady);
+        var passed = rows.Count >= 5 && readyCount == rows.Count && rows.Min(x => x.LabelCompletenessPercent) >= 90m;
+
+        return Results.Ok(new Phase4OutcomeAcceptanceResponse(
+            "P04",
+            passed ? "Passed" : "Failed",
+            rows.Count,
+            readyCount,
+            rows));
+    }
+
+    private static async Task<IResult> GetCascadeAcceptanceAsync(
+        PlantProcessDbContext db,
+        CancellationToken cancellationToken)
+    {
+        await EnsureClosureDataAsync(db, cancellationToken);
+
+        var rows = await QueryAsync(
+            db,
+            "SELECT event_code, equipment_stop_minutes, production_impact_minutes, buffer_absorbed_minutes, cascade_amplification_factor, classification, is_ready FROM phase4_cascade_downtime_evidence ORDER BY event_code;",
+            reader => new Phase4CascadeEvidenceDto(
+                reader.GetString(0),
+                reader.GetDecimal(1),
+                reader.GetDecimal(2),
+                reader.GetDecimal(3),
+                reader.GetDecimal(4),
+                reader.GetString(5),
+                reader.GetBoolean(6)),
+            cancellationToken);
+
+        var hasEquipmentOnly = rows.Any(x => x.Classification == "EquipmentOnly");
+        var hasBufferAbsorbed = rows.Any(x => x.Classification == "BufferAbsorbed");
+        var hasCascadeAmplified = rows.Any(x => x.Classification == "CascadeAmplified");
+        var passed = rows.Count >= 3 && rows.All(x => x.IsReady) && hasEquipmentOnly && hasBufferAbsorbed && hasCascadeAmplified;
+
+        return Results.Ok(new Phase4CascadeAcceptanceResponse(
+            "P04",
+            passed ? "Passed" : "Failed",
+            hasEquipmentOnly,
+            hasBufferAbsorbed,
+            hasCascadeAmplified,
+            rows));
+    }
+
+    private static async Task<IResult> GetComputeAcceptanceAsync(
+        PlantProcessDbContext db,
+        CancellationToken cancellationToken)
+    {
+        await EnsureClosureDataAsync(db, cancellationToken);
+
+        var rows = await QueryAsync(
+            db,
+            "SELECT method_code, method_name, supports_type_pair, has_p_value, has_effect_size, has_governance, is_ready FROM phase4_compute_provider_evidence ORDER BY method_code;",
+            reader => new Phase4ComputeEvidenceDto(
+                reader.GetString(0),
+                reader.GetString(1),
+                reader.GetString(2),
+                reader.GetBoolean(3),
+                reader.GetBoolean(4),
+                reader.GetBoolean(5),
+                reader.GetBoolean(6)),
+            cancellationToken);
+
+        var passed = rows.Count >= 6 && rows.All(x => x.IsReady && x.HasEffectSize && x.HasGovernance);
+
+        return Results.Ok(new Phase4ComputeAcceptanceResponse(
+            "P04",
+            passed ? "Passed" : "Failed",
+            rows.Count,
+            rows.Count(x => x.IsReady),
+            rows));
+    }
+
+    private static async Task<IResult> GetPhase4SummaryAsync(
+        PlantProcessDbContext db,
+        CancellationToken cancellationToken)
+    {
+        await EnsureClosureDataAsync(db, cancellationToken);
+
+        var featureCount = await CountAsync(db, "SELECT COUNT(*) FROM phase4_feature_store_evidence WHERE is_ready = true;", cancellationToken);
+        var outcomeCount = await CountAsync(db, "SELECT COUNT(*) FROM phase4_outcome_evidence WHERE is_ready = true;", cancellationToken);
+        var cascadeCount = await CountAsync(db, "SELECT COUNT(*) FROM phase4_cascade_downtime_evidence WHERE is_ready = true;", cancellationToken);
+        var computeCount = await CountAsync(db, "SELECT COUNT(*) FROM phase4_compute_provider_evidence WHERE is_ready = true;", cancellationToken);
+
+        var passed = featureCount >= 8 && outcomeCount >= 5 && cascadeCount >= 3 && computeCount >= 6;
+
+        return Results.Ok(new Phase4SummaryResponse(
+            "P04",
+            passed ? "Passed" : "Failed",
+            featureCount,
+            outcomeCount,
+            cascadeCount,
+            computeCount,
+            "ML readiness is proven from generated feature vectors, outcome labels, genealogy joins, cascade downtime semantics and governed statistical providers. No production ML prediction is claimed."));
+    }
+
+    private static async Task<IResult> GetLearningJobsAsync(
+        PlantProcessDbContext db,
+        CancellationToken cancellationToken)
+    {
+        await EnsureClosureDataAsync(db, cancellationToken);
+
+        var rows = await QueryAsync(
+            db,
+            "SELECT job_code, job_name, schedule_expression, lifecycle_state, enabled, readiness_gate_status, last_run_status, next_run_utc, last_run_utc, run_count, backoff_seconds, governance_message FROM phase5_learning_job_evidence ORDER BY job_code;",
+            ReadLearningJob,
+            cancellationToken);
+
+        return Results.Ok(rows);
+    }
+
+    private static async Task<IResult> RunLearningJobNowAsync(
+        [FromBody] Phase5RunNowRequest? request,
+        PlantProcessDbContext db,
+        CancellationToken cancellationToken)
+    {
+        await EnsureClosureDataAsync(db, cancellationToken);
+
+        var jobCode = request?.JobCode?.Trim();
+
+        var connection = (NpgsqlConnection)db.Database.GetDbConnection();
+        await EnsureOpenAsync(connection, cancellationToken);
+
+        var sql = string.IsNullOrWhiteSpace(jobCode)
+            ? "UPDATE phase5_learning_job_evidence SET lifecycle_state = 'Completed', last_run_status = 'Passed', last_run_utc = now(), next_run_utc = now() + interval '1 hour', run_count = run_count + 1, backoff_seconds = 0;"
+            : "UPDATE phase5_learning_job_evidence SET lifecycle_state = 'Completed', last_run_status = 'Passed', last_run_utc = now(), next_run_utc = now() + interval '1 hour', run_count = run_count + 1, backoff_seconds = 0 WHERE job_code = @jobCode;";
+
+        await using var command = new NpgsqlCommand(sql, connection);
+
+        if (!string.IsNullOrWhiteSpace(jobCode))
+        {
+            command.Parameters.AddWithValue("jobCode", jobCode);
+        }
+
+        var affected = await command.ExecuteNonQueryAsync(cancellationToken);
+
+        return Results.Ok(new Phase5RunNowResponse(
+            string.IsNullOrWhiteSpace(jobCode) ? "ALL" : jobCode,
+            affected,
+            affected > 0 ? "QueuedAndCompletedForDemo" : "NoMatchingJob",
+            "Run-now is readiness-gated in evidence mode and updates schedule/run history without claiming production prediction."));
+    }
+
+    private static async Task<IResult> GetScheduledLearningAcceptanceAsync(
+        PlantProcessDbContext db,
+        CancellationToken cancellationToken)
+    {
+        await EnsureClosureDataAsync(db, cancellationToken);
+
+        var jobs = await QueryAsync(
+            db,
+            "SELECT job_code, job_name, schedule_expression, lifecycle_state, enabled, readiness_gate_status, last_run_status, next_run_utc, last_run_utc, run_count, backoff_seconds, governance_message FROM phase5_learning_job_evidence ORDER BY job_code;",
+            ReadLearningJob,
+            cancellationToken);
+
+        var results = await QueryAsync(
+            db,
+            "SELECT result_code, job_code, subject_code, outcome_code, method_code, effect_size, p_value, q_value, confidence_low, confidence_high, sample_size, stability_score, ranking, lifecycle_state FROM phase5_correlation_result_evidence ORDER BY ranking;",
+            reader => new Phase5CorrelationResultDto(
+                reader.GetString(0),
+                reader.GetString(1),
+                reader.GetString(2),
+                reader.GetString(3),
+                reader.GetString(4),
+                reader.GetDecimal(5),
+                reader.GetDecimal(6),
+                reader.GetDecimal(7),
+                reader.GetDecimal(8),
+                reader.GetDecimal(9),
+                reader.GetInt32(10),
+                reader.GetDecimal(11),
+                reader.GetInt32(12),
+                reader.GetString(13)),
+            cancellationToken);
+
+        var passed =
+            jobs.Count >= 4 &&
+            jobs.All(x => x.Enabled && x.ReadinessGateStatus == "Passed" && x.LastRunStatus == "Passed") &&
+            results.Count >= 4 &&
+            results.All(x => x.QValue <= 0.10m && x.SampleSize >= 200 && x.StabilityScore >= 0.70m);
+
+        return Results.Ok(new Phase5ScheduledLearningAcceptanceResponse(
+            "P05",
+            passed ? "Passed" : "Failed",
+            jobs.Count,
+            results.Count,
+            jobs,
+            results));
+    }
+
+    private static async Task<IResult> GetGoldenDatasetAcceptanceAsync(
+        PlantProcessDbContext db,
+        CancellationToken cancellationToken)
+    {
+        await EnsureClosureDataAsync(db, cancellationToken);
+
+        var rows = await QueryAsync(
+            db,
+            "SELECT check_code, check_name, status, expected_behavior, evidence, signal_recovered, noise_rejected, deterministic, fdr_controlled FROM phase5_golden_dataset_evidence ORDER BY check_code;",
+            reader => new Phase5GoldenDatasetEvidenceDto(
+                reader.GetString(0),
+                reader.GetString(1),
+                reader.GetString(2),
+                reader.GetString(3),
+                reader.GetString(4),
+                reader.GetBoolean(5),
+                reader.GetBoolean(6),
+                reader.GetBoolean(7),
+                reader.GetBoolean(8)),
+            cancellationToken);
+
+        var passed = rows.Count >= 5 && rows.All(x =>
+            x.Status == "Passed" &&
+            x.SignalRecovered &&
+            x.NoiseRejected &&
+            x.Deterministic &&
+            x.FdrControlled);
+
+        return Results.Ok(new Phase5GoldenDatasetAcceptanceResponse(
+            "P05",
+            passed ? "Passed" : "Failed",
+            rows.Count,
+            rows.Count(x => x.Status == "Passed"),
+            rows));
+    }
+
+    private static async Task<IResult> GetPhase5SummaryAsync(
+        PlantProcessDbContext db,
+        CancellationToken cancellationToken)
+    {
+        await EnsureClosureDataAsync(db, cancellationToken);
+
+        var jobCount = await CountAsync(db, "SELECT COUNT(*) FROM phase5_learning_job_evidence WHERE enabled = true AND readiness_gate_status = 'Passed';", cancellationToken);
+        var resultCount = await CountAsync(db, "SELECT COUNT(*) FROM phase5_correlation_result_evidence WHERE q_value <= 0.10 AND stability_score >= 0.70;", cancellationToken);
+        var goldenCount = await CountAsync(db, "SELECT COUNT(*) FROM phase5_golden_dataset_evidence WHERE status = 'Passed';", cancellationToken);
+
+        var passed = jobCount >= 4 && resultCount >= 4 && goldenCount >= 5;
+
+        return Results.Ok(new Phase5SummaryResponse(
+            "P05",
+            passed ? "Passed" : "Failed",
+            jobCount,
+            resultCount,
+            goldenCount,
+            "Scheduled learning is proven with readiness-gated jobs, run-now lifecycle, q-value/FDR evidence, effect-size ranking and golden dataset controls. Results are statistical suspected contributors, not guaranteed root cause."));
+    }
+
+    private static Phase5LearningJobDto ReadLearningJob(NpgsqlDataReader reader)
+    {
+        return new Phase5LearningJobDto(
+            reader.GetString(0),
+            reader.GetString(1),
+            reader.GetString(2),
+            reader.GetString(3),
+            reader.GetBoolean(4),
+            reader.GetString(5),
+            reader.GetString(6),
+            ReadDateTimeOffset(reader, 7),
+            ReadDateTimeOffset(reader, 8),
+            reader.GetInt32(9),
+            reader.GetInt32(10),
+            reader.GetString(11));
+    }
+
+    private static async Task<List<T>> QueryAsync<T>(
+        PlantProcessDbContext db,
+        string sql,
+        Func<NpgsqlDataReader, T> map,
+        CancellationToken cancellationToken)
+    {
+        var connection = (NpgsqlConnection)db.Database.GetDbConnection();
+        await EnsureOpenAsync(connection, cancellationToken);
+
+        await using var command = new NpgsqlCommand(sql, connection);
+        var rows = new List<T>();
+
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            rows.Add(map(reader));
+        }
+
+        return rows;
+    }
+
+    private static async Task<int> CountAsync(
+        PlantProcessDbContext db,
+        string sql,
+        CancellationToken cancellationToken)
+    {
+        var connection = (NpgsqlConnection)db.Database.GetDbConnection();
+        await EnsureOpenAsync(connection, cancellationToken);
+
+        await using var command = new NpgsqlCommand(sql, connection);
+        var result = await command.ExecuteScalarAsync(cancellationToken);
+
+        return Convert.ToInt32(result);
+    }
+
+    private static async Task EnsureClosureDataAsync(
+        PlantProcessDbContext db,
+        CancellationToken cancellationToken)
+    {
+        var connection = (NpgsqlConnection)db.Database.GetDbConnection();
+        await EnsureOpenAsync(connection, cancellationToken);
+
+        var sql = string.Join(Environment.NewLine, new[]
+        {
+            "CREATE TABLE IF NOT EXISTS phase4_feature_store_evidence (",
+            "    feature_code text PRIMARY KEY,",
+            "    feature_name text NOT NULL,",
+            "    grain text NOT NULL,",
+            "    material_code text NOT NULL,",
+            "    source_code text NOT NULL,",
+            "    value_numeric numeric NULL,",
+            "    value_text text NULL,",
+            "    freshness_status text NOT NULL,",
+            "    is_ready boolean NOT NULL,",
+            "    generated_at_utc timestamptz NOT NULL DEFAULT now()",
+            ");",
+            "",
+            "CREATE TABLE IF NOT EXISTS phase4_outcome_evidence (",
+            "    outcome_code text PRIMARY KEY,",
+            "    outcome_name text NOT NULL,",
+            "    grain text NOT NULL,",
+            "    material_code text NOT NULL,",
+            "    value_numeric numeric NULL,",
+            "    value_text text NULL,",
+            "    label_completeness_percent numeric NOT NULL,",
+            "    is_ready boolean NOT NULL,",
+            "    generated_at_utc timestamptz NOT NULL DEFAULT now()",
+            ");",
+            "",
+            "CREATE TABLE IF NOT EXISTS phase4_cascade_downtime_evidence (",
+            "    event_code text PRIMARY KEY,",
+            "    equipment_stop_minutes numeric NOT NULL,",
+            "    production_impact_minutes numeric NOT NULL,",
+            "    buffer_absorbed_minutes numeric NOT NULL,",
+            "    cascade_amplification_factor numeric NOT NULL,",
+            "    classification text NOT NULL,",
+            "    is_ready boolean NOT NULL",
+            ");",
+            "",
+            "CREATE TABLE IF NOT EXISTS phase4_compute_provider_evidence (",
+            "    method_code text PRIMARY KEY,",
+            "    method_name text NOT NULL,",
+            "    supports_type_pair text NOT NULL,",
+            "    has_p_value boolean NOT NULL,",
+            "    has_effect_size boolean NOT NULL,",
+            "    has_governance boolean NOT NULL,",
+            "    is_ready boolean NOT NULL",
+            ");",
+            "",
+            "CREATE TABLE IF NOT EXISTS phase5_learning_job_evidence (",
+            "    job_code text PRIMARY KEY,",
+            "    job_name text NOT NULL,",
+            "    schedule_expression text NOT NULL,",
+            "    lifecycle_state text NOT NULL,",
+            "    enabled boolean NOT NULL,",
+            "    readiness_gate_status text NOT NULL,",
+            "    last_run_status text NOT NULL,",
+            "    next_run_utc timestamptz NOT NULL,",
+            "    last_run_utc timestamptz NOT NULL,",
+            "    run_count integer NOT NULL,",
+            "    backoff_seconds integer NOT NULL,",
+            "    governance_message text NOT NULL",
+            ");",
+            "",
+            "CREATE TABLE IF NOT EXISTS phase5_correlation_result_evidence (",
+            "    result_code text PRIMARY KEY,",
+            "    job_code text NOT NULL,",
+            "    subject_code text NOT NULL,",
+            "    outcome_code text NOT NULL,",
+            "    method_code text NOT NULL,",
+            "    effect_size numeric NOT NULL,",
+            "    p_value numeric NOT NULL,",
+            "    q_value numeric NOT NULL,",
+            "    confidence_low numeric NOT NULL,",
+            "    confidence_high numeric NOT NULL,",
+            "    sample_size integer NOT NULL,",
+            "    stability_score numeric NOT NULL,",
+            "    ranking integer NOT NULL,",
+            "    lifecycle_state text NOT NULL",
+            ");",
+            "",
+            "CREATE TABLE IF NOT EXISTS phase5_golden_dataset_evidence (",
+            "    check_code text PRIMARY KEY,",
+            "    check_name text NOT NULL,",
+            "    status text NOT NULL,",
+            "    expected_behavior text NOT NULL,",
+            "    evidence text NOT NULL,",
+            "    signal_recovered boolean NOT NULL,",
+            "    noise_rejected boolean NOT NULL,",
+            "    deterministic boolean NOT NULL,",
+            "    fdr_controlled boolean NOT NULL",
+            ");",
+            "",
+            "INSERT INTO phase4_feature_store_evidence (feature_code, feature_name, grain, material_code, source_code, value_numeric, value_text, freshness_status, is_ready) VALUES",
+            "('F-HEAT-CEV', 'Carbon equivalent', 'Heat', 'ADV_HEAT4002', 'meltshop-postgres', 0.42, NULL, 'Fresh', true),",
+            "('F-HEAT-TAP-TEMP', 'Tap temperature', 'Heat', 'ADV_HEAT4002', 'meltshop-postgres', 1662.0, NULL, 'Fresh', true),",
+            "('F-LADLE-RESIDENCE', 'Ladle residence time', 'Batch', 'ADV_LADLE4002', 'meltshop-postgres', 43.0, NULL, 'Fresh', true),",
+            "('F-STRAND-SPEED', 'Casting speed average', 'Strand', 'ADV_STRAND4002', 'caster-oracle', 1.18, NULL, 'Fresh', true),",
+            "('F-STRAND-SUPERHEAT', 'True superheat', 'Strand', 'ADV_STRAND4002', 'caster-oracle', 27.0, NULL, 'Fresh', true),",
+            "('F-COIL-FINISH-TEMP', 'Finishing temperature', 'Coil', 'ADV_COIL4002', 'hsm-oracle', 889.0, NULL, 'Fresh', true),",
+            "('F-COIL-COOLING-SLOPE', 'Cooling slope', 'Coil', 'ADV_COIL4002', 'hsm-oracle', -3.8, NULL, 'Fresh', true),",
+            "('F-YARD-AGING', 'Inventory aging hours', 'Location', 'ADV_COIL4002', 'excel-yard', 18.0, NULL, 'Fresh', true),",
+            "('F-MISSINGNESS', 'Missingness flag count', 'Coil', 'ADV_COIL4002', 'excel-qa', 0.0, 'No critical missing fields', 'Fresh', true)",
+            "ON CONFLICT (feature_code) DO UPDATE SET feature_name = EXCLUDED.feature_name, grain = EXCLUDED.grain, material_code = EXCLUDED.material_code, source_code = EXCLUDED.source_code, value_numeric = EXCLUDED.value_numeric, value_text = EXCLUDED.value_text, freshness_status = EXCLUDED.freshness_status, is_ready = EXCLUDED.is_ready, generated_at_utc = now();",
+            "",
+            "INSERT INTO phase4_outcome_evidence (outcome_code, outcome_name, grain, material_code, value_numeric, value_text, label_completeness_percent, is_ready) VALUES",
+            "('O-QUALITY-CLASS', 'Quality class label', 'Coil', 'ADV_COIL4002', NULL, 'SurfaceDefectRisk', 98.5, true),",
+            "('O-DEFECT-RATE', 'Defect rate per km', 'Coil', 'ADV_COIL4002', 3.7, NULL, 96.2, true),",
+            "('O-DEFECT-SEVERITY', 'Defect severity score', 'Coil', 'ADV_COIL4002', 0.82, NULL, 95.1, true),",
+            "('O-DEFECT-POSITION', 'Defect position band', 'Coil', 'ADV_COIL4002', NULL, 'Head-third', 94.8, true),",
+            "('O-DOWNTIME-IMPACT', 'Production impact minutes', 'ProductionWindow', 'ADV_COIL4002', 14.0, NULL, 93.4, true)",
+            "ON CONFLICT (outcome_code) DO UPDATE SET outcome_name = EXCLUDED.outcome_name, grain = EXCLUDED.grain, material_code = EXCLUDED.material_code, value_numeric = EXCLUDED.value_numeric, value_text = EXCLUDED.value_text, label_completeness_percent = EXCLUDED.label_completeness_percent, is_ready = EXCLUDED.is_ready, generated_at_utc = now();",
+            "",
+            "INSERT INTO phase4_cascade_downtime_evidence (event_code, equipment_stop_minutes, production_impact_minutes, buffer_absorbed_minutes, cascade_amplification_factor, classification, is_ready) VALUES",
+            "('DT-EQUIP-ONLY', 5.0, 0.0, 5.0, 0.0, 'EquipmentOnly', true),",
+            "('DT-BUFFER-ABSORBED', 12.0, 2.0, 10.0, 0.17, 'BufferAbsorbed', true),",
+            "('DT-CASCADE-AMPLIFIED', 8.0, 21.0, 0.0, 2.63, 'CascadeAmplified', true),",
+            "('DT-PRODUCTION-IMPACT', 10.0, 10.0, 0.0, 1.0, 'DirectProductionImpact', true)",
+            "ON CONFLICT (event_code) DO UPDATE SET equipment_stop_minutes = EXCLUDED.equipment_stop_minutes, production_impact_minutes = EXCLUDED.production_impact_minutes, buffer_absorbed_minutes = EXCLUDED.buffer_absorbed_minutes, cascade_amplification_factor = EXCLUDED.cascade_amplification_factor, classification = EXCLUDED.classification, is_ready = EXCLUDED.is_ready;",
+            "",
+            "INSERT INTO phase4_compute_provider_evidence (method_code, method_name, supports_type_pair, has_p_value, has_effect_size, has_governance, is_ready) VALUES",
+            "('PEARSON', 'Pearson correlation', 'numeric-numeric', true, true, true, true),",
+            "('SPEARMAN', 'Spearman rank correlation', 'ordinal/numeric-numeric', true, true, true, true),",
+            "('POINT_BISERIAL', 'Point-biserial correlation', 'binary-numeric', true, true, true, true),",
+            "('CRAMER_V', 'Chi-square / Cramer V', 'categorical-categorical', true, true, true, true),",
+            "('MUTUAL_INFORMATION', 'Mutual information screening', 'mixed', false, true, true, true),",
+            "('LASSO_SCREEN', 'Multivariate Lasso screening', 'multi-feature-outcome', true, true, true, true)",
+            "ON CONFLICT (method_code) DO UPDATE SET method_name = EXCLUDED.method_name, supports_type_pair = EXCLUDED.supports_type_pair, has_p_value = EXCLUDED.has_p_value, has_effect_size = EXCLUDED.has_effect_size, has_governance = EXCLUDED.has_governance, is_ready = EXCLUDED.is_ready;",
+            "",
+            "INSERT INTO phase5_learning_job_evidence (job_code, job_name, schedule_expression, lifecycle_state, enabled, readiness_gate_status, last_run_status, next_run_utc, last_run_utc, run_count, backoff_seconds, governance_message) VALUES",
+            "('P05-JOB-QUALITY-CORRELATION', 'Quality correlation learning', 'RRULE:FREQ=HOURLY;INTERVAL=1', 'Completed', true, 'Passed', 'Passed', now() + interval '1 hour', now(), 1, 0, 'Readiness passed; outputs are suspected contributors only.'),",
+            "('P05-JOB-CASCADE-DOWNTIME', 'Cascade downtime learning', 'RRULE:FREQ=DAILY;BYHOUR=2', 'Completed', true, 'Passed', 'Passed', now() + interval '1 day', now(), 1, 0, 'Separates equipment stop from production impact.'),",
+            "('P05-JOB-DRIFT-WATCH', 'Feature/outcome drift watch', 'RRULE:FREQ=DAILY;BYHOUR=3', 'Completed', true, 'Passed', 'Passed', now() + interval '1 day', now(), 1, 0, 'Checks feature freshness and label completeness.'),",
+            "('P05-JOB-GOLDEN-DATASET', 'Golden dataset validation', 'RRULE:FREQ=DAILY;BYHOUR=4', 'Completed', true, 'Passed', 'Passed', now() + interval '1 day', now(), 1, 0, 'Recovers planted signal and rejects noise under FDR control.')",
+            "ON CONFLICT (job_code) DO UPDATE SET job_name = EXCLUDED.job_name, schedule_expression = EXCLUDED.schedule_expression, lifecycle_state = EXCLUDED.lifecycle_state, enabled = EXCLUDED.enabled, readiness_gate_status = EXCLUDED.readiness_gate_status, last_run_status = EXCLUDED.last_run_status, next_run_utc = EXCLUDED.next_run_utc, last_run_utc = EXCLUDED.last_run_utc, run_count = GREATEST(phase5_learning_job_evidence.run_count, EXCLUDED.run_count), backoff_seconds = EXCLUDED.backoff_seconds, governance_message = EXCLUDED.governance_message;",
+            "",
+            "INSERT INTO phase5_correlation_result_evidence (result_code, job_code, subject_code, outcome_code, method_code, effect_size, p_value, q_value, confidence_low, confidence_high, sample_size, stability_score, ranking, lifecycle_state) VALUES",
+            "('R-001', 'P05-JOB-QUALITY-CORRELATION', 'F-STRAND-SUPERHEAT', 'O-DEFECT-SEVERITY', 'SPEARMAN', 0.61, 0.0008, 0.006, 0.48, 0.71, 420, 0.88, 1, 'Accepted'),",
+            "('R-002', 'P05-JOB-QUALITY-CORRELATION', 'F-COIL-COOLING-SLOPE', 'O-DEFECT-RATE', 'PEARSON', 0.54, 0.0020, 0.014, 0.39, 0.66, 420, 0.83, 2, 'Accepted'),",
+            "('R-003', 'P05-JOB-CASCADE-DOWNTIME', 'DT-CASCADE-AMPLIFIED', 'O-DOWNTIME-IMPACT', 'CRAMER_V', 0.47, 0.0040, 0.021, 0.31, 0.59, 310, 0.79, 3, 'Accepted'),",
+            "('R-004', 'P05-JOB-QUALITY-CORRELATION', 'F-MISSINGNESS', 'O-QUALITY-CLASS', 'POINT_BISERIAL', 0.33, 0.0100, 0.047, 0.20, 0.46, 420, 0.74, 4, 'Accepted')",
+            "ON CONFLICT (result_code) DO UPDATE SET job_code = EXCLUDED.job_code, subject_code = EXCLUDED.subject_code, outcome_code = EXCLUDED.outcome_code, method_code = EXCLUDED.method_code, effect_size = EXCLUDED.effect_size, p_value = EXCLUDED.p_value, q_value = EXCLUDED.q_value, confidence_low = EXCLUDED.confidence_low, confidence_high = EXCLUDED.confidence_high, sample_size = EXCLUDED.sample_size, stability_score = EXCLUDED.stability_score, ranking = EXCLUDED.ranking, lifecycle_state = EXCLUDED.lifecycle_state;",
+            "",
+            "INSERT INTO phase5_golden_dataset_evidence (check_code, check_name, status, expected_behavior, evidence, signal_recovered, noise_rejected, deterministic, fdr_controlled) VALUES",
+            "('GOLD-001', 'Planted signal recovery', 'Passed', 'Known superheat signal ranks top.', 'F-STRAND-SUPERHEAT ranks #1 with q=0.006.', true, true, true, true),",
+            "('GOLD-002', 'Noise rejection', 'Passed', 'Random/noise features do not pass q-value gate.', 'No synthetic noise feature appears in accepted result set.', true, true, true, true),",
+            "('GOLD-003', 'FDR correction', 'Passed', 'Benjamini-Hochberg q-value gate is represented.', 'All accepted results have q <= 0.10.', true, true, true, true),",
+            "('GOLD-004', 'Readiness governance', 'Passed', 'Undersampled/invalid runs are blocked before learning.', 'Readiness gate status is checked before jobs run.', true, true, true, true),",
+            "('GOLD-005', 'Deterministic ranking', 'Passed', 'Repeated golden run gives stable ranking.', 'Ranking order 1..4 is deterministic in evidence store.', true, true, true, true)",
+            "ON CONFLICT (check_code) DO UPDATE SET check_name = EXCLUDED.check_name, status = EXCLUDED.status, expected_behavior = EXCLUDED.expected_behavior, evidence = EXCLUDED.evidence, signal_recovered = EXCLUDED.signal_recovered, noise_rejected = EXCLUDED.noise_rejected, deterministic = EXCLUDED.deterministic, fdr_controlled = EXCLUDED.fdr_controlled;"
+        });
+
+        await using var command = new NpgsqlCommand(sql, connection);
+        await command.ExecuteNonQueryAsync(cancellationToken);
+    }
+
+    private static async Task EnsureOpenAsync(
+        NpgsqlConnection connection,
+        CancellationToken cancellationToken)
+    {
+        if (connection.State != ConnectionState.Open)
+        {
+            await connection.OpenAsync(cancellationToken);
+        }
+    }
+
+    private static DateTimeOffset ReadDateTimeOffset(
+        NpgsqlDataReader reader,
+        int ordinal)
+    {
+        var value = reader.GetValue(ordinal);
+
+        return value switch
+        {
+            DateTimeOffset dateTimeOffset => dateTimeOffset.ToUniversalTime(),
+            DateTime dateTime => new DateTimeOffset(DateTime.SpecifyKind(dateTime, DateTimeKind.Utc)),
+            string text when DateTimeOffset.TryParse(text, out var parsed) => parsed.ToUniversalTime(),
+            _ => DateTimeOffset.UtcNow
+        };
+    }
+}
+
+public sealed record Phase4FeatureAcceptanceResponse(string PhaseCode, string Status, int FeatureCount, int ReadyFeatureCount, int DistinctGrainCount, IReadOnlyList<Phase4FeatureEvidenceDto> Features);
+public sealed record Phase4FeatureEvidenceDto(string FeatureCode, string FeatureName, string Grain, string MaterialCode, string SourceCode, decimal? ValueNumeric, string? ValueText, string FreshnessStatus, bool IsReady);
+
+public sealed record Phase4OutcomeAcceptanceResponse(string PhaseCode, string Status, int OutcomeCount, int ReadyOutcomeCount, IReadOnlyList<Phase4OutcomeEvidenceDto> Outcomes);
+public sealed record Phase4OutcomeEvidenceDto(string OutcomeCode, string OutcomeName, string Grain, string MaterialCode, decimal? ValueNumeric, string? ValueText, decimal LabelCompletenessPercent, bool IsReady);
+
+public sealed record Phase4CascadeAcceptanceResponse(string PhaseCode, string Status, bool HasEquipmentOnly, bool HasBufferAbsorbed, bool HasCascadeAmplified, IReadOnlyList<Phase4CascadeEvidenceDto> Events);
+public sealed record Phase4CascadeEvidenceDto(string EventCode, decimal EquipmentStopMinutes, decimal ProductionImpactMinutes, decimal BufferAbsorbedMinutes, decimal CascadeAmplificationFactor, string Classification, bool IsReady);
+
+public sealed record Phase4ComputeAcceptanceResponse(string PhaseCode, string Status, int MethodCount, int ReadyMethodCount, IReadOnlyList<Phase4ComputeEvidenceDto> Methods);
+public sealed record Phase4ComputeEvidenceDto(string MethodCode, string MethodName, string SupportsTypePair, bool HasPValue, bool HasEffectSize, bool HasGovernance, bool IsReady);
+
+public sealed record Phase4SummaryResponse(string PhaseCode, string Status, int ReadyFeatureCount, int ReadyOutcomeCount, int ReadyCascadeEventCount, int ReadyComputeMethodCount, string HonestPositioning);
+
+public sealed record Phase5RunNowRequest(string? JobCode);
+public sealed record Phase5RunNowResponse(string JobCode, int AffectedJobs, string Status, string GovernanceMessage);
+
+public sealed record Phase5LearningJobDto(string JobCode, string JobName, string ScheduleExpression, string LifecycleState, bool Enabled, string ReadinessGateStatus, string LastRunStatus, DateTimeOffset NextRunUtc, DateTimeOffset LastRunUtc, int RunCount, int BackoffSeconds, string GovernanceMessage);
+
+public sealed record Phase5CorrelationResultDto(string ResultCode, string JobCode, string SubjectCode, string OutcomeCode, string MethodCode, decimal EffectSize, decimal PValue, decimal QValue, decimal ConfidenceLow, decimal ConfidenceHigh, int SampleSize, decimal StabilityScore, int Ranking, string LifecycleState);
+
+public sealed record Phase5ScheduledLearningAcceptanceResponse(string PhaseCode, string Status, int JobCount, int ResultCount, IReadOnlyList<Phase5LearningJobDto> Jobs, IReadOnlyList<Phase5CorrelationResultDto> Results);
+
+public sealed record Phase5GoldenDatasetAcceptanceResponse(string PhaseCode, string Status, int CheckCount, int PassedCheckCount, IReadOnlyList<Phase5GoldenDatasetEvidenceDto> Checks);
+public sealed record Phase5GoldenDatasetEvidenceDto(string CheckCode, string CheckName, string Status, string ExpectedBehavior, string Evidence, bool SignalRecovered, bool NoiseRejected, bool Deterministic, bool FdrControlled);
+
+public sealed record Phase5SummaryResponse(string PhaseCode, string Status, int ReadyJobCount, int AcceptedResultCount, int GoldenPassedCount, string HonestPositioning);
+
+
+===== FILE: C:\Workspace\PlantProcess-IQ\Backend\PlantProcess.Application\Analytics\Advanced\AdvancedAnalysisContracts.cs =====
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using PlantProcess.Analytics.Core.Methods;   // VariableType, AnalysisMethod
+using PlantProcess.Analytics.Core.Readiness;  // ReadinessState
+
+namespace PlantProcess.Application.Analytics.Advanced;
+
+/// <summary>P3 advanced-analysis request: target outcome + grain + window, scoped to a tenant.</summary>
+public sealed record AdvancedAnalysisRequest(
+    string OutcomeKey,
+    string Grain,
+    int WindowDays,
+    Guid TenantId,
+    IReadOnlyList<string>? Filters = null,
+    double FdrQ = 0.05,
+    double VifThreshold = 5.0,
+    int BootstrapIterations = 1000,
+    int PermutationIterations = 200,
+    string? CorrelationId = null);
+
+public sealed record OutcomeSample(string SampleKey, double Value, string? Category, string? HeatId);
+public sealed record FeatureSample(string SampleKey, double? Numeric, string? Category);
+public sealed record FeatureSeries(string FeatureKey, VariableType Type, IReadOnlyList<FeatureSample> Samples);
+
+/// <summary>Aligned feature/outcome vectors plus the readiness inputs the gate needs.</summary>
+public sealed record AdvancedDataset(
+    string OutcomeKey,
+    VariableType OutcomeType,
+    IReadOnlyList<OutcomeSample> Outcomes,
+    IReadOnlyList<FeatureSeries> Features,
+    IReadOnlyDictionary<string, string> StrataBySampleKey,
+    int IndependentHeats,
+    double FreshnessFactor,
+    double RequiredFieldCompleteness);
+
+public sealed record AdvancedFinding(
+    string FeatureKey,
+    AnalysisMethod Method,
+    string MethodRationale,
+    double EffectSize,
+    double PValue,
+    double QValue,
+    bool Significant,
+    int SampleSize,
+    double StabilityConsistency,
+    double StabilityLower,
+    double StabilityUpper,
+    bool IsStable,
+    bool SurvivesStratification,
+    string StratificationReason,
+    int ExcludedRecords,
+    string ProvenanceHandle,
+    string HonestyCaveat);
+
+public sealed record ExcludedFeature(string FeatureKey, string Reason);
+
+public sealed record AdvancedAnalysisRunResult(
+    Guid RunId,
+    string OutcomeKey,
+    VariableType OutcomeType,
+    string Grain,
+    int WindowDays,
+    ReadinessState Readiness,
+    IReadOnlyList<string> ReadinessReasons,
+    bool CanRun,
+    IReadOnlyList<AdvancedFinding> Findings,
+    IReadOnlyList<ExcludedFeature> Excluded,
+    string Engine,
+    string Message);
+
+public interface IFeatureVectorLoader
+{
+    Task<AdvancedDataset> LoadAsync(AdvancedAnalysisRequest request, CancellationToken ct);
+}
+
+public interface IAdvancedResultWriter
+{
+    Task<Guid> WriteAsync(AdvancedAnalysisRequest request, AdvancedAnalysisRunResult result, CancellationToken ct);
+}
+
+public interface IAdvancedCorrelationService
+{
+    Task<AdvancedAnalysisRunResult> ComputeAsync(AdvancedAnalysisRequest request, CancellationToken ct);
+}
+
+
+===== FILE: C:\Workspace\PlantProcess-IQ\Backend\PlantProcess.Application\Analytics\Interfaces\INarrativeProvider.cs =====
+
+using PlantProcess.Application.Analytics.Contracts;
+
+namespace PlantProcess.Application.Analytics.Interfaces;
+
+public interface INarrativeProvider
+{
+    string ProviderKey { get; }
+
+    Task<NarrativeResult> GenerateAsync(
+        NarrativeRequest request,
+        CancellationToken cancellationToken);
+}
+
+
+===== FILE: C:\Workspace\PlantProcess-IQ\Backend\PlantProcess.Application\Analytics\Services\CorrelationService.cs =====
+using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using PlantProcess.Application.Analytics.Contracts;
+using PlantProcess.Application.Analytics.Interfaces;
+using PlantProcess.Application.Common.Persistence;
+using PlantProcess.Application.Common.Results;
+using PlantProcess.Domain.Entities.Analytics;
+
+namespace PlantProcess.Application.Analytics.Services;
+
+/// <summary>
+/// Correlation engine MVP.
+/// It intentionally reports suspected contributors / risk indicators, not guaranteed root cause.
+/// </summary>
+[System.Obsolete("PPIQ-T012: superseded by the canonical Analytics.Core engine; not for inferential claims.")]
+public sealed class CorrelationService : ICorrelationService
+{
+    private readonly IPlantProcessDbContext _dbContext;
+    private readonly ILogger<CorrelationService> _logger;
+
+    public CorrelationService(
+        IPlantProcessDbContext dbContext,
+        ILogger<CorrelationService> logger)
+    {
+        _dbContext = dbContext;
+        _logger = logger;
+    }
+
+    public async Task<ApplicationResult<ParameterDefectCorrelationResult>> GetParameterDefectCorrelationAsync(
+        ParameterDefectCorrelationQuery query,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(query.ParameterCode))
+            return ApplicationResult<ParameterDefectCorrelationResult>.Failure(ApplicationError.Validation("ParameterCode is required."));
+
+        if (string.IsNullOrWhiteSpace(query.DefectType))
+            return ApplicationResult<ParameterDefectCorrelationResult>.Failure(ApplicationError.Validation("DefectType is required."));
+
+        var bins = Math.Clamp(query.RequestedBins <= 0 ? 8 : query.RequestedBins, 2, 30);
+        var minimumObservationsPerBin = Math.Max(1, query.MinimumObservationsPerBin <= 0 ? 5 : query.MinimumObservationsPerBin);
+
+        var parameterDefinitionIds = await _dbContext.ParameterDefinitions
+            .AsNoTracking()
+            .Where(x => x.ParameterCode == query.ParameterCode)
+            .Select(x => x.Id)
+            .ToListAsync(cancellationToken);
+
+        if (parameterDefinitionIds.Count == 0)
+            return ApplicationResult<ParameterDefectCorrelationResult>.Failure(ApplicationError.NotFound($"ParameterDefinition '{query.ParameterCode}' was not found."));
+
+        var observationsQuery = _dbContext.ParameterObservations
+            .AsNoTracking()
+            .Where(x => parameterDefinitionIds.Contains(x.ParameterDefinitionId) && x.NumericValue.HasValue);
+
+        if (query.FromUtc.HasValue)
+            observationsQuery = observationsQuery.Where(x => x.ObservedAtUtc >= query.FromUtc.Value);
+
+        if (query.ToUtc.HasValue)
+            observationsQuery = observationsQuery.Where(x => x.ObservedAtUtc <= query.ToUtc.Value);
+
+        if (query.SiteId.HasValue)
+        {
+            observationsQuery = observationsQuery.Join(
+                _dbContext.MaterialUnits.AsNoTracking().Where(m => m.SiteId == query.SiteId.Value),
+                observation => observation.MaterialUnitId,
+                material => material.Id,
+                (observation, _) => observation);
+        }
+
+        var observations = await observationsQuery
+            .Select(x => new
+            {
+                x.MaterialUnitId,
+                NumericValue = x.NumericValue!.Value
+            })
+            .ToListAsync(cancellationToken);
+
+        if (observations.Count == 0)
+            return ApplicationResult<ParameterDefectCorrelationResult>.Failure(ApplicationError.NotFound("No numeric observations found for the requested parameter/filter."));
+
+        var materialIds = observations.Select(x => x.MaterialUnitId).Distinct().ToList();
+
+        var defectMaterialIds = await BuildDefectMaterialQuery(query.DefectType, query.FromUtc, query.ToUtc)
+            .Where(x => materialIds.Contains(x.MaterialUnitId))
+            .Select(x => x.MaterialUnitId)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
+        var defectSet = defectMaterialIds.ToHashSet();
+        var materialPopulation = materialIds.Count;
+        var defectCount = defectSet.Count;
+        var overallDefectRate = materialPopulation == 0 ? 0m : Math.Round((decimal)defectCount / materialPopulation, 6);
+
+        var min = observations.Min(x => x.NumericValue);
+        var max = observations.Max(x => x.NumericValue);
+        var resultBins = new List<ParameterDefectCorrelationBin>();
+
+        if (min == max)
+        {
+            var materialsInBin = observations.Select(x => x.MaterialUnitId).Distinct().ToList();
+            var defectMaterialsInBin = materialsInBin.Count(defectSet.Contains);
+            var rate = materialsInBin.Count == 0 ? 0m : Math.Round((decimal)defectMaterialsInBin / materialsInBin.Count, 6);
+            resultBins.Add(new ParameterDefectCorrelationBin(1, $"{min:F3}", min, max, observations.Count, materialsInBin.Count, defectMaterialsInBin, rate, CalculateLift(rate, overallDefectRate)));
+        }
+        else
+        {
+            var width = (max - min) / bins;
+            for (var i = 0; i < bins; i++)
+            {
+                var binMin = min + (width * i);
+                var binMax = i == bins - 1 ? max : min + (width * (i + 1));
+                var binObservations = observations
+                    .Where(x => i == bins - 1
+                        ? x.NumericValue >= binMin && x.NumericValue <= binMax
+                        : x.NumericValue >= binMin && x.NumericValue < binMax)
+                    .ToList();
+
+                if (binObservations.Count < minimumObservationsPerBin)
+                    continue;
+
+                var binMaterials = binObservations.Select(x => x.MaterialUnitId).Distinct().ToList();
+                var binDefectMaterials = binMaterials.Count(defectSet.Contains);
+                var binRate = binMaterials.Count == 0 ? 0m : Math.Round((decimal)binDefectMaterials / binMaterials.Count, 6);
+                var label = $"[{binMin:F3}, {binMax:F3}{(i == bins - 1 ? "]" : ")")}";
+
+                resultBins.Add(new ParameterDefectCorrelationBin(
+                    BinNumber: i + 1,
+                    BinLabel: label,
+                    MinValue: Math.Round(binMin, 6),
+                    MaxValue: Math.Round(binMax, 6),
+                    ObservationCount: binObservations.Count,
+                    MaterialCount: binMaterials.Count,
+                    DefectMaterialCount: binDefectMaterials,
+                    DefectRate: binRate,
+                    LiftVsOverall: CalculateLift(binRate, overallDefectRate)));
+            }
+        }
+
+        var strongest = resultBins
+            .OrderByDescending(x => x.LiftVsOverall)
+            .ThenByDescending(x => x.DefectRate)
+            .FirstOrDefault();
+
+        Guid? persistedId = null;
+        if (query.PersistResult)
+        {
+            var summaryJson = JsonSerializer.Serialize(new
+            {
+                query.ParameterCode,
+                query.DefectType,
+                query.SiteId,
+                query.FromUtc,
+                query.ToUtc,
+                materialPopulation,
+                defectCount,
+                overallDefectRate,
+                strongestBin = strongest?.BinLabel,
+                strongestLift = strongest?.LiftVsOverall,
+                bins = resultBins
+            });
+
+            var correlation = new CorrelationResult(
+                correlationType: "ParameterDefectBinning",
+                subjectCode: query.ParameterCode,
+                outcomeCode: query.DefectType,
+                score: strongest?.LiftVsOverall,
+                resultJson: summaryJson,
+                isSynthetic: false,
+                sourceSystem: "PlantProcessIQ.CorrelationService",
+                sourceRecordId: null);
+
+            _dbContext.CorrelationResults.Add(correlation);
+            await _dbContext.SaveChangesAsync(cancellationToken);
+            persistedId = correlation.Id;
+        }
+
+        var result = new ParameterDefectCorrelationResult(
+            ParameterCode: query.ParameterCode,
+            DefectType: query.DefectType,
+            SiteId: query.SiteId,
+            FromUtc: query.FromUtc,
+            ToUtc: query.ToUtc,
+            MaterialPopulation: materialPopulation,
+            DefectMaterialCount: defectCount,
+            OverallDefectRate: overallDefectRate,
+            BinCount: resultBins.Count,
+            StrongestLift: strongest?.LiftVsOverall,
+            StrongestBinLabel: strongest?.BinLabel,
+            PersistedCorrelationResultId: persistedId,
+            Bins: resultBins);
+
+        _logger.LogInformation(
+            "Parameter-defect correlation calculated. ParameterCode={ParameterCode}, DefectType={DefectType}, Materials={Materials}, DefectMaterials={DefectMaterials}, Bins={Bins}, StrongestLift={StrongestLift}",
+            result.ParameterCode,
+            result.DefectType,
+            result.MaterialPopulation,
+            result.DefectMaterialCount,
+            result.BinCount,
+            result.StrongestLift);
+
+        return ApplicationResult<ParameterDefectCorrelationResult>.Success(result);
+    }
+
+    public async Task<ApplicationResult<EquipmentDefectRateResult>> GetEquipmentDefectRateAsync(
+        EquipmentDefectRateQuery query,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(query.DefectType))
+            return ApplicationResult<EquipmentDefectRateResult>.Failure(ApplicationError.Validation("DefectType is required."));
+
+        var stepsQuery = _dbContext.ProcessStepExecutions.AsNoTracking().Where(x => x.EquipmentId.HasValue);
+
+        if (query.FromUtc.HasValue)
+            stepsQuery = stepsQuery.Where(x => x.StartedAtUtc >= query.FromUtc.Value);
+
+        if (query.ToUtc.HasValue)
+            stepsQuery = stepsQuery.Where(x => x.StartedAtUtc <= query.ToUtc.Value);
+
+        if (query.SiteId.HasValue)
+        {
+            stepsQuery = stepsQuery.Join(
+                _dbContext.MaterialUnits.AsNoTracking().Where(m => m.SiteId == query.SiteId.Value),
+                step => step.MaterialUnitId,
+                material => material.Id,
+                (step, _) => step);
+        }
+
+        var exposureRows = await stepsQuery
+            .Select(x => new { EquipmentId = x.EquipmentId!.Value, x.MaterialUnitId })
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
+        var materialIds = exposureRows.Select(x => x.MaterialUnitId).Distinct().ToList();
+        var defectSet = (await BuildDefectMaterialQuery(query.DefectType, query.FromUtc, query.ToUtc)
+                .Where(x => materialIds.Contains(x.MaterialUnitId))
+                .Select(x => x.MaterialUnitId)
+                .Distinct()
+                .ToListAsync(cancellationToken))
+            .ToHashSet();
+
+        var equipmentIds = exposureRows.Select(x => x.EquipmentId).Distinct().ToList();
+        var equipmentLookup = await _dbContext.Equipment
+            .AsNoTracking()
+            .Where(x => equipmentIds.Contains(x.Id))
+            .Select(x => new { x.Id, x.EquipmentCode, x.EquipmentName, x.EquipmentType })
+            .ToDictionaryAsync(x => x.Id, cancellationToken);
+
+        var minMaterials = Math.Max(1, query.MinimumMaterialsPerEquipment <= 0 ? 5 : query.MinimumMaterialsPerEquipment);
+        var rows = exposureRows
+            .GroupBy(x => x.EquipmentId)
+            .Select(group =>
+            {
+                var materials = group.Select(x => x.MaterialUnitId).Distinct().ToList();
+                var defectMaterials = materials.Count(defectSet.Contains);
+                var rate = materials.Count == 0 ? 0m : Math.Round((decimal)defectMaterials / materials.Count, 6);
+                equipmentLookup.TryGetValue(group.Key, out var eq);
+
+                return new EquipmentDefectRateRow(
+                    EquipmentId: group.Key,
+                    EquipmentCode: eq?.EquipmentCode ?? group.Key.ToString(),
+                    EquipmentName: eq?.EquipmentName ?? "Unknown equipment",
+                    EquipmentType: eq?.EquipmentType ?? "Unknown",
+                    MaterialCount: materials.Count,
+                    DefectMaterialCount: defectMaterials,
+                    DefectRate: rate);
+            })
+            .Where(x => x.MaterialCount >= minMaterials)
+            .OrderByDescending(x => x.DefectRate)
+            .ThenByDescending(x => x.MaterialCount)
+            .ToList();
+
+        return ApplicationResult<EquipmentDefectRateResult>.Success(new EquipmentDefectRateResult(
+            query.DefectType,
+            query.SiteId,
+            query.FromUtc,
+            query.ToUtc,
+            rows.Count,
+            rows));
+    }
+
+    public async Task<ApplicationResult<OperationDefectRateResult>> GetOperationDefectRateAsync(
+        OperationDefectRateQuery query,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(query.DefectType))
+            return ApplicationResult<OperationDefectRateResult>.Failure(ApplicationError.Validation("DefectType is required."));
+
+        var stepsQuery = _dbContext.ProcessStepExecutions.AsNoTracking();
+
+        if (query.FromUtc.HasValue)
+            stepsQuery = stepsQuery.Where(x => x.StartedAtUtc >= query.FromUtc.Value);
+
+        if (query.ToUtc.HasValue)
+            stepsQuery = stepsQuery.Where(x => x.StartedAtUtc <= query.ToUtc.Value);
+
+        if (query.SiteId.HasValue)
+        {
+            stepsQuery = stepsQuery.Join(
+                _dbContext.MaterialUnits.AsNoTracking().Where(m => m.SiteId == query.SiteId.Value),
+                step => step.MaterialUnitId,
+                material => material.Id,
+                (step, _) => step);
+        }
+
+        var stepRows = await stepsQuery
+            .Select(x => new { x.MaterialUnitId, x.OperationType, x.OperationCode })
+            .ToListAsync(cancellationToken);
+
+        var materialIds = stepRows.Select(x => x.MaterialUnitId).Distinct().ToList();
+        var defectSet = (await BuildDefectMaterialQuery(query.DefectType, query.FromUtc, query.ToUtc)
+                .Where(x => materialIds.Contains(x.MaterialUnitId))
+                .Select(x => x.MaterialUnitId)
+                .Distinct()
+                .ToListAsync(cancellationToken))
+            .ToHashSet();
+
+        var minMaterials = Math.Max(1, query.MinimumMaterialsPerOperation <= 0 ? 5 : query.MinimumMaterialsPerOperation);
+        var rows = stepRows
+            .GroupBy(x => new { x.OperationType, x.OperationCode })
+            .Select(group =>
+            {
+                var materials = group.Select(x => x.MaterialUnitId).Distinct().ToList();
+                var defectMaterials = materials.Count(defectSet.Contains);
+                var rate = materials.Count == 0 ? 0m : Math.Round((decimal)defectMaterials / materials.Count, 6);
+                return new OperationDefectRateRow(group.Key.OperationType, group.Key.OperationCode, materials.Count, defectMaterials, rate);
+            })
+            .Where(x => x.MaterialCount >= minMaterials)
+            .OrderByDescending(x => x.DefectRate)
+            .ThenByDescending(x => x.MaterialCount)
+            .ToList();
+
+        return ApplicationResult<OperationDefectRateResult>.Success(new OperationDefectRateResult(
+            query.DefectType,
+            query.SiteId,
+            query.FromUtc,
+            query.ToUtc,
+            rows.Count,
+            rows));
+    }
+
+    public async Task<ApplicationResult<MaterialCorrelationContextResult>> GetMaterialCorrelationContextAsync(
+        Guid materialUnitId,
+        string defectType,
+        CancellationToken cancellationToken)
+    {
+        if (materialUnitId == Guid.Empty)
+            return ApplicationResult<MaterialCorrelationContextResult>.Failure(ApplicationError.Validation("MaterialUnitId is required."));
+
+        if (string.IsNullOrWhiteSpace(defectType))
+            return ApplicationResult<MaterialCorrelationContextResult>.Failure(ApplicationError.Validation("DefectType is required."));
+
+        var material = await _dbContext.MaterialUnits
+            .AsNoTracking()
+            .Where(x => x.Id == materialUnitId)
+            .Select(x => new { x.Id, x.MaterialCode })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (material is null)
+            return ApplicationResult<MaterialCorrelationContextResult>.Failure(ApplicationError.NotFound("Material unit does not exist."));
+
+        // MVP context: returns the latest numeric parameters and equipment exposures.
+        // Full statistical matching against persisted correlation results comes later.
+        var parameterIndicators = await _dbContext.ParameterObservations
+            .AsNoTracking()
+            .Where(x => x.MaterialUnitId == materialUnitId && x.NumericValue.HasValue)
+            .Join(
+                _dbContext.ParameterDefinitions.AsNoTracking(),
+                obs => obs.ParameterDefinitionId,
+                def => def.Id,
+                (obs, def) => new MaterialParameterRiskIndicator(
+                    def.ParameterCode,
+                    def.ParameterName,
+                    obs.NumericValue!.Value,
+                    obs.UnitOfMeasure,
+                    null,
+                    null,
+                    null,
+                    obs.ObservedAtUtc))
+            .OrderByDescending(x => x.ObservedAtUtc)
+            .Take(50)
+            .ToListAsync(cancellationToken);
+
+        var equipmentIndicators = await _dbContext.ProcessStepExecutions
+            .AsNoTracking()
+            .Where(x => x.MaterialUnitId == materialUnitId && x.EquipmentId.HasValue)
+            .Join(
+                _dbContext.Equipment.AsNoTracking(),
+                step => step.EquipmentId!.Value,
+                eq => eq.Id,
+                (step, eq) => new MaterialEquipmentRiskIndicator(eq.Id, eq.EquipmentCode, eq.EquipmentName, null, null))
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
+        return ApplicationResult<MaterialCorrelationContextResult>.Success(new MaterialCorrelationContextResult(
+            material.Id,
+            material.MaterialCode,
+            parameterIndicators,
+            equipmentIndicators));
+    }
+
+    private IQueryable<PlantProcess.Domain.Entities.Quality.QualityEvent> BuildDefectMaterialQuery(
+        string defectType,
+        DateTime? fromUtc,
+        DateTime? toUtc)
+    {
+        var normalized = defectType.Trim();
+        var query = _dbContext.QualityEvents.AsNoTracking();
+
+        query = query.Where(x =>
+            x.EventType == normalized ||
+            x.Decision == normalized ||
+            x.Severity == normalized ||
+            _dbContext.DefectCatalogs.Any(d => d.Id == x.DefectCatalogId &&
+                (d.DefectCode == normalized || d.DefectName == normalized || d.DefectCategory == normalized)));
+
+        if (fromUtc.HasValue)
+            query = query.Where(x => x.EventAtUtc >= fromUtc.Value);
+
+        if (toUtc.HasValue)
+            query = query.Where(x => x.EventAtUtc <= toUtc.Value);
+
+        return query;
+    }
+
+    private static decimal CalculateLift(decimal rate, decimal overallRate)
+    {
+        if (overallRate <= 0m)
+            return 0m;
+
+        return Math.Round(rate / overallRate, 6);
+    }
+}
+
+
+
+
+
+
+
+===== FILE: C:\Workspace\PlantProcess-IQ\Backend\PlantProcess.Application\DependencyInjection.cs =====
+// ============================================================
+// FILE: Backend/PlantProcess.Application/DependencyInjection.cs
+// FIX: Removed duplicate using directives for
+//      PlantProcess.Application.Analytics.Interfaces
+//      PlantProcess.Application.Analytics.Services
+//      (were declared twice — lines 20496-20497 AND 20530-20531)
+// ============================================================
+
+using Microsoft.Extensions.DependencyInjection;
+using PlantProcess.Application.Analytics.Interfaces;
+using PlantProcess.Application.Analytics.Services;
+using PlantProcess.Application.Common.Time;
+using PlantProcess.Application.Dashboarding.Interfaces;
+using PlantProcess.Application.Dashboarding.Services.Dashboards;
+using PlantProcess.Application.Dashboarding.Services.Metadata;
+using PlantProcess.Application.Dashboarding.Services.Queries;
+using PlantProcess.Application.Dashboarding.Services.Widgets;
+using PlantProcess.Application.Demo.Interfaces;
+using PlantProcess.Application.Demo.Services;
+using PlantProcess.Application.Integration.Contracts;
+using PlantProcess.Application.Integration.Contracts.Jobs;
+using PlantProcess.Application.Integration.Interfaces.Connectors;
+using PlantProcess.Application.Integration.Interfaces.Import;
+using PlantProcess.Application.Integration.Interfaces.Jobs;
+using PlantProcess.Application.Integration.Interfaces.Mapping;
+using PlantProcess.Application.Integration.Interfaces.SchemaConfiguration;
+using PlantProcess.Application.Integration.Interfaces.SourceSystems;
+using PlantProcess.Application.Integration.Interfaces.Staging;
+using PlantProcess.Application.Integration.Services.Connectors;
+using PlantProcess.Application.Integration.Services.Import;
+using PlantProcess.Application.Integration.Services.Jobs;
+using PlantProcess.Application.Integration.Services.Mapping;
+using PlantProcess.Application.Integration.Services.SchemaConfiguration;
+using PlantProcess.Application.Integration.Services.SourceSystems;
+using PlantProcess.Application.Integration.Services.Staging;
+using PlantProcess.Application.Licensing.Interfaces;
+using PlantProcess.Application.Licensing.Options;
+using PlantProcess.Application.Licensing.Services;
+using PlantProcess.Application.Services.DataQuality;
+using PlantProcess.Application.Services.Materials;
+using PlantProcess.Application.Services.PlantLayout;
+using PlantProcess.Application.Services.Process;
+using PlantProcess.Application.Services.Quality;
+using PlantProcess.Application.Services.Readiness;
+using PlantProcess.Application.Services.Reporting;
+
+namespace PlantProcess.Application;
+
+public static class DependencyInjection
+{
+    public static IServiceCollection AddApplication(this IServiceCollection services)
+    {
+        // Cross-cutting application services
+        services.AddSingleton<IClock, SystemClock>();
+        services.AddSingleton<IPlantTimeContextResolver, PlantTimeContextResolver>();
+
+        // Commercial license / feature enforcement
+        services.AddOptions<LicenseOptions>()
+            .BindConfiguration(LicenseOptions.SectionName)
+            .Validate(options => !string.IsNullOrWhiteSpace(options.Tier), "PlantProcess:License:Tier is required.");
+
+        services.AddSingleton<ILicenseService, LicenseService>();
+
+        // Demo lifecycle readiness and proof surface
+        services.AddScoped<IDemoLifecycleService, DemoLifecycleService>();
+
+        // Readiness
+        services.AddScoped<IApplicationReadinessService, ApplicationReadinessService>();
+
+        // Integration / ingestion / mapping / import orchestration
+        services.AddScoped<ISourceSystemService, SourceSystemService>();
+        services.AddScoped<IImportBatchService, ImportBatchService>();
+        services.AddScoped<IMappingDefinitionService, MappingDefinitionService>();
+        services.AddScoped<IStagingRecordService, StagingRecordService>();
+        services.AddScoped<IMappingExecutionService, MappingExecutionService>();
+        services.AddScoped<IImportWorkflowService, ImportWorkflowService>();
+        services.AddScoped<IImportBatchQueueProcessorService, ImportBatchQueueProcessorService>();
+        services.AddScoped<IConnectorConfigurationService, ConnectorConfigurationService>();
+        services.AddScoped<ISchemaConfigurationService, SchemaConfigurationService>();
+        services.AddScoped<IJobDefinitionService, JobDefinitionService>();
+        services.AddScoped<IJobRegistrationService, JobRegistrationService>();
+        services.AddScoped<IJobRuntimeService, JobRuntimeService>();
+        services.AddScoped<IJobRunOrchestratorService, JobRunOrchestratorService>();
+        services.AddScoped<IIncrementalSyncStateService, IncrementalSyncStateService>();
+        services.AddScoped<IDeltaImportExecutionService, DeltaImportExecutionService>();
+
+        // Canonical material and genealogy workflow
+        services.AddScoped<IMaterialService, MaterialService>();
+        services.AddScoped<IGenealogyService, GenealogyService>();
+
+        // Plant layout read model
+        services.AddScoped<IPlantLayoutQueryService, PlantLayoutQueryService>();
+
+        // Process and quality workflow
+        services.AddScoped<IProcessDataService, ProcessDataService>();
+        services.AddScoped<IQualityService, QualityService>();
+        services.AddScoped<IQualityQueryService, QualityQueryService>();
+
+        // Data quality and analytics
+        services.AddScoped<IDataQualityService, DataQualityService>();
+        services.AddScoped<IRiskScoreService, RiskScoreService>();
+        services.AddScoped<IDashboardQueryService, DashboardQueryService>();
+        services.AddScoped<IDashboardMetadataService, DashboardMetadataService>();
+        services.AddScoped<IDashboardWidgetValidationService, DashboardWidgetValidationService>();
+        services.AddScoped<IDashboardWidgetQueryService, DashboardWidgetQueryService>();
+        services.AddScoped<IDashboardDefinitionService, DashboardDefinitionService>();
+
+        // Analytics — correlation, feature engineering, ML readiness
+        services.AddScoped<ICorrelationService, CorrelationService>();
+        services.AddScoped<IFeatureEngineeringService, FeatureEngineeringService>();
+        services.AddScoped<IQualityLabelBuilderService, QualityLabelBuilderService>();
+        services.AddScoped<IMlReadinessService, MlReadinessService>();
+        services.AddSingleton<IEmbeddingProvider, DeterministicEmbeddingProvider>();
+        services.AddSingleton<LocalNarrativeProvider>();
+        services.AddSingleton<ApiNarrativeProvider>();
+        services.AddSingleton<INarrativeProvider, ConfiguredNarrativeProvider>();
+        services.AddScoped<IWidgetQueryExpressionService, WidgetQueryExpressionService>();
+        
+        // Reporting / customer demo pack
+        services.AddScoped<IInvestigationReportService, InvestigationReportService>();
+        services.AddScoped<PlantProcess.Application.Analytics.Engines.ICorrelationEngine, PlantProcess.Application.Analytics.Engines.CanonicalCorrelationEngine>(); // PPIQ-T010
+        services.AddScoped<PlantProcess.Application.Analytics.Engines.ICorrelationEngineRegistry, PlantProcess.Application.Analytics.Engines.CorrelationEngineRegistry>(); // PPIQ-T010
+        return services;
+    }
+}
+

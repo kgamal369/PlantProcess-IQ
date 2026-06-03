@@ -5766,14 +5766,14 @@ public sealed class NoopAuditLogger<T> : IAuditLogger<T>
   Backend\PlantProcess.Api\Program.cs:368:app.UsePlantProcessAccessControl();
   Backend\PlantProcess.Api\Program.cs:369:app.UseAuthorization();
   Backend\PlantProcess.Api\Program.cs:370:
-> Backend\PlantProcess.Api\Program.cs:371:    // Audit log ÃƒÆ’Ã�â€™Ãƒâ€�Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â�
-ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã�â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã�â€™Ãƒâ€�
-Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã�
-â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã�
-â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã�â€™Ãƒâ€�
-Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã�
-â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã�
-â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â wraps every request matching the audited prefix allow-list (BE-ADD-001).
+> Backend\PlantProcess.Api\Program.cs:371:    // Audit log ÃƒÆ’Ã�€™Ãƒ€�Ã¢‚¬„¢ÃƒÆ’Ã¢‚¬�
+Ãƒ¢Ã¢€š¬Ã¢€¢ÃƒÆ’Ã�€™Ãƒ¢Ã¢€š¬Ã…¡ÃƒÆ’Ã¢‚¬Å¡Ãƒ€šÃ‚¢ÃƒÆ’Ã�€™Ãƒ€�
+Ã¢‚¬„¢ÃƒÆ’Ã¢‚¬Å¡Ãƒ€šÃ‚¢ÃƒÆ’Ã�
+€™Ãƒ€šÃ‚¢ÃƒÆ’Ã‚¢Ãƒ¢Ã¢€š¬Ã…¡Ãƒ€šÃ‚¬ÃƒÆ’Ã¢‚¬¦Ãƒ€šÃ‚¡ÃƒÆ’Ã�
+€™Ãƒ¢Ã¢€š¬Ã…¡ÃƒÆ’Ã¢‚¬Å¡Ãƒ€šÃ‚¬ÃƒÆ’Ã�€™Ãƒ€�
+Ã¢‚¬„¢ÃƒÆ’Ã¢‚¬Å¡Ãƒ€šÃ‚¢ÃƒÆ’Ã�
+€™Ãƒ€šÃ‚¢ÃƒÆ’Ã‚¢Ãƒ¢Ã¢‚¬Å¡Ã‚¬Ãƒ€¦Ã‚¡ÃƒÆ’Ã¢‚¬Å¡Ãƒ€šÃ‚¬ÃƒÆ’Ã�
+€™Ãƒ¢Ã¢€š¬Ã…¡ÃƒÆ’Ã¢‚¬Å¡Ãƒ€šÃ‚ wraps every request matching the audited prefix allow-list (BE-ADD-001).
   Backend\PlantProcess.Api\Program.cs:372:    // Must run AFTER UseAuthentication so context.User is available, and BEFORE endpoints.
 > Backend\PlantProcess.Api\Program.cs:373:    app.UseAuditLog();
   Backend\PlantProcess.Api\Program.cs:374:
@@ -45115,16 +45115,16 @@ function read(file) {
 
 function check(task, condition, message) {
   if (condition) {
-    console.log(`âœ“ ${task} â€” ${message}`);
+    console.log(`œ“ ${task} €” ${message}`);
   } else {
     failed += 1;
-    console.error(`âŒ ${task} â€” ${message}`);
+    console.error(`Œ ${task} €” ${message}`);
   }
 }
 
 console.log("");
 console.log("============================================================");
-console.log("PlantProcess IQ â€” v5 Phase 01/02 Gate");
+console.log("PlantProcess IQ €” v5 Phase 01/02 Gate");
 console.log("Tasks: PPIQ-T201 .. PPIQ-T213");
 console.log("============================================================");
 console.log("");
@@ -45169,7 +45169,7 @@ if (failed > 0) {
 }
 
 console.log("");
-console.log("âœ… PPIQ v5 Phase 01/02 gate passed.");
+console.log("œ… PPIQ v5 Phase 01/02 gate passed.");
 
 [FILE_END]
 

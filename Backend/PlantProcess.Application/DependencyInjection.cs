@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // FILE: Backend/PlantProcess.Application/DependencyInjection.cs
 // FIX: Removed duplicate using directives for
 //      PlantProcess.Application.Analytics.Interfaces
@@ -118,7 +118,8 @@ public static class DependencyInjection
         
         // Reporting / customer demo pack
         services.AddScoped<IInvestigationReportService, InvestigationReportService>();
-
+        services.AddScoped<PlantProcess.Application.Analytics.Engines.ICorrelationEngine, PlantProcess.Application.Analytics.Engines.CanonicalCorrelationEngine>(); // PPIQ-T010
+        services.AddScoped<PlantProcess.Application.Analytics.Engines.ICorrelationEngineRegistry, PlantProcess.Application.Analytics.Engines.CorrelationEngineRegistry>(); // PPIQ-T010
         return services;
     }
 }

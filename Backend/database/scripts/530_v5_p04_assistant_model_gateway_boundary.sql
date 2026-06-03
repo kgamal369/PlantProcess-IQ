@@ -1,6 +1,6 @@
 -- ============================================================
 -- PlantProcess IQ Doctrine v5
--- P04 Â· Assistant Model Gateway & Data Boundary
+-- P04 · Assistant Model Gateway & Data Boundary
 --
 -- Idempotent data model for:
 --   - per-tenant provider configuration

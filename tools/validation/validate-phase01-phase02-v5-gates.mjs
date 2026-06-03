@@ -19,16 +19,16 @@ function read(file) {
 
 function check(task, condition, message) {
   if (condition) {
-    console.log(`âœ“ ${task} â€” ${message}`);
+    console.log(`œ“ ${task} €” ${message}`);
   } else {
     failed += 1;
-    console.error(`âŒ ${task} â€” ${message}`);
+    console.error(`Œ ${task} €” ${message}`);
   }
 }
 
 console.log("");
 console.log("============================================================");
-console.log("PlantProcess IQ â€” v5 Phase 01/02 Gate");
+console.log("PlantProcess IQ €” v5 Phase 01/02 Gate");
 console.log("Tasks: PPIQ-T201 .. PPIQ-T213");
 console.log("============================================================");
 console.log("");
@@ -73,4 +73,4 @@ if (failed > 0) {
 }
 
 console.log("");
-console.log("âœ… PPIQ v5 Phase 01/02 gate passed.");
+console.log("œ… PPIQ v5 Phase 01/02 gate passed.");

@@ -5043,7 +5043,7 @@ This document is the official P00A Test Register baseline. It records the dispos
 [METADATA: Path='Jenkinsfile', Category='Tools, Validation Scripts, Root Config, Misc', Classification='Jenkins Pipeline', Lines=252, SizeKB=9.74, Modified='2026-05-31 08:49:07']
 
 // ============================================================
-// PlantProcess IQ â€” CI/CD pipeline
+// PlantProcess IQ €” CI/CD pipeline
 //
 // What this does on every git push to main:
 //   1. Pull latest source on the deploy server (/opt/PlantProcess-IQ),
@@ -5284,10 +5284,10 @@ pipeline {
 
     post {
         success {
-            echo 'âœ“ Deployment succeeded â€” all stages green'
+            echo 'œ“ Deployment succeeded €” all stages green'
         }
         failure {
-            echo 'âœ— Deployment FAILED â€” see console output for the stage that failed'
+            echo 'œ— Deployment FAILED €” see console output for the stage that failed'
         }
         always {
             echo 'Build complete.'
@@ -42710,16 +42710,16 @@ function read(file) {
 
 function check(task, condition, message) {
   if (condition) {
-    console.log(`âœ“ ${task} â€” ${message}`);
+    console.log(`œ“ ${task} €” ${message}`);
   } else {
     failed += 1;
-    console.error(`âŒ ${task} â€” ${message}`);
+    console.error(`Œ ${task} €” ${message}`);
   }
 }
 
 console.log("");
 console.log("============================================================");
-console.log("PlantProcess IQ â€” v5 Phase 01/02 Gate");
+console.log("PlantProcess IQ €” v5 Phase 01/02 Gate");
 console.log("Tasks: PPIQ-T201 .. PPIQ-T213");
 console.log("============================================================");
 console.log("");
@@ -42764,7 +42764,7 @@ if (failed > 0) {
 }
 
 console.log("");
-console.log("âœ… PPIQ v5 Phase 01/02 gate passed.");
+console.log("œ… PPIQ v5 Phase 01/02 gate passed.");
 
 [FILE_END]
 

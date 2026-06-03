@@ -4812,7 +4812,8 @@ using Microsoft.EntityFrameworkCore;
 using PlantProcess.Application.Licensing.Interfaces;
 using PlantProcess.Application.Integration.Connectors;
 using PlantProcess.Infrastructure.Persistence;
-
+
+
 using PlantProcess.Api.ErrorHandling;
 namespace PlantProcess.Api.Endpoints.Admin;
 
@@ -6443,7 +6444,8 @@ using PlantProcess.Application.Common.Results;
 using PlantProcess.Application.Licensing.Contracts;
 using PlantProcess.Application.Licensing.Interfaces;
 
-
+
+
 using PlantProcess.Api.ErrorHandling;
 namespace PlantProcess.Api.Endpoints.Admin;
 
@@ -7371,7 +7373,8 @@ using PlantProcess.Application.Integration.Interfaces.SourceSystems;
 using PlantProcess.Domain.Entities.Integration;
 using PlantProcess.Domain.Enums.Integration;
 using PlantProcess.Infrastructure.Persistence;
-
+
+
 using PlantProcess.Api.ErrorHandling;
 namespace PlantProcess.Api.Endpoints.Admin;
 
@@ -8744,7 +8747,8 @@ using Npgsql;
 using PlantProcess.Application.Integration.Interfaces.Jobs;
 using PlantProcess.Domain.Entities.Integration;
 using PlantProcess.Infrastructure.Persistence;
-
+
+
 using PlantProcess.Api.ErrorHandling;
 namespace PlantProcess.Api.Endpoints.Admin;
 
@@ -9633,7 +9637,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using PlantProcess.Infrastructure.Persistence;
-
+
+
 using PlantProcess.Api.ErrorHandling;
 namespace PlantProcess.Api.Endpoints.Admin;
 
@@ -10046,7 +10051,8 @@ using PlantProcess.Application.Integration.Security;
 using PlantProcess.Application.Licensing.Contracts;
 using PlantProcess.Application.Licensing.Interfaces;
 using PlantProcess.Infrastructure.Persistence;
-
+
+
 using PlantProcess.Api.ErrorHandling;
 namespace PlantProcess.Api.Endpoints.Admin;
 
@@ -11356,7 +11362,8 @@ using PlantProcess.Application.Licensing.Interfaces;
 using PlantProcess.Domain.Entities.Analytics;
 using PlantProcess.Infrastructure.Persistence;
 using System.Text.Json;
-
+
+
 using PlantProcess.Api.ErrorHandling;
 namespace PlantProcess.Api.Endpoints.Analytics;
 
@@ -13453,7 +13460,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using PlantProcess.Infrastructure.Persistence;
-
+
+
 using PlantProcess.Api.ErrorHandling;
 namespace PlantProcess.Api.Endpoints.Analytics;
 
@@ -14320,7 +14328,8 @@ using PlantProcess.Application.Analytics.Services;
 using PlantProcess.Domain.Entities.Analytics;
 using PlantProcess.Infrastructure.Persistence;
 using PlantProcess.Application.Licensing.Contracts;
-
+
+
 using PlantProcess.Api.ErrorHandling;
 namespace PlantProcess.Api.Endpoints.Analytics;
 
@@ -14907,7 +14916,8 @@ using Microsoft.EntityFrameworkCore;
 using PlantProcess.Domain.Entities.Configuration;
 using PlantProcess.Infrastructure.Persistence;
 using RouteEntity = PlantProcess.Domain.Entities.Configuration.Route;
-
+
+
 using PlantProcess.Api.ErrorHandling;
 namespace PlantProcess.Api.Endpoints.Configuration;
 
@@ -16208,7 +16218,8 @@ public static class DashboardEndpoints
 using Microsoft.EntityFrameworkCore;
 using PlantProcess.Domain.Entities.Quality;
 using PlantProcess.Infrastructure.Persistence;
-
+
+
 using PlantProcess.Api.ErrorHandling;
 namespace PlantProcess.Api.Endpoints.DataQuality;
 
@@ -17700,7 +17711,8 @@ using PlantProcess.Application.Integration.Interfaces.Staging;
 using PlantProcess.Domain.Entities.Integration;
 using PlantProcess.Application.Integration.Connectors;
 using PlantProcess.Infrastructure.Persistence;
-
+
+
 using PlantProcess.Api.ErrorHandling;
 namespace PlantProcess.Api.Endpoints.Integration;
 
@@ -18393,7 +18405,8 @@ public static class IntegrationEndpoints
 using Microsoft.EntityFrameworkCore;
 using PlantProcess.Domain.Entities.Materials;
 using PlantProcess.Infrastructure.Persistence;
-
+
+
 using PlantProcess.Api.ErrorHandling;
 namespace PlantProcess.Api.Endpoints.Materials;
 
@@ -18696,7 +18709,8 @@ using PlantProcess.Api.Extensions;
 using PlantProcess.Application.Licensing.Contracts;
 using PlantProcess.Application.Licensing.Interfaces;
 using PlantProcess.Infrastructure.Persistence;
-
+
+
 using PlantProcess.Api.ErrorHandling;
 namespace PlantProcess.Api.Endpoints.Materials;
 
@@ -20619,7 +20633,8 @@ using PlantProcess.Application.Common.Paging;
 using PlantProcess.Application.Services.PlantLayout;
 using PlantProcess.Domain.Entities.PlantLayout;
 using PlantProcess.Infrastructure.Persistence;
-
+
+
 using PlantProcess.Api.ErrorHandling;
 namespace PlantProcess.Api.Endpoints.PlantLayout;
 
@@ -20877,7 +20892,8 @@ public static class PlantLayoutEndpoints
 using Microsoft.EntityFrameworkCore;
 using PlantProcess.Domain.Entities.Process;
 using PlantProcess.Infrastructure.Persistence;
-
+
+
 using PlantProcess.Api.ErrorHandling;
 namespace PlantProcess.Api.Endpoints.Process;
 
@@ -21649,7 +21665,8 @@ using PlantProcess.Application.Contracts.Quality;
 using PlantProcess.Application.Services.Quality;
 using PlantProcess.Domain.Entities.Quality;
 using PlantProcess.Infrastructure.Persistence;
-
+
+
 using PlantProcess.Api.ErrorHandling;
 namespace PlantProcess.Api.Endpoints.Quality;
 
@@ -22654,7 +22671,8 @@ using PlantProcess.Application.Services.Materials;
 using PlantProcess.Application.Services.Process;
 using PlantProcess.Application.Services.Quality;
 using PlantProcess.Infrastructure.Persistence;
-
+
+
 using PlantProcess.Api.ErrorHandling;
 namespace PlantProcess.Api.Endpoints.Workflow;
 
@@ -30028,7 +30046,7 @@ Log.Information(
 if (ppiqV7BootstrapCollision)
 {
     Log.Warning(
-        "Auth bootstrap collision detected: at least one configured user password equals BootstrapAdminPassword. Use a real admin password distinct from the bootstrap password.");
+        "Auth bootstrap collision detected: at least one configured user password equals BootstrapAdminPassword. Use a ral admin passwrd distinct from the bootstrap password.");
 }
 
 builder.Services.AddProblemDetails();
