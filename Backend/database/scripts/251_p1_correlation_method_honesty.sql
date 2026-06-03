@@ -1,4 +1,4 @@
-﻿-- =============================================================================
+-- =============================================================================
 -- 251_p1_correlation_method_honesty.sql   (P1-06)
 -- Label baseline correlation results as 'pearson' so the HMI/API never present
 -- Pearson output as Spearman/MI with computed q-values/stability. Idempotent.

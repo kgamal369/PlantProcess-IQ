@@ -1,4 +1,4 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc;
@@ -7,6 +7,7 @@ using Npgsql;
 using NpgsqlTypes;
 using PlantProcess.Infrastructure.Persistence;
 
+using PlantProcess.Api.ErrorHandling;
 namespace PlantProcess.Api.Endpoints.PageBuilder;
 
 public static class PageDefinitionEndpoints
@@ -101,7 +102,7 @@ public static class PageDefinitionEndpoints
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
         if (!await reader.ReadAsync(cancellationToken))
         {
-            return Results.NotFound(new { message = "Page '" + slug + "' was not found." });
+            return ApplicationProblems.NotFound("Page '" + slug + "' was not found.");
         }
 
         return Results.Ok(ReadDto(reader));
@@ -202,7 +203,7 @@ public static class PageDefinitionEndpoints
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
         if (!await reader.ReadAsync(cancellationToken))
         {
-            return Results.NotFound(new { message = "Page '" + slug + "' was not found or is not owned by '" + owner + "'." });
+            return ApplicationProblems.NotFound("Page '" + slug + "' was not found or is not owned by '" + owner + "'.");
         }
 
         return Results.Ok(ReadDto(reader));
@@ -421,3 +422,4 @@ public sealed record UpsertPageDefinitionRequest(
     JsonElement WidgetBindingsJson);
 
 public sealed record PageDeleteResponse(bool Deleted);
+

@@ -6,7 +6,8 @@ using PlantProcess.Application.Analytics.Services;
 using PlantProcess.Domain.Entities.Analytics;
 using PlantProcess.Infrastructure.Persistence;
 using PlantProcess.Application.Licensing.Contracts;
-
+
+using PlantProcess.Api.ErrorHandling;
 namespace PlantProcess.Api.Endpoints.Analytics;
 
 public static class RiskScoreEndpoints
@@ -129,8 +130,8 @@ public static class RiskScoreEndpoints
         CancellationToken cancellationToken)
     {
         var materialExists = await dbContext.MaterialUnits.AnyAsync(x => x.Id == request.MaterialUnitId && !x.IsDeleted, cancellationToken);
-        if (!materialExists) return Results.BadRequest(new { message = "MaterialUnit does not exist." });
-        if (request.Score < 0 || request.Score > 1) return Results.BadRequest(new { message = "Risk score must be between 0 and 1." });
+        if (!materialExists) return ApplicationProblems.Validation("MaterialUnit does not exist.");
+        if (request.Score < 0 || request.Score > 1) return ApplicationProblems.Validation("Risk score must be between 0 and 1.");
 
         var riskScore = new RiskScore(
             materialUnitId: request.MaterialUnitId,
@@ -244,5 +245,6 @@ public static class RiskScoreEndpoints
         string? PlantTimeZoneId,
         int? PlantUtcOffsetMinutes);
 }
+
 
 

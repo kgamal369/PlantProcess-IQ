@@ -4,7 +4,8 @@ using PlantProcess.Application.Contracts.Quality;
 using PlantProcess.Application.Services.Quality;
 using PlantProcess.Domain.Entities.Quality;
 using PlantProcess.Infrastructure.Persistence;
-
+
+using PlantProcess.Api.ErrorHandling;
 namespace PlantProcess.Api.Endpoints.Quality;
 
 public static class QualityEndpoints
@@ -93,7 +94,7 @@ public static class QualityEndpoints
             .AnyAsync(x => x.DefectCode == request.DefectCode, cancellationToken);
 
         if (exists)
-            return Results.Conflict(new { message = "Defect code already exists." });
+            return ApplicationProblems.Conflict("Defect code already exists.");
 
         var defect = new DefectCatalog(
             defectCode: request.DefectCode,
@@ -162,7 +163,7 @@ public static class QualityEndpoints
             .AnyAsync(x => x.Id == request.MaterialUnitId, cancellationToken);
 
         if (!materialExists)
-            return Results.BadRequest(new { message = "MaterialUnit does not exist." });
+            return ApplicationProblems.Validation("MaterialUnit does not exist.");
 
         if (request.DefectCatalogId.HasValue)
         {
@@ -170,7 +171,7 @@ public static class QualityEndpoints
                 .AnyAsync(x => x.Id == request.DefectCatalogId.Value, cancellationToken);
 
             if (!defectExists)
-                return Results.BadRequest(new { message = "DefectCatalog does not exist." });
+                return ApplicationProblems.Validation("DefectCatalog does not exist.");
         }
 
         var qualityEvent = new QualityEvent(
@@ -209,7 +210,7 @@ public static class QualityEndpoints
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
         if (qualityEvent is null)
-            return Results.NotFound(new { message = "QualityEvent not found." });
+            return ApplicationProblems.NotFound("QualityEvent not found.");
 
         qualityEvent.SoftDelete(
             string.IsNullOrWhiteSpace(reason)
@@ -253,4 +254,5 @@ public static class QualityEndpoints
         string? PlantTimeZoneId,
         int? PlantUtcOffsetMinutes);
 }
+
 

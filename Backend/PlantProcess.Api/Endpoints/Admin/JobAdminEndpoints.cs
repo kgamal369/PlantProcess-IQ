@@ -8,7 +8,8 @@ using PlantProcess.Application.Common.Results;
 using PlantProcess.Application.Licensing.Contracts;
 using PlantProcess.Application.Licensing.Interfaces;
 
-
+
+using PlantProcess.Api.ErrorHandling;
 namespace PlantProcess.Api.Endpoints.Admin;
 
 public static class JobAdminEndpoints
@@ -59,7 +60,7 @@ public static class JobAdminEndpoints
             .FirstOrDefaultAsync(x => x.Id == jobId && !x.IsDeleted, cancellationToken);
 
         if (job is null)
-            return Results.NotFound(new { message = "Job definition was not found." });
+            return ApplicationProblems.NotFound("Job definition was not found.");
 
         var featureGate = ResolveJobRunLicenseGate(
             job.JobType,
@@ -90,7 +91,7 @@ public static class JobAdminEndpoints
             .FirstOrDefaultAsync(x => !x.IsDeleted && x.Id == jobId, cancellationToken);
 
         if (job is null)
-            return Results.NotFound(new { message = "Job definition was not found." });
+            return ApplicationProblems.NotFound("Job definition was not found.");
 
         job.Disable();
 
@@ -116,7 +117,7 @@ public static class JobAdminEndpoints
             .FirstOrDefaultAsync(x => !x.IsDeleted && x.Id == jobId, cancellationToken);
 
         if (job is null)
-            return Results.NotFound(new { message = "Job definition was not found." });
+            return ApplicationProblems.NotFound("Job definition was not found.");
 
         job.Enable();
 
@@ -173,7 +174,7 @@ public static class JobAdminEndpoints
             .FirstOrDefaultAsync(x => !x.IsDeleted && x.Id == connectionProfileId, cancellationToken);
 
         if (connection is null)
-            return Results.NotFound(new { message = "Connection profile was not found." });
+            return ApplicationProblems.NotFound("Connection profile was not found.");
 
         connection.UpdateImportSchedule(
             request.ScheduleExpression,
@@ -231,7 +232,7 @@ public static class JobAdminEndpoints
             .FirstOrDefaultAsync(x => !x.IsDeleted && x.Id == mappingDefinitionId, cancellationToken);
 
         if (mapping is null)
-            return Results.NotFound(new { message = "Mapping definition was not found." });
+            return ApplicationProblems.NotFound("Mapping definition was not found.");
 
         var jobCode = $"CANONICAL_REFRESH_{mapping.MappingCode}";
 
@@ -312,3 +313,4 @@ public static class JobAdminEndpoints
             statusCode: code.Contains("NotFound", StringComparison.OrdinalIgnoreCase) ? 404 : 400);
     }
 }
+

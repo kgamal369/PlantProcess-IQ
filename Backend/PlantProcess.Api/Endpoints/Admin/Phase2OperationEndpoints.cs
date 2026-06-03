@@ -1,4 +1,4 @@
-using System.Data;
+﻿using System.Data;
 using System.Security.Claims;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
@@ -7,7 +7,8 @@ using Npgsql;
 using PlantProcess.Application.Integration.Interfaces.Jobs;
 using PlantProcess.Domain.Entities.Integration;
 using PlantProcess.Infrastructure.Persistence;
-
+
+using PlantProcess.Api.ErrorHandling;
 namespace PlantProcess.Api.Endpoints.Admin;
 
 public static class Phase2OperationEndpoints
@@ -77,7 +78,7 @@ public static class Phase2OperationEndpoints
         var validation = ValidateJoinRequest(request);
 
         if (validation is not null)
-            return Results.BadRequest(new { message = validation });
+            return ApplicationProblems.Validation(validation);
 
         var sql = BuildJoinSql(request, request.MaxRows ?? 100);
 
@@ -105,13 +106,13 @@ public static class Phase2OperationEndpoints
         var validation = ValidateJoinRequest(request.Join);
 
         if (validation is not null)
-            return Results.BadRequest(new { message = validation });
+            return ApplicationProblems.Validation(validation);
 
         if (string.IsNullOrWhiteSpace(request.SchemaViewCode))
-            return Results.BadRequest(new { message = "SchemaViewCode is required." });
+            return ApplicationProblems.Validation("SchemaViewCode is required.");
 
         if (string.IsNullOrWhiteSpace(request.SchemaViewName))
-            return Results.BadRequest(new { message = "SchemaViewName is required." });
+            return ApplicationProblems.Validation("SchemaViewName is required.");
 
         var duplicate = await dbContext.SchemaViewDefinitions
             .AnyAsync(x =>
@@ -120,7 +121,7 @@ public static class Phase2OperationEndpoints
                 cancellationToken);
 
         if (duplicate)
-            return Results.Conflict(new { message = "Schema view code already exists." });
+            return ApplicationProblems.Conflict("Schema view code already exists.");
 
         var sql = BuildJoinSql(request.Join, request.Join.MaxRows ?? 500);
 
@@ -208,13 +209,13 @@ public static class Phase2OperationEndpoints
         CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(request.KpiCode))
-            return Results.BadRequest(new { message = "KpiCode is required." });
+            return ApplicationProblems.Validation("KpiCode is required.");
 
         if (string.IsNullOrWhiteSpace(request.KpiName))
-            return Results.BadRequest(new { message = "KpiName is required." });
+            return ApplicationProblems.Validation("KpiName is required.");
 
         if (string.IsNullOrWhiteSpace(request.ParameterCode))
-            return Results.BadRequest(new { message = "ParameterCode is required." });
+            return ApplicationProblems.Validation("ParameterCode is required.");
 
         var parameterCode = NormalizeCode(request.ParameterCode);
 
@@ -324,7 +325,7 @@ public static class Phase2OperationEndpoints
 
         return result.IsSuccess
             ? Results.Ok(result.Value)
-            : Results.BadRequest(new { message = result.Error?.Message ?? "Run Now failed." });
+            : ApplicationProblems.Validation(result.Error?.Message ?? "Run Now failed.");
     }
 
     private static async Task<IResult> RetryJobAsync(
@@ -342,7 +343,7 @@ public static class Phase2OperationEndpoints
 
         return result.IsSuccess
             ? Results.Ok(result.Value)
-            : Results.BadRequest(new { message = result.Error?.Message ?? "Retry failed." });
+            : ApplicationProblems.Validation(result.Error?.Message ?? "Retry failed.");
     }
 
     private static async Task<IResult> EnableJobAsync(
@@ -354,7 +355,7 @@ public static class Phase2OperationEndpoints
             .FirstOrDefaultAsync(x => !x.IsDeleted && x.Id == jobDefinitionId, cancellationToken);
 
         if (job is null)
-            return Results.NotFound(new { message = "Job definition not found." });
+            return ApplicationProblems.NotFound("Job definition not found.");
 
         job.Enable(job.NextRunAtUtc);
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -376,7 +377,7 @@ public static class Phase2OperationEndpoints
             .FirstOrDefaultAsync(x => !x.IsDeleted && x.Id == jobDefinitionId, cancellationToken);
 
         if (job is null)
-            return Results.NotFound(new { message = "Job definition not found." });
+            return ApplicationProblems.NotFound("Job definition not found.");
 
         job.Disable();
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -476,7 +477,7 @@ public static class Phase2OperationEndpoints
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
 
         if (!await reader.ReadAsync(cancellationToken))
-            return Results.NotFound(new { message = "Operation progress not found." });
+            return ApplicationProblems.NotFound("Operation progress not found.");
 
         return Results.Ok(ReadProgress(reader));
     }

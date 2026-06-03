@@ -10,7 +10,8 @@ using PlantProcess.Application.Integration.Security;
 using PlantProcess.Application.Licensing.Contracts;
 using PlantProcess.Application.Licensing.Interfaces;
 using PlantProcess.Infrastructure.Persistence;
-
+
+using PlantProcess.Api.ErrorHandling;
 namespace PlantProcess.Api.Endpoints.Admin;
 
 /// <summary>
@@ -158,7 +159,7 @@ public static class SchemaConfigurationEndpoints
             .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, cancellationToken);
 
         if (view is null)
-            return Results.NotFound(new { message = "Schema view definition not found." });
+            return ApplicationProblems.NotFound("Schema view definition not found.");
 
         var sqlText = string.IsNullOrWhiteSpace(request.SqlText)
             ? view.SqlText
@@ -194,7 +195,7 @@ public static class SchemaConfigurationEndpoints
         CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(request.SqlText))
-            return Results.BadRequest(new { message = "SqlText is required for ad-hoc preview." });
+            return ApplicationProblems.Validation("SqlText is required for ad-hoc preview.");
 
         var maxRows = Math.Clamp(request.MaxRows ?? 50, 1, 5000);
         var timeoutSeconds = Math.Clamp(request.TimeoutSeconds ?? 15, 1, 120);
@@ -421,3 +422,4 @@ public static class SchemaConfigurationEndpoints
             message.Contains("57014", StringComparison.OrdinalIgnoreCase);
     }
   }
+

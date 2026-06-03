@@ -1,10 +1,11 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using PlantProcess.Application.Analytics.Value;
 using PlantProcess.Infrastructure.Analytics;
 
+using PlantProcess.Api.ErrorHandling;
 namespace PlantProcess.Api.Endpoints.Analytics;
 
 /// <summary>T-041/T-042/T-043: cost-assumption management + ranged (or abstaining) value-impact computation.</summary>
@@ -24,14 +25,14 @@ public static class ValueEndpoints
 
         group.MapGet("/cost-assumptions", async (ClaimsPrincipal user, ICostAssumptionStore store, CancellationToken ct) =>
         {
-            if (!TryTenant(user, out var tenantId)) return Results.BadRequest(new { error = "no_tenant" });
+            if (!TryTenant(user, out var tenantId)) return ApplicationProblems.Validation("no_tenant");
             var set = await store.GetActiveAsync(tenantId, ct);
-            return set is null ? Results.NotFound(new { message = "No cost assumptions configured for this tenant." }) : Results.Ok(set);
+            return set is null ? ApplicationProblems.NotFound("No cost assumptions configured for this tenant.") : Results.Ok(set);
         });
 
         group.MapPut("/cost-assumptions", async (CostAssumptionDto dto, ClaimsPrincipal user, ICostAssumptionStore store, CancellationToken ct) =>
         {
-            if (!TryTenant(user, out var tenantId)) return Results.BadRequest(new { error = "no_tenant" });
+            if (!TryTenant(user, out var tenantId)) return ApplicationProblems.Validation("no_tenant");
             var set = ToSet(dto);
             var version = await store.CreateVersionAsync(tenantId, set, user.Identity?.Name ?? "unknown", ct);
             return Results.Ok(new { version });
@@ -39,7 +40,7 @@ public static class ValueEndpoints
 
         group.MapPost("/impact", async (ImpactRequest req, ClaimsPrincipal user, ICostAssumptionStore store, IValueImpactEngine engine, NpgsqlValueImpactRepository repo, CancellationToken ct) =>
         {
-            if (!TryTenant(user, out var tenantId)) return Results.BadRequest(new { error = "no_tenant" });
+            if (!TryTenant(user, out var tenantId)) return ApplicationProblems.Validation("no_tenant");
 
             var assumptions = await store.GetActiveAsync(tenantId, ct);
             if (assumptions is null)
@@ -69,8 +70,7 @@ public static class ValueEndpoints
 
     private static bool TryTenant(ClaimsPrincipal user, out Guid tenantId)
     {
-        tenantId = Guid.Empty;
-        var raw = user.FindFirst("tenant_id")?.Value;
-        return !string.IsNullOrWhiteSpace(raw) && Guid.TryParse(raw, out tenantId);
+        return PlantProcess.Application.Security.Tenancy.TenantClaims.TryResolve(user, out tenantId);
     }
 }
+

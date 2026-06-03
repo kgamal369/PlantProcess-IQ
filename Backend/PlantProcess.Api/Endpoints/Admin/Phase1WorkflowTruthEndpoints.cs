@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -7,7 +7,8 @@ using PlantProcess.Application.Integration.Interfaces.SourceSystems;
 using PlantProcess.Domain.Entities.Integration;
 using PlantProcess.Domain.Enums.Integration;
 using PlantProcess.Infrastructure.Persistence;
-
+
+using PlantProcess.Api.ErrorHandling;
 namespace PlantProcess.Api.Endpoints.Admin;
 
 public static class Phase1WorkflowTruthEndpoints
@@ -274,7 +275,7 @@ public static class Phase1WorkflowTruthEndpoints
             .FirstOrDefaultAsync(x => x.Id == sourceDatasetDefinitionId, cancellationToken);
 
         if (dataset is null)
-            return Results.NotFound(new { message = "Source dataset definition not found." });
+            return ApplicationProblems.NotFound("Source dataset definition not found.");
 
         dataset.ScheduleNextRunImmediately();
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -292,7 +293,7 @@ public static class Phase1WorkflowTruthEndpoints
             .FirstOrDefaultAsync(x => x.Id == sourceDatasetDefinitionId, cancellationToken);
 
         if (dataset is null)
-            return Results.NotFound(new { message = "Source dataset definition not found." });
+            return ApplicationProblems.NotFound("Source dataset definition not found.");
 
         dataset.UpdateLastCursorValue(request.LastCursorValue);
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -663,10 +664,10 @@ public static class Phase1WorkflowTruthEndpoints
             .FirstOrDefaultAsync(x => x.Id == request.MappingDefinitionId, cancellationToken);
 
         if (mapping is null)
-            return Results.NotFound(new { message = "Mapping definition not found." });
+            return ApplicationProblems.NotFound("Mapping definition not found.");
 
         if (!mapping.IsActive)
-            return Results.BadRequest(new { message = "Mapping definition is not active." });
+            return ApplicationProblems.Validation("Mapping definition is not active.");
 
         var jobCode = string.IsNullOrWhiteSpace(request.JobCode)
             ? $"CANONICAL_IMPORT_{mapping.MappingCode}"
@@ -784,7 +785,7 @@ public static class Phase1WorkflowTruthEndpoints
             .FirstOrDefaultAsync(cancellationToken);
 
         return row is null
-            ? Results.NotFound(new { message = "Source dataset definition not found." })
+            ? ApplicationProblems.NotFound("Source dataset definition not found.")
             : Results.Ok(row);
     }
 

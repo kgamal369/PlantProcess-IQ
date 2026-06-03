@@ -3,7 +3,8 @@ using PlantProcess.Api.Extensions;
 using PlantProcess.Application.Licensing.Contracts;
 using PlantProcess.Application.Licensing.Interfaces;
 using PlantProcess.Infrastructure.Persistence;
-
+
+using PlantProcess.Api.ErrorHandling;
 namespace PlantProcess.Api.Endpoints.Materials;
 
 public static class MaterialInvestigationEndpoints
@@ -39,7 +40,7 @@ public static class MaterialInvestigationEndpoints
             .AnyAsync(x => x.Id == materialUnitId && !x.IsDeleted, cancellationToken);
 
         if (!materialExists)
-            return Results.NotFound(new { message = "Material unit not found." });
+            return ApplicationProblems.NotFound("Material unit not found.");
 
         var depthLimit = Math.Clamp(maxDepth ?? 5, 1, 20);
         var safeParameterPage = Math.Max(parameterPage ?? 1, 1);

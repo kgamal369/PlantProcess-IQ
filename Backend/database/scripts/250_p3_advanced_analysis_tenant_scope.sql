@@ -1,4 +1,4 @@
-﻿-- =============================================================================
+-- =============================================================================
 -- 250_p3_advanced_analysis_tenant_scope.sql   (P3-05)
 -- Tenant-scope the correlation run + result tables for the .NET advanced engine.
 -- Idempotent.

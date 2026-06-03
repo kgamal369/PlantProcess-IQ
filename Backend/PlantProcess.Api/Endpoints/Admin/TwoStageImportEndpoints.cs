@@ -1,8 +1,9 @@
-using System.Data;
+﻿using System.Data;
 using System.Data.Common;
 using Microsoft.EntityFrameworkCore;
 using PlantProcess.Infrastructure.Persistence;
 
+using PlantProcess.Api.ErrorHandling;
 namespace PlantProcess.Api.Endpoints.Admin;
 
 public static class TwoStageImportEndpoints
@@ -204,7 +205,7 @@ public static class TwoStageImportEndpoints
         await EnsureOpenAsync(connection, cancellationToken);
 
         if (!await RelationExistsAsync(connection, "public.source_table_dump_registry", cancellationToken))
-            return Results.NotFound(new { message = "Phase 03 registry table is not installed." });
+            return ApplicationProblems.NotFound("Phase 03 registry table is not installed.");
 
         var rows = await ReadRowsAsync(
             connection,

@@ -1,8 +1,9 @@
-using System.Data;
+﻿using System.Data;
 using System.Data.Common;
 using Microsoft.EntityFrameworkCore;
 using PlantProcess.Infrastructure.Persistence;
 
+using PlantProcess.Api.ErrorHandling;
 namespace PlantProcess.Api.Endpoints.Analytics;
 
 public static class MlLearningEndpoints
@@ -94,7 +95,7 @@ public static class MlLearningEndpoints
     {
         if (string.IsNullOrWhiteSpace(jobCode))
         {
-            return Results.BadRequest(new { message = "jobCode is required." });
+            return ApplicationProblems.Validation("jobCode is required.");
         }
 
         var windowDays = request.WindowDays is > 0 ? request.WindowDays.Value : 365;
@@ -302,3 +303,4 @@ public static class MlLearningEndpoints
         string? OutcomeFamily,
         int? WindowDays);
 }
+

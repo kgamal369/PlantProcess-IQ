@@ -1,10 +1,11 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Npgsql;
 using PlantProcess.Api.Analytics;
 
+using PlantProcess.Api.ErrorHandling;
 namespace PlantProcess.Api.Endpoints.Analytics;
 
 public sealed record KpiTargetRequest(double TargetValue, string? AlertDirection, double? WarningAt, double? CriticalAt, string? Unit);
@@ -57,7 +58,7 @@ public static class KpiEvaluationEndpoints
 
         group.MapGet("/{kpiCode}/target", async (string kpiCode, ClaimsPrincipal user, NpgsqlDataSource ds, CancellationToken ct) =>
         {
-            if (!TryTenant(user, out var tenantId)) return Results.BadRequest(new { error = "no_tenant" });
+            if (!TryTenant(user, out var tenantId)) return ApplicationProblems.Validation("no_tenant");
             await using var cmd = ds.CreateCommand(
                 "SELECT target_value, alert_direction, warning_at, critical_at, unit, effective_from_utc " +
                 "FROM kpi_targets WHERE tenant_id = @t AND kpi_code = @c AND is_active = true LIMIT 1");
@@ -79,7 +80,7 @@ public static class KpiEvaluationEndpoints
 
         group.MapPut("/{kpiCode}/target", async (string kpiCode, KpiTargetRequest req, ClaimsPrincipal user, NpgsqlDataSource ds, CancellationToken ct) =>
         {
-            if (!TryTenant(user, out var tenantId)) return Results.BadRequest(new { error = "no_tenant" });
+            if (!TryTenant(user, out var tenantId)) return ApplicationProblems.Validation("no_tenant");
             var direction = string.IsNullOrWhiteSpace(req.AlertDirection) ? "BelowTargetIsBad" : req.AlertDirection!.Trim();
             if (direction is not ("AboveTargetIsBad" or "BelowTargetIsBad"))
                 return Results.BadRequest(new { error = "invalid_direction", supported = new[] { "AboveTargetIsBad", "BelowTargetIsBad" } });
@@ -109,7 +110,7 @@ public static class KpiEvaluationEndpoints
 
         group.MapGet("/{kpiCode}/alerts", async (string kpiCode, ClaimsPrincipal user, NpgsqlDataSource ds, CancellationToken ct) =>
         {
-            if (!TryTenant(user, out var tenantId)) return Results.BadRequest(new { error = "no_tenant" });
+            if (!TryTenant(user, out var tenantId)) return ApplicationProblems.Validation("no_tenant");
             var list = new List<object>();
             await using var cmd = ds.CreateCommand(
                 "SELECT evaluated_value, target_value, severity, message, created_at_utc " +
@@ -134,8 +135,7 @@ public static class KpiEvaluationEndpoints
 
     private static bool TryTenant(ClaimsPrincipal user, out Guid tenantId)
     {
-        tenantId = Guid.Empty;
-        var raw = user.FindFirstValue("tenant_id") ?? user.FindFirstValue("tenant");
-        return Guid.TryParse(raw, out tenantId);
+        return PlantProcess.Application.Security.Tenancy.TenantClaims.TryResolve(user, out tenantId);
     }
 }
+

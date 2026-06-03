@@ -1,4 +1,4 @@
-using System.Data;
+﻿using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
 using System.Security.Claims;
@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PlantProcess.Infrastructure.Persistence;
 
+using PlantProcess.Api.ErrorHandling;
 namespace PlantProcess.Api.Endpoints.Admin;
 
 /// <summary>
@@ -131,7 +132,7 @@ public static class GenericSchemaMappingEndpoints
 
         var validation = ValidateRegisterRequest(request);
         if (validation is not null)
-            return Results.BadRequest(new { message = validation });
+            return ApplicationProblems.Validation(validation);
 
         var physicalSchema = CleanIdentifier(request.PhysicalSchema ?? "public", "physicalSchema");
         var physicalViewName = CleanIdentifier(
@@ -295,10 +296,10 @@ public static class GenericSchemaMappingEndpoints
         await EnsureCatalogAsync(db, cancellationToken);
 
         if (string.IsNullOrWhiteSpace(request.ViewCode))
-            return Results.BadRequest(new { message = "viewCode is required." });
+            return ApplicationProblems.Validation("viewCode is required.");
 
         if (string.IsNullOrWhiteSpace(request.ViewName))
-            return Results.BadRequest(new { message = "viewName is required." });
+            return ApplicationProblems.Validation("viewName is required.");
 
         var sql = BuildJoinSql(request.Join, includeLimit: false);
         var physicalName = CleanIdentifier(
@@ -344,16 +345,16 @@ public static class GenericSchemaMappingEndpoints
         await EnsureCatalogAsync(db, cancellationToken);
 
         if (string.IsNullOrWhiteSpace(request.ViewCode))
-            return Results.BadRequest(new { message = "viewCode is required." });
+            return ApplicationProblems.Validation("viewCode is required.");
 
         if (string.IsNullOrWhiteSpace(request.ViewName))
-            return Results.BadRequest(new { message = "viewName is required." });
+            return ApplicationProblems.Validation("viewName is required.");
 
         if (string.IsNullOrWhiteSpace(request.KpiCode))
-            return Results.BadRequest(new { message = "kpiCode is required." });
+            return ApplicationProblems.Validation("kpiCode is required.");
 
         if (string.IsNullOrWhiteSpace(request.SqlText))
-            return Results.BadRequest(new { message = "sqlText is required." });
+            return ApplicationProblems.Validation("sqlText is required.");
 
         var sql = NormalizeSelectSql(request.SqlText);
         var schema = CleanIdentifier(request.PhysicalSchema ?? "public", "physicalSchema");
@@ -407,7 +408,7 @@ public static class GenericSchemaMappingEndpoints
         await EnsureCatalogAsync(db, cancellationToken);
 
         if (string.IsNullOrWhiteSpace(viewCode))
-            return Results.BadRequest(new { message = "viewCode is required." });
+            return ApplicationProblems.Validation("viewCode is required.");
 
         var started = Stopwatch.StartNew();
         var actor = GetActor(user);

@@ -5,7 +5,8 @@ using Microsoft.EntityFrameworkCore;
 using PlantProcess.Application.Licensing.Interfaces;
 using PlantProcess.Application.Integration.Connectors;
 using PlantProcess.Infrastructure.Persistence;
-
+
+using PlantProcess.Api.ErrorHandling;
 namespace PlantProcess.Api.Endpoints.Admin;
 
 /// <summary>
@@ -132,7 +133,7 @@ public static class ConnectorAdminEndpoints
             .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, cancellationToken);
 
         if (existing is null)
-            return Results.NotFound(new { message = "Connection profile was not found." });
+            return ApplicationProblems.NotFound("Connection profile was not found.");
 
         var connectorGate = licenseService.EnsureConnectorAllowed(existing.ProviderType);
         if (connectorGate.IsFailure)
@@ -224,3 +225,4 @@ public static class ConnectorAdminEndpoints
         return result.ToHttpResult(Results.Ok);
     }
 }
+

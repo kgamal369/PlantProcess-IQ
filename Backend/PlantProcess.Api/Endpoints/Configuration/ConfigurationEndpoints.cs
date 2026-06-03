@@ -2,7 +2,8 @@
 using PlantProcess.Domain.Entities.Configuration;
 using PlantProcess.Infrastructure.Persistence;
 using RouteEntity = PlantProcess.Domain.Entities.Configuration.Route;
-
+
+using PlantProcess.Api.ErrorHandling;
 namespace PlantProcess.Api.Endpoints.Configuration;
 
 public static class ConfigurationEndpoints
@@ -101,7 +102,7 @@ public static class ConfigurationEndpoints
             .AnyAsync(x => x.TemplateCode == request.TemplateCode, cancellationToken);
 
         if (exists)
-            return Results.Conflict(new { message = "Industry template code already exists." });
+            return ApplicationProblems.Conflict("Industry template code already exists.");
 
         var template = new IndustryTemplate(
             templateCode: request.TemplateCode,
@@ -170,7 +171,7 @@ public static class ConfigurationEndpoints
             .AnyAsync(x => x.Id == request.IndustryTemplateId, cancellationToken);
 
         if (!templateExists)
-            return Results.BadRequest(new { message = "Industry template does not exist." });
+            return ApplicationProblems.Validation("Industry template does not exist.");
 
         var exists = await dbContext.MaterialUnitTypeDefinitions.AnyAsync(x =>
             x.IndustryTemplateId == request.IndustryTemplateId &&
@@ -178,7 +179,7 @@ public static class ConfigurationEndpoints
             cancellationToken);
 
         if (exists)
-            return Results.Conflict(new { message = "Material unit type code already exists for this template." });
+            return ApplicationProblems.Conflict("Material unit type code already exists for this template.");
 
         var type = new MaterialUnitTypeDefinition(
             industryTemplateId: request.IndustryTemplateId,
@@ -251,7 +252,7 @@ public static class ConfigurationEndpoints
             .AnyAsync(x => x.Id == request.IndustryTemplateId, cancellationToken);
 
         if (!templateExists)
-            return Results.BadRequest(new { message = "Industry template does not exist." });
+            return ApplicationProblems.Validation("Industry template does not exist.");
 
         var exists = await dbContext.OperationDefinitions.AnyAsync(x =>
             x.IndustryTemplateId == request.IndustryTemplateId &&
@@ -259,7 +260,7 @@ public static class ConfigurationEndpoints
             cancellationToken);
 
         if (exists)
-            return Results.Conflict(new { message = "Operation code already exists for this template." });
+            return ApplicationProblems.Conflict("Operation code already exists for this template.");
 
         var operation = new OperationDefinition(
             industryTemplateId: request.IndustryTemplateId,
@@ -331,7 +332,7 @@ public static class ConfigurationEndpoints
             .AnyAsync(x => x.Id == request.IndustryTemplateId, cancellationToken);
 
         if (!templateExists)
-            return Results.BadRequest(new { message = "Industry template does not exist." });
+            return ApplicationProblems.Validation("Industry template does not exist.");
 
         var exists = await dbContext.Routes.AnyAsync(x =>
             x.IndustryTemplateId == request.IndustryTemplateId &&
@@ -339,7 +340,7 @@ public static class ConfigurationEndpoints
             cancellationToken);
 
         if (exists)
-            return Results.Conflict(new { message = "Route code already exists for this template." });
+            return ApplicationProblems.Conflict("Route code already exists for this template.");
 
         var route = new RouteEntity(
             industryTemplateId: request.IndustryTemplateId,
@@ -402,13 +403,13 @@ public static class ConfigurationEndpoints
             .AnyAsync(x => x.Id == request.RouteId, cancellationToken);
 
         if (!routeExists)
-            return Results.BadRequest(new { message = "Route does not exist." });
+            return ApplicationProblems.Validation("Route does not exist.");
 
         var operationExists = await dbContext.OperationDefinitions
             .AnyAsync(x => x.Id == request.OperationDefinitionId, cancellationToken);
 
         if (!operationExists)
-            return Results.BadRequest(new { message = "Operation definition does not exist." });
+            return ApplicationProblems.Validation("Operation definition does not exist.");
 
         var sequenceExists = await dbContext.RouteSteps.AnyAsync(x =>
             x.RouteId == request.RouteId &&
@@ -416,7 +417,7 @@ public static class ConfigurationEndpoints
             cancellationToken);
 
         if (sequenceExists)
-            return Results.Conflict(new { message = "Route step sequence already exists for this route." });
+            return ApplicationProblems.Conflict("Route step sequence already exists for this route.");
 
         var step = new RouteStep(
             routeId: request.RouteId,
@@ -445,7 +446,7 @@ public static class ConfigurationEndpoints
     private static async Task<IResult> ActivateIndustryTemplateAsync(Guid id, PlantProcessDbContext dbContext, CancellationToken cancellationToken)
     {
         var entity = await dbContext.IndustryTemplates.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
-        if (entity is null) return Results.NotFound(new { message = "Industry template not found." });
+        if (entity is null) return ApplicationProblems.NotFound("Industry template not found.");
         entity.Activate();
         await dbContext.SaveChangesAsync(cancellationToken);
         return Results.Ok(new { entity.Id, entity.TemplateCode, entity.IsActive });
@@ -454,7 +455,7 @@ public static class ConfigurationEndpoints
     private static async Task<IResult> DeactivateIndustryTemplateAsync(Guid id, PlantProcessDbContext dbContext, CancellationToken cancellationToken)
     {
         var entity = await dbContext.IndustryTemplates.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
-        if (entity is null) return Results.NotFound(new { message = "Industry template not found." });
+        if (entity is null) return ApplicationProblems.NotFound("Industry template not found.");
         entity.Deactivate();
         await dbContext.SaveChangesAsync(cancellationToken);
         return Results.Ok(new { entity.Id, entity.TemplateCode, entity.IsActive });
@@ -463,7 +464,7 @@ public static class ConfigurationEndpoints
     private static async Task<IResult> ActivateMaterialUnitTypeAsync(Guid id, PlantProcessDbContext dbContext, CancellationToken cancellationToken)
     {
         var entity = await dbContext.MaterialUnitTypeDefinitions.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
-        if (entity is null) return Results.NotFound(new { message = "Material unit type not found." });
+        if (entity is null) return ApplicationProblems.NotFound("Material unit type not found.");
         entity.Activate();
         await dbContext.SaveChangesAsync(cancellationToken);
         return Results.Ok(new { entity.Id, entity.MaterialUnitTypeCode, entity.IsActive });
@@ -472,7 +473,7 @@ public static class ConfigurationEndpoints
     private static async Task<IResult> DeactivateMaterialUnitTypeAsync(Guid id, PlantProcessDbContext dbContext, CancellationToken cancellationToken)
     {
         var entity = await dbContext.MaterialUnitTypeDefinitions.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
-        if (entity is null) return Results.NotFound(new { message = "Material unit type not found." });
+        if (entity is null) return ApplicationProblems.NotFound("Material unit type not found.");
         entity.Deactivate();
         await dbContext.SaveChangesAsync(cancellationToken);
         return Results.Ok(new { entity.Id, entity.MaterialUnitTypeCode, entity.IsActive });
@@ -481,7 +482,7 @@ public static class ConfigurationEndpoints
     private static async Task<IResult> ActivateOperationDefinitionAsync(Guid id, PlantProcessDbContext dbContext, CancellationToken cancellationToken)
     {
         var entity = await dbContext.OperationDefinitions.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
-        if (entity is null) return Results.NotFound(new { message = "Operation definition not found." });
+        if (entity is null) return ApplicationProblems.NotFound("Operation definition not found.");
         entity.Activate();
         await dbContext.SaveChangesAsync(cancellationToken);
         return Results.Ok(new { entity.Id, entity.OperationCode, entity.IsActive });
@@ -490,7 +491,7 @@ public static class ConfigurationEndpoints
     private static async Task<IResult> DeactivateOperationDefinitionAsync(Guid id, PlantProcessDbContext dbContext, CancellationToken cancellationToken)
     {
         var entity = await dbContext.OperationDefinitions.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
-        if (entity is null) return Results.NotFound(new { message = "Operation definition not found." });
+        if (entity is null) return ApplicationProblems.NotFound("Operation definition not found.");
         entity.Deactivate();
         await dbContext.SaveChangesAsync(cancellationToken);
         return Results.Ok(new { entity.Id, entity.OperationCode, entity.IsActive });
@@ -499,7 +500,7 @@ public static class ConfigurationEndpoints
     private static async Task<IResult> ActivateRouteAsync(Guid id, PlantProcessDbContext dbContext, CancellationToken cancellationToken)
     {
         var entity = await dbContext.Routes.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
-        if (entity is null) return Results.NotFound(new { message = "Route not found." });
+        if (entity is null) return ApplicationProblems.NotFound("Route not found.");
         entity.Activate();
         await dbContext.SaveChangesAsync(cancellationToken);
         return Results.Ok(new { entity.Id, entity.RouteCode, entity.IsActive });
@@ -508,7 +509,7 @@ public static class ConfigurationEndpoints
     private static async Task<IResult> DeactivateRouteAsync(Guid id, PlantProcessDbContext dbContext, CancellationToken cancellationToken)
     {
         var entity = await dbContext.Routes.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
-        if (entity is null) return Results.NotFound(new { message = "Route not found." });
+        if (entity is null) return ApplicationProblems.NotFound("Route not found.");
         entity.Deactivate();
         await dbContext.SaveChangesAsync(cancellationToken);
         return Results.Ok(new { entity.Id, entity.RouteCode, entity.IsActive });
@@ -566,4 +567,5 @@ public static class ConfigurationEndpoints
         string? SourceSystem,
         string? SourceRecordId);
 }
+
 

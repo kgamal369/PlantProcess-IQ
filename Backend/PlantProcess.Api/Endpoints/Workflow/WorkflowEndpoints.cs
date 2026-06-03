@@ -20,7 +20,8 @@ using PlantProcess.Application.Services.Materials;
 using PlantProcess.Application.Services.Process;
 using PlantProcess.Application.Services.Quality;
 using PlantProcess.Infrastructure.Persistence;
-
+
+using PlantProcess.Api.ErrorHandling;
 namespace PlantProcess.Api.Endpoints.Workflow;
 
 public static class WorkflowEndpoints
@@ -701,7 +702,7 @@ public static class WorkflowEndpoints
             .FirstOrDefaultAsync(cancellationToken);
 
         if (material is null)
-            return Results.NotFound(new { message = "Material unit not found." });
+            return ApplicationProblems.NotFound("Material unit not found.");
 
         var aliases = await dbContext.MaterialAliases
             .AsNoTracking()
@@ -1025,4 +1026,5 @@ public static class WorkflowEndpoints
         string? PlantTimeZoneId,
         int? PlantUtcOffsetMinutes);
 }
+
 

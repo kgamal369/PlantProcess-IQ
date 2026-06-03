@@ -1,7 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PlantProcess.Domain.Entities.Materials;
 using PlantProcess.Infrastructure.Persistence;
-
+
+using PlantProcess.Api.ErrorHandling;
 namespace PlantProcess.Api.Endpoints.Materials;
 
 public static class MaterialEndpoints
@@ -87,7 +88,7 @@ public static class MaterialEndpoints
                 .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
             if (material is null)
-                return Results.NotFound(new { message = "MaterialUnit not found." });
+                return ApplicationProblems.NotFound("MaterialUnit not found.");
 
             material.SoftDelete(
                 string.IsNullOrWhiteSpace(reason)
@@ -115,7 +116,7 @@ public static class MaterialEndpoints
                 .AnyAsync(x => x.Id == request.SiteId, cancellationToken);
 
             if (!siteExists)
-                return Results.BadRequest(new { message = "Site does not exist." });
+                return ApplicationProblems.Validation("Site does not exist.");
 
             var exists = await dbContext.MaterialUnits
              .AnyAsync(x =>
@@ -124,7 +125,7 @@ public static class MaterialEndpoints
                  cancellationToken);
 
             if (exists)
-                return Results.Conflict(new { message = "Material code already exists." });
+                return ApplicationProblems.Conflict("Material code already exists.");
 
             var material = new MaterialUnit(
                 materialCode: request.MaterialCode,
@@ -193,7 +194,7 @@ public static class MaterialEndpoints
                 .AnyAsync(x => x.Id == request.ChildMaterialUnitId, cancellationToken);
 
             if (!parentExists || !childExists)
-                return Results.BadRequest(new { message = "Parent or child material does not exist." });
+                return ApplicationProblems.Validation("Parent or child material does not exist.");
 
             var edge = new GenealogyEdge(
                 parentMaterialUnitId: request.ParentMaterialUnitId,
@@ -290,4 +291,5 @@ public static class MaterialEndpoints
 
     public sealed record SoftDeleteRequest(string? Reason);
 }
+
 

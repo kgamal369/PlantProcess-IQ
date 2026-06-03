@@ -4,7 +4,8 @@ using PlantProcess.Application.Common.Paging;
 using PlantProcess.Application.Services.PlantLayout;
 using PlantProcess.Domain.Entities.PlantLayout;
 using PlantProcess.Infrastructure.Persistence;
-
+
+using PlantProcess.Api.ErrorHandling;
 namespace PlantProcess.Api.Endpoints.PlantLayout;
 
 public static class PlantLayoutEndpoints
@@ -123,7 +124,7 @@ public static class PlantLayoutEndpoints
     {
         var exists = await dbContext.Sites.AnyAsync(x => x.SiteCode == request.SiteCode, cancellationToken);
         if (exists)
-            return Results.Conflict(new { message = "Site code already exists." });
+            return ApplicationProblems.Conflict("Site code already exists.");
 
         var site = new Site(
             siteCode: request.SiteCode,
@@ -148,13 +149,13 @@ public static class PlantLayoutEndpoints
     {
         var siteExists = await dbContext.Sites.AnyAsync(x => x.Id == request.SiteId, cancellationToken);
         if (!siteExists)
-            return Results.BadRequest(new { message = "Site does not exist." });
+            return ApplicationProblems.Validation("Site does not exist.");
 
         if (request.ParentAreaId.HasValue)
         {
             var parentExists = await dbContext.Areas.AnyAsync(x => x.Id == request.ParentAreaId.Value, cancellationToken);
             if (!parentExists)
-                return Results.BadRequest(new { message = "Parent area does not exist." });
+                return ApplicationProblems.Validation("Parent area does not exist.");
         }
 
         var area = new Area(
@@ -181,20 +182,20 @@ public static class PlantLayoutEndpoints
     {
         var siteExists = await dbContext.Sites.AnyAsync(x => x.Id == request.SiteId, cancellationToken);
         if (!siteExists)
-            return Results.BadRequest(new { message = "Site does not exist." });
+            return ApplicationProblems.Validation("Site does not exist.");
 
         if (request.AreaId.HasValue)
         {
             var areaExists = await dbContext.Areas.AnyAsync(x => x.Id == request.AreaId.Value, cancellationToken);
             if (!areaExists)
-                return Results.BadRequest(new { message = "Area does not exist." });
+                return ApplicationProblems.Validation("Area does not exist.");
         }
 
         if (request.ParentEquipmentId.HasValue)
         {
             var parentExists = await dbContext.Equipment.AnyAsync(x => x.Id == request.ParentEquipmentId.Value, cancellationToken);
             if (!parentExists)
-                return Results.BadRequest(new { message = "Parent equipment does not exist." });
+                return ApplicationProblems.Validation("Parent equipment does not exist.");
         }
 
         var equipment = new Equipment(
@@ -250,4 +251,5 @@ public static class PlantLayoutEndpoints
         string? SourceSystem,
         string? SourceRecordId);
 }
+
 

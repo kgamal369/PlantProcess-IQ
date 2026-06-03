@@ -1,7 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PlantProcess.Domain.Entities.Quality;
 using PlantProcess.Infrastructure.Persistence;
-
+
+using PlantProcess.Api.ErrorHandling;
 namespace PlantProcess.Api.Endpoints.DataQuality;
 
 public static class DataQualityEndpoints
@@ -119,7 +120,7 @@ public static class DataQualityEndpoints
                     .AnyAsync(x => x.Id == request.MaterialUnitId.Value, cancellationToken);
 
                 if (!materialExists)
-                    return Results.BadRequest(new { message = "MaterialUnit does not exist." });
+                    return ApplicationProblems.Validation("MaterialUnit does not exist.");
             }
 
             var issue = new DataQualityIssue(
@@ -159,3 +160,4 @@ public static class DataQualityEndpoints
         string? SourceSystem,
         string? SourceRecordId);
 }
+

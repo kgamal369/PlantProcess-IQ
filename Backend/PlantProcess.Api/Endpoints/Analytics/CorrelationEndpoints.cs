@@ -7,7 +7,8 @@ using PlantProcess.Application.Licensing.Interfaces;
 using PlantProcess.Domain.Entities.Analytics;
 using PlantProcess.Infrastructure.Persistence;
 using System.Text.Json;
-
+
+using PlantProcess.Api.ErrorHandling;
 namespace PlantProcess.Api.Endpoints.Analytics;
 
 public static class CorrelationEndpoints
@@ -145,13 +146,13 @@ public static class CorrelationEndpoints
             return gate.ToHttpResult(() => Results.NoContent());
 
         if (string.IsNullOrWhiteSpace(request.CorrelationType))
-            return Results.BadRequest(new { message = "CorrelationType is required." });
+            return ApplicationProblems.Validation("CorrelationType is required.");
 
         if (string.IsNullOrWhiteSpace(request.SubjectCode))
-            return Results.BadRequest(new { message = "SubjectCode is required." });
+            return ApplicationProblems.Validation("SubjectCode is required.");
 
         if (string.IsNullOrWhiteSpace(request.OutcomeCode))
-            return Results.BadRequest(new { message = "OutcomeCode is required." });
+            return ApplicationProblems.Validation("OutcomeCode is required.");
 
         var resultJson = JsonSerializer.Serialize(new
         {

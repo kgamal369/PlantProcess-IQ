@@ -1,4 +1,4 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using PlantProcess.Application.Licensing.Contracts;
 using PlantProcess.Application.Licensing.Interfaces;
 
@@ -151,7 +151,7 @@ public sealed class PlantEntitlementResolver : IPlantEntitlementResolver
                 x => $"Requires {_licenseService.GetRequiredTierForFeature(x)} license tier.");
 
         return new EffectiveEntitlementDto(
-            TenantId: user.FindFirstValue("tenant_id") ?? "00000000-0000-0000-0000-000000000001",
+            TenantId: PlantProcess.Application.Security.Tenancy.TenantClaims.Resolve(user).ToString(),
             TenantCode: user.FindFirstValue("tenant_code") ?? "default-demo",
             Role: role,
             CompatibilityRole: compatibilityRole,
@@ -253,7 +253,13 @@ public sealed class AccessControlMiddleware
         var routeTenantId = context.Request.Query["tenantId"].FirstOrDefault()
             ?? context.Request.RouteValues["tenantId"]?.ToString();
 
-        var tokenTenantId = context.User.FindFirstValue("tenant_id") ?? "00000000-0000-0000-0000-000000000001";
+        var tokenTenantId = context.User.FindFirstValue("tenant_id");
+        if (string.IsNullOrWhiteSpace(tokenTenantId))
+        {
+            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            await context.Response.WriteAsJsonAsync(new { message = "No tenant claim on the authenticated principal.", error = "no_tenant" });
+            return;
+        }
 
         if (!string.IsNullOrWhiteSpace(routeTenantId) &&
             !string.Equals(routeTenantId, tokenTenantId, StringComparison.OrdinalIgnoreCase))
@@ -294,3 +300,5 @@ public static class AccessControlApplicationBuilderExtensions
         return app.UseMiddleware<AccessControlMiddleware>();
     }
 }
+
+

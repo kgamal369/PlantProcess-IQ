@@ -1,9 +1,10 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using PlantProcess.Application.Assistant;
 
+using PlantProcess.Api.ErrorHandling;
 namespace PlantProcess.Api.Endpoints.Assistant;
 
 /// <summary>T-053/T-054 backend: grounded ask + admin reindex. Tenant/role/license come from the caller's claims.</summary>
@@ -18,7 +19,7 @@ public static class AssistantEndpoints
 
         group.MapPost("/ask", async (AskRequest req, ClaimsPrincipal user, AssistantService assistant, CancellationToken ct) =>
         {
-            if (!TryTenant(user, out var tenantId)) return Results.BadRequest(new { error = "no_tenant" });
+            if (!TryTenant(user, out var tenantId)) return ApplicationProblems.Validation("no_tenant");
 
             var request = new AssistantRequest(
                 tenantId, Role(user), License(user), req.Question ?? string.Empty,
@@ -45,10 +46,9 @@ public static class AssistantEndpoints
 
     private static bool TryTenant(ClaimsPrincipal u, out Guid t)
     {
-        t = Guid.Empty;
-        var raw = u.FindFirst("tenant_id")?.Value;
-        return !string.IsNullOrWhiteSpace(raw) && Guid.TryParse(raw, out t);
+        return PlantProcess.Application.Security.Tenancy.TenantClaims.TryResolve(u, out t);
     }
     private static string Role(ClaimsPrincipal u) => u.FindFirst(ClaimTypes.Role)?.Value ?? u.FindFirst("role")?.Value ?? "viewer";
     private static string License(ClaimsPrincipal u) => u.FindFirst("license_tier")?.Value ?? u.FindFirst("license")?.Value ?? "";
 }
+

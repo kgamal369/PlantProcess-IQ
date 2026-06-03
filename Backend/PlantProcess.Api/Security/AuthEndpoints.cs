@@ -1,9 +1,10 @@
-using System.IdentityModel.Tokens.Jwt;
+﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
+using PlantProcess.Api.ErrorHandling;
 namespace PlantProcess.Api.Security;
 
 public static class AuthEndpoints
@@ -50,7 +51,7 @@ public static class AuthEndpoints
         var auth = options.Value;
 
         if (string.IsNullOrWhiteSpace(request.UserName) || string.IsNullOrWhiteSpace(request.Password))
-            return Results.BadRequest(new { message = "User name and password are required." });
+            return ApplicationProblems.Validation("User name and password are required.");
 
         AppUserRecord? user = await authStore.ValidateUserAsync(
             request.UserName,
@@ -187,7 +188,7 @@ public static class AuthEndpoints
         var logger = loggerFactory.CreateLogger("PlantProcess.Provisioning");
 
         if (await authStore.HasAnyUserAsync(cancellationToken))
-            return Results.Conflict(new { message = "First-run provisioning is already closed because a user exists." });
+            return ApplicationProblems.Conflict("First-run provisioning is already closed because a user exists.");
 
         if (!state.Validate(request.ProvisioningToken))
             return Results.Forbid();
@@ -196,7 +197,7 @@ public static class AuthEndpoints
             string.IsNullOrWhiteSpace(request.Password) ||
             request.Password.Length < 12)
         {
-            return Results.BadRequest(new { message = "User name is required and password must be at least 12 characters." });
+            return ApplicationProblems.Validation("User name is required and password must be at least 12 characters.");
         }
 
         var owner = await authStore.CreateOwnerAsync(
@@ -363,3 +364,4 @@ public interface IAuditLogger<T>
 public sealed class NoopAuditLogger<T> : IAuditLogger<T>
 {
 }
+

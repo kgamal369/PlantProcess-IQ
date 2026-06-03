@@ -1,7 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PlantProcess.Domain.Entities.Process;
 using PlantProcess.Infrastructure.Persistence;
-
+
+using PlantProcess.Api.ErrorHandling;
 namespace PlantProcess.Api.Endpoints.Process;
 
 public static class ProcessEndpoints
@@ -103,7 +104,7 @@ public static class ProcessEndpoints
                 .AnyAsync(x => x.Id == request.MaterialUnitId, cancellationToken);
 
             if (!materialExists)
-                return Results.BadRequest(new { message = "MaterialUnit does not exist." });
+                return ApplicationProblems.Validation("MaterialUnit does not exist.");
 
             if (request.EquipmentId.HasValue)
             {
@@ -111,7 +112,7 @@ public static class ProcessEndpoints
                     .AnyAsync(x => x.Id == request.EquipmentId.Value, cancellationToken);
 
                 if (!equipmentExists)
-                    return Results.BadRequest(new { message = "Equipment does not exist." });
+                    return ApplicationProblems.Validation("Equipment does not exist.");
             }
 
             if (request.OperationDefinitionId.HasValue)
@@ -120,7 +121,7 @@ public static class ProcessEndpoints
                     .AnyAsync(x => x.Id == request.OperationDefinitionId.Value, cancellationToken);
 
                 if (!operationExists)
-                    return Results.BadRequest(new { message = "OperationDefinition does not exist." });
+                    return ApplicationProblems.Validation("OperationDefinition does not exist.");
             }
 
             var step = new ProcessStepExecution(
@@ -162,7 +163,7 @@ public static class ProcessEndpoints
             var step = await dbContext.ProcessStepExecutions.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
             if (step is null)
-                return Results.NotFound(new { message = "ProcessStepExecution not found." });
+                return ApplicationProblems.NotFound("ProcessStepExecution not found.");
 
             try
             {
@@ -172,7 +173,7 @@ public static class ProcessEndpoints
             }
             catch (Exception ex) when (ex is InvalidOperationException or ArgumentException)
             {
-                return Results.BadRequest(new { message = ex.Message });
+                return ApplicationProblems.Validation(ex.Message);
             }
         });
 
@@ -185,7 +186,7 @@ public static class ProcessEndpoints
             var step = await dbContext.ProcessStepExecutions.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
             if (step is null)
-                return Results.NotFound(new { message = "ProcessStepExecution not found." });
+                return ApplicationProblems.NotFound("ProcessStepExecution not found.");
 
             try
             {
@@ -195,7 +196,7 @@ public static class ProcessEndpoints
             }
             catch (Exception ex) when (ex is InvalidOperationException or ArgumentException)
             {
-                return Results.BadRequest(new { message = ex.Message });
+                return ApplicationProblems.Validation(ex.Message);
             }
         });
 
@@ -209,7 +210,7 @@ public static class ProcessEndpoints
                 .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
             if (step is null)
-                return Results.NotFound(new { message = "ProcessStepExecution not found." });
+                return ApplicationProblems.NotFound("ProcessStepExecution not found.");
 
             step.SoftDelete(
                 string.IsNullOrWhiteSpace(reason)
@@ -278,7 +279,7 @@ public static class ProcessEndpoints
                     cancellationToken);
 
             if (exists)
-                return Results.Conflict(new { message = "Parameter code already exists." });
+                return ApplicationProblems.Conflict("Parameter code already exists.");
 
             var definition = new ParameterDefinition(
                 parameterCode: request.ParameterCode,
@@ -381,13 +382,13 @@ public static class ProcessEndpoints
                 .AnyAsync(x => x.Id == request.MaterialUnitId, cancellationToken);
 
             if (!materialExists)
-                return Results.BadRequest(new { message = "MaterialUnit does not exist." });
+                return ApplicationProblems.Validation("MaterialUnit does not exist.");
 
             var parameterExists = await dbContext.ParameterDefinitions
                 .AnyAsync(x => x.Id == request.ParameterDefinitionId, cancellationToken);
 
             if (!parameterExists)
-                return Results.BadRequest(new { message = "ParameterDefinition does not exist." });
+                return ApplicationProblems.Validation("ParameterDefinition does not exist.");
 
             if (request.ProcessStepExecutionId.HasValue)
             {
@@ -395,7 +396,7 @@ public static class ProcessEndpoints
                     .AnyAsync(x => x.Id == request.ProcessStepExecutionId.Value, cancellationToken);
 
                 if (!stepExists)
-                    return Results.BadRequest(new { message = "ProcessStepExecution does not exist." });
+                    return ApplicationProblems.Validation("ProcessStepExecution does not exist.");
             }
 
             if (request.EquipmentId.HasValue)
@@ -404,7 +405,7 @@ public static class ProcessEndpoints
                     .AnyAsync(x => x.Id == request.EquipmentId.Value, cancellationToken);
 
                 if (!equipmentExists)
-                    return Results.BadRequest(new { message = "Equipment does not exist." });
+                    return ApplicationProblems.Validation("Equipment does not exist.");
             }
 
             var observation = new ParameterObservation(
@@ -648,7 +649,7 @@ public static class ProcessEndpoints
                 .AnyAsync(x => x.Id == materialUnitId.Value, cancellationToken);
 
             if (!materialExists)
-                return Results.BadRequest(new { message = "MaterialUnit does not exist." });
+                return ApplicationProblems.Validation("MaterialUnit does not exist.");
         }
 
         if (processStepExecutionId.HasValue)
@@ -657,7 +658,7 @@ public static class ProcessEndpoints
                 .AnyAsync(x => x.Id == processStepExecutionId.Value, cancellationToken);
 
             if (!stepExists)
-                return Results.BadRequest(new { message = "ProcessStepExecution does not exist." });
+                return ApplicationProblems.Validation("ProcessStepExecution does not exist.");
         }
 
         if (equipmentId.HasValue)
@@ -666,7 +667,7 @@ public static class ProcessEndpoints
                 .AnyAsync(x => x.Id == equipmentId.Value, cancellationToken);
 
             if (!equipmentExists)
-                return Results.BadRequest(new { message = "Equipment does not exist." });
+                return ApplicationProblems.Validation("Equipment does not exist.");
         }
 
         return null;
@@ -758,4 +759,5 @@ public static class ProcessEndpoints
         string? PlantTimeZoneId,
         int? PlantUtcOffsetMinutes);
 }
+
 

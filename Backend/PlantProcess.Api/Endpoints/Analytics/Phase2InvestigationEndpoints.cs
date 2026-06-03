@@ -1,10 +1,11 @@
-using System.Data;
+﻿using System.Data;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using PlantProcess.Infrastructure.Persistence;
-
+
+using PlantProcess.Api.ErrorHandling;
 namespace PlantProcess.Api.Endpoints.Analytics;
 
 public static class Phase2InvestigationEndpoints
@@ -47,10 +48,10 @@ public static class Phase2InvestigationEndpoints
         CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(request.InspectionJobCode))
-            return Results.BadRequest(new { message = "InspectionJobCode is required." });
+            return ApplicationProblems.Validation("InspectionJobCode is required.");
 
         if (string.IsNullOrWhiteSpace(request.InspectionJobName))
-            return Results.BadRequest(new { message = "InspectionJobName is required." });
+            return ApplicationProblems.Validation("InspectionJobName is required.");
 
         var id = Guid.NewGuid();
 
@@ -181,10 +182,10 @@ public static class Phase2InvestigationEndpoints
         CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(request.ParameterCode))
-            return Results.BadRequest(new { message = "ParameterCode is required." });
+            return ApplicationProblems.Validation("ParameterCode is required.");
 
         if (string.IsNullOrWhiteSpace(request.DefectType))
-            return Results.BadRequest(new { message = "DefectType is required." });
+            return ApplicationProblems.Validation("DefectType is required.");
 
         var fromUtc = request.FromUtc ?? DateTime.UtcNow.AddDays(-30);
         var toUtc = request.ToUtc ?? DateTime.UtcNow;

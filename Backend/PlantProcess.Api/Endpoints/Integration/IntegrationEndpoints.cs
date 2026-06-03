@@ -8,7 +8,8 @@ using PlantProcess.Application.Integration.Interfaces.Staging;
 using PlantProcess.Domain.Entities.Integration;
 using PlantProcess.Application.Integration.Connectors;
 using PlantProcess.Infrastructure.Persistence;
-
+
+using PlantProcess.Api.ErrorHandling;
 namespace PlantProcess.Api.Endpoints.Integration;
 
 public static class IntegrationEndpoints
@@ -139,7 +140,7 @@ public static class IntegrationEndpoints
             .AnyAsync(x => x.SourceSystemCode == request.SourceSystemCode, cancellationToken);
 
         if (exists)
-            return Results.Conflict(new { message = "Source system code already exists." });
+            return ApplicationProblems.Conflict("Source system code already exists.");
 
         var sourceSystem = new SourceSystemDefinition(
             sourceSystemCode: request.SourceSystemCode,
@@ -173,7 +174,7 @@ public static class IntegrationEndpoints
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
         if (source is null)
-            return Results.NotFound(new { message = "Source system not found." });
+            return ApplicationProblems.NotFound("Source system not found.");
 
         source.Activate();
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -190,7 +191,7 @@ public static class IntegrationEndpoints
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
         if (source is null)
-            return Results.NotFound(new { message = "Source system not found." });
+            return ApplicationProblems.NotFound("Source system not found.");
 
         source.Deactivate();
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -283,13 +284,13 @@ public static class IntegrationEndpoints
             .AnyAsync(x => x.Id == request.SourceSystemDefinitionId, cancellationToken);
 
         if (!sourceExists)
-            return Results.BadRequest(new { message = "Source system definition does not exist." });
+            return ApplicationProblems.Validation("Source system definition does not exist.");
 
         var exists = await dbContext.ImportBatches
             .AnyAsync(x => x.ImportBatchCode == request.ImportBatchCode, cancellationToken);
 
         if (exists)
-            return Results.Conflict(new { message = "Import batch code already exists." });
+            return ApplicationProblems.Conflict("Import batch code already exists.");
 
         var importBatch = new ImportBatch(
             sourceSystemDefinitionId: request.SourceSystemDefinitionId,
@@ -323,7 +324,7 @@ public static class IntegrationEndpoints
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
         if (batch is null)
-            return Results.NotFound(new { message = "Import batch not found." });
+            return ApplicationProblems.NotFound("Import batch not found.");
 
         batch.MarkRunning();
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -338,13 +339,13 @@ public static class IntegrationEndpoints
         CancellationToken cancellationToken)
     {
         if (request.RowCount < 0)
-            return Results.BadRequest(new { message = "Row count cannot be negative." });
+            return ApplicationProblems.Validation("Row count cannot be negative.");
 
         var batch = await dbContext.ImportBatches
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
         if (batch is null)
-            return Results.NotFound(new { message = "Import batch not found." });
+            return ApplicationProblems.NotFound("Import batch not found.");
 
         batch.MarkCompleted(request.RowCount);
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -369,7 +370,7 @@ public static class IntegrationEndpoints
             .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
 
         if (batch is null)
-            return Results.NotFound(new { message = "Import batch not found." });
+            return ApplicationProblems.NotFound("Import batch not found.");
 
         batch.MarkFailed(request.ErrorMessage);
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -689,4 +690,5 @@ public static class IntegrationEndpoints
         string MappingJson,
         string? MappingVersion);
 }
+
 
