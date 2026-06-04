@@ -1,7 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PlantProcess.Api.Extensions;
 using PlantProcess.Application.Analytics.Contracts;
+using PlantProcess.Application.Analytics.Advanced;
 using PlantProcess.Application.Analytics.Interfaces;
+using PlantProcess.Application.Analytics.Engines;
 using PlantProcess.Application.Licensing.Contracts;
 using PlantProcess.Application.Licensing.Interfaces;
 using PlantProcess.Domain.Entities.Analytics;
@@ -21,6 +23,7 @@ public static class CorrelationEndpoints
 
         // Existing MVP endpoints
         group.MapGet("/parameter-defect", GetParameterDefectCorrelationAsync);
+        group.MapPost("/canonical/run", RunCanonicalCorrelationAsync);
         group.MapGet("/equipment-defect-rate", GetEquipmentDefectRateAsync);
         group.MapGet("/operation-defect-rate", GetOperationDefectRateAsync);
         group.MapGet("/materials/{materialUnitId:guid}/context", GetMaterialCorrelationContextAsync);
@@ -34,6 +37,32 @@ public static class CorrelationEndpoints
         group.MapGet("/parameter-defect/genealogy-aware", GetGenealogyAwareParameterDefectCorrelationAsync);
 
         return app;
+    }
+
+    private static async Task<IResult> RunCanonicalCorrelationAsync(
+        AdvancedAnalysisRequest request,
+        ICorrelationEngineRegistry engines,
+        CancellationToken cancellationToken)
+    {
+        var result = await engines.Default.ComputeAsync(request, cancellationToken);
+
+        return Results.Ok(new
+        {
+            result.RunId,
+            result.OutcomeKey,
+            result.OutcomeType,
+            result.Grain,
+            result.WindowDays,
+            result.Readiness,
+            result.ReadinessReasons,
+            result.CanRun,
+            result.Findings,
+            result.Excluded,
+            result.Engine,
+            result.Message,
+            canonicalEngine = engines.Default.Key,
+            honestyCaveat = "PlantProcess IQ reports statistical association and suspected contributors, not guaranteed root cause. Findings must be reviewed with process context."
+        });
     }
 
     private static async Task<IResult> GetParameterDefectCorrelationAsync(
@@ -716,3 +745,7 @@ public static class CorrelationEndpoints
         decimal? LiftVsBaseline,
         string Confidence);
 }
+
+
+
+

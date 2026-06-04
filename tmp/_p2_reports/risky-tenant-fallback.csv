@@ -1,3 +1,0 @@
-﻿"File","Line","Text"
-"\Backend\PlantProcess.Api\Security\PlantAccessControl.cs","154","TenantId: user.FindFirstValue(""tenant_id"") ?? ""00000000-0000-0000-0000-000000000001"","
-"\Backend\PlantProcess.Api\Security\PlantAccessControl.cs","256","var tokenTenantId = context.User.FindFirstValue(""tenant_id"") ?? ""00000000-0000-0000-0000-000000000001"";"

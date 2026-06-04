@@ -1,7 +1,27 @@
-
+﻿
 # PPIQ Phase 1 - backup hygiene
 *.bak
 *.bak_*
 *.fixbak
 *_225545
 **/.ppiq-phase1-backup/
+# PlantProcess IQ generated/local backup hygiene — PPIQ-T008
+*.bak
+*.bak_*
+*.orig
+*.tmp
+*.old
+*.rej
+*.patch
+*_backup/
+*_backup_*/
+tmp/
+tmp_*/
+.ppiq-phase1-backup/
+_pack_*/
+_p1_*/
+_p2_*/
+_p3_*/
+_p4_*/
+_p5_*/
+_v5_*_backup_*/

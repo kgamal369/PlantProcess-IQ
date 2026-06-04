@@ -1,5 +1,6 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using PlantProcess.Analytics.Core.Primitives;
 namespace PlantProcess.Analytics.Core.Kpi;
 public enum KpiKind { Formula, SqlView, MappedMeasure }
@@ -24,21 +25,67 @@ KpiSeverity Severity,
 bool AlertRaised,
 AnalysisMetadata Metadata,
 string? Message = null);
-/// <summary>Minimal SELECT-only guard mirroring SafeSqlValidator intent for SQL-view KPIs.</summary>
-public static class BasicSqlGuard
+/// <summary>
+/// Read-only SQL validator for KPI SQL-view definitions.
+/// PPIQ-T001/T006: replaces the old substring guard with token-boundary validation.
+/// </summary>
+public static class SafeSqlValidator
 {
-private static readonly string[] Forbidden =
-{ "insert", "update", "delete", "drop", "alter", "truncate", "grant", "revoke", "exec", "execute", "call", "copy", "merge", "create", "pg_", "information_schema" };
+private static readonly string[] ForbiddenTokens =
+[
+    "insert", "update", "delete", "drop", "alter", "truncate",
+    "grant", "revoke", "exec", "execute", "call", "copy", "merge",
+    "create", "vacuum", "analyze", "pg_catalog", "information_schema",
+    "pg_read_file", "pg_sleep", "dblink", "xp_cmdshell", "openrowset"
+];
+
 public static void Validate(string? sql)
 {
-    if (string.IsNullOrWhiteSpace(sql)) throw new KpiFormulaException("KPI SQL view text is empty.");
-    var trimmed = sql.Trim();
-    var lower = trimmed.ToLowerInvariant();
-    if (!(lower.StartsWith("select") || lower.StartsWith("with")))
+    if (string.IsNullOrWhiteSpace(sql))
+        throw new KpiFormulaException("KPI SQL view text is empty.");
+
+    var withoutComments = StripSqlComments(sql).Trim();
+    var trimmed = RemoveSingleTrailingSemicolon(withoutComments).Trim();
+
+    if (trimmed.Contains(';'))
+        throw new KpiFormulaException("KPI SQL view must be a single SELECT/WITH statement.");
+
+    var lowered = Regex.Replace(trimmed.ToLowerInvariant(), @"\s+", " ");
+
+    if (!(lowered.StartsWith("select ") || lowered == "select" || lowered.StartsWith("with ")))
         throw new KpiFormulaException("KPI SQL view must be a read-only SELECT/WITH query.");
-    if (trimmed.Contains(';')) throw new KpiFormulaException("KPI SQL view must be a single statement (no semicolons).");
-    foreach (var bad in Forbidden)
-        if (lower.Contains(bad)) throw new KpiFormulaException($"KPI SQL view contains a forbidden token: '{bad}'.");
+
+    foreach (var token in ForbiddenTokens)
+    {
+        if (ContainsForbiddenToken(lowered, token))
+            throw new KpiFormulaException($"KPI SQL view contains a forbidden token: '{token}'.");
+    }
+}
+
+private static bool ContainsForbiddenToken(string loweredSql, string token)
+{
+    var escaped = Regex.Escape(token);
+    var pattern = $@"(^|[^a-z0-9_]){escaped}([^a-z0-9_]|$|[ \t\r\n]*\()";
+
+    return Regex.IsMatch(loweredSql, pattern, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+}
+
+private static string StripSqlComments(string sql)
+{
+    var noLine = Regex.Replace(sql, @"--.*?$", string.Empty, RegexOptions.Multiline);
+    return Regex.Replace(noLine, @"/\*.*?\*/", string.Empty, RegexOptions.Singleline);
+}
+
+private static string RemoveSingleTrailingSemicolon(string sql)
+{
+    var trimmed = sql.TrimEnd();
+
+    if (!trimmed.EndsWith(';'))
+        return sql;
+
+    var without = trimmed[..^1];
+
+    return without.Contains(';') ? sql : without;
 }
 }
 public sealed class KpiEngine
@@ -60,7 +107,7 @@ public KpiResult EvaluateMeasured(
     string dataset, IReadOnlyList<string> filters, string timeWindow, DateTimeOffset refreshedAtUtc, int sampleSize)
 {
     string formula;
-    if (def.Kind == KpiKind.SqlView) { BasicSqlGuard.Validate(def.SqlView); formula = $"SQL:{def.SqlView}"; }
+    if (def.Kind == KpiKind.SqlView) { SafeSqlValidator.Validate(def.SqlView); formula = $"SQL:{def.SqlView}"; }
     else if (def.Kind == KpiKind.MappedMeasure) { formula = $"MEASURE:{def.MeasureCode}"; }
     else throw new KpiFormulaException($"KPI '{def.Code}' is not a measured KPI.");
     return Finalize(def, tenantId, measuredValue, formula, dataset, filters, timeWindow, refreshedAtUtc, sampleSize);

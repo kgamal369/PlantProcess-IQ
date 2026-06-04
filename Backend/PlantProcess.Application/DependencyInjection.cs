@@ -8,6 +8,7 @@
 
 using Microsoft.Extensions.DependencyInjection;
 using PlantProcess.Application.Analytics.Interfaces;
+using PlantProcess.Application.Analytics.Engines;
 using PlantProcess.Application.Analytics.Services;
 using PlantProcess.Application.Common.Time;
 using PlantProcess.Application.Dashboarding.Interfaces;
@@ -120,6 +121,12 @@ public static class DependencyInjection
         services.AddScoped<IInvestigationReportService, InvestigationReportService>();
         services.AddScoped<PlantProcess.Application.Analytics.Engines.ICorrelationEngine, PlantProcess.Application.Analytics.Engines.CanonicalCorrelationEngine>(); // PPIQ-T010
         services.AddScoped<PlantProcess.Application.Analytics.Engines.ICorrelationEngineRegistry, PlantProcess.Application.Analytics.Engines.CorrelationEngineRegistry>(); // PPIQ-T010
-        return services;
+        
+        // PPIQ-T010: canonical analytics engine registry.
+        services.AddScoped<ICorrelationEngine, CanonicalCorrelationEngine>();
+        services.AddScoped<ICorrelationEngineRegistry, CorrelationEngineRegistry>();
+return services;
     }
 }
+
+

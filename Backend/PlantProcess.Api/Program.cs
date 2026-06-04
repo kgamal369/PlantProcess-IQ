@@ -234,9 +234,9 @@ builder.Services.AddScoped(typeof(PlantProcess.Api.Security.IAuditLogger<>), typ
     builder.Services
         .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         .AddJwtBearer(options => {
-    options.SaveToken = false;
+
             options.RequireHttpsMetadata = !builder.Environment.IsDevelopment();
-            options.SaveToken = true;
+            options.SaveToken = true; // PPIQ-T003: single intentional assignment.
 
             options.TokenValidationParameters = new TokenValidationParameters
             {
@@ -557,6 +557,7 @@ static System.Collections.Generic.IEnumerable<Microsoft.IdentityModel.Tokens.Sec
 public partial class Program
 {
 }
+
 
 
 

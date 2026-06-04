@@ -1,19 +1,29 @@
-﻿// PPIQ-GENERATED (T009)
 using PlantProcess.Analytics.Core.Kpi;
 using Xunit;
 
-namespace PlantProcess.Phase1.Tests;
+namespace PlantProcess.Application.UnitTests;
 
-public class Phase1_KpiSqlGuardTests
+public sealed class Phase1_KpiSqlGuardTests
 {
-    [InlineData("SELECT created_at, updated_at FROM quality_events")]
+    [Theory]
+    [InlineData("SELECT created_at, updated_at, created_by FROM quality_events")]
     [InlineData("SELECT id FROM material_units ORDER BY created_at OFFSET 10")]
-    [InlineData("WITH x AS (SELECT created_by FROM app_users) SELECT * FROM x")]
-    [Theory] public void Valid_views_pass(string sql) => BasicSqlGuard.Validate(sql);
+    [InlineData("WITH x AS (SELECT created_by FROM quality_events) SELECT created_by FROM x")]
+    [InlineData("SELECT pre_grade, created_at FROM quality_events")]
+    public void Valid_read_only_views_with_forbidden_substrings_should_pass(string sql)
+    {
+        SafeSqlValidator.Validate(sql);
+    }
 
-    [InlineData("SELECT 1; DROP TABLE quality_events")]
-    [InlineData("SELECT * FROM pg_read_file('/etc/passwd')")]
-    [InlineData("INSERT INTO quality_events VALUES (1)")]
-    [InlineData("SELECT table_name FROM information_schema.tables")]
-    [Theory] public void Dangerous_views_fail(string sql) => Assert.Throws<KpiFormulaException>(() => BasicSqlGuard.Validate(sql));
+    [Theory]
+    [InlineData("SELECT 1; DROP TABLE material_units")]
+    [InlineData("SELECT * FROM quality_events; SELECT * FROM material_units")]
+    [InlineData("DROP TABLE material_units")]
+    [InlineData("CREATE VIEW v AS SELECT * FROM material_units")]
+    [InlineData("SELECT pg_read_file('/etc/passwd')")]
+    [InlineData("SELECT * FROM information_schema.tables")]
+    public void Dangerous_or_multi_statement_sql_should_be_rejected(string sql)
+    {
+        Assert.Throws<KpiFormulaException>(() => SafeSqlValidator.Validate(sql));
+    }
 }
