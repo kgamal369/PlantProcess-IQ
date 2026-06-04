@@ -1,0 +1,1262 @@
+[
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/WidgetBuilderWizardContent.implementation.tsx",
+    "lines": 1710,
+    "isImplementation": true,
+    "priority": "P0"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/WidgetBuilderWizard.implementation.tsx",
+    "lines": 1512,
+    "isImplementation": true,
+    "priority": "P0"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/api/productCoreApiClient.implementation.ts",
+    "lines": 1265,
+    "isImplementation": true,
+    "priority": "P1"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/pages/Admin/AdminDbConfigurationTab.implementation.tsx",
+    "lines": 1128,
+    "isImplementation": true,
+    "priority": "P1"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/pages/MaterialAnalytics/MaterialAnalyticsPages.implementation.tsx",
+    "lines": 1103,
+    "isImplementation": true,
+    "priority": "P1"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/pages/Admin/AdminSchemaConfigurationTab.implementation.tsx",
+    "lines": 948,
+    "isImplementation": true,
+    "priority": "P2"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/demo/plantProcessDemoScenario.implementation.ts",
+    "lines": 899,
+    "isImplementation": true,
+    "priority": "P2"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/App.implementation.tsx",
+    "lines": 589,
+    "isImplementation": true,
+    "priority": "P3"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/state/DashboardGridLayoutContext.implementation.tsx",
+    "lines": 552,
+    "isImplementation": true,
+    "priority": "P3"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/ui/standard-components.implementation.tsx",
+    "lines": 526,
+    "isImplementation": true,
+    "priority": "P3"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/pages/Admin/CanonicalSchemaMappingPanel.implementation.tsx",
+    "lines": 514,
+    "isImplementation": true,
+    "priority": "P3"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/standard/StandardTable.implementation.tsx",
+    "lines": 487,
+    "isImplementation": true,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/pages/DemoAnalytics/DemoAnalyticsPages.implementation.tsx",
+    "lines": 462,
+    "isImplementation": true,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/pages/MaterialInvestigation/MaterialInvestigationPage.tsx",
+    "lines": 445,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/charts/InteractiveCharts.tsx",
+    "lines": 426,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/api/productApiHardening.implementation.ts",
+    "lines": 392,
+    "isImplementation": true,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/pages/PageBuilder/PageBuilderPage.implementation.tsx",
+    "lines": 378,
+    "isImplementation": true,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/pages/Admin/TwoStageImportMonitorPanel.implementation.tsx",
+    "lines": 376,
+    "isImplementation": true,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/standard/StandardFields.tsx",
+    "lines": 371,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/api/workflow-foundation/workflowFoundation.api.ts",
+    "lines": 370,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/api/http/apiClient.ts",
+    "lines": 364,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/dashboard/DashboardWidgetCard.tsx",
+    "lines": 359,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/pages/Admin/AdminJobsMonitorTab.tsx",
+    "lines": 351,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/DashboardFilterBar.tsx",
+    "lines": 341,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/state/DashboardSelectionContext.tsx",
+    "lines": 340,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/state/AuthContext.tsx",
+    "lines": 325,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/pages/PageBuilder/pageBuilderReducer.ts",
+    "lines": 299,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/standard/StandardSurface.tsx",
+    "lines": 284,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/AppLayout.tsx",
+    "lines": 238,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/materials/GenealogyThreadPanel.tsx",
+    "lines": 235,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/pages/V5OutboundI18nMobilePage.tsx",
+    "lines": 235,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/pages/Admin/AdminImportingDataTab.tsx",
+    "lines": 229,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/api/inspectionWorkflowApi.ts",
+    "lines": 213,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/dashboard/SavedDashboardWidget.tsx",
+    "lines": 209,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/state/DashboardFilterContext.tsx",
+    "lines": 200,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/SortableDataTable.tsx",
+    "lines": 195,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/ui/standard-components.stories.tsx",
+    "lines": 192,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/pages/DynamicPage/DynamicPage.tsx",
+    "lines": 189,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/pages/V5SsoLicensingPage.tsx",
+    "lines": 177,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/WidgetScriptStep.tsx",
+    "lines": 176,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/standard/StandardTabs.tsx",
+    "lines": 174,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/pages/V5ConnectorsIdentityPage.tsx",
+    "lines": 167,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/license/LicenseUsagePanel.tsx",
+    "lines": 163,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/pages/Admin/AdminSharedComponents.tsx",
+    "lines": 163,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/skeletons/Skeleton.tsx",
+    "lines": 162,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/api/schemaMapping/schemaMapping.api.ts",
+    "lines": 158,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/WidgetScriptBuilderPanel.tsx",
+    "lines": 158,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/inspection/OperationProgressPanel.tsx",
+    "lines": 158,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/state/LicenseContext.tsx",
+    "lines": 158,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/state/DemoModeContext.tsx",
+    "lines": 155,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/analytics/ReadModelWidgets.tsx",
+    "lines": 149,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/standard/ErrorBoundary.tsx",
+    "lines": 148,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/utils/errorMapping.ts",
+    "lines": 148,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/api/productApiClient.ts",
+    "lines": 147,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/pages/V5NoCodeMapperPage.tsx",
+    "lines": 144,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/pages/PageBuilder/__tests__/pageBuilderReducer.test.ts",
+    "lines": 140,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/standard/StandardButton.tsx",
+    "lines": 134,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/test/architecture/largeFileBoundaries.test.ts",
+    "lines": 130,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/StateRenderer.tsx",
+    "lines": 126,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/api/ml/mlReadiness.api.ts",
+    "lines": 120,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/pages/CommercialLicense/CommercialLicensePage.tsx",
+    "lines": 120,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/license/ConnectorTruthPanel.tsx",
+    "lines": 118,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/api/demo/demoLifecycle.api.ts",
+    "lines": 116,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/standard/DataFetchBoundary.tsx",
+    "lines": 116,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/pages/Analytics/AdvancedAnalysisPage.tsx",
+    "lines": 115,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/state/ThemeContext.tsx",
+    "lines": 115,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/api/twoStageImport/twoStageImport.api.ts",
+    "lines": 112,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/demo/DimensionCompletionPanel.tsx",
+    "lines": 112,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/api/demo-analytics/demoAnalytics.api.ts",
+    "lines": 111,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/suggestions/SuggestionCardsPanel.tsx",
+    "lines": 111,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/analytics/AdvancedResultPanel.tsx",
+    "lines": 107,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/value/ValueImpactCard.tsx",
+    "lines": 106,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/hooks/useOptimisticSave.ts",
+    "lines": 105,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/hooks/useLatestOnlyPolling.ts",
+    "lines": 104,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/dashboard/DashboardGridLayout.tsx",
+    "lines": 103,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/notifications/toast.ts",
+    "lines": 102,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/brand/plantProcessBrand.ts",
+    "lines": 98,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/inspection/SaveInspectionJobModal.tsx",
+    "lines": 98,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/assistant/AssistantChat.tsx",
+    "lines": 95,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/standard/StandardTable.stories.tsx",
+    "lines": 95,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/hooks/useInlineFormValidation.ts",
+    "lines": 94,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/i18n/v5I18n.tsx",
+    "lines": 92,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/hooks/useDashboardLayoutPersistence.ts",
+    "lines": 91,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/standard/StandardPageCompat.tsx",
+    "lines": 90,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/license/LicenseGate.tsx",
+    "lines": 89,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/hardening/routeContracts.ts",
+    "lines": 89,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/pages/Analytics/InspectionJobsPage.tsx",
+    "lines": 88,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/api/license/licenseUsage.api.ts",
+    "lines": 85,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/skeletons/LoadingSkeletonSet.tsx",
+    "lines": 83,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/standard/__tests__/DataFetchBoundary.test.tsx",
+    "lines": 81,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/standard/StandardFields.stories.tsx",
+    "lines": 80,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/utils/dragPerformance.ts",
+    "lines": 80,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/standard/StandardSurface.stories.tsx",
+    "lines": 76,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/hardening/actionMatrix.ts",
+    "lines": 75,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/ActiveFilterChips.tsx",
+    "lines": 73,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/brand/AppCommandHeader.tsx",
+    "lines": 70,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/test/architecture/noLegacyApiGrowth.test.ts",
+    "lines": 70,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/utils/frontendDiagnostics.ts",
+    "lines": 69,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/dashboard/SelectionBreadcrumb.tsx",
+    "lines": 68,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/standard/StandardButton.stories.tsx",
+    "lines": 67,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/brand/BrandProofPanel.tsx",
+    "lines": 66,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/hooks/useCustomerSafeAction.ts",
+    "lines": 66,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/standard/__tests__/StandardButton.test.tsx",
+    "lines": 65,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/dashboard/DrilldownDrawer.tsx",
+    "lines": 64,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/api/legacy/__tests__/plantProcessApi.contract.test.ts",
+    "lines": 62,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/__tests__/ActiveFilterChips.test.tsx",
+    "lines": 61,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/BrandProofSection.tsx",
+    "lines": 60,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/api/widgetScript/widgetScript.api.ts",
+    "lines": 59,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/__tests__/SortableDataTable.virtualization.test.tsx",
+    "lines": 59,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/layout/PageGrid.tsx",
+    "lines": 55,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/state/__tests__/AuthContext.bootstrap.test.tsx",
+    "lines": 55,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/api/__tests__/apiClient.retry-backoff.test.ts",
+    "lines": 53,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/standard/__tests__/StandardTable.test.tsx",
+    "lines": 53,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/state/__tests__/LicenseContext.gating.test.tsx",
+    "lines": 52,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/api/license/license.api.ts",
+    "lines": 51,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/standard/DesignTokens.stories.tsx",
+    "lines": 51,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/notifications/Toaster.tsx",
+    "lines": 51,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/test/architecture/frontendArchitecture.test.ts",
+    "lines": 51,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/standard/tokens.ts",
+    "lines": 50,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/brand/ProductBrand.tsx",
+    "lines": 48,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/hooks/__tests__/useInlineFormValidation.test.tsx",
+    "lines": 47,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/demo/DemoModeControl.tsx",
+    "lines": 46,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/standard/StandardTabs.stories.tsx",
+    "lines": 46,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/api/apiConfig.ts",
+    "lines": 45,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/__tests__/MetricCard.test.tsx",
+    "lines": 45,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/analytics/__tests__/AdvancedResultPanel.test.tsx",
+    "lines": 42,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/standard/DoDont.stories.tsx",
+    "lines": 42,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/standard/Onboarding.stories.tsx",
+    "lines": 42,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/standard/__tests__/StandardTabs.test.tsx",
+    "lines": 42,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/brand/SOUBrand.tsx",
+    "lines": 41,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/api/dashboarding/dashboarding.api.ts",
+    "lines": 40,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/demo/DemoLifecycleKpiStrip.tsx",
+    "lines": 40,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/pages/Analytics/__tests__/AdvancedAnalysisPage.test.tsx",
+    "lines": 40,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/demo/LockedFeatureOverlay.tsx",
+    "lines": 37,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/pages/Analytics/AnalyticsWidgetsPage.tsx",
+    "lines": 35,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/api/pageBuilder/pageBuilder.api.ts",
+    "lines": 33,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/dashboard/DragGhost.tsx",
+    "lines": 33,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/license/FeatureGateHint.tsx",
+    "lines": 33,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/api/advancedAnalysis.ts",
+    "lines": 32,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/hooks/useApiResource.ts",
+    "lines": 32,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/api/integration/integration.api.ts",
+    "lines": 31,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/brand/AppDualBrandHeader.tsx",
+    "lines": 31,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/__tests__/StatusBadge.test.tsx",
+    "lines": 31,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/license/LicenseBadge.tsx",
+    "lines": 30,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/AsyncState.tsx",
+    "lines": 28,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/notifications/AppToastHost.tsx",
+    "lines": 27,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/api/admin/admin.api.ts",
+    "lines": 26,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/api/analytics/analytics.api.ts",
+    "lines": 25,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/analytics/AdvancedResultsList.tsx",
+    "lines": 25,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/__tests__/AsyncState.test.tsx",
+    "lines": 25,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/test/mocks/handlers.ts",
+    "lines": 24,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/MetricCard.tsx",
+    "lines": 21,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/demo/DemoEnvironmentBanner.tsx",
+    "lines": 20,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/StatusBadge.tsx",
+    "lines": 20,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/main.tsx",
+    "lines": 19,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/notifications/ToastRoot.tsx",
+    "lines": 19,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/test/setupTests.ts",
+    "lines": 18,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/dashboard/EmptyInsightState.tsx",
+    "lines": 17,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/__tests__/LockedFeatureOverlay.test.tsx",
+    "lines": 17,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/forms/InlineFieldError.tsx",
+    "lines": 14,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/pages/MaterialInvestigationPage.tsx",
+    "lines": 13,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/test/integration/mockedApi.integration.test.ts",
+    "lines": 13,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/standard/index.ts",
+    "lines": 9,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/pages/Admin/AdminPage.tsx",
+    "lines": 6,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/pages/Admin/AdminPageContent.tsx",
+    "lines": 6,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/pages/AdminPreview/AdminPreviewWorkspacePage.tsx",
+    "lines": 6,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/pages/BrandIdentity/BrandIdentityPage.tsx",
+    "lines": 6,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/pages/Correlation/CorrelationPage.tsx",
+    "lines": 6,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/pages/Dashboard/DashboardPage.tsx",
+    "lines": 6,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/pages/Dashboard/DashboardPageContent.tsx",
+    "lines": 6,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/pages/DataQuality/DataQualityPage.tsx",
+    "lines": 6,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/pages/DemoLifecycle/DemoLifecyclePage.tsx",
+    "lines": 6,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/pages/MlReadiness/MlReadinessPage.tsx",
+    "lines": 6,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/pages/RiskDashboard/RiskDashboardPage.tsx",
+    "lines": 6,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/test/mocks/server.ts",
+    "lines": 5,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/api/admin/index.ts",
+    "lines": 3,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/api/analytics/index.ts",
+    "lines": 3,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/api/dashboarding/index.ts",
+    "lines": 3,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/api/integration/index.ts",
+    "lines": 3,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/App.tsx",
+    "lines": 3,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/WidgetBuilderWizard.tsx",
+    "lines": 3,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/WidgetBuilderWizardContent.tsx",
+    "lines": 3,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/pages/PageBuilder/PageBuilderPage.tsx",
+    "lines": 3,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/api/http/index.ts",
+    "lines": 2,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/api/license/index.ts",
+    "lines": 2,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/api/pageBuilder/index.ts",
+    "lines": 2,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/api/productApiHardening.ts",
+    "lines": 2,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/api/productCoreApiClient.ts",
+    "lines": 2,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/standard/StandardTable.tsx",
+    "lines": 2,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/table/index.ts",
+    "lines": 2,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/demo/plantProcessDemoScenario.ts",
+    "lines": 2,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/pages/Admin/AdminDbConfigurationTab.tsx",
+    "lines": 2,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/pages/Admin/AdminSchemaConfigurationTab.tsx",
+    "lines": 2,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/pages/Admin/CanonicalSchemaMappingPanel.tsx",
+    "lines": 2,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/pages/Admin/TwoStageImportMonitorPanel.tsx",
+    "lines": 2,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/pages/AdminPage.tsx",
+    "lines": 2,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/pages/CorrelationPage.tsx",
+    "lines": 2,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/pages/DashboardPage.tsx",
+    "lines": 2,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/pages/DataQualityPage.tsx",
+    "lines": 2,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/pages/DemoAnalytics/DemoAnalyticsPages.tsx",
+    "lines": 2,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/pages/MaterialAnalytics/MaterialAnalyticsPages.tsx",
+    "lines": 2,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/pages/RiskDashboardPage.tsx",
+    "lines": 2,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/state/DashboardGridLayoutContext.tsx",
+    "lines": 2,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/ui/standard-components.tsx",
+    "lines": 2,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/api/demo/index.ts",
+    "lines": 1,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/api/ml/index.ts",
+    "lines": 1,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/api/widgetScript/index.ts",
+    "lines": 1,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/inspection/index.ts",
+    "lines": 1,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/components/layout/index.ts",
+    "lines": 1,
+    "isImplementation": false,
+    "priority": "P4"
+  },
+  {
+    "file": "Frontend/PlantProcess.Web/src/ui/index.ts",
+    "lines": 1,
+    "isImplementation": false,
+    "priority": "P4"
+  }
+]

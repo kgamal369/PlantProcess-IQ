@@ -1,0 +1,79 @@
+[
+  {
+    "rank": 1,
+    "file": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/WidgetBuilderWizardContent.implementation.tsx",
+    "lines": 1710,
+    "isImplementation": true,
+    "priority": "P0"
+  },
+  {
+    "rank": 2,
+    "file": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/WidgetBuilderWizard.implementation.tsx",
+    "lines": 1512,
+    "isImplementation": true,
+    "priority": "P0"
+  },
+  {
+    "rank": 3,
+    "file": "Frontend/PlantProcess.Web/src/api/productCoreApiClient.implementation.ts",
+    "lines": 1265,
+    "isImplementation": true,
+    "priority": "P1"
+  },
+  {
+    "rank": 4,
+    "file": "Frontend/PlantProcess.Web/src/pages/Admin/AdminDbConfigurationTab.implementation.tsx",
+    "lines": 1128,
+    "isImplementation": true,
+    "priority": "P1"
+  },
+  {
+    "rank": 5,
+    "file": "Frontend/PlantProcess.Web/src/pages/MaterialAnalytics/MaterialAnalyticsPages.implementation.tsx",
+    "lines": 1103,
+    "isImplementation": true,
+    "priority": "P1"
+  },
+  {
+    "rank": 6,
+    "file": "Frontend/PlantProcess.Web/src/pages/Admin/AdminSchemaConfigurationTab.implementation.tsx",
+    "lines": 948,
+    "isImplementation": true,
+    "priority": "P2"
+  },
+  {
+    "rank": 7,
+    "file": "Frontend/PlantProcess.Web/src/demo/plantProcessDemoScenario.implementation.ts",
+    "lines": 899,
+    "isImplementation": true,
+    "priority": "P2"
+  },
+  {
+    "rank": 8,
+    "file": "Frontend/PlantProcess.Web/src/App.implementation.tsx",
+    "lines": 589,
+    "isImplementation": true,
+    "priority": "P3"
+  },
+  {
+    "rank": 9,
+    "file": "Frontend/PlantProcess.Web/src/state/DashboardGridLayoutContext.implementation.tsx",
+    "lines": 552,
+    "isImplementation": true,
+    "priority": "P3"
+  },
+  {
+    "rank": 10,
+    "file": "Frontend/PlantProcess.Web/src/ui/standard-components.implementation.tsx",
+    "lines": 526,
+    "isImplementation": true,
+    "priority": "P3"
+  },
+  {
+    "rank": 11,
+    "file": "Frontend/PlantProcess.Web/src/pages/Admin/CanonicalSchemaMappingPanel.implementation.tsx",
+    "lines": 514,
+    "isImplementation": true,
+    "priority": "P3"
+  }
+]

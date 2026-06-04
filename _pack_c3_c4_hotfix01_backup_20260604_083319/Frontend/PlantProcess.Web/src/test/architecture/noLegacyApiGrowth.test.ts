@@ -10,17 +10,11 @@ function read(relativePath: string) {
   return readFileSync(repoPath(relativePath), "utf8");
 }
 
-function retiredLegacyApiName() {
-  return ["plant", "Process", "Api"].join("");
-}
-
 describe("frontend architecture guard", () => {
   it("retired legacy API files must stay deleted", () => {
-    const legacyName = retiredLegacyApiName();
-
     const forbiddenFiles = [
-      `src/api/${legacyName}.ts`,
-      `src/api/legacy/${legacyName}.ts`,
+      "src/api/plantProcessApi.ts",
+      "src/api/legacy/plantProcessApi.ts",
       "src/api/legacy/legacyApiHardening.ts"
     ];
 
@@ -49,9 +43,7 @@ describe("frontend architecture guard", () => {
     }
   });
 
-  it("product API client spine must not reintroduce retired legacy API references", () => {
-    const forbidden = retiredLegacyApiName();
-
+  it("product API client spine must not reintroduce plantProcessApi references", () => {
     const guardedFiles = [
       "src/api/productApiClient.ts",
       "src/api/productCoreApiClient.ts",
@@ -62,8 +54,8 @@ describe("frontend architecture guard", () => {
       const content = read(relativePath);
 
       expect(
-        content.includes(forbidden),
-        `${relativePath} must not contain retired legacy API client references`
+        content.includes("plantProcessApi"),
+        `${relativePath} must not contain plantProcessApi`
       ).toBe(false);
     }
   });

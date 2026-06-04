@@ -1,0 +1,77 @@
+{
+  "generatedAtUtc": "2026-06-04T05:36:14.205Z",
+  "plantProcessApiOffenders": [],
+  "phasePathOffenders": [],
+  "phaseImportOffenders": [],
+  "directImplementationImports": [],
+  "missingCssImports": [],
+  "oversizedFacades": [],
+  "implementationFiles": [
+    {
+      "file": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/WidgetBuilderWizardContent.implementation.tsx",
+      "lines": 1710
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/WidgetBuilderWizard.implementation.tsx",
+      "lines": 1512
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/api/productCoreApiClient.implementation.ts",
+      "lines": 1265
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/Admin/AdminDbConfigurationTab.implementation.tsx",
+      "lines": 1128
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/MaterialAnalytics/MaterialAnalyticsPages.implementation.tsx",
+      "lines": 1103
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/Admin/AdminSchemaConfigurationTab.implementation.tsx",
+      "lines": 948
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/demo/plantProcessDemoScenario.implementation.ts",
+      "lines": 899
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/App.implementation.tsx",
+      "lines": 589
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/state/DashboardGridLayoutContext.implementation.tsx",
+      "lines": 552
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/ui/standard-components.implementation.tsx",
+      "lines": 526
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/Admin/CanonicalSchemaMappingPanel.implementation.tsx",
+      "lines": 514
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/components/standard/StandardTable.implementation.tsx",
+      "lines": 487
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/DemoAnalytics/DemoAnalyticsPages.implementation.tsx",
+      "lines": 462
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/api/productApiHardening.implementation.ts",
+      "lines": 392
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/PageBuilder/PageBuilderPage.implementation.tsx",
+      "lines": 378
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/Admin/TwoStageImportMonitorPanel.implementation.tsx",
+      "lines": 376
+    }
+  ],
+  "publicLargeFiles": [],
+  "note": "Runtime source only. Tests are excluded from legacy-name checks to avoid self-matching guard literals."
+}

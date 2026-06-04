@@ -1,0 +1,8 @@
+{
+  "generatedAtUtc": "2026-06-04T05:33:21.361Z",
+  "patched": [
+    "tools/v5/pack-c3-c4-frontend-boundary-refactor.mjs",
+    "tools/v5/validate-pack-c2-frontend-phase-cleanup.mjs",
+    "tools/v5/validate-pack-c3-c4-frontend-boundaries.mjs"
+  ]
+}

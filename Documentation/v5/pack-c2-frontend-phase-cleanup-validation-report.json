@@ -1,8 +1,8 @@
 {
-  "generatedAtUtc": "2026-06-03T13:53:34.003Z",
+  "generatedAtUtc": "2026-06-04T05:36:13.887Z",
   "plantApiOffenders": [],
   "phasePathOffenders": [],
   "importOffenders": [],
   "contentFindings": [],
-  "note": "Content findings are intentionally reported for Pack C4. Pack C2 is a path/import cleanup gate."
+  "note": "Runtime source only. Architecture tests are excluded to avoid self-matching guard literals."
 }

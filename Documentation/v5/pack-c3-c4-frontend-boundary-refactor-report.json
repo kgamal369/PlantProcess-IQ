@@ -1,0 +1,478 @@
+{
+  "generatedAtUtc": "2026-06-04T05:36:13.446Z",
+  "minLinesToSplit": 450,
+  "splitResults": [
+    {
+      "file": "Frontend/PlantProcess.Web/src/App.tsx",
+      "implementation": "Frontend/PlantProcess.Web/src/App.implementation.tsx",
+      "status": "facade-refreshed",
+      "originalLines": 3,
+      "facadeLines": 3
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/api/productApiHardening.ts",
+      "implementation": "Frontend/PlantProcess.Web/src/api/productApiHardening.implementation.ts",
+      "status": "facade-refreshed",
+      "originalLines": 2,
+      "facadeLines": 2
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/api/productCoreApiClient.ts",
+      "implementation": "Frontend/PlantProcess.Web/src/api/productCoreApiClient.implementation.ts",
+      "status": "facade-refreshed",
+      "originalLines": 2,
+      "facadeLines": 2
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/WidgetBuilderWizard.tsx",
+      "implementation": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/WidgetBuilderWizard.implementation.tsx",
+      "status": "facade-refreshed",
+      "originalLines": 3,
+      "facadeLines": 3
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/WidgetBuilderWizardContent.tsx",
+      "implementation": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/WidgetBuilderWizardContent.implementation.tsx",
+      "status": "facade-refreshed",
+      "originalLines": 3,
+      "facadeLines": 3
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/demo/plantProcessDemoScenario.ts",
+      "implementation": "Frontend/PlantProcess.Web/src/demo/plantProcessDemoScenario.implementation.ts",
+      "status": "facade-refreshed",
+      "originalLines": 2,
+      "facadeLines": 2
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/Admin/AdminDbConfigurationTab.tsx",
+      "implementation": "Frontend/PlantProcess.Web/src/pages/Admin/AdminDbConfigurationTab.implementation.tsx",
+      "status": "facade-refreshed",
+      "originalLines": 2,
+      "facadeLines": 2
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/Admin/AdminSchemaConfigurationTab.tsx",
+      "implementation": "Frontend/PlantProcess.Web/src/pages/Admin/AdminSchemaConfigurationTab.implementation.tsx",
+      "status": "facade-refreshed",
+      "originalLines": 2,
+      "facadeLines": 2
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/Admin/CanonicalSchemaMappingPanel.tsx",
+      "implementation": "Frontend/PlantProcess.Web/src/pages/Admin/CanonicalSchemaMappingPanel.implementation.tsx",
+      "status": "facade-refreshed",
+      "originalLines": 2,
+      "facadeLines": 2
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/Admin/TwoStageImportMonitorPanel.tsx",
+      "implementation": "Frontend/PlantProcess.Web/src/pages/Admin/TwoStageImportMonitorPanel.implementation.tsx",
+      "status": "facade-refreshed",
+      "originalLines": 2,
+      "facadeLines": 2
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/DemoAnalytics/DemoAnalyticsPages.tsx",
+      "implementation": "Frontend/PlantProcess.Web/src/pages/DemoAnalytics/DemoAnalyticsPages.implementation.tsx",
+      "status": "facade-refreshed",
+      "originalLines": 2,
+      "facadeLines": 2
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/MaterialAnalytics/MaterialAnalyticsPages.tsx",
+      "implementation": "Frontend/PlantProcess.Web/src/pages/MaterialAnalytics/MaterialAnalyticsPages.implementation.tsx",
+      "status": "facade-refreshed",
+      "originalLines": 2,
+      "facadeLines": 2
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/PageBuilder/PageBuilderPage.tsx",
+      "implementation": "Frontend/PlantProcess.Web/src/pages/PageBuilder/PageBuilderPage.implementation.tsx",
+      "status": "facade-refreshed",
+      "originalLines": 3,
+      "facadeLines": 3
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/state/DashboardGridLayoutContext.tsx",
+      "implementation": "Frontend/PlantProcess.Web/src/state/DashboardGridLayoutContext.implementation.tsx",
+      "status": "facade-refreshed",
+      "originalLines": 2,
+      "facadeLines": 2
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/ui/standard-components.tsx",
+      "implementation": "Frontend/PlantProcess.Web/src/ui/standard-components.implementation.tsx",
+      "status": "facade-refreshed",
+      "originalLines": 2,
+      "facadeLines": 2
+    }
+  ],
+  "publicLargeFiles": [],
+  "implementationBacklog": [
+    {
+      "rank": 1,
+      "file": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/WidgetBuilderWizardContent.implementation.tsx",
+      "lines": 1710,
+      "isImplementation": true,
+      "priority": "P0"
+    },
+    {
+      "rank": 2,
+      "file": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/WidgetBuilderWizard.implementation.tsx",
+      "lines": 1512,
+      "isImplementation": true,
+      "priority": "P0"
+    },
+    {
+      "rank": 3,
+      "file": "Frontend/PlantProcess.Web/src/api/productCoreApiClient.implementation.ts",
+      "lines": 1265,
+      "isImplementation": true,
+      "priority": "P1"
+    },
+    {
+      "rank": 4,
+      "file": "Frontend/PlantProcess.Web/src/pages/Admin/AdminDbConfigurationTab.implementation.tsx",
+      "lines": 1128,
+      "isImplementation": true,
+      "priority": "P1"
+    },
+    {
+      "rank": 5,
+      "file": "Frontend/PlantProcess.Web/src/pages/MaterialAnalytics/MaterialAnalyticsPages.implementation.tsx",
+      "lines": 1103,
+      "isImplementation": true,
+      "priority": "P1"
+    },
+    {
+      "rank": 6,
+      "file": "Frontend/PlantProcess.Web/src/pages/Admin/AdminSchemaConfigurationTab.implementation.tsx",
+      "lines": 948,
+      "isImplementation": true,
+      "priority": "P2"
+    },
+    {
+      "rank": 7,
+      "file": "Frontend/PlantProcess.Web/src/demo/plantProcessDemoScenario.implementation.ts",
+      "lines": 899,
+      "isImplementation": true,
+      "priority": "P2"
+    },
+    {
+      "rank": 8,
+      "file": "Frontend/PlantProcess.Web/src/App.implementation.tsx",
+      "lines": 589,
+      "isImplementation": true,
+      "priority": "P3"
+    },
+    {
+      "rank": 9,
+      "file": "Frontend/PlantProcess.Web/src/state/DashboardGridLayoutContext.implementation.tsx",
+      "lines": 552,
+      "isImplementation": true,
+      "priority": "P3"
+    },
+    {
+      "rank": 10,
+      "file": "Frontend/PlantProcess.Web/src/ui/standard-components.implementation.tsx",
+      "lines": 526,
+      "isImplementation": true,
+      "priority": "P3"
+    },
+    {
+      "rank": 11,
+      "file": "Frontend/PlantProcess.Web/src/pages/Admin/CanonicalSchemaMappingPanel.implementation.tsx",
+      "lines": 514,
+      "isImplementation": true,
+      "priority": "P3"
+    }
+  ],
+  "facadeFiles": [
+    {
+      "file": "Frontend/PlantProcess.Web/src/App.tsx",
+      "lines": 3,
+      "isImplementation": false,
+      "priority": "P4"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/WidgetBuilderWizard.tsx",
+      "lines": 3,
+      "isImplementation": false,
+      "priority": "P4"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/WidgetBuilderWizardContent.tsx",
+      "lines": 3,
+      "isImplementation": false,
+      "priority": "P4"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/PageBuilder/PageBuilderPage.tsx",
+      "lines": 3,
+      "isImplementation": false,
+      "priority": "P4"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/api/productApiHardening.ts",
+      "lines": 2,
+      "isImplementation": false,
+      "priority": "P4"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/api/productCoreApiClient.ts",
+      "lines": 2,
+      "isImplementation": false,
+      "priority": "P4"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/components/standard/StandardTable.tsx",
+      "lines": 2,
+      "isImplementation": false,
+      "priority": "P4"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/demo/plantProcessDemoScenario.ts",
+      "lines": 2,
+      "isImplementation": false,
+      "priority": "P4"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/Admin/AdminDbConfigurationTab.tsx",
+      "lines": 2,
+      "isImplementation": false,
+      "priority": "P4"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/Admin/AdminSchemaConfigurationTab.tsx",
+      "lines": 2,
+      "isImplementation": false,
+      "priority": "P4"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/Admin/CanonicalSchemaMappingPanel.tsx",
+      "lines": 2,
+      "isImplementation": false,
+      "priority": "P4"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/Admin/TwoStageImportMonitorPanel.tsx",
+      "lines": 2,
+      "isImplementation": false,
+      "priority": "P4"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/DemoAnalytics/DemoAnalyticsPages.tsx",
+      "lines": 2,
+      "isImplementation": false,
+      "priority": "P4"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/MaterialAnalytics/MaterialAnalyticsPages.tsx",
+      "lines": 2,
+      "isImplementation": false,
+      "priority": "P4"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/state/DashboardGridLayoutContext.tsx",
+      "lines": 2,
+      "isImplementation": false,
+      "priority": "P4"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/ui/standard-components.tsx",
+      "lines": 2,
+      "isImplementation": false,
+      "priority": "P4"
+    }
+  ],
+  "oversizedFacades": [],
+  "plantProcessApiOffenders": [],
+  "phasePathOffenders": [],
+  "phaseImportOffenders": [],
+  "directImplementationImports": [],
+  "missingCssImports": [],
+  "topThirtyLargestFiles": [
+    {
+      "file": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/WidgetBuilderWizardContent.implementation.tsx",
+      "lines": 1710,
+      "isImplementation": true,
+      "priority": "P0"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/WidgetBuilderWizard.implementation.tsx",
+      "lines": 1512,
+      "isImplementation": true,
+      "priority": "P0"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/api/productCoreApiClient.implementation.ts",
+      "lines": 1265,
+      "isImplementation": true,
+      "priority": "P1"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/Admin/AdminDbConfigurationTab.implementation.tsx",
+      "lines": 1128,
+      "isImplementation": true,
+      "priority": "P1"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/MaterialAnalytics/MaterialAnalyticsPages.implementation.tsx",
+      "lines": 1103,
+      "isImplementation": true,
+      "priority": "P1"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/Admin/AdminSchemaConfigurationTab.implementation.tsx",
+      "lines": 948,
+      "isImplementation": true,
+      "priority": "P2"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/demo/plantProcessDemoScenario.implementation.ts",
+      "lines": 899,
+      "isImplementation": true,
+      "priority": "P2"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/App.implementation.tsx",
+      "lines": 589,
+      "isImplementation": true,
+      "priority": "P3"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/state/DashboardGridLayoutContext.implementation.tsx",
+      "lines": 552,
+      "isImplementation": true,
+      "priority": "P3"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/ui/standard-components.implementation.tsx",
+      "lines": 526,
+      "isImplementation": true,
+      "priority": "P3"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/Admin/CanonicalSchemaMappingPanel.implementation.tsx",
+      "lines": 514,
+      "isImplementation": true,
+      "priority": "P3"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/components/standard/StandardTable.implementation.tsx",
+      "lines": 487,
+      "isImplementation": true,
+      "priority": "P4"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/DemoAnalytics/DemoAnalyticsPages.implementation.tsx",
+      "lines": 462,
+      "isImplementation": true,
+      "priority": "P4"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/MaterialInvestigation/MaterialInvestigationPage.tsx",
+      "lines": 445,
+      "isImplementation": false,
+      "priority": "P4"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/components/charts/InteractiveCharts.tsx",
+      "lines": 426,
+      "isImplementation": false,
+      "priority": "P4"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/api/productApiHardening.implementation.ts",
+      "lines": 392,
+      "isImplementation": true,
+      "priority": "P4"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/PageBuilder/PageBuilderPage.implementation.tsx",
+      "lines": 378,
+      "isImplementation": true,
+      "priority": "P4"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/Admin/TwoStageImportMonitorPanel.implementation.tsx",
+      "lines": 376,
+      "isImplementation": true,
+      "priority": "P4"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/components/standard/StandardFields.tsx",
+      "lines": 371,
+      "isImplementation": false,
+      "priority": "P4"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/api/workflow-foundation/workflowFoundation.api.ts",
+      "lines": 370,
+      "isImplementation": false,
+      "priority": "P4"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/api/http/apiClient.ts",
+      "lines": 364,
+      "isImplementation": false,
+      "priority": "P4"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/components/dashboard/DashboardWidgetCard.tsx",
+      "lines": 359,
+      "isImplementation": false,
+      "priority": "P4"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/Admin/AdminJobsMonitorTab.tsx",
+      "lines": 351,
+      "isImplementation": false,
+      "priority": "P4"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/components/DashboardFilterBar.tsx",
+      "lines": 341,
+      "isImplementation": false,
+      "priority": "P4"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/state/DashboardSelectionContext.tsx",
+      "lines": 340,
+      "isImplementation": false,
+      "priority": "P4"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/state/AuthContext.tsx",
+      "lines": 325,
+      "isImplementation": false,
+      "priority": "P4"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/pages/PageBuilder/pageBuilderReducer.ts",
+      "lines": 299,
+      "isImplementation": false,
+      "priority": "P4"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/components/standard/StandardSurface.tsx",
+      "lines": 284,
+      "isImplementation": false,
+      "priority": "P4"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/components/AppLayout.tsx",
+      "lines": 238,
+      "isImplementation": false,
+      "priority": "P4"
+    },
+    {
+      "file": "Frontend/PlantProcess.Web/src/components/materials/GenealogyThreadPanel.tsx",
+      "lines": 235,
+      "isImplementation": false,
+      "priority": "P4"
+    }
+  ],
+  "note": "C3/C4 creates safe public boundaries. Implementation files remain as backlog for later deep extraction."
+}
