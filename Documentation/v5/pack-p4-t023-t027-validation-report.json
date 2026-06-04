@@ -1,0 +1,6 @@
+{
+  "generatedAtUtc": "2026-06-04T06:25:29.488Z",
+  "status": "green",
+  "runtimeHashingReferences": [],
+  "note": "P4A installs production assistant foundation: local pluggable embedding boundary, idempotent index build service, grounded gateway, UI proof page, eval harness, and hard tests."
+}

@@ -1,4 +1,4 @@
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using PlantProcess.Application.Assistant;
 
 namespace PlantProcess.Infrastructure.Assistant;
@@ -11,7 +11,7 @@ public static class AssistantInfrastructureExtensions
     /// </summary>
     public static IServiceCollection AddAssistant(this IServiceCollection services)
     {
-        services.AddSingleton<IEmbedder, HashingEmbedder>();
+        services.AddSingleton<IEmbedder, PlantProcess.Application.Assistant.LocalSemanticEmbedder>();
         services.AddScoped<IRetrievalIndex, NpgsqlRetrievalIndex>();
 
         services.AddScoped<ITool, FetchFindingTool>();

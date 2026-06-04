@@ -23,6 +23,10 @@ const translations: Record<V5LocaleCode, Record<string, string>> = {
     "v5.p11p12.mobileProof": "Mobile consume-and-act proof",
     "v5.p11p12.description":
       "Backend lead capture, mock SMTP/webhook delivery, suggestion outcome tracking, German and Arabic catalogs, RTL layout, and mobile action proof.",
+
+    "v5.p3.cost.title": "Cost Assumption Management",
+    "v5.p3.cost.description": "Versioned tenant cost bands for credible value-impact ranges.",
+    "v5.p3.cost.save": "Save cost bands",
   },
   de: {
     "v5.p11p12.title": "Ausgehende Benachrichtigungen + Internationalisierung",
@@ -32,6 +36,10 @@ const translations: Record<V5LocaleCode, Record<string, string>> = {
     "v5.p11p12.mobileProof": "Mobiler Nachweis für Prüfen und Handeln",
     "v5.p11p12.description":
       "Backend-Lead-Erfassung, Mock-SMTP/Webhook-Zustellung, Ergebnisverfolgung für Vorschläge, deutsche und arabische Kataloge, RTL-Layout und mobiler Aktionsnachweis.",
+
+    "v5.p3.cost.title": "Kostenannahmen verwalten",
+    "v5.p3.cost.description": "Versionierte Kostenbänder pro Mandant für glaubwürdige Wertspannen.",
+    "v5.p3.cost.save": "Kostenbänder speichern",
   },
   ar: {
     "v5.p11p12.title": "الإشعارات الخارجية + التدويل",
@@ -41,6 +49,10 @@ const translations: Record<V5LocaleCode, Record<string, string>> = {
     "v5.p11p12.mobileProof": "إثبات الاستخدام على الهاتف والتابلت",
     "v5.p11p12.description":
       "تسجيل العملاء في قاعدة البيانات، تسليم تجريبي عبر البريد والويب هوك، قياس نتائج التوصيات، كتالوجات ألمانية وعربية، واجهة RTL، وتجربة موبايل واضحة.",
+
+    "v5.p3.cost.title": "إدارة افتراضات التكلفة",
+    "v5.p3.cost.description": "نطاقات تكلفة بإصدارات لكل مستأجر لعرض تأثير مالي موثوق.",
+    "v5.p3.cost.save": "حفظ نطاقات التكلفة",
   },
 };
 
@@ -84,8 +96,8 @@ export function useV5I18n() {
 
 export function getHardcodedStringExtractionBudget() {
   return {
-    screenCode: "v5-p11-p12-proof",
-    maxHardcodedUserFacingStrings: 8,
+    screenCode: "v5-p11-p12-and-p3-proof",
+    maxHardcodedUserFacingStrings: 12,
     coveredLocales: v5Locales.map((x) => x.code),
     rtlSupported: true,
   };

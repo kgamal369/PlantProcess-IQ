@@ -1,0 +1,5 @@
+{
+  "generatedAtUtc": "2026-06-04T06:33:43.763Z",
+  "status": "green",
+  "note": "P5A installs OT-safe one-way collector contracts, historian mapping, schema drift detection, UI proof, SQL foundations and hard tests."
+}

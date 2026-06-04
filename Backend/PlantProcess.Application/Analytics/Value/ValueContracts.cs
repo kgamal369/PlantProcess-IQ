@@ -1,4 +1,4 @@
-using PlantProcess.Application.Provenance;
+﻿using PlantProcess.Application.Provenance;
 
 namespace PlantProcess.Application.Analytics.Value;
 
@@ -17,10 +17,18 @@ public sealed record CostAssumptionSet(
     CostBand? ScrapCostPerTon,
     CostBand? DowntimeCostPerMin,
     CostBand? GradePremiumPerTon,
-    CostBand? EnergyPricePerMwh);
+    CostBand? EnergyPricePerMwh)
+{
+    /// <summary>PPIQ-T016: active-version selection uses effective date. Existing constructors remain compatible.</summary>
+    public DateTimeOffset EffectiveFromUtc { get; init; } = DateTimeOffset.MinValue;
+
+    public string? CreatedBy { get; init; }
+
+    public DateTimeOffset? CreatedAtUtc { get; init; }
+}
 
 /// <summary>
-/// Measured inputs for ONE finding. ProductionStopMinutes is the §5.2 production-stop figure (T-023),
+/// Measured inputs for ONE finding. ProductionStopMinutes is the Â§5.2 production-stop figure (T-023),
 /// never raw equipment-stop minutes.
 /// </summary>
 public sealed record ValueImpactInputs(

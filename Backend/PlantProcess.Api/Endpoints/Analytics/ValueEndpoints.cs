@@ -34,6 +34,14 @@ public static class ValueEndpoints
         {
             if (!TryTenant(user, out var tenantId)) return ApplicationProblems.Validation("no_tenant");
             var set = ToSet(dto);
+            var validationErrors = CostAssumptionValidator.Validate(set);
+            if (validationErrors.Count > 0)
+            {
+                return Results.ValidationProblem(
+                    validationErrors.ToDictionary(
+                        keySelector: x => x,
+                        elementSelector: x => new[] { x }));
+            }
             var version = await store.CreateVersionAsync(tenantId, set, user.Identity?.Name ?? "unknown", ct);
             return Results.Ok(new { version });
         });
@@ -73,4 +81,5 @@ public static class ValueEndpoints
         return PlantProcess.Application.Security.Tenancy.TenantClaims.TryResolve(user, out tenantId);
     }
 }
+
 
