@@ -1,0 +1,6 @@
+﻿"Gate","Status","Evidence","Action"
+"All raw SQL findings have a refactor track","OK","No unclassified API raw SQL findings.","No action."
+"API raw SQL inventory generated","OK","Inventory rows captured: .","Use Pack 4C+ to reduce baseline."
+"API raw SQL quarantine contract exists","OK","Documentation\refactor\Api_RawSql_Quarantine_Contract.md","No action."
+"Pack 4A prerequisite","OK","Latest Pack 4A gate is green.","No action."
+"Pack 4B is non-invasive","OK","No runtime source behavior changed; register and documentation only.","No action."

@@ -1,0 +1,6 @@
+﻿"Gate","Status","Evidence","Action"
+"Pack 3 prerequisite","OK","Latest Pack 3F rollup is green after Pack3F Hotfix01.","No action."
+"Pack 4A is non-invasive","OK","No source code behavior changed; scan/report only.","No action."
+"Refactor baseline findings captured","OK","Findings captured: HIGH=262, MEDIUM=79, LOW=31, INFO=164.","Use Pack 4B+ to burn down findings."
+"Scan root exists","OK","Backend exists; 665 files scanned.","No action."
+"Scan root exists","OK","Frontend\PlantProcess.Web exists; 298 files scanned.","No action."

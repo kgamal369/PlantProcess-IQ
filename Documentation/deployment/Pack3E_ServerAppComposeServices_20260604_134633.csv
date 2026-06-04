@@ -1,0 +1,7 @@
+﻿"Service","Status","Evidence"
+"caddy","OK","Service exists in canonical compose."
+"plantprocess-api","OK","Service exists in canonical compose."
+"plantprocess-app-web","OK","Service exists in canonical compose."
+"plantprocess-website","OK","Service exists in canonical compose."
+"plantprocess-workers","OK","Service exists in canonical compose."
+"postgres","OK","Service exists in canonical compose."

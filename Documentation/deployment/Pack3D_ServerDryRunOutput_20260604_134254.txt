@@ -1,0 +1,225 @@
+﻿Docker: C:\Program Files\Docker\Docker\resources\bin\docker.exe
+Env   : C:\Workspace\PlantProcess-IQ\deploy\server\.env.example
+Compose files:
+ - C:\Workspace\PlantProcess-IQ\deploy\demo-sources\docker-compose.demo-sources.yml
+name: plantprocessiq
+services:
+  caster-oracle:
+    container_name: ppiq-source-caster-oracle
+    environment:
+      APP_USER: caster_owner
+      APP_USER_PASSWORD: caster_demo_pwd
+      ORACLE_PASSWORD: caster_demo_pwd
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - healthcheck.sh
+      timeout: 10s
+      interval: 20s
+      retries: 20
+    image: gvenzl/oracle-xe:21-slim
+    networks:
+      ppiq-demo-sources: null
+    volumes:
+      - type: volume
+        source: ppiq_caster_oracle_data
+        target: /opt/oracle/oradata
+        volume: {}
+      - type: bind
+        source: C:\Workspace\PlantProcess-IQ\deploy\demo-sources\Infrastructure\demo-sources\caster-oracle\init
+        target: /container-entrypoint-initdb.d
+        read_only: true
+        bind: {}
+  downtime-mysql:
+    container_name: ppiq-source-downtime-mysql
+    environment:
+      MYSQL_DATABASE: downtime
+      MYSQL_PASSWORD: downtime_demo_pwd
+      MYSQL_ROOT_PASSWORD: downtime_root_pwd
+      MYSQL_USER: downtime_owner
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - mysqladmin ping -h localhost -u downtime_owner -pdowntime_demo_pwd
+      timeout: 5s
+      interval: 10s
+      retries: 20
+    image: mysql:8.4
+    networks:
+      ppiq-demo-sources: null
+    volumes:
+      - type: volume
+        source: ppiq_downtime_mysql_data
+        target: /var/lib/mysql
+        volume: {}
+      - type: bind
+        source: C:\Workspace\PlantProcess-IQ\deploy\demo-sources\Infrastructure\demo-sources\downtime-mysql\init
+        target: /docker-entrypoint-initdb.d
+        read_only: true
+        bind: {}
+  excel-qa:
+    command:
+      - sh
+      - -c
+      - while true; do test -f /data/qa_samples.csv && sleep 30; done
+    container_name: ppiq-source-excel-qa
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - test -f /data/qa_samples.csv
+      timeout: 5s
+      interval: 10s
+      retries: 5
+    image: alpine:3.20
+    networks:
+      ppiq-demo-sources: null
+    volumes:
+      - type: bind
+        source: C:\Workspace\PlantProcess-IQ\deploy\demo-sources\Infrastructure\demo-sources\excel-qa
+        target: /data
+        read_only: true
+        bind: {}
+  excel-yard:
+    command:
+      - sh
+      - -c
+      - while true; do test -f /data/yard_inventory.csv && sleep 30; done
+    container_name: ppiq-source-excel-yard
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - test -f /data/yard_inventory.csv
+      timeout: 5s
+      interval: 10s
+      retries: 5
+    image: alpine:3.20
+    networks:
+      ppiq-demo-sources: null
+    volumes:
+      - type: bind
+        source: C:\Workspace\PlantProcess-IQ\deploy\demo-sources\Infrastructure\demo-sources\excel-yard
+        target: /data
+        read_only: true
+        bind: {}
+  hsm-oracle:
+    container_name: ppiq-source-hsm-oracle
+    environment:
+      APP_USER: hsm_owner
+      APP_USER_PASSWORD: hsm_demo_pwd
+      ORACLE_PASSWORD: hsm_demo_pwd
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - healthcheck.sh
+      timeout: 10s
+      interval: 20s
+      retries: 20
+    image: gvenzl/oracle-xe:21-slim
+    networks:
+      ppiq-demo-sources: null
+    volumes:
+      - type: volume
+        source: ppiq_hsm_oracle_data
+        target: /opt/oracle/oradata
+        volume: {}
+      - type: bind
+        source: C:\Workspace\PlantProcess-IQ\deploy\demo-sources\Infrastructure\demo-sources\hsm-oracle\init
+        target: /container-entrypoint-initdb.d
+        read_only: true
+        bind: {}
+  meltshop-postgres:
+    container_name: ppiq-source-meltshop-postgres
+    environment:
+      POSTGRES_DB: meltshop
+      POSTGRES_PASSWORD: meltshop_demo_pwd
+      POSTGRES_USER: meltshop_owner
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U meltshop_owner -d meltshop
+      timeout: 5s
+      interval: 10s
+      retries: 10
+    image: postgres:16-alpine
+    networks:
+      ppiq-demo-sources: null
+    volumes:
+      - type: volume
+        source: ppiq_meltshop_pg_data
+        target: /var/lib/postgresql/data
+        volume: {}
+      - type: bind
+        source: C:\Workspace\PlantProcess-IQ\deploy\demo-sources\Infrastructure\demo-sources\meltshop-postgres\init
+        target: /docker-entrypoint-initdb.d
+        read_only: true
+        bind: {}
+  parsytec-mysql:
+    container_name: ppiq-source-parsytec-mysql
+    environment:
+      MYSQL_DATABASE: parsytec
+      MYSQL_PASSWORD: parsytec_demo_pwd
+      MYSQL_ROOT_PASSWORD: parsytec_root_pwd
+      MYSQL_USER: parsytec_owner
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - mysqladmin ping -h localhost -u parsytec_owner -pparsytec_demo_pwd
+      timeout: 5s
+      interval: 10s
+      retries: 20
+    image: mysql:8.4
+    networks:
+      ppiq-demo-sources: null
+    volumes:
+      - type: volume
+        source: ppiq_parsytec_mysql_data
+        target: /var/lib/mysql
+        volume: {}
+      - type: bind
+        source: C:\Workspace\PlantProcess-IQ\deploy\demo-sources\Infrastructure\demo-sources\parsytec-mysql\init
+        target: /docker-entrypoint-initdb.d
+        read_only: true
+        bind: {}
+  pkl-mssql:
+    container_name: ppiq-source-pkl-mssql
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: Ppiq_Demo_2026_Strong!
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P Ppiq_Demo_2026_Strong! -C -Q "SELECT 1" || exit 1
+      timeout: 10s
+      interval: 20s
+      retries: 20
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    networks:
+      ppiq-demo-sources: null
+    volumes:
+      - type: volume
+        source: ppiq_pkl_mssql_data
+        target: /var/opt/mssql
+        volume: {}
+      - type: bind
+        source: C:\Workspace\PlantProcess-IQ\deploy\demo-sources\Infrastructure\demo-sources\pkl-mssql\init
+        target: /docker-entrypoint-initdb.d
+        read_only: true
+        bind: {}
+networks:
+  ppiq-demo-sources:
+    name: plantprocessiq_ppiq-demo-sources
+    driver: bridge
+volumes:
+  ppiq_caster_oracle_data:
+    name: plantprocessiq_ppiq_caster_oracle_data
+  ppiq_downtime_mysql_data:
+    name: plantprocessiq_ppiq_downtime_mysql_data
+  ppiq_hsm_oracle_data:
+    name: plantprocessiq_ppiq_hsm_oracle_data
+  ppiq_meltshop_pg_data:
+    name: plantprocessiq_ppiq_meltshop_pg_data
+  ppiq_parsytec_mysql_data:
+    name: plantprocessiq_ppiq_parsytec_mysql_data
+  ppiq_pkl_mssql_data:
+    name: plantprocessiq_ppiq_pkl_mssql_data
+[GREEN] Server deployment dry-run command succeeded.

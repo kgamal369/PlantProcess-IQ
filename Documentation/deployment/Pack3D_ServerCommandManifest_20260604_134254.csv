@@ -1,0 +1,6 @@
+﻿"Path","Purpose","Mode","RuntimeEffect"
+"scripts\deploy\server-command-common.ps1","Common Docker/compose/env helper functions.","Shared","No runtime effect."
+"scripts\deploy\server-down.ps1","Stops server stack using ignored runtime env.","Runtime","Stops containers only when explicitly executed."
+"scripts\deploy\server-dry-run.ps1","Validates server compose/env without startup.","Dry-run","Runs docker compose config only."
+"scripts\deploy\server-status.ps1","Shows server compose status.","Runtime read-only","Runs docker compose ps only."
+"scripts\deploy\server-up.ps1","Starts server stack using ignored runtime env.","Runtime","Starts containers only when explicitly executed."

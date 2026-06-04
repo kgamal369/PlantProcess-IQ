@@ -1,0 +1,6 @@
+﻿"Path","Action"
+"scripts\deploy\server-command-common.ps1","Created or refreshed server deployment command script."
+"scripts\deploy\server-down.ps1","Created or refreshed server deployment command script."
+"scripts\deploy\server-dry-run.ps1","Created or refreshed server deployment command script."
+"scripts\deploy\server-status.ps1","Created or refreshed server deployment command script."
+"scripts\deploy\server-up.ps1","Created or refreshed server deployment command script."

@@ -1,0 +1,6 @@
+﻿"Pack","LatestFile","GateRows","OK","Blockers","Missing","Warnings","Status"
+"Pack 3A - Deployment Baseline","C:\Workspace\PlantProcess-IQ\Documentation\deployment\Pack3A_DeploymentGate_20260604_132828.csv","26","26","0","0","0","OK"
+"Pack 3B - Server Deployment Manifest","C:\Workspace\PlantProcess-IQ\Documentation\deployment\Pack3B_ServerDeploymentGate_20260604_133404.csv","19","19","0","0","0","OK"
+"Pack 3C - Deployment Dry-Run","C:\Workspace\PlantProcess-IQ\Documentation\deployment\Pack3C_DeploymentDryRunGate_20260604_133920.csv","22","22","0","0","0","OK"
+"Pack 3D - Server Commands","C:\Workspace\PlantProcess-IQ\Documentation\deployment\Pack3D_ServerCommandGate_20260604_134633.csv","16","16","0","0","0","OK"
+"Pack 3E - Server App Compose","C:\Workspace\PlantProcess-IQ\Documentation\deployment\Pack3E_ServerAppComposeGate_20260604_134633.csv","12","12","0","0","0","OK"
