@@ -1,0 +1,7 @@
+﻿"Key","Pattern"
+"JENKINS_ADMIN_PASSWORD","safe-placeholder"
+"PlantProcess__Auth__BootstrapAdminPassword","safe-placeholder"
+"PlantProcess__Auth__SigningKey","safe-placeholder"
+"POSTGRES_PASSWORD","safe-placeholder"
+"PPIQ_BOOTSTRAP_ADMIN_PASSWORD","safe-placeholder"
+"PPIQ_SMOKE_PASSWORD","safe-placeholder"

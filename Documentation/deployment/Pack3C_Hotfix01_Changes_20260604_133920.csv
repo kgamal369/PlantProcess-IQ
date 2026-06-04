@@ -1,0 +1,4 @@
+﻿"Path","Action"
+"deploy\server\.env.example","Added missing key: POSTGRES_HOST"
+"deploy\server\.env.example","Added missing key: PPIQ_BOOTSTRAP_ADMIN_USER"
+"deploy\server\.env.example","Added missing key: PPIQ_SMOKE_USERNAME"

@@ -1,0 +1,5 @@
+﻿"Path","Action"
+"C:\Workspace\PlantProcess-IQ\env\profiles\customer-template.env.example","Added missing env key: PPIQ_SMOKE_PASSWORD"
+"C:\Workspace\PlantProcess-IQ\env\profiles\local.env.example","Added missing env key: PPIQ_SMOKE_PASSWORD"
+"C:\Workspace\PlantProcess-IQ\env\profiles\server-docker.env.example","Added missing env key: PPIQ_SMOKE_PASSWORD"
+"C:\Workspace\PlantProcess-IQ\env\profiles\test.env.example","Added missing env key: PPIQ_SMOKE_PASSWORD"

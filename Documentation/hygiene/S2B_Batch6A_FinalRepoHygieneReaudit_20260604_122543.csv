@@ -1,0 +1,6 @@
+﻿"Area","Status","Path","Action"
+"RequiredOutput","OK","deploy\README.md","Exists."
+"RequiredOutput","OK","deploy\demo-sources\docker-compose.demo-sources.yml","Exists."
+"RequiredOutput","OK","Backend\database\README.md","Exists."
+"RequiredOutput","OK","Backend\database\database.apply-order.manifest.csv","Exists."
+"RequiredOutput","OK","Documentation\testing\Validation_To_Test_Backlog.md","Exists."

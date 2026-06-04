@@ -1,0 +1,7 @@
+﻿"Key","Pattern","Action"
+"ConnectionStrings__PlantProcessDb","connection-string-password-token","Do not place full connection strings with Password= in tracked templates."
+"ConnectionStrings__WebsiteDb","connection-string-password-token","Do not place full connection strings with Password= in tracked templates."
+"JENKINS_ADMIN_PASSWORD","secret-key-with-non-placeholder-value","Use safe placeholder only in .env.example."
+"PlantProcess__Auth__BootstrapAdminPassword","secret-key-with-non-placeholder-value","Use safe placeholder only in .env.example."
+"PlantProcess__Auth__RefreshTokenDays","secret-key-with-non-placeholder-value","Use safe placeholder only in .env.example."
+"POSTGRES_PASSWORD","secret-key-with-non-placeholder-value","Use safe placeholder only in .env.example."

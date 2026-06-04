@@ -1,0 +1,7 @@
+﻿"Path","Action","BackupPath"
+"Backend\.env.example","Removed Password= from tracked connection-string templates.","C:\Workspace\PlantProcess-IQ_Archive\Pack2C_Hotfix01_ConnectionStrings_20260604_130847\Backend\.env.example"
+"env\profiles\customer-template.env.example","Removed Password= from tracked connection-string templates.","C:\Workspace\PlantProcess-IQ_Archive\Pack2C_Hotfix01_ConnectionStrings_20260604_130847\env\profiles\customer-template.env.example"
+"env\profiles\local.env.example","Removed Password= from tracked connection-string templates.","C:\Workspace\PlantProcess-IQ_Archive\Pack2C_Hotfix01_ConnectionStrings_20260604_130847\env\profiles\local.env.example"
+"env\profiles\server.env.example","Removed Password= from tracked connection-string templates.","C:\Workspace\PlantProcess-IQ_Archive\Pack2C_Hotfix01_ConnectionStrings_20260604_130847\env\profiles\server.env.example"
+"env\profiles\server-docker.env.example","Removed Password= from tracked connection-string templates.","C:\Workspace\PlantProcess-IQ_Archive\Pack2C_Hotfix01_ConnectionStrings_20260604_130847\env\profiles\server-docker.env.example"
+"env\profiles\test.env.example","Removed Password= from tracked connection-string templates.","C:\Workspace\PlantProcess-IQ_Archive\Pack2C_Hotfix01_ConnectionStrings_20260604_130847\env\profiles\test.env.example"

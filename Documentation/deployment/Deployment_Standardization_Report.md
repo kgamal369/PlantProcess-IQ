@@ -1,0 +1,53 @@
+﻿# PlantProcess IQ - Pack 3A Deployment Standardization Report
+
+Generated at: 2026-06-04 13:23:50
+
+## Gate Summary
+
+| Status | Count |
+|---|---:|
+| BLOCKER | 1 |
+| OK | 25 |
+
+## Asset Summary
+
+| Kind | Count |
+|---|---:|
+| CADDY | 3 |
+| COMPOSE | 4 |
+| DOC | 9 |
+| DOCKERFILE | 1 |
+| ENV_TEMPLATE_OR_ENV | 3 |
+| OTHER | 11 |
+| SCRIPT | 6 |
+
+## Gate Details
+
+| Gate | Status | Evidence | Action |
+|---|---|---|---|
+| No tracked local/server secret env files | BLOCKER | deploy/server/.env.example, deploy/server/.env.production | Remove from git tracking and keep ignored. |
+| Deployment compose assets exist | OK | 4 compose file(s) found under deploy/. | No action. |
+| Deployment secret ignore rule | OK | deploy/server/.env | No action. |
+| Deployment secret ignore rule | OK | deploy/server/.env.local | No action. |
+| Deployment secret ignore rule | OK | deploy/server/.env.production | No action. |
+| Deployment secret ignore rule | OK | env/profiles/local.env | No action. |
+| Deployment secret ignore rule | OK | Frontend/PlantProcess.Web/.env.local | No action. |
+| Deployment secret ignore rule | OK | Website/.env.local | No action. |
+| Docker command resolver | OK | scripts/docker/get-docker-command.ps1 exists. | No action. |
+| Forbidden deployment duplicate/artifact | OK | deployment absent. | No action. |
+| Forbidden deployment duplicate/artifact | OK | docker-compose.demo-sources.yml absent. | No action. |
+| Forbidden deployment duplicate/artifact | OK | Frontend\PlantProcess.Web\storybook-static absent. | No action. |
+| Forbidden deployment duplicate/artifact | OK | Infrastructure\deploy absent. | No action. |
+| Pack 2D env standardization prerequisite | OK | Latest Pack2D gate is green. | No action. |
+| Required deployment path | OK | deploy | No action. |
+| Required deployment path | OK | deploy\caddy | No action. |
+| Required deployment path | OK | deploy\caddy\Caddyfile | No action. |
+| Required deployment path | OK | deploy\caddy\README.md | No action. |
+| Required deployment path | OK | deploy\demo-sources | No action. |
+| Required deployment path | OK | deploy\demo-sources\docker-compose.demo-sources.yml | No action. |
+| Required deployment path | OK | deploy\demo-sources\README.md | No action. |
+| Required deployment path | OK | deploy\local | No action. |
+| Required deployment path | OK | deploy\local\README.md | No action. |
+| Required deployment path | OK | deploy\README.md | No action. |
+| Required deployment path | OK | deploy\server | No action. |
+| Required deployment path | OK | deploy\server\README.md | No action. |

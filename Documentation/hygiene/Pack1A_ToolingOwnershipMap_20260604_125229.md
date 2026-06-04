@@ -1,0 +1,36 @@
+﻿# Pack 1A - Tooling Ownership Map
+
+Generated at: 2026-06-04 12:58:15
+
+This report is analysis/documentation only. No code, test, or deploy file was deleted or moved.
+
+## Summary by Verdict
+
+| Verdict | Count | Files | Lines | Size KB |
+|---|---:|---:|---:|---:|
+| KEEP_AND_INDEX | 1 | 21 | 724 | 30 |
+| KEEP_AS_VALIDATION_BACKLOG | 1 | 23 | 870 | 72.23 |
+| KEEP_CANONICAL_DEPLOY_ROOT | 1 | 33 | 994 | 51.57 |
+| KEEP_WITH_BACKEND_OWNER | 1 | 12 | 3381 | 126.58 |
+| KEEP_WITH_FRONTEND_OWNER | 1 | 13 | 64 | 18.77 |
+| KEEP_WITH_OWNERSHIP_MAP | 1 | 47 | 11791 | 509.41 |
+| OPTIONAL_REVIEW_IF_EXISTS | 2 | 0 | 0 | 0 |
+| SHOULD_NOT_EXIST | 5 | 0 | 0 | 0 |
+
+## Ownership Details
+
+| Area | Path | Exists | Files | Lines | Verdict | Action | Reason |
+|---|---|---|---:|---:|---|---|---|
+| Backend orphan src | Backend\src | False | 0 | 0 | SHOULD_NOT_EXIST | Must stay removed or archived outside repo. | Shadow skeleton source should not coexist with real Backend\PlantProcess.* solution. |
+| Backend tooling | Backend\tools | True | 12 | 3381 | KEEP_WITH_BACKEND_OWNER | Keep active backend tools; review historical or one-shot scripts later. | Backend tools can stay only when they support repeatable validation, codegen, migration, or diagnostics. |
+| Deploy root | deploy | True | 33 | 994 | KEEP_CANONICAL_DEPLOY_ROOT | Single canonical deployment tree. | All deployment materials should live here. |
+| Docs | docs | True | 21 | 724 | KEEP_AND_INDEX | Keep; add or maintain README index. | Small documentation folder is acceptable but needs a clear index. |
+| Frontend codemods | Frontend\PlantProcess.Web\codemods | True | 0 | 0 | OPTIONAL_REVIEW_IF_EXISTS | If absent, no action. If present later, classify before use. | Codemods are allowed only for repeatable code migrations. |
+| Frontend orphan src | Frontend\src | False | 0 | 0 | SHOULD_NOT_EXIST | Must stay removed or archived outside repo. | Shadow frontend source should not coexist with real Frontend\PlantProcess.Web. |
+| Frontend scripts | Frontend\PlantProcess.Web\scripts | True | 13 | 64 | KEEP_WITH_FRONTEND_OWNER | Keep active frontend scripts; convert quality checks to tests where useful. | Frontend scripts should not become a second hidden test framework. |
+| Frontend tools | Frontend\tools | True | 0 | 0 | OPTIONAL_REVIEW_IF_EXISTS | If absent, no action. If present later, classify before use. | Audit said this folder did not exist; keep it that way unless a clear owner is added. |
+| Legacy deployment | deployment | False | 0 | 0 | SHOULD_NOT_EXIST | Must stay removed or archived outside repo. | Legacy deploy duplication causes server confusion. |
+| Legacy infra deploy | Infrastructure\deploy | False | 0 | 0 | SHOULD_NOT_EXIST | Must stay removed or archived outside repo. | Legacy deploy duplication causes Caddy/compose confusion. |
+| Root tooling | tools | True | 47 | 11791 | KEEP_WITH_OWNERSHIP_MAP | Keep active tooling; historical packs should remain outside repo. | Root tools are allowed only for active dev, hygiene, validation, generation, and CI support. |
+| Root validation | tools\validation | True | 23 | 870 | KEEP_AS_VALIDATION_BACKLOG | Convert valuable checks into tests later; do not delete blindly. | Validation scripts need staged conversion into xUnit, Vitest, or Playwright tests. |
+| Storybook generated output | Frontend\PlantProcess.Web\storybook-static | False | 0 | 0 | SHOULD_NOT_EXIST | Generated output must stay ignored and not committed. | Storybook static build is generated artifact, not source. |
