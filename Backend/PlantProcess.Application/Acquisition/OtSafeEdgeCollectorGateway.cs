@@ -52,3 +52,4 @@ public sealed record EdgeCollectorAcceptanceResult(
     public static EdgeCollectorAcceptanceResult Rejected(IReadOnlyList<string> errors)
         => new(false, 0, errors);
 }
+

@@ -235,8 +235,10 @@ builder.Services.AddScoped(typeof(PlantProcess.Api.Security.IAuditLogger<>), typ
         .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         .AddJwtBearer(options => {
 
+            options.SaveToken = false; // S0A: keep JWT token persistence disabled and explicit.
+
             options.RequireHttpsMetadata = !builder.Environment.IsDevelopment();
-            options.SaveToken = true; // PPIQ-T003: single intentional assignment.
+// PPIQ-T003: single intentional assignment.
 
             options.TokenValidationParameters = new TokenValidationParameters
             {
@@ -557,6 +559,8 @@ static System.Collections.Generic.IEnumerable<Microsoft.IdentityModel.Tokens.Sec
 public partial class Program
 {
 }
+
+
 
 
 

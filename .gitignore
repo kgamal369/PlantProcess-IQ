@@ -25,3 +25,37 @@ _p3_*/
 _p4_*/
 _p5_*/
 _v5_*_backup_*/
+# S1A env profile hygiene
+env/profiles/*.env
+!env/profiles/*.env.example
+Frontend/PlantProcess.Web/.env.local
+Website/PlantProcess.Website/.env.local
+*.pid
+logs/
+runtime/
+
+# S2B low-risk repo hygiene
+storybook-static/
+**/storybook-static/
+dist/
+**/dist/
+build/
+**/build/
+coverage/
+**/coverage/
+playwright-report/
+**/playwright-report/
+test-results/
+**/test-results/
+.vite/
+**/.vite/
+.cache/
+**/.cache/
+tools/_pack_*_backup_*/
+**/_pack_*_backup_*/
+**/_s*_backup_*/
+**/purged-artifacts/
+**/tmp/
+*.bak
+*.bak_*
+*.s0a_hotfix*

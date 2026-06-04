@@ -1,0 +1,5 @@
+﻿"Area","Path","Status","Evidence"
+"Backend/src","Backend\src","Exists","Files=6"
+"Backend/src","Backend\src","ArchiveCandidate","No archive action will happen if blockers exist."
+"Frontend/src","Frontend\src","Exists","Files=4"
+"Frontend/src","Frontend\src","ArchiveCandidate","No archive action will happen if blockers exist."

@@ -1,0 +1,9 @@
+api.plantprocessiq.com {
+    reverse_proxy plantprocess-api:5063
+}
+api.178.105.152.180.sslip.io {
+    reverse_proxy plantprocess-api:5063
+}
+api.localhost {
+    reverse_proxy plantprocess-api:5063
+}

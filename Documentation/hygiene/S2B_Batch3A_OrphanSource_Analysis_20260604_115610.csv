@@ -1,0 +1,5 @@
+﻿"Area","Path","Status","Evidence"
+"Backend/src","Backend\src","Exists","Files=6; Csproj=0"
+"Backend/src","External references","Clean","No external text references found."
+"Frontend/src","Frontend\src","Exists","Files=4"
+"Frontend/src","External references","BLOCKER","Found 63 possible references to Frontend\src."

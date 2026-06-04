@@ -1,0 +1,3 @@
+﻿"Path","ArchivePath","Reason"
+"Backend\src","C:\Workspace\PlantProcess-IQ_Archive\S2B_Batch3_OrphanSource_20260604_115930\Backend\src","Orphan backend skeleton outside real PlantProcess.* solution."
+"Frontend\src","C:\Workspace\PlantProcess-IQ_Archive\S2B_Batch3_OrphanSource_20260604_115930\Frontend\src","Orphan frontend skeleton outside real Frontend\PlantProcess.Web app."
