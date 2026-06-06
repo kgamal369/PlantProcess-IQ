@@ -1,34 +1,35 @@
 {
-    "name":  "sou-plantprocess-website",
-    "private":  true,
-    "version":  "0.1.0",
-    "type":  "module",
-    "scripts":  {
-                    "dev":  "vite",
-                    "build":  "tsc -b \u0026\u0026 vite build",
-                    "preview":  "vite preview",
-                    "check:ts":  "tsc -b --verbose",
-                    "lint":  "node scripts/validate-website-content.mjs",
-                    "test":  "node scripts/validate-website-content.mjs",
-                    "validate:content":  "node scripts/validate-website-content.mjs",
-                    "validate":  "npm run validate:phase10",
-                    "validate:brand":  "node scripts/validate-website-content.mjs",
-                    "e2e":  "node scripts/phase10-website-e2e.mjs",
-                    "test:phase10":  "node scripts/phase10-website-e2e.mjs",
-                    "validate:phase10":  "npm run build \u0026\u0026 npm run validate:content \u0026\u0026 npm run e2e"
-                },
-    "dependencies":  {
-                         "lucide-react":  "^1.14.0",
-                         "react":  "^19.2.6",
-                         "react-dom":  "^19.2.6",
-                         "react-router-dom":  "^7.15.0"
-                     },
-    "devDependencies":  {
-                            "@types/node":  "^24.12.3",
-                            "@types/react":  "^19.2.14",
-                            "@types/react-dom":  "^19.2.3",
-                            "@vitejs/plugin-react":  "^6.0.1",
-                            "typescript":  "~6.0.2",
-                            "vite":  "^8.0.12"
-                        }
+  "name": "sou-plantprocess-website",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "check:ts": "tsc -b --verbose",
+    "lint": "node scripts/validate-website-content.mjs",
+    "test": "node scripts/validate-website-content.mjs",
+    "validate:content": "node scripts/validate-website-content.mjs",
+    "validate": "npm run validate:phase10",
+    "validate:brand": "node scripts/validate-website-content.mjs",
+    "e2e": "node scripts/phase10-website-e2e.mjs",
+    "test:phase10": "node scripts/phase10-website-e2e.mjs",
+    "validate:phase10": "npm run build && npm run validate:content && npm run e2e",
+    "phase10:guard": "node ../../tools/phase9-phase10/website-phase10-guard.cjs"
+  },
+  "dependencies": {
+    "lucide-react": "^1.14.0",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
+    "react-router-dom": "^7.15.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.12.3",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "typescript": "~6.0.2",
+    "vite": "^8.0.12"
+  }
 }

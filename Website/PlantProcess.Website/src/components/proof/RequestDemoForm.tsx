@@ -1,6 +1,11 @@
 import { useMemo, useState, type FormEvent } from "react";
 import { requestDemoMail } from "../../content/phase1WebsiteProof";
 
+// PlantProcess IQ Phase 10 lead-capture storage contract.
+// PPIQ_PHASE10_DEMO_LEAD_CAPTURE
+export const requestDemoLeadStorageKey = "ppiq.website.demoLeads.v1";
+
+
 type FormState = {
   name: string;
   company: string;

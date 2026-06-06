@@ -79,7 +79,9 @@
     "lint:file-size": "node ../../tools/phase56/check-file-size-complexity.cjs",
     "test:visual:phase56": "playwright test e2e/visual/phase56-analytics-system.visual.spec.ts",
     "phase78:validate": "node ../../tools/phase78/validate-phase78.cjs",
-    "test:i18n-rtl": "playwright test e2e/i18n/phase78-i18n-rtl.spec.ts"
+    "test:i18n-rtl": "playwright test e2e/i18n/phase78-i18n-rtl.spec.ts",
+    "phase9:matrix": "playwright test --config=playwright.phase9.config.ts --list",
+    "phase9-phase10:validate": "node ../../tools/phase9-phase10/validate-phase9-phase10.cjs"
   },
   "dependencies": {
     "lucide-react": "^1.14.0",
