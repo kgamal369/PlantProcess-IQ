@@ -1,0 +1,45 @@
+/* PlantProcess IQ Phase 7 — i18n, Arabic RTL, and mobile parity hardening. */
+html[dir="rtl"] { direction: rtl; }
+html[dir="ltr"] { direction: ltr; }
+body { overflow-x: hidden; }
+:where(button, a, input, select, textarea, [role="button"]) { min-block-size: 44px; }
+.phase78-language-toggle {
+  position: fixed;
+  inset-block-end: 4.25rem;
+  inset-inline-end: 1rem;
+  z-index: 9998;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .55rem;
+  min-inline-size: 5.25rem;
+  min-block-size: 2.75rem;
+  padding-inline: .85rem;
+  border: 1px solid var(--ppiq-border-strong, rgba(0,212,255,.42));
+  border-radius: var(--ppiq-radius-control, 14px);
+  background: var(--ppiq-surface-strong, #071426);
+  color: var(--ppiq-text, #EAF6FF);
+  font-weight: 900;
+  box-shadow: var(--ppiq-shadow-glow, 0 0 32px rgba(0,212,255,.18));
+  cursor: pointer;
+}
+.phase78-language-toggle:hover { border-color: var(--ppiq-cyan, #00D4FF); }
+html[dir="rtl"] :where(.app-layout, .dashboard-page, .admin-page, .material-analytics-page, .mapping-health-page) { text-align: start; }
+html[dir="rtl"] :where(.sidebar, .nav, .app-nav, .site-nav) svg { transform: scaleX(-1); }
+html[dir="rtl"] :where(table) { direction: rtl; }
+html[dir="rtl"] :where(th, td) { text-align: start; }
+.phase78-readiness-page { min-height: 100%; padding: clamp(1rem,3vw,2rem); color: var(--ppiq-text,#EAF6FF); }
+.phase78-readiness-hero, .phase78-readiness-card { border: 1px solid var(--ppiq-border, rgba(0,212,255,.22)); border-radius: var(--ppiq-radius-card,24px); background: var(--ppiq-surface,rgba(8,20,38,.86)); box-shadow: var(--ppiq-shadow-glow,0 0 32px rgba(0,212,255,.18)); }
+.phase78-readiness-hero { padding: clamp(1rem,4vw,2rem); }
+.phase78-readiness-hero h1 { margin-block: 0 .75rem; font-size: clamp(2rem,5vw,4rem); }
+.phase78-readiness-hero p { max-inline-size: 72ch; color: var(--ppiq-text-muted,#B7D4E8); }
+.phase78-readiness-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 1rem; margin-block-start: 1rem; }
+.phase78-readiness-card { padding: 1rem; }
+.phase78-readiness-card strong { display: block; font-size: 1.4rem; margin-block-start: .35rem; }
+.phase78-readiness-actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-block-start: 1rem; }
+.phase78-readiness-actions button { padding-inline: 1rem; border-radius: 999px; border: 1px solid var(--ppiq-border-strong); background: var(--ppiq-surface-strong); color: var(--ppiq-text); font-weight: 850; }
+@media (max-width:760px) {
+  .phase78-readiness-grid { grid-template-columns: 1fr; }
+  .phase78-language-toggle { inset-block-end: 4rem; inset-inline-end: .75rem; }
+  :where(.app-shell, .app-layout, .dashboard-grid, .dashboard-page, .admin-page) { max-inline-size: 100%; overflow-x: clip; }
+}

@@ -1,0 +1,344 @@
+{
+  "generatedAtUtc": "2026-06-06T08:36:27.788Z",
+  "marker": "PPIQ_PHASE5B_PRODUCT_CORE_TYPES_DOMAIN_SPLIT",
+  "source": "Frontend/PlantProcess.Web/src/api/product-core/types.ts",
+  "moduleCount": 6,
+  "typeCount": 67,
+  "types": [
+    {
+      "name": "AdminJobMonitorRow",
+      "file": "admin-mapping-types.ts",
+      "group": "admin-mapping-types"
+    },
+    {
+      "name": "AdminJobsMonitor",
+      "file": "admin-mapping-types.ts",
+      "group": "admin-mapping-types"
+    },
+    {
+      "name": "AdminLatestImportBatch",
+      "file": "admin-mapping-types.ts",
+      "group": "admin-mapping-types"
+    },
+    {
+      "name": "AdminMetricCard",
+      "file": "analytics-quality-types.ts",
+      "group": "analytics-quality-types"
+    },
+    {
+      "name": "AdminOverview",
+      "file": "admin-mapping-types.ts",
+      "group": "admin-mapping-types"
+    },
+    {
+      "name": "AdminStatusCount",
+      "file": "admin-mapping-types.ts",
+      "group": "admin-mapping-types"
+    },
+    {
+      "name": "ConnectionProfileRecord",
+      "file": "shared-types.ts",
+      "group": "shared-types"
+    },
+    {
+      "name": "CreateConnectionProfileRequest",
+      "file": "shared-types.ts",
+      "group": "shared-types"
+    },
+    {
+      "name": "CreateDashboardWidgetDefinitionPayload",
+      "file": "dashboard-widget-types.ts",
+      "group": "dashboard-widget-types"
+    },
+    {
+      "name": "CreateKpiDefinitionRequest",
+      "file": "analytics-quality-types.ts",
+      "group": "analytics-quality-types"
+    },
+    {
+      "name": "CreateSchemaViewDefinitionRequest",
+      "file": "admin-mapping-types.ts",
+      "group": "admin-mapping-types"
+    },
+    {
+      "name": "CreateSourceDatasetDefinitionRequest",
+      "file": "admin-mapping-types.ts",
+      "group": "admin-mapping-types"
+    },
+    {
+      "name": "CsvImportSnapshotRequest",
+      "file": "admin-mapping-types.ts",
+      "group": "admin-mapping-types"
+    },
+    {
+      "name": "CsvImportSnapshotResult",
+      "file": "admin-mapping-types.ts",
+      "group": "admin-mapping-types"
+    },
+    {
+      "name": "CsvPreviewRequest",
+      "file": "shared-types.ts",
+      "group": "shared-types"
+    },
+    {
+      "name": "CsvPreviewResult",
+      "file": "shared-types.ts",
+      "group": "shared-types"
+    },
+    {
+      "name": "CsvSchemaDiscoveryRequest",
+      "file": "admin-mapping-types.ts",
+      "group": "admin-mapping-types"
+    },
+    {
+      "name": "CsvSchemaDiscoveryResult",
+      "file": "admin-mapping-types.ts",
+      "group": "admin-mapping-types"
+    },
+    {
+      "name": "DashboardChartTypeMetadata",
+      "file": "dashboard-widget-types.ts",
+      "group": "dashboard-widget-types"
+    },
+    {
+      "name": "DashboardCompatibilityRule",
+      "file": "dashboard-widget-types.ts",
+      "group": "dashboard-widget-types"
+    },
+    {
+      "name": "DashboardDefinitionRecord",
+      "file": "dashboard-widget-types.ts",
+      "group": "dashboard-widget-types"
+    },
+    {
+      "name": "DashboardDimensionMetadata",
+      "file": "dashboard-widget-types.ts",
+      "group": "dashboard-widget-types"
+    },
+    {
+      "name": "DashboardFilterMetadata",
+      "file": "dashboard-widget-types.ts",
+      "group": "dashboard-widget-types"
+    },
+    {
+      "name": "DashboardFilters",
+      "file": "dashboard-widget-types.ts",
+      "group": "dashboard-widget-types"
+    },
+    {
+      "name": "DashboardMaterialRow",
+      "file": "dashboard-widget-types.ts",
+      "group": "dashboard-widget-types"
+    },
+    {
+      "name": "DashboardMeasureMetadata",
+      "file": "dashboard-widget-types.ts",
+      "group": "dashboard-widget-types"
+    },
+    {
+      "name": "DashboardMetadata",
+      "file": "dashboard-widget-types.ts",
+      "group": "dashboard-widget-types"
+    },
+    {
+      "name": "DashboardPurposeMetadata",
+      "file": "dashboard-widget-types.ts",
+      "group": "dashboard-widget-types"
+    },
+    {
+      "name": "DashboardQuerySafetyLimits",
+      "file": "dashboard-widget-types.ts",
+      "group": "dashboard-widget-types"
+    },
+    {
+      "name": "DashboardReferenceData",
+      "file": "dashboard-widget-types.ts",
+      "group": "dashboard-widget-types"
+    },
+    {
+      "name": "DashboardWidgetColumn",
+      "file": "dashboard-widget-types.ts",
+      "group": "dashboard-widget-types"
+    },
+    {
+      "name": "DashboardWidgetDefinitionRecord",
+      "file": "dashboard-widget-types.ts",
+      "group": "dashboard-widget-types"
+    },
+    {
+      "name": "DashboardWidgetFilters",
+      "file": "dashboard-widget-types.ts",
+      "group": "dashboard-widget-types"
+    },
+    {
+      "name": "DashboardWidgetQuery",
+      "file": "dashboard-widget-types.ts",
+      "group": "dashboard-widget-types"
+    },
+    {
+      "name": "DashboardWidgetQueryOptions",
+      "file": "dashboard-widget-types.ts",
+      "group": "dashboard-widget-types"
+    },
+    {
+      "name": "DashboardWidgetQueryResult",
+      "file": "dashboard-widget-types.ts",
+      "group": "dashboard-widget-types"
+    },
+    {
+      "name": "DashboardWidgetResolved",
+      "file": "dashboard-widget-types.ts",
+      "group": "dashboard-widget-types"
+    },
+    {
+      "name": "DashboardWorkspace",
+      "file": "dashboard-widget-types.ts",
+      "group": "dashboard-widget-types"
+    },
+    {
+      "name": "DbConfigurationSourceSystem",
+      "file": "admin-mapping-types.ts",
+      "group": "admin-mapping-types"
+    },
+    {
+      "name": "DbConfigurationSummary",
+      "file": "admin-mapping-types.ts",
+      "group": "admin-mapping-types"
+    },
+    {
+      "name": "GenealogyAwareCorrelationBin",
+      "file": "material-process-types.ts",
+      "group": "material-process-types"
+    },
+    {
+      "name": "GenealogyAwareCorrelationResult",
+      "file": "material-process-types.ts",
+      "group": "material-process-types"
+    },
+    {
+      "name": "JobActionResponse",
+      "file": "admin-mapping-types.ts",
+      "group": "admin-mapping-types"
+    },
+    {
+      "name": "JobRunHistoryRecord",
+      "file": "admin-mapping-types.ts",
+      "group": "admin-mapping-types"
+    },
+    {
+      "name": "KpiDefinitionRecord",
+      "file": "analytics-quality-types.ts",
+      "group": "analytics-quality-types"
+    },
+    {
+      "name": "MaterialInvestigationRequestOptions",
+      "file": "material-process-types.ts",
+      "group": "material-process-types"
+    },
+    {
+      "name": "PagedResult",
+      "file": "shared-types.ts",
+      "group": "shared-types"
+    },
+    {
+      "name": "PlannedProvider",
+      "file": "license-commercial-types.ts",
+      "group": "license-commercial-types"
+    },
+    {
+      "name": "ProviderTypeRecord",
+      "file": "shared-types.ts",
+      "group": "shared-types"
+    },
+    {
+      "name": "ReferenceItem",
+      "file": "shared-types.ts",
+      "group": "shared-types"
+    },
+    {
+      "name": "SchemaConfigurationSummary",
+      "file": "admin-mapping-types.ts",
+      "group": "admin-mapping-types"
+    },
+    {
+      "name": "SchemaMappingSummary",
+      "file": "admin-mapping-types.ts",
+      "group": "admin-mapping-types"
+    },
+    {
+      "name": "SchemaViewDefinitionRecord",
+      "file": "admin-mapping-types.ts",
+      "group": "admin-mapping-types"
+    },
+    {
+      "name": "SchemaViewPreviewColumn",
+      "file": "admin-mapping-types.ts",
+      "group": "admin-mapping-types"
+    },
+    {
+      "name": "SchemaViewPreviewRequest",
+      "file": "admin-mapping-types.ts",
+      "group": "admin-mapping-types"
+    },
+    {
+      "name": "SchemaViewPreviewResult",
+      "file": "admin-mapping-types.ts",
+      "group": "admin-mapping-types"
+    },
+    {
+      "name": "SortDirection",
+      "file": "shared-types.ts",
+      "group": "shared-types"
+    },
+    {
+      "name": "SourceDatasetDefinitionRecord",
+      "file": "admin-mapping-types.ts",
+      "group": "admin-mapping-types"
+    },
+    {
+      "name": "SourceFieldDefinitionRecord",
+      "file": "admin-mapping-types.ts",
+      "group": "admin-mapping-types"
+    },
+    {
+      "name": "SourceObjectCoverage",
+      "file": "admin-mapping-types.ts",
+      "group": "admin-mapping-types"
+    },
+    {
+      "name": "TwoStageImportModel",
+      "file": "admin-mapping-types.ts",
+      "group": "admin-mapping-types"
+    },
+    {
+      "name": "TwoStageImportStage",
+      "file": "admin-mapping-types.ts",
+      "group": "admin-mapping-types"
+    },
+    {
+      "name": "UpdateConnectionImportScheduleRequest",
+      "file": "admin-mapping-types.ts",
+      "group": "admin-mapping-types"
+    },
+    {
+      "name": "UpdateMappingRefreshScheduleRequest",
+      "file": "admin-mapping-types.ts",
+      "group": "admin-mapping-types"
+    },
+    {
+      "name": "UpdateSchemaViewDefinitionRequest",
+      "file": "admin-mapping-types.ts",
+      "group": "admin-mapping-types"
+    },
+    {
+      "name": "WidgetQueryExpressionRequest",
+      "file": "dashboard-widget-types.ts",
+      "group": "dashboard-widget-types"
+    },
+    {
+      "name": "WidgetQueryExpressionResult",
+      "file": "dashboard-widget-types.ts",
+      "group": "dashboard-widget-types"
+    }
+  ]
+}

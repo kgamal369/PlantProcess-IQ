@@ -1,0 +1,1839 @@
+{
+  "generatedAtUtc": "2026-06-06T08:36:29.182Z",
+  "phase": "P05B · God-file decomposition preflight",
+  "mode": "read-only source analysis",
+  "targets": [
+    {
+      "taskId": "T-036A",
+      "label": "Widget builder content wizard",
+      "rel": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/WidgetBuilderWizardContent.implementation.tsx",
+      "targetMaxLines": 400,
+      "preferredFolder": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/content",
+      "strategy": "Split by wizard sections/components, keep wrapper/orchestrator thin, extract PreviewTable/WizardSection/helper components.",
+      "exists": true,
+      "absolutePath": "C:\\Workspace\\PlantProcess-IQ\\Frontend\\PlantProcess.Web\\src\\components\\dashboard\\widget-builder\\WidgetBuilderWizardContent.implementation.tsx",
+      "lineCount": 1710,
+      "sha256": "4cee6593ba91d16e6b2df871b42b85955563ecff314661143325a64999da8f18",
+      "importBlockCount": 11,
+      "exportLineCount": 3,
+      "topLevelDeclarationCount": 28,
+      "declarations": [
+        {
+          "kind": "interface",
+          "name": "WidgetBuilderWizardProps",
+          "exported": false,
+          "raw": "interface WidgetBuilderWizardProps {",
+          "startLine": 40,
+          "endLine": 47,
+          "approxLines": 8,
+          "suggestedModuleGroup": "content-orchestration"
+        },
+        {
+          "kind": "type",
+          "name": "WizardStep",
+          "exported": false,
+          "raw": "type WizardStep =",
+          "startLine": 48,
+          "endLine": 55,
+          "approxLines": 8,
+          "suggestedModuleGroup": "content-orchestration"
+        },
+        {
+          "kind": "type",
+          "name": "RelativeDateUnit",
+          "exported": false,
+          "raw": "type RelativeDateUnit = \"days\" | \"weeks\" | \"months\";",
+          "startLine": 56,
+          "endLine": 57,
+          "approxLines": 2,
+          "suggestedModuleGroup": "content-orchestration"
+        },
+        {
+          "kind": "interface",
+          "name": "WidgetBuilderState",
+          "exported": false,
+          "raw": "interface WidgetBuilderState {",
+          "startLine": 58,
+          "endLine": 75,
+          "approxLines": 18,
+          "suggestedModuleGroup": "content-orchestration"
+        },
+        {
+          "kind": "interface",
+          "name": "ValidationIssue",
+          "exported": false,
+          "raw": "interface ValidationIssue {",
+          "startLine": 76,
+          "endLine": 80,
+          "approxLines": 5,
+          "suggestedModuleGroup": "content-orchestration"
+        },
+        {
+          "kind": "component-or-const",
+          "name": "stepOrder",
+          "exported": false,
+          "raw": "const stepOrder: WizardStep[] = [",
+          "startLine": 81,
+          "endLine": 89,
+          "approxLines": 9,
+          "suggestedModuleGroup": "content-orchestration"
+        },
+        {
+          "kind": "component-or-const",
+          "name": "stepLabels",
+          "exported": false,
+          "raw": "const stepLabels: Record<WizardStep, string> = {",
+          "startLine": 90,
+          "endLine": 98,
+          "approxLines": 9,
+          "suggestedModuleGroup": "content-orchestration"
+        },
+        {
+          "kind": "component-or-const",
+          "name": "defaultState",
+          "exported": false,
+          "raw": "const defaultState: WidgetBuilderState = {",
+          "startLine": 99,
+          "endLine": 111,
+          "approxLines": 13,
+          "suggestedModuleGroup": "content-orchestration"
+        },
+        {
+          "kind": "function",
+          "name": "generateWidgetCode",
+          "exported": false,
+          "raw": "function generateWidgetCode(title: string) {",
+          "startLine": 112,
+          "endLine": 121,
+          "approxLines": 10,
+          "suggestedModuleGroup": "content-orchestration"
+        },
+        {
+          "kind": "function",
+          "name": "parseJson",
+          "exported": false,
+          "raw": "function parseJson<T>(value: string | null | undefined, fallback: T): T {",
+          "startLine": 122,
+          "endLine": 131,
+          "approxLines": 10,
+          "suggestedModuleGroup": "content-orchestration"
+        },
+        {
+          "kind": "function",
+          "name": "toInputDateTime",
+          "exported": false,
+          "raw": "function toInputDateTime(value?: string | null) {",
+          "startLine": 132,
+          "endLine": 140,
+          "approxLines": 9,
+          "suggestedModuleGroup": "content-orchestration"
+        },
+        {
+          "kind": "function",
+          "name": "fromInputDateTime",
+          "exported": false,
+          "raw": "function fromInputDateTime(value: string) {",
+          "startLine": 141,
+          "endLine": 149,
+          "approxLines": 9,
+          "suggestedModuleGroup": "content-orchestration"
+        },
+        {
+          "kind": "function",
+          "name": "relativeFromUtc",
+          "exported": false,
+          "raw": "function relativeFromUtc(value: number, unit: RelativeDateUnit) {",
+          "startLine": 150,
+          "endLine": 167,
+          "approxLines": 18,
+          "suggestedModuleGroup": "content-orchestration"
+        },
+        {
+          "kind": "function",
+          "name": "formatError",
+          "exported": false,
+          "raw": "function formatError(error: unknown) {",
+          "startLine": 168,
+          "endLine": 172,
+          "approxLines": 5,
+          "suggestedModuleGroup": "content-orchestration"
+        },
+        {
+          "kind": "function",
+          "name": "mapValidationIssues",
+          "exported": false,
+          "raw": "function mapValidationIssues(error: unknown): ValidationIssue[] {",
+          "startLine": 173,
+          "endLine": 211,
+          "approxLines": 39,
+          "suggestedModuleGroup": "content-orchestration"
+        },
+        {
+          "kind": "function",
+          "name": "isCompatible",
+          "exported": false,
+          "raw": "function isCompatible(",
+          "startLine": 212,
+          "endLine": 232,
+          "approxLines": 21,
+          "suggestedModuleGroup": "content-orchestration"
+        },
+        {
+          "kind": "function",
+          "name": "inferCategoryKey",
+          "exported": false,
+          "raw": "function inferCategoryKey(result: DashboardWidgetQueryResult | null) {",
+          "startLine": 233,
+          "endLine": 247,
+          "approxLines": 15,
+          "suggestedModuleGroup": "content-orchestration"
+        },
+        {
+          "kind": "function",
+          "name": "inferValueKey",
+          "exported": false,
+          "raw": "function inferValueKey(result: DashboardWidgetQueryResult | null) {",
+          "startLine": 248,
+          "endLine": 260,
+          "approxLines": 13,
+          "suggestedModuleGroup": "content-orchestration"
+        },
+        {
+          "kind": "function",
+          "name": "selectFieldForDimension",
+          "exported": false,
+          "raw": "function selectFieldForDimension(",
+          "startLine": 261,
+          "endLine": 297,
+          "approxLines": 37,
+          "suggestedModuleGroup": "step-sections"
+        },
+        {
+          "kind": "function",
+          "name": "WidgetBuilderWizardContent",
+          "exported": true,
+          "raw": "export function WidgetBuilderWizardContent({",
+          "startLine": 298,
+          "endLine": 1022,
+          "approxLines": 725,
+          "suggestedModuleGroup": "content-orchestration"
+        },
+        {
+          "kind": "function",
+          "name": "PurposeStep",
+          "exported": false,
+          "raw": "function PurposeStep({",
+          "startLine": 1023,
+          "endLine": 1056,
+          "approxLines": 34,
+          "suggestedModuleGroup": "content-orchestration"
+        },
+        {
+          "kind": "function",
+          "name": "ChartTypeStep",
+          "exported": false,
+          "raw": "function ChartTypeStep({",
+          "startLine": 1057,
+          "endLine": 1090,
+          "approxLines": 34,
+          "suggestedModuleGroup": "preview-components"
+        },
+        {
+          "kind": "function",
+          "name": "DataStep",
+          "exported": false,
+          "raw": "function DataStep({",
+          "startLine": 1091,
+          "endLine": 1223,
+          "approxLines": 133,
+          "suggestedModuleGroup": "content-orchestration"
+        },
+        {
+          "kind": "function",
+          "name": "FilterStep",
+          "exported": false,
+          "raw": "function FilterStep({",
+          "startLine": 1224,
+          "endLine": 1453,
+          "approxLines": 230,
+          "suggestedModuleGroup": "step-sections"
+        },
+        {
+          "kind": "function",
+          "name": "ScriptStep",
+          "exported": false,
+          "raw": "function ScriptStep({",
+          "startLine": 1454,
+          "endLine": 1529,
+          "approxLines": 76,
+          "suggestedModuleGroup": "content-orchestration"
+        },
+        {
+          "kind": "function",
+          "name": "PreviewStep",
+          "exported": false,
+          "raw": "function PreviewStep({",
+          "startLine": 1530,
+          "endLine": 1654,
+          "approxLines": 125,
+          "suggestedModuleGroup": "preview-components"
+        },
+        {
+          "kind": "function",
+          "name": "PreviewTable",
+          "exported": false,
+          "raw": "function PreviewTable({ rows }: { rows: ChartRow[] }) {",
+          "startLine": 1655,
+          "endLine": 1683,
+          "approxLines": 29,
+          "suggestedModuleGroup": "preview-components"
+        },
+        {
+          "kind": "function",
+          "name": "WizardSection",
+          "exported": false,
+          "raw": "function WizardSection({",
+          "startLine": 1684,
+          "endLine": 1710,
+          "approxLines": 27,
+          "suggestedModuleGroup": "step-sections"
+        }
+      ],
+      "proposedModules": [
+        {
+          "group": "content-orchestration",
+          "suggestedFile": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/content/content-orchestration.tsx",
+          "declarations": [
+            {
+              "name": "WidgetBuilderWizardProps",
+              "kind": "interface",
+              "startLine": 40,
+              "endLine": 47,
+              "approxLines": 8,
+              "exported": false
+            },
+            {
+              "name": "WizardStep",
+              "kind": "type",
+              "startLine": 48,
+              "endLine": 55,
+              "approxLines": 8,
+              "exported": false
+            },
+            {
+              "name": "RelativeDateUnit",
+              "kind": "type",
+              "startLine": 56,
+              "endLine": 57,
+              "approxLines": 2,
+              "exported": false
+            },
+            {
+              "name": "WidgetBuilderState",
+              "kind": "interface",
+              "startLine": 58,
+              "endLine": 75,
+              "approxLines": 18,
+              "exported": false
+            },
+            {
+              "name": "ValidationIssue",
+              "kind": "interface",
+              "startLine": 76,
+              "endLine": 80,
+              "approxLines": 5,
+              "exported": false
+            },
+            {
+              "name": "stepOrder",
+              "kind": "component-or-const",
+              "startLine": 81,
+              "endLine": 89,
+              "approxLines": 9,
+              "exported": false
+            },
+            {
+              "name": "stepLabels",
+              "kind": "component-or-const",
+              "startLine": 90,
+              "endLine": 98,
+              "approxLines": 9,
+              "exported": false
+            },
+            {
+              "name": "defaultState",
+              "kind": "component-or-const",
+              "startLine": 99,
+              "endLine": 111,
+              "approxLines": 13,
+              "exported": false
+            },
+            {
+              "name": "generateWidgetCode",
+              "kind": "function",
+              "startLine": 112,
+              "endLine": 121,
+              "approxLines": 10,
+              "exported": false
+            },
+            {
+              "name": "parseJson",
+              "kind": "function",
+              "startLine": 122,
+              "endLine": 131,
+              "approxLines": 10,
+              "exported": false
+            },
+            {
+              "name": "toInputDateTime",
+              "kind": "function",
+              "startLine": 132,
+              "endLine": 140,
+              "approxLines": 9,
+              "exported": false
+            },
+            {
+              "name": "fromInputDateTime",
+              "kind": "function",
+              "startLine": 141,
+              "endLine": 149,
+              "approxLines": 9,
+              "exported": false
+            },
+            {
+              "name": "relativeFromUtc",
+              "kind": "function",
+              "startLine": 150,
+              "endLine": 167,
+              "approxLines": 18,
+              "exported": false
+            },
+            {
+              "name": "formatError",
+              "kind": "function",
+              "startLine": 168,
+              "endLine": 172,
+              "approxLines": 5,
+              "exported": false
+            },
+            {
+              "name": "mapValidationIssues",
+              "kind": "function",
+              "startLine": 173,
+              "endLine": 211,
+              "approxLines": 39,
+              "exported": false
+            },
+            {
+              "name": "isCompatible",
+              "kind": "function",
+              "startLine": 212,
+              "endLine": 232,
+              "approxLines": 21,
+              "exported": false
+            },
+            {
+              "name": "inferCategoryKey",
+              "kind": "function",
+              "startLine": 233,
+              "endLine": 247,
+              "approxLines": 15,
+              "exported": false
+            },
+            {
+              "name": "inferValueKey",
+              "kind": "function",
+              "startLine": 248,
+              "endLine": 260,
+              "approxLines": 13,
+              "exported": false
+            },
+            {
+              "name": "WidgetBuilderWizardContent",
+              "kind": "function",
+              "startLine": 298,
+              "endLine": 1022,
+              "approxLines": 725,
+              "exported": true
+            },
+            {
+              "name": "PurposeStep",
+              "kind": "function",
+              "startLine": 1023,
+              "endLine": 1056,
+              "approxLines": 34,
+              "exported": false
+            },
+            {
+              "name": "DataStep",
+              "kind": "function",
+              "startLine": 1091,
+              "endLine": 1223,
+              "approxLines": 133,
+              "exported": false
+            },
+            {
+              "name": "ScriptStep",
+              "kind": "function",
+              "startLine": 1454,
+              "endLine": 1529,
+              "approxLines": 76,
+              "exported": false
+            }
+          ],
+          "approxLines": 1189
+        },
+        {
+          "group": "preview-components",
+          "suggestedFile": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/content/preview-components.tsx",
+          "declarations": [
+            {
+              "name": "ChartTypeStep",
+              "kind": "function",
+              "startLine": 1057,
+              "endLine": 1090,
+              "approxLines": 34,
+              "exported": false
+            },
+            {
+              "name": "PreviewStep",
+              "kind": "function",
+              "startLine": 1530,
+              "endLine": 1654,
+              "approxLines": 125,
+              "exported": false
+            },
+            {
+              "name": "PreviewTable",
+              "kind": "function",
+              "startLine": 1655,
+              "endLine": 1683,
+              "approxLines": 29,
+              "exported": false
+            }
+          ],
+          "approxLines": 188
+        },
+        {
+          "group": "step-sections",
+          "suggestedFile": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/content/step-sections.tsx",
+          "declarations": [
+            {
+              "name": "selectFieldForDimension",
+              "kind": "function",
+              "startLine": 261,
+              "endLine": 297,
+              "approxLines": 37,
+              "exported": false
+            },
+            {
+              "name": "FilterStep",
+              "kind": "function",
+              "startLine": 1224,
+              "endLine": 1453,
+              "approxLines": 230,
+              "exported": false
+            },
+            {
+              "name": "WizardSection",
+              "kind": "function",
+              "startLine": 1684,
+              "endLine": 1710,
+              "approxLines": 27,
+              "exported": false
+            }
+          ],
+          "approxLines": 294
+        }
+      ],
+      "risk": "requires-split"
+    },
+    {
+      "taskId": "T-036B",
+      "label": "Widget builder wizard shell",
+      "rel": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/WidgetBuilderWizard.implementation.tsx",
+      "targetMaxLines": 400,
+      "preferredFolder": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/wizard",
+      "strategy": "Split wizard shell into state hook, step navigation, preview orchestration, save/publish actions.",
+      "exists": true,
+      "absolutePath": "C:\\Workspace\\PlantProcess-IQ\\Frontend\\PlantProcess.Web\\src\\components\\dashboard\\widget-builder\\WidgetBuilderWizard.implementation.tsx",
+      "lineCount": 1512,
+      "sha256": "e3ff26bff6da32d772f6755a0d36751ce871a0447b35cc3981c6135e4766b592",
+      "importBlockCount": 10,
+      "exportLineCount": 3,
+      "topLevelDeclarationCount": 26,
+      "declarations": [
+        {
+          "kind": "interface",
+          "name": "WidgetBuilderWizardProps",
+          "exported": false,
+          "raw": "interface WidgetBuilderWizardProps {",
+          "startLine": 40,
+          "endLine": 47,
+          "approxLines": 8,
+          "suggestedModuleGroup": "wizard-orchestrator"
+        },
+        {
+          "kind": "type",
+          "name": "WizardStep",
+          "exported": false,
+          "raw": "type WizardStep = \"purpose\" | \"chartType\" | \"data\" | \"filters\" | \"preview\";",
+          "startLine": 48,
+          "endLine": 48,
+          "approxLines": 1,
+          "suggestedModuleGroup": "wizard-shell-components"
+        },
+        {
+          "kind": "type",
+          "name": "RelativeDateUnit",
+          "exported": false,
+          "raw": "type RelativeDateUnit = \"days\" | \"weeks\" | \"months\";",
+          "startLine": 49,
+          "endLine": 50,
+          "approxLines": 2,
+          "suggestedModuleGroup": "wizard-orchestrator"
+        },
+        {
+          "kind": "interface",
+          "name": "WidgetBuilderState",
+          "exported": false,
+          "raw": "interface WidgetBuilderState {",
+          "startLine": 51,
+          "endLine": 66,
+          "approxLines": 16,
+          "suggestedModuleGroup": "wizard-hooks-actions"
+        },
+        {
+          "kind": "interface",
+          "name": "ValidationIssue",
+          "exported": false,
+          "raw": "interface ValidationIssue {",
+          "startLine": 67,
+          "endLine": 71,
+          "approxLines": 5,
+          "suggestedModuleGroup": "wizard-orchestrator"
+        },
+        {
+          "kind": "component-or-const",
+          "name": "stepOrder",
+          "exported": false,
+          "raw": "const stepOrder: WizardStep[] = [",
+          "startLine": 72,
+          "endLine": 79,
+          "approxLines": 8,
+          "suggestedModuleGroup": "wizard-shell-components"
+        },
+        {
+          "kind": "component-or-const",
+          "name": "defaultState",
+          "exported": false,
+          "raw": "const defaultState: WidgetBuilderState = {",
+          "startLine": 80,
+          "endLine": 90,
+          "approxLines": 11,
+          "suggestedModuleGroup": "wizard-hooks-actions"
+        },
+        {
+          "kind": "function",
+          "name": "generateWidgetCode",
+          "exported": false,
+          "raw": "function generateWidgetCode(title: string) {",
+          "startLine": 91,
+          "endLine": 100,
+          "approxLines": 10,
+          "suggestedModuleGroup": "wizard-orchestrator"
+        },
+        {
+          "kind": "function",
+          "name": "parseJson",
+          "exported": false,
+          "raw": "function parseJson<T>(value: string | null | undefined, fallback: T): T {",
+          "startLine": 101,
+          "endLine": 110,
+          "approxLines": 10,
+          "suggestedModuleGroup": "wizard-orchestrator"
+        },
+        {
+          "kind": "function",
+          "name": "toInputDateTime",
+          "exported": false,
+          "raw": "function toInputDateTime(value?: string | null) {",
+          "startLine": 111,
+          "endLine": 119,
+          "approxLines": 9,
+          "suggestedModuleGroup": "wizard-orchestrator"
+        },
+        {
+          "kind": "function",
+          "name": "fromInputDateTime",
+          "exported": false,
+          "raw": "function fromInputDateTime(value: string) {",
+          "startLine": 120,
+          "endLine": 128,
+          "approxLines": 9,
+          "suggestedModuleGroup": "wizard-orchestrator"
+        },
+        {
+          "kind": "function",
+          "name": "relativeFromUtc",
+          "exported": false,
+          "raw": "function relativeFromUtc(value: number, unit: RelativeDateUnit) {",
+          "startLine": 129,
+          "endLine": 146,
+          "approxLines": 18,
+          "suggestedModuleGroup": "wizard-orchestrator"
+        },
+        {
+          "kind": "function",
+          "name": "formatError",
+          "exported": false,
+          "raw": "function formatError(error: unknown) {",
+          "startLine": 147,
+          "endLine": 151,
+          "approxLines": 5,
+          "suggestedModuleGroup": "wizard-orchestrator"
+        },
+        {
+          "kind": "function",
+          "name": "mapValidationIssues",
+          "exported": false,
+          "raw": "function mapValidationIssues(error: unknown): ValidationIssue[] {",
+          "startLine": 152,
+          "endLine": 190,
+          "approxLines": 39,
+          "suggestedModuleGroup": "wizard-orchestrator"
+        },
+        {
+          "kind": "function",
+          "name": "isCompatible",
+          "exported": false,
+          "raw": "function isCompatible(",
+          "startLine": 191,
+          "endLine": 211,
+          "approxLines": 21,
+          "suggestedModuleGroup": "wizard-orchestrator"
+        },
+        {
+          "kind": "function",
+          "name": "inferCategoryKey",
+          "exported": false,
+          "raw": "function inferCategoryKey(result: DashboardWidgetQueryResult | null) {",
+          "startLine": 212,
+          "endLine": 226,
+          "approxLines": 15,
+          "suggestedModuleGroup": "wizard-orchestrator"
+        },
+        {
+          "kind": "function",
+          "name": "inferValueKey",
+          "exported": false,
+          "raw": "function inferValueKey(result: DashboardWidgetQueryResult | null) {",
+          "startLine": 227,
+          "endLine": 236,
+          "approxLines": 10,
+          "suggestedModuleGroup": "wizard-orchestrator"
+        },
+        {
+          "kind": "function",
+          "name": "selectFieldForDimension",
+          "exported": false,
+          "raw": "function selectFieldForDimension(",
+          "startLine": 237,
+          "endLine": 273,
+          "approxLines": 37,
+          "suggestedModuleGroup": "wizard-orchestrator"
+        },
+        {
+          "kind": "function",
+          "name": "WidgetBuilderWizardContent",
+          "exported": true,
+          "raw": "export function WidgetBuilderWizardContent({",
+          "startLine": 274,
+          "endLine": 919,
+          "approxLines": 646,
+          "suggestedModuleGroup": "wizard-orchestrator"
+        },
+        {
+          "kind": "function",
+          "name": "PurposeStep",
+          "exported": false,
+          "raw": "function PurposeStep({",
+          "startLine": 920,
+          "endLine": 953,
+          "approxLines": 34,
+          "suggestedModuleGroup": "wizard-shell-components"
+        },
+        {
+          "kind": "function",
+          "name": "ChartTypeStep",
+          "exported": false,
+          "raw": "function ChartTypeStep({",
+          "startLine": 954,
+          "endLine": 987,
+          "approxLines": 34,
+          "suggestedModuleGroup": "wizard-shell-components"
+        },
+        {
+          "kind": "function",
+          "name": "DataStep",
+          "exported": false,
+          "raw": "function DataStep({",
+          "startLine": 988,
+          "endLine": 1120,
+          "approxLines": 133,
+          "suggestedModuleGroup": "wizard-shell-components"
+        },
+        {
+          "kind": "function",
+          "name": "FilterStep",
+          "exported": false,
+          "raw": "function FilterStep({",
+          "startLine": 1121,
+          "endLine": 1342,
+          "approxLines": 222,
+          "suggestedModuleGroup": "wizard-shell-components"
+        },
+        {
+          "kind": "function",
+          "name": "PreviewStep",
+          "exported": false,
+          "raw": "function PreviewStep({",
+          "startLine": 1343,
+          "endLine": 1457,
+          "approxLines": 115,
+          "suggestedModuleGroup": "wizard-shell-components"
+        },
+        {
+          "kind": "function",
+          "name": "PreviewTable",
+          "exported": false,
+          "raw": "function PreviewTable({ rows }: { rows: ChartRow[] }) {",
+          "startLine": 1458,
+          "endLine": 1486,
+          "approxLines": 29,
+          "suggestedModuleGroup": "wizard-preview"
+        },
+        {
+          "kind": "function",
+          "name": "WizardSection",
+          "exported": false,
+          "raw": "function WizardSection({",
+          "startLine": 1487,
+          "endLine": 1512,
+          "approxLines": 26,
+          "suggestedModuleGroup": "wizard-orchestrator"
+        }
+      ],
+      "proposedModules": [
+        {
+          "group": "wizard-hooks-actions",
+          "suggestedFile": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/wizard/wizard-hooks-actions.tsx",
+          "declarations": [
+            {
+              "name": "WidgetBuilderState",
+              "kind": "interface",
+              "startLine": 51,
+              "endLine": 66,
+              "approxLines": 16,
+              "exported": false
+            },
+            {
+              "name": "defaultState",
+              "kind": "component-or-const",
+              "startLine": 80,
+              "endLine": 90,
+              "approxLines": 11,
+              "exported": false
+            }
+          ],
+          "approxLines": 27
+        },
+        {
+          "group": "wizard-orchestrator",
+          "suggestedFile": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/wizard/wizard-orchestrator.tsx",
+          "declarations": [
+            {
+              "name": "WidgetBuilderWizardProps",
+              "kind": "interface",
+              "startLine": 40,
+              "endLine": 47,
+              "approxLines": 8,
+              "exported": false
+            },
+            {
+              "name": "RelativeDateUnit",
+              "kind": "type",
+              "startLine": 49,
+              "endLine": 50,
+              "approxLines": 2,
+              "exported": false
+            },
+            {
+              "name": "ValidationIssue",
+              "kind": "interface",
+              "startLine": 67,
+              "endLine": 71,
+              "approxLines": 5,
+              "exported": false
+            },
+            {
+              "name": "generateWidgetCode",
+              "kind": "function",
+              "startLine": 91,
+              "endLine": 100,
+              "approxLines": 10,
+              "exported": false
+            },
+            {
+              "name": "parseJson",
+              "kind": "function",
+              "startLine": 101,
+              "endLine": 110,
+              "approxLines": 10,
+              "exported": false
+            },
+            {
+              "name": "toInputDateTime",
+              "kind": "function",
+              "startLine": 111,
+              "endLine": 119,
+              "approxLines": 9,
+              "exported": false
+            },
+            {
+              "name": "fromInputDateTime",
+              "kind": "function",
+              "startLine": 120,
+              "endLine": 128,
+              "approxLines": 9,
+              "exported": false
+            },
+            {
+              "name": "relativeFromUtc",
+              "kind": "function",
+              "startLine": 129,
+              "endLine": 146,
+              "approxLines": 18,
+              "exported": false
+            },
+            {
+              "name": "formatError",
+              "kind": "function",
+              "startLine": 147,
+              "endLine": 151,
+              "approxLines": 5,
+              "exported": false
+            },
+            {
+              "name": "mapValidationIssues",
+              "kind": "function",
+              "startLine": 152,
+              "endLine": 190,
+              "approxLines": 39,
+              "exported": false
+            },
+            {
+              "name": "isCompatible",
+              "kind": "function",
+              "startLine": 191,
+              "endLine": 211,
+              "approxLines": 21,
+              "exported": false
+            },
+            {
+              "name": "inferCategoryKey",
+              "kind": "function",
+              "startLine": 212,
+              "endLine": 226,
+              "approxLines": 15,
+              "exported": false
+            },
+            {
+              "name": "inferValueKey",
+              "kind": "function",
+              "startLine": 227,
+              "endLine": 236,
+              "approxLines": 10,
+              "exported": false
+            },
+            {
+              "name": "selectFieldForDimension",
+              "kind": "function",
+              "startLine": 237,
+              "endLine": 273,
+              "approxLines": 37,
+              "exported": false
+            },
+            {
+              "name": "WidgetBuilderWizardContent",
+              "kind": "function",
+              "startLine": 274,
+              "endLine": 919,
+              "approxLines": 646,
+              "exported": true
+            },
+            {
+              "name": "WizardSection",
+              "kind": "function",
+              "startLine": 1487,
+              "endLine": 1512,
+              "approxLines": 26,
+              "exported": false
+            }
+          ],
+          "approxLines": 870
+        },
+        {
+          "group": "wizard-preview",
+          "suggestedFile": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/wizard/wizard-preview.tsx",
+          "declarations": [
+            {
+              "name": "PreviewTable",
+              "kind": "function",
+              "startLine": 1458,
+              "endLine": 1486,
+              "approxLines": 29,
+              "exported": false
+            }
+          ],
+          "approxLines": 29
+        },
+        {
+          "group": "wizard-shell-components",
+          "suggestedFile": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/wizard/wizard-shell-components.tsx",
+          "declarations": [
+            {
+              "name": "WizardStep",
+              "kind": "type",
+              "startLine": 48,
+              "endLine": 48,
+              "approxLines": 1,
+              "exported": false
+            },
+            {
+              "name": "stepOrder",
+              "kind": "component-or-const",
+              "startLine": 72,
+              "endLine": 79,
+              "approxLines": 8,
+              "exported": false
+            },
+            {
+              "name": "PurposeStep",
+              "kind": "function",
+              "startLine": 920,
+              "endLine": 953,
+              "approxLines": 34,
+              "exported": false
+            },
+            {
+              "name": "ChartTypeStep",
+              "kind": "function",
+              "startLine": 954,
+              "endLine": 987,
+              "approxLines": 34,
+              "exported": false
+            },
+            {
+              "name": "DataStep",
+              "kind": "function",
+              "startLine": 988,
+              "endLine": 1120,
+              "approxLines": 133,
+              "exported": false
+            },
+            {
+              "name": "FilterStep",
+              "kind": "function",
+              "startLine": 1121,
+              "endLine": 1342,
+              "approxLines": 222,
+              "exported": false
+            },
+            {
+              "name": "PreviewStep",
+              "kind": "function",
+              "startLine": 1343,
+              "endLine": 1457,
+              "approxLines": 115,
+              "exported": false
+            }
+          ],
+          "approxLines": 547
+        }
+      ],
+      "risk": "requires-split"
+    },
+    {
+      "taskId": "T-037A",
+      "label": "Product core API client",
+      "rel": "Frontend/PlantProcess.Web/src/api/productCoreApiClient.implementation.ts",
+      "targetMaxLines": 450,
+      "preferredFolder": "Frontend/PlantProcess.Web/src/api/product-core",
+      "strategy": "Split by endpoint domain: dashboard, materials, analytics, admin, mapping, workflow, license/demo/read-models.",
+      "exists": true,
+      "absolutePath": "C:\\Workspace\\PlantProcess-IQ\\Frontend\\PlantProcess.Web\\src\\api\\productCoreApiClient.implementation.ts",
+      "lineCount": 599,
+      "sha256": "90275ced37dda390e07a1b0880a4c1edc2c8b952c88bc66c61c5786d50ba12ee",
+      "importBlockCount": 3,
+      "exportLineCount": 2,
+      "topLevelDeclarationCount": 4,
+      "declarations": [
+        {
+          "kind": "function",
+          "name": "dashboardQuery",
+          "exported": false,
+          "raw": "function dashboardQuery(filters: DashboardFilters): QueryParams {",
+          "startLine": 127,
+          "endLine": 145,
+          "approxLines": 19,
+          "suggestedModuleGroup": "dashboard-api"
+        },
+        {
+          "kind": "function",
+          "name": "dashboardBody",
+          "exported": false,
+          "raw": "function dashboardBody(filters: DashboardFilters) {",
+          "startLine": 146,
+          "endLine": 163,
+          "approxLines": 18,
+          "suggestedModuleGroup": "dashboard-api"
+        },
+        {
+          "kind": "function",
+          "name": "createClientCorrelationId",
+          "exported": false,
+          "raw": "function createClientCorrelationId(): string {",
+          "startLine": 164,
+          "endLine": 175,
+          "approxLines": 12,
+          "suggestedModuleGroup": "analytics-api"
+        },
+        {
+          "kind": "component-or-const",
+          "name": "productApi",
+          "exported": true,
+          "raw": "export const productApi = {",
+          "startLine": 176,
+          "endLine": 599,
+          "approxLines": 424,
+          "suggestedModuleGroup": "shared-api-types"
+        }
+      ],
+      "proposedModules": [
+        {
+          "group": "analytics-api",
+          "suggestedFile": "Frontend/PlantProcess.Web/src/api/product-core/analytics-api.tsx",
+          "declarations": [
+            {
+              "name": "createClientCorrelationId",
+              "kind": "function",
+              "startLine": 164,
+              "endLine": 175,
+              "approxLines": 12,
+              "exported": false
+            }
+          ],
+          "approxLines": 12
+        },
+        {
+          "group": "dashboard-api",
+          "suggestedFile": "Frontend/PlantProcess.Web/src/api/product-core/dashboard-api.tsx",
+          "declarations": [
+            {
+              "name": "dashboardQuery",
+              "kind": "function",
+              "startLine": 127,
+              "endLine": 145,
+              "approxLines": 19,
+              "exported": false
+            },
+            {
+              "name": "dashboardBody",
+              "kind": "function",
+              "startLine": 146,
+              "endLine": 163,
+              "approxLines": 18,
+              "exported": false
+            }
+          ],
+          "approxLines": 37
+        },
+        {
+          "group": "shared-api-types",
+          "suggestedFile": "Frontend/PlantProcess.Web/src/api/product-core/shared-api-types.tsx",
+          "declarations": [
+            {
+              "name": "productApi",
+              "kind": "component-or-const",
+              "startLine": 176,
+              "endLine": 599,
+              "approxLines": 424,
+              "exported": true
+            }
+          ],
+          "approxLines": 424
+        }
+      ],
+      "risk": "requires-split"
+    },
+    {
+      "taskId": "T-037B",
+      "label": "Admin DB configuration tab",
+      "rel": "Frontend/PlantProcess.Web/src/pages/Admin/AdminDbConfigurationTab.implementation.tsx",
+      "targetMaxLines": 450,
+      "preferredFolder": "Frontend/PlantProcess.Web/src/pages/Admin/db-configuration",
+      "strategy": "Split into connection profile list, form/editor, validation/test panel, schema preview, helper hooks.",
+      "exists": true,
+      "absolutePath": "C:\\Workspace\\PlantProcess-IQ\\Frontend\\PlantProcess.Web\\src\\pages\\Admin\\AdminDbConfigurationTab.implementation.tsx",
+      "lineCount": 1128,
+      "sha256": "08605b1e62d0231a50e38c6a74e505f8f2780c5fd70f21b969194423c4e55ba3",
+      "importBlockCount": 9,
+      "exportLineCount": 1,
+      "topLevelDeclarationCount": 8,
+      "declarations": [
+        {
+          "kind": "interface",
+          "name": "ConnectionTestResult",
+          "exported": false,
+          "raw": "interface ConnectionTestResult {",
+          "startLine": 61,
+          "endLine": 67,
+          "approxLines": 7,
+          "suggestedModuleGroup": "connection-profile-section"
+        },
+        {
+          "kind": "type",
+          "name": "ViewMode",
+          "exported": false,
+          "raw": "type ViewMode = \"list\" | \"create\" | \"edit\" | \"tables\";",
+          "startLine": 68,
+          "endLine": 69,
+          "approxLines": 2,
+          "suggestedModuleGroup": "admin-db-shared"
+        },
+        {
+          "kind": "component-or-const",
+          "name": "PROVIDER_DEFAULTS",
+          "exported": false,
+          "raw": "const PROVIDER_DEFAULTS: Record<string, { port: number; schemaName: string }> = {",
+          "startLine": 70,
+          "endLine": 80,
+          "approxLines": 11,
+          "suggestedModuleGroup": "connection-profile-section"
+        },
+        {
+          "kind": "function",
+          "name": "DbConfigurationTab",
+          "exported": true,
+          "raw": "export function DbConfigurationTab({",
+          "startLine": 81,
+          "endLine": 258,
+          "approxLines": 178,
+          "suggestedModuleGroup": "admin-db-shared"
+        },
+        {
+          "kind": "function",
+          "name": "ConnectionProfileList",
+          "exported": false,
+          "raw": "function ConnectionProfileList({",
+          "startLine": 259,
+          "endLine": 400,
+          "approxLines": 142,
+          "suggestedModuleGroup": "connection-profile-section"
+        },
+        {
+          "kind": "function",
+          "name": "ConnectionProfileForm",
+          "exported": false,
+          "raw": "function ConnectionProfileForm({",
+          "startLine": 401,
+          "endLine": 740,
+          "approxLines": 340,
+          "suggestedModuleGroup": "connection-profile-section"
+        },
+        {
+          "kind": "function",
+          "name": "TableBrowser",
+          "exported": false,
+          "raw": "function TableBrowser({",
+          "startLine": 741,
+          "endLine": 1029,
+          "approxLines": 289,
+          "suggestedModuleGroup": "schema-preview-section"
+        },
+        {
+          "kind": "function",
+          "name": "ImportJobSchedulePanel",
+          "exported": false,
+          "raw": "function ImportJobSchedulePanel({",
+          "startLine": 1030,
+          "endLine": 1128,
+          "approxLines": 99,
+          "suggestedModuleGroup": "admin-db-shared"
+        }
+      ],
+      "proposedModules": [
+        {
+          "group": "admin-db-shared",
+          "suggestedFile": "Frontend/PlantProcess.Web/src/pages/Admin/db-configuration/admin-db-shared.tsx",
+          "declarations": [
+            {
+              "name": "ViewMode",
+              "kind": "type",
+              "startLine": 68,
+              "endLine": 69,
+              "approxLines": 2,
+              "exported": false
+            },
+            {
+              "name": "DbConfigurationTab",
+              "kind": "function",
+              "startLine": 81,
+              "endLine": 258,
+              "approxLines": 178,
+              "exported": true
+            },
+            {
+              "name": "ImportJobSchedulePanel",
+              "kind": "function",
+              "startLine": 1030,
+              "endLine": 1128,
+              "approxLines": 99,
+              "exported": false
+            }
+          ],
+          "approxLines": 279
+        },
+        {
+          "group": "connection-profile-section",
+          "suggestedFile": "Frontend/PlantProcess.Web/src/pages/Admin/db-configuration/connection-profile-section.tsx",
+          "declarations": [
+            {
+              "name": "ConnectionTestResult",
+              "kind": "interface",
+              "startLine": 61,
+              "endLine": 67,
+              "approxLines": 7,
+              "exported": false
+            },
+            {
+              "name": "PROVIDER_DEFAULTS",
+              "kind": "component-or-const",
+              "startLine": 70,
+              "endLine": 80,
+              "approxLines": 11,
+              "exported": false
+            },
+            {
+              "name": "ConnectionProfileList",
+              "kind": "function",
+              "startLine": 259,
+              "endLine": 400,
+              "approxLines": 142,
+              "exported": false
+            },
+            {
+              "name": "ConnectionProfileForm",
+              "kind": "function",
+              "startLine": 401,
+              "endLine": 740,
+              "approxLines": 340,
+              "exported": false
+            }
+          ],
+          "approxLines": 500
+        },
+        {
+          "group": "schema-preview-section",
+          "suggestedFile": "Frontend/PlantProcess.Web/src/pages/Admin/db-configuration/schema-preview-section.tsx",
+          "declarations": [
+            {
+              "name": "TableBrowser",
+              "kind": "function",
+              "startLine": 741,
+              "endLine": 1029,
+              "approxLines": 289,
+              "exported": false
+            }
+          ],
+          "approxLines": 289
+        }
+      ],
+      "risk": "requires-split"
+    },
+    {
+      "taskId": "T-037C",
+      "label": "Material analytics pages",
+      "rel": "Frontend/PlantProcess.Web/src/pages/MaterialAnalytics/MaterialAnalyticsPages.implementation.tsx",
+      "targetMaxLines": 450,
+      "preferredFolder": "Frontend/PlantProcess.Web/src/pages/MaterialAnalytics/sections",
+      "strategy": "Split by page section: overview, filters, KPI cards, charts, detail panels, helper formatters.",
+      "exists": true,
+      "absolutePath": "C:\\Workspace\\PlantProcess-IQ\\Frontend\\PlantProcess.Web\\src\\pages\\MaterialAnalytics\\MaterialAnalyticsPages.implementation.tsx",
+      "lineCount": 1103,
+      "sha256": "e8e3c2182ff748e837c5b9ee7cbe269b1e7c9e3a761053d31b0bb12a9f6e5765",
+      "importBlockCount": 13,
+      "exportLineCount": 10,
+      "topLevelDeclarationCount": 24,
+      "declarations": [
+        {
+          "kind": "type",
+          "name": "Row",
+          "exported": false,
+          "raw": "type Row = Record<string, unknown>;",
+          "startLine": 49,
+          "endLine": 50,
+          "approxLines": 2,
+          "suggestedModuleGroup": "material-analytics-shared"
+        },
+        {
+          "kind": "type",
+          "name": "AsyncState",
+          "exported": false,
+          "raw": "type AsyncState<T> = {",
+          "startLine": 51,
+          "endLine": 57,
+          "approxLines": 7,
+          "suggestedModuleGroup": "material-analytics-shared"
+        },
+        {
+          "kind": "function",
+          "name": "useResource",
+          "exported": false,
+          "raw": "function useResource<T>(loader: () => Promise<T>, fallback: T): AsyncState<T> {",
+          "startLine": 58,
+          "endLine": 96,
+          "approxLines": 39,
+          "suggestedModuleGroup": "material-analytics-shared"
+        },
+        {
+          "kind": "function",
+          "name": "text",
+          "exported": false,
+          "raw": "function text(value: unknown, fallback = \"-\"): string {",
+          "startLine": 97,
+          "endLine": 126,
+          "approxLines": 30,
+          "suggestedModuleGroup": "material-analytics-shared"
+        },
+        {
+          "kind": "function",
+          "name": "number",
+          "exported": false,
+          "raw": "function number(value: unknown, fallback = 0): number {",
+          "startLine": 127,
+          "endLine": 135,
+          "approxLines": 9,
+          "suggestedModuleGroup": "material-analytics-shared"
+        },
+        {
+          "kind": "function",
+          "name": "percent",
+          "exported": false,
+          "raw": "function percent(value: unknown): string {",
+          "startLine": 136,
+          "endLine": 141,
+          "approxLines": 6,
+          "suggestedModuleGroup": "material-analytics-shared"
+        },
+        {
+          "kind": "function",
+          "name": "rows",
+          "exported": false,
+          "raw": "function rows(value: unknown): Row[] {",
+          "startLine": 142,
+          "endLine": 154,
+          "approxLines": 13,
+          "suggestedModuleGroup": "material-analytics-shared"
+        },
+        {
+          "kind": "function",
+          "name": "cssKind",
+          "exported": false,
+          "raw": "function cssKind(value: unknown): string {",
+          "startLine": 155,
+          "endLine": 171,
+          "approxLines": 17,
+          "suggestedModuleGroup": "material-analytics-shared"
+        },
+        {
+          "kind": "function",
+          "name": "Chip",
+          "exported": false,
+          "raw": "function Chip({ value, tone }: { value: unknown; tone?: string }) {",
+          "startLine": 172,
+          "endLine": 176,
+          "approxLines": 5,
+          "suggestedModuleGroup": "material-analytics-shared"
+        },
+        {
+          "kind": "function",
+          "name": "PageShell",
+          "exported": false,
+          "raw": "function PageShell({",
+          "startLine": 177,
+          "endLine": 205,
+          "approxLines": 29,
+          "suggestedModuleGroup": "material-analytics-shared"
+        },
+        {
+          "kind": "function",
+          "name": "Metric",
+          "exported": false,
+          "raw": "function Metric({",
+          "startLine": 206,
+          "endLine": 226,
+          "approxLines": 21,
+          "suggestedModuleGroup": "overview-section"
+        },
+        {
+          "kind": "function",
+          "name": "StandardDataState",
+          "exported": false,
+          "raw": "function StandardDataState<T>({",
+          "startLine": 227,
+          "endLine": 263,
+          "approxLines": 37,
+          "suggestedModuleGroup": "material-analytics-shared"
+        },
+        {
+          "kind": "function",
+          "name": "ChartPlaceholder",
+          "exported": false,
+          "raw": "function ChartPlaceholder({",
+          "startLine": 264,
+          "endLine": 290,
+          "approxLines": 27,
+          "suggestedModuleGroup": "chart-section"
+        },
+        {
+          "kind": "function",
+          "name": "materialColumns",
+          "exported": false,
+          "raw": "function materialColumns(onDrilldown?: (row: DashboardMaterialRow) => void): StandardTableColumn<DashboardMaterialRow>[] {",
+          "startLine": 291,
+          "endLine": 332,
+          "approxLines": 42,
+          "suggestedModuleGroup": "material-analytics-shared"
+        },
+        {
+          "kind": "function",
+          "name": "MaterialAnalyticsCommandDashboardPage",
+          "exported": true,
+          "raw": "export function MaterialAnalyticsCommandDashboardPage() {",
+          "startLine": 333,
+          "endLine": 408,
+          "approxLines": 76,
+          "suggestedModuleGroup": "material-analytics-shared"
+        },
+        {
+          "kind": "function",
+          "name": "MaterialAnalyticsMaterialInvestigationPage",
+          "exported": true,
+          "raw": "export function MaterialAnalyticsMaterialInvestigationPage() {",
+          "startLine": 409,
+          "endLine": 550,
+          "approxLines": 142,
+          "suggestedModuleGroup": "material-analytics-shared"
+        },
+        {
+          "kind": "function",
+          "name": "MaterialAnalyticsRiskIntelligencePage",
+          "exported": true,
+          "raw": "export function MaterialAnalyticsRiskIntelligencePage() {",
+          "startLine": 551,
+          "endLine": 601,
+          "approxLines": 51,
+          "suggestedModuleGroup": "material-analytics-shared"
+        },
+        {
+          "kind": "function",
+          "name": "MaterialAnalyticsDataQualityPage",
+          "exported": true,
+          "raw": "export function MaterialAnalyticsDataQualityPage() {",
+          "startLine": 602,
+          "endLine": 662,
+          "approxLines": 61,
+          "suggestedModuleGroup": "material-analytics-shared"
+        },
+        {
+          "kind": "function",
+          "name": "MaterialAnalyticsCorrelationPage",
+          "exported": true,
+          "raw": "export function MaterialAnalyticsCorrelationPage() {",
+          "startLine": 663,
+          "endLine": 747,
+          "approxLines": 85,
+          "suggestedModuleGroup": "material-analytics-shared"
+        },
+        {
+          "kind": "function",
+          "name": "MaterialAnalyticsMlReadinessPage",
+          "exported": true,
+          "raw": "export function MaterialAnalyticsMlReadinessPage() {",
+          "startLine": 748,
+          "endLine": 814,
+          "approxLines": 67,
+          "suggestedModuleGroup": "material-analytics-shared"
+        },
+        {
+          "kind": "function",
+          "name": "MaterialAnalyticsDemoLifecyclePage",
+          "exported": true,
+          "raw": "export function MaterialAnalyticsDemoLifecyclePage() {",
+          "startLine": 815,
+          "endLine": 923,
+          "approxLines": 109,
+          "suggestedModuleGroup": "material-analytics-shared"
+        },
+        {
+          "kind": "function",
+          "name": "MaterialAnalyticsAdminPreviewPage",
+          "exported": true,
+          "raw": "export function MaterialAnalyticsAdminPreviewPage() {",
+          "startLine": 924,
+          "endLine": 978,
+          "approxLines": 55,
+          "suggestedModuleGroup": "material-analytics-shared"
+        },
+        {
+          "kind": "function",
+          "name": "MaterialAnalyticsAdministratorPage",
+          "exported": true,
+          "raw": "export function MaterialAnalyticsAdministratorPage() {",
+          "startLine": 979,
+          "endLine": 1064,
+          "approxLines": 86,
+          "suggestedModuleGroup": "material-analytics-shared"
+        },
+        {
+          "kind": "function",
+          "name": "MaterialAnalyticsBrandIdentityPage",
+          "exported": true,
+          "raw": "export function MaterialAnalyticsBrandIdentityPage() {",
+          "startLine": 1065,
+          "endLine": 1103,
+          "approxLines": 39,
+          "suggestedModuleGroup": "material-analytics-shared"
+        }
+      ],
+      "proposedModules": [
+        {
+          "group": "chart-section",
+          "suggestedFile": "Frontend/PlantProcess.Web/src/pages/MaterialAnalytics/sections/chart-section.tsx",
+          "declarations": [
+            {
+              "name": "ChartPlaceholder",
+              "kind": "function",
+              "startLine": 264,
+              "endLine": 290,
+              "approxLines": 27,
+              "exported": false
+            }
+          ],
+          "approxLines": 27
+        },
+        {
+          "group": "material-analytics-shared",
+          "suggestedFile": "Frontend/PlantProcess.Web/src/pages/MaterialAnalytics/sections/material-analytics-shared.tsx",
+          "declarations": [
+            {
+              "name": "Row",
+              "kind": "type",
+              "startLine": 49,
+              "endLine": 50,
+              "approxLines": 2,
+              "exported": false
+            },
+            {
+              "name": "AsyncState",
+              "kind": "type",
+              "startLine": 51,
+              "endLine": 57,
+              "approxLines": 7,
+              "exported": false
+            },
+            {
+              "name": "useResource",
+              "kind": "function",
+              "startLine": 58,
+              "endLine": 96,
+              "approxLines": 39,
+              "exported": false
+            },
+            {
+              "name": "text",
+              "kind": "function",
+              "startLine": 97,
+              "endLine": 126,
+              "approxLines": 30,
+              "exported": false
+            },
+            {
+              "name": "number",
+              "kind": "function",
+              "startLine": 127,
+              "endLine": 135,
+              "approxLines": 9,
+              "exported": false
+            },
+            {
+              "name": "percent",
+              "kind": "function",
+              "startLine": 136,
+              "endLine": 141,
+              "approxLines": 6,
+              "exported": false
+            },
+            {
+              "name": "rows",
+              "kind": "function",
+              "startLine": 142,
+              "endLine": 154,
+              "approxLines": 13,
+              "exported": false
+            },
+            {
+              "name": "cssKind",
+              "kind": "function",
+              "startLine": 155,
+              "endLine": 171,
+              "approxLines": 17,
+              "exported": false
+            },
+            {
+              "name": "Chip",
+              "kind": "function",
+              "startLine": 172,
+              "endLine": 176,
+              "approxLines": 5,
+              "exported": false
+            },
+            {
+              "name": "PageShell",
+              "kind": "function",
+              "startLine": 177,
+              "endLine": 205,
+              "approxLines": 29,
+              "exported": false
+            },
+            {
+              "name": "StandardDataState",
+              "kind": "function",
+              "startLine": 227,
+              "endLine": 263,
+              "approxLines": 37,
+              "exported": false
+            },
+            {
+              "name": "materialColumns",
+              "kind": "function",
+              "startLine": 291,
+              "endLine": 332,
+              "approxLines": 42,
+              "exported": false
+            },
+            {
+              "name": "MaterialAnalyticsCommandDashboardPage",
+              "kind": "function",
+              "startLine": 333,
+              "endLine": 408,
+              "approxLines": 76,
+              "exported": true
+            },
+            {
+              "name": "MaterialAnalyticsMaterialInvestigationPage",
+              "kind": "function",
+              "startLine": 409,
+              "endLine": 550,
+              "approxLines": 142,
+              "exported": true
+            },
+            {
+              "name": "MaterialAnalyticsRiskIntelligencePage",
+              "kind": "function",
+              "startLine": 551,
+              "endLine": 601,
+              "approxLines": 51,
+              "exported": true
+            },
+            {
+              "name": "MaterialAnalyticsDataQualityPage",
+              "kind": "function",
+              "startLine": 602,
+              "endLine": 662,
+              "approxLines": 61,
+              "exported": true
+            },
+            {
+              "name": "MaterialAnalyticsCorrelationPage",
+              "kind": "function",
+              "startLine": 663,
+              "endLine": 747,
+              "approxLines": 85,
+              "exported": true
+            },
+            {
+              "name": "MaterialAnalyticsMlReadinessPage",
+              "kind": "function",
+              "startLine": 748,
+              "endLine": 814,
+              "approxLines": 67,
+              "exported": true
+            },
+            {
+              "name": "MaterialAnalyticsDemoLifecyclePage",
+              "kind": "function",
+              "startLine": 815,
+              "endLine": 923,
+              "approxLines": 109,
+              "exported": true
+            },
+            {
+              "name": "MaterialAnalyticsAdminPreviewPage",
+              "kind": "function",
+              "startLine": 924,
+              "endLine": 978,
+              "approxLines": 55,
+              "exported": true
+            },
+            {
+              "name": "MaterialAnalyticsAdministratorPage",
+              "kind": "function",
+              "startLine": 979,
+              "endLine": 1064,
+              "approxLines": 86,
+              "exported": true
+            },
+            {
+              "name": "MaterialAnalyticsBrandIdentityPage",
+              "kind": "function",
+              "startLine": 1065,
+              "endLine": 1103,
+              "approxLines": 39,
+              "exported": true
+            }
+          ],
+          "approxLines": 1007
+        },
+        {
+          "group": "overview-section",
+          "suggestedFile": "Frontend/PlantProcess.Web/src/pages/MaterialAnalytics/sections/overview-section.tsx",
+          "declarations": [
+            {
+              "name": "Metric",
+              "kind": "function",
+              "startLine": 206,
+              "endLine": 226,
+              "approxLines": 21,
+              "exported": false
+            }
+          ],
+          "approxLines": 21
+        }
+      ],
+      "risk": "requires-split"
+    }
+  ]
+}

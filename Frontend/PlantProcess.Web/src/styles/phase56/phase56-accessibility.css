@@ -1,0 +1,71 @@
+/* Phase 6 WCAG 2.1 AA accessibility foundation. */
+html { scroll-behavior: smooth; }
+body { background: var(--ppiq-bg); color: var(--ppiq-text); }
+
+.ppiq-skip-link {
+  position: fixed;
+  inset-block-start: 0.75rem;
+  inset-inline-start: 0.75rem;
+  z-index: 10000;
+  transform: translateY(-160%);
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--ppiq-focus);
+  border-radius: var(--ppiq-radius-control);
+  background: var(--ppiq-surface-strong);
+  color: var(--ppiq-text);
+  font-weight: 900;
+  text-decoration: none;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.24);
+}
+.ppiq-skip-link:focus,
+.ppiq-skip-link:focus-visible { transform: translateY(0); outline: none; }
+
+:where(a, button, input, select, textarea, [role='button'], [tabindex]):focus-visible {
+  outline: 3px solid var(--ppiq-focus);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 6px color-mix(in srgb, var(--ppiq-focus) 24%, transparent);
+}
+
+.ppiq-sr-only {
+  position: absolute !important;
+  inline-size: 1px !important;
+  block-size: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.ppiq-live-region {
+  position: fixed;
+  inset-block-end: 1rem;
+  inset-inline-start: 1rem;
+  z-index: 9999;
+  max-inline-size: 28rem;
+}
+
+:where(.status-badge, .risk-pill, .health-pill, .wizard-state-panel)::before {
+  content: attr(data-state-label);
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+}
+
+html[data-theme='light'] :where(.card, .panel, .glass-panel, .dashboard-card, .admin-card) {
+  background-color: var(--ppiq-surface);
+  color: var(--ppiq-text);
+  border-color: var(--ppiq-border);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+  }
+}

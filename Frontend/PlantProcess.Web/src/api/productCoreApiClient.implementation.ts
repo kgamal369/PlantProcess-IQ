@@ -1,4 +1,4 @@
-﻿import { API_BASE_URL } from "./apiConfig";
+import { API_BASE_URL } from "./apiConfig";
 import {
   buildQuery,
   deleteJson,
@@ -9,786 +9,120 @@ import {
   requestJson,
   type QueryParams,
 } from "./productApiHardening";
-export type SortDirection = "asc" | "desc";
+// PPIQ_PHASE5B_PRODUCT_CORE_TYPES_SPLIT
+// Exported DTO/filter/read-model types moved to ./product-core/types.
+export type {
+  AdminJobMonitorRow,
+  AdminJobsMonitor,
+  AdminLatestImportBatch,
+  AdminMetricCard,
+  AdminOverview,
+  AdminStatusCount,
+  ConnectionProfileRecord,
+  CreateConnectionProfileRequest,
+  CreateDashboardWidgetDefinitionPayload,
+  CreateKpiDefinitionRequest,
+  CreateSchemaViewDefinitionRequest,
+  CreateSourceDatasetDefinitionRequest,
+  CsvImportSnapshotRequest,
+  CsvImportSnapshotResult,
+  CsvPreviewRequest,
+  CsvPreviewResult,
+  CsvSchemaDiscoveryRequest,
+  CsvSchemaDiscoveryResult,
+  DashboardChartTypeMetadata,
+  DashboardCompatibilityRule,
+  DashboardDefinitionRecord,
+  DashboardDimensionMetadata,
+  DashboardFilterMetadata,
+  DashboardFilters,
+  DashboardMaterialRow,
+  DashboardMeasureMetadata,
+  DashboardMetadata,
+  DashboardPurposeMetadata,
+  DashboardQuerySafetyLimits,
+  DashboardReferenceData,
+  DashboardWidgetColumn,
+  DashboardWidgetDefinitionRecord,
+  DashboardWidgetFilters,
+  DashboardWidgetQuery,
+  DashboardWidgetQueryOptions,
+  DashboardWidgetQueryResult,
+  DashboardWidgetResolved,
+  DashboardWorkspace,
+  DbConfigurationSourceSystem,
+  DbConfigurationSummary,
+  GenealogyAwareCorrelationBin,
+  GenealogyAwareCorrelationResult,
+  JobActionResponse,
+  JobRunHistoryRecord,
+  KpiDefinitionRecord,
+  MaterialInvestigationRequestOptions,
+  PagedResult,
+  PlannedProvider,
+  ProviderTypeRecord,
+  ReferenceItem,
+  SchemaConfigurationSummary,
+  SchemaMappingSummary,
+  SchemaViewDefinitionRecord,
+  SchemaViewPreviewColumn,
+  SchemaViewPreviewRequest,
+  SchemaViewPreviewResult,
+  SortDirection,
+  SourceDatasetDefinitionRecord,
+  SourceFieldDefinitionRecord,
+  SourceObjectCoverage,
+  TwoStageImportModel,
+  TwoStageImportStage,
+  UpdateConnectionImportScheduleRequest,
+  UpdateMappingRefreshScheduleRequest,
+  UpdateSchemaViewDefinitionRequest,
+  WidgetQueryExpressionRequest,
+  WidgetQueryExpressionResult,
+} from "./product-core/types";
+
+import type {
+  AdminJobsMonitor,
+  AdminOverview,
+  ConnectionProfileRecord,
+  CreateConnectionProfileRequest,
+  CreateDashboardWidgetDefinitionPayload,
+  CreateKpiDefinitionRequest,
+  CreateSchemaViewDefinitionRequest,
+  CreateSourceDatasetDefinitionRequest,
+  CsvImportSnapshotRequest,
+  CsvImportSnapshotResult,
+  CsvPreviewRequest,
+  CsvPreviewResult,
+  CsvSchemaDiscoveryRequest,
+  CsvSchemaDiscoveryResult,
+  DashboardDefinitionRecord,
+  DashboardFilters,
+  DashboardMaterialRow,
+  DashboardMetadata,
+  DashboardReferenceData,
+  DashboardWidgetQuery,
+  DashboardWidgetQueryResult,
+  DashboardWorkspace,
+  DbConfigurationSummary,
+  GenealogyAwareCorrelationResult,
+  JobActionResponse,
+  JobRunHistoryRecord,
+  KpiDefinitionRecord,
+  MaterialInvestigationRequestOptions,
+  PagedResult,
+  ProviderTypeRecord,
+  SchemaConfigurationSummary,
+  SchemaViewDefinitionRecord,
+  SchemaViewPreviewRequest,
+  SchemaViewPreviewResult,
+  SourceDatasetDefinitionRecord,
+  TwoStageImportModel,
+  UpdateConnectionImportScheduleRequest,
+  UpdateMappingRefreshScheduleRequest,
+  UpdateSchemaViewDefinitionRequest,
+} from "./product-core/types";
 
-export interface DashboardFilters {
-  siteId?: string;
-  areaId?: string;
-  equipmentId?: string;
-  materialCode?: string;
-  materialUnitType?: string;
-  sourceSystem?: string;
-  defectType?: string;
-  riskClass?: string;
-  fromUtc?: string;
-  toUtc?: string;
-  shiftCode?: string;
-  parameterCode?: string;
-  linkMode?: "SameMaterial" | "DownstreamChildren" | "UpstreamParents" | "FullGenealogy";
-  genealogyDepth?: number;
-  bins?: number;
-  minimumObservationsPerBin?: number;
-  page?: number;
-  pageSize?: number;
-  sortBy?: string;
-  sortDirection?: SortDirection;
-}
-
-export interface PagedResult<T> {
-  items: T[];
-  page: number;
-  pageSize: number;
-  totalCount: number;
-  totalPages: number;
-  sortBy?: string;
-  sortDirection?: SortDirection;
-}
-
-export interface ReferenceItem {
-  id: string;
-  code: string;
-  name: string;
-  group?: string;
-  count: number;
-}
-
-export interface DashboardReferenceData {
-  generatedAtUtc: string;
-  sites: ReferenceItem[];
-  areas: ReferenceItem[];
-  equipment: ReferenceItem[];
-  sourceSystems: ReferenceItem[];
-  defects: ReferenceItem[];
-  parameters: ReferenceItem[];
-  riskClasses: ReferenceItem[];
-  shifts: ReferenceItem[];
-}
-
-export interface DashboardMaterialRow {
-  materialUnitId: string;
-  materialCode: string;
-  materialUnitType: string;
-  productFamily?: string;
-  gradeOrRecipe?: string;
-  siteId: string;
-  siteName?: string;
-  productionStartUtc?: string;
-  productionEndUtc?: string;
-  sourceSystem?: string;
-  processStepCount: number;
-  parameterObservationCount: number;
-  qualityEventCount: number;
-  defectEventCount: number;
-  latestRiskScore?: number;
-  latestRiskClass?: string;
-  latestScoredAtUtc?: string;
-}
-
-export interface DashboardWorkspace {
-  generatedAtUtc: string;
-  query: DashboardFilters;
-  overview: any;
-  quality: any;
-  risk: any;
-  dataQuality: any;
-  materials: PagedResult<DashboardMaterialRow>;
-}
-
-export interface GenealogyAwareCorrelationResult {
-  generatedAtUtc: string;
-  parameterCode: string;
-  parameterName: string;
-  unitOfMeasure?: string;
-  defectType: string;
-  linkMode: string;
-  genealogyDepth: number;
-  baselineDefectRatePercent: number;
-  totalObservationCount: number;
-  totalMaterialCount: number;
-  totalDefectLinkedObservationCount: number;
-  bins: GenealogyAwareCorrelationBin[];
-  message: string;
-}
-
-export interface GenealogyAwareCorrelationBin {
-  binNo: number;
-  binLabel: string;
-  minValue: number;
-  maxValue: number;
-  observationCount: number;
-  materialCount: number;
-  defectLinkedObservationCount: number;
-  defectRatePercent: number;
-  liftVsBaseline?: number | null;
-  confidence: string;
-}
-
-export interface DashboardDimensionMetadata {
-  code: string;
-  label: string;
-  category: string;
-  dataType: string;
-  requiresParameterCode: boolean;
-  compatibleChartTypes: string[];
-  description?: string;
-}
-
-export interface DashboardMeasureMetadata {
-  code: string;
-  label: string;
-  category: string;
-  aggregation: string;
-  unit?: string | null;
-  requiresParameterCode: boolean;
-  compatibleChartTypes: string[];
-  description?: string;
-}
-
-export interface DashboardChartTypeMetadata {
-  code: string;
-  label: string;
-  category: string;
-  supportsDimension: boolean;
-  supportsMeasure: boolean;
-  supportsMultipleSeries: boolean;
-  supportsParameterSelection: boolean;
-  description?: string;
-}
-
-export interface DashboardFilterMetadata {
-  code: string;
-  label: string;
-  category: string;
-  dataType: string;
-  operatorMode: string;
-  isRequired: boolean;
-  sourceCatalog?: string | null;
-  description?: string;
-}
-
-export interface DashboardPurposeMetadata {
-  code: string;
-  label: string;
-  description: string;
-  recommendedDimensions: string[];
-  recommendedMeasures: string[];
-  recommendedChartTypes: string[];
-}
-
-export interface DashboardCompatibilityRule {
-  dimensionCode: string;
-  measureCode: string;
-  allowedChartTypes: string[];
-  requiresParameterCode: boolean;
-  warningMessage?: string | null;
-}
-
-export interface DashboardQuerySafetyLimits {
-  defaultMaxRows: number;
-  absoluteMaxRows: number;
-  defaultRawRowLimit: number;
-  absoluteRawRowLimit: number;
-  defaultLookbackDays: number;
-  absoluteLookbackDays: number;
-}
-
-export interface DashboardMetadata {
-  generatedAtUtc: string;
-  dimensions: DashboardDimensionMetadata[];
-  measures: DashboardMeasureMetadata[];
-  chartTypes: DashboardChartTypeMetadata[];
-  filters: DashboardFilterMetadata[];
-  purposes: DashboardPurposeMetadata[];
-  compatibilityRules: DashboardCompatibilityRule[];
-  safetyLimits: DashboardQuerySafetyLimits;
-}
-
-export interface DashboardWidgetFilters {
-  siteId?: string | null;
-  areaId?: string | null;
-  equipmentId?: string | null;
-  materialCode?: string | null;
-  materialUnitType?: string | null;
-  sourceSystem?: string | null;
-  defectType?: string | null;
-  riskClass?: string | null;
-  shiftCode?: string | null;
-  parameterCode?: string | null;
-  fromUtc?: string | null;
-  toUtc?: string | null;
-}
-
-export interface DashboardWidgetQueryOptions {
-  maxRows?: number;
-  rawRowLimit?: number;
-  sortDirection?: SortDirection;
-  includeWarnings?: boolean;
-}
-
-export interface DashboardWidgetQuery {
-  widgetType?: string;
-  chartType?: string;
-  dimensionCode?: string | null;
-  measureCode?: string | null;
-  parameterCode?: string | null;
-  filters?: DashboardWidgetFilters | null;
-  options?: DashboardWidgetQueryOptions | null;
-}
-
-export interface DashboardWidgetResolved {
-  widgetType: string;
-  chartType: string;
-  dimensionCode?: string | null;
-  measureCode: string;
-  parameterCode?: string | null;
-  maxRows: number;
-  rawRowLimit: number;
-  sortDirection: SortDirection;
-  fromUtc?: string | null;
-  toUtc?: string | null;
-}
-
-export interface DashboardWidgetColumn {
-  code: string;
-  label: string;
-  dataType: string;
-}
-
-export interface DashboardWidgetQueryResult {
-  generatedAtUtc: string;
-  widget: DashboardWidgetResolved;
-  columns: DashboardWidgetColumn[];
-  rows: Record<string, unknown>[];
-  warnings: string[];
-}
-
-export interface DashboardDefinitionRecord {
-  id: string;
-  userId?: string | null;
-  dashboardCode: string;
-  name: string;
-  description?: string | null;
-  layoutJson: string;
-  isDefault: boolean;
-  isSystemTemplate: boolean;
-  isActive: boolean;
-  isSynthetic: boolean;
-  sourceSystem?: string | null;
-  sourceRecordId?: string | null;
-  widgets: DashboardWidgetDefinitionRecord[];
-}
-
-export interface DashboardWidgetDefinitionRecord {
-  id: string;
-  dashboardDefinitionId: string;
-  widgetCode: string;
-  widgetTitle: string;
-  widgetType: string;
-  chartType: string;
-  dimensionCode: string;
-  measureCode: string;
-  parameterCode?: string | null;
-  filterJson: string;
-  layoutJson: string;
-  displayOptionsJson: string;
-  sortOrder: number;
-  isActive: boolean;
-  isSynthetic: boolean;
-  sourceSystem?: string | null;
-  sourceRecordId?: string | null;
-}
-
-export interface CreateDashboardWidgetDefinitionPayload {
-  widgetCode: string;
-  widgetTitle: string;
-  widgetType: string;
-  chartType: string;
-  dimensionCode: string;
-  measureCode: string;
-  parameterCode?: string | null;
-  filterJson?: string | null;
-  layoutJson?: string | null;
-  displayOptionsJson?: string | null;
-  sortOrder?: number | null;
-  isSynthetic: boolean;
-  sourceSystem?: string | null;
-  sourceRecordId?: string | null;
-}
-// ============================================================
-// Phase 2 Admin Area Foundation DTOs
-// ============================================================
-
-export interface AdminMetricCard {
-  label: string;
-  value: number;
-  note: string;
-  group: string;
-}
-
-export interface AdminLatestImportBatch {
-  id: string;
-  importBatchCode: string;
-  importType: string;
-  status: string;
-  startedAtUtc: string;
-  completedAtUtc: string | null;
-  rowCount: number | null;
-  errorMessage: string | null;
-}
-
-export interface AdminOverview {
-  generatedAtUtc: string;
-  status: string;
-  cards: AdminMetricCard[];
-  latestImportBatch: AdminLatestImportBatch | null;
-}
-
-export interface TwoStageImportStage {
-  stageNo: number;
-  stageCode: string;
-  stageName: string;
-  purpose: string;
-  currentImplementation: string;
-  refreshOwner: string;
-  currentCount: number;
-  status: string;
-}
-
-export interface TwoStageImportModel {
-  generatedAtUtc: string;
-  modelName: string;
-  summary: string;
-  stages: TwoStageImportStage[];
-  metrics: AdminMetricCard[];
-}
-
-export interface PlannedProvider {
-  providerType: string;
-  description: string;
-  roadmapStatus: string;
-  recommendedForFirstDemo: boolean;
-}
-
-export interface DbConfigurationSourceSystem {
-  id: string;
-  sourceSystemCode: string;
-  sourceSystemName: string;
-  sourceSystemType: string;
-  description: string | null;
-  isReadOnlySource: boolean;
-  isActive: boolean;
-  importBatchCount: number;
-  completedBatchCount: number;
-  runningBatchCount: number;
-  failedBatchCount: number;
-  lastImportAtUtc: string | null;
-}
-
-export interface DbConfigurationSummary {
-  generatedAtUtc: string;
-  message: string;
-  plannedProviderTypes: PlannedProvider[];
-  sourceSystems: DbConfigurationSourceSystem[];
-}
-
-export interface SourceObjectCoverage {
-  sourceObjectName: string;
-  totalRows: number;
-  pendingRows: number;
-  mappedRows: number;
-  failedRows: number;
-  skippedRows: number;
-}
-
-export interface AdminStatusCount {
-  status: string;
-  count: number;
-}
-
-export interface SchemaMappingSummary {
-  id: string;
-  mappingCode: string;
-  mappingName: string;
-  sourceObjectName: string;
-  targetEntityName: string;
-  mappingVersion: string;
-  isActive: boolean;
-  description: string | null;
-}
-
-export interface SchemaConfigurationSummary {
-  generatedAtUtc: string;
-  message: string;
-  mappingCount: number;
-  activeMappingCount: number;
-  sourceObjects: SourceObjectCoverage[];
-  targetCoverage: AdminStatusCount[];
-  mappings: SchemaMappingSummary[];
-}
-
-export interface AdminJobMonitorRow {
-  id: string;
-  jobCode: string;
-  jobName: string;
-  jobType: string;
-  sourceSystemCode: string;
-  sourceSystemName: string;
-  status: string;
-  statusClass: "success" | "running" | "danger" | "warning" | "neutral" | "info" | string;
-  lastRunAtUtc: string | null;
-  lastDurationMs: number | null;
-  nextRunAtUtc: string | null;
-  rowCount: number | null;
-  errorMessage: string | null;
-  isConfigured: boolean;
-  isRealRuntimeJob: boolean;
-}
-
-export interface AdminJobsMonitor {
-  generatedAtUtc: string;
-  summary: AdminStatusCount[];
-  jobs: AdminJobMonitorRow[];
-}
-
-// ============================================================
-// Phase 3 Connector Foundation DTOs
-// ============================================================
-
-export interface ProviderTypeRecord {
-  providerType: string;
-  displayName: string;
-  description: string;
-  isAvailableNow: boolean;
-  requiresSecretReference: boolean;
-  supportsSchemaDiscovery: boolean;
-  supportsSnapshotImport: boolean;
-  supportsIncrementalImport: boolean;
-}
-
-export interface ConnectionProfileRecord {
-  id: string;
-  sourceSystemDefinitionId: string;
-  sourceSystemCode: string;
-  sourceSystemName: string;
-  connectionProfileCode: string;
-  connectionProfileName: string;
-  providerType: string;
-  connectionMode: string;
-  hostName: string | null;
-  port: number | null;
-  databaseName: string | null;
-  schemaName: string | null;
-  fileRootPath: string | null;
-  apiBaseUrl: string | null;
-  secretReference: string | null;
-  connectionOptionsJson: string;
-  isActive: boolean;
-  readOnlyEnforced: boolean;
-  description: string | null;
-  lastTestedAtUtc: string | null;
-  lastTestStatus: string | null;
-  lastTestMessage: string | null;
-  isSynthetic: boolean;
-  createdAtUtc: string;
-  updatedAtUtc: string | null;
-}
-
-export interface CreateConnectionProfileRequest {
-  sourceSystemDefinitionId: string;
-  connectionProfileCode: string;
-  connectionProfileName: string;
-  providerType: string;
-  connectionMode?: string | null;
-  hostName?: string | null;
-  port?: number | null;
-  databaseName?: string | null;
-  schemaName?: string | null;
-  fileRootPath?: string | null;
-  apiBaseUrl?: string | null;
-  secretReference?: string | null;
-  connectionOptionsJson?: string | null;
-  readOnlyEnforced?: boolean | null;
-  description?: string | null;
-  isSynthetic: boolean;
-  sourceSystem?: string | null;
-  sourceRecordId?: string | null;
-}
-
-export interface SourceDatasetDefinitionRecord {
-  id: string;
-  connectionProfileId: string;
-  connectionProfileCode: string;
-  providerType: string;
-  datasetCode: string;
-  datasetName: string;
-  datasetKind: string;
-  sourceObjectName: string;
-  sourceSchemaName: string | null;
-  primaryTimestampField: string | null;
-  incrementalCursorField: string | null;
-  lastCursorValue: string | null;
-  refreshIntervalSeconds: number;
-  datasetOptionsJson: string;
-  isActive: boolean;
-  description: string | null;
-  isSynthetic: boolean;
-  createdAtUtc: string;
-  updatedAtUtc: string | null;
-}
-
-export interface CreateSourceDatasetDefinitionRequest {
-  connectionProfileId: string;
-  datasetCode: string;
-  datasetName: string;
-  datasetKind: string;
-  sourceObjectName: string;
-  sourceSchemaName?: string | null;
-  primaryTimestampField?: string | null;
-  incrementalCursorField?: string | null;
-  refreshIntervalSeconds?: number | null;
-  datasetOptionsJson?: string | null;
-  description?: string | null;
-  isSynthetic: boolean;
-  sourceSystem?: string | null;
-  sourceRecordId?: string | null;
-}
-
-export interface SourceFieldDefinitionRecord {
-  id: string;
-  sourceDatasetDefinitionId: string;
-  fieldName: string;
-  displayName: string;
-  sourceDataType: string;
-  ordinal: number;
-  isNullable: boolean;
-  maxLength: number | null;
-  numericPrecision: number | null;
-  numericScale: number | null;
-  sampleValue: string | null;
-  isPrimaryKeyCandidate: boolean;
-  isTimestampCandidate: boolean;
-  isActive: boolean;
-}
-
-export interface CsvSchemaDiscoveryRequest {
-  csvText: string;
-  fileName?: string | null;
-  delimiter?: string | null;
-  hasHeader?: boolean | null;
-  maxRowsToAnalyze?: number | null;
-  persistFields: boolean;
-}
-
-export interface CsvPreviewRequest {
-  csvText: string;
-  delimiter?: string | null;
-  hasHeader?: boolean | null;
-  maxRows?: number | null;
-}
-
-export interface CsvImportSnapshotRequest {
-  csvText: string;
-  fileName?: string | null;
-  delimiter?: string | null;
-  hasHeader?: boolean | null;
-  importBatchCode?: string | null;
-  checksum?: string | null;
-  isSynthetic: boolean;
-  sourceSystem?: string | null;
-  sourceRecordId?: string | null;
-}
-
-export interface CsvSchemaDiscoveryResult {
-  sourceDatasetDefinitionId: string;
-  datasetCode: string;
-  sourceObjectName: string;
-  delimiter: string;
-  hasHeader: boolean;
-  analyzedRowCount: number;
-  fields: SourceFieldDefinitionRecord[];
-}
-
-export interface CsvPreviewResult {
-  delimiter: string;
-  hasHeader: boolean;
-  headers: string[];
-  rows: Record<string, string | null>[];
-}
-
-export interface CsvImportSnapshotResult {
-  importBatchId: string;
-  importBatchCode: string;
-  sourceDatasetDefinitionId: string;
-  connectionProfileId: string;
-  sourceSystemDefinitionId: string;
-  sourceObjectName: string;
-  rowCount: number;
-  status: string;
-  startedAtUtc: string;
-  completedAtUtc: string | null;
-}
-
-// ============================================================
-// Phase 4 Schema Configuration DTOs
-// ============================================================
-
-export interface SchemaViewDefinitionRecord {
-  id: string;
-  schemaViewCode: string;
-  schemaViewName: string;
-  viewKind: string;
-  primarySourceDatasetDefinitionId: string | null;
-  sqlText: string;
-  sourceDatasetIdsJson: string;
-  outputSchemaJson: string;
-  maxPreviewRows: number;
-  timeoutSeconds: number;
-  isApproved: boolean;
-  isActive: boolean;
-  lastValidatedAtUtc: string | null;
-  lastValidationStatus: string | null;
-  lastValidationMessage: string | null;
-  description: string | null;
-  isSynthetic: boolean;
-  createdAtUtc: string;
-  updatedAtUtc: string | null;
-}
-
-export interface CreateSchemaViewDefinitionRequest {
-  schemaViewCode: string;
-  schemaViewName: string;
-  viewKind: string;
-  primarySourceDatasetDefinitionId?: string | null;
-  sqlText: string;
-  sourceDatasetIdsJson?: string | null;
-  maxPreviewRows?: number | null;
-  timeoutSeconds?: number | null;
-  description?: string | null;
-  isSynthetic: boolean;
-  sourceSystem?: string | null;
-  sourceRecordId?: string | null;
-}
-
-export interface UpdateSchemaViewDefinitionRequest {
-  schemaViewName: string;
-  viewKind: string;
-  primarySourceDatasetDefinitionId?: string | null;
-  sqlText: string;
-  sourceDatasetIdsJson?: string | null;
-  maxPreviewRows?: number | null;
-  timeoutSeconds?: number | null;
-  description?: string | null;
-}
-
-export interface SchemaViewPreviewColumn {
-  columnName: string;
-  dataType: string;
-  ordinal: number;
-}
-
-export interface SchemaViewPreviewResult {
-  isSuccess: boolean;
-  message: string;
-  rowCount: number;
-  durationMs: number;
-  columns: SchemaViewPreviewColumn[];
-  rows: Record<string, unknown>[];
-}
-
-export interface SchemaViewPreviewRequest {
-  sqlText?: string | null;
-  maxRows?: number | null;
-  timeoutSeconds?: number | null;
-}
-
-export interface KpiDefinitionRecord {
-  id: string;
-  schemaViewDefinitionId: string | null;
-  kpiCode: string;
-  kpiName: string;
-  kpiCategory: string;
-  valueExpression: string;
-  unit: string | null;
-  dimensionExpression: string | null;
-  filterExpression: string | null;
-  aggregationType: string;
-  kpiOptionsJson: string;
-  isActive: boolean;
-  description: string | null;
-  isSynthetic: boolean;
-  createdAtUtc: string;
-  updatedAtUtc: string | null;
-}
-
-export interface CreateKpiDefinitionRequest {
-  schemaViewDefinitionId?: string | null;
-  kpiCode: string;
-  kpiName: string;
-  kpiCategory: string;
-  valueExpression: string;
-  unit?: string | null;
-  dimensionExpression?: string | null;
-  filterExpression?: string | null;
-  aggregationType?: string | null;
-  kpiOptionsJson?: string | null;
-  description?: string | null;
-  isSynthetic: boolean;
-  sourceSystem?: string | null;
-  sourceRecordId?: string | null;
-}
-
-export interface JobRunHistoryRecord {
-  id: string;
-  jobDefinitionId: string;
-  jobCode: string;
-  jobName: string;
-  jobType: string;
-  status: string;
-  startedAtUtc: string;
-  completedAtUtc: string | null;
-  durationMs: number | null;
-  triggerSource: string;
-  triggeredBy: string | null;
-  correlationId: string | null;
-  failureReason: string | null;
-  runMessage: string | null;
-  resultSummaryJson: string | null;
-}
-
-export interface JobActionResponse {
-  jobDefinitionId: string;
-  jobCode: string;
-  jobName: string;
-  jobType: string;
-  status: string;
-  message: string;
-  jobRunHistoryId: string | null;
-  actionedAtUtc: string;
-}
-
-export interface UpdateConnectionImportScheduleRequest {
-  scheduleExpression: string;
-  importIntervalMinutes: number;
-}
-
-export interface UpdateMappingRefreshScheduleRequest {
-  scheduleExpression: string;
-  refreshIntervalMinutes: number;
-}
-
-export interface MaterialInvestigationRequestOptions {
-  maxDepth?: number;
-  parameterPage?: number;
-  parameterPageSize?: number;
-}
-
-export type WidgetQueryExpressionRequest = {
-  expression: string;
-  filters?: DashboardWidgetFilters | null;
-  options?: DashboardWidgetQueryOptions | null;
-};
-
-export type WidgetQueryExpressionResult = DashboardWidgetQueryResult;
 
 function dashboardQuery(filters: DashboardFilters): QueryParams {
   return {

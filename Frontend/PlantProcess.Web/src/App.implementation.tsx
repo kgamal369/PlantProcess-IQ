@@ -158,6 +158,11 @@ const MappingHealthPage = lazy(() =>
     default: module.MappingHealthPage,
   }))
 );
+
+const I18nRtlReadinessPage = lazy(() =>
+  import("./pages/I18nRtlReadinessPage").then((m) => ({ default: m.I18nRtlReadinessPage }))
+);
+
 function withPageBoundary(
   routePath: string,
   fallbackTitle: string,
@@ -465,7 +470,15 @@ function AppRoutes() {
                         <MappingHealthPage />
                       )}
                     />
-
+                    {/* Phase 7 i18n + Arabic RTL readiness */}
+                    <Route
+                      path="/i18n-rtl"
+                      element={withPageBoundary(
+                        "/i18n-rtl",
+                        "Internationalization readiness is refreshing",
+                        <I18nRtlReadinessPage />
+                      )}
+                    />
 
                     <Route
                       path="/analytics-widgets"

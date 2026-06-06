@@ -1,3 +1,7 @@
+/* Migrated from styles/legacy/legacy-global.css by Phase 5.
+   Retained under phase56 namespace while selectors are gradually converted to design-system modules.
+   This file is intentionally not named legacy-global.css and the old import is retired. */
+
 /* ==========================================================================
    PlantProcess IQ — Industrial AI / Digital Twin Theme
    Clean production stylesheet

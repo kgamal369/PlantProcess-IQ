@@ -1,0 +1,76 @@
+/* PlantProcess IQ Phase 5/6 canonical theme tokens.
+   Single source for dark/light theme, contrast-safe text, focus and reduced-motion support. */
+:root {
+  color-scheme: dark;
+  --ppiq-brand-navy: #050B18;
+  --ppiq-brand-cyan: #00D4FF;
+  --ppiq-focus: #FFBF47;
+  --ppiq-bg: #050B18;
+  --ppiq-surface: rgba(8, 20, 38, 0.86);
+  --ppiq-surface-strong: rgba(12, 28, 52, 0.96);
+  --ppiq-border: rgba(0, 212, 255, 0.24);
+  --ppiq-border-strong: rgba(0, 212, 255, 0.48);
+  --ppiq-text: #EAF6FF;
+  --ppiq-text-muted: #B7D4E8;
+  --ppiq-cyan: #00D4FF;
+  --ppiq-blue: #5AA8FF;
+  --ppiq-success: #35D07F;
+  --ppiq-warning: #F7C948;
+  --ppiq-danger: #FF5F6D;
+  --ppiq-radius-card: 24px;
+  --ppiq-radius-control: 14px;
+  --ppiq-shadow-glow: 0 0 32px rgba(0, 212, 255, 0.18);
+
+  --pp-bg-0: var(--ppiq-bg);
+  --pp-bg-1: #071426;
+  --pp-bg-2: #0A1B31;
+  --pp-bg-3: #0E2744;
+  --pp-panel: var(--ppiq-surface);
+  --pp-panel-strong: var(--ppiq-surface-strong);
+  --pp-border: var(--ppiq-border);
+  --pp-border-strong: var(--ppiq-border-strong);
+  --pp-cyan: var(--ppiq-cyan);
+  --pp-cyan-soft: #8EEBFF;
+  --pp-blue: var(--ppiq-blue);
+  --pp-text: var(--ppiq-text);
+  --pp-text-strong: #FFFFFF;
+  --pp-muted: var(--ppiq-text-muted);
+  --accent-primary: var(--ppiq-cyan);
+  --text-primary: var(--ppiq-text);
+  --text-muted: var(--ppiq-text-muted);
+}
+
+html[data-theme='light'] {
+  color-scheme: light;
+  --ppiq-bg: #F4F9FC;
+  --ppiq-surface: rgba(255, 255, 255, 0.94);
+  --ppiq-surface-strong: #FFFFFF;
+  --ppiq-border: rgba(11, 95, 128, 0.22);
+  --ppiq-border-strong: rgba(11, 95, 128, 0.42);
+  --ppiq-text: #0B1F33;
+  --ppiq-text-muted: #315B73;
+  --ppiq-cyan: #006D91;
+  --ppiq-blue: #1D4ED8;
+  --ppiq-success: #087443;
+  --ppiq-warning: #7A4D00;
+  --ppiq-danger: #B4232D;
+  --ppiq-shadow-glow: 0 18px 45px rgba(15, 76, 117, 0.15);
+
+  --pp-bg-0: var(--ppiq-bg);
+  --pp-bg-1: #EAF4FA;
+  --pp-bg-2: #DCECF5;
+  --pp-bg-3: #CFE3EF;
+  --pp-panel: var(--ppiq-surface);
+  --pp-panel-strong: var(--ppiq-surface-strong);
+  --pp-border: var(--ppiq-border);
+  --pp-border-strong: var(--ppiq-border-strong);
+  --pp-cyan: var(--ppiq-cyan);
+  --pp-cyan-soft: #0E7490;
+  --pp-blue: var(--ppiq-blue);
+  --pp-text: var(--ppiq-text);
+  --pp-text-strong: #071426;
+  --pp-muted: var(--ppiq-text-muted);
+  --accent-primary: var(--ppiq-cyan);
+  --text-primary: var(--ppiq-text);
+  --text-muted: var(--ppiq-text-muted);
+}

@@ -1,0 +1,308 @@
+{
+  "generatedAtUtc": "2026-06-06T08:48:56.781Z",
+  "marker": "PPIQ_PHASE8_BACKEND_API_HYGIENE",
+  "targets": [
+    {
+      "path": "Backend/PlantProcess.Api/Endpoints/Admin/GenericSchemaMappingEndpoints.cs",
+      "exists": true,
+      "lines": 1389,
+      "routeCount": 8,
+      "directDataAccessHits": 5,
+      "risk": "critical-god-file"
+    },
+    {
+      "path": "Backend/PlantProcess.Api/Endpoints/Admin/Phase1WorkflowTruthEndpoints.cs",
+      "exists": true,
+      "lines": 1368,
+      "routeCount": 12,
+      "directDataAccessHits": 2,
+      "risk": "critical-god-file"
+    },
+    {
+      "path": "Backend/PlantProcess.Api/Endpoints/Workflow/WorkflowEndpoints.cs",
+      "exists": true,
+      "lines": 1031,
+      "routeCount": 18,
+      "directDataAccessHits": 0,
+      "risk": "critical-god-file"
+    },
+    {
+      "path": "Backend/PlantProcess.Application/Integration/Services/Connectors/ConnectorConfigurationService.cs",
+      "exists": true,
+      "lines": 1247,
+      "routeCount": 0,
+      "directDataAccessHits": 0,
+      "risk": "critical-god-file"
+    },
+    {
+      "path": "Backend/PlantProcess.Api/Endpoints/Admin/Phase2OperationEndpoints.cs",
+      "exists": true,
+      "lines": 888,
+      "routeCount": 11,
+      "directDataAccessHits": 7,
+      "risk": "large-file"
+    },
+    {
+      "path": "Backend/PlantProcess.Api/Endpoints/Admin/TwoStageImportEndpoints.cs",
+      "exists": true,
+      "lines": 620,
+      "routeCount": 7,
+      "directDataAccessHits": 7,
+      "risk": "watch"
+    },
+    {
+      "path": "Backend/PlantProcess.Api/Endpoints/Analytics/CorrelationEndpoints.cs",
+      "exists": true,
+      "lines": 752,
+      "routeCount": 9,
+      "directDataAccessHits": 0,
+      "risk": "large-file"
+    },
+    {
+      "path": "Backend/PlantProcess.Api/Endpoints/Process/ProcessEndpoints.cs",
+      "exists": true,
+      "lines": 764,
+      "routeCount": 14,
+      "directDataAccessHits": 0,
+      "risk": "large-file"
+    }
+  ],
+  "allLargeFiles": [
+    {
+      "path": "Backend/PlantProcess.Api/AssistantGateway/V5AssistantGateway.cs",
+      "lines": 654
+    },
+    {
+      "path": "Backend/PlantProcess.Api/AssistantGateway/V5PrivateModelGatewayCertificationEndpoints.cs",
+      "lines": 786
+    },
+    {
+      "path": "Backend/PlantProcess.Api/Endpoints/Admin/AdminEndpoints.cs",
+      "lines": 579
+    },
+    {
+      "path": "Backend/PlantProcess.Api/Endpoints/Admin/GenericSchemaMappingEndpoints.cs",
+      "lines": 1389
+    },
+    {
+      "path": "Backend/PlantProcess.Api/Endpoints/Admin/Phase1WorkflowTruthEndpoints.cs",
+      "lines": 1368
+    },
+    {
+      "path": "Backend/PlantProcess.Api/Endpoints/Admin/Phase2OperationEndpoints.cs",
+      "lines": 888
+    },
+    {
+      "path": "Backend/PlantProcess.Api/Endpoints/Admin/TwoStageImportEndpoints.cs",
+      "lines": 620
+    },
+    {
+      "path": "Backend/PlantProcess.Api/Endpoints/Analytics/CorrelationEndpoints.cs",
+      "lines": 752
+    },
+    {
+      "path": "Backend/PlantProcess.Api/Endpoints/Analytics/Phase2InvestigationEndpoints.cs",
+      "lines": 600
+    },
+    {
+      "path": "Backend/PlantProcess.Api/Endpoints/Configuration/ConfigurationEndpoints.cs",
+      "lines": 572
+    },
+    {
+      "path": "Backend/PlantProcess.Api/Endpoints/Dashboarding/DashboardEndpoints.cs",
+      "lines": 720
+    },
+    {
+      "path": "Backend/PlantProcess.Api/Endpoints/Integration/IntegrationEndpoints.cs",
+      "lines": 695
+    },
+    {
+      "path": "Backend/PlantProcess.Api/Endpoints/Phase45/Phase45ClosureEndpoints.cs",
+      "lines": 603
+    },
+    {
+      "path": "Backend/PlantProcess.Api/Endpoints/Process/ProcessEndpoints.cs",
+      "lines": 764
+    },
+    {
+      "path": "Backend/PlantProcess.Api/Endpoints/Workflow/WorkflowEndpoints.cs",
+      "lines": 1031
+    },
+    {
+      "path": "Backend/PlantProcess.Api/EnterpriseIdentity/V5EnterpriseIdentityEndpoints.cs",
+      "lines": 958
+    },
+    {
+      "path": "Backend/PlantProcess.Api/EnterpriseSsoScim/V5EnterpriseSsoScimEndpoints.cs",
+      "lines": 858
+    },
+    {
+      "path": "Backend/PlantProcess.Api/EnterpriseSsoScim/V5IdentityRuntimeCertificationEndpoints.cs",
+      "lines": 880
+    },
+    {
+      "path": "Backend/PlantProcess.Api/OutboundLeadSystem/V5OutboundLeadSystemEndpoints.cs",
+      "lines": 737
+    },
+    {
+      "path": "Backend/PlantProcess.Api/PlantConnectors/V5ConnectorRuntimeCertificationEndpoints.cs",
+      "lines": 906
+    },
+    {
+      "path": "Backend/PlantProcess.Api/PlantConnectors/V5PlantConnectorEndpoints.cs",
+      "lines": 642
+    },
+    {
+      "path": "Backend/PlantProcess.Api/Program.cs",
+      "lines": 570
+    },
+    {
+      "path": "Backend/PlantProcess.Api/SignedLicensing/V5Ed25519LicenseEndpoints.cs",
+      "lines": 773
+    },
+    {
+      "path": "Backend/PlantProcess.Api/SignedLicensing/V5SignedLicensingEndpoints.cs",
+      "lines": 694
+    },
+    {
+      "path": "Backend/PlantProcess.Api/VisualMapper/V5VisualMapperEndpoints.cs",
+      "lines": 717
+    },
+    {
+      "path": "Backend/PlantProcess.Application/Analytics/Services/CorrelationService.cs",
+      "lines": 565
+    },
+    {
+      "path": "Backend/PlantProcess.Application/Dashboarding/Services/Dashboards/DashboardDefinitionService.cs",
+      "lines": 903
+    },
+    {
+      "path": "Backend/PlantProcess.Application/Dashboarding/Services/Metadata/DashboardMetadataService.cs",
+      "lines": 560
+    },
+    {
+      "path": "Backend/PlantProcess.Application/Dashboarding/Services/Queries/DashboardQueryService.cs",
+      "lines": 800
+    },
+    {
+      "path": "Backend/PlantProcess.Application/Dashboarding/Services/Queries/DashboardWidgetQueryService.cs",
+      "lines": 851
+    },
+    {
+      "path": "Backend/PlantProcess.Application/Demo/Services/DemoLifecycleService.cs",
+      "lines": 584
+    },
+    {
+      "path": "Backend/PlantProcess.Application/Integration/Services/Connectors/ConnectorConfigurationService.cs",
+      "lines": 1247
+    },
+    {
+      "path": "Backend/PlantProcess.Application/Integration/Services/Mapping/MappingExecutionService.cs",
+      "lines": 900
+    },
+    {
+      "path": "Backend/PlantProcess.Application/Services/DataQuality/DataQualityService.cs",
+      "lines": 524
+    },
+    {
+      "path": "Backend/PlantProcess.Application/Services/Readiness/ApplicationReadinessService.cs",
+      "lines": 930
+    },
+    {
+      "path": "Backend/PlantProcess.Infrastructure/Connectors/Csv/CsvConnector.cs",
+      "lines": 510
+    },
+    {
+      "path": "Backend/PlantProcess.Infrastructure/Migrations/20260507074459_InitialCanonicalModel.cs",
+      "lines": 792
+    },
+    {
+      "path": "Backend/PlantProcess.Infrastructure/Migrations/20260507074459_InitialCanonicalModel.Designer.cs",
+      "lines": 1497
+    },
+    {
+      "path": "Backend/PlantProcess.Infrastructure/Migrations/20260507092434_AddPlantLayoutAndIntegrationMasterData.Designer.cs",
+      "lines": 1929
+    },
+    {
+      "path": "Backend/PlantProcess.Infrastructure/Migrations/20260510091155_Add2ndDayDomain.Designer.cs",
+      "lines": 2713
+    },
+    {
+      "path": "Backend/PlantProcess.Infrastructure/Migrations/20260510132030_Phase3_ModelConsistencyFixes.Designer.cs",
+      "lines": 2734
+    },
+    {
+      "path": "Backend/PlantProcess.Infrastructure/Migrations/20260511081726_AddOperationDefinitionIdToProcessStep.Designer.cs",
+      "lines": 2741
+    },
+    {
+      "path": "Backend/PlantProcess.Infrastructure/Migrations/20260511092313_AddStagingRecordEntity.Designer.cs",
+      "lines": 2868
+    },
+    {
+      "path": "Backend/PlantProcess.Infrastructure/Migrations/20260511115023_AddPhaseGCorrelationResults.Designer.cs",
+      "lines": 2974
+    },
+    {
+      "path": "Backend/PlantProcess.Infrastructure/Migrations/20260511124245_AddModelRegistry.Designer.cs",
+      "lines": 3094
+    },
+    {
+      "path": "Backend/PlantProcess.Infrastructure/Migrations/20260512085506_AddDashboardDefinitions.Designer.cs",
+      "lines": 3357
+    },
+    {
+      "path": "Backend/PlantProcess.Infrastructure/Migrations/20260516080826_AddPhase3ConnectorFoundation.Designer.cs",
+      "lines": 3820
+    },
+    {
+      "path": "Backend/PlantProcess.Infrastructure/Migrations/20260516094248_AddJobDefinition.Designer.cs",
+      "lines": 4261
+    },
+    {
+      "path": "Backend/PlantProcess.Infrastructure/Migrations/20260519064446_AddRiskScoreExplanationAndCriticalIndexes.Designer.cs",
+      "lines": 4427
+    },
+    {
+      "path": "Backend/PlantProcess.Infrastructure/Migrations/20260519075125_TodayAddRiskScoreExplanationAndCriticalIndexes.Designer.cs",
+      "lines": 4440
+    },
+    {
+      "path": "Backend/PlantProcess.Infrastructure/Migrations/20260519083512_AddCriticalQueryIndexes.Designer.cs",
+      "lines": 4440
+    },
+    {
+      "path": "Backend/PlantProcess.Infrastructure/Migrations/20260521182857_Fix_WidgetCode_UniqueIndex_PerDashboard.Designer.cs",
+      "lines": 4440
+    },
+    {
+      "path": "Backend/PlantProcess.Infrastructure/Migrations/20260521221629_Fix_PendingModelChanges.Designer.cs",
+      "lines": 4440
+    },
+    {
+      "path": "Backend/PlantProcess.Infrastructure/Migrations/20260524061000_AddAuditLogAndPerSourceScheduling.Designer.cs",
+      "lines": 4575
+    },
+    {
+      "path": "Backend/PlantProcess.Infrastructure/Migrations/20260524110553_HardenAuditLogEntrySchemaAndImmutability.Designer.cs",
+      "lines": 4584
+    },
+    {
+      "path": "Backend/PlantProcess.Infrastructure/Migrations/20260525082545_Phase1WorkflowTruth.Designer.cs",
+      "lines": 4584
+    },
+    {
+      "path": "Backend/PlantProcess.Infrastructure/Migrations/20260530130708_Phase03_ModelSnapshotSync.Designer.cs",
+      "lines": 4624
+    },
+    {
+      "path": "Backend/PlantProcess.Infrastructure/Migrations/20260603203438_SyncModel_20260603.Designer.cs",
+      "lines": 4645
+    },
+    {
+      "path": "Backend/PlantProcess.Infrastructure/Migrations/PlantProcessDbContextModelSnapshot.cs",
+      "lines": 4642
+    }
+  ]
+}
