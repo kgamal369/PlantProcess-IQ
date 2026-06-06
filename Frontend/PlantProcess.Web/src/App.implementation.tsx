@@ -159,6 +159,36 @@ const MappingHealthPage = lazy(() =>
   }))
 );
 
+const HonestyCertificationPage = lazy(() =>
+  import("./pages/Phase15/HonestyCertificationPage").then((m) => ({
+    default: m.HonestyCertificationPage,
+  }))
+);
+const BenchmarkingPage = lazy(() =>
+  import("./pages/Phase15/BenchmarkingPage").then((m) => ({
+    default: m.BenchmarkingPage,
+  }))
+);
+const RoiCfoDashboardPage = lazy(() =>
+  import("./pages/Phase15/RoiCfoDashboardPage").then((m) => ({
+    default: m.RoiCfoDashboardPage,
+  }))
+);
+const ValueRealizationPage = lazy(() =>
+  import("./pages/Phase15/ValueRealizationPage").then((m) => ({
+    default: m.ValueRealizationPage,
+  }))
+);
+const RecommendationsPage = lazy(() =>
+  import("./pages/Phase15/RecommendationsPage").then((m) => ({
+    default: m.RecommendationsPage,
+  }))
+);
+const ScenarioSimulationPage = lazy(() =>
+  import("./pages/Phase15/ScenarioSimulationPage").then((m) => ({
+    default: m.ScenarioSimulationPage,
+  }))
+);
 const EdgeCollectorPage = lazy(() =>
   import("./pages/EdgeCollector/EdgeCollectorPage").then((m) => ({
     default: m.EdgeCollectorPage,
@@ -499,6 +529,90 @@ function AppRoutes() {
                       )}
                     />
 
+                    {/* Pack G Phase 15 honesty certification */}
+                    <Route
+                      path="/phase15/honesty-certification"
+                      element={withPageBoundary(
+                        "/phase15/honesty-certification",
+                        "Phase 15 honesty certification is refreshing",
+                        <HonestyCertificationPage />
+                      )}
+                    />
+
+                    <Route
+                      path="/advisory/honesty-certification"
+                      element={<Navigate to="/phase15/honesty-certification" replace />}
+                    />
+                    {/* Pack G Phase 15 benchmarking */}
+                    <Route
+                      path="/phase15/benchmarking"
+                      element={withPageBoundary(
+                        "/phase15/benchmarking",
+                        "Phase 15 benchmarking is refreshing",
+                        <BenchmarkingPage />
+                      )}
+                    />
+
+                    <Route
+                      path="/advisory/benchmarking"
+                      element={<Navigate to="/phase15/benchmarking" replace />}
+                    />
+                    {/* Pack G Phase 15 ROI CFO dashboard */}
+                    <Route
+                      path="/phase15/roi-cfo-dashboard"
+                      element={withPageBoundary(
+                        "/phase15/roi-cfo-dashboard",
+                        "Phase 15 ROI/CFO dashboard is refreshing",
+                        <RoiCfoDashboardPage />
+                      )}
+                    />
+
+                    <Route
+                      path="/advisory/roi-cfo-dashboard"
+                      element={<Navigate to="/phase15/roi-cfo-dashboard" replace />}
+                    />
+                    {/* Pack G Phase 15 value realization */}
+                    <Route
+                      path="/phase15/value-realization"
+                      element={withPageBoundary(
+                        "/phase15/value-realization",
+                        "Phase 15 value realization is refreshing",
+                        <ValueRealizationPage />
+                      )}
+                    />
+
+                    <Route
+                      path="/advisory/value-realization"
+                      element={<Navigate to="/phase15/value-realization" replace />}
+                    />
+                    {/* Pack G Phase 15 recommendation generator */}
+                    <Route
+                      path="/phase15/recommendations"
+                      element={withPageBoundary(
+                        "/phase15/recommendations",
+                        "Phase 15 recommendations are refreshing",
+                        <RecommendationsPage />
+                      )}
+                    />
+
+                    <Route
+                      path="/advisory/recommendations"
+                      element={<Navigate to="/phase15/recommendations" replace />}
+                    />
+                    {/* Pack G Phase 15 scenario simulation */}
+                    <Route
+                      path="/phase15/scenario-simulation"
+                      element={withPageBoundary(
+                        "/phase15/scenario-simulation",
+                        "Phase 15 scenario simulation is refreshing",
+                        <ScenarioSimulationPage />
+                      )}
+                    />
+
+                    <Route
+                      path="/advisory/scenario-simulation"
+                      element={<Navigate to="/phase15/scenario-simulation" replace />}
+                    />
                     {/* Pack F edge collector management UX */}
                     <Route
                       path="/edge-collector"

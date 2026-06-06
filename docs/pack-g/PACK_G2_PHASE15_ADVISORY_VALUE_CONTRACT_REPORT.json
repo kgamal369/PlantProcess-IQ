@@ -1,0 +1,26 @@
+{
+  "generatedAtUtc": "2026-06-06T14:29:37.101Z",
+  "marker": "PPIQ_PACK_G2_PHASE15_ADVISORY_VALUE_CONTRACT",
+  "phase": "P15",
+  "pack": "G",
+  "step": "G-2",
+  "purpose": "Create shared Phase 15 advisory/value contract spine before scenario, recommendation, value-realization, dashboard, benchmarking and honesty certification implementation.",
+  "results": [
+    {
+      "path": "Backend/PlantProcess.Application/Advisory/P15AdvisoryValueContracts.cs",
+      "status": "WRITTEN"
+    },
+    {
+      "path": "Backend/PlantProcess.Application/Advisory/P15AdvisoryHonestyPolicy.cs",
+      "status": "WRITTEN"
+    },
+    {
+      "path": "tools/pack-g/validate-pack-g2-phase15-contract.cjs",
+      "status": "WRITTEN"
+    },
+    {
+      "path": "tools/pack-g/Invoke-PackG-Phase15Regression.ps1",
+      "status": "WRITTEN"
+    }
+  ]
+}

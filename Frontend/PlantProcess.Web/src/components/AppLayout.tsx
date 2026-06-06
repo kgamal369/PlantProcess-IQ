@@ -48,6 +48,12 @@ const NAV_INTELLIGENCE = [
 ];
 
 const NAV_SYSTEM = [
+  { to: "/phase15/honesty-certification", label: "Honesty Cert.", desc: "Approval + no overclaim gate", icon: DatabaseZap },
+  { to: "/phase15/benchmarking", label: "Benchmarking", desc: "Cross-plant privacy bands", icon: DatabaseZap },
+  { to: "/phase15/roi-cfo-dashboard", label: "ROI/CFO Value", desc: "Potential vs realized value", icon: DatabaseZap },
+  { to: "/phase15/value-realization", label: "Value Realization", desc: "Baseline vs actual ledger", icon: DatabaseZap },
+  { to: "/phase15/recommendations", label: "Recommendations", desc: "Expected € impact + approval", icon: DatabaseZap },
+  { to: "/phase15/scenario-simulation", label: "What-if Simulation", desc: "Phase 15 advisory projection", icon: DatabaseZap },
   { to: "/edge-collector", label: "Edge Collector", desc: "OT-safe one-way push status", icon: DatabaseZap },
   { to: "/historian-connector", label: "Historian Connector", desc: "Register, test, browse and map tags", icon: DatabaseZap },
   { to: "/admin-preview", label: "Admin Preview",  desc: "License, roles, ML scripts, report",   icon: BarChart3 },

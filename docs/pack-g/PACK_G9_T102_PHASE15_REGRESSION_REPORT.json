@@ -1,0 +1,111 @@
+{
+  "generatedAtUtc": "2026-06-06T15:20:17.032Z",
+  "marker": "PPIQ_PACK_G9_T102_PHASE15_REGRESSION_FINAL_CLOSURE",
+  "phase": "P15",
+  "pack": "G",
+  "task": "T-102",
+  "regressionScope": [
+    "Pack G-1 to G-8 validators",
+    "Backend build",
+    "Frontend build",
+    "Phase 15 scorecard closure",
+    "Final below-90 verification"
+  ],
+  "results": [
+    {
+      "path": "tools/pack-g/validate-pack-g9-t102-phase15-regression.cjs",
+      "status": "WRITTEN"
+    },
+    {
+      "path": "tools/task-closure/ppiq-pack-g9-scorecard-bridge.cjs",
+      "status": "WRITTEN"
+    },
+    {
+      "path": "tools/pack-g/Invoke-PackG-Phase15Regression.ps1",
+      "status": "WRITTEN"
+    }
+  ],
+  "runResults": [
+    {
+      "name": "Run tools/pack-g/validate-pack-g-phase15-closure-map.cjs",
+      "ok": true
+    },
+    {
+      "name": "Run tools/pack-g/validate-pack-g2-phase15-contract.cjs",
+      "ok": true
+    },
+    {
+      "name": "Run tools/pack-g/validate-pack-g3-t096-scenario-engine.cjs",
+      "ok": true
+    },
+    {
+      "name": "Run tools/pack-g/validate-pack-g4-t097-recommendation-generator.cjs",
+      "ok": true
+    },
+    {
+      "name": "Run tools/pack-g/validate-pack-g5-t098-value-realization.cjs",
+      "ok": true
+    },
+    {
+      "name": "Run tools/pack-g/validate-pack-g6-t099-roi-cfo-dashboard.cjs",
+      "ok": true
+    },
+    {
+      "name": "Run tools/pack-g/validate-pack-g7-t100-benchmarking.cjs",
+      "ok": true
+    },
+    {
+      "name": "Run tools/pack-g/validate-pack-g8-t101-honesty-certification.cjs",
+      "ok": true
+    },
+    {
+      "name": "Backend build",
+      "ok": true
+    },
+    {
+      "name": "Frontend build",
+      "ok": true
+    },
+    {
+      "name": "Apply ppiq-pack-g3-scorecard-bridge",
+      "ok": true
+    },
+    {
+      "name": "Apply ppiq-pack-g4-scorecard-bridge",
+      "ok": true
+    },
+    {
+      "name": "Apply ppiq-pack-g5-scorecard-bridge",
+      "ok": true
+    },
+    {
+      "name": "Apply ppiq-pack-g6-scorecard-bridge",
+      "ok": true
+    },
+    {
+      "name": "Apply ppiq-pack-g7-scorecard-bridge",
+      "ok": true
+    },
+    {
+      "name": "Apply ppiq-pack-g8-scorecard-bridge",
+      "ok": true
+    },
+    {
+      "name": "node --check Pack G-9 validator",
+      "ok": true
+    },
+    {
+      "name": "node --check Pack G9 bridge",
+      "ok": true
+    },
+    {
+      "name": "Pack G-9 T-102 phase15 regression validator",
+      "ok": true
+    },
+    {
+      "name": "Apply Pack G9 scorecard bridge",
+      "ok": true
+    }
+  ],
+  "below90BeforeT102Bridge": []
+}

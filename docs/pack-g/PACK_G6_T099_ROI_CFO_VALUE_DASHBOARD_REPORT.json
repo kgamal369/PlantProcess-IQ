@@ -1,0 +1,52 @@
+{
+  "generatedAtUtc": "2026-06-06T15:03:47.917Z",
+  "marker": "PPIQ_PACK_G6_T099_ROI_CFO_VALUE_DASHBOARD",
+  "phase": "P15",
+  "pack": "G",
+  "task": "T-099",
+  "backendRouteRoot": "/api/p15/roi-cfo-dashboard",
+  "frontendRoute": "/phase15/roi-cfo-dashboard",
+  "aliasRoute": "/advisory/roi-cfo-dashboard",
+  "results": [
+    {
+      "path": "Backend/PlantProcess.Application/Advisory/P15RoiCfoDashboardService.cs",
+      "status": "WRITTEN"
+    },
+    {
+      "path": "Backend/PlantProcess.Api/PlantConnectors/P15RoiCfoDashboardEndpoints.cs",
+      "status": "WRITTEN"
+    },
+    {
+      "path": "Backend/PlantProcess.Api/Program.cs",
+      "status": "PATCHED"
+    },
+    {
+      "path": "Frontend/PlantProcess.Web/src/api/phase15Advisory.ts",
+      "status": "WRITTEN"
+    },
+    {
+      "path": "Frontend/PlantProcess.Web/src/pages/Phase15/RoiCfoDashboardPage.tsx",
+      "status": "WRITTEN"
+    },
+    {
+      "path": "Frontend/PlantProcess.Web/src/App.implementation.tsx",
+      "status": "PATCHED"
+    },
+    {
+      "path": "Frontend/PlantProcess.Web/src/components/AppLayout.tsx",
+      "status": "PATCHED"
+    },
+    {
+      "path": "tools/pack-g/validate-pack-g6-t099-roi-cfo-dashboard.cjs",
+      "status": "WRITTEN"
+    },
+    {
+      "path": "tools/task-closure/ppiq-pack-g6-scorecard-bridge.cjs",
+      "status": "WRITTEN"
+    },
+    {
+      "path": "tools/pack-g/Invoke-PackG-Phase15Regression.ps1",
+      "status": "WRITTEN"
+    }
+  ]
+}
