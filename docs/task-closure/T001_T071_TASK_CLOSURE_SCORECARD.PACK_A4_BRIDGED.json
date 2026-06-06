@@ -511,8 +511,8 @@
       "id": "T-035",
       "title": "Mapping and drift developer docs",
       "pack": "A",
-      "score": 100,
-      "status": "DONE",
+      "score": 25,
+      "status": "NOT YET STARTED",
       "checks": [
         {
           "name": "Mapping and drift docs exist",
@@ -526,17 +526,7 @@
           "ok": true,
           "evidence": ""
         }
-      ],
-      "percent": 100,
-      "completionPercent": 100,
-      "percentage": 100,
-      "state": "DONE",
-      "result": "DONE",
-      "isGreen": true,
-      "isDone": true,
-      "done": true,
-      "below90": false,
-      "evidenceBridge": "Pack A-5 evidence bridge: mapping and drift developer docs validator passed."
+      ]
     },
     {
       "id": "T-036",
@@ -824,8 +814,8 @@
       "id": "T-060",
       "title": "Implement one GA historian connector",
       "pack": "E",
-      "score": 100,
-      "status": "DONE",
+      "score": 75,
+      "status": "MOSTLY DONE",
       "checks": [
         {
           "name": "Historian connector implementation exists",
@@ -845,17 +835,7 @@
           "ok": true,
           "evidence": ""
         }
-      ],
-      "percent": 100,
-      "completionPercent": 100,
-      "percentage": 100,
-      "state": "DONE",
-      "result": "DONE",
-      "isGreen": true,
-      "isDone": true,
-      "done": true,
-      "below90": false,
-      "evidenceBridge": "Pack E-2 evidence bridge: GA historian backend validator passed and backend build was green."
+      ]
     },
     {
       "id": "T-061",
@@ -897,8 +877,8 @@
       "id": "T-063",
       "title": "Historian connector UI register/test/map",
       "pack": "E",
-      "score": 100,
-      "status": "DONE",
+      "score": 0,
+      "status": "NOT YET STARTED",
       "checks": [
         {
           "name": "Historian UI e2e exists",
@@ -906,17 +886,7 @@
           "ok": false,
           "evidence": ""
         }
-      ],
-      "percent": 100,
-      "completionPercent": 100,
-      "percentage": 100,
-      "state": "DONE",
-      "result": "DONE",
-      "isGreen": true,
-      "isDone": true,
-      "done": true,
-      "below90": false,
-      "evidenceBridge": "Pack E-3 evidence bridge: historian connector UI validator and frontend build were green."
+      ]
     },
     {
       "id": "T-064",
@@ -1091,20 +1061,5 @@
     "generatedAtUtc": "2026-06-06T13:28:15.649Z",
     "marker": "PPIQ_PACK_A4_T007_SCORECARD_BRIDGE",
     "t007Green": true
-  },
-  "packA5EvidenceBridge": {
-    "generatedAtUtc": "2026-06-06T13:28:16.020Z",
-    "marker": "PPIQ_PACK_A5_T035_SCORECARD_BRIDGE",
-    "t035Green": true
-  },
-  "packE2EvidenceBridge": {
-    "generatedAtUtc": "2026-06-06T13:28:16.606Z",
-    "marker": "PPIQ_PACK_E2_T060_SCORECARD_BRIDGE",
-    "t060Green": true
-  },
-  "packE3EvidenceBridge": {
-    "generatedAtUtc": "2026-06-06T13:29:11.513Z",
-    "marker": "PPIQ_PACK_E3_T063_SCORECARD_BRIDGE",
-    "t063Green": true
   }
 }

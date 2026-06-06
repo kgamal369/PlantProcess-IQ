@@ -222,6 +222,7 @@ pipeline {
 
                         # taskClosure
                         node tools/task-closure/validate-t001-t071-task-closure.cjs
+node tools/task-closure/ppiq-pack-a-scorecard-bridge.cjs
 
                         # routeContract
                         node tools/pack-d/validate-pack-d-route-contract-snapshot.cjs

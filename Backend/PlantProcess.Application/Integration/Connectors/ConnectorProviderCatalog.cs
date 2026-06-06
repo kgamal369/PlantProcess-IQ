@@ -78,13 +78,14 @@ public static class ConnectorProviderCatalog
                 SupportsSnapshotImport: true,
                 SupportsIncrementalImport: true),
 
+                        // PPIQ_PACK_E2_GA_HISTORIAN_PROVIDER
             new ProviderTypeDto(
                 ProviderType: "OpcUaHistorian",
-                DisplayName: "OPC-UA / Historian",
-                Description: "Future historian/live-data path. Not part of the current demo availability.",
-                IsAvailableNow: false,
+                DisplayName: "OPC-UA / Historian Gateway",
+                Description: "Available now for read-only historian gateway onboarding: configuration validation, tag/point browse metadata, bounded sample reads, and mapping handoff. Vendor-specific live handshake remains environment-specific.",
+                IsAvailableNow: true,
                 RequiresSecretReference: true,
-                SupportsSchemaDiscovery: false,
+                SupportsSchemaDiscovery: true,
                 SupportsSnapshotImport: false,
                 SupportsIncrementalImport: true)
         };

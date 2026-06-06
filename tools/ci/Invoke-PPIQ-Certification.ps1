@@ -21,6 +21,7 @@ try {
     # taskClosure: T001-T071 task closure gate
     Run-Step "taskClosure - T001-T071 task closure gate" {
         node ".\tools\task-closure\validate-t001-t071-task-closure.cjs"
+        node ".\tools\task-closure\ppiq-pack-a-scorecard-bridge.cjs"
     }
 
     # routeContract: Pack D route contract snapshot

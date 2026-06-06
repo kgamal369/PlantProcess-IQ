@@ -509,6 +509,7 @@ app.MapV5AssistantGatewayEndpoints();
 app.MapV5VisualMapperEndpoints();
 app.MapV5BlendedProvenanceEndpoints();
 app.MapV5PlantConnectorEndpoints();
+app.MapV5GaHistorianConnectorEndpoints();
 app.MapV5EnterpriseIdentityEndpoints();
 app.MapV5EnterpriseSsoScimEndpoints();
 app.MapV5SignedLicensingEndpoints();

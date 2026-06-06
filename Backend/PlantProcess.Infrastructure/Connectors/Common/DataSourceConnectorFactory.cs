@@ -44,7 +44,7 @@ public sealed class DataSourceConnectorFactory : IDataSourceConnectorFactory
 
         throw new NotSupportedException(
             $"No data-source connector is registered for provider type '{providerType}'. " +
-            $"Supported types: csv, excel, postgresql, sqlserver, mysql, oracle.");
+            $"Supported types: csv, excel, postgresql, sqlserver, mysql, oracle, opcuahistorian.");
     }
 
     public ISchemaReader GetSchemaReader(string providerType)
@@ -107,6 +107,16 @@ public sealed class DataSourceConnectorFactory : IDataSourceConnectorFactory
             "ora"          => "oracle",
             "oracledb"     => "oracle",
             "oracle db"    => "oracle",
+
+            // PPIQ_PACK_E2_GA_HISTORIAN_PROVIDER
+            // OPC-UA / historian gateway aliases
+            "opcuahistorian" => "opcuahistorian",
+            "opcua"          => "opcuahistorian",
+            "opc-ua"         => "opcuahistorian",
+            "opc ua"         => "opcuahistorian",
+            "historian"      => "opcuahistorian",
+            "piwebapi"       => "opcuahistorian",
+            "pi web api"     => "opcuahistorian",
 
             // Fall-through for future connectors (oracle, etc.)
             _              => providerType.Trim().ToLowerInvariant()

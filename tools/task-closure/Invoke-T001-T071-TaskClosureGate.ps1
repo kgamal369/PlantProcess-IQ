@@ -6,7 +6,17 @@
 
 
 
+
+
+
+
+
 param(
+
+
+
+
+
 
 
 
@@ -22,6 +32,11 @@ param(
 
 
 
+
+
+
+
+
     [switch]$RunBuilds
 
 
@@ -30,7 +45,22 @@ param(
 
 
 
+
+
+
+
+
 )
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -62,7 +92,22 @@ $ErrorActionPreference = "Stop"
 
 
 
+
+
+
+
+
+
+
+
+
+
 function Run-Step([string]$Name, [scriptblock]$Block) {
+
+
+
+
+
 
 
 
@@ -78,7 +123,17 @@ function Run-Step([string]$Name, [scriptblock]$Block) {
 
 
 
+
+
+
+
+
     Write-Host "---- $Name" -ForegroundColor Cyan
+
+
+
+
+
 
 
 
@@ -94,7 +149,17 @@ function Run-Step([string]$Name, [scriptblock]$Block) {
 
 
 
+
+
+
+
+
     if ($LASTEXITCODE -ne 0) {
+
+
+
+
+
 
 
 
@@ -110,6 +175,11 @@ function Run-Step([string]$Name, [scriptblock]$Block) {
 
 
 
+
+
+
+
+
     }
 
 
@@ -118,7 +188,22 @@ function Run-Step([string]$Name, [scriptblock]$Block) {
 
 
 
+
+
+
+
+
 }
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -142,7 +227,17 @@ Push-Location $ProjectRoot
 
 
 
+
+
+
+
+
 try {
+
+
+
+
+
 
 
 
@@ -158,6 +253,11 @@ try {
 
 
 
+
+
+
+
+
         node ".\tools\task-closure\validate-t001-t071-task-closure.cjs"
 
 
@@ -166,7 +266,22 @@ try {
 
 
 
+
+
+
+
+
     }
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -190,7 +305,17 @@ try {
 
 
 
+
+
+
+
+
         Push-Location ".\Frontend\PlantProcess.Web"
+
+
+
+
+
 
 
 
@@ -206,7 +331,17 @@ try {
 
 
 
+
+
+
+
+
             Run-Step "Frontend npm run build" {
+
+
+
+
+
 
 
 
@@ -222,6 +357,11 @@ try {
 
 
 
+
+
+
+
+
             }
 
 
@@ -230,7 +370,17 @@ try {
 
 
 
+
+
+
+
+
         }
+
+
+
+
+
 
 
 
@@ -246,6 +396,11 @@ try {
 
 
 
+
+
+
+
+
             Pop-Location
 
 
@@ -254,7 +409,22 @@ try {
 
 
 
+
+
+
+
+
         }
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -278,7 +448,17 @@ try {
 
 
 
+
+
+
+
+
         try {
+
+
+
+
+
 
 
 
@@ -294,7 +474,17 @@ try {
 
 
 
+
+
+
+
+
                 dotnet build
+
+
+
+
+
 
 
 
@@ -310,7 +500,17 @@ try {
 
 
 
+
+
+
+
+
         }
+
+
+
+
+
 
 
 
@@ -326,6 +526,11 @@ try {
 
 
 
+
+
+
+
+
             Pop-Location
 
 
@@ -334,7 +539,22 @@ try {
 
 
 
+
+
+
+
+
         }
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -358,7 +578,17 @@ try {
 
 
 
+
+
+
+
+
             Push-Location ".\Website\PlantProcess.Website"
+
+
+
+
+
 
 
 
@@ -374,7 +604,17 @@ try {
 
 
 
+
+
+
+
+
                 $packageJson = Get-Content ".\package.json" -Raw | ConvertFrom-Json
+
+
+
+
+
 
 
 
@@ -390,7 +630,17 @@ try {
 
 
 
+
+
+
+
+
                     Run-Step "Website npm run validate:phase10" {
+
+
+
+
+
 
 
 
@@ -406,6 +656,11 @@ try {
 
 
 
+
+
+
+
+
                     }
 
 
@@ -414,7 +669,17 @@ try {
 
 
 
+
+
+
+
+
                 }
+
+
+
+
+
 
 
 
@@ -430,7 +695,17 @@ try {
 
 
 
+
+
+
+
+
                     Run-Step "Website npm run build" {
+
+
+
+
+
 
 
 
@@ -446,7 +721,17 @@ try {
 
 
 
+
+
+
+
+
                     }
+
+
+
+
+
 
 
 
@@ -462,7 +747,17 @@ try {
 
 
 
+
+
+
+
+
             }
+
+
+
+
+
 
 
 
@@ -478,7 +773,17 @@ try {
 
 
 
+
+
+
+
+
                 Pop-Location
+
+
+
+
+
 
 
 
@@ -494,7 +799,17 @@ try {
 
 
 
+
+
+
+
+
         }
+
+
+
+
+
 
 
 
@@ -518,6 +833,16 @@ try {
 
 
 
+
+
+
+
+
+
+
+
+
+
     Write-Host ""
 
 
@@ -526,7 +851,17 @@ try {
 
 
 
+
+
+
+
+
     Write-Host "=================================================================================================" -ForegroundColor DarkGray
+
+
+
+
+
 
 
 
@@ -542,7 +877,17 @@ try {
 
 
 
+
+
+
+
+
     Write-Host "Report: docs\task-closure\T001_T071_TASK_CLOSURE_SCORECARD.md" -ForegroundColor Green
+
+
+
+
+
 
 
 
@@ -558,7 +903,17 @@ try {
 
 
 
+
+
+
+
+
 }
+
+
+
+
+
 
 
 
@@ -574,6 +929,11 @@ finally {
 
 
 
+
+
+
+
+
     Pop-Location
 
 
@@ -582,7 +942,17 @@ finally {
 
 
 
+
+
+
+
+
 }
+
+
+
+
+
 
 
 

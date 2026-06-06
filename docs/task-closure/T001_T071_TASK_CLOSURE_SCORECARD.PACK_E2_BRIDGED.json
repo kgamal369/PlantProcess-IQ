@@ -897,8 +897,8 @@
       "id": "T-063",
       "title": "Historian connector UI register/test/map",
       "pack": "E",
-      "score": 100,
-      "status": "DONE",
+      "score": 0,
+      "status": "NOT YET STARTED",
       "checks": [
         {
           "name": "Historian UI e2e exists",
@@ -906,17 +906,7 @@
           "ok": false,
           "evidence": ""
         }
-      ],
-      "percent": 100,
-      "completionPercent": 100,
-      "percentage": 100,
-      "state": "DONE",
-      "result": "DONE",
-      "isGreen": true,
-      "isDone": true,
-      "done": true,
-      "below90": false,
-      "evidenceBridge": "Pack E-3 evidence bridge: historian connector UI validator and frontend build were green."
+      ]
     },
     {
       "id": "T-064",
@@ -1101,10 +1091,5 @@
     "generatedAtUtc": "2026-06-06T13:28:16.606Z",
     "marker": "PPIQ_PACK_E2_T060_SCORECARD_BRIDGE",
     "t060Green": true
-  },
-  "packE3EvidenceBridge": {
-    "generatedAtUtc": "2026-06-06T13:29:11.513Z",
-    "marker": "PPIQ_PACK_E3_T063_SCORECARD_BRIDGE",
-    "t063Green": true
   }
 }

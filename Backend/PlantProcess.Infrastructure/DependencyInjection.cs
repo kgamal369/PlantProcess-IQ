@@ -23,6 +23,7 @@ using PlantProcess.Infrastructure.Connectors.MySql;
 using PlantProcess.Infrastructure.Connectors.PostgreSql;
 using PlantProcess.Infrastructure.Connectors.SqlServer;
 using PlantProcess.Infrastructure.Connectors.Oracle;
+using PlantProcess.Infrastructure.Connectors.Historian;
 
 namespace PlantProcess.Infrastructure;
 
@@ -107,6 +108,11 @@ public static class DependencyInjection
         services.AddScoped<ISchemaReader>(sp => sp.GetRequiredService<MySqlDataConnector>());
         services.AddScoped<IDataSourceReader>(sp => sp.GetRequiredService<MySqlDataConnector>());
 
+
+        // OPC-UA / Historian Gateway (Pack E-2 / T-060)
+        // Read-only gateway connector: validates configuration and supports backend historian UI/API flow.
+        services.AddScoped<OpcUaHistorianConnector>();
+        services.AddScoped<IDataSourceConnector>(sp => sp.GetRequiredService<OpcUaHistorianConnector>());
          // Factory resolves connector by provider type string
         services.AddScoped<IDataSourceConnectorFactory, DataSourceConnectorFactory>();
 

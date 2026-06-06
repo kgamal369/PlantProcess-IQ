@@ -66,6 +66,11 @@ export const plantProcessBrand = {
       message: "Use for read-only database integration demos.",
     },
     {
+      name: "OPC-UA / Historian Gateway",
+      status: "Available now — read-only gateway mode",
+      message: "Supports configuration validation, tag browsing, bounded sample reads, and mapping hints. Live vendor handshake remains customer-environment specific.",
+    },
+    {
       name: "SQL Server",
       status: "Planned",
       message: "Do not show as available until implementation and tests pass.",

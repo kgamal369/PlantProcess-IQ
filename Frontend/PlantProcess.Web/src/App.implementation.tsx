@@ -159,6 +159,11 @@ const MappingHealthPage = lazy(() =>
   }))
 );
 
+const HistorianConnectorPage = lazy(() =>
+  import("./pages/HistorianConnector/HistorianConnectorPage").then((m) => ({
+    default: m.HistorianConnectorPage,
+  }))
+);
 const I18nRtlReadinessPage = lazy(() =>
   import("./pages/I18nRtlReadinessPage").then((m) => ({ default: m.I18nRtlReadinessPage }))
 );
@@ -489,6 +494,20 @@ function AppRoutes() {
                       )}
                     />
 
+                    {/* Pack E historian connector UI */}
+                    <Route
+                      path="/historian-connector"
+                      element={withPageBoundary(
+                        "/historian-connector",
+                        "Historian connector is refreshing",
+                        <HistorianConnectorPage />
+                      )}
+                    />
+
+                    <Route
+                      path="/connectors/historian"
+                      element={<Navigate to="/historian-connector" replace />}
+                    />
                     {/* Demo lifecycle */}
                     <Route
                       path="/demo-lifecycle"

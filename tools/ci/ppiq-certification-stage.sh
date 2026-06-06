@@ -7,6 +7,7 @@ cd "$PROJECT_ROOT"
 # PPIQ_PACK_A3_CI_CERTIFICATION
 # taskClosure: T001-T071 task closure gate
 node tools/task-closure/validate-t001-t071-task-closure.cjs
+node tools/task-closure/ppiq-pack-a-scorecard-bridge.cjs
 
 # routeContract: Pack D route contract snapshot
 node tools/pack-d/validate-pack-d-route-contract-snapshot.cjs

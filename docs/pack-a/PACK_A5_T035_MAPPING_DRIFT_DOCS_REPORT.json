@@ -1,0 +1,15 @@
+{
+  "generatedAtUtc": "2026-06-06T12:11:51.046Z",
+  "marker": "PPIQ_PACK_A5_T035_MAPPING_DRIFT_DOCS",
+  "task": "T-035",
+  "generatedDocs": [
+    "docs/developer/MAPPING_AND_DRIFT_DEVELOPER_GUIDE.md",
+    "docs/developer/MAPPING_DRIFT_TROUBLESHOOTING_RUNBOOK.md",
+    "docs/developer/MAPPING_DRIFT_GATE_COMMANDS.md"
+  ],
+  "generatedTools": [
+    "tools/pack-a/validate-pack-a-t035-mapping-drift-docs.cjs",
+    "tools/task-closure/ppiq-pack-a5-scorecard-bridge.cjs",
+    "tools/pack-a/Invoke-PackA-FinalClosure-WithBridges.ps1"
+  ]
+}
