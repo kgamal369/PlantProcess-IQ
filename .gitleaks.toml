@@ -1,0 +1,19 @@
+title = "PlantProcess IQ secret-scan policy"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Allowed placeholders and documentation-only markers"
+regexes = [
+  '''SET_LOCAL_POSTGRES_PASSWORD''',
+  '''ChangeMe123!''',
+  '''BootstrapDisabledOnlyForTests123!''',
+  '''SuperSecretTestKeyThatIsAtLeast32Bytes!!''',
+  '''example_password''',
+  '''your-password-here'''
+]
+paths = [
+  '''docs/''',
+  '''Documentation/'''
+]

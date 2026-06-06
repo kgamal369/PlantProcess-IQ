@@ -343,7 +343,7 @@ public sealed class CsvConnector : IDataSourceConnector, ISchemaReader, IDataSou
 
             if (ch == delimiter && !inQuotes)
             {
-                result.Add(current.ToString());
+                result.Add(NormalizeCsvValue(current.ToString()));
                 current.Clear();
                 continue;
             }
@@ -351,9 +351,14 @@ public sealed class CsvConnector : IDataSourceConnector, ISchemaReader, IDataSou
             current.Append(ch);
         }
 
-        result.Add(current.ToString());
+        result.Add(NormalizeCsvValue(current.ToString()));
         return result;
     }
+    private static string? NormalizeCsvValue(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+    }
+
 
     private static string BuildDatasetOptionsJson(
         string? fileName,

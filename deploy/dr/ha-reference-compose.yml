@@ -20,13 +20,8 @@ services:
   plantprocess-api-1:
     image: plantprocessiq/api:v5-p13
     environment:
-      ConnectionStrings__PlantProcessDb: Host=postgres-primary;Port=5432;Database=plantprocessiq;Username=plantprocess;Password=example
-
-  plantprocess-api-2:
+      ConnectionStrings__PlantProcessDb: Host=postgres-primary;Port=5432;Database=plantprocessiq;Username=plantprocess;Password=${PPIQ_DB_PASSWORD}RD}ntprocess-api-2:
     image: plantprocessiq/api:v5-p13
     environment:
-      ConnectionStrings__PlantProcessDb: Host=postgres-primary;Port=5432;Database=plantprocessiq;Username=plantprocess;Password=example
-
-volumes:
-  primary_data:
+      ConnectionStrings__PlantProcessDb: Host=postgres-primary;Port=5432;Database=plantprocessiq;Username=plantprocess;Password=${PPIQ_DB_PASSWORD}RD}rimary_data:
   replica_data:

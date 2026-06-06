@@ -1,4 +1,4 @@
-﻿
+
 # PPIQ Phase 1 - backup hygiene
 *.bak
 *.bak_*
@@ -72,3 +72,4 @@ deploy/server/.env
 deploy/server/.env.local
 deploy/server/.env.production
 Website/.env.local
+deploy/.env

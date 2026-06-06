@@ -7,3 +7,10 @@ obj/
 
 # Or specifically, if you only want this path
 PlantProcess.Api/bin/Debug/
+
+# local/runtime secrets
+.env
+.env.*
+!.env.example
+.env.local
+*.local

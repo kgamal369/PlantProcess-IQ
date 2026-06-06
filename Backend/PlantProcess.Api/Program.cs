@@ -1,4 +1,4 @@
-﻿
+
 using Microsoft.Extensions.Options;
 using System.Reflection;
 using System.IdentityModel.Tokens.Jwt;
@@ -44,7 +44,7 @@ using Serilog.Exceptions;
 using PlantProcess.Api.Endpoints.PageBuilder;
 using PlantProcess.Api.Endpoints.Phase2;
 using PlantProcess.Api.Endpoints.Phase45;
-
+using PlantProcess.Api.Endpoints.MappingHealth;
 using PlantProcess.Api.AssistantGateway;
 using PlantProcess.Api.VisualMapper;
 using PlantProcess.Api.BlendedProvenance;
@@ -491,6 +491,7 @@ app.MapMlProviderEndpoints();
     app.MapGenericSchemaMappingEndpoints();
     app.MapP03P04MappingGenealogyEndpoints();
 app.MapP03P04CompletionProofEndpoints();
+app.MapPhase34MappingHealthEndpoints();
 app.MapTwoStageImportEndpoints();
     
     app.MapPageDefinitionEndpoints();

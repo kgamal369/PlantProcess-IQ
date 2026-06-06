@@ -1,4 +1,4 @@
-﻿// ============================================================
+// ============================================================
 // FILE: Frontend/PlantProcess.Web/src/App.tsx
 //
 // Phase 2 E2E Stability Update:
@@ -53,7 +53,7 @@ import { StandardButton } from "@/components/standard";
 // Ã¢€‚¬Ã¢€‚¬ Lazy pages Ã¢€‚¬Ã¢€‚¬Ã¢€‚¬Ã¢€‚¬Ã¢€‚¬Ã¢€‚¬Ã¢€‚¬Ã¢€‚¬Ã¢€‚¬Ã¢€‚¬Ã¢€‚¬Ã¢€‚¬Ã¢€‚¬Ã¢€‚¬Ã¢€‚¬Ã¢€‚¬Ã¢€‚¬Ã¢€‚¬Ã¢€‚¬Ã¢€‚¬Ã¢€‚¬Ã¢€‚¬Ã¢€‚¬Ã¢€‚¬Ã¢€‚¬Ã¢€‚¬Ã¢€‚¬Ã¢€‚¬Ã¢€‚¬Ã¢€‚¬Ã¢€‚¬Ã¢€‚¬Ã¢€‚¬Ã¢€‚¬Ã¢€‚¬Ã¢€‚¬Ã¢€‚¬Ã¢€‚¬Ã¢€‚¬Ã¢€‚¬Ã¢€‚¬Ã¢€‚¬Ã¢€‚¬Ã¢€‚¬Ã¢€‚¬Ã¢€‚¬Ã¢€‚¬Ã¢€‚¬
 
 const DashboardPage = lazy(() =>
-  import("./pages/DashboardPage").then((m) => ({ default: m.DashboardPage }))
+  import("./pages/Dashboard/DashboardPage").then((m) => ({ default: m.DashboardPage }))
 );
 
 const MaterialInvestigationPage = lazy(() =>
@@ -63,25 +63,25 @@ const MaterialInvestigationPage = lazy(() =>
 );
 
 const RiskDashboardPage = lazy(() =>
-  import("./pages/RiskDashboardPage").then((m) => ({
+  import("./pages/RiskDashboard/RiskDashboardPage").then((m) => ({
     default: m.RiskDashboardPage,
   }))
 );
 
 const DataQualityPage = lazy(() =>
-  import("./pages/DataQualityPage").then((m) => ({
+  import("./pages/DataQuality/DataQualityPage").then((m) => ({
     default: m.DataQualityPage,
   }))
 );
 
 const CorrelationPage = lazy(() =>
-  import("./pages/CorrelationPage").then((m) => ({
+  import("./pages/Correlation/CorrelationPage").then((m) => ({
     default: m.CorrelationPage,
   }))
 );
 
 const AdminPage = lazy(() =>
-  import("./pages/AdminPage").then((m) => ({
+  import("./pages/Admin/AdminPage").then((m) => ({
     default: m.AdminPage,
   }))
 );
@@ -152,6 +152,11 @@ const AdvancedAnalysisPage = lazy(() =>
 );
 const InspectionJobsPage = lazy(() =>
   import("./pages/Analytics/InspectionJobsPage").then((m) => ({ default: m.InspectionJobsPage }))
+);
+const MappingHealthPage = lazy(() =>
+  import("./pages/MappingHealth/MappingHealthPage").then((module) => ({
+    default: module.MappingHealthPage,
+  }))
 );
 function withPageBoundary(
   routePath: string,
@@ -451,7 +456,16 @@ function AppRoutes() {
                         "ML readiness view is refreshing",
                         <MlReadinessPage />
                       )}
+                    />                    {/* Mapping health + schema drift */}
+                    <Route
+                      path="/mapping-health"
+                      element={withPageBoundary(
+                        "/mapping-health",
+                        "Mapping health view is refreshing",
+                        <MappingHealthPage />
+                      )}
                     />
+
 
                     <Route
                       path="/analytics-widgets"

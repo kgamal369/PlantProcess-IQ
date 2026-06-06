@@ -5,7 +5,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:5063
-      ConnectionStrings__PlantProcessDb: Host=postgres;Port=5432;Database=plantprocessiq;Username=plantprocess;Password=${PPIQ_DB_PASSWORD}
+      ConnectionStrings__PlantProcessDb: Host=postgres;Port=5432;Database=plantprocessiq;Username=plantprocess;Password=${PPIQ_DB_PASSWORD}RD}RD}
       PLANTPROCESS_DISABLE_EXTERNAL_EGRESS: "true"
       PLANTPROCESS_MODEL_MODE: self-hosted
     ports:
