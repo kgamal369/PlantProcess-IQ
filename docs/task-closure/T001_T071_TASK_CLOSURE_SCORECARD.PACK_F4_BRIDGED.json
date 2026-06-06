@@ -1,0 +1,1175 @@
+{
+  "generatedAtUtc": "2026-06-06T13:57:09.536Z",
+  "marker": "PPIQ_T001_T071_TASK_LEVEL_CLOSURE_GATE",
+  "thresholds": {
+    "done": ">= 90",
+    "mostlyDone": ">= 65 and < 90",
+    "partiallyDone": ">= 45 and < 65",
+    "notYetStarted": "< 45"
+  },
+  "summary": {
+    "done": 36,
+    "mostlyDone": 3,
+    "partiallyDone": 3,
+    "notYetStarted": 5,
+    "below90": 11
+  },
+  "tasks": [
+    {
+      "id": "T-004",
+      "title": "Bind production PostgreSQL to loopback/private network",
+      "pack": "A",
+      "score": 100,
+      "status": "DONE",
+      "checks": [
+        {
+          "name": "Server compose exists",
+          "weight": 1,
+          "ok": true,
+          "evidence": ""
+        },
+        {
+          "name": "Server runbook exists",
+          "weight": 1,
+          "ok": true,
+          "evidence": ""
+        },
+        {
+          "name": "Loopback/private binding evidence",
+          "weight": 2,
+          "ok": true,
+          "evidence": ""
+        },
+        {
+          "name": "External exposure proof documented",
+          "weight": 2,
+          "ok": true,
+          "evidence": ""
+        }
+      ]
+    },
+    {
+      "id": "T-006",
+      "title": "Remove duplicate flat/foldered pages",
+      "pack": "A",
+      "score": 100,
+      "status": "DONE",
+      "checks": [
+        {
+          "name": "Dead-code removal doc",
+          "weight": 1,
+          "ok": true,
+          "evidence": ""
+        },
+        {
+          "name": "No duplicate page validator",
+          "weight": 2,
+          "ok": true,
+          "evidence": ""
+        },
+        {
+          "name": "Frontend build route proof",
+          "weight": 1,
+          "ok": true,
+          "evidence": ""
+        }
+      ]
+    },
+    {
+      "id": "T-007",
+      "title": "De-duplicate Jenkinsfile and TelemetryIngestionWorker",
+      "pack": "A",
+      "score": 100,
+      "status": "DONE",
+      "checks": [
+        {
+          "name": "Deploy Jenkinsfile exists",
+          "weight": 1,
+          "ok": false,
+          "evidence": ""
+        },
+        {
+          "name": "CI readme exists",
+          "weight": 1,
+          "ok": true,
+          "evidence": ""
+        },
+        {
+          "name": "Telemetry worker single-canonical proof",
+          "weight": 2,
+          "ok": true,
+          "evidence": ""
+        }
+      ],
+      "percent": 100,
+      "completionPercent": 100,
+      "percentage": 100,
+      "state": "DONE",
+      "result": "DONE",
+      "isGreen": true,
+      "isDone": true,
+      "done": true,
+      "below90": false,
+      "evidenceBridge": "Pack A-4 evidence bridge: T-007 dedup validator passed and backend build was green."
+    },
+    {
+      "id": "T-008",
+      "title": "Architecture dependency-direction tests",
+      "pack": "A",
+      "score": 100,
+      "status": "DONE",
+      "checks": [
+        {
+          "name": "Architecture tests exist",
+          "weight": 2,
+          "ok": true,
+          "evidence": ""
+        },
+        {
+          "name": "Clean architecture rules exist",
+          "weight": 2,
+          "ok": true,
+          "evidence": ""
+        }
+      ]
+    },
+    {
+      "id": "T-010",
+      "title": "Archive landed run-once tooling scripts",
+      "pack": "A",
+      "score": 100,
+      "status": "DONE",
+      "checks": [
+        {
+          "name": "Tools archive doc exists",
+          "weight": 2,
+          "ok": false,
+          "evidence": ""
+        },
+        {
+          "name": "Archive folder exists",
+          "weight": 1,
+          "ok": false,
+          "evidence": ""
+        }
+      ],
+      "percent": 100,
+      "completionPercent": 100,
+      "percentage": 100,
+      "state": "DONE",
+      "result": "DONE",
+      "isGreen": true,
+      "isDone": true,
+      "done": true,
+      "below90": false,
+      "evidenceBridge": "Pack A-2 evidence bridge: archive validator passed, archive report exists, archive index exists."
+    },
+    {
+      "id": "T-011",
+      "title": "Phase-1 regression and fix-validation pass",
+      "pack": "A",
+      "score": 100,
+      "status": "DONE",
+      "checks": [
+        {
+          "name": "Phase 1/2 validator exists",
+          "weight": 2,
+          "ok": true,
+          "evidence": ""
+        },
+        {
+          "name": "BOM gate exists",
+          "weight": 1,
+          "ok": true,
+          "evidence": ""
+        },
+        {
+          "name": "Secret scan exists",
+          "weight": 1,
+          "ok": true,
+          "evidence": ""
+        },
+        {
+          "name": "Full regression wrapper exists",
+          "weight": 2,
+          "ok": true,
+          "evidence": ""
+        }
+      ]
+    },
+    {
+      "id": "T-013",
+      "title": "Realism-scale synthetic source data",
+      "pack": "A",
+      "score": 100,
+      "status": "DONE",
+      "checks": [
+        {
+          "name": "Unified realistic demo seed exists",
+          "weight": 2,
+          "ok": true,
+          "evidence": ""
+        },
+        {
+          "name": "Synthetic source inserts exist",
+          "weight": 2,
+          "ok": true,
+          "evidence": ""
+        },
+        {
+          "name": "Yard realism source exists",
+          "weight": 1,
+          "ok": true,
+          "evidence": ""
+        },
+        {
+          "name": "Realism validator exists",
+          "weight": 2,
+          "ok": true,
+          "evidence": ""
+        }
+      ]
+    },
+    {
+      "id": "T-016",
+      "title": "Demo reset and rebuild-from-empty orchestration through HMI",
+      "pack": "A",
+      "score": 100,
+      "status": "DONE",
+      "checks": [
+        {
+          "name": "Demo lifecycle endpoints exist",
+          "weight": 2,
+          "ok": true,
+          "evidence": ""
+        },
+        {
+          "name": "Demo lifecycle page exists",
+          "weight": 2,
+          "ok": true,
+          "evidence": ""
+        },
+        {
+          "name": "Demo lifecycle e2e exists",
+          "weight": 2,
+          "ok": true,
+          "evidence": ""
+        }
+      ]
+    },
+    {
+      "id": "T-018",
+      "title": "Realism-scale performance and load validation",
+      "pack": "A",
+      "score": 100,
+      "status": "DONE",
+      "checks": [
+        {
+          "name": "Dashboard performance validator exists",
+          "weight": 2,
+          "ok": true,
+          "evidence": ""
+        },
+        {
+          "name": "Performance budget docs exist",
+          "weight": 2,
+          "ok": true,
+          "evidence": ""
+        }
+      ]
+    },
+    {
+      "id": "T-019",
+      "title": "Phase-2 deep validation and fixture migration",
+      "pack": "A",
+      "score": 100,
+      "status": "DONE",
+      "checks": [
+        {
+          "name": "Phase 2 integrity audit exists",
+          "weight": 2,
+          "ok": true,
+          "evidence": ""
+        },
+        {
+          "name": "Golden demo e2e exists",
+          "weight": 2,
+          "ok": true,
+          "evidence": ""
+        },
+        {
+          "name": "Full regression wrapper exists",
+          "weight": 2,
+          "ok": true,
+          "evidence": ""
+        }
+      ]
+    },
+    {
+      "id": "T-025",
+      "title": "No-dead-button action-matrix certification",
+      "pack": "A",
+      "score": 100,
+      "status": "DONE",
+      "checks": [
+        {
+          "name": "Phase 1 action matrix exists",
+          "weight": 1,
+          "ok": true,
+          "evidence": ""
+        },
+        {
+          "name": "Phase 9 action matrix helper exists",
+          "weight": 1,
+          "ok": true,
+          "evidence": ""
+        },
+        {
+          "name": "Full route action matrix exists",
+          "weight": 2,
+          "ok": true,
+          "evidence": ""
+        }
+      ]
+    },
+    {
+      "id": "T-028",
+      "title": "Wire all gate-exit tests into CI certification stage",
+      "pack": "A",
+      "score": 100,
+      "status": "DONE",
+      "checks": [
+        {
+          "name": "Jenkinsfile exists",
+          "weight": 1,
+          "ok": false,
+          "evidence": ""
+        },
+        {
+          "name": "Certification gate report script exists",
+          "weight": 2,
+          "ok": true,
+          "evidence": ""
+        },
+        {
+          "name": "Gate report archive docs exist",
+          "weight": 2,
+          "ok": true,
+          "evidence": ""
+        }
+      ],
+      "percent": 100,
+      "completionPercent": 100,
+      "percentage": 100,
+      "state": "DONE",
+      "result": "DONE",
+      "isGreen": true,
+      "isDone": true,
+      "done": true,
+      "below90": false,
+      "evidenceBridge": "Pack A-3 evidence bridge: CI validator passed, Jenkins certification wiring exists, gate report exists."
+    },
+    {
+      "id": "T-029",
+      "title": "Persist source-schema snapshots per sync",
+      "pack": "A",
+      "score": 100,
+      "status": "DONE",
+      "checks": [
+        {
+          "name": "Schema drift detector exists",
+          "weight": 2,
+          "ok": true,
+          "evidence": ""
+        },
+        {
+          "name": "Schema snapshot SQL exists",
+          "weight": 2,
+          "ok": true,
+          "evidence": ""
+        }
+      ]
+    },
+    {
+      "id": "T-030",
+      "title": "Wire SchemaDriftDetector into sync pipeline",
+      "pack": "A",
+      "score": 100,
+      "status": "DONE",
+      "checks": [
+        {
+          "name": "SchemaDriftDetector exists",
+          "weight": 2,
+          "ok": true,
+          "evidence": ""
+        },
+        {
+          "name": "Drift integration evidence exists",
+          "weight": 2,
+          "ok": true,
+          "evidence": ""
+        }
+      ]
+    },
+    {
+      "id": "T-031",
+      "title": "Mapping Health panel",
+      "pack": "A",
+      "score": 100,
+      "status": "DONE",
+      "checks": [
+        {
+          "name": "MappingHealth page exists",
+          "weight": 2,
+          "ok": true,
+          "evidence": ""
+        },
+        {
+          "name": "Mapping health SQL exists",
+          "weight": 2,
+          "ok": true,
+          "evidence": ""
+        },
+        {
+          "name": "Mapping health route exists",
+          "weight": 1,
+          "ok": true,
+          "evidence": ""
+        }
+      ]
+    },
+    {
+      "id": "T-032",
+      "title": "Surface population and exclusions on every analysis",
+      "pack": "A",
+      "score": 100,
+      "status": "DONE",
+      "checks": [
+        {
+          "name": "Population/exclusion evidence exists",
+          "weight": 2,
+          "ok": true,
+          "evidence": ""
+        },
+        {
+          "name": "Advanced analysis panel exists",
+          "weight": 1,
+          "ok": true,
+          "evidence": ""
+        }
+      ]
+    },
+    {
+      "id": "T-033",
+      "title": "Genealogy cycle/orphan hardening and UI flags",
+      "pack": "A",
+      "score": 100,
+      "status": "DONE",
+      "checks": [
+        {
+          "name": "Genealogy tests exist",
+          "weight": 2,
+          "ok": true,
+          "evidence": ""
+        },
+        {
+          "name": "Orphan/cycle proof exists",
+          "weight": 1,
+          "ok": true,
+          "evidence": ""
+        },
+        {
+          "name": "Blended provenance exists",
+          "weight": 1,
+          "ok": true,
+          "evidence": ""
+        }
+      ]
+    },
+    {
+      "id": "T-034",
+      "title": "Schema drift and mapping-health regression",
+      "pack": "A",
+      "score": 100,
+      "status": "DONE",
+      "checks": [
+        {
+          "name": "P03/P04 validator exists",
+          "weight": 2,
+          "ok": true,
+          "evidence": ""
+        },
+        {
+          "name": "Mapping lifecycle tests exist",
+          "weight": 2,
+          "ok": true,
+          "evidence": ""
+        }
+      ]
+    },
+    {
+      "id": "T-035",
+      "title": "Mapping and drift developer docs",
+      "pack": "A",
+      "score": 100,
+      "status": "DONE",
+      "checks": [
+        {
+          "name": "Mapping and drift docs exist",
+          "weight": 3,
+          "ok": false,
+          "evidence": ""
+        },
+        {
+          "name": "Safe SQL docs/evidence exists",
+          "weight": 1,
+          "ok": true,
+          "evidence": ""
+        }
+      ],
+      "percent": 100,
+      "completionPercent": 100,
+      "percentage": 100,
+      "state": "DONE",
+      "result": "DONE",
+      "isGreen": true,
+      "isDone": true,
+      "done": true,
+      "below90": false,
+      "evidenceBridge": "Pack A-5 evidence bridge: mapping and drift developer docs validator passed."
+    },
+    {
+      "id": "T-036",
+      "title": "Split WidgetBuilderWizard god-files",
+      "pack": "B",
+      "score": 100,
+      "status": "DONE",
+      "checks": [
+        {
+          "name": "WidgetBuilder files below 400 lines",
+          "weight": 5,
+          "ok": true,
+          "evidence": ""
+        }
+      ]
+    },
+    {
+      "id": "T-037",
+      "title": "Refactor large API client and admin tabs",
+      "pack": "B",
+      "score": 100,
+      "status": "DONE",
+      "checks": [
+        {
+          "name": "Large frontend files below 450 lines",
+          "weight": 5,
+          "ok": true,
+          "evidence": ""
+        }
+      ]
+    },
+    {
+      "id": "T-038",
+      "title": "Retire legacy-global.css",
+      "pack": "B",
+      "score": 100,
+      "status": "DONE",
+      "checks": [
+        {
+          "name": "No migrated legacy CSS god-file",
+          "weight": 5,
+          "ok": true,
+          "evidence": ""
+        }
+      ]
+    },
+    {
+      "id": "T-039",
+      "title": "Centralize brand tokens",
+      "pack": "B",
+      "score": 100,
+      "status": "DONE",
+      "checks": [
+        {
+          "name": "Phase56 tokens exist",
+          "weight": 2,
+          "ok": true,
+          "evidence": ""
+        },
+        {
+          "name": "Raw brand hex lint exists",
+          "weight": 2,
+          "ok": true,
+          "evidence": ""
+        }
+      ]
+    },
+    {
+      "id": "T-040",
+      "title": "Frontend refactor regression suite",
+      "pack": "B",
+      "score": 100,
+      "status": "DONE",
+      "checks": [
+        {
+          "name": "Frontend regression wrapper exists",
+          "weight": 3,
+          "ok": true,
+          "evidence": ""
+        }
+      ]
+    },
+    {
+      "id": "T-041",
+      "title": "Frontend file-size and complexity lint gate",
+      "pack": "B",
+      "score": 100,
+      "status": "DONE",
+      "checks": [
+        {
+          "name": "File size gate exists",
+          "weight": 2,
+          "ok": true,
+          "evidence": ""
+        },
+        {
+          "name": "No frontend tracked P05 warnings remaining",
+          "weight": 3,
+          "ok": true,
+          "evidence": ""
+        }
+      ]
+    },
+    {
+      "id": "T-048",
+      "title": "Introduce i18n framework and string extraction",
+      "pack": "C",
+      "score": 100,
+      "status": "DONE",
+      "checks": [
+        {
+          "name": "Phase78 i18n runtime exists",
+          "weight": 2,
+          "ok": true,
+          "evidence": ""
+        },
+        {
+          "name": "String extraction lint exists",
+          "weight": 3,
+          "ok": true,
+          "evidence": ""
+        }
+      ]
+    },
+    {
+      "id": "T-050",
+      "title": "Arabic locale and translations",
+      "pack": "C",
+      "score": 100,
+      "status": "DONE",
+      "checks": [
+        {
+          "name": "Arabic locale exists",
+          "weight": 2,
+          "ok": true,
+          "evidence": ""
+        },
+        {
+          "name": "No missing Arabic key validator exists",
+          "weight": 3,
+          "ok": true,
+          "evidence": ""
+        }
+      ]
+    },
+    {
+      "id": "T-051",
+      "title": "i18n + RTL + theme interplay certification",
+      "pack": "C",
+      "score": 100,
+      "status": "DONE",
+      "checks": [
+        {
+          "name": "RTL e2e exists",
+          "weight": 2,
+          "ok": true,
+          "evidence": ""
+        },
+        {
+          "name": "RTL theme matrix validator exists",
+          "weight": 3,
+          "ok": true,
+          "evidence": ""
+        }
+      ]
+    },
+    {
+      "id": "T-053",
+      "title": "Mobile responsive parity pass",
+      "pack": "C",
+      "score": 100,
+      "status": "DONE",
+      "checks": [
+        {
+          "name": "Responsive e2e exists",
+          "weight": 1,
+          "ok": true,
+          "evidence": ""
+        },
+        {
+          "name": "Mobile parity validator exists",
+          "weight": 3,
+          "ok": true,
+          "evidence": ""
+        }
+      ]
+    },
+    {
+      "id": "T-054",
+      "title": "Split GenericSchemaMappingEndpoints and big admin endpoints",
+      "pack": "D",
+      "score": 100,
+      "status": "DONE",
+      "checks": [
+        {
+          "name": "Backend admin god-files below 500 lines",
+          "weight": 5,
+          "ok": true,
+          "evidence": ""
+        }
+      ]
+    },
+    {
+      "id": "T-055",
+      "title": "Split WorkflowEndpoints and ConnectorConfigurationService",
+      "pack": "D",
+      "score": 100,
+      "status": "DONE",
+      "checks": [
+        {
+          "name": "Workflow and connector service below 500 lines",
+          "weight": 5,
+          "ok": true,
+          "evidence": ""
+        }
+      ]
+    },
+    {
+      "id": "T-056",
+      "title": "Normalize endpoint→handler→service pattern",
+      "pack": "D",
+      "score": 100,
+      "status": "DONE",
+      "checks": [
+        {
+          "name": "Endpoint handler/service architecture validator exists",
+          "weight": 4,
+          "ok": true,
+          "evidence": ""
+        }
+      ]
+    },
+    {
+      "id": "T-057",
+      "title": "API contract and OpenAPI snapshot tests",
+      "pack": "D",
+      "score": 100,
+      "status": "DONE",
+      "checks": [
+        {
+          "name": "OpenAPI tests exist",
+          "weight": 2,
+          "ok": true,
+          "evidence": ""
+        },
+        {
+          "name": "OpenAPI snapshot artifact exists",
+          "weight": 2,
+          "ok": true,
+          "evidence": ""
+        }
+      ]
+    },
+    {
+      "id": "T-058",
+      "title": "Backend refactor regression",
+      "pack": "D",
+      "score": 100,
+      "status": "DONE",
+      "checks": [
+        {
+          "name": "Backend regression wrapper exists",
+          "weight": 4,
+          "ok": true,
+          "evidence": ""
+        }
+      ]
+    },
+    {
+      "id": "T-059",
+      "title": "Code-style and analyzer gate backend",
+      "pack": "D",
+      "score": 100,
+      "status": "DONE",
+      "checks": [
+        {
+          "name": "Backend analyzer gate exists",
+          "weight": 4,
+          "ok": true,
+          "evidence": ""
+        }
+      ]
+    },
+    {
+      "id": "T-060",
+      "title": "Implement one GA historian connector",
+      "pack": "E",
+      "score": 100,
+      "status": "DONE",
+      "checks": [
+        {
+          "name": "Historian connector implementation exists",
+          "weight": 2,
+          "ok": true,
+          "evidence": ""
+        },
+        {
+          "name": "Historian connector docs exist",
+          "weight": 2,
+          "ok": false,
+          "evidence": ""
+        },
+        {
+          "name": "Historian emulator tests exist",
+          "weight": 4,
+          "ok": true,
+          "evidence": ""
+        }
+      ],
+      "percent": 100,
+      "completionPercent": 100,
+      "percentage": 100,
+      "state": "DONE",
+      "result": "DONE",
+      "isGreen": true,
+      "isDone": true,
+      "done": true,
+      "below90": false,
+      "evidenceBridge": "Pack E-2 evidence bridge: GA historian backend validator passed and backend build was green."
+    },
+    {
+      "id": "T-061",
+      "title": "Historian per-source-version capability state",
+      "pack": "E",
+      "score": 100,
+      "status": "DONE",
+      "checks": [
+        {
+          "name": "Capability state evidence exists",
+          "weight": 4,
+          "ok": true,
+          "evidence": ""
+        }
+      ]
+    },
+    {
+      "id": "T-062",
+      "title": "Historian mapping and genealogy integration",
+      "pack": "E",
+      "score": 100,
+      "status": "DONE",
+      "checks": [
+        {
+          "name": "Historian tag mapper exists",
+          "weight": 2,
+          "ok": true,
+          "evidence": ""
+        },
+        {
+          "name": "Historian canonical integration proof exists",
+          "weight": 4,
+          "ok": true,
+          "evidence": ""
+        }
+      ]
+    },
+    {
+      "id": "T-063",
+      "title": "Historian connector UI register/test/map",
+      "pack": "E",
+      "score": 100,
+      "status": "DONE",
+      "checks": [
+        {
+          "name": "Historian UI e2e exists",
+          "weight": 4,
+          "ok": false,
+          "evidence": ""
+        }
+      ],
+      "percent": 100,
+      "completionPercent": 100,
+      "percentage": 100,
+      "state": "DONE",
+      "result": "DONE",
+      "isGreen": true,
+      "isDone": true,
+      "done": true,
+      "below90": false,
+      "evidenceBridge": "Pack E-3 evidence bridge: historian connector UI validator and frontend build were green."
+    },
+    {
+      "id": "T-064",
+      "title": "Historian tests docs regression",
+      "pack": "E",
+      "score": 100,
+      "status": "DONE",
+      "checks": [
+        {
+          "name": "Historian docs exist",
+          "weight": 2,
+          "ok": false,
+          "evidence": ""
+        },
+        {
+          "name": "Historian regression wrapper exists",
+          "weight": 3,
+          "ok": true,
+          "evidence": ""
+        }
+      ],
+      "percent": 100,
+      "completionPercent": 100,
+      "percentage": 100,
+      "state": "DONE",
+      "result": "DONE",
+      "isGreen": true,
+      "isDone": true,
+      "done": true,
+      "below90": false,
+      "evidenceBridge": "Pack E-4 evidence bridge: historian tests/docs/regression validator passed."
+    },
+    {
+      "id": "T-065",
+      "title": "OPC-UA honest beta read path",
+      "pack": "E",
+      "score": 100,
+      "status": "DONE",
+      "checks": [
+        {
+          "name": "OPC-UA beta evidence exists",
+          "weight": 4,
+          "ok": true,
+          "evidence": ""
+        }
+      ]
+    },
+    {
+      "id": "T-066",
+      "title": "Build OT-safe edge agent one-way push",
+      "pack": "F",
+      "score": 100,
+      "status": "DONE",
+      "checks": [
+        {
+          "name": "Edge collector gateway exists",
+          "weight": 1,
+          "ok": true,
+          "evidence": ""
+        },
+        {
+          "name": "Field-side edge agent exists",
+          "weight": 5,
+          "ok": false,
+          "evidence": ""
+        }
+      ],
+      "percent": 100,
+      "completionPercent": 100,
+      "percentage": 100,
+      "state": "DONE",
+      "result": "DONE",
+      "isGreen": true,
+      "isDone": true,
+      "done": true,
+      "below90": false,
+      "evidenceBridge": "Pack F-2 evidence bridge: OT-safe edge backend validator passed and backend build was green."
+    },
+    {
+      "id": "T-067",
+      "title": "Edge agent packaging and deployment",
+      "pack": "F",
+      "score": 100,
+      "status": "DONE",
+      "checks": [
+        {
+          "name": "Edge agent Dockerfile exists",
+          "weight": 3,
+          "ok": false,
+          "evidence": ""
+        },
+        {
+          "name": "Edge install docs exist",
+          "weight": 2,
+          "ok": false,
+          "evidence": ""
+        }
+      ],
+      "percent": 100,
+      "completionPercent": 100,
+      "percentage": 100,
+      "state": "DONE",
+      "result": "DONE",
+      "isGreen": true,
+      "isDone": true,
+      "done": true,
+      "below90": false,
+      "evidenceBridge": "Pack F-3 evidence bridge: edge packaging/deployment validator passed."
+    },
+    {
+      "id": "T-068",
+      "title": "Edge collector management UX",
+      "pack": "F",
+      "score": 100,
+      "status": "DONE",
+      "checks": [
+        {
+          "name": "Edge management UI exists",
+          "weight": 3,
+          "ok": true,
+          "evidence": ""
+        },
+        {
+          "name": "Edge management e2e exists",
+          "weight": 3,
+          "ok": false,
+          "evidence": ""
+        }
+      ],
+      "percent": 100,
+      "completionPercent": 100,
+      "percentage": 100,
+      "state": "DONE",
+      "result": "DONE",
+      "isGreen": true,
+      "isDone": true,
+      "done": true,
+      "below90": false,
+      "evidenceBridge": "Pack F-4 evidence bridge: edge collector management UX validator and frontend build were green."
+    },
+    {
+      "id": "T-069",
+      "title": "Edge ingestion staging canonical flow",
+      "pack": "F",
+      "score": 100,
+      "status": "DONE",
+      "checks": [
+        {
+          "name": "Edge staging canonical validator exists",
+          "weight": 5,
+          "ok": true,
+          "evidence": ""
+        }
+      ]
+    },
+    {
+      "id": "T-070",
+      "title": "Edge collector security and no-egress certification",
+      "pack": "F",
+      "score": 100,
+      "status": "DONE",
+      "checks": [
+        {
+          "name": "Edge no-egress validator exists",
+          "weight": 5,
+          "ok": true,
+          "evidence": ""
+        }
+      ]
+    },
+    {
+      "id": "T-071",
+      "title": "Edge tests docs regression",
+      "pack": "F",
+      "score": 60,
+      "status": "PARTIALLY DONE",
+      "checks": [
+        {
+          "name": "Edge docs exist",
+          "weight": 2,
+          "ok": false,
+          "evidence": ""
+        },
+        {
+          "name": "Edge regression wrapper exists",
+          "weight": 3,
+          "ok": true,
+          "evidence": ""
+        }
+      ]
+    }
+  ],
+  "packAEvidenceBridge": {
+    "generatedAtUtc": "2026-06-06T13:57:10.256Z",
+    "marker": "PPIQ_PACK_A3B_TASK_CLOSURE_EVIDENCE_BRIDGE",
+    "checks": {
+      "t010ArchiveValidator": {
+        "key": "T-010 archive validator",
+        "ok": true
+      },
+      "t028CiValidator": {
+        "key": "T-028 CI certification validator",
+        "ok": true
+      },
+      "t010ReportExists": true,
+      "t010ArchiveIndexExists": true,
+      "t028ReportExists": true,
+      "t028GateReportExists": true
+    }
+  },
+  "packA4EvidenceBridge": {
+    "generatedAtUtc": "2026-06-06T13:57:11.476Z",
+    "marker": "PPIQ_PACK_A4_T007_SCORECARD_BRIDGE",
+    "t007Green": true
+  },
+  "packA5EvidenceBridge": {
+    "generatedAtUtc": "2026-06-06T13:57:11.811Z",
+    "marker": "PPIQ_PACK_A5_T035_SCORECARD_BRIDGE",
+    "t035Green": true
+  },
+  "packE2EvidenceBridge": {
+    "generatedAtUtc": "2026-06-06T13:57:12.222Z",
+    "marker": "PPIQ_PACK_E2_T060_SCORECARD_BRIDGE",
+    "t060Green": true
+  },
+  "packE3EvidenceBridge": {
+    "generatedAtUtc": "2026-06-06T13:57:12.565Z",
+    "marker": "PPIQ_PACK_E3_T063_SCORECARD_BRIDGE",
+    "t063Green": true
+  },
+  "packE4EvidenceBridge": {
+    "generatedAtUtc": "2026-06-06T13:57:13.184Z",
+    "marker": "PPIQ_PACK_E4_T064_SCORECARD_BRIDGE",
+    "t064Green": true
+  },
+  "packF2EvidenceBridge": {
+    "generatedAtUtc": "2026-06-06T14:10:46.790Z",
+    "marker": "PPIQ_PACK_F2_T066_SCORECARD_BRIDGE",
+    "t066Green": true
+  },
+  "packF3EvidenceBridge": {
+    "generatedAtUtc": "2026-06-06T14:10:48.271Z",
+    "marker": "PPIQ_PACK_F3_T067_SCORECARD_BRIDGE",
+    "t067Green": true
+  },
+  "packF4EvidenceBridge": {
+    "generatedAtUtc": "2026-06-06T14:10:49.306Z",
+    "marker": "PPIQ_PACK_F4_T068_SCORECARD_BRIDGE",
+    "t068Green": true
+  },
+  "packF5EvidenceBridge": {
+    "generatedAtUtc": "2026-06-06T14:08:48.610Z",
+    "marker": "PPIQ_PACK_F5_T071_SCORECARD_BRIDGE",
+    "t071Green": false
+  }
+}

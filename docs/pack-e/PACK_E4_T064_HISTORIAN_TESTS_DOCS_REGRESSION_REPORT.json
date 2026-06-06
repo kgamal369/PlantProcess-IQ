@@ -1,0 +1,22 @@
+{
+  "generatedAtUtc": "2026-06-06T13:32:00.329Z",
+  "marker": "PPIQ_PACK_E4_T064_HISTORIAN_TESTS_DOCS_REGRESSION",
+  "task": "T-064",
+  "contractSnapshot": "docs/pack-e/PACK_E4_HISTORIAN_CONTRACT_SNAPSHOT.json",
+  "generatedDocs": [
+    "docs/developer/HISTORIAN_CONNECTOR_REGRESSION_GUIDE.md",
+    "docs/developer/HISTORIAN_CONNECTOR_RUNBOOK.md",
+    "docs/pack-e/PACK_E4_HISTORIAN_CONTRACT_SNAPSHOT.md"
+  ],
+  "generatedTools": [
+    "tools/pack-e/validate-pack-e-t064-historian-regression.cjs",
+    "tools/pack-e/Invoke-PackE-HistorianRegression.ps1",
+    "tools/task-closure/ppiq-pack-e4-scorecard-bridge.cjs",
+    "tools/pack-e/Invoke-PackE-FinalClosure.ps1"
+  ],
+  "acceptance": {
+    "backendRoutesPresent": true,
+    "frontendSignalsPresent": true,
+    "safetySignalsPresent": true
+  }
+}

@@ -1,0 +1,106 @@
+{
+  "generatedAtUtc": "2026-06-06T13:32:00.302Z",
+  "marker": "PPIQ_PACK_E4_HISTORIAN_CONTRACT_SNAPSHOT",
+  "providerType": "OpcUaHistorian",
+  "frontendRoute": "/historian-connector",
+  "aliasRoute": "/connectors/historian",
+  "backendRoutes": [
+    "/api/v5/historian-connector/health",
+    "/api/v5/historian-connector/provider",
+    "/api/v5/historian-connector/test-connection",
+    "/api/v5/historian-connector/browse-tags",
+    "/api/v5/historian-connector/read-window",
+    "/api/v5/historian-connector/mapping-hints"
+  ],
+  "routeSignals": [
+    {
+      "route": "GET /health",
+      "present": true
+    },
+    {
+      "route": "GET /provider",
+      "present": true
+    },
+    {
+      "route": "POST /test-connection",
+      "present": true
+    },
+    {
+      "route": "POST /browse-tags",
+      "present": true
+    },
+    {
+      "route": "POST /read-window",
+      "present": true
+    },
+    {
+      "route": "POST /mapping-hints",
+      "present": true
+    }
+  ],
+  "frontendSignals": [
+    {
+      "signal": "historianConnectorApi.health",
+      "present": true
+    },
+    {
+      "signal": "historianConnectorApi.provider",
+      "present": true
+    },
+    {
+      "signal": "historianConnectorApi.testConnection",
+      "present": true
+    },
+    {
+      "signal": "historianConnectorApi.browseTags",
+      "present": true
+    },
+    {
+      "signal": "historianConnectorApi.readWindow",
+      "present": true
+    },
+    {
+      "signal": "historianConnectorApi.mappingHints",
+      "present": true
+    },
+    {
+      "signal": "HistorianConnectorPage",
+      "present": true
+    },
+    {
+      "signal": "Test connection button",
+      "present": true
+    },
+    {
+      "signal": "Browse tags button",
+      "present": true
+    },
+    {
+      "signal": "Create mapping hints button",
+      "present": true
+    }
+  ],
+  "safetySignals": [
+    {
+      "signal": "read-only",
+      "present": true
+    },
+    {
+      "signal": "no fake live handshake",
+      "present": true
+    },
+    {
+      "signal": "bounded read",
+      "present": true
+    },
+    {
+      "signal": "mapping handoff",
+      "present": true
+    }
+  ],
+  "acceptance": {
+    "backendRoutesPresent": true,
+    "frontendSignalsPresent": true,
+    "safetySignalsPresent": true
+  }
+}

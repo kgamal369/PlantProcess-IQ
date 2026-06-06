@@ -1,0 +1,39 @@
+{
+  "generatedAtUtc": "2026-06-06T13:50:34.561Z",
+  "marker": "PPIQ_PACK_F2_OT_SAFE_EDGE_BACKEND",
+  "task": "T-066",
+  "mode": "read-only-outbound-one-way-push",
+  "safetyBoundary": "No inbound OT access, no write path to production assets, outbound-only push to PlantProcess IQ.",
+  "backendRoutes": [
+    "/api/v5/edge-collector/health",
+    "/api/v5/edge-collector/contract",
+    "/api/v5/edge-collector/profiles",
+    "/api/v5/edge-collector/register",
+    "/api/v5/edge-collector/heartbeat",
+    "/api/v5/edge-collector/push-batch",
+    "/api/v5/edge-collector/queue-status",
+    "/api/v5/edge-collector/status"
+  ],
+  "results": [
+    {
+      "path": "Backend/PlantProcess.Api/PlantConnectors/V5OtSafeEdgeCollectorEndpoints.cs",
+      "status": "WRITTEN"
+    },
+    {
+      "path": "Backend/PlantProcess.Workers/Edge/OtSafeEdgeAgentContract.cs",
+      "status": "WRITTEN"
+    },
+    {
+      "path": "Backend/PlantProcess.Api/Program.cs",
+      "status": "PATCHED"
+    },
+    {
+      "path": "tools/pack-f/validate-pack-f-t066-edge-backend.cjs",
+      "status": "WRITTEN"
+    },
+    {
+      "path": "tools/task-closure/ppiq-pack-f2-scorecard-bridge.cjs",
+      "status": "WRITTEN"
+    }
+  ]
+}

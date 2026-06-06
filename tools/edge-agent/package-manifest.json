@@ -1,0 +1,24 @@
+{
+  "marker": "PPIQ_PACK_F3_EDGE_AGENT_PACKAGING",
+  "packageName": "ppiq-ot-safe-edge-agent",
+  "packageVersion": "0.1.0-pack-f3",
+  "mode": "read-only-outbound-one-way-push",
+  "entrypoint": "tools/edge-agent/ppiq-edge-agent.cjs",
+  "sampleConfig": "tools/edge-agent/edge-agent.sample.json",
+  "safetyRules": [
+    "readOnlyCollection=true",
+    "outboundOnly=true",
+    "opensInboundListener=false",
+    "no write path to source systems",
+    "secrets referenced by configuration"
+  ],
+  "deploymentArtifacts": [
+    "scripts/edge-agent/Run-PPIQ-EdgeAgent-Local.ps1",
+    "scripts/edge-agent/Install-PPIQ-EdgeAgent-Service.ps1",
+    "scripts/edge-agent/Uninstall-PPIQ-EdgeAgent-Service.ps1",
+    "deploy/edge-agent/Dockerfile",
+    "deploy/edge-agent/docker-compose.edge-agent.yml",
+    "deploy/edge-agent/.env.edge-agent.template",
+    "deploy/edge-agent/README_EDGE_AGENT_DEPLOYMENT.md"
+  ]
+}

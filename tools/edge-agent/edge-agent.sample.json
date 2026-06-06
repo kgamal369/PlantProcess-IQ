@@ -1,0 +1,48 @@
+{
+  "marker": "PPIQ_PACK_F3_EDGE_AGENT_PACKAGING",
+  "collector": {
+    "collectorId": "edge-demo-collector-01",
+    "displayName": "Demo OT-safe Edge Collector 01",
+    "siteName": "Demo Plant",
+    "networkZone": "DMZ/Edge",
+    "agentVersion": "0.1.0-pack-f3"
+  },
+  "plantProcessIq": {
+    "baseUrl": "http://localhost:5063",
+    "tokenReference": "PPIQ_EDGE_AGENT_TOKEN_REFERENCE_ONLY"
+  },
+  "safety": {
+    "readOnlyCollection": true,
+    "outboundOnly": true,
+    "opensInboundListener": false,
+    "writesToSourceSystems": false
+  },
+  "spool": {
+    "directory": "./spool",
+    "maxBatchSize": 5000,
+    "maxRetentionHours": 72
+  },
+  "sourceProfiles": [
+    {
+      "profileCode": "historian-readonly",
+      "providerType": "OpcUaHistorian",
+      "readOnly": true,
+      "endpointReference": "opc.tcp://demo-historian-gateway:4840",
+      "tagPaths": [
+        "plant.line1.furnace.temperature.actual",
+        "plant.line1.mill.force.actual",
+        "plant.line1.speed.actual"
+      ]
+    },
+    {
+      "profileCode": "file-drop-readonly",
+      "providerType": "FileDrop",
+      "readOnly": true,
+      "folderReference": "C:/PPIQ/edge/drop",
+      "tagPaths": [
+        "filedrop.production.count",
+        "filedrop.quality.score"
+      ]
+    }
+  ]
+}

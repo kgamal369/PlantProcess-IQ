@@ -159,6 +159,11 @@ const MappingHealthPage = lazy(() =>
   }))
 );
 
+const EdgeCollectorPage = lazy(() =>
+  import("./pages/EdgeCollector/EdgeCollectorPage").then((m) => ({
+    default: m.EdgeCollectorPage,
+  }))
+);
 const HistorianConnectorPage = lazy(() =>
   import("./pages/HistorianConnector/HistorianConnectorPage").then((m) => ({
     default: m.HistorianConnectorPage,
@@ -494,6 +499,20 @@ function AppRoutes() {
                       )}
                     />
 
+                    {/* Pack F edge collector management UX */}
+                    <Route
+                      path="/edge-collector"
+                      element={withPageBoundary(
+                        "/edge-collector",
+                        "Edge collector management is refreshing",
+                        <EdgeCollectorPage />
+                      )}
+                    />
+
+                    <Route
+                      path="/edge-agent"
+                      element={<Navigate to="/edge-collector" replace />}
+                    />
                     {/* Pack E historian connector UI */}
                     <Route
                       path="/historian-connector"

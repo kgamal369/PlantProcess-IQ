@@ -1,0 +1,105 @@
+{
+  "generatedAtUtc": "2026-06-06T13:39:39.578Z",
+  "marker": "PPIQ_PACK_F1_EDGE_AGENT_CLOSURE_MAP",
+  "recommendedOrder": [
+    "T-066",
+    "T-067",
+    "T-068",
+    "T-071"
+  ],
+  "closureMap": [
+    {
+      "task": "T-066",
+      "packStep": "Pack F-2",
+      "title": "OT-safe edge agent one-way push backend",
+      "priority": 1,
+      "risk": "HIGH",
+      "reason": "The edge architecture must be safe before packaging or UX. It must prove read-only collection and outbound-only push.",
+      "acceptance": [
+        "One canonical edge agent/collector contract exists",
+        "Agent config supports outbound PlantProcess IQ API endpoint",
+        "Agent never opens inbound OT-facing listener",
+        "Agent supports read-only collection profile",
+        "Agent supports local spool/queue model",
+        "Agent supports heartbeat payload",
+        "Agent supports bounded batch push payload",
+        "Server/API accepts heartbeat and batch push",
+        "OT-safety documentation exists",
+        "Backend build remains green"
+      ],
+      "auditFindings": {
+        "backendEdgeSignals": 150,
+        "backendWorkerSignals": 24,
+        "backendSafetySignals": 41
+      }
+    },
+    {
+      "task": "T-067",
+      "packStep": "Pack F-3",
+      "title": "Edge agent packaging and deployment",
+      "priority": 2,
+      "risk": "MEDIUM",
+      "reason": "After the safety contract exists, package it for repeatable demo/customer deployment without mixing local/server DB or unsafe inbound assumptions.",
+      "acceptance": [
+        "Sample edge-agent configuration exists",
+        "Packaging/deployment script exists",
+        "Docker or service-wrapper mode is documented",
+        "Install/uninstall or run-local commands are documented",
+        "Secrets are referenced, not hardcoded",
+        "Environment separation is explicit",
+        "Deployment report and validator exist"
+      ],
+      "auditFindings": {
+        "packagingSignals": 80,
+        "configSignals": 31,
+        "deploymentDocs": 142
+      }
+    },
+    {
+      "task": "T-068",
+      "packStep": "Pack F-4",
+      "title": "Edge collector management UX",
+      "priority": 3,
+      "risk": "MEDIUM",
+      "reason": "The UI should display edge collector readiness, heartbeat, queue, and deployment status only after backend and packaging contracts exist.",
+      "acceptance": [
+        "UI route exists for edge collectors",
+        "UI shows collector profile",
+        "UI shows heartbeat status",
+        "UI shows queue/spool status",
+        "UI shows one-way push status",
+        "UI shows deployment command guidance",
+        "UI is honest about OT-safe outbound-only behavior",
+        "Frontend build remains green"
+      ],
+      "auditFindings": {
+        "frontendEdgeSignals": 27,
+        "frontendPageSignals": 38,
+        "frontendApiSignals": 23
+      }
+    },
+    {
+      "task": "T-071",
+      "packStep": "Pack F-5",
+      "title": "Edge tests, docs, regression, final closure",
+      "priority": 4,
+      "risk": "LOW",
+      "reason": "After backend, packaging, and UI are complete, lock Pack F with validators, documentation, build regression, and scorecard closure.",
+      "acceptance": [
+        "Pack F backend validator exists",
+        "Pack F packaging validator exists",
+        "Pack F UI validator exists",
+        "Pack F OT-safety contract snapshot exists",
+        "Pack F regression wrapper exists",
+        "Pack F final scorecard bridge exists",
+        "Backend and frontend build remain green",
+        "Remaining below-90 tasks drop to zero"
+      ],
+      "auditFindings": {
+        "backendTestSignals": 25,
+        "edgeDocs": 45,
+        "safetyDocs": 33
+      }
+    }
+  ]
+}

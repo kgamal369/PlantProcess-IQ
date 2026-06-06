@@ -1,5 +1,5 @@
 {
-  "generatedAtUtc": "2026-06-06T13:28:14.114Z",
+  "generatedAtUtc": "2026-06-06T13:57:09.536Z",
   "marker": "PPIQ_T001_T071_TASK_LEVEL_CLOSURE_GATE",
   "thresholds": {
     "done": ">= 90",
@@ -1060,7 +1060,7 @@
     }
   ],
   "packAEvidenceBridge": {
-    "generatedAtUtc": "2026-06-06T13:28:14.698Z",
+    "generatedAtUtc": "2026-06-06T13:57:10.256Z",
     "marker": "PPIQ_PACK_A3B_TASK_CLOSURE_EVIDENCE_BRIDGE",
     "checks": {
       "t010ArchiveValidator": {
@@ -1078,17 +1078,17 @@
     }
   },
   "packA4EvidenceBridge": {
-    "generatedAtUtc": "2026-06-06T13:28:15.649Z",
+    "generatedAtUtc": "2026-06-06T13:57:11.476Z",
     "marker": "PPIQ_PACK_A4_T007_SCORECARD_BRIDGE",
     "t007Green": true
   },
   "packA5EvidenceBridge": {
-    "generatedAtUtc": "2026-06-06T13:28:16.020Z",
+    "generatedAtUtc": "2026-06-06T13:57:11.811Z",
     "marker": "PPIQ_PACK_A5_T035_SCORECARD_BRIDGE",
     "t035Green": true
   },
   "packE2EvidenceBridge": {
-    "generatedAtUtc": "2026-06-06T13:28:16.606Z",
+    "generatedAtUtc": "2026-06-06T13:57:12.222Z",
     "marker": "PPIQ_PACK_E2_T060_SCORECARD_BRIDGE",
     "t060Green": true
   }

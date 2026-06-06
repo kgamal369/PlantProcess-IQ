@@ -1,6 +1,6 @@
 # PlantProcess IQ T-001 → T-071 Task-Level Closure Scorecard
 
-Generated: 2026-06-06T13:28:14.114Z
+Generated: 2026-06-06T13:57:09.536Z
 
 ## Summary
 
@@ -78,7 +78,7 @@ A task is not marked DONE unless the repository contains evidence matching that 
 
 # T001-T071 Task Closure Scorecard — Pack A Evidence Bridged
 
-Generated: 2026-06-06T13:28:14.698Z
+Generated: 2026-06-06T13:57:10.256Z
 
 Marker: PPIQ_PACK_A3B_TASK_CLOSURE_EVIDENCE_BRIDGE
 

@@ -55,3 +55,24 @@ Generated artifacts:
 - docs/pack-e/PACK_E3_T063_HISTORIAN_UI_REPORT.json
 - tools/pack-e/validate-pack-e-t063-historian-ui.cjs
 - tools/task-closure/ppiq-pack-e3-scorecard-bridge.cjs
+
+## Pack E-4 T-064 Historian tests docs regression
+
+- Marker: PPIQ_PACK_E4_T064_HISTORIAN_TESTS_DOCS_REGRESSION.
+- Added historian connector contract snapshot.
+- Added historian connector regression guide.
+- Added historian connector runbook.
+- Added Pack E historian regression wrapper.
+- Added T-064 validator and scorecard bridge.
+- Added Pack E final closure wrapper.
+
+Generated artifacts:
+
+- docs/pack-e/PACK_E4_HISTORIAN_CONTRACT_SNAPSHOT.md
+- docs/pack-e/PACK_E4_HISTORIAN_CONTRACT_SNAPSHOT.json
+- docs/developer/HISTORIAN_CONNECTOR_REGRESSION_GUIDE.md
+- docs/developer/HISTORIAN_CONNECTOR_RUNBOOK.md
+- tools/pack-e/validate-pack-e-t064-historian-regression.cjs
+- tools/pack-e/Invoke-PackE-HistorianRegression.ps1
+- tools/pack-e/Invoke-PackE-FinalClosure.ps1
+- tools/task-closure/ppiq-pack-e4-scorecard-bridge.cjs

@@ -1,0 +1,67 @@
+{
+  "heartbeat": {
+    "collectorId": "edge-demo-collector-01",
+    "agentVersion": "0.1.0-pack-f3",
+    "observedAtUtc": "2026-06-06T14:06:40.347Z",
+    "status": "healthy",
+    "localQueueDepth": 0,
+    "failedPushCount": 0,
+    "lastSuccessfulPushUtc": null,
+    "lastError": null
+  },
+  "batch": {
+    "collectorId": "edge-demo-collector-01",
+    "batchId": "batch-1780754800348",
+    "createdAtUtc": "2026-06-06T14:06:40.348Z",
+    "readOnlyCollection": true,
+    "outboundOnly": true,
+    "sequenceNumber": 1,
+    "samples": [
+      {
+        "sourceProfile": "historian-readonly",
+        "tagPath": "plant.line1.furnace.temperature.actual",
+        "timestampUtc": "2026-06-06T14:06:40.348Z",
+        "numericValue": 82,
+        "textValue": null,
+        "unit": "degC",
+        "quality": "Good"
+      },
+      {
+        "sourceProfile": "historian-readonly",
+        "tagPath": "plant.line1.mill.force.actual",
+        "timestampUtc": "2026-06-06T14:06:40.348Z",
+        "numericValue": 101.5,
+        "textValue": null,
+        "unit": "engineering-unit",
+        "quality": "Good"
+      },
+      {
+        "sourceProfile": "historian-readonly",
+        "tagPath": "plant.line1.speed.actual",
+        "timestampUtc": "2026-06-06T14:06:40.348Z",
+        "numericValue": 28,
+        "textValue": null,
+        "unit": "engineering-unit",
+        "quality": "Good"
+      },
+      {
+        "sourceProfile": "file-drop-readonly",
+        "tagPath": "filedrop.production.count",
+        "timestampUtc": "2026-06-06T14:06:40.348Z",
+        "numericValue": 103,
+        "textValue": null,
+        "unit": "engineering-unit",
+        "quality": "Good"
+      },
+      {
+        "sourceProfile": "file-drop-readonly",
+        "tagPath": "filedrop.quality.score",
+        "timestampUtc": "2026-06-06T14:06:40.348Z",
+        "numericValue": 72.5,
+        "textValue": null,
+        "unit": "engineering-unit",
+        "quality": "Good"
+      }
+    ]
+  }
+}

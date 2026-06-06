@@ -48,6 +48,7 @@ const NAV_INTELLIGENCE = [
 ];
 
 const NAV_SYSTEM = [
+  { to: "/edge-collector", label: "Edge Collector", desc: "OT-safe one-way push status", icon: DatabaseZap },
   { to: "/historian-connector", label: "Historian Connector", desc: "Register, test, browse and map tags", icon: DatabaseZap },
   { to: "/admin-preview", label: "Admin Preview",  desc: "License, roles, ML scripts, report",   icon: BarChart3 },
   { to: "/admin",         label: "Administrator",  desc: "DB config, schema mapping and jobs",    icon: Settings2 },
