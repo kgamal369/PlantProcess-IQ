@@ -1,0 +1,1813 @@
+{
+  "generatedAtUtc": "2026-06-06T09:11:20.653Z",
+  "marker": "PPIQ_GROUND_TRUTH_VALIDATION_SCORECARD",
+  "thresholds": {
+    "done": ">= 90",
+    "mostlyDone": ">= 65 and < 90",
+    "partiallyDone": ">= 45 and < 65",
+    "notYetStarted": "< 45"
+  },
+  "roadmapWorkbook": {
+    "available": false,
+    "path": null,
+    "note": "No PlantProcessIQ_Roadmap_to_100.xlsx found in project root or Documentation folder. Canonical built-in gate catalog was used."
+  },
+  "overallScore": 93,
+  "counts": {
+    "done": 12,
+    "mostlyDone": 2,
+    "partiallyDone": 1,
+    "notYetStarted": 0
+  },
+  "phases": [
+    {
+      "phase": "P01",
+      "title": "Security/authentication/secret hygiene foundation",
+      "score": 100,
+      "status": "DONE",
+      "checks": [
+        {
+          "name": "Argon2/security SQL present",
+          "weight": 2,
+          "passed": true,
+          "evidence": "Backend/database/scripts/500_v5_p01_auth_argon2id_and_secret_hygiene.sql"
+        },
+        {
+          "name": "Access-control spine present",
+          "weight": 2,
+          "passed": true,
+          "evidence": "Backend/database/scripts/300_p01_p02_security_access_control_spine.sql"
+        },
+        {
+          "name": "Phase 1/2 validation tooling present",
+          "weight": 2,
+          "passed": true,
+          "evidence": "tools/phase1-phase2/Invoke-Phase1Phase2Validation.ps1 | tools/phase1-phase2/Invoke-SecretScan.ps1"
+        },
+        {
+          "name": "Secret scan evidence available",
+          "weight": 2,
+          "passed": true,
+          "evidence": "repo scan :: Fallback secret scan passed"
+        },
+        {
+          "name": "No unsafe overclaims",
+          "weight": 1,
+          "passed": true,
+          "evidence": "No unsafe commercial/AI overclaims found."
+        }
+      ]
+    },
+    {
+      "phase": "P02",
+      "title": "Tenant isolation/RLS/data realism baseline",
+      "score": 100,
+      "status": "DONE",
+      "checks": [
+        {
+          "name": "RLS/tenant isolation SQL present",
+          "weight": 2,
+          "passed": true,
+          "evidence": "Backend/database/scripts/510_v5_p02_rls_tenant_isolation_and_secret_vault.sql"
+        },
+        {
+          "name": "Hot-path explain/index review present",
+          "weight": 1,
+          "passed": true,
+          "evidence": "Backend/database/scripts/511_v5_p02_hotpath_explain_review.sql"
+        },
+        {
+          "name": "Phase 2 integrity audit present",
+          "weight": 1,
+          "passed": true,
+          "evidence": "Backend/database/scripts/115_phase2_integrity_audit.sql"
+        },
+        {
+          "name": "Phase 2 operation analytics foundation present",
+          "weight": 1,
+          "passed": true,
+          "evidence": "Backend/database/scripts/116_phase2_operation_analytics_pilot_foundation.sql"
+        },
+        {
+          "name": "External demo source data exists",
+          "weight": 2,
+          "passed": true,
+          "evidence": "Infrastructure/demo-sources/excel-qa/qa_samples.csv | Infrastructure/demo-sources/excel-yard/yard_inventory.csv"
+        }
+      ]
+    },
+    {
+      "phase": "P03",
+      "title": "Time-series/schema/mapping foundation",
+      "score": 92,
+      "status": "DONE",
+      "checks": [
+        {
+          "name": "Timeseries foundation SQL present",
+          "weight": 2,
+          "passed": true,
+          "evidence": "Backend/database/scripts/520_v5_p03_timeseries_foundation.sql"
+        },
+        {
+          "name": "Mapping genealogy foundation present",
+          "weight": 2,
+          "passed": true,
+          "evidence": "Backend/database/scripts/310_p03_p04_mapping_genealogy_foundation.sql"
+        },
+        {
+          "name": "Safe SQL fix present",
+          "weight": 2,
+          "passed": true,
+          "evidence": "Backend/database/scripts/311_p03_p04_fix_genealogy_walk_and_safe_sql.sql"
+        },
+        {
+          "name": "P03/P04 completion proof endpoints present",
+          "weight": 1,
+          "passed": true,
+          "evidence": "Backend/PlantProcess.Api/Endpoints/Admin/P03P04CompletionProofEndpoints.cs"
+        },
+        {
+          "name": "Mapping health route/page present",
+          "weight": 1,
+          "passed": true,
+          "evidence": "repo scan :: MappingHealth"
+        }
+      ],
+      "validationNote": "Explicit P03/P04 validator recreated. Source evidence includes business keys, canonical mapping, safe SQL resolver, mapping lifecycle proof, and completion status."
+    },
+    {
+      "phase": "P04",
+      "title": "Assistant/model gateway boundary and grounding",
+      "score": 90,
+      "status": "DONE",
+      "checks": [
+        {
+          "name": "Assistant gateway SQL boundary present",
+          "weight": 2,
+          "passed": true,
+          "evidence": "Backend/database/scripts/530_v5_p04_assistant_model_gateway_boundary.sql"
+        },
+        {
+          "name": "Production assistant documentation present",
+          "weight": 2,
+          "passed": true,
+          "evidence": "docs/assistant/P04_PRODUCTION_ASSISTANT.md :: LocalSemanticEmbedder, grounded"
+        },
+        {
+          "name": "Private model gateway certification endpoints present",
+          "weight": 1,
+          "passed": true,
+          "evidence": "Backend/PlantProcess.Api/AssistantGateway/V5PrivateModelGatewayCertificationEndpoints.cs"
+        },
+        {
+          "name": "Grounding tests present",
+          "weight": 1,
+          "passed": true,
+          "evidence": "Backend/tests/PlantProcess.Analytics.Core.Tests/Assistant/GroundingContractTests.cs"
+        },
+        {
+          "name": "Unsupported claims blocked",
+          "weight": 1,
+          "passed": true,
+          "evidence": "repo scan :: Unsupported, blocked"
+        }
+      ],
+      "validationNote": "Explicit P03/P04 validator recreated. Source evidence includes bidirectional genealogy hotfix, mapping-health summary, phase34 certification status, and UI/API workbench proof."
+    },
+    {
+      "phase": "P05",
+      "title": "Frontend hygiene/god-file refactor/design system",
+      "score": 80,
+      "status": "MOSTLY DONE",
+      "checks": [
+        {
+          "name": "Phase56 validation present",
+          "weight": 2,
+          "passed": true,
+          "evidence": "tools/phase56/validate-phase56.cjs"
+        },
+        {
+          "name": "Brand tokens present",
+          "weight": 2,
+          "passed": true,
+          "evidence": "Frontend/PlantProcess.Web/src/design-system/phase56/phase56Tokens.ts"
+        },
+        {
+          "name": "Product-core type split present",
+          "weight": 2,
+          "passed": true,
+          "evidence": "Frontend/PlantProcess.Web/src/api/product-core/types.ts | Frontend/PlantProcess.Web/src/api/product-core/product-core-types.manifest.json"
+        },
+        {
+          "name": "File-size gate present",
+          "weight": 2,
+          "passed": true,
+          "evidence": "tools/phase56/check-file-size-complexity.cjs"
+        },
+        {
+          "name": "No unknown new god-files",
+          "weight": 2,
+          "passed": false,
+          "evidence": "unknown=33, tracked=8"
+        }
+      ]
+    },
+    {
+      "phase": "P06",
+      "title": "Accessibility/light theme/mobile UX discipline",
+      "score": 100,
+      "status": "DONE",
+      "checks": [
+        {
+          "name": "Theme runtime present",
+          "weight": 2,
+          "passed": true,
+          "evidence": "Frontend/PlantProcess.Web/src/accessibility/phase56ThemeRuntime.ts"
+        },
+        {
+          "name": "Contrast gate present",
+          "weight": 2,
+          "passed": true,
+          "evidence": "tools/phase56/contrast-check.cjs"
+        },
+        {
+          "name": "A11y E2E present",
+          "weight": 2,
+          "passed": true,
+          "evidence": "Frontend/PlantProcess.Web/e2e/a11y/phase56-accessibility.spec.ts"
+        },
+        {
+          "name": "Accessibility docs present",
+          "weight": 1,
+          "passed": true,
+          "evidence": "docs/ux/ACCESSIBILITY.md"
+        },
+        {
+          "name": "Reduced motion / focus / skip link source present",
+          "weight": 1,
+          "passed": true,
+          "evidence": "repo scan :: skip, focus"
+        }
+      ]
+    },
+    {
+      "phase": "P07",
+      "title": "Connector breadth/i18n/RTL runtime",
+      "score": 100,
+      "status": "DONE",
+      "checks": [
+        {
+          "name": "Plant connector breadth SQL present",
+          "weight": 2,
+          "passed": true,
+          "evidence": "Backend/database/scripts/560_v5_p07_plant_connector_breadth.sql"
+        },
+        {
+          "name": "Connector runtime certification docs present",
+          "weight": 2,
+          "passed": true,
+          "evidence": "docs/connectors/P07_CONNECTOR_RUNTIME_CERTIFICATION.md :: read-only, historian"
+        },
+        {
+          "name": "i18n runtime present",
+          "weight": 2,
+          "passed": true,
+          "evidence": "Frontend/PlantProcess.Web/src/i18n/phase78/phase78I18nRuntime.ts"
+        },
+        {
+          "name": "RTL route present",
+          "weight": 1,
+          "passed": true,
+          "evidence": "repo scan :: /i18n-rtl"
+        },
+        {
+          "name": "i18n RTL docs present",
+          "weight": 1,
+          "passed": true,
+          "evidence": "docs/ux/I18N_RTL.md"
+        }
+      ]
+    },
+    {
+      "phase": "P08",
+      "title": "Backend API hygiene/identity MFA/route contract guard",
+      "score": 75,
+      "status": "MOSTLY DONE",
+      "checks": [
+        {
+          "name": "Identity MFA SQL present",
+          "weight": 1,
+          "passed": true,
+          "evidence": "Backend/database/scripts/570_v5_p08_enterprise_identity_mfa_sessions.sql"
+        },
+        {
+          "name": "Backend hygiene validator present",
+          "weight": 2,
+          "passed": true,
+          "evidence": "tools/phase78/check-backend-api-hygiene.cjs"
+        },
+        {
+          "name": "Route contract snapshot present",
+          "weight": 2,
+          "passed": true,
+          "evidence": "docs/phase8/openapi-source-contract-snapshot.json"
+        },
+        {
+          "name": "Backend hygiene report present",
+          "weight": 1,
+          "passed": true,
+          "evidence": "docs/phase8/backend-api-hygiene-report.json"
+        },
+        {
+          "name": "No unknown backend god-files",
+          "weight": 2,
+          "passed": false,
+          "evidence": "unknown=33, tracked=8"
+        }
+      ]
+    },
+    {
+      "phase": "P09",
+      "title": "Enterprise SSO/SCIM/runtime certification/UI matrix",
+      "score": 100,
+      "status": "DONE",
+      "checks": [
+        {
+          "name": "SSO/SCIM SQL present",
+          "weight": 2,
+          "passed": true,
+          "evidence": "Backend/database/scripts/580_v5_p09_enterprise_identity_sso_scim.sql"
+        },
+        {
+          "name": "Runtime SSO certification SQL present",
+          "weight": 2,
+          "passed": true,
+          "evidence": "Backend/database/scripts/660_remaining_p09_sso_scim_runtime_certification.sql"
+        },
+        {
+          "name": "SSO/SCIM docs present",
+          "weight": 2,
+          "passed": true,
+          "evidence": "docs/identity/P09_SSO_SCIM_RUNTIME_CERTIFICATION.md :: SCIM, RS256"
+        },
+        {
+          "name": "Phase9 browser matrix present",
+          "weight": 1,
+          "passed": true,
+          "evidence": "Frontend/PlantProcess.Web/playwright.phase9.config.ts"
+        },
+        {
+          "name": "Phase9/10 validator present",
+          "weight": 1,
+          "passed": true,
+          "evidence": "tools/phase9-phase10/validate-phase9-phase10.cjs"
+        }
+      ]
+    },
+    {
+      "phase": "P10",
+      "title": "Signed licensing/website commercial acceptance",
+      "score": 100,
+      "status": "DONE",
+      "checks": [
+        {
+          "name": "Signed license anti-tamper SQL present",
+          "weight": 2,
+          "passed": true,
+          "evidence": "Backend/database/scripts/590_v5_p10_signed_license_anti_tamper.sql"
+        },
+        {
+          "name": "Ed25519 verified license SQL present",
+          "weight": 2,
+          "passed": true,
+          "evidence": "Backend/database/scripts/650_remaining_p10_ed25519_verified_license.sql"
+        },
+        {
+          "name": "Signed licensing endpoints present",
+          "weight": 2,
+          "passed": true,
+          "evidence": "Backend/PlantProcess.Api/SignedLicensing/V5Ed25519LicenseEndpoints.cs | Backend/PlantProcess.Api/SignedLicensing/VerifiedEd25519LicenseService.cs"
+        },
+        {
+          "name": "Website acceptance docs present",
+          "weight": 1,
+          "passed": true,
+          "evidence": "Website/PlantProcess.Website/docs/phase10-acceptance.md"
+        },
+        {
+          "name": "Website commercial guard present",
+          "weight": 1,
+          "passed": true,
+          "evidence": "tools/phase9-phase10/website-phase10-guard.cjs"
+        },
+        {
+          "name": "No unsafe website/commercial overclaims",
+          "weight": 2,
+          "passed": true,
+          "evidence": "No unsafe commercial/AI overclaims found."
+        }
+      ]
+    },
+    {
+      "phase": "P11",
+      "title": "Outbound notifications/leads/closed-loop tracking",
+      "score": 100,
+      "status": "DONE",
+      "checks": [
+        {
+          "name": "Outbound notifications/leads SQL present",
+          "weight": 2,
+          "passed": true,
+          "evidence": "Backend/database/scripts/600_v5_p11_outbound_notifications_leads.sql"
+        },
+        {
+          "name": "Outbound lead endpoints present",
+          "weight": 2,
+          "passed": true,
+          "evidence": "Backend/PlantProcess.Api/OutboundLeadSystem/V5OutboundLeadSystemEndpoints.cs"
+        },
+        {
+          "name": "Closed loop/outcome evidence present",
+          "weight": 1,
+          "passed": true,
+          "evidence": "repo scan :: closed-loop, outcome"
+        },
+        {
+          "name": "Website lead capture marker present",
+          "weight": 1,
+          "passed": true,
+          "evidence": "Website/PlantProcess.Website/src/components/proof/RequestDemoForm.tsx :: ppiq.website.demoLeads.v1"
+        }
+      ]
+    },
+    {
+      "phase": "P12",
+      "title": "i18n/RTL/mobile consume-and-act hardening",
+      "score": 100,
+      "status": "DONE",
+      "checks": [
+        {
+          "name": "i18n RTL mobile SQL present",
+          "weight": 2,
+          "passed": true,
+          "evidence": "Backend/database/scripts/610_v5_p12_i18n_rtl_mobile.sql"
+        },
+        {
+          "name": "i18n RTL E2E present",
+          "weight": 2,
+          "passed": true,
+          "evidence": "Frontend/PlantProcess.Web/e2e/i18n/phase78-i18n-rtl.spec.ts"
+        },
+        {
+          "name": "RTL CSS present",
+          "weight": 2,
+          "passed": true,
+          "evidence": "Frontend/PlantProcess.Web/src/styles/phase78/phase78-i18n-rtl.css"
+        },
+        {
+          "name": "Locale storage key present",
+          "weight": 1,
+          "passed": true,
+          "evidence": "repo scan :: plantprocess.locale.v1"
+        }
+      ]
+    },
+    {
+      "phase": "P13",
+      "title": "Deployment/DR/portability/airgap acceptance",
+      "score": 100,
+      "status": "DONE",
+      "checks": [
+        {
+          "name": "Deployment DR portability SQL present",
+          "weight": 2,
+          "passed": true,
+          "evidence": "Backend/database/scripts/620_v5_p13_deployment_dr_portability.sql"
+        },
+        {
+          "name": "Deployment portability endpoints present",
+          "weight": 2,
+          "passed": true,
+          "evidence": "Backend/PlantProcess.Api/DeploymentPortability/V5DeploymentPortabilityEndpoints.cs"
+        },
+        {
+          "name": "Customer acceptance template present",
+          "weight": 1,
+          "passed": true,
+          "evidence": "docs/closure/P13_CUSTOMER_ACCEPTANCE_REPORT_TEMPLATE.md"
+        },
+        {
+          "name": "Open-format export evidence present",
+          "weight": 1,
+          "passed": true,
+          "evidence": "repo scan :: open-format, export"
+        },
+        {
+          "name": "Airgap evidence present",
+          "weight": 1,
+          "passed": true,
+          "evidence": "repo scan :: air-gapped"
+        }
+      ]
+    },
+    {
+      "phase": "P14",
+      "title": "Compliance controls/refactor closure/naming cleanup",
+      "score": 100,
+      "status": "DONE",
+      "checks": [
+        {
+          "name": "Compliance controls SQL present",
+          "weight": 2,
+          "passed": true,
+          "evidence": "Backend/database/scripts/630_v5_p14_compliance_refactor_controls.sql"
+        },
+        {
+          "name": "Compliance endpoints present",
+          "weight": 2,
+          "passed": true,
+          "evidence": "Backend/PlantProcess.Api/ComplianceControls/V5ComplianceControlsEndpoints.cs"
+        },
+        {
+          "name": "Control evidence matrix present",
+          "weight": 1,
+          "passed": true,
+          "evidence": "docs/compliance/CONTROL_EVIDENCE_MATRIX.md"
+        },
+        {
+          "name": "Pack B3.5 exception acknowledged",
+          "weight": 1,
+          "passed": true,
+          "evidence": "docs/closure/PACK_B35_MOSTLY_GREEN_TASK_CLOSURE.md :: P14-T03, not closed"
+        },
+        {
+          "name": "Legacy frontend client retired",
+          "weight": 1,
+          "passed": true,
+          "evidence": "repo scan :: zero imports of, plantProcessApi.ts"
+        }
+      ]
+    },
+    {
+      "phase": "P15+",
+      "title": "Customer-production proof still requiring real environment",
+      "score": 60,
+      "status": "PARTIALLY DONE",
+      "checks": [
+        {
+          "name": "Customer acceptance report template present",
+          "weight": 1,
+          "passed": true,
+          "evidence": "docs/closure/P13_CUSTOMER_ACCEPTANCE_REPORT_TEMPLATE.md"
+        },
+        {
+          "name": "Real customer IdP metadata evidence present",
+          "weight": 1,
+          "passed": false,
+          "evidence": "repo scan :: customer IdP, accepted"
+        },
+        {
+          "name": "Real customer database connector certification present",
+          "weight": 1,
+          "passed": true,
+          "evidence": "repo scan :: customer-certified, OPC"
+        },
+        {
+          "name": "Production backup/restore measured evidence present",
+          "weight": 1,
+          "passed": true,
+          "evidence": "repo scan :: measured RPO, measured RTO"
+        },
+        {
+          "name": "Signed pilot acceptance report present",
+          "weight": 1,
+          "passed": false,
+          "evidence": "repo scan :: pilot acceptance, signed"
+        }
+      ]
+    }
+  ],
+  "hotfixes": [
+    {
+      "id": "HOTFIX-DOC-001",
+      "status": "APPLIED",
+      "description": "Normalized literal escaped newline sequences in Phase 9/10 evidence markdown.",
+      "file": "docs/phase9-phase10/PHASE9_PHASE10_IMPLEMENTATION_EVIDENCE.md"
+    },
+    {
+      "id": "HOTFIX-WEB-001",
+      "status": "APPLIED",
+      "description": "Removed unsafe website/app overclaims and replaced them with evidence-backed decision-support language.",
+      "files": [
+        "Frontend/PlantProcess.Web/e2e/dimension2-dimension6-readiness.spec.ts",
+        "Frontend/PlantProcess.Web/e2e/dimension7-brand-identity.spec.ts",
+        "Frontend/PlantProcess.Web/e2e/p4-advanced-analysis.spec.ts",
+        "Frontend/PlantProcess.Web/e2e/phase2-realism-demo-lifecycle.spec.ts",
+        "Frontend/PlantProcess.Web/e2e/phase5-scheduled-learning-proof.spec.ts",
+        "Frontend/PlantProcess.Web/src/brand/plantProcessBrand.ts",
+        "Frontend/PlantProcess.Web/src/components/analytics/AdvancedResultPanel.tsx",
+        "Frontend/PlantProcess.Web/src/components/analytics/__tests__/AdvancedResultPanel.test.tsx",
+        "Frontend/PlantProcess.Web/src/components/demo/DemoEnvironmentBanner.tsx",
+        "Frontend/PlantProcess.Web/src/demo/plantProcessDemoScenario.implementation.ts",
+        "Frontend/PlantProcess.Web/src/pages/Analytics/AdvancedAnalysisPage.tsx",
+        "Frontend/PlantProcess.Web/src/pages/Analytics/__tests__/AdvancedAnalysisPage.test.tsx"
+      ]
+    },
+    {
+      "id": "HOTFIX-VAL-001",
+      "status": "APPLIED",
+      "description": "Hardened Phase 9/10 validator so string paths are handled as single-file arrays and directories are not read as files.",
+      "file": "tools/phase9-phase10/validate-phase9-phase10.cjs"
+    }
+  ],
+  "commandResults": [
+    {
+      "name": "Phase 1/2 BOM gate",
+      "command": "powershell -ExecutionPolicy Bypass -File .\\tools\\phase1-phase2\\Test-Utf8NoBom.ps1 -ProjectRoot C:\\Workspace\\PlantProcess-IQ",
+      "cwd": "",
+      "ok": true,
+      "skipped": false,
+      "error": null
+    },
+    {
+      "name": "Phase 1/2 production-runtime secret scan",
+      "command": "powershell -ExecutionPolicy Bypass -File .\\tools\\phase1-phase2\\Invoke-SecretScan.ps1 -ProjectRoot C:\\Workspace\\PlantProcess-IQ",
+      "cwd": "",
+      "ok": true,
+      "skipped": false,
+      "error": null
+    },
+    {
+      "name": "Phase 5/6 validation",
+      "command": "node tools/phase56/validate-phase56.cjs",
+      "cwd": "",
+      "ok": true,
+      "skipped": false,
+      "error": null
+    },
+    {
+      "name": "Phase 7/8 validation",
+      "command": "node tools/phase78/validate-phase78.cjs",
+      "cwd": "",
+      "ok": true,
+      "skipped": false,
+      "error": null
+    },
+    {
+      "name": "Phase 9/10 validation",
+      "command": "node tools/phase9-phase10/validate-phase9-phase10.cjs",
+      "cwd": "",
+      "ok": true,
+      "skipped": false,
+      "error": null
+    },
+    {
+      "name": "Phase 10 website commercial guard",
+      "command": "node tools/phase9-phase10/website-phase10-guard.cjs",
+      "cwd": "",
+      "ok": true,
+      "skipped": false,
+      "error": null
+    }
+  ],
+  "godFiles": {
+    "tracked": [
+      {
+        "path": "Backend/PlantProcess.Api/Endpoints/Admin/GenericSchemaMappingEndpoints.cs",
+        "lines": 1389
+      },
+      {
+        "path": "Backend/PlantProcess.Api/Endpoints/Admin/Phase1WorkflowTruthEndpoints.cs",
+        "lines": 1368
+      },
+      {
+        "path": "Backend/PlantProcess.Api/Endpoints/Workflow/WorkflowEndpoints.cs",
+        "lines": 1031
+      },
+      {
+        "path": "Backend/PlantProcess.Api/EnterpriseIdentity/V5EnterpriseIdentityEndpoints.cs",
+        "lines": 958
+      },
+      {
+        "path": "Backend/PlantProcess.Api/PlantConnectors/V5ConnectorRuntimeCertificationEndpoints.cs",
+        "lines": 906
+      },
+      {
+        "path": "Backend/PlantProcess.Application/Dashboarding/Services/Dashboards/DashboardDefinitionService.cs",
+        "lines": 903
+      },
+      {
+        "path": "Backend/PlantProcess.Application/Integration/Services/Connectors/ConnectorConfigurationService.cs",
+        "lines": 1247
+      },
+      {
+        "path": "Backend/PlantProcess.Application/Services/Readiness/ApplicationReadinessService.cs",
+        "lines": 930
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/WidgetBuilderWizard.implementation.tsx",
+        "lines": 1512
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/WidgetBuilderWizardContent.implementation.tsx",
+        "lines": 1710
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/src/demo/plantProcessDemoScenario.implementation.ts",
+        "lines": 899
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/src/pages/Admin/AdminDbConfigurationTab.implementation.tsx",
+        "lines": 1128
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/src/pages/Admin/AdminSchemaConfigurationTab.implementation.tsx",
+        "lines": 948
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/src/pages/MaterialAnalytics/MaterialAnalyticsPages.implementation.tsx",
+        "lines": 1103
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/src/styles/phase56/phase56-migrated-legacy.css",
+        "lines": 2980
+      }
+    ],
+    "unknown": [],
+    "excludedGenerated": [
+      {
+        "path": ".ground_truth_backup/20260606090928/Frontend/PlantProcess.Web/src/demo/plantProcessDemoScenario.implementation.ts",
+        "lines": 899
+      },
+      {
+        "path": ".phase5_phase6_backup/20260606081829/Frontend/PlantProcess.Web/src/styles/legacy/legacy-global.css",
+        "lines": 2975
+      },
+      {
+        "path": ".phase5b_backup/product_core_domain_types_20260606083627/Frontend/PlantProcess.Web/src/api/product-core/types.ts",
+        "lines": 784
+      },
+      {
+        "path": ".phase5b_backup/product_core_types_20260606083356/Frontend/PlantProcess.Web/src/api/productCoreApiClient.implementation.ts",
+        "lines": 1265
+      },
+      {
+        "path": "Backend/PlantProcess.Infrastructure/Migrations/20260507074459_InitialCanonicalModel.Designer.cs",
+        "lines": 1497
+      },
+      {
+        "path": "Backend/PlantProcess.Infrastructure/Migrations/20260507092434_AddPlantLayoutAndIntegrationMasterData.Designer.cs",
+        "lines": 1929
+      },
+      {
+        "path": "Backend/PlantProcess.Infrastructure/Migrations/20260510091155_Add2ndDayDomain.Designer.cs",
+        "lines": 2713
+      },
+      {
+        "path": "Backend/PlantProcess.Infrastructure/Migrations/20260510132030_Phase3_ModelConsistencyFixes.Designer.cs",
+        "lines": 2734
+      },
+      {
+        "path": "Backend/PlantProcess.Infrastructure/Migrations/20260511081726_AddOperationDefinitionIdToProcessStep.Designer.cs",
+        "lines": 2741
+      },
+      {
+        "path": "Backend/PlantProcess.Infrastructure/Migrations/20260511092313_AddStagingRecordEntity.Designer.cs",
+        "lines": 2868
+      },
+      {
+        "path": "Backend/PlantProcess.Infrastructure/Migrations/20260511115023_AddPhaseGCorrelationResults.Designer.cs",
+        "lines": 2974
+      },
+      {
+        "path": "Backend/PlantProcess.Infrastructure/Migrations/20260511124245_AddModelRegistry.Designer.cs",
+        "lines": 3094
+      },
+      {
+        "path": "Backend/PlantProcess.Infrastructure/Migrations/20260512085506_AddDashboardDefinitions.Designer.cs",
+        "lines": 3357
+      },
+      {
+        "path": "Backend/PlantProcess.Infrastructure/Migrations/20260516080826_AddPhase3ConnectorFoundation.Designer.cs",
+        "lines": 3820
+      },
+      {
+        "path": "Backend/PlantProcess.Infrastructure/Migrations/20260516094248_AddJobDefinition.Designer.cs",
+        "lines": 4261
+      },
+      {
+        "path": "Backend/PlantProcess.Infrastructure/Migrations/20260519064446_AddRiskScoreExplanationAndCriticalIndexes.Designer.cs",
+        "lines": 4427
+      },
+      {
+        "path": "Backend/PlantProcess.Infrastructure/Migrations/20260519075125_TodayAddRiskScoreExplanationAndCriticalIndexes.Designer.cs",
+        "lines": 4440
+      },
+      {
+        "path": "Backend/PlantProcess.Infrastructure/Migrations/20260519083512_AddCriticalQueryIndexes.Designer.cs",
+        "lines": 4440
+      },
+      {
+        "path": "Backend/PlantProcess.Infrastructure/Migrations/20260521182857_Fix_WidgetCode_UniqueIndex_PerDashboard.Designer.cs",
+        "lines": 4440
+      },
+      {
+        "path": "Backend/PlantProcess.Infrastructure/Migrations/20260521221629_Fix_PendingModelChanges.Designer.cs",
+        "lines": 4440
+      },
+      {
+        "path": "Backend/PlantProcess.Infrastructure/Migrations/20260524061000_AddAuditLogAndPerSourceScheduling.Designer.cs",
+        "lines": 4575
+      },
+      {
+        "path": "Backend/PlantProcess.Infrastructure/Migrations/20260524110553_HardenAuditLogEntrySchemaAndImmutability.Designer.cs",
+        "lines": 4584
+      },
+      {
+        "path": "Backend/PlantProcess.Infrastructure/Migrations/20260525082545_Phase1WorkflowTruth.Designer.cs",
+        "lines": 4584
+      },
+      {
+        "path": "Backend/PlantProcess.Infrastructure/Migrations/20260530130708_Phase03_ModelSnapshotSync.Designer.cs",
+        "lines": 4624
+      },
+      {
+        "path": "Backend/PlantProcess.Infrastructure/Migrations/20260603203438_SyncModel_20260603.Designer.cs",
+        "lines": 4645
+      },
+      {
+        "path": "Backend/PlantProcess.Infrastructure/Migrations/PlantProcessDbContextModelSnapshot.cs",
+        "lines": 4642
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@asamuzakjp/css-color/src/js/color.ts",
+        "lines": 3497
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@asamuzakjp/css-color/src/js/css-calc.ts",
+        "lines": 1009
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@asamuzakjp/dom-selector/node_modules/lru-cache/dist/commonjs/browser/index.d.ts",
+        "lines": 1380
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@asamuzakjp/dom-selector/node_modules/lru-cache/dist/commonjs/index.d.ts",
+        "lines": 1380
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@asamuzakjp/dom-selector/node_modules/lru-cache/dist/commonjs/node/index.d.ts",
+        "lines": 1380
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@asamuzakjp/dom-selector/node_modules/lru-cache/dist/esm/browser/index.d.ts",
+        "lines": 1380
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@asamuzakjp/dom-selector/node_modules/lru-cache/dist/esm/index.d.ts",
+        "lines": 1380
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@asamuzakjp/dom-selector/node_modules/lru-cache/dist/esm/node/index.d.ts",
+        "lines": 1380
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@babel/types/lib/index-legacy.d.ts",
+        "lines": 2797
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@babel/types/lib/index.d.ts",
+        "lines": 3618
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@eslint-community/regexpp/index.d.ts",
+        "lines": 1164
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@eslint/core/dist/esm/types.d.ts",
+        "lines": 1160
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@mswjs/interceptors/src/interceptors/ClientRequest/MockHttpSocket.ts",
+        "lines": 725
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@mswjs/interceptors/src/interceptors/XMLHttpRequest/XMLHttpRequestController.ts",
+        "lines": 748
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@oxc-project/types/types.d.ts",
+        "lines": 1913
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@reduxjs/toolkit/dist/index.d.ts",
+        "lines": 2663
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@reduxjs/toolkit/dist/query/index.d.ts",
+        "lines": 2955
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@reduxjs/toolkit/dist/query/react/index.d.ts",
+        "lines": 981
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@reduxjs/toolkit/src/createAsyncThunk.ts",
+        "lines": 792
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@reduxjs/toolkit/src/createSlice.ts",
+        "lines": 1074
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@reduxjs/toolkit/src/entities/tests/sorted_state_adapter.test.ts",
+        "lines": 1182
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@reduxjs/toolkit/src/entities/tests/unsorted_state_adapter.test.ts",
+        "lines": 760
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@reduxjs/toolkit/src/listenerMiddleware/tests/listenerMiddleware.test.ts",
+        "lines": 1372
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@reduxjs/toolkit/src/listenerMiddleware/types.ts",
+        "lines": 873
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@reduxjs/toolkit/src/query/core/buildSlice.ts",
+        "lines": 736
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@reduxjs/toolkit/src/query/core/buildThunks.ts",
+        "lines": 1125
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@reduxjs/toolkit/src/query/core/module.ts",
+        "lines": 728
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@reduxjs/toolkit/src/query/endpointDefinitions.ts",
+        "lines": 1606
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@reduxjs/toolkit/src/query/react/buildHooks.ts",
+        "lines": 2259
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@reduxjs/toolkit/src/query/tests/buildHooks.test.tsx",
+        "lines": 4143
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@reduxjs/toolkit/src/query/tests/cacheLifecycle.test.ts",
+        "lines": 709
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@reduxjs/toolkit/src/query/tests/createApi.test.ts",
+        "lines": 1834
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@reduxjs/toolkit/src/query/tests/fetchBaseQuery.test.tsx",
+        "lines": 1546
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@reduxjs/toolkit/src/query/tests/infiniteQueries.test.ts",
+        "lines": 1815
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@reduxjs/toolkit/src/query/tests/retry.test.ts",
+        "lines": 922
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@reduxjs/toolkit/src/query/tests/unionTypes.test-d.ts",
+        "lines": 915
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@reduxjs/toolkit/src/tests/configureStore.test-d.ts",
+        "lines": 806
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@reduxjs/toolkit/src/tests/createAsyncThunk.test-d.ts",
+        "lines": 900
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@reduxjs/toolkit/src/tests/createAsyncThunk.test.ts",
+        "lines": 1046
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@reduxjs/toolkit/src/tests/createSlice.test-d.ts",
+        "lines": 996
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@reduxjs/toolkit/src/tests/createSlice.test.ts",
+        "lines": 988
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@storybook/addon-docs/dist/blocks.d.ts",
+        "lines": 1087
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@testing-library/jest-dom/types/matchers.d.ts",
+        "lines": 861
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@types/babel__core/index.d.ts",
+        "lines": 832
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@types/babel__traverse/index.d.ts",
+        "lines": 1507
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@types/chai/index.d.ts",
+        "lines": 2146
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@types/d3-array/index.d.ts",
+        "lines": 1119
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@types/d3-scale/index.d.ts",
+        "lines": 2670
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@types/d3-shape/index.d.ts",
+        "lines": 2681
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@types/json-schema/index.d.ts",
+        "lines": 750
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@types/node/assert.d.ts",
+        "lines": 1116
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@types/node/buffer.d.ts",
+        "lines": 1935
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@types/node/child_process.d.ts",
+        "lines": 1477
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@types/node/crypto.d.ts",
+        "lines": 5418
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@types/node/dns.d.ts",
+        "lines": 924
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@types/node/events.d.ts",
+        "lines": 977
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@types/node/fs.d.ts",
+        "lines": 4715
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@types/node/fs/promises.d.ts",
+        "lines": 1331
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@types/node/http.d.ts",
+        "lines": 2155
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@types/node/http2.d.ts",
+        "lines": 2832
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@types/node/inspector.generated.d.ts",
+        "lines": 4247
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@types/node/module.d.ts",
+        "lines": 906
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@types/node/net.d.ts",
+        "lines": 1074
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@types/node/perf_hooks.d.ts",
+        "lines": 1043
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@types/node/process.d.ts",
+        "lines": 2084
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@types/node/sqlite.d.ts",
+        "lines": 959
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@types/node/stream.d.ts",
+        "lines": 1707
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@types/node/test.d.ts",
+        "lines": 2341
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@types/node/tls.d.ts",
+        "lines": 1274
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@types/node/url.d.ts",
+        "lines": 1058
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@types/node/util.d.ts",
+        "lines": 2334
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@types/node/v8.d.ts",
+        "lines": 979
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@types/node/vm.d.ts",
+        "lines": 1196
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@types/node/worker_threads.d.ts",
+        "lines": 895
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@types/node/zlib.d.ts",
+        "lines": 746
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@types/react/index.d.ts",
+        "lines": 4371
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@types/react/ts5.0/index.d.ts",
+        "lines": 4358
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@typescript-eslint/eslint-plugin/dist/index.d.ts",
+        "lines": 1129
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@typescript-eslint/eslint-plugin/dist/raw-plugin.d.ts",
+        "lines": 1153
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@typescript-eslint/types/dist/generated/ast-spec.d.ts",
+        "lines": 2164
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@vitest/expect/dist/index.d.ts",
+        "lines": 931
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@vitest/mocker/dist/hoistMocks.d-w2ILr1dG.d.ts",
+        "lines": 740
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/@vitest/runner/dist/tasks.d-DEYaIMIu.d.ts",
+        "lines": 1525
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/acorn/dist/acorn.d.ts",
+        "lines": 884
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/ast-types/lib/gen/builders.d.ts",
+        "lines": 2851
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/ast-types/lib/gen/namedTypes.d.ts",
+        "lines": 2030
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/cssstyle/node_modules/lru-cache/dist/commonjs/browser/index.d.ts",
+        "lines": 1380
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/cssstyle/node_modules/lru-cache/dist/commonjs/index.d.ts",
+        "lines": 1380
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/cssstyle/node_modules/lru-cache/dist/commonjs/node/index.d.ts",
+        "lines": 1380
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/cssstyle/node_modules/lru-cache/dist/esm/browser/index.d.ts",
+        "lines": 1380
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/cssstyle/node_modules/lru-cache/dist/esm/index.d.ts",
+        "lines": 1380
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/cssstyle/node_modules/lru-cache/dist/esm/node/index.d.ts",
+        "lines": 1380
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/csstype/index.d.ts",
+        "lines": 22570
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/esbuild/lib/main.d.ts",
+        "lines": 717
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/eslint/lib/types/index.d.ts",
+        "lines": 1526
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/eslint/lib/types/rules.d.ts",
+        "lines": 5604
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/expect-type/dist/index.d.ts",
+        "lines": 898
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/globals/index.d.ts",
+        "lines": 4227
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/graphql/type/definition.d.ts",
+        "lines": 927
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/lightningcss/node/ast.d.ts",
+        "lines": 9893
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/lucide-react/dist/lucide-react.d.ts",
+        "lines": 25612
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/lucide-react/dist/lucide-react.prefixed.d.ts",
+        "lines": 25599
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/lucide-react/dist/lucide-react.suffixed.d.ts",
+        "lines": 25599
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/lucide-react/dynamic.d.ts",
+        "lines": 37767
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/lucide-react/dynamicIconImports.d.ts",
+        "lines": 37738
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/msw/src/core/handlers/GraphQLHandler.test.ts",
+        "lines": 873
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/msw/src/core/sse.ts",
+        "lines": 1018
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/oxc-parser/node_modules/@oxc-project/types/types.d.ts",
+        "lines": 1913
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/path-scurry/dist/commonjs/index.d.ts",
+        "lines": 1115
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/path-scurry/dist/esm/index.d.ts",
+        "lines": 1115
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/path-scurry/node_modules/lru-cache/dist/commonjs/browser/index.d.ts",
+        "lines": 1400
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/path-scurry/node_modules/lru-cache/dist/commonjs/index.d.ts",
+        "lines": 1400
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/path-scurry/node_modules/lru-cache/dist/commonjs/node/index.d.ts",
+        "lines": 1400
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/path-scurry/node_modules/lru-cache/dist/esm/browser/index.d.ts",
+        "lines": 1400
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/path-scurry/node_modules/lru-cache/dist/esm/index.d.ts",
+        "lines": 1400
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/path-scurry/node_modules/lru-cache/dist/esm/node/index.d.ts",
+        "lines": 1400
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/playwright-core/types/protocol.d.ts",
+        "lines": 24566
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/playwright-core/types/types.d.ts",
+        "lines": 24519
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/playwright/types/test.d.ts",
+        "lines": 10412
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/playwright/types/testReporter.d.ts",
+        "lines": 825
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/react-redux/src/components/connect.tsx",
+        "lines": 814
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/react-router/dist/development/data-BqZ2x964.d.ts",
+        "lines": 1733
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/react-router/dist/development/index-react-server-client-CSv-KZBk.d.ts",
+        "lines": 3648
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/react-router/dist/development/index-react-server.d.ts",
+        "lines": 2698
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/react-router/dist/development/index.d.ts",
+        "lines": 1391
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/react-router/dist/development/instrumentation-DlJ2QV7d.d.ts",
+        "lines": 710
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/react-router/dist/production/data-BqZ2x964.d.ts",
+        "lines": 1733
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/react-router/dist/production/index-react-server-client-CSv-KZBk.d.ts",
+        "lines": 3648
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/react-router/dist/production/index-react-server.d.ts",
+        "lines": 2698
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/react-router/dist/production/index.d.ts",
+        "lines": 1391
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/react-router/dist/production/instrumentation-DlJ2QV7d.d.ts",
+        "lines": 710
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/recharts/types/util/types.d.ts",
+        "lines": 1403
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/reselect/dist/reselect.d.ts",
+        "lines": 1430
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/reselect/src/types.ts",
+        "lines": 877
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/rettime/src/index.ts",
+        "lines": 890
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/sonner/dist/styles.css",
+        "lines": 725
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/storybook/dist/babel/index.d.ts",
+        "lines": 7960
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/storybook/dist/cli/index.d.ts",
+        "lines": 4375
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/storybook/dist/common/index.d.ts",
+        "lines": 2727
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/storybook/dist/components/index.d.ts",
+        "lines": 1536
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/storybook/dist/core-server/index.d.ts",
+        "lines": 1780
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/storybook/dist/csf/index.d.ts",
+        "lines": 1530
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/storybook/dist/manager-api/index.d.ts",
+        "lines": 4067
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/storybook/dist/mocking-utils/index.d.ts",
+        "lines": 1133
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/storybook/dist/node-logger/index.d.ts",
+        "lines": 2026
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/storybook/dist/preview-api/index.d.ts",
+        "lines": 1587
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/storybook/dist/preview-errors.d.ts",
+        "lines": 781
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/storybook/dist/router/index.d.ts",
+        "lines": 784
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/storybook/dist/server-errors.d.ts",
+        "lines": 925
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/storybook/dist/test/index.d.ts",
+        "lines": 1381
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/storybook/dist/theming/index.d.ts",
+        "lines": 12785
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/storybook/dist/types/index.d.ts",
+        "lines": 3910
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/storybook/node_modules/@vitest/expect/dist/index.d.ts",
+        "lines": 809
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/tough-cookie/dist/index.d.ts",
+        "lines": 1803
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/ts-api-utils/lib/index.d.ts",
+        "lines": 3054
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/type-fest/source/package-json.d.ts",
+        "lines": 711
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/type-fest/source/tsconfig-json.d.ts",
+        "lines": 1357
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/typescript/lib/lib.dom.d.ts",
+        "lines": 45126
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/typescript/lib/lib.es2020.bigint.d.ts",
+        "lines": 764
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/typescript/lib/lib.es2023.array.d.ts",
+        "lines": 923
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/typescript/lib/lib.es5.d.ts",
+        "lines": 4600
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/typescript/lib/lib.webworker.d.ts",
+        "lines": 15607
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/typescript/lib/typescript.d.ts",
+        "lines": 11449
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/vite/dist/node/index.d.ts",
+        "lines": 3871
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/vitest/dist/chunks/reporters.d.CtLUhkkA.d.ts",
+        "lines": 3619
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/zod/src/v3/tests/string.test.ts",
+        "lines": 917
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/zod/src/v3/types.ts",
+        "lines": 5139
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/zod/src/v4/classic/schemas.ts",
+        "lines": 2673
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/zod/src/v4/classic/tests/codec.test.ts",
+        "lines": 704
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/zod/src/v4/classic/tests/error-utils.test.ts",
+        "lines": 808
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/zod/src/v4/classic/tests/error.test.ts",
+        "lines": 712
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/zod/src/v4/classic/tests/from-json-schema.test.ts",
+        "lines": 896
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/zod/src/v4/classic/tests/index.test.ts",
+        "lines": 940
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/zod/src/v4/classic/tests/object.test.ts",
+        "lines": 718
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/zod/src/v4/classic/tests/record.test.ts",
+        "lines": 718
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/zod/src/v4/classic/tests/string.test.ts",
+        "lines": 1225
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/zod/src/v4/classic/tests/template-literal.test.ts",
+        "lines": 772
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/zod/src/v4/classic/tests/to-json-schema.test.ts",
+        "lines": 3126
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/zod/src/v4/core/api.ts",
+        "lines": 1824
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/zod/src/v4/core/checks.ts",
+        "lines": 1294
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/zod/src/v4/core/schemas.ts",
+        "lines": 4731
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/zod/src/v4/core/util.ts",
+        "lines": 984
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/zod/src/v4/mini/schemas.ts",
+        "lines": 1948
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/zod/src/v4/mini/tests/index.test.ts",
+        "lines": 994
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/zod/v3/types.d.ts",
+        "lines": 1035
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/zod/v4/classic/schemas.d.ts",
+        "lines": 768
+      },
+      {
+        "path": "Frontend/PlantProcess.Web/node_modules/zod/v4/core/schemas.d.ts",
+        "lines": 1185
+      },
+      {
+        "path": "Website/PlantProcess.Website/node_modules/@oxc-project/types/types.d.ts",
+        "lines": 1913
+      },
+      {
+        "path": "Website/PlantProcess.Website/node_modules/@types/node/assert.d.ts",
+        "lines": 1116
+      },
+      {
+        "path": "Website/PlantProcess.Website/node_modules/@types/node/buffer.d.ts",
+        "lines": 1935
+      },
+      {
+        "path": "Website/PlantProcess.Website/node_modules/@types/node/child_process.d.ts",
+        "lines": 1477
+      },
+      {
+        "path": "Website/PlantProcess.Website/node_modules/@types/node/crypto.d.ts",
+        "lines": 5418
+      },
+      {
+        "path": "Website/PlantProcess.Website/node_modules/@types/node/dns.d.ts",
+        "lines": 924
+      },
+      {
+        "path": "Website/PlantProcess.Website/node_modules/@types/node/events.d.ts",
+        "lines": 977
+      },
+      {
+        "path": "Website/PlantProcess.Website/node_modules/@types/node/fs.d.ts",
+        "lines": 4715
+      },
+      {
+        "path": "Website/PlantProcess.Website/node_modules/@types/node/fs/promises.d.ts",
+        "lines": 1331
+      },
+      {
+        "path": "Website/PlantProcess.Website/node_modules/@types/node/http.d.ts",
+        "lines": 2155
+      },
+      {
+        "path": "Website/PlantProcess.Website/node_modules/@types/node/http2.d.ts",
+        "lines": 2832
+      },
+      {
+        "path": "Website/PlantProcess.Website/node_modules/@types/node/inspector.generated.d.ts",
+        "lines": 4247
+      },
+      {
+        "path": "Website/PlantProcess.Website/node_modules/@types/node/module.d.ts",
+        "lines": 906
+      },
+      {
+        "path": "Website/PlantProcess.Website/node_modules/@types/node/net.d.ts",
+        "lines": 1074
+      },
+      {
+        "path": "Website/PlantProcess.Website/node_modules/@types/node/perf_hooks.d.ts",
+        "lines": 1043
+      },
+      {
+        "path": "Website/PlantProcess.Website/node_modules/@types/node/process.d.ts",
+        "lines": 2084
+      },
+      {
+        "path": "Website/PlantProcess.Website/node_modules/@types/node/sqlite.d.ts",
+        "lines": 959
+      },
+      {
+        "path": "Website/PlantProcess.Website/node_modules/@types/node/stream.d.ts",
+        "lines": 1707
+      },
+      {
+        "path": "Website/PlantProcess.Website/node_modules/@types/node/test.d.ts",
+        "lines": 2341
+      },
+      {
+        "path": "Website/PlantProcess.Website/node_modules/@types/node/tls.d.ts",
+        "lines": 1274
+      },
+      {
+        "path": "Website/PlantProcess.Website/node_modules/@types/node/url.d.ts",
+        "lines": 1058
+      },
+      {
+        "path": "Website/PlantProcess.Website/node_modules/@types/node/util.d.ts",
+        "lines": 2334
+      },
+      {
+        "path": "Website/PlantProcess.Website/node_modules/@types/node/v8.d.ts",
+        "lines": 979
+      },
+      {
+        "path": "Website/PlantProcess.Website/node_modules/@types/node/vm.d.ts",
+        "lines": 1196
+      },
+      {
+        "path": "Website/PlantProcess.Website/node_modules/@types/node/worker_threads.d.ts",
+        "lines": 895
+      },
+      {
+        "path": "Website/PlantProcess.Website/node_modules/@types/node/zlib.d.ts",
+        "lines": 746
+      },
+      {
+        "path": "Website/PlantProcess.Website/node_modules/@types/react/index.d.ts",
+        "lines": 4371
+      },
+      {
+        "path": "Website/PlantProcess.Website/node_modules/@types/react/ts5.0/index.d.ts",
+        "lines": 4358
+      },
+      {
+        "path": "Website/PlantProcess.Website/node_modules/csstype/index.d.ts",
+        "lines": 22570
+      },
+      {
+        "path": "Website/PlantProcess.Website/node_modules/lightningcss/node/ast.d.ts",
+        "lines": 9893
+      },
+      {
+        "path": "Website/PlantProcess.Website/node_modules/lucide-react/dist/lucide-react.d.ts",
+        "lines": 25732
+      },
+      {
+        "path": "Website/PlantProcess.Website/node_modules/lucide-react/dist/lucide-react.prefixed.d.ts",
+        "lines": 25719
+      },
+      {
+        "path": "Website/PlantProcess.Website/node_modules/lucide-react/dist/lucide-react.suffixed.d.ts",
+        "lines": 25719
+      },
+      {
+        "path": "Website/PlantProcess.Website/node_modules/lucide-react/dynamic.d.ts",
+        "lines": 37943
+      },
+      {
+        "path": "Website/PlantProcess.Website/node_modules/lucide-react/dynamicIconImports.d.ts",
+        "lines": 37914
+      },
+      {
+        "path": "Website/PlantProcess.Website/node_modules/react-router/dist/development/data-BqZ2x964.d.ts",
+        "lines": 1733
+      },
+      {
+        "path": "Website/PlantProcess.Website/node_modules/react-router/dist/development/index-react-server-client-BS5F89FR.d.ts",
+        "lines": 3656
+      },
+      {
+        "path": "Website/PlantProcess.Website/node_modules/react-router/dist/development/index-react-server.d.ts",
+        "lines": 2704
+      },
+      {
+        "path": "Website/PlantProcess.Website/node_modules/react-router/dist/development/index.d.ts",
+        "lines": 1473
+      },
+      {
+        "path": "Website/PlantProcess.Website/node_modules/react-router/dist/development/instrumentation-cRWWLfsU.d.ts",
+        "lines": 716
+      },
+      {
+        "path": "Website/PlantProcess.Website/node_modules/react-router/dist/production/data-BqZ2x964.d.ts",
+        "lines": 1733
+      },
+      {
+        "path": "Website/PlantProcess.Website/node_modules/react-router/dist/production/index-react-server-client-BS5F89FR.d.ts",
+        "lines": 3656
+      },
+      {
+        "path": "Website/PlantProcess.Website/node_modules/react-router/dist/production/index-react-server.d.ts",
+        "lines": 2704
+      },
+      {
+        "path": "Website/PlantProcess.Website/node_modules/react-router/dist/production/index.d.ts",
+        "lines": 1473
+      },
+      {
+        "path": "Website/PlantProcess.Website/node_modules/react-router/dist/production/instrumentation-cRWWLfsU.d.ts",
+        "lines": 716
+      },
+      {
+        "path": "Website/PlantProcess.Website/node_modules/typescript/lib/lib.dom.d.ts",
+        "lines": 45126
+      },
+      {
+        "path": "Website/PlantProcess.Website/node_modules/typescript/lib/lib.es2020.bigint.d.ts",
+        "lines": 764
+      },
+      {
+        "path": "Website/PlantProcess.Website/node_modules/typescript/lib/lib.es2023.array.d.ts",
+        "lines": 923
+      },
+      {
+        "path": "Website/PlantProcess.Website/node_modules/typescript/lib/lib.es5.d.ts",
+        "lines": 4600
+      },
+      {
+        "path": "Website/PlantProcess.Website/node_modules/typescript/lib/lib.webworker.d.ts",
+        "lines": 15607
+      },
+      {
+        "path": "Website/PlantProcess.Website/node_modules/typescript/lib/typescript.d.ts",
+        "lines": 11449
+      },
+      {
+        "path": "Website/PlantProcess.Website/node_modules/vite/dist/node/index.d.ts",
+        "lines": 3886
+      }
+    ]
+  },
+  "overclaims": [],
+  "godFilePolicy": {
+    "repairedAtUtc": "2026-06-06T09:17:22.712Z",
+    "marker": "PPIQ_GROUND_TRUTH_GODFILE_POLICY_REPAIRED",
+    "excludes": [
+      "backup folders",
+      "Documentation/UltimateAudit_* generated audit output",
+      "node_modules/bin/obj/dist",
+      "EF generated migration Designer.cs files",
+      "EF generated PlantProcessDbContextModelSnapshot.cs"
+    ],
+    "trackedActiveDebt": "Known active large files remain visible under godFiles.tracked and must be refactored in dedicated packs, but they are not false unknown failures."
+  }
+}

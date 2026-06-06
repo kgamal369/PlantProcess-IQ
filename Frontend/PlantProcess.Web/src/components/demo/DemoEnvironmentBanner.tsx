@@ -12,7 +12,7 @@ export function DemoEnvironmentBanner() {
         layer · Active tier: {license?.displayName ?? "loading"}
       </span>
       <span>
-        No MES, SCADA, L2, PLC, or BI replacement. No guaranteed root cause. No
+        No MES, SCADA, L2, PLC, or BI replacement. No evidence-backed root-cause investigation. No
         production-ready ML model active.
       </span>
     </aside>

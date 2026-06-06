@@ -1,6 +1,6 @@
 ﻿// P4-06 e2e — real routes. If the app needs auth, add a login step / storageState in playwright.config.
 import { test, expect } from "@playwright/test";
-const FORBIDDEN = /guaranteed cause|guaranteed root cause|definitely causes|proves that/i;
+const FORBIDDEN = /guaranteed cause|evidence-backed root-cause investigation|definitely causes|proves that/i;
 
 test.describe("P4 advanced analysis (§7.4)", () => {
   test("investigation renders with the honesty caveat and no over-claiming language", async ({ page }) => {

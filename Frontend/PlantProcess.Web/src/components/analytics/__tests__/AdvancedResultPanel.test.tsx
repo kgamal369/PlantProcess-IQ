@@ -13,7 +13,7 @@ const renderable: AdvancedResult = {
   stabilityConsistency: 0.92,
   isStable: true,
   survivesStratification: true,
-  honestyCaveat: "This is a diagnostic association, not a guaranteed root cause.",
+  honestyCaveat: "This is a diagnostic association, not a evidence-backed root-cause investigation.",
 };
 
 describe("AdvancedResultPanel", () => {
@@ -21,7 +21,7 @@ describe("AdvancedResultPanel", () => {
     const html = renderToString(<AdvancedResultPanel result={renderable} />);
     expect(html).toContain("Spearman");
     expect(html).toContain("128");
-    expect(html).toContain("not a guaranteed root cause");
+    expect(html).toContain("not a evidence-backed root-cause investigation");
     expect(html).not.toContain("Result cannot be displayed");
   });
 

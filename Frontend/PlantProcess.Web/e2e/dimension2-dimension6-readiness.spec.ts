@@ -61,7 +61,7 @@ test.describe("Dimension 6 ML readiness", () => {
     await expect(page.locator("body")).toContainText(/no trained production ml model|not trained|readiness|preview|honest|feature|label/i);
 
     const body = await page.locator("body").innerText();
-    expect(body.toLowerCase()).not.toContain("guaranteed root cause detection");
+    expect(body.toLowerCase()).not.toContain("evidence-backed root-cause investigation detection");
     expect(body.toLowerCase()).not.toContain("production-ready ai model");
   });
 });

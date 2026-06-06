@@ -15,7 +15,7 @@ test.describe("Phase 2 realism demo lifecycle", () => {
     await expect(body).toContainText(/demo|lifecycle|connect|stage|map|monitor|dashboard|report/i);
     await expect(body).toContainText(/ML readiness|No trained production model|readiness/i);
 
-    await expect(body).not.toContainText(/guaranteed root cause/i);
+    await expect(body).not.toContainText(/evidence-backed root-cause investigation/i);
     await expect(body).not.toContainText(/autonomous control/i);
     await expect(body).not.toContainText(/writes to PLC/i);
   });

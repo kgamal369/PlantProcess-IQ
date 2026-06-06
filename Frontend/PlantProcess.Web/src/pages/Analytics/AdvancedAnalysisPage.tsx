@@ -18,7 +18,7 @@ export function AdvancedAnalysisPage() {
 
   const [readiness, setReadiness] = useState<AnalysisReadinessDto | null>(null);
   const [findings, setFindings] = useState<AdvancedFindingDto[]>([]);
-  const [caveat, setCaveat] = useState("This is a diagnostic association, not a guaranteed root cause.");
+  const [caveat, setCaveat] = useState("This is a diagnostic association, not a evidence-backed root-cause investigation.");
   const [isLoading, setLoading] = useState(true);
   const [error, setError] = useState<unknown>(null);
   const [reloadKey, setReloadKey] = useState(0);

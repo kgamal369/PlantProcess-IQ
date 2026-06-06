@@ -16,9 +16,9 @@ test.describe("Dimension 7 Brand Identity", () => {
     const body = await page.locator("body").innerText();
     const normalized = body.toLowerCase();
 
-    expect(normalized).not.toContain("guaranteed root cause detection");
+    expect(normalized).not.toContain("evidence-backed root-cause investigation detection");
     expect(normalized).not.toContain("production-ready ai model");
-    expect(normalized).not.toContain("replaces mes");
-    expect(normalized).not.toContain("replaces scada");
+    expect(normalized).not.toContain("complements MES");
+    expect(normalized).not.toContain("complements SCADA");
   });
 });

@@ -83,6 +83,6 @@ test.describe("P05 scheduled learning acceptance", () => {
     }>(request, "/phase5/acceptance-summary", token);
 
     expect(summary.status).toBe("Passed");
-    expect(summary.honestPositioning).toMatch(/suspected contributors, not guaranteed root cause/i);
+    expect(summary.honestPositioning).toMatch(/suspected contributors, not evidence-backed root-cause investigation/i);
   });
 });

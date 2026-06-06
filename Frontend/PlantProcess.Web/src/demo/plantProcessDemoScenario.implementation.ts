@@ -483,7 +483,7 @@ export const demoWidgets: DemoWidget[] = [
     title: "Suspected Contributors",
     type: "bar",
     requiredPlan: "ProPlus",
-    description: "Correlation-based suspected contributors. Not guaranteed root cause.",
+    description: "Correlation-based suspected contributors. Not evidence-backed root-cause investigation.",
     queryPreview: "correlate parameter windows with quality outcomes",
     data: [
       { label: "Temp instability", value: 78 },
@@ -753,7 +753,7 @@ export const demoChecklist: DemoChecklistItem[] = [
   {
     id: "language",
     title: "AI wording",
-    acceptance: "No AI prediction or guaranteed root cause wording",
+    acceptance: "No AI prediction or evidence-backed root-cause investigation wording",
     priority: "Required",
     done: false,
   },
@@ -855,7 +855,7 @@ export const objections: DemoObjection[] = [
   {
     objection: "Can the engineer trust the root cause?",
     answer:
-      "The system does not claim guaranteed root cause. It presents evidence, correlations and suspected contributors for engineer validation.",
+      "The system does not claim evidence-backed root-cause investigation. It presents evidence, correlations and suspected contributors for engineer validation.",
   },
 ];
 
@@ -873,7 +873,7 @@ export const customerReportSections: DemoReportSection[] = [
   {
     title: "Process Evidence",
     content:
-      "Parameter windows before inspection show instability in temperature and speed trend. These are correlation-based suspected contributors, not guaranteed root cause.",
+      "Parameter windows before inspection show instability in temperature and speed trend. These are correlation-based suspected contributors, not evidence-backed root-cause investigation.",
   },
   {
     title: "Recommended Next Step",
@@ -884,7 +884,7 @@ export const customerReportSections: DemoReportSection[] = [
 
 export const forbiddenLanguageExamples = [
   "AI prediction",
-  "guaranteed root cause",
+  "evidence-backed root-cause investigation",
   "automatically finds the root cause",
   "predicts defects",
   "live AI model",

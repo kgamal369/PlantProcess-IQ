@@ -47,10 +47,9 @@ function anyHas(relativePaths, marker) {
   const candidates = toArray(relativePaths);
 
   for (const relativePath of candidates) {
-    if (!existsFile(relativePath)) continue;
-
-    const text = fs.readFileSync(absolute(relativePath), "utf8");
-    if (containsIgnoreCase(text, marker)) return;
+    const file = path.join(root, relativePath);
+    if (!fs.existsSync(file) || !fs.statSync(file).isFile()) continue;
+    if (containsIgnoreCase(fs.readFileSync(file, "utf8"), marker)) return;
   }
 
   throw new Error("None of these files contains marker '" + marker + "': " + candidates.join(", "));

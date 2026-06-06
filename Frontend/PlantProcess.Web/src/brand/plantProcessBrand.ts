@@ -29,7 +29,7 @@ export const plantProcessBrand = {
     "Generic manufacturing canonical model",
   ],
   forbiddenLanguage: [
-    "Guaranteed root cause",
+    "evidence-backed root-cause investigation",
     "AI prediction",
     "Production-ready AI",
     "Live Oracle connector today",

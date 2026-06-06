@@ -30,7 +30,7 @@ describe("AdvancedAnalysisPage (§7.4)", () => {
       findingId: "casting_speed", method: "Spearman", effectSize: 0.6, qValue: 0.01, sampleSize: 90,
       stabilityLower: 0.4, stabilityUpper: 0.8, stabilityConsistency: 0.98, isStable: true,
       survivesStratification: true, significant: true, isRenderable: true,
-      honestyCaveat: "This is a diagnostic association, not a guaranteed root cause.",
+      honestyCaveat: "This is a diagnostic association, not a evidence-backed root-cause investigation.",
     }]);
     render(<MemoryRouter initialEntries={["/investigate/advanced?outcomeKey=defect.edge_crack_rate"]}><AdvancedAnalysisPage /></MemoryRouter>);
     await waitFor(() => expect(screen.getByText(/Spearman/)).toBeInTheDocument());

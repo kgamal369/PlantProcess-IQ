@@ -27,7 +27,7 @@ export type AdvancedResult = {
   evidenceHandle?: ProvenanceHandleRef | null;
 };
 
-const DEFAULT_CAVEAT = "This is a diagnostic association, not a guaranteed root cause.";
+const DEFAULT_CAVEAT = "This is a diagnostic association, not a evidence-backed root-cause investigation.";
 
 /** Mirrors AdvancedAnalysisResult.IsRenderable: missing method, sample size, readiness or caveat must not render. */
 export function isRenderable(r: AdvancedResult): boolean {
