@@ -1,0 +1,100 @@
+{
+  "generatedAtUtc": "2026-06-06T11:25:27.707Z",
+  "marker": "PPIQ_PACK_A1_CLOSURE_MAP",
+  "recommendedOrder": [
+    "T-010",
+    "T-028",
+    "T-007",
+    "T-035"
+  ],
+  "closureMap": [
+    {
+      "task": "T-010",
+      "packStep": "Pack A-2",
+      "title": "Archive landed run-once tooling scripts",
+      "priority": 1,
+      "risk": "LOW",
+      "reason": "Is 0% and mostly file organization/documentation if archive is done with manifest and no active validators moved.",
+      "acceptance": [
+        "Create tools/archive/run-once or tools/_archive/run-once folder",
+        "Move or copy landed one-off apply/repair/continue scripts into archive",
+        "Create archive manifest with original path, reason, and date",
+        "Keep reusable validators in active tools folders",
+        "Task closure score for T-010 >= 90"
+      ],
+      "currentFindings": {
+        "activeRunOnceCandidateCount": 28,
+        "archiveExists": true
+      }
+    },
+    {
+      "task": "T-028",
+      "packStep": "Pack A-3",
+      "title": "Wire all gate-exit tests into CI certification stage",
+      "priority": 2,
+      "risk": "MEDIUM",
+      "reason": "CI wiring should be done after Pack B/D validators exist and are green.",
+      "acceptance": [
+        "Certification stage references frontend build",
+        "Certification stage references backend build/test",
+        "Certification stage references Phase 5/6 validation",
+        "Certification stage references Pack B validation",
+        "Certification stage references Pack D validation",
+        "Certification stage references T001-T071 task closure gate",
+        "Task closure score for T-028 >= 90"
+      ],
+      "currentFindings": {
+        "missingSignals": [
+          {
+            "key": "taskClosure",
+            "label": "T001-T071 task closure"
+          },
+          {
+            "key": "routeContract",
+            "label": "Route contract validation"
+          }
+        ]
+      }
+    },
+    {
+      "task": "T-007",
+      "packStep": "Pack A-4",
+      "title": "De-duplicate Jenkinsfile and TelemetryIngestionWorker",
+      "priority": 3,
+      "risk": "MEDIUM",
+      "reason": "Dedup should happen after CI certification target is clear.",
+      "acceptance": [
+        "Single canonical Jenkinsfile/pipeline definition or clear wrapper/redirect",
+        "Single canonical TelemetryIngestionWorker class definition",
+        "No duplicate hosted-service worker registrations",
+        "Architecture/build tests remain green",
+        "Task closure score for T-007 >= 90"
+      ],
+      "currentFindings": {
+        "jenkinsfileCount": 2,
+        "telemetryClassDefinitions": 171,
+        "telemetryHostedServiceRegistrations": 0,
+        "duplicateRisk": "HIGH"
+      }
+    },
+    {
+      "task": "T-035",
+      "packStep": "Pack A-5",
+      "title": "Mapping and drift developer docs",
+      "priority": 4,
+      "risk": "LOW",
+      "reason": "Documentation should reference final validators and current mapping/drift reality.",
+      "acceptance": [
+        "Add mapping lifecycle developer guide",
+        "Add drift detection developer guide/runbook",
+        "Document business-key dictionary validation",
+        "Document safe SQL resolver behavior",
+        "Document troubleshooting and gate commands",
+        "Task closure score for T-035 >= 90"
+      ],
+      "currentFindings": {
+        "missingDocTopics": []
+      }
+    }
+  ]
+}

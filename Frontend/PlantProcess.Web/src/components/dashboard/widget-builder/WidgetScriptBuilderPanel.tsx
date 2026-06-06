@@ -95,11 +95,11 @@ export function WidgetScriptBuilderPanel({ onPublish }: { onPublish?: (widget: R
         {!showSql ? (
           <textarea value={script} spellCheck={false} rows={7}
             onChange={(e) => { setScript(e.target.value); setValidated(false); setPublished(false); }}
-            style={{ width: "100%", boxSizing: "border-box", background: "#050B18", color: "#EAF6FF",
+            style={{ width: "100%", boxSizing: "border-box", background: "var(--ppiq-color-bg-deep)", color: "#EAF6FF",
               border: "1px solid rgba(122,176,224,0.35)", borderRadius: 10, padding: 12,
               fontFamily: "JetBrains Mono, monospace", fontSize: 13, lineHeight: 1.6, resize: "vertical" }} />
         ) : (
-          <pre style={{ width: "100%", boxSizing: "border-box", background: "#050B18", color: "#00D4FF",
+          <pre style={{ width: "100%", boxSizing: "border-box", background: "var(--ppiq-color-bg-deep)", color: "var(--ppiq-color-accent-cyan)",
             border: "1px solid rgba(122,176,224,0.18)", borderRadius: 10, padding: 12, margin: 0,
             fontFamily: "JetBrains Mono, monospace", fontSize: 12, overflowX: "auto", whiteSpace: "pre-wrap" }}>
             {compiledSql || "Run Validate or Preview to see the compiled query."}

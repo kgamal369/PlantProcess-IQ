@@ -6,8 +6,8 @@ type ThreadRow = Record<string, unknown>;
 interface ApiRows<T> { rows: T[] }
 
 const C = {
-  navy: "#050B18", surface1: "#0C1A2E", surface2: "#10243C",
-  cyan: "#00D4FF", text: "#EAF6FF", muted: "#A0BDD8",
+  navy: "var(--ppiq-color-bg-deep)", surface1: "#0C1A2E", surface2: "#10243C",
+  cyan: "var(--ppiq-color-accent-cyan)", text: "#EAF6FF", muted: "#A0BDD8",
   success: "#2CE6A2", warning: "#FFD166", danger: "#FF4D6D",
   border: "rgba(122,176,224,0.18)", borderStrong: "rgba(122,176,224,0.35)",
 };

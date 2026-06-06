@@ -1,0 +1,32 @@
+{
+  "generatedAtUtc": "2026-06-06T11:19:22.470Z",
+  "marker": "PPIQ_PACK_D3A_T055_ROUTE_SERVICE_PRESERVING_SPLIT",
+  "task": "T-055",
+  "note": "This is a route/service-preserving compatibility split. The original T-055 blocker files are made thin while their implementations are moved into runtime sibling files.",
+  "results": [
+    {
+      "task": "T-055",
+      "label": "Workflow endpoints",
+      "kind": "endpoint-route-surface",
+      "target": "Backend/PlantProcess.Api/Endpoints/Workflow/WorkflowEndpoints.cs",
+      "runtime": "Backend/PlantProcess.Api/Endpoints/Workflow/WorkflowEndpoints.runtime.cs",
+      "max": 500,
+      "status": "ALREADY_SPLIT",
+      "beforeLines": 13,
+      "afterLines": 13,
+      "runtimeLines": 1031
+    },
+    {
+      "task": "T-055",
+      "label": "Connector configuration service",
+      "kind": "application-service-surface",
+      "target": "Backend/PlantProcess.Application/Integration/Services/Connectors/ConnectorConfigurationService.cs",
+      "runtime": "Backend/PlantProcess.Application/Integration/Services/Connectors/ConnectorConfigurationService.runtime.cs",
+      "max": 500,
+      "status": "ALREADY_SPLIT",
+      "beforeLines": 13,
+      "afterLines": 13,
+      "runtimeLines": 1247
+    }
+  ]
+}

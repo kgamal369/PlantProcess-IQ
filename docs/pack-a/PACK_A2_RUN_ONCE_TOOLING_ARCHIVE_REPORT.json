@@ -1,0 +1,263 @@
+{
+  "generatedAtUtc": "2026-06-06T11:27:16.059Z",
+  "marker": "PPIQ_PACK_A2_RUN_ONCE_TOOLING_ARCHIVE",
+  "task": "T-010",
+  "archiveRunDir": "tools/_archive/landed-tooling/20260606112715",
+  "archivedCount": 28,
+  "skippedCount": 0,
+  "note": "Archived landed one-off apply/repair/continue/fix/patch tooling scripts. Reusable validators and Invoke wrappers remain active.",
+  "results": [
+    {
+      "absolute": "C:\\Workspace\\PlantProcess-IQ\\tools\\ground-truth\\apply-ground-truth-validation-hotfix-pack.cjs",
+      "path": "tools/ground-truth/apply-ground-truth-validation-hotfix-pack.cjs",
+      "lines": 1064,
+      "sizeBytes": 43178,
+      "extension": "cjs",
+      "archivedPath": "tools/_archive/landed-tooling/20260606112715/tools/ground-truth/apply-ground-truth-validation-hotfix-pack.cjs",
+      "status": "ARCHIVED"
+    },
+    {
+      "absolute": "C:\\Workspace\\PlantProcess-IQ\\tools\\ground-truth\\repair-ground-truth-p03p04-and-godfile-policy.cjs",
+      "path": "tools/ground-truth/repair-ground-truth-p03p04-and-godfile-policy.cjs",
+      "lines": 762,
+      "sizeBytes": 31340,
+      "extension": "cjs",
+      "archivedPath": "tools/_archive/landed-tooling/20260606112715/tools/ground-truth/repair-ground-truth-p03p04-and-godfile-policy.cjs",
+      "status": "ARCHIVED"
+    },
+    {
+      "absolute": "C:\\Workspace\\PlantProcess-IQ\\tools\\ml\\Apply-PPIQ-v5-T209-T213.ps1",
+      "path": "tools/ml/Apply-PPIQ-v5-T209-T213.ps1",
+      "lines": 1497,
+      "sizeBytes": 57100,
+      "extension": "ps1",
+      "archivedPath": "tools/_archive/landed-tooling/20260606112715/tools/ml/Apply-PPIQ-v5-T209-T213.ps1",
+      "status": "ARCHIVED"
+    },
+    {
+      "absolute": "C:\\Workspace\\PlantProcess-IQ\\tools\\pack-a\\apply-pack-a1-remaining-cleanup-audit-closure-map.cjs",
+      "path": "tools/pack-a/apply-pack-a1-remaining-cleanup-audit-closure-map.cjs",
+      "lines": 941,
+      "sizeBytes": 29263,
+      "extension": "cjs",
+      "archivedPath": "tools/_archive/landed-tooling/20260606112715/tools/pack-a/apply-pack-a1-remaining-cleanup-audit-closure-map.cjs",
+      "status": "ARCHIVED"
+    },
+    {
+      "absolute": "C:\\Workspace\\PlantProcess-IQ\\tools\\pack-b\\apply-pack-b1-safe-frontend-refactor.cjs",
+      "path": "tools/pack-b/apply-pack-b1-safe-frontend-refactor.cjs",
+      "lines": 731,
+      "sizeBytes": 21835,
+      "extension": "cjs",
+      "archivedPath": "tools/_archive/landed-tooling/20260606112715/tools/pack-b/apply-pack-b1-safe-frontend-refactor.cjs",
+      "status": "ARCHIVED"
+    },
+    {
+      "absolute": "C:\\Workspace\\PlantProcess-IQ\\tools\\pack-b\\apply-pack-b2-widget-builder-content-split-v2.cjs",
+      "path": "tools/pack-b/apply-pack-b2-widget-builder-content-split-v2.cjs",
+      "lines": 651,
+      "sizeBytes": 18945,
+      "extension": "cjs",
+      "archivedPath": "tools/_archive/landed-tooling/20260606112715/tools/pack-b/apply-pack-b2-widget-builder-content-split-v2.cjs",
+      "status": "ARCHIVED"
+    },
+    {
+      "absolute": "C:\\Workspace\\PlantProcess-IQ\\tools\\pack-b\\apply-pack-b2-widget-builder-content-split.cjs",
+      "path": "tools/pack-b/apply-pack-b2-widget-builder-content-split.cjs",
+      "lines": 617,
+      "sizeBytes": 18747,
+      "extension": "cjs",
+      "archivedPath": "tools/_archive/landed-tooling/20260606112715/tools/pack-b/apply-pack-b2-widget-builder-content-split.cjs",
+      "status": "ARCHIVED"
+    },
+    {
+      "absolute": "C:\\Workspace\\PlantProcess-IQ\\tools\\pack-b\\apply-pack-b3-widget-builder-shell-retirement.cjs",
+      "path": "tools/pack-b/apply-pack-b3-widget-builder-shell-retirement.cjs",
+      "lines": 184,
+      "sizeBytes": 6045,
+      "extension": "cjs",
+      "archivedPath": "tools/_archive/landed-tooling/20260606112715/tools/pack-b/apply-pack-b3-widget-builder-shell-retirement.cjs",
+      "status": "ARCHIVED"
+    },
+    {
+      "absolute": "C:\\Workspace\\PlantProcess-IQ\\tools\\pack-b\\apply-pack-b4a-t037-compatibility-split.cjs",
+      "path": "tools/pack-b/apply-pack-b4a-t037-compatibility-split.cjs",
+      "lines": 299,
+      "sizeBytes": 9620,
+      "extension": "cjs",
+      "archivedPath": "tools/_archive/landed-tooling/20260606112715/tools/pack-b/apply-pack-b4a-t037-compatibility-split.cjs",
+      "status": "ARCHIVED"
+    },
+    {
+      "absolute": "C:\\Workspace\\PlantProcess-IQ\\tools\\pack-b\\repair-pack-b1-css-safe-split.cjs",
+      "path": "tools/pack-b/repair-pack-b1-css-safe-split.cjs",
+      "lines": 390,
+      "sizeBytes": 10306,
+      "extension": "cjs",
+      "archivedPath": "tools/_archive/landed-tooling/20260606112715/tools/pack-b/repair-pack-b1-css-safe-split.cjs",
+      "status": "ARCHIVED"
+    },
+    {
+      "absolute": "C:\\Workspace\\PlantProcess-IQ\\tools\\pack-b\\repair-pack-b2-generated-split-compile.cjs",
+      "path": "tools/pack-b/repair-pack-b2-generated-split-compile.cjs",
+      "lines": 344,
+      "sizeBytes": 10654,
+      "extension": "cjs",
+      "archivedPath": "tools/_archive/landed-tooling/20260606112715/tools/pack-b/repair-pack-b2-generated-split-compile.cjs",
+      "status": "ARCHIVED"
+    },
+    {
+      "absolute": "C:\\Workspace\\PlantProcess-IQ\\tools\\pack-b\\repair-pack-b2-import-syntax.cjs",
+      "path": "tools/pack-b/repair-pack-b2-import-syntax.cjs",
+      "lines": 209,
+      "sizeBytes": 6709,
+      "extension": "cjs",
+      "archivedPath": "tools/_archive/landed-tooling/20260606112715/tools/pack-b/repair-pack-b2-import-syntax.cjs",
+      "status": "ARCHIVED"
+    },
+    {
+      "absolute": "C:\\Workspace\\PlantProcess-IQ\\tools\\pack-d\\apply-pack-d1-backend-split-audit-route-snapshot.cjs",
+      "path": "tools/pack-d/apply-pack-d1-backend-split-audit-route-snapshot.cjs",
+      "lines": 732,
+      "sizeBytes": 22624,
+      "extension": "cjs",
+      "archivedPath": "tools/_archive/landed-tooling/20260606112715/tools/pack-d/apply-pack-d1-backend-split-audit-route-snapshot.cjs",
+      "status": "ARCHIVED"
+    },
+    {
+      "absolute": "C:\\Workspace\\PlantProcess-IQ\\tools\\pack-d\\apply-pack-d2a-t054-route-preserving-split.cjs",
+      "path": "tools/pack-d/apply-pack-d2a-t054-route-preserving-split.cjs",
+      "lines": 314,
+      "sizeBytes": 9803,
+      "extension": "cjs",
+      "archivedPath": "tools/_archive/landed-tooling/20260606112715/tools/pack-d/apply-pack-d2a-t054-route-preserving-split.cjs",
+      "status": "ARCHIVED"
+    },
+    {
+      "absolute": "C:\\Workspace\\PlantProcess-IQ\\tools\\pack-d\\apply-pack-d3a-t055-route-service-preserving-split.cjs",
+      "path": "tools/pack-d/apply-pack-d3a-t055-route-service-preserving-split.cjs",
+      "lines": 345,
+      "sizeBytes": 10851,
+      "extension": "cjs",
+      "archivedPath": "tools/_archive/landed-tooling/20260606112715/tools/pack-d/apply-pack-d3a-t055-route-service-preserving-split.cjs",
+      "status": "ARCHIVED"
+    },
+    {
+      "absolute": "C:\\Workspace\\PlantProcess-IQ\\tools\\pack-d\\repair-pack-d1-target-paths.cjs",
+      "path": "tools/pack-d/repair-pack-d1-target-paths.cjs",
+      "lines": 274,
+      "sizeBytes": 8632,
+      "extension": "cjs",
+      "archivedPath": "tools/_archive/landed-tooling/20260606112715/tools/pack-d/repair-pack-d1-target-paths.cjs",
+      "status": "ARCHIVED"
+    },
+    {
+      "absolute": "C:\\Workspace\\PlantProcess-IQ\\tools\\phase3-phase4\\repair-phase34-validator-frontend-path-policy.cjs",
+      "path": "tools/phase3-phase4/repair-phase34-validator-frontend-path-policy.cjs",
+      "lines": 219,
+      "sizeBytes": 8779,
+      "extension": "cjs",
+      "archivedPath": "tools/_archive/landed-tooling/20260606112715/tools/phase3-phase4/repair-phase34-validator-frontend-path-policy.cjs",
+      "status": "ARCHIVED"
+    },
+    {
+      "absolute": "C:\\Workspace\\PlantProcess-IQ\\tools\\phase3-phase4\\repair-phase34-validator-marker-policy.cjs",
+      "path": "tools/phase3-phase4/repair-phase34-validator-marker-policy.cjs",
+      "lines": 197,
+      "sizeBytes": 8238,
+      "extension": "cjs",
+      "archivedPath": "tools/_archive/landed-tooling/20260606112715/tools/phase3-phase4/repair-phase34-validator-marker-policy.cjs",
+      "status": "ARCHIVED"
+    },
+    {
+      "absolute": "C:\\Workspace\\PlantProcess-IQ\\tools\\phase56\\apply-phase5-phase6.cjs",
+      "path": "tools/phase56/apply-phase5-phase6.cjs",
+      "lines": 787,
+      "sizeBytes": 32020,
+      "extension": "cjs",
+      "archivedPath": "tools/_archive/landed-tooling/20260606112715/tools/phase56/apply-phase5-phase6.cjs",
+      "status": "ARCHIVED"
+    },
+    {
+      "absolute": "C:\\Workspace\\PlantProcess-IQ\\tools\\phase78\\apply-phase7-phase8-v2.cjs",
+      "path": "tools/phase78/apply-phase7-phase8-v2.cjs",
+      "lines": 588,
+      "sizeBytes": 29787,
+      "extension": "cjs",
+      "archivedPath": "tools/_archive/landed-tooling/20260606112715/tools/phase78/apply-phase7-phase8-v2.cjs",
+      "status": "ARCHIVED"
+    },
+    {
+      "absolute": "C:\\Workspace\\PlantProcess-IQ\\tools\\phase9-phase10\\apply-phase9-phase10.cjs",
+      "path": "tools/phase9-phase10/apply-phase9-phase10.cjs",
+      "lines": 505,
+      "sizeBytes": 19069,
+      "extension": "cjs",
+      "archivedPath": "tools/_archive/landed-tooling/20260606112715/tools/phase9-phase10/apply-phase9-phase10.cjs",
+      "status": "ARCHIVED"
+    },
+    {
+      "absolute": "C:\\Workspace\\PlantProcess-IQ\\tools\\phase9-phase10\\repair-phase10-demo-lead-marker.cjs",
+      "path": "tools/phase9-phase10/repair-phase10-demo-lead-marker.cjs",
+      "lines": 146,
+      "sizeBytes": 4876,
+      "extension": "cjs",
+      "archivedPath": "tools/_archive/landed-tooling/20260606112715/tools/phase9-phase10/repair-phase10-demo-lead-marker.cjs",
+      "status": "ARCHIVED"
+    },
+    {
+      "absolute": "C:\\Workspace\\PlantProcess-IQ\\tools\\phase9-phase10\\repair-phase10-website-overclaims.cjs",
+      "path": "tools/phase9-phase10/repair-phase10-website-overclaims.cjs",
+      "lines": 140,
+      "sizeBytes": 4336,
+      "extension": "cjs",
+      "archivedPath": "tools/_archive/landed-tooling/20260606112715/tools/phase9-phase10/repair-phase10-website-overclaims.cjs",
+      "status": "ARCHIVED"
+    },
+    {
+      "absolute": "C:\\Workspace\\PlantProcess-IQ\\tools\\phase9-phase10\\repair-phase9-phase10-validator-v2.cjs",
+      "path": "tools/phase9-phase10/repair-phase9-phase10-validator-v2.cjs",
+      "lines": 230,
+      "sizeBytes": 7980,
+      "extension": "cjs",
+      "archivedPath": "tools/_archive/landed-tooling/20260606112715/tools/phase9-phase10/repair-phase9-phase10-validator-v2.cjs",
+      "status": "ARCHIVED"
+    },
+    {
+      "absolute": "C:\\Workspace\\PlantProcess-IQ\\tools\\phase9-phase10\\repair-phase9-phase10-validator.cjs",
+      "path": "tools/phase9-phase10/repair-phase9-phase10-validator.cjs",
+      "lines": 277,
+      "sizeBytes": 10715,
+      "extension": "cjs",
+      "archivedPath": "tools/_archive/landed-tooling/20260606112715/tools/phase9-phase10/repair-phase9-phase10-validator.cjs",
+      "status": "ARCHIVED"
+    },
+    {
+      "absolute": "C:\\Workspace\\PlantProcess-IQ\\tools\\task-closure\\apply-task-closure-gate-t001-t071.cjs",
+      "path": "tools/task-closure/apply-task-closure-gate-t001-t071.cjs",
+      "lines": 815,
+      "sizeBytes": 33052,
+      "extension": "cjs",
+      "archivedPath": "tools/_archive/landed-tooling/20260606112715/tools/task-closure/apply-task-closure-gate-t001-t071.cjs",
+      "status": "ARCHIVED"
+    },
+    {
+      "absolute": "C:\\Workspace\\PlantProcess-IQ\\tools\\tests\\fix-api-integration-test-db-connection.cjs",
+      "path": "tools/tests/fix-api-integration-test-db-connection.cjs",
+      "lines": 308,
+      "sizeBytes": 10058,
+      "extension": "cjs",
+      "archivedPath": "tools/_archive/landed-tooling/20260606112715/tools/tests/fix-api-integration-test-db-connection.cjs",
+      "status": "ARCHIVED"
+    },
+    {
+      "absolute": "C:\\Workspace\\PlantProcess-IQ\\tools\\tests\\patch-api-test-local-db-resolver.cjs",
+      "path": "tools/tests/patch-api-test-local-db-resolver.cjs",
+      "lines": 61,
+      "sizeBytes": 2629,
+      "extension": "cjs",
+      "archivedPath": "tools/_archive/landed-tooling/20260606112715/tools/tests/patch-api-test-local-db-resolver.cjs",
+      "status": "ARCHIVED"
+    }
+  ]
+}

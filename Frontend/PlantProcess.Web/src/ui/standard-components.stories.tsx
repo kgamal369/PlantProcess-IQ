@@ -104,8 +104,8 @@ function StandardsPage() {
           {tab === "tokens" ? (
             <StandardCard title="Brand tokens" subtitle="Use tokens instead of one-off colors.">
               <div className="ppiq-token-grid">
-                <Token name="Brand" value="#00d4ff" />
-                <Token name="Background" value="#050b18" />
+                <Token name="Brand" value="var(--ppiq-color-accent-cyan)" />
+                <Token name="Background" value="var(--ppiq-color-bg-deep)" />
                 <Token name="Surface" value="#0b1730" />
                 <Token name="Success" value="#30d158" />
                 <Token name="Warning" value="#ffd166" />

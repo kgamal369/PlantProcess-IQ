@@ -1,0 +1,328 @@
+/*
+  PlantProcess IQ Pack B extracted legacy CSS chunk.
+  CSS-safe split: top-level block boundary only.
+  Generated: 2026-06-06T10:47:34.420Z
+*/
+
+
+.interactive-chart-item:hover {
+  opacity: 0.84;
+}
+
+.recharts-cartesian-axis-tick-value {
+  fill: #91a9c5;
+}
+
+.recharts-cartesian-grid line {
+  stroke: rgba(90, 194, 255, 0.1);
+}
+
+.recharts-tooltip-wrapper {
+  outline: none;
+}
+
+.recharts-default-tooltip {
+  color: var(--pp-text) !important;
+  background: rgba(4, 12, 26, 0.96) !important;
+  border: 1px solid rgba(90, 194, 255, 0.28) !important;
+  border-radius: 14px !important;
+  box-shadow: var(--pp-glow);
+}
+
+.recharts-tooltip-label,
+.recharts-tooltip-item {
+  color: var(--pp-text) !important;
+}
+
+/* --------------------------------------------------------------------------
+   Heatmap
+   -------------------------------------------------------------------------- */
+
+.heatmap {
+  display: grid;
+  gap: 8px;
+  overflow: auto;
+  padding: 8px;
+}
+
+.heatmap__row {
+  display: grid;
+  grid-template-columns: 140px repeat(auto-fit, minmax(74px, 1fr));
+  gap: 8px;
+  align-items: center;
+}
+
+.heatmap__axis {
+  color: var(--pp-muted);
+  font-weight: 900;
+  font-size: 0.78rem;
+}
+
+.heatmap__cell {
+  min-height: 52px;
+  border: 1px solid rgba(114, 231, 255, 0.38);
+  background: var(--pp-blue);
+  color: white;
+  border-radius: 14px;
+  font-weight: 900;
+}
+
+.heatmap__cell:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 28px rgba(19, 216, 255, 0.18);
+}
+
+/* --------------------------------------------------------------------------
+   Tables
+   -------------------------------------------------------------------------- */
+
+.table-wrap {
+  margin-top: 14px;
+  overflow: auto;
+  border: 1px solid rgba(90, 194, 255, 0.14);
+  border-radius: 16px;
+  background: rgba(2, 8, 19, 0.35);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  color: var(--pp-text);
+  background: transparent;
+}
+
+th,
+td {
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(90, 194, 255, 0.08);
+  text-align: left;
+  white-space: nowrap;
+}
+
+th {
+  color: #b9d5ef;
+  background: rgba(5, 18, 32, 0.86);
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+tbody tr:hover {
+  background: rgba(19, 216, 255, 0.07);
+}
+
+.sortable-header {
+  cursor: pointer;
+  user-select: none;
+}
+
+.sortable-header:hover,
+.sort-indicator {
+  color: var(--pp-cyan-soft);
+}
+
+/* --------------------------------------------------------------------------
+   Pagination / Toolbar
+   -------------------------------------------------------------------------- */
+
+.toolbar,
+.toolbar-row,
+.pagination-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.toolbar-row,
+.pagination-row {
+  justify-content: flex-end;
+}
+
+.pagination-row {
+  padding-top: 14px;
+  color: var(--pp-muted);
+}
+
+.pagination-row select {
+  color: var(--pp-text);
+  background: rgba(5, 18, 32, 0.74);
+  border: 1px solid rgba(90, 194, 255, 0.2);
+  border-radius: 12px;
+  padding: 9px 10px;
+}
+
+/* --------------------------------------------------------------------------
+   Pills / Risk / Confidence
+   -------------------------------------------------------------------------- */
+
+.risk-pill,
+.confidence-pill {
+  display: inline-flex;
+  border-radius: 999px;
+  padding: 4px 9px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 0.74rem;
+  font-weight: 900;
+}
+
+button.risk-pill {
+  cursor: pointer;
+}
+
+.risk-high,
+.risk-critical,
+.confidence-high {
+  color: #ff8ca0;
+  background: rgba(255, 77, 109, 0.12);
+}
+
+.risk-medium,
+.confidence-medium {
+  color: #ffd071;
+  background: rgba(255, 176, 32, 0.12);
+}
+
+.risk-low,
+.confidence-low {
+  color: #70ffc2;
+  background: rgba(45, 247, 163, 0.12);
+}
+
+/* --------------------------------------------------------------------------
+   Empty / Error / Loading
+   -------------------------------------------------------------------------- */
+
+.state-panel {
+  padding: 22px;
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  color: var(--pp-muted);
+}
+
+.state-panel strong,
+.empty-insight strong {
+  color: var(--pp-text-strong);
+}
+
+.state-panel--error,
+.error-box {
+  color: #ff8ca0;
+  background: rgba(255, 77, 109, 0.08);
+  border: 1px solid rgba(255, 77, 109, 0.18);
+}
+
+.empty-insight {
+  min-height: 220px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 8px;
+  text-align: center;
+  color: var(--pp-muted);
+}
+
+.empty-insight p {
+  margin: 0;
+  max-width: 420px;
+}
+
+.spin {
+  animation: pp-spin 0.9s linear infinite;
+}
+
+@keyframes pp-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Correlation / Mode Cards
+   -------------------------------------------------------------------------- */
+
+.mode-grid {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.mode-card {
+  border-radius: 16px;
+  padding: 14px;
+  display: grid;
+  gap: 4px;
+  text-align: left;
+}
+
+.mode-card span {
+  color: var(--pp-muted);
+  font-size: 0.82rem;
+}
+
+.mode-card--active {
+  border-color: rgba(114, 231, 255, 0.5);
+  background:
+    linear-gradient(135deg, rgba(19, 216, 255, 0.15), rgba(47, 107, 255, 0.16)),
+    rgba(10, 31, 54, 0.95);
+}
+
+.insight-box {
+  padding: 18px 20px;
+}
+
+.insight-box small {
+  color: var(--pp-muted);
+}
+
+/* --------------------------------------------------------------------------
+   Drilldown Drawer
+   -------------------------------------------------------------------------- */
+
+.drilldown-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 100;
+  width: min(480px, 92vw);
+  height: 100vh;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  color: var(--pp-text);
+  background:
+    radial-gradient(circle at top right, rgba(19, 216, 255, 0.13), transparent 18rem),
+    linear-gradient(180deg, #06111f, #030813);
+  border-left: 1px solid rgba(90, 194, 255, 0.22);
+  box-shadow: -28px 0 70px rgba(0, 0, 0, 0.34);
+}
+
+.drilldown-drawer__header {
+  padding: 22px;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid rgba(90, 194, 255, 0.14);
+}
+
+.drilldown-drawer__header span {
+  color: var(--pp-cyan-soft);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.drilldown-drawer__header h3 {
+  margin: 6px 0 4px;
+  color: var(--pp-text-strong);
+}
+
+.drilldown-drawer__header p {
+  margin: 0;
+  color: var(--pp-muted);
+}
+
+.drilldown-drawer__body {
+  padding: 18px 22px;
+  overflow: auto;
+}

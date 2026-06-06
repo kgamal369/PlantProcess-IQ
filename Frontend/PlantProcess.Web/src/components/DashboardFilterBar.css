@@ -40,7 +40,7 @@
   padding: 2px 8px;
   border-radius: 20px;
   background: rgba(0, 212, 255, 0.12);
-  color: #00d4ff;
+  color: var(--ppiq-color-accent-cyan);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0;
@@ -123,7 +123,7 @@
 }
 
 .piq-filter-select--active .piq-filter-select__label {
-  color: #00d4ff;
+  color: var(--ppiq-color-accent-cyan);
 }
 
 .piq-filter-select__icon {
@@ -134,7 +134,7 @@
 }
 
 .piq-filter-select--active .piq-filter-select__icon {
-  color: #00d4ff;
+  color: var(--ppiq-color-accent-cyan);
 }
 
 .piq-filter-select__label {
@@ -162,7 +162,7 @@
 }
 
 .piq-filter-select--active .piq-filter-select__caret {
-  color: #00d4ff;
+  color: var(--ppiq-color-accent-cyan);
 }
 
 /* ── FilterInput pill ────────────────────────────────────────── */
@@ -190,7 +190,7 @@
 }
 
 .piq-filter-input--active .piq-filter-input__label {
-  color: #00d4ff;
+  color: var(--ppiq-color-accent-cyan);
 }
 
 .piq-filter-input__icon {
@@ -201,7 +201,7 @@
 }
 
 .piq-filter-input--active .piq-filter-input__icon {
-  color: #00d4ff;
+  color: var(--ppiq-color-accent-cyan);
 }
 
 .piq-filter-input__label {

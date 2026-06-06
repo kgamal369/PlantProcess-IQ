@@ -112,7 +112,7 @@ export function V5SsoLicensingPage() {
   }
 
   return (
-    <main style={{ padding: 32, color: "#eaf7ff", background: "#050b18", minHeight: "100vh" }}>
+    <main style={{ padding: 32, color: "#eaf7ff", background: "var(--ppiq-color-bg-deep)", minHeight: "100vh" }}>
       <section
         style={{
           border: "1px solid rgba(0, 212, 255, 0.22)",
@@ -121,7 +121,7 @@ export function V5SsoLicensingPage() {
           background: "rgba(11, 23, 48, 0.82)",
         }}
       >
-        <p style={{ color: "#00d4ff", textTransform: "uppercase", letterSpacing: "0.08em", fontSize: 12 }}>
+        <p style={{ color: "var(--ppiq-color-accent-cyan)", textTransform: "uppercase", letterSpacing: "0.08em", fontSize: 12 }}>
           Doctrine v5 · Phase 9 / Phase 10
         </p>
         <h1>Enterprise SSO / SCIM + Signed Offline Licensing</h1>

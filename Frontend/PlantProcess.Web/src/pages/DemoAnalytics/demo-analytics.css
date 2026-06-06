@@ -30,7 +30,7 @@
 }
 
 .demo-analytics-eyebrow {
-  color: var(--ppiq-std-accent, #00d4ff) !important;
+  color: var(--ppiq-std-accent, var(--ppiq-color-accent-cyan)) !important;
   font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.14em;

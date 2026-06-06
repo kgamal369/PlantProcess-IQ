@@ -1,6 +1,6 @@
 
 :root {
-  --ppiq-std-bg-0: #050B18;
+  --ppiq-std-bg-0: var(--ppiq-color-bg-deep);
   --ppiq-std-bg-1: #081426;
   --ppiq-std-bg-2: #0B1730;
   --ppiq-std-surface-1: rgba(11, 23, 48, 0.88);
@@ -8,7 +8,7 @@
   --ppiq-std-border-subtle: rgba(0, 212, 255, 0.12);
   --ppiq-std-border-strong: rgba(0, 212, 255, 0.34);
   --ppiq-std-brand-blue: #0A84FF;
-  --ppiq-std-brand-cyan: #00D4FF;
+  --ppiq-std-brand-cyan: var(--ppiq-color-accent-cyan);
   --ppiq-std-success: #2CE6A2;
   --ppiq-std-warning: #FFD166;
   --ppiq-std-danger: #FF4D6D;
@@ -613,7 +613,7 @@
   flex-direction: column;
   border-radius: var(--ppiq-std-radius-xl);
   border: 1px solid var(--ppiq-std-border-strong);
-  background: linear-gradient(180deg, #0B1730, #050B18);
+  background: linear-gradient(180deg, #0B1730, var(--ppiq-color-bg-deep));
   box-shadow: 0 22px 60px rgba(0, 0, 0, 0.42), 0 0 28px rgba(0, 212, 255, 0.18);
   color: var(--ppiq-std-text);
 }
@@ -651,7 +651,7 @@
 .ppiq-std-standards-page {
   min-height: 100vh;
   padding: 28px;
-  background: radial-gradient(circle at 12% 0%, rgba(0, 212, 255, 0.12), transparent 34%), linear-gradient(180deg, #050B18, #081426);
+  background: radial-gradient(circle at 12% 0%, rgba(0, 212, 255, 0.12), transparent 34%), linear-gradient(180deg, var(--ppiq-color-bg-deep), #081426);
   color: var(--ppiq-std-text);
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
 }

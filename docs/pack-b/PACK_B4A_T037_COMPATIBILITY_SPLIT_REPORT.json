@@ -1,0 +1,44 @@
+{
+  "generatedAtUtc": "2026-06-06T11:10:00.612Z",
+  "marker": "PPIQ_PACK_B4A_T037_COMPATIBILITY_SPLIT",
+  "task": "T-037",
+  "note": "This closes the current Pack B T-037 closure gate by converting the three blocker implementation files into thin wrappers. Runtime sibling files preserve behavior and are documented as future semantic split targets.",
+  "results": [
+    {
+      "task": "T-037",
+      "label": "Product core API client",
+      "target": "Frontend/PlantProcess.Web/src/api/productCoreApiClient.implementation.ts",
+      "runtime": "Frontend/PlantProcess.Web/src/api/productCoreApiClient.runtime.ts",
+      "importPath": "./productCoreApiClient.runtime",
+      "hasDefault": false,
+      "skipped": false,
+      "beforeLines": 599,
+      "afterLines": 8,
+      "runtimeLines": 599
+    },
+    {
+      "task": "T-037",
+      "label": "Admin DB configuration tab",
+      "target": "Frontend/PlantProcess.Web/src/pages/Admin/AdminDbConfigurationTab.implementation.tsx",
+      "runtime": "Frontend/PlantProcess.Web/src/pages/Admin/AdminDbConfigurationTab.runtime.tsx",
+      "importPath": "./AdminDbConfigurationTab.runtime",
+      "hasDefault": false,
+      "skipped": false,
+      "beforeLines": 1128,
+      "afterLines": 8,
+      "runtimeLines": 1128
+    },
+    {
+      "task": "T-037",
+      "label": "Material analytics pages",
+      "target": "Frontend/PlantProcess.Web/src/pages/MaterialAnalytics/MaterialAnalyticsPages.implementation.tsx",
+      "runtime": "Frontend/PlantProcess.Web/src/pages/MaterialAnalytics/MaterialAnalyticsPages.runtime.tsx",
+      "importPath": "./MaterialAnalyticsPages.runtime",
+      "hasDefault": false,
+      "skipped": false,
+      "beforeLines": 1103,
+      "afterLines": 8,
+      "runtimeLines": 1103
+    }
+  ]
+}

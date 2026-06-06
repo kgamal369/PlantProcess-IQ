@@ -73,7 +73,7 @@ export function GroundedAssistantPage() {
         }}
       >
         <div>
-          <p style={{ color: "#00d4ff", textTransform: "uppercase", letterSpacing: "0.08em", fontSize: 12 }}>
+          <p style={{ color: "var(--ppiq-color-accent-cyan)", textTransform: "uppercase", letterSpacing: "0.08em", fontSize: 12 }}>
             P4 · Production Assistant
           </p>
           <h1 id="assistant-title">Grounded Assistant</h1>

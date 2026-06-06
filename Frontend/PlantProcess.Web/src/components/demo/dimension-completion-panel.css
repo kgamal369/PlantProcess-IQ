@@ -18,7 +18,7 @@
 
 .dimension-eyebrow {
   margin: 0 0 6px;
-  color: var(--color-accent-cyan, #00d4ff);
+  color: var(--color-accent-cyan, var(--ppiq-color-accent-cyan));
   font-size: 0.74rem;
   font-weight: 900;
   letter-spacing: 0.12em;
@@ -95,7 +95,7 @@
   width: fit-content;
   border-radius: 999px;
   padding: 6px 9px;
-  color: #050b18;
+  color: var(--ppiq-color-bg-deep);
   background: #2ce6a2;
   font-size: 0.72rem;
   font-weight: 900;
@@ -130,7 +130,7 @@
 }
 
 .completion-check strong {
-  color: var(--color-accent-cyan, #00d4ff);
+  color: var(--color-accent-cyan, var(--ppiq-color-accent-cyan));
 }
 
 .completion-check span {

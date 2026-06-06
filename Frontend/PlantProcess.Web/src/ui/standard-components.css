@@ -288,7 +288,7 @@
   width: min(720px, 100%);
   border: 1px solid var(--ppiq-border);
   border-radius: var(--ppiq-radius-xl);
-  background: linear-gradient(180deg, #0b1730, #050b18);
+  background: linear-gradient(180deg, #0b1730, var(--ppiq-color-bg-deep));
   box-shadow: var(--ppiq-shadow-md), var(--ppiq-shadow-glow);
   color: var(--ppiq-text);
 }

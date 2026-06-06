@@ -1,0 +1,592 @@
+[CmdletBinding()]
+
+
+
+
+
+
+
+param(
+
+
+
+
+
+
+
+    [string]$ProjectRoot = (Resolve-Path ".").Path,
+
+
+
+
+
+
+
+    [switch]$RunBuilds
+
+
+
+
+
+
+
+)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+$ErrorActionPreference = "Stop"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function Run-Step([string]$Name, [scriptblock]$Block) {
+
+
+
+
+
+
+
+    Write-Host ""
+
+
+
+
+
+
+
+    Write-Host "---- $Name" -ForegroundColor Cyan
+
+
+
+
+
+
+
+    & $Block
+
+
+
+
+
+
+
+    if ($LASTEXITCODE -ne 0) {
+
+
+
+
+
+
+
+        throw "$Name failed with exit code $LASTEXITCODE"
+
+
+
+
+
+
+
+    }
+
+
+
+
+
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Push-Location $ProjectRoot
+
+
+
+
+
+
+
+try {
+
+
+
+
+
+
+
+    Run-Step "T-001 to T-071 task-level closure gate" {
+
+
+
+
+
+
+
+        node ".\tools\task-closure\validate-t001-t071-task-closure.cjs"
+
+
+
+
+
+
+
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    if ($RunBuilds) {
+
+
+
+
+
+
+
+        Push-Location ".\Frontend\PlantProcess.Web"
+
+
+
+
+
+
+
+        try {
+
+
+
+
+
+
+
+            Run-Step "Frontend npm run build" {
+
+
+
+
+
+
+
+                npm run build
+
+
+
+
+
+
+
+            }
+
+
+
+
+
+
+
+        }
+
+
+
+
+
+
+
+        finally {
+
+
+
+
+
+
+
+            Pop-Location
+
+
+
+
+
+
+
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        Push-Location ".\Backend"
+
+
+
+
+
+
+
+        try {
+
+
+
+
+
+
+
+            Run-Step "Backend dotnet build" {
+
+
+
+
+
+
+
+                dotnet build
+
+
+
+
+
+
+
+            }
+
+
+
+
+
+
+
+        }
+
+
+
+
+
+
+
+        finally {
+
+
+
+
+
+
+
+            Pop-Location
+
+
+
+
+
+
+
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        if (Test-Path ".\Website\PlantProcess.Website\package.json") {
+
+
+
+
+
+
+
+            Push-Location ".\Website\PlantProcess.Website"
+
+
+
+
+
+
+
+            try {
+
+
+
+
+
+
+
+                $packageJson = Get-Content ".\package.json" -Raw | ConvertFrom-Json
+
+
+
+
+
+
+
+                if ($packageJson.scripts.PSObject.Properties.Name -contains "validate:phase10") {
+
+
+
+
+
+
+
+                    Run-Step "Website npm run validate:phase10" {
+
+
+
+
+
+
+
+                        npm run validate:phase10
+
+
+
+
+
+
+
+                    }
+
+
+
+
+
+
+
+                }
+
+
+
+
+
+
+
+                elseif ($packageJson.scripts.PSObject.Properties.Name -contains "build") {
+
+
+
+
+
+
+
+                    Run-Step "Website npm run build" {
+
+
+
+
+
+
+
+                        npm run build
+
+
+
+
+
+
+
+                    }
+
+
+
+
+
+
+
+                }
+
+
+
+
+
+
+
+            }
+
+
+
+
+
+
+
+            finally {
+
+
+
+
+
+
+
+                Pop-Location
+
+
+
+
+
+
+
+            }
+
+
+
+
+
+
+
+        }
+
+
+
+
+
+
+
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    Write-Host ""
+
+
+
+
+
+
+
+    Write-Host "=================================================================================================" -ForegroundColor DarkGray
+
+
+
+
+
+
+
+    Write-Host "T-001 to T-071 task closure gate completed." -ForegroundColor Green
+
+
+
+
+
+
+
+    Write-Host "Report: docs\task-closure\T001_T071_TASK_CLOSURE_SCORECARD.md" -ForegroundColor Green
+
+
+
+
+
+
+
+    Write-Host "=================================================================================================" -ForegroundColor DarkGray
+
+
+
+
+
+
+
+}
+
+
+
+
+
+
+
+finally {
+
+
+
+
+
+
+
+    Pop-Location
+
+
+
+
+
+
+
+}
+
+
+
+
+
+
+

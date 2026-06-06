@@ -1,0 +1,40 @@
+{
+  "generatedAtUtc": "2026-06-06T10:56:35.910Z",
+  "marker": "PPIQ_PACK_B2_WIDGET_BUILDER_CONTENT_SPLIT_V2",
+  "target": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/WidgetBuilderWizardContent.implementation.tsx",
+  "targetLines": 3,
+  "generatedFiles": [
+    {
+      "path": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/content/WidgetBuilderWizardContent.types.ts",
+      "lines": 46
+    },
+    {
+      "path": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/content/WidgetBuilderWizardContent.helpers.ts",
+      "lines": 258
+    },
+    {
+      "path": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/content/WidgetBuilderWizardContent.data-steps.tsx",
+      "lines": 271
+    },
+    {
+      "path": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/content/WidgetBuilderWizardContent.filter-step.tsx",
+      "lines": 300
+    },
+    {
+      "path": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/content/WidgetBuilderWizardContent.preview-steps.tsx",
+      "lines": 300
+    },
+    {
+      "path": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/content/WidgetBuilderWizardContent.model.ts",
+      "lines": 579
+    },
+    {
+      "path": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/content/WidgetBuilderWizardContent.view.tsx",
+      "lines": 342
+    },
+    {
+      "path": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/content/WidgetBuilderWizardContent.orchestrator.tsx",
+      "lines": 12
+    }
+  ]
+}

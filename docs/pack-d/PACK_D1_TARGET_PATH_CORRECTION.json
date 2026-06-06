@@ -1,0 +1,43 @@
+{
+  "generatedAtUtc": "2026-06-06T11:15:44.821Z",
+  "marker": "PPIQ_PACK_D1B_TARGET_PATH_CORRECTION",
+  "reason": "Pack D-1 used two stale target paths. This correction aligns Pack D validators with the actual repository locations.",
+  "correctedTargets": [
+    {
+      "task": "T-054",
+      "name": "GenericSchemaMappingEndpoints",
+      "max": 500,
+      "path": "Backend/PlantProcess.Api/Endpoints/Admin/GenericSchemaMappingEndpoints.cs",
+      "exists": true,
+      "lines": 1389,
+      "status": "SPLIT_REQUIRED"
+    },
+    {
+      "task": "T-054",
+      "name": "Phase1WorkflowTruthEndpoints",
+      "max": 500,
+      "path": "Backend/PlantProcess.Api/Endpoints/Admin/Phase1WorkflowTruthEndpoints.cs",
+      "exists": true,
+      "lines": 1368,
+      "status": "SPLIT_REQUIRED"
+    },
+    {
+      "task": "T-055",
+      "name": "WorkflowEndpoints",
+      "max": 500,
+      "path": "Backend/PlantProcess.Api/Endpoints/Workflow/WorkflowEndpoints.cs",
+      "exists": true,
+      "lines": 1031,
+      "status": "SPLIT_REQUIRED"
+    },
+    {
+      "task": "T-055",
+      "name": "ConnectorConfigurationService",
+      "max": 500,
+      "path": "Backend/PlantProcess.Application/Integration/Services/Connectors/ConnectorConfigurationService.cs",
+      "exists": true,
+      "lines": 1247,
+      "status": "SPLIT_REQUIRED"
+    }
+  ]
+}

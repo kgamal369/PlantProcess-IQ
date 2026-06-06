@@ -124,7 +124,7 @@
 .piq-dash-btn--primary {
   background: rgba(0, 212, 255, 0.10);
   border-color: rgba(0, 212, 255, 0.25);
-  color: #00d4ff;
+  color: var(--ppiq-color-accent-cyan);
 }
 
 .piq-dash-btn--primary:hover:not(:disabled) {

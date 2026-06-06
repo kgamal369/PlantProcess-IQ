@@ -191,7 +191,7 @@ function BootstrapScreen() {
           justifyContent: "center",
           gap: "1rem",
           background:
-            "linear-gradient(180deg,#050b18 0%,#081426 52%,#050b18 100%)",
+            "linear-gradient(180deg,var(--ppiq-color-bg-deep) 0%,#081426 52%,var(--ppiq-color-bg-deep) 100%)",
           color: "#eaf6ff",
           fontFamily: "Inter,ui-sans-serif,system-ui,sans-serif",
         }}
@@ -214,7 +214,7 @@ function BootstrapScreen() {
 
         <div style={{ textAlign: "center" }}>
           <p style={{ margin: "0 0 0.3rem", fontSize: 18, fontWeight: 700 }}>
-            PlantProcess <span style={{ color: "#00d4ff" }}>IQ</span>
+            PlantProcess <span style={{ color: "var(--ppiq-color-accent-cyan)" }}>IQ</span>
           </p>
           <p style={{ margin: 0, fontSize: 13, color: "#5a7a9a" }}>
             Connecting to backend...
@@ -234,7 +234,7 @@ function BootstrapScreen() {
             style={{
               height: "100%",
               width: "40%",
-              background: "linear-gradient(90deg,#00d4ff,#0a84ff)",
+              background: "linear-gradient(90deg,var(--ppiq-color-accent-cyan),#0a84ff)",
               borderRadius: 2,
               animation: "piq-shimmer 1.4s ease-in-out infinite",
             }}
@@ -262,7 +262,7 @@ function BootstrapScreen() {
           justifyContent: "center",
           gap: "1.25rem",
           background:
-            "linear-gradient(180deg,#050b18 0%,#081426 52%,#050b18 100%)",
+            "linear-gradient(180deg,var(--ppiq-color-bg-deep) 0%,#081426 52%,var(--ppiq-color-bg-deep) 100%)",
           color: "#eaf6ff",
           fontFamily: "Inter,ui-sans-serif,system-ui,sans-serif",
           padding: "2rem",
@@ -310,7 +310,7 @@ function BootstrapScreen() {
               borderRadius: 8,
               border: "1px solid rgba(0,212,255,0.25)",
               background: "rgba(0,212,255,0.08)",
-              color: "#00d4ff",
+              color: "var(--ppiq-color-accent-cyan)",
               fontSize: 13,
               fontWeight: 600,
               cursor: "pointer",

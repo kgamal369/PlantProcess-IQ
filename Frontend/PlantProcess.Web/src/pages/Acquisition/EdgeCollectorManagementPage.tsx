@@ -62,7 +62,7 @@ export function EdgeCollectorManagementPage() {
         }}
       >
         <div>
-          <p style={{ color: "#00d4ff", textTransform: "uppercase", letterSpacing: "0.08em", fontSize: 12 }}>
+          <p style={{ color: "var(--ppiq-color-accent-cyan)", textTransform: "uppercase", letterSpacing: "0.08em", fontSize: 12 }}>
             P5 · OT-Safe Acquisition
           </p>
           <h1 id="edge-title">Edge Collector Management</h1>

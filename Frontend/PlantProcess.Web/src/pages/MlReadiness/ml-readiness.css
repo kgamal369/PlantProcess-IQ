@@ -46,7 +46,7 @@
 .ml-metric-card strong {
   display: block;
   margin: 14px 0 8px;
-  color: var(--color-accent-cyan, #00d4ff);
+  color: var(--color-accent-cyan, var(--ppiq-color-accent-cyan));
   font-size: 1.5rem;
 }
 
@@ -77,7 +77,7 @@
 }
 
 .ml-label-row--head {
-  color: var(--color-accent-cyan, #00d4ff);
+  color: var(--color-accent-cyan, var(--ppiq-color-accent-cyan));
   background: rgba(16, 42, 67, 0.86);
   font-size: 0.78rem;
   font-weight: 900;
@@ -115,8 +115,8 @@
   margin: 8px 0;
   padding: 5px 8px;
   border-radius: 999px;
-  color: #050b18;
-  background: #00d4ff;
+  color: var(--ppiq-color-bg-deep);
+  background: var(--ppiq-color-accent-cyan);
   font-size: 0.72rem;
   font-weight: 900;
 }

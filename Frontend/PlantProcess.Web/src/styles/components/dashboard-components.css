@@ -37,7 +37,7 @@
 .demo-mode-toggle.active {
   background: rgba(0, 212, 255, 0.10);
   border-color: rgba(0, 212, 255, 0.30);
-  color: #00d4ff;
+  color: var(--ppiq-color-accent-cyan);
 }
 
 .demo-plan-select {
@@ -89,7 +89,7 @@
   text-decoration: none;
   background: rgba(0, 212, 255, 0.08);
   border: 1px solid rgba(0, 212, 255, 0.20);
-  color: #00d4ff;
+  color: var(--ppiq-color-accent-cyan);
   transition: background 0.12s, border-color 0.12s;
 }
 
@@ -186,7 +186,7 @@
 }
 
 .visual-selection-chip strong {
-  color: #00d4ff;
+  color: var(--ppiq-color-accent-cyan);
   font-weight: 700;
 }
 
@@ -485,7 +485,7 @@ html[data-theme="light"] .selection-breadcrumb .secondary-button:hover:not(:disa
 }
 
 .dashboard-widget__drag-handle:hover {
-  color: #00d4ff;
+  color: var(--ppiq-color-accent-cyan);
 }
 
 .widget-icon {
@@ -564,7 +564,7 @@ html[data-theme="light"] .selection-breadcrumb .secondary-button:hover:not(:disa
 
 .widget-chart-btn--active {
   background: rgba(0, 212, 255, 0.15);
-  color: #00d4ff;
+  color: var(--ppiq-color-accent-cyan);
 }
 
 /* ── Icon buttons ───────────────────────────────────────────── */
@@ -725,7 +725,7 @@ html[data-theme="light"] .selection-breadcrumb .secondary-button:hover:not(:disa
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #00d4ff;
+  color: var(--ppiq-color-accent-cyan);
   flex-shrink: 0;
 }
 

@@ -34,7 +34,7 @@
 
 .license-eyebrow {
   margin: 0 0 6px;
-  color: var(--color-accent-cyan, #00d4ff);
+  color: var(--color-accent-cyan, var(--ppiq-color-accent-cyan));
   text-transform: uppercase;
   letter-spacing: 0.12em;
   font-size: 0.72rem;
@@ -46,8 +46,8 @@
   width: fit-content;
   border-radius: 999px;
   padding: 7px 12px;
-  color: #050b18;
-  background: #00d4ff;
+  color: var(--ppiq-color-bg-deep);
+  background: var(--ppiq-color-accent-cyan);
   font-size: 0.78rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -202,7 +202,7 @@
 }
 
 .connector-truth-head {
-  color: var(--color-accent-cyan, #00d4ff);
+  color: var(--color-accent-cyan, var(--ppiq-color-accent-cyan));
   background: rgba(16, 42, 67, 0.8);
   font-size: 0.76rem;
   font-weight: 900;

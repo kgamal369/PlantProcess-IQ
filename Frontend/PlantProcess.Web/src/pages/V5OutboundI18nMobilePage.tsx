@@ -130,7 +130,7 @@ function V5OutboundI18nMobileInner() {
         minHeight: "100vh",
         padding: "clamp(16px, 4vw, 32px)",
         color: "#eaf7ff",
-        background: "#050b18",
+        background: "var(--ppiq-color-bg-deep)",
       }}
     >
       <section
@@ -145,7 +145,7 @@ function V5OutboundI18nMobileInner() {
           margin: "0 auto",
         }}
       >
-        <p style={{ color: "#00d4ff", textTransform: "uppercase", letterSpacing: "0.08em", fontSize: 12 }}>
+        <p style={{ color: "var(--ppiq-color-accent-cyan)", textTransform: "uppercase", letterSpacing: "0.08em", fontSize: 12 }}>
           Doctrine v5 · Phase 11 / Phase 12
         </p>
 

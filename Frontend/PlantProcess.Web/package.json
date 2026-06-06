@@ -81,7 +81,10 @@
     "phase78:validate": "node ../../tools/phase78/validate-phase78.cjs",
     "test:i18n-rtl": "playwright test e2e/i18n/phase78-i18n-rtl.spec.ts",
     "phase9:matrix": "playwright test --config=playwright.phase9.config.ts --list",
-    "phase9-phase10:validate": "node ../../tools/phase9-phase10/validate-phase9-phase10.cjs"
+    "phase9-phase10:validate": "node ../../tools/phase9-phase10/validate-phase9-phase10.cjs",
+    "pack-b:validate": "node ../../tools/pack-b/validate-pack-b-p05-closure.cjs",
+    "pack-b:brand-tokens": "node ../../tools/pack-b/validate-raw-brand-tokens.cjs",
+    "pack-b:split-plan": "node ../../tools/pack-b/analyze-pack-b-split-plan.cjs"
   },
   "dependencies": {
     "lucide-react": "^1.14.0",

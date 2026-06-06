@@ -1,7 +1,7 @@
 
 export const ppiqTokens = {
   color: {
-    navy900: "#050B18",
+    navy900: "var(--ppiq-color-bg-deep)",
     navy800: "#081426",
     navy700: "#0B1730",
     navy600: "#10213D",
@@ -10,7 +10,7 @@ export const ppiqTokens = {
     borderSubtle: "rgba(0, 212, 255, 0.12)",
     borderStrong: "rgba(0, 212, 255, 0.34)",
     brandBlue: "#0A84FF",
-    brandCyan: "#00D4FF",
+    brandCyan: "var(--ppiq-color-accent-cyan)",
     success: "#2CE6A2",
     warning: "#FFD166",
     danger: "#FF4D6D",

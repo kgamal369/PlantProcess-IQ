@@ -1,0 +1,47 @@
+{
+  "generatedAtUtc": "2026-06-06T10:59:55.102Z",
+  "marker": "PPIQ_PACK_B2_GENERATED_SPLIT_COMPILE_REPAIR",
+  "files": [
+    {
+      "path": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/content/WidgetBuilderWizardContent.data-steps.tsx",
+      "lines": 269,
+      "exceeds400": false
+    },
+    {
+      "path": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/content/WidgetBuilderWizardContent.filter-step.tsx",
+      "lines": 301,
+      "exceeds400": false
+    },
+    {
+      "path": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/content/WidgetBuilderWizardContent.helpers.ts",
+      "lines": 260,
+      "exceeds400": false
+    },
+    {
+      "path": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/content/WidgetBuilderWizardContent.model.ts",
+      "lines": 585,
+      "exceeds400": true
+    },
+    {
+      "path": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/content/WidgetBuilderWizardContent.orchestrator.tsx",
+      "lines": 13,
+      "exceeds400": false
+    },
+    {
+      "path": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/content/WidgetBuilderWizardContent.preview-steps.tsx",
+      "lines": 298,
+      "exceeds400": false
+    },
+    {
+      "path": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/content/WidgetBuilderWizardContent.types.ts",
+      "lines": 46,
+      "exceeds400": false
+    },
+    {
+      "path": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/content/WidgetBuilderWizardContent.view.tsx",
+      "lines": 348,
+      "exceeds400": false
+    }
+  ],
+  "note": "This repair fixes compile errors in the generated WidgetBuilderWizardContent split. Any generated file above 400 lines remains a follow-up split target."
+}

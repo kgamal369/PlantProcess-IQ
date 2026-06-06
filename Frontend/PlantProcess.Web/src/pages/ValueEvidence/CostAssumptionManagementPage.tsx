@@ -64,7 +64,7 @@ function BandEditor({
         gap: 10,
       }}
     >
-      <legend style={{ paddingInline: 8, color: "#00d4ff", fontWeight: 800 }}>{label}</legend>
+      <legend style={{ paddingInline: 8, color: "var(--ppiq-color-accent-cyan)", fontWeight: 800 }}>{label}</legend>
       {(["low", "mid", "high"] as const).map((key) => (
         <label key={key} style={{ display: "grid", gap: 4 }}>
           <span>{key.toUpperCase()}</span>
@@ -174,7 +174,7 @@ function CostAssumptionInner() {
       >
         <div style={{ display: "flex", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
           <div>
-            <p style={{ color: "#00d4ff", textTransform: "uppercase", letterSpacing: "0.08em", fontSize: 12 }}>
+            <p style={{ color: "var(--ppiq-color-accent-cyan)", textTransform: "uppercase", letterSpacing: "0.08em", fontSize: 12 }}>
               P3 · Value & Evidence in HMI
             </p>
             <h1 id="p3-cost-title" style={{ margin: 0 }}>

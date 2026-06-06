@@ -202,6 +202,46 @@ pipeline {
             }
         }
 
+        stage('2z. Gate-exit certification') {
+            steps {
+                sh '''
+                    set -e
+                    cd ${REPO_DIR}
+
+                    echo "PPIQ_PACK_A3_CI_CERTIFICATION"
+                    echo "taskClosure: T001-T071 task closure gate"
+                    echo "routeContract: Pack D route contract snapshot"
+
+                    docker run --rm \
+                      -v "$PWD:/app" \
+                      -w /app \
+                      node:20-alpine \
+                      sh -lc '
+                        set -e
+                        node --version
+
+                        # taskClosure
+                        node tools/task-closure/validate-t001-t071-task-closure.cjs
+
+                        # routeContract
+                        node tools/pack-d/validate-pack-d-route-contract-snapshot.cjs
+
+                        node tools/pack-b/validate-pack-b-p05-closure.cjs
+                        node tools/pack-d/validate-pack-d-backend-thinness.cjs
+                        node tools/phase56/validate-phase56.cjs
+                        node tools/ci/write-certification-gate-report.cjs
+                      '
+                '''
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: 'docs/ci/gate-report.json', allowEmptyArchive: true
+                    archiveArtifacts artifacts: 'docs/task-closure/T001_T071_TASK_CLOSURE_SCORECARD.*', allowEmptyArchive: true
+                    archiveArtifacts artifacts: 'docs/pack-d/PACK_D1_ROUTE_CONTRACT_SNAPSHOT.*', allowEmptyArchive: true
+                }
+            }
+        }
+
         stage('3. Build images') {
             steps {
                 sh '''

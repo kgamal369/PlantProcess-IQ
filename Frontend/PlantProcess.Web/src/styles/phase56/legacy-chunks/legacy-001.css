@@ -1,0 +1,334 @@
+/*
+  PlantProcess IQ Pack B extracted legacy CSS chunk.
+  CSS-safe split: top-level block boundary only.
+  Generated: 2026-06-06T10:47:34.404Z
+*/
+
+/* Migrated from styles/legacy/legacy-global.css by Phase 5.
+   Retained under phase56 namespace while selectors are gradually converted to design-system modules.
+   This file is intentionally not named legacy-global.css and the old import is retired. */
+
+/* ==========================================================================
+   PlantProcess IQ — Industrial AI / Digital Twin Theme
+   Clean production stylesheet
+   Visual direction:
+   - Dark control-room dashboard
+   - Deep navy / black background
+   - Cyan-blue neon glow
+   - Glass panels
+   - Vertical sidebar button navigation
+   - Interactive dashboard widgets
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Design Tokens
+   -------------------------------------------------------------------------- */
+
+:root {
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+
+  --pp-bg-0: #020712;
+  --pp-bg-1: #04101f;
+  --pp-bg-2: #071a2d;
+  --pp-bg-3: #0b233b;
+
+  --pp-panel: rgba(8, 24, 43, 0.82);
+  --pp-panel-strong: rgba(10, 31, 54, 0.95);
+  --pp-panel-soft: rgba(14, 39, 67, 0.68);
+  --pp-panel-deep: rgba(3, 10, 22, 0.92);
+
+  --pp-border: rgba(90, 194, 255, 0.18);
+  --pp-border-strong: rgba(90, 194, 255, 0.42);
+  --pp-border-soft: rgba(90, 194, 255, 0.1);
+
+  --pp-cyan: #13d8ff;
+  --pp-cyan-soft: #72e7ff;
+  --pp-blue: #2f6bff;
+  --pp-blue-2: #1d4ed8;
+  --pp-indigo: #5b7cfa;
+  --pp-green: #2df7a3;
+  --pp-amber: #ffb020;
+  --pp-red: #ff4d6d;
+  --pp-purple: #9b5cff;
+
+  --pp-text: #eaf7ff;
+  --pp-text-strong: #ffffff;
+  --pp-muted: #91a9c5;
+  --pp-muted-2: #607895;
+  --pp-muted-3: #3f5875;
+
+  --pp-radius-xl: 28px;
+  --pp-radius-lg: 22px;
+  --pp-radius-md: 16px;
+  --pp-radius-sm: 12px;
+
+  --pp-shadow: 0 24px 80px rgba(0, 0, 0, 0.34);
+  --pp-shadow-soft: 0 16px 44px rgba(0, 0, 0, 0.22);
+  --pp-glow: 0 0 34px rgba(19, 216, 255, 0.22);
+  --pp-glow-strong: 0 0 52px rgba(19, 216, 255, 0.38);
+
+  color: var(--pp-text);
+  background: var(--pp-bg-0);
+}
+
+/* --------------------------------------------------------------------------
+   Base
+   -------------------------------------------------------------------------- */
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 1280px;
+  background: var(--pp-bg-0);
+}
+
+body {
+  margin: 0;
+  min-width: 1280px;
+  min-height: 100vh;
+  color: var(--pp-text);
+  background:
+    radial-gradient(circle at 16% 0%, rgba(19, 216, 255, 0.16), transparent 36rem),
+    radial-gradient(circle at 92% 12%, rgba(47, 107, 255, 0.22), transparent 40rem),
+    radial-gradient(circle at 70% 100%, rgba(45, 247, 163, 0.08), transparent 36rem),
+    linear-gradient(135deg, #020712 0%, #06111f 44%, #020712 100%);
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background:
+    linear-gradient(rgba(90, 194, 255, 0.034) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(90, 194, 255, 0.034) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(circle at 50% 20%, black, transparent 76%);
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 80% 10%, rgba(19, 216, 255, 0.08), transparent 26rem),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.34));
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* --------------------------------------------------------------------------
+   App Layout
+   -------------------------------------------------------------------------- */
+
+.app-shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+  background: transparent;
+}
+
+.main {
+  min-width: 0;
+  padding: 24px 26px 44px;
+}
+
+.page-shell {
+  display: grid;
+  gap: 18px;
+}
+
+/* --------------------------------------------------------------------------
+   Sidebar
+   -------------------------------------------------------------------------- */
+
+.sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+  padding: 22px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  color: var(--pp-text);
+  background:
+    radial-gradient(circle at 50% 0%, rgba(19, 216, 255, 0.19), transparent 18rem),
+    linear-gradient(180deg, rgba(4, 13, 27, 0.98), rgba(5, 17, 32, 0.96));
+  border-right: 1px solid rgba(90, 194, 255, 0.16);
+  box-shadow: 18px 0 70px rgba(0, 0, 0, 0.32);
+}
+
+.sidebar-glow {
+  position: absolute;
+  right: -110px;
+  bottom: 8%;
+  width: 250px;
+  height: 460px;
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(19, 216, 255, 0.22), transparent 70%);
+  filter: blur(14px);
+}
+
+.brand {
+  position: relative;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding: 12px 10px 18px;
+  border-bottom: 1px solid rgba(90, 194, 255, 0.12);
+}
+
+.brand-icon {
+  width: 58px;
+  height: 58px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  color: white;
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.34), transparent 34%),
+    linear-gradient(135deg, #0aaeea, #1d4ed8 58%, #0b1024);
+  border: 1px solid rgba(114, 231, 255, 0.42);
+  box-shadow: 0 0 32px rgba(19, 216, 255, 0.3);
+}
+
+.brand-copy h1,
+.brand h1 {
+  margin: 0;
+  color: var(--pp-text-strong);
+  font-size: 1.25rem;
+  letter-spacing: -0.04em;
+}
+
+.brand-copy p,
+.brand p {
+  margin: 5px 0 0;
+  color: var(--pp-muted);
+  font-size: 0.82rem;
+}
+
+.sidebar-status-card,
+.sidebar-metric-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border-radius: var(--pp-radius-lg);
+  background:
+    linear-gradient(145deg, rgba(12, 36, 61, 0.78), rgba(5, 15, 29, 0.78));
+  border: 1px solid var(--pp-border);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 14px 32px rgba(0, 0, 0, 0.14);
+}
+
+.status-orb {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  color: var(--pp-cyan);
+  border-radius: 999px;
+  background: rgba(19, 216, 255, 0.1);
+  border: 1px solid rgba(19, 216, 255, 0.24);
+  box-shadow: 0 0 24px rgba(19, 216, 255, 0.18);
+}
+
+.sidebar-status-card strong,
+.sidebar-metric-card strong {
+  display: block;
+  color: var(--pp-text-strong);
+  font-size: 0.88rem;
+}
+
+.sidebar-status-card span,
+.sidebar-metric-card span {
+  display: block;
+  margin-top: 4px;
+  color: var(--pp-muted);
+  font-size: 0.74rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.nav {
+  position: relative;
+  display: grid;
+  gap: 10px;
+}
+
+.nav-link {
+  position: relative;
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding: 11px 12px;
+  color: var(--pp-muted);
+  text-decoration: none;
+  border-radius: 18px;
+  border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.022);
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    transform 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.nav-link:hover {
+  color: var(--pp-text);
+  border-color: rgba(90, 194, 255, 0.24);
+  background: rgba(19, 216, 255, 0.07);
+  transform: translateX(2px);
+}
+
+.nav-link.active {
+  color: white;
+  border-color: rgba(114, 231, 255, 0.42);
+  background:
+    linear-gradient(135deg, rgba(19, 216, 255, 0.18), rgba(47, 107, 255, 0.18)),
+    rgba(10, 31, 54, 0.92);
+  box-shadow:
+    0 0 28px rgba(19, 216, 255, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}

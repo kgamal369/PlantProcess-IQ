@@ -19,7 +19,7 @@
 
 .productModule56-page__eyebrow {
   margin: 0;
-  color: var(--ppiq-std-accent, #00d4ff);
+  color: var(--ppiq-std-accent, var(--ppiq-color-accent-cyan));
   text-transform: uppercase;
   letter-spacing: 0.12em;
   font-size: 0.72rem;
@@ -174,7 +174,7 @@
   display: block;
   height: 100%;
   width: var(--value);
-  background: linear-gradient(90deg, #00d4ff, #0a84ff);
+  background: linear-gradient(90deg, var(--ppiq-color-accent-cyan), #0a84ff);
   border-radius: inherit;
 }
 

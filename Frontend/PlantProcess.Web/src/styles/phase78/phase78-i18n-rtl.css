@@ -23,7 +23,7 @@ body { overflow-x: hidden; }
   box-shadow: var(--ppiq-shadow-glow, 0 0 32px rgba(0,212,255,.18));
   cursor: pointer;
 }
-.phase78-language-toggle:hover { border-color: var(--ppiq-cyan, #00D4FF); }
+.phase78-language-toggle:hover { border-color: var(--ppiq-cyan, var(--ppiq-color-accent-cyan)); }
 html[dir="rtl"] :where(.app-layout, .dashboard-page, .admin-page, .material-analytics-page, .mapping-health-page) { text-align: start; }
 html[dir="rtl"] :where(.sidebar, .nav, .app-nav, .site-nav) svg { transform: scaleX(-1); }
 html[dir="rtl"] :where(table) { direction: rtl; }

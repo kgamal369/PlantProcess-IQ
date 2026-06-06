@@ -3,7 +3,7 @@
 
   --ppiq-font-sans: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
 
-  --ppiq-bg-0: #050b18;
+  --ppiq-bg-0: var(--ppiq-color-bg-deep);
   --ppiq-bg-1: #081426;
   --ppiq-bg-2: #0b1730;
 
@@ -20,7 +20,7 @@
   --ppiq-text-soft: #6d8eae;
   --ppiq-text-disabled: #48647f;
 
-  --ppiq-brand: #00d4ff;
+  --ppiq-brand: var(--ppiq-color-accent-cyan);
   --ppiq-brand-strong: #36e5ff;
   --ppiq-brand-soft: rgba(0, 212, 255, 0.12);
 

@@ -1,0 +1,3310 @@
+{
+  "generatedAtUtc": "2026-06-06T11:14:12.271Z",
+  "marker": "PPIQ_PACK_D1_ROUTE_CONTRACT_SNAPSHOT",
+  "routeCount": 328,
+  "groupCount": 58,
+  "routes": [
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Materials/MaterialEndpoints.cs",
+      "line": 81,
+      "method": "DELETE",
+      "route": "/{id:guid}",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/PageBuilder/PageDefinitionEndpoints.cs",
+      "line": 27,
+      "method": "DELETE",
+      "route": "/{slug}",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Dashboarding/DashboardEndpoints.cs",
+      "line": 77,
+      "method": "DELETE",
+      "route": "/definitions/{dashboardDefinitionId:guid}/widgets/{widgetDefinitionId:guid}",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Dashboarding/DashboardEndpoints.cs",
+      "line": 57,
+      "method": "DELETE",
+      "route": "/definitions/{dashboardDefinitionId:guid}",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Quality/QualityEndpoints.cs",
+      "line": 27,
+      "method": "DELETE",
+      "route": "/events/{id:guid}",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Process/ProcessEndpoints.cs",
+      "line": 203,
+      "method": "DELETE",
+      "route": "/steps/{id:guid}",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/AdminProofEndpoints.cs",
+      "line": 16,
+      "method": "GET",
+      "route": "/configured-summary",
+      "withName": null,
+      "tag": "Admin - Users",
+      "nearestGroup": "/admin/widgets"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/AdvancedResultsEndpoints.cs",
+      "line": 18,
+      "method": "GET",
+      "route": "/readiness",
+      "withName": null,
+      "tag": "Analytics Advanced",
+      "nearestGroup": "/api/analytics/advanced"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/SuggestionEndpoints.cs",
+      "line": 19,
+      "method": "GET",
+      "route": "/cards",
+      "withName": null,
+      "tag": "Suggestions",
+      "nearestGroup": "/api/suggestions"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/ValueEndpoints.cs",
+      "line": 26,
+      "method": "GET",
+      "route": "/cost-assumptions",
+      "withName": null,
+      "tag": "Value / Impact",
+      "nearestGroup": "/api/value"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Configuration/ConfigurationEndpoints.cs",
+      "line": 16,
+      "method": "GET",
+      "route": "/status",
+      "withName": null,
+      "tag": "Configuration",
+      "nearestGroup": "/configuration"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/DataQuality/DataQualityEndpoints.cs",
+      "line": 15,
+      "method": "GET",
+      "route": "/issues",
+      "withName": null,
+      "tag": "Data Quality",
+      "nearestGroup": "/data-quality"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Demo/DemoLifecycleEndpoints.cs",
+      "line": 22,
+      "method": "GET",
+      "route": "/lifecycle",
+      "withName": null,
+      "tag": "Demo Lifecycle",
+      "nearestGroup": "/demo-lifecycle"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Development/DevSeedEndpoints.cs",
+      "line": 13,
+      "method": "GET",
+      "route": "/database-summary",
+      "withName": null,
+      "tag": "Development / Database Validation",
+      "nearestGroup": "/dev"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Integration/IntegrationEndpoints.cs",
+      "line": 22,
+      "method": "GET",
+      "route": "/summary",
+      "withName": null,
+      "tag": "Integration",
+      "nearestGroup": "/integration"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/MappingHealth/Phase34MappingHealthEndpoints.cs",
+      "line": 13,
+      "method": "GET",
+      "route": "/status",
+      "withName": "GetPhase34MappingHealthStatus",
+      "tag": "Phase 3/4 Mapping Health",
+      "nearestGroup": "/mapping-health"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Phase45/Phase45ClosureEndpoints.cs",
+      "line": 21,
+      "method": "GET",
+      "route": "/acceptance-summary",
+      "withName": null,
+      "tag": "Phase 5 Scheduled Learning Proof",
+      "nearestGroup": "/phase5"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Phase45/Phase45ClosureEndpoints.cs",
+      "line": 19,
+      "method": "GET",
+      "route": "/cascade/acceptance",
+      "withName": null,
+      "tag": "Phase 5 Scheduled Learning Proof",
+      "nearestGroup": "/phase5"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Phase45/Phase45ClosureEndpoints.cs",
+      "line": 20,
+      "method": "GET",
+      "route": "/compute/acceptance",
+      "withName": null,
+      "tag": "Phase 5 Scheduled Learning Proof",
+      "nearestGroup": "/phase5"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Phase45/Phase45ClosureEndpoints.cs",
+      "line": 17,
+      "method": "GET",
+      "route": "/features/acceptance",
+      "withName": null,
+      "tag": "Phase 4 ML Foundation Proof",
+      "nearestGroup": "/phase5"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Phase45/Phase45ClosureEndpoints.cs",
+      "line": 18,
+      "method": "GET",
+      "route": "/outcomes/acceptance",
+      "withName": null,
+      "tag": "Phase 5 Scheduled Learning Proof",
+      "nearestGroup": "/phase5"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Quality/QualityEndpoints.cs",
+      "line": 18,
+      "method": "GET",
+      "route": "/defects",
+      "withName": null,
+      "tag": "Quality",
+      "nearestGroup": "/quality"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Reporting/ReportingEndpoints.cs",
+      "line": 32,
+      "method": "GET",
+      "route": "/readiness-assessment/pdf",
+      "withName": null,
+      "tag": "Readiness",
+      "nearestGroup": "/readiness"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Reporting/CustomerDemoReportEndpoints.cs",
+      "line": 15,
+      "method": "GET",
+      "route": "/phase1.pdf",
+      "withName": "GeneratePhase1CustomerDemoPdf",
+      "tag": "Reports - Customer Demo",
+      "nearestGroup": "/reports/customer-demo"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Validation/ValidationEndpoints.cs",
+      "line": 13,
+      "method": "GET",
+      "route": "/sync-report",
+      "withName": null,
+      "tag": "Validation / Model Sync",
+      "nearestGroup": "/validation"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Workflow/WorkflowEndpoints.cs",
+      "line": 34,
+      "method": "GET",
+      "route": "/overview",
+      "withName": null,
+      "tag": "Workflow",
+      "nearestGroup": "/workflow"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/RiskEvidenceEndpoints.cs",
+      "line": 22,
+      "method": "GET",
+      "route": "/{id:guid}/evidence",
+      "withName": null,
+      "tag": "Analytics Risk Evidence",
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Materials/MaterialEndpoints.cs",
+      "line": 223,
+      "method": "GET",
+      "route": "/{id:guid}/genealogy",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/RiskScoreEndpoints.cs",
+      "line": 22,
+      "method": "GET",
+      "route": "/{id:guid}",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Materials/MaterialEndpoints.cs",
+      "line": 52,
+      "method": "GET",
+      "route": "/{id:guid}",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/JobAdminEndpoints.cs",
+      "line": 35,
+      "method": "GET",
+      "route": "/{jobId:guid}/history",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/KpiEvaluationEndpoints.cs",
+      "line": 111,
+      "method": "GET",
+      "route": "/{kpiCode}/alerts",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/KpiEvaluationEndpoints.cs",
+      "line": 59,
+      "method": "GET",
+      "route": "/{kpiCode}/target",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Materials/MaterialInvestigationEndpoints.cs",
+      "line": 18,
+      "method": "GET",
+      "route": "/{materialUnitId:guid}/investigation-full",
+      "withName": null,
+      "tag": "Material Investigation",
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/FeatureEngineeringEndpoints.cs",
+      "line": 15,
+      "method": "GET",
+      "route": "/{materialUnitId:guid}",
+      "withName": null,
+      "tag": "Feature Engineering",
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/RiskCalibrationEndpoints.cs",
+      "line": 17,
+      "method": "GET",
+      "route": "/{riskType}",
+      "withName": null,
+      "tag": "Analytics Risk Calibration",
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/PageBuilder/PageDefinitionEndpoints.cs",
+      "line": 24,
+      "method": "GET",
+      "route": "/{slug}",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Reporting/ReportingEndpoints.cs",
+      "line": 39,
+      "method": "GET",
+      "route": "/",
+      "withName": null,
+      "tag": "Readiness",
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Program.cs",
+      "line": 433,
+      "method": "GET",
+      "route": "/",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Phase2/Phase2LifecycleProofEndpoints.cs",
+      "line": 19,
+      "method": "GET",
+      "route": "/acceptance-summary",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Phase45/Phase45ClosureEndpoints.cs",
+      "line": 31,
+      "method": "GET",
+      "route": "/acceptance-summary",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/PlantLayout/PlantLayoutEndpoints.cs",
+      "line": 22,
+      "method": "GET",
+      "route": "/areas/{id:guid}/children",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/PlantLayout/PlantLayoutEndpoints.cs",
+      "line": 20,
+      "method": "GET",
+      "route": "/areas",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/Phase2PilotReadinessEndpoints.cs",
+      "line": 24,
+      "method": "GET",
+      "route": "/audit-log",
+      "withName": "QueryAuditLog",
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/P03P04CompletionProofEndpoints.cs",
+      "line": 34,
+      "method": "GET",
+      "route": "/business-key-validation",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/GenericSchemaMappingEndpoints.cs",
+      "line": 39,
+      "method": "GET",
+      "route": "/catalog",
+      "withName": "GetCanonicalSchemaViewCatalog",
+      "tag": "Admin - Generic Schema Mapping",
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/LicenseAdminEndpoints.cs",
+      "line": 38,
+      "method": "GET",
+      "route": "/commercial-readiness",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/ConnectorAdminEndpoints.cs",
+      "line": 33,
+      "method": "GET",
+      "route": "/connection-profiles/{id:guid}",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/ConnectorAdminEndpoints.cs",
+      "line": 30,
+      "method": "GET",
+      "route": "/connection-profiles",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/Phase1WorkflowTruthEndpoints.cs",
+      "line": 33,
+      "method": "GET",
+      "route": "/connector-certification",
+      "withName": "GetPhase1ConnectorCertification",
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/Phase1WorkflowTruthEndpoints.cs",
+      "line": 25,
+      "method": "GET",
+      "route": "/connector-truth",
+      "withName": "GetPhase1ConnectorTruth",
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/LicenseAdminEndpoints.cs",
+      "line": 26,
+      "method": "GET",
+      "route": "/current",
+      "withName": null,
+      "tag": "Admin - License",
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/ReadModelEndpoints.cs",
+      "line": 27,
+      "method": "GET",
+      "route": "/daily-production",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Dashboarding/DashboardEndpoints.cs",
+      "line": 23,
+      "method": "GET",
+      "route": "/data-quality",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/ConnectorAdminEndpoints.cs",
+      "line": 51,
+      "method": "GET",
+      "route": "/datasets",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/SimpleAnalysisEndpoints.cs",
+      "line": 24,
+      "method": "GET",
+      "route": "/datasets",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/AdminEndpoints.cs",
+      "line": 41,
+      "method": "GET",
+      "route": "/db-configuration/summary",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Health/HealthEndpoints.cs",
+      "line": 38,
+      "method": "GET",
+      "route": "/db-health",
+      "withName": "GetDbHealth",
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/ReadModelEndpoints.cs",
+      "line": 32,
+      "method": "GET",
+      "route": "/defect-by-product-family",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Quality/QualityEndpoints.cs",
+      "line": 19,
+      "method": "GET",
+      "route": "/defects/{id:guid}",
+      "withName": null,
+      "tag": "Quality",
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Dashboarding/DashboardEndpoints.cs",
+      "line": 41,
+      "method": "GET",
+      "route": "/definitions/{dashboardDefinitionId:guid}",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Dashboarding/DashboardEndpoints.cs",
+      "line": 37,
+      "method": "GET",
+      "route": "/definitions",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/Phase2PilotReadinessEndpoints.cs",
+      "line": 38,
+      "method": "GET",
+      "route": "/demo-language/rules",
+      "withName": "AuditDemoLanguage",
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/Phase2PilotReadinessEndpoints.cs",
+      "line": 29,
+      "method": "GET",
+      "route": "/deployment-checklist",
+      "withName": "GetDeploymentChecklist",
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/ReadModelEndpoints.cs",
+      "line": 17,
+      "method": "GET",
+      "route": "/downtime-by-area",
+      "withName": null,
+      "tag": "Analytics Read Models",
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Process/ProcessEndpoints.cs",
+      "line": 539,
+      "method": "GET",
+      "route": "/downtime-events",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/CorrelationEndpoints.cs",
+      "line": 27,
+      "method": "GET",
+      "route": "/equipment-defect-rate",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/ReadModelEndpoints.cs",
+      "line": 22,
+      "method": "GET",
+      "route": "/equipment-stoppage",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/PlantLayout/PlantLayoutEndpoints.cs",
+      "line": 23,
+      "method": "GET",
+      "route": "/equipment/{id:guid}/children",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/PlantLayout/PlantLayoutEndpoints.cs",
+      "line": 24,
+      "method": "GET",
+      "route": "/equipment/{id:guid}/materials",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/PlantLayout/PlantLayoutEndpoints.cs",
+      "line": 21,
+      "method": "GET",
+      "route": "/equipment",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Quality/QualityEndpoints.cs",
+      "line": 24,
+      "method": "GET",
+      "route": "/events/{id:guid}",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Process/ProcessEndpoints.cs",
+      "line": 444,
+      "method": "GET",
+      "route": "/events",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Quality/QualityEndpoints.cs",
+      "line": 23,
+      "method": "GET",
+      "route": "/events",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/MlFoundationEndpoints.cs",
+      "line": 22,
+      "method": "GET",
+      "route": "/feature-definitions",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/LicenseAdminEndpoints.cs",
+      "line": 29,
+      "method": "GET",
+      "route": "/features",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/P03P04CompletionProofEndpoints.cs",
+      "line": 58,
+      "method": "GET",
+      "route": "/genealogy-validation",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Phase2/Phase2LifecycleProofEndpoints.cs",
+      "line": 17,
+      "method": "GET",
+      "route": "/genealogy/{materialCode}",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Phase45/Phase45ClosureEndpoints.cs",
+      "line": 30,
+      "method": "GET",
+      "route": "/golden-dataset/acceptance",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Health/HealthEndpoints.cs",
+      "line": 45,
+      "method": "GET",
+      "route": "/health/ready",
+      "withName": "GetReadiness",
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Health/HealthEndpoints.cs",
+      "line": 28,
+      "method": "GET",
+      "route": "/health",
+      "withName": "GetHealth",
+      "tag": "Health",
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Integration/IntegrationEndpoints.cs",
+      "line": 31,
+      "method": "GET",
+      "route": "/import-batches/{id:guid}",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Integration/IntegrationEndpoints.cs",
+      "line": 30,
+      "method": "GET",
+      "route": "/import-batches",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/Phase1WorkflowTruthEndpoints.cs",
+      "line": 86,
+      "method": "GET",
+      "route": "/import-jobs/configuration-board",
+      "withName": "GetPhase1ImportJobConfigurationBoard",
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Phase2/Phase2LifecycleProofEndpoints.cs",
+      "line": 18,
+      "method": "GET",
+      "route": "/import-lifecycle/acceptance",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Configuration/ConfigurationEndpoints.cs",
+      "line": 25,
+      "method": "GET",
+      "route": "/industry-templates",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/Phase2InvestigationEndpoints.cs",
+      "line": 24,
+      "method": "GET",
+      "route": "/inspection-jobs",
+      "withName": "SaveInspectionJobFromCorrelation",
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/DataQuality/DataQualityEndpoints.cs",
+      "line": 60,
+      "method": "GET",
+      "route": "/issues/{id:guid}",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/DataQuality/DataQualityEndpoints.cs",
+      "line": 87,
+      "method": "GET",
+      "route": "/issues/material/{materialUnitId:guid}",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/AdminEndpoints.cs",
+      "line": 49,
+      "method": "GET",
+      "route": "/jobs-monitor",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/MlLearningEndpoints.cs",
+      "line": 20,
+      "method": "GET",
+      "route": "/jobs",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/MlReadinessEndpoints.cs",
+      "line": 21,
+      "method": "GET",
+      "route": "/jobs",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/Phase2OperationEndpoints.cs",
+      "line": 32,
+      "method": "GET",
+      "route": "/kpi-parameter-bindings",
+      "withName": "GetPhase2KpiParameterBindings",
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/SchemaConfigurationEndpoints.cs",
+      "line": 63,
+      "method": "GET",
+      "route": "/kpis",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/MlReadinessEndpoints.cs",
+      "line": 17,
+      "method": "GET",
+      "route": "/labels/preview",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/LicenseAdminEndpoints.cs",
+      "line": 32,
+      "method": "GET",
+      "route": "/limits",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Integration/IntegrationEndpoints.cs",
+      "line": 41,
+      "method": "GET",
+      "route": "/mapping-definitions/{id:guid}",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Integration/IntegrationEndpoints.cs",
+      "line": 40,
+      "method": "GET",
+      "route": "/mapping-definitions",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/P03P04CompletionProofEndpoints.cs",
+      "line": 68,
+      "method": "GET",
+      "route": "/material-investigation/{materialKey}",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Development/DevSeedEndpoints.cs",
+      "line": 14,
+      "method": "GET",
+      "route": "/material-sample",
+      "withName": null,
+      "tag": "Development / Database Validation",
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Configuration/ConfigurationEndpoints.cs",
+      "line": 30,
+      "method": "GET",
+      "route": "/material-unit-types",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/RiskScoreEndpoints.cs",
+      "line": 23,
+      "method": "GET",
+      "route": "/material/{materialUnitId:guid}",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/CorrelationEndpoints.cs",
+      "line": 29,
+      "method": "GET",
+      "route": "/materials/{materialUnitId:guid}/context",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Reporting/ReportingEndpoints.cs",
+      "line": 19,
+      "method": "GET",
+      "route": "/materials/{materialUnitId:guid}/investigation/pdf",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Reporting/ReportingEndpoints.cs",
+      "line": 16,
+      "method": "GET",
+      "route": "/materials/{materialUnitId:guid}/investigation",
+      "withName": null,
+      "tag": "Reports",
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Workflow/WorkflowEndpoints.cs",
+      "line": 58,
+      "method": "GET",
+      "route": "/materials/{materialUnitId:guid}/investigation",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Dashboarding/DashboardEndpoints.cs",
+      "line": 27,
+      "method": "GET",
+      "route": "/materials",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Dashboarding/DashboardEndpoints.cs",
+      "line": 29,
+      "method": "GET",
+      "route": "/metadata",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/Phase2InvestigationEndpoints.cs",
+      "line": 34,
+      "method": "GET",
+      "route": "/ml-lifecycle",
+      "withName": "GetMlLifecycleStates",
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/RiskScoreEndpoints.cs",
+      "line": 29,
+      "method": "GET",
+      "route": "/models",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/MlProviderEndpoints.cs",
+      "line": 15,
+      "method": "GET",
+      "route": "/narrative/proof",
+      "withName": null,
+      "tag": "ML Providers",
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/CorrelationEndpoints.cs",
+      "line": 28,
+      "method": "GET",
+      "route": "/operation-defect-rate",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Configuration/ConfigurationEndpoints.cs",
+      "line": 35,
+      "method": "GET",
+      "route": "/operation-definitions",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/Phase2OperationEndpoints.cs",
+      "line": 62,
+      "method": "GET",
+      "route": "/operations/progress/{operationId:guid}",
+      "withName": "GetPhase2RecentOperationProgress",
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/Phase2OperationEndpoints.cs",
+      "line": 58,
+      "method": "GET",
+      "route": "/operations/progress/recent",
+      "withName": "GetPhase2RecentOperationProgress",
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/MlFoundationEndpoints.cs",
+      "line": 23,
+      "method": "GET",
+      "route": "/outcomes",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/AdminEndpoints.cs",
+      "line": 33,
+      "method": "GET",
+      "route": "/overview",
+      "withName": null,
+      "tag": "Admin",
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/TwoStageImportEndpoints.cs",
+      "line": 17,
+      "method": "GET",
+      "route": "/overview",
+      "withName": null,
+      "tag": "Admin - Two Stage Import",
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Dashboarding/DashboardEndpoints.cs",
+      "line": 20,
+      "method": "GET",
+      "route": "/overview",
+      "withName": null,
+      "tag": "Dashboard",
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/DynamicContent/DynamicContentEndpoints.cs",
+      "line": 17,
+      "method": "GET",
+      "route": "/pages/{slug}",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/ReadModelEndpoints.cs",
+      "line": 37,
+      "method": "GET",
+      "route": "/parameter-by-grade",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/CorrelationEndpoints.cs",
+      "line": 37,
+      "method": "GET",
+      "route": "/parameter-defect/genealogy-aware",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/CorrelationEndpoints.cs",
+      "line": 25,
+      "method": "GET",
+      "route": "/parameter-defect",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/ReadModelEndpoints.cs",
+      "line": 45,
+      "method": "GET",
+      "route": "/parameter-trend",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Process/ProcessEndpoints.cs",
+      "line": 234,
+      "method": "GET",
+      "route": "/parameters/definitions",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Process/ProcessEndpoints.cs",
+      "line": 316,
+      "method": "GET",
+      "route": "/parameters/observations",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Reporting/CustomerDemoReportEndpoints.cs",
+      "line": 19,
+      "method": "GET",
+      "route": "/phase1-summary",
+      "withName": "GeneratePhase1CustomerDemoPdf",
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/SimpleAnalysisEndpoints.cs",
+      "line": 23,
+      "method": "GET",
+      "route": "/primitives",
+      "withName": null,
+      "tag": "Analytics Simple",
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/AdminProofEndpoints.cs",
+      "line": 23,
+      "method": "GET",
+      "route": "/proof",
+      "withName": null,
+      "tag": "Admin - Widgets",
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/ConnectorAdminEndpoints.cs",
+      "line": 27,
+      "method": "GET",
+      "route": "/provider-types",
+      "withName": null,
+      "tag": "Admin - Connectors",
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Dashboarding/DashboardEndpoints.cs",
+      "line": 21,
+      "method": "GET",
+      "route": "/quality",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Reporting/ReportingEndpoints.cs",
+      "line": 26,
+      "method": "GET",
+      "route": "/readiness-assessment",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/GenericSchemaMappingEndpoints.cs",
+      "line": 67,
+      "method": "GET",
+      "route": "/readiness",
+      "withName": "ExecuteCanonicalSchemaMapping",
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/P03P04MappingGenealogyEndpoints.cs",
+      "line": 14,
+      "method": "GET",
+      "route": "/readiness",
+      "withName": null,
+      "tag": "Admin - P03/P04 Mapping & Genealogy",
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/MlFoundationEndpoints.cs",
+      "line": 20,
+      "method": "GET",
+      "route": "/readiness",
+      "withName": null,
+      "tag": "ML Foundation",
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Dashboarding/DashboardEndpoints.cs",
+      "line": 28,
+      "method": "GET",
+      "route": "/reference-data",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Reporting/ReportingEndpoints.cs",
+      "line": 51,
+      "method": "GET",
+      "route": "/report/pdf",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Reporting/ReportingEndpoints.cs",
+      "line": 45,
+      "method": "GET",
+      "route": "/report",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Demo/DemoLifecycleEndpoints.cs",
+      "line": 37,
+      "method": "GET",
+      "route": "/reset/{jobId:guid}/progress",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Demo/DemoLifecycleEndpoints.cs",
+      "line": 34,
+      "method": "GET",
+      "route": "/reset/{jobId:guid}",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/AdvancedResultsEndpoints.cs",
+      "line": 26,
+      "method": "GET",
+      "route": "/results",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/MlLearningEndpoints.cs",
+      "line": 26,
+      "method": "GET",
+      "route": "/results",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Dashboarding/DashboardEndpoints.cs",
+      "line": 22,
+      "method": "GET",
+      "route": "/risk",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Configuration/ConfigurationEndpoints.cs",
+      "line": 45,
+      "method": "GET",
+      "route": "/route-steps",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Configuration/ConfigurationEndpoints.cs",
+      "line": 40,
+      "method": "GET",
+      "route": "/routes",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/ProvenanceGuardedAdvancedResultsEndpoints.cs",
+      "line": 23,
+      "method": "GET",
+      "route": "/runs-guarded",
+      "withName": null,
+      "tag": "Analytics Advanced (Guarded)",
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/CorrelationEndpoints.cs",
+      "line": 34,
+      "method": "GET",
+      "route": "/runs/{id:guid}",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/TwoStageImportEndpoints.cs",
+      "line": 23,
+      "method": "GET",
+      "route": "/runs",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/AdvancedResultsEndpoints.cs",
+      "line": 21,
+      "method": "GET",
+      "route": "/runs",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/CorrelationEndpoints.cs",
+      "line": 33,
+      "method": "GET",
+      "route": "/runs",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/DataQuality/DataQualityScanEndpoints.cs",
+      "line": 18,
+      "method": "GET",
+      "route": "/scan-preview",
+      "withName": null,
+      "tag": "Data Quality Scan",
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Phase45/Phase45ClosureEndpoints.cs",
+      "line": 29,
+      "method": "GET",
+      "route": "/scheduled-learning/acceptance",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Phase45/Phase45ClosureEndpoints.cs",
+      "line": 27,
+      "method": "GET",
+      "route": "/scheduled-learning/jobs",
+      "withName": null,
+      "tag": "Phase 5 Scheduled Learning Proof",
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/AdminEndpoints.cs",
+      "line": 45,
+      "method": "GET",
+      "route": "/schema-configuration/summary",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/Phase1WorkflowTruthEndpoints.cs",
+      "line": 74,
+      "method": "GET",
+      "route": "/schema-mapping/workbench",
+      "withName": "GetPhase1SchemaMappingWorkbench",
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/MlReadinessEndpoints.cs",
+      "line": 13,
+      "method": "GET",
+      "route": "/score",
+      "withName": null,
+      "tag": "ML Readiness",
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/PlantLayout/PlantLayoutEndpoints.cs",
+      "line": 27,
+      "method": "GET",
+      "route": "/sites/{id:guid}",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/PlantLayout/PlantLayoutEndpoints.cs",
+      "line": 19,
+      "method": "GET",
+      "route": "/sites",
+      "withName": null,
+      "tag": "Plant Layout",
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Phase2/Phase2LifecycleProofEndpoints.cs",
+      "line": 16,
+      "method": "GET",
+      "route": "/source-lifecycle/acceptance",
+      "withName": null,
+      "tag": "Phase 2 Lifecycle Proof",
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/Phase1WorkflowTruthEndpoints.cs",
+      "line": 42,
+      "method": "GET",
+      "route": "/source-schedule-board",
+      "withName": "GetPhase1SourceScheduleBoard",
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Integration/IntegrationEndpoints.cs",
+      "line": 25,
+      "method": "GET",
+      "route": "/source-systems/{id:guid}",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Integration/IntegrationEndpoints.cs",
+      "line": 24,
+      "method": "GET",
+      "route": "/source-systems",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/TwoStageImportEndpoints.cs",
+      "line": 20,
+      "method": "GET",
+      "route": "/source-tables",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Integration/IntegrationEndpoints.cs",
+      "line": 37,
+      "method": "GET",
+      "route": "/staging-records",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/Phase1WorkflowTruthEndpoints.cs",
+      "line": 66,
+      "method": "GET",
+      "route": "/staging/records",
+      "withName": "GetPhase1StagingSummary",
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/Phase1WorkflowTruthEndpoints.cs",
+      "line": 62,
+      "method": "GET",
+      "route": "/staging/summary",
+      "withName": "GetPhase1StagingSummary",
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/ReadModelEndpoints.cs",
+      "line": 53,
+      "method": "GET",
+      "route": "/staleness",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/P03P04CompletionProofEndpoints.cs",
+      "line": 24,
+      "method": "GET",
+      "route": "/status",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/MlLearningEndpoints.cs",
+      "line": 17,
+      "method": "GET",
+      "route": "/status",
+      "withName": null,
+      "tag": "ML Learning",
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Workflow/WorkflowEndpoints.cs",
+      "line": 35,
+      "method": "GET",
+      "route": "/status",
+      "withName": null,
+      "tag": "Workflow",
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Process/ProcessEndpoints.cs",
+      "line": 65,
+      "method": "GET",
+      "route": "/steps/{id:guid}",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Process/ProcessEndpoints.cs",
+      "line": 18,
+      "method": "GET",
+      "route": "/steps",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/DynamicContent/DynamicContentEndpoints.cs",
+      "line": 14,
+      "method": "GET",
+      "route": "/suggestions",
+      "withName": null,
+      "tag": "Dynamic Content",
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Configuration/ConfigurationEndpoints.cs",
+      "line": 23,
+      "method": "GET",
+      "route": "/summary",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/MappingHealth/Phase34MappingHealthEndpoints.cs",
+      "line": 21,
+      "method": "GET",
+      "route": "/summary",
+      "withName": "GetPhase34MappingHealthStatus",
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/Phase2PilotReadinessEndpoints.cs",
+      "line": 19,
+      "method": "GET",
+      "route": "/tenant-isolation-decision",
+      "withName": "GetTenantIsolationDecision",
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/AdminEndpoints.cs",
+      "line": 37,
+      "method": "GET",
+      "route": "/two-stage-import-model",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/LicenseAdminEndpoints.cs",
+      "line": 35,
+      "method": "GET",
+      "route": "/usage",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/SchemaConfigurationEndpoints.cs",
+      "line": 39,
+      "method": "GET",
+      "route": "/views/{id:guid}",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/SchemaConfigurationEndpoints.cs",
+      "line": 36,
+      "method": "GET",
+      "route": "/views",
+      "withName": null,
+      "tag": "Admin - Schema Configuration",
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/MlReadinessEndpoints.cs",
+      "line": 29,
+      "method": "GET",
+      "route": "/workspace",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/JobAdminEndpoints.cs",
+      "line": 39,
+      "method": "PATCH",
+      "route": "/connection-profiles/{connectionProfileId:guid}/schedule",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/ConnectorAdminEndpoints.cs",
+      "line": 42,
+      "method": "PATCH",
+      "route": "/connection-profiles/{id:guid}/activate",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/ConnectorAdminEndpoints.cs",
+      "line": 45,
+      "method": "PATCH",
+      "route": "/connection-profiles/{id:guid}/deactivate",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Dashboarding/DashboardEndpoints.cs",
+      "line": 53,
+      "method": "PATCH",
+      "route": "/definitions/{dashboardDefinitionId:guid}/layout",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Dashboarding/DashboardEndpoints.cs",
+      "line": 69,
+      "method": "PATCH",
+      "route": "/definitions/{dashboardDefinitionId:guid}/widgets/{widgetDefinitionId:guid}/layout",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Configuration/ConfigurationEndpoints.cs",
+      "line": 27,
+      "method": "PATCH",
+      "route": "/industry-templates/{id:guid}/activate",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Configuration/ConfigurationEndpoints.cs",
+      "line": 28,
+      "method": "PATCH",
+      "route": "/industry-templates/{id:guid}/deactivate",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Integration/IntegrationEndpoints.cs",
+      "line": 43,
+      "method": "PATCH",
+      "route": "/mapping-definitions/{id:guid}/mapping-json",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/JobAdminEndpoints.cs",
+      "line": 43,
+      "method": "PATCH",
+      "route": "/mappings/{mappingDefinitionId:guid}/schedule",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Configuration/ConfigurationEndpoints.cs",
+      "line": 32,
+      "method": "PATCH",
+      "route": "/material-unit-types/{id:guid}/activate",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Configuration/ConfigurationEndpoints.cs",
+      "line": 33,
+      "method": "PATCH",
+      "route": "/material-unit-types/{id:guid}/deactivate",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Configuration/ConfigurationEndpoints.cs",
+      "line": 37,
+      "method": "PATCH",
+      "route": "/operation-definitions/{id:guid}/activate",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Configuration/ConfigurationEndpoints.cs",
+      "line": 38,
+      "method": "PATCH",
+      "route": "/operation-definitions/{id:guid}/deactivate",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Configuration/ConfigurationEndpoints.cs",
+      "line": 42,
+      "method": "PATCH",
+      "route": "/routes/{id:guid}/activate",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Configuration/ConfigurationEndpoints.cs",
+      "line": 43,
+      "method": "PATCH",
+      "route": "/routes/{id:guid}/deactivate",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Integration/IntegrationEndpoints.cs",
+      "line": 27,
+      "method": "PATCH",
+      "route": "/source-systems/{id:guid}/activate",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Integration/IntegrationEndpoints.cs",
+      "line": 28,
+      "method": "PATCH",
+      "route": "/source-systems/{id:guid}/deactivate",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Process/ProcessEndpoints.cs",
+      "line": 180,
+      "method": "PATCH",
+      "route": "/steps/{id:guid}/abort",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Process/ProcessEndpoints.cs",
+      "line": 157,
+      "method": "PATCH",
+      "route": "/steps/{id:guid}/complete",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Assistant/AssistantEndpoints.cs",
+      "line": 20,
+      "method": "POST",
+      "route": "/ask",
+      "withName": null,
+      "tag": "Assistant",
+      "nearestGroup": "/api/assistant"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Reporting/ReportingEndpoints.cs",
+      "line": 29,
+      "method": "POST",
+      "route": "/readiness-assessment/pdf",
+      "withName": null,
+      "tag": "Readiness",
+      "nearestGroup": "/readiness"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Integration/ImportWorkflowEndpoints.cs",
+      "line": 15,
+      "method": "POST",
+      "route": "/run",
+      "withName": null,
+      "tag": "Import Workflow",
+      "nearestGroup": "/workflow/import"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Materials/MaterialEndpoints.cs",
+      "line": 160,
+      "method": "POST",
+      "route": "/{id:guid}/aliases",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/JobAdminEndpoints.cs",
+      "line": 27,
+      "method": "POST",
+      "route": "/{jobId:guid}/pause",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/JobAdminEndpoints.cs",
+      "line": 31,
+      "method": "POST",
+      "route": "/{jobId:guid}/resume",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/JobAdminEndpoints.cs",
+      "line": 23,
+      "method": "POST",
+      "route": "/{jobId:guid}/run-now",
+      "withName": null,
+      "tag": "Admin - Jobs",
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/KpiEvaluationEndpoints.cs",
+      "line": 22,
+      "method": "POST",
+      "route": "/{kpiCode}/evaluate",
+      "withName": null,
+      "tag": "KPI Evaluation",
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/PlantLayout/PlantLayoutEndpoints.cs",
+      "line": 29,
+      "method": "POST",
+      "route": "/areas",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/RiskScoreEndpoints.cs",
+      "line": 28,
+      "method": "POST",
+      "route": "/calculate-all",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/CorrelationEndpoints.cs",
+      "line": 26,
+      "method": "POST",
+      "route": "/canonical/run",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/GenericSchemaMappingEndpoints.cs",
+      "line": 43,
+      "method": "POST",
+      "route": "/catalog/register",
+      "withName": "GetCanonicalSchemaViewCatalog",
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Diagnostics/DiagnosticsEndpoints.cs",
+      "line": 31,
+      "method": "POST",
+      "route": "/client-error",
+      "withName": null,
+      "tag": "Diagnostics",
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/MlFoundationEndpoints.cs",
+      "line": 24,
+      "method": "POST",
+      "route": "/compute/correlation",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/ConnectorAdminEndpoints.cs",
+      "line": 48,
+      "method": "POST",
+      "route": "/connection-profiles/{id:guid}/test",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/ConnectorAdminEndpoints.cs",
+      "line": 36,
+      "method": "POST",
+      "route": "/connection-profiles",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/Phase2OperationEndpoints.cs",
+      "line": 23,
+      "method": "POST",
+      "route": "/cross-source/preview-join",
+      "withName": "PreviewPhase2CrossSourceJoin",
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/Phase2OperationEndpoints.cs",
+      "line": 27,
+      "method": "POST",
+      "route": "/cross-source/save-join-view",
+      "withName": "PreviewPhase2CrossSourceJoin",
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Workflow/WorkflowEndpoints.cs",
+      "line": 55,
+      "method": "POST",
+      "route": "/data-quality-issues",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/ConnectorAdminEndpoints.cs",
+      "line": 57,
+      "method": "POST",
+      "route": "/datasets/{id:guid}/discover-csv-schema",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/ConnectorAdminEndpoints.cs",
+      "line": 63,
+      "method": "POST",
+      "route": "/datasets/{id:guid}/import-csv-snapshot",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/ConnectorAdminEndpoints.cs",
+      "line": 60,
+      "method": "POST",
+      "route": "/datasets/{id:guid}/preview-csv",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/ConnectorAdminEndpoints.cs",
+      "line": 54,
+      "method": "POST",
+      "route": "/datasets",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Quality/QualityEndpoints.cs",
+      "line": 20,
+      "method": "POST",
+      "route": "/defects",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Workflow/WorkflowEndpoints.cs",
+      "line": 52,
+      "method": "POST",
+      "route": "/defects",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Dashboarding/DashboardEndpoints.cs",
+      "line": 73,
+      "method": "POST",
+      "route": "/definitions/{dashboardDefinitionId:guid}/widgets/{widgetDefinitionId:guid}/clone",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Dashboarding/DashboardEndpoints.cs",
+      "line": 61,
+      "method": "POST",
+      "route": "/definitions/{dashboardDefinitionId:guid}/widgets",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Dashboarding/DashboardEndpoints.cs",
+      "line": 81,
+      "method": "POST",
+      "route": "/definitions/system-templates/ensure",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Dashboarding/DashboardEndpoints.cs",
+      "line": 85,
+      "method": "POST",
+      "route": "/definitions/system-templates/repair",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Dashboarding/DashboardEndpoints.cs",
+      "line": 45,
+      "method": "POST",
+      "route": "/definitions",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/Phase2PilotReadinessEndpoints.cs",
+      "line": 34,
+      "method": "POST",
+      "route": "/demo-language/audit",
+      "withName": "AuditDemoLanguage",
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Process/ProcessEndpoints.cs",
+      "line": 583,
+      "method": "POST",
+      "route": "/downtime-events",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Workflow/WorkflowEndpoints.cs",
+      "line": 50,
+      "method": "POST",
+      "route": "/downtime-events",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/PlantLayout/PlantLayoutEndpoints.cs",
+      "line": 30,
+      "method": "POST",
+      "route": "/equipment",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Process/ProcessEndpoints.cs",
+      "line": 486,
+      "method": "POST",
+      "route": "/events",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Quality/QualityEndpoints.cs",
+      "line": 26,
+      "method": "POST",
+      "route": "/events",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/GenericSchemaMappingEndpoints.cs",
+      "line": 63,
+      "method": "POST",
+      "route": "/execute/{viewCode}",
+      "withName": "CreateGenericKpiView",
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/MlFoundationEndpoints.cs",
+      "line": 21,
+      "method": "POST",
+      "route": "/feature-store/refresh",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Materials/MaterialEndpoints.cs",
+      "line": 185,
+      "method": "POST",
+      "route": "/genealogy-edges",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Workflow/WorkflowEndpoints.cs",
+      "line": 43,
+      "method": "POST",
+      "route": "/genealogy-edges",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/ValueEndpoints.cs",
+      "line": 49,
+      "method": "POST",
+      "route": "/impact",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Integration/IntegrationEndpoints.cs",
+      "line": 34,
+      "method": "POST",
+      "route": "/import-batches/{id:guid}/mark-completed",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Integration/IntegrationEndpoints.cs",
+      "line": 35,
+      "method": "POST",
+      "route": "/import-batches/{id:guid}/mark-failed",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Integration/IntegrationEndpoints.cs",
+      "line": 33,
+      "method": "POST",
+      "route": "/import-batches/{id:guid}/mark-running",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Integration/IntegrationEndpoints.cs",
+      "line": 32,
+      "method": "POST",
+      "route": "/import-batches",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Workflow/WorkflowEndpoints.cs",
+      "line": 38,
+      "method": "POST",
+      "route": "/import-batches",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/Phase1WorkflowTruthEndpoints.cs",
+      "line": 90,
+      "method": "POST",
+      "route": "/import-jobs/from-mapping",
+      "withName": "GetPhase1ImportJobConfigurationBoard",
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Configuration/ConfigurationEndpoints.cs",
+      "line": 26,
+      "method": "POST",
+      "route": "/industry-templates",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/Phase2InvestigationEndpoints.cs",
+      "line": 20,
+      "method": "POST",
+      "route": "/inspection-jobs/save-from-correlation",
+      "withName": "SaveInspectionJobFromCorrelation",
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/DataQuality/DataQualityEndpoints.cs",
+      "line": 112,
+      "method": "POST",
+      "route": "/issues",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/MlLearningEndpoints.cs",
+      "line": 23,
+      "method": "POST",
+      "route": "/jobs/{jobCode}/run",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/Phase2OperationEndpoints.cs",
+      "line": 53,
+      "method": "POST",
+      "route": "/jobs/{jobDefinitionId:guid}/disable",
+      "withName": "EnablePhase2Job",
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/Phase2OperationEndpoints.cs",
+      "line": 49,
+      "method": "POST",
+      "route": "/jobs/{jobDefinitionId:guid}/enable",
+      "withName": "RetryPhase2Job",
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/Phase2OperationEndpoints.cs",
+      "line": 45,
+      "method": "POST",
+      "route": "/jobs/{jobDefinitionId:guid}/retry",
+      "withName": "RunPhase2JobNow",
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/Phase2OperationEndpoints.cs",
+      "line": 41,
+      "method": "POST",
+      "route": "/jobs/{jobDefinitionId:guid}/run-now",
+      "withName": "RunPhase2JobNow",
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/MlReadinessEndpoints.cs",
+      "line": 25,
+      "method": "POST",
+      "route": "/jobs/ensure",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/GenericSchemaMappingEndpoints.cs",
+      "line": 55,
+      "method": "POST",
+      "route": "/joins/materialize",
+      "withName": "PreviewGenericCrossSourceJoin",
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/GenericSchemaMappingEndpoints.cs",
+      "line": 51,
+      "method": "POST",
+      "route": "/joins/preview",
+      "withName": "ResolveCanonicalSchemaView",
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/MlFoundationEndpoints.cs",
+      "line": 26,
+      "method": "POST",
+      "route": "/kb/search",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/MlFoundationEndpoints.cs",
+      "line": 25,
+      "method": "POST",
+      "route": "/kb/upsert",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/Phase2OperationEndpoints.cs",
+      "line": 36,
+      "method": "POST",
+      "route": "/kpi-parameter-bindings",
+      "withName": "GetPhase2KpiParameterBindings",
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/GenericSchemaMappingEndpoints.cs",
+      "line": 59,
+      "method": "POST",
+      "route": "/kpi-views",
+      "withName": "MaterializeGenericCrossSourceJoin",
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/SchemaConfigurationEndpoints.cs",
+      "line": 66,
+      "method": "POST",
+      "route": "/kpis",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Integration/IntegrationEndpoints.cs",
+      "line": 45,
+      "method": "POST",
+      "route": "/mapping-definitions/{id:guid}/execute",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Integration/IntegrationEndpoints.cs",
+      "line": 44,
+      "method": "POST",
+      "route": "/mapping-definitions/{id:guid}/preview",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Integration/IntegrationEndpoints.cs",
+      "line": 42,
+      "method": "POST",
+      "route": "/mapping-definitions",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Workflow/WorkflowEndpoints.cs",
+      "line": 39,
+      "method": "POST",
+      "route": "/mapping-definitions",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/P03P04CompletionProofEndpoints.cs",
+      "line": 80,
+      "method": "POST",
+      "route": "/mapping-lifecycle-proof/run",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Configuration/ConfigurationEndpoints.cs",
+      "line": 31,
+      "method": "POST",
+      "route": "/material-unit-types",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Workflow/WorkflowEndpoints.cs",
+      "line": 42,
+      "method": "POST",
+      "route": "/materials/{materialUnitId:guid}/aliases",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/RiskScoreEndpoints.cs",
+      "line": 27,
+      "method": "POST",
+      "route": "/materials/{materialUnitId:guid}/calculate",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Workflow/WorkflowEndpoints.cs",
+      "line": 41,
+      "method": "POST",
+      "route": "/materials",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/Phase2InvestigationEndpoints.cs",
+      "line": 38,
+      "method": "POST",
+      "route": "/ml-lifecycle/evaluate",
+      "withName": "GetMlLifecycleStates",
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Configuration/ConfigurationEndpoints.cs",
+      "line": 36,
+      "method": "POST",
+      "route": "/operation-definitions",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/Phase2OperationEndpoints.cs",
+      "line": 66,
+      "method": "POST",
+      "route": "/operations/progress",
+      "withName": "GetPhase2OperationProgress",
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Workflow/WorkflowEndpoints.cs",
+      "line": 46,
+      "method": "POST",
+      "route": "/parameter-definitions",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Workflow/WorkflowEndpoints.cs",
+      "line": 47,
+      "method": "POST",
+      "route": "/parameter-observations",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Process/ProcessEndpoints.cs",
+      "line": 270,
+      "method": "POST",
+      "route": "/parameters/definitions",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Process/ProcessEndpoints.cs",
+      "line": 376,
+      "method": "POST",
+      "route": "/parameters/observations",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Workflow/WorkflowEndpoints.cs",
+      "line": 49,
+      "method": "POST",
+      "route": "/process-events",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Integration/ImportWorkflowEndpoints.cs",
+      "line": 16,
+      "method": "POST",
+      "route": "/process-queue",
+      "withName": null,
+      "tag": "Import Workflow",
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Workflow/WorkflowEndpoints.cs",
+      "line": 45,
+      "method": "POST",
+      "route": "/process-steps",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/TwoStageImportEndpoints.cs",
+      "line": 35,
+      "method": "POST",
+      "route": "/provision-baseline",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Workflow/WorkflowEndpoints.cs",
+      "line": 53,
+      "method": "POST",
+      "route": "/quality-events",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Dashboarding/DashboardEndpoints.cs",
+      "line": 34,
+      "method": "POST",
+      "route": "/read-models/refresh",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Reporting/ReportingEndpoints.cs",
+      "line": 22,
+      "method": "POST",
+      "route": "/readiness-assessment",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Reporting/ReportingEndpoints.cs",
+      "line": 48,
+      "method": "POST",
+      "route": "/report/pdf",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Reporting/ReportingEndpoints.cs",
+      "line": 42,
+      "method": "POST",
+      "route": "/report",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Demo/DemoLifecycleEndpoints.cs",
+      "line": 30,
+      "method": "POST",
+      "route": "/reset",
+      "withName": null,
+      "tag": "Demo Lifecycle Reset",
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/GenericSchemaMappingEndpoints.cs",
+      "line": 47,
+      "method": "POST",
+      "route": "/resolve",
+      "withName": "RegisterCanonicalSchemaView",
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Workflow/WorkflowEndpoints.cs",
+      "line": 56,
+      "method": "POST",
+      "route": "/risk-scores",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Configuration/ConfigurationEndpoints.cs",
+      "line": 46,
+      "method": "POST",
+      "route": "/route-steps",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Configuration/ConfigurationEndpoints.cs",
+      "line": 41,
+      "method": "POST",
+      "route": "/routes",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/Phase2InvestigationEndpoints.cs",
+      "line": 29,
+      "method": "POST",
+      "route": "/rule-correlation/run",
+      "withName": "RunRuleBasedCorrelation",
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/Phase1WorkflowTruthEndpoints.cs",
+      "line": 46,
+      "method": "POST",
+      "route": "/run-due-source-imports",
+      "withName": "GetPhase1SourceScheduleBoard",
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/TwoStageImportEndpoints.cs",
+      "line": 32,
+      "method": "POST",
+      "route": "/run-full-cycle",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/SimpleAnalysisEndpoints.cs",
+      "line": 26,
+      "method": "POST",
+      "route": "/run",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/CorrelationEndpoints.cs",
+      "line": 32,
+      "method": "POST",
+      "route": "/runs",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/P03P04CompletionProofEndpoints.cs",
+      "line": 44,
+      "method": "POST",
+      "route": "/safe-sql/resolve",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/DataQuality/DataQualityScanEndpoints.cs",
+      "line": 19,
+      "method": "POST",
+      "route": "/scan/run",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/DataQuality/DataQualityScanEndpoints.cs",
+      "line": 22,
+      "method": "POST",
+      "route": "/scan",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Phase45/Phase45ClosureEndpoints.cs",
+      "line": 28,
+      "method": "POST",
+      "route": "/scheduled-learning/run-now",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/Phase1WorkflowTruthEndpoints.cs",
+      "line": 78,
+      "method": "POST",
+      "route": "/schema-mapping/preview-view",
+      "withName": "GetPhase1SchemaMappingWorkbench",
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/PlantLayout/PlantLayoutEndpoints.cs",
+      "line": 28,
+      "method": "POST",
+      "route": "/sites",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/Phase1WorkflowTruthEndpoints.cs",
+      "line": 54,
+      "method": "POST",
+      "route": "/source-datasets/{sourceDatasetDefinitionId:guid}/cursor",
+      "withName": "SchedulePhase1SourceDatasetNow",
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/Phase1WorkflowTruthEndpoints.cs",
+      "line": 50,
+      "method": "POST",
+      "route": "/source-datasets/{sourceDatasetDefinitionId:guid}/schedule-now",
+      "withName": "RunPhase1DueSourceImports",
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Integration/IntegrationEndpoints.cs",
+      "line": 26,
+      "method": "POST",
+      "route": "/source-systems",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Workflow/WorkflowEndpoints.cs",
+      "line": 37,
+      "method": "POST",
+      "route": "/source-systems",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/TwoStageImportEndpoints.cs",
+      "line": 26,
+      "method": "POST",
+      "route": "/stage1/run",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/TwoStageImportEndpoints.cs",
+      "line": 29,
+      "method": "POST",
+      "route": "/stage2/run",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Integration/IntegrationEndpoints.cs",
+      "line": 38,
+      "method": "POST",
+      "route": "/staging-records/bulk",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Process/ProcessEndpoints.cs",
+      "line": 98,
+      "method": "POST",
+      "route": "/steps",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/SchemaConfigurationEndpoints.cs",
+      "line": 57,
+      "method": "POST",
+      "route": "/views/{id:guid}/activate",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/SchemaConfigurationEndpoints.cs",
+      "line": 54,
+      "method": "POST",
+      "route": "/views/{id:guid}/approve",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/SchemaConfigurationEndpoints.cs",
+      "line": 60,
+      "method": "POST",
+      "route": "/views/{id:guid}/deactivate",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/SchemaConfigurationEndpoints.cs",
+      "line": 48,
+      "method": "POST",
+      "route": "/views/{id:guid}/preview",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/SchemaConfigurationEndpoints.cs",
+      "line": 51,
+      "method": "POST",
+      "route": "/views/preview",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/SchemaConfigurationEndpoints.cs",
+      "line": 42,
+      "method": "POST",
+      "route": "/views",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Dashboarding/DashboardEndpoints.cs",
+      "line": 91,
+      "method": "POST",
+      "route": "/widgets/execute",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Dashboarding/DashboardEndpoints.cs",
+      "line": 30,
+      "method": "POST",
+      "route": "/widgets/query",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Dashboarding/DashboardEndpoints.cs",
+      "line": 26,
+      "method": "POST",
+      "route": "/workspace",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/KpiEvaluationEndpoints.cs",
+      "line": 81,
+      "method": "PUT",
+      "route": "/{kpiCode}/target",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/PageBuilder/PageDefinitionEndpoints.cs",
+      "line": 26,
+      "method": "PUT",
+      "route": "/{slug}",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/ConnectorAdminEndpoints.cs",
+      "line": 39,
+      "method": "PUT",
+      "route": "/connection-profiles/{id:guid}",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/ValueEndpoints.cs",
+      "line": 33,
+      "method": "PUT",
+      "route": "/cost-assumptions",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Dashboarding/DashboardEndpoints.cs",
+      "line": 65,
+      "method": "PUT",
+      "route": "/definitions/{dashboardDefinitionId:guid}/widgets/{widgetDefinitionId:guid}",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Dashboarding/DashboardEndpoints.cs",
+      "line": 49,
+      "method": "PUT",
+      "route": "/definitions/{dashboardDefinitionId:guid}",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/SchemaConfigurationEndpoints.cs",
+      "line": 45,
+      "method": "PUT",
+      "route": "/views/{id:guid}",
+      "withName": null,
+      "tag": null,
+      "nearestGroup": null
+    }
+  ],
+  "groups": [
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/ConnectorAdminEndpoints.cs",
+      "line": 23,
+      "groupRoute": "/admin/connectors",
+      "sourceLine": "var group = app.MapGroup(\"/admin/connectors\")"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/JobAdminEndpoints.cs",
+      "line": 19,
+      "groupRoute": "/admin/jobs",
+      "sourceLine": "var group = app.MapGroup(\"/admin/jobs\")"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/LicenseAdminEndpoints.cs",
+      "line": 22,
+      "groupRoute": "/admin/license",
+      "sourceLine": "var group = app.MapGroup(\"/admin/license\")"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/P03P04CompletionProofEndpoints.cs",
+      "line": 14,
+      "groupRoute": "/admin/p03p04/completion",
+      "sourceLine": "var group = app.MapGroup(\"/admin/p03p04/completion\")"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/P03P04MappingGenealogyEndpoints.cs",
+      "line": 10,
+      "groupRoute": "/admin/p03p04",
+      "sourceLine": "var group = app.MapGroup(\"/admin/p03p04\")"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/Phase1WorkflowTruthEndpoints.cs",
+      "line": 18,
+      "groupRoute": "/admin/phase1",
+      "sourceLine": "var group = app.MapGroup(\"/admin/phase1\")"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/Phase2PilotReadinessEndpoints.cs",
+      "line": 14,
+      "groupRoute": "/admin/phase2/pilot",
+      "sourceLine": "var group = app.MapGroup(\"/admin/phase2/pilot\")"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/Phase2OperationEndpoints.cs",
+      "line": 18,
+      "groupRoute": "/admin/phase2",
+      "sourceLine": "var group = app.MapGroup(\"/admin/phase2\")"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/SchemaConfigurationEndpoints.cs",
+      "line": 32,
+      "groupRoute": "/admin/schema-configuration",
+      "sourceLine": "var group = app.MapGroup(\"/admin/schema-configuration\")"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/GenericSchemaMappingEndpoints.cs",
+      "line": 35,
+      "groupRoute": "/admin/schema-mapping",
+      "sourceLine": "var group = app.MapGroup(\"/admin/schema-mapping\")"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/TwoStageImportEndpoints.cs",
+      "line": 13,
+      "groupRoute": "/admin/two-stage-import",
+      "sourceLine": "var group = app.MapGroup(\"/admin/two-stage-import\")"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/AdminProofEndpoints.cs",
+      "line": 12,
+      "groupRoute": "/admin/users",
+      "sourceLine": "var users = app.MapGroup(\"/admin/users\")"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/AdminProofEndpoints.cs",
+      "line": 19,
+      "groupRoute": "/admin/widgets",
+      "sourceLine": "var widgets = app.MapGroup(\"/admin/widgets\")"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Admin/AdminEndpoints.cs",
+      "line": 29,
+      "groupRoute": "/admin",
+      "sourceLine": "var group = app.MapGroup(\"/admin\")"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/CorrelationEndpoints.cs",
+      "line": 20,
+      "groupRoute": "/analytics/correlations",
+      "sourceLine": "var group = app.MapGroup(\"/analytics/correlations\")"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Dashboarding/DashboardEndpoints.cs",
+      "line": 16,
+      "groupRoute": "/analytics/dashboard",
+      "sourceLine": "var group = app.MapGroup(\"/analytics/dashboard\")"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/FeatureEngineeringEndpoints.cs",
+      "line": 11,
+      "groupRoute": "/analytics/features",
+      "sourceLine": "var group = app.MapGroup(\"/analytics/features\")"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/MlReadinessEndpoints.cs",
+      "line": 9,
+      "groupRoute": "/analytics/ml-readiness",
+      "sourceLine": "var group = app.MapGroup(\"/analytics/ml-readiness\")"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/Phase2InvestigationEndpoints.cs",
+      "line": 15,
+      "groupRoute": "/analytics/phase2",
+      "sourceLine": "var group = app.MapGroup(\"/analytics/phase2\")"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/AdvancedResultsEndpoints.cs",
+      "line": 15,
+      "groupRoute": "/api/analytics/advanced",
+      "sourceLine": "var group = app.MapGroup(\"/api/analytics/advanced\")"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/ProvenanceGuardedAdvancedResultsEndpoints.cs",
+      "line": 19,
+      "groupRoute": "/api/analytics/advanced",
+      "sourceLine": "var group = app.MapGroup(\"/api/analytics/advanced\")"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/ReadModelEndpoints.cs",
+      "line": 13,
+      "groupRoute": "/api/analytics/read-models",
+      "sourceLine": "var group = app.MapGroup(\"/api/analytics/read-models\")"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/RiskCalibrationEndpoints.cs",
+      "line": 13,
+      "groupRoute": "/api/analytics/risk-calibration",
+      "sourceLine": "var group = app.MapGroup(\"/api/analytics/risk-calibration\")"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/RiskEvidenceEndpoints.cs",
+      "line": 18,
+      "groupRoute": "/api/analytics/risk-scores",
+      "sourceLine": "var group = app.MapGroup(\"/api/analytics/risk-scores\")"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/SimpleAnalysisEndpoints.cs",
+      "line": 19,
+      "groupRoute": "/api/analytics/simple",
+      "sourceLine": "var group = app.MapGroup(\"/api/analytics/simple\")"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Assistant/AssistantEndpoints.cs",
+      "line": 18,
+      "groupRoute": "/api/assistant",
+      "sourceLine": "var group = app.MapGroup(\"/api/assistant\").WithTags(\"Assistant\").RequireAuthorization();"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/KpiEvaluationEndpoints.cs",
+      "line": 18,
+      "groupRoute": "/api/kpis",
+      "sourceLine": "var group = app.MapGroup(\"/api/kpis\")"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/MlFoundationEndpoints.cs",
+      "line": 16,
+      "groupRoute": "/api/ml/foundation",
+      "sourceLine": "var group = app.MapGroup(\"/api/ml/foundation\")"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/MlLearningEndpoints.cs",
+      "line": 13,
+      "groupRoute": "/api/ml/learning",
+      "sourceLine": "var group = app.MapGroup(\"/api/ml/learning\")"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/MlProviderEndpoints.cs",
+      "line": 11,
+      "groupRoute": "/api/ml/providers",
+      "sourceLine": "var group = app.MapGroup(\"/api/ml/providers\")"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/SuggestionEndpoints.cs",
+      "line": 17,
+      "groupRoute": "/api/suggestions",
+      "sourceLine": "var group = app.MapGroup(\"/api/suggestions\").WithTags(\"Suggestions\").RequireAuthorization();"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/ValueEndpoints.cs",
+      "line": 24,
+      "groupRoute": "/api/value",
+      "sourceLine": "var group = app.MapGroup(\"/api/value\").WithTags(\"Value / Impact\").RequireAuthorization();"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/DynamicContent/DynamicContentEndpoints.cs",
+      "line": 10,
+      "groupRoute": "/api",
+      "sourceLine": "var api = app.MapGroup(\"/api\")"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Configuration/ConfigurationEndpoints.cs",
+      "line": 13,
+      "groupRoute": "/configuration",
+      "sourceLine": "var group = app.MapGroup(\"/configuration\")"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/DataQuality/DataQualityEndpoints.cs",
+      "line": 12,
+      "groupRoute": "/data-quality",
+      "sourceLine": "var group = app.MapGroup(\"/data-quality\")"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/DataQuality/DataQualityScanEndpoints.cs",
+      "line": 14,
+      "groupRoute": "/data-quality",
+      "sourceLine": "var group = app.MapGroup(\"/data-quality\")"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Demo/DemoLifecycleEndpoints.cs",
+      "line": 26,
+      "groupRoute": "/demo-lifecycle",
+      "sourceLine": "var resetGroup = app.MapGroup(\"/demo-lifecycle\")"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Demo/DemoLifecycleEndpoints.cs",
+      "line": 18,
+      "groupRoute": "/demo",
+      "sourceLine": "var demoGroup = app.MapGroup(\"/demo\")"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Development/DevSeedEndpoints.cs",
+      "line": 10,
+      "groupRoute": "/dev",
+      "sourceLine": "var group = app.MapGroup(\"/dev\")"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Diagnostics/DiagnosticsEndpoints.cs",
+      "line": 27,
+      "groupRoute": "/diagnostics",
+      "sourceLine": "var group = app.MapGroup(\"/diagnostics\")"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Integration/IntegrationEndpoints.cs",
+      "line": 19,
+      "groupRoute": "/integration",
+      "sourceLine": "var group = app.MapGroup(\"/integration\")"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/MappingHealth/Phase34MappingHealthEndpoints.cs",
+      "line": 11,
+      "groupRoute": "/mapping-health",
+      "sourceLine": "var group = app.MapGroup(\"/mapping-health\").WithTags(\"Phase 3/4 Mapping Health\").RequireAuthorization();"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Materials/MaterialEndpoints.cs",
+      "line": 12,
+      "groupRoute": "/materials",
+      "sourceLine": "var group = app.MapGroup(\"/materials\")"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Materials/MaterialInvestigationEndpoints.cs",
+      "line": 14,
+      "groupRoute": "/materials",
+      "sourceLine": "var group = app.MapGroup(\"/materials\")"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/PageBuilder/PageDefinitionEndpoints.cs",
+      "line": 19,
+      "groupRoute": "/pages",
+      "sourceLine": "var group = app.MapGroup(\"/pages\")"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Phase2/Phase2LifecycleProofEndpoints.cs",
+      "line": 12,
+      "groupRoute": "/phase2",
+      "sourceLine": "var group = app.MapGroup(\"/phase2\")"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Phase45/Phase45ClosureEndpoints.cs",
+      "line": 13,
+      "groupRoute": "/phase4",
+      "sourceLine": "var p4 = app.MapGroup(\"/phase4\")"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Phase45/Phase45ClosureEndpoints.cs",
+      "line": 23,
+      "groupRoute": "/phase5",
+      "sourceLine": "var p5 = app.MapGroup(\"/phase5\")"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/PlantLayout/PlantLayoutEndpoints.cs",
+      "line": 15,
+      "groupRoute": "/plant-layout",
+      "sourceLine": "var group = app.MapGroup(\"/plant-layout\")"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Process/ProcessEndpoints.cs",
+      "line": 12,
+      "groupRoute": "/process",
+      "sourceLine": "var group = app.MapGroup(\"/process\")"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Quality/QualityEndpoints.cs",
+      "line": 15,
+      "groupRoute": "/quality",
+      "sourceLine": "var group = app.MapGroup(\"/quality\")"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Reporting/ReportingEndpoints.cs",
+      "line": 35,
+      "groupRoute": "/readiness",
+      "sourceLine": "var readiness = app.MapGroup(\"/readiness\")"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Reporting/CustomerDemoReportEndpoints.cs",
+      "line": 12,
+      "groupRoute": "/reports/customer-demo",
+      "sourceLine": "var group = app.MapGroup(\"/reports/customer-demo\")"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Reporting/ReportingEndpoints.cs",
+      "line": 12,
+      "groupRoute": "/reports",
+      "sourceLine": "var reports = app.MapGroup(\"/reports\")"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Analytics/RiskScoreEndpoints.cs",
+      "line": 17,
+      "groupRoute": "/risk-scores",
+      "sourceLine": "var group = app.MapGroup(\"/risk-scores\")"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Validation/ValidationEndpoints.cs",
+      "line": 10,
+      "groupRoute": "/validation",
+      "sourceLine": "var group = app.MapGroup(\"/validation\")"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Integration/ImportWorkflowEndpoints.cs",
+      "line": 12,
+      "groupRoute": "/workflow/import",
+      "sourceLine": "var group = app.MapGroup(\"/workflow/import\")"
+    },
+    {
+      "file": "Backend/PlantProcess.Api/Endpoints/Workflow/WorkflowEndpoints.cs",
+      "line": 31,
+      "groupRoute": "/workflow",
+      "sourceLine": "var group = app.MapGroup(\"/workflow\")"
+    }
+  ]
+}
