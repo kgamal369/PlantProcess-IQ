@@ -1,19 +1,15 @@
-title = "PlantProcess IQ secret-scan policy"
+title = "PPIQ gitleaks"
 
 [extend]
 useDefault = true
 
 [allowlist]
-description = "Allowed placeholders and documentation-only markers"
-regexes = [
-  '''SET_LOCAL_POSTGRES_PASSWORD''',
-  '''ChangeMe123!''',
-  '''BootstrapDisabledOnlyForTests123!''',
-  '''SuperSecretTestKeyThatIsAtLeast32Bytes!!''',
-  '''example_password''',
-  '''your-password-here'''
-]
+description = "Vendored, generated, and non-source paths."
 paths = [
-  '''docs/''',
-  '''Documentation/'''
+  '''(^|/)node_modules/''',
+  '''(^|/)bin/''',
+  '''(^|/)obj/''',
+  '''(^|/)dist/''',
+  '''(^|/)coverage/''',
+  '''(^|/)\.git/''',
 ]

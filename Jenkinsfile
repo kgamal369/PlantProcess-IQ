@@ -297,11 +297,23 @@ node tools/task-closure/ppiq-pack-a-scorecard-bridge.cjs
         }
         stage('PPIQ Phase01/02 security and verification gates') {
             steps {
-                powershell 'node tools/ci/validate-test-project-registration.cjs'
-                powershell 'node tools/security/validate-no-demo-tenant-fallback.cjs'
-                powershell 'node tools/security/validate-devseed-production-artifact.cjs'
-                powershell 'powershell -ExecutionPolicy Bypass -File tools/security/Invoke-SecretScan.ps1'
-                powershell 'node tools/realization/validate-phase01-phase02.cjs'
+                sh '''
+                    set -e
+                    cd ${REPO_DIR}
+
+                    docker run --rm -v "$PWD:/app" -w /app mcr.microsoft.com/dotnet/sdk:9.0 sh -lc '
+                        set -e
+                        apt-get update -qq && apt-get install -y -qq nodejs >/dev/null 2>&1
+                        node --version
+                        dotnet --version
+                        node tools/security/validate-no-demo-tenant-fallback.cjs
+                        node tools/ci/validate-test-project-registration.cjs
+                        node tools/security/validate-devseed-production-artifact.cjs
+                        node tools/realization/validate-phase01-phase02.cjs
+                      '
+
+                    docker run --rm -v "$PWD:/repo" -w /repo ghcr.io/gitleaks/gitleaks:v8.18.4 detect --source /repo --no-git --redact --config /repo/.gitleaks.toml
+                '''
             }
         }
     }
