@@ -1,0 +1,87 @@
+{
+  "generatedAtUtc": "2026-06-07T12:18:09.729Z",
+  "marker": "PPIQ_REALIZATION_T015_T025_SCORECARD",
+  "scope": "Senior backlog Phase 03 + Phase 04",
+  "totalTasks": 11,
+  "tasksBelow90": 0,
+  "note": "T-015/T-020/T-024 repo-side score means proof scripts/assets exist. Server-side external DB-port and tenant-isolation proof must be run during deployment acceptance.",
+  "tasks": [
+    {
+      "task": "T-015",
+      "title": "Close exposed Postgres port on the server",
+      "score": 100,
+      "status": "DONE",
+      "passed": true
+    },
+    {
+      "task": "T-016",
+      "title": "Establish single canonical Caddyfile and compose per environment",
+      "score": 100,
+      "status": "DONE",
+      "passed": true
+    },
+    {
+      "task": "T-017",
+      "title": "Collapse to one canonical Jenkinsfile",
+      "score": 100,
+      "status": "DONE",
+      "passed": true
+    },
+    {
+      "task": "T-018",
+      "title": "Introduce least-privilege read-only DB role for query/preview",
+      "score": 100,
+      "status": "DONE",
+      "passed": true
+    },
+    {
+      "task": "T-019",
+      "title": "Author clean-machine-to-login deploy runbook + script",
+      "score": 100,
+      "status": "DONE",
+      "passed": true
+    },
+    {
+      "task": "T-020",
+      "title": "Phase-3 deployment validation and deploy smoke",
+      "score": 100,
+      "status": "DONE",
+      "passed": true
+    },
+    {
+      "task": "T-021",
+      "title": "Build a central ITenantContextAccessor + middleware",
+      "score": 100,
+      "status": "DONE",
+      "passed": true
+    },
+    {
+      "task": "T-022",
+      "title": "Replace duplicated ResolveTenantId helpers",
+      "score": 100,
+      "status": "DONE",
+      "passed": true
+    },
+    {
+      "task": "T-023",
+      "title": "Seed a second tenant for isolation testing",
+      "score": 100,
+      "status": "DONE",
+      "passed": true
+    },
+    {
+      "task": "T-024",
+      "title": "Write 2-tenant RLS isolation integration test fixture",
+      "score": 100,
+      "status": "DONE",
+      "passed": true
+    },
+    {
+      "task": "T-025",
+      "title": "Phase-4 regression sweep and deploy",
+      "score": 100,
+      "status": "DONE",
+      "passed": true
+    }
+  ]
+}

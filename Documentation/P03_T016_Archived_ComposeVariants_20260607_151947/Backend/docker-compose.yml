@@ -1,0 +1,51 @@
+services:
+  plantprocess-db:
+    image: postgres:17-alpine
+    container_name: plantprocess-iq-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-plantprocessiq}
+      POSTGRES_USER: ${POSTGRES_USER:-plantprocess}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD_required}
+    ports:
+      - "127.0.0.1:127.0.0.1:5432:5432"
+    volumes:
+      - plantprocess_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-plantprocess} -d ${POSTGRES_DB:-plantprocessiq}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  plantprocess-api:
+    build:
+      context: .
+      dockerfile: PlantProcess.Api/Dockerfile
+    container_name: plantprocess-iq-api
+    restart: unless-stopped
+    depends_on:
+      plantprocess-db:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
+      ASPNETCORE_URLS: ${ASPNETCORE_URLS:-http://0.0.0.0:5063}
+      ConnectionStrings__PlantProcessDb: ${ConnectionStrings__PlantProcessDb:?ConnectionStrings__PlantProcessDb_required}
+      PLANTPROCESS_ALLOWED_ORIGINS: ${PLANTPROCESS_ALLOWED_ORIGINS:-http://localhost:5173,http://localhost:3000}
+    ports:
+      - "127.0.0.1:${PLANTPROCESS_API_PORT:-5063}:5063"
+
+  plantprocess-workers:
+    build:
+      context: .
+      dockerfile: PlantProcess.Workers/Dockerfile
+    container_name: plantprocess-iq-workers
+    restart: unless-stopped
+    depends_on:
+      plantprocess-db:
+        condition: service_healthy
+    environment:
+      DOTNET_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
+      ConnectionStrings__PlantProcessDb: ${ConnectionStrings__PlantProcessDb:?ConnectionStrings__PlantProcessDb_required}
+
+volumes:
+  plantprocess_pgdata:

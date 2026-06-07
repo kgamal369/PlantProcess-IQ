@@ -1,0 +1,48 @@
+using System.Text;
+using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
+using PlantProcess.Application.Common.Persistence;
+using PlantProcess.Application.Common.Results;
+using PlantProcess.Application.Integration.Contracts.Dtos;
+using PlantProcess.Application.Integration.Interfaces.Connectors;
+using PlantProcess.Application.Integration.Interfaces.SourceSystems;
+using PlantProcess.Domain.Entities.Integration;
+
+namespace PlantProcess.Application.Integration.Services.Connectors;
+
+// PPIQ_REALIZATION_T028_CONNECTOR_CONFIGURATION_SERVICE_PROFILES_SPLIT
+public sealed partial class ConnectorConfigurationService
+{
+public async Task<ApplicationResult<ConnectionProfileDto>> UpdateConnectionProfileAsync(
+        Guid id,
+        UpdateConnectionProfileRequest request,
+        CancellationToken cancellationToken)
+    {
+        var entity = await _dbContext.ConnectionProfiles
+            .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, cancellationToken);
+
+        if (entity is null)
+        {
+            return ApplicationResult<ConnectionProfileDto>.Failure(
+                ApplicationError.NotFound("Connection profile not found."));
+        }
+
+        entity.Update(
+            connectionProfileName: request.ConnectionProfileName,
+            connectionMode: request.ConnectionMode ?? "Snapshot",
+            hostName: request.HostName,
+            port: request.Port,
+            databaseName: request.DatabaseName,
+            schemaName: request.SchemaName,
+            fileRootPath: request.FileRootPath,
+            apiBaseUrl: request.ApiBaseUrl,
+            secretReference: request.SecretReference,
+            connectionOptionsJson: request.ConnectionOptionsJson,
+            readOnlyEnforced: request.ReadOnlyEnforced ?? true,
+            description: request.Description);
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return await GetConnectionProfileByIdAsync(entity.Id, cancellationToken);
+    }
+}

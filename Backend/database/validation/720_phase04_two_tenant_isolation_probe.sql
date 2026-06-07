@@ -1,0 +1,4 @@
+-- PPIQ_REALIZATION_T024_TWO_TENANT_ISOLATION_PROBE
+
+SELECT 'PPIQ-T024-TWO-TENANT-ISOLATION-PROBE' AS gate_code;
+SELECT * FROM public.ppiq_validate_second_tenant_seed();

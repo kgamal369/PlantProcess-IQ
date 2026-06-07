@@ -1,12 +1,32 @@
-// PlantProcess IQ Pack D-3A route/service-preserving split.
-// Task: T-055
-// Surface: application service surface
-// Original blocker file: Backend/PlantProcess.Application/Integration/Services/Connectors/ConnectorConfigurationService.cs
-// Runtime implementation moved to: Backend/PlantProcess.Application/Integration/Services/Connectors/ConnectorConfigurationService.runtime.cs
-// Before lines: 1247
-// Runtime lines: 1247
-// Marker: PPIQ_PACK_D3A_T055_ROUTE_SERVICE_PRESERVING_SPLIT
+using System.Text;
+using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
+using PlantProcess.Application.Common.Persistence;
+using PlantProcess.Application.Common.Results;
+using PlantProcess.Application.Integration.Contracts.Dtos;
+using PlantProcess.Application.Integration.Interfaces.Connectors;
+using PlantProcess.Application.Integration.Interfaces.SourceSystems;
+using PlantProcess.Domain.Entities.Integration;
 
-// This file is intentionally thin. The implementation remains compiled
-// from the runtime sibling file so route contracts, DI registrations,
-// public service behavior, and existing references stay unchanged.
+namespace PlantProcess.Application.Integration.Services.Connectors;
+
+// PPIQ_REALIZATION_T028_CONNECTOR_CONFIGURATION_SERVICE_SURFACE_SPLIT
+public sealed partial class ConnectorConfigurationService : IConnectorConfigurationService
+{
+private readonly IDataSourceConnectorFactory _connectorFactory;
+
+private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
+    {
+        WriteIndented = false
+    };
+
+private readonly IPlantProcessDbContext _dbContext;
+
+public ConnectorConfigurationService(IPlantProcessDbContext dbContext,
+    IDataSourceConnectorFactory connectorFactory)
+    {
+        _dbContext = dbContext;
+        _connectorFactory = connectorFactory;
+
+    }
+}

@@ -1,0 +1,20 @@
+services:
+  ppiq-edge-agent:
+    build:
+      context: ../..
+      dockerfile: deploy/edge-agent/Dockerfile
+    container_name: ppiq-edge-agent
+    restart: unless-stopped
+    env_file:
+      - .env.edge-agent
+    volumes:
+      - ppiq-edge-spool:/app/spool
+    command:
+      - node
+      - /app/ppiq-edge-agent.cjs
+      - --config=/app/edge-agent.sample.json
+      - --dry-run
+      - --once
+
+volumes:
+  ppiq-edge-spool:

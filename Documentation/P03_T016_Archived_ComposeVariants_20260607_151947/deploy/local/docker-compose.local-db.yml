@@ -1,0 +1,21 @@
+﻿services:
+  plantprocess-local-db:
+    image: postgres:17-alpine
+    container_name: plantprocess-iq-local-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-plantprocessiq}
+      POSTGRES_USER: ${POSTGRES_USER:-plantprocess}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-plantprocess123}
+    ports:
+      - "${POSTGRES_HOST_PORT:-5432}:5432"
+    volumes:
+      - plantprocess_iq_local_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-plantprocess} -d ${POSTGRES_DB:-plantprocessiq}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  plantprocess_iq_local_pgdata:
