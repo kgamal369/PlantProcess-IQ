@@ -49,10 +49,7 @@ pipeline {
                     # sslip.io routing, server-side bind mount). We back
                     # them up, hard-reset to origin/main, then restore.
                     BACKUP=$(mktemp -d)
-                    for f in \
-                        Infrastructure/deploy/.env \
-                        Infrastructure/deploy/Caddyfile \
-                        Infrastructure/deploy/docker-compose.demo.yml
+                    for f in Infrastructure/deploy/.env Infrastructure/deploy/Caddyfile Infrastructure/deploy/docker-compose.demo.yml
                     do
                         if [ -f "$f" ]; then
                             mkdir -p "$BACKUP/$(dirname $f)"
@@ -67,10 +64,7 @@ pipeline {
                     git clean -fd
 
                     # ---- Restore the production config files ----
-                    for f in \
-                        Infrastructure/deploy/.env \
-                        Infrastructure/deploy/Caddyfile \
-                        Infrastructure/deploy/docker-compose.demo.yml
+                    for f in Infrastructure/deploy/.env Infrastructure/deploy/Caddyfile Infrastructure/deploy/docker-compose.demo.yml
                     do
                         if [ -f "$BACKUP/$f" ]; then
                             cp "$BACKUP/$f" "$f"
