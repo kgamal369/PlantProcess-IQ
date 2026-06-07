@@ -42,8 +42,7 @@ public sealed record ScimGroupRequest(
 
 public static class V5EnterpriseSsoScimEndpoints
 {
-    private static readonly Guid DefaultTenantId = Guid.Parse("00000000-0000-0000-0000-000000000001");
-    private const string MockIdpSecret = "local-dev-mock-idp-secret-change-in-production";
+        private const string MockIdpSecret = "local-dev-mock-idp-secret-change-in-production";
 
     public static IEndpointRouteBuilder MapV5EnterpriseSsoScimEndpoints(this IEndpointRouteBuilder app)
     {
@@ -684,13 +683,13 @@ public static class V5EnterpriseSsoScimEndpoints
         var auth = http.Request.Headers.Authorization.ToString();
 
         if (!auth.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
-            return new ScimAuth(false, DefaultTenantId);
+            return new ScimAuth(false, System.Guid.Empty);
 
         var token = auth["Bearer ".Length..].Trim();
         var hash = Sha256(token);
 
         await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
-        await SetTenantAsync(connection, DefaultTenantId, cancellationToken);
+        throw new UnauthorizedAccessException(PlantProcess.Api.Security.TenantClaimReader.MissingTenantMessage);
 
         await using var cmd = connection.CreateCommand();
         cmd.CommandText =
@@ -708,7 +707,7 @@ public static class V5EnterpriseSsoScimEndpoints
 
         return result is Guid tenantId
             ? new ScimAuth(true, tenantId)
-            : new ScimAuth(false, DefaultTenantId);
+            : new ScimAuth(false, System.Guid.Empty);
     }
 
     private static bool TryValidateMockToken(
@@ -837,12 +836,7 @@ public static class V5EnterpriseSsoScimEndpoints
 
     private static Guid ResolveTenantId(HttpContext http)
     {
-        var claimValue =
-            http.User.FindFirst("tenant_id")?.Value ??
-            http.User.FindFirst("tenantId")?.Value ??
-            DefaultTenantId.ToString();
-
-        return Guid.TryParse(claimValue, out var tenantId) ? tenantId : DefaultTenantId;
+        return PlantProcess.Api.Security.TenantClaimReader.ResolveRequiredTenantId(http);
     }
 
     private static async Task SetTenantAsync(

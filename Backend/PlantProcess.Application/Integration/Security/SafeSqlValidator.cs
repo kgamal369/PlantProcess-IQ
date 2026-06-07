@@ -322,8 +322,7 @@ public static class SafeSqlValidator
 
     private static string StripSqlComments(string sql)
     {
-        var noBlockComments = BlockCommentPattern.Replace(sql, string.Empty);
-        return LineCommentPattern.Replace(noBlockComments, string.Empty);
+        return SafeSqlCommentStripper.Strip(sql);
     }
 
     private static string RemoveSingleTrailingSemicolon(string sql)

@@ -413,6 +413,7 @@ app.UseExceptionHandler();
     app.UseAuthentication();
 app.UsePlantProcessAccessControl();
 app.UseAuthorization();
+app.UseMiddleware<AdminMfaRequirementMiddleware>();
 
     // Must run AFTER UseAuthentication so context.User is available, and BEFORE endpoints.
     app.UseAuditLog();

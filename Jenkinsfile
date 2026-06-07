@@ -312,5 +312,15 @@ node tools/task-closure/ppiq-pack-a-scorecard-bridge.cjs
         always {
             echo 'Build complete.'
         }
+        stage('PPIQ Phase01/02 security and verification gates') {
+            steps {
+                powershell 'node tools/ci/validate-test-project-registration.cjs'
+                powershell 'node tools/security/validate-no-demo-tenant-fallback.cjs'
+                powershell 'node tools/security/validate-devseed-production-artifact.cjs'
+                powershell 'powershell -ExecutionPolicy Bypass -File tools/security/Invoke-SecretScan.ps1'
+                powershell 'node tools/realization/validate-phase01-phase02.cjs'
+            }
+        }
+
     }
 }

@@ -48,8 +48,7 @@ public sealed record VisualMapperPublishRequest(
 
 public static class V5VisualMapperEndpoints
 {
-    private static readonly Guid DefaultTenantId = Guid.Parse("00000000-0000-0000-0000-000000000001");
-
+    
     public static IEndpointRouteBuilder MapV5VisualMapperEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/v5/visual-mapper")
@@ -694,14 +693,7 @@ public static class V5VisualMapperEndpoints
 
     private static Guid ResolveTenantId(HttpContext http)
     {
-        var claimValue =
-            http.User.FindFirst("tenant_id")?.Value ??
-            http.User.FindFirst("tenantId")?.Value ??
-            DefaultTenantId.ToString();
-
-        return Guid.TryParse(claimValue, out var tenantId)
-            ? tenantId
-            : DefaultTenantId;
+        return PlantProcess.Api.Security.TenantClaimReader.ResolveRequiredTenantId(http);
     }
 
     private static async Task SetTenantAsync(

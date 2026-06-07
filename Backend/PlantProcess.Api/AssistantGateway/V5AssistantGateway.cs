@@ -472,15 +472,10 @@ public sealed class V5AssistantGatewayService
     private Guid ResolveTenantId()
     {
         var http = _httpContextAccessor.HttpContext;
+        if (http is null)
+            throw new UnauthorizedAccessException(PlantProcess.Api.Security.TenantClaimReader.MissingTenantMessage);
 
-        var claimValue =
-            http?.User.FindFirst("tenant_id")?.Value ??
-            http?.User.FindFirst("tenantId")?.Value ??
-            "00000000-0000-0000-0000-000000000001";
-
-        return Guid.TryParse(claimValue, out var tenantId)
-            ? tenantId
-            : Guid.Parse("00000000-0000-0000-0000-000000000001");
+        return PlantProcess.Api.Security.TenantClaimReader.ResolveRequiredTenantId(http);
     }
 
     private static string Sha256(string value)

@@ -9,8 +9,7 @@ namespace PlantProcess.Api.SignedLicensing;
 
 public sealed class VerifiedEd25519LicenseService : ILicenseService
 {
-    private static readonly Guid DefaultTenantId = Guid.Parse("00000000-0000-0000-0000-000000000001");
-
+    
     private static readonly IReadOnlyDictionary<LicenseFeature, LicenseTier> RequiredTierByFeature =
         new Dictionary<LicenseFeature, LicenseTier>
         {
@@ -414,15 +413,10 @@ public sealed class VerifiedEd25519LicenseService : ILicenseService
     private Guid ResolveTenantId()
     {
         var http = _httpContextAccessor.HttpContext;
+        if (http is null)
+            throw new UnauthorizedAccessException(PlantProcess.Api.Security.TenantClaimReader.MissingTenantMessage);
 
-        var claimValue =
-            http?.User.FindFirst("tenant_id")?.Value ??
-            http?.User.FindFirst("tenantId")?.Value ??
-            DefaultTenantId.ToString();
-
-        return Guid.TryParse(claimValue, out var tenantId)
-            ? tenantId
-            : DefaultTenantId;
+        return PlantProcess.Api.Security.TenantClaimReader.ResolveRequiredTenantId(http);
     }
 
     private static string NormalizeProvider(string providerType)

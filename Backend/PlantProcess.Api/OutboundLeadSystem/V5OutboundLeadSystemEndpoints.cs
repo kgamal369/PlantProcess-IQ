@@ -50,8 +50,7 @@ public sealed record SuggestionOutcomeRequest(
 
 public static class V5OutboundLeadSystemEndpoints
 {
-    private static readonly Guid DefaultTenantId = Guid.Parse("00000000-0000-0000-0000-000000000001");
-
+    
     private static readonly Regex EmailRegex = new(
         @"^[^@\s]+@[^@\s]+\.[^@\s]+$",
         RegexOptions.Compiled | RegexOptions.IgnoreCase);
@@ -716,12 +715,7 @@ public static class V5OutboundLeadSystemEndpoints
 
     private static Guid ResolveTenantId(HttpContext http)
     {
-        var claimValue =
-            http.User.FindFirst("tenant_id")?.Value ??
-            http.User.FindFirst("tenantId")?.Value ??
-            DefaultTenantId.ToString();
-
-        return Guid.TryParse(claimValue, out var tenantId) ? tenantId : DefaultTenantId;
+        return PlantProcess.Api.Security.TenantClaimReader.ResolveRequiredTenantId(http);
     }
 
     private static async Task SetTenantAsync(

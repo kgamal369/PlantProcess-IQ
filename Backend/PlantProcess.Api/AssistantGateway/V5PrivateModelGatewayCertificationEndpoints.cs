@@ -35,8 +35,7 @@ public sealed record EvalHarnessRunRequest(
 
 public static class V5PrivateModelGatewayCertificationEndpoints
 {
-    private static readonly Guid DefaultTenantId = Guid.Parse("00000000-0000-0000-0000-000000000001");
-
+    
     public static IEndpointRouteBuilder MapV5PrivateModelGatewayCertificationEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/v5/ai/private-model-gateway")
@@ -739,12 +738,7 @@ public static class V5PrivateModelGatewayCertificationEndpoints
 
     private static Guid ResolveTenantId(HttpContext http)
     {
-        var claimValue =
-            http.User.FindFirst("tenant_id")?.Value ??
-            http.User.FindFirst("tenantId")?.Value ??
-            DefaultTenantId.ToString();
-
-        return Guid.TryParse(claimValue, out var tenantId) ? tenantId : DefaultTenantId;
+        return PlantProcess.Api.Security.TenantClaimReader.ResolveRequiredTenantId(http);
     }
 
     private static async Task SetTenantAsync(

@@ -119,14 +119,7 @@ public static class V5BlendedProvenanceEndpoints
 
     private static Guid ResolveTenantId(HttpContext http)
     {
-        var claimValue =
-            http.User.FindFirst("tenant_id")?.Value ??
-            http.User.FindFirst("tenantId")?.Value ??
-            "00000000-0000-0000-0000-000000000001";
-
-        return Guid.TryParse(claimValue, out var tenantId)
-            ? tenantId
-            : Guid.Parse("00000000-0000-0000-0000-000000000001");
+        return PlantProcess.Api.Security.TenantClaimReader.ResolveRequiredTenantId(http);
     }
 
     private static async Task SetTenantAsync(

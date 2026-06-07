@@ -5,7 +5,6 @@ import { mapErrorToFriendly } from "@/utils/errorMapping";
 export type QueryPrimitive = string | number | boolean | null | undefined;
 export type QueryParams = Record<string, QueryPrimitive>;
 
-export const ACCESS_TOKEN_KEY = "plantprocess.auth.accessToken";
 export const AUTH_USER_KEY = "plantprocess.auth.user";
 
 export interface EffectiveEntitlementDto {

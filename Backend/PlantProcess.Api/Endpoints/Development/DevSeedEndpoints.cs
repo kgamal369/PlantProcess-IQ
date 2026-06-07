@@ -1,3 +1,4 @@
+#if DEBUG
 ﻿using Microsoft.EntityFrameworkCore;
 using PlantProcess.Infrastructure.Persistence;
 
@@ -92,3 +93,17 @@ public static class DevSeedEndpoints
     }
 }
 
+
+#else
+using Microsoft.AspNetCore.Routing;
+
+namespace PlantProcess.Api.Endpoints.Development;
+
+public static class DevSeedEndpointsReleaseStub
+{
+    public static IEndpointRouteBuilder MapDevSeedEndpoints(this IEndpointRouteBuilder app)
+    {
+        return app;
+    }
+}
+#endif

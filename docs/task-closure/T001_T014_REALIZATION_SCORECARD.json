@@ -1,0 +1,108 @@
+{
+  "generatedAtUtc": "2026-06-07T12:01:31.373Z",
+  "marker": "PPIQ_REALIZATION_T001_T014_SCORECARD",
+  "scope": "Senior backlog Phase 01 + Phase 02",
+  "totalTasks": 14,
+  "tasksBelow90": 0,
+  "note": "T-013 local score means encryption-at-rest proof gate exists. Full server proof still requires docs/security/DB_ENCRYPTION_AT_REST_PROOF.md and -RequireDbEncryptionProof.",
+  "tasks": [
+    {
+      "task": "T-001",
+      "title": "Register orphaned test projects",
+      "score": 100,
+      "status": "DONE",
+      "passed": true
+    },
+    {
+      "task": "T-002",
+      "title": "CI guard for unregistered tests",
+      "score": 100,
+      "status": "DONE",
+      "passed": true
+    },
+    {
+      "task": "T-003",
+      "title": "Silent demo-tenant fallback removed",
+      "score": 100,
+      "status": "DONE",
+      "passed": true
+    },
+    {
+      "task": "T-004",
+      "title": "SafeSqlValidator literal-aware comment stripping",
+      "score": 100,
+      "status": "DONE",
+      "passed": true
+    },
+    {
+      "task": "T-005",
+      "title": "Recursive CTE for genealogy cycle check",
+      "score": 100,
+      "status": "DONE",
+      "passed": true
+    },
+    {
+      "task": "T-006",
+      "title": "Remove dead constants and retired pages",
+      "score": 100,
+      "status": "DONE",
+      "passed": true
+    },
+    {
+      "task": "T-007",
+      "title": "Audit-log immutability tests in CI",
+      "score": 100,
+      "status": "DONE",
+      "passed": true
+    },
+    {
+      "task": "T-008",
+      "title": "Phase-1 regression sweep/deploy smoke",
+      "score": 100,
+      "status": "DONE",
+      "passed": true
+    },
+    {
+      "task": "T-009",
+      "title": "Mandatory admin MFA/TOTP",
+      "score": 100,
+      "status": "DONE",
+      "passed": true
+    },
+    {
+      "task": "T-010",
+      "title": "Remove dev-seed from production binary",
+      "score": 100,
+      "status": "DONE",
+      "passed": true
+    },
+    {
+      "task": "T-011",
+      "title": "Disable bootstrap-admin after provisioning",
+      "score": 100,
+      "status": "DONE",
+      "passed": true
+    },
+    {
+      "task": "T-012",
+      "title": "CI secret-scan gate",
+      "score": 100,
+      "status": "DONE",
+      "passed": true
+    },
+    {
+      "task": "T-013",
+      "title": "DB encryption at rest proof gate",
+      "score": 100,
+      "status": "DONE",
+      "passed": true
+    },
+    {
+      "task": "T-014",
+      "title": "Phase-2 security tests/deploy",
+      "score": 100,
+      "status": "DONE",
+      "passed": true
+    }
+  ]
+}

@@ -12,5 +12,6 @@
 </ItemGroup>
 <ItemGroup>
 <ProjectReference Include="..\..\PlantProcess.Analytics.Core\PlantProcess.Analytics.Core.csproj" />
+<ProjectReference Include="..\..\PlantProcess.Application\PlantProcess.Application.csproj" />
 </ItemGroup>
 </Project>

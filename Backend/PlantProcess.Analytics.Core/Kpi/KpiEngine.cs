@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using PlantProcess.Analytics.Core.Primitives;
@@ -88,6 +88,250 @@ private static string RemoveSingleTrailingSemicolon(string sql)
     return without.Contains(';') ? sql : without;
 }
 }
+
+/// <summary>
+/// PPIQ_REALIZATION_T004_BASIC_SQL_GUARD
+/// Minimal SELECT-only guard for SQL-view KPIs.
+/// This is intentionally conservative: KPI SQL views must be single-statement read-only SELECT/WITH queries.
+/// </summary>
+/// <summary>
+/// PPIQ_REALIZATION_T004_BASIC_SQL_GUARD
+/// Minimal SELECT-only guard for SQL-view KPIs.
+/// This guard is independent of Application layer to avoid circular dependencies.
+/// It is intentionally conservative:
+/// - read-only SELECT/WITH only
+/// - no multi-statement semicolon outside string literals
+/// - forbidden SQL verbs matched by token boundary, not substring
+/// - comments stripped with a literal-aware parser, not Regex
+/// </summary>
+public static class BasicSqlGuard
+{
+    private static readonly string[] ForbiddenTokens =
+    {
+        "insert",
+        "update",
+        "delete",
+        "drop",
+        "alter",
+        "truncate",
+        "grant",
+        "revoke",
+        "exec",
+        "execute",
+        "call",
+        "copy",
+        "merge",
+        "create"
+    };
+
+    private static readonly string[] ForbiddenFragments =
+    {
+        "pg_",
+        "information_schema"
+    };
+
+    public static void Validate(string? sql)
+    {
+        if (string.IsNullOrWhiteSpace(sql))
+            throw new KpiFormulaException("KPI SQL view text is empty.");
+
+        var stripped = StripSqlComments(sql);
+        var trimmed = stripped.Trim();
+        var lower = trimmed.ToLowerInvariant();
+
+        if (!(lower.StartsWith("select") || lower.StartsWith("with")))
+            throw new KpiFormulaException("KPI SQL view must be a read-only SELECT/WITH query.");
+
+        if (ContainsSemicolonOutsideLiteral(trimmed))
+            throw new KpiFormulaException("KPI SQL view must be a single statement (no semicolons).");
+
+        foreach (var token in ForbiddenTokens)
+        {
+            if (ContainsSqlToken(lower, token))
+                throw new KpiFormulaException($"KPI SQL view contains a forbidden token: '{token}'.");
+        }
+
+        foreach (var fragment in ForbiddenFragments)
+        {
+            if (lower.Contains(fragment, StringComparison.Ordinal))
+                throw new KpiFormulaException($"KPI SQL view contains a forbidden fragment: '{fragment}'.");
+        }
+    }
+
+    private static string StripSqlComments(string sql)
+    {
+        var output = new System.Text.StringBuilder(sql.Length);
+        var i = 0;
+        var blockDepth = 0;
+        var inSingleQuote = false;
+        var inDoubleQuote = false;
+        var inBracketIdentifier = false;
+
+        while (i < sql.Length)
+        {
+            var current = sql[i];
+            var next = i + 1 < sql.Length ? sql[i + 1] : '\0';
+
+            if (blockDepth > 0)
+            {
+                if (current == '/' && next == '*')
+                {
+                    blockDepth++;
+                    i += 2;
+                    continue;
+                }
+
+                if (current == '*' && next == '/')
+                {
+                    blockDepth--;
+                    i += 2;
+                    continue;
+                }
+
+                i++;
+                continue;
+            }
+
+            if (!inSingleQuote && !inDoubleQuote && !inBracketIdentifier)
+            {
+                if (current == '-' && next == '-')
+                {
+                    while (i < sql.Length && sql[i] != '\r' && sql[i] != '\n')
+                        i++;
+
+                    output.Append(' ');
+                    continue;
+                }
+
+                if (current == '/' && next == '*')
+                {
+                    blockDepth = 1;
+                    i += 2;
+                    output.Append(' ');
+                    continue;
+                }
+            }
+
+            if (!inDoubleQuote && !inBracketIdentifier && current == '\'')
+            {
+                output.Append(current);
+
+                if (inSingleQuote && next == '\'')
+                {
+                    output.Append(next);
+                    i += 2;
+                    continue;
+                }
+
+                inSingleQuote = !inSingleQuote;
+                i++;
+                continue;
+            }
+
+            if (!inSingleQuote && !inBracketIdentifier && current == '"')
+            {
+                inDoubleQuote = !inDoubleQuote;
+                output.Append(current);
+                i++;
+                continue;
+            }
+
+            if (!inSingleQuote && !inDoubleQuote && current == '[')
+            {
+                inBracketIdentifier = true;
+                output.Append(current);
+                i++;
+                continue;
+            }
+
+            if (inBracketIdentifier && current == ']')
+            {
+                inBracketIdentifier = false;
+                output.Append(current);
+                i++;
+                continue;
+            }
+
+            output.Append(current);
+            i++;
+        }
+
+        return output.ToString();
+    }
+
+    private static bool ContainsSemicolonOutsideLiteral(string sql)
+    {
+        var inSingleQuote = false;
+        var inDoubleQuote = false;
+        var inBracketIdentifier = false;
+
+        for (var i = 0; i < sql.Length; i++)
+        {
+            var current = sql[i];
+            var next = i + 1 < sql.Length ? sql[i + 1] : '\0';
+
+            if (!inDoubleQuote && !inBracketIdentifier && current == '\'')
+            {
+                if (inSingleQuote && next == '\'')
+                {
+                    i++;
+                    continue;
+                }
+
+                inSingleQuote = !inSingleQuote;
+                continue;
+            }
+
+            if (!inSingleQuote && !inBracketIdentifier && current == '"')
+            {
+                inDoubleQuote = !inDoubleQuote;
+                continue;
+            }
+
+            if (!inSingleQuote && !inDoubleQuote && current == '[')
+            {
+                inBracketIdentifier = true;
+                continue;
+            }
+
+            if (inBracketIdentifier && current == ']')
+            {
+                inBracketIdentifier = false;
+                continue;
+            }
+
+            if (!inSingleQuote && !inDoubleQuote && !inBracketIdentifier && current == ';')
+                return true;
+        }
+
+        return false;
+    }
+
+    private static bool ContainsSqlToken(string lowerSql, string token)
+    {
+        var index = 0;
+
+        while ((index = lowerSql.IndexOf(token, index, StringComparison.Ordinal)) >= 0)
+        {
+            var beforeOk = index == 0 || !IsIdentifierCharacter(lowerSql[index - 1]);
+            var afterIndex = index + token.Length;
+            var afterOk = afterIndex >= lowerSql.Length || !IsIdentifierCharacter(lowerSql[afterIndex]);
+
+            if (beforeOk && afterOk)
+                return true;
+
+            index += token.Length;
+        }
+
+        return false;
+    }
+
+    private static bool IsIdentifierCharacter(char value)
+    {
+        return char.IsLetterOrDigit(value) || value == '_';
+    }
+}
+
 public sealed class KpiEngine
 {
 private readonly ExpressionEvaluator _evaluator = new();
