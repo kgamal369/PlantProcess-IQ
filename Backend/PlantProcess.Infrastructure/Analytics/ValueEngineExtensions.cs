@@ -11,6 +11,8 @@ public static class ValueEngineExtensions
         services.AddSingleton<IValueImpactEngine, ValueImpactEngine>();
         services.AddScoped<ICostAssumptionStore, NpgsqlCostAssumptionStore>();
         services.AddScoped<NpgsqlValueImpactRepository>();
+        services.AddSingleton<IValueRealizationService, ValueRealizationService>();
+        services.AddScoped<NpgsqlValueRealizationRepository>();
         return services;
     }
 }

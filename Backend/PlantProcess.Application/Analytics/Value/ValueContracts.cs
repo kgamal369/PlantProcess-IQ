@@ -1,14 +1,25 @@
-﻿using PlantProcess.Application.Provenance;
+
+using PlantProcess.Application.Provenance;
 
 namespace PlantProcess.Application.Analytics.Value;
 
-/// <summary>A low/mid/high assumption band. Complete only when Low &lt;= Mid &lt;= High.</summary>
+/// <summary>
+/// PPIQ_REALIZATION_T037_VALUE_ENGINE_BOUNDED_CONTRACTS.
+/// A low/expected/high assumption band. Complete only when Low <= Mid <= High.
+/// Mid is intentionally retained as the historical API name; Expected is exposed as an alias.
+/// </summary>
 public sealed record CostBand(decimal Low, decimal Mid, decimal High)
 {
+    public decimal Expected => Mid;
+
     public bool IsComplete => Low <= Mid && Mid <= High;
+
+    public string RangeText => $"{Low:N2} <= {Mid:N2} <= {High:N2}";
 }
 
-/// <summary>A versioned, tenant-scoped set of cost assumptions (each a band). Nulls mean "missing basis".</summary>
+/// <summary>
+/// Versioned, tenant-scoped set of cost assumptions. Nulls mean "missing basis", not zero.
+/// </summary>
 public sealed record CostAssumptionSet(
     int Version,
     string Currency,
@@ -19,7 +30,6 @@ public sealed record CostAssumptionSet(
     CostBand? GradePremiumPerTon,
     CostBand? EnergyPricePerMwh)
 {
-    /// <summary>PPIQ-T016: active-version selection uses effective date. Existing constructors remain compatible.</summary>
     public DateTimeOffset EffectiveFromUtc { get; init; } = DateTimeOffset.MinValue;
 
     public string? CreatedBy { get; init; }
@@ -28,8 +38,8 @@ public sealed record CostAssumptionSet(
 }
 
 /// <summary>
-/// Measured inputs for ONE finding. ProductionStopMinutes is the Â§5.2 production-stop figure (T-023),
-/// never raw equipment-stop minutes.
+/// Measured inputs for one finding. ProductionStopMinutes must be attributable production-stop time,
+/// not raw equipment-stop time.
 /// </summary>
 public sealed record ValueImpactInputs(
     string FindingRef,
@@ -39,7 +49,10 @@ public sealed record ValueImpactInputs(
     decimal MonthlyVolumeTons,
     decimal ProductionStopMinutes,
     decimal YieldLossTons,
-    bool UseScrapCost = false);
+    bool UseScrapCost = false)
+{
+    public decimal DefectAffectedTons => DefectRateDelta * MonthlyVolumeTons;
+}
 
 public sealed record ValueImpactTerm(
     string Name,
@@ -47,7 +60,14 @@ public sealed record ValueImpactTerm(
     decimal Low,
     decimal Mid,
     decimal High,
-    ProvenanceHandle Handle);
+    ProvenanceHandle Handle)
+{
+    public decimal Expected => Mid;
+
+    public bool IsMonotonic => Low <= Mid && Mid <= High;
+
+    public decimal RangeWidth => High - Low;
+}
 
 public sealed record ValueImpactResult(
     string Currency,
@@ -59,6 +79,19 @@ public sealed record ValueImpactResult(
     bool IsAbstained,
     string? AbstainReason)
 {
+    public decimal Expected => Mid;
+
+    public bool IsMonotonic => IsAbstained || (Low <= Mid && Mid <= High && Terms.All(x => x.IsMonotonic));
+
+    public decimal RangeWidth => High - Low;
+
+    public string SupportStatus => IsAbstained ? "Abstained" : "BoundedRange";
+
+    public string HonestyCaveat =>
+        IsAbstained
+            ? "No value claim emitted because the required assumption basis is incomplete."
+            : "Projected value range only; not a guaranteed saving. Every figure is tied to assumptions, inputs, and provenance.";
+
     public static ValueImpactResult Abstained(string currency, int version, string reason)
         => new(currency, 0m, 0m, 0m, Array.Empty<ValueImpactTerm>(), version, true, reason);
 }

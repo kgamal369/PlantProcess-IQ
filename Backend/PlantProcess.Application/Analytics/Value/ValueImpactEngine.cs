@@ -1,55 +1,185 @@
+
+using System.Globalization;
 using PlantProcess.Application.Provenance;
 
 namespace PlantProcess.Application.Analytics.Value;
 
 /// <summary>
-/// T-041: deterministic §7.5 impact computation. Produces a RANGE from the assumption bands (never a
-/// single guaranteed number), attaches inputs + a provenance handle (T-101) to every term, and ABSTAINS
-/// when any required assumption band is missing (T-043).
-///
-///   Impact = defect_rate_delta * monthly_volume_tons * (downgrade|scrap)_cost_per_ton
-///          + production_stop_minutes * downtime_cost_per_min        (production-stop, NOT raw downtime)
-///          + yield_loss_tons * grade_premium_per_ton
+/// PPIQ_REALIZATION_T037_VALUE_ENGINE_BOUNDED_RANGE.
+/// Deterministic bounded euro-value engine:
+/// - emits Low / Expected(Mid) / High;
+/// - preserves monotonic range ordering even for negative/improvement factors;
+/// - abstains instead of fabricating a number when required assumptions are missing;
+/// - attaches provenance handle + input JSON to every term.
+/// - production stop minutes must be attributable production-stop time, not raw equipment-stop time.
 /// </summary>
 public sealed class ValueImpactEngine : IValueImpactEngine
 {
-    public ValueImpactResult Compute(ValueImpactInputs inputs, CostAssumptionSet a)
+    public ValueImpactResult Compute(ValueImpactInputs inputs, CostAssumptionSet assumptions)
     {
-        var currency = string.IsNullOrWhiteSpace(a.Currency) ? "EUR" : a.Currency;
+        var currency = string.IsNullOrWhiteSpace(assumptions.Currency) ? "EUR" : assumptions.Currency.Trim().ToUpperInvariant();
 
-        var defectCostBand = inputs.UseScrapCost ? a.ScrapCostPerTon : a.DowngradeDeltaPerTon;
-        var missing = new List<string>();
-        if (defectCostBand is null || !defectCostBand.IsComplete) missing.Add(inputs.UseScrapCost ? "scrap_cost_per_ton" : "downgrade_delta_per_ton");
-        if (a.DowntimeCostPerMin is null || !a.DowntimeCostPerMin.IsComplete) missing.Add("downtime_cost_per_min");
-        if (a.GradePremiumPerTon is null || !a.GradePremiumPerTon.IsComplete) missing.Add("grade_premium_per_ton");
+        var defectCostBand = inputs.UseScrapCost ? assumptions.ScrapCostPerTon : assumptions.DowngradeDeltaPerTon;
+        var missing = RequiredAssumptionGaps(inputs, assumptions, defectCostBand);
 
         if (missing.Count > 0)
-            return ValueImpactResult.Abstained(currency, a.Version,
-                $"Insufficient basis: missing required assumption(s): {string.Join(", ", missing)}.");
+        {
+            return ValueImpactResult.Abstained(
+                currency,
+                assumptions.Version,
+                "Insufficient basis: missing or invalid required assumption(s): " + string.Join(", ", missing) + ".");
+        }
 
-        var findingHandle = ProvenanceHandle.Finding(inputs.FindingRef, inputs.CoilId is null ? null : $"coil:{inputs.CoilId}");
+        var findingHandle = ProvenanceHandle.Finding(
+            inputs.FindingRef,
+            inputs.CoilId is null ? null : "coil:" + inputs.CoilId);
 
-        var defect = Term("DefectDowngradeOrScrap",
-            $"{{\"defectRateDelta\":{inputs.DefectRateDelta},\"monthlyVolumeTons\":{inputs.MonthlyVolumeTons},\"costType\":\"{(inputs.UseScrapCost ? "scrap" : "downgrade")}\"}}",
-            inputs.DefectRateDelta * inputs.MonthlyVolumeTons, defectCostBand!, findingHandle);
+        var terms = new[]
+        {
+            Term(
+                "DefectDowngradeOrScrap",
+                Json(new Dictionary<string, object?>
+                {
+                    ["findingRef"] = inputs.FindingRef,
+                    ["coilId"] = inputs.CoilId,
+                    ["defectCode"] = inputs.DefectCode,
+                    ["defectRateDelta"] = inputs.DefectRateDelta,
+                    ["monthlyVolumeTons"] = inputs.MonthlyVolumeTons,
+                    ["affectedTons"] = inputs.DefectAffectedTons,
+                    ["assumption"] = inputs.UseScrapCost ? "scrap_cost_per_ton" : "downgrade_delta_per_ton"
+                }),
+                inputs.DefectAffectedTons,
+                defectCostBand!,
+                findingHandle),
 
-        var downtime = Term("AttributableDowntime",
-            $"{{\"productionStopMinutes\":{inputs.ProductionStopMinutes}}}",
-            inputs.ProductionStopMinutes, a.DowntimeCostPerMin!, findingHandle);
+            Term(
+                "AttributableProductionStop",
+                Json(new Dictionary<string, object?>
+                {
+                    ["findingRef"] = inputs.FindingRef,
+                    ["coilId"] = inputs.CoilId,
+                    ["productionStopMinutes"] = inputs.ProductionStopMinutes,
+                    ["assumption"] = "downtime_cost_per_min"
+                }),
+                inputs.ProductionStopMinutes,
+                assumptions.DowntimeCostPerMin!,
+                findingHandle),
 
-        var yieldLoss = Term("YieldLoss",
-            $"{{\"yieldLossTons\":{inputs.YieldLossTons}}}",
-            inputs.YieldLossTons, a.GradePremiumPerTon!, findingHandle);
+            Term(
+                "YieldLoss",
+                Json(new Dictionary<string, object?>
+                {
+                    ["findingRef"] = inputs.FindingRef,
+                    ["coilId"] = inputs.CoilId,
+                    ["yieldLossTons"] = inputs.YieldLossTons,
+                    ["assumption"] = "grade_premium_per_ton"
+                }),
+                inputs.YieldLossTons,
+                assumptions.GradePremiumPerTon!,
+                findingHandle)
+        };
 
-        var terms = new[] { defect, downtime, yieldLoss };
-        decimal low = 0m, mid = 0m, high = 0m;
-        foreach (var t in terms) { low += t.Low; mid += t.Mid; high += t.High; }
+        var result = new ValueImpactResult(
+            currency,
+            RoundMoney(terms.Sum(x => x.Low)),
+            RoundMoney(terms.Sum(x => x.Mid)),
+            RoundMoney(terms.Sum(x => x.High)),
+            terms,
+            assumptions.Version,
+            IsAbstained: false,
+            AbstainReason: null);
 
-        return new ValueImpactResult(currency, Round(low), Round(mid), Round(high), terms, a.Version, false, null);
+        if (!result.IsMonotonic)
+        {
+            return ValueImpactResult.Abstained(
+                currency,
+                assumptions.Version,
+                "Internal value-engine guard: computed value range was not monotonic.");
+        }
+
+        return result;
     }
 
-    private static ValueImpactTerm Term(string name, string inputsJson, decimal quantity, CostBand cost, ProvenanceHandle handle)
-        => new(name, inputsJson, Round(quantity * cost.Low), Round(quantity * cost.Mid), Round(quantity * cost.High), handle);
+    private static IReadOnlyList<string> RequiredAssumptionGaps(
+        ValueImpactInputs inputs,
+        CostAssumptionSet assumptions,
+        CostBand? defectCostBand)
+    {
+        var missing = new List<string>();
 
-    private static decimal Round(decimal v) => Math.Round(v, 2, MidpointRounding.AwayFromZero);
+        RequireBand(
+            defectCostBand,
+            inputs.UseScrapCost ? "scrap_cost_per_ton" : "downgrade_delta_per_ton",
+            missing);
+
+        RequireBand(assumptions.DowntimeCostPerMin, "downtime_cost_per_min", missing);
+        RequireBand(assumptions.GradePremiumPerTon, "grade_premium_per_ton", missing);
+
+        return missing;
+    }
+
+    private static void RequireBand(CostBand? band, string name, List<string> missing)
+    {
+        if (band is null)
+        {
+            missing.Add(name);
+            return;
+        }
+
+        if (!band.IsComplete)
+        {
+            missing.Add(name + " must satisfy low <= expected <= high");
+        }
+    }
+
+    private static ValueImpactTerm Term(
+        string name,
+        string inputsJson,
+        decimal factor,
+        CostBand band,
+        ProvenanceHandle handle)
+    {
+        var candidates = new[]
+        {
+            factor * band.Low,
+            factor * band.Mid,
+            factor * band.High
+        }
+        .Select(RoundMoney)
+        .OrderBy(x => x)
+        .ToArray();
+
+        var expected = RoundMoney(factor * band.Mid);
+
+        return new ValueImpactTerm(
+            name,
+            inputsJson,
+            candidates[0],
+            expected,
+            candidates[2],
+            handle);
+    }
+
+    private static decimal RoundMoney(decimal value)
+        => Math.Round(value, 2, MidpointRounding.AwayFromZero);
+
+    private static string Json(IReadOnlyDictionary<string, object?> values)
+    {
+        static string Scalar(object? value)
+        {
+            return value switch
+            {
+                null => "null",
+                string s => "\"" + s.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"",
+                bool b => b ? "true" : "false",
+                decimal d => d.ToString(CultureInfo.InvariantCulture),
+                int i => i.ToString(CultureInfo.InvariantCulture),
+                long l => l.ToString(CultureInfo.InvariantCulture),
+                double d => d.ToString(CultureInfo.InvariantCulture),
+                _ => "\"" + value.ToString()?.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\""
+            };
+        }
+
+        return "{" + string.Join(",", values.Select(x => "\"" + x.Key + "\":" + Scalar(x.Value))) + "}";
+    }
 }
