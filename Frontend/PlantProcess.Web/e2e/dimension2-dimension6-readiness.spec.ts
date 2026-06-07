@@ -48,8 +48,7 @@ test.describe("Dimension 6 ML readiness", () => {
       /* P01: access token is memory-only; UI bootstraps via HttpOnly refresh cookie. */
       /* P01: removed forbidden browser auth-token storage. */
       /* P01: removed forbidden browser auth-token storage. */
-      /* P01: removed forbidden browser auth-token storage. */ + 60 * 60 * 1000).toISOString()
-      );
+      void accessToken;
     }, token);
 
     await page.goto("/ml-readiness");
