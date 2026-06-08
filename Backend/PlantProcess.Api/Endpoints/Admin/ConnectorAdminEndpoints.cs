@@ -1,4 +1,4 @@
-﻿using PlantProcess.Api.Extensions;
+using PlantProcess.Api.Extensions;
 using PlantProcess.Application.Integration.Contracts.Dtos;
 using PlantProcess.Application.Integration.Interfaces.Connectors;
 using Microsoft.EntityFrameworkCore;
@@ -74,7 +74,7 @@ public static class ConnectorAdminEndpoints
         Guid? sourceSystemDefinitionId,
         string? providerType,
         bool? includeInactive,
-        IConnectorConfigurationService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IConnectorConfigurationService service,
         CancellationToken cancellationToken)
     {
         var result = await service.GetConnectionProfilesAsync(
@@ -88,7 +88,7 @@ public static class ConnectorAdminEndpoints
 
     private static async Task<IResult> GetConnectionProfileByIdAsync(
         Guid id,
-        IConnectorConfigurationService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IConnectorConfigurationService service,
         CancellationToken cancellationToken)
     {
         var result = await service.GetConnectionProfileByIdAsync(id, cancellationToken);
@@ -97,7 +97,7 @@ public static class ConnectorAdminEndpoints
 
     private static async Task<IResult> CreateConnectionProfileAsync(
         CreateConnectionProfileRequest request,
-        IConnectorConfigurationService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IConnectorConfigurationService service,
         ILicenseService licenseService,
         PlantProcessDbContext dbContext,
         CancellationToken cancellationToken)
@@ -123,7 +123,7 @@ public static class ConnectorAdminEndpoints
     private static async Task<IResult> UpdateConnectionProfileAsync(
         Guid id,
         UpdateConnectionProfileRequest request,
-        IConnectorConfigurationService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IConnectorConfigurationService service,
         PlantProcessDbContext dbContext,
         ILicenseService licenseService,
         CancellationToken cancellationToken)
@@ -145,7 +145,7 @@ public static class ConnectorAdminEndpoints
 
     private static async Task<IResult> ActivateConnectionProfileAsync(
         Guid id,
-        IConnectorConfigurationService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IConnectorConfigurationService service,
         CancellationToken cancellationToken)
     {
         var result = await service.ActivateConnectionProfileAsync(id, cancellationToken);
@@ -154,7 +154,7 @@ public static class ConnectorAdminEndpoints
 
     private static async Task<IResult> DeactivateConnectionProfileAsync(
         Guid id,
-        IConnectorConfigurationService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IConnectorConfigurationService service,
         CancellationToken cancellationToken)
     {
         var result = await service.DeactivateConnectionProfileAsync(id, cancellationToken);
@@ -163,7 +163,7 @@ public static class ConnectorAdminEndpoints
 
     private static async Task<IResult> TestConnectionProfileAsync(
         Guid id,
-        IConnectorConfigurationService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IConnectorConfigurationService service,
         CancellationToken cancellationToken)
     {
         var result = await service.TestConnectionProfileAsync(id, cancellationToken);
@@ -173,7 +173,7 @@ public static class ConnectorAdminEndpoints
     private static async Task<IResult> GetDatasetsAsync(
         Guid? connectionProfileId,
         bool? includeInactive,
-        IConnectorConfigurationService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IConnectorConfigurationService service,
         CancellationToken cancellationToken)
     {
         var result = await service.GetDatasetsAsync(
@@ -186,7 +186,7 @@ public static class ConnectorAdminEndpoints
 
     private static async Task<IResult> CreateDatasetAsync(
         CreateSourceDatasetDefinitionRequest request,
-        IConnectorConfigurationService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IConnectorConfigurationService service,
         CancellationToken cancellationToken)
     {
         var result = await service.CreateDatasetAsync(request, cancellationToken);
@@ -198,7 +198,7 @@ public static class ConnectorAdminEndpoints
     private static async Task<IResult> DiscoverCsvSchemaAsync(
         Guid id,
         CsvSchemaDiscoveryRequest request,
-        IConnectorConfigurationService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IConnectorConfigurationService service,
         CancellationToken cancellationToken)
     {
         var result = await service.DiscoverCsvSchemaAsync(id, request, cancellationToken);
@@ -208,7 +208,7 @@ public static class ConnectorAdminEndpoints
     private static async Task<IResult> PreviewCsvAsync(
         Guid id,
         CsvPreviewRequest request,
-        IConnectorConfigurationService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IConnectorConfigurationService service,
         CancellationToken cancellationToken)
     {
         var result = await service.PreviewCsvAsync(id, request, cancellationToken);
@@ -218,7 +218,7 @@ public static class ConnectorAdminEndpoints
     private static async Task<IResult> ImportCsvSnapshotAsync(
         Guid id,
         CsvImportSnapshotRequest request,
-        IConnectorConfigurationService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IConnectorConfigurationService service,
         CancellationToken cancellationToken)
     {
         var result = await service.ImportCsvSnapshotAsync(id, request, cancellationToken);

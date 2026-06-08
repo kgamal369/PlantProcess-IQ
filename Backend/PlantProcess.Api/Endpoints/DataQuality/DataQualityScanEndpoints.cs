@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using PlantProcess.Api.Extensions;
 using PlantProcess.Application.Services.DataQuality;
 using PlantProcess.Domain.Entities.Quality;
@@ -26,7 +26,7 @@ public static class DataQualityScanEndpoints
 
     private static async Task<IResult> RunPersistedScanAsync(
         int? maxCandidatesPerRule,
-        IDataQualityService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IDataQualityService service,
         CancellationToken cancellationToken)
     {
         var result = await service.RunFullScanAsync(maxCandidatesPerRule ?? 500, cancellationToken);

@@ -34,7 +34,7 @@ public static class MlReadinessEndpoints
     }
 
     private static async Task<IResult> GetReadinessAsync(
-        IMlReadinessService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IMlReadinessService service,
         CancellationToken cancellationToken)
     {
         var result = await service.GetReadinessAsync(cancellationToken);
@@ -43,7 +43,7 @@ public static class MlReadinessEndpoints
 
     private static async Task<IResult> GetLabelPreviewAsync(
         int? limit,
-        IQualityLabelBuilderService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IQualityLabelBuilderService service,
         CancellationToken cancellationToken)
     {
         var result = await service.BuildPreviewAsync(limit ?? 50, cancellationToken);
@@ -51,7 +51,7 @@ public static class MlReadinessEndpoints
     }
 
     private static async Task<IResult> GetMlJobsAsync(
-        IMlReadinessService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IMlReadinessService service,
         CancellationToken cancellationToken)
     {
         var result = await service.GetMlJobsAsync(cancellationToken);
@@ -59,7 +59,7 @@ public static class MlReadinessEndpoints
     }
 
     private static async Task<IResult> EnsureMlJobsAsync(
-        IMlReadinessService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IMlReadinessService service,
         CancellationToken cancellationToken)
     {
         await service.EnsureMlJobDefinitionsAsync(cancellationToken);
@@ -75,7 +75,7 @@ public static class MlReadinessEndpoints
 
     private static async Task<IResult> GetWorkspaceAsync(
         int? labelPreviewLimit,
-        IMlReadinessService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IMlReadinessService service,
         CancellationToken cancellationToken)
     {
         var result = await service.GetWorkspaceAsync(

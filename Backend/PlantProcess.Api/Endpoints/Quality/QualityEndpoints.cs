@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using PlantProcess.Api.Extensions;
 using PlantProcess.Application.Contracts.Quality;
 using PlantProcess.Application.Services.Quality;
@@ -126,7 +126,7 @@ public static class QualityEndpoints
         DateTime? toUtc,
         int? page,
         int? pageSize,
-        IQualityQueryService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IQualityQueryService service,
         CancellationToken cancellationToken)
     {
         var result = await service.GetQualityEventsAsync(
@@ -147,7 +147,7 @@ public static class QualityEndpoints
 
     private static async Task<IResult> GetQualityEventByIdAsync(
         Guid id,
-        IQualityQueryService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IQualityQueryService service,
         CancellationToken cancellationToken)
     {
         var result = await service.GetQualityEventByIdAsync(id, cancellationToken);

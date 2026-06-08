@@ -30,7 +30,7 @@ public static partial class WorkflowEndpoints
 {
 private static async Task<IResult> CreateGenealogyEdgeAsync(
         CreateWorkflowGenealogyEdgeRequest request,
-        IGenealogyService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IGenealogyService service,
         HttpContext httpContext,
         CancellationToken cancellationToken)
     {

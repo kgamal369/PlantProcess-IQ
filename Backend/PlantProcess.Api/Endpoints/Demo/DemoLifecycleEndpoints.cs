@@ -41,7 +41,7 @@ public static class DemoLifecycleEndpoints
     }
 
     private static async Task<IResult> GetLifecycleAsync(
-        IDemoLifecycleService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IDemoLifecycleService service,
         CancellationToken cancellationToken)
     {
         var result = await service.GetDemoLifecycleAsync(cancellationToken);

@@ -1,4 +1,4 @@
-﻿using System.IdentityModel.Tokens.Jwt;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.Extensions.Options;
@@ -297,7 +297,7 @@ public static class AuthEndpoints
 
     private static async Task IssueRefreshCookieAsync(
         AppUserRecord user,
-        AuthStore store,
+        [Microsoft.AspNetCore.Mvc.FromServices] AuthStore store,
         AuthOptions auth,
         HttpContext httpContext,
         CancellationToken cancellationToken)

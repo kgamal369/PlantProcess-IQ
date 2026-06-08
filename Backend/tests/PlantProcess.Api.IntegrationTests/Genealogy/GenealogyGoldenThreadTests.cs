@@ -10,7 +10,7 @@ using Xunit;
 
 namespace PlantProcess.Api.IntegrationTests.Genealogy;
 
-// P6-01 — genealogy bidirectional walk ("golden thread"): proves ppiq_walk_genealogy resolves
+// P6-01 â€” genealogy bidirectional walk ("golden thread"): proves ppiq_walk_genealogy resolves
 // connected nodes, respects the depth bound, rejects bad directions, and that the graph-safety
 // check is wired. DB-gated (inherits AuthenticatedApiTestBase).
 public sealed class GenealogyGoldenThreadTests : AuthenticatedApiTestBase
@@ -21,10 +21,23 @@ public sealed class GenealogyGoldenThreadTests : AuthenticatedApiTestBase
         Environment.GetEnvironmentVariable("PPIQ_TEST_CONNECTION_STRING")
         ?? throw new InvalidOperationException("PPIQ_TEST_CONNECTION_STRING not set.");
 
-    private static async Task<NpgsqlConnection> OpenAsync()
+        private static async Task<NpgsqlConnection> OpenAsync()
     {
         var c = new NpgsqlConnection(Conn);
         await c.OpenAsync();
+
+        await using var tenantCmd = new NpgsqlCommand("""
+SELECT set_config(
+    'app.current_tenant',
+    COALESCE(
+        (SELECT id::text FROM public.ppiq_tenants ORDER BY created_at_utc LIMIT 1),
+        '00000000-0000-0000-0000-000000000001'
+    ),
+    false
+)
+""", c);
+        await tenantCmd.ExecuteNonQueryAsync();
+
         return c;
     }
 

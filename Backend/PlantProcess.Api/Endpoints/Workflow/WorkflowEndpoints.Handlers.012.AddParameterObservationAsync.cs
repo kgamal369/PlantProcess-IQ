@@ -30,7 +30,7 @@ public static partial class WorkflowEndpoints
 {
 private static async Task<IResult> AddParameterObservationAsync(
         AddWorkflowParameterObservationRequest request,
-        IProcessDataService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IProcessDataService service,
         HttpContext httpContext,
         CancellationToken cancellationToken)
     {

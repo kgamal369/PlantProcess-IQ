@@ -28,26 +28,15 @@ public abstract class AuthenticatedApiTestBase : IClassFixture<WebApplicationFac
 
     protected HttpClient CreateAnonymousClient()
     {
-        // PPIQ_FULL_DOTNET_TEST_EXTERNAL_API_HOST_DEFAULT:
-        // Full local dotnet test must not depend on shared WebApplicationFactory lifecycle.
-        // Default to external test API host. Use PPIQ_USE_WEBAPPLICATION_FACTORY_TEST_HOST=1 only for debugging.
-        if (!UseInProcessFactoryHost())
+        // PPIQ_PLAIN_DOTNET_TEST_WEB_FACTORY_ONLY:
+        // Plain dotnet test must use WebApplicationFactory by default.
+        // External API host is opt-in only via PPIQ_FORCE_EXTERNAL_API_TEST_HOST=1.
+        if (IsForcedExternalHost())
         {
             return ExternalApiTestHost.CreateClient();
         }
 
-        try
-        {
-            return CreateFactoryClient();
-        }
-        catch (ObjectDisposedException ex) when (IsFactoryLifecycleFailure(ex))
-        {
-            return ExternalApiTestHost.CreateClient();
-        }
-        catch (InvalidOperationException ex) when (IsFactoryStartupFailure(ex) || IsFactoryLifecycleFailure(ex))
-        {
-            return ExternalApiTestHost.CreateClient();
-        }
+        return CreateFactoryClient();
     }
 
     protected async Task<HttpClient> CreateAuthenticatedClientAsync()
@@ -223,6 +212,9 @@ public abstract class AuthenticatedApiTestBase : IClassFixture<WebApplicationFac
 
         private static Uri? _baseAddress;
         private static Process? _process;
+    private static readonly string ExternalHostLogPath =
+        Path.Combine(Path.GetTempPath(), "ppiq-api-integration-host.log");
+
         private static bool _cleanupRegistered;
 
         public static HttpClient CreateClient()
@@ -289,10 +281,13 @@ public abstract class AuthenticatedApiTestBase : IClassFixture<WebApplicationFac
             {
                 WorkingDirectory = backendRoot,
                 UseShellExecute = false,
-                CreateNoWindow = true
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
             };
 
             psi.ArgumentList.Add("run");
+            psi.ArgumentList.Add("--no-launch-profile");
             psi.ArgumentList.Add("--no-build");
             psi.ArgumentList.Add("--project");
             psi.ArgumentList.Add(apiProject);
@@ -338,6 +333,36 @@ public abstract class AuthenticatedApiTestBase : IClassFixture<WebApplicationFac
             _process = Process.Start(psi)
                 ?? throw new InvalidOperationException("Could not start external API integration test host.");
 
+            try
+            {
+                File.AppendAllText(
+                    ExternalHostLogPath,
+                    $"---- PPIQ external API test host started {DateTimeOffset.UtcNow:o} ----{Environment.NewLine}");
+
+                _process.OutputDataReceived += (_, e) =>
+                {
+                    if (e.Data is not null)
+                    {
+                        File.AppendAllText(ExternalHostLogPath, "[OUT] " + e.Data + Environment.NewLine);
+                    }
+                };
+
+                _process.ErrorDataReceived += (_, e) =>
+                {
+                    if (e.Data is not null)
+                    {
+                        File.AppendAllText(ExternalHostLogPath, "[ERR] " + e.Data + Environment.NewLine);
+                    }
+                };
+
+                _process.BeginOutputReadLine();
+                _process.BeginErrorReadLine();
+            }
+            catch
+            {
+                // Diagnostic logging must never break the test host.
+            }
+
             if (!_cleanupRegistered)
             {
                 AppDomain.CurrentDomain.ProcessExit += (_, _) =>
@@ -368,7 +393,7 @@ public abstract class AuthenticatedApiTestBase : IClassFixture<WebApplicationFac
                 if (_process is { HasExited: true })
                 {
                     throw new InvalidOperationException(
-                        $"External API integration test host exited early. ExitCode={_process.ExitCode}");
+                        $"External API integration test host exited early. ExitCode={_process.ExitCode}. Log={ExternalHostLogPath}");
                 }
 
                 if (IsReachable(uri))

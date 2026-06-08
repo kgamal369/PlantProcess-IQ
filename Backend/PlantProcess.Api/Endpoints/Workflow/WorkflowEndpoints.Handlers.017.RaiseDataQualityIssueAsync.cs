@@ -30,7 +30,7 @@ public static partial class WorkflowEndpoints
 {
 private static async Task<IResult> RaiseDataQualityIssueAsync(
         RaiseWorkflowDataQualityIssueRequest request,
-        IDataQualityService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IDataQualityService service,
         HttpContext httpContext,
         CancellationToken cancellationToken)
     {

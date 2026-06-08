@@ -1,4 +1,4 @@
-﻿using PlantProcess.Api.Extensions;
+using PlantProcess.Api.Extensions;
 using PlantProcess.Application.Contracts.Common;
 using PlantProcess.Application.Integration.Contracts.Commands;
 using PlantProcess.Application.Integration.Interfaces.Import;
@@ -20,7 +20,7 @@ public static class ImportWorkflowEndpoints
 
     private static async Task<IResult> RunImportWorkflowAsync(
         RunImportWorkflowRequest request,
-        IImportWorkflowService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IImportWorkflowService service,
         HttpContext httpContext,
         CancellationToken cancellationToken)
     {
@@ -51,7 +51,7 @@ public static class ImportWorkflowEndpoints
 
     private static async Task<IResult> ProcessImportQueueAsync(
         ProcessImportQueueRequest request,
-        IImportBatchQueueProcessorService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IImportBatchQueueProcessorService service,
         CancellationToken cancellationToken)
     {
         var result = await service.ProcessPendingBatchesAsync(

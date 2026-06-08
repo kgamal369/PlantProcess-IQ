@@ -30,7 +30,7 @@ public static partial class WorkflowEndpoints
 {
 private static async Task<IResult> StoreRiskScoreAsync(
         StoreWorkflowRiskScoreRequest request,
-        IRiskScoreService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IRiskScoreService service,
         HttpContext httpContext,
         CancellationToken cancellationToken)
     {

@@ -1,4 +1,4 @@
-﻿using PlantProcess.Api.Extensions;
+using PlantProcess.Api.Extensions;
 using PlantProcess.Application.Contracts.Readiness;
 using PlantProcess.Application.Services.Readiness;
 using PlantProcess.Application.Services.Reporting;
@@ -56,7 +56,7 @@ public static class ReportingEndpoints
 
     private static async Task<IResult> GetInvestigationReportAsync(
         Guid materialUnitId,
-        IInvestigationReportService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IInvestigationReportService service,
         HttpContext httpContext,
         CancellationToken cancellationToken)
     {
@@ -70,7 +70,7 @@ public static class ReportingEndpoints
 
     private static async Task<IResult> GetInvestigationPdfAsync(
         Guid materialUnitId,
-        IInvestigationReportService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IInvestigationReportService service,
         HttpContext httpContext,
         CancellationToken cancellationToken)
     {

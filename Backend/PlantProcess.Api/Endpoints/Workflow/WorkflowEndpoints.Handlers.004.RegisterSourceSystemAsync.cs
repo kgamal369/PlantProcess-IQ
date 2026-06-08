@@ -30,7 +30,7 @@ public static partial class WorkflowEndpoints
 {
 private static async Task<IResult> RegisterSourceSystemAsync(
         RegisterSourceSystemRequest request,
-        ISourceSystemService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] ISourceSystemService service,
         HttpContext httpContext,
         CancellationToken cancellationToken)
     {

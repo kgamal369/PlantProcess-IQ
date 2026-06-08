@@ -39,7 +39,7 @@ public static class ValueRealizationEndpoints
             }
         }));
 
-        group.MapPost("/calculate", (ValueRealizationRequest request, IValueRealizationService service) =>
+        group.MapPost("/calculate", (ValueRealizationRequest request, [Microsoft.AspNetCore.Mvc.FromServices] IValueRealizationService service) =>
         {
             var result = service.Calculate(request);
             return Results.Ok(result);
@@ -48,8 +48,8 @@ public static class ValueRealizationEndpoints
         group.MapPost("/record", async (
             ValueRealizationRequest request,
             ClaimsPrincipal user,
-            IValueRealizationService service,
-            NpgsqlValueRealizationRepository repo,
+            [Microsoft.AspNetCore.Mvc.FromServices] IValueRealizationService service,
+            [Microsoft.AspNetCore.Mvc.FromServices] NpgsqlValueRealizationRepository repo,
             CancellationToken ct) =>
         {
             if (!TryTenant(user, out var tenantId))
@@ -85,7 +85,7 @@ public static class ValueRealizationEndpoints
         group.MapGet("/ledger", async (
             int? take,
             ClaimsPrincipal user,
-            NpgsqlValueRealizationRepository repo,
+            [Microsoft.AspNetCore.Mvc.FromServices] NpgsqlValueRealizationRepository repo,
             CancellationToken ct) =>
         {
             if (!TryTenant(user, out var tenantId))

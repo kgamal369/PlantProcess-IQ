@@ -1,4 +1,4 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -23,14 +23,14 @@ public static class ValueEndpoints
     {
         var group = app.MapGroup("/api/value").WithTags("Value / Impact").RequireAuthorization();
 
-        group.MapGet("/cost-assumptions", async (ClaimsPrincipal user, ICostAssumptionStore store, CancellationToken ct) =>
+        group.MapGet("/cost-assumptions", async (ClaimsPrincipal user, [Microsoft.AspNetCore.Mvc.FromServices] ICostAssumptionStore store, CancellationToken ct) =>
         {
             if (!TryTenant(user, out var tenantId)) return ApplicationProblems.Validation("no_tenant");
             var set = await store.GetActiveAsync(tenantId, ct);
             return set is null ? ApplicationProblems.NotFound("No cost assumptions configured for this tenant.") : Results.Ok(set);
         });
 
-        group.MapPut("/cost-assumptions", async (CostAssumptionDto dto, ClaimsPrincipal user, ICostAssumptionStore store, CancellationToken ct) =>
+        group.MapPut("/cost-assumptions", async (CostAssumptionDto dto, ClaimsPrincipal user, [Microsoft.AspNetCore.Mvc.FromServices] ICostAssumptionStore store, CancellationToken ct) =>
         {
             if (!TryTenant(user, out var tenantId)) return ApplicationProblems.Validation("no_tenant");
             var set = ToSet(dto);
@@ -46,7 +46,7 @@ public static class ValueEndpoints
             return Results.Ok(new { version });
         });
 
-        group.MapPost("/impact", async (ImpactRequest req, ClaimsPrincipal user, ICostAssumptionStore store, IValueImpactEngine engine, NpgsqlValueImpactRepository repo, CancellationToken ct) =>
+        group.MapPost("/impact", async (ImpactRequest req, ClaimsPrincipal user, [Microsoft.AspNetCore.Mvc.FromServices] ICostAssumptionStore store, IValueImpactEngine engine, [Microsoft.AspNetCore.Mvc.FromServices] NpgsqlValueImpactRepository repo, CancellationToken ct) =>
         {
             if (!TryTenant(user, out var tenantId)) return ApplicationProblems.Validation("no_tenant");
 

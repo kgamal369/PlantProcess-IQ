@@ -1,4 +1,4 @@
-﻿using PlantProcess.Api.Extensions;
+using PlantProcess.Api.Extensions;
 using PlantProcess.Application.Analytics.Interfaces;
 using PlantProcess.Application.Licensing.Contracts;
 
@@ -19,7 +19,7 @@ public static class FeatureEngineeringEndpoints
 
     private static async Task<IResult> GetMaterialFeatureVectorAsync(
         Guid materialUnitId,
-        IFeatureEngineeringService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IFeatureEngineeringService service,
         CancellationToken cancellationToken)
     {
         var result = await service.BuildMaterialFeatureVectorAsync(materialUnitId, cancellationToken);

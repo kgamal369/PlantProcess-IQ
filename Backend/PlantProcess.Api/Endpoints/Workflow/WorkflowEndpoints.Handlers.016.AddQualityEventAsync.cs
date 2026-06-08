@@ -30,7 +30,7 @@ public static partial class WorkflowEndpoints
 {
 private static async Task<IResult> AddQualityEventAsync(
         AddWorkflowQualityEventRequest request,
-        IQualityService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IQualityService service,
         HttpContext httpContext,
         CancellationToken cancellationToken)
     {

@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using PlantProcess.Api.Extensions;
 using PlantProcess.Application.Analytics.Contracts;
 using PlantProcess.Application.Analytics.Interfaces;
@@ -162,7 +162,7 @@ public static class RiskScoreEndpoints
     private static async Task<IResult> CalculateMaterialRiskAsync(
         Guid materialUnitId,
         CalculateRiskScoreRequest request,
-        IRiskScoreService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IRiskScoreService service,
         HttpContext httpContext,
         CancellationToken cancellationToken)
     {
@@ -182,7 +182,7 @@ public static class RiskScoreEndpoints
 
     private static async Task<IResult> CalculateRiskScoresBatchAsync(
         CalculateRiskScoresBatchRequest request,
-        IRiskScoreService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IRiskScoreService service,
         HttpContext httpContext,
         CancellationToken cancellationToken)
     {

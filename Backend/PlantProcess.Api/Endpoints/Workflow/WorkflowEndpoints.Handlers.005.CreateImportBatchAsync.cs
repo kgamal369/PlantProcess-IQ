@@ -30,7 +30,7 @@ public static partial class WorkflowEndpoints
 {
 private static async Task<IResult> CreateImportBatchAsync(
         CreateImportBatchRequest request,
-        IImportBatchService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IImportBatchService service,
         HttpContext httpContext,
         CancellationToken cancellationToken)
     {

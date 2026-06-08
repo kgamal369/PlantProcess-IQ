@@ -30,7 +30,7 @@ public static partial class WorkflowEndpoints
 {
 private static async Task<IResult> CreateMappingDefinitionAsync(
         CreateMappingDefinitionRequest request,
-        IMappingDefinitionService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IMappingDefinitionService service,
         HttpContext httpContext,
         CancellationToken cancellationToken)
     {

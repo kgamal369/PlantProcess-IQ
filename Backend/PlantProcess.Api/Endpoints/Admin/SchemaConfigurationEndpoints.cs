@@ -1,4 +1,4 @@
-﻿using System.Data;
+using System.Data;
 using System.Diagnostics;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -71,7 +71,7 @@ public static class SchemaConfigurationEndpoints
 
     private static async Task<IResult> GetSchemaViewsAsync(
         bool? includeInactive,
-        ISchemaConfigurationService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] ISchemaConfigurationService service,
         CancellationToken cancellationToken)
     {
         var result = await service.GetSchemaViewsAsync(
@@ -83,7 +83,7 @@ public static class SchemaConfigurationEndpoints
 
     private static async Task<IResult> GetSchemaViewByIdAsync(
         Guid id,
-        ISchemaConfigurationService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] ISchemaConfigurationService service,
         CancellationToken cancellationToken)
     {
         var result = await service.GetSchemaViewByIdAsync(id, cancellationToken);
@@ -92,7 +92,7 @@ public static class SchemaConfigurationEndpoints
 
     private static async Task<IResult> CreateSchemaViewAsync(
         CreateSchemaViewDefinitionRequest request,
-        ISchemaConfigurationService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] ISchemaConfigurationService service,
         ILicenseService licenseService,
         CancellationToken cancellationToken)
     {
@@ -119,7 +119,7 @@ public static class SchemaConfigurationEndpoints
     private static async Task<IResult> UpdateSchemaViewAsync(
         Guid id,
         UpdateSchemaViewDefinitionRequest request,
-        ISchemaConfigurationService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] ISchemaConfigurationService service,
         ILicenseService licenseService,
         CancellationToken cancellationToken)
     {
@@ -146,7 +146,7 @@ public static class SchemaConfigurationEndpoints
         Guid id,
         SchemaViewPreviewRequest request,
         PlantProcessDbContext dbContext,
-        ISchemaConfigurationService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] ISchemaConfigurationService service,
         ILicenseService licenseService,
         CancellationToken cancellationToken)
     {
@@ -214,7 +214,7 @@ public static class SchemaConfigurationEndpoints
 
     private static async Task<IResult> ApproveSchemaViewAsync(
         Guid id,
-        ISchemaConfigurationService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] ISchemaConfigurationService service,
         CancellationToken cancellationToken)
     {
         var result = await service.ApproveSchemaViewAsync(id, cancellationToken);
@@ -223,7 +223,7 @@ public static class SchemaConfigurationEndpoints
 
     private static async Task<IResult> ActivateSchemaViewAsync(
         Guid id,
-        ISchemaConfigurationService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] ISchemaConfigurationService service,
         CancellationToken cancellationToken)
     {
         var result = await service.ActivateSchemaViewAsync(id, cancellationToken);
@@ -232,7 +232,7 @@ public static class SchemaConfigurationEndpoints
 
     private static async Task<IResult> DeactivateSchemaViewAsync(
         Guid id,
-        ISchemaConfigurationService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] ISchemaConfigurationService service,
         CancellationToken cancellationToken)
     {
         var result = await service.DeactivateSchemaViewAsync(id, cancellationToken);
@@ -241,7 +241,7 @@ public static class SchemaConfigurationEndpoints
 
     private static async Task<IResult> GetKpisAsync(
         bool? includeInactive,
-        ISchemaConfigurationService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] ISchemaConfigurationService service,
         CancellationToken cancellationToken)
     {
         var result = await service.GetKpisAsync(
@@ -253,7 +253,7 @@ public static class SchemaConfigurationEndpoints
 
     private static async Task<IResult> CreateKpiAsync(
         CreateKpiDefinitionRequest request,
-        ISchemaConfigurationService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] ISchemaConfigurationService service,
         ILicenseService licenseService,
         CancellationToken cancellationToken)
     {

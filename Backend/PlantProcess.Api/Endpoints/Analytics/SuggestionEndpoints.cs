@@ -1,4 +1,4 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -16,7 +16,7 @@ public static class SuggestionEndpoints
     {
         var group = app.MapGroup("/api/suggestions").WithTags("Suggestions").RequireAuthorization();
 
-        group.MapGet("/cards", async (ClaimsPrincipal user, ISuggestionStore store, CancellationToken ct) =>
+        group.MapGet("/cards", async (ClaimsPrincipal user, [Microsoft.AspNetCore.Mvc.FromServices] ISuggestionStore store, CancellationToken ct) =>
         {
             if (!TryTenant(user, out var t)) return ApplicationProblems.Validation("no_tenant");
             var cards = await store.ListActiveAsync(t, ct);
@@ -29,7 +29,7 @@ public static class SuggestionEndpoints
             ("reject", SuggestionStatus.Rejected), ("close", SuggestionStatus.Closed),
         })
         {
-            group.MapPost($"/{{id:guid}}/{verb}", async (Guid id, TransitionRequest? body, ClaimsPrincipal user, ISuggestionStore store, CancellationToken ct) =>
+            group.MapPost($"/{{id:guid}}/{verb}", async (Guid id, TransitionRequest? body, ClaimsPrincipal user, [Microsoft.AspNetCore.Mvc.FromServices] ISuggestionStore store, CancellationToken ct) =>
             {
                 if (!TryTenant(user, out var t)) return ApplicationProblems.Validation("no_tenant");
                 var decision = await store.TransitionAsync(t, id, status, Role(user), user.Identity?.Name ?? "unknown", body?.Note, ct);

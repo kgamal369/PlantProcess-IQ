@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using PlantProcess.Api.Extensions;
 using PlantProcess.Application.Common.Paging;
 using PlantProcess.Application.Services.PlantLayout;
@@ -35,7 +35,7 @@ public static class PlantLayoutEndpoints
     private static async Task<IResult> GetSitesAsync(
         int? page,
         int? pageSize,
-        IPlantLayoutQueryService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IPlantLayoutQueryService service,
         CancellationToken cancellationToken)
     {
         var result = await service.GetSitesAsync(new PageRequest(page ?? 1, pageSize ?? 50), cancellationToken);
@@ -46,7 +46,7 @@ public static class PlantLayoutEndpoints
         Guid? siteId,
         int? page,
         int? pageSize,
-        IPlantLayoutQueryService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IPlantLayoutQueryService service,
         CancellationToken cancellationToken)
     {
         var result = await service.GetAreasAsync(siteId, new PageRequest(page ?? 1, pageSize ?? 50), cancellationToken);
@@ -58,7 +58,7 @@ public static class PlantLayoutEndpoints
         Guid? areaId,
         int? page,
         int? pageSize,
-        IPlantLayoutQueryService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IPlantLayoutQueryService service,
         CancellationToken cancellationToken)
     {
         var result = await service.GetEquipmentAsync(siteId, areaId, new PageRequest(page ?? 1, pageSize ?? 50), cancellationToken);
@@ -67,7 +67,7 @@ public static class PlantLayoutEndpoints
 
     private static async Task<IResult> GetAreaChildrenAsync(
         Guid id,
-        IPlantLayoutQueryService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IPlantLayoutQueryService service,
         CancellationToken cancellationToken)
     {
         var result = await service.GetAreaChildrenAsync(id, cancellationToken);
@@ -76,7 +76,7 @@ public static class PlantLayoutEndpoints
 
     private static async Task<IResult> GetEquipmentChildrenAsync(
         Guid id,
-        IPlantLayoutQueryService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IPlantLayoutQueryService service,
         CancellationToken cancellationToken)
     {
         var result = await service.GetEquipmentChildrenAsync(id, cancellationToken);
@@ -87,7 +87,7 @@ public static class PlantLayoutEndpoints
         Guid id,
         int? page,
         int? pageSize,
-        IPlantLayoutQueryService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IPlantLayoutQueryService service,
         CancellationToken cancellationToken)
     {
         var result = await service.GetMaterialsByEquipmentAsync(id, new PageRequest(page ?? 1, pageSize ?? 50), cancellationToken);

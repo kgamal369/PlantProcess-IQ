@@ -30,7 +30,7 @@ public static partial class WorkflowEndpoints
 {
 private static async Task<IResult> CreateMaterialAsync(
         CreateWorkflowMaterialRequest request,
-        IMaterialService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IMaterialService service,
         HttpContext httpContext,
         CancellationToken cancellationToken)
     {

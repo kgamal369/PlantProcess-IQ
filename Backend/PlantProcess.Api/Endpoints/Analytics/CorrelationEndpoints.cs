@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using PlantProcess.Api.Extensions;
 using PlantProcess.Application.Analytics.Contracts;
 using PlantProcess.Application.Analytics.Advanced;
@@ -75,7 +75,7 @@ public static class CorrelationEndpoints
         int? minimumObservationsPerBin,
         bool? persistResult,
         ILicenseService licenseService,
-        ICorrelationService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] ICorrelationService service,
         CancellationToken cancellationToken)
     {
         var gate = licenseService.EnsureFeatureEnabled(LicenseFeature.CorrelationManualRun);
@@ -104,7 +104,7 @@ public static class CorrelationEndpoints
         DateTime? toUtc,
         int? minimumMaterialsPerEquipment,
         ILicenseService licenseService,
-        ICorrelationService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] ICorrelationService service,
         CancellationToken cancellationToken)
     {
         var gate = licenseService.EnsureFeatureEnabled(LicenseFeature.CorrelationManualRun);
@@ -130,7 +130,7 @@ public static class CorrelationEndpoints
         DateTime? toUtc,
         int? minimumMaterialsPerOperation,
         ILicenseService licenseService,
-        ICorrelationService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] ICorrelationService service,
         CancellationToken cancellationToken)
     {
         var gate = licenseService.EnsureFeatureEnabled(LicenseFeature.CorrelationManualRun);
@@ -153,7 +153,7 @@ public static class CorrelationEndpoints
         Guid materialUnitId,
         string defectType,
         ILicenseService licenseService,
-        ICorrelationService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] ICorrelationService service,
         CancellationToken cancellationToken)
     {
         var gate = licenseService.EnsureFeatureEnabled(LicenseFeature.CorrelationManualRun);

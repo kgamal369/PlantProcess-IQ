@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using PlantProcess.Api.Extensions;
 using PlantProcess.Application.Contracts.Common;
 using PlantProcess.Application.Integration.Contracts.Commands;
@@ -437,7 +437,7 @@ public static class IntegrationEndpoints
 
     private static async Task<IResult> CreateStagingRecordsBulkAsync(
         BulkCreateStagingRecordsRequest request,
-        IStagingRecordService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IStagingRecordService service,
         HttpContext httpContext,
         CancellationToken cancellationToken)
     {
@@ -538,7 +538,7 @@ public static class IntegrationEndpoints
     /// </summary>
     private static async Task<IResult> CreateMappingDefinitionAsync(
         CreateMappingDefinitionRequest request,
-        IMappingDefinitionService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IMappingDefinitionService service,
         HttpContext httpContext,
         CancellationToken cancellationToken)
     {
@@ -579,7 +579,7 @@ public static class IntegrationEndpoints
     private static async Task<IResult> UpdateMappingDefinitionJsonAsync(
         Guid id,
         UpdateMappingJsonRequest request,
-        IMappingDefinitionService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IMappingDefinitionService service,
         CancellationToken cancellationToken)
     {
         var result = await service.UpdateMappingJsonAsync(
@@ -601,7 +601,7 @@ public static class IntegrationEndpoints
         Guid id,
         Guid importBatchId,
         int? take,
-        IMappingExecutionService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IMappingExecutionService service,
         CancellationToken cancellationToken)
     {
         var result = await service.PreviewAsync(
@@ -618,7 +618,7 @@ public static class IntegrationEndpoints
         Guid importBatchId,
         int? take,
         bool? stopOnFirstError,
-        IMappingExecutionService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IMappingExecutionService service,
         CancellationToken cancellationToken)
     {
         var result = await service.ExecuteAsync(

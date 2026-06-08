@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using PlantProcess.Api.Extensions;
 using PlantProcess.Application.Dashboarding.Contracts;
@@ -97,7 +97,7 @@ public static class DashboardEndpoints
     }
 
     private static async Task<IResult> GetMetadataAsync(
-    IDashboardMetadataService service,
+    [Microsoft.AspNetCore.Mvc.FromServices] IDashboardMetadataService service,
     ILoggerFactory loggerFactory,
     CancellationToken cancellationToken)
     {
@@ -113,7 +113,7 @@ public static class DashboardEndpoints
 
     private static async Task<IResult> QueryWidgetAsync(
         DashboardWidgetQueryDto query,
-        IDashboardWidgetQueryService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IDashboardWidgetQueryService service,
         ILoggerFactory loggerFactory,
         CancellationToken cancellationToken)
     {
@@ -132,7 +132,7 @@ public static class DashboardEndpoints
 
     private static async Task<IResult> GetWorkspaceAsync(
         DashboardQueryDto query,
-        IDashboardQueryService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IDashboardQueryService service,
         CancellationToken cancellationToken)
     {
         var result = await service.GetWorkspaceAsync(query, cancellationToken);
@@ -150,7 +150,7 @@ public static class DashboardEndpoints
         DateTime? fromUtc,
         DateTime? toUtc,
         string? shiftCode,
-        IDashboardQueryService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IDashboardQueryService service,
         CancellationToken cancellationToken)
     {
         var result = await service.GetOverviewAsync(
@@ -171,7 +171,7 @@ public static class DashboardEndpoints
         DateTime? fromUtc,
         DateTime? toUtc,
         string? shiftCode,
-        IDashboardQueryService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IDashboardQueryService service,
         CancellationToken cancellationToken)
     {
         var result = await service.GetQualityDashboardAsync(
@@ -193,7 +193,7 @@ public static class DashboardEndpoints
         DateTime? toUtc,
         string? shiftCode,
         int? highRiskTake,
-        IDashboardQueryService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IDashboardQueryService service,
         CancellationToken cancellationToken)
     {
         var result = await service.GetRiskDashboardAsync(
@@ -214,7 +214,7 @@ public static class DashboardEndpoints
         DateTime? fromUtc,
         DateTime? toUtc,
         string? shiftCode,
-        IDashboardQueryService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IDashboardQueryService service,
         CancellationToken cancellationToken)
     {
         var result = await service.GetDataQualityDashboardAsync(
@@ -239,7 +239,7 @@ public static class DashboardEndpoints
         int? pageSize,
         string? sortBy,
         string? sortDirection,
-        IDashboardQueryService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IDashboardQueryService service,
         CancellationToken cancellationToken)
     {
         var result = await service.SearchMaterialsAsync(
@@ -421,7 +421,7 @@ public static class DashboardEndpoints
     private static async Task<IResult> GetDashboardDefinitionsAsync(
     bool? includeInactive,
     bool? includeSystemTemplates,
-    IDashboardDefinitionService service,
+    [Microsoft.AspNetCore.Mvc.FromServices] IDashboardDefinitionService service,
     CancellationToken cancellationToken)
     {
         var result = await service.GetDashboardsAsync(
@@ -434,7 +434,7 @@ public static class DashboardEndpoints
 
     private static async Task<IResult> GetDashboardDefinitionByIdAsync(
         Guid dashboardDefinitionId,
-        IDashboardDefinitionService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IDashboardDefinitionService service,
         CancellationToken cancellationToken)
     {
         var result = await service.GetDashboardByIdAsync(dashboardDefinitionId, cancellationToken);
@@ -443,7 +443,7 @@ public static class DashboardEndpoints
 
     private static async Task<IResult> CreateDashboardDefinitionAsync(
         CreateDashboardDefinitionRequest request,
-        IDashboardDefinitionService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IDashboardDefinitionService service,
         PlantProcessDbContext dbContext,
         ILicenseService licenseService,
         CancellationToken cancellationToken)
@@ -468,7 +468,7 @@ public static class DashboardEndpoints
     private static async Task<IResult> UpdateDashboardDefinitionAsync(
         Guid dashboardDefinitionId,
         UpdateDashboardDefinitionRequest request,
-        IDashboardDefinitionService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IDashboardDefinitionService service,
         CancellationToken cancellationToken)
     {
         var result = await service.UpdateDashboardAsync(dashboardDefinitionId, request, cancellationToken);
@@ -482,7 +482,7 @@ public static class DashboardEndpoints
     private static async Task<IResult> UpdateDashboardLayoutAsync(
         Guid dashboardDefinitionId,
         UpdateDashboardLayoutRequest request,
-        IDashboardDefinitionService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IDashboardDefinitionService service,
         CancellationToken cancellationToken)
     {
         var result = await service.UpdateDashboardLayoutAsync(dashboardDefinitionId, request, cancellationToken);
@@ -496,7 +496,7 @@ public static class DashboardEndpoints
 
     private static async Task<IResult> DeactivateDashboardDefinitionAsync(
         Guid dashboardDefinitionId,
-        IDashboardDefinitionService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IDashboardDefinitionService service,
         CancellationToken cancellationToken)
     {
         var result = await service.DeactivateDashboardAsync(dashboardDefinitionId, cancellationToken);
@@ -511,7 +511,7 @@ public static class DashboardEndpoints
     private static async Task<IResult> CreateDashboardWidgetDefinitionAsync(
         Guid dashboardDefinitionId,
         CreateDashboardWidgetDefinitionRequest request,
-        IDashboardDefinitionService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IDashboardDefinitionService service,
         ILicenseService licenseService,
         CancellationToken cancellationToken)
     {
@@ -530,7 +530,7 @@ public static class DashboardEndpoints
         Guid dashboardDefinitionId,
         Guid widgetDefinitionId,
         UpdateDashboardWidgetDefinitionRequest request,
-        IDashboardDefinitionService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IDashboardDefinitionService service,
         CancellationToken cancellationToken)
     {
         var result = await service.UpdateWidgetAsync(
@@ -551,7 +551,7 @@ public static class DashboardEndpoints
         Guid dashboardDefinitionId,
         Guid widgetDefinitionId,
         UpdateDashboardWidgetLayoutRequest request,
-        IDashboardDefinitionService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IDashboardDefinitionService service,
         CancellationToken cancellationToken)
     {
         var result = await service.UpdateWidgetLayoutAsync(
@@ -573,7 +573,7 @@ public static class DashboardEndpoints
         Guid dashboardDefinitionId,
         Guid widgetDefinitionId,
         CloneDashboardWidgetRequest request,
-        IDashboardDefinitionService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IDashboardDefinitionService service,
         CancellationToken cancellationToken)
     {
         var result = await service.CloneWidgetAsync(
@@ -591,7 +591,7 @@ public static class DashboardEndpoints
     private static async Task<IResult> DeactivateDashboardWidgetDefinitionAsync(
         Guid dashboardDefinitionId,
         Guid widgetDefinitionId,
-        IDashboardDefinitionService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IDashboardDefinitionService service,
         CancellationToken cancellationToken)
     {
         var result = await service.DeactivateWidgetAsync(
@@ -609,7 +609,7 @@ public static class DashboardEndpoints
     }
 
     private static async Task<IResult> EnsureSystemDashboardTemplatesAsync(
-        IDashboardDefinitionService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IDashboardDefinitionService service,
         ILoggerFactory loggerFactory,
         CancellationToken cancellationToken)
     {
@@ -680,7 +680,7 @@ public static class DashboardEndpoints
     }
 
     private static async Task<IResult> RepairSystemDashboardTemplatesAsync(
-        IDashboardDefinitionService service,
+        [Microsoft.AspNetCore.Mvc.FromServices] IDashboardDefinitionService service,
         CancellationToken cancellationToken)
     {
         var result = await service.RepairSystemTemplatesAsync(cancellationToken);

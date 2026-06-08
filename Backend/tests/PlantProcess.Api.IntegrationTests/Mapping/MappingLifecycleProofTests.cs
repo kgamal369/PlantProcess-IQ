@@ -9,7 +9,7 @@ using Xunit;
 
 namespace PlantProcess.Api.IntegrationTests.Mapping;
 
-// P6-03 — mapping validate/publish/rollback with typed errors + safe-SQL rejection. DB-gated.
+// P6-03 â€” mapping validate/publish/rollback with typed errors + safe-SQL rejection. DB-gated.
 public sealed class MappingLifecycleProofTests : AuthenticatedApiTestBase
 {
     public MappingLifecycleProofTests(WebApplicationFactory<Program> factory) : base(factory) { }
@@ -18,10 +18,23 @@ public sealed class MappingLifecycleProofTests : AuthenticatedApiTestBase
         Environment.GetEnvironmentVariable("PPIQ_TEST_CONNECTION_STRING")
         ?? throw new InvalidOperationException("PPIQ_TEST_CONNECTION_STRING not set.");
 
-    private static async Task<NpgsqlConnection> OpenAsync()
+        private static async Task<NpgsqlConnection> OpenAsync()
     {
         var c = new NpgsqlConnection(Conn);
         await c.OpenAsync();
+
+        await using var tenantCmd = new NpgsqlCommand("""
+SELECT set_config(
+    'app.current_tenant',
+    COALESCE(
+        (SELECT id::text FROM public.ppiq_tenants ORDER BY created_at_utc LIMIT 1),
+        '00000000-0000-0000-0000-000000000001'
+    ),
+    false
+)
+""", c);
+        await tenantCmd.ExecuteNonQueryAsync();
+
         return c;
     }
 
