@@ -14,6 +14,32 @@ export interface AnalysisReadinessDto {
   outcomeKey: string; grain: string; windowDays: number; independentHeats: number; outcomeEvents: number;
 }
 
+export type AdvancedReadinessGateState = "Ready" | "Partial" | "Blocked";
+
+export interface AdvancedReadinessGateDto {
+  gateCode: string;
+  title: string;
+  state: AdvancedReadinessGateState;
+  reason: string;
+  evidence: string;
+  isBlocking: boolean;
+}
+
+export interface AdvancedReadinessGateSummaryDto {
+  state: AdvancedReadinessGateState;
+  canRun: boolean;
+  outcomeKey: string;
+  grain: string;
+  windowDays: number;
+  independentHeats: number;
+  outcomeEvents: number;
+  readyCount: number;
+  partialCount: number;
+  blockedCount: number;
+  message: string;
+  gates: AdvancedReadinessGateDto[];
+}
+
 const BASE = "/analytics/advanced";
 const qs = (o: Record<string, unknown>) =>
   Object.entries(o).filter(([, v]) => v !== undefined && v !== null && v !== "")
@@ -27,5 +53,8 @@ export async function getAdvancedResults(outcomeKey: string, runId?: string): Pr
 }
 export const getAnalysisReadiness = (outcomeKey: string, grain = "coil", windowDays = 30) =>
   apiClient.get<AnalysisReadinessDto>(`${BASE}/readiness?${qs({ outcomeKey, grain, windowDays })}`);
+
+export const getAnalysisReadinessGates = (outcomeKey: string, grain = "coil", windowDays = 30) =>
+  apiClient.get<AdvancedReadinessGateSummaryDto>(`${BASE}/readiness/gates?${qs({ outcomeKey, grain, windowDays })}`);
 export const runCorrelation = (outcomeKey: string, grain = "coil", windowDays = 30) =>
-  apiClient.post("/ml/foundation/compute/correlation", { outcomeKey, grain, windowDays });
+  apiClient.post("/ml/foundation/compute/correlation", { outcomeKey, grain, windowDays });

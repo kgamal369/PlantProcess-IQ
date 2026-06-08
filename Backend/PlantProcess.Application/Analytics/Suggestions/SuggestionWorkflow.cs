@@ -3,7 +3,8 @@ namespace PlantProcess.Application.Analytics.Suggestions;
 public sealed record TransitionDecision(bool Allowed, string Reason);
 
 /// <summary>
-/// T-049: pure transition + RBAC rules. open -> assigned -> accepted | rejected -> closed; dismissed is
+/// PPIQ_REALIZATION_T047_DETERMINISTIC_SUGGESTION_WORKFLOW.
+/// T-047/T-049: pure transition + RBAC rules. open -> assigned -> accepted | rejected -> closed; dismissed is
 /// terminal. An Operator may acknowledge (assign) but never accept. Illegal transitions are refused.
 /// </summary>
 public static class SuggestionWorkflow

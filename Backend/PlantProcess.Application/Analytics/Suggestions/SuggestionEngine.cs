@@ -5,7 +5,8 @@ using PlantProcess.Application.Provenance;
 namespace PlantProcess.Application.Analytics.Suggestions;
 
 /// <summary>
-/// T-046: DETERMINISTIC suggestion generation. Same approved findings -> identical cards (stable ids and
+/// PPIQ_REALIZATION_T047_DETERMINISTIC_SUGGESTION_WORKFLOW.
+/// T-047: DETERMINISTIC suggestion generation. Same approved findings -> identical cards (stable ids and
 /// order). Every card carries at least one resolvable evidence handle and a ranged impact; a finding with
 /// no evidence handle is refused. Confidence is derived from data quality + sample size + stability.
 /// The assistant may later explain a card, but cards are produced only here.
@@ -81,6 +82,7 @@ public sealed class SuggestionEngine : ISuggestionEngine
         return parts.Count == 0 ? "" : " on " + string.Join(" / ", parts);
     }
 
+    /// <summary>PPIQ_REALIZATION_T047_DETERMINISTIC_SUGGESTION_WORKFLOW: MD5-stable card id from suggestion key.</summary>
     private static Guid DeterministicGuid(string key)
     {
         using var md5 = MD5.Create();

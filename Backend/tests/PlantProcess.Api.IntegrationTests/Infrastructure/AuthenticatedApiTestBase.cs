@@ -28,7 +28,10 @@ public abstract class AuthenticatedApiTestBase : IClassFixture<WebApplicationFac
 
     protected HttpClient CreateAnonymousClient()
     {
-        if (IsForcedExternalHost())
+        // PPIQ_FULL_DOTNET_TEST_EXTERNAL_API_HOST_DEFAULT:
+        // Full local dotnet test must not depend on shared WebApplicationFactory lifecycle.
+        // Default to external test API host. Use PPIQ_USE_WEBAPPLICATION_FACTORY_TEST_HOST=1 only for debugging.
+        if (!UseInProcessFactoryHost())
         {
             return ExternalApiTestHost.CreateClient();
         }
@@ -37,7 +40,11 @@ public abstract class AuthenticatedApiTestBase : IClassFixture<WebApplicationFac
         {
             return CreateFactoryClient();
         }
-        catch (InvalidOperationException ex) when (IsFactoryStartupFailure(ex))
+        catch (ObjectDisposedException ex) when (IsFactoryLifecycleFailure(ex))
+        {
+            return ExternalApiTestHost.CreateClient();
+        }
+        catch (InvalidOperationException ex) when (IsFactoryStartupFailure(ex) || IsFactoryLifecycleFailure(ex))
         {
             return ExternalApiTestHost.CreateClient();
         }
@@ -103,6 +110,14 @@ public abstract class AuthenticatedApiTestBase : IClassFixture<WebApplicationFac
             StringComparison.OrdinalIgnoreCase);
     }
 
+    private static bool UseInProcessFactoryHost()
+    {
+        return !IsForcedExternalHost()
+            && string.Equals(
+                Environment.GetEnvironmentVariable("PPIQ_USE_WEBAPPLICATION_FACTORY_TEST_HOST"),
+                "1",
+                StringComparison.OrdinalIgnoreCase);
+    }
     private static bool IsFactoryStartupFailure(Exception ex)
     {
         var text = ex.ToString();
@@ -113,6 +128,22 @@ public abstract class AuthenticatedApiTestBase : IClassFixture<WebApplicationFac
             || text.Contains(
                 "no web application was configured",
                 StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsFactoryLifecycleFailure(Exception ex)
+    {
+        var text = ex.ToString();
+
+        return text.Contains(
+                "Cannot access a disposed object",
+                StringComparison.OrdinalIgnoreCase)
+            || text.Contains(
+                "Object name: 'IServiceProvider'",
+                StringComparison.OrdinalIgnoreCase)
+            || (
+                text.Contains("IServiceProvider", StringComparison.OrdinalIgnoreCase)
+                && text.Contains("disposed", StringComparison.OrdinalIgnoreCase)
+            );
     }
 
     private static void ConfigureTestEnvironmentOnce()
@@ -126,6 +157,8 @@ public abstract class AuthenticatedApiTestBase : IClassFixture<WebApplicationFac
 
             Set("ASPNETCORE_ENVIRONMENT", "Development");
             Set("DOTNET_ENVIRONMENT", "Development");
+
+            Set("PPIQ_RUN_CONNECTOR_INTEGRATION", "0");
 
             Set(
                 "ConnectionStrings__PlantProcessDb",

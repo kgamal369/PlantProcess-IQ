@@ -4,7 +4,8 @@ using PlantProcess.Application.Provenance;
 namespace PlantProcess.Application.Assistant;
 
 /// <summary>
-/// T-053 grounding contract (§2/§7.7). Operates on a model DRAFT plus the grounded claims that back it:
+/// PPIQ_REALIZATION_T048_ASSISTANT_GROUNDING_EVAL_GATE.
+/// T-048/T-053 grounding contract (§2/§7.7). Operates on a model DRAFT plus the grounded claims that back it:
 ///  - a sentence containing a NUMBER not authorized by a claim is BLOCKED (the number never reaches the client);
 ///  - sentences asserting causation ('root cause', 'is caused by') or forbidden value phrasing are BLOCKED;
 ///  - synthetic/seed-backed claims are dropped; if nothing grounded remains, the answer is an honest refusal.

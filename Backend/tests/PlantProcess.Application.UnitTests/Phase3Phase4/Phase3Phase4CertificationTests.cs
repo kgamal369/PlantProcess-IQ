@@ -1,3 +1,5 @@
+using PlantProcess.Application.Assistant;
+using PlantProcess.Application.Provenance;
 using Xunit;
 
 namespace PlantProcess.Application.UnitTests.Phase3Phase4;
@@ -20,28 +22,58 @@ public sealed class Phase3Phase4CertificationTests
         Assert.True(abstained.Abstained);
         Assert.Contains("missing", abstained.Message, StringComparison.OrdinalIgnoreCase);
     }
-
-    [Fact]
+        [Fact]
     public void P03_T024_Grounding_blocks_uncited_numbers_causation_and_synthetic_only_claims()
     {
-        var claim = new GroundedClaim("The observed defect rate is 12.5%.", new[] { "12.5" }, "finding:C-0044170", false);
-        var guarded = GroundingCertifier.Enforce(
-            "The observed defect rate is 12.5%. The root cause is caster superheat. Expected saving is 99999 EUR.",
-            new[] { claim });
+        var handle = ProvenanceHandle.DocumentSection("p4-evidence", "defect-rate");
 
-        Assert.False(guarded.Refused);
-        Assert.Contains("12.5", guarded.Text);
-        Assert.DoesNotContain("root cause", guarded.Text, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("99999", guarded.Text);
-        Assert.Contains("finding:C-0044170", guarded.Citations);
-        Assert.NotEmpty(guarded.BlockedSentences);
+        var liveClaims = new[]
+        {
+            new AssistantClaim(
+                "Observed defect rate was 12.5%",
+                handle,
+                new[] { "12.5" })
+        };
 
-        var syntheticOnly = GroundingCertifier.Enforce(
-            "The synthetic value is 55.",
-            new[] { new GroundedClaim("Synthetic value is 55.", new[] { "55" }, "seed-only", true) });
+        // Supported number survives when the draft is clean and fully grounded.
+        var grounded = GroundingService.Enforce(
+            "Observed defect rate was 12.5%.",
+            liveClaims);
 
-        Assert.True(syntheticOnly.Refused);
+        Assert.False(grounded.IsRefusal);
+        Assert.Contains("12.5", grounded.Text);
+        Assert.Single(grounded.Citations);
+        Assert.Empty(grounded.BlockedSentences);
+
+        // Poisoned / unsupported draft must not leak uncited numbers or causal/value overclaim.
+        var adversarial = GroundingService.Enforce(
+            "The root cause will save 999.",
+            liveClaims);
+
+        Assert.True(adversarial.IsRefusal);
+        Assert.Empty(adversarial.Text);
+        Assert.DoesNotContain("999", adversarial.Text);
+        Assert.DoesNotContain("root cause", adversarial.Text, StringComparison.OrdinalIgnoreCase);
+        Assert.NotEmpty(adversarial.BlockedSentences);
+        Assert.Contains(adversarial.BlockedSentences, s => s.Contains("999", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(adversarial.BlockedSentences, s => s.Contains("root cause", StringComparison.OrdinalIgnoreCase));
+
+        // Synthetic-only evidence must refuse honestly and never surface the seed number.
+        var syntheticOnly = GroundingService.Enforce(
+            "Observed defect rate was 12.5%.",
+            new[]
+            {
+                new AssistantClaim(
+                    "Synthetic seed says defect rate was 12.5%",
+                    handle,
+                    new[] { "12.5" },
+                    IsSynthetic: true)
+            });
+
+        Assert.True(syntheticOnly.IsRefusal);
+        Assert.Empty(syntheticOnly.Text);
         Assert.Empty(syntheticOnly.Citations);
+        Assert.DoesNotContain("12.5", syntheticOnly.Text);
     }
 
     [Fact]

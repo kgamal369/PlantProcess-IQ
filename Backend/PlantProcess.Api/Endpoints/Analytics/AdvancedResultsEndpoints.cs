@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Npgsql;
+using PlantProcess.Application.Analytics.Advanced;
 
 namespace PlantProcess.Api.Endpoints.Analytics;
 
@@ -14,9 +15,28 @@ public static class AdvancedResultsEndpoints
     {
         var group = app.MapGroup("/api/analytics/advanced")
             .WithTags("Analytics Advanced")
-            .RequireAuthorization();
-        group.MapGet("/readiness", async (string outcomeKey, string? grain, int? windowDays, System.Guid? tenantId, PlantProcess.Application.Analytics.Advanced.IAnalysisReadinessService readiness, System.Threading.CancellationToken ct) =>
+            .RequireAuthorization();
+        group.MapGet("/readiness", async (string outcomeKey, string? grain, int? windowDays, System.Guid? tenantId, PlantProcess.Application.Analytics.Advanced.IAnalysisReadinessService readiness, System.Threading.CancellationToken ct) =>
             Results.Ok(await readiness.EvaluateAsync(new PlantProcess.Application.Analytics.Advanced.AdvancedAnalysisRequest(outcomeKey, string.IsNullOrWhiteSpace(grain) ? "coil" : grain!, windowDays ?? 3650, tenantId ?? PlantProcess.Application.Analytics.Advanced.AdvancedDefaults.DemoTenant), ct)));
+
+        // PPIQ_REALIZATION_T045_READY_PARTIAL_BLOCKED_GATES: canonical API surface for HMI readiness badges.
+        group.MapGet("/readiness/gates", async (
+            string outcomeKey,
+            string? grain,
+            int? windowDays,
+            System.Guid? tenantId,
+            IAnalysisReadinessService readiness,
+            System.Threading.CancellationToken ct) =>
+        {
+            var request = new AdvancedAnalysisRequest(
+                outcomeKey,
+                string.IsNullOrWhiteSpace(grain) ? "coil" : grain!,
+                windowDays ?? 3650,
+                tenantId ?? AdvancedDefaults.DemoTenant);
+
+            var dto = await readiness.EvaluateAsync(request, ct);
+            return Results.Ok(AdvancedReadinessGateProjector.Project(dto));
+        });
 
         group.MapGet("/runs", async (NpgsqlDataSource ds, CancellationToken ct) =>
             Results.Ok(await ReadAsync(ds,
@@ -68,8 +88,8 @@ public static class AdvancedResultsEndpoints
                     stabilityConsistency = row.GetValueOrDefault("stability_score"),
                     isStable = row.GetValueOrDefault("is_stable"),
                     stratum,
-                    survivesStratification = EvidenceBool(row, "survivesStratification", true),
-                    significant = EvidenceBool(row, "significant", false),
+                    survivesStratification = EvidenceBool(row, "survivesStratification", true),
+                    significant = EvidenceBool(row, "significant", false),
                     provenanceHandle = EvidenceString(row, "provenanceHandle"),
                     windowDays = row.GetValueOrDefault("window_days"),
                     evidence = row.GetValueOrDefault("evidence_json")?.ToString(),
@@ -97,11 +117,11 @@ public static class AdvancedResultsEndpoints
               using var d = System.Text.Json.JsonDocument.Parse(t);
               return d.RootElement.TryGetProperty(key, out var v) ? v.GetString() : null; }
         catch { return null; }
-    }
-
+    }
+
     private static async Task<List<Dictionary<string, object?>>> ReadAsync(
         NpgsqlDataSource ds, string sql, (string Name, object Value)? p, CancellationToken ct)
-    {
+    {
 
 
         var rows = new List<Dictionary<string, object?>>();
@@ -117,8 +137,8 @@ public static class AdvancedResultsEndpoints
         }
         return rows;
     }
-}
-
-
-
-
+}
+
+
+
+

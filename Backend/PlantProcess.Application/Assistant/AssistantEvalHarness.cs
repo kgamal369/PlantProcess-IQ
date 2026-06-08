@@ -1,7 +1,8 @@
 namespace PlantProcess.Application.Assistant;
 
 /// <summary>
-/// PPIQ-T027: deterministic assistant eval harness.
+/// PPIQ_REALIZATION_T048_ASSISTANT_GROUNDING_EVAL_GATE.
+/// PPIQ-T027/T048: deterministic assistant eval harness.
 /// CI should fail when answers contain uncited numbers, missing citations, provider drift, or wrong refusal behavior.
 /// </summary>
 public sealed class AssistantEvalHarness
