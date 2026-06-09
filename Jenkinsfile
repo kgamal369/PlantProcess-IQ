@@ -186,10 +186,8 @@ pipeline {
                       sh -lc '
                         set -e
                         if [ -f package-lock.json ]; then npm ci; else npm install; fi
-                        npx playwright install --with-deps chromium || npx playwright install chromium
                         npm run validate:copy
                         npm run validate:standard-imports
-                        npm run test:auth-matrix
                       '
                 '''
             }
@@ -207,9 +205,7 @@ pipeline {
                       node:20-alpine \
                       sh -lc 'node tools/validation/validate-v6-phase01-phase02-completion.cjs && node tools/validation/validate-t208-exposure.cjs'
 
-                    cd ${REPO_DIR}/Frontend/PlantProcess.Web
-                    docker run --rm -v "$PWD:/app" -w /app -e PPIQ_API_BASE_URL=${PPIQ_PUBLIC_API_URL:-http://plantprocess-api:5063} -e PPIQ_ADMIN_USER=${PPIQ_SMOKE_USERNAME:-admin} -e PPIQ_ADMIN_PASSWORD=${PPIQ_SMOKE_PASSWORD:-} -e PPIQ_OPERATOR_USER=${PPIQ_OPERATOR_USER:-datamanager} -e PPIQ_OPERATOR_PASSWORD=${PPIQ_SMOKE_PASSWORD:-} node:20-alpine sh -lc 'if [ -f package-lock.json ]; then npm ci; else npm install; fi
-                        npx playwright install --with-deps chromium || npx playwright install chromium && npm run test:auth-matrix'
+
                 '''
             }
             post {
@@ -325,6 +321,30 @@ node tools/task-closure/ppiq-pack-a-scorecard-bridge.cjs
             }
         }
 
+        stage('6. Post-deploy browser gates (live stack)') {
+            steps {
+                sh '''
+                    set -e
+                    cd ${REPO_DIR}/Frontend/PlantProcess.Web
+                    docker run --rm -v "$PWD:/app" -w /app \
+                      -e CI=1 \
+                      -e PLAYWRIGHT_BASE_URL=https://178.105.152.180.sslip.io \
+                      -e PLAYWRIGHT_API_URL=https://api.178.105.152.180.sslip.io \
+                      -e PPIQ_SMOKE_USERNAME=${PPIQ_SMOKE_USERNAME:-e2eadmin} \
+                      -e PPIQ_SMOKE_PASSWORD=${PPIQ_SMOKE_PASSWORD:-} \
+                      node:20-bookworm \
+                      sh -lc '
+                        set -e
+                        if [ -f package-lock.json ]; then npm ci; else npm install; fi
+                        npx playwright install --with-deps chromium
+                        npm run test:phase56:e2e
+                        npm run test:a11y
+                        npm run test:visual
+                        npm run test:auth-matrix
+                      '
+                '''
+            }
+        }
         stage('PPIQ Phase01/02 security and verification gates') {
             steps {
                 sh '''
