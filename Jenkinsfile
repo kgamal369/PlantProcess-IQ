@@ -39,44 +39,44 @@ pipeline {
 
         stage('1. Pull latest code') {
             steps {
-                sh '''
-                    set -e
-                    cd ${REPO_DIR}
+                withCredentials([usernamePassword(credentialsId: 'github-kgamal369', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PAT')]) {
+                    sh '''
+                        set -e
+                        cd ${REPO_DIR}
 
-                    # ---- Preserve server-only files across the pull ----
-                    # These three files have production-only modifications
-                    # that intentionally diverge from the repo (secrets,
-                    # sslip.io routing, server-side bind mount). We back
-                    # them up, hard-reset to origin/main, then restore.
-                    BACKUP=$(mktemp -d)
-                    for f in deploy/compose/.env deploy/caddy/Caddyfile
-                    do
-                        if [ -f "$f" ]; then
-                            mkdir -p "$BACKUP/$(dirname $f)"
-                            cp "$f" "$BACKUP/$f"
-                            echo "    backed up $f"
-                        fi
-                    done
+                        # ---- Preserve server-only files across the pull ----
+                        BACKUP=$(mktemp -d)
+                        for f in deploy/compose/.env deploy/caddy/Caddyfile
+                        do
+                            if [ -f "$f" ]; then
+                                mkdir -p "$BACKUP/$(dirname $f)"
+                                cp "$f" "$BACKUP/$f"
+                                echo "    backed up $f"
+                            fi
+                        done
 
-                    # ---- Hard sync to origin/main ----
-                    git fetch --all --prune
-                    git reset --hard origin/main
-                    git clean -fd
+                        # ---- Hard sync to origin/main (auth via bound Jenkins PAT) ----
+                        git -c credential.helper= \
+                            -c credential.helper='!f() { echo username=${GIT_USER:-x-access-token}; echo password=$GIT_PAT; }; f' \
+                            fetch --all --prune
+                        git reset --hard origin/main
+                        git clean -fd
 
-                    # ---- Restore the production config files ----
-                    for f in deploy/compose/.env deploy/caddy/Caddyfile
-                    do
-                        if [ -f "$BACKUP/$f" ]; then
-                            cp "$BACKUP/$f" "$f"
-                            echo "    restored $f"
-                        fi
-                    done
+                        # ---- Restore the production config files ----
+                        for f in deploy/compose/.env deploy/caddy/Caddyfile
+                        do
+                            if [ -f "$BACKUP/$f" ]; then
+                                cp "$BACKUP/$f" "$f"
+                                echo "    restored $f"
+                            fi
+                        done
 
-                    rm -rf "$BACKUP"
+                        rm -rf "$BACKUP"
 
-                    echo "==> HEAD is now at:"
-                    git log -1 --format='%h %ai %s'
-                '''
+                        echo "==> HEAD is now at:"
+                        git log -1 --format='%h %ai %s'
+                    '''
+                }
             }
         }
 
