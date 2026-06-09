@@ -44,7 +44,13 @@ function noNative(task, file) {
 }
 
 function contains(file, patterns) {
-  const text = read(file);
+  // A page file may be a thin re-export shim whose real implementation was moved into a
+  // ".generated" / ".runtime.generated" sibling by an earlier split (T063). Inspect the
+  // shim AND any generated sibling so feature checks see the real, shipped implementation.
+  let text = read(file);
+  for (const sib of [file.replace(/\.tsx$/, ".generated.tsx"), file.replace(/\.tsx$/, ".runtime.generated.tsx")]) {
+    if (sib !== file) text += "\n" + read(sib);
+  }
   return patterns.every((pattern) => pattern.test(text));
 }
 
