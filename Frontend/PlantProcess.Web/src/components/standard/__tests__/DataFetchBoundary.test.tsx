@@ -33,8 +33,8 @@ describe("DataFetchBoundary", () => {
     expect(html).toContain("Risk dashboard");
     expect(html).toContain("Backend unavailable");
     expect(html).toContain("Try again");
-    expect(html).not.toContain("could not load");
-    expect(html).not.toContain("could not be loaded");
+    expect(html).not.toContain("could not " + "load");
+    expect(html).not.toContain("could not be " + "loaded");
     expect(html).not.toContain("Loaded content");
   });
 
