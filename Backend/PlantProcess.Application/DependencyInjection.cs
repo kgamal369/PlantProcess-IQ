@@ -77,6 +77,7 @@ public static class DependencyInjection
         services.AddScoped<IImportWorkflowService, ImportWorkflowService>();
         services.AddScoped<IImportBatchQueueProcessorService, ImportBatchQueueProcessorService>();
         services.AddScoped<IConnectorConfigurationService, ConnectorConfigurationService>();
+        services.AddScoped<IConnectorSchemaDriftService, ConnectorSchemaDriftService>();
         services.AddScoped<ISchemaConfigurationService, SchemaConfigurationService>();
         services.AddScoped<IJobDefinitionService, JobDefinitionService>();
         services.AddScoped<IJobRegistrationService, JobRegistrationService>();

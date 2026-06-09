@@ -117,10 +117,11 @@ pipeline {
                         node --version
                         npm --version
                         if [ -f package-lock.json ]; then npm ci; else npm install; fi
+                        npx playwright install --with-deps chromium || npx playwright install chromium
                         npm run validate:phase5-phase6:strict
-                        npm run test:visual -- --list
-                        npm run test:phase56:e2e -- --list
-                        npm run test:a11y -- --list
+                        npm run test:visual
+                        npm run test:phase56:e2e
+                        npm run test:a11y
                       '
                 '''
             }
@@ -138,6 +139,7 @@ pipeline {
                       sh -lc '
                         set -e
                         if [ -f package-lock.json ]; then npm ci; else npm install; fi
+                        npx playwright install --with-deps chromium || npx playwright install chromium
                         npm run lint:ci
                         npm run openapi:check
                       '
@@ -187,6 +189,7 @@ pipeline {
                       sh -lc '
                         set -e
                         if [ -f package-lock.json ]; then npm ci; else npm install; fi
+                        npx playwright install --with-deps chromium || npx playwright install chromium
                         npm run validate:copy
                         npm run validate:standard-imports
                         npm run test:auth-matrix
@@ -208,7 +211,8 @@ pipeline {
                       sh -lc 'node tools/validation/validate-v6-phase01-phase02-completion.cjs && node tools/validation/validate-t208-exposure.cjs'
 
                     cd ${REPO_DIR}/Frontend/PlantProcess.Web
-                    docker run --rm -v "$PWD:/app" -w /app -e PPIQ_API_BASE_URL=${PPIQ_PUBLIC_API_URL:-http://plantprocess-api:5063} -e PPIQ_ADMIN_USER=${PPIQ_SMOKE_USERNAME:-admin} -e PPIQ_ADMIN_PASSWORD=${PPIQ_SMOKE_PASSWORD:-} -e PPIQ_OPERATOR_USER=${PPIQ_OPERATOR_USER:-datamanager} -e PPIQ_OPERATOR_PASSWORD=${PPIQ_SMOKE_PASSWORD:-} node:20-alpine sh -lc 'if [ -f package-lock.json ]; then npm ci; else npm install; fi && npm run test:auth-matrix'
+                    docker run --rm -v "$PWD:/app" -w /app -e PPIQ_API_BASE_URL=${PPIQ_PUBLIC_API_URL:-http://plantprocess-api:5063} -e PPIQ_ADMIN_USER=${PPIQ_SMOKE_USERNAME:-admin} -e PPIQ_ADMIN_PASSWORD=${PPIQ_SMOKE_PASSWORD:-} -e PPIQ_OPERATOR_USER=${PPIQ_OPERATOR_USER:-datamanager} -e PPIQ_OPERATOR_PASSWORD=${PPIQ_SMOKE_PASSWORD:-} node:20-alpine sh -lc 'if [ -f package-lock.json ]; then npm ci; else npm install; fi
+                        npx playwright install --with-deps chromium || npx playwright install chromium && npm run test:auth-matrix'
                 '''
             }
             post {

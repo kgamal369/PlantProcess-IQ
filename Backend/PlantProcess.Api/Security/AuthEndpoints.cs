@@ -235,7 +235,7 @@ public static class AuthEndpoints
 
         var plantRole = PlantRoles.NormalizePlantRole(configured.Role);
         return new AppUserRecord(
-            Id: Guid.Parse("00000000-0000-0000-0000-000000000099"),
+            Id: Guid.Parse("00000000-0000-0000-0000-000000000101"),
             TenantId: Guid.Parse("00000000-0000-0000-0000-000000000001"),
             TenantCode: "default-demo",
             UserName: configured.UserName,

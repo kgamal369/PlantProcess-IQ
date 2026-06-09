@@ -48,6 +48,12 @@ const NAV_INTELLIGENCE = [
   { to: "/demo-lifecycle",label: "Demo Lifecycle",  desc: "Connector to ML result workflow",       icon: PlayCircle },
 ];
 
+const NAV_PHASE8_AI = [
+  { to: "/phase8/suggestions", label: "P08 Suggestions", desc: "Guarded recommendations", icon: BrainCircuit },
+  { to: "/phase8/assistant", label: "P08 Assistant", desc: "Grounded chat runtime", icon: Sparkles },
+  { to: "/phase8/assistant-config", label: "Assistant Config", desc: "HMI grounding controls", icon: Settings2 },
+];
+
 const NAV_SYSTEM = [
   { to: "/phase15/honesty-certification", label: "Honesty Cert.", desc: "Approval + no overclaim gate", icon: DatabaseZap },
   { to: "/phase15/benchmarking", label: "Benchmarking", desc: "Cross-plant privacy bands", icon: DatabaseZap },

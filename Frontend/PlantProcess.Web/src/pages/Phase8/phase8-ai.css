@@ -1,0 +1,120 @@
+
+.phase8-page {
+  display: grid;
+  gap: 18px;
+  color: #eaf7ff;
+}
+
+.phase8-hero,
+.phase8-card {
+  border: 1px solid rgba(124, 220, 255, 0.18);
+  border-radius: 22px;
+  padding: 20px;
+  background: linear-gradient(135deg, rgba(7, 18, 34, 0.95), rgba(4, 10, 22, 0.9));
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.22);
+}
+
+.phase8-eyebrow {
+  margin: 0;
+  color: #13d8ff;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.phase8-hero h1 {
+  margin: 8px 0;
+  font-size: clamp(28px, 4vw, 38px);
+}
+
+.phase8-muted {
+  color: #9ab8d7;
+  line-height: 1.65;
+}
+
+.phase8-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.phase8-two-col {
+  display: grid;
+  grid-template-columns: minmax(340px, 1.15fr) minmax(300px, 0.85fr);
+  gap: 14px;
+}
+
+@media (max-width: 900px) {
+  .phase8-two-col {
+    grid-template-columns: 1fr;
+  }
+}
+
+.phase8-button {
+  border: 1px solid rgba(0, 212, 255, 0.34);
+  border-radius: 14px;
+  padding: 10px 14px;
+  color: #eaf7ff;
+  background: rgba(0, 132, 255, 0.24);
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.phase8-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.phase8-input,
+.phase8-select,
+.phase8-textarea {
+  width: 100%;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(2, 7, 18, 0.65);
+  color: #eaf7ff;
+  padding: 10px 12px;
+}
+
+.phase8-textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.phase8-kpi {
+  display: grid;
+  gap: 4px;
+}
+
+.phase8-kpi span {
+  color: #7e9bb8;
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.phase8-kpi strong {
+  font-size: 18px;
+}
+
+.phase8-list {
+  display: grid;
+  gap: 10px;
+  padding-left: 18px;
+  color: #9ab8d7;
+  line-height: 1.65;
+}
+
+.phase8-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  border: 1px solid rgba(100, 255, 218, 0.28);
+  border-radius: 999px;
+  padding: 5px 10px;
+  color: #64ffda;
+  background: rgba(100, 255, 218, 0.08);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}

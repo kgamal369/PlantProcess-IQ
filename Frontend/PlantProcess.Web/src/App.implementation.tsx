@@ -179,6 +179,23 @@ const ValueRealizationPage = lazy(() =>
     default: m.ValueRealizationPage,
   }))
 );
+
+const Phase8SuggestionRecommendationPage = lazy(() =>
+  import("./pages/Phase8/SuggestionRecommendationPage").then((m) => ({
+    default: m.SuggestionRecommendationPage,
+  }))
+);
+const Phase8AssistantRuntimePage = lazy(() =>
+  import("./pages/Phase8/AssistantRuntimePage").then((m) => ({
+    default: m.AssistantRuntimePage,
+  }))
+);
+const Phase8AssistantConfigurationPage = lazy(() =>
+  import("./pages/Phase8/AssistantConfigurationPage").then((m) => ({
+    default: m.AssistantConfigurationPage,
+  }))
+);
+
 const RecommendationsPage = lazy(() =>
   import("./pages/Phase15/RecommendationsPage").then((m) => ({
     default: m.RecommendationsPage,
@@ -585,6 +602,36 @@ function AppRoutes() {
                       path="/advisory/value-realization"
                       element={<Navigate to="/phase15/value-realization" replace />}
                     />
+                    
+                    {/* Phase 8 AI suggestion and assistant HMI */}
+                    <Route
+                      path="/phase8/suggestions"
+                      element={withPageBoundary(
+                        "/phase8/suggestions",
+                        "Phase 8 suggestions are refreshing",
+                        <Phase8SuggestionRecommendationPage />
+                      )}
+                    />
+                    <Route path="/suggestions" element={<Navigate to="/phase8/suggestions" replace />} />
+                    <Route
+                      path="/phase8/assistant"
+                      element={withPageBoundary(
+                        "/phase8/assistant",
+                        "Phase 8 assistant is refreshing",
+                        <Phase8AssistantRuntimePage />
+                      )}
+                    />
+                    <Route path="/assistant" element={<Navigate to="/phase8/assistant" replace />} />
+                    <Route
+                      path="/phase8/assistant-config"
+                      element={withPageBoundary(
+                        "/phase8/assistant-config",
+                        "Phase 8 assistant configuration is refreshing",
+                        <Phase8AssistantConfigurationPage />
+                      )}
+                    />
+                    <Route path="/assistant-config" element={<Navigate to="/phase8/assistant-config" replace />} />
+
                     {/* Pack G Phase 15 recommendation generator */}
                     <Route
                       path="/phase15/recommendations"
