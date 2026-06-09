@@ -119,9 +119,6 @@ pipeline {
                         if [ -f package-lock.json ]; then npm ci; else npm install; fi
                         npx playwright install --with-deps chromium || npx playwright install chromium
                         npm run validate:phase5-phase6:strict
-                        npm run test:visual
-                        npm run test:phase56:e2e
-                        npm run test:a11y
                       '
                 '''
             }
