@@ -1,4 +1,3 @@
-// @ts-nocheck
 import type { WidgetBuilderWizardProps } from "./WidgetBuilderWizardContent.types";
 import { useWidgetBuilderWizardContentModel } from "./WidgetBuilderWizardContent.model";
 import { WidgetBuilderWizardContentView } from "./WidgetBuilderWizardContent.view";

@@ -1,72 +1,11 @@
-// @ts-nocheck
-import {
-  ArrowLeft,
-    ArrowRight,
-    BarChart3,
-    CheckCircle2,
-    Eye,
-    Filter,
-    Save,
-    Sparkles,
-    X,
-} from "lucide-react";
-import {
-  useEffect, useMemo, useState
-} from "react";
-import {
-  productApi
-} from "../../../../api/productApiClient";
-import {
-  widgetScriptApi
-} from "@/api/widgetScript";
-import {
-  useOptimisticSave
-} from "@/hooks/useOptimisticSave";
-import type {
-  DashboardChartTypeMetadata,
-    DashboardDefinitionRecord,
-    DashboardDimensionMetadata,
-    DashboardMeasureMetadata,
-    DashboardMetadata,
-    DashboardReferenceData,
-    DashboardWidgetDefinitionRecord,
-    DashboardWidgetFilters,
-    DashboardWidgetQuery,
-    DashboardWidgetQueryOptions,
-    DashboardWidgetQueryResult,
-} from "../../../../api/productApiClient";
+import { ArrowLeft, ArrowRight, Eye, Save, X } from "lucide-react";
 
-import {
-  InteractiveBarChart,
-    InteractiveLineChart,
-    InteractivePieChart,
-} from "@/components/charts/InteractiveCharts";
-import type {
-  ChartRow
-} from "@/components/charts/InteractiveCharts";
-import {
-  EmptyInsightState
-} from "@/components/dashboard/EmptyInsightState";
-import {
-  WidgetScriptStep
-} from "../WidgetScriptStep";
-import {
-  StandardButton
-} from "@/components/standard";
+import { StandardButton } from "@/components/standard";
 
-import {
-  PurposeStep, ChartTypeStep, DataStep
-} from "./WidgetBuilderWizardContent.data-steps";
-import {
-  FilterStep
-} from "./WidgetBuilderWizardContent.filter-step";
-import {
-  ScriptStep, PreviewStep
-} from "./WidgetBuilderWizardContent.preview-steps";
-import {
-  mapValidationIssues, stepLabels, stepOrder,
-    formatError,
-} from "./WidgetBuilderWizardContent.helpers";
+import { PurposeStep, ChartTypeStep, DataStep } from "./WidgetBuilderWizardContent.data-steps";
+import { FilterStep } from "./WidgetBuilderWizardContent.filter-step";
+import { ScriptStep, PreviewStep } from "./WidgetBuilderWizardContent.preview-steps";
+import { mapValidationIssues, stepLabels, stepOrder, formatError } from "./WidgetBuilderWizardContent.helpers";
 
 export function WidgetBuilderWizardContentView({ vm }: { vm: Record<string, any> }) {
   const {
@@ -121,7 +60,6 @@ export function WidgetBuilderWizardContentView({ vm }: { vm: Record<string, any>
 
   const runPreview = vm.runPreview;
   const saveWidget = vm.saveWidget;
-
 
   if (!shouldRender) return null;
 
@@ -185,7 +123,7 @@ export function WidgetBuilderWizardContentView({ vm }: { vm: Record<string, any>
                 selectedPurposeCode={builderState.purposeCode}
                 onSelect={(purposeCode) => {
                   const purpose = metadata?.purposes.find(
-                    (x) => x.code === purposeCode
+                    (x: any) => x.code === purposeCode
                   );
 
                   patchState({
@@ -211,12 +149,12 @@ export function WidgetBuilderWizardContentView({ vm }: { vm: Record<string, any>
                 onSelect={(chartTypeCode) => {
                   const currentDimensionStillCompatible =
                     metadata?.dimensions
-                      .find((x) => x.code === builderState.dimensionCode)
+                      .find((x: any) => x.code === builderState.dimensionCode)
                       ?.compatibleChartTypes.includes(chartTypeCode) ?? false;
 
                   const currentMeasureStillCompatible =
                     metadata?.measures
-                      .find((x) => x.code === builderState.measureCode)
+                      .find((x: any) => x.code === builderState.measureCode)
                       ?.compatibleChartTypes.includes(chartTypeCode) ?? false;
 
                   patchState({
@@ -294,7 +232,7 @@ export function WidgetBuilderWizardContentView({ vm }: { vm: Record<string, any>
 
             {validationIssues.length > 0 ? (
               <div className="wizard-validation">
-                {validationIssues.map((issue) => (
+                {validationIssues.map((issue: any) => (
                   <div key={`${issue.field}-${issue.message}`}>
                     <strong>{issue.field}:</strong> {issue.message}
                   </div>

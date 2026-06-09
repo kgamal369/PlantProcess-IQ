@@ -29,7 +29,7 @@ pipeline {
 
     environment {
         REPO_DIR     = '/opt/PlantProcess-IQ'
-        DEPLOY_DIR   = '/opt/PlantProcess-IQ/Infrastructure/deploy'
+        DEPLOY_DIR   = '/opt/PlantProcess-IQ/deploy/compose'
         COMPOSE_FILE = 'docker-compose.demo.yml'
         DB_CONTAINER = 'ppiq-postgres'
         API_HEALTH   = 'https://api.178.105.152.180.sslip.io/health'
@@ -49,7 +49,7 @@ pipeline {
                     # sslip.io routing, server-side bind mount). We back
                     # them up, hard-reset to origin/main, then restore.
                     BACKUP=$(mktemp -d)
-                    for f in Infrastructure/deploy/.env Infrastructure/deploy/Caddyfile Infrastructure/deploy/docker-compose.demo.yml
+                    for f in deploy/compose/.env deploy/caddy/Caddyfile
                     do
                         if [ -f "$f" ]; then
                             mkdir -p "$BACKUP/$(dirname $f)"
@@ -64,7 +64,7 @@ pipeline {
                     git clean -fd
 
                     # ---- Restore the production config files ----
-                    for f in Infrastructure/deploy/.env Infrastructure/deploy/Caddyfile Infrastructure/deploy/docker-compose.demo.yml
+                    for f in deploy/compose/.env deploy/caddy/Caddyfile
                     do
                         if [ -f "$BACKUP/$f" ]; then
                             cp "$BACKUP/$f" "$f"
@@ -121,6 +121,25 @@ pipeline {
                         npm run test:visual -- --list
                         npm run test:phase56:e2e -- --list
                         npm run test:a11y -- --list
+                      '
+                '''
+            }
+        }
+
+        stage('2b2. Lint warning budget + API client drift') {
+            steps {
+                sh '''
+                    set -e
+                    cd ${REPO_DIR}/Frontend/PlantProcess.Web
+                    docker run --rm \
+                      -v "$PWD:/app" \
+                      -w /app \
+                      node:20-alpine \
+                      sh -lc '
+                        set -e
+                        if [ -f package-lock.json ]; then npm ci; else npm install; fi
+                        npm run lint:ci
+                        npm run openapi:check
                       '
                 '''
             }
@@ -295,6 +314,16 @@ node tools/task-closure/ppiq-pack-a-scorecard-bridge.cjs
                 '''
             }
         }
+        stage('5b. Deploy smoke gate') {
+            steps {
+                sh '''
+                    set -e
+                    cd ${REPO_DIR}
+                    sh deploy/ci/post-deploy-smoke.sh
+                '''
+            }
+        }
+
         stage('PPIQ Phase01/02 security and verification gates') {
             steps {
                 sh '''

@@ -1,63 +1,8 @@
-// @ts-nocheck
-import {
-  ArrowLeft,
-    ArrowRight,
-    BarChart3,
-    CheckCircle2,
-    Eye,
-    Filter,
-    Save,
-    Sparkles,
-    X,
-} from "lucide-react";
-import {
-  useEffect, useMemo, useState
-} from "react";
-import {
-  productApi
-} from "../../../../api/productApiClient";
-import {
-  widgetScriptApi
-} from "@/api/widgetScript";
-import {
-  useOptimisticSave
-} from "@/hooks/useOptimisticSave";
-import type {
-  DashboardChartTypeMetadata,
-    DashboardDefinitionRecord,
-    DashboardDimensionMetadata,
-    DashboardMeasureMetadata,
-    DashboardMetadata,
-    DashboardReferenceData,
-    DashboardWidgetDefinitionRecord,
-    DashboardWidgetFilters,
-    DashboardWidgetQuery,
-    DashboardWidgetQueryOptions,
-    DashboardWidgetQueryResult,
-} from "../../../../api/productApiClient";
 
-import {
-  InteractiveBarChart,
-    InteractiveLineChart,
-    InteractivePieChart,
-} from "@/components/charts/InteractiveCharts";
-import type {
-  ChartRow
-} from "@/components/charts/InteractiveCharts";
-import {
-  EmptyInsightState
-} from "@/components/dashboard/EmptyInsightState";
-import {
-  WidgetScriptStep
-} from "../WidgetScriptStep";
-import {
-  StandardButton
-} from "@/components/standard";
 
-import type {
-  ValidationIssue, WidgetBuilderState, WizardStep,
-    RelativeDateUnit,
-} from "./WidgetBuilderWizardContent.types";
+import type { DashboardDimensionMetadata, DashboardMeasureMetadata, DashboardMetadata, DashboardWidgetQueryResult } from "../../../../api/productApiClient";
+
+import type { ValidationIssue, WidgetBuilderState, WizardStep, RelativeDateUnit } from "./WidgetBuilderWizardContent.types";
 
 export const stepOrder: WizardStep[] = [
   "purpose",

@@ -54,10 +54,10 @@ public sealed class AuditLogImmutabilityTests : IClassFixture<AuditLogDatabaseFi
         _fixture = fixture;
     }
 
-    [SkippableFact]
+    [Fact]
     public async Task Audit_table_should_allow_insert()
     {
-        Skip.IfNot(_fixture.IsConfigured, SkipReason);
+        /* T-012: skip guard removed - runs against the configured test DB */
 
         await using var db = _fixture.CreateDbContext();
 
@@ -71,10 +71,10 @@ public sealed class AuditLogImmutabilityTests : IClassFixture<AuditLogDatabaseFi
         Assert.NotEqual(Guid.Empty, entry.Id);
     }
 
-    [SkippableFact]
+    [Fact]
     public async Task Audit_table_should_allow_select()
     {
-        Skip.IfNot(_fixture.IsConfigured, SkipReason);
+        /* T-012: skip guard removed - runs against the configured test DB */
 
         await using var db = _fixture.CreateDbContext();
 
@@ -95,10 +95,10 @@ public sealed class AuditLogImmutabilityTests : IClassFixture<AuditLogDatabaseFi
         Assert.Equal("Success", loaded.OutcomeStatus);
     }
 
-    [SkippableFact]
+    [Fact]
     public async Task Audit_table_should_block_update()
     {
-        Skip.IfNot(_fixture.IsConfigured, SkipReason);
+        /* T-012: skip guard removed - runs against the configured test DB */
 
         Guid insertedId;
 
@@ -140,10 +140,10 @@ public sealed class AuditLogImmutabilityTests : IClassFixture<AuditLogDatabaseFi
         }
     }
 
-    [SkippableFact]
+    [Fact]
     public async Task Audit_table_should_block_delete()
     {
-        Skip.IfNot(_fixture.IsConfigured, SkipReason);
+        /* T-012: skip guard removed - runs against the configured test DB */
 
         Guid insertedId;
 
@@ -181,10 +181,10 @@ public sealed class AuditLogImmutabilityTests : IClassFixture<AuditLogDatabaseFi
         Assert.True(stillExists);
     }
 
-    [SkippableFact]
+    [Fact]
     public async Task Audit_table_should_block_truncate()
     {
-        Skip.IfNot(_fixture.IsConfigured, SkipReason);
+        /* T-012: skip guard removed - runs against the configured test DB */
 
         await using var db = _fixture.CreateDbContext();
 
@@ -242,7 +242,10 @@ public sealed class AuditLogDatabaseFixture
         // test methods). Throwing would surface as test FAILURES instead of
         // skips and would break `dotnet test` in CI and on fresh machines.
         ConnectionString =
-            Environment.GetEnvironmentVariable(ConnectionStringEnvironmentVariable);
+            Environment.GetEnvironmentVariable(ConnectionStringEnvironmentVariable)
+                ?? Environment.GetEnvironmentVariable("PPIQ_TEST_CONNECTION_STRING")
+                ?? Environment.GetEnvironmentVariable("ConnectionStrings__PlantProcessDb")
+                ?? "Host=127.0.0.1;Port=5432;Database=plantprocessiq;Username=plantprocess;Password=plantprocess123";
     }
 
     public string? ConnectionString { get; }

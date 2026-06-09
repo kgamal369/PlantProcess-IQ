@@ -110,7 +110,7 @@ assert(
   "PPIQ-T105 Backend API host port is loopback-bound when present"
 );
 
-const demoCompose = read("Infrastructure/deploy/docker-compose.demo.yml");
+const demoCompose = exists("deploy/compose/docker-compose.demo.yml") ? read("deploy/compose/docker-compose.demo.yml") : "";
 assert(
   demoCompose.includes('127.0.0.1:${POSTGRES_PORT:-5432}:5432'),
   "PPIQ-T105 demo Postgres is loopback-bound"

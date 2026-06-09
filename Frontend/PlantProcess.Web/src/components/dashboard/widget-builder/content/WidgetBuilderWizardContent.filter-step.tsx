@@ -1,68 +1,9 @@
-// @ts-nocheck
-import {
-  ArrowLeft,
-    ArrowRight,
-    BarChart3,
-    CheckCircle2,
-    Eye,
-    Filter,
-    Save,
-    Sparkles,
-    X,
-} from "lucide-react";
-import {
-  useEffect, useMemo, useState
-} from "react";
-import {
-  productApi
-} from "../../../../api/productApiClient";
-import {
-  widgetScriptApi
-} from "@/api/widgetScript";
-import {
-  useOptimisticSave
-} from "@/hooks/useOptimisticSave";
-import type {
-  DashboardChartTypeMetadata,
-    DashboardDefinitionRecord,
-    DashboardDimensionMetadata,
-    DashboardMeasureMetadata,
-    DashboardMetadata,
-    DashboardReferenceData,
-    DashboardWidgetDefinitionRecord,
-    DashboardWidgetFilters,
-    DashboardWidgetQuery,
-    DashboardWidgetQueryOptions,
-    DashboardWidgetQueryResult,
-} from "../../../../api/productApiClient";
+import { Filter } from "lucide-react";
 
-import {
-  InteractiveBarChart,
-    InteractiveLineChart,
-    InteractivePieChart,
-} from "@/components/charts/InteractiveCharts";
-import type {
-  ChartRow
-} from "@/components/charts/InteractiveCharts";
-import {
-  EmptyInsightState
-} from "@/components/dashboard/EmptyInsightState";
-import {
-  WidgetScriptStep
-} from "../WidgetScriptStep";
-import {
-  StandardButton
-} from "@/components/standard";
+import type { DashboardReferenceData, DashboardWidgetFilters } from "../../../../api/productApiClient";
 
-import type {
-  WidgetBuilderState,
-    RelativeDateUnit,
-} from "./WidgetBuilderWizardContent.types";
-import {
-  mapValidationIssues, selectFieldForDimension,
-    toInputDateTime,
-    fromInputDateTime,
-} from "./WidgetBuilderWizardContent.helpers";
+import type { WidgetBuilderState, RelativeDateUnit } from "./WidgetBuilderWizardContent.types";
+import { toInputDateTime, fromInputDateTime } from "./WidgetBuilderWizardContent.helpers";
 
 export function WizardSection({
   icon,

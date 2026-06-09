@@ -59,7 +59,7 @@ assert(stopPort.includes("StartTime"), "T284 stop helper must print StartTime");
 const showPort = read("tools/dev/Show-PPIQ-PortOwner.ps1");
 assert(showPort.includes("StartTime"), "T284 show helper must print listener StartTime");
 
-const exposure = read("Infrastructure/deploy/verify-server-exposure.sh");
+const exposure = read("deploy/server/verify-server-exposure.sh");
 assert(exposure.includes("5432") && exposure.includes("PostgreSQL"), "T286 exposure proof missing PostgreSQL check");
 assert(exposure.includes("6379") && exposure.includes("5063"), "T208 exposure proof missing internal port checks");
 

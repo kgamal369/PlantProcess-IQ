@@ -84,7 +84,13 @@
     "phase9-phase10:validate": "node ../../tools/phase9-phase10/validate-phase9-phase10.cjs",
     "pack-b:validate": "node ../../tools/pack-b/validate-pack-b-p05-closure.cjs",
     "pack-b:brand-tokens": "node ../../tools/pack-b/validate-raw-brand-tokens.cjs",
-    "pack-b:split-plan": "node ../../tools/pack-b/analyze-pack-b-split-plan.cjs"
+    "pack-b:split-plan": "node ../../tools/pack-b/analyze-pack-b-split-plan.cjs",
+    "lint:json": "eslint . -f json -o eslint-report.json",
+    "lint:ci": "node scripts/lint-ratchet.mjs",
+    "lint:ratchet:init": "node scripts/lint-ratchet.mjs --init",
+    "openapi:export": "node scripts/export-openapi.mjs",
+    "openapi:generate": "node scripts/generate-api-client.mjs",
+    "openapi:check": "node scripts/check-api-client-drift.mjs"
   },
   "dependencies": {
     "lucide-react": "^1.14.0",
@@ -121,6 +127,7 @@
     "storybook": "^10.0.0",
     "@storybook/react-vite": "^10.0.0",
     "@storybook/addon-docs": "^10.0.0",
-    "@storybook/addon-a11y": "^10.0.0"
+    "@storybook/addon-a11y": "^10.0.0",
+    "openapi-typescript": "^7.4.0"
   }
 }

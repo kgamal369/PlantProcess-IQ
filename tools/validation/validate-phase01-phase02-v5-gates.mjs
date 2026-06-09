@@ -50,7 +50,7 @@ check("PPIQ-T206", /InvalidAggregateForType/.test(schemaEndpoint), "resolver exp
 
 check("PPIQ-T207", exists("Backend/tests/PlantProcess.Api.IntegrationTests/Import/DeltaImportResumabilityTests.cs"), "delta-import resumability tests exist");
 
-const deployReadme = read("Infrastructure/deploy/README.md");
+const deployReadme = exists("deploy/README.md") ? read("deploy/README.md") : "";
 check("PPIQ-T208", /loopback-binding decision/i.test(deployReadme), "deployment README documents exposure decisions");
 
 const mlSql = read("Backend/database/scripts/200_phase02_ml_foundation_feature_store_pgvector.sql");

@@ -1,4 +1,4 @@
-﻿# PlantProcess IQ Deployment
+# PlantProcess IQ Deployment
 
 This is the canonical deployment root for PlantProcess IQ.
 
@@ -27,3 +27,15 @@ Use:
     
 
 Use a server profile/env file and the canonical deploy folder only.
+
+## Loopback-binding decision
+
+The demo database (`ppiq-postgres`) is bound to the loopback interface only -
+`127.0.0.1:${POSTGRES_PORT:-5432}:5432` in `deploy/compose/docker-compose.demo.yml`.
+It is never published on the server's public interface. Application containers reach
+PostgreSQL over the private `ppiq-network` by service name (`ppiq-postgres:5432`), and
+external clients reach the API only through Caddy over TLS - never the database directly.
+
+Exposure is proven after each deploy by `deploy/server/verify-server-exposure.sh`, which
+checks that ports 5432 (PostgreSQL), 6379 (Redis) and 5063 (API internal) are not publicly
+open on the server's public IP. Redis and the API listen on internal networks only.

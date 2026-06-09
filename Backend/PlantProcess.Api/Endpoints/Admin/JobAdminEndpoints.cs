@@ -1,6 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using PlantProcess.Application.Integration.Contracts.Jobs;
 using PlantProcess.Application.Integration.Interfaces.Jobs;
+using PlantProcess.Application.Integration.Services.SourceSystems;
 using PlantProcess.Domain.Enums.Integration;
 using PlantProcess.Infrastructure.Persistence;
 using PlantProcess.Api.Extensions;
@@ -20,6 +21,9 @@ public static class JobAdminEndpoints
             .WithTags("Admin - Jobs")
             .RequireAuthorization("PlantProcessDataManager");
 
+        group.MapPost("/datasets/{datasetId:guid}/backfill", BackfillDatasetAsync)
+            .WithSummary("Run a throttled historical backfill")
+            .WithDescription("Runs a throttled, resumable historical backfill for a source dataset and records JobRunHistory.");
         group.MapPost("/{jobId:guid}/run-now", RunNowAsync)
             .WithSummary("Run a job immediately")
             .WithDescription("Triggers immediate execution for supported jobs and records JobRunHistory.");
@@ -81,6 +85,60 @@ public static class JobAdminEndpoints
             ? Results.Ok(result.Value)
             : ToProblem(result.Error!.Message, result.Error.Type.ToString());
     }
+
+    private static async Task<IResult> BackfillDatasetAsync(
+        Guid datasetId,
+        BackfillDatasetRequest request,
+        PlantProcessDbContext dbContext,
+        IBackfillExecutionService backfillService,
+        CancellationToken cancellationToken)
+    {
+        var dataset = await dbContext.SourceDatasetDefinitions
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == datasetId, cancellationToken);
+
+        if (dataset is null)
+            return ApplicationProblems.NotFound("Source dataset was not found.");
+
+        // Attach the run to the dataset's DB-link import job so it surfaces in the Jobs Monitor.
+        var jobDefinitionId = Guid.Empty;
+
+        var connection = await dbContext.ConnectionProfiles
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == dataset.ConnectionProfileId && !x.IsDeleted, cancellationToken);
+
+        if (connection is not null)
+        {
+            var jobCode = $"CONNECTION_IMPORT_{connection.ConnectionProfileCode}";
+            var job = await dbContext.JobDefinitions
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.JobCode == jobCode && !x.IsDeleted, cancellationToken);
+
+            if (job is not null)
+                jobDefinitionId = job.Id;
+        }
+
+        var summary = await backfillService.BackfillDatasetAsync(
+            new BackfillRequest(
+                DatasetId: datasetId,
+                JobDefinitionId: jobDefinitionId,
+                BatchSize: request.BatchSize,
+                MaxRowsPerSecond: request.MaxRowsPerSecond,
+                MaxTotalRows: request.MaxTotalRows,
+                TriggerSource: "JobAdminEndpoints",
+                TriggeredBy: request.RequestedBy),
+            cancellationToken);
+
+        return string.IsNullOrWhiteSpace(summary.ErrorMessage)
+            ? Results.Ok(summary)
+            : ToProblem(summary.ErrorMessage!, "BackfillFailed");
+    }
+
+    public sealed record BackfillDatasetRequest(
+        int BatchSize,
+        int MaxRowsPerSecond,
+        long MaxTotalRows,
+        string? RequestedBy);
 
     private static async Task<IResult> PauseAsync(
         Guid jobId,

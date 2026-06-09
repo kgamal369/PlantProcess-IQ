@@ -1,4 +1,4 @@
-﻿// ============================================================
+// ============================================================
 // FILE: Backend/PlantProcess.Application/DependencyInjection.cs
 // FIX: Removed duplicate using directives for
 //      PlantProcess.Application.Analytics.Interfaces
@@ -84,6 +84,7 @@ public static class DependencyInjection
         services.AddScoped<IJobRunOrchestratorService, JobRunOrchestratorService>();
         services.AddScoped<IIncrementalSyncStateService, IncrementalSyncStateService>();
         services.AddScoped<IDeltaImportExecutionService, DeltaImportExecutionService>();
+        services.AddScoped<IBackfillExecutionService, BackfillExecutionService>();
 
         // Canonical material and genealogy workflow
         services.AddScoped<IMaterialService, MaterialService>();
