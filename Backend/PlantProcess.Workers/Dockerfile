@@ -9,6 +9,8 @@ COPY PlantProcessIQ.sln ./
 COPY PlantProcess.Domain/PlantProcess.Domain.csproj PlantProcess.Domain/
 COPY PlantProcess.Application/PlantProcess.Application.csproj PlantProcess.Application/
 COPY PlantProcess.Infrastructure/PlantProcess.Infrastructure.csproj PlantProcess.Infrastructure/
+COPY PlantProcess.Analytics.Core/PlantProcess.Analytics.Core.csproj PlantProcess.Analytics.Core/
+COPY PlantProcess.Analytics.Engine/PlantProcess.Analytics.Engine.csproj PlantProcess.Analytics.Engine/
 COPY PlantProcess.Workers/PlantProcess.Workers.csproj PlantProcess.Workers/
 
 RUN dotnet restore PlantProcess.Workers/PlantProcess.Workers.csproj
