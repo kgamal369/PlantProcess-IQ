@@ -4,28 +4,45 @@ const path = require("path");
 const root = process.cwd();
 const failures = [];
 
-function exists(file) {
-  return fs.existsSync(path.join(root, file));
+function full(relativePath) {
+  return path.join(root, relativePath);
 }
 
-function read(file) {
-  return fs.readFileSync(path.join(root, file), "utf8");
+function exists(relativePath) {
+  return fs.existsSync(full(relativePath));
 }
 
-function lineCount(file) {
-  return read(file).split(/\r?\n/).length;
+function read(relativePath) {
+  return fs.readFileSync(full(relativePath), "utf8");
 }
 
-function check(file, signals) {
-  if (!exists(file)) {
-    failures.push("Missing file: " + file);
+function lineCount(relativePath) {
+  return read(relativePath).split(/\r?\n/).length;
+}
+
+function check(relativePath, signals) {
+  if (!exists(relativePath)) {
+    failures.push("Missing file: " + relativePath);
     return;
   }
 
-  const text = read(file);
+  const text = read(relativePath);
   for (const signal of signals) {
     if (!text.includes(signal)) {
-      failures.push(file + " missing signal: " + signal);
+      failures.push(relativePath + " missing signal: " + signal);
+    }
+  }
+}
+
+function walk(dir, results) {
+  if (!fs.existsSync(dir)) return;
+
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const current = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      walk(current, results);
+    } else {
+      results.push(current);
     }
   }
 }
@@ -36,7 +53,34 @@ check("Frontend/PlantProcess.Web/src/App.implementation.tsx", [
 ]);
 
 check("Frontend/PlantProcess.Web/src/AppRoutes.generated.tsx", [
-  "export default function App"
+  "PPIQ_REALIZATION_T063_APP_IMPLEMENTATION_DECOMPOSED"
+]);
+
+check("Frontend/PlantProcess.Web/src/pages/Admin/AdminDbConfigurationTab.runtime.tsx", [
+  "PPIQ_REALIZATION_T063_ADMIN_DB_CONFIGURATION_SPLIT",
+  "AdminDbConfigurationTab.runtime.generated"
+]);
+
+check("Frontend/PlantProcess.Web/src/pages/Admin/AdminDbConfigurationTab.runtime.generated.tsx", [
+  "PPIQ_REALIZATION_T063_ADMIN_DB_CONFIGURATION_SPLIT"
+]);
+
+check("Frontend/PlantProcess.Web/src/pages/Admin/AdminSchemaConfigurationTab.implementation.tsx", [
+  "PPIQ_REALIZATION_T063_ADMIN_SCHEMA_CONFIGURATION_SPLIT",
+  "AdminSchemaConfigurationTab.implementation.generated"
+]);
+
+check("Frontend/PlantProcess.Web/src/pages/Admin/AdminSchemaConfigurationTab.implementation.generated.tsx", [
+  "PPIQ_REALIZATION_T063_ADMIN_SCHEMA_CONFIGURATION_SPLIT"
+]);
+
+check("Frontend/PlantProcess.Web/src/pages/MaterialAnalytics/MaterialAnalyticsPages.runtime.tsx", [
+  "PPIQ_REALIZATION_T063_MATERIAL_ANALYTICS_SPLIT",
+  "MaterialAnalyticsPages.runtime.generated"
+]);
+
+check("Frontend/PlantProcess.Web/src/pages/MaterialAnalytics/MaterialAnalyticsPages.runtime.generated.tsx", [
+  "PPIQ_REALIZATION_T063_MATERIAL_ANALYTICS_SPLIT"
 ]);
 
 check("Frontend/PlantProcess.Web/src/phase11/phase11StandardControlContract.ts", [
@@ -76,37 +120,28 @@ check("Frontend/PlantProcess.Web/e2e/phase11-ui-interaction-regression.spec.ts",
   "T-069 key UI pages"
 ]);
 
-const appLines = lineCount("Frontend/PlantProcess.Web/src/App.implementation.tsx");
-if (appLines > 80) {
-  failures.push("App.implementation.tsx still too large after T-063: " + appLines + " lines");
+if (exists("Frontend/PlantProcess.Web/src/App.implementation.tsx")) {
+  const appLines = lineCount("Frontend/PlantProcess.Web/src/App.implementation.tsx");
+  if (appLines > 80) {
+    failures.push("App.implementation.tsx still too large after T-063: " + appLines + " lines");
+  }
 }
 
-const pageRoot = path.join(root, "Frontend", "PlantProcess.Web", "src", "pages");
-if (fs.existsSync(pageRoot)) {
-  const pageFiles = [];
-  function walk(dir) {
-    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-      const full = path.join(dir, entry.name);
-      if (entry.isDirectory()) {
-        walk(full);
-      } else if (entry.name.endsWith(".tsx") && !entry.name.includes(".generated.")) {
-        pageFiles.push(full);
-      }
-    }
-  }
+const pageRoot = full("Frontend/PlantProcess.Web/src/pages");
+const pageFiles = [];
+walk(pageRoot, pageFiles);
 
-  walk(pageRoot);
+const oversized = pageFiles
+  .filter((file) => file.endsWith(".tsx"))
+  .filter((file) => !file.includes(".generated."))
+  .map((file) => ({
+    file: path.relative(root, file).replaceAll("\\", "/"),
+    lines: fs.readFileSync(file, "utf8").split(/\r?\n/).length,
+  }))
+  .filter((item) => item.lines > 600);
 
-  const oversized = pageFiles
-    .map((file) => ({
-      file: path.relative(root, file).replaceAll("\\", "/"),
-      lines: fs.readFileSync(file, "utf8").split(/\r?\n/).length,
-    }))
-    .filter((x) => x.lines > 600);
-
-  if (oversized.length) {
-    failures.push("Page files over 600 lines: " + JSON.stringify(oversized));
-  }
+if (oversized.length) {
+  failures.push("Page files over 600 lines: " + JSON.stringify(oversized));
 }
 
 if (failures.length) {

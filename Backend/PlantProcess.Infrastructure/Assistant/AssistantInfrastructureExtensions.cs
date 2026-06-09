@@ -1,5 +1,6 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 using PlantProcess.Application.Assistant;
+using PlantProcess.Application.Top15.Phase34;
 
 namespace PlantProcess.Infrastructure.Assistant;
 
@@ -19,7 +20,15 @@ public static class AssistantInfrastructureExtensions
         services.AddScoped<ITool, RunKpiTool>();
         services.AddScoped<ToolRegistry>();
 
-        services.AddSingleton<IAssistantModel, ExtractiveAssistantModel>();
+                services.AddSingleton<ITop15AssistantModelClient, Top15HttpAssistantModelClient>();
+        services.AddSingleton<IAssistantModel>(sp =>
+        {
+            var phase34ModelConfig = Top15ModelEndpointConfig.FromEnvironment();
+
+            return phase34ModelConfig.IsConfigured
+                ? new Top15RealAssistantModel(phase34ModelConfig, sp.GetRequiredService<ITop15AssistantModelClient>())
+                : new ExtractiveAssistantModel();
+        });
         services.AddScoped<AssistantService>();
         return services;
     }
