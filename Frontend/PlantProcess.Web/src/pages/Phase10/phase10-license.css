@@ -1,0 +1,97 @@
+.phase10-license-page {
+  display: grid;
+  gap: 18px;
+  color: #eaf7ff;
+}
+
+.phase10-hero,
+.phase10-panel,
+.phase10-card {
+  border: 1px solid rgba(19, 216, 255, 0.18);
+  border-radius: 22px;
+  background: linear-gradient(135deg, rgba(7, 18, 34, 0.96), rgba(4, 10, 22, 0.92));
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.22);
+  padding: 20px;
+}
+
+.phase10-eyebrow {
+  margin: 0;
+  color: #13d8ff;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.phase10-copy {
+  color: #9ab8d7;
+  line-height: 1.65;
+}
+
+.phase10-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.phase10-toggle-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.phase10-toggle-row button {
+  border: 1px solid rgba(124, 220, 255, 0.22);
+  border-radius: 999px;
+  padding: 10px 14px;
+  color: #eaf7ff;
+  background: rgba(11, 31, 56, 0.8);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.phase10-toggle-row button[data-active="true"] {
+  border-color: rgba(100, 255, 218, 0.8);
+  box-shadow: 0 0 24px rgba(19, 216, 255, 0.18);
+}
+
+.tier-badge {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  border-radius: 999px;
+  padding: 6px 11px;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.tier-badge--lite {
+  color: #d6e4f0;
+  background: rgba(111, 132, 151, 0.25);
+  border: 1px solid rgba(164, 181, 196, 0.35);
+}
+
+.tier-badge--pro {
+  color: #1f1300;
+  background: #ffb020;
+}
+
+.tier-badge--proplus {
+  color: #06142a;
+  background: #24a8ff;
+}
+
+.tier-badge--enterprise {
+  color: #021411;
+  background: #64ffda;
+}
+
+.phase10-feature-enabled {
+  color: #64ffda;
+}
+
+.phase10-feature-disabled {
+  color: #ffd166;
+}

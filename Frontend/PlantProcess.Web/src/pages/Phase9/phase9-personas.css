@@ -1,0 +1,50 @@
+.phase9-page {
+  display: grid;
+  gap: 18px;
+  color: #eaf7ff;
+}
+
+.phase9-hero,
+.phase9-card {
+  border: 1px solid rgba(124, 220, 255, 0.18);
+  border-radius: 22px;
+  padding: 20px;
+  background: linear-gradient(135deg, rgba(7, 18, 34, 0.95), rgba(4, 10, 22, 0.9));
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.22);
+}
+
+.phase9-eyebrow {
+  margin: 0;
+  color: #13d8ff;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.phase9-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.phase9-muted {
+  color: #9ab8d7;
+  line-height: 1.65;
+}
+
+.phase9-badge {
+  display: inline-flex;
+  border: 1px solid rgba(100, 255, 218, 0.28);
+  border-radius: 999px;
+  padding: 5px 10px;
+  color: #64ffda;
+  background: rgba(100, 255, 218, 0.08);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.phase9-disabled {
+  color: #ffd166;
+}

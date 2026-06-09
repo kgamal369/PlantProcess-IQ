@@ -1,0 +1,40 @@
+# docker-compose.demo-sources.ports.yml
+# Local/native-dev overlay: publishes the demo-source DB ports to the host so a
+# NATIVE (non-docker) API process on the laptop can reach them. Host ports are
+# offset to avoid clashing with a native PostgreSQL on 5432.
+#
+# Use alongside the base demo-sources compose:
+#   docker compose -f deploy/compose/docker-compose.demo-sources.yml \
+#                  -f deploy/compose/docker-compose.demo-sources.ports.yml up -d
+#
+# (No -v / down needed - this only adds port mappings; the named volumes keep
+#  the T-039 data. The two CSV sources have no port: a native API reads those
+#  files directly from Infrastructure/demo-sources/excel-*/.)
+#
+# On the SERVER (dockerized API on the shared demo network) you do NOT use this
+# overlay - the API reaches the sources by container name on port 5432/1521/etc.
+
+services:
+  meltshop-postgres:
+    ports:
+      - "127.0.0.1:15432:5432"
+
+  caster-oracle:
+    ports:
+      - "127.0.0.1:11521:1521"
+
+  hsm-oracle:
+    ports:
+      - "127.0.0.1:11522:1521"
+
+  pkl-mssql:
+    ports:
+      - "127.0.0.1:11433:1433"
+
+  downtime-mysql:
+    ports:
+      - "127.0.0.1:13306:3306"
+
+  parsytec-mysql:
+    ports:
+      - "127.0.0.1:13307:3306"
