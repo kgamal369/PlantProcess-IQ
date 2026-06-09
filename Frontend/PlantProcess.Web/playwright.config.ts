@@ -76,7 +76,7 @@ export default defineConfig({
     navigationTimeout: 30_000,
   },
 
-  webServer: [
+  webServer: process.env.PLAYWRIGHT_BASE_URL ? undefined : [
     {
       command: `dotnet run --project ${backendProject} --urls ${apiBaseUrl}`,
       url: `${apiBaseUrl}/health`,
