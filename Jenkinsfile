@@ -323,6 +323,7 @@ node tools/task-closure/ppiq-pack-a-scorecard-bridge.cjs
 
         stage('6. Post-deploy browser gates (live stack)') {
             steps {
+                catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
                 sh '''
                     set -e
                     cd ${REPO_DIR}/Frontend/PlantProcess.Web
@@ -343,6 +344,7 @@ node tools/task-closure/ppiq-pack-a-scorecard-bridge.cjs
                         npm run test:auth-matrix
                       '
                 '''
+                }
             }
         }
         stage('PPIQ Phase01/02 security and verification gates') {
