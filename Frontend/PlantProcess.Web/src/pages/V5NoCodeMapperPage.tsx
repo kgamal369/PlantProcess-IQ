@@ -55,7 +55,7 @@ export function V5NoCodeMapperPage() {
       })
       .catch((error) => {
         if (!active) return;
-        setStatus(`V5 mapper proof could not load: ${error.message}`);
+        setStatus(`V5 mapper proof unavailable: ${error.message}`);
       });
 
     return () => {

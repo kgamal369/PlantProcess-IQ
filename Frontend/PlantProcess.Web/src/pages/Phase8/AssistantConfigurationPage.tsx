@@ -33,7 +33,7 @@ export function AssistantConfigurationPage() {
       })
       .catch((error: Error) => {
         if (!active) return;
-        setStatus("Using safe local defaults because config could not be loaded: " + error.message);
+        setStatus("Using safe local defaults; configuration unavailable: " + error.message);
       });
 
     return () => {

@@ -65,6 +65,9 @@ export function SchemaConfigurationTab({
   return (
     <section className="admin-panel-grid">
 
+      {/* Canonical schema mapping (PPIQ-T109) */}
+      <CanonicalSchemaMappingPanel />
+
       {/* Item 12: SQL View Editor */}
       <SqlViewEditorPanel />
 

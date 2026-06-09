@@ -47,7 +47,7 @@ export function V5ConnectorsIdentityPage() {
       })
       .catch((error) => {
         if (!active) return;
-        setStatus(`P07/P08 proof could not load: ${error.message}`);
+        setStatus(`P07/P08 proof unavailable: ${error.message}`);
       });
 
     return () => {

@@ -47,7 +47,7 @@ function V5OutboundI18nMobileInner() {
       })
       .catch((error) => {
         if (!active) return;
-        setStatus(`P11/P12 proof could not load: ${error.message}`);
+        setStatus(`P11/P12 proof unavailable: ${error.message}`);
       });
 
     return () => {

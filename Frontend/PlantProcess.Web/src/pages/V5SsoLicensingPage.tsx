@@ -47,7 +47,7 @@ export function V5SsoLicensingPage() {
       })
       .catch((error) => {
         if (!active) return;
-        setStatus(`P09/P10 proof could not load: ${error.message}`);
+        setStatus(`P09/P10 proof unavailable: ${error.message}`);
       });
 
     return () => {
