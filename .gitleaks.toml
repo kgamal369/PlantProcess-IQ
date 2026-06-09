@@ -1,10 +1,8 @@
 title = "PPIQ gitleaks"
-
 [extend]
 useDefault = true
-
 [allowlist]
-description = "Vendored, generated, and non-source paths."
+description = "Vendored, generated, non-source, and server-only runtime config paths."
 paths = [
   '''(^|/)node_modules/''',
   '''(^|/)bin/''',
@@ -12,4 +10,8 @@ paths = [
   '''(^|/)dist/''',
   '''(^|/)coverage/''',
   '''(^|/)\.git/''',
+  '''(^|/)\.env$''',
+  '''(^|/)\.env\.[^/]+$''',
+  '''(^|/)deploy/compose/\.env$''',
+  '''(^|/)deploy/caddy/Caddyfile$''',
 ]
