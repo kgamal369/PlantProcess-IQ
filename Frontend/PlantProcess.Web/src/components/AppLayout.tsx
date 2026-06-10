@@ -33,9 +33,15 @@ import { AppToaster } from "../notifications/Toaster";
 import "./AppLayout.css";
 import { StandardButton } from "@/components/standard";
 
-// ── Navigation definition ─────────────────────────────────────
+// â”€â”€ Navigation definition â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const NAV_ANALYTICS = [
-  { to: "/dashboard",   label: "Command Dashboard",      desc: "Interactive intelligence workspace",    icon: LayoutDashboard },
+  { to: "/dashboard",   label: "Command Dashboard",      desc: "Interactive intelligence workspace",    icon: LayoutDashboard },
+  {
+    to: "/dashboard/widgets/schema-drift",
+    label: "Widget Drift",
+    desc: "Schema contract + heatmap filters",
+    icon: BarChart3,
+  },
   { to: "/materials",   label: "Material Investigation", desc: "Genealogy, quality and risk drilldown", icon: Search },
   { to: "/risk",        label: "Risk Intelligence",      desc: "Quality risk score and contributors",   icon: ShieldCheck },
   { to: "/data-quality",label: "Data Quality",           desc: "Readiness and validation findings",     icon: AlertTriangle },
@@ -43,7 +49,8 @@ const NAV_ANALYTICS = [
 ];
 
 const NAV_INTELLIGENCE = [
-  { to: "/value/scenario", label: "Value Scenario", desc: "Projected vs tracked ROI", icon: BarChart3 },
+  { to: "/value/scenario", label: "Value Scenario", desc: "Projected vs tracked ROI", icon: BarChart3 },
+  { to: "/value/executive", label: "Value Exec", desc: "Bounded EUR ROI", icon: BarChart3 },
   { to: "/ml-readiness",  label: "ML Readiness",    desc: "Labels, features and training gates",  icon: BrainCircuit },
   { to: "/demo-lifecycle",label: "Demo Lifecycle",  desc: "Connector to ML result workflow",       icon: PlayCircle },
 ];
@@ -59,7 +66,7 @@ const NAV_SYSTEM = [
   { to: "/phase15/benchmarking", label: "Benchmarking", desc: "Cross-plant privacy bands", icon: DatabaseZap },
   { to: "/phase15/roi-cfo-dashboard", label: "ROI/CFO Value", desc: "Potential vs realized value", icon: DatabaseZap },
   { to: "/phase15/value-realization", label: "Value Realization", desc: "Baseline vs actual ledger", icon: DatabaseZap },
-  { to: "/phase15/recommendations", label: "Recommendations", desc: "Expected € impact + approval", icon: DatabaseZap },
+  { to: "/phase15/recommendations", label: "Recommendations", desc: "Expected â‚¬ impact + approval", icon: DatabaseZap },
   { to: "/phase15/scenario-simulation", label: "What-if Simulation", desc: "Phase 15 advisory projection", icon: DatabaseZap },
   { to: "/edge-collector", label: "Edge Collector", desc: "OT-safe one-way push status", icon: DatabaseZap },
   { to: "/historian-connector", label: "Historian Connector", desc: "Register, test, browse and map tags", icon: DatabaseZap },
@@ -118,7 +125,7 @@ export function AppLayout() {
   return (
     <div className="piq-shell">
       <AppToaster />
-      {/* ── Sidebar ── */}
+      {/* â”€â”€ Sidebar â”€â”€ */}
       <aside className="piq-sidebar" aria-label="PlantProcess IQ navigation">
 
         {/* Brand header */}
@@ -170,7 +177,7 @@ export function AppLayout() {
           </div>
           <div className="piq-sidebar-stat">
             <Network size={11} aria-hidden="true" />
-            <span>Phase 8–10 Interactive MVP</span>
+            <span>Phase 8â€“10 Interactive MVP</span>
           </div>
           <StandardButton className="piq-theme-btn" type="button" onClick={toggleTheme}
             title={`Switch to ${isDark ? "light" : "dark"} mode`}>
@@ -180,7 +187,7 @@ export function AppLayout() {
         </div>
       </aside>
 
-      {/* ── Main ── */}
+      {/* â”€â”€ Main â”€â”€ */}
       <main className="piq-main">
 
         {/* Command header */}

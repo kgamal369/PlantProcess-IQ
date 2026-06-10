@@ -74,3 +74,5 @@ deploy/server/.env.production
 Website/.env.local
 deploy/.env
 deploy/compose/.env
+
+.local-secrets/

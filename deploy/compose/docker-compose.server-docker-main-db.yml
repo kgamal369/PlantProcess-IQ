@@ -1,0 +1,34 @@
+
+# PPIQ_REALIZATION_T016_CANONICAL_ENV_DEPLOY_V2
+# P3-T16 server profile.
+# Main PlantProcess IQ Postgres is a Docker container.
+# Caddy is the only public ingress.
+
+services:
+  ppiq-postgres:
+    profiles: ["server-docker-main-db"]
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+
+  plantprocess-api:
+    environment:
+      PPIQ_DB_TOPOLOGY: "server-docker-main-db"
+      ASPNETCORE_ENVIRONMENT: "Production"
+      ASPNETCORE_URLS: "http://0.0.0.0:5063"
+      ConnectionStrings__DefaultConnection: "Host=ppiq-postgres;Port=5432;Database=${POSTGRES_DB:-plantprocess_app_db};Username=${POSTGRES_USER:-plantprocess_admin};Password=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD};Include Error Detail=false"
+      ConnectionStrings__PlantProcessDb: "Host=ppiq-postgres;Port=5432;Database=${POSTGRES_DB:-plantprocess_app_db};Username=${POSTGRES_USER:-plantprocess_admin};Password=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD};Include Error Detail=false"
+      PlantProcess__Auth__SigningKey: "${PPIQ_SIGNING_KEY:?Set strong PPIQ_SIGNING_KEY}"
+      PlantProcess__Auth__BootstrapAdminPassword: "${PPIQ_BOOTSTRAP_ADMIN_PASSWORD:-__DISABLED__}"
+    depends_on:
+      ppiq-postgres:
+        condition: service_healthy
+
+  plantprocess-workers:
+    environment:
+      PPIQ_DB_TOPOLOGY: "server-docker-main-db"
+      DOTNET_ENVIRONMENT: "Production"
+      ConnectionStrings__DefaultConnection: "Host=ppiq-postgres;Port=5432;Database=${POSTGRES_DB:-plantprocess_app_db};Username=${POSTGRES_USER:-plantprocess_admin};Password=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD};Include Error Detail=false"
+      ConnectionStrings__PlantProcessDb: "Host=ppiq-postgres;Port=5432;Database=${POSTGRES_DB:-plantprocess_app_db};Username=${POSTGRES_USER:-plantprocess_admin};Password=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD};Include Error Detail=false"
+    depends_on:
+      ppiq-postgres:
+        condition: service_healthy

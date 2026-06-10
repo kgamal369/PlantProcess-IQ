@@ -1,0 +1,12 @@
+services:
+  plantprocess-api:
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+      PlantProcess__Auth__SigningKey: "73I+f9cwTPyjoHaP/oy1VweG0K9hd+A3CUbk1gnqzdB10AbgrbXqZ3qllAx1NcFFsqD1bjvRTg8WnH8SnmHbow=="
+      ConnectionStrings__PlantProcessDb: "Host=host.docker.internal;Port=5432;Database=plantprocess_app_db;Username=postgres;Password=<your native PG password>"
+      PLANTPROCESS_ALLOWED_ORIGINS: "http://localhost:5173,http://localhost:5174"
+  plantprocess-workers:
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+      PlantProcess__Auth__SigningKey: "73I+f9cwTPyjoHaP/oy1VweG0K9hd+A3CUbk1gnqzdB10AbgrbXqZ3qllAx1NcFFsqD1bjvRTg8WnH8SnmHbow=="
+      ConnectionStrings__PlantProcessDb: "Host=host.docker.internal;Port=5432;Database=plantprocess_app_db;Username=postgres;Password=<your native PG password>"

@@ -1,0 +1,32 @@
+# PPIQ_REALIZATION_T016_CANONICAL_CADDYFILE
+# Single canonical PlantProcess IQ Caddyfile.
+# Deployed through the canonical compose path documented in deploy/compose/README.md.
+
+{
+    email {$ACME_EMAIL}
+}
+
+{$SITE_HOST} {
+    encode zstd gzip
+
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        Content-Security-Policy "default-src 'self'; connect-src 'self' https:; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; font-src 'self' data:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Permissions-Policy "camera=(), microphone=(), geolocation=()"
+    }
+
+    handle_path /api/* {
+        reverse_proxy plantprocess-api:8080
+    }
+
+    handle_path /health* {
+        reverse_proxy plantprocess-api:8080
+    }
+
+    handle {
+        reverse_proxy plantprocess-web:80
+    }
+}

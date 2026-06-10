@@ -798,7 +798,29 @@ function AppRoutes() {
                     <Route
                       path="/commercial-license"
                       element={<Navigate to="/commercial/license" replace />}
-                    />
+                    />
+                    {/* P3-T14 value executive surface */}
+                    <Route
+                      path="/value/executive"
+                      element={withPageBoundary(
+                        "/value/executive",
+                        "Value executive dashboard is refreshing",
+                        <ValueExecutiveDashboardPage />
+                      )}
+                    />
+                    {/* P3-T15 widget schema-drift root-cause proof */}
+                    <Route
+                      path="/dashboard/widgets/schema-drift"
+                      element={withPageBoundary(
+                        "/dashboard/widgets/schema-drift",
+                        "Widget schema-drift proof is refreshing",
+                        <P3T15WidgetSchemaDriftPage />
+                      )}
+                    />
+
+
+
+
 
                     {/* Default */}
                     <Route
@@ -851,6 +873,18 @@ const Phase7ValueScenarioPage = lazy(() =>
     default: module.Phase7ValueScenarioPage,
   }))
 );
+const ValueExecutiveDashboardPage = lazy(() =>
+  import("./pages/ValueExecutive/ValueExecutiveDashboardPage").then((m) => ({
+    default: m.ValueExecutiveDashboardPage,
+  }))
+);
+
+const P3T15WidgetSchemaDriftPage = lazy(() =>
+  import("./pages/Dashboard/P3T15WidgetSchemaDriftPage").then((m) => ({
+    default: m.P3T15WidgetSchemaDriftPage,
+  }))
+);
+
 export default function App() {
   return (
     <ThemeProvider>

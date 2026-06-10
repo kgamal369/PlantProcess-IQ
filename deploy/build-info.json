@@ -1,0 +1,9 @@
+{
+  "product": "PlantProcess IQ",
+  "phase": "P1-T01 Live-stack stabilization",
+  "commit": "b9bf698",
+  "branch": "main",
+  "builtAtUtc": "2026-06-10T09:30:22.6901382Z",
+  "composeProject": "plantprocessiq",
+  "composeFile": "C:\Workspace\PlantProcess-IQ\deploy\compose\docker-compose.demo.yml"
+}

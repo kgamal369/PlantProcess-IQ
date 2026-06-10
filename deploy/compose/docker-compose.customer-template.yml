@@ -1,0 +1,25 @@
+
+# PPIQ_REALIZATION_T016_CANONICAL_ENV_DEPLOY_V2
+# P3-T16 customer-flexible profile.
+# Customer DB topology can be native, managed, VM-hosted, Docker, or platform service.
+# The only required input is PPIQ_MAIN_DB_CONNECTION_STRING.
+
+services:
+  plantprocess-api:
+    depends_on: !reset []
+    environment:
+      PPIQ_DB_TOPOLOGY: "${PPIQ_DB_TOPOLOGY:-customer-managed-or-external}"
+      ASPNETCORE_ENVIRONMENT: "Production"
+      ASPNETCORE_URLS: "http://0.0.0.0:5063"
+      ConnectionStrings__DefaultConnection: "${PPIQ_MAIN_DB_CONNECTION_STRING:?Set customer-specific main DB connection string}"
+      ConnectionStrings__PlantProcessDb: "${PPIQ_MAIN_DB_CONNECTION_STRING:?Set customer-specific main DB connection string}"
+      PlantProcess__Auth__SigningKey: "${PPIQ_SIGNING_KEY:?Set strong PPIQ_SIGNING_KEY}"
+      PlantProcess__Auth__BootstrapAdminPassword: "${PPIQ_BOOTSTRAP_ADMIN_PASSWORD:-__DISABLED__}"
+
+  plantprocess-workers:
+    depends_on: !reset []
+    environment:
+      PPIQ_DB_TOPOLOGY: "${PPIQ_DB_TOPOLOGY:-customer-managed-or-external}"
+      DOTNET_ENVIRONMENT: "Production"
+      ConnectionStrings__DefaultConnection: "${PPIQ_MAIN_DB_CONNECTION_STRING:?Set customer-specific main DB connection string}"
+      ConnectionStrings__PlantProcessDb: "${PPIQ_MAIN_DB_CONNECTION_STRING:?Set customer-specific main DB connection string}"

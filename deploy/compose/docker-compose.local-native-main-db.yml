@@ -1,0 +1,44 @@
+
+# PPIQ_REALIZATION_T016_CANONICAL_ENV_DEPLOY_V2
+# P3-T16 local laptop profile.
+# Main PlantProcess IQ Postgres is native on the laptop/host.
+# Demo/customer-source DB containers are separate and should be started through demo-source compose files.
+
+services:
+  # Keep the base DB service available for server/demo profiles, but hide it from default local-native-main-db usage.
+  ppiq-postgres:
+    profiles:
+      - server-docker-main-db
+
+  plantprocess-api:
+    depends_on: !reset []
+    environment:
+      PPIQ_DB_TOPOLOGY: "local-native-main-db"
+      ASPNETCORE_ENVIRONMENT: "Production"
+      ASPNETCORE_URLS: "http://0.0.0.0:5063"
+      ConnectionStrings__DefaultConnection: "${PPIQ_MAIN_DB_CONNECTION_STRING:?Set PPIQ_MAIN_DB_CONNECTION_STRING for local native DB}"
+      ConnectionStrings__PlantProcessDb: "${PPIQ_MAIN_DB_CONNECTION_STRING:?Set PPIQ_MAIN_DB_CONNECTION_STRING for local native DB}"
+      PlantProcess__Auth__SigningKey: "${PPIQ_SIGNING_KEY:?Set strong PPIQ_SIGNING_KEY}"
+      PlantProcess__Auth__BootstrapAdminPassword: "${PPIQ_BOOTSTRAP_ADMIN_PASSWORD:-__DISABLED__}"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "127.0.0.1:${PPIQ_API_HOST_PORT:-5063}:5063"
+
+  plantprocess-workers:
+    depends_on: !reset []
+    environment:
+      PPIQ_DB_TOPOLOGY: "local-native-main-db"
+      DOTNET_ENVIRONMENT: "Production"
+      ConnectionStrings__DefaultConnection: "${PPIQ_MAIN_DB_CONNECTION_STRING:?Set PPIQ_MAIN_DB_CONNECTION_STRING for local native DB}"
+      ConnectionStrings__PlantProcessDb: "${PPIQ_MAIN_DB_CONNECTION_STRING:?Set PPIQ_MAIN_DB_CONNECTION_STRING for local native DB}"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  plantprocess-app-web:
+    ports:
+      - "127.0.0.1:${PPIQ_APP_HOST_PORT:-5173}:80"
+
+  plantprocess-website:
+    ports:
+      - "127.0.0.1:${PPIQ_WEBSITE_HOST_PORT:-5174}:80"

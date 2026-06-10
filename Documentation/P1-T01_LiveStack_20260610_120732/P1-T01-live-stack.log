@@ -1,0 +1,519 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20260610120733
+Username: SMS-GROUP\elka01
+RunAs User: SMS-GROUP\elka01
+Configuration Name: 
+Machine: WAP174432 (Microsoft Windows NT 10.0.26100.0)
+Host Application: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+Process ID: 6220
+PSVersion: 5.1.26100.7920
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.26100.7920
+BuildVersion: 10.0.26100.7920
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+PS C:\Workspace\PlantProcess-IQ> try {
+    if (-not (Test-Path $ComposeFile)) {
+        throw "Compose file not found: $ComposeFile"
+    }
+
+    Write-P1 "Starting P1-T01 live-stack stabilization."
+
+    Run-Native -Name "docker version" -Exe "docker" -Args @("version")
+    Run-Native -Name "git status" -Exe "git" -Args @("status", "--short")
+
+    $Commit = Get-GitCommit
+    $Branch = Get-GitBranch
+    $BuildUtc = (Get-Date).ToUniversalTime().ToString("o")
+
+    Write-P1 "Commit       : $Commit"
+    Write-P1 "Branch       : $Branch"
+    Write-P1 "Compose file : $ComposeFile"
+    Write-P1 "App services : $($AppServices -join ', ')"
+    Write-P1 "DB services  : $($DbServices -join ', ')"
+
+    $buildInfo = @"
+{
+  "product": "PlantProcess IQ",
+  "phase": "P1-T01 Live-stack stabilization",
+  "commit": "$Commit",
+  "branch": "$Branch",
+  "builtAtUtc": "$BuildUtc",
+  "composeProject": "$ComposeProject",
+  "composeFile": "$ComposeFile"
+}
+"@
+
+    Write-TextFile -Path (Join-Path $RepoRoot "deploy\build-info.json") -Content $buildInfo
+
+    if (Test-Path (Join-Path $RepoRoot "Frontend\PlantProcess.Web\public")) {
+        Write-TextFile -Path (Join-Path $RepoRoot "Frontend\PlantProcess.Web\public\build-info.json") -Content $buildInfo
+    }
+
+    if (Test-Path (Join-Path $RepoRoot "Website\PlantProcess.Website\public")) {
+        Write-TextFile -Path (Join-Path $RepoRoot "Website\PlantProcess.Website\public\build-info.json") -Content $buildInfo
+    }
+
+    $programPath = Join-Path $RepoRoot "Backend\PlantProcess.Api\Program.cs"
+
+    if (Test-Path $programPath) {
+        $program = Get-Content -Raw -Path $programPath
+
+        if ($program -notmatch "PPIQ_P1_T01_VERSION_ENDPOINT") {
+            Backup-File $programPath
+
+            $marker = "var app = builder.Build();"
+
+            if ($program.Contains($marker)) {
+                $insert = @'
+var app = builder.Build();
+
+// PPIQ_P1_T01_VERSION_ENDPOINT
+app.MapGet("/version", () => Results.Ok(new
+{
+    product = "PlantProcess IQ",
+    phase = "P1-T01 Live-stack stabilization",
+    commit = Environment.GetEnvironmentVariable("PPIQ_BUILD_COMMIT") ?? "unknown",
+    branch = Environment.GetEnvironmentVariable("PPIQ_BUILD_BRANCH") ?? "unknown",
+    builtAtUtc = Environment.GetEnvironmentVariable("PPIQ_BUILD_UTC") ?? "unknown",
+    source = "api-runtime"
+}))
+.AllowAnonymous()
+.WithName("PpiqVersion");
+
+app.MapGet("/api/version", () => Results.Ok(new
+{
+    product = "PlantProcess IQ",
+    phase = "P1-T01 Live-stack stabilization",
+    commit = Environment.GetEnvironmentVariable("PPIQ_BUILD_COMMIT") ?? "unknown",
+    branch = Environment.GetEnvironmentVariable("PPIQ_BUILD_BRANCH") ?? "unknown",
+    builtAtUtc = Environment.GetEnvironmentVariable("PPIQ_BUILD_UTC") ?? "unknown",
+    source = "api-runtime"
+}))
+.AllowAnonymous()
+.WithName("PpiqApiVersion");
+
+'@
+                $program = $program.Replace($marker, $insert)
+                Write-TextFile -Path $programPath -Content $program
+                Write-P1 "Injected /version endpoint into Program.cs."
+            }
+            else {
+                Write-Yellow "Could not find Program.cs marker. /version endpoint was not injected."
+            }
+        }
+        else {
+            Write-P1 "/version endpoint marker already exists."
+        }
+    }
+
+    $overlayFile = Join-Path $LiveDir "docker-compose.p1-t01.env.yml"
+    $overlayLines = New-Object System.Collections.Generic.List[string]
+    $overlayLines.Add("services:")
+
+    foreach ($svc in $AppServices) {
+        $overlayLines.Add("  ${svc}:")
+        $overlayLines.Add("    environment:")
+        $overlayLines.Add("      PPIQ_BUILD_COMMIT: `"$Commit`"")
+        $overlayLines.Add("      PPIQ_BUILD_BRANCH: `"$Branch`"")
+        $overlayLines.Add("      PPIQ_BUILD_UTC: `"$BuildUtc`"")
+        $overlayLines.Add("      POSTGRES_PASSWORD: `"$env:POSTGRES_PASSWORD`"")
+    }
+
+    Write-TextFile -Path $overlayFile -Content (($overlayLines -join "`r`n") + "`r`n")
+
+    $dbBefore = Get-DbSnapshot
+    Write-TextFile -Path (Join-Path $EvidenceRoot "db-identity-before.txt") -Content $dbBefore
+
+    $runningIdsBefore = @(Get-ServiceContainerIds -Services $AppServices)
+    $removedOrphans = @(Remove-CrashLoopOrphanContainers -KeepContainerIds $runningIdsBefore)
+    Write-TextFile -Path (Join-Path $EvidenceRoot "removed-orphans.txt") -Content (($removedOrphans -join "`n") + "`n")
+
+    $knownGoodTag = "known-good-$((Get-Date).ToString('yyyyMMdd'))-$Commit"
+    $rollbackItems = @()
+
+    foreach ($id in $runningIdsBefore) {
+        $image = (& docker inspect -f "{{.Config.Image}}" $id 2>$null).Trim()
+        $name = (& docker inspect -f "{{.Name}}" $id 2>$null).Trim().TrimStart("/")
+
+        if (-not [string]::IsNullOrWhiteSpace($image)) {
+            $base = ($image -split ":", 2)[0]
+            $tagged = "$base`:$knownGoodTag"
+
+            docker image inspect $image *> $null
+            if ($LASTEXITCODE -eq 0) {
+                docker tag $image $tagged
+                if ($LASTEXITCODE -ne 0) {
+                    throw "Failed to tag image $image as $tagged"
+                }
+
+                $rollbackItems += [pscustomobject]@{
+                    container = $name
+                    currentImage = $image
+                    knownGoodImage = $tagged
+                }
+            }
+        }
+    }
+
+    $rollbackManifest = Join-Path $LiveDir "rollback-p1-t01-$Stamp.json"
+    $rollbackItems | ConvertTo-Json -Depth 5 | Set-Content -Path $rollbackManifest -Encoding utf8
+
+    Backup-And-Write -Path (Join-Path $LiveDir "rollback-p1-t01.ps1") -Content @'
+param(
+    [string]$RepoRoot = "C:\Workspace\PlantProcess-IQ",
+    [string]$ComposeProject = "plantprocessiq",
+    [string]$ComposeFile = "C:\Workspace\PlantProcess-IQ\deploy\compose\docker-compose.demo.yml",
+    [string]$Manifest = ""
+)
+
+$ErrorActionPreference = "Stop"
+Set-StrictMode -Off
+try { $global:PSNativeCommandUseErrorActionPreference = $false } catch {}
+
+if ([string]::IsNullOrWhiteSpace($env:POSTGRES_PASSWORD)) {
+    $env:POSTGRES_PASSWORD = "local-dev-compose-placeholder"
+}
+
+Set-Location $RepoRoot
+
+if ([string]::IsNullOrWhiteSpace($Manifest)) {
+    $Manifest = Get-ChildItem -Path (Join-Path $RepoRoot "deploy\live") -Filter "rollback-p1-t01-*.json" |
+        Sort-Object LastWriteTime -Descending |
+        Select-Object -First 1 |
+        ForEach-Object { $_.FullName }
+}
+
+if (-not (Test-Path $Manifest)) {
+    throw "Rollback manifest not found."
+}
+
+$items = Get-Content -Raw -Path $Manifest | ConvertFrom-Json
+$started = Get-Date
+
+foreach ($item in $items) {
+    docker image inspect $item.knownGoodImage *> $null
+    if ($LASTEXITCODE -ne 0) {
+        throw "Known-good image not found: $($item.knownGoodImage)"
+    }
+
+    docker tag $item.knownGoodImage $item.currentImage
+    if ($LASTEXITCODE -ne 0) {
+        throw "Failed restoring $($item.currentImage)"
+    }
+}
+
+$services = @(
+    "plantprocess-api",
+    "plantprocess-app-web",
+    "plantprocess-website",
+    "plantprocess-workers"
+)
+
+docker compose -p $ComposeProject -f $ComposeFile up -d --no-deps @services
+
+if ($LASTEXITCODE -ne 0) {
+    throw "Rollback compose up failed."
+}
+
+$elapsed = [int]((Get-Date) - $started).TotalSeconds
+
+if ($elapsed -gt 120) {
+    throw "Rollback exceeded 120 seconds. Elapsed=${elapsed}s"
+}
+
+Write-Host "[GREEN] P1-T01 rollback completed in ${elapsed}s."
+'@
+
+    Write-P1 "Rebuilding/recreating app services only with --no-deps."
+
+    $composeArgs = @(
+        "-p", $ComposeProject,
+        "-f", $ComposeFile,
+        "-f", $overlayFile,
+        "up", "-d", "--no-deps", "--build"
+    ) + $AppServices
+
+    & docker compose @composeArgs
+
+    if ($LASTEXITCODE -ne 0) {
+        throw "docker compose app-service redeploy failed."
+    }
+
+    Start-Sleep -Seconds 8
+
+    $runningIdsAfter = @(Get-ServiceContainerIds -Services $AppServices)
+
+    if ($runningIdsAfter.Count -eq 0) {
+        throw "No app service containers are running after redeploy."
+    }
+
+    foreach ($id in $runningIdsAfter) {
+        $name = (& docker inspect -f "{{.Name}}" $id 2>$null).Trim().TrimStart("/")
+        $state = (& docker inspect -f "{{.State.Status}}" $id 2>$null).Trim()
+        $restartCount = (& docker inspect -f "{{.RestartCount}}" $id 2>$null).Trim()
+
+        if ($state -ne "running") {
+            throw "Container $name is not running. State=$state"
+        }
+
+        if ([int]$restartCount -ne 0) {
+            throw "Container $name has RestartCount=$restartCount. Expected 0."
+        }
+    }
+
+    $dbAfter = Get-DbSnapshot
+    Write-TextFile -Path (Join-Path $EvidenceRoot "db-identity-after.txt") -Content $dbAfter
+
+    if ($dbBefore -ne $dbAfter) {
+        throw "DB identity changed during P1-T01 app-only deploy. Check db-identity-before/after evidence."
+    }
+
+    Write-P1 "Validating API /version."
+
+    $version = Invoke-HttpOk -Url "$ApiBaseUrl/version" -Name "API /version"
+    Write-TextFile -Path (Join-Path $EvidenceRoot "api-version.json") -Content $version
+
+    if ($version -notmatch [regex]::Escape($Commit)) {
+        throw "API /version does not show latest commit $Commit. Response: $version"
+    }
+
+    foreach ($check in @(
+        @{ Url = $AppBaseUrl; Name = "frontend app"; File = "frontend-home.html" },
+        @{ Url = $WebsiteBaseUrl; Name = "website"; File = "website-home.html" }
+    )) {
+        if (-not [string]::IsNullOrWhiteSpace($check.Url)) {
+            try {
+                $content = Invoke-HttpOk -Url $check.Url -Name $check.Name
+                Write-TextFile -Path (Join-Path $EvidenceRoot $check.File) -Content $content
+            }
+            catch {
+                Write-Yellow "$($check.Name) URL check skipped/failed: $($_.Exception.Message)"
+            }
+        }
+    }
+
+    Write-P1 "Running stability check for $StabilityMinutes minute(s)."
+
+    for ($i = 1; $i -le $StabilityMinutes; $i++) {
+        Invoke-HttpOk -Url "$ApiBaseUrl/version" -Name "API stability $i/$StabilityMinutes" | Out-Null
+
+        foreach ($id in $runningIdsAfter) {
+            $name = (& docker inspect -f "{{.Name}}" $id 2>$null).Trim().TrimStart("/")
+            $state = (& docker inspect -f "{{.State.Status}}" $id 2>$null).Trim()
+            $restartCount = (& docker inspect -f "{{.RestartCount}}" $id 2>$null).Trim()
+
+            if ($state -ne "running") {
+                throw "During stability check, container $name is not running. State=$state"
+            }
+
+            if ([int]$restartCount -ne 0) {
+                throw "During stability check, container $name has RestartCount=$restartCount. Expected 0."
+            }
+        }
+
+        if ($i -lt $StabilityMinutes) {
+            Start-Sleep -Seconds 60
+        }
+    }
+
+    $finalContainers = @(& docker ps -a --format "{{.Names}}|{{.Status}}" 2>$null |
+        Where-Object { $_ -match "^(plantprocess|ppiq)" } |
+        Sort-Object)
+
+    Write-TextFile -Path (Join-Path $EvidenceRoot "final-containers.txt") -Content (($finalContainers -join "`n") + "`n")
+
+    $summary = @"
+# P1-T01 Live-stack stabilization complete
+
+Generated: $(Get-Date -Format o)
+
+Commit: $Commit
+Branch: $Branch
+Compose project: $ComposeProject
+Compose file: $ComposeFile
+App services: $($AppServices -join ', ')
+DB services: $($DbServices -join ', ')
+
+Validation:
+- App services rebuilt/recreated with --no-deps.
+- DB identity unchanged before/after app-only deploy.
+- Crash-loop/exited plantprocess/ppiq orphan app containers removed when found.
+- API /version serves latest commit.
+- RestartCount stayed 0 for $StabilityMinutes minute(s).
+- Rollback script created: deploy\live\rollback-p1-t01.ps1
+- Rollback manifest created: $rollbackManifest
+
+Evidence folder:
+$EvidenceRoot
+"@
+
+    Write-TextFile -Path (Join-Path $EvidenceRoot "P1-T01_SUMMARY.md") -Content $summary
+
+    Write-Green "P1-T01 is DONE by description and validation."
+    Write-Host "Evidence: $EvidenceRoot"
+    Write-Host "Rollback: .\deploy\live\rollback-p1-t01.ps1"
+}
+finally {
+    Stop-Transcript | Out-Null
+}
+[P1-T01] Starting P1-T01 live-stack stabilization.
+[P1-T01] Running: docker version
+Usage:  docker [OPTIONS] COMMAND
+
+A self-sufficient runtime for containers
+
+Common Commands:
+  run         Create and run a new container from an image
+  exec        Execute a command in a running container
+  ps          List containers
+  build       Build an image from a Dockerfile
+  bake        Build from a file
+  pull        Download an image from a registry
+  push        Upload an image to a registry
+  images      List images
+  login       Authenticate to a registry
+  logout      Log out from a registry
+  search      Search Docker Hub for images
+  version     Show the Docker version information
+  info        Display system-wide information
+
+Management Commands:
+  agent*      Docker AI Agent Runner
+  ai*         Docker AI Agent - Ask Gordon
+  builder     Manage builds
+  buildx*     Docker Buildx
+  compose*    Docker Compose
+  container   Manage containers
+  context     Manage contexts
+  debug*      Get a shell into any image or container
+  desktop*    Docker Desktop commands
+  dhi*        CLI for managing Docker Hardened Images
+  extension*  Manages Docker extensions
+  image       Manage images
+  init*       Creates Docker-related starter files for your project
+  manifest    Manage Docker image manifests and manifest lists
+  mcp*        Docker MCP Plugin
+  model*      Docker Model Runner
+  network     Manage networks
+  offload*    Docker Offload
+  plugin      Manage plugins
+  sandbox*    Docker Sandbox
+  sbom*       View the packaged-based Software Bill Of Materials (SBOM) for an image
+  scout*      Docker Scout
+  system      Manage Docker
+  volume      Manage volumes
+
+Swarm Commands:
+  swarm       Manage Swarm
+
+Commands:
+  attach      Attach local standard input, output, and error streams to a running container
+  commit      Create a new image from a container's changes
+  cp          Copy files/folders between a container and the local filesystem
+  create      Create a new container
+  diff        Inspect changes to files or directories on a container's filesystem
+  events      Get real time events from the server
+  export      Export a container's filesystem as a tar archive
+  history     Show the history of an image
+  import      Import the contents from a tarball to create a filesystem image
+  inspect     Return low-level information on Docker objects
+  kill        Kill one or more running containers
+  load        Load an image from a tar archive or STDIN
+  logs        Fetch the logs of a container
+  pause       Pause all processes within one or more containers
+  port        List port mappings or a specific mapping for the container
+  rename      Rename a container
+  restart     Restart one or more containers
+  rm          Remove one or more containers
+  rmi         Remove one or more images
+  save        Save one or more images to a tar archive (streamed to STDOUT by default)
+  start       Start one or more stopped containers
+  stats       Display a live stream of container(s) resource usage statistics
+  stop        Stop one or more running containers
+  tag         Create a tag TARGET_IMAGE that refers to SOURCE_IMAGE
+  top         Display the running processes of a container
+  unpause     Unpause all processes within one or more containers
+  update      Update configuration of one or more containers
+  wait        Block until one or more containers stop, then print their exit codes
+
+Global Options:
+      --config string      Location of client config files (default
+                           "C:\\Users\\elka01\\.docker")
+  -c, --context string     Name of the context to use to connect to the
+                           daemon (overrides DOCKER_HOST env var and
+                           default context set with "docker context use")
+  -D, --debug              Enable debug mode
+  -H, --host string        Daemon socket to connect to
+  -l, --log-level string   Set the logging level ("debug", "info",
+                           "warn", "error", "fatal") (default "info")
+      --tls                Use TLS; implied by --tlsverify
+      --tlscacert string   Trust certs signed only by this CA (default
+                           "C:\\Users\\elka01\\.docker\\ca.pem")
+      --tlscert string     Path to TLS certificate file (default
+                           "C:\\Users\\elka01\\.docker\\cert.pem")
+      --tlskey string      Path to TLS key file (default
+                           "C:\\Users\\elka01\\.docker\\key.pem")
+      --tlsverify          Use TLS and verify the remote
+  -v, --version            Print version information and quit
+
+Run 'docker COMMAND --help' for more information on a command.
+
+For more help on how to use Docker, head to https://docs.docker.com/go/guides/
+[P1-T01] Running: git status
+usage: git [-v | --version] [-h | --help] [-C <path>] [-c <name>=<value>]
+           [--exec-path[=<path>]] [--html-path] [--man-path] [--info-path]
+           [-p | --paginate | -P | --no-pager] [--no-replace-objects] [--no-lazy-fetch]
+           [--no-optional-locks] [--no-advice] [--bare] [--git-dir=<path>]
+           [--work-tree=<path>] [--namespace=<name>] [--config-env=<name>=<envvar>]
+           <command> [<args>]
+
+These are common Git commands used in various situations:
+
+start a working area (see also: git help tutorial)
+   clone      Clone a repository into a new directory
+   init       Create an empty Git repository or reinitialize an existing one
+
+work on the current change (see also: git help everyday)
+   add        Add file contents to the index
+   mv         Move or rename a file, a directory, or a symlink
+   restore    Restore working tree files
+   rm         Remove files from the working tree and from the index
+
+examine the history and state (see also: git help revisions)
+   bisect     Use binary search to find the commit that introduced a bug
+   diff       Show changes between commits, commit and working tree, etc
+   grep       Print lines matching a pattern
+   log        Show commit logs
+   show       Show various types of objects
+   status     Show the working tree status
+
+grow, mark and tweak your common history
+   backfill   Download missing objects in a partial clone
+   branch     List, create, or delete branches
+   commit     Record changes to the repository
+   history    EXPERIMENTAL: Rewrite history
+   merge      Join two or more development histories together
+   rebase     Reapply commits on top of another base tip
+   reset      Set `HEAD` or the index to a known state
+   switch     Switch branches
+   tag        Create, list, delete or verify tags
+
+collaborate (see also: git help workflows)
+   fetch      Download objects and refs from another repository
+   pull       Fetch from and integrate with another repository or a local branch
+   push       Update remote refs along with associated objects
+
+'git help -a' and 'git help -g' list available subcommands and some
+concept guides. See 'git help <command>' or 'git help <concept>'
+to read about a specific subcommand or concept.
+See 'git help git' for an overview of the system.
+PS C:\Workspace\PlantProcess-IQ> TerminatingError(): "git status failed with exit code 1"
+**********************
+Windows PowerShell transcript end
+End time: 20260610120739
+**********************

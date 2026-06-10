@@ -1,17 +1,28 @@
+
 # PPIQ_REALIZATION_T016_CANONICAL_CADDYFILE
+# PPIQ_REALIZATION_T016_CANONICAL_ENV_DEPLOY_V2
 # Single canonical PlantProcess IQ Caddyfile.
-# Deployed through the canonical compose path documented in deploy/compose/README.md.
+#
+# Environment variables:
+# - SITE_HOST: primary application host, e.g. plantprocessiq.example.com or localhost
+# - WEBSITE_HOST: optional public website host, e.g. www.plantprocessiq.example.com
+# - ACME_EMAIL: certificate contact email
+# - CADDY_AUTO_HTTPS: usually "on" or "off" for local config parsing
+# - PPIQ_API_UPSTREAM: default plantprocess-api:5063
+# - PPIQ_APP_UPSTREAM: default plantprocess-app-web:80
+# - PPIQ_WEBSITE_UPSTREAM: default plantprocess-website:80
 
 {
-    email {$ACME_EMAIL}
+    email {$ACME_EMAIL:admin@example.invalid}
+    auto_https {$CADDY_AUTO_HTTPS:off}
 }
 
-{$SITE_HOST} {
+{$SITE_HOST:localhost} {
     encode zstd gzip
 
     header {
         Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
-        Content-Security-Policy "default-src 'self'; connect-src 'self' https:; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; font-src 'self' data:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+        Content-Security-Policy "default-src 'self'; connect-src 'self' https: http://localhost:* ws://localhost:*; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; font-src 'self' data:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
         X-Content-Type-Options "nosniff"
         X-Frame-Options "DENY"
         Referrer-Policy "strict-origin-when-cross-origin"
@@ -19,14 +30,41 @@
     }
 
     handle_path /api/* {
-        reverse_proxy plantprocess-api:8080
+        reverse_proxy {$PPIQ_API_UPSTREAM:plantprocess-api:5063}
     }
 
     handle_path /health* {
-        reverse_proxy plantprocess-api:8080
+        reverse_proxy {$PPIQ_API_UPSTREAM:plantprocess-api:5063}
+    }
+
+    handle_path /readiness* {
+        reverse_proxy {$PPIQ_API_UPSTREAM:plantprocess-api:5063}
+    }
+
+    handle_path /website/* {
+        reverse_proxy {$PPIQ_WEBSITE_UPSTREAM:plantprocess-website:80}
     }
 
     handle {
-        reverse_proxy plantprocess-web:80
+        reverse_proxy {$PPIQ_APP_UPSTREAM:plantprocess-app-web:80}
+    }
+}
+
+{$WEBSITE_HOST:website.localhost} {
+    encode zstd gzip
+
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "strict-origin-when-cross-origin"
+    }
+
+    handle_path /api/* {
+        reverse_proxy {$PPIQ_API_UPSTREAM:plantprocess-api:5063}
+    }
+
+    handle {
+        reverse_proxy {$PPIQ_WEBSITE_UPSTREAM:plantprocess-website:80}
     }
 }
