@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+import { P2T08_STANDARD_ROLLOUT_MARKER, StandardP2TextArea } from "@/components/standard/StandardP2Controls";
+import { StandardButton } from "@/components/standard";
 type AssistantCitation = {
   kind: string;
   id: string;
@@ -52,28 +54,12 @@ export function GroundedAssistantPage() {
 
   return (
     <main
-      style={{
-        minHeight: "100vh",
-        background: "linear-gradient(135deg,#06101f,#091a33 52%,#071426)",
-        color: "#eaf7ff",
-        padding: 24,
-      }}
     >
       <section
         aria-labelledby="assistant-title"
-        style={{
-          maxWidth: 1080,
-          margin: "0 auto",
-          display: "grid",
-          gap: 18,
-          border: "1px solid rgba(0,212,255,0.22)",
-          borderRadius: 24,
-          padding: 24,
-          background: "rgba(7,20,38,0.86)",
-        }}
       >
         <div>
-          <p style={{ color: "var(--ppiq-color-accent-cyan)", textTransform: "uppercase", letterSpacing: "0.08em", fontSize: 12 }}>
+          <p>
             P4 · Production Assistant
           </p>
           <h1 id="assistant-title">Grounded Assistant</h1>
@@ -82,48 +68,24 @@ export function GroundedAssistantPage() {
           </p>
         </div>
 
-        <label style={{ display: "grid", gap: 8 }}>
+        <label>
           <span>Ask a grounded question</span>
-          <textarea
+          <StandardP2TextArea
             value={question}
             onChange={(event) => setQuestion(event.target.value)}
-            style={{
-              minHeight: 110,
-              borderRadius: 16,
-              border: "1px solid rgba(255,255,255,0.18)",
-              background: "#071426",
-              color: "#eaf7ff",
-              padding: 14,
-            }}
           />
         </label>
 
-        <button
+        <StandardButton
           type="button"
-          onClick={ask}
-          disabled={isLoading || question.trim().length === 0}
-          style={{
-            minHeight: 44,
-            borderRadius: 14,
-            border: "1px solid rgba(0,212,255,0.35)",
-            background: "rgba(0,132,255,0.28)",
-            color: "#eaf7ff",
-            fontWeight: 800,
-          }}
+          onClick={ask} isDisabled={isLoading || question.trim().length === 0}
         >
           {isLoading ? "Asking..." : "Ask assistant"}
-        </button>
+        </StandardButton>
 
         {answer && (
           <article
             aria-live="polite"
-            style={{
-              border: "1px solid rgba(0,212,255,0.22)",
-              borderRadius: 18,
-              padding: 18,
-              display: "grid",
-              gap: 12,
-            }}
           >
             {answer.isRefusal ? (
               <strong>No grounded answer — abstained: {answer.refusalReason}</strong>

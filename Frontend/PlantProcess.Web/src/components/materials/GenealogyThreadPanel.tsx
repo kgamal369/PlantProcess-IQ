@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { StandardButton, StandardCard } from "@/components/standard";
 import { apiClient } from "@/api/http";
 
+import { P2T08_STANDARD_ROLLOUT_MARKER, StandardP2Input, StandardP2Table } from "@/components/standard/StandardP2Controls";
 type ThreadRow = Record<string, unknown>;
 interface ApiRows<T> { rows: T[] }
 
@@ -111,9 +112,8 @@ export function GenealogyThreadPanel() {
       eyebrow="Material Investigation"
       title="Genealogy â€” Traced Thread"
       subtitle="Bidirectional walk: coil to heat/melt (backward) and heat to defects/lab (forward), with per-node conditions."
-      style={{ background: C.surface1 }}
       actions={
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <div>
           <StandardButton variant="ghost" type="button" onClick={() => load(pending)} isDisabled={status === "loading"}>
             {status === "loading" ? "Resolving..." : "Investigate"}
           </StandardButton>
@@ -128,31 +128,29 @@ export function GenealogyThreadPanel() {
         </div>
       }
     >
-      <div style={{ display: "flex", gap: 8, alignItems: "flex-end", marginBottom: 14, flexWrap: "wrap" }}>
-        <label style={{ display: "flex", flexDirection: "column", gap: 4, flex: "1 1 260px" }}>
-          <span style={{ color: C.muted, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em" }}>Material code</span>
-          <input value={pending} placeholder="e.g. ADV_COIL4002"
+      <div>
+        <label>
+          <span>Material code</span>
+          <StandardP2Input value={pending} placeholder="e.g. ADV_COIL4002"
             onChange={(e) => setPending(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter") load(pending); }}
-            style={{ background: C.navy, color: C.text, border: `1px solid ${C.borderStrong}`, borderRadius: 8,
-              padding: "9px 12px", fontFamily: "JetBrains Mono, monospace", fontSize: 13 }} />
+            onKeyDown={(e) => { if (e.key === "Enter") load(pending); }} />
         </label>
       </div>
 
       {dedup.dropped > 0 && <Chip tone={C.warning} text={`${dedup.dropped} duplicate node(s) collapsed`} />}
       {incomplete && <Chip tone={C.warning} text="Incomplete genealogy: one direction has no edges on this data" />}
-      {risk && <div style={{ margin: "8px 0", color: C.success, fontFamily: "JetBrains Mono, monospace", fontSize: 13 }}>{risk}</div>}
+      {risk && <div>{risk}</div>}
 
-      {status === "loading" && <div style={{ color: C.muted, padding: "18px 0" }}>Resolving genealogy thread...</div>}
+      {status === "loading" && <div>Resolving genealogy thread...</div>}
       {status === "error" && (
-        <div style={{ padding: "14px 0" }}>
-          <div style={{ color: C.danger, marginBottom: 8 }}>{error}</div>
+        <div>
+          <div>{error}</div>
           <StandardButton variant="ghost" type="button" onClick={() => load(materialKey)}>Retry</StandardButton>
         </div>
       )}
       {status === "ready" && ordered.length === 0 && (
-        <div style={{ padding: "18px 0", color: C.muted }}>
-          No traced thread for <strong style={{ color: C.text }}>{materialKey}</strong>. Check the material code or import genealogy edges.
+        <div>
+          No traced thread for <strong>{materialKey}</strong>. Check the material code or import genealogy edges.
         </div>
       )}
       {status === "ready" && ordered.length > 0 && (
@@ -175,31 +173,30 @@ export function GenealogyThreadPanel() {
 
 function Chip({ tone, text }: { tone: string; text: string }) {
   return (
-    <span style={{ display: "inline-block", margin: "4px 8px 4px 0", padding: "3px 10px", borderRadius: 999,
-      border: `1px solid ${tone}`, color: tone, fontSize: 12, fontFamily: "JetBrains Mono, monospace" }}>{text}</span>
+    <span>{text}</span>
   );
 }
 function Thread({ title, rows, accent }: { title: string; rows: Record<string, unknown>[]; accent: string }) {
   if (rows.length === 0) return null;
   return (
-    <div style={{ marginTop: 16 }}>
-      <div style={{ color: accent, fontSize: 12, letterSpacing: "0.08em", textTransform: "uppercase", fontFamily: "JetBrains Mono, monospace", marginBottom: 8 }}>{title}</div>
-      <div style={{ position: "relative", paddingLeft: 18 }}>
-        <div style={{ position: "absolute", left: 6, top: 4, bottom: 4, width: 2, background: C.border }} />
+    <div>
+      <div>{title}</div>
+      <div>
+        <div />
         {rows.map((r, i) => {
           const label = pick(r, ["material_key", "material", "node", "event", "stage", "step"]) ?? `Node ${i + 1}`;
           const when = pick(r, ["event_time_utc", "event_time", "time", "timestamp"]);
           const cond = pick(r, ["condition", "observation", "note", "measure", "defect", "lab", "value"]);
           const seq = pick(r, ["sequence_no", "sequence", "seq", "depth"]);
           return (
-            <div key={i} style={{ position: "relative", marginBottom: 10 }}>
-              <div style={{ position: "absolute", left: -16, top: 4, width: 10, height: 10, borderRadius: 999, background: accent, boxShadow: `0 0 0 3px ${C.surface1}` }} />
-              <div style={{ background: C.surface2, border: `1px solid ${C.border}`, borderRadius: 10, padding: "8px 12px" }}>
-                <div style={{ color: C.text, fontWeight: 600, fontSize: 14 }}>
-                  {label}{seq ? <span style={{ color: C.muted, fontWeight: 400 }}> Â· #{seq}</span> : null}
+            <div key={i}>
+              <div />
+              <div>
+                <div>
+                  {label}{seq ? <span> Â· #{seq}</span> : null}
                 </div>
-                {when && <div style={{ color: C.muted, fontSize: 12, fontFamily: "JetBrains Mono, monospace" }}>{when}</div>}
-                {cond && <div style={{ color: C.muted, fontSize: 13, marginTop: 2 }}>{cond}</div>}
+                {when && <div>{when}</div>}
+                {cond && <div>{cond}</div>}
               </div>
             </div>
           );
@@ -212,23 +209,23 @@ function Evidence({ rows }: { rows: Record<string, unknown>[] }) {
   if (rows.length === 0) return null;
   const cols = Array.from(rows.reduce((s, r) => { Object.keys(r).forEach((k) => s.add(k)); return s; }, new Set<string>()));
   return (
-    <details style={{ marginTop: 18 }}>
-      <summary style={{ cursor: "pointer", color: C.cyan, fontSize: 13, fontFamily: "JetBrains Mono, monospace" }}>
+    <details>
+      <summary>
         Evidence â€” raw observations ({rows.length} rows)
       </summary>
-      <div style={{ overflowX: "auto", marginTop: 8, border: `1px solid ${C.border}`, borderRadius: 10 }}>
-        <table style={{ borderCollapse: "collapse", width: "100%", fontSize: 12 }}>
+      <div>
+        <StandardP2Table>
           <thead><tr>{cols.map((c) => (
-            <th key={c} style={{ textAlign: "left", padding: "6px 10px", color: C.muted, borderBottom: `1px solid ${C.borderStrong}`, fontFamily: "JetBrains Mono, monospace", whiteSpace: "nowrap" }}>{c}</th>
+            <th key={c}>{c}</th>
           ))}</tr></thead>
           <tbody>{rows.map((r, i) => (
             <tr key={i}>{cols.map((c) => (
-              <td key={c} style={{ padding: "6px 10px", color: C.text, borderBottom: `1px solid ${C.border}`, whiteSpace: "nowrap" }}>
+              <td key={c}>
                 {r[c] === null || r[c] === undefined ? "" : String(r[c])}
               </td>
             ))}</tr>
           ))}</tbody>
-        </table>
+        </StandardP2Table>
       </div>
     </details>
   );

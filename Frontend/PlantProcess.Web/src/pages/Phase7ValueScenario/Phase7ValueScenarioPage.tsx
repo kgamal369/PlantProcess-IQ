@@ -2,15 +2,11 @@
 import { useMemo, useState } from "react";
 import { phase7ValueApi, type Phase7RealizationRequest } from "../../api/value";
 import {
-  formatMoney,
-  normalizeImpact,
-  normalizeRealization,
-  workedCaseLocalProjection,
-  type ScenarioImpactView,
-  type ScenarioRealizationView,
-} from "./phase7ValueScenarioMath";
+  formatMoney, normalizeImpact, normalizeRealization, workedCaseLocalProjection, type ScenarioImpactView, type ScenarioRealizationView, } from "./phase7ValueScenarioMath";
 import "./phase7-value-scenario.css";
 
+import { StandardP2Button } from "@/components/standard/StandardP2Controls";
+import { StandardButton } from "@/components/standard";
 const T040_MARKER = "PPIQ_REALIZATION_T040_VALUE_SCENARIO_PAGE";
 
 const demoAssumptions = {
@@ -137,12 +133,12 @@ export function Phase7ValueScenarioPage() {
         </div>
 
         <div className="phase7-value-actions">
-          <button className="phase7-value-button" type="button" onClick={runScenario} disabled={isRunning}>
+          <StandardButton className="phase7-value-button" type="button" onClick={runScenario} isDisabled={isRunning}>
             {isRunning ? "Running..." : "Run value scenario"}
-          </button>
-          <button className="phase7-value-button" type="button" onClick={recordTrackedValue} disabled={isRunning || !realization}>
+          </StandardButton>
+          <StandardButton className="phase7-value-button" type="button" onClick={recordTrackedValue} isDisabled={isRunning || !realization}>
             Record tracked value
-          </button>
+          </StandardButton>
         </div>
       </section>
 

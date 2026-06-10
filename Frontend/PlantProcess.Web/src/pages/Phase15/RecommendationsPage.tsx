@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import { P2T08_STANDARD_ROLLOUT_MARKER, StandardP2Table } from "@/components/standard/StandardP2Controls";
+import { StandardButton } from "@/components/standard";
 import {
   phase15AdvisoryApi,
   type P15RecommendationCandidate,
@@ -117,84 +119,84 @@ export function RecommendationsPage() {
   );
 
   return (
-    <main style={{ display: "grid", gap: 18, color: "#eaf7ff" }} data-testid="phase15-recommendations-page">
-      <section style={{ ...cardStyle, borderColor: "rgba(19, 216, 255, 0.28)" }}>
-        <p style={{ color: "#13d8ff", textTransform: "uppercase", letterSpacing: "0.08em", fontSize: 12, margin: 0 }}>
+    <main data-testid="phase15-recommendations-page">
+      <section>
+        <p>
           Pack G · T-097 · Recommendation generator with expected €-impact
         </p>
-        <h1 style={{ margin: "8px 0 8px", fontSize: 34 }}>Phase 15 Recommendations</h1>
-        <p style={{ margin: 0, color: "#9ab8d7", maxWidth: 980, lineHeight: 1.65 }}>
+        <h1>Phase 15 Recommendations</h1>
+        <p>
           Generates guarded advisory recommendations from supported what-if projections. Every recommendation carries expected €-impact, confidence, evidence, provenance and explicit approval requirement.
         </p>
-        <strong style={{ display: "block", marginTop: 16, color: status.includes("failed") ? "#ffb86b" : "#64ffda" }}>{status}</strong>
-        {decisionMessage ? <strong style={{ display: "block", marginTop: 8, color: "#ffdd8a" }}>{decisionMessage}</strong> : null}
+        <strong>{status}</strong>
+        {decisionMessage ? <strong>{decisionMessage}</strong> : null}
       </section>
 
-      <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 12 }}>
+      <section>
         {summaryCards.map((card) => (
-          <div key={card.label} style={cardStyle}>
-            <span style={{ color: "#7e9bb8", fontSize: 12, textTransform: "uppercase" }}>{card.label}</span>
-            <strong style={{ display: "block", marginTop: 6, fontSize: 18 }}>{card.value}</strong>
+          <div key={card.label}>
+            <span>{card.label}</span>
+            <strong>{card.value}</strong>
           </div>
         ))}
       </section>
 
-      <section style={{ ...cardStyle, display: "grid", gap: 14 }}>
-        <h2 style={{ margin: 0 }}>1. Generate recommendation</h2>
-        <p style={{ color: "#9ab8d7", lineHeight: 1.65, margin: 0 }}>
+      <section>
+        <h2>1. Generate recommendation</h2>
+        <p>
           Demo request uses the Pack G-3 deterministic scenario engine. The recommendation generator blocks unsupported scenarios and weak evidence.
         </p>
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <button type="button" disabled={busy || !request} onClick={generate} style={buttonStyle}>Generate recommendation</button>
-          <button type="button" disabled={busy} onClick={() => void refresh()} style={buttonStyle}>Reload demo request</button>
+        <div>
+          <StandardButton type="button" isDisabled={busy || !request} onClick={generate}>Generate recommendation</StandardButton>
+          <StandardButton type="button" isDisabled={busy} onClick={() => void refresh()}>Reload demo request</StandardButton>
         </div>
       </section>
 
-      <section style={{ display: "grid", gridTemplateColumns: "minmax(360px, 1.2fr) minmax(280px, 0.8fr)", gap: 14 }}>
-        <div style={cardStyle}>
-          <h2 style={{ marginTop: 0 }}>2. Recommendation output</h2>
+      <section>
+        <div>
+          <h2>2. Recommendation output</h2>
           {response?.recommendations.length ? (
-            <div style={{ display: "grid", gap: 12 }}>
+            <div>
               {response.recommendations.map((recommendation) => (
-                <div key={recommendation.recommendationId} style={{ border: "1px solid rgba(100,255,218,0.18)", borderRadius: 16, padding: 14, background: "rgba(2,7,18,0.42)" }}>
-                  <h3 style={{ marginTop: 0 }}>{recommendation.title}</h3>
-                  <p style={{ color: "#9ab8d7", lineHeight: 1.65 }}>{recommendation.advisoryText}</p>
-                  <p style={{ color: "#ffdd8a", lineHeight: 1.65 }}>{recommendation.honestyCaveat}</p>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 10 }}>
-                    <div><small>Confidence</small><strong style={{ display: "block" }}>{percent(recommendation.confidence)}</strong></div>
-                    <div><small>Status</small><strong style={{ display: "block" }}>{String(recommendation.status)}</strong></div>
-                    <div><small>Expected</small><strong style={{ display: "block" }}>{asMoney(recommendation.expectedImpact?.expectedValue, recommendation.expectedImpact?.currencyCode ?? "EUR")}</strong></div>
-                    <div><small>Approval</small><strong style={{ display: "block" }}>{recommendation.requiresHumanApproval ? "Required" : "Not required"}</strong></div>
+                <div key={recommendation.recommendationId}>
+                  <h3>{recommendation.title}</h3>
+                  <p>{recommendation.advisoryText}</p>
+                  <p>{recommendation.honestyCaveat}</p>
+                  <div>
+                    <div><small>Confidence</small><strong>{percent(recommendation.confidence)}</strong></div>
+                    <div><small>Status</small><strong>{String(recommendation.status)}</strong></div>
+                    <div><small>Expected</small><strong>{asMoney(recommendation.expectedImpact?.expectedValue, recommendation.expectedImpact?.currencyCode ?? "EUR")}</strong></div>
+                    <div><small>Approval</small><strong>{recommendation.requiresHumanApproval ? "Required" : "Not required"}</strong></div>
                   </div>
                   <h4>Parameter windows</h4>
-                  <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                    <thead><tr style={{ color: "#9ab8d7", textAlign: "left" }}><th style={{ padding: 8 }}>Parameter</th><th style={{ padding: 8 }}>Min</th><th style={{ padding: 8 }}>Max</th><th style={{ padding: 8 }}>Basis</th></tr></thead>
+                  <StandardP2Table>
+                    <thead><tr><th>Parameter</th><th>Min</th><th>Max</th><th>Basis</th></tr></thead>
                     <tbody>
                       {recommendation.parameterWindows.map((window) => (
-                        <tr key={window.parameterCode} style={{ borderTop: "1px solid rgba(120,190,255,0.12)" }}>
-                          <td style={{ padding: 8 }}>{window.displayName}</td>
-                          <td style={{ padding: 8 }}>{window.recommendedMinimum} {window.unit ?? ""}</td>
-                          <td style={{ padding: 8 }}>{window.recommendedMaximum} {window.unit ?? ""}</td>
-                          <td style={{ padding: 8, color: "#9ab8d7" }}>{window.basis}</td>
+                        <tr key={window.parameterCode}>
+                          <td>{window.displayName}</td>
+                          <td>{window.recommendedMinimum} {window.unit ?? ""}</td>
+                          <td>{window.recommendedMaximum} {window.unit ?? ""}</td>
+                          <td>{window.basis}</td>
                         </tr>
                       ))}
                     </tbody>
-                  </table>
-                  <div style={{ display: "flex", gap: 10, marginTop: 12, flexWrap: "wrap" }}>
-                    <button type="button" disabled={busy} onClick={() => void decide(recommendation, 1)} style={buttonStyle}>Approve for review</button>
-                    <button type="button" disabled={busy} onClick={() => void decide(recommendation, 2)} style={buttonStyle}>Dismiss</button>
+                  </StandardP2Table>
+                  <div>
+                    <StandardButton type="button" isDisabled={busy} onClick={() => void decide(recommendation, 1)}>Approve for review</StandardButton>
+                    <StandardButton type="button" isDisabled={busy} onClick={() => void decide(recommendation, 2)}>Dismiss</StandardButton>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <p style={{ color: "#9ab8d7" }}>{response?.message ?? "Generate a recommendation to view guarded advisory output."}</p>
+            <p>{response?.message ?? "Generate a recommendation to view guarded advisory output."}</p>
           )}
         </div>
 
-        <div style={cardStyle}>
-          <h2 style={{ marginTop: 0 }}>3. Guardrails</h2>
-          <ul style={{ color: "#9ab8d7", lineHeight: 1.75, paddingLeft: 18 }}>
+        <div>
+          <h2>3. Guardrails</h2>
+          <ul>
             {(response?.guardrails ?? contract?.guardrails ?? [
               "No causal language.",
               "Expected e-impact is projection-only.",
@@ -203,7 +205,7 @@ export function RecommendationsPage() {
             ]).map((rule) => <li key={rule}>{rule}</li>)}
           </ul>
           <h3>Provenance</h3>
-          <ul style={{ color: "#9ab8d7", lineHeight: 1.75, paddingLeft: 18 }}>
+          <ul>
             {(firstRecommendation?.provenance ?? ["No recommendation generated yet."]).map((item) => <li key={item}>{item}</li>)}
           </ul>
         </div>

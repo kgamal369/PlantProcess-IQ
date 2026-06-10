@@ -1,5 +1,6 @@
 import { memo } from "react";
 
+import { P2T08_STANDARD_ROLLOUT_MARKER } from "@/components/standard/StandardP2Controls";
 type DragGhostProps = {
   title: string;
   subtitle?: string;
@@ -16,7 +17,6 @@ export const DragGhost = memo(function DragGhost({
   return (
     <div
       className="drag-ghost-card"
-      style={{ width, height }}
       aria-label={`Dragging ${title}`}
     >
       <div className="drag-ghost-card__bar" />

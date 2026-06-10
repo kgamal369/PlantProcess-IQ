@@ -5,6 +5,7 @@ import { pageBuilderApi, type PageDefinitionDto } from "@/api/pageBuilder";
 
 import "./dynamic-page.css";
 
+import { P2T08_STANDARD_ROLLOUT_MARKER } from "@/components/standard/StandardP2Controls";
 type RuntimeWidget = {
   id: string;
   kind: string;
@@ -129,7 +130,6 @@ export function DynamicPage() {
             className="dynamic-page-widget"
             data-runtime-widget-id={widget.id}
             data-runtime-widget-kind={widget.kind}
-            style={{ gridColumn: "span " + Math.min(Math.max(widget.w, 1), 12) }}
           >
             <header>
               <strong>{widget.title}</strong>

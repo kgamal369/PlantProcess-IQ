@@ -6,6 +6,7 @@ import { StandardButton } from "@/components/standard";
 
 import type { WidgetBuilderState } from "./WidgetBuilderWizardContent.types";
 
+import { StandardP2Input, StandardP2Select } from "@/components/standard/StandardP2Controls";
 export function WizardSection({
   icon,
   title,
@@ -132,7 +133,7 @@ export function DataStep({
       <div className="form-grid">
         <label>
           Widget title
-          <input
+          <StandardP2Input
             value={state.widgetTitle}
             onChange={(event) => onPatch({ widgetTitle: event.target.value })}
             placeholder="Example: Defect rate by equipment"
@@ -141,19 +142,19 @@ export function DataStep({
 
         <label>
           Widget type
-          <select
+          <StandardP2Select
             value={state.widgetType}
             onChange={(event) => onPatch({ widgetType: event.target.value })}
           >
             <option value="chart">Chart</option>
             <option value="kpi">KPI</option>
             <option value="table">Table</option>
-          </select>
+          </StandardP2Select>
         </label>
 
         <label>
           Dimension
-          <select
+          <StandardP2Select
             value={state.dimensionCode ?? ""}
             onChange={(event) =>
               onPatch({ dimensionCode: event.target.value || undefined })
@@ -165,12 +166,12 @@ export function DataStep({
                 {dimension.label} — {dimension.category}
               </option>
             ))}
-          </select>
+          </StandardP2Select>
         </label>
 
         <label>
           Measure
-          <select
+          <StandardP2Select
             value={state.measureCode ?? ""}
             onChange={(event) =>
               onPatch({ measureCode: event.target.value || undefined })
@@ -182,13 +183,13 @@ export function DataStep({
                 {measure.label} — {measure.aggregation}
               </option>
             ))}
-          </select>
+          </StandardP2Select>
         </label>
 
         {parameterRequired ? (
           <label>
             Process parameter
-            <select
+            <StandardP2Select
               value={state.parameterCode ?? ""}
               onChange={(event) =>
                 onPatch({ parameterCode: event.target.value || undefined })
@@ -200,13 +201,13 @@ export function DataStep({
                   {item.name} — {item.code}
                 </option>
               ))}
-            </select>
+            </StandardP2Select>
           </label>
         ) : null}
 
         <label>
           Max rows
-          <input
+          <StandardP2Input
             type="number"
             min={1}
             max={500}
@@ -217,7 +218,7 @@ export function DataStep({
 
         <label>
           Raw row limit
-          <input
+          <StandardP2Input
             type="number"
             min={1}
             max={5000}

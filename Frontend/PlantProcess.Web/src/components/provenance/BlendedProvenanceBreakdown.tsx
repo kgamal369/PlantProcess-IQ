@@ -1,3 +1,4 @@
+import { P2T08_STANDARD_ROLLOUT_MARKER } from "@/components/standard/StandardP2Controls";
 export type BlendedProvenanceContributor = {
   parentMaterialId: string;
   weight: number;
@@ -18,14 +19,6 @@ export function BlendedProvenanceBreakdown({ evidence }: { evidence: BlendedProv
   return (
     <section
       aria-label="Blended provenance breakdown"
-      style={{
-        border: "1px solid rgba(0,212,255,0.22)",
-        borderRadius: 18,
-        padding: 16,
-        background: "rgba(7,20,38,0.78)",
-        display: "grid",
-        gap: 12,
-      }}
     >
       <div>
         <strong>Material provenance</strong>
@@ -34,7 +27,7 @@ export function BlendedProvenanceBreakdown({ evidence }: { evidence: BlendedProv
         </div>
       </div>
 
-      <ul style={{ display: "grid", gap: 8, paddingInlineStart: 20 }}>
+      <ul>
         {evidence.contributors.map((item) => (
           <li key={item.parentMaterialId}>
             {item.parentMaterialId}: {(item.weight * 100).toFixed(1)}% · {item.contributionBasis} ·{" "}

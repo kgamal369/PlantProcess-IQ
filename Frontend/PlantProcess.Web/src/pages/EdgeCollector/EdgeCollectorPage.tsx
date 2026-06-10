@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import { P2T08_STANDARD_ROLLOUT_MARKER, StandardP2Input, StandardP2Table } from "@/components/standard/StandardP2Controls";
+import { StandardButton } from "@/components/standard";
 import {
   edgeCollectorApi,
   type EdgeCollectorContract,
@@ -183,48 +185,48 @@ export function EdgeCollectorPage() {
   }
 
   return (
-    <main style={{ display: "grid", gap: 18, color: "#eaf7ff" }} data-testid="edge-collector-page">
-      <section style={{ ...cardStyle, borderColor: "rgba(19, 216, 255, 0.28)" }}>
-        <p style={{ color: "#13d8ff", textTransform: "uppercase", letterSpacing: "0.08em", fontSize: 12, margin: 0 }}>
+    <main data-testid="edge-collector-page">
+      <section>
+        <p>
           Pack F · T-068 · Edge collector management UX
         </p>
-        <h1 style={{ margin: "8px 0 8px", fontSize: 34 }}>Edge Collector Management</h1>
-        <p style={{ margin: 0, color: "#9ab8d7", maxWidth: 980, lineHeight: 1.65 }}>
+        <h1>Edge Collector Management</h1>
+        <p>
           Register and monitor OT-safe edge collectors. The contract is read-only toward OT sources, outbound-only toward PlantProcess IQ, and does not require inbound OT firewall access.
         </p>
-        <strong style={{ display: "block", marginTop: 16, color: status.includes("failed") ? "#ffb86b" : "#64ffda" }}>{status}</strong>
+        <strong>{status}</strong>
       </section>
 
-      <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12 }}>
+      <section>
         {summaryCards.map((card) => (
-          <div key={card.label} style={cardStyle}>
-            <span style={{ color: "#7e9bb8", fontSize: 12, textTransform: "uppercase" }}>{card.label}</span>
-            <strong style={{ display: "block", marginTop: 6, fontSize: 18 }}>{card.value}</strong>
+          <div key={card.label}>
+            <span>{card.label}</span>
+            <strong>{card.value}</strong>
           </div>
         ))}
       </section>
 
-      <section style={{ ...cardStyle, display: "grid", gap: 14 }}>
-        <h2 style={{ margin: 0 }}>1. Register edge collector</h2>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
-          <label><span style={{ display: "block", marginBottom: 6, color: "#9ab8d7" }}>Collector ID</span><input value={collectorId} onChange={(event) => setCollectorId(event.target.value)} style={inputStyle} /></label>
-          <label><span style={{ display: "block", marginBottom: 6, color: "#9ab8d7" }}>Display name</span><input value={displayName} onChange={(event) => setDisplayName(event.target.value)} style={inputStyle} /></label>
-          <label><span style={{ display: "block", marginBottom: 6, color: "#9ab8d7" }}>Site name</span><input value={siteName} onChange={(event) => setSiteName(event.target.value)} style={inputStyle} /></label>
-          <label><span style={{ display: "block", marginBottom: 6, color: "#9ab8d7" }}>Network zone</span><input value={networkZone} onChange={(event) => setNetworkZone(event.target.value)} style={inputStyle} /></label>
+      <section>
+        <h2>1. Register edge collector</h2>
+        <div>
+          <label><span>Collector ID</span><StandardP2Input value={collectorId} onChange={(event) => setCollectorId(event.target.value)} /></label>
+          <label><span>Display name</span><StandardP2Input value={displayName} onChange={(event) => setDisplayName(event.target.value)} /></label>
+          <label><span>Site name</span><StandardP2Input value={siteName} onChange={(event) => setSiteName(event.target.value)} /></label>
+          <label><span>Network zone</span><StandardP2Input value={networkZone} onChange={(event) => setNetworkZone(event.target.value)} /></label>
         </div>
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <button type="button" disabled={busy} onClick={registerCollector} style={buttonStyle}>Register collector</button>
-          <button type="button" disabled={busy} onClick={sendHeartbeat} style={buttonStyle}>Send heartbeat</button>
-          <button type="button" disabled={busy} onClick={sendQueueStatus} style={buttonStyle}>Update queue status</button>
-          <button type="button" disabled={busy} onClick={pushSampleBatch} style={buttonStyle}>Push sample batch</button>
-          <button type="button" disabled={busy} onClick={() => void refresh()} style={buttonStyle}>Refresh status</button>
+        <div>
+          <StandardButton type="button" isDisabled={busy} onClick={registerCollector}>Register collector</StandardButton>
+          <StandardButton type="button" isDisabled={busy} onClick={sendHeartbeat}>Send heartbeat</StandardButton>
+          <StandardButton type="button" isDisabled={busy} onClick={sendQueueStatus}>Update queue status</StandardButton>
+          <StandardButton type="button" isDisabled={busy} onClick={pushSampleBatch}>Push sample batch</StandardButton>
+          <StandardButton type="button" isDisabled={busy} onClick={() => void refresh()}>Refresh status</StandardButton>
         </div>
       </section>
 
-      <section style={{ display: "grid", gridTemplateColumns: "minmax(280px, 0.8fr) minmax(360px, 1.2fr)", gap: 14 }}>
-        <div style={cardStyle}>
-          <h2 style={{ marginTop: 0 }}>2. OT-safety contract</h2>
-          <ul style={{ color: "#9ab8d7", lineHeight: 1.75, paddingLeft: 18 }}>
+      <section>
+        <div>
+          <h2>2. OT-safety contract</h2>
+          <ul>
             {(contract?.safetyRules ?? [
               "Collector reads only from configured source profiles.",
               "Collector never writes to production assets.",
@@ -232,43 +234,43 @@ export function EdgeCollectorPage() {
             ]).map((rule) => <li key={rule}>{rule}</li>)}
           </ul>
           <h3>Profiles</h3>
-          <div style={{ display: "grid", gap: 8 }}>
+          <div>
             {profiles.map((profile) => (
-              <div key={profile.profileCode} style={{ border: "1px solid rgba(120, 190, 255, 0.14)", borderRadius: 14, padding: 10, background: "rgba(2, 7, 18, 0.42)" }}>
+              <div key={profile.profileCode}>
                 <strong>{profile.displayName}</strong>
-                <p style={{ margin: "6px 0", color: "#9ab8d7" }}>{profile.direction}</p>
+                <p>{profile.direction}</p>
                 <small>Writes to source: {safetyLabel(profile.writesToSource)} · Inbound OT firewall: {safetyLabel(profile.requiresInboundOtFirewallRule)}</small>
               </div>
             ))}
           </div>
         </div>
 
-        <div style={cardStyle}>
-          <h2 style={{ marginTop: 0 }}>3. Collector status</h2>
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead><tr style={{ color: "#9ab8d7", textAlign: "left" }}><th style={{ padding: 8 }}>Collector</th><th style={{ padding: 8 }}>Heartbeat</th><th style={{ padding: 8 }}>Queue</th><th style={{ padding: 8 }}>Push</th><th style={{ padding: 8 }}>Safety</th></tr></thead>
+        <div>
+          <h2>3. Collector status</h2>
+          <div>
+            <StandardP2Table>
+              <thead><tr><th>Collector</th><th>Heartbeat</th><th>Queue</th><th>Push</th><th>Safety</th></tr></thead>
               <tbody>
                 {collectors.map((collector) => (
-                  <tr key={collector.collectorId} style={{ borderTop: "1px solid rgba(120, 190, 255, 0.12)" }}>
-                    <td style={{ padding: 8 }}><strong>{collector.displayName}</strong><br /><small>{collector.collectorId}</small></td>
-                    <td style={{ padding: 8 }}>{collector.status}<br /><small>{shortTime(collector.lastHeartbeatUtc)}</small></td>
-                    <td style={{ padding: 8 }}>{collector.localQueueDepth}<br /><small>failed: {collector.failedPushCount}</small></td>
-                    <td style={{ padding: 8 }}>{collector.acceptedSamples} samples<br /><small>{shortTime(collector.lastPushUtc)}</small></td>
-                    <td style={{ padding: 8 }}>RO {safetyLabel(collector.readOnlyCollection)} · OUT {safetyLabel(collector.outboundOnly)} · IN {safetyLabel(collector.opensInboundListener)}</td>
+                  <tr key={collector.collectorId}>
+                    <td><strong>{collector.displayName}</strong><br /><small>{collector.collectorId}</small></td>
+                    <td>{collector.status}<br /><small>{shortTime(collector.lastHeartbeatUtc)}</small></td>
+                    <td>{collector.localQueueDepth}<br /><small>failed: {collector.failedPushCount}</small></td>
+                    <td>{collector.acceptedSamples} samples<br /><small>{shortTime(collector.lastPushUtc)}</small></td>
+                    <td>RO {safetyLabel(collector.readOnlyCollection)} · OUT {safetyLabel(collector.outboundOnly)} · IN {safetyLabel(collector.opensInboundListener)}</td>
                   </tr>
                 ))}
               </tbody>
-            </table>
-            {!collectors.length ? <p style={{ color: "#9ab8d7" }}>Register a collector to see heartbeat, queue and push status.</p> : null}
+            </StandardP2Table>
+            {!collectors.length ? <p>Register a collector to see heartbeat, queue and push status.</p> : null}
           </div>
         </div>
       </section>
 
-      <section style={cardStyle}>
-        <h2 style={{ marginTop: 0 }}>4. Deployment guidance</h2>
-        <p style={{ color: "#9ab8d7" }}>Use the packaged edge-agent dry-run before enabling outbound push. Never solve connectivity by opening inbound OT firewall access.</p>
-        <pre style={{ whiteSpace: "pre-wrap", color: "#64ffda", background: "rgba(2,7,18,0.75)", padding: 14, borderRadius: 14, overflowX: "auto" }}>{`powershell -ExecutionPolicy Bypass -File .\\scripts\\edge-agent\\Run-PPIQ-EdgeAgent-Local.ps1 -ProjectRoot "C:\\Workspace\\PlantProcess-IQ"\n\npowershell -ExecutionPolicy Bypass -File .\\scripts\\edge-agent\\Run-PPIQ-EdgeAgent-Local.ps1 -ProjectRoot "C:\\Workspace\\PlantProcess-IQ" -Push`}</pre>
+      <section>
+        <h2>4. Deployment guidance</h2>
+        <p>Use the packaged edge-agent dry-run before enabling outbound push. Never solve connectivity by opening inbound OT firewall access.</p>
+        <pre>{`powershell -ExecutionPolicy Bypass -File .\\scripts\\edge-agent\\Run-PPIQ-EdgeAgent-Local.ps1 -ProjectRoot "C:\\Workspace\\PlantProcess-IQ"\n\npowershell -ExecutionPolicy Bypass -File .\\scripts\\edge-agent\\Run-PPIQ-EdgeAgent-Local.ps1 -ProjectRoot "C:\\Workspace\\PlantProcess-IQ" -Push`}</pre>
       </section>
     </main>
   );

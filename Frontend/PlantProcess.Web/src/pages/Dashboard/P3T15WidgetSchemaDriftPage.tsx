@@ -1,19 +1,11 @@
 
 import { useMemo, useState } from "react";
 import {
-  buildWidgetHeatmapCells,
-  buildWidgetQueryFromDefinition,
-  filterSortHeatmapCells,
-  heatmapSeriesSignature,
-  normalizeDashboardWidgetDefinition,
-  p3t15DemoBackendWidget,
-  p3t15DemoHeatmapRows,
-  schemaDriftSummary,
-  validateWidgetDefinitionSchema,
-  type HeatmapFilterSortState,
-} from "../../api/p3T15WidgetSchemaContract";
+  buildWidgetHeatmapCells, buildWidgetQueryFromDefinition, filterSortHeatmapCells, heatmapSeriesSignature, normalizeDashboardWidgetDefinition, p3t15DemoBackendWidget, p3t15DemoHeatmapRows, schemaDriftSummary, validateWidgetDefinitionSchema, type HeatmapFilterSortState, } from "../../api/p3T15WidgetSchemaContract";
 import "./p3t15-widget-schema-drift.css";
 
+import { P2T08_STANDARD_ROLLOUT_MARKER, StandardP2Input, StandardP2Select } from "@/components/standard/StandardP2Controls";
+import { StandardButton } from "@/components/standard";
 export const P3_T15_WIDGET_SCHEMA_DRIFT_ROOT_CAUSE_FIXED =
   "P3_T15_WIDGET_SCHEMA_DRIFT_ROOT_CAUSE_FIXED";
 
@@ -74,12 +66,12 @@ export function P3T15WidgetSchemaDriftPage() {
         </p>
 
         <div className="p3-t15-actions">
-          <button type="button" onClick={() => setCreated(true)}>
+          <StandardButton type="button" onClick={() => setCreated(true)}>
             Create heatmap widget from builder contract
-          </button>
-          <button type="button" onClick={() => setCreated(false)}>
+          </StandardButton>
+          <StandardButton type="button" onClick={() => setCreated(false)}>
             Reset widget preview
-          </button>
+          </StandardButton>
         </div>
       </section>
 
@@ -121,7 +113,7 @@ export function P3T15WidgetSchemaDriftPage() {
             <div className="p3-t15-controls">
               <label>
                 Search
-                <input
+                <StandardP2Input
                   data-testid="p3-t15-filter-search"
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
@@ -131,7 +123,7 @@ export function P3T15WidgetSchemaDriftPage() {
 
               <label>
                 Minimum value
-                <input
+                <StandardP2Input
                   data-testid="p3-t15-filter-min"
                   type="number"
                   min="0"
@@ -144,7 +136,7 @@ export function P3T15WidgetSchemaDriftPage() {
 
               <label>
                 Sort by
-                <select
+                <StandardP2Select
                   data-testid="p3-t15-sort-by"
                   value={sortBy}
                   onChange={(event) => setSortBy(event.target.value as HeatmapFilterSortState["sortBy"])}
@@ -152,19 +144,19 @@ export function P3T15WidgetSchemaDriftPage() {
                   <option value="value">Value</option>
                   <option value="x">Equipment</option>
                   <option value="y">Day</option>
-                </select>
+                </StandardP2Select>
               </label>
 
               <label>
                 Direction
-                <select
+                <StandardP2Select
                   data-testid="p3-t15-sort-direction"
                   value={direction}
                   onChange={(event) => setDirection(event.target.value as HeatmapFilterSortState["direction"])}
                 >
                   <option value="desc">Desc</option>
                   <option value="asc">Asc</option>
-                </select>
+                </StandardP2Select>
               </label>
             </div>
 
@@ -174,18 +166,17 @@ export function P3T15WidgetSchemaDriftPage() {
               data-series-signature={signature}
             >
               {cells.map((cell) => (
-                <button
+                <StandardButton
                   type="button"
                   key={cell.id}
                   className="p3-t15-heatmap-cell"
-                  style={{ opacity: 0.42 + cell.intensity * 0.58 }}
                   data-testid="p3-t15-heatmap-cell"
                   title={cell.label + " = " + cell.value.toFixed(2)}
                 >
                   <span>{cell.x}</span>
                   <em>{cell.y}</em>
                   <strong>{Math.round(cell.value * 100)}%</strong>
-                </button>
+                </StandardButton>
               ))}
             </div>
 

@@ -54,6 +54,7 @@ import { AdminPanel, StatusPill, formatDate } from "./AdminSharedComponents";
 
 import { InlineFieldError } from "@/components/forms/InlineFieldError";
 import { StandardPageButton, StandardPageInput, StandardPageSelect, StandardPageTable } from "@/components/standard/StandardPageCompat";
+import { P2T08_STANDARD_ROLLOUT_MARKER } from "@/components/standard/StandardP2Controls";
 import {
   useInlineFormValidation,
   validateCode,
@@ -142,7 +143,7 @@ export function DbConfigurationTab({
         {error ? <ErrorPanel error={error} /> : null}
 
         {/* Toolbar */}
-        <div className="admin-action-row" style={{ marginBottom: "1rem" }}>
+        <div className="admin-action-row">
           {viewMode !== "list" ? (
             <StandardPageButton className="secondary-button" onClick={backToList} type="button">
               <X size={14} /> Back to list
@@ -349,7 +350,7 @@ function ConnectionProfileList({
                     />
                   ) : "â€”"}
                   {conn.lastTestMessage ? (
-                    <small style={{ display: "block", maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis" }}>
+                    <small>
                       {conn.lastTestMessage}
                     </small>
                   ) : null}
@@ -703,7 +704,7 @@ function ConnectionProfileForm({
         </label>
 
         {/* Description */}
-        <label className="admin-form-label" style={{ gridColumn: "1 / -1" }}>
+        <label className="admin-form-label">
           Description
           <StandardPageInput
             className="admin-input"
@@ -838,10 +839,10 @@ function TableBrowser({
 
   return (
     <div>
-      <div className="admin-panel__header" style={{ marginBottom: "1.5rem" }}>
+      <div className="admin-panel__header">
         <div>
           <h3>Table Browser â€” {profile?.connectionProfileName}</h3>
-          <p style={{ color: "var(--ppiq-text-muted)", fontSize: 13 }}>
+          <p>
             {profile?.providerType} Â· {profile?.hostName ?? profile?.fileRootPath ?? "No host"} Â· {profile?.databaseName ?? ""}
           </p>
         </div>
@@ -850,7 +851,7 @@ function TableBrowser({
       {error ? <ErrorPanel error={error} /> : null}
 
       {/* Register new dataset */}
-      <div className="admin-form-card" style={{ marginBottom: "1.5rem" }}>
+      <div className="admin-form-card">
         <h3>Register Table / View as Dataset</h3>
         <p className="admin-copy">
           Enter the name of a table or view from the source database to register it as a
@@ -901,7 +902,7 @@ function TableBrowser({
               ))}
             </StandardPageSelect>
           </label>
-          <label className="admin-form-label" style={{ gridColumn: "1 / -1" }}>
+          <label className="admin-form-label">
             Description
             <StandardPageInput
               className="admin-input"
@@ -923,11 +924,11 @@ function TableBrowser({
               : <><Plus size={14} /> Register Dataset</>}
           </StandardPageButton>
         </div>
-        {message ? <p className="admin-test-result" style={{ marginTop: 8 }}>{message}</p> : null}
+        {message ? <p className="admin-test-result">{message}</p> : null}
       </div>
 
       {/* Registered datasets */}
-      <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 8 }}>
+      <h3>
         Registered Datasets ({datasets.length})
       </h3>
 
@@ -975,7 +976,7 @@ function TableBrowser({
                     </td>
                     <td>{ds.datasetKind}</td>
                     <td>{ds.sourceObjectName}{ds.sourceSchemaName ? ` (${ds.sourceSchemaName})` : ""}</td>
-                    <td>{ds.incrementalCursorField ?? <span style={{ color: "var(--ppiq-text-muted)" }}>Full snapshot</span>}</td>
+                    <td>{ds.incrementalCursorField ?? <span>Full snapshot</span>}</td>
                     <td>
                       {ds.refreshIntervalSeconds < 3600
                         ? `${ds.refreshIntervalSeconds / 60}min`

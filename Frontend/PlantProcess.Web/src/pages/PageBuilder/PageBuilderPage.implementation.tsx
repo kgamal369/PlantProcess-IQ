@@ -1,7 +1,6 @@
 import { useMemo, useReducer, useState } from "react";
 
 import { pageBuilderApi, type PageDefinitionDto } from "@/api/pageBuilder";
-import { StandardButton } from "@/components/standard/StandardButton";
 import {
   StandardInput,
   StandardSelect,
@@ -21,6 +20,8 @@ import {
 
 import "./page-builder.css";
 
+import { P2T08_STANDARD_ROLLOUT_MARKER } from "@/components/standard/StandardP2Controls";
+import { StandardButton } from "@/components/standard";
 const visibilityOptions = [
   { value: "Private", label: "Private" },
   { value: "Shared", label: "Shared" },
@@ -237,14 +238,11 @@ export function PageBuilderPage() {
               key={widget.id}
               className="page-builder-page__widget"
               data-widget-id={widget.id}
-              style={{
-                gridColumn: "span " + Math.min(Math.max(widget.w, 1), 12),
-              }}
             >
               <div>
                 <strong>{widget.title}</strong>
                 <small>
-                  {widget.kind} · {widget.source}
+                  {widget.kind} Â· {widget.source}
                 </small>
                 <small>
                   x:{widget.x} y:{widget.y} w:{widget.w} h:{widget.h}

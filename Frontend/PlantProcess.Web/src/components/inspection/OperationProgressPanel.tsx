@@ -120,7 +120,7 @@ export function OperationProgressPanel({
       cell: (row) => (
         <div>
           <div className="productModule56-progress" aria-label={row.percentComplete.toFixed(1) + "% complete"}>
-            <span style={{ "--value": Math.min(100, Math.max(0, row.percentComplete)) + "%" } as React.CSSProperties} />
+            <span />
           </div>
           <small>{row.percentComplete.toFixed(1)}%</small>
         </div>

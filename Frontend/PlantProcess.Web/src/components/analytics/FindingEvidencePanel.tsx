@@ -1,3 +1,4 @@
+import { P2T08_STANDARD_ROLLOUT_MARKER } from "@/components/standard/StandardP2Controls";
 export type FindingCoverageEvidence = {
   population: number;
   included: number;
@@ -31,14 +32,6 @@ export function FindingEvidencePanel({
   return (
     <aside
       aria-label="Finding evidence"
-      style={{
-        border: "1px solid rgba(0,212,255,0.24)",
-        borderRadius: 16,
-        padding: 14,
-        display: "grid",
-        gap: 10,
-        background: "rgba(7,20,38,0.72)",
-      }}
     >
       <strong>Evidence transparency</strong>
       <div>

@@ -14,6 +14,7 @@ import { apiClient } from "@/api/http";
 import "./p03p04-workbench.css";
 import { StandardButton } from "@/components/standard";
 
+import { StandardP2Input, StandardP2Table, StandardP2TextArea } from "@/components/standard/StandardP2Controls";
 type ApiRows<T> = {
   generatedAtUtc?: string;
   rowCount: number;
@@ -93,7 +94,7 @@ function ProofTable({ rows }: { rows: ProofRow[] }) {
 
   return (
     <div className="p03p04-table-wrap">
-      <table className="p03p04-table">
+      <StandardP2Table className="p03p04-table">
         <thead>
           <tr>
             {columns.map((column) => (
@@ -112,7 +113,7 @@ function ProofTable({ rows }: { rows: ProofRow[] }) {
             </tr>
           ))}
         </tbody>
-      </table>
+      </StandardP2Table>
     </div>
   );
 }
@@ -260,7 +261,7 @@ export function MaterialInvestigationPage() {
           </p>
         </div>
 
-        <StandardButton className="p03p04-primary" type="button" onClick={refreshAll} isDisabled={isLoading}>
+        <StandardButton className="p03p04-primary ppiq-p2t09-material-button ppiq-p2t09-action-primary" type="button" onClick={refreshAll} isDisabled={isLoading} variant="primary">
           <RefreshCw size={16} />
           {isLoading ? "Refreshing..." : "Refresh proof"}
         </StandardButton>
@@ -282,7 +283,7 @@ export function MaterialInvestigationPage() {
             className={activeTab === tab.key ? "p03p04-tab p03p04-tab--active" : "p03p04-tab"}
             type="button"
             onClick={() => setActiveTab(tab.key)}
-          >
+           variant="secondary">
             <strong>{tab.label}</strong>
             <span>{tab.subtitle}</span>
           </StandardButton>
@@ -318,7 +319,7 @@ export function MaterialInvestigationPage() {
                 <h2>Business-Key Dictionary Validation</h2>
                 <p>Detects missing members, duplicate normalized samples and nullable key members.</p>
               </div>
-              <StandardButton className="p03p04-secondary" type="button" onClick={loadBusinessKeys}>
+              <StandardButton className="p03p04-secondary ppiq-p2t09-material-button ppiq-p2t09-action-ghost" type="button" onClick={loadBusinessKeys} variant="ghost">
                 <RefreshCw size={14} />
                 Validate
               </StandardButton>
@@ -334,7 +335,7 @@ export function MaterialInvestigationPage() {
                 <h2>Canonical Entity Mapper</h2>
                 <p>Runs required-field, type, unit-conversion and mapping lifecycle proof.</p>
               </div>
-              <StandardButton className="p03p04-secondary" type="button" onClick={runMappingLifecycle}>
+              <StandardButton className="p03p04-secondary ppiq-p2t09-material-button ppiq-p2t09-action-ghost" type="button" onClick={runMappingLifecycle} variant="ghost">
                 <Play size={14} />
                 Run proof
               </StandardButton>
@@ -353,12 +354,12 @@ export function MaterialInvestigationPage() {
             </div>
 
             <form className="p03p04-sql-form" onSubmit={resolveSql}>
-              <textarea
+              <StandardP2TextArea
                 value={sqlText}
                 onChange={(event) => setSqlText(event.target.value)}
                 spellCheck={false}
               />
-              <StandardButton className="p03p04-primary" type="submit">
+              <StandardButton className="p03p04-primary ppiq-p2t09-material-button ppiq-p2t09-action-ghost" type="submit" variant="ghost">
                 <Search size={14} />
                 Resolve SQL
               </StandardButton>
@@ -375,7 +376,7 @@ export function MaterialInvestigationPage() {
                 <h2>Genealogy Builder Proof</h2>
                 <p>Recursive graph validation with cycle and orphan checks.</p>
               </div>
-              <StandardButton className="p03p04-secondary" type="button" onClick={loadGenealogy}>
+              <StandardButton className="p03p04-secondary ppiq-p2t09-material-button ppiq-p2t09-action-ghost" type="button" onClick={loadGenealogy} variant="ghost">
                 <GitBranch size={14} />
                 Validate graph
               </StandardButton>
@@ -391,7 +392,7 @@ export function MaterialInvestigationPage() {
                 <h2>Validation & Publish</h2>
                 <p>Dry-run, publish and rollback proof for versioned mappings.</p>
               </div>
-              <StandardButton className="p03p04-primary" type="button" onClick={runMappingLifecycle}>
+              <StandardButton className="p03p04-primary ppiq-p2t09-material-button ppiq-p2t09-action-ghost" type="button" onClick={runMappingLifecycle} variant="ghost">
                 <Play size={14} />
                 Run lifecycle
               </StandardButton>
@@ -410,12 +411,12 @@ export function MaterialInvestigationPage() {
             </div>
 
             <form className="p03p04-search-form" onSubmit={investigateMaterial}>
-              <input
+              <StandardP2Input
                 value={materialKey}
                 onChange={(event) => setMaterialKey(event.target.value)}
                 placeholder="Material key, for example ADV_COIL4002"
               />
-              <StandardButton className="p03p04-primary" type="submit">
+              <StandardButton className="p03p04-primary ppiq-p2t09-material-button ppiq-p2t09-action-ghost" type="submit" variant="ghost">
                 <Search size={14} />
                 Investigate
               </StandardButton>

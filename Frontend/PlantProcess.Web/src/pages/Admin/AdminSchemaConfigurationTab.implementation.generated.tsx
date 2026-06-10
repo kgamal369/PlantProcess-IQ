@@ -45,6 +45,7 @@ import { useOptimisticSave } from "@/hooks/useOptimisticSave";
 import { InlineFieldError } from "@/components/forms/InlineFieldError";
 import { CanonicalSchemaMappingPanel } from "./CanonicalSchemaMappingPanel";
 import { StandardPageButton, StandardPageInput, StandardPageSelect, StandardPageTable, StandardPageTextArea } from "@/components/standard/StandardPageCompat";
+import { P2T08_STANDARD_ROLLOUT_MARKER } from "@/components/standard/StandardP2Controls";
 import {
   useInlineFormValidation,
   validateCode,
@@ -316,7 +317,7 @@ LIMIT 100`,
 
       {/* Existing views selector */}
       {schemaViews.length > 0 ? (
-        <div className="admin-form-row" style={{ marginBottom: "1rem" }}>
+        <div className="admin-form-row">
           <label className="admin-form-label">Load existing view</label>
           <div className="admin-form-inline">
             <StandardPageSelect
@@ -333,7 +334,7 @@ LIMIT 100`,
               ))}
             </StandardPageSelect>
             {selectedView ? (
-              <span className="admin-copy" style={{ fontSize: 12 }}>
+              <span className="admin-copy">
                 Status: {selectedView.lastValidationStatus ?? "Not run"} Â·
                 Approved: {selectedView.isApproved ? "Yes" : "No"} Â·
                 Last: {formatDate(selectedView.lastValidatedAtUtc)}
@@ -344,7 +345,7 @@ LIMIT 100`,
       ) : null}
 
       {/* Form metadata */}
-      <div className="admin-form-grid" style={{ marginBottom: "1rem" }}>
+      <div className="admin-form-grid">
         <label className="admin-form-label">
           View Code *
           <StandardPageInput
@@ -420,7 +421,7 @@ LIMIT 100`,
       </label>
 
       {/* Actions */}
-      <div className="admin-action-row" style={{ marginTop: "1rem", flexWrap: "wrap" }}>
+      <div className="admin-action-row">
         <StandardPageButton
           className="secondary-button"
           type="button"
@@ -456,7 +457,7 @@ LIMIT 100`,
 
       {/* Preview result */}
       {preview ? (
-        <div className="admin-preview-panel" style={{ marginTop: "1.5rem" }}>
+        <div className="admin-preview-panel">
           <div className="admin-panel__header">
             <div className="admin-panel__icon">
               <PlayCircle size={18} />
@@ -471,7 +472,7 @@ LIMIT 100`,
           </div>
 
           {preview.columns.length > 0 ? (
-            <div className="admin-table-wrap" style={{ maxHeight: 300, overflowY: "auto" }}>
+            <div className="admin-table-wrap">
               <StandardPageTable>
                 <thead>
                   <tr>
@@ -502,8 +503,8 @@ LIMIT 100`,
 
       {/* All saved views table */}
       {schemaViews.length > 0 ? (
-        <div className="admin-table-wrap" style={{ marginTop: "1.5rem" }}>
-          <strong style={{ fontSize: 12, color: "var(--ppiq-text-muted)", display: "block", marginBottom: 8 }}>
+        <div className="admin-table-wrap">
+          <strong>
             All Schema Views ({schemaViews.length})
           </strong>
           <StandardPageTable>
@@ -517,7 +518,6 @@ LIMIT 100`,
                 <tr
                   key={v.id}
                   className={selectedViewId === v.id ? "selected-row" : ""}
-                  style={{ cursor: "pointer" }}
                   onClick={() => loadSelectedViewIntoEditor(v.id)}
                 >
                   <td>
@@ -633,7 +633,7 @@ function KpiDefinitionPanel() {
       {error ? <div className="admin-inline-error">{error}</div> : null}
       {createKpiError instanceof Error ? <div className="admin-inline-error">{createKpiError.message}</div> : null}
 
-      <div className="admin-action-row" style={{ marginBottom: "1rem" }}>
+      <div className="admin-action-row">
         <StandardPageButton
           className="primary-button"
           type="button"
@@ -645,7 +645,7 @@ function KpiDefinitionPanel() {
 
       {/* Create form */}
       {showForm ? (
-        <div className="admin-form-card" style={{ marginBottom: "1.5rem" }}>
+        <div className="admin-form-card">
           <h3>New KPI Definition</h3>
           <div className="admin-form-grid">
 
@@ -759,7 +759,7 @@ function KpiDefinitionPanel() {
               ) : null}
             </label>
 
-            <label className="admin-form-label" style={{ gridColumn: "1 / -1" }}>
+            <label className="admin-form-label">
               Description
               <StandardPageInput
                 className="admin-input"
@@ -803,7 +803,7 @@ function KpiDefinitionPanel() {
                   </td>
                   <td>{kpi.kpiCategory}</td>
                   <td>
-                    <code style={{ fontSize: 11 }}>{kpi.valueExpression}</code>
+                    <code>{kpi.valueExpression}</code>
                   </td>
                   <td>{kpi.unit ?? "â€”"}</td>
                   <td>{kpi.aggregationType}</td>
@@ -861,8 +861,8 @@ function FieldMapperPanel({
       </p>
 
       {/* Canonical target reference */}
-      <div style={{ marginBottom: "1.5rem" }}>
-        <strong style={{ fontSize: 13, display: "block", marginBottom: 8 }}>
+      <div>
+        <strong>
           Canonical Target Entities
         </strong>
         <div className="admin-provider-grid">
@@ -871,9 +871,9 @@ function FieldMapperPanel({
               <div className="admin-provider-card__head">
                 <strong>{target.entity}</strong>
               </div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 6 }}>
+              <div>
                 {target.fields.map((f) => (
-                  <code key={f} style={{ fontSize: 10, background: "var(--ppiq-surface-2)", padding: "1px 5px", borderRadius: 3 }}>
+                  <code key={f}>
                     {f}
                   </code>
                 ))}
@@ -886,7 +886,7 @@ function FieldMapperPanel({
       {/* Existing mappings */}
       {mappings.length > 0 ? (
         <div className="admin-table-wrap">
-          <strong style={{ fontSize: 12, color: "var(--ppiq-text-muted)", display: "block", marginBottom: 8 }}>
+          <strong>
             Configured Mappings ({mappings.length})
           </strong>
           <StandardPageTable>
@@ -899,7 +899,6 @@ function FieldMapperPanel({
               {mappings.map((m) => (
                 <tr
                   key={m.id}
-                  style={{ cursor: "pointer" }}
                   onClick={() => setExpandedMapping(expandedMapping === m.id ? null : m.id)}
                 >
                   <td>
@@ -924,8 +923,8 @@ function FieldMapperPanel({
 
       {/* Source object coverage â€” starting points for mapping */}
       {coverage.length > 0 ? (
-        <div style={{ marginTop: "1rem" }}>
-          <strong style={{ fontSize: 12, color: "var(--ppiq-text-muted)", display: "block", marginBottom: 8 }}>
+        <div>
+          <strong>
             Source Objects available for mapping ({coverage.length})
           </strong>
           <div className="admin-list">
@@ -947,7 +946,7 @@ function FieldMapperPanel({
         </div>
       )}
 
-      <p className="admin-copy" style={{ marginTop: "1rem", fontSize: 12 }}>
+      <p className="admin-copy">
         Full drag-and-drop field-level mapping UI is in Phase 5. Use the Integration API
         (<code>/admin/schema-configuration/mappings</code>) to create MappingDefinition records now.
       </p>

@@ -3,6 +3,7 @@ import { BadgeEuro, FlaskConical, PlayCircle } from "lucide-react";
 import { licensePlans, useDemoMode } from "@/state/DemoModeContext";
 import { StandardButton } from "@/components/standard";
 
+import { StandardP2Select } from "@/components/standard/StandardP2Controls";
 export function DemoModeControl() {
   const {
     demoModeEnabled,
@@ -25,7 +26,7 @@ export function DemoModeControl() {
 
       <label className="demo-plan-select">
         <BadgeEuro size={15} />
-        <select
+        <StandardP2Select
           value={selectedPlan}
           onChange={(event) => setSelectedPlan(event.target.value as typeof selectedPlan)}
         >
@@ -34,7 +35,7 @@ export function DemoModeControl() {
               {plan.name}
             </option>
           ))}
-        </select>
+        </StandardP2Select>
       </label>
 
       <a className="demo-run-link" href="/demo-lifecycle">

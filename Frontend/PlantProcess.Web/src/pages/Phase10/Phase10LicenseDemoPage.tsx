@@ -1,13 +1,10 @@
 import { useMemo, useState } from "react";
 import {
-  buildPhase10FeatureMatrix,
-  liveTierToggleResult,
-  phase10LifecycleBadge,
-  phase10TierVisuals,
-  type Phase10Tier,
-} from "@/license/phase10License";
+  buildPhase10FeatureMatrix, liveTierToggleResult, phase10LifecycleBadge, phase10TierVisuals, type Phase10Tier, } from "@/license/phase10License";
 import "./phase10-license.css";
 
+import { StandardP2Button } from "@/components/standard/StandardP2Controls";
+import { StandardButton } from "@/components/standard";
 const tiers: Phase10Tier[] = ["Lite", "Pro", "ProPlus", "Enterprise"];
 
 export function Phase10LicenseDemoPage() {
@@ -34,14 +31,14 @@ export function Phase10LicenseDemoPage() {
         <p className="phase10-eyebrow">Live tier toggle</p>
         <div className="phase10-toggle-row">
           {tiers.map((item) => (
-            <button
+            <StandardButton
               key={item}
               type="button"
               data-active={tier === item}
               onClick={() => setTier(item)}
             >
               {phase10TierVisuals[item].label}
-            </button>
+            </StandardButton>
           ))}
         </div>
         <p className="phase10-copy">

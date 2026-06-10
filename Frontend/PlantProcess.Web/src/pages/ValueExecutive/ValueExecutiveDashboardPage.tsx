@@ -1,16 +1,11 @@
 
 import { useMemo, useState } from "react";
 import {
-  buildMonthlyValueReportHtml,
-  computePayback,
-  computeWorkedCasePreview,
-  formatMoney,
-  runEngineAbstainProof,
-  runEngineWorkedCase,
-  type P3T14ImpactResult,
-} from "../../api/p3T14ValueExecutive";
+  buildMonthlyValueReportHtml, computePayback, computeWorkedCasePreview, formatMoney, runEngineAbstainProof, runEngineWorkedCase, type P3T14ImpactResult, } from "../../api/p3T14ValueExecutive";
 import "./value-executive.css";
 
+import { StandardP2Button, StandardP2Input, StandardP2Table } from "@/components/standard/StandardP2Controls";
+import { StandardButton } from "@/components/standard";
 export const P3_T14_VALUE_ROI_EXECUTIVE_SURFACE = "P3_T14_VALUE_ROI_EXECUTIVE_SURFACE";
 
 function openReport(html: string) {
@@ -90,15 +85,15 @@ export function ValueExecutiveDashboardPage() {
         </p>
 
         <div className="value-exec-actions">
-          <button className="value-exec-button" type="button" onClick={runDashboard} disabled={isRunning}>
+          <StandardButton className="value-exec-button" type="button" onClick={runDashboard} isDisabled={isRunning}>
             {isRunning ? "Running..." : "Run approved finding through value engine"}
-          </button>
-          <button className="value-exec-button warning" type="button" onClick={runAbstain} disabled={isRunning}>
+          </StandardButton>
+          <StandardButton className="value-exec-button warning" type="button" onClick={runAbstain} isDisabled={isRunning}>
             Prove ABSTAIN on missing assumptions
-          </button>
-          <button className="value-exec-button secondary" type="button" onClick={printReport} disabled={!impact || impact.isAbstained}>
+          </StandardButton>
+          <StandardButton className="value-exec-button secondary" type="button" onClick={printReport} isDisabled={!impact || impact.isAbstained}>
             Open monthly value report PDF
-          </button>
+          </StandardButton>
         </div>
 
         <p className="value-exec-muted" role="status">{status}</p>
@@ -147,7 +142,7 @@ export function ValueExecutiveDashboardPage() {
         <h2>Payback view vs license cost</h2>
         <div className="value-exec-license">
           <label htmlFor="p3t14-license-cost">Monthly license cost</label>
-          <input
+          <StandardP2Input
             id="p3t14-license-cost"
             type="number"
             min="1"
@@ -170,7 +165,7 @@ export function ValueExecutiveDashboardPage() {
           Every value term below comes from the engine response and carries its own provenance handle.
         </p>
 
-        <table className="value-exec-table">
+        <StandardP2Table className="value-exec-table">
           <thead>
             <tr>
               <th>Term</th>
@@ -204,7 +199,7 @@ export function ValueExecutiveDashboardPage() {
               </tr>
             )}
           </tbody>
-        </table>
+        </StandardP2Table>
       </section>
 
       {abstain ? (

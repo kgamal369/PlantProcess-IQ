@@ -5,6 +5,7 @@ import type { DashboardReferenceData, DashboardWidgetFilters } from "../../../..
 import type { WidgetBuilderState, RelativeDateUnit } from "./WidgetBuilderWizardContent.types";
 import { toInputDateTime, fromInputDateTime } from "./WidgetBuilderWizardContent.helpers";
 
+import { StandardP2Input, StandardP2Select } from "@/components/standard/StandardP2Controls";
 export function WizardSection({
   icon,
   title,
@@ -50,7 +51,7 @@ export function FilterStep({
       <div className="form-grid">
         <label>
           Site
-          <select
+          <StandardP2Select
             value={state.filters.siteId ?? ""}
             onChange={(event) =>
               onPatchFilters({ siteId: event.target.value || null })
@@ -62,12 +63,12 @@ export function FilterStep({
                 {item.name}
               </option>
             ))}
-          </select>
+          </StandardP2Select>
         </label>
 
         <label>
           Area
-          <select
+          <StandardP2Select
             value={state.filters.areaId ?? ""}
             onChange={(event) =>
               onPatchFilters({ areaId: event.target.value || null })
@@ -79,12 +80,12 @@ export function FilterStep({
                 {item.name}
               </option>
             ))}
-          </select>
+          </StandardP2Select>
         </label>
 
         <label>
           Equipment
-          <select
+          <StandardP2Select
             value={state.filters.equipmentId ?? ""}
             onChange={(event) =>
               onPatchFilters({ equipmentId: event.target.value || null })
@@ -96,12 +97,12 @@ export function FilterStep({
                 {item.name}
               </option>
             ))}
-          </select>
+          </StandardP2Select>
         </label>
 
         <label>
           Material type
-          <input
+          <StandardP2Input
             value={state.filters.materialUnitType ?? ""}
             onChange={(event) =>
               onPatchFilters({ materialUnitType: event.target.value || null })
@@ -112,7 +113,7 @@ export function FilterStep({
 
         <label>
           Defect type
-          <select
+          <StandardP2Select
             value={state.filters.defectType ?? ""}
             onChange={(event) =>
               onPatchFilters({ defectType: event.target.value || null })
@@ -124,12 +125,12 @@ export function FilterStep({
                 {item.name}
               </option>
             ))}
-          </select>
+          </StandardP2Select>
         </label>
 
         <label>
           Risk class
-          <select
+          <StandardP2Select
             value={state.filters.riskClass ?? ""}
             onChange={(event) =>
               onPatchFilters({ riskClass: event.target.value || null })
@@ -141,12 +142,12 @@ export function FilterStep({
                 {item.name}
               </option>
             ))}
-          </select>
+          </StandardP2Select>
         </label>
 
         <label>
           Source system
-          <select
+          <StandardP2Select
             value={state.filters.sourceSystem ?? ""}
             onChange={(event) =>
               onPatchFilters({ sourceSystem: event.target.value || null })
@@ -158,12 +159,12 @@ export function FilterStep({
                 {item.name}
               </option>
             ))}
-          </select>
+          </StandardP2Select>
         </label>
 
         <label>
           Shift / crew
-          <select
+          <StandardP2Select
             value={state.filters.shiftCode ?? ""}
             onChange={(event) =>
               onPatchFilters({ shiftCode: event.target.value || null })
@@ -175,12 +176,12 @@ export function FilterStep({
                 {item.name}
               </option>
             ))}
-          </select>
+          </StandardP2Select>
         </label>
 
         <label>
           Date filter mode
-          <select
+          <StandardP2Select
             value={state.dateMode}
             onChange={(event) =>
               onPatch({
@@ -191,14 +192,14 @@ export function FilterStep({
             <option value="none">No date filter</option>
             <option value="relative">Relative lookback</option>
             <option value="absolute">Absolute date range</option>
-          </select>
+          </StandardP2Select>
         </label>
 
         {state.dateMode === "relative" ? (
           <>
             <label>
               Last
-              <input
+              <StandardP2Input
                 type="number"
                 min={1}
                 value={state.relativeDateValue}
@@ -210,7 +211,7 @@ export function FilterStep({
 
             <label>
               Unit
-              <select
+              <StandardP2Select
                 value={state.relativeDateUnit}
                 onChange={(event) =>
                   onPatch({
@@ -221,7 +222,7 @@ export function FilterStep({
                 <option value="days">Days</option>
                 <option value="weeks">Weeks</option>
                 <option value="months">Months</option>
-              </select>
+              </StandardP2Select>
             </label>
           </>
         ) : null}
@@ -230,7 +231,7 @@ export function FilterStep({
           <>
             <label>
               From
-              <input
+              <StandardP2Input
                 type="datetime-local"
                 value={toInputDateTime(state.filters.fromUtc)}
                 onChange={(event) =>
@@ -243,7 +244,7 @@ export function FilterStep({
 
             <label>
               To
-              <input
+              <StandardP2Input
                 type="datetime-local"
                 value={toInputDateTime(state.filters.toUtc)}
                 onChange={(event) =>

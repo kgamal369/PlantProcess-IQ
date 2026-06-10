@@ -14,6 +14,7 @@ import {
 } from "../../api/advancedAnalysis";
 import { readinessGateSummaryText, readinessGateView } from "./advancedReadinessGateView";
 
+import { P2T08_STANDARD_ROLLOUT_MARKER } from "@/components/standard/StandardP2Controls";
 const c = ppiqTokens.color;
 
 const stateColor = (s: string) => {
@@ -82,21 +83,13 @@ export function AdvancedAnalysisPage() {
   const badge = (
     <span
       data-testid="phase8-readiness-state-badge"
-      style={{
-        background: stateColor(state),
-        color: c.navy900,
-        fontWeight: 700,
-        padding: "4px 12px",
-        borderRadius: 999,
-        fontSize: 12,
-      }}
     >
       {view.label}
     </span>
   );
 
   return (
-    <div style={{ display: "grid", gap: ppiqTokens.spacing.lg, padding: ppiqTokens.spacing.lg }}>
+    <div>
       <StandardCard
         eyebrow="Advanced analysis · doctrine §7.4"
         title={`Suspected contributors — ${outcomeKey}`}
@@ -114,9 +107,9 @@ export function AdvancedAnalysisPage() {
           emptyMessage="No statistically supported contributors were found for this target and window."
         >
           {blocked ? (
-            <div style={{ borderLeft: `3px solid ${c.danger}`, padding: ppiqTokens.spacing.md, background: c.surface2, borderRadius: ppiqTokens.radius.md }}>
-              <strong style={{ color: c.danger }}>Analysis blocked by the data-readiness gate.</strong>
-              <ul style={{ margin: "8px 0 0", color: c.textMuted, fontSize: 13 }}>
+            <div>
+              <strong>Analysis blocked by the data-readiness gate.</strong>
+              <ul>
                 {(gateSummary?.gates ?? []).map((gate) => (
                   <li key={gate.gateCode}>{gate.title}: {gate.reason}</li>
                 ))}
@@ -124,24 +117,24 @@ export function AdvancedAnalysisPage() {
               </ul>
             </div>
           ) : (
-            <div style={{ display: "grid", gap: ppiqTokens.spacing.md }}>
+            <div>
               {contributors.map((f) => {
                 const e = Math.min(1, Math.abs(f.effectSize ?? 0));
                 return (
-                  <div key={f.findingId} style={{ border: `1px solid ${c.borderSubtle}`, borderRadius: ppiqTokens.radius.md, padding: ppiqTokens.spacing.md, background: c.surface1 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between" }}>
-                      <strong style={{ color: c.text }}>{f.findingId}</strong>
-                      <span style={{ color: c.brandCyan, fontFamily: "monospace", fontSize: 12 }}>{f.method}</span>
+                  <div key={f.findingId}>
+                    <div>
+                      <strong>{f.findingId}</strong>
+                      <span>{f.method}</span>
                     </div>
-                    <div style={{ height: 8, background: c.navy700, borderRadius: 4, marginTop: 8 }}>
-                      <div style={{ width: `${e * 100}%`, height: 8, background: c.brandCyan, borderRadius: 4 }} />
+                    <div>
+                      <div />
                     </div>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 16, marginTop: 8, fontSize: 12, color: c.textMuted, fontFamily: "monospace" }}>
+                    <div>
                       <span>effect {num(f.effectSize)}</span>
                       <span>q {num(f.qValue)}{f.significant ? " ✓sig" : ""}</span>
                       <span>stability {pct(f.stabilityConsistency)} [{num(f.stabilityLower)}, {num(f.stabilityUpper)}]</span>
                       <span>n {f.sampleSize}</span>
-                      <span style={{ color: f.survivesStratification ? c.success : c.warning }}>
+                      <span>
                         {f.survivesStratification ? "survives stratification" : "fails stratification"}
                       </span>
                     </div>
@@ -159,9 +152,9 @@ export function AdvancedAnalysisPage() {
         subtitle={gateSummary?.message ?? readinessGateSummaryText(state, 0, 0, blocked ? 1 : 0)}
         elevation="flat"
       >
-        <div data-testid="phase8-readiness-gates" style={{ display: "grid", gap: 10 }}>
-          <div style={{ display: "flex", gap: 12, flexWrap: "wrap", fontSize: 13, color: c.textMuted }}>
-            <span>State: <strong style={{ color: stateColor(state) }}>{state}</strong></span>
+        <div data-testid="phase8-readiness-gates">
+          <div>
+            <span>State: <strong>{state}</strong></span>
             <span>Ready: {gateSummary?.readyCount ?? "—"}</span>
             <span>Partial: {gateSummary?.partialCount ?? "—"}</span>
             <span>Blocked: {gateSummary?.blockedCount ?? "—"}</span>
@@ -173,20 +166,13 @@ export function AdvancedAnalysisPage() {
               <div
                 key={gate.gateCode}
                 data-testid="phase8-readiness-gate-row"
-                style={{
-                  border: `1px solid ${c.borderSubtle}`,
-                  borderLeft: `4px solid ${stateColor(gate.state)}`,
-                  borderRadius: ppiqTokens.radius.md,
-                  padding: ppiqTokens.spacing.md,
-                  background: c.surface1,
-                }}
               >
-                <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
-                  <strong style={{ color: c.text }}>{gate.title}</strong>
-                  <span style={{ color: stateColor(gate.state), fontWeight: 800 }}>{gateView.label}</span>
+                <div>
+                  <strong>{gate.title}</strong>
+                  <span>{gateView.label}</span>
                 </div>
-                <p style={{ margin: "6px 0 0", color: c.textMuted, fontSize: 13 }}>{gate.reason}</p>
-                <p style={{ margin: "4px 0 0", color: c.textMuted, fontSize: 12, fontFamily: "monospace" }}>{gate.evidence}</p>
+                <p>{gate.reason}</p>
+                <p>{gate.evidence}</p>
               </div>
             );
           })}
@@ -201,7 +187,7 @@ export function AdvancedAnalysisPage() {
 
       {excluded.length > 0 && (
         <StandardCard eyebrow="Screening" title="Excluded features" elevation="flat">
-          <ul style={{ margin: 0, color: c.textMuted, fontSize: 13 }}>
+          <ul>
             {excluded.map((f) => {
               let reason = "";
               try {
@@ -215,10 +201,10 @@ export function AdvancedAnalysisPage() {
         </StandardCard>
       )}
 
-      <StandardCard elevation="flat" style={{ borderColor: c.borderStrong }}>
-        <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-          <span style={{ color: c.brandCyan, fontWeight: 700 }}>Honesty</span>
-          <span style={{ color: c.text, fontSize: 13 }}>{caveat}</span>
+      <StandardCard elevation="flat">
+        <div>
+          <span>Honesty</span>
+          <span>{caveat}</span>
         </div>
       </StandardCard>
     </div>

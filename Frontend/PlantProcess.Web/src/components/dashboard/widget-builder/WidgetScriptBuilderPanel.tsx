@@ -3,6 +3,7 @@ import { StandardButton, StandardCard } from "@/components/standard";
 import { LicenseGate } from "@/components/license/LicenseGate";
 import { apiClient } from "@/api/http";
 
+import { P2T08_STANDARD_ROLLOUT_MARKER, StandardP2Table, StandardP2TextArea } from "@/components/standard/StandardP2Controls";
 interface WidgetColumn { name?: string; key?: string; label?: string }
 interface WidgetExecResult {
   generatedAtUtc?: string;
@@ -73,9 +74,8 @@ export function WidgetScriptBuilderPanel({ onPublish }: { onPublish?: (widget: R
         eyebrow="Widget Builder Â· PPIQ-WF-012/013/014"
         title="Widget Script Studio"
         subtitle="Compile a widget script into a safe, parameterized, read-only query. Validate, preview (row-limited) and review a cost estimate before publishing."
-        style={{ background: "#0C1A2E" }}
         actions={
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <div>
             <StandardButton variant="ghost" type="button" onClick={() => setShowSql((s) => !s)}>
               {showSql ? "Show script" : "Show compiled query"}
             </StandardButton>
@@ -93,51 +93,46 @@ export function WidgetScriptBuilderPanel({ onPublish }: { onPublish?: (widget: R
         }
       >
         {!showSql ? (
-          <textarea value={script} spellCheck={false} rows={7}
-            onChange={(e) => { setScript(e.target.value); setValidated(false); setPublished(false); }}
-            style={{ width: "100%", boxSizing: "border-box", background: "var(--ppiq-color-bg-deep)", color: "#EAF6FF",
-              border: "1px solid rgba(122,176,224,0.35)", borderRadius: 10, padding: 12,
-              fontFamily: "JetBrains Mono, monospace", fontSize: 13, lineHeight: 1.6, resize: "vertical" }} />
+          <StandardP2TextArea value={script} spellCheck={false} rows={7}
+            onChange={(e) => { setScript(e.target.value); setValidated(false); setPublished(false); }} />
         ) : (
-          <pre style={{ width: "100%", boxSizing: "border-box", background: "var(--ppiq-color-bg-deep)", color: "var(--ppiq-color-accent-cyan)",
-            border: "1px solid rgba(122,176,224,0.18)", borderRadius: 10, padding: 12, margin: 0,
-            fontFamily: "JetBrains Mono, monospace", fontSize: 12, overflowX: "auto", whiteSpace: "pre-wrap" }}>
+          <pre>
             {compiledSql || "Run Validate or Preview to see the compiled query."}
           </pre>
         )}
 
-        <div style={{ display: "flex", gap: 10, alignItems: "center", marginTop: 12, flexWrap: "wrap" }}>
-          {validated && !error && <span style={{ color: "#2CE6A2", fontFamily: "JetBrains Mono, monospace", fontSize: 13 }}>Validated</span>}
-          {error && <span style={{ color: "#FF4D6D", fontFamily: "JetBrains Mono, monospace", fontSize: 13 }}>{error}</span>}
-          {published && <span style={{ color: "#2CE6A2", fontFamily: "JetBrains Mono, monospace", fontSize: 13 }}>Published</span>}
+        <div>
+          {validated && !error && <span>Validated</span>}
+          {error && <span>{error}</span>}
+          {published && <span>Published</span>}
         </div>
 
         {result && !error && (
-          <div style={{ marginTop: 14 }}>
-            <div style={{ display: "flex", gap: 16, flexWrap: "wrap", marginBottom: 10 }}>
+          <div>
+            <div>
               <Metric label="Rows (preview)" value={String(rows.length)} />
               <Metric label="Columns" value={String(cols.length)} />
               <Metric label="Est. cost" value={perf.label} tone={perf.tone} sub={perf.detail} />
             </div>
             {result.warnings && result.warnings.length > 0 && (
-              <div style={{ color: "#FFD166", fontSize: 12, marginBottom: 8 }}>
+              <div>
                 {result.warnings.map((w, i) => <div key={i}>{w}</div>)}
               </div>
             )}
             {cols.length > 0 && (
-              <div style={{ overflowX: "auto", border: "1px solid rgba(122,176,224,0.18)", borderRadius: 10 }}>
-                <table style={{ borderCollapse: "collapse", width: "100%", fontSize: 12 }}>
+              <div>
+                <StandardP2Table>
                   <thead><tr>{cols.map((c) => (
-                    <th key={c} style={{ textAlign: "left", padding: "6px 10px", color: "#A0BDD8", borderBottom: "1px solid rgba(122,176,224,0.35)", whiteSpace: "nowrap", fontFamily: "JetBrains Mono, monospace" }}>{c}</th>
+                    <th key={c}>{c}</th>
                   ))}</tr></thead>
                   <tbody>{rows.slice(0, 20).map((r, i) => (
                     <tr key={i}>{cols.map((c) => (
-                      <td key={c} style={{ padding: "6px 10px", color: "#EAF6FF", borderBottom: "1px solid rgba(122,176,224,0.18)", whiteSpace: "nowrap" }}>
+                      <td key={c}>
                         {r[c] === null || r[c] === undefined ? "" : String(r[c])}
                       </td>
                     ))}</tr>
                   ))}</tbody>
-                </table>
+                </StandardP2Table>
               </div>
             )}
           </div>
@@ -149,10 +144,10 @@ export function WidgetScriptBuilderPanel({ onPublish }: { onPublish?: (widget: R
 
 function Metric({ label, value, tone, sub }: { label: string; value: string; tone?: string; sub?: string }) {
   return (
-    <div style={{ minWidth: 120 }}>
-      <div style={{ color: "#A0BDD8", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em" }}>{label}</div>
-      <div style={{ color: tone ?? "#EAF6FF", fontSize: 18, fontWeight: 700, fontFamily: "JetBrains Mono, monospace" }}>{value}</div>
-      {sub && <div style={{ color: "#A0BDD8", fontSize: 11 }}>{sub}</div>}
+    <div>
+      <div>{label}</div>
+      <div>{value}</div>
+      {sub && <div>{sub}</div>}
     </div>
   );
 }

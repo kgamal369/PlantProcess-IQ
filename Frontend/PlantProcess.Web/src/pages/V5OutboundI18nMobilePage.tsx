@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { StandardButton } from "@/components/standard";
 import { V5I18nProvider, useV5I18n, v5Locales, type V5LocaleCode } from "@/i18n/v5I18n";
 
+import { P2T08_STANDARD_ROLLOUT_MARKER, StandardP2Select } from "@/components/standard/StandardP2Controls";
 type Health = {
   status: string;
   component: string;
@@ -126,88 +127,52 @@ function V5OutboundI18nMobileInner() {
   return (
     <main
       dir={locale.direction}
-      style={{
-        minHeight: "100vh",
-        padding: "clamp(16px, 4vw, 32px)",
-        color: "#eaf7ff",
-        background: "var(--ppiq-color-bg-deep)",
-      }}
     >
       <section
-        style={{
-          border: "1px solid rgba(0, 212, 255, 0.22)",
-          borderRadius: 24,
-          padding: "clamp(18px, 4vw, 28px)",
-          background: "rgba(11, 23, 48, 0.82)",
-          display: "grid",
-          gap: 18,
-          maxWidth: 1040,
-          margin: "0 auto",
-        }}
       >
-        <p style={{ color: "var(--ppiq-color-accent-cyan)", textTransform: "uppercase", letterSpacing: "0.08em", fontSize: 12 }}>
+        <p>
           Doctrine v5 · Phase 11 / Phase 12
         </p>
 
-        <div style={{ display: "grid", gap: 8 }}>
-          <label htmlFor="v5-locale-select" style={{ fontWeight: 700 }}>
+        <div>
+          <label htmlFor="v5-locale-select">
             {t("v5.p11p12.language")}
           </label>
-          <select
+          <StandardP2Select
             id="v5-locale-select"
             value={locale.code}
             onChange={(event) => setLocaleCode(event.target.value as V5LocaleCode)}
-            style={{
-              width: "min(100%, 280px)",
-              minHeight: 44,
-              borderRadius: 12,
-              padding: "0 12px",
-              background: "#091a33",
-              color: "#eaf7ff",
-              border: "1px solid rgba(0, 212, 255, 0.28)",
-            }}
           >
             {v5Locales.map((item) => (
               <option key={item.code} value={item.code}>
                 {item.label}
               </option>
             ))}
-          </select>
+          </StandardP2Select>
         </div>
 
-        <h1 style={{ margin: 0 }}>{t("v5.p11p12.title")}</h1>
-        <p style={{ margin: 0, lineHeight: 1.7 }}>{t("v5.p11p12.description")}</p>
+        <h1>{t("v5.p11p12.title")}</h1>
+        <p>{t("v5.p11p12.description")}</p>
 
         <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-            gap: 12,
-          }}
         >
-          <article style={{ border: "1px solid rgba(255,255,255,0.12)", borderRadius: 18, padding: 16 }}>
+          <article>
             <strong>Outbound</strong>
             <div>{outboundHealth?.status ?? "pending"}</div>
           </article>
 
-          <article style={{ border: "1px solid rgba(255,255,255,0.12)", borderRadius: 18, padding: 16 }}>
+          <article>
             <strong>Backend leads</strong>
             <div>{leadCount}</div>
           </article>
 
-          <article style={{ border: "1px solid rgba(255,255,255,0.12)", borderRadius: 18, padding: 16 }}>
+          <article>
             <strong>{t("v5.p11p12.mobileProof")}</strong>
             <div>44px+ touch targets · responsive cards · RTL mirror</div>
           </article>
         </div>
 
         <div
-          style={{
-            display: "flex",
-            gap: 12,
-            flexWrap: "wrap",
-            alignItems: "center",
-          }}
         >
           <StandardButton type="button" onClick={captureDemoLead}>
             {t("v5.p11p12.leadCta")}

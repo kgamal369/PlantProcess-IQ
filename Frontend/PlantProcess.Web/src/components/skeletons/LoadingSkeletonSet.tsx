@@ -1,9 +1,10 @@
+import { P2T08_STANDARD_ROLLOUT_MARKER } from "@/components/standard/StandardP2Controls";
 export function SkeletonLine({
   width = "100%",
 }: {
   width?: string;
 }) {
-  return <span className="ppiq-skeleton-line" style={{ width }} />;
+  return <span className="ppiq-skeleton-line" />;
 }
 
 export function SkeletonCard() {
@@ -59,9 +60,6 @@ export function SkeletonChart() {
         {Array.from({ length: 9 }).map((_, index) => (
           <span
             key={index}
-            style={{
-              height: `${32 + ((index * 17) % 58)}%`,
-            }}
           />
         ))}
       </div>

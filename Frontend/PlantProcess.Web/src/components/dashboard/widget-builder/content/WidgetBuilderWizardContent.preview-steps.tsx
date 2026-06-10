@@ -11,6 +11,7 @@ import { StandardButton } from "@/components/standard";
 import type { WidgetBuilderState } from "./WidgetBuilderWizardContent.types";
 import { selectFieldForDimension } from "./WidgetBuilderWizardContent.helpers";
 
+import { StandardP2Table } from "@/components/standard/StandardP2Controls";
 export function WizardSection({
   icon,
   title,
@@ -244,7 +245,7 @@ export function PreviewTable({ rows }: { rows: ChartRow[] }) {
 
   return (
     <div className="table-shell">
-      <table>
+      <StandardP2Table>
         <thead>
           <tr>
             {columns.map((column) => (
@@ -261,7 +262,7 @@ export function PreviewTable({ rows }: { rows: ChartRow[] }) {
             </tr>
           ))}
         </tbody>
-      </table>
+      </StandardP2Table>
     </div>
   );
 }

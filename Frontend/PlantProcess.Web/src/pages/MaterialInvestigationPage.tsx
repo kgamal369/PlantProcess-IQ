@@ -2,9 +2,10 @@ import { MaterialAnalyticsMaterialInvestigationPage } from "./MaterialAnalytics/
 import { GenealogyThreadPanel } from "@/components/materials/GenealogyThreadPanel";
 import { WidgetScriptBuilderPanel } from "@/components/dashboard/widget-builder/WidgetScriptBuilderPanel";
 
+import { P2T08_STANDARD_ROLLOUT_MARKER } from "@/components/standard/StandardP2Controls";
 export function MaterialInvestigationPage() {
   return (
-    <div style={{ display: "grid", gap: 24 }}>
+    <div>
       <GenealogyThreadPanel />
       <WidgetScriptBuilderPanel />
       <MaterialAnalyticsMaterialInvestigationPage />

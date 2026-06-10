@@ -1,14 +1,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 import {
-  formatEuroRange,
-  phase8AssistantApi,
-  type Phase8SuggestionRecommendation,
-  type Phase8SuggestionRequest,
-  type Phase8SuggestionResponse,
-} from "@/api/phase8Assistant";
+  formatEuroRange, phase8AssistantApi, type Phase8SuggestionRecommendation, type Phase8SuggestionRequest, type Phase8SuggestionResponse, } from "@/api/phase8Assistant";
 import "./phase8-ai.css";
 
+import { P2T08_STANDARD_ROLLOUT_MARKER, StandardP2Input } from "@/components/standard/StandardP2Controls";
+import { StandardButton } from "@/components/standard";
 const defaultRequest: Phase8SuggestionRequest = {
   scope: "demo",
   outcomeKey: "defect.edge_crack_rate",
@@ -110,23 +107,23 @@ export function SuggestionRecommendationPage() {
           <h2>Generate guarded recommendation</h2>
           <label>
             Outcome key
-            <input className="phase8-input" value={request.outcomeKey} onChange={(event) => setRequest({ ...request, outcomeKey: event.target.value })} />
+            <StandardP2Input className="phase8-input" value={request.outcomeKey} onChange={(event) => setRequest({ ...request, outcomeKey: event.target.value })} />
           </label>
           <label>
             Material scope
-            <input className="phase8-input" value={request.materialScope} onChange={(event) => setRequest({ ...request, materialScope: event.target.value })} />
+            <StandardP2Input className="phase8-input" value={request.materialScope} onChange={(event) => setRequest({ ...request, materialScope: event.target.value })} />
           </label>
           <label>
             Minimum confidence
-            <input className="phase8-input" type="number" min="0.1" max="0.98" step="0.01" value={request.minimumConfidence} onChange={(event) => setRequest({ ...request, minimumConfidence: Number(event.target.value) })} />
+            <StandardP2Input className="phase8-input" type="number" min="0.1" max="0.98" step="0.01" value={request.minimumConfidence} onChange={(event) => setRequest({ ...request, minimumConfidence: Number(event.target.value) })} />
           </label>
-          <label style={{ display: "flex", gap: 10, alignItems: "center", marginTop: 12 }}>
-            <input type="checkbox" checked={request.includeValueProjection} onChange={(event) => setRequest({ ...request, includeValueProjection: event.target.checked })} />
+          <label>
+            <StandardP2Input type="checkbox" checked={request.includeValueProjection} onChange={(event) => setRequest({ ...request, includeValueProjection: event.target.checked })} />
             Include projected euro value range
           </label>
-          <button className="phase8-button" type="button" disabled={busy} onClick={() => void generate()}>
+          <StandardButton className="phase8-button" type="button" isDisabled={busy} onClick={() => void generate()}>
             {busy ? "Working..." : "Generate recommendation"}
-          </button>
+          </StandardButton>
         </div>
 
         <div className="phase8-card">
@@ -164,9 +161,9 @@ export function SuggestionRecommendationPage() {
                   {item.guardrails.map((rule) => <li key={rule}>{rule}</li>)}
                 </ul>
 
-                <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                  <button className="phase8-button" type="button" disabled={busy} onClick={() => void decide(item, "approve")}>Approve for review</button>
-                  <button className="phase8-button" type="button" disabled={busy} onClick={() => void decide(item, "dismiss")}>Dismiss</button>
+                <div>
+                  <StandardButton className="phase8-button" type="button" isDisabled={busy} onClick={() => void decide(item, "approve")}>Approve for review</StandardButton>
+                  <StandardButton className="phase8-button" type="button" isDisabled={busy} onClick={() => void decide(item, "dismiss")}>Dismiss</StandardButton>
                 </div>
               </article>
             ))}

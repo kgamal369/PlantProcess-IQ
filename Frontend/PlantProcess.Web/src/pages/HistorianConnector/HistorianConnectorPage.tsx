@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import { P2T08_STANDARD_ROLLOUT_MARKER, StandardP2Input, StandardP2Table } from "@/components/standard/StandardP2Controls";
+import { StandardButton } from "@/components/standard";
 import {
   historianConnectorApi,
   type HistorianConnectionTestResult,
@@ -175,113 +177,113 @@ export function HistorianConnectorPage() {
   }
 
   return (
-    <main style={pageStyle} data-testid="historian-connector-page">
-      <section style={{ ...cardStyle, borderColor: "rgba(19, 216, 255, 0.28)" }}>
-        <p style={{ color: "#13d8ff", textTransform: "uppercase", letterSpacing: "0.08em", fontSize: 12, margin: 0 }}>
+    <main data-testid="historian-connector-page">
+      <section>
+        <p>
           Pack E · T-063 · Historian connector UI
         </p>
-        <h1 style={{ margin: "8px 0 8px", fontSize: 34 }}>Historian Connector</h1>
-        <p style={{ margin: 0, color: "#9ab8d7", maxWidth: 980, lineHeight: 1.65 }}>
+        <h1>Historian Connector</h1>
+        <p>
           Register a read-only OPC-UA / historian gateway source, test the configuration, browse tag metadata, read a bounded sample window, and hand selected tags into canonical mapping. This page is honest: live vendor handshake remains customer-environment specific.
         </p>
-        <strong style={{ display: "block", marginTop: 16, color: testResult?.isSuccess ? "#64ffda" : "#eaf7ff" }}>{status}</strong>
+        <strong>{status}</strong>
       </section>
 
-      <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12 }}>
+      <section>
         {statusCards.map((card) => (
-          <div key={card.label} style={cardStyle}>
-            <span style={{ color: "#7e9bb8", fontSize: 12, textTransform: "uppercase" }}>{card.label}</span>
-            <strong style={{ display: "block", marginTop: 6, fontSize: 18 }}>{card.value}</strong>
+          <div key={card.label}>
+            <span>{card.label}</span>
+            <strong>{card.value}</strong>
           </div>
         ))}
       </section>
 
-      <section style={{ ...cardStyle, display: "grid", gap: 14 }}>
-        <h2 style={{ margin: 0 }}>1. Register configuration</h2>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 12 }}>
+      <section>
+        <h2>1. Register configuration</h2>
+        <div>
           <label>
-            <span style={{ display: "block", marginBottom: 6, color: "#9ab8d7" }}>Endpoint URL</span>
-            <input value={endpointUrl} onChange={(event) => setEndpointUrl(event.target.value)} style={inputStyle} />
+            <span>Endpoint URL</span>
+            <StandardP2Input value={endpointUrl} onChange={(event) => setEndpointUrl(event.target.value)} />
           </label>
           <label>
-            <span style={{ display: "block", marginBottom: 6, color: "#9ab8d7" }}>Namespace URI</span>
-            <input value={namespaceUri} onChange={(event) => setNamespaceUri(event.target.value)} style={inputStyle} />
+            <span>Namespace URI</span>
+            <StandardP2Input value={namespaceUri} onChange={(event) => setNamespaceUri(event.target.value)} />
           </label>
           <label>
-            <span style={{ display: "block", marginBottom: 6, color: "#9ab8d7" }}>Browse prefix</span>
-            <input value={pathPrefix} onChange={(event) => setPathPrefix(event.target.value)} style={inputStyle} />
+            <span>Browse prefix</span>
+            <StandardP2Input value={pathPrefix} onChange={(event) => setPathPrefix(event.target.value)} />
           </label>
         </div>
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <button type="button" disabled={busy} onClick={testConnection} style={buttonStyle}>Test connection</button>
-          <button type="button" disabled={busy} onClick={browseTags} style={buttonStyle}>Browse tags</button>
-          <button type="button" disabled={busy} onClick={readWindow} style={buttonStyle}>Read sample window</button>
-          <button type="button" disabled={busy} onClick={createMappingHints} style={buttonStyle}>Create mapping hints</button>
+        <div>
+          <StandardButton type="button" isDisabled={busy} onClick={testConnection}>Test connection</StandardButton>
+          <StandardButton type="button" isDisabled={busy} onClick={browseTags}>Browse tags</StandardButton>
+          <StandardButton type="button" isDisabled={busy} onClick={readWindow}>Read sample window</StandardButton>
+          <StandardButton type="button" isDisabled={busy} onClick={createMappingHints}>Create mapping hints</StandardButton>
         </div>
         {provider ? (
-          <p style={{ color: "#9ab8d7", margin: 0 }}>
+          <p>
             Provider scope: <strong>{provider.displayName}</strong> · {provider.description}
           </p>
         ) : null}
       </section>
 
-      <section style={{ display: "grid", gridTemplateColumns: "minmax(260px, 0.9fr) minmax(320px, 1.1fr)", gap: 14 }}>
-        <div style={cardStyle}>
-          <h2 style={{ marginTop: 0 }}>2. Tag browser</h2>
-          <div style={{ display: "grid", gap: 8 }}>
+      <section>
+        <div>
+          <h2>2. Tag browser</h2>
+          <div>
             {(tags.length ? tags : seedTags.map((tagPath) => ({ tagPath, displayName: tagPath.split('.').at(-1) ?? tagPath, unit: "engineering-unit", dataType: "Double", suggestedCanonicalGroup: "process-measurement", isTimestampCandidate: false, isQualityCandidate: tagPath.includes("quality"), isProcessMeasurementCandidate: true }))).map((tag) => (
-              <label key={tag.tagPath} style={{ display: "grid", gridTemplateColumns: "24px 1fr", gap: 8, alignItems: "start", padding: 10, border: "1px solid rgba(120, 190, 255, 0.14)", borderRadius: 14, background: "rgba(2, 7, 18, 0.42)" }}>
-                <input type="checkbox" checked={selectedTags.includes(tag.tagPath)} onChange={() => setSelectedTags((current) => toggle(current, tag.tagPath))} />
+              <label key={tag.tagPath}>
+                <StandardP2Input type="checkbox" checked={selectedTags.includes(tag.tagPath)} onChange={() => setSelectedTags((current) => toggle(current, tag.tagPath))} />
                 <span>
-                  <strong style={{ display: "block" }}>{tag.tagPath}</strong>
-                  <small style={{ color: "#9ab8d7" }}>{tag.suggestedCanonicalGroup} · {tag.dataType} · {tag.unit}</small>
+                  <strong>{tag.tagPath}</strong>
+                  <small>{tag.suggestedCanonicalGroup} · {tag.dataType} · {tag.unit}</small>
                 </span>
               </label>
             ))}
           </div>
         </div>
 
-        <div style={cardStyle}>
-          <h2 style={{ marginTop: 0 }}>3. Bounded read sample</h2>
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+        <div>
+          <h2>3. Bounded read sample</h2>
+          <div>
+            <StandardP2Table>
               <thead>
-                <tr style={{ color: "#9ab8d7", textAlign: "left" }}>
-                  <th style={{ padding: 8 }}>Tag</th>
-                  <th style={{ padding: 8 }}>Time</th>
-                  <th style={{ padding: 8 }}>Value</th>
-                  <th style={{ padding: 8 }}>Quality</th>
+                <tr>
+                  <th>Tag</th>
+                  <th>Time</th>
+                  <th>Value</th>
+                  <th>Quality</th>
                 </tr>
               </thead>
               <tbody>
                 {points.slice(0, 16).map((point, index) => (
-                  <tr key={`${point.tagPath}-${point.timestampUtc}-${index}`} style={{ borderTop: "1px solid rgba(120, 190, 255, 0.12)" }}>
-                    <td style={{ padding: 8 }}>{point.tagPath}</td>
-                    <td style={{ padding: 8 }}>{shortTime(point.timestampUtc)}</td>
-                    <td style={{ padding: 8 }}>{point.value} {point.unit}</td>
-                    <td style={{ padding: 8 }}>{point.quality}</td>
+                  <tr key={`${point.tagPath}-${point.timestampUtc}-${index}`}>
+                    <td>{point.tagPath}</td>
+                    <td>{shortTime(point.timestampUtc)}</td>
+                    <td>{point.value} {point.unit}</td>
+                    <td>{point.quality}</td>
                   </tr>
                 ))}
               </tbody>
-            </table>
-            {!points.length ? <p style={{ color: "#9ab8d7" }}>Run “Read sample window” after selecting tags.</p> : null}
+            </StandardP2Table>
+            {!points.length ? <p>Run “Read sample window” after selecting tags.</p> : null}
           </div>
         </div>
       </section>
 
-      <section style={cardStyle}>
-        <h2 style={{ marginTop: 0 }}>4. Mapping handoff</h2>
-        <p style={{ color: "#9ab8d7" }}>Selected historian tags become mapping candidates for generic canonical groups. This keeps PlantProcess IQ generic and avoids hardcoded plant/vendor assumptions.</p>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 10 }}>
+      <section>
+        <h2>4. Mapping handoff</h2>
+        <p>Selected historian tags become mapping candidates for generic canonical groups. This keeps PlantProcess IQ generic and avoids hardcoded plant/vendor assumptions.</p>
+        <div>
           {hints.map((hint) => (
-            <div key={hint.tagPath} style={{ padding: 12, borderRadius: 16, border: "1px solid rgba(0, 212, 255, 0.16)", background: "rgba(2, 7, 18, 0.55)" }}>
+            <div key={hint.tagPath}>
               <strong>{hint.suggestedFieldName}</strong>
-              <p style={{ margin: "6px 0", color: "#9ab8d7" }}>{hint.tagPath}</p>
+              <p>{hint.tagPath}</p>
               <small>{hint.suggestedCanonicalGroup} · {hint.sourceDataType}</small>
             </div>
           ))}
         </div>
-        {!hints.length ? <p style={{ color: "#9ab8d7" }}>Run “Create mapping hints” to generate canonical mapping candidates.</p> : null}
+        {!hints.length ? <p>Run “Create mapping hints” to generate canonical mapping candidates.</p> : null}
       </section>
     </main>
   );

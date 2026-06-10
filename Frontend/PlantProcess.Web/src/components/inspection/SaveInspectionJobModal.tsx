@@ -3,6 +3,7 @@ import { Save } from "lucide-react";
 import { StandardButton, StandardInput, StandardModal, StandardSelect, StandardTextArea } from "@/components/standard";
 import { demoAnalyticsApi, type SavedInvestigationRequest, type SavedInvestigationResponse } from "@/api/demo-analytics/demoAnalytics.api";
 
+import { StandardP2Input } from "@/components/standard/StandardP2Controls";
 type Props = {
   isOpen: boolean;
   onClose: () => void;
@@ -87,7 +88,7 @@ export function SaveInspectionJobModal({
         ]}
       />
       <label className="demo-analytics-checkbox">
-        <input type="checkbox" checked={notifyOnChange} onChange={(event) => setNotifyOnChange(event.target.checked)} />
+        <StandardP2Input type="checkbox" checked={notifyOnChange} onChange={(event) => setNotifyOnChange(event.target.checked)} />
         <span>Notify on change</span>
       </label>
     </StandardModal>

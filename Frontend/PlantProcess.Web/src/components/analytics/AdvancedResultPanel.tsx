@@ -2,6 +2,7 @@
 import type { ReactNode } from "react";
 import { StandardButton } from "@/components/standard";
 
+import { P2T08_STANDARD_ROLLOUT_MARKER } from "@/components/standard/StandardP2Controls";
 export type ProvenanceHandleRef = { kind: string; id: string };
 
 export type AdvancedResult = {
@@ -37,8 +38,8 @@ export function isRenderable(r: AdvancedResult): boolean {
 }
 
 const row = (label: string, value: ReactNode) => (
-  <div style={{ display: "flex", justifyContent: "space-between", gap: 12, padding: "3px 0", fontSize: 13 }}>
-    <span style={{ color: "#6b7280" }}>{label}</span><span style={{ fontWeight: 600 }}>{value}</span>
+  <div>
+    <span>{label}</span><span>{value}</span>
   </div>
 );
 const fmt = (v: number | null | undefined, d = 3) => (typeof v === "number" && Number.isFinite(v) ? v.toFixed(d) : "-");
@@ -55,14 +56,14 @@ export function AdvancedResultPanel({
 
   if (!isRenderable(result)) {
     return (
-      <section data-testid="advanced-result-blocked" style={{ border: "1px dashed #c0563b", borderRadius: 10, padding: 14, background: "#fdf3f0" }}>
-        <strong style={{ color: "#c0563b" }}>{blocked ? "Result blocked" : "Result cannot be displayed"}</strong>
-        <p style={{ margin: "6px 0 0", fontSize: 13, color: "#6b7280" }}>
+      <section data-testid="advanced-result-blocked">
+        <strong>{blocked ? "Result blocked" : "Result cannot be displayed"}</strong>
+        <p>
           An advanced result missing a valid method, a positive sample size, the honesty caveat, or with a Blocked
           readiness state is withheld by design.
         </p>
         {blocked && result.blockedReasons && result.blockedReasons.length > 0 ? (
-          <ul style={{ margin: "8px 0 0", paddingLeft: 18, fontSize: 12, color: "#c0563b" }}>
+          <ul>
             {result.blockedReasons.map((reason, i) => <li key={i}>{reason}</li>)}
           </ul>
         ) : null}
@@ -71,12 +72,12 @@ export function AdvancedResultPanel({
   }
 
   return (
-    <section data-testid="advanced-result" style={{ border: "1px solid #d8dee9", borderRadius: 10, padding: 14, background: "#fff" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-        <strong style={{ fontSize: 14 }}>{result.findingId ?? "Finding"}</strong>
-        <span style={{ fontSize: 12, color: "#3b6fb5", fontWeight: 700 }}>{result.method}</span>
+    <section data-testid="advanced-result">
+      <div>
+        <strong>{result.findingId ?? "Finding"}</strong>
+        <span>{result.method}</span>
       </div>
-      <div style={{ marginTop: 8 }}>
+      <div>
         {row("Effect size", fmt(result.effectSize))}
         {row("q-value (FDR)", fmt(result.qValue))}
         {row("Sample size", String(result.sampleSize))}
@@ -87,7 +88,7 @@ export function AdvancedResultPanel({
         {result.readiness ? row("Readiness", result.readiness) : null}
       </div>
       {result.dataQualityWarnings && result.dataQualityWarnings.length > 0 ? (
-        <ul style={{ margin: "8px 0 0", paddingLeft: 18, fontSize: 12, color: "#b9770e" }}>
+        <ul>
           {result.dataQualityWarnings.map((w, i) => <li key={i}>{w}</li>)}
         </ul>
       ) : null}
@@ -96,12 +97,11 @@ export function AdvancedResultPanel({
           type="button"
           data-testid="advanced-result-evidence"
           onClick={() => onOpenEvidence?.(result.evidenceHandle as ProvenanceHandleRef)}
-          style={{ marginTop: 10, fontSize: 12, color: "#3b6fb5", background: "none", border: "none", padding: 0, cursor: "pointer", textDecoration: "underline" }}
         >
           View evidence ({result.evidenceHandle.kind})
         </StandardButton>
       ) : null}
-      <p style={{ margin: "10px 0 0", fontSize: 12, fontStyle: "italic", color: "#6b7280" }}>{caveat}</p>
+      <p>{caveat}</p>
     </section>
   );
 }

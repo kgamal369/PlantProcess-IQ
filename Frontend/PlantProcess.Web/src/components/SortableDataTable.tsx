@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useRef, useState, type ReactNode } from "react";
 import type { SortDirection } from "../api/productApiClient";
 
+import { P2T08_STANDARD_ROLLOUT_MARKER, StandardP2Table } from "@/components/standard/StandardP2Controls";
 export interface SortableColumn<T> {
   key: string;
   title: string;
@@ -95,19 +96,14 @@ export function SortableDataTable<T>({
       <div
         ref={bodyRef}
         className={shouldVirtualize ? "virtual-table-scroll" : undefined}
-        style={shouldVirtualize ? { maxHeight: maxBodyHeight, overflow: "auto" } : undefined}
         onScroll={shouldVirtualize ? handleScroll : undefined}
       >
-        <table>
+        <StandardP2Table>
           <thead>
             <tr>
               {columns.map((column) => (
                 <th
                   key={column.key}
-                  style={{
-                    textAlign: column.align ?? "left",
-                    width: column.width,
-                  }}
                   className={column.sortable ? "sortable-header" : undefined}
                   onClick={() => handleSort(column)}
                   aria-sort={
@@ -140,11 +136,6 @@ export function SortableDataTable<T>({
                   <tr aria-hidden="true">
                     <td
                       colSpan={columns.length}
-                      style={{
-                        height: virtualState.beforeHeight,
-                        padding: 0,
-                        border: 0,
-                      }}
                     />
                   </tr>
                 ) : null}
@@ -157,14 +148,10 @@ export function SortableDataTable<T>({
                   const key = getRowKey ? getRowKey(row, index) : index;
 
                   return (
-                    <tr key={key} style={shouldVirtualize ? { height: rowHeight } : undefined}>
+                    <tr key={key}>
                       {columns.map((column) => (
                         <td
                           key={column.key}
-                          style={{
-                            textAlign: column.align ?? "left",
-                            width: column.width,
-                          }}
                         >
                           {column.render(row, index)}
                         </td>
@@ -177,18 +164,13 @@ export function SortableDataTable<T>({
                   <tr aria-hidden="true">
                     <td
                       colSpan={columns.length}
-                      style={{
-                        height: virtualState.afterHeight,
-                        padding: 0,
-                        border: 0,
-                      }}
                     />
                   </tr>
                 ) : null}
               </>
             )}
           </tbody>
-        </table>
+        </StandardP2Table>
       </div>
     </div>
   );

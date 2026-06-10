@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { phase8AssistantApi, type Phase8AssistantConfiguration } from "@/api/phase8Assistant";
 import "./phase8-ai.css";
 
+import { P2T08_STANDARD_ROLLOUT_MARKER, StandardP2Input, StandardP2Select } from "@/components/standard/StandardP2Controls";
+import { StandardButton } from "@/components/standard";
 const defaultConfig: Phase8AssistantConfiguration = {
   mode: "grounded-extractive",
   groundingPolicy: "strict-citations-required",
@@ -103,60 +105,60 @@ export function AssistantConfigurationPage() {
 
           <label>
             Mode
-            <select className="phase8-select" value={config.mode} onChange={(event) => setConfig({ ...config, mode: event.target.value })}>
+            <StandardP2Select className="phase8-select" value={config.mode} onChange={(event) => setConfig({ ...config, mode: event.target.value })}>
               <option value="grounded-extractive">grounded-extractive</option>
               <option value="private-model">private-model</option>
               <option value="self-hosted">self-hosted</option>
-            </select>
+            </StandardP2Select>
           </label>
 
           <label>
             Grounding policy
-            <select className="phase8-select" value={config.groundingPolicy} onChange={(event) => setConfig({ ...config, groundingPolicy: event.target.value })}>
+            <StandardP2Select className="phase8-select" value={config.groundingPolicy} onChange={(event) => setConfig({ ...config, groundingPolicy: event.target.value })}>
               <option value="strict-citations-required">strict-citations-required</option>
               <option value="abstain-on-missing-evidence">abstain-on-missing-evidence</option>
               <option value="demo-extractive-only">demo-extractive-only</option>
-            </select>
+            </StandardP2Select>
           </label>
 
           <label>
             Evidence policy
-            <select className="phase8-select" value={config.evidencePolicy} onChange={(event) => setConfig({ ...config, evidencePolicy: event.target.value })}>
+            <StandardP2Select className="phase8-select" value={config.evidencePolicy} onChange={(event) => setConfig({ ...config, evidencePolicy: event.target.value })}>
               <option value="citations-and-provenance-required">citations-and-provenance-required</option>
               <option value="citations-required">citations-required</option>
               <option value="provenance-required">provenance-required</option>
-            </select>
+            </StandardP2Select>
           </label>
 
           <label>
             Max citations
-            <input className="phase8-input" type="number" min="1" max="12" value={config.maxCitations} onChange={(event) => setConfig({ ...config, maxCitations: Number(event.target.value) })} />
+            <StandardP2Input className="phase8-input" type="number" min="1" max="12" value={config.maxCitations} onChange={(event) => setConfig({ ...config, maxCitations: Number(event.target.value) })} />
           </label>
         </div>
 
         <div className="phase8-card">
           <h2>Safety switches</h2>
 
-          <label style={{ display: "flex", gap: 10, alignItems: "center" }}>
-            <input type="checkbox" checked={config.noEgress} onChange={(event) => setConfig({ ...config, noEgress: event.target.checked })} />
+          <label>
+            <StandardP2Input type="checkbox" checked={config.noEgress} onChange={(event) => setConfig({ ...config, noEgress: event.target.checked })} />
             No egress
           </label>
 
-          <label style={{ display: "flex", gap: 10, alignItems: "center" }}>
-            <input type="checkbox" checked={config.requireHumanApprovalForRecommendations} onChange={(event) => setConfig({ ...config, requireHumanApprovalForRecommendations: event.target.checked })} />
+          <label>
+            <StandardP2Input type="checkbox" checked={config.requireHumanApprovalForRecommendations} onChange={(event) => setConfig({ ...config, requireHumanApprovalForRecommendations: event.target.checked })} />
             Require human approval for recommendations
           </label>
 
-          <label style={{ display: "flex", gap: 10, alignItems: "center" }}>
-            <input type="checkbox" checked={config.enableSuggestionWorkflow} onChange={(event) => setConfig({ ...config, enableSuggestionWorkflow: event.target.checked })} />
+          <label>
+            <StandardP2Input type="checkbox" checked={config.enableSuggestionWorkflow} onChange={(event) => setConfig({ ...config, enableSuggestionWorkflow: event.target.checked })} />
             Enable suggestion workflow
           </label>
 
           <h3>Allowed tools</h3>
-          <div style={{ display: "grid", gap: 8 }}>
+          <div>
             {toolOptions.map((tool) => (
-              <label key={tool} style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                <input type="checkbox" checked={config.allowedTools.includes(tool)} onChange={() => toggleTool(tool)} />
+              <label key={tool}>
+                <StandardP2Input type="checkbox" checked={config.allowedTools.includes(tool)} onChange={() => toggleTool(tool)} />
                 {tool}
               </label>
             ))}
@@ -169,9 +171,9 @@ export function AssistantConfigurationPage() {
         <p className="phase8-muted">
           The backend normalizes unsafe values and returns findings. This prevents the HMI from enabling unsupported tools or invalid policies.
         </p>
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <button className="phase8-button" type="button" disabled={busy} onClick={() => void save()}>Save configuration</button>
-          <button className="phase8-button" type="button" disabled={busy} onClick={() => void reset()}>Reset safe defaults</button>
+        <div>
+          <StandardButton className="phase8-button" type="button" isDisabled={busy} onClick={() => void save()}>Save configuration</StandardButton>
+          <StandardButton className="phase8-button" type="button" isDisabled={busy} onClick={() => void reset()}>Reset safe defaults</StandardButton>
         </div>
 
         {findings.length ? (

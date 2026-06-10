@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 
+import { P2T08_STANDARD_ROLLOUT_MARKER } from "@/components/standard/StandardP2Controls";
+import { StandardButton } from "@/components/standard";
 type Health = {
   status: string;
   component: string;
@@ -94,16 +96,10 @@ export function V5NoCodeMapperPage() {
   );
 
   return (
-    <main style={{ padding: "32px", color: "#eaf7ff", background: "var(--ppiq-color-bg-deep)", minHeight: "100vh" }}>
+    <main>
       <section
-        style={{
-          border: "1px solid rgba(0, 212, 255, 0.22)",
-          borderRadius: 24,
-          padding: 24,
-          background: "rgba(11, 23, 48, 0.82)",
-        }}
       >
-        <p style={{ color: "var(--ppiq-color-accent-cyan)", textTransform: "uppercase", letterSpacing: "0.08em", fontSize: 12 }}>
+        <p>
           Doctrine v5 · Phase 5 / Phase 6
         </p>
         <h1>No-Code Visual Mapper + Blended Provenance</h1>
@@ -113,7 +109,7 @@ export function V5NoCodeMapperPage() {
           inspect transition/blended genealogy weights.
         </p>
 
-        <div style={{ display: "grid", gap: 12, marginTop: 20 }}>
+        <div>
           <div>Visual mapper health: {mapperHealth?.status ?? "pending"}</div>
           <div>Blended provenance health: {provenanceHealth?.status ?? "pending"}</div>
           <div>Templates: {templateSummary || "pending"}</div>
@@ -121,21 +117,12 @@ export function V5NoCodeMapperPage() {
           <strong>{status}</strong>
         </div>
 
-        <button
+        <StandardButton
           type="button"
           onClick={runDemoDiscovery}
-          style={{
-            marginTop: 22,
-            border: "1px solid rgba(0, 212, 255, 0.35)",
-            borderRadius: 14,
-            padding: "12px 18px",
-            color: "#eaf7ff",
-            background: "rgba(0, 132, 255, 0.24)",
-            cursor: "pointer",
-          }}
         >
           Run read-only demo discovery
-        </button>
+        </StandardButton>
       </section>
     </main>
   );

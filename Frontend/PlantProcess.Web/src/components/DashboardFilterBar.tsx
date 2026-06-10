@@ -24,6 +24,7 @@ import { useDashboardFilters } from "../state/DashboardFilterContext";
 import "./DashboardFilterBar.css";
 import { StandardButton } from "@/components/standard";
 
+import { StandardP2Input, StandardP2Select } from "@/components/standard/StandardP2Controls";
 // ── FilterSelect ──────────────────────────────────────────────
 function FilterSelect({
   label,
@@ -46,13 +47,13 @@ function FilterSelect({
         <Icon size={12} />
       </span>
       <span className="piq-filter-select__label">{label}</span>
-      <select
+      <StandardP2Select
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="piq-filter-select__native"
       >
         {children}
-      </select>
+      </StandardP2Select>
       <ChevronDown size={11} className="piq-filter-select__caret" aria-hidden="true" />
     </label>
   );
@@ -82,7 +83,7 @@ function FilterInput({
         <Icon size={12} />
       </span>
       <span className="piq-filter-input__label">{label}</span>
-      <input
+      <StandardP2Input
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}

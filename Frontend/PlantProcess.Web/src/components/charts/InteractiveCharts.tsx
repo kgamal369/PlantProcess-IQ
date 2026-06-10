@@ -26,6 +26,7 @@ import {
 import { EmptyInsightState } from "../dashboard/EmptyInsightState";
 import { StandardButton } from "@/components/standard";
 
+import { P2T08_STANDARD_ROLLOUT_MARKER } from "@/components/standard/StandardP2Controls";
 export interface ChartRow {
   [key: string]: string | number | null | undefined;
 }
@@ -408,9 +409,6 @@ export function InteractiveHeatmap({
               <StandardButton
                 key={`${x}-${y}`}
                 className="heatmap__cell"
-                style={{
-                  opacity: intensity,
-                }}
                 onClick={() => selectCell(row)}
                 type="button"
                 title={`${x} / ${y}: ${value}`}

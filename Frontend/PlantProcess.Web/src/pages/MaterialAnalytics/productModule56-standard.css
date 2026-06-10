@@ -159,7 +159,7 @@
 .productModule56-matrix span {
   height: 2rem;
   border-radius: 0.45rem;
-  background: rgba(0, 212, 255, calc(0.08 + var(--i) * 0.018));
+  background: rgba(0, 212, 255, 0.18);
   border: 1px solid rgba(0, 212, 255, 0.14);
 }
 
@@ -208,3 +208,19 @@
     grid-template-columns: 1fr;
   }
 }
+
+.productModule56-matrix-cell--0 { opacity: 0.28; }
+.productModule56-matrix-cell--1 { opacity: 0.34; }
+.productModule56-matrix-cell--2 { opacity: 0.40; }
+.productModule56-matrix-cell--3 { opacity: 0.46; }
+.productModule56-matrix-cell--4 { opacity: 0.52; }
+.productModule56-matrix-cell--5 { opacity: 0.58; }
+.productModule56-matrix-cell--6 { opacity: 0.64; }
+.productModule56-matrix-cell--7 { opacity: 0.70; }
+.productModule56-matrix-cell--8 { opacity: 0.76; }
+.productModule56-matrix-cell--9 { opacity: 0.82; }
+.productModule56-matrix-cell--10 { opacity: 0.88; }
+.productModule56-matrix-cell--11 { opacity: 0.92; }
+.productModule56-matrix-cell--12 { opacity: 0.96; }
+.productModule56-matrix-cell--13 { opacity: 1; }
+.productModule56-matrix-cell--14 { opacity: 1; }

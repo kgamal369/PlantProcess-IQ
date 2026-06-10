@@ -7,6 +7,7 @@ import { apiClient } from "@/api/http";
 import { DataFetchBoundary } from "@/components/standard/DataFetchBoundary";
 import { useApiResource } from "@/hooks/useApiResource";
 
+import { P2T08_STANDARD_ROLLOUT_MARKER } from "@/components/standard/StandardP2Controls";
 const card: React.CSSProperties = {
   border: "1px solid var(--ppiq-border, #d8dee9)", borderRadius: 10,
   padding: "14px 16px", background: "var(--ppiq-surface, #fff)", minHeight: 300,
@@ -16,9 +17,9 @@ const sub: React.CSSProperties = { margin: "0 0 12px", fontSize: 12, color: "var
 
 function WidgetCard(props: { title: string; subtitle?: string; isLoading: boolean; error: unknown; isEmpty: boolean; onRetry: () => void; children: ReactNode }) {
   return (
-    <section style={card}>
-      <h3 style={head}>{props.title}</h3>
-      {props.subtitle ? <p style={sub}>{props.subtitle}</p> : null}
+    <section>
+      <h3>{props.title}</h3>
+      {props.subtitle ? <p>{props.subtitle}</p> : null}
       <DataFetchBoundary
         title={props.title}
         isLoading={props.isLoading}
@@ -27,7 +28,7 @@ function WidgetCard(props: { title: string; subtitle?: string; isLoading: boolea
         emptyMessage="No data yet. Refresh the read models or adjust the selection."
         onRetry={props.onRetry}
       >
-        <div style={{ width: "100%", height: 230 }}>{props.children}</div>
+        <div>{props.children}</div>
       </DataFetchBoundary>
     </section>
   );
@@ -138,10 +139,10 @@ export function KpiTargetVsActualWidget(props: { kpiCode: string }) {
   return (
     <WidgetCard title={`KPI target vs actual — ${props.kpiCode}`} subtitle="Per-tenant target with threshold severity" isLoading={state.isLoading} error={state.error} isEmpty={d == null} onRetry={() => setTick((t) => t + 1)}>
       {d ? (
-        <div style={{ display: "flex", flexDirection: "column", gap: 8, paddingTop: 8 }}>
-          <div style={{ fontSize: 30, fontWeight: 800 }}>{d.value ?? "-"}{d.unit ? <span style={{ fontSize: 14, fontWeight: 500, marginLeft: 4 }}>{d.unit}</span> : null}</div>
-          <div style={{ fontSize: 13 }}>Target: <strong>{d.target ?? "none set"}</strong>{d.warningAt != null ? `  ·  warn ${d.warningAt}` : ""}{d.criticalAt != null ? `  ·  crit ${d.criticalAt}` : ""}</div>
-          <div><span style={{ display: "inline-block", padding: "2px 10px", borderRadius: 999, color: "#fff", fontSize: 12, fontWeight: 700, background: sevColor(d.severity) }}>{d.severity}</span></div>
+        <div>
+          <div>{d.value ?? "-"}{d.unit ? <span>{d.unit}</span> : null}</div>
+          <div>Target: <strong>{d.target ?? "none set"}</strong>{d.warningAt != null ? `  ·  warn ${d.warningAt}` : ""}{d.criticalAt != null ? `  ·  crit ${d.criticalAt}` : ""}</div>
+          <div><span>{d.severity}</span></div>
         </div>
       ) : <div />}
     </WidgetCard>

@@ -6,7 +6,7 @@
 //    instead of just toggling a CSS class — works reliably.
 // 2. Separate Expand (Maximize2) and Fullscreen (Scan/Minimize2) icons
 //    so they are visually distinct and both function correctly.
-// 3. Chart-type selector styled as piq pill buttons instead of raw <select>.
+// 3. Chart-type selector styled as piq pill buttons instead of raw <StandardP2Select>.
 // 4. All icon-buttons aligned to the same visual style.
 // 5. Action menu closes on outside click.
 // ============================================================
@@ -39,6 +39,7 @@ import {
 import { useDashboardGridLayout } from "../../state/DashboardGridLayoutContext";
 import { StandardButton } from "@/components/standard";
 
+import { StandardP2Select } from "@/components/standard/StandardP2Controls";
 interface DashboardWidgetCardProps {
   widgetId: DashboardWidgetId;
   title: string;

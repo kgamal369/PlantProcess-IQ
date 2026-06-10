@@ -21,6 +21,7 @@
 import React from "react";
 import "./Skeleton.css";
 
+import { P2T08_STANDARD_ROLLOUT_MARKER } from "@/components/standard/StandardP2Controls";
 interface BaseProps {
   className?: string;
   style?: React.CSSProperties;
@@ -37,7 +38,6 @@ export function SkeletonLine({ width = "100%", height = 12, className, style }: 
   return (
     <div
       className={`ppiq-skeleton ppiq-skeleton--line ${className ?? ""}`}
-      style={{ width: w, height: h, ...style }}
       role="presentation"
       aria-hidden="true"
     />
@@ -48,7 +48,6 @@ export function SkeletonCircle({ size = 40, className, style }: BaseProps & { si
   return (
     <div
       className={`ppiq-skeleton ppiq-skeleton--circle ${className ?? ""}`}
-      style={{ width: size, height: size, ...style }}
       role="presentation"
       aria-hidden="true"
     />
@@ -57,7 +56,7 @@ export function SkeletonCircle({ size = 40, className, style }: BaseProps & { si
 
 export function SkeletonCard({ className, style }: BaseProps) {
   return (
-    <div className={`ppiq-skeleton-card ${className ?? ""}`} style={style} role="presentation" aria-hidden="true">
+    <div className={`ppiq-skeleton-card ${className ?? ""}`} role="presentation" aria-hidden="true">
       <SkeletonLine width="40%" height={16} />
       <SkeletonLine width="100%" height={120} className="ppiq-skeleton-card__body" />
       <SkeletonLine width="60%" />
@@ -67,7 +66,7 @@ export function SkeletonCard({ className, style }: BaseProps) {
 
 export function SkeletonKpi({ className, style }: BaseProps) {
   return (
-    <div className={`ppiq-skeleton-kpi ${className ?? ""}`} style={style} role="presentation" aria-hidden="true">
+    <div className={`ppiq-skeleton-kpi ${className ?? ""}`} role="presentation" aria-hidden="true">
       <SkeletonLine width="50%" height={12} />
       <SkeletonLine width="35%" height={36} className="ppiq-skeleton-kpi__value" />
       <SkeletonLine width="65%" height={10} />
@@ -90,7 +89,7 @@ export function SkeletonTable({
   style,
 }: TableProps) {
   return (
-    <div className={`ppiq-skeleton-table ${className ?? ""}`} style={style} role="presentation" aria-hidden="true">
+    <div className={`ppiq-skeleton-table ${className ?? ""}`} role="presentation" aria-hidden="true">
       {withHeader && (
         <div className="ppiq-skeleton-table__row ppiq-skeleton-table__row--header">
           {Array.from({ length: columns }).map((_, i) => (
@@ -123,7 +122,6 @@ export function SkeletonChart({ height = 240, className, style }: ChartProps) {
   return (
     <div
       className={`ppiq-skeleton-chart ${className ?? ""}`}
-      style={{ height, ...style }}
       role="presentation"
       aria-hidden="true"
     >
@@ -135,7 +133,6 @@ export function SkeletonChart({ height = 240, className, style }: ChartProps) {
             <span
               key={i}
               className="ppiq-skeleton ppiq-skeleton-chart__bar"
-              style={{ height: `${20 + ((i * 17) % 70)}%` }}
             />
           ))}
         </div>
@@ -151,7 +148,7 @@ interface WidgetGridProps extends BaseProps {
 
 export function SkeletonWidgetGrid({ widgetCount = 6, className, style }: WidgetGridProps) {
   return (
-    <div className={`ppiq-skeleton-widget-grid ${className ?? ""}`} style={style} role="presentation" aria-hidden="true">
+    <div className={`ppiq-skeleton-widget-grid ${className ?? ""}`} role="presentation" aria-hidden="true">
       {Array.from({ length: widgetCount }).map((_, i) => {
         // Mix of card and chart shapes so the layout looks realistic
         return i % 3 === 0 ? <SkeletonChart key={i} /> : <SkeletonCard key={i} />;

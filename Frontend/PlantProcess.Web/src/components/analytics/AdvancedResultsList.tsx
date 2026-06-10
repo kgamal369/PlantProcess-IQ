@@ -2,6 +2,7 @@ import { DataFetchBoundary } from "@/components/standard/DataFetchBoundary";
 import { useApiResource } from "@/hooks/useApiResource";
 import { AdvancedResultPanel, type AdvancedResult } from "./AdvancedResultPanel";
 
+import { P2T08_STANDARD_ROLLOUT_MARKER } from "@/components/standard/StandardP2Controls";
 type ResultsResponse = { runId: string | null; honestyCaveat: string; results: AdvancedResult[] };
 
 export function AdvancedResultsList(props: { outcomeKey?: string }) {
@@ -17,7 +18,7 @@ export function AdvancedResultsList(props: { outcomeKey?: string }) {
       emptyMessage="No managed correlation run yet. Run a correlation with the managed engine to populate findings."
       onRetry={r.reload}
     >
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 12 }}>
+      <div>
         {results.map((res, i) => <AdvancedResultPanel key={res.findingId ?? i} result={res} />)}
       </div>
     </DataFetchBoundary>

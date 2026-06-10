@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import useOptimisticSave from "@/hooks/useOptimisticSave";
 import { V5I18nProvider, useV5I18n, v5Locales, type V5LocaleCode } from "@/i18n/v5I18n";
 
+import { P2T08_STANDARD_ROLLOUT_MARKER, StandardP2Input, StandardP2Select } from "@/components/standard/StandardP2Controls";
+import { StandardButton } from "@/components/standard";
 type Band = { low: number; mid: number; high: number };
 
 type CostAssumptionDto = {
@@ -56,32 +58,17 @@ function BandEditor({
 }) {
   return (
     <fieldset
-      style={{
-        border: "1px solid rgba(0,212,255,0.22)",
-        borderRadius: 16,
-        padding: 14,
-        display: "grid",
-        gap: 10,
-      }}
     >
-      <legend style={{ paddingInline: 8, color: "var(--ppiq-color-accent-cyan)", fontWeight: 800 }}>{label}</legend>
+      <legend>{label}</legend>
       {(["low", "mid", "high"] as const).map((key) => (
-        <label key={key} style={{ display: "grid", gap: 4 }}>
+        <label key={key}>
           <span>{key.toUpperCase()}</span>
-          <input
+          <StandardP2Input
             type="number"
             value={value[key]}
             min={0}
             aria-label={`${label} ${key}`}
             onChange={(event) => onChange({ ...value, [key]: Number(event.target.value) })}
-            style={{
-              minHeight: 42,
-              borderRadius: 12,
-              border: "1px solid rgba(255,255,255,0.18)",
-              background: "#071426",
-              color: "#eaf7ff",
-              paddingInline: 12,
-            }}
           />
         </label>
       ))}
@@ -151,72 +138,46 @@ function CostAssumptionInner() {
   return (
     <main
       dir={locale.direction}
-      style={{
-        minHeight: "100vh",
-        padding: 24,
-        color: "#eaf7ff",
-        background: "linear-gradient(135deg,#06101f,#091a33 52%,#071426)",
-      }}
     >
       <section
         aria-labelledby="p3-cost-title"
-        style={{
-          maxWidth: 1100,
-          margin: "0 auto",
-          border: "1px solid rgba(0,212,255,0.22)",
-          borderRadius: 24,
-          padding: 24,
-          background: "rgba(7,20,38,0.86)",
-          boxShadow: "0 24px 80px rgba(0,0,0,0.35)",
-          display: "grid",
-          gap: 20,
-        }}
       >
-        <div style={{ display: "flex", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+        <div>
           <div>
-            <p style={{ color: "var(--ppiq-color-accent-cyan)", textTransform: "uppercase", letterSpacing: "0.08em", fontSize: 12 }}>
+            <p>
               P3 · Value & Evidence in HMI
             </p>
-            <h1 id="p3-cost-title" style={{ margin: 0 }}>
+            <h1 id="p3-cost-title">
               {t("v5.p3.cost.title")}
             </h1>
             <p>{t("v5.p3.cost.description")}</p>
             <p>Active version: {version ?? "not saved yet"}</p>
           </div>
 
-          <label style={{ display: "grid", gap: 6 }}>
+          <label>
             <span>{t("v5.p11p12.language")}</span>
-            <select
+            <StandardP2Select
               value={locale.code}
               onChange={(event) => setLocaleCode(event.target.value as V5LocaleCode)}
-              style={{ minHeight: 42, borderRadius: 12, paddingInline: 12 }}
             >
               {v5Locales.map((item) => (
                 <option key={item.code} value={item.code}>
                   {item.label}
                 </option>
               ))}
-            </select>
+            </StandardP2Select>
           </label>
         </div>
 
-        <label style={{ display: "grid", gap: 6, maxWidth: 220 }}>
+        <label>
           <span>Currency</span>
-          <input
+          <StandardP2Input
             value={form.currency}
             onChange={(event) => setForm({ ...form, currency: event.target.value })}
-            style={{
-              minHeight: 42,
-              borderRadius: 12,
-              paddingInline: 12,
-              background: "#071426",
-              color: "#eaf7ff",
-              border: "1px solid rgba(255,255,255,0.18)",
-            }}
           />
         </label>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(230px,1fr))", gap: 14 }}>
+        <div>
           <BandEditor
             label="Downgrade delta / ton"
             value={form.downgradeDeltaPerTon}
@@ -240,29 +201,19 @@ function CostAssumptionInner() {
         </div>
 
         {errors.length > 0 && (
-          <div role="alert" style={{ border: "1px solid #ff9f43", borderRadius: 14, padding: 12 }}>
+          <div role="alert">
             {errors.map((error) => (
               <div key={error}>{error}</div>
             ))}
           </div>
         )}
 
-        <button
-          type="button"
-          disabled={save.isSaving || errors.length > 0}
+        <StandardButton
+          type="button" isDisabled={save.isSaving || errors.length > 0}
           onClick={save.save}
-          style={{
-            minHeight: 44,
-            borderRadius: 14,
-            border: "1px solid rgba(0,212,255,0.35)",
-            color: "#eaf7ff",
-            background: errors.length > 0 ? "rgba(255,255,255,0.08)" : "rgba(0,132,255,0.28)",
-            cursor: errors.length > 0 ? "not-allowed" : "pointer",
-            fontWeight: 800,
-          }}
         >
           {save.isSaving ? "Saving..." : t("v5.p3.cost.save")}
-        </button>
+        </StandardButton>
 
         <strong>{status}</strong>
       </section>

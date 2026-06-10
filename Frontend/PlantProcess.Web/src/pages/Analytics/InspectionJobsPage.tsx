@@ -1,9 +1,10 @@
-﻿// P4-05 On-demand inspection job + generated analysis page.
+// P4-05 On-demand inspection job + generated analysis page.
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { StandardCard, DataFetchBoundary, StandardButton, ppiqTokens } from "../../components/standard";
 import { inspectionWorkflowApi, type InspectionJobRow } from "../../api/inspectionWorkflowApi";
 
+import { P2T08_STANDARD_ROLLOUT_MARKER, StandardP2Input } from "@/components/standard/StandardP2Controls";
 const c = ppiqTokens.color;
 
 export function InspectionJobsPage() {
@@ -47,32 +48,32 @@ export function InspectionJobsPage() {
   const label = { display: "block", color: c.textMuted, fontSize: 12, marginBottom: 4 } as const;
 
   return (
-    <div style={{ display: "grid", gap: ppiqTokens.spacing.lg, padding: ppiqTokens.spacing.lg }}>
+    <div>
       <StandardCard eyebrow="ML / Correlation workflow" title="New inspection job" subtitle="Pick a defect + period, name the job, then run or schedule. Running generates the \u00a77.4 analysis page." elevation="raised">
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: ppiqTokens.spacing.md }}>
-          <div><label style={label}>Job name</label><input style={field} value={name} onChange={(e) => setName(e.target.value)} /></div>
-          <div><label style={label}>Defect type</label><input style={field} value={defectType} onChange={(e) => setDefectType(e.target.value)} /></div>
-          <div><label style={label}>Parameter code (optional)</label><input style={field} value={parameterCode} onChange={(e) => setParameterCode(e.target.value)} placeholder="e.g. casting_speed" /></div>
-          <div><label style={label}>Window (days)</label><input style={field} type="number" value={windowDays} onChange={(e) => setWindowDays(Number(e.target.value))} /></div>
-          <div><label style={label}>Schedule (cron)</label><input style={field} value={schedule} onChange={(e) => setSchedule(e.target.value)} /></div>
+        <div>
+          <div><label>Job name</label><StandardP2Input value={name} onChange={(e) => setName(e.target.value)} /></div>
+          <div><label>Defect type</label><StandardP2Input value={defectType} onChange={(e) => setDefectType(e.target.value)} /></div>
+          <div><label>Parameter code (optional)</label><StandardP2Input value={parameterCode} onChange={(e) => setParameterCode(e.target.value)} placeholder="e.g. casting_speed" /></div>
+          <div><label>Window (days)</label><StandardP2Input type="number" value={windowDays} onChange={(e) => setWindowDays(Number(e.target.value))} /></div>
+          <div><label>Schedule (cron)</label><StandardP2Input value={schedule} onChange={(e) => setSchedule(e.target.value)} /></div>
         </div>
-        <div style={{ display: "flex", gap: 10, marginTop: ppiqTokens.spacing.md, alignItems: "center" }}>
+        <div>
           <StandardButton variant="primary" onClick={() => void save(true)}>Run now</StandardButton>
           <StandardButton variant="ghost" onClick={() => void save(false)}>Save &amp; schedule</StandardButton>
-          <span style={{ color: c.textSoft, fontSize: 12 }}>{saving ? "Saving\u2026" : `outcome: ${outcomeKey}`}</span>
+          <span>{saving ? "Saving\u2026" : `outcome: ${outcomeKey}`}</span>
         </div>
       </StandardCard>
 
       <StandardCard eyebrow="Jobs" title="Inspection jobs" subtitle="Saved jobs appear in the Jobs Monitor. Run, enable/disable, or open the analysis." elevation="flat">
         <DataFetchBoundary title="Inspection jobs" isLoading={isLoading} error={error} isEmpty={jobs.length === 0} onRetry={() => setReloadKey((k) => k + 1)} emptyTitle="No inspection jobs yet" emptyMessage="Create one above to generate a saved analysis.">
-          <div style={{ display: "grid", gap: 8 }}>
+          <div>
             {jobs.map((j) => (
-              <div key={j.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", border: `1px solid ${c.borderSubtle}`, borderRadius: ppiqTokens.radius.md, padding: ppiqTokens.spacing.md, background: c.surface1 }}>
+              <div key={j.id}>
                 <div>
-                  <strong style={{ color: c.text }}>{j.inspectionJobName}</strong>
-                  <div style={{ color: c.textMuted, fontSize: 12, fontFamily: "monospace" }}>{j.inspectionType} \u00b7 {j.defectType ?? j.parameterCode ?? "\u2014"} \u00b7 {j.scheduleExpression} \u00b7 {j.honestState}{j.lastRunStatus ? ` \u00b7 last: ${j.lastRunStatus}` : ""}</div>
+                  <strong>{j.inspectionJobName}</strong>
+                  <div>{j.inspectionType} \u00b7 {j.defectType ?? j.parameterCode ?? "\u2014"} \u00b7 {j.scheduleExpression} \u00b7 {j.honestState}{j.lastRunStatus ? ` \u00b7 last: ${j.lastRunStatus}` : ""}</div>
                 </div>
-                <div style={{ display: "flex", gap: 8 }}>
+                <div>
                   <StandardButton variant="ghost" onClick={() => void inspectionWorkflowApi.runJobNow(j.id).then(() => setReloadKey((k) => k + 1))}>Run</StandardButton>
                   <StandardButton variant="ghost" onClick={() => void (j.isEnabled ? inspectionWorkflowApi.disableJob(j.id) : inspectionWorkflowApi.enableJob(j.id)).then(() => setReloadKey((k) => k + 1))}>{j.isEnabled ? "Disable" : "Enable"}</StandardButton>
                   <StandardButton variant="ghost" onClick={() => navigate(`/investigate/advanced?outcomeKey=${encodeURIComponent(`defect.${j.defectType ?? "edge_crack"}_rate`)}`)}>Open analysis</StandardButton>

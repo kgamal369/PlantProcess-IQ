@@ -17,7 +17,6 @@ import {
 import { createPortal } from "react-dom";
 import "./design-tokens.css";
 import "./standard-components.css";
-
 export type StandardSize = "xs" | "sm" | "md" | "lg";
 export type StandardButtonVariant = "primary" | "secondary" | "ghost" | "danger" | "success";
 

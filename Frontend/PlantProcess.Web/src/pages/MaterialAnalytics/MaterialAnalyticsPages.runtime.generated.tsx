@@ -280,7 +280,10 @@ function ChartPlaceholder({
       {matrix ? (
         <div className="productModule56-matrix">
           {Array.from({ length: 64 }).map((_, index) => (
-            <span key={index} style={{ "--i": String((index % 8) + Math.floor(index / 8)) } as React.CSSProperties} />
+            <span
+              key={index}
+              className={"productModule56-matrix-cell productModule56-matrix-cell--" + ((index % 8) + Math.floor(index / 8))}
+            />
           ))}
         </div>
       ) : (
@@ -1032,7 +1035,7 @@ export function MaterialAnalyticsAdministratorPage() {
       label: "SQL Editor",
       content: (
         <StandardCard title="SQL View Editor" subtitle="StandardTextArea with monospace editor style and standard focus ring.">
-          <StandardTextArea value={sql} onChange={setSql} rows={8} style={{ fontFamily: "ui-monospace, SFMono-Regular, Consolas, monospace" }} />
+          <StandardTextArea value={sql} onChange={setSql} rows={8} />
           <div className="productModule56-toolbar">
             <StandardButton variant="primary" leadingIcon={<Play size={16} />}>Preview SQL</StandardButton>
             <StandardButton variant="secondary" leadingIcon={<Save size={16} />}>Save view</StandardButton>

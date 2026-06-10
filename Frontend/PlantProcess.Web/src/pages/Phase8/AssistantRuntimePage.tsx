@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { assistantModeLabel, phase8AssistantApi, type Phase8AssistantAnswer, type Phase8AssistantConfiguration } from "@/api/phase8Assistant";
 import "./phase8-ai.css";
 
+import { StandardP2Button, StandardP2TextArea } from "@/components/standard/StandardP2Controls";
+import { StandardButton } from "@/components/standard";
 export function AssistantRuntimePage() {
   const [config, setConfig] = useState<Phase8AssistantConfiguration | null>(null);
   const [question, setQuestion] = useState("What evidence supports the latest quality recommendation?");
@@ -80,10 +82,10 @@ export function AssistantRuntimePage() {
       <section className="phase8-two-col">
         <div className="phase8-card">
           <h2>Ask a grounded question</h2>
-          <textarea className="phase8-textarea" value={question} onChange={(event) => setQuestion(event.target.value)} />
-          <button className="phase8-button" type="button" disabled={busy || question.trim().length === 0} onClick={() => void ask()}>
+          <StandardP2TextArea className="phase8-textarea" value={question} onChange={(event) => setQuestion(event.target.value)} />
+          <StandardButton className="phase8-button" type="button" isDisabled={busy || question.trim().length === 0} onClick={() => void ask()}>
             {busy ? "Asking..." : "Ask assistant"}
-          </button>
+          </StandardButton>
         </div>
 
         <div className="phase8-card">

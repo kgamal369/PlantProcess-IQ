@@ -33,6 +33,7 @@ import { AppToaster } from "../notifications/Toaster";
 import "./AppLayout.css";
 import { StandardButton } from "@/components/standard";
 
+import { P2T08_STANDARD_ROLLOUT_MARKER } from "@/components/standard/StandardP2Controls";
 // â”€â”€ Navigation definition â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const NAV_ANALYTICS = [
   { to: "/dashboard",   label: "Command Dashboard",      desc: "Interactive intelligence workspace",    icon: LayoutDashboard },
@@ -151,7 +152,7 @@ export function AppLayout() {
         {/* Plant context */}
         <div className="piq-plant-strip">
           <span className="piq-plant-strip__dot" aria-hidden="true" />
-          <Factory size={12} aria-hidden="true" style={{ opacity: 0.5 }} />
+          <Factory size={12} aria-hidden="true" />
           <span className="piq-plant-strip__name">Demo Plant</span>
           <span className="piq-plant-strip__badge">DEMO</span>
         </div>
@@ -214,7 +215,7 @@ export function AppLayout() {
               onClick={logout} title="Logout" ariaLabel="Logout">
               <CircleUserRound size={14} aria-hidden="true" />
               {displayName}
-              <LogOut size={12} aria-hidden="true" style={{ opacity: 0.6 }} />
+              <LogOut size={12} aria-hidden="true" />
             </StandardButton>
           </div>
         </header>

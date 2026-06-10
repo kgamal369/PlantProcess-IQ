@@ -12,6 +12,7 @@ import type {
 } from "../../../api/productApiClient";
 import { StandardButton } from "@/components/standard";
 
+import { P2T08_STANDARD_ROLLOUT_MARKER, StandardP2TextArea } from "@/components/standard/StandardP2Controls";
 type WidgetScriptStepProps = {
   initialExpression?: string;
   filters?: DashboardWidgetFilters | null;
@@ -115,7 +116,7 @@ export function WidgetScriptStep({
         ))}
       </div>
 
-      <textarea
+      <StandardP2TextArea
         className="widget-script-step__editor"
         value={expression}
         rows={8}
@@ -156,7 +157,7 @@ export function WidgetScriptStep({
             </ul>
           ) : null}
 
-          <pre style={{ overflow: "auto", maxHeight: 260 }}>
+          <pre>
             {JSON.stringify(
               {
                 widget: preview.widget,

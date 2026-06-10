@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { formatPhase78Date, formatPhase78Number, getPhase78Direction, getPhase78StoredLocale, phase78LocaleStorageKey, t, type Phase78Locale } from "../i18n/phase78/phase78I18n";
 
+import { StandardP2Button } from "@/components/standard/StandardP2Controls";
+import { StandardButton } from "@/components/standard";
 function applyLocale(locale: Phase78Locale): void {
   window.localStorage.setItem(phase78LocaleStorageKey, locale);
   document.documentElement.lang = locale;
@@ -22,8 +24,8 @@ export function I18nRtlReadinessPage() {
         <h1>{t("readinessTitle", locale)}</h1>
         <p>{t("readinessSubtitle", locale)}</p>
         <div className="phase78-readiness-actions" aria-label={t("toggleLanguage", locale)}>
-          <button type="button" onClick={() => setLocale("en")}>{t("english", locale)}</button>
-          <button type="button" onClick={() => setLocale("ar")}>{t("arabic", locale)}</button>
+          <StandardButton type="button" onClick={() => setLocale("en")}>{t("english", locale)}</StandardButton>
+          <StandardButton type="button" onClick={() => setLocale("ar")}>{t("arabic", locale)}</StandardButton>
         </div>
       </section>
       <section className="phase78-readiness-grid" aria-label="Phase 7 and Phase 8 readiness cards">

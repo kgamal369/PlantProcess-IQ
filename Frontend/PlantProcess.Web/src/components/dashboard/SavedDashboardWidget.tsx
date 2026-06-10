@@ -16,6 +16,7 @@ import type { ChartRow } from "../charts/InteractiveCharts";
 import { DashboardWidgetCard } from "./DashboardWidgetCard";
 import { EmptyInsightState } from "./EmptyInsightState";
 
+import { StandardP2Table } from "@/components/standard/StandardP2Controls";
 interface SavedDashboardWidgetProps {
   dashboardDefinitionId: string;
   widget: DashboardWidgetDefinitionRecord;
@@ -186,7 +187,7 @@ function MiniTable({ rows }: { rows: ChartRow[] }) {
 
   return (
     <div className="table-shell">
-      <table>
+      <StandardP2Table>
         <thead>
           <tr>
             {columns.map((column) => (
@@ -203,7 +204,7 @@ function MiniTable({ rows }: { rows: ChartRow[] }) {
             </tr>
           ))}
         </tbody>
-      </table>
+      </StandardP2Table>
     </div>
   );
 }

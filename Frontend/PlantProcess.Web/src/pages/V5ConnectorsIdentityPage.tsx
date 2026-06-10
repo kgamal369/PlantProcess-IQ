@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 
+import { P2T08_STANDARD_ROLLOUT_MARKER } from "@/components/standard/StandardP2Controls";
+import { StandardButton } from "@/components/standard";
 type Health = {
   status: string;
   component: string;
@@ -103,16 +105,10 @@ export function V5ConnectorsIdentityPage() {
   }
 
   return (
-    <main style={{ padding: 32, color: "#eaf7ff", background: "var(--ppiq-color-bg-deep)", minHeight: "100vh" }}>
+    <main>
       <section
-        style={{
-          border: "1px solid rgba(0, 212, 255, 0.22)",
-          borderRadius: 24,
-          padding: 24,
-          background: "rgba(11, 23, 48, 0.82)",
-        }}
       >
-        <p style={{ color: "var(--ppiq-color-accent-cyan)", textTransform: "uppercase", letterSpacing: "0.08em", fontSize: 12 }}>
+        <p>
           Doctrine v5 · Phase 7 / Phase 8
         </p>
         <h1>Plant Connector Breadth + Enterprise Identity</h1>
@@ -121,43 +117,27 @@ export function V5ConnectorsIdentityPage() {
           backfill/checkpointing, TOTP MFA, recovery codes, session controls, and account protection.
         </p>
 
-        <div style={{ display: "grid", gap: 12, marginTop: 20 }}>
+        <div>
           <div>Connector health: {connectorHealth?.status ?? "pending"}</div>
           <div>Identity health: {identityHealth?.status ?? "pending"}</div>
           <div>Connector truth rows: {truth.length}</div>
           <strong>{status}</strong>
         </div>
 
-        <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 22 }}>
-          <button
+        <div>
+          <StandardButton
             type="button"
             onClick={registerMockConnector}
-            style={{
-              border: "1px solid rgba(0, 212, 255, 0.35)",
-              borderRadius: 14,
-              padding: "12px 18px",
-              color: "#eaf7ff",
-              background: "rgba(0, 132, 255, 0.24)",
-              cursor: "pointer",
-            }}
           >
             Register mock historian + backfill
-          </button>
+          </StandardButton>
 
-          <button
+          <StandardButton
             type="button"
             onClick={enrollMfa}
-            style={{
-              border: "1px solid rgba(44, 230, 162, 0.35)",
-              borderRadius: 14,
-              padding: "12px 18px",
-              color: "#eaf7ff",
-              background: "rgba(44, 230, 162, 0.18)",
-              cursor: "pointer",
-            }}
           >
             Enroll TOTP MFA
-          </button>
+          </StandardButton>
         </div>
       </section>
     </main>
