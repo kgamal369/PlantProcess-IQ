@@ -1,177 +1,83 @@
-import { useCallback, useMemo, useRef, useState, type ReactNode } from "react";
-import type { SortDirection } from "../api/productApiClient";
+import type { ReactNode } from "react";
+import {
+  StandardDataTable,
+  type StandardDataTableAlign,
+  type StandardDataTableColumn,
+  type StandardDataTableSortDirection,
+} from "@/components/standard";
 
-import { P2T08_STANDARD_ROLLOUT_MARKER, StandardP2Table } from "@/components/standard/StandardP2Controls";
-export interface SortableColumn<T> {
+export const P2T010_SORTABLE_TABLE_STANDARDIZATION_MARKER =
+  "PPIQ_P2_T010_TABLE_STANDARDIZATION";
+
+export type SortDirection = StandardDataTableSortDirection;
+
+export interface SortableColumn<T extends object> {
   key: string;
   title: string;
   sortable?: boolean;
-  align?: "left" | "right" | "center";
-  width?: number | string;
-  render: (row: T, index: number) => ReactNode;
+  align?: StandardDataTableAlign;
+  render: (row: T) => ReactNode;
 }
 
-type SortableDataTableProps<T> = {
-  rows: T[];
-  columns: SortableColumn<T>[];
+export type SortableDataTableProps<T extends object> = {
+  rows?: readonly T[];
+  columns: readonly SortableColumn<T>[];
   sortBy?: string;
   sortDirection?: SortDirection;
   onSort?: (sortBy: string, sortDirection: SortDirection) => void;
-  emptyText?: string;
-  virtualizationThreshold?: number;
-  rowHeight?: number;
-  maxBodyHeight?: number;
-  getRowKey?: (row: T, index: number) => string | number;
+  emptyText?: ReactNode;
+  loadingText?: ReactNode;
+  isLoading?: boolean;
+  error?: ReactNode;
+  rowKey?: keyof T | ((row: T, index: number) => string | number);
+  getRowKey?: keyof T | ((row: T, index: number) => string | number);
+  caption?: ReactNode;
+  ariaLabel?: string;
+  density?: "compact" | "comfortable";
+  className?: string;
 };
 
-export function SortableDataTable<T>({
-  rows,
+export function SortableDataTable<T extends object>({
+  rows = [],
   columns,
   sortBy,
   sortDirection,
   onSort,
   emptyText = "No data available.",
-  virtualizationThreshold = 200,
-  rowHeight = 44,
-  maxBodyHeight = 560,
+  loadingText,
+  isLoading,
+  error,
+  rowKey,
   getRowKey,
+  caption,
+  ariaLabel,
+  density,
+  className,
 }: SortableDataTableProps<T>) {
-  const shouldVirtualize = rows.length > virtualizationThreshold;
-
-  const [scrollTop, setScrollTop] = useState(0);
-  const bodyRef = useRef<HTMLDivElement | null>(null);
-
-  const handleSort = useCallback(
-    (column: SortableColumn<T>) => {
-      if (!column.sortable || !onSort) return;
-
-      const nextDirection: SortDirection =
-        sortBy === column.key && sortDirection === "asc" ? "desc" : "asc";
-
-      onSort(column.key, nextDirection);
-    },
-    [onSort, sortBy, sortDirection]
-  );
-
-  const virtualState = useMemo(() => {
-    if (!shouldVirtualize) {
-      return {
-        startIndex: 0,
-        endIndex: rows.length,
-        beforeHeight: 0,
-        afterHeight: 0,
-        visibleRows: rows,
-      };
-    }
-
-    const overscan = 12;
-    const viewportHeight = maxBodyHeight;
-    const startIndex = Math.max(0, Math.floor(scrollTop / rowHeight) - overscan);
-    const visibleCount = Math.ceil(viewportHeight / rowHeight) + overscan * 2;
-    const endIndex = Math.min(rows.length, startIndex + visibleCount);
-    const beforeHeight = startIndex * rowHeight;
-    const afterHeight = Math.max(0, (rows.length - endIndex) * rowHeight);
-
-    return {
-      startIndex,
-      endIndex,
-      beforeHeight,
-      afterHeight,
-      visibleRows: rows.slice(startIndex, endIndex),
-    };
-  }, [maxBodyHeight, rowHeight, rows, scrollTop, shouldVirtualize]);
-
-  const handleScroll = useCallback(() => {
-    if (!bodyRef.current) return;
-    setScrollTop(bodyRef.current.scrollTop);
-  }, []);
+  const standardColumns: StandardDataTableColumn<T>[] = columns.map((column) => ({
+    key: column.key,
+    title: column.title,
+    sortable: column.sortable,
+    align: column.align,
+    render: (row) => column.render(row),
+  }));
 
   return (
-    <div className="table-wrap sortable-data-table">
-      <div className="sortable-data-table__summary">
-        <span>{rows.length.toLocaleString()} rows</span>
-        {shouldVirtualize ? <span>Virtualized rendering enabled</span> : null}
-      </div>
-
-      <div
-        ref={bodyRef}
-        className={shouldVirtualize ? "virtual-table-scroll" : undefined}
-        onScroll={shouldVirtualize ? handleScroll : undefined}
-      >
-        <StandardP2Table>
-          <thead>
-            <tr>
-              {columns.map((column) => (
-                <th
-                  key={column.key}
-                  className={column.sortable ? "sortable-header" : undefined}
-                  onClick={() => handleSort(column)}
-                  aria-sort={
-                    column.sortable && sortBy === column.key
-                      ? sortDirection === "asc"
-                        ? "ascending"
-                        : "descending"
-                      : undefined
-                  }
-                >
-                  {column.title}
-                  {column.sortable && sortBy === column.key ? (
-                    <span className="sort-indicator">
-                      {sortDirection === "asc" ? " ↑" : " ↓"}
-                    </span>
-                  ) : null}
-                </th>
-              ))}
-            </tr>
-          </thead>
-
-          <tbody>
-            {rows.length === 0 ? (
-              <tr>
-                <td colSpan={columns.length}>{emptyText}</td>
-              </tr>
-            ) : (
-              <>
-                {shouldVirtualize && virtualState.beforeHeight > 0 ? (
-                  <tr aria-hidden="true">
-                    <td
-                      colSpan={columns.length}
-                    />
-                  </tr>
-                ) : null}
-
-                {virtualState.visibleRows.map((row, localIndex) => {
-                  const index = shouldVirtualize
-                    ? virtualState.startIndex + localIndex
-                    : localIndex;
-
-                  const key = getRowKey ? getRowKey(row, index) : index;
-
-                  return (
-                    <tr key={key}>
-                      {columns.map((column) => (
-                        <td
-                          key={column.key}
-                        >
-                          {column.render(row, index)}
-                        </td>
-                      ))}
-                    </tr>
-                  );
-                })}
-
-                {shouldVirtualize && virtualState.afterHeight > 0 ? (
-                  <tr aria-hidden="true">
-                    <td
-                      colSpan={columns.length}
-                    />
-                  </tr>
-                ) : null}
-              </>
-            )}
-          </tbody>
-        </StandardP2Table>
-      </div>
-    </div>
+    <StandardDataTable
+      rows={rows}
+      columns={standardColumns}
+      rowKey={rowKey ?? getRowKey}
+      sortBy={sortBy}
+      sortDirection={sortDirection}
+      onSort={onSort}
+      emptyText={emptyText}
+      loadingText={loadingText}
+      isLoading={isLoading}
+      error={error}
+      caption={caption}
+      ariaLabel={ariaLabel ?? "Sortable data table"}
+      density={density}
+      className={className}
+    />
   );
 }

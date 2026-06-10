@@ -1,5 +1,7 @@
 task,file,line,page,currentImplementation,itemCount,navigationType,activeIndicatorStyle,badgeSupport,keyboardNavigation,lazyLoading,responsiveBehavior,standardStatus
-PPIQ-T011,src/components/AppLayout.tsx,137,Component:AppLayout.tsx,navigation,3,primary-navigation,not-detected,missing,missing,missing,not-detected,non-standard
-PPIQ-T011,src/components/AppLayout.tsx,75,Component:AppLayout.tsx,navigation,3,primary-navigation,detected,missing,missing,missing,not-detected,non-standard
-PPIQ-T011,src/pages/Admin/AdminPageContent.tsx,183,Admin,navigation,2,in-page-navigation,detected,missing,missing,missing,not-detected,non-standard
-PPIQ-T011,src/pages/Admin/AdminPageContent.tsx,185,Admin,navigation,2,in-page-navigation,detected,missing,missing,missing,not-detected,non-standard
+PPIQ-T011,src/components/AppLayout.tsx,1,AppLayout,navigation,dynamic,primary-navigation,detected,present,missing,missing,present,non-standard
+PPIQ-T011,src/pages/DemoAnalytics/DemoAnalyticsPages.implementation.tsx,1,DemoAnalyticsPages,StandardTabs,dynamic-or-standard,in-page-tabs,detected,present,missing,present,not-detected,standard
+PPIQ-T011,src/pages/DynamicPage/DynamicPage.tsx,1,DynamicPage,navigation,dynamic,sub-navigation,missing,missing,missing,missing,not-detected,non-standard
+PPIQ-T011,src/pages/MaterialAnalytics/MaterialAnalyticsPages.runtime.generated.tsx,1,MaterialAnalyticsPages.runtime.generated,StandardTabs,dynamic-or-standard,in-page-tabs,detected,present,missing,present,not-detected,standard
+PPIQ-T011,src/pages/MaterialInvestigation/MaterialInvestigationPage.tsx,1,MaterialInvestigationPage,tabs-or-segmented-control,dynamic,in-page-tabs,detected,present,missing,missing,not-detected,non-standard
+PPIQ-T011,src/pages/Admin/AdminDbConfigurationTab.implementation.tsx,1,Admin,admin-navigation-or-page-tabs,dynamic,in-page-navigation,detected,missing,missing,missing,not-detected,non-standard

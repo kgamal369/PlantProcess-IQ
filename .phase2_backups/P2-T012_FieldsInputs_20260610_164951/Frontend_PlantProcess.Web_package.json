@@ -97,9 +97,7 @@
                     "audit:tables":  "node ../../tools/ui/audit-tables.cjs",
                     "validate:tables":  "node ../../tools/ui/audit-tables.cjs --fail",
                     "audit:tabs":  "node ../../tools/ui/audit-tabs-navigation.cjs",
-                    "validate:tabs":  "node ../../tools/ui/audit-tabs-navigation.cjs --fail",
-                    "audit:fields":  "node ../../tools/ui/audit-fields.cjs",
-                    "validate:fields":  "node ../../tools/ui/audit-fields.cjs --fail"
+                    "validate:tabs":  "node ../../tools/ui/audit-tabs-navigation.cjs --fail"
                 },
     "dependencies":  {
                          "lucide-react":  "^1.14.0",

@@ -1,6 +1,6 @@
 {
   "marker": "PPIQ_P2_T09_ACTION_BUTTON_STANDARDIZATION",
-  "generatedAtUtc": "2026-06-10T13:28:03.475Z",
+  "generatedAtUtc": "2026-06-10T13:50:36.528Z",
   "auditedFiles": 124,
   "materialFiles": [
     "src/pages/MaterialInvestigation/MaterialInvestigationPage.tsx",

@@ -1,9 +1,7 @@
-import { useId,  forwardRef, useMemo, useState, type ChangeEvent, type InputHTMLAttributes, type ReactNode, type TextareaHTMLAttributes  } from "react";
+﻿import { useId,  forwardRef, useMemo, useState, type ChangeEvent, type InputHTMLAttributes, type ReactNode, type TextareaHTMLAttributes  } from "react";
 import { ChevronDown, Search, X } from "lucide-react";
 import { StandardButton } from "./StandardButton";
 import "./standard-components.css";
-export const P2T012_FIELDS_INPUTS_STANDARDIZATION_MARKER =
-  "PPIQ_P2_T012_FIELDS_INPUTS_STANDARDIZATION";
 
 export type StandardFieldSize = "sm" | "md" | "lg";
 

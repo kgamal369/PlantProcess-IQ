@@ -1,27 +1,50 @@
-
-import { useEffect, useMemo, useRef, type KeyboardEvent, type ReactNode } from "react";
+import {
+  type KeyboardEvent,
+  type ReactNode,
+  useEffect,
+  useMemo,
+  useRef,
+} from "react";
 import "./standard-components.css";
 
-export type StandardTabsOrientation = "horizontal" | "vertical";
+export const P2T011_TABS_NAVIGATION_MARKER =
+  "PPIQ_P2_T011_TABS_NAVIGATION_STANDARDIZATION";
 
-export type StandardTabItem<TId extends string = string> = {
-  id: TId;
+export type StandardTabsOrientation = "horizontal" | "vertical";
+export type StandardTabsVariant = "tabs" | "segmented" | "pills" | "breadcrumb";
+
+export type StandardTabItem = {
+  id: string;
   label: ReactNode;
-  icon?: ReactNode;
   badge?: ReactNode;
+  icon?: ReactNode;
   disabled?: boolean;
-  content: ReactNode;
-  preload?: boolean;
+  href?: string;
+  ariaLabel?: string;
+  lazy?: boolean;
+
+  // Backward-compatible API used by existing pages/tests.
+  content?: ReactNode;
 };
 
-export type StandardTabsProps<TId extends string = string> = {
-  items: ReadonlyArray<StandardTabItem<TId>>;
-  value: TId;
-  onChange: (value: TId) => void;
-  orientation?: StandardTabsOrientation;
-  lazy?: boolean;
+export type StandardTabsProps = {
+  items: readonly StandardTabItem[];
+
+  // New API.
+  activeId?: string;
+  syncSearchParam?: string;
+  mountMode?: "all" | "active-only";
+  renderPanel?: (item: StandardTabItem) => ReactNode;
+
+  // Backward-compatible API used by existing pages/tests.
+  value?: string;
   searchParam?: string;
-  ariaLabel: string;
+  lazy?: boolean;
+
+  onChange?: (id: string) => void;
+  orientation?: StandardTabsOrientation;
+  variant?: StandardTabsVariant;
+  ariaLabel?: string;
   className?: string;
 };
 
@@ -29,145 +52,241 @@ function cx(...values: Array<string | false | null | undefined>) {
   return values.filter(Boolean).join(" ");
 }
 
-export function StandardTabs<TId extends string = string>({
+function getEnabledItems(items: readonly StandardTabItem[]) {
+  return items.filter((item) => !item.disabled);
+}
+
+function nextIndex(current: number, direction: 1 | -1, total: number) {
+  if (total <= 0) return 0;
+  return (current + direction + total) % total;
+}
+
+function ariaCurrent(
+  variant: StandardTabsVariant,
+  selected: boolean,
+): boolean | "page" | "step" | "location" | "date" | "time" | "true" | "false" | undefined {
+  if (variant !== "breadcrumb") return undefined;
+  return selected ? "page" : undefined;
+}
+
+export function StandardTabs({
   items,
+  activeId,
   value,
   onChange,
   orientation = "horizontal",
-  lazy = true,
+  variant = "tabs",
+  ariaLabel = "Tabs",
+  syncSearchParam,
   searchParam,
-  ariaLabel,
   className,
-}: StandardTabsProps<TId>) {
-  const refs = useRef<Array<HTMLButtonElement | null>>([]);
+  mountMode,
+  lazy,
+  renderPanel,
+}: StandardTabsProps) {
+  const tabsRef = useRef<Array<HTMLButtonElement | HTMLAnchorElement | null>>([]);
 
-  const enabledItems = useMemo(() => items.filter((item) => !item.disabled), [items]);
-  const activeIndex = items.findIndex((item) => item.id === value);
-  const activeItem = items[activeIndex] ?? items[0];
+  const enabledItems = useMemo(() => getEnabledItems(items), [items]);
+  const resolvedActiveId = activeId ?? value ?? enabledItems[0]?.id ?? items[0]?.id ?? "";
+  const activeItem = items.find((item) => item.id === resolvedActiveId) ?? enabledItems[0] ?? items[0];
 
-  useEffect(() => {
-    if (!searchParam) return;
+  const resolvedSearchParam = syncSearchParam ?? searchParam;
+  const resolvedMountMode: "all" | "active-only" =
+    mountMode ?? (lazy ? "active-only" : "all");
 
-    const params = new URLSearchParams(window.location.search);
-    const tabFromUrl = params.get(searchParam);
-    const match = items.find((item) => item.id === tabFromUrl && !item.disabled);
-
-    if (match && match.id !== value) {
-      onChange(match.id);
-    }
-  }, []);
+  const hasPanels =
+    Boolean(renderPanel) || items.some((item) => item.content !== undefined);
 
   useEffect(() => {
-    if (!searchParam) return;
+    if (!resolvedSearchParam || !activeItem?.id) return;
 
     const url = new URL(window.location.href);
-    url.searchParams.set(searchParam, value);
-    window.history.replaceState(null, "", url.toString());
-  }, [searchParam, value]);
+    if (url.searchParams.get(resolvedSearchParam) === activeItem.id) return;
 
-  function activateByOffset(offset: number) {
-    const currentEnabledIndex = enabledItems.findIndex((item) => item.id === value);
-    const nextIndex = (currentEnabledIndex + offset + enabledItems.length) % enabledItems.length;
-    const next = enabledItems[nextIndex];
+    url.searchParams.set(resolvedSearchParam, activeItem.id);
+    window.history.replaceState({}, "", url);
+  }, [activeItem?.id, resolvedSearchParam]);
 
-    if (next) {
-      onChange(next.id);
-      const realIndex = items.findIndex((item) => item.id === next.id);
-      refs.current[realIndex]?.focus();
-    }
+  function activate(id: string) {
+    const item = items.find((candidate) => candidate.id === id);
+    if (!item || item.disabled) return;
+    onChange?.(id);
+  }
+
+  function focusById(id: string) {
+    const index = items.findIndex((item) => item.id === id);
+    tabsRef.current[index]?.focus();
   }
 
   function onKeyDown(event: KeyboardEvent<HTMLDivElement>) {
-    const nextKey = orientation === "horizontal" ? "ArrowRight" : "ArrowDown";
-    const previousKey = orientation === "horizontal" ? "ArrowLeft" : "ArrowUp";
+    const currentEnabledIndex = enabledItems.findIndex((item) => item.id === activeItem?.id);
+    const horizontal = orientation === "horizontal";
 
-    if (event.key === nextKey) {
-      event.preventDefault();
-      activateByOffset(1);
-    }
-
-    if (event.key === previousKey) {
-      event.preventDefault();
-      activateByOffset(-1);
-    }
-
-    if (event.key === "Home") {
-      event.preventDefault();
-      const first = enabledItems[0];
-      if (first) onChange(first.id);
-    }
-
-    if (event.key === "End") {
-      event.preventDefault();
-      const last = enabledItems[enabledItems.length - 1];
-      if (last) onChange(last.id);
+    if (
+      event.key !== "ArrowRight" &&
+      event.key !== "ArrowLeft" &&
+      event.key !== "ArrowDown" &&
+      event.key !== "ArrowUp" &&
+      event.key !== "Home" &&
+      event.key !== "End" &&
+      event.key !== "Enter" &&
+      event.key !== " "
+    ) {
+      return;
     }
 
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
-      const focusedIndex = refs.current.findIndex((item) => item === document.activeElement);
-      const item = items[focusedIndex];
-      if (item && !item.disabled) onChange(item.id);
+      if (activeItem?.id) activate(activeItem.id);
+      return;
+    }
+
+    let nextItem = activeItem;
+
+    if (event.key === "Home") {
+      nextItem = enabledItems[0];
+    } else if (event.key === "End") {
+      nextItem = enabledItems[enabledItems.length - 1];
+    } else if (
+      (horizontal && event.key === "ArrowRight") ||
+      (!horizontal && event.key === "ArrowDown")
+    ) {
+      nextItem = enabledItems[nextIndex(currentEnabledIndex, 1, enabledItems.length)];
+    } else if (
+      (horizontal && event.key === "ArrowLeft") ||
+      (!horizontal && event.key === "ArrowUp")
+    ) {
+      nextItem = enabledItems[nextIndex(currentEnabledIndex, -1, enabledItems.length)];
+    }
+
+    if (nextItem?.id) {
+      event.preventDefault();
+      activate(nextItem.id);
+      focusById(nextItem.id);
     }
   }
 
+  function renderItemContent(item: StandardTabItem) {
+    return (
+      <>
+        {item.icon ? <span className="ppiq-std-tabs__icon">{item.icon}</span> : null}
+        <span className="ppiq-std-tabs__label">{item.label}</span>
+        {item.badge ? <span className="ppiq-std-tabs__badge">{item.badge}</span> : null}
+      </>
+    );
+  }
+
+  function renderTabButton(item: StandardTabItem, index: number) {
+    const selected = item.id === activeItem?.id;
+    const classNameForItem = cx(
+      "ppiq-std-tabs__item",
+      selected && "ppiq-std-tabs__item--active",
+      item.disabled && "ppiq-std-tabs__item--disabled",
+    );
+
+    const ariaSelected = variant === "breadcrumb" ? undefined : selected;
+    const ariaControls = hasPanels ? "ppiq-tab-panel-" + item.id : undefined;
+
+    if (item.href) {
+      return (
+        <a
+          key={item.id}
+          ref={(node) => {
+            tabsRef.current[index] = node;
+          }}
+          href={item.href}
+          className={classNameForItem}
+          role={variant === "breadcrumb" ? "link" : "tab"}
+          aria-selected={ariaSelected}
+          aria-current={ariaCurrent(variant, selected)}
+          aria-disabled={item.disabled || undefined}
+          aria-controls={ariaControls}
+          tabIndex={selected ? 0 : -1}
+          aria-label={item.ariaLabel}
+          onClick={(event) => {
+            if (item.disabled) {
+              event.preventDefault();
+              return;
+            }
+
+            activate(item.id);
+          }}
+        >
+          {renderItemContent(item)}
+        </a>
+      );
+    }
+
+    return (
+      <button
+        key={item.id}
+        ref={(node) => {
+          tabsRef.current[index] = node;
+        }}
+        type="button"
+        disabled={item.disabled}
+        className={classNameForItem}
+        role={variant === "breadcrumb" ? undefined : "tab"}
+        aria-selected={ariaSelected}
+        aria-current={ariaCurrent(variant, selected)}
+        aria-disabled={item.disabled || undefined}
+        aria-controls={ariaControls}
+        tabIndex={selected ? 0 : -1}
+        aria-label={item.ariaLabel}
+        onClick={() => activate(item.id)}
+      >
+        {renderItemContent(item)}
+      </button>
+    );
+  }
+
+  function panelContent(item: StandardTabItem) {
+    if (renderPanel) return renderPanel(item);
+    return item.content;
+  }
+
   return (
-    <div className={cx("ppiq-std-tabs", "ppiq-std-tabs--" + orientation, className)}>
+    <div
+      className={cx(
+        "ppiq-std-tabs",
+        "ppiq-std-tabs--" + orientation,
+        "ppiq-std-tabs--" + variant,
+        className,
+      )}
+      data-ppiq-tabs-standardization="P2-T011"
+    >
       <div
         className="ppiq-std-tabs__list"
-        role="tablist"
+        role={variant === "breadcrumb" ? "navigation" : "tablist"}
         aria-label={ariaLabel}
-        aria-orientation={orientation}
+        aria-orientation={variant === "breadcrumb" ? undefined : orientation}
         onKeyDown={onKeyDown}
       >
-        {items.map((item, index) => (
-          <button
-            key={item.id}
-            ref={(node) => {
-              refs.current[index] = node;
-            }}
-            id={"ppiq-tab-" + item.id}
-            type="button"
-            role="tab"
-            className="ppiq-std-tabs__button"
-            aria-selected={item.id === value}
-            aria-controls={"ppiq-tab-panel-" + item.id}
-            disabled={item.disabled}
-            tabIndex={item.id === value ? 0 : -1}
-            onClick={() => {
-              if (!item.disabled) onChange(item.id);
-            }}
-          >
-            {item.icon ? <span aria-hidden="true">{item.icon}</span> : null}
-            <span>{item.label}</span>
-            {item.badge ? <span className="ppiq-std-tabs__badge">{item.badge}</span> : null}
-          </button>
-        ))}
+        {items.map((item, index) => renderTabButton(item, index))}
       </div>
 
-      <div className="ppiq-std-tabs__panel">
-        {items.map((item) => {
-          const isActive = item.id === value;
+      {hasPanels ? (
+        <div className="ppiq-std-tabs__panels">
+          {items.map((item) => {
+            const selected = item.id === activeItem?.id;
 
-          if (lazy && !isActive && !item.preload) {
-            return null;
-          }
+            if (resolvedMountMode === "active-only" && !selected) return null;
 
-          return (
-            <div
-              key={item.id}
-              id={"ppiq-tab-panel-" + item.id}
-              role="tabpanel"
-              aria-labelledby={"ppiq-tab-" + item.id}
-              hidden={!isActive}
-            >
-              {item.content}
-            </div>
-          );
-        })}
-
-        {!activeItem ? null : null}
-      </div>
+            return (
+              <div
+                key={item.id}
+                id={"ppiq-tab-panel-" + item.id}
+                role="tabpanel"
+                hidden={!selected}
+                aria-labelledby={"ppiq-tab-" + item.id}
+                className="ppiq-std-tabs__panel"
+              >
+                {selected || resolvedMountMode === "all" ? panelContent(item) : null}
+              </div>
+            );
+          })}
+        </div>
+      ) : null}
     </div>
   );
 }
