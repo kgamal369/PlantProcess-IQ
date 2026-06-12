@@ -1,3 +1,4 @@
+using PlantProcess.Api.TestMode;
 using PlantProcess.Api.Endpoints.Licensing;
 using PlantProcess.Api.Endpoints.Security;
 using PlantProcess.Application.Connectors.Certification;
@@ -361,6 +362,8 @@ builder.Services.AddScoped<ConnectorBehaviourCertificationService>();
 
 
 builder.Services.AddScoped<ILicenseService, VerifiedEd25519LicenseService>();
+builder.AddPpiqTestMode();   // PPIQ-T022 (validates + refuses in Production without accept-risk)
+
 var app = builder.Build();
 
 // PPIQ_P1_T01_VERSION_ENDPOINT
@@ -577,6 +580,8 @@ app.MapV5LicenseResolverProofEndpoints();
 app.MapV5IdentityRuntimeCertificationEndpoints();
 app.MapV5ConnectorRuntimeCertificationEndpoints();
 app.MapV5PrivateModelGatewayCertificationEndpoints();
+app.UsePpiqTestMode();       // PPIQ-T022 (loud log + /admin/testmode-status)
+
 app.Run();
 }
 catch (Exception ex) when (ex.GetType().Name == "HostAbortedException")

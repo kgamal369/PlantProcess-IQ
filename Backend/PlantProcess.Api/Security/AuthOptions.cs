@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 
 namespace PlantProcess.Api.Security;
 
@@ -25,6 +25,14 @@ public sealed class AuthOptions
     public string RefreshCookieName { get; set; } = "__Host-ppiq-refresh";
     public bool RefreshCookieSecure { get; set; } = true;
     public SameSiteMode RefreshCookieSameSite { get; set; } = SameSiteMode.Strict;
+
+    /// <summary>
+    /// PPIQ-T021: master switch for PPIQ-T009 admin MFA enforcement.
+    /// DEFAULT FALSE - until the step-up loop is demo-verified, enforcement is opt-in,
+    /// because enforcement without an attainable claim path is a production lockout.
+    /// Env: PlantProcess__Auth__RequireAdminMfa=true|false
+    /// </summary>
+    public bool RequireAdminMfa { get; set; } = false;
 
     public string? BootstrapAdminUser { get; set; }
     public string? BootstrapAdminPassword { get; set; }

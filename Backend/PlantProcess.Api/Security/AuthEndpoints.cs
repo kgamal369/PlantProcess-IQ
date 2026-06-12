@@ -28,6 +28,10 @@ public static class AuthEndpoints
             .RequireAuthorization()
             .WithSummary("Return authenticated session and entitlements.");
 
+        group.MapPost("/mfa/step-up", StepUpAsync)
+            .RequireAuthorization()
+            .WithSummary("PPIQ-T021: re-issue the access token with mfa=true after a recent successful /mfa/verify.");
+
         group.MapGet("/provisioning/status", ProvisioningStatusAsync)
             .WithSummary("Return whether first-run provisioning is required.");
 
@@ -163,6 +167,109 @@ public static class AuthEndpoints
         [Microsoft.AspNetCore.Mvc.FromServicesAttribute] IPlantEntitlementResolver entitlementResolver)
     {
         return Results.Ok(entitlementResolver.Resolve(user));
+    }
+
+    /// <summary>
+    /// PPIQ-T021 step-up: if this user produced a successful mfa_verify audit event within
+    /// the step-up window, mint a fresh access token carrying mfa=true + amr=mfa so the
+    /// PPIQ-T009 middleware admits it. The deterministic engines stay untouched; this only
+    /// closes the claim path that T009 enforcement was missing.
+    /// </summary>
+    private static async Task<IResult> StepUpAsync(
+        System.Security.Claims.ClaimsPrincipal principal,
+        IOptions<AuthOptions> options,
+        [Microsoft.AspNetCore.Mvc.FromServicesAttribute] Npgsql.NpgsqlDataSource dataSource,
+        ILoggerFactory loggerFactory,
+        CancellationToken cancellationToken)
+    {
+        var logger = loggerFactory.CreateLogger("PlantProcess.Auth");
+        var auth = options.Value;
+
+        var userIdRaw = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                        ?? principal.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+        if (!Guid.TryParse(userIdRaw, out var userId))
+            return Results.Unauthorized();
+
+        const int stepUpWindowMinutes = 15;
+        var verified = false;
+        try
+        {
+            await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
+            await using var cmd = connection.CreateCommand();
+            cmd.CommandText =
+                """
+                SELECT 1
+                FROM public.ppiq_auth_audit_events
+                WHERE user_id = @user_id
+                  AND event_type = 'mfa_verify'
+                  AND outcome = 'success'
+                  AND created_at_utc >= NOW() - make_interval(mins => @window)
+                LIMIT 1
+                """;
+            cmd.Parameters.AddWithValue("user_id", userId);
+            cmd.Parameters.AddWithValue("window", stepUpWindowMinutes);
+            verified = await cmd.ExecuteScalarAsync(cancellationToken) is not null;
+        }
+        catch (Npgsql.PostgresException ex) when (ex.SqlState == "42703")
+        {
+            // Timestamp column name differs in this schema revision - degrade to an
+            // existence check and log loudly so the window is tightened post-go-live.
+            logger.LogWarning("PPIQ-T021: ppiq_auth_audit_events has no created_at_utc; step-up window check degraded to existence-only.");
+            await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
+            await using var cmd = connection.CreateCommand();
+            cmd.CommandText =
+                """
+                SELECT 1 FROM public.ppiq_auth_audit_events
+                WHERE user_id = @user_id AND event_type = 'mfa_verify' AND outcome = 'success'
+                LIMIT 1
+                """;
+            cmd.Parameters.AddWithValue("user_id", userId);
+            verified = await cmd.ExecuteScalarAsync(cancellationToken) is not null;
+        }
+
+        if (!verified)
+        {
+            logger.LogWarning("PPIQ-T021: step-up refused for {UserId} - no recent successful mfa_verify event.", userId);
+            return Results.Json(
+                new { error = "mfa_step_up_refused", message = "Complete /mfa/verify first, then retry step-up." },
+                statusCode: StatusCodes.Status403Forbidden);
+        }
+
+        if (string.IsNullOrWhiteSpace(auth.SigningKey) || auth.SigningKey.Length < 32)
+            throw new InvalidOperationException("JWT signing key is missing or too short.");
+
+        var now = DateTime.UtcNow;
+        var expires = now.AddMinutes(Math.Clamp(auth.AccessTokenMinutes, 5, 240));
+
+        var excluded = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            JwtRegisteredClaimNames.Exp, JwtRegisteredClaimNames.Iat, JwtRegisteredClaimNames.Nbf,
+            JwtRegisteredClaimNames.Aud, JwtRegisteredClaimNames.Iss, "mfa", "mfa_verified", "amr"
+        };
+        var claims = principal.Claims
+            .Where(c => !excluded.Contains(c.Type))
+            .Select(c => new Claim(c.Type, c.Value))
+            .ToList();
+        claims.Add(new Claim("mfa", "true"));
+        claims.Add(new Claim("amr", "mfa"));
+
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(auth.SigningKey));
+        var token = new JwtSecurityToken(
+            issuer: auth.Issuer,
+            audience: auth.Audience,
+            claims: claims,
+            notBefore: now,
+            expires: expires,
+            signingCredentials: new SigningCredentials(key, SecurityAlgorithms.HmacSha256));
+
+        logger.LogInformation("PPIQ-T021: step-up token issued for {UserId}.", userId);
+        return Results.Ok(new
+        {
+            accessToken = new JwtSecurityTokenHandler().WriteToken(token),
+            tokenType = "Bearer",
+            expiresAtUtc = expires,
+            mfa = true
+        });
     }
 
     private static async Task<IResult> ProvisioningStatusAsync(

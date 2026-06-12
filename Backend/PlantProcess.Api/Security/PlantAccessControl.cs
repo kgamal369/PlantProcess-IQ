@@ -1,4 +1,4 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using PlantProcess.Application.Licensing.Contracts;
 using PlantProcess.Application.Licensing.Interfaces;
 
@@ -180,6 +180,10 @@ public sealed class AccessControlMiddleware
         ("/auth/login", new[] { "POST" }, "anonymous", true),
         ("/auth/refresh", new[] { "POST" }, "anonymous", true),
         ("/auth/logout", new[] { "POST" }, "anonymous", true),
+        // PPIQ-T021: middleware-anonymous like /auth/refresh - the endpoint itself
+        // enforces authentication via RequireAuthorization(); step-up additionally
+        // demands a recent successful mfa_verify audit event before minting mfa=true.
+        ("/auth/mfa/step-up", new[] { "POST" }, "anonymous", true),
         ("/auth/provisioning", new[] { "GET", "POST" }, "anonymous", true),
         ("/swagger", new[] { "GET" }, "anonymous", true),
         ("/", new[] { "GET" }, "anonymous", true),

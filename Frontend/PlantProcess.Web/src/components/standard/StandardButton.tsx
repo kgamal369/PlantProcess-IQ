@@ -80,6 +80,14 @@ export const StandardButton = forwardRef<
     ...rest
   } = props as StandardButtonProps & { disabled?: boolean };
 
+  // PPIQ-T04: consumers write idiomatic JSX (aria-label="..."). The camelCase prop wins
+  // when both are given; the DOM-style attribute is honored otherwise instead of being
+  // silently swallowed by ...rest (which made icon-only buttons fall back to children).
+  const domAriaLabel = (rest as Record<string, unknown>)["aria-label"] as
+    | string
+    | undefined;
+  const effectiveAriaLabel = ariaLabel ?? domAriaLabel;
+
   const disabledState = Boolean(isDisabled || disabled || isLoading);
   const renderedVariant = normalizeVariant(variant);
 
@@ -96,7 +104,7 @@ export const StandardButton = forwardRef<
   );
 
   const readableLabel =
-    typeof children === "string" ? children : ariaLabel ?? "Action";
+    typeof children === "string" ? children : effectiveAriaLabel ?? "Action";
 
   const content = (
     <>
@@ -107,7 +115,7 @@ export const StandardButton = forwardRef<
       )}
 
       {iconOnly ? (
-        <span className="sr-only">{ariaLabel ?? readableLabel}</span>
+        <span className="sr-only">{effectiveAriaLabel ?? readableLabel}</span>
       ) : (
         <span className={isLoading ? "ppiq-std-button__label--loading" : undefined}>
           {isLoading ? loadingLabel : children}

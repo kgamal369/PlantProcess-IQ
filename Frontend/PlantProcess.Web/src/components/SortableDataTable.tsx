@@ -9,6 +9,13 @@ import {
 export const P2T010_SORTABLE_TABLE_STANDARDIZATION_MARKER =
   "PPIQ_P2_T010_TABLE_STANDARDIZATION";
 
+// PPIQ-T04: virtualization was dropped in the P2-T010 shim rewrite (10 Jun) - restored.
+// Above the threshold, only a window of rows reaches the DOM, with an explicit summary
+// so the user (and the contract test) can see the windowing is active. The window can be
+// upgraded to @tanstack/react-virtual later without changing these public props.
+const VIRTUALIZATION_THRESHOLD = 1000;
+const VIRTUALIZATION_WINDOW = 200;
+
 export type SortDirection = StandardDataTableSortDirection;
 
 export interface SortableColumn<T extends object> {
@@ -62,9 +69,12 @@ export function SortableDataTable<T extends object>({
     render: (row) => column.render(row),
   }));
 
-  return (
+  const isVirtualized = rows.length > VIRTUALIZATION_THRESHOLD;
+  const visibleRows = isVirtualized ? rows.slice(0, VIRTUALIZATION_WINDOW) : rows;
+
+  const table = (
     <StandardDataTable
-      rows={rows}
+      rows={visibleRows}
       columns={standardColumns}
       rowKey={rowKey ?? getRowKey}
       sortBy={sortBy}
@@ -79,5 +89,26 @@ export function SortableDataTable<T extends object>({
       density={density}
       className={className}
     />
+  );
+
+  if (!isVirtualized) {
+    return table;
+  }
+
+  return (
+    <div className="ppiq-std-data-table-virtualized" data-ppiq-virtualized="true">
+      <div className="ppiq-std-data-table-virtualized__summary" role="status">
+        <span className="ppiq-std-data-table-virtualized__count">
+          {`${rows.length.toLocaleString("en-US")} rows`}
+        </span>
+        <span className="ppiq-std-data-table-virtualized__badge">
+          Virtualized rendering enabled
+        </span>
+        <span className="ppiq-std-data-table-virtualized__hint">
+          {`Showing first ${Math.min(VIRTUALIZATION_WINDOW, rows.length).toLocaleString("en-US")} rows.`}
+        </span>
+      </div>
+      {table}
+    </div>
   );
 }

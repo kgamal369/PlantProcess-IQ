@@ -1,35 +1,41 @@
+using Microsoft.Extensions.Options;
+
 namespace PlantProcess.Api.Security;
 
 /// <summary>
-/// PPIQ_REALIZATION_T009_ADMIN_MFA_REQUIRED
-/// Enforces MFA for privileged/admin API surfaces.
-///
-/// MFA proof is accepted from:
-/// - a verified MFA claim: mfa=true / mfa_verified=true / amr containing "mfa"
-/// - a transitional integration-test header: X-PPIQ-MFA-Verified=true
-///   (honored ONLY outside Production; hard-blocked in Production so it can never
-///   be replayed against a live deployment)
+/// PPIQ_REALIZATION_T009_ADMIN_MFA_REQUIRED + PPIQ-T021 enforcement flag.
+/// Enforces MFA for privileged/admin API surfaces WHEN AuthOptions.RequireAdminMfa is true.
+/// MFA proof: claim mfa=true / mfa_verified=true / amr contains "mfa" (minted by
+/// POST /auth/mfa/step-up after a recent successful /mfa/verify), or - outside
+/// Production only - the transitional X-PPIQ-MFA-Verified test header.
 /// </summary>
 public sealed class AdminMfaRequirementMiddleware
 {
     private readonly RequestDelegate _next;
     private readonly IWebHostEnvironment _environment;
+    private readonly IOptionsMonitor<AuthOptions> _auth;
 
-    public AdminMfaRequirementMiddleware(RequestDelegate next, IWebHostEnvironment environment)
+    public AdminMfaRequirementMiddleware(
+        RequestDelegate next,
+        IWebHostEnvironment environment,
+        IOptionsMonitor<AuthOptions> auth)
     {
         _next = next;
         _environment = environment;
+        _auth = auth;
     }
 
     public async Task InvokeAsync(HttpContext context)
     {
-        if (RequiresAdminMfa(context) && !HasMfaProof(context))
+        if (_auth.CurrentValue.RequireAdminMfa
+            && RequiresAdminMfa(context)
+            && !HasMfaProof(context))
         {
             context.Response.StatusCode = StatusCodes.Status403Forbidden;
             await context.Response.WriteAsJsonAsync(new
             {
                 error = "admin_mfa_required",
-                message = "PPIQ-T009: Admin endpoints require verified MFA."
+                message = "PPIQ-T009: Admin endpoints require verified MFA. Complete /mfa/verify then POST /auth/mfa/step-up."
             });
             return;
         }
@@ -61,8 +67,7 @@ public sealed class AdminMfaRequirementMiddleware
             string.Equals(value, "true", StringComparison.OrdinalIgnoreCase)
             || string.Equals(value, "mfa", StringComparison.OrdinalIgnoreCase);
 
-        // PPIQ-T009 transitional integration-test bypass.
-        // Never honored in Production deployments.
+        // Transitional integration-test bypass - NEVER honored in Production.
         if (!_environment.IsProduction()
             && IsTrue(context.Request.Headers["X-PPIQ-MFA-Verified"].FirstOrDefault()))
             return true;
