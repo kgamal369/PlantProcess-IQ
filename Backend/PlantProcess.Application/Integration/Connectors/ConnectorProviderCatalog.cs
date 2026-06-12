@@ -82,8 +82,8 @@ public static class ConnectorProviderCatalog
             new ProviderTypeDto(
                 ProviderType: "OpcUaHistorian",
                 DisplayName: "OPC-UA / Historian Gateway",
-                Description: "Available now for read-only historian gateway onboarding: configuration validation, tag/point browse metadata, bounded sample reads, and mapping handoff. Vendor-specific live handshake remains environment-specific.",
-                IsAvailableNow: true,
+                Description: "Read-only historian gateway onboarding: configuration validation, tag/point browse metadata, bounded sample reads, and mapping handoff. Presented as available only after intentional demo certification via PPIQ_CONNECTOR_CERTIFIED_OPCUAHISTORIAN (truth contract: stays Planned otherwise).",
+                IsAvailableNow: ConnectorCertification.IsCertified("OpcUaHistorian"),
                 RequiresSecretReference: true,
                 SupportsSchemaDiscovery: true,
                 SupportsSnapshotImport: false,

@@ -31,7 +31,11 @@ public sealed class AuthLifecycleTests : AuthenticatedApiTestBase
         var client = Factory.CreateClient(new WebApplicationFactoryClientOptions
         {
             AllowAutoRedirect = false,
-            HandleCookies = true
+            HandleCookies = true,
+
+            // __Host-ppiq-refresh is Secure=true; .NET CookieContainer only re-sends
+            // Secure cookies over HTTPS, so the in-process client must use an HTTPS base.
+            BaseAddress = new Uri("https://localhost")
         });
         client.Timeout = TimeSpan.FromSeconds(120);
 

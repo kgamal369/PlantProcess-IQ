@@ -77,6 +77,10 @@ public abstract class AuthenticatedApiTestBase : IClassFixture<WebApplicationFac
         client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", token);
 
+        // PPIQ-T009: the integration-test admin asserts verified MFA via the transitional
+        // header documented in AdminMfaRequirementMiddleware (honored outside Production only).
+        client.DefaultRequestHeaders.Add("X-PPIQ-MFA-Verified", "true");
+
         return client;
     }
 
@@ -177,7 +181,7 @@ public abstract class AuthenticatedApiTestBase : IClassFixture<WebApplicationFac
         }
     }
 
-    private static string ResolveIntegrationTestConnectionString()
+    protected static string ResolveIntegrationTestConnectionString()
     {
         var candidates = new[]
         {

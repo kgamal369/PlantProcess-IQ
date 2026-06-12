@@ -80,6 +80,7 @@ public static class AuthEndpoints
             expires);
 
         var principal = BuildPrincipalForResponse(user, auth);
+        httpContext.User = principal;
         var entitlements = entitlementResolver.Resolve(principal);
 
         return Results.Ok(new LoginResponse(
@@ -123,6 +124,7 @@ public static class AuthEndpoints
         await IssueRefreshCookieAsync(user, authStore, auth, httpContext, cancellationToken);
 
         var principal = BuildPrincipalForResponse(user, auth);
+        httpContext.User = principal;
         var entitlements = entitlementResolver.Resolve(principal);
 
         return Results.Ok(new LoginResponse(

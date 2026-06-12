@@ -86,7 +86,8 @@ not yet define how it will be but I guess all this learning of those jobs existi
 
  
 5. User / Role and Admin 
-
+5.1. Which User is able to configure or modify 
+5.2. which Role can see which pages where developer had some concern to see some pages different than  Process Engineer different than planner different than CEO each had concern with different KPI and charts and running Jobs
 
 
 

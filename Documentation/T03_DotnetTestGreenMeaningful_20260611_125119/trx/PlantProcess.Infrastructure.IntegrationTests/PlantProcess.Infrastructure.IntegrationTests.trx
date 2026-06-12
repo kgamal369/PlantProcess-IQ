@@ -1,0 +1,208 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="0496470b-b5a9-4d26-81bb-5b4519d60d1c" name="elka01@WAP174432 2026-06-12 20:14:11" runUser="SMS-GROUP\elka01" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-06-12T20:14:11.9760330+03:00" queuing="2026-06-12T20:14:11.9760336+03:00" start="2026-06-12T20:14:07.4907745+03:00" finish="2026-06-12T20:14:19.3807290+03:00" />
+  <TestSettings name="default" id="19073eee-82d8-4a08-b3a4-c7b595d7eb30">
+    <Deployment runDeploymentRoot="elka01_WAP174432_2026-06-12_20_14_11" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="09df9d9a-7b59-4597-ba7c-4737814035c2" testId="2bf59dbc-9c37-e90a-86d8-6012d603c0d7" testName="PlantProcess.Infrastructure.IntegrationTests.Connectors.CsvConnectorTrimRegressionTests.Csv_parser_trims_unquoted_cell_values_from_yard_fixture" computerName="WAP174432" duration="00:00:00.3384958" startTime="2026-06-12T20:14:11.3522505+03:00" endTime="2026-06-12T20:14:11.3522512+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="09df9d9a-7b59-4597-ba7c-4737814035c2" />
+    <UnitTestResult executionId="27aff49b-f076-4b29-9922-a974488c356c" testId="e6bf40a1-0848-529d-d3a5-ceadfbf5fbfd" testName="PlantProcess.Infrastructure.IntegrationTests.Database.SqlScriptHygieneApplyTests.Sql_scripts_should_not_contain_raw_unmasked_local_password" computerName="WAP174432" duration="00:00:00.5186679" startTime="2026-06-12T20:14:13.2821831+03:00" endTime="2026-06-12T20:14:13.2821837+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="27aff49b-f076-4b29-9922-a974488c356c" />
+    <UnitTestResult executionId="99c14256-7222-4a4f-a9d9-fa8f27345639" testId="4648c290-c841-75a9-5ffe-f15a80ea8f66" testName="PlantProcess.Infrastructure.IntegrationTests.Database.Utf8NoBomRepositoryHygieneTests.Active_json_and_sql_files_must_be_utf8_without_bom" computerName="WAP174432" duration="00:00:06.1606652" startTime="2026-06-12T20:14:17.1744290+03:00" endTime="2026-06-12T20:14:17.1744297+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="99c14256-7222-4a4f-a9d9-fa8f27345639" />
+    <UnitTestResult executionId="dfb372b9-72fc-47c9-876a-0e75d0971caf" testId="802f132e-424e-bde4-6566-d7a6cfcb6038" testName="PlantProcess.Infrastructure.IntegrationTests.Analytics.AdvancedEngineContractTests.Engine_maps_method_aware_run_to_correlation_result" computerName="WAP174432" duration="00:00:00.5478137" startTime="2026-06-12T20:14:11.5615813+03:00" endTime="2026-06-12T20:14:11.5615819+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="dfb372b9-72fc-47c9-876a-0e75d0971caf" />
+    <UnitTestResult executionId="9bdf00c8-db9b-486e-bd5c-ca59071c8534" testId="291591e1-690b-5d26-0f3f-d63fc7c7fe0c" testName="PlantProcess.Infrastructure.IntegrationTests.Analytics.AdvancedResultPersistenceTests.Persists_run_and_findings_tenant_scoped_with_provenance" computerName="WAP174432" duration="00:00:00.0010000" startTime="2026-06-12T20:14:12.0386374+03:00" endTime="2026-06-12T20:14:12.0386378+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="NotExecuted" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="9bdf00c8-db9b-486e-bd5c-ca59071c8534">
+      <Output>
+        <ErrorInfo>
+          <Message>Set PPIQ_TEST_PG_CONNSTRING to run this integration test.</Message>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="79129d05-1c88-49e2-95d8-9a02e8e84fbe" testId="60468e7f-2491-ad2d-973c-4ebb1e893591" testName="PlantProcess.Infrastructure.IntegrationTests.Connectors.ExcelConnectorSmokeTests.ExcelConnector_should_discover_workbook_sheets" computerName="WAP174432" duration="00:00:00.0432879" startTime="2026-06-12T20:14:19.2605065+03:00" endTime="2026-06-12T20:14:19.2605069+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="79129d05-1c88-49e2-95d8-9a02e8e84fbe" />
+    <UnitTestResult executionId="1ee4e15c-56e1-4e08-959f-bd9bbfa1586d" testId="b9376146-ce81-91f2-38b4-3a0fd2da2ed9" testName="PlantProcess.Infrastructure.IntegrationTests.Database.SqlScriptHygieneApplyTests.Critical_ml_learning_scripts_should_expose_acceptance_and_governance_functions" computerName="WAP174432" duration="00:00:00.5861733" startTime="2026-06-12T20:14:11.5997618+03:00" endTime="2026-06-12T20:14:11.5997624+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="1ee4e15c-56e1-4e08-959f-bd9bbfa1586d" />
+    <UnitTestResult executionId="a1b504ae-b150-4823-a6aa-d939cd27877f" testId="6c5531cc-4362-65a2-00e3-c34b1ff47624" testName="PlantProcess.Infrastructure.IntegrationTests.Database.SqlScriptHygieneApplyTests.Runtime_role_script_should_require_explicit_password_variable" computerName="WAP174432" duration="00:00:00.0026852" startTime="2026-06-12T20:14:11.6026294+03:00" endTime="2026-06-12T20:14:11.6026300+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a1b504ae-b150-4823-a6aa-d939cd27877f" />
+    <UnitTestResult executionId="c9df4ff4-2ee7-43c8-ad5f-d31a6d338ee3" testId="8a3d9705-28d4-fbea-a6f1-d2582fd463a5" testName="PlantProcess.Infrastructure.IntegrationTests.Connectors.ExcelConnectorSmokeTests.ExcelConnector_should_test_file_connection" computerName="WAP174432" duration="00:00:08.2031136" startTime="2026-06-12T20:14:19.2170070+03:00" endTime="2026-06-12T20:14:19.2170073+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c9df4ff4-2ee7-43c8-ad5f-d31a6d338ee3" />
+    <UnitTestResult executionId="0022c3f9-877e-4ce6-8e5a-d977a47fb48b" testId="67730d26-411e-51ac-d0b5-bacb1edadea8" testName="PlantProcess.Infrastructure.IntegrationTests.Connectors.ReadOnlyEnforcementTests.PostgreSql_session_is_read_only_after_apply" computerName="WAP174432" duration="00:00:00.0010000" startTime="2026-06-12T20:14:12.0425333+03:00" endTime="2026-06-12T20:14:12.0425338+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="NotExecuted" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="0022c3f9-877e-4ce6-8e5a-d977a47fb48b">
+      <Output>
+        <ErrorInfo>
+          <Message>Set PPIQ_TEST_PG_CONNSTRING to run this integration test.</Message>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="b7cf649b-0456-4c6b-a41f-ed619e9ecc2a" testId="7c6e93fb-42b4-5307-7a03-9be940b3b97c" testName="PlantProcess.Infrastructure.IntegrationTests.Audit.AuditLogImmutabilityTests.Audit_table_should_block_truncate" computerName="WAP174432" duration="00:00:04.6172351" startTime="2026-06-12T20:14:15.6316423+03:00" endTime="2026-06-12T20:14:15.6316428+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b7cf649b-0456-4c6b-a41f-ed619e9ecc2a" />
+    <UnitTestResult executionId="42292529-29d3-4dd1-9b36-3687d52be768" testId="0f3c1eaf-133c-e806-b7b1-7674ee07531d" testName="PlantProcess.Infrastructure.IntegrationTests.Audit.AuditLogImmutabilityTests.Audit_table_should_block_delete" computerName="WAP174432" duration="00:00:00.0612269" startTime="2026-06-12T20:14:16.8121725+03:00" endTime="2026-06-12T20:14:16.8121727+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="42292529-29d3-4dd1-9b36-3687d52be768" />
+    <UnitTestResult executionId="781a9425-fd15-4cbb-890a-bfa1e3103b00" testId="ab3aaa71-7657-a4d3-1f96-15566cab69af" testName="PlantProcess.Infrastructure.IntegrationTests.Demo.Phase2RealismSourceSeedTests.Realism_source_files_contain_expected_scale_and_reference_thread" computerName="WAP174432" duration="00:00:00.2549300" startTime="2026-06-12T20:14:11.2732501+03:00" endTime="2026-06-12T20:14:11.2732869+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="781a9425-fd15-4cbb-890a-bfa1e3103b00" />
+    <UnitTestResult executionId="450d3d3b-7c13-4f43-af06-035b3e4b224f" testId="8d7a1339-e74c-9cd3-670e-c552c076dacc" testName="PlantProcess.Infrastructure.IntegrationTests.Audit.AuditLogImmutabilityTests.Audit_table_should_allow_select" computerName="WAP174432" duration="00:00:00.0203963" startTime="2026-06-12T20:14:16.8332341+03:00" endTime="2026-06-12T20:14:16.8332344+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="450d3d3b-7c13-4f43-af06-035b3e4b224f" />
+    <UnitTestResult executionId="c3124c48-e70e-4953-b67d-9291fddfdf55" testId="4075c899-5960-acfc-ac64-050c641a41da" testName="PlantProcess.Infrastructure.IntegrationTests.Database.SqlScriptHygieneApplyTests.Ordered_database_scripts_should_be_non_empty_and_bom_free" computerName="WAP174432" duration="00:00:01.1605094" startTime="2026-06-12T20:14:12.7633410+03:00" endTime="2026-06-12T20:14:12.7633418+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c3124c48-e70e-4953-b67d-9291fddfdf55" />
+    <UnitTestResult executionId="dab87108-fc5f-408e-a00a-c5bbdbad050e" testId="3fc80d36-a4a6-5f81-c258-e1b68714931b" testName="PlantProcess.Infrastructure.IntegrationTests.Demo.Phase2RealismSourceSeedTests.Yard_csv_trim_regression_fixture_has_no_leading_whitespace" computerName="WAP174432" duration="00:00:00.2597316" startTime="2026-06-12T20:14:12.0999035+03:00" endTime="2026-06-12T20:14:12.0999041+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="dab87108-fc5f-408e-a00a-c5bbdbad050e">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Contains() Failure: Sub-string not found&#xD;
+String:    "Y-704170,C-0044170,SLAB-504170,AREA-10,B8"···&#xD;
+Not found: ",BAY-03,"</Message>
+          <StackTrace>   at PlantProcess.Infrastructure.IntegrationTests.Demo.Phase2RealismSourceSeedTests.Yard_csv_trim_regression_fixture_has_no_leading_whitespace() in C:\Workspace\PlantProcess-IQ\Backend\tests\PlantProcess.Infrastructure.IntegrationTests\Demo\Phase2RealismSourceSeedTests.cs:line 54&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="978f4799-9ff2-4ba8-a566-bf8de77da5f8" testId="3624be73-765b-c631-7285-9110fc373b59" testName="PlantProcess.Infrastructure.IntegrationTests.Audit.AuditLogImmutabilityTests.Audit_table_should_block_update" computerName="WAP174432" duration="00:00:01.1161125" startTime="2026-06-12T20:14:16.7500831+03:00" endTime="2026-06-12T20:14:16.7500837+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="978f4799-9ff2-4ba8-a566-bf8de77da5f8" />
+    <UnitTestResult executionId="383e04f5-6675-436d-99bb-8e28de6dbe25" testId="9b9253d9-54f1-0d89-f35a-11fe28541f65" testName="PlantProcess.Infrastructure.IntegrationTests.Security.RlsTenantIsolationTests.Forced_rls_isolates_rows_by_app_current_tenant" computerName="WAP174432" duration="00:00:03.4239131" startTime="2026-06-12T20:14:14.4411452+03:00" endTime="2026-06-12T20:14:14.4411458+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="383e04f5-6675-436d-99bb-8e28de6dbe25" />
+    <UnitTestResult executionId="36001a14-d4b0-4bdf-9381-0b067f95e241" testId="72aa5c9b-3063-a2e9-b07b-31e4652605b6" testName="PlantProcess.Infrastructure.IntegrationTests.Connectors.CsvConnectorSmokeTests.CsvConnector_should_discover_inline_csv_datasets" computerName="WAP174432" duration="00:00:00.8937242" startTime="2026-06-12T20:14:11.9075604+03:00" endTime="2026-06-12T20:14:11.9075612+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="36001a14-d4b0-4bdf-9381-0b067f95e241" />
+    <UnitTestResult executionId="8d908749-37fe-412d-99ca-608f720c61da" testId="ecd70703-bc07-402f-6fcd-7586eff62546" testName="PlantProcess.Infrastructure.IntegrationTests.Connectors.CsvConnectorSmokeTests.CsvConnector_should_test_inline_csv_connection" computerName="WAP174432" duration="00:00:00.0027255" startTime="2026-06-12T20:14:11.9240236+03:00" endTime="2026-06-12T20:14:11.9240237+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8d908749-37fe-412d-99ca-608f720c61da" />
+    <UnitTestResult executionId="5cf2d26f-4344-4e41-89f5-09f35457207e" testId="ee60fd0a-eed9-7e93-3ec1-8dff79388841" testName="PlantProcess.Infrastructure.IntegrationTests.Audit.AuditLogImmutabilityTests.Audit_table_should_allow_insert" computerName="WAP174432" duration="00:00:00.0094190" startTime="2026-06-12T20:14:16.8434693+03:00" endTime="2026-06-12T20:14:16.8434695+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="5cf2d26f-4344-4e41-89f5-09f35457207e" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="PlantProcess.Infrastructure.IntegrationTests.Audit.AuditLogImmutabilityTests.Audit_table_should_block_update" storage="c:\workspace\plantprocess-iq\backend\tests\plantprocess.infrastructure.integrationtests\bin\release\net9.0\plantprocess.infrastructure.integrationtests.dll" id="3624be73-765b-c631-7285-9110fc373b59">
+      <Execution id="978f4799-9ff2-4ba8-a566-bf8de77da5f8" />
+      <TestMethod codeBase="C:\Workspace\PlantProcess-IQ\Backend\tests\PlantProcess.Infrastructure.IntegrationTests\bin\Release\net9.0\PlantProcess.Infrastructure.IntegrationTests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="PlantProcess.Infrastructure.IntegrationTests.Audit.AuditLogImmutabilityTests" name="Audit_table_should_block_update" />
+    </UnitTest>
+    <UnitTest name="PlantProcess.Infrastructure.IntegrationTests.Database.SqlScriptHygieneApplyTests.Critical_ml_learning_scripts_should_expose_acceptance_and_governance_functions" storage="c:\workspace\plantprocess-iq\backend\tests\plantprocess.infrastructure.integrationtests\bin\release\net9.0\plantprocess.infrastructure.integrationtests.dll" id="b9376146-ce81-91f2-38b4-3a0fd2da2ed9">
+      <Execution id="1ee4e15c-56e1-4e08-959f-bd9bbfa1586d" />
+      <TestMethod codeBase="C:\Workspace\PlantProcess-IQ\Backend\tests\PlantProcess.Infrastructure.IntegrationTests\bin\Release\net9.0\PlantProcess.Infrastructure.IntegrationTests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="PlantProcess.Infrastructure.IntegrationTests.Database.SqlScriptHygieneApplyTests" name="Critical_ml_learning_scripts_should_expose_acceptance_and_governance_functions" />
+    </UnitTest>
+    <UnitTest name="PlantProcess.Infrastructure.IntegrationTests.Audit.AuditLogImmutabilityTests.Audit_table_should_block_delete" storage="c:\workspace\plantprocess-iq\backend\tests\plantprocess.infrastructure.integrationtests\bin\release\net9.0\plantprocess.infrastructure.integrationtests.dll" id="0f3c1eaf-133c-e806-b7b1-7674ee07531d">
+      <Execution id="42292529-29d3-4dd1-9b36-3687d52be768" />
+      <TestMethod codeBase="C:\Workspace\PlantProcess-IQ\Backend\tests\PlantProcess.Infrastructure.IntegrationTests\bin\Release\net9.0\PlantProcess.Infrastructure.IntegrationTests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="PlantProcess.Infrastructure.IntegrationTests.Audit.AuditLogImmutabilityTests" name="Audit_table_should_block_delete" />
+    </UnitTest>
+    <UnitTest name="PlantProcess.Infrastructure.IntegrationTests.Database.SqlScriptHygieneApplyTests.Runtime_role_script_should_require_explicit_password_variable" storage="c:\workspace\plantprocess-iq\backend\tests\plantprocess.infrastructure.integrationtests\bin\release\net9.0\plantprocess.infrastructure.integrationtests.dll" id="6c5531cc-4362-65a2-00e3-c34b1ff47624">
+      <Execution id="a1b504ae-b150-4823-a6aa-d939cd27877f" />
+      <TestMethod codeBase="C:\Workspace\PlantProcess-IQ\Backend\tests\PlantProcess.Infrastructure.IntegrationTests\bin\Release\net9.0\PlantProcess.Infrastructure.IntegrationTests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="PlantProcess.Infrastructure.IntegrationTests.Database.SqlScriptHygieneApplyTests" name="Runtime_role_script_should_require_explicit_password_variable" />
+    </UnitTest>
+    <UnitTest name="PlantProcess.Infrastructure.IntegrationTests.Audit.AuditLogImmutabilityTests.Audit_table_should_allow_select" storage="c:\workspace\plantprocess-iq\backend\tests\plantprocess.infrastructure.integrationtests\bin\release\net9.0\plantprocess.infrastructure.integrationtests.dll" id="8d7a1339-e74c-9cd3-670e-c552c076dacc">
+      <Execution id="450d3d3b-7c13-4f43-af06-035b3e4b224f" />
+      <TestMethod codeBase="C:\Workspace\PlantProcess-IQ\Backend\tests\PlantProcess.Infrastructure.IntegrationTests\bin\Release\net9.0\PlantProcess.Infrastructure.IntegrationTests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="PlantProcess.Infrastructure.IntegrationTests.Audit.AuditLogImmutabilityTests" name="Audit_table_should_allow_select" />
+    </UnitTest>
+    <UnitTest name="PlantProcess.Infrastructure.IntegrationTests.Connectors.CsvConnectorSmokeTests.CsvConnector_should_test_inline_csv_connection" storage="c:\workspace\plantprocess-iq\backend\tests\plantprocess.infrastructure.integrationtests\bin\release\net9.0\plantprocess.infrastructure.integrationtests.dll" id="ecd70703-bc07-402f-6fcd-7586eff62546">
+      <Execution id="8d908749-37fe-412d-99ca-608f720c61da" />
+      <TestMethod codeBase="C:\Workspace\PlantProcess-IQ\Backend\tests\PlantProcess.Infrastructure.IntegrationTests\bin\Release\net9.0\PlantProcess.Infrastructure.IntegrationTests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="PlantProcess.Infrastructure.IntegrationTests.Connectors.CsvConnectorSmokeTests" name="CsvConnector_should_test_inline_csv_connection" />
+    </UnitTest>
+    <UnitTest name="PlantProcess.Infrastructure.IntegrationTests.Analytics.AdvancedEngineContractTests.Engine_maps_method_aware_run_to_correlation_result" storage="c:\workspace\plantprocess-iq\backend\tests\plantprocess.infrastructure.integrationtests\bin\release\net9.0\plantprocess.infrastructure.integrationtests.dll" id="802f132e-424e-bde4-6566-d7a6cfcb6038">
+      <Execution id="dfb372b9-72fc-47c9-876a-0e75d0971caf" />
+      <TestMethod codeBase="C:\Workspace\PlantProcess-IQ\Backend\tests\PlantProcess.Infrastructure.IntegrationTests\bin\Release\net9.0\PlantProcess.Infrastructure.IntegrationTests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="PlantProcess.Infrastructure.IntegrationTests.Analytics.AdvancedEngineContractTests" name="Engine_maps_method_aware_run_to_correlation_result" />
+    </UnitTest>
+    <UnitTest name="PlantProcess.Infrastructure.IntegrationTests.Connectors.CsvConnectorTrimRegressionTests.Csv_parser_trims_unquoted_cell_values_from_yard_fixture" storage="c:\workspace\plantprocess-iq\backend\tests\plantprocess.infrastructure.integrationtests\bin\release\net9.0\plantprocess.infrastructure.integrationtests.dll" id="2bf59dbc-9c37-e90a-86d8-6012d603c0d7">
+      <Execution id="09df9d9a-7b59-4597-ba7c-4737814035c2" />
+      <TestMethod codeBase="C:\Workspace\PlantProcess-IQ\Backend\tests\PlantProcess.Infrastructure.IntegrationTests\bin\Release\net9.0\PlantProcess.Infrastructure.IntegrationTests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="PlantProcess.Infrastructure.IntegrationTests.Connectors.CsvConnectorTrimRegressionTests" name="Csv_parser_trims_unquoted_cell_values_from_yard_fixture" />
+    </UnitTest>
+    <UnitTest name="PlantProcess.Infrastructure.IntegrationTests.Connectors.ReadOnlyEnforcementTests.PostgreSql_session_is_read_only_after_apply" storage="c:\workspace\plantprocess-iq\backend\tests\plantprocess.infrastructure.integrationtests\bin\release\net9.0\plantprocess.infrastructure.integrationtests.dll" id="67730d26-411e-51ac-d0b5-bacb1edadea8">
+      <Execution id="0022c3f9-877e-4ce6-8e5a-d977a47fb48b" />
+      <TestMethod codeBase="C:\Workspace\PlantProcess-IQ\Backend\tests\PlantProcess.Infrastructure.IntegrationTests\bin\Release\net9.0\PlantProcess.Infrastructure.IntegrationTests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="PlantProcess.Infrastructure.IntegrationTests.Connectors.ReadOnlyEnforcementTests" name="PostgreSql_session_is_read_only_after_apply" />
+    </UnitTest>
+    <UnitTest name="PlantProcess.Infrastructure.IntegrationTests.Audit.AuditLogImmutabilityTests.Audit_table_should_allow_insert" storage="c:\workspace\plantprocess-iq\backend\tests\plantprocess.infrastructure.integrationtests\bin\release\net9.0\plantprocess.infrastructure.integrationtests.dll" id="ee60fd0a-eed9-7e93-3ec1-8dff79388841">
+      <Execution id="5cf2d26f-4344-4e41-89f5-09f35457207e" />
+      <TestMethod codeBase="C:\Workspace\PlantProcess-IQ\Backend\tests\PlantProcess.Infrastructure.IntegrationTests\bin\Release\net9.0\PlantProcess.Infrastructure.IntegrationTests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="PlantProcess.Infrastructure.IntegrationTests.Audit.AuditLogImmutabilityTests" name="Audit_table_should_allow_insert" />
+    </UnitTest>
+    <UnitTest name="PlantProcess.Infrastructure.IntegrationTests.Connectors.CsvConnectorSmokeTests.CsvConnector_should_discover_inline_csv_datasets" storage="c:\workspace\plantprocess-iq\backend\tests\plantprocess.infrastructure.integrationtests\bin\release\net9.0\plantprocess.infrastructure.integrationtests.dll" id="72aa5c9b-3063-a2e9-b07b-31e4652605b6">
+      <Execution id="36001a14-d4b0-4bdf-9381-0b067f95e241" />
+      <TestMethod codeBase="C:\Workspace\PlantProcess-IQ\Backend\tests\PlantProcess.Infrastructure.IntegrationTests\bin\Release\net9.0\PlantProcess.Infrastructure.IntegrationTests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="PlantProcess.Infrastructure.IntegrationTests.Connectors.CsvConnectorSmokeTests" name="CsvConnector_should_discover_inline_csv_datasets" />
+    </UnitTest>
+    <UnitTest name="PlantProcess.Infrastructure.IntegrationTests.Security.RlsTenantIsolationTests.Forced_rls_isolates_rows_by_app_current_tenant" storage="c:\workspace\plantprocess-iq\backend\tests\plantprocess.infrastructure.integrationtests\bin\release\net9.0\plantprocess.infrastructure.integrationtests.dll" id="9b9253d9-54f1-0d89-f35a-11fe28541f65">
+      <Execution id="383e04f5-6675-436d-99bb-8e28de6dbe25" />
+      <TestMethod codeBase="C:\Workspace\PlantProcess-IQ\Backend\tests\PlantProcess.Infrastructure.IntegrationTests\bin\Release\net9.0\PlantProcess.Infrastructure.IntegrationTests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="PlantProcess.Infrastructure.IntegrationTests.Security.RlsTenantIsolationTests" name="Forced_rls_isolates_rows_by_app_current_tenant" />
+    </UnitTest>
+    <UnitTest name="PlantProcess.Infrastructure.IntegrationTests.Database.SqlScriptHygieneApplyTests.Sql_scripts_should_not_contain_raw_unmasked_local_password" storage="c:\workspace\plantprocess-iq\backend\tests\plantprocess.infrastructure.integrationtests\bin\release\net9.0\plantprocess.infrastructure.integrationtests.dll" id="e6bf40a1-0848-529d-d3a5-ceadfbf5fbfd">
+      <Execution id="27aff49b-f076-4b29-9922-a974488c356c" />
+      <TestMethod codeBase="C:\Workspace\PlantProcess-IQ\Backend\tests\PlantProcess.Infrastructure.IntegrationTests\bin\Release\net9.0\PlantProcess.Infrastructure.IntegrationTests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="PlantProcess.Infrastructure.IntegrationTests.Database.SqlScriptHygieneApplyTests" name="Sql_scripts_should_not_contain_raw_unmasked_local_password" />
+    </UnitTest>
+    <UnitTest name="PlantProcess.Infrastructure.IntegrationTests.Database.SqlScriptHygieneApplyTests.Ordered_database_scripts_should_be_non_empty_and_bom_free" storage="c:\workspace\plantprocess-iq\backend\tests\plantprocess.infrastructure.integrationtests\bin\release\net9.0\plantprocess.infrastructure.integrationtests.dll" id="4075c899-5960-acfc-ac64-050c641a41da">
+      <Execution id="c3124c48-e70e-4953-b67d-9291fddfdf55" />
+      <TestMethod codeBase="C:\Workspace\PlantProcess-IQ\Backend\tests\PlantProcess.Infrastructure.IntegrationTests\bin\Release\net9.0\PlantProcess.Infrastructure.IntegrationTests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="PlantProcess.Infrastructure.IntegrationTests.Database.SqlScriptHygieneApplyTests" name="Ordered_database_scripts_should_be_non_empty_and_bom_free" />
+    </UnitTest>
+    <UnitTest name="PlantProcess.Infrastructure.IntegrationTests.Connectors.ExcelConnectorSmokeTests.ExcelConnector_should_test_file_connection" storage="c:\workspace\plantprocess-iq\backend\tests\plantprocess.infrastructure.integrationtests\bin\release\net9.0\plantprocess.infrastructure.integrationtests.dll" id="8a3d9705-28d4-fbea-a6f1-d2582fd463a5">
+      <Execution id="c9df4ff4-2ee7-43c8-ad5f-d31a6d338ee3" />
+      <TestMethod codeBase="C:\Workspace\PlantProcess-IQ\Backend\tests\PlantProcess.Infrastructure.IntegrationTests\bin\Release\net9.0\PlantProcess.Infrastructure.IntegrationTests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="PlantProcess.Infrastructure.IntegrationTests.Connectors.ExcelConnectorSmokeTests" name="ExcelConnector_should_test_file_connection" />
+    </UnitTest>
+    <UnitTest name="PlantProcess.Infrastructure.IntegrationTests.Connectors.ExcelConnectorSmokeTests.ExcelConnector_should_discover_workbook_sheets" storage="c:\workspace\plantprocess-iq\backend\tests\plantprocess.infrastructure.integrationtests\bin\release\net9.0\plantprocess.infrastructure.integrationtests.dll" id="60468e7f-2491-ad2d-973c-4ebb1e893591">
+      <Execution id="79129d05-1c88-49e2-95d8-9a02e8e84fbe" />
+      <TestMethod codeBase="C:\Workspace\PlantProcess-IQ\Backend\tests\PlantProcess.Infrastructure.IntegrationTests\bin\Release\net9.0\PlantProcess.Infrastructure.IntegrationTests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="PlantProcess.Infrastructure.IntegrationTests.Connectors.ExcelConnectorSmokeTests" name="ExcelConnector_should_discover_workbook_sheets" />
+    </UnitTest>
+    <UnitTest name="PlantProcess.Infrastructure.IntegrationTests.Database.Utf8NoBomRepositoryHygieneTests.Active_json_and_sql_files_must_be_utf8_without_bom" storage="c:\workspace\plantprocess-iq\backend\tests\plantprocess.infrastructure.integrationtests\bin\release\net9.0\plantprocess.infrastructure.integrationtests.dll" id="4648c290-c841-75a9-5ffe-f15a80ea8f66">
+      <Execution id="99c14256-7222-4a4f-a9d9-fa8f27345639" />
+      <TestMethod codeBase="C:\Workspace\PlantProcess-IQ\Backend\tests\PlantProcess.Infrastructure.IntegrationTests\bin\Release\net9.0\PlantProcess.Infrastructure.IntegrationTests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="PlantProcess.Infrastructure.IntegrationTests.Database.Utf8NoBomRepositoryHygieneTests" name="Active_json_and_sql_files_must_be_utf8_without_bom" />
+    </UnitTest>
+    <UnitTest name="PlantProcess.Infrastructure.IntegrationTests.Analytics.AdvancedResultPersistenceTests.Persists_run_and_findings_tenant_scoped_with_provenance" storage="c:\workspace\plantprocess-iq\backend\tests\plantprocess.infrastructure.integrationtests\bin\release\net9.0\plantprocess.infrastructure.integrationtests.dll" id="291591e1-690b-5d26-0f3f-d63fc7c7fe0c">
+      <Execution id="9bdf00c8-db9b-486e-bd5c-ca59071c8534" />
+      <TestMethod codeBase="C:\Workspace\PlantProcess-IQ\Backend\tests\PlantProcess.Infrastructure.IntegrationTests\bin\Release\net9.0\PlantProcess.Infrastructure.IntegrationTests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="PlantProcess.Infrastructure.IntegrationTests.Analytics.AdvancedResultPersistenceTests" name="Persists_run_and_findings_tenant_scoped_with_provenance" />
+    </UnitTest>
+    <UnitTest name="PlantProcess.Infrastructure.IntegrationTests.Demo.Phase2RealismSourceSeedTests.Realism_source_files_contain_expected_scale_and_reference_thread" storage="c:\workspace\plantprocess-iq\backend\tests\plantprocess.infrastructure.integrationtests\bin\release\net9.0\plantprocess.infrastructure.integrationtests.dll" id="ab3aaa71-7657-a4d3-1f96-15566cab69af">
+      <Execution id="781a9425-fd15-4cbb-890a-bfa1e3103b00" />
+      <TestMethod codeBase="C:\Workspace\PlantProcess-IQ\Backend\tests\PlantProcess.Infrastructure.IntegrationTests\bin\Release\net9.0\PlantProcess.Infrastructure.IntegrationTests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="PlantProcess.Infrastructure.IntegrationTests.Demo.Phase2RealismSourceSeedTests" name="Realism_source_files_contain_expected_scale_and_reference_thread" />
+    </UnitTest>
+    <UnitTest name="PlantProcess.Infrastructure.IntegrationTests.Audit.AuditLogImmutabilityTests.Audit_table_should_block_truncate" storage="c:\workspace\plantprocess-iq\backend\tests\plantprocess.infrastructure.integrationtests\bin\release\net9.0\plantprocess.infrastructure.integrationtests.dll" id="7c6e93fb-42b4-5307-7a03-9be940b3b97c">
+      <Execution id="b7cf649b-0456-4c6b-a41f-ed619e9ecc2a" />
+      <TestMethod codeBase="C:\Workspace\PlantProcess-IQ\Backend\tests\PlantProcess.Infrastructure.IntegrationTests\bin\Release\net9.0\PlantProcess.Infrastructure.IntegrationTests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="PlantProcess.Infrastructure.IntegrationTests.Audit.AuditLogImmutabilityTests" name="Audit_table_should_block_truncate" />
+    </UnitTest>
+    <UnitTest name="PlantProcess.Infrastructure.IntegrationTests.Demo.Phase2RealismSourceSeedTests.Yard_csv_trim_regression_fixture_has_no_leading_whitespace" storage="c:\workspace\plantprocess-iq\backend\tests\plantprocess.infrastructure.integrationtests\bin\release\net9.0\plantprocess.infrastructure.integrationtests.dll" id="3fc80d36-a4a6-5f81-c258-e1b68714931b">
+      <Execution id="dab87108-fc5f-408e-a00a-c5bbdbad050e" />
+      <TestMethod codeBase="C:\Workspace\PlantProcess-IQ\Backend\tests\PlantProcess.Infrastructure.IntegrationTests\bin\Release\net9.0\PlantProcess.Infrastructure.IntegrationTests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="PlantProcess.Infrastructure.IntegrationTests.Demo.Phase2RealismSourceSeedTests" name="Yard_csv_trim_regression_fixture_has_no_leading_whitespace" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="2bf59dbc-9c37-e90a-86d8-6012d603c0d7" executionId="09df9d9a-7b59-4597-ba7c-4737814035c2" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="e6bf40a1-0848-529d-d3a5-ceadfbf5fbfd" executionId="27aff49b-f076-4b29-9922-a974488c356c" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="4648c290-c841-75a9-5ffe-f15a80ea8f66" executionId="99c14256-7222-4a4f-a9d9-fa8f27345639" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="802f132e-424e-bde4-6566-d7a6cfcb6038" executionId="dfb372b9-72fc-47c9-876a-0e75d0971caf" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="291591e1-690b-5d26-0f3f-d63fc7c7fe0c" executionId="9bdf00c8-db9b-486e-bd5c-ca59071c8534" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="60468e7f-2491-ad2d-973c-4ebb1e893591" executionId="79129d05-1c88-49e2-95d8-9a02e8e84fbe" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b9376146-ce81-91f2-38b4-3a0fd2da2ed9" executionId="1ee4e15c-56e1-4e08-959f-bd9bbfa1586d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="6c5531cc-4362-65a2-00e3-c34b1ff47624" executionId="a1b504ae-b150-4823-a6aa-d939cd27877f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="8a3d9705-28d4-fbea-a6f1-d2582fd463a5" executionId="c9df4ff4-2ee7-43c8-ad5f-d31a6d338ee3" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="67730d26-411e-51ac-d0b5-bacb1edadea8" executionId="0022c3f9-877e-4ce6-8e5a-d977a47fb48b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="7c6e93fb-42b4-5307-7a03-9be940b3b97c" executionId="b7cf649b-0456-4c6b-a41f-ed619e9ecc2a" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="0f3c1eaf-133c-e806-b7b1-7674ee07531d" executionId="42292529-29d3-4dd1-9b36-3687d52be768" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ab3aaa71-7657-a4d3-1f96-15566cab69af" executionId="781a9425-fd15-4cbb-890a-bfa1e3103b00" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="8d7a1339-e74c-9cd3-670e-c552c076dacc" executionId="450d3d3b-7c13-4f43-af06-035b3e4b224f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="4075c899-5960-acfc-ac64-050c641a41da" executionId="c3124c48-e70e-4953-b67d-9291fddfdf55" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="3fc80d36-a4a6-5f81-c258-e1b68714931b" executionId="dab87108-fc5f-408e-a00a-c5bbdbad050e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="3624be73-765b-c631-7285-9110fc373b59" executionId="978f4799-9ff2-4ba8-a566-bf8de77da5f8" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="9b9253d9-54f1-0d89-f35a-11fe28541f65" executionId="383e04f5-6675-436d-99bb-8e28de6dbe25" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="72aa5c9b-3063-a2e9-b07b-31e4652605b6" executionId="36001a14-d4b0-4bdf-9381-0b067f95e241" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ecd70703-bc07-402f-6fcd-7586eff62546" executionId="8d908749-37fe-412d-99ca-608f720c61da" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ee60fd0a-eed9-7e93-3ec1-8dff79388841" executionId="5cf2d26f-4344-4e41-89f5-09f35457207e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="21" executed="19" passed="18" failed="1" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.8.2+699d445a1a (64-bit .NET 9.0.8)&#xD;
+[xUnit.net 00:00:00.78]   Discovering: PlantProcess.Infrastructure.IntegrationTests&#xD;
+[xUnit.net 00:00:01.09]   Discovered:  PlantProcess.Infrastructure.IntegrationTests&#xD;
+[xUnit.net 00:00:01.10]   Starting:    PlantProcess.Infrastructure.IntegrationTests&#xD;
+     Warning:&#xD;
+     The component "Fluent Assertions" is governed by the rules defined in the Xceed License Agreement and&#xD;
+     the Xceed Fluent Assertions Community License. You may use Fluent Assertions free of charge for&#xD;
+     non-commercial use only. An active subscription is required to use Fluent Assertions for commercial use.&#xD;
+     Please contact Xceed Sales mailto:sales@xceed.com to acquire a subscription at a very low cost.&#xD;
+     A paid commercial license supports the development and continued increasing support of&#xD;
+     Fluent Assertions users under both commercial and community licenses. Help us&#xD;
+     keep Fluent Assertions at the forefront of unit testing.&#xD;
+     For more information, visit https://xceed.com/products/unit-testing/fluent-assertions/&#xD;
+[xUnit.net 00:00:02.17]       Set PPIQ_TEST_PG_CONNSTRING to run this integration test.&#xD;
+[xUnit.net 00:00:02.18]       Set PPIQ_TEST_PG_CONNSTRING to run this integration test.&#xD;
+[xUnit.net 00:00:02.24]       Assert.Contains() Failure: Sub-string not found&#xD;
+[xUnit.net 00:00:02.24]       String:    "Y-704170,C-0044170,SLAB-504170,AREA-10,B8"···&#xD;
+[xUnit.net 00:00:02.24]       Not found: ",BAY-03,"&#xD;
+[xUnit.net 00:00:02.24]       Stack Trace:&#xD;
+[xUnit.net 00:00:02.24]         C:\Workspace\PlantProcess-IQ\Backend\tests\PlantProcess.Infrastructure.IntegrationTests\Demo\Phase2RealismSourceSeedTests.cs(54,0): at PlantProcess.Infrastructure.IntegrationTests.Demo.Phase2RealismSourceSeedTests.Yard_csv_trim_regression_fixture_has_no_leading_whitespace()&#xD;
+[xUnit.net 00:00:02.24]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+[xUnit.net 00:00:02.24]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+Test 'PlantProcess.Infrastructure.IntegrationTests.Analytics.AdvancedResultPersistenceTests.Persists_run_and_findings_tenant_scoped_with_provenance' was skipped in the test run.&#xD;
+Test 'PlantProcess.Infrastructure.IntegrationTests.Connectors.ReadOnlyEnforcementTests.PostgreSql_session_is_read_only_after_apply' was skipped in the test run.&#xD;
+[xUnit.net 00:00:09.40]   Finished:    PlantProcess.Infrastructure.IntegrationTests&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="WAP174432" outcome="Warning" timestamp="2026-06-12T20:14:12.0340481+03:00">
+        <Text>[xUnit.net 00:00:02.17]     PlantProcess.Infrastructure.IntegrationTests.Analytics.AdvancedResultPersistenceTests.Persists_run_and_findings_tenant_scoped_with_provenance [SKIP]</Text>
+      </RunInfo>
+      <RunInfo computerName="WAP174432" outcome="Warning" timestamp="2026-06-12T20:14:12.0420475+03:00">
+        <Text>[xUnit.net 00:00:02.18]     PlantProcess.Infrastructure.IntegrationTests.Connectors.ReadOnlyEnforcementTests.PostgreSql_session_is_read_only_after_apply [SKIP]</Text>
+      </RunInfo>
+      <RunInfo computerName="WAP174432" outcome="Error" timestamp="2026-06-12T20:14:12.0966167+03:00">
+        <Text>[xUnit.net 00:00:02.24]     PlantProcess.Infrastructure.IntegrationTests.Demo.Phase2RealismSourceSeedTests.Yard_csv_trim_regression_fixture_has_no_leading_whitespace [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

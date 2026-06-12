@@ -1,6 +1,7 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using PlantProcess.Application.Assistant;
 
@@ -17,7 +18,7 @@ public static class AssistantEndpoints
     {
         var group = app.MapGroup("/api/assistant").WithTags("Assistant").RequireAuthorization();
 
-        group.MapPost("/ask", async (AskRequest req, ClaimsPrincipal user, AssistantService assistant, CancellationToken ct) =>
+        group.MapPost("/ask", async ([FromBody] AskRequest req, ClaimsPrincipal user, [FromServices] AssistantService assistant, CancellationToken ct) =>
         {
             if (!TryTenant(user, out var tenantId)) return ApplicationProblems.Validation("no_tenant");
 

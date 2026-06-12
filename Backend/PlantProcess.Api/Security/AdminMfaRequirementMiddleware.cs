@@ -4,12 +4,11 @@ namespace PlantProcess.Api.Security;
 /// PPIQ_REALIZATION_T009_ADMIN_MFA_REQUIRED
 /// Enforces MFA for privileged/admin API surfaces.
 ///
-/// This middleware accepts either:
-/// - a verified MFA claim: mfa=true / amr=mfa / mfa_verified=true
+/// MFA proof is accepted from:
+/// - a verified MFA claim: mfa=true / mfa_verified=true / amr containing "mfa"
 /// - a transitional integration-test header: X-PPIQ-MFA-Verified=true
-///
-/// The test header is intentionally explicit and should be blocked at the gateway
-/// for public internet deployments if not needed.
+///   (honored ONLY outside Production; hard-blocked in Production so it can never
+///   be replayed against a live deployment)
 /// </summary>
 public sealed class AdminMfaRequirementMiddleware
 {
@@ -56,13 +55,16 @@ public sealed class AdminMfaRequirementMiddleware
             || path.StartsWith("/api/v5/enterprise-sso-scim", StringComparison.OrdinalIgnoreCase);
     }
 
-    private static bool HasMfaProof(HttpContext context)
+    private bool HasMfaProof(HttpContext context)
     {
         static bool IsTrue(string? value) =>
             string.Equals(value, "true", StringComparison.OrdinalIgnoreCase)
             || string.Equals(value, "mfa", StringComparison.OrdinalIgnoreCase);
 
-        if (IsTrue(context.Request.Headers["X-PPIQ-MFA-Verified"].FirstOrDefault()))
+        // PPIQ-T009 transitional integration-test bypass.
+        // Never honored in Production deployments.
+        if (!_environment.IsProduction()
+            && IsTrue(context.Request.Headers["X-PPIQ-MFA-Verified"].FirstOrDefault()))
             return true;
 
         foreach (var claim in context.User.Claims)

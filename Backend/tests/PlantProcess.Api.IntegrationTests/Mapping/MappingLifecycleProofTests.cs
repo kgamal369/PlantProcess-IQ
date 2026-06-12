@@ -15,8 +15,7 @@ public sealed class MappingLifecycleProofTests : AuthenticatedApiTestBase
     public MappingLifecycleProofTests(WebApplicationFactory<Program> factory) : base(factory) { }
 
     private static string Conn =>
-        Environment.GetEnvironmentVariable("PPIQ_TEST_CONNECTION_STRING")
-        ?? throw new InvalidOperationException("PPIQ_TEST_CONNECTION_STRING not set.");
+        ResolveIntegrationTestConnectionString();
 
         private static async Task<NpgsqlConnection> OpenAsync()
     {

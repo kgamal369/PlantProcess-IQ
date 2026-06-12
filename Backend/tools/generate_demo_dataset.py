@@ -245,8 +245,8 @@ def generate(seed: int, n_heats: int):
                 "yard_record_id": "Y-" + str(700000 + len(yard) + 1),
                 "coil_id": cid, "slab_id": slab_id,
                 "storage_area": "AREA-" + str(1 + (coil_counter % 13)).zfill(2),
-                "bay": "B" + str(1 + (coil_counter % 9)),
-                "position": str(1 + (coil_counter % 40)),
+                "bay": "BAY-03" if is_golden else "B" + str(1 + (coil_counter % 9)),
+                "position": "POS-17" if is_golden else str(1 + (coil_counter % 40)),
                 "received_at_utc": iso_z(pkl_exit + timedelta(hours=1)),
                 "shipped_at_utc": iso_z(pkl_exit + timedelta(days=rnd.randint(2, 20))),
             })
