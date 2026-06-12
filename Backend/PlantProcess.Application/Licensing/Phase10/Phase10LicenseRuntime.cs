@@ -18,13 +18,9 @@ namespace PlantProcess.Application.Licensing.Phase10;
 /// - Offline signed license envelope can be verified in air-gapped mode.
 /// - Tampered license payload is rejected and audited.
 /// </summary>
-public enum Phase10LicenseTier
-{
-    Lite,
-    Pro,
-    ProPlus,
-    Enterprise
-}
+// PPIQ-T08: Phase10LicenseTier retired - it duplicated the canonical LicenseTier.
+// A global using alias (GlobalUsings.T08.cs) keeps the name compiling; member
+// 'Lite' was the canonical 'Light' (the Lite/Light split was a live string bug).
 
 public enum Phase10LicenseRuntimeState
 {

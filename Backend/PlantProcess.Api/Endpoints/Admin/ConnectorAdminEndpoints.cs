@@ -1,3 +1,4 @@
+using PlantProcess.Application.Licensing.Contracts;
 using PlantProcess.Api.Extensions;
 using PlantProcess.Application.Integration.Contracts.Dtos;
 using PlantProcess.Application.Integration.Interfaces.Connectors;
@@ -21,6 +22,8 @@ public static class ConnectorAdminEndpoints
     public static IEndpointRouteBuilder MapConnectorAdminEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/admin/connectors")
+            // PPIQ-T14: license paywall - tier resolution via ILicenseService (toggle with T22 ForceTier)
+            .RequireLicenseFeature(LicenseFeature.DbLinkConfiguration)
         .WithTags("Admin - Connectors")
         .RequireAuthorization("PlantProcessDataManager");
 

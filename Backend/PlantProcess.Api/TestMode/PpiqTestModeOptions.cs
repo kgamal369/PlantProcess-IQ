@@ -22,7 +22,12 @@ public sealed class PpiqTestModeOptions
     /// <summary>Required to run ANY test-mode switch when ASPNETCORE_ENVIRONMENT=Production.</summary>
     public bool IExplicitlyAcceptRisk { get; set; } = false;
 
-    public static readonly string[] ValidTiers = { "Lite", "Pro", "ProPlus", "Enterprise" };
+    // PPIQ-T08: canonical member is 'Light' (LicenseTier.Light=1). 'Lite' is accepted as a
+    // legacy spelling and normalized so existing docs/env files keep working.
+    public static readonly string[] ValidTiers = { "Light", "Lite", "Pro", "ProPlus", "Enterprise" };
+
+    public static string NormalizeTier(string tier) =>
+        string.Equals(tier, "Lite", StringComparison.OrdinalIgnoreCase) ? "Light" : tier;
 
     public bool AnySwitchActive =>
         SeedUsers || !string.IsNullOrWhiteSpace(ForceTier);

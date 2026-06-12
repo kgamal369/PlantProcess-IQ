@@ -1,4 +1,6 @@
-﻿using System.Data;
+using PlantProcess.Application.Licensing.Contracts;
+using PlantProcess.Api.Extensions;
+using System.Data;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -13,6 +15,8 @@ public static class Phase2InvestigationEndpoints
     public static IEndpointRouteBuilder MapPhase2InvestigationEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/analytics/phase2")
+            // PPIQ-T14: license paywall - tier resolution via ILicenseService (toggle with T22 ForceTier)
+            .RequireLicenseFeature(LicenseFeature.InvestigationWorkflow)
             .WithTags("Analytics - Phase 2 Investigation")
             .RequireAuthorization("PlantProcessViewer");
 

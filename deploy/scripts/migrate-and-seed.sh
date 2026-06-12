@@ -24,7 +24,7 @@ echo "== recreating demo source containers so init scripts re-seed =="
 COMPOSE_FILE="${COMPOSE_FILE:-Infrastructure/deploy/docker-compose.demo.yml}"
 # >>> CONFIG: list your demo-source service names exactly as in the compose file:
 DEMO_SERVICES="meltshop-postgres caster-oracle hsm-oracle pkl-mssql parsytec-mysql downtime-mysql excel-qa excel-yard"
-# <<<
+# <
 docker compose -p "${COMPOSE_PROJECT:-plantprocessiq}" -f "${COMPOSE_FILE}" up -d --force-recreate ${DEMO_SERVICES} || \
   echo "WARN: adjust DEMO_SERVICES to your compose service names"
 echo "== migrate + seed done =="

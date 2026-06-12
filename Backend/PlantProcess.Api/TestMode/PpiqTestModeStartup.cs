@@ -107,7 +107,7 @@ public sealed class PpiqTestModeForceTierHostedService : IHostedService
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        var tier = _options.ForceTier!.Trim();
+        var tier = PpiqTestModeOptions.NormalizeTier(_options.ForceTier!.Trim());
 
         await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken);
         await using var tx = await connection.BeginTransactionAsync(cancellationToken);

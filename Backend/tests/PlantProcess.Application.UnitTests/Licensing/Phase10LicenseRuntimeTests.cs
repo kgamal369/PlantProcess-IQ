@@ -53,7 +53,7 @@ public sealed class Phase10LicenseRuntimeTests
         var now = new DateTimeOffset(2026, 6, 9, 12, 0, 0, TimeSpan.Zero);
 
         var decision = Phase10LicenseLifecycleEngine.Evaluate(new Phase10LicenseLifecycleRequest(
-            Phase10LicenseTier.Lite,
+            Phase10LicenseTier.Light,
             now.AddDays(-45),
             now,
             GraceDays: 30,

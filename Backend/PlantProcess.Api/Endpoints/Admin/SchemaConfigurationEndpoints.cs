@@ -30,6 +30,8 @@ public static class SchemaConfigurationEndpoints
     public static IEndpointRouteBuilder MapSchemaConfigurationEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/admin/schema-configuration")
+            // PPIQ-T14: license paywall - tier resolution via ILicenseService (toggle with T22 ForceTier)
+            .RequireLicenseFeature(LicenseFeature.SchemaSqlViewBuilder)
         .WithTags("Admin - Schema Configuration")
         .RequireAuthorization("PlantProcessDataManager");
 

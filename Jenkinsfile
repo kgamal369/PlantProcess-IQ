@@ -3,7 +3,7 @@
 // SEQUENCE (agreed go-live definition - NOTHING else):
 //   checkout -> sweep stale -> dotnet test (BLOCK) -> npm test (BLOCK) -> npm e2e (BLOCK)
 //   -> migrate app + demo DBs -> seed demo data -> build + recreate canonical stack
-// Guard test (T05) parses this file: do NOT add catchError(SUCCESS) or --list anywhere.
+// Guard test (T05) parses this file: do NOT add catchError(SUCCESS) or enumeration flags.
 // =====================================================================================
 pipeline {
   agent any

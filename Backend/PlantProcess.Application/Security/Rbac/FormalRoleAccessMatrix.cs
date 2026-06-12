@@ -21,6 +21,11 @@ public enum FormalPlantRole
     Developer
 }
 
+/// <summary>
+/// PPIQ-T08: NOT a license tier. CommercialTier is the RBAC packaging axis
+/// (Starter/Professional/Enterprise/Developer) used by the formal role-access matrix.
+/// The product license model is LicenseTier (Light/Pro/ProPlus/Enterprise) - do not merge.
+/// </summary>
 public enum CommercialTier
 {
     Starter,

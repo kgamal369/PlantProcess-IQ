@@ -4,7 +4,7 @@
 API_SERVICE="app-api"
 WEB_SERVICE="app-web"
 DB_SERVICE="postgres"
-# <<<
+# <
 set -euo pipefail
 COMPOSE_FILE="${COMPOSE_FILE:-Infrastructure/deploy/docker-compose.demo.yml}"
 FRONTEND_DIR="${FRONTEND_DIR:-Frontend/PlantProcess.Web}"
