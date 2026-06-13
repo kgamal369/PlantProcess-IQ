@@ -417,10 +417,10 @@ public static class StartupConfigurationValidator
 
         if (signingKey.Contains("DEV_ONLY", StringComparison.OrdinalIgnoreCase) ||
             signingKey.Contains("CHANGE_THIS", StringComparison.OrdinalIgnoreCase) ||
-            signingKey.Length < 32)
+            signingKey.Length < 64)
         {
             errors.Add(
-                "Production PlantProcess:Auth:SigningKey must be a strong non-development key with at least 32 characters.");
+                "Production PlantProcess:Auth:SigningKey must be a strong non-development key with at least 64 characters.");
         }
 
         if (!string.IsNullOrWhiteSpace(bootstrapPassword) &&

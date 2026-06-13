@@ -1,4 +1,4 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc;
@@ -180,6 +180,34 @@ public static class PageDefinitionEndpoints
         await using var connection = (NpgsqlConnection)db.Database.GetDbConnection();
         await EnsureOpenAsync(connection, cancellationToken);
 
+        if (normalized.ExpectedVersion is int expectedVersion)
+        {
+            await using var conflictCheck = new NpgsqlCommand(
+                "SELECT version, owner_user_name, updated_at_utc FROM page_definitions " +
+                "WHERE tenant_id = @tenant AND slug = @slug AND owner_user_name = @owner AND is_deleted = false",
+                connection);
+            conflictCheck.Parameters.AddWithValue("tenant", tenant);
+            conflictCheck.Parameters.AddWithValue("slug", normalized.Slug);
+            conflictCheck.Parameters.AddWithValue("owner", owner);
+            await using var conflictReader = await conflictCheck.ExecuteReaderAsync(cancellationToken);
+            if (await conflictReader.ReadAsync(cancellationToken))
+            {
+                var currentVersion = conflictReader.GetInt32(0);
+                if (currentVersion != expectedVersion)
+                {
+                    var editorUser = conflictReader.GetString(1);
+                    var updatedAtUtc = conflictReader.GetDateTime(2);
+                    return Results.Json(new
+                    {
+                        code = "page_version_conflict",
+                        message = "This page was changed by " + editorUser + " since you opened it.",
+                        currentVersion,
+                        editor = editorUser,
+                        updatedAtUtc,
+                    }, statusCode: 409);
+                }
+            }
+        }
         await using var command = new NpgsqlCommand(
             """
             UPDATE page_definitions
@@ -419,7 +447,8 @@ public sealed record UpsertPageDefinitionRequest(
     string Title,
     string Visibility,
     JsonElement LayoutJson,
-    JsonElement WidgetBindingsJson);
+    JsonElement WidgetBindingsJson,
+    int? ExpectedVersion = null);
 
 public sealed record PageDeleteResponse(bool Deleted);
 

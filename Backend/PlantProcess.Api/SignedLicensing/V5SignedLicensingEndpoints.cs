@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Hosting;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -51,8 +52,15 @@ public static class V5SignedLicensingEndpoints
             [FromBody] CreateDevLicenseRequest request,
             NpgsqlDataSource dataSource,
             HttpContext http,
+            IHostEnvironment hostEnvironment,
             CancellationToken cancellationToken) =>
         {
+            // P2-T01: dev-only license minting. Never expose outside Development.
+            if (!hostEnvironment.IsDevelopment())
+            {
+                return Results.NotFound();
+            }
+
             var tenantId = ResolveTenantId(http);
 
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);

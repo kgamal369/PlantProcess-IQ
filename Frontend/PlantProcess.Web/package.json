@@ -16,6 +16,7 @@
                     "check:ts":  "tsc -b --verbose",
                     "size-check":  "node scripts/check-bundle-size.mjs",
                     "contract:api":  "vitest run src/api/legacy/__tests__/plantProcessApi.contract.test.ts --config vitest.config.ts",
+                    "verify:no-dead-buttons": "node ../../scripts/dead-button-scan.mjs src DEAD_BUTTON_INVENTORY.md",
                     "verify:no-hardcoded": "node ../../scripts/verify-no-hardcoded-demo-pages.mjs src",
     "language:audit":  "node scripts/audit-language.mjs",
                     "qa:hardening":  "playwright test e2e/hardening-matrix.spec.ts e2e/widget-builder-focused.spec.ts e2e/admin-db-focused.spec.ts e2e/admin-schema-focused.spec.ts",

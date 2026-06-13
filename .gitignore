@@ -91,3 +91,5 @@ docs/.ground_truth_backup/
 # PPIQ helper-script edit backups (never commit)
 .ppiq-script-backups/
 **/_legacy_consolidated_*/
+
+Website/PlantProcess.Website/node_modules/
