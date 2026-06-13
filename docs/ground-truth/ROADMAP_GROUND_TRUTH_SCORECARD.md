@@ -1,3 +1,7 @@
+> [!WARNING]
+> NOT A READINESS MEASURE. The percentages below are an ARTIFACT-PRESENCE heuristic
+> (does a file/marker exist per phase), not a functional verification. Treat this as a
+> coverage index, never as runtime readiness.
 # PlantProcess IQ Roadmap Ground Truth Validation
 
 Generated/Repaired: 2026-06-06T09:17:22.718Z

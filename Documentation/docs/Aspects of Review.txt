@@ -11,6 +11,9 @@ Aspect for developer
 6. code generic (for every customer for any plant for any routing , any product, for any domain , dynaminc )
 7. able to expand without been fragile 
 8. code structure is in order sustablble same structure for every thing 
+9.Fix the pipe line and deployment to be stable where pipeline only ( run dotnet test and npm run test , npm run e2e , then mirgrate main Postgres DB and demo DB and seeding the data only nothing else )
+10.now I have a lot of layer of Authenication and user and license are applied , during my test local and on the server I can't test easily due to that , where some time my user don't have lincense or not Authnencated , I want to have some run setting in local and on server where I can test all different settings easliy
+
 
 
 Engineer customer 

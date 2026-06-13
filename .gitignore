@@ -76,3 +76,11 @@ deploy/.env
 deploy/compose/.env
 
 .local-secrets/
+
+# H2: committed legacy backups must never be tracked again
+deploy/_legacy_consolidated_*/
+tools/_archive/
+tools/archive/
+
+# H2b: ground-truth backup must never be tracked
+docs/.ground_truth_backup/

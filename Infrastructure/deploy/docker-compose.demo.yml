@@ -10,8 +10,7 @@
 #       never touched by a deploy. Do NOT run a bare `docker compose up` that
 #       includes ppiq-postgres on the server unless you have verified the volume.
 # ============================================================================
-name: ppiq-demo
-
+name: plantprocessiq
 services:
 
   ppiq-postgres:
@@ -34,68 +33,98 @@ services:
       timeout: 5s
       retries: 12
 
-  plantprocess-api:
+  ppiq-app-api:
     build:
       context: ../../Backend
       dockerfile: PlantProcess.Api/Dockerfile
-    image: plantprocess-api:latest
-    container_name: plantprocess-api
+    image: ppiq-app-api:latest
+    container_name: ppiq-app-api
     restart: unless-stopped
+    env_file:
+      - ../../deploy/compose/.env
     environment:
       ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://0.0.0.0:5063
       # The API image listens on :5063 (Backend/PlantProcess.Api/Dockerfile).
-      # If your running Caddy reverse-proxies to plantprocess-api:8080 instead,
+      # If your running Caddy reverse-proxies to ppiq-app-api:8080 instead,
       # uncomment the next line so the container listens where Caddy expects:
       # ASPNETCORE_URLS: http://0.0.0.0:8080
-      ConnectionStrings__DefaultConnection: "Host=ppiq-postgres;Port=5432;Database=${POSTGRES_DB:-plantprocess_app_db};Username=${POSTGRES_USER:-plantprocess_admin};Password=${POSTGRES_PASSWORD}"
+      ConnectionStrings__PlantProcessDb: "Host=${PPIQ_DB_HOST:-ppiq-postgres};Port=${POSTGRES_PORT:-5432};Database=${POSTGRES_DB:-plantprocess_app_db};Username=${POSTGRES_USER:-plantprocess_admin};Password=${POSTGRES_PASSWORD}"
     depends_on:
       ppiq-postgres:
         condition: service_healthy
     networks:
       - ppiq-network
 
-  plantprocess-workers:
+  ppiq-app-workers:
     build:
       context: ../../Backend
       dockerfile: PlantProcess.Workers/Dockerfile
-    image: plantprocess-workers:latest
-    container_name: plantprocess-workers
+    image: ppiq-app-workers:latest
+    container_name: ppiq-app-workers
     restart: unless-stopped
+    env_file:
+      - ../../deploy/compose/.env
     environment:
       DOTNET_ENVIRONMENT: Production
-      ConnectionStrings__DefaultConnection: "Host=ppiq-postgres;Port=5432;Database=${POSTGRES_DB:-plantprocess_app_db};Username=${POSTGRES_USER:-plantprocess_admin};Password=${POSTGRES_PASSWORD}"
+      ConnectionStrings__PlantProcessDb: "Host=${PPIQ_DB_HOST:-ppiq-postgres};Port=${POSTGRES_PORT:-5432};Database=${POSTGRES_DB:-plantprocess_app_db};Username=${POSTGRES_USER:-plantprocess_admin};Password=${POSTGRES_PASSWORD}"
     depends_on:
       ppiq-postgres:
         condition: service_healthy
     networks:
       - ppiq-network
 
-  plantprocess-app-web:
+  ppiq-app-web:
     build:
       context: ../../Frontend/PlantProcess.Web
       dockerfile: Dockerfile
       args:
         VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/api}
-    image: plantprocess-app-web:latest
-    container_name: plantprocess-app-web
+    image: ppiq-app-web:latest
+    container_name: ppiq-app-web
     restart: unless-stopped
     depends_on:
-      - plantprocess-api
+      - ppiq-app-api
     networks:
       - ppiq-network
 
-  plantprocess-website:
+  ppiq-website-web:
     build:
       context: ../../Website/PlantProcess.Website
       dockerfile: Dockerfile
       args:
         VITE_WEBSITE_API_BASE_URL: ${VITE_WEBSITE_API_BASE_URL:-/api}
-    image: plantprocess-website:latest
-    container_name: plantprocess-website
+    image: ppiq-website-web:latest
+    container_name: ppiq-website-web
     restart: unless-stopped
     networks:
       - ppiq-network
 
+  ppiq-caddy:
+    image: caddy:2-alpine
+    container_name: ppiq-caddy
+    restart: unless-stopped
+    depends_on:
+      - ppiq-app-api
+      - ppiq-app-web
+      - ppiq-website-web
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      SITE_HOST: ${SITE_HOST:-localhost}
+      WEBSITE_HOST: ${WEBSITE_HOST:-website.localhost}
+      ACME_EMAIL: ${ACME_EMAIL:-admin@example.invalid}
+      CADDY_AUTO_HTTPS: ${CADDY_AUTO_HTTPS:-off}
+      PPIQ_API_UPSTREAM: ${PPIQ_API_UPSTREAM:-ppiq-app-api:5063}
+      PPIQ_APP_UPSTREAM: ${PPIQ_APP_UPSTREAM:-ppiq-app-web:80}
+      PPIQ_WEBSITE_UPSTREAM: ${PPIQ_WEBSITE_UPSTREAM:-ppiq-website-web:80}
+    volumes:
+      - ../../deploy/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ppiq-caddy-data:/data
+      - ppiq-caddy-config:/config
+    networks:
+      - ppiq-network
 networks:
   ppiq-network:
     name: ppiq-network
@@ -103,3 +132,7 @@ networks:
 volumes:
   ppiq-postgres-data:
     name: ppiq-postgres-data
+  ppiq-caddy-data:
+    name: ppiq-caddy-data
+  ppiq-caddy-config:
+    name: ppiq-caddy-config

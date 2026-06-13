@@ -43,7 +43,15 @@ pipeline {
     stage('3. Backend tests - BLOCKING') {
       steps {
         // T05 guard asserts this exact invocation exists and is not wrapped.
-        sh 'dotnet test Backend --nologo'
+        sh '''
+          set -euo pipefail
+          PPIQ_TEST_CONNECTION_STRING="$(bash deploy/scripts/ci-test-db.sh up)"
+          export PPIQ_TEST_CONNECTION_STRING
+          export PPIQ_TEST_PG_CONNSTRING="${PPIQ_TEST_CONNECTION_STRING}"
+          export ConnectionStrings__PlantProcessDb="${PPIQ_TEST_CONNECTION_STRING}"
+          trap 'bash deploy/scripts/ci-test-db.sh down' EXIT
+          dotnet test Backend --nologo
+        '''
       }
     }
 

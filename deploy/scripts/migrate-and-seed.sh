@@ -12,7 +12,10 @@ DB_NAME="${POSTGRES_DB:?POSTGRES_DB missing from .env}"
 
 echo "== applying numbered SQL scripts (idempotent) to ${DB_NAME} =="
 shopt -s nullglob
-for f in Backend/Database/Scripts/*.sql; do
+SQL_DIR="Backend/database/scripts"
+SQL_FILES=( "${SQL_DIR}"/*.sql )
+[ ${#SQL_FILES[@]} -gt 0 ] || { echo "FATAL: no .sql files found in ${SQL_DIR} (wrong path/case?)"; exit 1; }
+for f in "${SQL_FILES[@]}"; do
   echo "  -> ${f}"
   docker exec -i "${DB_CONTAINER}" psql -v ON_ERROR_STOP=1 -U "${DB_USER}" -d "${DB_NAME}" < "${f}"
 done
@@ -25,6 +28,8 @@ COMPOSE_FILE="${COMPOSE_FILE:-Infrastructure/deploy/docker-compose.demo.yml}"
 # >>> CONFIG: list your demo-source service names exactly as in the compose file:
 DEMO_SERVICES="meltshop-postgres caster-oracle hsm-oracle pkl-mssql parsytec-mysql downtime-mysql excel-qa excel-yard"
 # <
-docker compose -p "${COMPOSE_PROJECT:-plantprocessiq}" -f "${COMPOSE_FILE}" up -d --force-recreate ${DEMO_SERVICES} || \
-  echo "WARN: adjust DEMO_SERVICES to your compose service names"
+DEMO_SOURCES_FILE="${DEMO_SOURCES_FILE:-deploy/compose/docker-compose.demo-sources.yml}"
+DEMO_SOURCES_PORTS="${DEMO_SOURCES_PORTS:-deploy/compose/docker-compose.demo-sources.ports.yml}"
+DEMO_SOURCES_PROJECT="${DEMO_SOURCES_PROJECT:-plantprocessiq-demo-sources}"
+docker compose -p "${DEMO_SOURCES_PROJECT}" -f "${DEMO_SOURCES_FILE}" -f "${DEMO_SOURCES_PORTS}" up -d --force-recreate ${DEMO_SERVICES}
 echo "== migrate + seed done =="

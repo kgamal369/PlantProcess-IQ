@@ -4,7 +4,9 @@
 set -euo pipefail
 COMPOSE_PROJECT="${COMPOSE_PROJECT:-plantprocessiq}"
 COMPOSE_FILE="${COMPOSE_FILE:-Infrastructure/deploy/docker-compose.demo.yml}"
-HEALTH_URL="${HEALTH_URL:-http://127.0.0.1:8080/health}"
+HEALTH_NETWORK="${HEALTH_NETWORK:-ppiq-network}"
+HEALTH_TARGET="${HEALTH_TARGET:-http://ppiq-app-api:5063/health}"
+HEALTH_CURL_IMAGE="${HEALTH_CURL_IMAGE:-curlimages/curl:8.10.1}"
 
 echo "== tagging current images as :previous (rollback anchors) =="
 for img in $(docker compose -p "${COMPOSE_PROJECT}" -f "${COMPOSE_FILE}" config --images | sort -u); do
@@ -20,7 +22,7 @@ docker compose -p "${COMPOSE_PROJECT}" -f "${COMPOSE_FILE}" up -d --remove-orpha
 echo "== health gate: ${HEALTH_URL} =="
 ok=0
 for i in $(seq 1 45); do
-  code=$(curl -ks -o /dev/null -w '%{http_code}' "${HEALTH_URL}" || true)
+  code=$(docker run --rm --network "${HEALTH_NETWORK}" "${HEALTH_CURL_IMAGE}" -ks -o /dev/null -w '%{http_code}' "${HEALTH_TARGET}" 2>/dev/null || true)
   [ "$code" = "200" ] && ok=1 && break
   sleep 2
 done

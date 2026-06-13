@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # T02 stage 5: bring up an EPHEMERAL ppiq-ci stack, run Playwright, tear down. BLOCKING.
 # >>> CONFIG - set once to your compose service names (docker compose config --services):
-API_SERVICE="app-api"
-WEB_SERVICE="app-web"
-DB_SERVICE="postgres"
+API_SERVICE="ppiq-app-api"
+WEB_SERVICE="ppiq-app-web"
+DB_SERVICE="ppiq-postgres"
 # <
 set -euo pipefail
 COMPOSE_FILE="${COMPOSE_FILE:-Infrastructure/deploy/docker-compose.demo.yml}"
