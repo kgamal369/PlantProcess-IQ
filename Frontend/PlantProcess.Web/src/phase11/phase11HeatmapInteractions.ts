@@ -78,3 +78,13 @@ export function filterAndSortHeatmap(
 export function chartSeriesSignature(points: Phase11HeatmapCell[]) {
   return points.map((point) => `${point.id}:${point.bucket}:${point.value}`).join("|");
 }
+
+/** P5-T01/T05: underlying records for a drilled heatmap cell - every point sharing the cell's row/group. */
+export function pointsInGroup(points: Phase11HeatmapPoint[], group: string): Phase11HeatmapPoint[] {
+  return points.filter((point) => point.group === group);
+}
+
+/** P5-T01/T05: population N for a rendered cell set. A3 requires N to be stated on every surface. */
+export function populationCount(points: { length: number }): number {
+  return points.length;
+}

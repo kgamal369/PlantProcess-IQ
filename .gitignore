@@ -87,3 +87,7 @@ docs/.ground_truth_backup/
 
 # Phase 7 in-place edit backups (never commit)
 .phase7-backups/
+
+# PPIQ helper-script edit backups (never commit)
+.ppiq-script-backups/
+**/_legacy_consolidated_*/

@@ -15,3 +15,9 @@ Rules:
 1. New `SkippableFact`/`Skip=` usages MUST add a row here in the same PR.
 2. A skip that fires in CI (where DB + sources exist) is a failure, not a skip - investigate.
 3. Never use a skip to hide a regression; that was the T03 anti-pattern this register closes out.
+## Hygiene contract (Phase 3)
+- No committed `*.bak_*` files, `_legacy_*` folders, or `.runtime`/`.generated` shim siblings.
+- No component file may be a thin (< 10-line) re-export fronting a sibling.
+- Enforced by: `scripts/hygiene-check.mjs` (Jenkins stage '2z. Hygiene gate'),
+  `Frontend/PlantProcess.Web/src/test/architecture/{noDebris,noThinReExports}.test.ts`,
+  and the T-041 Golden-Rule scanner `scripts/verify-no-hardcoded-demo-pages.mjs`.

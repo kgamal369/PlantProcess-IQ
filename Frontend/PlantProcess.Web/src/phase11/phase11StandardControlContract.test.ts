@@ -22,7 +22,7 @@ describe("Phase 11 standard control contract", () => {
 
   it("T-064 allows native controls only in standard/generated/test boundaries", () => {
     expect(isNativeControlAllowedInNewCode("src/components/standard/StandardButton.tsx")).toBe(true);
-    expect(isNativeControlAllowedInNewCode("src/AppRoutes.generated.tsx")).toBe(true);
+    expect(isNativeControlAllowedInNewCode("src/example.generated.tsx")).toBe(true);
     expect(isNativeControlAllowedInNewCode("src/pages/MaterialInvestigationPage.tsx")).toBe(false);
   });
 });

@@ -23,14 +23,14 @@ export const phase56RefactorTargets: Phase56RefactorTarget[] = [
   },
   {
     taskId: 'T-037',
-    source: 'src/pages/Admin/AdminDbConfigurationTab.implementation.tsx',
+    source: 'src/pages/Admin/AdminDbConfigurationTab.tsx',
     targetModule: 'src/pages/Admin/db-configuration/',
     status: 'protected',
     rationale: 'Admin DB tab section split target is tracked without changing runtime behavior in this safe installer.'
   },
   {
     taskId: 'T-037',
-    source: 'src/pages/MaterialAnalytics/MaterialAnalyticsPages.implementation.tsx',
+    source: 'src/pages/MaterialAnalytics/MaterialAnalyticsPages.tsx',
     targetModule: 'src/pages/MaterialAnalytics/sections/',
     status: 'protected',
     rationale: 'Material analytics section split target is tracked by regression and file-size gates.'

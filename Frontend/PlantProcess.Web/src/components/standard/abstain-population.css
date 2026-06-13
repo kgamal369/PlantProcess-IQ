@@ -1,0 +1,24 @@
+.ppiq-population-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.1rem 0.5rem;
+  border: 1px solid rgba(0, 212, 255, 0.35);
+  border-radius: 999px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.75rem;
+  color: #00d4ff;
+  background: rgba(0, 212, 255, 0.06);
+  white-space: nowrap;
+}
+.ppiq-abstain-panel {
+  border: 1px solid rgba(255, 176, 32, 0.4);
+  border-left: 3px solid #ffb020;
+  border-radius: 8px;
+  padding: 0.85rem 1rem;
+  background: rgba(255, 176, 32, 0.06);
+  color: #e6edf7;
+}
+.ppiq-abstain-title { display: block; color: #ffb020; font-size: 0.95rem; }
+.ppiq-abstain-reason { margin: 0.4rem 0 0; font-size: 0.85rem; }
+.ppiq-abstain-note { margin: 0.5rem 0 0; font-size: 0.78rem; color: #9fb0c3; }
