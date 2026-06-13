@@ -1,4 +1,4 @@
-import { DemoAnalyticsAdminPage } from "../DemoAnalytics/DemoAnalyticsPages";
+import { DemoAnalyticsAdminPage } from "../PlatformOps/DemoAnalyticsPages";
 
 export function AdminPageContent() {
   return <DemoAnalyticsAdminPage />;

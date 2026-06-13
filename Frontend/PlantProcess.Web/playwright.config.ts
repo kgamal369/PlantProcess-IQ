@@ -174,5 +174,19 @@ export default defineConfig({
         ...devices["Desktop Chrome"],
       },
     },
-  ],
+    {
+      name: "firefox",
+      testMatch: /visual\.spec\.ts$/,
+      use: { ...devices["Desktop Firefox"] },
+    },
+    {
+      name: "chromium-tablet",
+      testMatch: /visual\.spec\.ts$/,
+      use: { ...devices["Desktop Chrome"], viewport: { width: 768, height: 1024 } },
+    },
+    {
+      name: "firefox-tablet",
+      testMatch: /visual\.spec\.ts$/,
+      use: { ...devices["Desktop Firefox"], viewport: { width: 768, height: 1024 } },
+    },  ],
 });

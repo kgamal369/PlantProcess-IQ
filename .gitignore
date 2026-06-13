@@ -84,3 +84,6 @@ tools/archive/
 
 # H2b: ground-truth backup must never be tracked
 docs/.ground_truth_backup/
+
+# Phase 7 in-place edit backups (never commit)
+.phase7-backups/

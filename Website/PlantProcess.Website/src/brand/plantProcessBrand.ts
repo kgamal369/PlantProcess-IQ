@@ -3,7 +3,7 @@ export const plantProcessBrand = {
   companyName: "SOU Industrial Intelligence",
   founderLocation: "Düsseldorf, Germany",
   marketFocus: "EU / MENA industrial plants",
-  tagline: "Connect plant data. Understand your process. Act with evidence.",
+  tagline: "Connect Your Plant Data. Understand Your Process.",
   shortPositioning:
     "A read-only manufacturing intelligence layer for process-to-quality investigation.",
   longPositioning:

@@ -4,6 +4,9 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "validate:phase7": "node scripts/validate-phase7-content.mjs",
+    "check:tagline": "node scripts/check-tagline.mjs",
+    "test:phase7": "playwright test --config playwright.phase7.config.ts",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",

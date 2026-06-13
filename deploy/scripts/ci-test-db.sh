@@ -28,6 +28,9 @@ case "${ACTION}" in
     for f in "${SQL_FILES[@]}"; do
       docker exec -i "${CT}" psql -v ON_ERROR_STOP=1 -U "${DBUSER}" -d "${DBNAME}" < "${f}" >/dev/null
     done
+    # PPIQ-T07: the same DB carries script 096 audit triggers; callers export
+    #          PPIQ_AUDIT_TRIGGER_TEST_CONNECTION="${CONN}" to run the immutability suite.
+    echo "AUDIT trigger DB ready" >&2
     echo "${CONN}"
     ;;
   down)

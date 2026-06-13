@@ -22,8 +22,11 @@ const srcRoot = process.argv[2] || "Frontend/PlantProcess.Web/src";
 // Hardcoded demo-page module path fragments that must NOT be imported/routed.
 // (Normalised to forward slashes before matching.)
 const DENY_PATH_FRAGMENTS = [
-  "pages/DemoAnalytics",
-  "pages/DemoLifecycle",
+  // Customer demo CONTENT must be HMI-authored (PageDefinition -> DynamicPage at /pages/:slug),
+  // never a coded React route. Any module under pages/Demo* is a Golden-Rule violation.
+  // (Platform/operator surfaces - reset console, evidence/compiler, suggestions - were reclassified
+  //  to pages/PlatformOps; they are not customer demo content.)
+  "pages/Demo",
 ];
 
 // Modules that look demo-ish but are legitimate (the dynamic renderer, contexts).

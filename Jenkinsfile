@@ -49,6 +49,7 @@ pipeline {
           export PPIQ_TEST_CONNECTION_STRING
           export PPIQ_TEST_PG_CONNSTRING="${PPIQ_TEST_CONNECTION_STRING}"
           export ConnectionStrings__PlantProcessDb="${PPIQ_TEST_CONNECTION_STRING}"
+          export PPIQ_AUDIT_TRIGGER_TEST_CONNECTION="${PPIQ_TEST_CONNECTION_STRING}"
           trap 'bash deploy/scripts/ci-test-db.sh down' EXIT
           dotnet test Backend --nologo
         '''
