@@ -45,7 +45,6 @@ import { OperationProgressPanel } from "@/components/inspection/OperationProgres
 import { SaveInspectionJobModal } from "@/components/inspection/SaveInspectionJobModal";
 import * as tokens from "@/components/standard/tokens";
 import "./productModule56-standard.css";
-import { AnalysisHonestyBar } from "../../components/standard/AnalysisHonestyBar";
 
 type Row = Record<string, unknown>;
 
@@ -581,7 +580,6 @@ export function MaterialAnalyticsRiskIntelligencePage() {
         </>
       }
     >
-      <AnalysisHonestyBar population={highRisk.length} />
       <div className="productModule56-grid productModule56-grid--3">
         <Metric title="Risk Class" value={<Chip value={riskClass} />} note="Selected risk filter" icon={<ShieldCheck size={20} />} />
         <Metric title="Materials" value={highRisk.length} note="Materials in risk scope" icon={<Workflow size={20} />} />

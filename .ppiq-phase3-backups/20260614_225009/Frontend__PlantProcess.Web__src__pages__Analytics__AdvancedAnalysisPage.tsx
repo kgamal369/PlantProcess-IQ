@@ -91,7 +91,6 @@ export function AdvancedAnalysisPage() {
 
   return (
     <div>
-      <AnalysisHonestyBar population={contributors.length + excluded.length} excluded={excluded.length} blocked={blocked} />
       <StandardCard
         eyebrow="Advanced analysis · doctrine §7.4"
         title={`Suspected contributors — ${outcomeKey}`}
