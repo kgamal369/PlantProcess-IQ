@@ -1,3 +1,4 @@
+using Xunit;
 using System.Text.Json;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -12,7 +13,7 @@ public sealed class OpenApiContractTests : AuthenticatedApiTestBase
     {
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task Swagger_document_should_be_generated_in_development_or_test_mode()
     {
         using var client = await CreateAuthenticatedClientAsync();
@@ -34,7 +35,7 @@ public sealed class OpenApiContractTests : AuthenticatedApiTestBase
             .NotBeEmpty("Swagger paths must not be empty");
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task Swagger_document_should_include_critical_endpoint_groups()
     {
         using var client = await CreateAuthenticatedClientAsync();

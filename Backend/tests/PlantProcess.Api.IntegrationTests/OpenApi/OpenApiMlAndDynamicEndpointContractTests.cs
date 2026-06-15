@@ -1,3 +1,4 @@
+using Xunit;
 using System.Text.Json;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -12,7 +13,7 @@ public sealed class OpenApiMlAndDynamicEndpointContractTests : AuthenticatedApiT
     {
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task Swagger_document_should_include_ml_learning_and_dynamic_page_surfaces()
     {
         using var client = await CreateAuthenticatedClientAsync();

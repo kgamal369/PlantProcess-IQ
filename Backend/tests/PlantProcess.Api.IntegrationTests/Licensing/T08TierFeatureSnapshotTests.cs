@@ -21,7 +21,7 @@ public sealed class T08TierFeatureSnapshotTests
         return (IReadOnlyDictionary<LicenseFeature, LicenseTier>)field!.GetValue(null)!;
     }
 
-    [Theory]
+    [SkippableTheory]
     [InlineData(LicenseFeature.WidgetScriptLayer,       LicenseTier.ProPlus)]
     [InlineData(LicenseFeature.OpcUaHistorianConnector, LicenseTier.Enterprise)]
     [InlineData(LicenseFeature.SchemaSqlViewBuilder,    LicenseTier.Pro)]
@@ -35,7 +35,7 @@ public sealed class T08TierFeatureSnapshotTests
         Assert.Equal(expectedMinimum, Map()[feature]);
     }
 
-    [Fact]
+    [SkippableFact]
     public void Every_license_feature_has_a_tier_mapping()
     {
         var map = Map();

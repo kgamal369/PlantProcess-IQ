@@ -1,3 +1,4 @@
+using Xunit;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -15,7 +16,7 @@ public sealed class AuthGateMatrixTests : AuthenticatedApiTestBase
     {
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task Login_gate_should_reject_empty_payload()
     {
         using var client = CreateAnonymousClient();
@@ -27,7 +28,7 @@ public sealed class AuthGateMatrixTests : AuthenticatedApiTestBase
             .BeOneOf(HttpStatusCode.BadRequest, HttpStatusCode.Unauthorized);
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task Login_gate_should_reject_wrong_password()
     {
         using var client = CreateAnonymousClient();
@@ -43,7 +44,7 @@ public sealed class AuthGateMatrixTests : AuthenticatedApiTestBase
             .BeOneOf(HttpStatusCode.BadRequest, HttpStatusCode.Unauthorized);
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task Login_gate_should_issue_admin_token_with_expected_claim_surface()
     {
         using var client = CreateAnonymousClient();
@@ -72,7 +73,7 @@ public sealed class AuthGateMatrixTests : AuthenticatedApiTestBase
             .Contain("source.configure");
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task Protected_admin_endpoint_should_reject_anonymous_user()
     {
         using var client = CreateAnonymousClient();
@@ -84,7 +85,7 @@ public sealed class AuthGateMatrixTests : AuthenticatedApiTestBase
             .BeOneOf(HttpStatusCode.Unauthorized, HttpStatusCode.Forbidden);
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task Protected_admin_endpoint_should_accept_admin_token()
     {
         using var client = await CreateAuthenticatedClientAsync();
@@ -94,7 +95,7 @@ public sealed class AuthGateMatrixTests : AuthenticatedApiTestBase
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task Malformed_bearer_token_should_not_be_accepted()
     {
         using var client = CreateAnonymousClient();

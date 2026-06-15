@@ -18,7 +18,7 @@ public sealed class T10DuplicateRouteContractTests : IClassFixture<WebApplicatio
 
     public T10DuplicateRouteContractTests(WebApplicationFactory<Program> factory) => _factory = factory;
 
-    [Fact]
+    [SkippableFact]
     public void No_route_pattern_and_method_is_registered_twice()
     {
         using var scope = _factory.Services.CreateScope();

@@ -14,7 +14,7 @@ public sealed class Phase2DemoLifecycleContractTests : AuthenticatedApiTestBase
     {
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task Demo_lifecycle_exposes_complete_customer_journey_steps()
     {
         using var client = await CreateAuthenticatedClientAsync();
@@ -44,7 +44,7 @@ public sealed class Phase2DemoLifecycleContractTests : AuthenticatedApiTestBase
         Assert.Contains("No trained production model is active", json);
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task Demo_reset_endpoint_returns_controlled_status_or_authorization_boundary()
     {
         using var client = await CreateAuthenticatedClientAsync();

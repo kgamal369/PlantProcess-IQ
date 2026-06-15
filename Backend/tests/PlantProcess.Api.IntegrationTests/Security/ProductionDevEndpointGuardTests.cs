@@ -5,7 +5,7 @@ namespace PlantProcess.Api.IntegrationTests.Security;
 
 public sealed class ProductionDevEndpointGuardTests
 {
-    [Fact]
+    [SkippableFact]
     public void Program_maps_dev_seed_endpoints_only_inside_development_gate()
     {
         var root = FindRepoRoot();

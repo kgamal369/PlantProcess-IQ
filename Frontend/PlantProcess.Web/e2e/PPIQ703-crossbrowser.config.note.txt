@@ -1,0 +1,9 @@
+// PPIQ-703: add WebKit + the 375/768/1440 viewports to playwright.config.ts `projects`:
+//
+//   { name: "chromium-375",  use: { ...devices["Desktop Chrome"], viewport: { width: 375,  height: 812 } } },
+//   { name: "chromium-768",  use: { ...devices["Desktop Chrome"], viewport: { width: 768,  height: 1024 } } },
+//   { name: "chromium-1440", use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 } } },
+//   { name: "firefox-1440",  use: { ...devices["Desktop Firefox"], viewport: { width: 1440, height: 900 } } },
+//   { name: "webkit-1440",   use: { ...devices["Desktop Safari"],  viewport: { width: 1440, height: 900 } } },
+//
+// and run the demo path over both http and https base URLs (env BASE_URL).

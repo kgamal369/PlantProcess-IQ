@@ -23,7 +23,7 @@ public sealed class T06RouteAuthorizationCoverageTests : IClassFixture<WebApplic
         "/auth/login", "/swagger", "/_framework", "/openapi",
     };
 
-    [Fact]
+    [SkippableFact]
     public void Every_non_anonymous_endpoint_has_an_authorization_requirement()
     {
         EndpointDataSource source;

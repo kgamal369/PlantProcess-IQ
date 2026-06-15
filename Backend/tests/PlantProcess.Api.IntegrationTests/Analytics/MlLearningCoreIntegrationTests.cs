@@ -1,3 +1,4 @@
+using Xunit;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -14,7 +15,7 @@ public sealed class MlLearningCoreIntegrationTests : AuthenticatedApiTestBase
     {
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task Ml_learning_core_should_expose_status_jobs_run_results_and_provider_proof()
     {
         using var client = await CreateAuthenticatedClientAsync();
@@ -91,7 +92,7 @@ public sealed class MlLearningCoreIntegrationTests : AuthenticatedApiTestBase
             .BeFalse("narrative provider must not leak raw plant data");
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task Ml_results_endpoint_should_keep_honest_positioning_language()
     {
         using var client = await CreateAuthenticatedClientAsync();

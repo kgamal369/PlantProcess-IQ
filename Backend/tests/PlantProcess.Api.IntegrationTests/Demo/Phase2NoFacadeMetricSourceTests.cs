@@ -4,7 +4,7 @@ namespace PlantProcess.Api.IntegrationTests.Demo;
 
 public sealed class Phase2NoFacadeMetricSourceTests
 {
-    [Fact]
+    [SkippableFact]
     public void Demo_pages_must_not_hardcode_realism_scale_metric_cards()
     {
         var root = FindRepoRoot();

@@ -1,3 +1,4 @@
+using Xunit;
 // ============================================================
 // File: Backend/tests/PlantProcess.Api.IntegrationTests/Security/SchemaConfigurationSafetyEndpointTests.cs
 // Task: BE-FIX-002
@@ -25,7 +26,7 @@ public sealed class SchemaConfigurationSafetyEndpointTests : AuthenticatedApiTes
     {
     }
 
-    [Theory]
+    [SkippableTheory]
     [InlineData("SELECT pg_read_file('/etc/passwd', 0, 1000);")]
     [InlineData("SELECT pg_sleep(30);")]
     [InlineData("SELECT * FROM information_schema.tables;")]
@@ -56,7 +57,7 @@ public sealed class SchemaConfigurationSafetyEndpointTests : AuthenticatedApiTes
         body.Should().Contain("SQL safety validation failed");
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task Ad_hoc_preview_endpoint_should_require_sql_text()
     {
         using var client = await CreateAuthenticatedClientAsync();

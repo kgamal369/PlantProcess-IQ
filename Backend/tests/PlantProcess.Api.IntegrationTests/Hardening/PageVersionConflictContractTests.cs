@@ -20,13 +20,13 @@ public sealed class PageVersionConflictContractTests
         throw new FileNotFoundException("PageDefinitionEndpoints.cs not found by climbing from " + AppContext.BaseDirectory);
     }
 
-    [Fact]
+    [SkippableFact]
     public void Page_save_accepts_expected_version()
     {
         Assert.Contains("ExpectedVersion", ReadEndpointSource());
     }
 
-    [Fact]
+    [SkippableFact]
     public void Page_save_returns_structured_409_on_version_conflict()
     {
         var src = ReadEndpointSource();

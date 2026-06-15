@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Text.Json;
 using System.Threading;
@@ -43,7 +43,7 @@ public sealed class GlobalExceptionHandlerTests
         return (ctx.Response.StatusCode, ctx.Response.ContentType ?? "", doc.RootElement.Clone());
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task Unhandled_exception_maps_to_500_problem_json_with_traceId_and_no_stack_in_production()
     {
         var (status, contentType, root) = await Run(new InvalidOperationException("boom"), "Production");
@@ -59,7 +59,7 @@ public sealed class GlobalExceptionHandlerTests
         Assert.False(root.TryGetProperty("detail", out var d) && d.ValueKind == JsonValueKind.String);
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task BadHttpRequestException_maps_to_400_problem_json()
     {
         var (status, contentType, root) = await Run(new BadHttpRequestException("bad body", 400), "Production");
@@ -70,7 +70,7 @@ public sealed class GlobalExceptionHandlerTests
         Assert.Equal("bad_request", root.GetProperty("errorCode").GetString());
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task Development_includes_detail_and_exception()
     {
         var (_, _, root) = await Run(new InvalidOperationException("boom-dev"), "Development");

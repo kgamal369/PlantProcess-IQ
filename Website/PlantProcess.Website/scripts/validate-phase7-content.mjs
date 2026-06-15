@@ -22,7 +22,7 @@ const FORBIDDEN = [
 // Approved vocabulary that must appear somewhere in the product copy.
 const APPROVED = [/read-only/i, /suspected contributor/i, /rule-based risk/i, /evidence/i];
 // Palette tokens that must be present (brand fidelity).
-const PALETTE = ["#050B18", "#0B1730", "#00D4FF", "#0A84FF", "#2CE6A2", "#FFB020", "#FF4D6D"];
+const PALETTE = ["#050B18", "#0B1730", "#00D4FF", "#0A84FF", "#2CE6A2", "#FFB020", "#FF4D6D", "#2F80ED", "#F4F6F8"];
 // Canonical tagline.
 const TAGLINE = "Connect Your Plant Data. Understand Your Process.";
 const TAGLINE_DRIFT = [

@@ -16,7 +16,7 @@ public sealed class T08ConnectorSecretMaskingIntegrationTests : AuthenticatedApi
 
     private const string PlaintextSecret = "t08-PlAiNtExT-secret-9z";
 
-    [Fact]
+    [SkippableFact]
     public async Task Connector_password_is_masked_on_readback()
     {
         using var client = await CreateAuthenticatedClientAsync();

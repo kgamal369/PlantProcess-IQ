@@ -28,7 +28,7 @@ public sealed class T07SensitiveActionAuditCoverageTests : AuthenticatedApiTestB
         return Convert.ToInt64(await cmd.ExecuteScalarAsync());
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task Connector_credential_change_writes_an_audit_row()
     {
         var conn = Conn;
@@ -59,7 +59,7 @@ public sealed class T07SensitiveActionAuditCoverageTests : AuthenticatedApiTestB
             "a connector credential change is a sensitive action and must write an append-only audit row");
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task Data_export_writes_an_audit_row_when_export_route_is_provided()
     {
         var conn = Conn;

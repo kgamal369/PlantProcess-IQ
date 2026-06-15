@@ -9,7 +9,7 @@ namespace PlantProcess.Api.IntegrationTests.TestMode;
 [Trait("Task", "T022")]
 public sealed class PpiqTestModeGuardTests
 {
-    [Fact]
+    [SkippableFact]
     public void Production_with_active_switch_and_no_accept_risk_is_refused()
     {
         var o = new PpiqTestModeOptions { SeedUsers = true };
@@ -17,21 +17,21 @@ public sealed class PpiqTestModeGuardTests
         Assert.Contains("REFUSED in Production", ex.Message);
     }
 
-    [Fact]
+    [SkippableFact]
     public void Production_with_explicit_accept_risk_is_allowed()
     {
         var o = new PpiqTestModeOptions { SeedUsers = true, ForceTier = "Pro", IExplicitlyAcceptRisk = true };
         PpiqTestModeGuard.Validate(o, "Production");
     }
 
-    [Fact]
+    [SkippableFact]
     public void Development_switches_are_allowed_without_accept_risk()
     {
         var o = new PpiqTestModeOptions { SeedUsers = true, ForceTier = "Enterprise" };
         PpiqTestModeGuard.Validate(o, "Development");
     }
 
-    [Theory]
+    [SkippableTheory]
     [InlineData("Gold")]
     [InlineData("enterprise-plus")]
     public void Invalid_ForceTier_values_are_rejected(string tier)
@@ -40,7 +40,7 @@ public sealed class PpiqTestModeGuardTests
         Assert.Throws<InvalidOperationException>(() => PpiqTestModeGuard.Validate(o, "Development"));
     }
 
-    [Fact]
+    [SkippableFact]
     public void Inactive_options_never_throw_anywhere()
     {
         PpiqTestModeGuard.Validate(new PpiqTestModeOptions(), "Production");

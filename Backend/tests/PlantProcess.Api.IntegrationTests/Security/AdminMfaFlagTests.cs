@@ -18,7 +18,7 @@ public sealed class AdminMfaFlagTests : AuthenticatedApiTestBase
 {
     public AdminMfaFlagTests(WebApplicationFactory<Program> factory) : base(factory) { }
 
-    [Fact]
+    [SkippableFact]
     public async Task With_flag_off_plain_admin_token_reaches_admin_without_mfa_header()
     {
         using var client = await CreateAuthenticatedClientAsync();
@@ -31,7 +31,7 @@ public sealed class AdminMfaFlagTests : AuthenticatedApiTestBase
             "PPIQ-T021: with RequireAdminMfa=false (default), admin MFA must not block the admin surface");
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task Step_up_without_recent_verify_is_refused_403()
     {
         using var client = await CreateAuthenticatedClientAsync();
@@ -49,7 +49,7 @@ public sealed class AdminMfaFlagTests : AuthenticatedApiTestBase
         error.GetString().Should().Be("mfa_step_up_refused");
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task Step_up_endpoint_requires_authentication()
     {
         using var client = CreateAnonymousClient();

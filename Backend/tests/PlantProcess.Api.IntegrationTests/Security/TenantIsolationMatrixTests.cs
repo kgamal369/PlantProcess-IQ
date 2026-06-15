@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
@@ -49,7 +49,7 @@ public sealed class TenantIsolationMatrixTests
         return http;
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task Cross_tenant_access_is_denied_or_empty_for_every_sensitive_domain()
     {
         // Not configured: no-op pass. Set PPIQ_TEST_BASEURL + tenant A/B credentials to run the proof.

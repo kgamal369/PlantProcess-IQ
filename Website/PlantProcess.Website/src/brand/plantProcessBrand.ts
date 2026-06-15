@@ -59,3 +59,10 @@ export const plantProcessBrand = {
     },
   ],
 } as const;
+
+/* PPIQ-PHASE7 palette completion (PPIQ-704): corporate blue + light report surface.
+   Declared as .ts brand tokens so the honesty validator (which scans .ts/.tsx) enforces them. */
+export const ppiqPaletteExtension = {
+  corporateBlue: "#2F80ED",
+  reportSurface: "#F4F6F8",
+} as const;

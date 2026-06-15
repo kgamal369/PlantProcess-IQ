@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using PlantProcess.Api.Security;
@@ -19,7 +19,7 @@ public sealed class TenantAccessorTests
         return new HttpTenantAccessor(new HttpContextAccessor { HttpContext = ctx });
     }
 
-    [Fact]
+    [SkippableFact]
     public void Returns_tenant_from_claim()
     {
         var tenant = Guid.NewGuid();
@@ -29,7 +29,7 @@ public sealed class TenantAccessorTests
         Assert.Equal(tenant, acc.TenantId);
     }
 
-    [Fact]
+    [SkippableFact]
     public void Fails_closed_when_claim_absent()
     {
         var acc = Accessor(Principal(new Claim("role", "viewer")));
@@ -37,7 +37,7 @@ public sealed class TenantAccessorTests
         Assert.Throws<TenantResolutionException>(() => acc.TenantId);
     }
 
-    [Fact]
+    [SkippableFact]
     public void Fails_closed_when_claim_malformed()
     {
         var acc = Accessor(Principal(new Claim("tenant_id", "not-a-guid")));
@@ -45,7 +45,7 @@ public sealed class TenantAccessorTests
         Assert.Throws<TenantResolutionException>(() => acc.TenantId);
     }
 
-    [Fact]
+    [SkippableFact]
     public void Fails_closed_when_no_principal()
     {
         var acc = Accessor(null);

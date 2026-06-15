@@ -17,7 +17,7 @@ public sealed class T06CrossTenantIsolationTests : AuthenticatedApiTestBase
 {
     public T06CrossTenantIsolationTests(WebApplicationFactory<Program> factory) : base(factory) { }
 
-    [Fact]
+    [SkippableFact]
     public async Task TenantA_token_cannot_read_TenantB_resource()
     {
         var tenantAToken = Environment.GetEnvironmentVariable("PPIQ_TEST_TENANT_A_TOKEN");

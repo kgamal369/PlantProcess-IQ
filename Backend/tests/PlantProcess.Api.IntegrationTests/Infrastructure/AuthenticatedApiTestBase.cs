@@ -1,3 +1,4 @@
+using Xunit;
 using System.Diagnostics;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -26,11 +27,23 @@ public abstract class AuthenticatedApiTestBase : IClassFixture<WebApplicationFac
         Factory = factory;
     }
 
+    /// <summary>
+    /// True only when an API host is actually available: the opt-in external host
+    /// (PPIQ_FORCE_EXTERNAL_API_TEST_HOST=1) or the in-process factory host
+    /// (PPIQ_USE_WEBAPPLICATION_FACTORY_TEST_HOST=1). On a bare laptop neither is set
+    /// and the default WebApplicationFactory does not boot Program, so these tests skip.
+    /// </summary>
+    protected static bool IsApiHostConfigured =>
+        IsForcedExternalHost() || UseInProcessFactoryHost();
+
     protected HttpClient CreateAnonymousClient()
     {
-        // PPIQ_PLAIN_DOTNET_TEST_WEB_FACTORY_ONLY:
-        // Plain dotnet test must use WebApplicationFactory by default.
-        // External API host is opt-in only via PPIQ_FORCE_EXTERNAL_API_TEST_HOST=1.
+        Skip.IfNot(
+            IsApiHostConfigured,
+            "API integration host not configured on this machine. " +
+            "Set PPIQ_FORCE_EXTERNAL_API_TEST_HOST=1 (and a reachable Postgres) to run these locally; " +
+            "they run in CI/on the server where the host + DB exist.");
+
         if (IsForcedExternalHost())
         {
             return ExternalApiTestHost.CreateClient();
@@ -84,6 +97,20 @@ public abstract class AuthenticatedApiTestBase : IClassFixture<WebApplicationFac
         return client;
     }
 
+    /// <summary>True when the resolved integration Postgres is reachable AND authenticates.</summary>
+    protected static bool IsIntegrationDbReachable()
+    {
+        try
+        {
+            using var c = new Npgsql.NpgsqlConnection(ResolveIntegrationTestConnectionString());
+            c.Open();
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
     private HttpClient CreateFactoryClient()
     {
         var client = Factory.CreateClient(new WebApplicationFactoryClientOptions

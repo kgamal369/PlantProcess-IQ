@@ -1,4 +1,5 @@
-﻿using System.Net;
+using Xunit;
+using System.Net;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
 using PlantProcess.Api.IntegrationTests.Infrastructure;
@@ -12,7 +13,7 @@ public sealed class ApiSmokeEndpointTests : AuthenticatedApiTestBase
     {
     }
 
-    [Theory]
+    [SkippableTheory]
     [InlineData("/health")]
     [InlineData("/swagger/v1/swagger.json")]
     [InlineData("/admin/jobs-monitor")]

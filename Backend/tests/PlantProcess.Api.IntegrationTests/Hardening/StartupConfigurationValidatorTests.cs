@@ -40,7 +40,7 @@ public sealed class StartupConfigurationValidatorTests
         }
     }
 
-    [Fact]
+    [SkippableFact]
     public void Rejects_signing_key_shorter_than_64_in_production()
     {
         var ex = Run(new string('A', 63), "Production");
@@ -48,7 +48,7 @@ public sealed class StartupConfigurationValidatorTests
         Assert.Contains("at least 64 characters", ex!.Message);
     }
 
-    [Fact]
+    [SkippableFact]
     public void Rejects_development_marker_signing_key_outside_development()
     {
         // length is fine (>= 64) but the key carries a dev marker -> must be rejected
@@ -57,7 +57,7 @@ public sealed class StartupConfigurationValidatorTests
         Assert.Contains("Remove DEV_ONLY/CHANGE_THIS", ex!.Message);
     }
 
-    [Fact]
+    [SkippableFact]
     public void Accepts_strong_64_char_signing_key_in_production_no_length_error()
     {
         var ex = Run(new string('A', 64), "Production");

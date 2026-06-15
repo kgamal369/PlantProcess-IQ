@@ -22,7 +22,7 @@ public sealed class RefreshTokenInvalidationContractTests
         throw new FileNotFoundException("AuthStore.cs not found by climbing from " + AppContext.BaseDirectory);
     }
 
-    [Fact]
+    [SkippableFact]
     public void Validation_excludes_revoked_and_expired_tokens()
     {
         var src = ReadAuthStoreSource();
@@ -30,7 +30,7 @@ public sealed class RefreshTokenInvalidationContractTests
         Assert.Contains("expires_at_utc > now()", src);
     }
 
-    [Fact]
+    [SkippableFact]
     public void Revoke_marks_token_revoked()
     {
         var src = ReadAuthStoreSource();
@@ -38,7 +38,7 @@ public sealed class RefreshTokenInvalidationContractTests
         Assert.Contains("revoked_at_utc", src);
     }
 
-    [Fact]
+    [SkippableFact]
     public void Tokens_are_persisted_hashed_not_plaintext()
     {
         var src = ReadAuthStoreSource();

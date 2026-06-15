@@ -1,3 +1,4 @@
+using Xunit;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -14,7 +15,7 @@ public sealed class AuthEndpointTests : AuthenticatedApiTestBase
     {
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task Login_should_return_access_token_for_valid_admin_credentials()
     {
         using var client = CreateAnonymousClient();
@@ -42,7 +43,7 @@ public sealed class AuthEndpointTests : AuthenticatedApiTestBase
             .BeTrue("login must return a bearer token");
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task Login_should_reject_invalid_credentials()
     {
         using var client = CreateAnonymousClient();
@@ -58,7 +59,7 @@ public sealed class AuthEndpointTests : AuthenticatedApiTestBase
             .BeOneOf(HttpStatusCode.BadRequest, HttpStatusCode.Unauthorized);
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task Protected_endpoint_should_reject_anonymous_request()
     {
         using var client = CreateAnonymousClient();

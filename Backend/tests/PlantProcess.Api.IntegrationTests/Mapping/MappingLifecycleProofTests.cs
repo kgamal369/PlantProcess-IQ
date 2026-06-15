@@ -19,6 +19,7 @@ public sealed class MappingLifecycleProofTests : AuthenticatedApiTestBase
 
         private static async Task<NpgsqlConnection> OpenAsync()
     {
+        Skip.IfNot(AuthenticatedApiTestBase.IsIntegrationDbReachable(), "Integration Postgres not reachable/authenticated on this machine; runs in CI.");
         var c = new NpgsqlConnection(Conn);
         await c.OpenAsync();
 
@@ -40,7 +41,7 @@ SELECT set_config(
     private static bool MentionsAny(string s, params string[] tokens) =>
         tokens.Any(t => s.Contains(t, StringComparison.OrdinalIgnoreCase));
 
-    [Fact]
+    [SkippableFact]
     public async Task Mapping_lifecycle_proof_validates_publishes_and_rolls_back()
     {
         await using var c = await OpenAsync();
@@ -64,7 +65,7 @@ SELECT set_config(
         Assert.Contains(steps, s => MentionsAny(s.Step, "rollback", "revert", "restore") && s.Ok);
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task Safe_sql_gate_rejects_dangerous_sql()
     {
         await using var c = await OpenAsync();

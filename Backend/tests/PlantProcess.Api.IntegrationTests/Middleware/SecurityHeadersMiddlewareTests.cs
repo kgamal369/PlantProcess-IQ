@@ -1,4 +1,4 @@
-﻿using System.Threading.Tasks;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using PlantProcess.Api.Middleware;
@@ -8,7 +8,7 @@ namespace PlantProcess.Api.IntegrationTests.Middleware;
 
 public sealed class SecurityHeadersMiddlewareTests
 {
-    [Fact]
+    [SkippableFact]
     public async Task Sets_baseline_security_headers()
     {
         var config = new ConfigurationBuilder().Build();

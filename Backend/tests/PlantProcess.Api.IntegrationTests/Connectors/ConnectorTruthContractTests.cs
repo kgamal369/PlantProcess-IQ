@@ -1,3 +1,4 @@
+using Xunit;
 using System.Net;
 using System.Net.Http.Json;
 using FluentAssertions;
@@ -13,7 +14,7 @@ public sealed class ConnectorTruthContractTests : AuthenticatedApiTestBase
     {
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task Connector_provider_types_should_return_single_truth_catalog()
     {
         using var client = await CreateAuthenticatedClientAsync();
@@ -32,7 +33,7 @@ public sealed class ConnectorTruthContractTests : AuthenticatedApiTestBase
             .OnlyHaveUniqueItems("provider types must not be duplicated between stale DTO arrays and new catalog source");
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task Csv_and_excel_should_be_available_now_because_smoke_tests_exist()
     {
         using var client = await CreateAuthenticatedClientAsync();
@@ -50,7 +51,7 @@ public sealed class ConnectorTruthContractTests : AuthenticatedApiTestBase
             .BeTrue("Excel connector is implemented and ExcelConnectorSmokeTests prove file connection and sheet discovery");
     }
 
-    [Theory]
+    [SkippableTheory]
     [InlineData("SqlServer")]
     [InlineData("MySql")]
     [InlineData("Oracle")]
@@ -69,7 +70,7 @@ public sealed class ConnectorTruthContractTests : AuthenticatedApiTestBase
             .BeFalse($"{providerType} must stay Planned until it is intentionally certified for customer demo availability");
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task Provider_catalog_should_expose_honest_capabilities()
     {
         using var client = await CreateAuthenticatedClientAsync();

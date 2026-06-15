@@ -29,7 +29,7 @@ public sealed class T06RoleAuthorizationMatrixTests : AuthenticatedApiTestBase
         return null;
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task Admin_role_reaches_admin_surface_and_operator_is_denied()
     {
         using var probe = CreateAnonymousClient();

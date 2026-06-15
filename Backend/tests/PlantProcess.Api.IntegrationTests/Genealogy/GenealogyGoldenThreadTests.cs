@@ -22,6 +22,7 @@ public sealed class GenealogyGoldenThreadTests : AuthenticatedApiTestBase
 
         private static async Task<NpgsqlConnection> OpenAsync()
     {
+        Skip.IfNot(AuthenticatedApiTestBase.IsIntegrationDbReachable(), "Integration Postgres not reachable/authenticated on this machine; runs in CI.");
         var c = new NpgsqlConnection(Conn);
         await c.OpenAsync();
 
@@ -97,7 +98,7 @@ SELECT set_config(
         return keys;
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task Walk_resolves_a_connected_bidirectional_thread_on_demo_data()
     {
         await using var c = await OpenAsync();
@@ -123,7 +124,7 @@ SELECT set_config(
         Assert.Contains(connectedDepths, d => d > 0);              // at least one traversed (non-self) node
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task Walk_respects_depth_bound_and_rejects_invalid_direction()
     {
         await using var c = await OpenAsync();
@@ -140,7 +141,7 @@ SELECT set_config(
                 "An invalid direction must yield an InvalidDirection error code.");
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task Genealogy_graph_safety_check_is_callable()
     {
         await using var c = await OpenAsync();

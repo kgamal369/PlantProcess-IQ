@@ -1,4 +1,5 @@
-﻿using System.Net;
+using Xunit;
+using System.Net;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
 using PlantProcess.Api.IntegrationTests.Infrastructure;
@@ -12,7 +13,7 @@ public sealed class HealthEndpointTests : AuthenticatedApiTestBase
     {
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task Health_endpoint_should_return_success()
     {
         using var client = await CreateAuthenticatedClientAsync();

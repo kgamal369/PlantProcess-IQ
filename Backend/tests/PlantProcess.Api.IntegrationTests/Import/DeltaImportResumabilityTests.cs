@@ -1,3 +1,4 @@
+using Xunit;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -14,7 +15,7 @@ public sealed class DeltaImportResumabilityTests : AuthenticatedApiTestBase
     {
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task TwoStageDeltaImport_OverviewAndRegistry_AreReachable_WhenOptInEnabled()
     {
         if (!IsEnabled()) return;
@@ -27,7 +28,7 @@ public sealed class DeltaImportResumabilityTests : AuthenticatedApiTestBase
         await AssertSuccessAsync(await client.GetAsync("/admin/two-stage-import/runs"), "runs");
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task TwoStageDeltaImport_Stage1Stage2AndFullCycle_AreIdempotent_WhenOptInEnabled()
     {
         if (!IsEnabled()) return;
@@ -53,7 +54,7 @@ public sealed class DeltaImportResumabilityTests : AuthenticatedApiTestBase
         sourceTables.ValueKind.Should().Be(JsonValueKind.Array);
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task TwoStageDeltaImport_MaxRowsSmallBatch_DoesNotBreakWatermarks_WhenOptInEnabled()
     {
         if (!IsEnabled()) return;
@@ -71,7 +72,7 @@ public sealed class DeltaImportResumabilityTests : AuthenticatedApiTestBase
         resumeRows.ValueKind.Should().Be(JsonValueKind.Array);
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task TwoStageDeltaImport_RejectsAnonymousAccess_WhenOptInEnabled()
     {
         if (!IsEnabled()) return;

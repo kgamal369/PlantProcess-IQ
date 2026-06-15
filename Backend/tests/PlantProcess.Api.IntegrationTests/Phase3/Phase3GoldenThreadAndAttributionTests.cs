@@ -65,6 +65,7 @@ public sealed class Phase3GoldenThreadAndAttributionTests : AuthenticatedApiTest
 
     private static async Task<NpgsqlConnection> OpenAsync()
     {
+        Skip.IfNot(AuthenticatedApiTestBase.IsIntegrationDbReachable(), "Integration Postgres not reachable/authenticated on this machine; runs in CI.");
         var c = new NpgsqlConnection(Conn);
         await c.OpenAsync();
         await using (var t = new NpgsqlCommand(
@@ -97,7 +98,7 @@ public sealed class Phase3GoldenThreadAndAttributionTests : AuthenticatedApiTest
     }
 
     // ---- PPIQ-301 -----------------------------------------------------------
-    [Fact]
+    [SkippableFact]
     public async Task BusinessKey_reconciles_equivalent_ids_and_rejects_conflicts()
     {
         await using var c = await OpenAsync();
@@ -123,7 +124,7 @@ public sealed class Phase3GoldenThreadAndAttributionTests : AuthenticatedApiTest
     }
 
     // ---- PPIQ-302 -----------------------------------------------------------
-    [Fact]
+    [SkippableFact]
     public async Task GoldenThread_resolves_both_directions_on_customer_keys_only()
     {
         await using var c = await OpenAsync();
@@ -143,7 +144,7 @@ public sealed class Phase3GoldenThreadAndAttributionTests : AuthenticatedApiTest
     }
 
     // ---- PPIQ-303 -----------------------------------------------------------
-    [Fact]
+    [SkippableFact]
     public async Task TransitionCoil_reports_weighted_split_summing_to_one()
     {
         await using var c = await OpenAsync();

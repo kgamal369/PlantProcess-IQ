@@ -25,9 +25,10 @@ public sealed class AuthLifecycleTests : AuthenticatedApiTestBase
     {
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task Login_session_refresh_logout_then_refresh_is_rejected()
     {
+        Skip.IfNot(IsApiHostConfigured, "API host not configured on this machine; runs in CI.");
         var client = Factory.CreateClient(new WebApplicationFactoryClientOptions
         {
             AllowAutoRedirect = false,

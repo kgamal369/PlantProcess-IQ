@@ -1,3 +1,4 @@
+using Xunit;
 using System.Net;
 using System.Net.Http.Json;
 using FluentAssertions;
@@ -49,7 +50,7 @@ public sealed class ApiEndpointCatalogSmokeTests : AuthenticatedApiTestBase
         yield return new object[] { "Data quality scan preview", "/data-quality/scan-preview" };
     }
 
-    [Theory]
+    [SkippableTheory]
     [MemberData(nameof(PublicOrLightweightEndpoints))]
     public async Task Lightweight_endpoint_should_not_return_server_error(
         string name,
@@ -69,7 +70,7 @@ public sealed class ApiEndpointCatalogSmokeTests : AuthenticatedApiTestBase
             .NotBe(HttpStatusCode.NotFound, $"{name} route must exist. Body: {body}");
     }
 
-    [Theory]
+    [SkippableTheory]
     [MemberData(nameof(AuthenticatedStableGetEndpoints))]
     public async Task Authenticated_stable_get_endpoint_should_not_return_server_error(
         string name,

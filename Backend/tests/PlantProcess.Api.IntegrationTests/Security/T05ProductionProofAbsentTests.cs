@@ -73,7 +73,7 @@ public sealed class T05ProductionProofAbsentTests
         }
     }
 
-    [Fact]
+    [SkippableFact]
     public void Proof_routes_absent_and_honesty_present_in_production()
     {
         var patterns = TryGetProductionRoutePatterns();
