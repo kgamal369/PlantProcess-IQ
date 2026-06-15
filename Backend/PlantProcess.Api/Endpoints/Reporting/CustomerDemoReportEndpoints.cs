@@ -89,7 +89,7 @@ public static class CustomerDemoReportEndpoints
             "PlantProcess IQ is not MES, not SCADA, not Level 2, and not BI-only. It is a manufacturing intelligence layer above existing systems."
         };
 
-        var pdfBytes = SimplePdfWriter.Create("PlantProcess IQ Phase 1 Demo Report", lines);
+        var pdfBytes = PlantProcess.Application.Reporting.BrandedPdfWriter.Create("PlantProcess IQ Phase 1 Demo Report", lines);
 
         return Results.File(
             pdfBytes,

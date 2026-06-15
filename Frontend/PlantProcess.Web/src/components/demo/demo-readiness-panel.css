@@ -1,0 +1,10 @@
+.demo-readiness-panel { margin: 24px; }
+.demo-readiness-panel__actions { display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+.demo-readiness-panel__status { border-radius:999px; padding:6px 12px; letter-spacing:.06em; }
+.demo-readiness-panel__status--green { background:#153f36; color:#2CE6A2; }
+.demo-readiness-panel__status--blocked { background:#4a2029; color:#FF4D6D; }
+.demo-readiness-panel__error { margin-top:12px; color:#FF4D6D; }
+.demo-readiness-panel__metrics { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:12px; margin-top:16px; }
+.demo-readiness-panel__metrics div { background:#0B1730; border:1px solid #102A43; border-radius:12px; padding:12px; }
+.demo-readiness-panel__metrics dt { color:#8EA7C1; }
+.demo-readiness-panel__metrics dd { margin:4px 0 0; color:#EAF6FF; font-weight:700; }

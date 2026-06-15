@@ -1,6 +1,8 @@
 import { useMemo, useReducer, useState } from "react";
 
 import { pageBuilderApi, type PageDefinitionDto } from "@/api/pageBuilder";
+import { ApiError } from "@/api/http/apiClient";
+import { ConflictDialog } from "@/components/conflict/ConflictDialog";
 import {
   StandardInput,
   StandardSelect,
@@ -55,24 +57,58 @@ export function PageBuilderPage() {
   );
 
   const [status, setStatus] = useState<SaveStatus>(initialStatus);
+  const [loadedPage, setLoadedPage] = useState<PageDefinitionDto | null>(null);
+  const [conflict, setConflict] = useState<{
+    editor: string;
+    currentVersion: number;
+    updatedAtUtc?: string;
+  } | null>(null);
 
   const payload = useMemo(() => createPageBuilderPayload(state), [state]);
 
+  async function persistPageDefinition(overwrite = false) {
+    setStatus({ kind: "saving", message: "Saving PageDefinition..." });
+    const request = {
+      ...payload,
+      expectedVersion: overwrite ? null : loadedPage?.version ?? null,
+    };
+    const saved = loadedPage
+      ? await pageBuilderApi.update(state.slug, request)
+      : await pageBuilderApi.create(request);
+    setLoadedPage(saved);
+    setConflict(null);
+    setStatus({
+      kind: "saved",
+      message: "Saved PageDefinition '" + saved.slug + "' v" + saved.version,
+    });
+  }
+
   async function savePageDefinition() {
     try {
-      setStatus({ kind: "saving", message: "Saving PageDefinition..." });
-
-      const saved = await pageBuilderApi.create(payload);
-
-      setStatus({
-        kind: "saved",
-        message: "Saved PageDefinition '" + saved.slug + "' v" + saved.version,
-      });
+      await persistPageDefinition(false);
     } catch (error) {
-      setStatus({
-        kind: "error",
-        message: error instanceof Error ? error.message : "Save failed",
-      });
+      if (error instanceof ApiError && error.status === 409) {
+        try {
+          const body = JSON.parse(error.responseText) as {
+            code?: string;
+            editor?: string;
+            currentVersion?: number;
+            updatedAtUtc?: string;
+          };
+          if (body.code === "page_version_conflict" && typeof body.currentVersion === "number") {
+            setConflict({
+              editor: body.editor || "another editor",
+              currentVersion: body.currentVersion,
+              updatedAtUtc: body.updatedAtUtc,
+            });
+            setStatus({ kind: "error", message: "Save blocked: this page changed in another session." });
+            return;
+          }
+        } catch {
+          // Fall through to the normal error presentation.
+        }
+      }
+      setStatus({ kind: "error", message: error instanceof Error ? error.message : "Save failed" });
     }
   }
 
@@ -81,6 +117,8 @@ export function PageBuilderPage() {
       setStatus({ kind: "loading", message: "Loading PageDefinition..." });
 
       const loaded = await pageBuilderApi.getBySlug(state.slug);
+      setLoadedPage(loaded);
+      setConflict(null);
 
       dispatch({
         type: "reset",
@@ -124,6 +162,19 @@ export function PageBuilderPage() {
     }
   }
 
+
+  async function reloadAfterConflict() {
+    setConflict(null);
+    await loadPageDefinition();
+  }
+
+  async function overwriteAfterConflict() {
+    try {
+      await persistPageDefinition(true);
+    } catch (error) {
+      setStatus({ kind: "error", message: error instanceof Error ? error.message : "Overwrite failed" });
+    }
+  }
   return (
     <main className="page-builder-page" data-inspection3-page="page-builder">
       <section className="page-builder-page__header">
@@ -137,7 +188,7 @@ export function PageBuilderPage() {
         </div>
 
         <div className="page-builder-page__actions" aria-label="Page builder actions">
-          <StandardButton variant="primary" onClick={savePageDefinition}>
+          <StandardButton variant="primary" onClick={savePageDefinition} data-testid="ctl-save-page">
             Save page definition
           </StandardButton>
 
@@ -294,7 +345,16 @@ export function PageBuilderPage() {
           ))}
         </div>
       </StandardCard>
-    </main>
+
+      <ConflictDialog
+        open={conflict !== null}
+        editor={conflict?.editor ?? "another editor"}
+        currentVersion={conflict?.currentVersion ?? loadedPage?.version ?? 0}
+        updatedAtUtc={conflict?.updatedAtUtc}
+        onReload={reloadAfterConflict}
+        onOverwrite={overwriteAfterConflict}
+        onCancel={() => setConflict(null)}
+      />    </main>
   );
 }
 

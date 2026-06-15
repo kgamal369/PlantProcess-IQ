@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using PlantProcess.Application.Common.Persistence;
@@ -108,7 +108,23 @@ public sealed class ApplicationReadinessService : IApplicationReadinessService
 
         var report = reportResult.Value;
         var customerName = Clean(request.CustomerName) ?? "Customer";
-        var pdf = SimplePdfWriter.BuildReadinessPdf(customerName, report);
+        var pdf = PlantProcess.Application.Reporting.BrandedPdfWriter.Create(
+            $"PlantProcess IQ Readiness Assessment - {customerName}",
+            new[]
+            {
+                $"Customer: {customerName}",
+                $"Generated UTC: {report.GeneratedAtUtc:u}",
+                $"Overall score: {report.OverallScore:0.0}",
+                $"Overall feasibility: {report.OverallFeasibility}",
+                "",
+                "Executive Summary",
+                report.ExecutiveSummary,
+                "",
+                "Top Blockers",
+            }.Concat(report.TopBlockers.Select(x => "- " + x))
+             .Concat(new[] { "", "Recommended Actions" })
+             .Concat(report.RecommendedActions.Select(x => "- " + x))
+             .Concat(new[] { "", report.Disclaimer }));
 
         var fileName =
             $"PlantProcessIQ-ReadinessAssessment-{DateTime.UtcNow:yyyyMMdd-HHmm}.pdf";

@@ -1006,6 +1006,7 @@ app.MapConnectorSchemaDriftEndpoints();
     app.MapSchemaConfigurationEndpoints();
 
     app.MapDemoLifecycleEndpoints();
+    app.MapDemoReadinessEndpoints();
 
     app.MapDynamicContentEndpoints();
 

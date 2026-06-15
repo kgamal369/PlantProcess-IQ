@@ -221,12 +221,19 @@ public static class PageDefinitionEndpoints
               AND slug = @slug
               AND owner_user_name = @owner
               AND is_deleted = false
+              AND (@expected_version IS NULL OR version = @expected_version)
             RETURNING id, tenant_id, slug, title, owner_user_name, visibility, version,
                       layout_json::text, widget_bindings_json::text, updated_at_utc;
             """,
             connection);
 
         AddPageParameters(command, normalized, tenant, owner);
+        command.Parameters.Add(new NpgsqlParameter("expected_version", NpgsqlDbType.Integer)
+        {
+            Value = normalized.ExpectedVersion.HasValue
+                ? normalized.ExpectedVersion.Value
+                : DBNull.Value
+        });
 
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
         if (!await reader.ReadAsync(cancellationToken))

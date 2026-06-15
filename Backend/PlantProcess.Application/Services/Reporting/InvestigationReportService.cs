@@ -1,4 +1,4 @@
-﻿using PlantProcess.Application.Analytics.Contracts;
+using PlantProcess.Application.Analytics.Contracts;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -129,7 +129,7 @@ public sealed class InvestigationReportService : IInvestigationReportService
             return ApplicationResult<InvestigationPdfReportResult>.Failure(reportResult.Error ?? ApplicationError.Unexpected("Could not build report."));
 
         var report = reportResult.Value;
-        var pdfBytes = SimplePdfWriter.CreatePdf(BuildPlainTextReport(report));
+        var pdfBytes = PlantProcess.Application.Reporting.BrandedPdfWriter.Create("PlantProcess IQ Material Investigation Report", BuildPlainTextReport(report).Replace("\r", "").Split('\n'));
         var safeCode = string.Join("_", report.MaterialCode.Split(Path.GetInvalidFileNameChars(), StringSplitOptions.RemoveEmptyEntries));
         var fileName = $"PlantProcessIQ_Investigation_{safeCode}_{DateTime.UtcNow:yyyyMMdd_HHmm}.pdf";
 

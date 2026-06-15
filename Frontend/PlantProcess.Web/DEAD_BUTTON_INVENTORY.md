@@ -1,5 +1,8 @@
-# Dead / stub control inventory (P4-T02)
+# Dead-button inventory
 
-Scanned 256 files under `src`. Found 0 candidate(s).
+Generated 2026-06-15T08:46:33.130Z over 139 component files.
 
-No dead/stub controls detected. P4-T02 acceptance (1) satisfied.
+Target: every interactive control does something real on the demo dataset (A3#1/#2/#10).
+Fix each row in P4-T02 (wire to a real handler/endpoint, or remove from the demo build).
+
+No dead/stub handlers found. 

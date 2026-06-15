@@ -21,6 +21,7 @@ export interface UpsertPageDefinitionRequest {
   visibility: PageVisibility;
   layoutJson: unknown;
   widgetBindingsJson: unknown;
+  expectedVersion?: number | null;
 }
 
 export const pageBuilderApi = {
