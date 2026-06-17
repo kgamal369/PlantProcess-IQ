@@ -230,7 +230,7 @@ Main PlantProcess IQ PostgreSQL is installed directly on the laptop/Windows host
 
 Use:
 
-    docker-compose.demo.yml
+    docker-compose.yml
     docker-compose.local-native-main-db.yml
 
 The local overlay points app containers to host.docker.internal and does not require the main DB container.
@@ -241,7 +241,7 @@ All databases, including the main PlantProcess IQ PostgreSQL DB, run as Docker c
 
 Use:
 
-    docker-compose.demo.yml
+    docker-compose.yml
     docker-compose.server-docker-main-db.yml
 
 The server overlay keeps PostgreSQL loopback-bound and lets app containers reach it on the private Docker network.
@@ -252,7 +252,7 @@ Customer topology can vary: native DB, managed DB, VM DB, Kubernetes service, or
 
 Use:
 
-    docker-compose.demo.yml
+    docker-compose.yml
     docker-compose.customer-template.yml
 
 The customer overlay relies on PPIQ_MAIN_DB_CONNECTION_STRING and does not hardcode the DB topology.
@@ -449,7 +449,7 @@ P3-T16 establishes a generic deployment contract:
    - deploy/caddy/Caddyfile
 
 2. One canonical compose base:
-   - deploy/compose/docker-compose.demo.yml
+   - deploy/compose/docker-compose.yml
 
 3. Environment-specific overlays:
    - deploy/compose/docker-compose.local-native-main-db.yml
@@ -574,7 +574,7 @@ const required = [
   "deploy/caddy/Caddyfile",
   "deploy/caddy/README.md",
   "deploy/compose/README.md",
-  "deploy/compose/docker-compose.demo.yml",
+  "deploy/compose/docker-compose.yml",
   "deploy/compose/docker-compose.local-native-main-db.yml",
   "deploy/compose/docker-compose.server-docker-main-db.yml",
   "deploy/compose/docker-compose.customer-template.yml",
@@ -597,7 +597,7 @@ if (!caddy.includes("X-Content-Type-Options")) fail("Caddy missing nosniff heade
 if (!caddy.includes("PPIQ_API_UPSTREAM:plantprocess-api:5063")) fail("Caddy API upstream must default to plantprocess-api:5063");
 if (caddy.includes("plantprocess-api:8080")) fail("Caddy still contains stale plantprocess-api:8080 drift");
 
-const base = read("deploy/compose/docker-compose.demo.yml");
+const base = read("deploy/compose/docker-compose.yml");
 if (!base.includes("ppiq-postgres")) fail("base compose missing ppiq-postgres");
 if (!base.includes("plantprocess-api")) fail("base compose missing plantprocess-api");
 if (!base.includes("plantprocess-workers")) fail("base compose missing workers");
@@ -636,7 +636,7 @@ for (const envFile of [
 
 runComposeConfig(
   [
-    "deploy/compose/docker-compose.demo.yml",
+    "deploy/compose/docker-compose.yml",
     "deploy/compose/docker-compose.local-native-main-db.yml",
   ],
   "local-native-main-db",
@@ -644,7 +644,7 @@ runComposeConfig(
 
 runComposeConfig(
   [
-    "deploy/compose/docker-compose.demo.yml",
+    "deploy/compose/docker-compose.yml",
     "deploy/compose/docker-compose.server-docker-main-db.yml",
   ],
   "server-docker-main-db",
@@ -652,7 +652,7 @@ runComposeConfig(
 
 runComposeConfig(
   [
-    "deploy/compose/docker-compose.demo.yml",
+    "deploy/compose/docker-compose.yml",
     "deploy/compose/docker-compose.customer-template.yml",
   ],
   "customer-template",
@@ -663,7 +663,7 @@ console.log("[GREEN] P3-T16 static validation passed.");
 
 runDockerComposeConfig(
   [
-    "deploy/compose/docker-compose.demo.yml",
+    "deploy/compose/docker-compose.yml",
     "deploy/compose/docker-compose.local-native-main-db.yml",
   ],
   "local_native_main_db"
@@ -671,7 +671,7 @@ runDockerComposeConfig(
 
 runDockerComposeConfig(
   [
-    "deploy/compose/docker-compose.demo.yml",
+    "deploy/compose/docker-compose.yml",
     "deploy/compose/docker-compose.server-docker-main-db.yml",
   ],
   "server_docker_main_db"
@@ -679,7 +679,7 @@ runDockerComposeConfig(
 
 runDockerComposeConfig(
   [
-    "deploy/compose/docker-compose.demo.yml",
+    "deploy/compose/docker-compose.yml",
     "deploy/compose/docker-compose.customer-template.yml",
   ],
   "customer_template"

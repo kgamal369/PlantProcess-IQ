@@ -1,7 +1,7 @@
 # Phase 1 - Deploy Chain Restoration: acceptance runbook
 
 ## What Phase 1 changed
-- Single self-contained compose at `deploy/compose/docker-compose.demo.yml`
+- Single self-contained compose at `deploy/compose/docker-compose.yml`
   (ppiq-postgres + api + workers + app-web + website), loopback-bound DB.
 - Jenkinsfile DEPLOY_DIR -> `deploy/compose`; stage-1 now preserves only the
   server-only `deploy/compose/.env` and `deploy/caddy/Caddyfile`.

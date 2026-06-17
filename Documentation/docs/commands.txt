@@ -98,3 +98,14 @@ dotnet run --no-launch-profile --project .\PlantProcess.Api\PlantProcess.Api.csp
 rom now on, start the API with:
 cd C:\Workspace\PlantProcess-IQ
 .\scripts\dev\run-api-local.ps1
+
+
+
+Demo Database:
+Source	    host(service name)	    port	database
+Meltshop	  meltshop-postgres	      5432	meltshop
+Caster	    caster-oracle	          1521	FREEPDB1
+HSM	        hsm-oracle	            1521	FREEPDB1
+PKL	        pkl-mssql	              1433	pkl
+Downtime	  downtime-mysql	        3306	downtime
+Parsytec	  parsytec-mysql	        3306	parsytec

@@ -6,7 +6,7 @@ WEB_SERVICE="ppiq-app-web"
 DB_SERVICE="ppiq-postgres"
 # <
 set -euo pipefail
-COMPOSE_FILE="${COMPOSE_FILE:-Infrastructure/deploy/docker-compose.demo.yml}"
+COMPOSE_FILE="${COMPOSE_FILE:-deploy/compose/docker-compose.yml}"
 FRONTEND_DIR="${FRONTEND_DIR:-Frontend/PlantProcess.Web}"
 API_PORT_CI="${API_PORT_CI:-18080}"
 BASE_URL="http://127.0.0.1:${API_PORT_CI}"

@@ -6,7 +6,7 @@ $root = (Get-Location).Path
 Write-Host '== docker compose config ==' -ForegroundColor Cyan
 if (Get-Command docker -ErrorAction SilentlyContinue) {
     Push-Location (Join-Path $root 'deploy/compose')
-    docker compose -f docker-compose.demo.yml config | Out-Null
+    docker compose -f docker-compose.yml config | Out-Null
     if ($LASTEXITCODE -eq 0) { Write-Host '  compose config: OK' -ForegroundColor Green } else { Write-Host '  compose config: FAILED (set deploy/compose/.env)' -ForegroundColor Red }
     Pop-Location
 } else { Write-Host '  docker not found - skipping compose validation' -ForegroundColor Yellow }

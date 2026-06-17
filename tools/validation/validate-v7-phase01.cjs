@@ -46,7 +46,7 @@ const authEndpoints = read("Backend/PlantProcess.Api/Security/AuthEndpoints.cs")
 ok(authEndpoints.includes("Bootstrap admin login rejected because at least one real admin exists"), "T287 missing runtime bootstrap rejection");
 ok(authEndpoints.includes("HasRealAdmin"), "T287 missing real-admin guard helper");
 
-const compose = read("deploy/compose/docker-compose.demo.yml");
+const compose = read("deploy/compose/docker-compose.yml");
 ok(!compose.includes('"${POSTGRES_PORT:-5432}:5432"'), "T286 postgres still binds publicly");
 ok(compose.includes('"127.0.0.1:${POSTGRES_PORT:-5432}:5432"'), "T286 postgres loopback binding missing");
 

@@ -64,7 +64,7 @@ function Invoke-Checked {
 function Get-ComposeFilesForProfile {
     param([string]$SelectedProfile)
 
-    $base = "deploy\compose\docker-compose.demo.yml"
+    $base = "deploy\compose\docker-compose.yml"
 
     if (-not (Test-Path $base)) {
         $legacy = "deploy\server\docker-compose.server.yml"
@@ -73,25 +73,25 @@ function Get-ComposeFilesForProfile {
             return @($legacy)
         }
 
-        Fail "No compose base found. Expected deploy\compose\docker-compose.demo.yml or deploy\server\docker-compose.server.yml."
+        Fail "No compose base found. Expected deploy\compose\docker-compose.yml or deploy\server\docker-compose.server.yml."
     }
 
     switch ($SelectedProfile) {
         "local-native-main-db" {
             return @(
-                "deploy\compose\docker-compose.demo.yml",
+                "deploy\compose\docker-compose.yml",
                 "deploy\compose\docker-compose.local-native-main-db.yml"
             )
         }
         "server-docker-main-db" {
             return @(
-                "deploy\compose\docker-compose.demo.yml",
+                "deploy\compose\docker-compose.yml",
                 "deploy\compose\docker-compose.server-docker-main-db.yml"
             )
         }
         "customer-template" {
             return @(
-                "deploy\compose\docker-compose.demo.yml",
+                "deploy\compose\docker-compose.yml",
                 "deploy\compose\docker-compose.customer-template.yml"
             )
         }

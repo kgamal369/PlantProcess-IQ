@@ -9,7 +9,7 @@
 #
 # (No -v / down needed - this only adds port mappings; the named volumes keep
 #  the T-039 data. The two CSV sources have no port: a native API reads those
-#  files directly from Infrastructure/demo-sources/excel-*/.)
+#  files directly from deploy/fixtures/demo/excel-*/.)
 #
 # On the SERVER (dockerized API on the shared demo network) you do NOT use this
 # overlay - the API reaches the sources by container name on port 5432/1521/etc.

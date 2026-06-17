@@ -70,7 +70,7 @@ assert(
   "PPIQ-T102 orphan Phase1WorkflowTruthPanel is deleted"
 );
 
-for (const caddy of ["Infrastructure/deploy/Caddyfile", "deployment/caddy/Caddyfile"]) {
+for (const caddy of ["deploy/caddy/Caddyfile", "deployment/caddy/Caddyfile"]) {
   if (!exists(caddy)) continue;
   const text = read(caddy);
   assert(text.includes("https://api.plantprocessiq.com"), `PPIQ-T103 ${caddy} allows production API`);
@@ -110,7 +110,7 @@ assert(
   "PPIQ-T105 Backend API host port is loopback-bound when present"
 );
 
-const demoCompose = exists("deploy/compose/docker-compose.demo.yml") ? read("deploy/compose/docker-compose.demo.yml") : "";
+const demoCompose = exists("deploy/compose/docker-compose.yml") ? read("deploy/compose/docker-compose.yml") : "";
 assert(
   demoCompose.includes('127.0.0.1:${POSTGRES_PORT:-5432}:5432'),
   "PPIQ-T105 demo Postgres is loopback-bound"

@@ -3,7 +3,7 @@
 #  PlantProcess IQ - T-039 : write + run the deterministic demo dataset generator
 #
 #  This applier writes Backend\tools\generate_demo_dataset.py and runs it,
-#  emitting 002_data.sql into each Infrastructure\demo-sources\*\init plus the
+#  emitting 002_data.sql into each deploy\fixtures\demo\*\init plus the
 #  two CSVs. Then recreate the demo-source containers to load the data.
 # ============================================================================
     $ErrorActionPreference = 'Stop'
@@ -326,7 +326,7 @@ def main() -> None:
     ap = argparse.ArgumentParser(description="PPIQ T-039 deterministic demo dataset generator")
     ap.add_argument("--seed", type=int, default=DEFAULT_SEED)
     ap.add_argument("--heats", type=int, default=DEFAULT_HEATS)
-    ap.add_argument("--out", type=str, default="Infrastructure/demo-sources")
+    ap.add_argument("--out", type=str, default="deploy/fixtures/demo")
     args = ap.parse_args()
 
     out = Path(args.out)
@@ -406,11 +406,11 @@ if __name__ == "__main__":
     }
     if (-not $python) {
         Write-Host "Python 3 not found on PATH. Install it, then run:" -ForegroundColor Yellow
-        Write-Host ("  python `"" + $pyPath + "`" --out `"" + (Join-Path $Root 'Infrastructure/demo-sources') + "`"") -ForegroundColor Yellow
+        Write-Host ("  python `"" + $pyPath + "`" --out `"" + (Join-Path $Root 'deploy/fixtures/demo') + "`"") -ForegroundColor Yellow
         return
     }
 
-    $outDir = Join-Path $Root 'Infrastructure/demo-sources'
+    $outDir = Join-Path $Root 'deploy/fixtures/demo'
     Write-Host ("[run] " + $python + " generate_demo_dataset.py --out " + $outDir) -ForegroundColor Cyan
     & $python $pyPath --out $outDir --seed 20260601
 

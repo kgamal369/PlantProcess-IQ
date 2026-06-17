@@ -13,7 +13,7 @@ Main PlantProcess IQ PostgreSQL is installed directly on the laptop/Windows host
 
 Use:
 
-    docker-compose.demo.yml
+    docker-compose.yml
     docker-compose.local-native-main-db.yml
 
 The local overlay points app containers to host.docker.internal and does not require the main DB container.
@@ -24,7 +24,7 @@ All databases, including the main PlantProcess IQ PostgreSQL DB, run as Docker c
 
 Use:
 
-    docker-compose.demo.yml
+    docker-compose.yml
     docker-compose.server-docker-main-db.yml
 
 The server overlay keeps PostgreSQL loopback-bound and lets app containers reach it on the private Docker network.
@@ -35,7 +35,7 @@ Customer topology can vary: native DB, managed DB, VM DB, Kubernetes service, or
 
 Use:
 
-    docker-compose.demo.yml
+    docker-compose.yml
     docker-compose.customer-template.yml
 
 The customer overlay relies on PPIQ_MAIN_DB_CONNECTION_STRING and does not hardcode the DB topology.

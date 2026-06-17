@@ -1,0 +1,35 @@
+{
+  "kid": "ppiq-dev-ed25519",
+  "tenantId": "00000000-0000-0000-0000-000000000001",
+  "algorithm": "Ed25519",
+  "issuedAtUtc": "2026-06-16T17:14:26.159Z",
+  "expiresAtUtc": "2027-06-16T17:14:26.159Z",
+  "reusedExistingKey": true,
+  "publicKeyB64": "DnycfAUUX263chT9G2UHQ6gbI6HUe5dX8W5KQL8E/Ss=",
+  "tokens": [
+    {
+      "tier": "Light",
+      "licenseKey": "PPIQ-DEV-LIGHT",
+      "file": "light.token",
+      "selfVerified": true
+    },
+    {
+      "tier": "Pro",
+      "licenseKey": "PPIQ-DEV-PRO",
+      "file": "pro.token",
+      "selfVerified": true
+    },
+    {
+      "tier": "ProPlus",
+      "licenseKey": "PPIQ-DEV-PROPLUS",
+      "file": "proplus.token",
+      "selfVerified": true
+    },
+    {
+      "tier": "Enterprise",
+      "licenseKey": "PPIQ-DEV-ENTERPRISE",
+      "file": "enterprise.token",
+      "selfVerified": true
+    }
+  ]
+}

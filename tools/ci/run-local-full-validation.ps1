@@ -14,7 +14,7 @@ $Root = Resolve-Path (Join-Path $PSScriptRoot "..\..")
 $Backend = Join-Path $Root "Backend"
 $Frontend = Join-Path $Root "Frontend\PlantProcess.Web"
 $Website = Join-Path $Root "Website\PlantProcess.Website"
-$Deploy = Join-Path $Root "Infrastructure\deploy"
+$Deploy = Join-Path $Root "deploy\compose"
 
 Write-Section "PlantProcess IQ — Local Full Validation"
 Write-Host "Root: $Root"
@@ -53,7 +53,7 @@ Pop-Location
 
 Write-Section "Docker Compose Config"
 Push-Location $Deploy
-docker compose -f docker-compose.demo.yml config | Out-Null
+docker compose -f docker-compose.yml config | Out-Null
 Pop-Location
 
 Write-Section "Validation Completed"

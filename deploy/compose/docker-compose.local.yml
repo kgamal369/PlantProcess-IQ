@@ -1,0 +1,21 @@
+# ==============================================================================
+# LOCAL overlay (M1-T01) — developer laptop.
+# Publishes the app Postgres on 127.0.0.1 so a NATIVELY-run API / `dotnet test` /
+# vitest can reach it through the deploy/compose/.env.dev connection string
+# (Host=localhost). Run API/Web natively for hot reload, or bring the whole stack
+# up with these published ports. Loopback-only: nothing is exposed off-box.
+# ==============================================================================
+services:
+  plantprocess-postgres:
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+
+  plantprocess-api:
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
+    ports:
+      - "127.0.0.1:${PPIQ_API_HOST_PORT:-5063}:5063"
+
+  plantprocess-web:
+    ports:
+      - "127.0.0.1:${PPIQ_WEB_HOST_PORT:-5173}:80"

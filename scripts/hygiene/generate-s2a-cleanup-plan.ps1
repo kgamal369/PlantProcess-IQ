@@ -1,4 +1,4 @@
-﻿param(
+param(
     [string]$RepoRoot = "C:\Workspace\PlantProcess-IQ"
 )
 
@@ -144,8 +144,8 @@ Add-CleanupItem "deployment" "Duplicate deployment folder" "MOVE_TO_DEPLOY" "Med
     "Duplicate deployment folder. Caddy config should live under one deploy root." `
     "deploy\caddy"
 
-Add-CleanupItem "Infrastructure\deploy" "Duplicate infrastructure deploy folder" "MOVE_TO_DEPLOY" "Medium" `
-    "Infrastructure\deploy contains env files, Caddyfile, compose and server scripts, but deployment ownership should be centralized." `
+Add-CleanupItem "deploy\compose" "Duplicate infrastructure deploy folder" "MOVE_TO_DEPLOY" "Medium" `
+    "deploy\compose contains env files, Caddyfile, compose and server scripts, but deployment ownership should be centralized." `
     "deploy\server or deploy\infra"
 
 Add-CleanupItem "Jenkinsfile" "CI/CD root file" "DECIDE_KEEP_ROOT_OR_MOVE" "Medium" `
@@ -326,7 +326,7 @@ $Lines.Add("")
 $Lines.Add("| Priority | Area | Decision Needed |")
 $Lines.Add("|---:|---|---|")
 $Lines.Add("| 1 | `Frontend\PlantProcess.Web\storybook-static` | Delete generated artifact and ignore it. |")
-$Lines.Add("| 2 | `deploy` / `deployment` / `Infrastructure\deploy` | Consolidate to one canonical `deploy` root. |")
+$Lines.Add("| 2 | `deploy` / `deployment` / `deploy\compose` | Consolidate to one canonical `deploy` root. |")
 $Lines.Add("| 3 | `tools` and backup/purged artifacts | Keep active scripts only; archive or delete historical pack backups. |")
 $Lines.Add("| 4 | `Backend\src` and `Frontend\src` | Verify unreferenced legacy/prototype source, then remove/archive. |")
 $Lines.Add("| 5 | `Backend\database` | Restructure scripts into migrations, seed/demo, views, manual repairs, deprecated. |")

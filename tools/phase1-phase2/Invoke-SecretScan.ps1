@@ -48,7 +48,7 @@ function Should-SkipPath([string]$FullPath) {
     if ($relative -eq 'Backend\PlantProcess.Workers\Properties\launchSettings.json') { return $true }
     if ($relative -match '^deploy\\demo-sources\\') { return $true }
     if ($relative -eq 'deploy\identity\keycloak-reference-compose.yml') { return $true }
-    if ($relative -eq 'deploy\server\docker-compose.demo.yml') { return $true }
+    if ($relative -eq 'deploy\server\docker-compose.yml') { return $true }
 
     # Do not scan this scanner. It contains secret-detection regex literals by design.
     if ($relative -eq 'tools\phase1-phase2\Invoke-SecretScan.ps1') { return $true }

@@ -1,9 +1,0 @@
-services:
-  plantprocess-api:
-    environment:
-      PlantProcess__Auth__SigningKey: "73I+f9cwTPyjoHaP/oy1VweG0K9hd+A3CUbk1gnqzdB10AbgrbXqZ3qllAx1NcFFsqD1bjvRTg8WnH8SnmHbow=="
-      Auth__SigningKey: "73I+f9cwTPyjoHaP/oy1VweG0K9hd+A3CUbk1gnqzdB10AbgrbXqZ3qllAx1NcFFsqD1bjvRTg8WnH8SnmHbow=="
-  plantprocess-workers:
-    environment:
-      PlantProcess__Auth__SigningKey: "73I+f9cwTPyjoHaP/oy1VweG0K9hd+A3CUbk1gnqzdB10AbgrbXqZ3qllAx1NcFFsqD1bjvRTg8WnH8SnmHbow=="
-      Auth__SigningKey: "73I+f9cwTPyjoHaP/oy1VweG0K9hd+A3CUbk1gnqzdB10AbgrbXqZ3qllAx1NcFFsqD1bjvRTg8WnH8SnmHbow=="

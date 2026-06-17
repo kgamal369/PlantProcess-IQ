@@ -7,7 +7,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 const repo = process.cwd();
-const composePath = path.join(repo, "Infrastructure", "deploy", "docker-compose.demo.yml");
+const composePath = path.join(repo, "Infrastructure", "deploy", "docker-compose.yml");
 const readmePath = path.join(repo, "Infrastructure", "deploy", "README.md");
 
 function fail(message) {
@@ -15,8 +15,8 @@ function fail(message) {
   process.exit(1);
 }
 
-if (!fs.existsSync(composePath)) fail("Missing docker-compose.demo.yml");
-if (!fs.existsSync(readmePath)) fail("Missing Infrastructure/deploy/README.md");
+if (!fs.existsSync(composePath)) fail("Missing docker-compose.yml");
+if (!fs.existsSync(readmePath)) fail("Missing deploy/compose/README.md");
 
 const compose = fs.readFileSync(composePath, "utf8");
 const readme = fs.readFileSync(readmePath, "utf8");

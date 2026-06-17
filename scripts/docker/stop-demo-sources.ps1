@@ -1,4 +1,4 @@
-﻿param(
+param(
     [ValidateSet("local", "test", "server")]
     [string]$Profile = "local"
 )
@@ -18,8 +18,8 @@ if (-not $Docker) {
 $Candidates = @(
     "deploy\demo-sources\docker-compose.demo-sources.yml",
     "docker-compose.demo-sources.yml",
-    "Infrastructure\deploy\docker-compose.demo-sources.yml",
-    "Infrastructure\deploy\docker-compose.demo.yml"
+    "deploy\compose\docker-compose.demo-sources.yml",
+    "deploy\compose\docker-compose.yml"
 )
 
 foreach ($Relative in $Candidates) {

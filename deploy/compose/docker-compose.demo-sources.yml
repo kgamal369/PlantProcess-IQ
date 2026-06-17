@@ -22,7 +22,7 @@ services:
       POSTGRES_PASSWORD: meltshop_demo_pwd
     volumes:
       - ppiq_meltshop_pg_data:/var/lib/postgresql/data
-      - ./Infrastructure/demo-sources/meltshop-postgres/init:/docker-entrypoint-initdb.d:ro
+      - ./deploy/fixtures/demo/meltshop-postgres/init:/docker-entrypoint-initdb.d:ro
     networks:
       - ppiq-demo-sources
     healthcheck:
@@ -40,7 +40,7 @@ services:
       APP_USER_PASSWORD: caster_demo_pwd
     volumes:
       - ppiq_caster_oracle_data:/opt/oracle/oradata
-      - ./Infrastructure/demo-sources/caster-oracle/init:/container-entrypoint-initdb.d:ro
+      - ./deploy/fixtures/demo/caster-oracle/init:/container-entrypoint-initdb.d:ro
     networks:
       - ppiq-demo-sources
     healthcheck:
@@ -58,7 +58,7 @@ services:
       APP_USER_PASSWORD: hsm_demo_pwd
     volumes:
       - ppiq_hsm_oracle_data:/opt/oracle/oradata
-      - ./Infrastructure/demo-sources/hsm-oracle/init:/container-entrypoint-initdb.d:ro
+      - ./deploy/fixtures/demo/hsm-oracle/init:/container-entrypoint-initdb.d:ro
     networks:
       - ppiq-demo-sources
     healthcheck:
@@ -75,7 +75,7 @@ services:
       MSSQL_SA_PASSWORD: Ppiq_Demo_2026_Strong!
     volumes:
       - ppiq_pkl_mssql_data:/var/opt/mssql
-      - ./Infrastructure/demo-sources/pkl-mssql/init:/docker-entrypoint-initdb.d:ro
+      - ./deploy/fixtures/demo/pkl-mssql/init:/docker-entrypoint-initdb.d:ro
     networks:
       - ppiq-demo-sources
     healthcheck:
@@ -94,7 +94,7 @@ services:
       MYSQL_ROOT_PASSWORD: downtime_root_pwd
     volumes:
       - ppiq_downtime_mysql_data:/var/lib/mysql
-      - ./Infrastructure/demo-sources/downtime-mysql/init:/docker-entrypoint-initdb.d:ro
+      - ./deploy/fixtures/demo/downtime-mysql/init:/docker-entrypoint-initdb.d:ro
     networks:
       - ppiq-demo-sources
     healthcheck:
@@ -113,7 +113,7 @@ services:
       MYSQL_ROOT_PASSWORD: parsytec_root_pwd
     volumes:
       - ppiq_parsytec_mysql_data:/var/lib/mysql
-      - ./Infrastructure/demo-sources/parsytec-mysql/init:/docker-entrypoint-initdb.d:ro
+      - ./deploy/fixtures/demo/parsytec-mysql/init:/docker-entrypoint-initdb.d:ro
     networks:
       - ppiq-demo-sources
     healthcheck:
@@ -127,7 +127,7 @@ services:
     container_name: ppiq-source-excel-yard
     command: ["sh", "-c", "while true; do test -f /data/yard_inventory.csv && sleep 30; done"]
     volumes:
-      - ./Infrastructure/demo-sources/excel-yard:/data:ro
+      - ./deploy/fixtures/demo/excel-yard:/data:ro
     networks:
       - ppiq-demo-sources
     healthcheck:
@@ -141,7 +141,7 @@ services:
     container_name: ppiq-source-excel-qa
     command: ["sh", "-c", "while true; do test -f /data/qa_samples.csv && sleep 30; done"]
     volumes:
-      - ./Infrastructure/demo-sources/excel-qa:/data:ro
+      - ./deploy/fixtures/demo/excel-qa:/data:ro
     networks:
       - ppiq-demo-sources
     healthcheck:

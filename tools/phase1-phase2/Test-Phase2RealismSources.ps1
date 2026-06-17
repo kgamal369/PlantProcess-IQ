@@ -5,7 +5,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-$infra = Join-Path $ProjectRoot "Infrastructure\demo-sources"
+$infra = Join-Path $ProjectRoot "deploy\fixtures\demo"
 
 $required = @(
     "meltshop-postgres\init\001_schema_seed.sql",

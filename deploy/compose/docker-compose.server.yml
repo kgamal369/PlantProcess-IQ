@@ -1,0 +1,35 @@
+# ==============================================================================
+# SERVER overlay (M1-T01) — production VPS.
+# Adds Caddy in front of Web + API, restart policies, and the ONLY externally
+# published ports (80/443 via Caddy). Real secrets come from deploy/compose/.env
+# on the server (gitignored) and /var/lib/ppiq-preserve/.env.
+# ==============================================================================
+services:
+  plantprocess-api:
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+
+  plantprocess-web:
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: plantprocess-caddy
+    restart: unless-stopped
+    depends_on:
+      - plantprocess-web
+      - plantprocess-api
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ../caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - plantprocess-caddy-data:/data
+      - plantprocess-caddy-config:/config
+    networks:
+      - plantprocess-private
+
+volumes:
+  plantprocess-caddy-data:
+  plantprocess-caddy-config:

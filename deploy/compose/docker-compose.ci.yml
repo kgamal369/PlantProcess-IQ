@@ -1,0 +1,16 @@
+# ==============================================================================
+# CI overlay (M1-T01) — ephemeral pipeline stack.
+# No published host ports (prevents port clashes on the build agent). Postgres is
+# reachable only on the private network. Containers are not restarted.
+# ==============================================================================
+services:
+  plantprocess-postgres:
+    restart: "no"
+
+  plantprocess-api:
+    restart: "no"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+
+  plantprocess-web:
+    restart: "no"

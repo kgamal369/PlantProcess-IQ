@@ -25,7 +25,7 @@ const linuxCertificationShPath = path.join(ciToolsDir, "ppiq-certification-stage
 const jenkinsCandidates = [
   "Jenkinsfile",
   "deploy/ci/Jenkinsfile",
-  "Infrastructure/deploy/Jenkinsfile"
+  "deploy/compose/Jenkinsfile"
 ];
 
 function ensureDir(dir) {

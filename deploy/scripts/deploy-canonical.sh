@@ -10,7 +10,7 @@ set -euo pipefail
 
 # --- inputs (env-configurable; never hardcode targets) ---
 COMPOSE_PROJECT="${COMPOSE_PROJECT:-plantprocessiq}"
-COMPOSE_FILE="${COMPOSE_FILE:-Infrastructure/deploy/docker-compose.demo.yml}"
+COMPOSE_FILE="${COMPOSE_FILE:-deploy/compose/docker-compose.yml}"
 HEALTH_NETWORK="${HEALTH_NETWORK:-ppiq-network}"
 HEALTH_TARGET="${HEALTH_TARGET:-http://ppiq-app-api:5063/health}"
 HEALTH_CURL_IMAGE="${HEALTH_CURL_IMAGE:-curlimages/curl:8.10.1}"

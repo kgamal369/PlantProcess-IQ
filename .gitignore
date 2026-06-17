@@ -93,3 +93,8 @@ docs/.ground_truth_backup/
 **/_legacy_consolidated_*/
 
 Website/PlantProcess.Website/node_modules/
+# M1-T02: local-only dev env is COMMITTED; real secrets (.env) stay ignored.
+!deploy/compose/.env.dev
+
+# DEV-ONLY Ed25519 private key - never commit
+deploy/fixtures/license/dev_private.pem

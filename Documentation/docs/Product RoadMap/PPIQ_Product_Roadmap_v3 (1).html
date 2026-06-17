@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>PPIQ — Product Roadmap · €35k → €250k</title>
+<style>
+  :root{--navy:#050B18;--panel:#0B1730;--indus:#102A43;--eblue:#0A84FF;--cyan:#00D4FF;--cblue:#2F80ED;--ok:#2CE6A2;--warn:#FFB020;--crit:#FF4D6D;--white:#EAF6FF;--steel:#8EA7C1;--light:#F4F6F8;--line:#1c3354;}
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(1200px 600px at 70% -10%,#0a1a33,var(--navy));color:var(--white);font-family:Inter,-apple-system,Segoe UI,Roboto,sans-serif;font-size:14px;line-height:1.55}
+  code,.mono{font-family:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace}
+  .wrap{max-width:1280px;margin:0 auto;padding:30px 22px 90px}
+  h1{font-size:28px;margin:0 0 4px;letter-spacing:.2px}
+  h2{font-size:20px;margin:38px 0 12px;border-left:3px solid var(--cyan);padding-left:11px}
+  h3{font-size:15px;margin:0 0 10px}
+  .sub{color:var(--steel);font-size:13px;margin:0 0 18px}
+  .pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:600}
+  .b-crit{background:rgba(255,77,109,.16);color:var(--crit);border:1px solid rgba(255,77,109,.4)}
+  .b-warn{background:rgba(255,176,32,.14);color:var(--warn);border:1px solid rgba(255,176,32,.4)}
+  .b-ok{background:rgba(0,212,255,.12);color:var(--cyan);border:1px solid rgba(0,212,255,.4)}
+  .b-strong{background:rgba(44,230,162,.14);color:var(--ok);border:1px solid rgba(44,230,162,.4)}
+  .note{background:var(--indus);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:12px 0}
+  .note b{color:var(--cyan)}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+  .grid2{display:grid;grid-template-columns:1.1fr .9fr;gap:16px}
+  @media(max-width:920px){.grid2{grid-template-columns:1fr}}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  @media(max-width:920px){.grid3{grid-template-columns:1fr}}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--steel);margin-top:8px}
+  .legend span{display:inline-flex;align-items:center;gap:6px}.dot{width:10px;height:10px;border-radius:3px;display:inline-block}
+  /* lenses */
+  .lens{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px}
+  .lens .h{display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .lens .nm{font-weight:700;font-size:13.5px}.lens .sc{font-size:20px;font-weight:700}
+  .lens .q{font-size:12px;color:var(--steel);margin:6px 0 0}
+  .lens .veto{font-size:11.5px;color:#ffb9c6;margin-top:6px}
+  /* gantt */
+  .gantt{display:grid;grid-template-columns:120px 1fr;gap:6px 10px;align-items:center;margin-top:6px}
+  .gantt .lab{font-size:12px;color:var(--white)}
+  .gtrack{position:relative;height:30px;background:#0a1426;border:1px solid var(--line);border-radius:7px;overflow:hidden}
+  .gbar{position:absolute;top:4px;bottom:4px;border-radius:5px;display:flex;align-items:center;padding:0 8px;font-size:11px;font-weight:600;color:#04121f;white-space:nowrap}
+  .gscale{display:flex;justify-content:space-between;font-size:11px;color:var(--steel);margin:4px 0 0;padding-left:130px}
+  /* qa */
+  details.qa{background:var(--panel);border:1px solid var(--line);border-radius:10px;margin:8px 0;overflow:hidden}
+  details.qa summary{cursor:pointer;padding:11px 14px;font-weight:600;font-size:13.5px;list-style:none}
+  details.qa summary::-webkit-details-marker{display:none}
+  details.qa[open] summary{border-bottom:1px solid var(--line)}
+  details.qa .a{padding:10px 14px;font-size:13px;color:var(--white)}
+  details.qa .a .ev{color:var(--steel);font-size:11.5px;margin-top:4px}
+  details.qa .a code{color:#afe3ff;background:#0a1426;padding:1px 5px;border-radius:4px}
+  /* tracker */
+  .msbar{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:12px 0;display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+  .msbar .goal{font-size:26px;font-weight:700}
+  .prog{flex:1;min-width:240px}
+  .pbar{height:12px;border-radius:7px;background:#0a1426;border:1px solid var(--line);overflow:hidden}
+  .pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--eblue),var(--cyan));transition:width .25s}
+  .pcount{font-size:12px;color:var(--steel);margin-top:5px}
+  .grp{margin:10px 0 4px;font-size:12px;text-transform:uppercase;letter-spacing:.8px;color:var(--steel);display:flex;align-items:center;gap:8px}
+  .grp .d{width:9px;height:9px;border-radius:3px;display:inline-block}.dotcode{background:var(--eblue)}.dottech{background:var(--cyan)}.dotbiz{background:var(--ok)}
+  .gate{display:grid;grid-template-columns:24px auto 1fr;gap:10px;align-items:start;padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin:6px 0;background:var(--panel)}
+  .gate.done{border-color:rgba(44,230,162,.45);background:rgba(44,230,162,.06)}
+  .gate input{width:17px;height:17px;margin-top:2px;accent-color:#2CE6A2;cursor:pointer}
+  .gate .id{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--cyan);white-space:nowrap;padding-top:2px}
+  .gate .w{font-weight:600;font-size:13px}.gate .test{font-size:12px;color:var(--steel);margin-top:2px}.gate .test b{color:#a9f0d4}
+  .reset{background:var(--indus);color:var(--white);border:1px solid var(--line);border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;margin-left:auto}
+  table{width:100%;border-collapse:collapse;margin:6px 0}
+  th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top;font-size:13px}
+  th{color:var(--steel);font-size:11px;text-transform:uppercase}
+  .foot{color:var(--steel);font-size:12px;margin-top:26px;border-top:1px solid var(--line);padding-top:14px}
+  .arch{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:6px}
+  @media(max-width:920px){.arch{grid-template-columns:1fr}}
+  .box{background:var(--indus);border:1px solid var(--line);border-radius:10px;padding:11px}
+  .box h4{margin:0 0 6px;font-size:12.5px;color:var(--cyan)}
+  .box ul{margin:0;padding-left:15px}.box li{font-size:12px;margin:3px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>PlantProcess IQ — Product Roadmap</h1>
+  <p class="sub">From laptop software → a product you sell · €35k → €60k → €120k → €250k + first contract. A product ships when <b>all six buyer lenses can sign</b>; the headline is the <b>lowest</b>, never an average. Euros = customer-side willingness-to-pay, not quotes.</p>
+
+  <div class="note"><b>The rule that fixes 6-June:</b> every task is a <b>binary gate</b> with an evidence artifact — a task is done when its gate is green, not when code was written. <i>What is not measured is not achieved.</i> The value jumps are mostly <b>not code</b>: €35k→€60k = a demo that runs <b>live</b>; €120k→€250k = <b>one reference customer</b>.</p></div>
+
+  <div class="note" style="border-color:rgba(255,176,32,.5)"><b>v3.1 adjustment (market benchmark + pilot model):</b> the €35k→€60k→€120k→€250k figures are <b>market value, not the invoice</b>. You propose a <b>€30–40k paid pilot now</b> (lean €30k for the first customer) <b>crediting toward a €120k/yr license</b>; €120k is what you convert to after <b>proven ROI on the customer's data</b>, and the pilot/contract runs right after the M1 presentation (M2 overlaps it, customer-funded). PPIQ is a <b>Tier-2 specialist</b>, read-only — lower price ceiling than prescriptive peers SST/Fero — so the path is <b>proof + service + a reference, not more features</b>.</div>
+
+  <!-- ===== VALUE BRIDGE ===== -->
+  <h2>The value bridge — where the money actually comes from</h2>
+  <div class="panel">
+    <svg id="bridge" viewBox="0 0 1000 300" width="100%" height="300" role="img" aria-label="Value bridge chart"></svg>
+    <div class="legend">
+      <span><i class="dot" style="background:var(--steel)"></i>origin</span>
+      <span><i class="dot" style="background:var(--warn)"></i>M1 · 5 days</span>
+      <span><i class="dot" style="background:var(--cyan)"></i>M2 · mid-July</span>
+      <span><i class="dot" style="background:var(--ok)"></i>M3 · 1 Jan 2027</span>
+    </div>
+  </div>
+
+  <!-- ===== CURRENT STATE: RADAR + DIMENSIONS ===== -->
+  <h2>Origin — how the six lenses score today (headline = lowest = 61)</h2>
+  <div class="grid2">
+    <div class="panel">
+      <h3>The six buyer lenses (radar)</h3>
+      <svg id="radar" viewBox="0 0 320 330" width="100%" height="330" role="img" aria-label="Persona radar"></svg>
+    </div>
+    <div class="panel">
+      <h3>Strong where it's engineering · Critical where it's proven-live + commercial</h3>
+      <div style="margin-top:4px">
+        <div style="font-size:12px;color:var(--ok);margin:8px 0 4px">ENGINEERING — your moat</div>
+        <div class="bardim" data-v="74" data-l="Analytics / AI+ML engine" data-c="cyan"></div>
+        <div class="bardim" data-v="72" data-l="Security &amp; identity (strongest lens)" data-c="cyan"></div>
+        <div class="bardim" data-v="72" data-l="Read-only / OT-safe posture" data-c="cyan"></div>
+        <div class="bardim" data-v="72" data-l="Honesty / explainability" data-c="cyan"></div>
+        <div style="font-size:12px;color:var(--crit);margin:14px 0 4px">PROVEN-LIVE &amp; COMMERCIAL — the wall</div>
+        <div class="bardim" data-v="40" data-l="Live-demo readiness" data-c="crit"></div>
+        <div class="bardim" data-v="42" data-l="Environment reproducibility" data-c="crit"></div>
+        <div class="bardim" data-v="58" data-l="Website / commercial surface" data-c="warn"></div>
+        <div class="bardim" data-v="45" data-l="Vendor viability / references" data-c="crit"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== BUYER LENSES ===== -->
+  <h2>How a customer judges this — the six lenses &amp; their vetoes</h2>
+  <div class="grid3">
+    <div class="lens"><div class="h"><span class="nm">Developer / Maintainer</span><span class="sc" style="color:var(--warn)">63</span></div><div class="q">"Can I extend it, and is it honest?"</div><div class="veto">Veto: red suite · dead button · tombstone shim</div></div>
+    <div class="lens" style="border-color:rgba(0,212,255,.4)"><div class="h"><span class="nm">Security / IT / Procurement</span><span class="sc" style="color:var(--cyan)">72</span></div><div class="q">"Any OT or data-egress risk?" — the veto-holder.</div><div class="veto">Veto: write-back to control · token in localStorage · exposed DB port</div></div>
+    <div class="lens" style="border-color:rgba(255,176,32,.5)"><div class="h"><span class="nm">Quality Engineer (daily user)</span><span class="sc" style="color:var(--warn)">61</span></div><div class="q">"Will it beat my spreadsheets and can I trust it?"</div><div class="veto">Veto: dead button · fabricated number · broken genealogy</div></div>
+    <div class="lens"><div class="h"><span class="nm">Reliability / Ops / Admin</span><span class="sc" style="color:var(--warn)">65</span></div><div class="q">"Does it run, and can I configure without you?"</div><div class="veto">Veto: silent overwrite · unmonitored job · no runbook</div></div>
+    <div class="lens"><div class="h"><span class="nm">Executive Sponsor (buyer)</span><span class="sc" style="color:var(--warn)">67</span></div><div class="q">"Will it pay back? Right scope per role?"</div><div class="veto">Veto: value asserted-not-computed · uncited number · editable license</div></div>
+    <div class="lens"><div class="h"><span class="nm">Brand / Website (first look)</span><span class="sc" style="color:var(--warn)">63</span></div><div class="q">"Before login, would a buyer request a demo?"</div><div class="veto">Veto: forbidden claim · thin product page · dead CTA</div></div>
+  </div>
+
+  <!-- ===== SURPRISE QUESTION GATE ===== -->
+  <h2>The surprise-question gate — the objections the demo must survive (rehearse these)</h2>
+  <p class="sub">A skeptical buyer asks these live. The five you must nail cold are below; full set in the .md.</p>
+  <div class="grid2">
+    <div>
+      <details class="qa"><summary>"Briefly — what is it and why should I buy it?"</summary><div class="a">A read-only, evidence-grade layer that connects your fragmented plant data and shows <i>suspected</i> drivers of quality/downtime with the population and the math shown — faster than spreadsheets, without touching control systems.</div></details>
+      <details class="qa"><summary>"Do you send my data to GPT/Claude?"</summary><div class="a">No. Engines run in-tenant; the assistant model is self-hosted by default, or a zero-retention private endpoint receiving <b>only</b> the question + scoped evidence; a per-tenant no-egress toggle exists.<div class="ev">Evidence: <code>PrivateModelGatewayContracts.cs:13</code></div></div></details>
+      <details class="qa"><summary>"Is it AI, or simple math?"</summary><div class="a">Deterministic engines compute and rank; the assistant only explains, and <b>cannot render an uncited number</b>.<div class="ev">Evidence: <code>GroundingService.cs:42</code>; <code>AdvancedCorrelationComputeService.cs</code></div></div></details>
+    </div>
+    <div>
+      <details class="qa"><summary>"Can I change pages/widgets/jobs myself, or only in source?"</summary><div class="a">From the HMI. A script layer adjusts widget behaviour so there's no endpoint-per-widget.<div class="ev">Evidence: <code>p3T15WidgetSchemaContract.ts</code></div></div></details>
+      <details class="qa"><summary>"How do you control the license — can I just edit my tier?"</summary><div class="a">No. Entitlements come from an Ed25519-<b>signed token</b>, not an editable DB row — a tamper test proves mutating the tier changes nothing.<div class="ev">Evidence: <code>VerifiedEd25519LicenseService.cs</code>; <code>Phase5_LicenseTierTamperTests.cs:8</code></div></div></details>
+      <details class="qa"><summary>"GPT-3 erred often — how can I depend on your assistant?"</summary><div class="a">Because the assistant doesn't compute or rank — deterministic engines do, and every assistant claim carries a resolvable evidence handle or is not rendered.</div></details>
+    </div>
+  </div>
+  <div class="note">The close, every time: <b>"suspected contributor, not guaranteed root cause — read-only, no OT control."</b> That honesty <i>is</i> the differentiator vs prescriptive tools (SST/Fero).</div>
+
+  <!-- ===== TIMELINE ===== -->
+  <h2>The milestone timeline</h2>
+  <div class="panel">
+    <div class="gantt">
+      <div class="lab">M1 · €60k</div><div class="gtrack"><div class="gbar" style="left:0;width:8%;background:var(--warn)">5 days</div></div>
+      <div class="lab">M2 · €120k</div><div class="gtrack"><div class="gbar" style="left:8%;width:22%;background:var(--cyan)">→ mid-July</div></div>
+      <div class="lab">M3 · €250k</div><div class="gtrack"><div class="gbar" style="left:30%;width:70%;background:var(--ok)">→ 1 Jan 2027 · first signed contract</div></div>
+    </div>
+    <div class="gscale"><span>now</span><span>mid-July</span><span>Oct</span><span>1 Jan 2027</span></div>
+    <table style="margin-top:10px">
+      <tr><th>Milestone</th><th>The lever (mostly not code)</th><th>Defining gate</th></tr>
+      <tr><td><b>M1 · €60k</b></td><td>A demo that runs <b>live</b> + collateral</td><td>recorded live dry-run (M1-8…M1-11)</td></tr>
+      <tr><td><b>M2 · €120k</b></td><td>Certified + auto-tested + whole website + funnel</td><td>green suite twice + soak + 5 products + ≥3 conversations</td></tr>
+      <tr><td><b>M3 · €250k</b></td><td><b>One reference customer</b> + viability story</td><td>a <b>signed contract</b> + case study + SOC2 window open</td></tr>
+    </table>
+  </div>
+
+  <!-- ===== ENVIRONMENT ===== -->
+  <h2>The stable environment — fix the root cause once (M1, Day 1)</h2>
+  <div class="note"><b>Your failing tests, your failing demo dry-run, and your vanishing credentials are one problem: non-reproducibility.</b> Move local-only creds into version control (they only ever point at local containers, so they're not secrets); keep real secrets in a git-ignored <code>.env</code> on the VPS. A clean checkout + <code>ppiq.ps1 demo</code> then always boots an identical seeded, credentialed, licensed system. <b>M1-7's gate</b> — <code>ppiq.ps1 test</code> exits 0 <b>twice</b> on a clean machine — is the permanent end of the 83-failure struggle.</div>
+  <div class="arch">
+    <div class="box"><h4>One canonical compose + overlays</h4><ul><li><code>docker-compose.yml</code> base (app DB)</li><li><code>.sources.yml</code> — 8 emulated sources (demo)</li><li>local / ci / server overlays</li><li>delete the 3 duplicate trees</li></ul></div>
+    <div class="box"><h4>App DB = ONE database, TWO schemas</h4><ul><li><code>ppiq_meta</code> — dashboards, widgets, jobs, pages, users, roles, license</li><li><code>ppiq_plant</code> — customer data after staging transform (RLS)</li></ul></div>
+    <div class="box"><h4>Committed fixtures (never vanish)</h4><ul><li><code>demo/</code> — 630 heats / 5,600 coils</li><li><code>users/</code> — one user per role</li><li><code>license/</code> — dev Ed25519 keypair + per-tier tokens</li></ul></div>
+    <div class="box"><h4>One entrypoint <code>ppiq.ps1</code></h4><ul><li>up · migrate · seed · test · e2e · demo · reset · down</li><li>loads <code>.env.dev</code> — no hand-set vars ever</li></ul></div>
+    <div class="box"><h4>Auth, ready for test/e2e/run</h4><ul><li>License: committed dev keypair; prod uses SOU's real key</li><li>Users: seeded per role, known dev passwords</li></ul></div>
+    <div class="box"><h4>Why it's the right pattern</h4><ul><li>identical local/CI/server topology</li><li>zero manual setup; one-command clean rebuild</li><li>"deploy to server &amp; customer" falls out</li></ul></div>
+  </div>
+
+  <!-- ===== ACCEPTANCE TRACKER ===== -->
+  <h2>Acceptance-gate tracker — tick a gate only when its evidence exists</h2>
+  <p class="sub">Interactive. Progress is in-memory (resets on reload); the <code>.md</code> is the source of truth.</p>
+
+  <!-- M1 -->
+  <div class="msbar"><div><div class="sub" style="margin:0">M1 · 5 days</div><div class="goal" style="color:var(--warn)">€60k</div></div><div class="prog"><div class="pbar"><i id="bar-m1"></i></div><div class="pcount" id="cnt-m1"></div></div><button class="reset" onclick="resetAll()">reset ticks</button></div>
+  <div class="grp"><span class="d dotcode"></span>Environment — build first (fixes env + the 83 failures permanently)</div>
+  <div data-ms="m1" class="gate"><input type="checkbox"><div class="id">M1-1</div><div><div class="w">Converge to ONE compose base; delete 2 duplicate trees</div><div class="test">Gate: <b>grep finds no duplicate compose; one base</b></div></div></div>
+  <div data-ms="m1" class="gate"><input type="checkbox"><div class="id">M1-2</div><div><div class="w">Commit <code>.env.dev</code> (local-only, non-secret)</div><div class="test">Gate: <b>fresh clone has working creds, no manual setup</b></div></div></div>
+  <div data-ms="m1" class="gate"><input type="checkbox"><div class="id">M1-3</div><div><div class="w"><code>000_schemas.sql</code> — <code>ppiq_meta</code> + <code>ppiq_plant</code></div><div class="test">Gate: <b>after migrate, <code>\dn</code> lists both</b></div></div></div>
+  <div data-ms="m1" class="gate"><input type="checkbox"><div class="id">M1-4</div><div><div class="w">Demo sources compose + fixtures (8 sources, 630/5,600)</div><div class="test">Gate: <b><code>up-sources</code> → 8 healthy; counts match</b></div></div></div>
+  <div data-ms="m1" class="gate"><input type="checkbox"><div class="id">M1-5</div><div><div class="w">Seed one user per role + dev Ed25519 license per tier</div><div class="test">Gate: <b>login for all 5 roles; each tier token verifies</b></div></div></div>
+  <div data-ms="m1" class="gate"><input type="checkbox"><div class="id">M1-6</div><div><div class="w"><code>ppiq.ps1</code> one entrypoint</div><div class="test">Gate: <b>each verb runs from clean checkout, no hand-set vars</b></div></div></div>
+  <div data-ms="m1" class="gate"><input type="checkbox"><div class="id">M1-7</div><div><div class="w">Commit test config so <code>dotnet test</code> boots host + DB</div><div class="test">Gate: <b><code>ppiq.ps1 test</code> exits 0 TWICE on a clean machine</b> — the 83-failure fix</div></div></div>
+  <div class="grp"><span class="d dotcode"></span>Make the demo run (the €60k blocker)</div>
+  <div data-ms="m1" class="gate"><input type="checkbox"><div class="id">M1-8</div><div><div class="w">App boots under Playwright (no early <code>webServer</code> exit)</div><div class="test">Gate: <b><code>ppiq.ps1 e2e</code> starts app + runs ≥1 spec</b></div></div></div>
+  <div data-ms="m1" class="gate"><input type="checkbox"><div class="id">M1-9</div><div><div class="w">One-click readiness green + record dry-run video</div><div class="test">Gate: <b>readiness passes; MP4 of the walk exists</b></div></div></div>
+  <div data-ms="m1" class="gate"><input type="checkbox"><div class="id">M1-10</div><div><div class="w">Fix ONLY demo-path buttons (subset of 41)</div><div class="test">Gate: <b>every 9-step button performs its action</b></div></div></div>
+  <div data-ms="m1" class="gate"><input type="checkbox"><div class="id">M1-11</div><div><div class="w">Verify C-0044170 thread + transition coil live</div><div class="test">Gate: <b>both directions + 70/30 render live</b></div></div></div>
+  <div data-ms="m1" class="gate"><input type="checkbox"><div class="id">M1-12</div><div><div class="w">Point website CTA at a real inbox</div><div class="test">Gate: <b>form submit → email/DB row</b></div></div></div>
+  <div class="grp"><span class="d dottech"></span>Collateral &amp; presence</div>
+  <div data-ms="m1" class="gate"><input type="checkbox"><div class="id">M1-13</div><div><div class="w">Pitch deck (10–12 slides)</div><div class="test">Gate: <b>rehearsed once; ≤12 slides; on-brand</b></div></div></div>
+  <div data-ms="m1" class="gate"><input type="checkbox"><div class="id">M1-14</div><div><div class="w">One-page brief (light-surface PDF)</div><div class="test">Gate: <b>renders with brand header/footer</b></div></div></div>
+  <div data-ms="m1" class="gate"><input type="checkbox"><div class="id">M1-15</div><div><div class="w">Demo video 2–3 min</div><div class="test">Gate: <b>MP4 exists; no dead click</b></div></div></div>
+  <div data-ms="m1" class="gate"><input type="checkbox"><div class="id">M1-16</div><div><div class="w">Pilot offer doc (scope/8wk/€/data-ask)</div><div class="test">Gate: <b>one page with a number + the ask</b></div></div></div>
+  <div data-ms="m1" class="gate"><input type="checkbox"><div class="id">M1-17</div><div><div class="w">Sharpen IQ product page; others "coming soon"</div><div class="test">Gate: <b>IQ complete; others stubbed</b></div></div></div>
+  <div data-ms="m1" class="gate"><input type="checkbox"><div class="id">M1-18</div><div><div class="w">Company LinkedIn page + founder post w/ video</div><div class="test">Gate: <b>page live; post queued</b></div></div></div>
+  <div data-ms="m1" class="gate"><input type="checkbox"><div class="id">M1-19</div><div><div class="w">Illustrative ROI model for the presentation <span class="b-warn pill">new</span></div><div class="test">Gate: <b>a conservative €/yr figure with stated assumptions, tied to a live demo finding, labelled projected-not-proven</b></div></div></div>
+  <div data-ms="m1" class="gate"><input type="checkbox"><div class="id">M1-20</div><div><div class="w">Founder domain-credibility pack (14 yrs PSI/SMS/EzzSteel) <span class="b-warn pill">new</span></div><div class="test">Gate: <b>one-pager + slide naming specific plants/processes, placed before the offer slide</b></div></div></div>
+  <div class="note"><b>Price you propose:</b> a <b>€30–40k paid pilot</b> (lean €30k for the first customer) <b>crediting toward a €120k/yr license</b>, once the live demo (M1-8…11) + ROI model (M1-19) + credibility pack (M1-20) are green. <b>Don't propose €120k as the ask</b> — state it as the license destination, ask for the pilot now. No live demo → honestly <b>€15k–€35k "paid to evaluate."</b> €60k = demonstrated value / a second pilot, not the first invoice.</div>
+
+  <!-- M2 -->
+  <div class="msbar"><div><div class="sub" style="margin:0">M2 · mid-July</div><div class="goal" style="color:var(--cyan)">€120k</div></div><div class="prog"><div class="pbar"><i id="bar-m2"></i></div><div class="pcount" id="cnt-m2"></div></div></div>
+  <div class="note" style="border-color:rgba(255,176,32,.5)"><b>v3.1 re-weighting:</b> M2 overlaps the <b>contract process</b>. Its spine is converting the presentation customer to a <b>signed paid pilot (C2-3)</b> and <b>proving ROI on their data (C2-4)</b> — that unlocks the €120k <b>license</b>. Hardening happens around it, customer-funded. Benchmark re-priorities: <b>pull the advisory write-back forward</b> (the read-only ceiling-raiser), and <b>de-prioritize QES/Energy product pages</b> (brand polish, not willingness-to-pay).</div>
+  <div class="grp"><span class="d dotcode"></span>Track A · Codebase</div>
+  <div data-ms="m2" class="gate"><input type="checkbox"><div class="id">A2-1</div><div><div class="w">Full suite green twice on clean machine</div><div class="test">Gate: <b><code>test &amp;&amp; e2e</code> exit 0 twice</b></div></div></div>
+  <div data-ms="m2" class="gate"><input type="checkbox"><div class="id">A2-2</div><div><div class="w">Keep IQ product page sharp · <b>defer QES + Energy depth</b> <span class="b-warn pill">de-prioritized</span></div><div class="test">Gate: <b>IQ page complete + honesty-lint green; QES/Energy = honest "coming soon" (brand polish, not willingness-to-pay)</b></div></div></div>
+  <div data-ms="m2" class="gate"><input type="checkbox"><div class="id">A2-3</div><div><div class="w">Real lead-capture backend</div><div class="test">Gate: <b>form → DB row + email; e2e asserts</b></div></div></div>
+  <div data-ms="m2" class="gate"><input type="checkbox"><div class="id">A2-4</div><div><div class="w">e2e action-matrix + visual-regression</div><div class="test">Gate: <b>enumerates every demo control; visual-regression green</b></div></div></div>
+  <div data-ms="m2" class="gate"><input type="checkbox"><div class="id">A2-5</div><div><div class="w">Wire 902/904 policies; perf-at-scale; clear buttons; one compose · <b>+ pull in advisory write-back</b></div><div class="test">Gate: <b>over-budget query throttled live; virtualize; 0 non-standard buttons; human-approved advisory path begun</b></div></div></div>
+  <div class="grp"><span class="d dottech"></span>Track B · Non-code technical</div>
+  <div data-ms="m2" class="gate"><input type="checkbox"><div class="id">B2-1</div><div><div class="w">Automated AI test pipeline (nightly + soak + AI-triage PRs + dashboard)</div><div class="test">Gate: <b>nightly full suite+e2e; 24–72h soak passes; dashboard trend</b></div></div></div>
+  <div data-ms="m2" class="gate"><input type="checkbox"><div class="id">B2-2</div><div><div class="w">Recorded certified dry-run + docs suite (Admin/Security/Deploy/API) + lightweight service wrap</div><div class="test">Gate: <b>readiness green on video; docs exist; commissioning playbook + support-SLA drafted (buyers check service at pilot)</b></div></div></div>
+  <div class="grp"><span class="d dotbiz"></span>Track C · Admin &amp; business <span style="color:var(--warn);font-weight:700">— the M2 spine</span></div>
+  <div data-ms="m2" class="gate"><input type="checkbox"><div class="id">C2-1</div><div><div class="w">Incorporate (UG/GmbH) + company page + pricing/tiers page</div><div class="test">Gate: <b>entity registered; pages live</b></div></div></div>
+  <div data-ms="m2" class="gate"><input type="checkbox"><div class="id">C2-2</div><div><div class="w">Pilot contract + MNDA + DPA templates</div><div class="test">Gate: <b>lawyer-reviewed templates exist</b></div></div></div>
+  <div data-ms="m2" class="gate" style="border-color:rgba(255,176,32,.5)"><input type="checkbox"><div class="id">C2-3</div><div><div class="w"><b>Convert presentation customer → signed paid pilot</b> (the spine) <span class="b-crit pill">Critical</span></div><div class="test">Gate: <b>one customer counter-signs the €30–40k pilot + provides their data-dump or a date</b></div></div></div>
+  <div data-ms="m2" class="gate" style="border-color:rgba(44,230,162,.45)"><input type="checkbox"><div class="id">C2-4</div><div><div class="w"><b>Prove ROI on the customer's real data</b> (pilot deliverable) <span class="b-crit pill">Critical · new</span></div><div class="test">Gate: <b>customer signs off on a measured €/quality figure on THEIR data — the proven ROI that unlocks the €120k license + the reference</b></div></div></div>
+
+  <!-- M3 -->
+  <div class="msbar"><div><div class="sub" style="margin:0">M3 · 1 Jan 2027</div><div class="goal" style="color:var(--ok)">€250k</div></div><div class="prog"><div class="pbar"><i id="bar-m3"></i></div><div class="pcount" id="cnt-m3"></div></div></div>
+  <div class="note"><b>€250k is unlocked by the reference customer, not by code.</b> The code gates here make you supportable; the contract is the unlock. <b>v3.1 timing:</b> the <i>first</i> contract closes far earlier — ~2–3 months after the M1 presentation, not at 1 Jan 2027. 1 Jan 2027 / €250k marks "<b>referenceable + a viability story = ready to command €250k</b>", not the first signature.</div>
+  <div class="grp"><span class="d dotcode"></span>Track A · Codebase</div>
+  <div data-ms="m3" class="gate"><input type="checkbox"><div class="id">A3-1</div><div><div class="w">HA basics: backup/restore drill + rollback to <code>:previous</code></div><div class="test">Gate: <b>restore drill performed + recorded; rollback tested</b></div></div></div>
+  <div data-ms="m3" class="gate"><input type="checkbox"><div class="id">A3-2</div><div><div class="w">One historian/edge connector to GA + deployable edge agent</div><div class="test">Gate: <b>connector passes behavioural tests live; agent pushing one-way</b></div></div></div>
+  <div data-ms="m3" class="gate"><input type="checkbox"><div class="id">A3-3</div><div><div class="w">Human-approved advisory write-back + perf budgets at real scale</div><div class="test">Gate: <b>write-back needs approval + audit; load test at reference scale passes</b></div></div></div>
+  <div class="grp"><span class="d dottech"></span>Track B · Non-code technical</div>
+  <div data-ms="m3" class="gate"><input type="checkbox"><div class="id">B3-1</div><div><div class="w">Start SOC 2 Type II NOW (6–12 month window)</div><div class="test">Gate: <b>observation window opened with an auditor/tool</b></div></div></div>
+  <div data-ms="m3" class="gate"><input type="checkbox"><div class="id">B3-2</div><div><div class="w">ISO 27001 mapping + full docs + status page + one-command install</div><div class="test">Gate: <b>mapping + catalog exist; docs/status live; one-command install works</b></div></div></div>
+  <div class="grp"><span class="d dotbiz"></span>Track C · Admin &amp; business (the unlock)</div>
+  <div data-ms="m3" class="gate"><input type="checkbox"><div class="id">C3-1</div><div><div class="w">Land first paid pilot → signed contract</div><div class="test">Gate: <b>a signed contract exists</b> — THE €250k unlock</div></div></div>
+  <div data-ms="m3" class="gate"><input type="checkbox"><div class="id">C3-2</div><div><div class="w">Case study / reference (measured before/after)</div><div class="test">Gate: <b>a quotable, numbers-backed case study exists</b></div></div></div>
+  <div data-ms="m3" class="gate"><input type="checkbox"><div class="id">C3-3</div><div><div class="w">Viability (hire/co-founder OR escrow+BCP OR OEM/partner) + support SLA</div><div class="test">Gate: <b>one is in place + documented; SLA tiers published</b></div></div></div>
+
+  <div class="foot">Euros are customer-side willingness-to-pay anchored to your Market-Positioning workbook, not quotes or valuation. The plan is deliberately conservative on commercial dimensions (viability, references, support, certs) — inflating them is the 6-June mistake. A task with no gate is not on the plan; a gate that is not green is not done. The product ships when all six buyer lenses can sign; the headline is the lowest. Where this plan and a live customer disagree, the customer wins.</div>
+</div>
+
+<script>
+  // ---- value bridge ----
+  (function(){
+    var svg=document.getElementById('bridge'); if(!svg) return;
+    var W=1000,H=300, pad=46, base=H-44, maxV=250, plot=base-30;
+    var steps=[{v:35,l:'Today',c:'#8EA7C1',lever:'real capability, no references'},
+               {v:60,l:'+5 days · M1',c:'#FFB020',lever:'a demo that runs LIVE'},
+               {v:120,l:'mid-July · M2',c:'#00D4FF',lever:'certified + auto-tested + funnel'},
+               {v:250,l:'1 Jan 2027 · M3',c:'#2CE6A2',lever:'ONE reference customer'}];
+    var n=steps.length, gap=(W-pad*2)/n, bw=gap*0.5;
+    var s='';
+    // gridlines
+    [0,50,120,250].forEach(function(g){var y=base-(g/maxV)*plot;s+='<line x1="'+pad+'" y1="'+y+'" x2="'+(W-pad)+'" y2="'+y+'" stroke="#1c3354" stroke-width="1"/>'+'<text x="'+(pad-8)+'" y="'+(y+4)+'" fill="#8EA7C1" font-size="11" text-anchor="end">€'+g+'k</text>';});
+    steps.forEach(function(d,i){
+      var x=pad+gap*i+(gap-bw)/2, h=(d.v/maxV)*plot, y=base-h;
+      // connector from previous top
+      if(i>0){var px=pad+gap*(i-1)+(gap-bw)/2+bw, py=base-(steps[i-1].v/maxV)*plot;
+        s+='<line x1="'+px+'" y1="'+py+'" x2="'+x+'" y2="'+py+'" stroke="#3a577d" stroke-dasharray="3 3" stroke-width="1.5"/>';
+        s+='<line x1="'+x+'" y1="'+py+'" x2="'+x+'" y2="'+y+'" stroke="#3a577d" stroke-dasharray="3 3" stroke-width="1.5"/>';
+        // delta tag
+        var d2=d.v-steps[i-1].v; s+='<text x="'+(x+bw/2)+'" y="'+(y-10)+'" fill="'+d.c+'" font-size="12" font-weight="700" text-anchor="middle">+€'+d2+'k</text>';
+      }
+      s+='<rect x="'+x+'" y="'+y+'" width="'+bw+'" height="'+h+'" rx="6" fill="'+d.c+'" opacity="0.92"/>';
+      s+='<text x="'+(x+bw/2)+'" y="'+(y+ (i===0?-10:22))+'" fill="'+(i===0?d.c:'#04121f')+'" font-size="15" font-weight="700" text-anchor="middle">€'+d.v+'k</text>';
+      s+='<text x="'+(x+bw/2)+'" y="'+(base+16)+'" fill="#EAF6FF" font-size="12" font-weight="600" text-anchor="middle">'+d.l+'</text>';
+      s+='<text x="'+(x+bw/2)+'" y="'+(base+31)+'" fill="#8EA7C1" font-size="10.5" text-anchor="middle">'+d.lever+'</text>';
+    });
+    svg.innerHTML=s;
+  })();
+
+  // ---- radar ----
+  (function(){
+    var svg=document.getElementById('radar'); if(!svg) return;
+    var cx=160,cy=150,R=110;
+    var data=[{l:'Dev',v:63},{l:'Security',v:72},{l:'Engineer',v:61},{l:'Ops',v:65},{l:'Exec',v:67},{l:'Brand',v:63}];
+    var n=data.length, s='';
+    function pt(i,r){var a=(-90+i*360/n)*Math.PI/180;return [cx+r*Math.cos(a),cy+r*Math.sin(a)];}
+    // rings
+    [0.25,0.5,0.75,1].forEach(function(f){
+      var poly=''; for(var i=0;i<n;i++){var p=pt(i,R*f);poly+=p[0]+','+p[1]+' ';}
+      s+='<polygon points="'+poly+'" fill="none" stroke="#1c3354" stroke-width="1"/>';
+    });
+    // axes + labels
+    for(var i=0;i<n;i++){var p=pt(i,R);s+='<line x1="'+cx+'" y1="'+cy+'" x2="'+p[0]+'" y2="'+p[1]+'" stroke="#1c3354" stroke-width="1"/>';
+      var lp=pt(i,R+20); var anchor= (lp[0]<cx-5?'end':(lp[0]>cx+5?'start':'middle'));
+      s+='<text x="'+lp[0]+'" y="'+(lp[1]+4)+'" fill="#8EA7C1" font-size="11" text-anchor="'+anchor+'">'+data[i].l+'</text>';
+      s+='<text x="'+lp[0]+'" y="'+(lp[1]+17)+'" fill="#EAF6FF" font-size="11" font-weight="700" text-anchor="'+anchor+'">'+data[i].v+'</text>';
+    }
+    // score polygon
+    var poly=''; for(var j=0;j<n;j++){var p=pt(j,R*data[j].v/100);poly+=p[0]+','+p[1]+' ';}
+    s+='<polygon points="'+poly+'" fill="rgba(0,212,255,0.16)" stroke="#00D4FF" stroke-width="2"/>';
+    for(var k=0;k<n;k++){var p=pt(k,R*data[k].v/100);var col=data[k].v<62?'#FFB020':'#00D4FF';s+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="3.5" fill="'+col+'"/>';}
+    // headline ring at 61
+    s+='<text x="'+cx+'" y="'+(cy+R+44)+'" fill="#FFB020" font-size="12" font-weight="700" text-anchor="middle">headline = lowest = 61 (Engineer)</text>';
+    svg.innerHTML=s;
+  })();
+
+  // ---- dimension bars ----
+  document.querySelectorAll('.bardim').forEach(function(el){
+    var v=+el.dataset.v, l=el.dataset.l, c=el.dataset.c;
+    var col={cyan:'#00D4FF',warn:'#FFB020',crit:'#FF4D6D',ok:'#2CE6A2'}[c]||'#00D4FF';
+    el.innerHTML='<div style="display:flex;justify-content:space-between;font-size:12px;margin:6px 0 3px"><span>'+l+'</span><span style="color:'+col+'">'+v+'</span></div>'+
+      '<div style="height:8px;border-radius:5px;background:#0a1426;border:1px solid #1c3354;overflow:hidden"><i style="display:block;height:100%;width:'+v+'%;background:'+col+'"></i></div>';
+  });
+
+  // ---- tracker ----
+  function recompute(){
+    ['m1','m2','m3'].forEach(function(ms){
+      var g=[].slice.call(document.querySelectorAll('[data-ms="'+ms+'"]'));
+      var done=g.filter(function(x){return x.querySelector('input').checked;}).length;
+      var pct=g.length?Math.round(done/g.length*100):0;
+      document.getElementById('bar-'+ms).style.width=pct+'%';
+      document.getElementById('cnt-'+ms).textContent=done+' / '+g.length+' gates green ('+pct+'%)';
+    });
+  }
+  document.querySelectorAll('.gate input').forEach(function(cb){
+    cb.addEventListener('change',function(){this.closest('.gate').classList.toggle('done',this.checked);recompute();});
+  });
+  function resetAll(){document.querySelectorAll('.gate input').forEach(function(cb){cb.checked=false;cb.closest('.gate').classList.remove('done');});recompute();}
+  recompute();
+</script>
+</body>
+</html>

@@ -58,7 +58,7 @@ Expected public exposure:
 Run from an external network:
 
 ```bash
-bash Infrastructure/deploy/verify-server-exposure.sh 178.105.152.180
+bash deploy/compose/verify-server-exposure.sh 178.105.152.180
 ```
 
 ### Server DB deployment
@@ -70,9 +70,9 @@ Apply:
 ```bash
 cd /opt/plantprocess-iq
 set -a
-source Infrastructure/deploy/.env
+source deploy/compose/.env
 set +a
-bash Infrastructure/deploy/apply-server-db-scripts.sh
+bash deploy/compose/apply-server-db-scripts.sh
 ```
 
 Never reuse local laptop credentials on the server.

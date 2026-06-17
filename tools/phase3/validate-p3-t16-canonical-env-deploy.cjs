@@ -1,4 +1,4 @@
-﻿const fs = require("fs");
+const fs = require("fs");
 const path = require("path");
 const childProcess = require("child_process");
 
@@ -133,7 +133,7 @@ const required = [
   "deploy/caddy/Caddyfile",
   "deploy/caddy/README.md",
   "deploy/compose/README.md",
-  "deploy/compose/docker-compose.demo.yml",
+  "deploy/compose/docker-compose.yml",
   "deploy/compose/docker-compose.local-native-main-db.yml",
   "deploy/compose/docker-compose.server-docker-main-db.yml",
   "deploy/compose/docker-compose.customer-template.yml",
@@ -156,7 +156,7 @@ if (!caddy.includes("X-Content-Type-Options")) fail("Caddy missing nosniff heade
 if (!caddy.includes("PPIQ_API_UPSTREAM:plantprocess-api:5063")) fail("Caddy API upstream must default to plantprocess-api:5063");
 if (caddy.includes("plantprocess-api:8080")) fail("Caddy still contains stale plantprocess-api:8080 drift");
 
-const base = read("deploy/compose/docker-compose.demo.yml");
+const base = read("deploy/compose/docker-compose.yml");
 if (!base.includes("ppiq-postgres")) fail("base compose missing ppiq-postgres");
 if (!base.includes("plantprocess-api")) fail("base compose missing plantprocess-api");
 if (!base.includes("plantprocess-workers")) fail("base compose missing workers");
@@ -193,7 +193,7 @@ for (const envFile of [
 
 runDockerComposeConfig(
   [
-    "deploy/compose/docker-compose.demo.yml",
+    "deploy/compose/docker-compose.yml",
     "deploy/compose/docker-compose.local-native-main-db.yml",
   ],
   "local-native-main-db"
@@ -201,7 +201,7 @@ runDockerComposeConfig(
 
 runDockerComposeConfig(
   [
-    "deploy/compose/docker-compose.demo.yml",
+    "deploy/compose/docker-compose.yml",
     "deploy/compose/docker-compose.server-docker-main-db.yml",
   ],
   "server-docker-main-db"
@@ -209,7 +209,7 @@ runDockerComposeConfig(
 
 runDockerComposeConfig(
   [
-    "deploy/compose/docker-compose.demo.yml",
+    "deploy/compose/docker-compose.yml",
     "deploy/compose/docker-compose.customer-template.yml",
   ],
   "customer-template"

@@ -28,7 +28,7 @@ check("PPIQ-T207", "delta integration tests expanded beyond shallow scaffold", (
   const t = read("Backend/tests/PlantProcess.Api.IntegrationTests/Import/DeltaImportResumabilityTests.cs");
   return t.includes("MaxRowsSmallBatch") && t.includes("Stage1Stage2AndFullCycle") && t.includes("RejectsAnonymousAccess");
 });
-check("PPIQ-T208", "static loopback exposure validator exists and README documents nmap proof", () => exists("tools/validation/validate-t208-exposure.cjs") && contains("Infrastructure/deploy/README.md", "nmap -Pn 178.105.152.180"));
+check("PPIQ-T208", "static loopback exposure validator exists and README documents nmap proof", () => exists("tools/validation/validate-t208-exposure.cjs") && contains("deploy/compose/README.md", "nmap -Pn 178.105.152.180"));
 check("PPIQ-T209", "multi-grain feature store completion SQL exists", () => contains("Backend/database/scripts/201_phase02_ml_feature_store_v6_completion.sql", "ppiq_ml_refresh_feature_store_v6") && contains("Backend/database/scripts/201_phase02_ml_feature_store_v6_completion.sql", "genealogy_json"));
 check("PPIQ-T210", "derived feature definitions exist", () => {
   const t = read("Backend/database/scripts/201_phase02_ml_feature_store_v6_completion.sql");
