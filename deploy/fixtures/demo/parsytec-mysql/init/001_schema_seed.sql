@@ -1,3 +1,4 @@
+SET SESSION cte_max_recursion_depth = 1000000;
 CREATE TABLE IF NOT EXISTS parsytec_surface_defects
 (
     defect_id varchar(64) PRIMARY KEY,

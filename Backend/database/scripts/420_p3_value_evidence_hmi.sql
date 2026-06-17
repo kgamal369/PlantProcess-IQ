@@ -69,6 +69,8 @@ CREATE TABLE IF NOT EXISTS canon.cost_assumption (
     )
 );
 
+ALTER TABLE canon.cost_assumption ADD COLUMN IF NOT EXISTS effective_from_utc timestamptz NOT NULL DEFAULT now();
+
 CREATE INDEX IF NOT EXISTS ix_cost_assumption_active
 ON canon.cost_assumption (tenant_id, effective_from_utc DESC, version DESC);
 

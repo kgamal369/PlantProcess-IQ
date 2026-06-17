@@ -204,6 +204,9 @@ ON public.ppiq_visual_mapper_columns(tenant_id, is_business_key);
 CREATE INDEX IF NOT EXISTS ix_ppiq_visual_mapper_suggestions_tenant_session
 ON public.ppiq_visual_mapper_canonical_suggestions(tenant_id, session_id);
 
+ALTER TABLE public.ppiq_schema_drift_events ADD COLUMN IF NOT EXISTS source_code text NOT NULL DEFAULT '';
+ALTER TABLE public.ppiq_schema_drift_events ADD COLUMN IF NOT EXISTS detected_at_utc timestamptz NOT NULL DEFAULT now();
+
 CREATE INDEX IF NOT EXISTS ix_ppiq_schema_drift_tenant_source
 ON public.ppiq_schema_drift_events(tenant_id, source_code, detected_at_utc DESC);
 

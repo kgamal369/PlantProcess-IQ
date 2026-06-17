@@ -137,7 +137,17 @@ function Do-Migrate {
   $pg = Get-Pg
   if(-not [string]::IsNullOrEmpty($env:PPIQ_PG_SUPERPASSWORD)){ Ensure-AppDb }
   $env:PGPASSWORD = $pg.Pass
-  $dir = Join-Path $RepoRoot $MigrationsDir
+  # EF schema FIRST: model-first migrations create the canonical tables before the ordered SQL layers on top.
+  $dsn = ("Host=" + $pg.Host + ";Port=" + $pg.Port + ";Database=" + $pg.Db + ";Username=" + $pg.User + ";Password=" + $pg.Pass)
+  $env:PLANTPROCESS_DB = $dsn
+  $env:ConnectionStrings__PlantProcessDb = $dsn
+  $infra = Join-Path $RepoRoot "Backend/PlantProcess.Infrastructure"
+  $apip  = Join-Path $RepoRoot "Backend/PlantProcess.Api"
+  Say "applying EF migrations (dotnet ef database update)"
+  & dotnet ef database update --project $infra --startup-project $apip --no-build
+  if($LASTEXITCODE -ne 0){ & dotnet ef database update --project $infra --startup-project $apip; Assert-Exit "ef database update" }
+  
+$dir = Join-Path $RepoRoot $MigrationsDir
   if(-not (Test-Path $dir)){ Die ($MigrationsDir + " not found") }
   $files = Get-ChildItem $dir -Filter *.sql | Sort-Object Name
   if(-not $files -or $files.Count -eq 0){ Die ("no .sql migrations in " + $MigrationsDir) }

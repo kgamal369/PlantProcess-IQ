@@ -3,12 +3,14 @@
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'plantprocess_readonly_preview') THEN
-        CREATE ROLE plantprocess_readonly_preview LOGIN PASSWORD 'CHANGE_ME_READONLY_PREVIEW_PASSWORD';
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'plantprocess_readonly_preview') THEN
+        ALTER ROLE plantprocess_readonly_preview NOLOGIN PASSWORD NULL;
+    ELSE
+        CREATE ROLE plantprocess_readonly_preview NOLOGIN;
     END IF;
+    EXECUTE format('GRANT CONNECT ON DATABASE %I TO plantprocess_readonly_preview', current_database());
 END $$;
 
-GRANT CONNECT ON DATABASE plantprocessiq TO plantprocess_readonly_preview;
 GRANT USAGE ON SCHEMA public TO plantprocess_readonly_preview;
 GRANT SELECT ON ALL TABLES IN SCHEMA public TO plantprocess_readonly_preview;
 GRANT SELECT ON ALL SEQUENCES IN SCHEMA public TO plantprocess_readonly_preview;

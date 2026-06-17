@@ -1,3 +1,4 @@
+SET SESSION cte_max_recursion_depth = 1000000;
 -- PlantProcess IQ T-039 generated demo data (mysql). 2132 rows. DO NOT EDIT BY HAND; regenerate via generate_demo_dataset.py.
 
 DELETE FROM parsytec_surface_defects;
