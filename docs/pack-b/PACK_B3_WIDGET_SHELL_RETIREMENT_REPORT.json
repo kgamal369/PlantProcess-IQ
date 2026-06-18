@@ -1,9 +1,0 @@
-{
-  "generatedAtUtc": "2026-06-06T11:03:49.609Z",
-  "marker": "PPIQ_PACK_B3_WIDGET_BUILDER_SHELL_RETIREMENT",
-  "target": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/WidgetBuilderWizard.implementation.tsx",
-  "beforeLines": 1512,
-  "afterLines": 16,
-  "canonicalImplementation": "Frontend/PlantProcess.Web/src/components/dashboard/widget-builder/WidgetBuilderWizardContent.implementation.tsx",
-  "note": "This retires the duplicate WidgetBuilderWizard implementation by delegating to the split WidgetBuilderWizardContent implementation."
-}
