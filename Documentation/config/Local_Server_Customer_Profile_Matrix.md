@@ -1,4 +1,4 @@
-﻿# PlantProcess IQ - Local / Server / Customer Profile Matrix
+# PlantProcess IQ - Local / Server / Customer Profile Matrix
 
 Generated at: 2026-06-04 13:02:37
 
@@ -6,7 +6,7 @@ Generated at: 2026-06-04 13:02:37
 |---|---|---|---|---|---|
 | env\profiles\customer-template.env.example | ASPNETCORE_ENVIRONMENT | YES | SET | PUBLIC_CONFIG | OK |
 | env\profiles\customer-template.env.example | ASPNETCORE_URLS | YES | LOCAL_VALUE | PUBLIC_CONFIG | OK |
-| env\profiles\customer-template.env.example | ConnectionStrings__DefaultConnection | YES | SET | SECRET | CHECK_SECRET_SOURCE |
+| env\profiles\customer-template.env.example | ConnectionStrings__PlantProcessDb | YES | SET | SECRET | CHECK_SECRET_SOURCE |
 | env\profiles\customer-template.env.example | ConnectionStrings__PlantProcessDb | YES | SET | SECRET | CHECK_SECRET_SOURCE |
 | env\profiles\customer-template.env.example | DOTNET_ENVIRONMENT | YES | SET | PUBLIC_CONFIG | OK |
 | env\profiles\customer-template.env.example | PLANTPROCESS_ALLOWED_ORIGINS | YES | SET | PUBLIC_CONFIG | OK |
@@ -37,7 +37,7 @@ Generated at: 2026-06-04 13:02:37
 | env\profiles\customer-template.env.example | VITE_WEBSITE_API_BASE_URL | YES | SET | PUBLIC_CONFIG | OK |
 | env\profiles\local.env | ASPNETCORE_ENVIRONMENT | YES | SET | PUBLIC_CONFIG | OK |
 | env\profiles\local.env | ASPNETCORE_URLS | YES | LOCAL_VALUE | PUBLIC_CONFIG | OK |
-| env\profiles\local.env | ConnectionStrings__DefaultConnection | YES | LOCAL_VALUE | SECRET | OK |
+| env\profiles\local.env | ConnectionStrings__PlantProcessDb | YES | LOCAL_VALUE | SECRET | OK |
 | env\profiles\local.env | ConnectionStrings__PlantProcessDb | YES | LOCAL_VALUE | SECRET | OK |
 | env\profiles\local.env | DOTNET_ENVIRONMENT | YES | SET | PUBLIC_CONFIG | OK |
 | env\profiles\local.env | PlantProcess__Auth__DefaultTenantId | YES | LOCAL_VALUE | PUBLIC_CONFIG | OK |
@@ -79,7 +79,7 @@ Generated at: 2026-06-04 13:02:37
 | env\profiles\local.env | VITE_WEBSITE_API_BASE_URL | YES | LOCAL_VALUE | PUBLIC_CONFIG | OK |
 | env\profiles\local.env.example | ASPNETCORE_ENVIRONMENT | YES | SET | PUBLIC_CONFIG | OK |
 | env\profiles\local.env.example | ASPNETCORE_URLS | YES | LOCAL_VALUE | PUBLIC_CONFIG | OK |
-| env\profiles\local.env.example | ConnectionStrings__DefaultConnection | YES | LOCAL_VALUE | SECRET | OK |
+| env\profiles\local.env.example | ConnectionStrings__PlantProcessDb | YES | LOCAL_VALUE | SECRET | OK |
 | env\profiles\local.env.example | ConnectionStrings__PlantProcessDb | YES | LOCAL_VALUE | SECRET | OK |
 | env\profiles\local.env.example | DOTNET_ENVIRONMENT | YES | SET | PUBLIC_CONFIG | OK |
 | env\profiles\local.env.example | PlantProcess__Auth__DefaultTenantId | YES | LOCAL_VALUE | PUBLIC_CONFIG | OK |
@@ -116,7 +116,7 @@ Generated at: 2026-06-04 13:02:37
 | env\profiles\local.env.example | VITE_WEBSITE_API_BASE_URL | YES | LOCAL_VALUE | PUBLIC_CONFIG | OK |
 | env\profiles\server.env.example | ASPNETCORE_ENVIRONMENT | YES | SET | PUBLIC_CONFIG | OK |
 | env\profiles\server.env.example | ASPNETCORE_URLS | YES | LOCAL_VALUE | PUBLIC_CONFIG | OK |
-| env\profiles\server.env.example | ConnectionStrings__DefaultConnection | YES | SET | SECRET | CHECK_SECRET_SOURCE |
+| env\profiles\server.env.example | ConnectionStrings__PlantProcessDb | YES | SET | SECRET | CHECK_SECRET_SOURCE |
 | env\profiles\server.env.example | ConnectionStrings__PlantProcessDb | YES | SET | SECRET | CHECK_SECRET_SOURCE |
 | env\profiles\server.env.example | DOTNET_ENVIRONMENT | YES | SET | PUBLIC_CONFIG | OK |
 | env\profiles\server.env.example | PLANTPROCESS_ALLOWED_ORIGINS | YES | SET | PUBLIC_CONFIG | OK |
@@ -144,7 +144,7 @@ Generated at: 2026-06-04 13:02:37
 | env\profiles\server.env.example | VITE_WEBSITE_API_BASE_URL | YES | SET | PUBLIC_CONFIG | OK |
 | env\profiles\server-docker.env.example | ASPNETCORE_ENVIRONMENT | YES | SET | PUBLIC_CONFIG | OK |
 | env\profiles\server-docker.env.example | ASPNETCORE_URLS | YES | LOCAL_VALUE | PUBLIC_CONFIG | OK |
-| env\profiles\server-docker.env.example | ConnectionStrings__DefaultConnection | YES | SET | SECRET | CHECK_SECRET_SOURCE |
+| env\profiles\server-docker.env.example | ConnectionStrings__PlantProcessDb | YES | SET | SECRET | CHECK_SECRET_SOURCE |
 | env\profiles\server-docker.env.example | ConnectionStrings__PlantProcessDb | YES | SET | SECRET | CHECK_SECRET_SOURCE |
 | env\profiles\server-docker.env.example | DOTNET_ENVIRONMENT | YES | SET | PUBLIC_CONFIG | OK |
 | env\profiles\server-docker.env.example | PLANTPROCESS_ALLOWED_ORIGINS | YES | SET | PUBLIC_CONFIG | OK |
@@ -177,7 +177,7 @@ Generated at: 2026-06-04 13:02:37
 | env\profiles\server-docker.env.example | VITE_WEBSITE_API_BASE_URL | YES | SET | PUBLIC_CONFIG | OK |
 | env\profiles\test.env.example | ASPNETCORE_ENVIRONMENT | YES | SET | PUBLIC_CONFIG | OK |
 | env\profiles\test.env.example | ASPNETCORE_URLS | YES | LOCAL_VALUE | PUBLIC_CONFIG | OK |
-| env\profiles\test.env.example | ConnectionStrings__DefaultConnection | YES | LOCAL_VALUE | SECRET | OK |
+| env\profiles\test.env.example | ConnectionStrings__PlantProcessDb | YES | LOCAL_VALUE | SECRET | OK |
 | env\profiles\test.env.example | ConnectionStrings__PlantProcessDb | YES | LOCAL_VALUE | SECRET | OK |
 | env\profiles\test.env.example | DOTNET_ENVIRONMENT | YES | SET | PUBLIC_CONFIG | OK |
 | env\profiles\test.env.example | PLANTPROCESS_ALLOWED_ORIGINS | YES | LOCAL_VALUE | PUBLIC_CONFIG | OK |

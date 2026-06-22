@@ -66,13 +66,9 @@ pipeline {
           set -euo pipefail
           set -a; . "${ENV_FILE}"; set +a    # POSTGRES_*, ConnectionStrings__PlantProcessDb, modes
 
-          # 3a. EF migrations FIRST — create the model-derived schema (incl. audit_log_entries)
-          #     so the numbered SQL decoration scripts have their dependency tables.
-          dotnet ef database update \
-            --project "${INFRA_PROJ}" --startup-project "${API_PROJ}" --no-build || \
-          dotnet ef database update \
-            --project "${INFRA_PROJ}" --startup-project "${API_PROJ}"
-
+          # EF-first is owned by the canonical migrate path (migrate-and-seed.sh --app-only):
+          # it generates an idempotent script FROM the EF model and applies it BEFORE the
+          # numbered SQL. The duplicated inline EF update call was removed (V1-01).
           # 3b. Post-EF SQL decoration (indexes / matviews / ML foundation), idempotent.
           # 3c. Seed the latest committed dataset.
           bash deploy/scripts/migrate-and-seed.sh --app-only

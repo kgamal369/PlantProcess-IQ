@@ -63,7 +63,7 @@ Key API routes used for M1 proof:
 | **Local (containerised app)** | container `plantprocess-postgres` (pub `127.0.0.1:5432`) | 5432 | `ppiq_app` | `ppiq_dev` | `ppiq_dev_local_only` | API reaches **native main DB** via `host.docker.internal` |
 | **Server** | container `postgres` / `ppiq-postgres` | 5432 | `plantprocessiq` | `plantprocess` | (gitignored `deploy/compose/.env`) | container network |
 
-Required config key outside Development is **`ConnectionStrings__PlantProcessDb`** — NOT `ConnectionStrings__DefaultConnection`.
+Required config key outside Development is **`ConnectionStrings__PlantProcessDb`** — NOT `ConnectionStrings__PlantProcessDb`.
 
 ### 2.2 Schemas
 

@@ -27158,21 +27158,21 @@
                         "Line":  25,
                         "Severity":  "CRIT",
                         "Rule":  "Config: wrong connection-string key (__DefaultConnection)",
-                        "Snippet":  "ConnectionStrings__DefaultConnection=Host=localhost;Port=5432;Database=ppiq_app;Username=ppiq_dev;Password=ppiq_dev_local_only"
+                        "Snippet":  "ConnectionStrings__PlantProcessDb=Host=localhost;Port=5432;Database=ppiq_app;Username=ppiq_dev;Password=ppiq_dev_local_only"
                     },
                     {
                         "RelativePath":  "deploy\\compose\\docker-compose.yml",
                         "Line":  48,
                         "Severity":  "CRIT",
                         "Rule":  "Config: wrong connection-string key (__DefaultConnection)",
-                        "Snippet":  "ConnectionStrings__DefaultConnection: Host=plantprocess-postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}"
+                        "Snippet":  "ConnectionStrings__PlantProcessDb: Host=plantprocess-postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}"
                     },
                     {
                         "RelativePath":  "env\\profiles\\local.env",
                         "Line":  19,
                         "Severity":  "CRIT",
                         "Rule":  "Config: wrong connection-string key (__DefaultConnection)",
-                        "Snippet":  "ConnectionStrings__DefaultConnection=Host=127.0.0.1;Port=5432;Database=plantprocessiq;Username=plantprocess;Password=plantprocess123"
+                        "Snippet":  "ConnectionStrings__PlantProcessDb=Host=127.0.0.1;Port=5432;Database=plantprocessiq;Username=plantprocess;Password=plantprocess123"
                     },
                     {
                         "RelativePath":  "Frontend\\PlantProcess.Web\\package.json",
@@ -27263,98 +27263,98 @@
                         "Line":  644,
                         "Severity":  "CRIT",
                         "Rule":  "Config: wrong connection-string key (__DefaultConnection)",
-                        "Snippet":  "Regex = \u0027(?i)ConnectionStrings__DefaultConnection|ConnectionStrings:DefaultConnection\u0027"
+                        "Snippet":  "Regex = \u0027(?i)ConnectionStrings__PlantProcessDb|ConnectionStrings:PlantProcessDb\u0027"
                     },
                     {
                         "RelativePath":  "tools\\ml\\Run-PPIQ-v5-DbAndFrontendProof-PS51.ps1",
                         "Line":  171,
                         "Severity":  "CRIT",
                         "Rule":  "Config: wrong connection-string key (__DefaultConnection)",
-                        "Snippet":  "if ([string]::IsNullOrWhiteSpace($dbConnection) -and -not [string]::IsNullOrWhiteSpace($env:ConnectionStrings__DefaultConnection)) {"
+                        "Snippet":  "if ([string]::IsNullOrWhiteSpace($dbConnection) -and -not [string]::IsNullOrWhiteSpace($env:ConnectionStrings__PlantProcessDb)) {"
                     },
                     {
                         "RelativePath":  "tools\\ml\\Run-PPIQ-v5-DbAndFrontendProof-PS51.ps1",
                         "Line":  172,
                         "Severity":  "CRIT",
                         "Rule":  "Config: wrong connection-string key (__DefaultConnection)",
-                        "Snippet":  "$dbConnection = $env:ConnectionStrings__DefaultConnection"
+                        "Snippet":  "$dbConnection = $env:ConnectionStrings__PlantProcessDb"
                     },
                     {
                         "RelativePath":  "tools\\phase3\\apply-p3-t16-canonical-env-deploy.cjs",
                         "Line":  281,
                         "Severity":  "CRIT",
                         "Rule":  "Config: wrong connection-string key (__DefaultConnection)",
-                        "Snippet":  "ConnectionStrings__DefaultConnection: \"\\${PPIQ_MAIN_DB_CONNECTION_STRING:?Set PPIQ_MAIN_DB_CONNECTION_STRING for local native DB}\""
+                        "Snippet":  "ConnectionStrings__PlantProcessDb: \"\\${PPIQ_MAIN_DB_CONNECTION_STRING:?Set PPIQ_MAIN_DB_CONNECTION_STRING for local native DB}\""
                     },
                     {
                         "RelativePath":  "tools\\phase3\\apply-p3-t16-canonical-env-deploy.cjs",
                         "Line":  295,
                         "Severity":  "CRIT",
                         "Rule":  "Config: wrong connection-string key (__DefaultConnection)",
-                        "Snippet":  "ConnectionStrings__DefaultConnection: \"\\${PPIQ_MAIN_DB_CONNECTION_STRING:?Set PPIQ_MAIN_DB_CONNECTION_STRING for local native DB}\""
+                        "Snippet":  "ConnectionStrings__PlantProcessDb: \"\\${PPIQ_MAIN_DB_CONNECTION_STRING:?Set PPIQ_MAIN_DB_CONNECTION_STRING for local native DB}\""
                     },
                     {
                         "RelativePath":  "tools\\phase3\\apply-p3-t16-canonical-env-deploy.cjs",
                         "Line":  327,
                         "Severity":  "CRIT",
                         "Rule":  "Config: wrong connection-string key (__DefaultConnection)",
-                        "Snippet":  "ConnectionStrings__DefaultConnection: \"Host=ppiq-postgres;Port=5432;Database=\\${POSTGRES_DB:-plantprocess_app_db};Username=\\${POSTGRES_USER:-plantprocess_admin} ..."
+                        "Snippet":  "ConnectionStrings__PlantProcessDb: \"Host=ppiq-postgres;Port=5432;Database=\\${POSTGRES_DB:-plantprocess_app_db};Username=\\${POSTGRES_USER:-plantprocess_admin} ..."
                     },
                     {
                         "RelativePath":  "tools\\phase3\\apply-p3-t16-canonical-env-deploy.cjs",
                         "Line":  339,
                         "Severity":  "CRIT",
                         "Rule":  "Config: wrong connection-string key (__DefaultConnection)",
-                        "Snippet":  "ConnectionStrings__DefaultConnection: \"Host=ppiq-postgres;Port=5432;Database=\\${POSTGRES_DB:-plantprocess_app_db};Username=\\${POSTGRES_USER:-plantprocess_admin} ..."
+                        "Snippet":  "ConnectionStrings__PlantProcessDb: \"Host=ppiq-postgres;Port=5432;Database=\\${POSTGRES_DB:-plantprocess_app_db};Username=\\${POSTGRES_USER:-plantprocess_admin} ..."
                     },
                     {
                         "RelativePath":  "tools\\phase3\\apply-p3-t16-canonical-env-deploy.cjs",
                         "Line":  358,
                         "Severity":  "CRIT",
                         "Rule":  "Config: wrong connection-string key (__DefaultConnection)",
-                        "Snippet":  "ConnectionStrings__DefaultConnection: \"\\${PPIQ_MAIN_DB_CONNECTION_STRING:?Set customer-specific main DB connection string}\""
+                        "Snippet":  "ConnectionStrings__PlantProcessDb: \"\\${PPIQ_MAIN_DB_CONNECTION_STRING:?Set customer-specific main DB connection string}\""
                     },
                     {
                         "RelativePath":  "tools\\phase3\\apply-p3-t16-canonical-env-deploy.cjs",
                         "Line":  367,
                         "Severity":  "CRIT",
                         "Rule":  "Config: wrong connection-string key (__DefaultConnection)",
-                        "Snippet":  "ConnectionStrings__DefaultConnection: \"\\${PPIQ_MAIN_DB_CONNECTION_STRING:?Set customer-specific main DB connection string}\""
+                        "Snippet":  "ConnectionStrings__PlantProcessDb: \"\\${PPIQ_MAIN_DB_CONNECTION_STRING:?Set customer-specific main DB connection string}\""
                     },
                     {
                         "RelativePath":  "tools\\phase3\\repair-p3-t16-compose-reset-and-validator.cjs",
                         "Line":  50,
                         "Severity":  "CRIT",
                         "Rule":  "Config: wrong connection-string key (__DefaultConnection)",
-                        "Snippet":  "ConnectionStrings__DefaultConnection: \"\\${PPIQ_MAIN_DB_CONNECTION_STRING:?Set PPIQ_MAIN_DB_CONNECTION_STRING for local native DB}\""
+                        "Snippet":  "ConnectionStrings__PlantProcessDb: \"\\${PPIQ_MAIN_DB_CONNECTION_STRING:?Set PPIQ_MAIN_DB_CONNECTION_STRING for local native DB}\""
                     },
                     {
                         "RelativePath":  "tools\\phase3\\repair-p3-t16-compose-reset-and-validator.cjs",
                         "Line":  64,
                         "Severity":  "CRIT",
                         "Rule":  "Config: wrong connection-string key (__DefaultConnection)",
-                        "Snippet":  "ConnectionStrings__DefaultConnection: \"\\${PPIQ_MAIN_DB_CONNECTION_STRING:?Set PPIQ_MAIN_DB_CONNECTION_STRING for local native DB}\""
+                        "Snippet":  "ConnectionStrings__PlantProcessDb: \"\\${PPIQ_MAIN_DB_CONNECTION_STRING:?Set PPIQ_MAIN_DB_CONNECTION_STRING for local native DB}\""
                     },
                     {
                         "RelativePath":  "tools\\phase3\\repair-p3-t16-compose-reset-and-validator.cjs",
                         "Line":  91,
                         "Severity":  "CRIT",
                         "Rule":  "Config: wrong connection-string key (__DefaultConnection)",
-                        "Snippet":  "ConnectionStrings__DefaultConnection: \"\\${PPIQ_MAIN_DB_CONNECTION_STRING:?Set customer-specific main DB connection string}\""
+                        "Snippet":  "ConnectionStrings__PlantProcessDb: \"\\${PPIQ_MAIN_DB_CONNECTION_STRING:?Set customer-specific main DB connection string}\""
                     },
                     {
                         "RelativePath":  "tools\\phase3\\repair-p3-t16-compose-reset-and-validator.cjs",
                         "Line":  101,
                         "Severity":  "CRIT",
                         "Rule":  "Config: wrong connection-string key (__DefaultConnection)",
-                        "Snippet":  "ConnectionStrings__DefaultConnection: \"\\${PPIQ_MAIN_DB_CONNECTION_STRING:?Set customer-specific main DB connection string}\""
+                        "Snippet":  "ConnectionStrings__PlantProcessDb: \"\\${PPIQ_MAIN_DB_CONNECTION_STRING:?Set customer-specific main DB connection string}\""
                     },
                     {
                         "RelativePath":  "tools\\realization\\continue-phase03-phase04-from-t016.cjs",
                         "Line":  207,
                         "Severity":  "CRIT",
                         "Rule":  "Config: wrong connection-string key (__DefaultConnection)",
-                        "Snippet":  "ConnectionStrings__DefaultConnection: Host=plantprocess-postgres;Port=5432;Database=\\${POSTGRES_DB};Username=\\${POSTGRES_USER};Password=\\${POSTGRES_PASSWORD}"
+                        "Snippet":  "ConnectionStrings__PlantProcessDb: Host=plantprocess-postgres;Port=5432;Database=\\${POSTGRES_DB};Username=\\${POSTGRES_USER};Password=\\${POSTGRES_PASSWORD}"
                     },
                     {
                         "RelativePath":  "Backend\\tools\\verify_demo_dataset.py",

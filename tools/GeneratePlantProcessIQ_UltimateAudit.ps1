@@ -1,7 +1,7 @@
 #requires -Version 5.1
 <#
 .SYNOPSIS
-    PlantProcess IQ Ultimate Documentation + Deep AI Audit Generator (v2).
+    PlantProcess IQ Ultimate Documentation + Deep AI Audit Generator (v2.1).
 
 .DESCRIPTION
     Produces a professional, AI-friendly, evidence-grade documentation + audit
@@ -29,6 +29,8 @@
         server IP, dev-seed endpoints, gate-closing shims) and reports file:line.
       - Rich manifests (CSV + JSON) including SHA-256 per file and detected signals.
       - Per-file failures are isolated; one unreadable file never kills the run.
+      - Demo schema/data fixtures under deploy\fixtures\demo are exported into a
+        dedicated DEMO SQL Data Seed document instead of 07_Tools_Validation_Misc.
 
 .OUTPUTS
     A timestamped folder under <Repo>\Documentation\UltimateAudit_<timestamp> containing:
@@ -40,6 +42,7 @@
       05_Frontend_Misc_*.txt
       06_Infrastructure_*.txt
       07_Tools_Validation_Misc_*.txt
+      07A_DEMO_SQL_Data_Seed_*.txt
       08_Website_*.txt
       09_FullStack_Combined_*.txt
       10_Audit_Signals_*.txt
@@ -219,7 +222,8 @@ $forceIncludeFilePatterns = @(
 $forceIncludeRelGlobs = @(
     ".github\workflows\*",
     "Infrastructure\*",
-    "Backend\database\*"
+    "Backend\database\*",
+    "deploy\fixtures\demo\*"
 )
 
 $lockFileNames = @(
@@ -511,6 +515,16 @@ function Get-FileSha256 {
 # 6. Classification + categorization
 # ============================================================
 
+function Test-IsDemoSeedRelativePath {
+    param([Parameter(Mandatory = $true)][string]$RelativePath)
+
+    $rp = $RelativePath -replace '/', '\'
+    return (
+        $rp -match '^deploy\\fixtures\\demo\\' -and
+        $rp -match '\.(sql|csv)$'
+    )
+}
+
 function Get-FileClassification {
     param(
         [Parameter(Mandatory = $true)][string]$RelativePath,
@@ -523,6 +537,11 @@ function Get-FileClassification {
     if ($RelativePath -match '(^|[\\/])tools[\\/]') { return "Tooling Script" }
     if ($RelativePath -match '(^|[\\/])Validation[\\/]') { return "Validation Script" }
     if ($RelativePath -match '(^|[\\/])\.github[\\/]workflows[\\/]') { return "GitHub Actions Workflow" }
+    if (Test-IsDemoSeedRelativePath -RelativePath $RelativePath) {
+        if ($ext -eq ".sql") { return "Demo SQL Seed Script" }
+        if ($ext -eq ".csv") { return "Demo CSV Seed Data" }
+        return "Demo Source / Seed"
+    }
     if ($RelativePath -match '(^|[\\/])demo-sources[\\/]') { return "Demo Source / Seed" }
 
     if ($name -eq "Dockerfile") { return "Dockerfile" }
@@ -567,6 +586,13 @@ function Get-PrimaryCategory {
 
     if ($rp -match '^Backend\\database\\') { return "02_Backend_Database" }
     if ($rp -match '^Backend\\tests\\') { return "03_Backend_Tests" }
+
+    # Keep large prepared demo schema/data fixtures out of the general tools/misc
+    # document. This dedicated category includes the SQL seed scripts and the two
+    # CSV fixture datasets used by the Excel demo sources.
+    if (Test-IsDemoSeedRelativePath -RelativePath $rp) {
+        return "07A_DEMO_SQL_Data_Seed"
+    }
 
     if ($rp -match '^Frontend\\PlantProcess\.Web\\') {
         if (
@@ -613,6 +639,7 @@ function Get-CategoryTitle {
         "05_Frontend_Misc" { return "Frontend Misc: E2E, Scripts, Test Results, Reports" }
         "06_Infrastructure" { return "Infrastructure: Deployment, Docker, Caddy, CI/CD (.github, Jenkins)" }
         "07_Tools_Validation_Misc" { return "Tools, Validation Scripts, Root Config, Docs, Misc" }
+        "07A_DEMO_SQL_Data_Seed" { return "DEMO SQL Data Seed: Schema, SQL Data, Excel/CSV Fixtures" }
         "08_Website" { return "Website: PlantProcess.Website" }
         default { return $Category }
     }
@@ -748,7 +775,7 @@ function Get-LineCountFromContent {
 # ============================================================
 
 Write-Step "============================================================"
-Write-Step " PlantProcess IQ Ultimate Documentation + Deep Audit (v2)"
+Write-Step " PlantProcess IQ Ultimate Documentation + Deep Audit (v2.1)"
 Write-Step "============================================================"
 Write-Info "Repository root : $RepositoryRoot"
 Write-Info "Output folder   : $OutputFolder"
@@ -892,7 +919,23 @@ $includedFiles = @($includedFiles | Sort-Object Category, RelativePath)
 $skippedFiles = @($skippedFiles | Sort-Object RelativePath)
 $allSignals = @($allSignals | Sort-Object @{Expression='Severity';Descending=$false}, RelativePath, Line)
 
-Write-Ok ("Collected {0} included files, {1} skipped, {2} audit signals." -f $includedFiles.Count, $skippedFiles.Count, $allSignals.Count)
+# Classification integrity gate: no SQL/CSV demo fixture may leak back into the
+# generic 07_Tools_Validation_Misc document. Fail fast rather than generating a
+# misleading audit package.
+$misclassifiedDemoSeedFiles = @(
+    $includedFiles | Where-Object {
+        (Test-IsDemoSeedRelativePath -RelativePath $_.RelativePath) -and
+        $_.Category -ne "07A_DEMO_SQL_Data_Seed"
+    }
+)
+
+if ($misclassifiedDemoSeedFiles.Count -gt 0) {
+    $badPaths = ($misclassifiedDemoSeedFiles | ForEach-Object { $_.RelativePath }) -join "; "
+    throw "Demo seed classification integrity failure. These files were not routed to 07A_DEMO_SQL_Data_Seed: $badPaths"
+}
+
+$demoSeedFileCount = @($includedFiles | Where-Object { $_.Category -eq "07A_DEMO_SQL_Data_Seed" }).Count
+Write-Ok ("Collected {0} included files, {1} skipped, {2} audit signals. Demo seed files: {3}." -f $includedFiles.Count, $skippedFiles.Count, $allSignals.Count, $demoSeedFileCount)
 
 # ============================================================
 # 10. Writer helpers
@@ -1196,6 +1239,7 @@ $categoryDefinitions = @(
     [pscustomobject]@{ Key = "05_Frontend_Misc"; FilePrefix = "05_Frontend_Misc"; Title = "PLANTPROCESS IQ FRONTEND MISC AUDIT - E2E / SCRIPTS / TEST RESULTS" },
     [pscustomobject]@{ Key = "06_Infrastructure"; FilePrefix = "06_Infrastructure"; Title = "PLANTPROCESS IQ INFRASTRUCTURE AUDIT - DEPLOYMENT / DOCKER / CADDY / CI-CD" },
     [pscustomobject]@{ Key = "07_Tools_Validation_Misc"; FilePrefix = "07_Tools_Validation_Misc"; Title = "PLANTPROCESS IQ TOOLS / VALIDATION / ROOT MISC AUDIT" },
+    [pscustomobject]@{ Key = "07A_DEMO_SQL_Data_Seed"; FilePrefix = "07A_DEMO_SQL_Data_Seed"; Title = "PLANTPROCESS IQ DEMO SQL DATA SEED - SCHEMA / DATA / EXCEL-CSV FIXTURES" },
     [pscustomobject]@{ Key = "08_Website"; FilePrefix = "08_Website"; Title = "PLANTPROCESS IQ WEBSITE AUDIT - PLANTPROCESS.WEBSITE" }
 )
 

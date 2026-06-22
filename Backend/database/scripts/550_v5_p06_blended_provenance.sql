@@ -70,6 +70,12 @@ WHERE ge.id = bf.id
       OR bf.parent_count > 1
   );
 
+-- Flush the deferred weight-guard events queued by the backfill UPDATE above
+-- (the constraint trigger already exists on re-runs) so CREATE INDEX is not
+-- blocked by pending trigger events. The guard is validated here on the
+-- backfilled data exactly as it would be at COMMIT.
+SET CONSTRAINTS ALL IMMEDIATE;
+
 CREATE INDEX IF NOT EXISTS ix_genealogy_edges_child_weight_transition_v5
 ON public.genealogy_edges(child_material_unit_id, is_transition, contribution_weight)
 WHERE COALESCE(is_deleted, false) = false;

@@ -168,8 +168,8 @@ if (-not [string]::IsNullOrWhiteSpace($env:PPIQ_DB_CONNECTION)) {
   $dbConnection = $env:PPIQ_DB_CONNECTION
 }
 
-if ([string]::IsNullOrWhiteSpace($dbConnection) -and -not [string]::IsNullOrWhiteSpace($env:ConnectionStrings__DefaultConnection)) {
-  $dbConnection = $env:ConnectionStrings__DefaultConnection
+if ([string]::IsNullOrWhiteSpace($dbConnection) -and -not [string]::IsNullOrWhiteSpace($env:ConnectionStrings__PlantProcessDb)) {
+  $dbConnection = $env:ConnectionStrings__PlantProcessDb
 }
 
 $settingsFiles = @(

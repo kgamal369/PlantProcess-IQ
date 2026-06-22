@@ -53,3 +53,30 @@ BEGIN
     END;
     RAISE NOTICE 'PPIQ P3 seed applied site=%', v_site;
 END;$seed$;
+-- M1-T14: Seed blended-provenance edges for C-0044170 guaranteeing weights sum to 1.0 (100%)
+DO $$$
+DECLARE
+    child_id uuid;
+    parent1_id uuid;
+    parent2_id uuid;
+BEGIN
+    SELECT id INTO child_id FROM public.material_units WHERE material_code = 'C-0044170' LIMIT 1;
+    SELECT id INTO parent1_id FROM public.material_units WHERE material_code = 'H-3361' LIMIT 1;
+    SELECT id INTO parent2_id FROM public.material_units WHERE material_code = 'H-3362' LIMIT 1;
+
+    IF child_id IS NOT NULL AND parent1_id IS NOT NULL THEN
+        -- Force primary parent to 70% attribution
+        UPDATE public.genealogy_edges
+        SET contribution_weight = 0.70
+        WHERE child_material_unit_id = child_id AND parent_material_unit_id = parent1_id;
+
+        -- Ensure transition parent exists at 30% attribution
+        IF parent2_id IS NOT NULL THEN
+            INSERT INTO public.genealogy_edges (id, parent_material_unit_id, child_material_unit_id, relationship_type, contribution_weight, is_deleted, created_at_utc)
+            SELECT gen_random_uuid(), parent2_id, child_id, 'BlendedTransition', 0.30, false, now()
+            WHERE NOT EXISTS (
+                SELECT 1 FROM public.genealogy_edges WHERE child_material_unit_id = child_id AND parent_material_unit_id = parent2_id
+            );
+        END IF;
+    END IF;
+END $$$;

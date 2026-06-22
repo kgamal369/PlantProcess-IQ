@@ -215,7 +215,7 @@ public abstract class AuthenticatedApiTestBase : IClassFixture<WebApplicationFac
             Environment.GetEnvironmentVariable("PPIQ_TEST_CONNECTION_STRING"),
             Environment.GetEnvironmentVariable("PLANTPROCESS_TEST_CONNECTION_STRING"),
             Environment.GetEnvironmentVariable("ConnectionStrings__PlantProcessDb"),
-            "Host=127.0.0.1;Port=5432;Database=plantprocessiq;Username=plantprocess;Password=plantprocess123"
+            "Host=127.0.0.1;Port=5432;Database=ppiq_app;Username=ppiq_dev;Password=ppiq_dev_local_only"
         };
 
         foreach (var candidate in candidates)

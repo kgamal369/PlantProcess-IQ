@@ -45,7 +45,7 @@ One Postgres instance, two schemas: **`ppiq_meta`** (app metadata: dashboards, w
 ### Connection string (env form; ASP.NET maps `__` → `:`)
 ```
 ConnectionStrings__PlantProcessDb=Host=localhost;Port=5432;Database=ppiq_app;Username=ppiq_dev;Password=ppiq_dev_local_only
-ConnectionStrings__DefaultConnection=…same…    # legacy mirror only; the app reads PlantProcessDb
+ConnectionStrings__PlantProcessDb=…same…    # legacy mirror only; the app reads PlantProcessDb
 PPIQ_TEST_CONNECTION_STRING=Host=localhost;Port=5432;Database=plantprocess_test_db;Username=ppiq_dev;Password=ppiq_dev_local_only
 PPIQ_AUDIT_TRIGGER_TEST_CONNECTION=…test DSN…  # audit-immutability tests
 ```
