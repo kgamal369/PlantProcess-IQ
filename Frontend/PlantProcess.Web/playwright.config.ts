@@ -17,15 +17,30 @@
 
 import { defineConfig, devices } from "@playwright/test";
 
-const frontendBaseUrl =
-  process.env.PLAYWRIGHT_BASE_URL ||
-  process.env.VITE_APP_BASE_URL ||
-  "http://localhost:5173";
+function firstAbsoluteHttpUrl(candidates: Array<string | undefined>, fallback: string): string {
+  for (const candidate of candidates) {
+    if (!candidate) continue;
+    try {
+      const parsed = new URL(candidate);
+      if (parsed.protocol === "http:" || parsed.protocol === "https:") return candidate;
+    } catch {
+      // Ignore relative or malformed values like "/api" so they never break webServer/baseURL.
+    }
+  }
+  return fallback;
+}
 
-const apiBaseUrl =
-  process.env.PLAYWRIGHT_API_URL ||
-  process.env.VITE_API_BASE_URL ||
-  "http://localhost:5063";
+const externalBaseUrl = firstAbsoluteHttpUrl([process.env.PLAYWRIGHT_BASE_URL], "");
+
+const frontendBaseUrl = firstAbsoluteHttpUrl(
+  [process.env.PLAYWRIGHT_BASE_URL, process.env.VITE_APP_BASE_URL],
+  "http://localhost:5173"
+);
+
+const apiBaseUrl = firstAbsoluteHttpUrl(
+  [process.env.PLAYWRIGHT_API_URL, process.env.VITE_API_BASE_URL],
+  "http://localhost:5063"
+);
 
 const backendProject =
   process.env.PLAYWRIGHT_BACKEND_PROJECT ||
@@ -35,7 +50,7 @@ const frontendHost = process.env.PLAYWRIGHT_FRONTEND_HOST || "127.0.0.1";
 const frontendPort = Number(process.env.PLAYWRIGHT_FRONTEND_PORT || "5173");
 
 const e2eUserName = "e2eadmin";
-const e2ePassword = "SET_E2E_SMOKE_PASSWORD_BY_ENV";
+const e2ePassword = process.env.PPIQ_SMOKE_PASSWORD || "E2eAdmin_Local123!";
 
 // Make the values visible to Playwright test code itself.
 // webServer.env is only for spawned backend/frontend processes.
@@ -76,7 +91,7 @@ export default defineConfig({
     navigationTimeout: 30_000,
   },
 
-  webServer: process.env.PLAYWRIGHT_BASE_URL ? undefined : [
+  webServer: externalBaseUrl ? undefined : [
     {
       command: `dotnet run --project ${backendProject} --urls ${apiBaseUrl}`,
       url: `${apiBaseUrl}/health`,
@@ -87,7 +102,7 @@ export default defineConfig({
         ASPNETCORE_URLS: apiBaseUrl,
 
         ConnectionStrings__PlantProcessDb:
-          "Host=localhost;Port=5432;Database=plantprocessiq;Username=plantprocess;Password=SET_LOCAL_POSTGRES_PASSWORD",
+          process.env.ConnectionStrings__PlantProcessDb || process.env.PPIQ_TEST_CONNECTION_STRING || "Host=localhost;Port=5432;Database=ppiq_app;Username=ppiq_dev;Password=ppiq_dev_local_only",
 
         PLANTPROCESS_ALLOWED_ORIGINS:
           "http://localhost:5173,http://localhost:3000",
@@ -102,7 +117,7 @@ export default defineConfig({
         PlantProcess__Auth__Issuer: "PlantProcessIQ",
         PlantProcess__Auth__Audience: "PlantProcessIQ.Client",
         PlantProcess__Auth__SigningKey:
-          "SuperSecretPlaywrightKeyThatIsAtLeast32Bytes!!",
+          process.env.PlantProcess__Auth__SigningKey || "ppiq-local-signing-key-not-for-production-0a1b2c3d4e5f60718293a4b5c6",
         PlantProcess__Auth__AccessTokenMinutes: "120",
 
         // Keep bootstrap different from the E2E real admin user.
