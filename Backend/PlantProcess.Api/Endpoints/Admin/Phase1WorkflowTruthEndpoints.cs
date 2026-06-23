@@ -17,7 +17,7 @@ public static partial class Phase1WorkflowTruthEndpoints
 {
 public static IEndpointRouteBuilder MapPhase1WorkflowTruthEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/admin/phase1")
+        var group = app.MapGroup("/admin/workflow-foundation")
             .WithTags("Admin - Phase 1 Workflow Truth");
 
         // ------------------------------------------------------------

@@ -34,11 +34,11 @@ test.describe("PPIQ Phase 1 — Golden Demo & Workflow Truth", () => {
       "http://localhost:5063";
 
     const endpoints = [
-      "/admin/phase1/connector-truth",
-      "/admin/phase1/source-schedule-board",
-      "/admin/phase1/staging/summary",
-      "/admin/phase1/schema-mapping/workbench",
-      "/admin/phase1/import-jobs/configuration-board",
+      "/admin/workflow-foundation/connector-truth",
+      "/admin/workflow-foundation/source-schedule-board",
+      "/admin/workflow-foundation/staging/summary",
+      "/admin/workflow-foundation/schema-mapping/workbench",
+      "/admin/workflow-foundation/import-jobs/configuration-board",
       "/reports/customer-demo/phase1-summary",
     ];
 

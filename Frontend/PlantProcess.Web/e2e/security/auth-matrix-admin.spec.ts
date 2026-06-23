@@ -25,7 +25,7 @@ const rows: MatrixRow[] = [
   { group: "admin-two-stage-import", path: "/admin/two-stage-import/source-tables", anonymous: unauthorized, operator: dataManagerOk, admin: adminOk },
   { group: "admin-two-stage-import", path: "/admin/two-stage-import/runs", anonymous: unauthorized, operator: dataManagerOk, admin: adminOk },
   { group: "admin-license", path: "/admin/license/current", anonymous: unauthorized, operator: dataManagerOk, admin: adminOk },
-  { group: "admin-phase1", path: "/admin/phase1/workflow-truth", anonymous: unauthorized, operator: adminOnlyOperator, admin: adminOk },
+  { group: "admin-workflow-foundation", path: "/admin/workflow-foundation/workflow-truth", anonymous: unauthorized, operator: adminOnlyOperator, admin: adminOk },
   { group: "admin-phase2", path: "/admin/phase2/operations/readiness", anonymous: unauthorized, operator: adminOnlyOperator, admin: adminOk },
   { group: "admin-phase2", path: "/admin/phase2/pilot-readiness", anonymous: unauthorized, operator: adminOnlyOperator, admin: adminOk },
   { group: "admin-widgets", path: "/admin/widgets/proof", anonymous: unauthorized, operator: adminOnlyOperator, admin: adminOk },
