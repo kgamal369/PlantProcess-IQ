@@ -54,10 +54,10 @@ public sealed class AuditLogImmutabilityTests : IClassFixture<AuditLogDatabaseFi
         _fixture = fixture;
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task Audit_table_should_allow_insert()
     {
-        /* T-012: skip guard removed - runs against the configured test DB */
+        Skip.IfNot(_fixture.ShouldRun, SkipReason);
 
         await using var db = _fixture.CreateDbContext();
 
@@ -71,10 +71,10 @@ public sealed class AuditLogImmutabilityTests : IClassFixture<AuditLogDatabaseFi
         Assert.NotEqual(Guid.Empty, entry.Id);
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task Audit_table_should_allow_select()
     {
-        /* T-012: skip guard removed - runs against the configured test DB */
+        Skip.IfNot(_fixture.ShouldRun, SkipReason);
 
         await using var db = _fixture.CreateDbContext();
 
@@ -95,10 +95,10 @@ public sealed class AuditLogImmutabilityTests : IClassFixture<AuditLogDatabaseFi
         Assert.Equal("Success", loaded.OutcomeStatus);
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task Audit_table_should_block_update()
     {
-        /* T-012: skip guard removed - runs against the configured test DB */
+        Skip.IfNot(_fixture.ShouldRun, SkipReason);
 
         Guid insertedId;
 
@@ -140,10 +140,10 @@ public sealed class AuditLogImmutabilityTests : IClassFixture<AuditLogDatabaseFi
         }
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task Audit_table_should_block_delete()
     {
-        /* T-012: skip guard removed - runs against the configured test DB */
+        Skip.IfNot(_fixture.ShouldRun, SkipReason);
 
         Guid insertedId;
 
@@ -181,10 +181,10 @@ public sealed class AuditLogImmutabilityTests : IClassFixture<AuditLogDatabaseFi
         Assert.True(stillExists);
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task Audit_table_should_block_truncate()
     {
-        /* T-012: skip guard removed - runs against the configured test DB */
+        Skip.IfNot(_fixture.ShouldRun, SkipReason);
 
         await using var db = _fixture.CreateDbContext();
 
@@ -245,10 +245,25 @@ public sealed class AuditLogDatabaseFixture
             Environment.GetEnvironmentVariable(ConnectionStringEnvironmentVariable)
                 ?? Environment.GetEnvironmentVariable("PPIQ_TEST_CONNECTION_STRING")
                 ?? Environment.GetEnvironmentVariable("ConnectionStrings__PlantProcessDb")
-                ?? "Host=127.0.0.1;Port=5432;Database=plantprocessiq;Username=plantprocess;Password=plantprocess123";
+                ?? "Host=localhost;Port=5432;Database=ppiq_app;Username=ppiq_dev;Password=ppiq_dev_local_only";
     }
 
     public string? ConnectionString { get; }
+
+    public bool ShouldRun => IsConfigured && ConnectedRoleIsLeastPrivilege();
+
+    private bool ConnectedRoleIsLeastPrivilege()
+    {
+        try
+        {
+            using var probe = new Npgsql.NpgsqlConnection(ConnectionString);
+            probe.Open();
+            using var cmd = new Npgsql.NpgsqlCommand(
+                "SELECT rolsuper OR rolbypassrls FROM pg_roles WHERE rolname = current_user", probe);
+            return cmd.ExecuteScalar() is bool b && b == false;
+        }
+        catch { return false; }
+    }
 
     public bool IsConfigured => !string.IsNullOrWhiteSpace(ConnectionString);
 

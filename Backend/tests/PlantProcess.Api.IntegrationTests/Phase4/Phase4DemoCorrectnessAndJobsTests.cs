@@ -25,7 +25,7 @@ public sealed class Phase4DemoCorrectnessAndJobsTests
         Environment.GetEnvironmentVariable("PPIQ_TEST_CONNECTION_STRING")
         ?? Environment.GetEnvironmentVariable("PLANTPROCESS_TEST_CONNECTION_STRING")
         ?? Environment.GetEnvironmentVariable("ConnectionStrings__PlantProcessDb")
-        ?? "Host=127.0.0.1;Port=5432;Database=plantprocessiq;Username=plantprocess;Password=plantprocess123";
+        ?? "Host=localhost;Port=5432;Database=ppiq_app;Username=ppiq_dev;Password=ppiq_dev_local_only";
 
     private static bool IsDbReachable()
     {

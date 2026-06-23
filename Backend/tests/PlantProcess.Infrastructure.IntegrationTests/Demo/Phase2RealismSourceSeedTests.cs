@@ -8,7 +8,7 @@ public sealed class Phase2RealismSourceSeedTests
     public void Realism_source_files_contain_expected_scale_and_reference_thread()
     {
         var root = FindRepoRoot();
-        var infra = Path.Combine(root, "Infrastructure", "demo-sources");
+        var infra = Path.Combine(root, "deploy", "fixtures", "demo");
 
         var meltshop = File.ReadAllText(Path.Combine(infra, "meltshop-postgres", "init", "001_schema_seed.sql"));
         var caster = File.ReadAllText(Path.Combine(infra, "caster-oracle", "init", "001_schema_seed.sql"));
@@ -45,7 +45,7 @@ public sealed class Phase2RealismSourceSeedTests
     public void Yard_csv_trim_regression_fixture_has_no_leading_whitespace()
     {
         var root = FindRepoRoot();
-        var yardPath = Path.Combine(root, "Infrastructure", "demo-sources", "excel-yard", "yard_inventory.csv");
+        var yardPath = Path.Combine(root, "deploy", "fixtures", "demo", "excel-yard", "yard_inventory.csv");
         var rows = File.ReadAllLines(yardPath);
 
         Assert.True(rows.Length >= 5401, $"Expected realism-scale yard rows. Actual lines: {rows.Length}");

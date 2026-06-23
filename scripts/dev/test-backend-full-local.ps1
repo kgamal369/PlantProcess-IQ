@@ -6,7 +6,7 @@ $Backend = Join-Path $Root "Backend"
 # Local Windows PostgreSQL test baseline.
 $env:ASPNETCORE_ENVIRONMENT = "Development"
 $env:DOTNET_ENVIRONMENT = "Development"
-$env:ConnectionStrings__PlantProcessDb = "Host=127.0.0.1;Port=5432;Database=plantprocessiq;Username=plantprocess;Password=plantprocess123"
+$env:ConnectionStrings__PlantProcessDb = "Host=localhost;Port=5432;Database=ppiq_app;Username=ppiq_dev;Password=ppiq_dev_local_only"
 $env:PPIQ_TEST_CONNECTION_STRING = $env:ConnectionStrings__PlantProcessDb
 $env:PLANTPROCESS_ALLOWED_ORIGINS = "http://localhost:5173,http://localhost:3000"
 

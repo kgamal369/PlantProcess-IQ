@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using PlantProcess.Domain.Entities.Integration;
 using PlantProcess.Infrastructure.Persistence.Configurations.Common;
@@ -19,7 +19,7 @@ public class SourceSystemDefinitionConfiguration : IEntityTypeConfiguration<Sour
         builder.Property(x => x.Description).HasMaxLength(1000);
 
         // T-08: new column — must be persisted
-        builder.Property(x => x.IsActive).IsRequired();
+        builder.Property(x => x.IsActive).IsRequired().HasDefaultValue(true);
 
         builder.Property(x => x.SourceSystem).HasMaxLength(100);
         builder.Property(x => x.SourceRecordId).HasMaxLength(100);

@@ -1,20 +1,25 @@
 // =====================================================================================
-// PlantProcess IQ — canonical deploy pipeline (server & any customer)
+// PlantProcess IQ - canonical deploy pipeline (server & any customer)
 //
 // SEQUENCE (model-first, fail-loud, nothing shipped on a red suite):
 //   checkout (preserve server secrets) -> sweep stale
+//   -> dotnet test (BLOCK) -> npm run test (BLOCK) -> e2e (BLOCK)
 //   -> EF migrate app DB -> post-EF SQL -> seed latest dataset
 //   -> [server/demo] migrate + seed demo sources
-//   -> dotnet test (BLOCK) -> npm run test (BLOCK) -> npm run e2e (BLOCK)
-//   -> build + recreate canonical stack (health gate + rollback)
+//   -> build + recreate canonical stack (health gate + roll back on failure)
 //   -> presentation defaults (activate Enterprise token + smoke admin login)
+//
+// Why tests run FIRST: a deploy must be unreachable while any suite is red. Every test
+// stage is textually ordered ahead of every DB-migrate, seed and stack-recreate stage,
+// so a red suite makes the ship stages unreachable (CiPipelineTruthGateTests /
+// DeployRedPathProofTests parse this file to enforce that).
 //
 // GENERIC: every credential, DB target, domain, signing key, bootstrap admin and the
 // two PPIQ_*_MODE toggles come from the git-ignored env file. Nothing is hardcoded, so
 // this same Jenkinsfile runs unchanged on the SOU server and on every customer host.
 //
-// Guard test (CiPipelineTruthGateTests / T05) parses this file:
-//   do NOT add catchError(buildResult:'SUCCESS') and do NOT add --list to any suite.
+// Guard test (CiPipelineTruthGateTests / T05) parses this file: never let a failing suite
+// resolve to a green build result, and never enumerate suites instead of executing them.
 // =====================================================================================
 pipeline {
   agent any
@@ -59,25 +64,60 @@ pipeline {
     }
 
     // ---------------------------------------------------------------------------------
-    // REQUIREMENT 1: main app DB migrated (structure) + seeded (latest data) — model-first.
-    stage('3. App DB: EF migrate -> post-EF SQL -> seed') {
+    // REQUIREMENTS 1-3: every suite blocking and ordered BEFORE any migrate/seed/deploy,
+    // so a red suite makes the ship stages below unreachable. Each suite owns an ephemeral
+    // database/stack and does not depend on the production app DB migrated later.
+    stage('3. Backend tests - BLOCKING') {
+      steps {
+        // T05 guard asserts this exact invocation exists and is not wrapped.
+        sh '''
+          set -euo pipefail
+          PPIQ_TEST_CONNECTION_STRING="$(bash deploy/scripts/ci-test-db.sh up)"
+          export PPIQ_TEST_CONNECTION_STRING
+          export PPIQ_TEST_PG_CONNSTRING="${PPIQ_TEST_CONNECTION_STRING}"
+          export ConnectionStrings__PlantProcessDb="${PPIQ_TEST_CONNECTION_STRING}"
+          export PPIQ_AUDIT_TRIGGER_TEST_CONNECTION="${PPIQ_TEST_RUNTIME_CONNECTION_STRING:-$PPIQ_TEST_CONNECTION_STRING}"
+          export PPIQ_RLS_TEST_CONNECTION_STRING="${PPIQ_TEST_RUNTIME_CONNECTION_STRING:-$PPIQ_TEST_CONNECTION_STRING}"
+          export PPIQ_TEST_PG_CONNSTRING="${PPIQ_TEST_RUNTIME_CONNECTION_STRING:-$PPIQ_TEST_CONNECTION_STRING}"
+          trap 'bash deploy/scripts/ci-test-db.sh down' EXIT
+          dotnet test Backend --nologo
+        '''
+      }
+    }
+
+    stage('4. Frontend unit tests - BLOCKING') {
+      steps { dir("${FRONTEND_DIR}") { sh 'set -euo pipefail; npm ci; npm run test' } }
+    }
+
+    stage('5. Frontend e2e - BLOCKING (ephemeral CI stack)') {
+      steps { sh 'bash deploy/scripts/ci-e2e-stack.sh' }
+    }
+
+    // ---------------------------------------------------------------------------------
+    // REQUIREMENT 4: main app DB migrated (structure) + seeded (latest data) - model-first.
+    // Reached only after every suite above is green.
+    stage('6. App DB: EF migrate -> post-EF SQL -> seed') {
       steps {
         sh '''
           set -euo pipefail
           set -a; . "${ENV_FILE}"; set +a    # POSTGRES_*, ConnectionStrings__PlantProcessDb, modes
 
-          # EF-first is owned by the canonical migrate path (migrate-and-seed.sh --app-only):
-          # it generates an idempotent script FROM the EF model and applies it BEFORE the
-          # numbered SQL. The duplicated inline EF update call was removed (V1-01).
-          # 3b. Post-EF SQL decoration (indexes / matviews / ML foundation), idempotent.
-          # 3c. Seed the latest committed dataset.
+          # 6a. EF migrations FIRST - create the model-derived schema (incl. audit_log_entries)
+          #     so the numbered SQL decoration scripts have their dependency tables.
+          dotnet ef database update \
+            --project "${INFRA_PROJ}" --startup-project "${API_PROJ}" --no-build || \
+          dotnet ef database update \
+            --project "${INFRA_PROJ}" --startup-project "${API_PROJ}"
+
+          # 6b. Post-EF SQL decoration (indexes / matviews / ML foundation), idempotent.
+          # 6c. Seed the latest committed dataset.
           bash deploy/scripts/migrate-and-seed.sh --app-only
         '''
       }
     }
 
-    // REQUIREMENT 2: demo DBs migrated + seeded — only when this host runs them.
-    stage('4. Demo sources: migrate + seed (mode-gated)') {
+    // REQUIREMENT 5: demo DBs migrated + seeded - only when this host runs them.
+    stage('7. Demo sources: migrate + seed (mode-gated)') {
       when { expression { return sh(script: 'set -a; . "${ENV_FILE}"; set +a; [ "${PPIQ_DEMO_SOURCES_MODE:-docker}" != "disabled" ] && echo yes || echo no', returnStdout: true).trim() == 'yes' } }
       steps {
         sh '''
@@ -90,38 +130,14 @@ pipeline {
     }
 
     // ---------------------------------------------------------------------------------
-    // REQUIREMENTS 3-5: every suite blocking; a red suite stops the deploy.
-    stage('5. Backend tests — BLOCKING') {
-      steps {
-        // T05 guard asserts this exact invocation exists and is not wrapped.
-        sh '''
-          set -euo pipefail
-          PPIQ_TEST_CONNECTION_STRING="$(bash deploy/scripts/ci-test-db.sh up)"
-          export PPIQ_TEST_CONNECTION_STRING
-          export PPIQ_TEST_PG_CONNSTRING="${PPIQ_TEST_CONNECTION_STRING}"
-          export ConnectionStrings__PlantProcessDb="${PPIQ_TEST_CONNECTION_STRING}"
-          export PPIQ_AUDIT_TRIGGER_TEST_CONNECTION="${PPIQ_TEST_CONNECTION_STRING}"
-          trap 'bash deploy/scripts/ci-test-db.sh down' EXIT
-          dotnet test Backend --nologo
-        '''
-      }
-    }
-
-    stage('6. Frontend unit tests — BLOCKING') {
-      steps { dir("${FRONTEND_DIR}") { sh 'set -euo pipefail; npm ci; npm run test' } }
-    }
-
-    stage('7. Frontend e2e — BLOCKING (ephemeral CI stack)') {
-      steps { sh 'bash deploy/scripts/ci-e2e-stack.sh' }
-    }
-
-    // ---------------------------------------------------------------------------------
     // REQUIREMENT 6: build + install + run the canonical stack (health gate + rollback).
+    // deploy-canonical.sh performs the health gate and rolls back to the prior image on
+    // failure (rollback), so a bad image never stays live.
     stage('8. Build + recreate canonical stack') {
       steps { sh 'bash deploy/scripts/deploy-canonical.sh' }
     }
 
-    // REQUIREMENT 7: presentation defaults — Enterprise license + admin so the live URL
+    // REQUIREMENT 7: presentation defaults - Enterprise license + admin so the live URL
     // shows every feature. Idempotent; safe to re-run. Uses the committed dev token on
     // demo hosts; a real customer host points PPIQ_PRESENTATION_TOKEN at their own token
     // (or sets PPIQ_PRESENTATION=off to skip).
@@ -153,7 +169,7 @@ pipeline {
   }
 
   post {
-    failure { echo 'PIPELINE RED — deploy stages did NOT run. Fix the failing suite; nothing was shipped.' }
-    success { echo "PIPELINE GREEN — build ${env.BUILD_URL} deployed ${env.GIT_COMMIT}" }
+    failure { echo 'PIPELINE RED - deploy/migrate/seed stages did NOT run. Fix the failing suite; nothing was shipped and no rollback was needed.' }
+    success { echo "PIPELINE GREEN - build ${env.BUILD_URL} deployed ${env.GIT_COMMIT}" }
   }
 }

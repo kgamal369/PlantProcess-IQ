@@ -98,3 +98,4 @@ Website/PlantProcess.Website/node_modules/
 
 # DEV-ONLY Ed25519 private key - never commit
 deploy/fixtures/license/dev_private.pem
+deploy/.ppiq-backups/

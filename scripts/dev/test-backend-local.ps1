@@ -7,7 +7,7 @@ $Backend = Join-Path $Root "Backend"
 $env:ASPNETCORE_ENVIRONMENT = "Development"
 $env:DOTNET_ENVIRONMENT = "Development"
 $env:ASPNETCORE_URLS = "http://localhost:5063"
-$env:ConnectionStrings__PlantProcessDb = "Host=127.0.0.1;Port=5432;Database=plantprocessiq;Username=plantprocess;Password=plantprocess123"
+$env:ConnectionStrings__PlantProcessDb = "Host=localhost;Port=5432;Database=ppiq_app;Username=ppiq_dev;Password=ppiq_dev_local_only"
 $env:PLANTPROCESS_ALLOWED_ORIGINS = "http://localhost:5173,http://localhost:3000"
 
 # Force API integration tests to use the real local API host instead of unstable WebApplicationFactory/TestServer.

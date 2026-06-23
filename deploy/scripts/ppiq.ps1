@@ -156,7 +156,9 @@ $dir = Join-Path $RepoRoot $MigrationsDir
   if(-not $files -or $files.Count -eq 0){ Die ("no .sql migrations in " + $MigrationsDir) }
   Say ("applying " + $files.Count + " migrations to " + $pg.Host + ":" + $pg.Port + "/" + $pg.Db + " as " + $pg.User)
   foreach($f in $files){
-    & psql -h $pg.Host -p $pg.Port -U $pg.User -d $pg.Db -v ON_ERROR_STOP=1 -q -f $f.FullName
+    $psqlArgs = @('-h', $pg.Host, '-p', $pg.Port, '-U', $pg.User, '-d', $pg.Db, '-v', 'ON_ERROR_STOP=1', '-q', '-f', $f.FullName)
+    if(-not [string]::IsNullOrEmpty($env:PPIQ_APP_RUNTIME_PASSWORD)){ $psqlArgs = @('-v', ('plantprocess_app_password=' + $env:PPIQ_APP_RUNTIME_PASSWORD)) + $psqlArgs }
+    & psql @psqlArgs
     Assert-Exit ("migration " + $f.Name)
   }
   Say "migrations applied"
@@ -172,7 +174,9 @@ function Do-Seed {
   if(-not $files -or $files.Count -eq 0){ Say "no seed files - nothing to seed"; return }
   Say ("applying " + $files.Count + " seed files to " + $pg.Db)
   foreach($f in $files){
-    & psql -h $pg.Host -p $pg.Port -U $pg.User -d $pg.Db -v ON_ERROR_STOP=1 -q -f $f.FullName
+    $psqlArgs = @('-h', $pg.Host, '-p', $pg.Port, '-U', $pg.User, '-d', $pg.Db, '-v', 'ON_ERROR_STOP=1', '-q', '-f', $f.FullName)
+    if(-not [string]::IsNullOrEmpty($env:PPIQ_APP_RUNTIME_PASSWORD)){ $psqlArgs = @('-v', ('plantprocess_app_password=' + $env:PPIQ_APP_RUNTIME_PASSWORD)) + $psqlArgs }
+    & psql @psqlArgs
     Assert-Exit ("seed " + $f.Name)
   }
   Say "seeds applied"
