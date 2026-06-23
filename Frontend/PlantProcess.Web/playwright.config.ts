@@ -183,8 +183,10 @@ export default defineConfig({
   ],
 
   projects: [
+    { name: "setup", testMatch: /license\.setup\.ts/ },
     {
       name: "chromium",
+      dependencies: ["setup"],
       use: {
         ...devices["Desktop Chrome"],
       },

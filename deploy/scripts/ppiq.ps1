@@ -135,6 +135,28 @@ function Ensure-AppDb {
 
 function Do-InitDb { Import-DotEnv; Ensure-AppDb; Say "init-db complete" }
 
+function Register-DevLicenseKey {
+  # DEV-ONLY: registers the committed development Ed25519 license public key so the signed
+  # dev tokens (deploy/fixtures/license/*.token) verify and activate. Production registers
+  # the customer signing key via the ops path and never ships this dev key. Idempotent.
+  if($env:ASPNETCORE_ENVIRONMENT -eq 'Production'){ Say "skipping dev Ed25519 key registration (ASPNETCORE_ENVIRONMENT=Production)"; return }
+  $pubFile = Join-Path $RepoRoot 'deploy/fixtures/license/dev_public.b64'
+  $keySql  = Join-Path $RepoRoot 'Backend/database/seed/dev_ed25519_public_key.sql'
+  if(-not (Test-Path $pubFile)){ Say "dev_public.b64 absent - skipping dev license key registration"; return }
+  if(-not (Test-Path $keySql)){ Say "dev_ed25519_public_key.sql absent - skipping dev license key registration"; return }
+  $pg = Get-Pg
+  $env:PGPASSWORD = $pg.Pass
+  $pub = ([System.IO.File]::ReadAllText($pubFile)).Trim()
+  if([string]::IsNullOrEmpty($pub)){ Die "dev_public.b64 is empty" }
+  $tenant = '00000000-0000-0000-0000-000000000001'
+  $kid = 'ppiq-dev-ed25519'
+  Say ("registering dev Ed25519 license public key (kid=" + $kid + ", tenant=" + $tenant + ")")
+  $psqlArgs = @('-h', $pg.Host, '-p', $pg.Port, '-U', $pg.User, '-d', $pg.Db, '-v', 'ON_ERROR_STOP=1', '-q', '-v', ('tenant_id=' + $tenant), '-v', ('key_id=' + $kid), '-v', ('public_key_b64=' + $pub), '-f', $keySql)
+  & psql @psqlArgs
+  Assert-Exit "register dev Ed25519 public key"
+  Say "dev Ed25519 license public key registered"
+}
+
 function Do-Migrate {
   Import-DotEnv
   $pg = Get-Pg
@@ -162,6 +184,7 @@ $dir = Join-Path $RepoRoot $MigrationsDir
     Assert-Exit ("migration " + $f.Name)
   }
   Say "migrations applied"
+  Register-DevLicenseKey
 }
 
 function Do-Seed {

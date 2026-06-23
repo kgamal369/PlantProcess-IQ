@@ -190,6 +190,7 @@ public sealed class AccessControlMiddleware
 
         ("/admin/license", All(), "license.admin", false),
             ("/api/v5/licensing/ed25519", All(), "license.admin", false),
+        ("/api/v5/licensing", All(), "license.admin", false),
         ("/admin", All(), "tenant.admin", false),
         ("/integration", All(), "source.configure", false),
         ("/workflow", All(), "job.manage", false),
