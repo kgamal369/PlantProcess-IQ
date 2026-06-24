@@ -454,7 +454,7 @@ export const demoWidgets: DemoWidget[] = [
     title: "Quality Risk Score",
     type: "risk",
     requiredPlan: "Pro",
-    description: "Rule-based risk score. Not an AI prediction.",
+    description: "Rule-based risk score. Not a machine-learning forecast.",
     queryPreview: "RiskScoreService.Calculate(material, genealogy, recent events)",
     value: "72",
     trend: "+11 vs previous shift",
@@ -753,7 +753,7 @@ export const demoChecklist: DemoChecklistItem[] = [
   {
     id: "language",
     title: "AI wording",
-    acceptance: "No AI prediction or evidence-backed root-cause investigation wording",
+    acceptance: "No misleading AI-forecast or evidence-backed root-cause wording",
     priority: "Required",
     done: false,
   },

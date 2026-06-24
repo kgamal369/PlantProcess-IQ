@@ -25,6 +25,10 @@ BEGIN
         (v_coilT,now(),true,'PPIQ_P3_SEED',false,'C-0044170','Coil','FlatSteel','S235JR',v_site,'Europe/Berlin',60),
         (v_coilN,now(),true,'PPIQ_P3_SEED',false,'C-0044171','Coil','FlatSteel','S235JR',v_site,'Europe/Berlin',60)
     ON CONFLICT (id) DO NOTHING;
+    -- M1 self-healing: clear any prior/duplicate edges for the transition + normal coils
+    -- so re-runs are deterministic (no accumulation past 1.0, no stale 0.50/0.50) before
+    -- re-inserting the canonical 70/30 transition split.
+    DELETE FROM public.genealogy_edges WHERE child_material_unit_id IN (v_coilT, v_coilN);
     INSERT INTO public.genealogy_edges (id,created_at_utc,is_synthetic,source_system,is_deleted,parent_material_unit_id,child_material_unit_id,relationship_type,contribution_weight,is_transition)
     VALUES
         ('3a000000-0000-0000-0000-0000000ed003',now(),true,'PPIQ_P3_SEED',false,v_h1,v_coilT,'HeatToCoil',0.70,true),
@@ -54,7 +58,7 @@ BEGIN
     RAISE NOTICE 'PPIQ P3 seed applied site=%', v_site;
 END;$seed$;
 -- M1-T14: Seed blended-provenance edges for C-0044170 guaranteeing weights sum to 1.0 (100%)
-DO $$$
+DO $blend$
 DECLARE
     child_id uuid;
     parent1_id uuid;
@@ -73,10 +77,10 @@ BEGIN
         -- Ensure transition parent exists at 30% attribution
         IF parent2_id IS NOT NULL THEN
             INSERT INTO public.genealogy_edges (id, parent_material_unit_id, child_material_unit_id, relationship_type, contribution_weight, is_deleted, created_at_utc)
-            SELECT gen_random_uuid(), parent2_id, child_id, 'BlendedTransition', 0.30, false, now()
+            SELECT '3a000000-0000-0000-0000-0000000ed006'::uuid, parent2_id, child_id, 'BlendedTransition', 0.30, false, now()
             WHERE NOT EXISTS (
                 SELECT 1 FROM public.genealogy_edges WHERE child_material_unit_id = child_id AND parent_material_unit_id = parent2_id
             );
         END IF;
     END IF;
-END $$$;
+END $blend$;

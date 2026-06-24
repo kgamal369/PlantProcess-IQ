@@ -451,3 +451,11 @@ img { height: auto; }
   .site-shell, .phase10-shell { width: 100%; max-width: 100%; margin-inline: auto; }
 }
 /* P7-T04-GOLIVE-RESPONSIVE:END */
+
+/* V1-21 product availability status */
+.status-pill { display: inline-block; margin-left: 8px; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; letter-spacing: 0.04em; vertical-align: middle; }
+.status-pill--soon { background: rgba(255,176,32,0.16); color: #FFB020; border: 1px solid rgba(255,176,32,0.5); }
+.status-pill--live { background: rgba(44,230,162,0.16); color: #2CE6A2; border: 1px solid rgba(44,230,162,0.5); }
+.status-banner { margin: 14px 0 0; padding: 12px 14px; border-radius: 10px; font-size: 14px; line-height: 1.5; }
+.status-banner--soon { background: rgba(255,176,32,0.10); border: 1px solid rgba(255,176,32,0.4); color: #FFD79A; }
+.status-note { margin-top: 10px; font-size: 13px; color: #FFB020; }

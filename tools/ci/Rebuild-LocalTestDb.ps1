@@ -11,7 +11,7 @@
 # safe to re-run.
 #
 # DB defaults match scripts/dev/test-backend-full-local.ps1:
-#   127.0.0.1:5432 / plantprocessiq , user plantprocess / plantprocess123
+#   127.0.0.1:5432 / plantprocessiq , user plantprocess / ppiq_dev_local_only
 # Override with PPIQ_PG_HOST / PPIQ_PG_PORT / PPIQ_PG_USER / PPIQ_PG_PASSWORD / PPIQ_PG_DB.
 # ============================================================================
 $ErrorActionPreference = 'Stop'
@@ -21,7 +21,7 @@ if (-not (Test-Path (Join-Path $Root 'Jenkinsfile'))) { $Root = (Get-Location).P
 $PgHost = if ($env:PPIQ_PG_HOST)     { $env:PPIQ_PG_HOST }     else { '127.0.0.1' }
 $PgPort = if ($env:PPIQ_PG_PORT)     { $env:PPIQ_PG_PORT }     else { '5432' }
 $PgUser = if ($env:PPIQ_PG_USER)     { $env:PPIQ_PG_USER }     else { 'plantprocess' }
-$PgPass = if ($env:PPIQ_PG_PASSWORD) { $env:PPIQ_PG_PASSWORD } else { 'plantprocess123' }
+$PgPass = if ($env:PPIQ_PG_PASSWORD) { $env:PPIQ_PG_PASSWORD } else { 'ppiq_dev_local_only' }
 $Db     = if ($env:PPIQ_PG_DB)       { $env:PPIQ_PG_DB }       else { 'plantprocessiq' }
 
 if (-not (Get-Command psql -ErrorAction SilentlyContinue)) { throw 'psql not found in PATH.' }

@@ -235,7 +235,7 @@ export function DemoAnalyticsDemoLifecyclePage() {
       subtitle="Reset workflow now has confirmation, scope control, 202 job hand-off and 1s progress polling through OperationProgressPanel."
       actions={
         <>
-          <StandardButton variant="secondary" leadingIcon={<RefreshCw size={16} />} onClick={() => resetJobId && demoAnalyticsApi.getDemoResetProgress(resetJobId).then(setResetJob)} isDisabled={!resetJobId}>
+          <StandardButton variant="secondary" leadingIcon={<RefreshCw size={16} />} onClick={() => resetJobId && demoAnalyticsApi.getDemoResetProgress(resetJobId).then(setResetJob)} isDisabled={!resetJobId} data-disabled-reason={!resetJobId ? "Start a demo reset first to enable progress refresh." : undefined}>
             Refresh Progress
           </StandardButton>
           <StandardButton

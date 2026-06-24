@@ -43,7 +43,7 @@ export function ProductScreenshotShowcase() {
         </div>
         <div>
           <strong>Shown in message</strong>
-          <span>Evidence-based investigation, not guaranteed root-cause theatre.</span>
+          <span>Evidence-based investigation, not root-cause theatre.</span>
         </div>
       </div>
     </section>

@@ -83,6 +83,11 @@ BEGIN
     FROM public.material_aliases a
     WHERE a.normalized_alias_code = v_norm
       AND a.material_unit_id <> NEW.material_unit_id
+      -- Namespace-scoped uniqueness: a business key is unique within its own id-type
+      -- (HeatId, CoilId, SourceSystemId, ...), not globally. Two different entities may
+      -- legitimately share a trailing number across different id namespaces; only a
+      -- collision WITHIN the same alias_type is a genuine ambiguous join.
+      AND a.alias_type IS NOT DISTINCT FROM NEW.alias_type
       AND COALESCE(a.is_deleted, false) = false
     LIMIT 1;
 

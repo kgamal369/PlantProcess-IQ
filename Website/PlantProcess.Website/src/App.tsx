@@ -59,10 +59,10 @@ const productEcosystem: EcosystemProduct[] = [
     bestFor: ["Quality teams", "Process engineers", "Plant managers", "MES / data teams"],
     workflow: ["Connect sources", "Stage raw data", "Map model", "Investigate", "Score risk", "Report"],
     proofPoints: [
-      "Read-only data philosophy",
-      "Generic manufacturing model",
-      "Evidence-first analytics",
-      "Honest AI readiness gates",
+      "Read-only intelligence layer",
+      "Generic manufacturing canonical model",
+      "Evidence-based investigation",
+      "ML readiness",
     ],
   },
   {
@@ -179,6 +179,16 @@ const trustPillars = [
   },
 ];
 
+const comingSoonCodes: ReadonlySet<ProductCode> = new Set<ProductCode>(["mes", "qes", "yard", "energy"]);
+const isComingSoon = (code: ProductCode): boolean => comingSoonCodes.has(code);
+
+function statusBadge(code: ProductCode): ReactNode {
+  if (isComingSoon(code)) {
+    return <span className="status-pill status-pill--soon">Coming soon</span>;
+  }
+  return <span className="status-pill status-pill--live">Available now</span>;
+}
+
 function productIcon(code: ProductCode): ReactNode {
   switch (code) {
     case "plantprocess-iq":
@@ -269,7 +279,10 @@ function ProductCard({ product }: { product: EcosystemProduct }) {
     <NavLink className="ecosystem-product-card" to={href}>
       <span className="ecosystem-product-card__icon">{productIcon(product.code)}</span>
       <span className="section-kicker">{product.eyebrow}</span>
-      <strong>{product.name}</strong>
+      <strong>
+        {product.name}
+        {statusBadge(product.code)}
+      </strong>
       <p>{product.description}</p>
       <span className="card-link-text">Open product page →</span>
     </NavLink>
@@ -318,8 +331,9 @@ function HomePage() {
           <div>
             <h2>Five product stories, one industrial brand architecture.</h2>
             <p>
-              Each product page has its own benefit, workflow, license logic and inquiry CTA,
-              while PlantProcess IQ stays the flagship quality-intelligence product.
+              PlantProcess IQ is available today as the flagship quality-intelligence product.
+              SOU MES, QES, Yard and Energy are on the roadmap - their pages describe the
+              intended direction, not a shipping product yet.
             </p>
           </div>
         </div>
@@ -344,6 +358,7 @@ function ProductPage({ fixedCode }: { fixedCode?: ProductCode }) {
   const params = useParams<{ code?: string }>();
   const requestedCode = fixedCode ?? params.code;
   const product = productEcosystem.find((item) => item.code === requestedCode) ?? productEcosystem[0];
+  const comingSoon = isComingSoon(product.code);
 
   return (
     <>
@@ -352,6 +367,13 @@ function ProductPage({ fixedCode }: { fixedCode?: ProductCode }) {
           <div className="section-kicker">{product.eyebrow}</div>
           <h1>{product.headline}</h1>
           <p>{product.description}</p>
+          {comingSoon && (
+            <div className="status-banner status-banner--soon" role="status">
+              <strong>In development - not yet available.</strong>{" "}
+              PlantProcess IQ is the product you can run today. {product.name} is on the roadmap;
+              register your interest below and we will share progress and an early-access path.
+            </div>
+          )}
 
           <div className="hero-actions">
             <a className="website-button website-button--primary" href="#request-demo">
@@ -389,11 +411,14 @@ function ProductPage({ fixedCode }: { fixedCode?: ProductCode }) {
           </article>
 
           <article>
-            <span className="section-kicker">License detail</span>
+            <span className="section-kicker">{comingSoon ? "Planned commercial model" : "License detail"}</span>
             <h2>Commercial packaging stays honest.</h2>
             <p>{product.licenseDetail}</p>
+            {comingSoon && (
+              <p className="status-note">This is the intended licensing direction once {product.name} ships. Nothing here is purchasable yet.</p>
+            )}
             <a className="website-button website-button--secondary" href="#request-demo">
-              Ask for fit check
+              {comingSoon ? "Register interest" : "Ask for fit check"}
             </a>
           </article>
         </div>

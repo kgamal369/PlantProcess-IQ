@@ -1,4 +1,4 @@
-﻿import fs from "node:fs";
+import fs from "node:fs";
 import path from "node:path";
 
 const repoRoot = process.cwd();
@@ -104,23 +104,37 @@ function walk(directory) {
 
 const violations = [];
 
+// Declared banned-term registries legitimately contain the forbidden phrases
+// (they define the policy), so their array bodies are skipped during the scan.
+const registryOpen = /\b(forbiddenLanguageExamples|forbiddenLanguage|notClaims)\b\s*[:=]\s*\[/;
+
 for (const root of scanRoots) {
   for (const file of walk(root)) {
     const content = fs.readFileSync(file, "utf8");
+    const lines = content.split(/\r?\n/);
+    let inRegistry = false;
 
-    for (const rule of forbiddenPatterns) {
-      const matches = [...content.matchAll(rule.pattern)];
+    for (let i = 0; i < lines.length; i++) {
+      const text = lines[i];
 
-      for (const match of matches) {
-        const before = content.slice(0, match.index);
-        const line = before.split(/\r?\n/).length;
+      if (!inRegistry && registryOpen.test(text)) {
+        inRegistry = !text.includes("]");
+        continue;
+      }
+      if (inRegistry) {
+        if (text.includes("]")) inRegistry = false;
+        continue;
+      }
 
-        violations.push({
-          file: path.relative(repoRoot, file),
-          line,
-          text: match[0],
-          reason: rule.reason,
-        });
+      for (const rule of forbiddenPatterns) {
+        for (const match of text.matchAll(rule.pattern)) {
+          violations.push({
+            file: path.relative(repoRoot, file),
+            line: i + 1,
+            text: match[0],
+            reason: rule.reason,
+          });
+        }
       }
     }
   }

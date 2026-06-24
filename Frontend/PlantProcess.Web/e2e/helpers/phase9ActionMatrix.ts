@@ -72,18 +72,26 @@ export async function collectInteractiveIssues(page: Page): Promise<InteractiveI
     }
 
     function labelOf(el: HTMLElement) {
-      return [
-        el.getAttribute("aria-label"),
+      const parts: (string | null)[] = [el.getAttribute("aria-label")];
+      const labelledBy = el.getAttribute("aria-labelledby");
+      if (labelledBy) {
+        for (const ref of labelledBy.split(/\s+/)) {
+          const node = ref ? document.getElementById(ref) : null;
+          if (node) parts.push(node.textContent);
+        }
+      }
+      const forLabel = el.id ? document.querySelector('label[for="' + CSS.escape(el.id) + '"]') : null;
+      if (forLabel) parts.push(forLabel.textContent);
+      const wrappingLabel = el.closest("label");
+      if (wrappingLabel) parts.push(wrappingLabel.textContent);
+      parts.push(
         el.getAttribute("title"),
         el.getAttribute("data-testid"),
         el.getAttribute("name"),
         el.getAttribute("placeholder"),
         el.textContent,
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .replace(/\s+/g, " ")
-        .trim();
+      );
+      return parts.filter(Boolean).join(" ").replace(/\s+/g, " ").trim();
     }
 
     function selectorOf(el: HTMLElement) {
@@ -94,19 +102,25 @@ export async function collectInteractiveIssues(page: Page): Promise<InteractiveI
       return `${tag}${id}${testId}${text ? ` :: ${text}` : ""}`;
     }
 
-    function hasDisabledReason(el: HTMLElement, label: string) {
-      const reasonText = [
-        label,
-        el.getAttribute("aria-describedby"),
-        el.getAttribute("data-disabled-reason"),
-        el.closest("[data-disabled-reason]")?.getAttribute("data-disabled-reason"),
-        el.closest("[aria-label]")?.getAttribute("aria-label"),
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-
-      return /locked|permission|requires|select|configure|not available|coming soon|disabled|loading|no data|read only|license/.test(reasonText);
+    function hasDisabledReason(el: HTMLElement, _label: string) {
+      // Structural and i18n-safe: a disabled control is "explained" when it carries a
+      // machine-readable reason - a non-empty data-disabled-reason (on itself or an
+      // ancestor), a title tooltip, or an aria-describedby that resolves to text.
+      // No English keyword matching (the product ships in EN/DE/AR).
+      const own = el.getAttribute("data-disabled-reason");
+      if (own && own.trim()) return true;
+      const ancestor = el.closest("[data-disabled-reason]");
+      if (ancestor && (ancestor.getAttribute("data-disabled-reason") || "").trim()) return true;
+      const title = el.getAttribute("title");
+      if (title && title.trim()) return true;
+      const describedBy = el.getAttribute("aria-describedby");
+      if (describedBy) {
+        for (const ref of describedBy.split(/\s+/)) {
+          const node = ref ? document.getElementById(ref) : null;
+          if (node && node.textContent && node.textContent.trim()) return true;
+        }
+      }
+      return false;
     }
 
     const issues: InteractiveIssue[] = [];
@@ -138,7 +152,7 @@ export async function collectInteractiveIssues(page: Page): Promise<InteractiveI
         continue;
       }
 
-      if (el.tagName.toLowerCase() === "a") {
+      if (!isDisabled && el.tagName.toLowerCase() === "a") {
         const href = el.getAttribute("href") ?? "";
         if (href === "#" || href.trim() === "") {
           issues.push({

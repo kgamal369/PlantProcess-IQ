@@ -72,7 +72,7 @@ export const TextArea: Story = {
   render: () => (
     <div className="ppiq-std-standards-page">
       <div style={{ maxWidth: 520 }}>
-        <StandardTextArea label="Investigation note" helperText="Keep notes factual and avoid guaranteed root-cause wording." />
+        <StandardTextArea label="Investigation note" helperText="Keep notes factual and avoid root-cause guarantee wording." />
       </div>
     </div>
   ),

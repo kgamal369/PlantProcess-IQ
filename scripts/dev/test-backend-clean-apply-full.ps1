@@ -5,7 +5,7 @@ param(
     [int]$DbPort = 5432,
     [string]$DbName = "plantprocessiq",
     [string]$DbUser = "plantprocess",
-    [string]$DbPassword = "plantprocess123",
+    [string]$DbPassword = "ppiq_dev_local_only",
     [switch]$SkipDotnetTest
 )
 

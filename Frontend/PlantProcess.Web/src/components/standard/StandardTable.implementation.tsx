@@ -364,7 +364,7 @@ export function StandardTable<T>({
                     <button
                       type="button"
                       className="ppiq-std-table__header-button"
-                      disabled={!column.sortable}
+                      disabled={!column.sortable} data-disabled-reason={!column.sortable ? "This column is not sortable." : undefined}
                       onClick={(event) => toggleSort(column, event.shiftKey)}
                     >
                       <span>{column.header}</span>
@@ -439,7 +439,7 @@ export function StandardTable<T>({
 
             <StandardButton
               variant="ghost"
-              isDisabled={pageIndex === 0}
+              isDisabled={pageIndex === 0} data-disabled-reason={pageIndex === 0 ? "You are on the first page." : undefined}
               onClick={() => {
                 const next = Math.max(0, pageIndex - 1);
                 setPageIndex(next);
@@ -463,7 +463,7 @@ export function StandardTable<T>({
 
             <StandardButton
               variant="ghost"
-              isDisabled={pageIndex >= pageCount - 1}
+              isDisabled={pageIndex >= pageCount - 1} data-disabled-reason={pageIndex >= pageCount - 1 ? "You are on the last page." : undefined}
               onClick={() => {
                 const next = Math.min(pageCount - 1, pageIndex + 1);
                 setPageIndex(next);

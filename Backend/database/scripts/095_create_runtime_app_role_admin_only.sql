@@ -4,7 +4,7 @@
 \else
 \echo 'Required psql variable is missing: plantprocess_app_password'
 \echo 'Usage: psql -v plantprocess_app_password=<password> -f 095_create_runtime_app_role_admin_only.sql'
-\quit
+\quit 1
 \endif
 -- ============================================================================
 -- PlantProcess IQ

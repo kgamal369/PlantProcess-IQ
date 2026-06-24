@@ -189,7 +189,7 @@ function PageShell({
   children: ReactNode;
 }) {
   return (
-    <main className="productModule56-page" data-productModule56-page={task}>
+    <main className="productModule56-page" data-page-task={task}>
       <header className="productModule56-page__header">
         <div className="productModule56-page__title">
           <p className="productModule56-page__eyebrow">{task}</p>
@@ -486,9 +486,9 @@ export function MaterialAnalyticsMaterialInvestigationPage() {
         <>
           <StandardInput type="search" value={query} onChange={setQuery} placeholder="Search material code..." aria-label="Search material code" />
           <StandardButton variant="primary" leadingIcon={<Search size={16} />} onClick={materials.reload} isLoading={materials.isLoading}>Search</StandardButton>
-          <StandardButton variant="secondary" leadingIcon={<Save size={16} />} onClick={() => setSaveOpen(true)} isDisabled={!selectedMaterialId}>Save Investigation</StandardButton>
+          <StandardButton variant="secondary" leadingIcon={<Save size={16} />} onClick={() => setSaveOpen(true)} isDisabled={!selectedMaterialId} data-disabled-reason={!selectedMaterialId ? "Select a material first to enable this action." : undefined}>Save Investigation</StandardButton>
           <StandardButton variant="ghost" leadingIcon={<Share2 size={16} />} onClick={() => void navigator.clipboard?.writeText(window.location.href)}>Share</StandardButton>
-          <StandardButton as="a" href={selectedMaterialId ? productApi.getInvestigationPdfUrl(selectedMaterialId) : "#"} variant="ghost" leadingIcon={<Download size={16} />} isDisabled={!selectedMaterialId}>Export PDF</StandardButton>
+          <StandardButton as="a" href={selectedMaterialId ? productApi.getInvestigationPdfUrl(selectedMaterialId) : "#"} variant="ghost" leadingIcon={<Download size={16} />} isDisabled={!selectedMaterialId} data-disabled-reason={!selectedMaterialId ? "Select a material first to enable this action." : undefined}>Export PDF</StandardButton>
         </>
       }
     >

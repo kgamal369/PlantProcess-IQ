@@ -3,6 +3,8 @@ using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc;
+using System.Net;
+using System.Net.Mail;
 using Npgsql;
 
 namespace PlantProcess.Api.OutboundLeadSystem;
@@ -74,6 +76,8 @@ public static class V5OutboundLeadSystemEndpoints
 
         group.MapPost("/leads", async (
             [FromBody] CaptureLeadRequest request,
+            IConfiguration configuration,
+            ILoggerFactory loggerFactory,
             HttpContext http,
             NpgsqlDataSource dataSource,
             CancellationToken cancellationToken) =>
@@ -128,6 +132,11 @@ public static class V5OutboundLeadSystemEndpoints
             }
 
             await tx.CommitAsync(cancellationToken);
+
+            if (status != "spam")
+            {
+                await TrySendLeadEmailAsync(configuration, loggerFactory, leadId, request, fitScore, cancellationToken);
+            }
 
             return Results.Ok(new
             {
@@ -605,6 +614,75 @@ public static class V5OutboundLeadSystemEndpoints
             queued += 1;
 
         return queued;
+    }
+
+    private static async Task TrySendLeadEmailAsync(
+        IConfiguration configuration,
+        ILoggerFactory loggerFactory,
+        Guid leadId,
+        CaptureLeadRequest request,
+        decimal fitScore,
+        CancellationToken cancellationToken)
+    {
+        var logger = loggerFactory.CreateLogger("OutboundLeadEmail");
+        var host = configuration["PlantProcess:Lead:Smtp:Host"];
+        var to = configuration["PlantProcess:Lead:To"];
+        if (string.IsNullOrWhiteSpace(host) || string.IsNullOrWhiteSpace(to))
+        {
+            logger.LogInformation(
+                "Lead email delivery not configured (PlantProcess:Lead:Smtp:Host / PlantProcess:Lead:To); lead {LeadId} stored only.",
+                leadId);
+            return;
+        }
+
+        try
+        {
+            var port = int.TryParse(configuration["PlantProcess:Lead:Smtp:Port"], out var parsedPort) ? parsedPort : 587;
+            var user = configuration["PlantProcess:Lead:Smtp:User"];
+            var password = configuration["PlantProcess:Lead:Smtp:Password"];
+            var useSsl = !string.Equals(configuration["PlantProcess:Lead:Smtp:UseSsl"], "false", StringComparison.OrdinalIgnoreCase);
+            var from = configuration["PlantProcess:Lead:From"];
+            if (string.IsNullOrWhiteSpace(from)) from = string.IsNullOrWhiteSpace(user) ? to : user;
+
+            var body = new StringBuilder();
+            body.AppendLine("New PlantProcess IQ demo request:");
+            body.AppendLine();
+            body.AppendLine("Lead id:       " + leadId);
+            body.AppendLine("Company:       " + request.CompanyName);
+            body.AppendLine("Contact:       " + request.ContactName);
+            body.AppendLine("Email:         " + request.Email);
+            body.AppendLine("Phone:         " + (request.Phone ?? "-"));
+            body.AppendLine("Job title:     " + (request.JobTitle ?? "-"));
+            body.AppendLine("Country:       " + (request.Country ?? "-"));
+            body.AppendLine("Plant type:    " + (request.PlantType ?? "-"));
+            body.AppendLine("Interest area: " + (request.InterestArea ?? "-"));
+            body.AppendLine("Pain points:   " + (request.PainPoints ?? "-"));
+            body.AppendLine("Preferred:     " + (request.PreferredContact ?? "-"));
+            body.AppendLine("Fit score:     " + fitScore.ToString("0.00"));
+
+            using var message = new MailMessage
+            {
+                From = new MailAddress(from),
+                Subject = "New PlantProcess IQ demo lead: " + request.CompanyName,
+                Body = body.ToString(),
+                IsBodyHtml = false
+            };
+            foreach (var recipient in to.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+                message.To.Add(recipient);
+            if (!string.IsNullOrWhiteSpace(request.Email) && EmailRegex.IsMatch(request.Email))
+                message.ReplyToList.Add(new MailAddress(request.Email));
+
+            using var client = new SmtpClient(host, port) { EnableSsl = useSsl };
+            if (!string.IsNullOrWhiteSpace(user))
+                client.Credentials = new NetworkCredential(user, password);
+
+            await client.SendMailAsync(message, cancellationToken);
+            logger.LogInformation("Lead {LeadId} email delivered to {To}.", leadId, to);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Lead {LeadId} stored but email delivery failed.", leadId);
+        }
     }
 
     private static List<string> ValidateLead(CaptureLeadRequest request)
