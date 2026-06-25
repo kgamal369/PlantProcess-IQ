@@ -54,7 +54,7 @@ pipeline {
           mkdir -p "$(dirname "${ENV_FILE}")"
           [ -f "${PRESERVE_DIR}/.env" ] && cp -f "${PRESERVE_DIR}/.env" "${ENV_FILE}" || true
           [ -f "${PRESERVE_DIR}/Caddyfile" ] && cp -f "${PRESERVE_DIR}/Caddyfile" deploy/caddy/Caddyfile || true
-          test -f "${ENV_FILE}" || { echo "FATAL: ${ENV_FILE} missing on host. Seed it from env/profiles/*.example."; exit 1; }
+          bash deploy/scripts/ensure-runtime-env.sh "${ENV_FILE}" "${PRESERVE_DIR}" env/profiles/server.env.example
         '''
       }
     }
