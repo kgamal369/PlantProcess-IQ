@@ -1,45 +1,28 @@
 # ==============================================================================
-# SERVER overlay (M1-T01) — production VPS.
-# Adds Caddy in front of Web + API, restart policies, and the ONLY externally
-# published ports (80/443 via Caddy). Real secrets come from deploy/compose/.env
-# on the server (gitignored) and /var/lib/ppiq-preserve/.env.
+# SERVER overlay (M1-T01) - production VPS.
+# Option 1 topology: the long-lived INFRASTRUCTURE Caddy (project plantprocessiq,
+# container ppiq-caddy) owns ports 80/443 and fronts BOTH the app and Jenkins.
+# This overlay therefore does NOT run its own Caddy. Instead it joins the app
+# API + Web to the infra edge network (plantprocessiq_ppiq-net, aliased ppiq-edge)
+# so the infra Caddy can reach them by container name. Real secrets come from
+# deploy/compose/.env on the server (gitignored) and /var/lib/ppiq-preserve/.env.
 # ==============================================================================
 services:
   plantprocess-api:
     restart: unless-stopped
     environment:
       ASPNETCORE_ENVIRONMENT: Production
-    ports:
-      - "127.0.0.1:5063:5063"
+    networks:
+      - plantprocess-private
+      - ppiq-edge
 
   plantprocess-web:
     restart: unless-stopped
-
-  caddy:
-    image: caddy:2-alpine
-    container_name: plantprocess-caddy
-    restart: unless-stopped
-    environment:
-      SITE_HOST: ${SITE_HOST:-localhost}
-      WEBSITE_HOST: ${WEBSITE_HOST:-website.localhost}
-      ACME_EMAIL: ${ACME_EMAIL:-admin@example.invalid}
-      CADDY_AUTO_HTTPS: ${CADDY_AUTO_HTTPS:-off}
-      PPIQ_API_UPSTREAM: ${PPIQ_API_UPSTREAM:-plantprocess-api:5063}
-      PPIQ_APP_UPSTREAM: ${PPIQ_APP_UPSTREAM:-plantprocess-web:80}
-      PPIQ_WEBSITE_UPSTREAM: ${PPIQ_WEBSITE_UPSTREAM:-plantprocess-web:80}
-    depends_on:
-      - plantprocess-web
-      - plantprocess-api
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ../caddy/Caddyfile:/etc/caddy/Caddyfile:ro
-      - plantprocess-caddy-data:/data
-      - plantprocess-caddy-config:/config
     networks:
       - plantprocess-private
+      - ppiq-edge
 
-volumes:
-  plantprocess-caddy-data:
-  plantprocess-caddy-config:
+networks:
+  ppiq-edge:
+    external: true
+    name: plantprocessiq_ppiq-net
