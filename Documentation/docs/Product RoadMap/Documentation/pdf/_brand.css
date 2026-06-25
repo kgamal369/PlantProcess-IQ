@@ -1,0 +1,23 @@
+@page { size: A4; margin: 22mm 18mm 20mm 18mm; }
+* { box-sizing: border-box; }
+body { font-family: "Inter","Segoe UI",Arial,sans-serif; color:#102A43; background:#F4F6F8;
+  font-size:10.7pt; line-height:1.5; margin:0; }
+.brandbar { border-bottom:2px solid #00D4FF; padding-bottom:8px; margin-bottom:18px;
+  display:flex; justify-content:space-between; align-items:baseline; }
+.brandbar .b { font-weight:700; color:#050B18; font-size:12pt; letter-spacing:.3px; }
+.brandbar .t { color:#5b7088; font-size:8.5pt; font-family:"JetBrains Mono",Consolas,monospace; }
+h1 { color:#050B18; font-size:21pt; margin:6px 0 2px; letter-spacing:-.3px; }
+h2 { color:#0A2540; font-size:13.5pt; margin:20px 0 6px; padding-bottom:4px; border-bottom:1px solid #d4dde6; }
+h3 { color:#0A2540; font-size:11.5pt; margin:14px 0 4px; }
+p { margin:7px 0; }
+a { color:#0A84FF; text-decoration:none; }
+code { font-family:"JetBrains Mono",Consolas,monospace; background:#e9eef3; color:#0A2540;
+  padding:1px 4px; border-radius:3px; font-size:9.3pt; }
+table { width:100%; border-collapse:collapse; margin:10px 0; font-size:9.6pt; }
+th,td { text-align:left; padding:6px 9px; border:1px solid #d4dde6; vertical-align:top; }
+th { background:#0A2540; color:#EAF6FF; font-weight:600; }
+tr:nth-child(even) td { background:#eef2f6; }
+ul,ol { margin:6px 0; padding-left:20px; } li { margin:3px 0; }
+strong { color:#0A2540; }
+.footer { position:fixed; bottom:-12mm; left:0; right:0; color:#5b7088; font-size:8pt;
+  font-family:"JetBrains Mono",Consolas,monospace; display:flex; justify-content:space-between; }

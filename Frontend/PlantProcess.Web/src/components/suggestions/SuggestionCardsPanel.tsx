@@ -10,6 +10,8 @@ export type SuggestionCard = {
   actionType: string;
   status: string;
   confidence: number;
+  population?: number;
+  method?: string;
   impactLow?: number | null;
   impactHigh?: number | null;
   honestyText: string;
@@ -57,6 +59,8 @@ export function SuggestionCardsPanel({
             <span>{c.status}</span>
           </div>
           <div>
+            {c.population ? <span data-testid="suggestion-population">Population {c.population} &middot; </span> : null}
+            {c.method ? <span data-testid="suggestion-method">{c.method} &middot; </span> : null}
             Impact {money(c.impactLow)} &ndash; {money(c.impactHigh)} &middot; confidence {(c.confidence * 100).toFixed(0)}%
           </div>
 
