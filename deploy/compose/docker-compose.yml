@@ -11,7 +11,7 @@
 #   docker-compose.ci.yml      ephemeral pipeline stack (no host ports)
 #   docker-compose.server.yml  production VPS (Caddy + restart policies)
 # ==============================================================================
-name: plantprocessiq
+name: ppiq-app
 
 services:
   plantprocess-postgres:

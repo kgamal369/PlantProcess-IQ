@@ -26,7 +26,7 @@ pipeline {
   options { timestamps(); disableConcurrentBuilds(); timeout(time: 75, unit: 'MINUTES') }
 
   environment {
-    COMPOSE_PROJECT = 'plantprocessiq'
+    COMPOSE_PROJECT = 'ppiq-app'
     COMPOSE_BASE    = 'deploy/compose/docker-compose.yml'
     COMPOSE_SERVER  = 'deploy/compose/docker-compose.server.yml'
     COMPOSE_SOURCES = 'deploy/compose/docker-compose.sources.yml'

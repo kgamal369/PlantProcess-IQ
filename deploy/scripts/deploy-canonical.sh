@@ -2,7 +2,7 @@
 # Build images, tag current as :previous, recreate the canonical plantprocessiq stack
 # (base + server overlay so Caddy starts), health-gate, and auto-rollback on failure.
 set -euo pipefail
-COMPOSE_PROJECT="${COMPOSE_PROJECT:-plantprocessiq}"
+COMPOSE_PROJECT="${COMPOSE_PROJECT:-ppiq-app}"
 COMPOSE_BASE="${COMPOSE_BASE:-deploy/compose/docker-compose.yml}"
 COMPOSE_SERVER="${COMPOSE_SERVER:-deploy/compose/docker-compose.server.yml}"
 ENV_FILE="${ENV_FILE:-deploy/compose/.env}"
