@@ -97,14 +97,9 @@ pipeline {
           set -euo pipefail
           SELF="$(cat /etc/hostname)"
           NODE_IMAGE="${PPIQ_NODE_IMAGE:-node:24-alpine}"
-          # Pass the whole npm command via a heredoc to `sh -s`, so the `&&` runs INSIDE the
-          # container (a bare `sh -lc '...'` here had its quotes stripped by Jenkins, leaking
-          # `&& npm run test` onto the dotnet-less agent -> exit 127).
-          docker run --rm --volumes-from "${SELF}" -w "${PWD}/${FRONTEND_DIR}" "${NODE_IMAGE}" sh -s <<'NPMEOF'
-set -e
-npm ci
-npm run test
-NPMEOF
+          # Run npm INSIDE the node container. The whole command is ONE double-quoted bash -lc
+          # argument (heredocs and single-quoted args get mangled inside Jenkins sh ''' blocks).
+          docker run --rm --volumes-from "${SELF}" -w "${PWD}/${FRONTEND_DIR}" "${NODE_IMAGE}" sh -lc "set -e; npm ci; npm run test"
         '''
       }
     }

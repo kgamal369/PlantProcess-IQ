@@ -10,6 +10,7 @@ echo "ensure-runtime-env: generating fresh runtime secrets"
 gen(){ openssl rand -hex "$1"; }
 PG="$(gen 24)"; SIGN="$(gen 48)"; AU="ppiq-owner"; AP="$(gen 16)"
 [ -f "${TEMPLATE}" ] && cp -f "${TEMPLATE}" "${ENV_FILE}" || : > "${ENV_FILE}"
+sed -i '1s/^\xEF\xBB\xBF//' "${ENV_FILE}"   # strip a UTF-8 BOM if the template carried one
 sed -i '/_Password_REMOVED_FROM_TRACKED_TEMPLATE=/d' "${ENV_FILE}"
 setkv(){ local k="$1" v="$2"; if grep -qE "^${k}=" "${ENV_FILE}" 2>/dev/null; then sed -i "s|^${k}=.*|${k}=${v}|" "${ENV_FILE}"; else printf "%s=%s\n" "${k}" "${v}" >> "${ENV_FILE}"; fi; }
 val(){ grep -E "^$1=" "${ENV_FILE}" 2>/dev/null | head -1 | cut -d= -f2-; }
