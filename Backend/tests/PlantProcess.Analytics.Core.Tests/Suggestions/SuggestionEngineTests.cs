@@ -55,4 +55,20 @@ public class SuggestionEngineTests
         Assert.Empty(Engine.Generate(new List<ApprovedFinding> { noHandle }));
         Assert.Empty(Engine.Generate(new List<ApprovedFinding> { seed }));
     }
+
+    [Fact]
+    public void Card_surfaces_population_and_method_from_the_finding()
+    {
+        var finding = new ApprovedFinding(
+            FindingKind.Correlation, "finding-CM", ProvenanceHandle.Finding("finding-CM"),
+            "param_pressure", "EDGE_CRACK", SampleSize: 142, Stability: 0.8, DataQuality: 0.9,
+            ImpactLow: 10000, ImpactHigh: 25000, IsSynthetic: false, Method: "Spearman");
+
+        var card = Engine.Generate(new List<ApprovedFinding> { finding }).Single();
+
+        Assert.Equal(142, card.Population);
+        Assert.Equal("Spearman", card.Method);
+        Assert.NotNull(card.ImpactLow);
+        Assert.NotNull(card.ImpactHigh);
+    }
 }

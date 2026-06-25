@@ -18,7 +18,8 @@ public sealed record ApprovedFinding(
     double DataQuality,        // 0..1
     decimal? ImpactLow,        // from the value engine (ranged)
     decimal? ImpactHigh,
-    bool IsSynthetic = false);
+    bool IsSynthetic = false,
+    string Method = "");
 
 public sealed record SuggestionCard(
     Guid Id,
@@ -31,4 +32,6 @@ public sealed record SuggestionCard(
     double Confidence,
     string HonestyText,
     IReadOnlyList<string> SourceFindingRefs,
-    SuggestionStatus Status = SuggestionStatus.Open);
+    SuggestionStatus Status = SuggestionStatus.Open,
+    int Population = 0,
+    string Method = "");

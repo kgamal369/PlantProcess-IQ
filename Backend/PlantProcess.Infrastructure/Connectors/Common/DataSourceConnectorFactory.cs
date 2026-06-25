@@ -17,7 +17,9 @@ public sealed class DataSourceConnectorFactory : IDataSourceConnectorFactory
     public DataSourceConnectorFactory(
         IEnumerable<IDataSourceConnector> connectors,
         IEnumerable<ISchemaReader> schemaReaders,
-        IEnumerable<IDataSourceReader> dataReaders)
+        IEnumerable<IDataSourceReader> dataReaders,
+        PlantProcess.Application.Integration.Protection.ISourceLoadBudgetProvider sourceLoadBudgetProvider,
+        PlantProcess.Application.Integration.Protection.ISourceQueryRateLimiter sourceQueryRateLimiter)
     {
         _connectors = connectors.ToDictionary(
             x => NormalizeProvider(x.ProviderType),
@@ -31,7 +33,7 @@ public sealed class DataSourceConnectorFactory : IDataSourceConnectorFactory
 
         _dataReaders = dataReaders.ToDictionary(
             x => NormalizeProvider(x.ProviderType),
-            x => x,
+            x => (IDataSourceReader)new PlantProcess.Application.Integration.Protection.ThrottlingDataSourceReader(x, sourceLoadBudgetProvider, sourceQueryRateLimiter),
             StringComparer.OrdinalIgnoreCase);
     }
 

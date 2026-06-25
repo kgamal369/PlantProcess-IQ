@@ -40,7 +40,9 @@ public sealed class SuggestionEngine : ISuggestionEngine
                 Confidence: confidence,
                 HonestyText: Caveat,
                 SourceFindingRefs: new[] { finding.FindingRef },
-                Status: SuggestionStatus.Open));
+                Status: SuggestionStatus.Open,
+                Population: finding.SampleSize,
+                Method: finding.Method));
         }
 
         // Stable ordering: impact (high) desc, then confidence desc, then key asc.

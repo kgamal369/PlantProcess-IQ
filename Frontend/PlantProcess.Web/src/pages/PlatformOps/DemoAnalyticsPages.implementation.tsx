@@ -409,7 +409,7 @@ export function DemoAnalyticsAdminPage() {
         <StandardCard title="License tier override" subtitle="Backend endpoints POST /admin/license/tier-override and GET /admin/license/effective-tier are wired.">
           <div className="demo-analytics-toolbar">
             {["Free", "Pro", "ProPlus", "Enterprise"].map((tier) => (
-              <StandardButton key={tier} variant={tier === "ProPlus" ? "primary" : "secondary"}>{tier}</StandardButton>
+              <StandardButton key={tier} variant={tier === "ProPlus" ? "primary" : "secondary"} isDisabled data-disabled-reason="In-app tier selection is not yet available.">{tier}</StandardButton>
             ))}
           </div>
         </StandardCard>
@@ -449,7 +449,7 @@ export function DemoAnalyticsWidgetScriptCompilerPage() {
       task="PPIQ-T055 → PPIQ-T062"
       title="Widget Script Layer Compiler"
       subtitle="Phase 8 implementation evidence page for entity mapping, EF configuration, compiler grammar and validation coverage."
-      actions={<StandardButton variant="primary" leadingIcon={<Sparkles size={16} />}>Validate Expression</StandardButton>}
+      actions={<StandardButton variant="primary" leadingIcon={<Sparkles size={16} />} isDisabled data-disabled-reason="Expression validation is not yet available.">Validate Expression</StandardButton>}
     >
       <StandardCard title="Expression preview" subtitle="Structured grammar sample for compiled WidgetQueryExpression.">
         <StandardInput value={expression} onChange={setExpression} label="Widget Query Expression" />

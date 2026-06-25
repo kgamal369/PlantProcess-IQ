@@ -1,4 +1,4 @@
-﻿// ============================================================
+// ============================================================
 // FILE: Backend/PlantProcess.Infrastructure/DependencyInjection.cs
 // CHANGES: Registered MsSqlConnector and MySqlConnector alongside
 //          the existing CSV, Excel and PostgreSQL connectors.
@@ -113,6 +113,12 @@ public static class DependencyInjection
         // Read-only gateway connector: validates configuration and supports backend historian UI/API flow.
         services.AddScoped<OpcUaHistorianConnector>();
         services.AddScoped<IDataSourceConnector>(sp => sp.GetRequiredService<OpcUaHistorianConnector>());
+         // Source-load protection: budget options, per-source rate limiter, budget provider.
+        services.Configure<PlantProcess.Application.Integration.Protection.SourceLoadBudgetOptions>(
+            configuration.GetSection(PlantProcess.Application.Integration.Protection.SourceLoadBudgetOptions.SectionName));
+        services.AddSingleton<PlantProcess.Application.Integration.Protection.ISourceQueryRateLimiter, PlantProcess.Application.Integration.Protection.SlidingWindowSourceQueryRateLimiter>();
+        services.AddScoped<PlantProcess.Application.Integration.Protection.ISourceLoadBudgetProvider, PlantProcess.Infrastructure.Integration.Protection.OptionsSourceLoadBudgetProvider>();
+
          // Factory resolves connector by provider type string
         services.AddScoped<IDataSourceConnectorFactory, DataSourceConnectorFactory>();
 

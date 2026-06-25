@@ -946,7 +946,7 @@ export function MaterialAnalyticsAdminPreviewPage() {
     { key: "name", header: "Name", sortable: true, accessor: (row) => text(row.role ?? row.script) },
     { key: "type", header: "Type", sortable: true, accessor: (row) => text(row.access ?? row.type) },
     { key: "status", header: "Status", sortable: true, cell: (row) => <Chip value={row.status} /> },
-    { key: "action", header: "Action", cell: () => <StandardButton variant="primary" size="sm" leadingIcon={<Play size={14} />}>Run</StandardButton> },
+    { key: "action", header: "Action", cell: () => <StandardButton variant="primary" size="sm" leadingIcon={<Play size={14} />} isDisabled data-disabled-reason="This action is not yet available.">Run</StandardButton> },
   ];
 
   return (
@@ -1008,7 +1008,7 @@ export function MaterialAnalyticsAdministratorPage() {
     { key: "name", header: "Name", sortable: true, accessor: (row) => text(row.name ?? row.code ?? row.jobName ?? row.tableName ?? row.id) },
     { key: "type", header: "Type", sortable: true, accessor: (row) => text(row.type ?? row.jobType ?? row.sourceSystem ?? row.status) },
     { key: "status", header: "Status", sortable: true, cell: (row) => <Chip value={row.status ?? row.lastRunStatus ?? "Tracked"} /> },
-    { key: "action", header: "Action", cell: () => <StandardButton variant="primary" size="sm" leadingIcon={<Play size={14} />}>Run</StandardButton> },
+    { key: "action", header: "Action", cell: () => <StandardButton variant="primary" size="sm" leadingIcon={<Play size={14} />} isDisabled data-disabled-reason="This action is not yet available.">Run</StandardButton> },
   ];
 
   const adminTabs: StandardTabItem[] = [
@@ -1034,8 +1034,8 @@ export function MaterialAnalyticsAdministratorPage() {
         <StandardCard title="SQL View Editor" subtitle="StandardTextArea with monospace editor style and standard focus ring.">
           <StandardTextArea value={sql} onChange={setSql} rows={8} />
           <div className="productModule56-toolbar">
-            <StandardButton variant="primary" leadingIcon={<Play size={16} />}>Preview SQL</StandardButton>
-            <StandardButton variant="secondary" leadingIcon={<Save size={16} />}>Save view</StandardButton>
+            <StandardButton variant="primary" leadingIcon={<Play size={16} />} isDisabled data-disabled-reason="SQL preview is not yet available.">Preview SQL</StandardButton>
+            <StandardButton variant="secondary" leadingIcon={<Save size={16} />} isDisabled data-disabled-reason="Saving views is not yet available.">Save view</StandardButton>
           </div>
         </StandardCard>
       ),
@@ -1047,7 +1047,7 @@ export function MaterialAnalyticsAdministratorPage() {
         <StandardCard title="KPI Definition" subtitle="KPI builder is standardized and ready for dashboard widget integration.">
           <StandardInput label="KPI code" value="DEFECT_RATE" onChange={() => undefined} />
           <StandardInput label="KPI name" value="Defect Rate" onChange={() => undefined} />
-          <StandardButton variant="primary" leadingIcon={<Save size={16} />}>Save KPI</StandardButton>
+          <StandardButton variant="primary" leadingIcon={<Save size={16} />} isDisabled data-disabled-reason="Saving KPIs is not yet available.">Save KPI</StandardButton>
         </StandardCard>
       ),
     },

@@ -44,6 +44,14 @@ function rel(file) {
   return path.relative(root, file).split(path.sep).join("/");
 }
 
+function isAuditedSource(relative) {
+  if (!relative.startsWith("src/pages/") && !relative.startsWith("src/components/")) return false;
+  if (relative.startsWith("src/components/standard/")) return false;
+  if (relative.includes("/__tests__/")) return false;
+  if (relative.endsWith(".test.tsx") || relative.endsWith(".test.ts") || relative.endsWith(".stories.tsx") || relative.endsWith(".stories.ts")) return false;
+  return relative.endsWith(".tsx");
+}
+
 function lineOf(text, index) {
   return text.slice(0, index).split(/\r?\n/).length;
 }
@@ -200,6 +208,18 @@ for (const file of files) {
     for (const match of findTagInstances(text, tag)) {
       const fragment = match.fragment;
       const label = getAttribute(fragment, "aria-label") || getAttribute(fragment, "title") || contentLabel(fragment);
+      const auditedForButtons = isAuditedSource(relative);
+      let standardStatus;
+      if (!auditedForButtons) {
+        standardStatus = "excluded";
+      } else if (fragment.includes("<StandardButton")) {
+        standardStatus = "standard";
+      } else if (tag === "a") {
+        standardStatus = "anchor";
+      } else {
+        standardStatus = "non-standard";
+      }
+      const migrationCandidate = standardStatus === "non-standard" ? "yes" : "no";
 
       buttonRows.push({
         task: "PPIQ-T009",
@@ -212,8 +232,8 @@ for (const file of files) {
         currentStyle: styleOf(fragment),
         wiredHandler: getAttribute(fragment, "onClick") || getAttribute(fragment, "href") || getAttribute(fragment, "to") || "null",
         context: page,
-        standardStatus: fragment.includes("<StandardButton") ? "standard" : "non-standard",
-        migrationCandidate: fragment.includes("<StandardButton") ? "no" : "yes",
+        standardStatus,
+        migrationCandidate,
       });
     }
   }

@@ -16,6 +16,7 @@ public sealed class V5AssistantGatewayOptions
     public int MaxRetries { get; set; } = 2;
     public int CircuitBreakerFailures { get; set; } = 3;
     public string RequiredModelVersion { get; set; } = "v1";
+    public bool NoEgressDefault { get; set; } = true;
 }
 
 public sealed record V5AssistantQuestionRequest(
@@ -229,19 +230,22 @@ public sealed class V5AssistantGatewayService
     private readonly V5AssistantGroundingGuard _groundingGuard;
     private readonly NpgsqlDataSource _dataSource;
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly V5AssistantGatewayOptions _options;
 
     public V5AssistantGatewayService(
         IEnumerable<IV5AssistantProvider> providers,
         V5AssistantRedactor redactor,
         V5AssistantGroundingGuard groundingGuard,
         NpgsqlDataSource dataSource,
-        IHttpContextAccessor httpContextAccessor)
+        IHttpContextAccessor httpContextAccessor,
+        Microsoft.Extensions.Options.IOptions<V5AssistantGatewayOptions> options)
     {
         _providers = providers;
         _redactor = redactor;
         _groundingGuard = groundingGuard;
         _dataSource = dataSource;
         _httpContextAccessor = httpContextAccessor;
+        _options = options.Value;
     }
 
     public async Task<V5AssistantAnswerResponse> AskAsync(
@@ -272,8 +276,18 @@ public sealed class V5AssistantGatewayService
             // Redaction still ran; there simply was nothing to redact.
         }
 
-        var provider = ResolveProvider(config);
-        var answer = await provider.CompleteAsync(config, redaction.RedactedText, evidenceChunks, cancellationToken);
+        var egressPlan = PlantProcess.Application.Security.DataBoundary.AssistantEgressGuard.Plan(
+            noEgressEnabled: _options.NoEgressDefault,
+            modelIsExternal: config.IsExternal,
+            question: prompt,
+            evidenceHandles: evidenceHandles,
+            evidenceChunks: evidenceChunks);
+
+        var provider = egressPlan.UseLocalProvider
+            ? _providers.OfType<ExtractiveAssistantProvider>().First()
+            : ResolveProvider(config);
+
+        var answer = await provider.CompleteAsync(config, redaction.RedactedText, egressPlan.EgressChunks, cancellationToken);
         answer = _redactor.RestoreSafeReferences(answer, redaction.TokenMap);
 
         var grounding = _groundingGuard.Validate(answer, evidenceHandles);

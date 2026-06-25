@@ -86,7 +86,7 @@ export function EdgeCollectorManagementPage() {
               <div>
                 <strong>Credential</strong>
                 <div>{collector.credentialStatus}</div>
-                <StandardButton type="button">Rotate credential</StandardButton>
+                <StandardButton type="button" isDisabled data-disabled-reason="Credential rotation is not yet available.">Rotate credential</StandardButton>
               </div>
             </article>
           ))}

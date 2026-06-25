@@ -1,6 +1,6 @@
 # PlantProcess IQ UI Standards Inventory Summary
 
-Generated UTC: 2026-05-30T07:25:23.204Z
+Generated UTC: 2026-06-24T14:16:41.357Z
 
 ## Acceptance files
 
@@ -13,16 +13,16 @@ Generated UTC: 2026-05-30T07:25:23.204Z
 
 | Inventory | Count |
 |---|---:|
-| Buttons | 160 |
-| Tables | 34 |
-| Tabs / navigation | 4 |
-| Inputs / forms | 117 |
+| Buttons | 214 |
+| Tables | 36 |
+| Tabs / navigation | 6 |
+| Inputs / forms | 41 |
 
 ## Distinct button implementation styles
 
-- native <button>
-- native <a>
 - StandardButton
+- native <a>
+- native <button>
 
 ## Manual review note
 

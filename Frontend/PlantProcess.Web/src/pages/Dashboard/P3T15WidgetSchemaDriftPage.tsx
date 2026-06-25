@@ -166,8 +166,7 @@ export function P3T15WidgetSchemaDriftPage() {
               data-series-signature={signature}
             >
               {cells.map((cell) => (
-                <StandardButton
-                  type="button"
+                <div
                   key={cell.id}
                   className="p3-t15-heatmap-cell"
                   data-testid="p3-t15-heatmap-cell"
@@ -176,7 +175,7 @@ export function P3T15WidgetSchemaDriftPage() {
                   <span>{cell.x}</span>
                   <em>{cell.y}</em>
                   <strong>{Math.round(cell.value * 100)}%</strong>
-                </StandardButton>
+                </div>
               ))}
             </div>
 

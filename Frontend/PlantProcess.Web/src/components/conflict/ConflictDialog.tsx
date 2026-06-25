@@ -52,7 +52,8 @@ export function ConflictDialog(props: ConflictDialogProps) {
           </StandardButton>
           <StandardButton
             variant="danger"
-            disabled={!confirmOverwrite}
+            isDisabled={!confirmOverwrite}
+            data-disabled-reason={!confirmOverwrite ? "Tick the confirmation to enable overwrite." : undefined}
             onClick={onOverwrite}
             data-testid="conflict-overwrite"
           >

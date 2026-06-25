@@ -22,7 +22,11 @@ describe("ConflictDialog contract (P4-T04)", () => {
   it("gates overwrite behind an explicit confirm", () => {
     const src = readDialogSource();
     expect(src).toContain("conflict-overwrite-confirm");
-    expect(src).toMatch(/disabled=\{!confirmOverwrite\}/);
+    // Overwrite stays gated until the confirm box is ticked. Track the behaviour
+    // (disabled bound to !confirmOverwrite) rather than the exact prop spelling,
+    // and require the honest disabled-reason per the action-button standard.
+    expect(src).toMatch(/(?:is)?[Dd]isabled=\{!confirmOverwrite\}/);
+    expect(src).toMatch(/data-disabled-reason/);
   });
 
   it("offers a reload action", () => {
