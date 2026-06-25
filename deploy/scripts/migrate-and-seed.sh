@@ -44,20 +44,19 @@ API_PROJ="${API_PROJ:-Backend/PlantProcess.Api}"
 psql_in() { docker exec -i "${DB_CONTAINER}" psql -v ON_ERROR_STOP=1 -U "${DB_USER}" -d "${DB_NAME}"; }
 
 run_app() {
-  echo "== [app] EF model -> idempotent SQL -> apply (model-first) =="
-  if ! dotnet ef --version >/dev/null 2>&1; then
-    dotnet tool restore >/dev/null 2>&1 || dotnet tool install --global dotnet-ef >/dev/null 2>&1 || true
-    export PATH="${PATH}:${HOME}/.dotnet/tools"
-  fi
-  TMP="$(mktemp -d)"
-  # generate from the EF model; --no-build first (fast if already built), else full build
-  dotnet ef migrations script --idempotent --no-build \
-      --project "${INFRA_PROJ}" --startup-project "${API_PROJ}" -o "${TMP}/ef-idempotent.sql" \
-    || dotnet ef migrations script --idempotent \
-      --project "${INFRA_PROJ}" --startup-project "${API_PROJ}" -o "${TMP}/ef-idempotent.sql"
+  echo "== [app] EF model -> idempotent SQL -> apply (model-first, via SDK sibling) =="
+  # The Jenkins agent has no dotnet; generate the idempotent EF SQL inside the SDK image
+  # (workspace inherited via --volumes-from; the design-time factory needs a connection
+  # string env to instantiate even though script generation is offline).
+  SELF="$(cat /etc/hostname)"
+  SDK_IMAGE="${PPIQ_SDK_IMAGE:-mcr.microsoft.com/dotnet/sdk:9.0}"
+  EF_OUT="deploy/.migrate-ef-idempotent.sql"
+  docker run --rm --volumes-from "${SELF}" -w "${PWD}" \
+    -e ConnectionStrings__PlantProcessDb="${ConnectionStrings__PlantProcessDb:-Host=${DB_CONTAINER};Port=5432;Database=${DB_NAME};Username=${DB_USER};Password=${POSTGRES_PASSWORD:-}}" \
+    "${SDK_IMAGE}" bash -lc "set -e; mkdir -p /tmp/efbin; dotnet tool install dotnet-ef --version 9.* --tool-path /tmp/efbin >/dev/null; /tmp/efbin/dotnet-ef migrations script --idempotent --project \"${INFRA_PROJ}\" --startup-project \"${API_PROJ}\" -o \"${EF_OUT}\""
   echo "  -> applying EF-derived schema to ${DB_NAME} via ${DB_CONTAINER}"
-  psql_in < "${TMP}/ef-idempotent.sql"
-  rm -rf "${TMP}"
+  psql_in < "${EF_OUT}"
+  rm -f "${EF_OUT}"
 
   echo "== [app] numbered SQL decoration (idempotent) =="
   shopt -s nullglob
@@ -67,8 +66,27 @@ run_app() {
 
   local seeds=( Backend/database/seed/*.sql )
   if [ ${#seeds[@]} -gt 0 ]; then
-    echo "== [app] seed =="
-    for f in "${seeds[@]}"; do echo "  -> ${f}"; psql_in < "${f}"; done
+    echo "== [app] seed (excluding -v-only dev key) =="
+    for f in "${seeds[@]}"; do
+      case "$(basename "${f}")" in
+        dev_ed25519_public_key.sql) echo "  (skip plain-pipe: ${f} is psql -v driven; registered below)" ;;
+        *) echo "  -> ${f}"; psql_in < "${f}" ;;
+      esac
+    done
+  fi
+
+  # register the DEV Ed25519 license public key the proper way (psql -v from the committed fixture).
+  local DEV_TENANT="${PPIQ_DEV_TENANT:-00000000-0000-0000-0000-000000000001}"
+  local DEV_KID="${PPIQ_DEV_KID:-ppiq-dev-ed25519}"
+  local DEV_PUB_FILE="${PPIQ_DEV_PUB_FILE:-deploy/fixtures/license/dev_public.b64}"
+  local KEYSQL="Backend/database/seed/dev_ed25519_public_key.sql"
+  if [ "${ASPNETCORE_ENVIRONMENT:-}" != "Production" ] && [ -f "${KEYSQL}" ] && [ -f "${DEV_PUB_FILE}" ]; then
+    echo "== [app] register dev Ed25519 license key (kid=${DEV_KID}) =="
+    local PUB; PUB="$(tr -d '\r\n' < "${DEV_PUB_FILE}")"
+    docker exec -i "${DB_CONTAINER}" psql -v ON_ERROR_STOP=1 -U "${DB_USER}" -d "${DB_NAME}" \
+      -v "tenant_id=${DEV_TENANT}" -v "key_id=${DEV_KID}" -v "public_key_b64=${PUB}" < "${KEYSQL}"
+  else
+    echo "  (skip dev key registration: Production, or fixture/seed absent)"
   fi
 }
 
