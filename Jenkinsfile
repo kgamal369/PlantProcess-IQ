@@ -98,7 +98,7 @@ pipeline {
           SELF="$(cat /etc/hostname)"
           NODE_IMAGE="${PPIQ_NODE_IMAGE:-node:24-alpine}"
           # Run npm INSIDE the node container. The whole command is ONE double-quoted bash -lc
-          # argument (heredocs and single-quoted args get mangled inside Jenkins sh ''' blocks).
+          # argument: npm runs inside the node container as one sh -lc string.
           docker run --rm --volumes-from "${SELF}" -w "${PWD}/${FRONTEND_DIR}" "${NODE_IMAGE}" sh -lc "set -e; npm ci; npm run test"
         '''
       }
