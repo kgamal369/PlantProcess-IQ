@@ -74,19 +74,32 @@ pipeline {
           set -euo pipefail
           PPIQ_TEST_CONNECTION_STRING="$(bash deploy/scripts/ci-test-db.sh up)"
           export PPIQ_TEST_CONNECTION_STRING
-          export PPIQ_TEST_PG_CONNSTRING="${PPIQ_TEST_CONNECTION_STRING}"
-          export ConnectionStrings__PlantProcessDb="${PPIQ_TEST_CONNECTION_STRING}"
-          export PPIQ_AUDIT_TRIGGER_TEST_CONNECTION="${PPIQ_TEST_RUNTIME_CONNECTION_STRING:-$PPIQ_TEST_CONNECTION_STRING}"
-          export PPIQ_RLS_TEST_CONNECTION_STRING="${PPIQ_TEST_RUNTIME_CONNECTION_STRING:-$PPIQ_TEST_CONNECTION_STRING}"
-          export PPIQ_TEST_PG_CONNSTRING="${PPIQ_TEST_RUNTIME_CONNECTION_STRING:-$PPIQ_TEST_CONNECTION_STRING}"
           trap 'bash deploy/scripts/ci-test-db.sh down' EXIT
-          dotnet test Backend --nologo
+          SELF="$(cat /etc/hostname)"
+          SDK_IMAGE="${PPIQ_SDK_IMAGE:-mcr.microsoft.com/dotnet/sdk:9.0}"
+          TESTNET="${PPIQ_CI_TESTDB_NETWORK:-ppiq-citestnet}"
+          # the agent has no dotnet; run the suite inside the SDK image, on the test-db network,
+          # with the workspace inherited via --volumes-from (same paths as the Jenkins container).
+          docker run --rm --network "${TESTNET}" --volumes-from "${SELF}" -w "${PWD}" \
+            -e PPIQ_TEST_CONNECTION_STRING="${PPIQ_TEST_CONNECTION_STRING}" \
+            -e PPIQ_TEST_PG_CONNSTRING="${PPIQ_TEST_CONNECTION_STRING}" \
+            -e ConnectionStrings__PlantProcessDb="${PPIQ_TEST_CONNECTION_STRING}" \
+            -e PPIQ_AUDIT_TRIGGER_TEST_CONNECTION="${PPIQ_TEST_CONNECTION_STRING}" \
+            -e PPIQ_RLS_TEST_CONNECTION_STRING="${PPIQ_TEST_CONNECTION_STRING}" \
+            "${SDK_IMAGE}" bash -lc 'dotnet test Backend --nologo'
         '''
       }
     }
 
     stage('4. Frontend unit tests - BLOCKING') {
-      steps { dir("${FRONTEND_DIR}") { sh 'set -euo pipefail; npm ci; npm run test' } }
+      steps {
+        sh '''
+          set -euo pipefail
+          SELF="$(cat /etc/hostname)"
+          NODE_IMAGE="${PPIQ_NODE_IMAGE:-node:24-alpine}"
+          docker run --rm --volumes-from "${SELF}" -w "${PWD}/${FRONTEND_DIR}" "${NODE_IMAGE}" sh -lc 'npm ci && npm run test'
+        '''
+      }
     }
 
     stage('5. Frontend e2e (gated off by default; set PPIQ_RUN_E2E=on to enable)') {
