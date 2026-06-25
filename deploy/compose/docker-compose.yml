@@ -33,6 +33,9 @@ services:
       retries: 10
 
   plantprocess-api:
+    build:
+      context: ../../Backend
+      dockerfile: PlantProcess.Api/Dockerfile
     image: ${PPIQ_API_IMAGE:-plantprocess-api:local}
     container_name: plantprocess-api
     restart: unless-stopped
@@ -55,6 +58,11 @@ services:
       - plantprocess-private
 
   plantprocess-web:
+    build:
+      context: ../../Frontend/PlantProcess.Web
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-}
     image: ${PPIQ_WEB_IMAGE:-plantprocess-web:local}
     container_name: plantprocess-web
     restart: unless-stopped

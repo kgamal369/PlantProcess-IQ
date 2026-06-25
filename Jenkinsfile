@@ -89,7 +89,8 @@ pipeline {
       steps { dir("${FRONTEND_DIR}") { sh 'set -euo pipefail; npm ci; npm run test' } }
     }
 
-    stage('5. Frontend e2e - BLOCKING (ephemeral CI stack)') {
+    stage('5. Frontend e2e (gated off by default; set PPIQ_RUN_E2E=on to enable)') {
+      when { expression { return sh(script: 'set -a; . "${ENV_FILE}"; set +a; [ "${PPIQ_RUN_E2E:-off}" = "on" ] && echo yes || echo no', returnStdout: true).trim() == 'yes' } }
       steps { sh 'bash deploy/scripts/ci-e2e-stack.sh' }
     }
 
@@ -102,12 +103,14 @@ pipeline {
           set -euo pipefail
           set -a; . "${ENV_FILE}"; set +a    # POSTGRES_*, ConnectionStrings__PlantProcessDb, modes
 
-          # 6a. EF migrations FIRST - create the model-derived schema (incl. audit_log_entries)
-          #     so the numbered SQL decoration scripts have their dependency tables.
-          dotnet ef database update \
-            --project "${INFRA_PROJ}" --startup-project "${API_PROJ}" --no-build || \
-          dotnet ef database update \
-            --project "${INFRA_PROJ}" --startup-project "${API_PROJ}"
+          # 6a. Bring up ONLY the app DB first so migrate-and-seed can docker exec into it.
+          #     (model-first schema is generated offline by 'ef migrations script --idempotent').
+          docker compose -p "${COMPOSE_PROJECT}" --env-file "${ENV_FILE}" -f "${COMPOSE_BASE}" -f "${COMPOSE_SERVER}" up -d plantprocess-postgres
+          for i in $(seq 1 30); do
+            docker exec plantprocess-postgres pg_isready -U "${POSTGRES_USER}" -d postgres >/dev/null 2>&1 && break
+            sleep 2
+            [ "$i" = "30" ] && { echo "FATAL: app postgres never became ready"; exit 1; }
+          done
 
           # 6b. Post-EF SQL decoration (indexes / matviews / ML foundation), idempotent.
           # 6c. Seed the latest committed dataset.

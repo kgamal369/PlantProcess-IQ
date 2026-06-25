@@ -9,6 +9,8 @@ services:
     restart: unless-stopped
     environment:
       ASPNETCORE_ENVIRONMENT: Production
+    ports:
+      - "127.0.0.1:5063:5063"
 
   plantprocess-web:
     restart: unless-stopped
@@ -17,6 +19,14 @@ services:
     image: caddy:2-alpine
     container_name: plantprocess-caddy
     restart: unless-stopped
+    environment:
+      SITE_HOST: ${SITE_HOST:-localhost}
+      WEBSITE_HOST: ${WEBSITE_HOST:-website.localhost}
+      ACME_EMAIL: ${ACME_EMAIL:-admin@example.invalid}
+      CADDY_AUTO_HTTPS: ${CADDY_AUTO_HTTPS:-off}
+      PPIQ_API_UPSTREAM: ${PPIQ_API_UPSTREAM:-plantprocess-api:5063}
+      PPIQ_APP_UPSTREAM: ${PPIQ_APP_UPSTREAM:-plantprocess-web:80}
+      PPIQ_WEBSITE_UPSTREAM: ${PPIQ_WEBSITE_UPSTREAM:-plantprocess-web:80}
     depends_on:
       - plantprocess-web
       - plantprocess-api
