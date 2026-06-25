@@ -58,16 +58,35 @@ public sealed class Phase2RealismSourceSeedTests
 
     private static string FindRepoRoot()
     {
+        // 1) Honour an explicit override (CI passes the workspace as PPIQ_REPO_ROOT or uses CWD).
+        foreach (var candidate in new[]
+                 {
+                     Environment.GetEnvironmentVariable("PPIQ_REPO_ROOT"),
+                     Directory.GetCurrentDirectory()
+                 })
+        {
+            if (!string.IsNullOrWhiteSpace(candidate) && IsRepoRoot(candidate!))
+                return candidate!;
+        }
+
+        // 2) Walk up from the test assembly location looking for the real repo-root marker.
         var current = new DirectoryInfo(AppContext.BaseDirectory);
         while (current is not null)
         {
-            if (Directory.Exists(Path.Combine(current.FullName, "Backend")) &&
-                Directory.Exists(Path.Combine(current.FullName, "Infrastructure")))
+            if (IsRepoRoot(current.FullName))
                 return current.FullName;
-
             current = current.Parent;
         }
 
-        throw new InvalidOperationException("Repo root could not be found.");
+        throw new InvalidOperationException(
+            "Repo root could not be found (looked for a folder containing both 'Backend' and 'deploy'; " +
+            "set PPIQ_REPO_ROOT to override).");
     }
+
+    // The repo root is the only directory that contains BOTH the Backend project tree and the
+    // deploy/ tree (where deploy/fixtures/demo lives) - a marker that exists on every checkout,
+    // unlike the previous 'Backend'+'Infrastructure' pair which never coexist at the root.
+    private static bool IsRepoRoot(string path)
+        => Directory.Exists(Path.Combine(path, "Backend"))
+        && Directory.Exists(Path.Combine(path, "deploy"));
 }
