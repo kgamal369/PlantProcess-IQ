@@ -18,9 +18,6 @@ SDK_IMAGE="${PPIQ_SDK_IMAGE:-mcr.microsoft.com/dotnet/sdk:9.0}"
 SELF="$(cat /etc/hostname)"
 CONN="Host=${CT};Port=5432;Database=${DBNAME};Username=${DBUSER};Password=${DBPASS}"
 psql_in() { docker exec -i "${CT}" psql -v ON_ERROR_STOP=1 -U "${DBUSER}" -d "${DBNAME}"; }
-# robust readiness: require a real SELECT to succeed against the MAINTENANCE db, twice in a
-# row, so the init-time throwaway server (which answers pg_isready early then restarts) cannot
-# produce a false "ready". Returns only when the REAL server is genuinely up.
 wait_ready() {
   local ok=0 streak=0 i
   for i in $(seq 1 60); do
@@ -45,7 +42,10 @@ case "${ACTION}" in
       docker exec "${CT}" createdb -U "${DBUSER}" "${DBNAME}"
     fi
     echo "ci-test-db: [1/3] EF model -> idempotent schema (via SDK sibling)" >&2
-    docker run --rm --volumes-from "${SELF}" -w "${PWD}" "${SDK_IMAGE}" bash -lc "set -e; export PATH=\"\$PATH:\$HOME/.dotnet/tools\"; dotnet tool restore >/dev/null 2>&1 || dotnet tool install --global dotnet-ef >/dev/null 2>&1 || true; dotnet ef migrations script --idempotent --project \"${INFRA_PROJ}\" --startup-project \"${API_PROJ}\" -o deploy/.ci-ef-idempotent.sql" 1>&2
+    # Install dotnet-ef to an explicit tool path (no PATH/global guessing) and satisfy the
+    # design-time factory with a connection string (script generation is offline; the value
+    # only needs to be well-formed, not reachable). NO error-swallowing - fail loud if it breaks.
+    docker run --rm --volumes-from "${SELF}" -w "${PWD}" -e ConnectionStrings__PlantProcessDb="${CONN}" "${SDK_IMAGE}" bash -lc "set -e; mkdir -p /tmp/efbin; dotnet tool install dotnet-ef --version 9.* --tool-path /tmp/efbin >/dev/null; /tmp/efbin/dotnet-ef migrations script --idempotent --project \"${INFRA_PROJ}\" --startup-project \"${API_PROJ}\" -o deploy/.ci-ef-idempotent.sql" 1>&2
     psql_in < deploy/.ci-ef-idempotent.sql >/dev/null
     rm -f deploy/.ci-ef-idempotent.sql
     echo "ci-test-db: [2/3] decoration scripts" >&2
