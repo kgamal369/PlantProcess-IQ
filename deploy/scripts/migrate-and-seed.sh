@@ -80,13 +80,13 @@ run_app() {
   local DEV_KID="${PPIQ_DEV_KID:-ppiq-dev-ed25519}"
   local DEV_PUB_FILE="${PPIQ_DEV_PUB_FILE:-deploy/fixtures/license/dev_public.b64}"
   local KEYSQL="Backend/database/seed/dev_ed25519_public_key.sql"
-  if [ "${ASPNETCORE_ENVIRONMENT:-}" != "Production" ] && [ -f "${KEYSQL}" ] && [ -f "${DEV_PUB_FILE}" ]; then
+  if { [ "${ASPNETCORE_ENVIRONMENT:-}" != "Production" ] || [ "${PPIQ_PRESENTATION:-off}" = "on" ]; } && [ -f "${KEYSQL}" ] && [ -f "${DEV_PUB_FILE}" ]; then
     echo "== [app] register dev Ed25519 license key (kid=${DEV_KID}) =="
     local PUB; PUB="$(tr -d '\r\n' < "${DEV_PUB_FILE}")"
     docker exec -i "${DB_CONTAINER}" psql -v ON_ERROR_STOP=1 -U "${DB_USER}" -d "${DB_NAME}" \
       -v "tenant_id=${DEV_TENANT}" -v "key_id=${DEV_KID}" -v "public_key_b64=${PUB}" < "${KEYSQL}"
   else
-    echo "  (skip dev key registration: Production, or fixture/seed absent)"
+    echo "  (skip dev key registration: Production with PPIQ_PRESENTATION off, or fixture/seed absent)"
   fi
 }
 

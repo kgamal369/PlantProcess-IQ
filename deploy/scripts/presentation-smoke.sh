@@ -29,7 +29,7 @@ echo "  admin login OK (bearer acquired)"
 
 echo "== activate Enterprise signed license =="
 JWS="$(cat "${TOKEN_FILE}")"
-curl -fsS -X POST "${BASE}/api/v5/licensing/ed25519/activate" -H "Authorization: Bearer ${BEARER}" -H "Content-Type: application/json" -d "{\"token\":\"${JWS}\"}" > /dev/null
+curl -fsS -X POST "${BASE}/api/v5/licensing/ed25519/activate" -H "Authorization: Bearer ${BEARER}" -H "Content-Type: application/json" -d "{\"licenseJws\":\"${JWS}\"}" > /dev/null
 echo "  Enterprise token activated"
 
 echo "== confirm active license =="
