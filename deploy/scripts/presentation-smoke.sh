@@ -23,7 +23,7 @@ SMOKE_PASS="${PPIQ_SMOKE_PASSWORD:-${PlantProcess__Auth__Users__0__Password:-}}"
 
 echo "== presentation smoke: admin login at ${BASE} =="
 LOGIN_BODY="{\"userName\":\"${SMOKE_USER}\",\"password\":\"${SMOKE_PASS}\"}"
-BEARER="$(curl -fsS -X POST "${BASE}/auth/login" -H "Content-Type: application/json" -d "${LOGIN_BODY}" | sed -n 's/.*"token":"\([^"]*\)".*/\1/p')"
+BEARER="$(curl -fsS -X POST "${BASE}/auth/login" -H "Content-Type: application/json" -d "${LOGIN_BODY}" | sed -n 's/.*"accessToken":"\([^"]*\)".*/\1/p')"
 [ -n "$BEARER" ] || { echo "FATAL: admin login returned no token"; exit 1; }
 echo "  admin login OK (bearer acquired)"
 
