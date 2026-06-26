@@ -8,7 +8,7 @@ if [ -f "${PRESERVE_ENV}" ]; then echo "ensure-runtime-env: persisted .env is st
 if [ -f "${ENV_FILE}" ]; then cp -f "${ENV_FILE}" "${PRESERVE_ENV}"; chmod 600 "${PRESERVE_ENV}"; echo "ensure-runtime-env: adopted operator-provided .env"; exit 0; fi
 echo "ensure-runtime-env: generating fresh runtime secrets"
 gen(){ openssl rand -hex "$1"; }
-PG="$(gen 24)"; SIGN="$(gen 48)"; AU="ppiq-owner"; AP="$(gen 16)"
+PG="$(gen 24)"; SIGN="$(gen 48)"; AU="sysadmin"; AP="$(gen 16)"
 [ -f "${TEMPLATE}" ] && cp -f "${TEMPLATE}" "${ENV_FILE}" || : > "${ENV_FILE}"
 sed -i '1s/^\xEF\xBB\xBF//' "${ENV_FILE}"   # strip a UTF-8 BOM if the template carried one
 sed -i '/_Password_REMOVED_FROM_TRACKED_TEMPLATE=/d' "${ENV_FILE}"
@@ -23,6 +23,7 @@ setkv PlantProcess__Auth__SigningKey "${SIGN}"
 setkv PlantProcess__Auth__BootstrapAdminPassword "__DISABLED__"; setkv PPIQ_BOOTSTRAP_ADMIN_PASSWORD "__DISABLED__"
 setkv PlantProcess__Auth__Users__0__UserName "${AU}"; setkv PlantProcess__Auth__Users__0__Password "${AP}"
 setkv PlantProcess__Auth__Users__0__Role "Admin"; setkv PlantProcess__Auth__Users__0__IsBootstrapAdmin "false"
+setkv PlantProcess__Auth__Users__0__DisplayName "PPIQ System Administrator"
 setkv PPIQ_SMOKE_USERNAME "${AU}"; setkv PPIQ_SMOKE_PASSWORD "${AP}"; setkv VITE_SMOKE_USERNAME "${AU}"; setkv VITE_SMOKE_PASSWORD "${AP}"
 setkv PPIQ_DEMO_SOURCES_MODE "disabled"
 setkv PPIQ_RUN_E2E "off"

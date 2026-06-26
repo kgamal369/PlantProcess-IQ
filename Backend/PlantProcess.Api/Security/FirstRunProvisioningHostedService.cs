@@ -65,6 +65,35 @@ public sealed class FirstRunProvisioningHostedService : IHostedService
             return;
         }
 
+        // Auto-provision the PERMANENT sysadmin (system / support account) from configuration.
+        // This is the ONLY account created at install time. Customer / tenant admins are added
+        // later, manually, during commissioning - never here. The account is created with
+        // is_owner=true and there is no delete-user path, so it is effectively undeletable.
+        var auth = scope.ServiceProvider
+            .GetRequiredService<Microsoft.Extensions.Options.IOptions<AuthOptions>>().Value;
+        var sysAdmin = System.Linq.Enumerable.FirstOrDefault(
+            auth.Users,
+            u => !string.IsNullOrWhiteSpace(u.UserName) && !string.IsNullOrWhiteSpace(u.Password));
+
+        if (sysAdmin is not null && sysAdmin.Password.Length >= 12)
+        {
+            var created = await store.CreateOwnerAsync(
+                sysAdmin.UserName,
+                sysAdmin.Password,
+                string.IsNullOrWhiteSpace(sysAdmin.DisplayName)
+                    ? "PPIQ System Administrator"
+                    : sysAdmin.DisplayName!,
+                cancellationToken);
+            _state.Clear();
+            _logger.LogWarning(
+                "PPIQ permanent sysadmin provisioned at first run for environment {Environment}. " +
+                "UserName={UserName} (system/support account; customer admins are added later during commissioning).",
+                _environment.EnvironmentName,
+                created.UserName);
+            return;
+        }
+
+        // Fallback: no usable configured sysadmin -> emit a one-time manual-claim token.
         var token = PasswordHasher.CreateSecureToken();
         _state.SetToken(token);
 
