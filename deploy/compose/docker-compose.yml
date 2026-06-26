@@ -39,6 +39,12 @@ services:
     image: ${PPIQ_API_IMAGE:-plantprocess-api:local}
     container_name: plantprocess-api
     restart: unless-stopped
+    # Load the WHOLE generated .env into the container so every key the runtime-env
+    # generator writes (admin user, signing key, etc.) reaches the API - not only the
+    # keys explicitly listed under environment: below. .env sits next to this compose
+    # file (deploy/compose/.env); env_file resolves relative to the compose file dir.
+    env_file:
+      - .env
     environment:
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
       ASPNETCORE_URLS: http://0.0.0.0:5063
