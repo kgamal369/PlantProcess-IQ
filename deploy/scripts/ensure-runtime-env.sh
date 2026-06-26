@@ -12,7 +12,7 @@ PG="$(gen 24)"; SIGN="$(gen 48)"; AU="sysadmin"; AP="$(gen 16)"
 [ -f "${TEMPLATE}" ] && cp -f "${TEMPLATE}" "${ENV_FILE}" || : > "${ENV_FILE}"
 sed -i '1s/^\xEF\xBB\xBF//' "${ENV_FILE}"   # strip a UTF-8 BOM if the template carried one
 sed -i '/_Password_REMOVED_FROM_TRACKED_TEMPLATE=/d' "${ENV_FILE}"
-setkv(){ local k="$1" v="$2"; if grep -qE "^${k}=" "${ENV_FILE}" 2>/dev/null; then sed -i "s|^${k}=.*|${k}=${v}|" "${ENV_FILE}"; else printf "%s=%s\n" "${k}" "${v}" >> "${ENV_FILE}"; fi; }
+setkv(){ local k="$1" v="$2"; case "$v" in *[!A-Za-z0-9_./:@,=+-]*) v="\"${v}\"";; esac; if grep -qE "^${k}=" "${ENV_FILE}" 2>/dev/null; then sed -i "s|^${k}=.*|${k}=${v}|" "${ENV_FILE}"; else printf "%s=%s\n" "${k}" "${v}" >> "${ENV_FILE}"; fi; }
 val(){ grep -E "^$1=" "${ENV_FILE}" 2>/dev/null | head -1 | cut -d= -f2-; }
 U="$(val POSTGRES_USER)"; U="${U:-plantprocess}"; D="$(val POSTGRES_DB)"; D="${D:-plantprocessiq}"; PT="$(val POSTGRES_PORT)"; PT="${PT:-5432}"
 H="plantprocess-postgres"
