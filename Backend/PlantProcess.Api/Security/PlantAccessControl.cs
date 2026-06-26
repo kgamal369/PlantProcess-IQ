@@ -207,9 +207,9 @@ public sealed class AccessControlMiddleware
         ("/reporting", All(), "report.export", false),
         ("/demo-lifecycle", new[] { "GET" }, "assistant.use", false),
         ("/dynamic-content", new[] { "GET" }, "assistant.use", false),
-        ("/health", new[] { "GET" }, "assistant.use", false),
-        ("/db-health", new[] { "GET" }, "assistant.use", false),
-        ("/health/ready", new[] { "GET" }, "assistant.use", false)
+        ("/health", new[] { "GET" }, "anonymous", true),
+        ("/db-health", new[] { "GET" }, "anonymous", true),
+        ("/health/ready", new[] { "GET" }, "anonymous", true)
     };
 
     public AccessControlMiddleware(
