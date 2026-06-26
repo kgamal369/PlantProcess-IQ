@@ -82,65 +82,11 @@ CREATE INDEX IF NOT EXISTS ix_auth_refresh_tokens_user_active
 ON public.auth_refresh_tokens(user_id, expires_at_utc)
 WHERE revoked_at_utc IS NULL;
 
-INSERT INTO public.app_users (
-    id,
-    tenant_id,
-    user_name,
-    normalized_user_name,
-    display_name,
-    password_hash,
-    password_salt,
-    password_iterations,
-    plant_role,
-    compatibility_role,
-    is_owner,
-    is_enabled,
-    force_password_change
-)
-VALUES
-(
-    '00000000-0000-0000-0000-000000000101',
-    '00000000-0000-0000-0000-000000000001',
-    'admin',
-    'admin',
-    'Integration Test Admin',
-    'E/BlzNTl6Y5jQY6ijUMZtYpgEbKkKpmUcSGKRZlENGk=',
-    'BClU1U1/7x7eG8McApK3+5qSKAbePKR6sSl1Oz+Wckc=',
-    210000,
-    'TenantOwner',
-    'Admin',
-    true,
-    true,
-    false
-),
-(
-    '00000000-0000-0000-0000-000000000102',
-    '00000000-0000-0000-0000-000000000001',
-    'e2eadmin',
-    'e2eadmin',
-    'E2E Admin',
-    'oDMwn3z0L2basAfd4rE86gV//CXIu2BkoImemuqKQqk=',
-    'OFUp5OHakU4Zzf5rkiYXYk52OafvKVqNIybaQkW8kEw=',
-    210000,
-    'TenantOwner',
-    'Admin',
-    true,
-    true,
-    false
-)
-ON CONFLICT (tenant_id, normalized_user_name)
-DO UPDATE SET
-    display_name = EXCLUDED.display_name,
-    password_hash = EXCLUDED.password_hash,
-    password_salt = EXCLUDED.password_salt,
-    password_iterations = EXCLUDED.password_iterations,
-    plant_role = EXCLUDED.plant_role,
-    compatibility_role = EXCLUDED.compatibility_role,
-    is_owner = true,
-    is_enabled = true,
-    force_password_change = false,
-    updated_at_utc = now();
-
+-- NOTE: No application users are seeded here. The permanent system administrator
+-- (sysadmin) is auto-provisioned at first run by FirstRunProvisioningHostedService
+-- against an empty app_users table. Customer/tenant admins are created later,
+-- manually, during commissioning. Seeding users here would block first-run
+-- provisioning (HasAnyUser becomes true) and must never happen in production.
 COMMIT;
 
 SELECT
