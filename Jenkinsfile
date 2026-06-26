@@ -170,7 +170,7 @@ pipeline {
           SELF="$(cat /etc/hostname)"
           SMOKE_NET="${PPIQ_SMOKE_NETWORK:-${COMPOSE_PROJECT}_plantprocess-private}"
           SMOKE_IMAGE="${PPIQ_SMOKE_CURL_IMAGE:-curlimages/curl:8.10.1}"
-          docker run --rm --network "${SMOKE_NET}" --volumes-from "${SELF}" -w "${PWD}" \
+          docker run --rm --user 0:0 --network "${SMOKE_NET}" --volumes-from "${SELF}" -w "${PWD}" \
             -e ENV_FILE="${ENV_FILE}" "${SMOKE_IMAGE}" sh ./deploy/scripts/presentation-smoke.sh
         '''
       }
