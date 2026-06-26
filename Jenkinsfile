@@ -161,26 +161,17 @@ pipeline {
     // (or sets PPIQ_PRESENTATION=off to skip).
     stage('9. Presentation defaults (Enterprise + admin smoke)') {
       when { expression { return sh(script: 'set -a; . "${ENV_FILE}"; set +a; [ "${PPIQ_PRESENTATION:-on}" = "on" ] && echo yes || echo no', returnStdout: true).trim() == 'yes' } }
-      steps {
+            steps {
         sh '''
           set -euo pipefail
-          set -a; . "${ENV_FILE}"; set +a
-          BASE="${PPIQ_SMOKE_BASE_URL:-http://127.0.0.1:5063}"
-          TOKEN_FILE="${PPIQ_PRESENTATION_TOKEN:-deploy/fixtures/license/enterprise.token}"
-
-          # admin login -> bearer (smoke that auth + DB + signing key are all wired)
-          BEARER="$(curl -fsS -X POST "$BASE/auth/login" -H 'Content-Type: application/json' \
-            -d "{\\"userName\\":\\"${PPIQ_SMOKE_USERNAME:-admin}\\",\\"password\\":\\"${PPIQ_SMOKE_PASSWORD:?set PPIQ_SMOKE_PASSWORD in .env}\\"}" \
-            | sed -n 's/.*\\"token\\":\\"\\([^\\"]*\\)\\".*/\\1/p')"
-          test -n "$BEARER" || { echo "FATAL: admin login returned no token"; exit 1; }
-
-          # activate the Enterprise signed token for the demo tenant (V5 Ed25519)
-          JWS="$(cat "$TOKEN_FILE")"
-          curl -fsS -X POST "$BASE/api/v5/licensing/ed25519/activate" \
-            -H "Authorization: Bearer $BEARER" -H 'Content-Type: application/json' \
-            -d "{\\"token\\":\\"$JWS\\"}" > /dev/null
-          curl -fsS "$BASE/api/v5/licensing/ed25519/current" -H "Authorization: Bearer $BEARER"
-          echo "Presentation ready: admin + Enterprise active at $BASE"
+          # Run the presentation smoke inside a curl sibling on the app network so it can
+          # reach the API by container name (the agent cannot hit 127.0.0.1:5063). Workspace
+          # mounted via --volumes-from gives the script access to .env and the token fixture.
+          SELF="$(cat /etc/hostname)"
+          SMOKE_NET="${PPIQ_SMOKE_NETWORK:-${COMPOSE_PROJECT}_plantprocess-private}"
+          SMOKE_IMAGE="${PPIQ_SMOKE_CURL_IMAGE:-curlimages/curl:8.10.1}"
+          docker run --rm --network "${SMOKE_NET}" --volumes-from "${SELF}" -w "${PWD}" \
+            -e ENV_FILE="${ENV_FILE}" "${SMOKE_IMAGE}" sh ./deploy/scripts/presentation-smoke.sh
         '''
       }
     }
