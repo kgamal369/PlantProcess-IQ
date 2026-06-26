@@ -28,7 +28,12 @@ setkv PPIQ_SMOKE_USERNAME "${AU}"; setkv PPIQ_SMOKE_PASSWORD "${AP}"; setkv VITE
 setkv PPIQ_DEMO_SOURCES_MODE "disabled"
 setkv PPIQ_RUN_E2E "off"
 setkv PPIQ_PRESENTATION "on"
-setkv SITE_HOST "localhost"; setkv WEBSITE_HOST "website.localhost"
+# Public host: one variable drives every browser-facing URL (override per customer via PPIQ_SITE_HOST).
+PUBLIC_HOST="${PPIQ_SITE_HOST:-178.105.152.180.sslip.io}"
+setkv SITE_HOST "${PUBLIC_HOST}"; setkv WEBSITE_HOST "website.${PUBLIC_HOST}"
+setkv VITE_API_BASE_URL "https://api.${PUBLIC_HOST}"
+setkv VITE_WEBSITE_API_BASE_URL "https://api.${PUBLIC_HOST}"
+setkv PLANTPROCESS_ALLOWED_ORIGINS "https://app.${PUBLIC_HOST},https://${PUBLIC_HOST},https://website.${PUBLIC_HOST}"
 setkv CADDY_AUTO_HTTPS "off"; setkv ACME_EMAIL "admin@example.invalid"
 setkv PPIQ_API_UPSTREAM "plantprocess-api:5063"; setkv PPIQ_APP_UPSTREAM "plantprocess-web:80"; setkv PPIQ_WEBSITE_UPSTREAM "plantprocess-web:80"
 chmod 600 "${ENV_FILE}"; cp -f "${ENV_FILE}" "${PRESERVE_ENV}"; chmod 600 "${PRESERVE_ENV}"
