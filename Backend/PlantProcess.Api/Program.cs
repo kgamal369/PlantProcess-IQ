@@ -311,6 +311,7 @@ P01P02StartupGuard.Validate(builder.Configuration, builder.Environment);
 builder.Services.AddScoped<PlantProcess.Api.Analytics.KpiEvaluationService>();
 
 builder.Services.AddHostedService<PlantProcess.Api.Hosting.ReadModelRefreshHostedService>();
+builder.Services.AddHostedService<PlantProcess.Api.Security.FirstRunProvisioningHostedService>();
 
     builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 
