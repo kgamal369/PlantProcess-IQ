@@ -1,4 +1,4 @@
-﻿// ============================================================
+// ============================================================
 // PHASE 0 — TASK 3 / TASK 4
 // FILE: Backend/PlantProcess.Api/Endpoints/Health/HealthEndpoints.cs
 //
@@ -23,7 +23,12 @@ public static class HealthEndpoints
     public static IEndpointRouteBuilder MapHealthEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("")
-            .WithTags("Health");
+            .WithTags("Health")
+            // Liveness/readiness probes MUST be anonymous: the global authorization
+            // FallbackPolicy (Program.cs) requires an authenticated user on every endpoint
+            // by default, which made /health return 401 to the deploy health-gate, load
+            // balancers and uptime monitors. Health endpoints are unauthenticated by design.
+            .AllowAnonymous();
 
         group.MapGet("/health", () => Results.Ok(new
         {
