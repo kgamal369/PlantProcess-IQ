@@ -23,6 +23,8 @@ private static async Task<IResult> GetSchemaMappingWorkbenchAsync(
                 from dataset in dbContext.SourceDatasetDefinitions.AsNoTracking()
                 join profile in dbContext.ConnectionProfiles.AsNoTracking()
                     on dataset.ConnectionProfileId equals profile.Id
+                // PPIQ-V1-20 orderby-before-projection: EF cannot ORDER BY a constructed record; order source columns first.
+                orderby profile.ProviderType, dataset.DatasetCode
                 select new WorkbenchDatasetRow(
                     dataset.Id,
                     dataset.DatasetCode,
@@ -31,10 +33,7 @@ private static async Task<IResult> GetSchemaMappingWorkbenchAsync(
                     profile.ProviderType,
                     dataset.SourceSchemaName,
                     dataset.SourceObjectName,
-                    dataset.IsActive))
-            .OrderBy(x => x.ProviderType)
-            .ThenBy(x => x.DatasetCode)
-            .ToListAsync(cancellationToken);
+                    dataset.IsActive)).ToListAsync(cancellationToken);
 
         var fields = await dbContext.SourceFieldDefinitions
             .AsNoTracking()

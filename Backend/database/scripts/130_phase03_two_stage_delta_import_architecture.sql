@@ -186,6 +186,7 @@ CREATE OR REPLACE FUNCTION public.ppiq_identifier(p_value text)
 RETURNS text
 LANGUAGE plpgsql
 AS $$
+#variable_conflict use_column
 DECLARE
     v_value text;
 BEGIN
@@ -212,6 +213,7 @@ CREATE OR REPLACE FUNCTION public.ppiq_column_pg_type(
 RETURNS text
 LANGUAGE plpgsql
 AS $$
+#variable_conflict use_column
 DECLARE
     v_type text;
 BEGIN
@@ -238,6 +240,7 @@ CREATE OR REPLACE FUNCTION public.ppiq_ensure_phase3_site()
 RETURNS uuid
 LANGUAGE plpgsql
 AS $$
+#variable_conflict use_column
 DECLARE
     v_site_id uuid;
 BEGIN
@@ -304,6 +307,7 @@ CREATE OR REPLACE FUNCTION public.ppiq_upsert_phase3_job(
 RETURNS uuid
 LANGUAGE plpgsql
 AS $$
+#variable_conflict use_column
 DECLARE
     v_job_id uuid;
 BEGIN
@@ -407,6 +411,7 @@ CREATE OR REPLACE FUNCTION public.ppiq_start_phase3_job_history(
 RETURNS uuid
 LANGUAGE plpgsql
 AS $$
+#variable_conflict use_column
 DECLARE
     v_job_id uuid;
     v_history_id uuid;
@@ -518,6 +523,7 @@ CREATE OR REPLACE FUNCTION public.ppiq_finish_phase3_job_history(
 RETURNS void
 LANGUAGE plpgsql
 AS $$
+#variable_conflict use_column
 DECLARE
     v_completed_at timestamptz := now();
     v_started_at timestamptz;
@@ -576,6 +582,7 @@ CREATE OR REPLACE FUNCTION public.ppiq_register_dump_source(
 RETURNS uuid
 LANGUAGE plpgsql
 AS $$
+#variable_conflict use_column
 DECLARE
     v_registry_id uuid;
     v_dump_schema text := 'dump_store';
@@ -771,6 +778,7 @@ RETURNS TABLE
 )
 LANGUAGE plpgsql
 AS $$
+#variable_conflict use_column
 DECLARE
     v_registry public.source_table_dump_registry%ROWTYPE;
     v_run_id uuid := gen_random_uuid();
@@ -1128,6 +1136,7 @@ RETURNS TABLE
 )
 LANGUAGE plpgsql
 AS $$
+#variable_conflict use_column
 DECLARE
     v_registry_id uuid;
 BEGIN
@@ -1172,6 +1181,7 @@ RETURNS TABLE
 )
 LANGUAGE plpgsql
 AS $$
+#variable_conflict use_column
 DECLARE
     v_registry public.source_table_dump_registry%ROWTYPE;
     v_run_id uuid := gen_random_uuid();
@@ -1472,7 +1482,7 @@ BEGIN
     v_duration_ms := greatest(0, floor(extract(epoch FROM (v_completed_at - v_started_at)) * 1000)::bigint);
 
     v_message := format(
-        'Stage-2 canonical refresh completed for %.%. Canonical rows inserted: %s.',
+        'Stage-2 canonical refresh completed for %s.%s. Canonical rows inserted: %s.',
         v_registry.source_schema_name,
         v_registry.source_table_name,
         v_canonical_rows
@@ -1626,6 +1636,7 @@ RETURNS TABLE
 )
 LANGUAGE plpgsql
 AS $$
+#variable_conflict use_column
 DECLARE
     v_registry_id uuid;
 BEGIN

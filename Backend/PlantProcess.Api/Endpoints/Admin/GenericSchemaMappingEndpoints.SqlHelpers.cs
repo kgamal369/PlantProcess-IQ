@@ -51,7 +51,9 @@ private static async Task<IReadOnlyList<IReadOnlyDictionary<string, object?>>> Q
         CancellationToken cancellationToken,
         params (string Name, object? Value)[] parameters)
     {
-        await using var connection = db.Database.GetDbConnection();
+        // PPIQ-V1-20 do-not-dispose-EF-connection: GetDbConnection() is owned by the DbContext;
+        // disposing it here (await using) corrupts the context for the next call. Acquire without owning.
+        var connection = db.Database.GetDbConnection();
         if (connection.State != ConnectionState.Open)
             await connection.OpenAsync(cancellationToken);
 
@@ -89,7 +91,9 @@ private static async Task ExecuteNonQueryAsync(
         CancellationToken cancellationToken,
         params (string Name, object? Value)[] parameters)
     {
-        await using var connection = db.Database.GetDbConnection();
+        // PPIQ-V1-20 do-not-dispose-EF-connection: GetDbConnection() is owned by the DbContext;
+        // disposing it here (await using) corrupts the context for the next call. Acquire without owning.
+        var connection = db.Database.GetDbConnection();
         if (connection.State != ConnectionState.Open)
             await connection.OpenAsync(cancellationToken);
 

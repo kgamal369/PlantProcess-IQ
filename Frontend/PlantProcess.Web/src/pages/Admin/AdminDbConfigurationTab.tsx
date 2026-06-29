@@ -41,6 +41,7 @@ import {
   type SourceFieldDefinitionRecord,
   type UpdateConnectionImportScheduleRequest,
 } from "../../api/productApiClient";
+import type { DbConfigurationSourceSystem } from "../../api/product-core/admin-mapping-types";
 import { ErrorPanel } from "@/components/AsyncState";
 import { useOptimisticSave } from "@/hooks/useOptimisticSave";
 import { AdminPanel, StatusPill, formatDate } from "./AdminSharedComponents";
@@ -162,6 +163,7 @@ export function DbConfigurationTab({
           <ConnectionProfileForm
             profile={editingProfile}
             providerTypes={providerTypes}
+            sourceSystems={data?.sourceSystems ?? []}
             onSaved={handleSaved}
             onCancel={backToList}
           />
@@ -398,10 +400,12 @@ function ConnectionProfileList({
 // â”€â”€ ConnectionProfileForm (Create + Edit) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function ConnectionProfileForm({
-  profile, providerTypes, onSaved, onCancel,
+  profile, providerTypes, sourceSystems, onSaved, onCancel,
 }: {
   profile: ConnectionProfileRecord | null;
   providerTypes: ProviderTypeRecord[];
+  // PPIQ-V1-18 source-system-picker: real source systems (already loaded by parent) replace the hardcoded id.
+  sourceSystems: DbConfigurationSourceSystem[];
   onSaved: () => void;
   onCancel: () => void;
 }) {
@@ -411,6 +415,7 @@ function ConnectionProfileForm({
     connectionProfileCode: profile?.connectionProfileCode ?? "",
     connectionProfileName: profile?.connectionProfileName ?? "",
     providerType: profile?.providerType ?? "Csv",
+    sourceSystemDefinitionId: "",
     hostName: profile?.hostName ?? "",
     port: profile?.port ?? 5432,
     databaseName: profile?.databaseName ?? "",
@@ -506,7 +511,7 @@ function ConnectionProfileForm({
         });
       } else {
         const request: CreateConnectionProfileRequest = {
-          sourceSystemDefinitionId: "00000000-0000-0000-0000-000000000001", // placeholder
+          sourceSystemDefinitionId: form.sourceSystemDefinitionId, // PPIQ-V1-18: user-selected source system
           connectionProfileCode: form.connectionProfileCode ||
             `${form.providerType.toUpperCase()}_${Date.now()}`,
           connectionProfileName: form.connectionProfileName,
@@ -558,6 +563,25 @@ function ConnectionProfileForm({
             ))}
           </StandardPageSelect>
         </label>
+
+        {/* PPIQ-V1-18 source-system-picker */}
+        {!isEdit ? (
+          <label className="admin-form-label">
+            Source System *
+            <StandardPageSelect
+              className="admin-select"
+              value={form.sourceSystemDefinitionId}
+              onChange={(e) => set("sourceSystemDefinitionId", e.target.value)}
+            >
+              <option value="">-- Select a source system --</option>
+              {sourceSystems.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.sourceSystemName} ({s.sourceSystemCode})
+                </option>
+              ))}
+            </StandardPageSelect>
+          </label>
+        ) : null}
 
         {/* Profile name */}
         <label
