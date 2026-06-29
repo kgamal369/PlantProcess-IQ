@@ -239,6 +239,19 @@ function Do-Up {
     $env:ConnectionStrings__PlantProcessDb = ('Host=' + $pg.Host + ';Port=' + $pg.Port + ';Database=' + $pg.Db + ';Username=' + $pg.User + ';Password=' + $pg.Pass)
   }
   Say ('starting API (dotnet run, Development, ' + $ApiProj + ') - a console window will open with Kestrel logs')
+  # >>> PPIQ-V1-17 dev-sysadmin (idempotent) >>>
+  # Provision the permanent local sysadmin (SOU support account) via the env-var form
+  # the rest of the product uses (ensure-runtime-env.sh / Playwright). The nested JSON
+  # Users array in appsettings.Development.json does not bind reliably; env vars do.
+  # Development-only: ResolveDevelopmentUser is gated by IWebHostEnvironment.IsDevelopment().
+  if ($env:ASPNETCORE_ENVIRONMENT -eq 'Development') {
+    if (-not $env:PlantProcess__Auth__Users__0__UserName) { $env:PlantProcess__Auth__Users__0__UserName = 'sysadmin' }
+    if (-not $env:PlantProcess__Auth__Users__0__Password) { $env:PlantProcess__Auth__Users__0__Password = 'PpiqLocalDev_Sysadmin_2026!' }
+    if (-not $env:PlantProcess__Auth__Users__0__Role) { $env:PlantProcess__Auth__Users__0__Role = 'Admin' }
+    if (-not $env:PlantProcess__Auth__Users__0__DisplayName) { $env:PlantProcess__Auth__Users__0__DisplayName = 'PPIQ System Administrator (local dev)' }
+    if (-not $env:PlantProcess__Auth__Users__0__IsBootstrapAdmin) { $env:PlantProcess__Auth__Users__0__IsBootstrapAdmin = 'false' }
+  }
+  # <<< PPIQ-V1-17 dev-sysadmin <<<
   $api = Start-Process -FilePath 'dotnet' -ArgumentList @('run','--project',(Join-Path $RepoRoot $ApiProj),'--no-launch-profile') -PassThru -WindowStyle Normal
   $api.Id | Set-Content (Join-Path $RunDir 'api.pid')
   Say ("starting web (npm run dev, " + $WebDir + ")")
@@ -328,6 +341,13 @@ function Do-Test {
 
 function Do-E2e {
   Import-DotEnv
+  # >>> PPIQ-V1-12 e2e-api-host-guard (idempotent) >>>
+  # Playwright webServer launches its own API via dotnet run; kill any stray API host
+  # first so the e2e build cannot wedge on a locked bin\Debug (same failure as Do-Test).
+  Get-CimInstance Win32_Process -Filter "Name='PlantProcess.Api.exe'" -ErrorAction SilentlyContinue | ForEach-Object { & taskkill /PID $_.ProcessId /T /F 2>$null | Out-Null }
+  Get-CimInstance Win32_Process -Filter "Name='dotnet.exe'" -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -match 'run .*PlantProcess\.Api' } | ForEach-Object { & taskkill /PID $_.ProcessId /T /F 2>$null | Out-Null }
+  Start-Sleep -Seconds 2
+  # <<< PPIQ-V1-12 e2e-api-host-guard <<<
   Do-Migrate
   Push-Location (Join-Path $RepoRoot $WebDir); & npx playwright test; $e = $LASTEXITCODE; Pop-Location
   if($e -ne 0){ Die "e2e failed" }
