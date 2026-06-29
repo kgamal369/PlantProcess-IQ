@@ -158,6 +158,23 @@ function Register-DevLicenseKey {
 }
 
 function Do-Migrate {
+  # >>> PPIQ-V1-01 ef-first (idempotent) >>>
+  if (-not $env:ConnectionStrings__PlantProcessDb) {
+    $efCfg = Join-Path $PSScriptRoot '..\..\Backend\PlantProcess.Api\appsettings.Development.json'
+    if (Test-Path $efCfg) {
+      try {
+        $efObj = Get-Content $efCfg -Raw | ConvertFrom-Json
+        if ($efObj.ConnectionStrings -and $efObj.ConnectionStrings.PlantProcessDb) { $env:ConnectionStrings__PlantProcessDb = $efObj.ConnectionStrings.PlantProcessDb }
+      } catch { }
+    }
+  }
+  if (-not $env:ConnectionStrings__PlantProcessDb) {
+    $env:ConnectionStrings__PlantProcessDb = 'Host=localhost;Port=5432;Database=ppiq_app;Username=ppiq_dev;Password=ppiq_dev_local_only'
+  }
+  Push-Location (Join-Path $PSScriptRoot '..\..\Backend\PlantProcess.Api')
+  try { dotnet ef database update --project ..\PlantProcess.Infrastructure --startup-project . } finally { Pop-Location }
+  if ($LASTEXITCODE -ne 0) { throw 'EF database update failed' }
+  # <<< PPIQ-V1-01 ef-first <
   Import-DotEnv
   $pg = Get-Pg
   if(-not [string]::IsNullOrEmpty($env:PPIQ_PG_SUPERPASSWORD)){ Ensure-AppDb }
@@ -275,6 +292,10 @@ function Do-Reset {
 }
 
 function Do-Test {
+  # >>> PPIQ-V1-03 test-env (idempotent) >>>
+  if (-not $env:PGCLIENTENCODING) { $env:PGCLIENTENCODING = 'UTF8' }
+  if (-not $env:PPIQ_FORCE_EXTERNAL_API_TEST_HOST) { $env:PPIQ_FORCE_EXTERNAL_API_TEST_HOST = '1' }
+  # <<< PPIQ-V1-03 test-env <<<
   Import-DotEnv
   if([string]::IsNullOrEmpty($env:PPIQ_TEST_CONNECTION_STRING)){
     $pg = Get-Pg
@@ -284,6 +305,13 @@ function Do-Test {
   $tp = if([string]::IsNullOrEmpty($env:PPIQ_TEST_API_PORT)){ '15063' } else { $env:PPIQ_TEST_API_PORT }
   Get-NetTCPConnection -LocalPort ([int]$tp) -State Listen -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique | ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue }
   Do-Migrate
+  # >>> PPIQ-V1-03 api-host-guard (idempotent) >>>
+  # Kill any stray PPIQ API host (demo or prior external test host) so dotnet test
+  # cannot wedge on a locked bin or wait forever on a non-terminating external host.
+  Get-CimInstance Win32_Process -Filter "Name='PlantProcess.Api.exe'" -ErrorAction SilentlyContinue | ForEach-Object { & taskkill /PID $_.ProcessId /T /F 2>$null | Out-Null }
+  Get-CimInstance Win32_Process -Filter "Name='dotnet.exe'" -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -match 'run .*PlantProcess\.Api' } | ForEach-Object { & taskkill /PID $_.ProcessId /T /F 2>$null | Out-Null }
+  Start-Sleep -Seconds 2
+  # <<< PPIQ-V1-03 api-host-guard <<<
   Say "backend: dotnet test"
   Push-Location (Join-Path $RepoRoot 'Backend')
   & dotnet test --nologo
@@ -291,6 +319,9 @@ function Do-Test {
   Pop-Location
   Say "frontend: vitest run"
   Push-Location (Join-Path $RepoRoot $WebDir); & npx vitest run; $ft = $LASTEXITCODE; Pop-Location
+  # >>> PPIQ-V1-03 api-host-cleanup (idempotent) >>>
+  Get-CimInstance Win32_Process -Filter "Name='PlantProcess.Api.exe'" -ErrorAction SilentlyContinue | ForEach-Object { & taskkill /PID $_.ProcessId /T /F 2>$null | Out-Null }
+  # <<< PPIQ-V1-03 api-host-cleanup <<<
   if($bt -ne 0 -or $ft -ne 0){ Die ("tests failed (backend=" + $bt + " frontend=" + $ft + ")") }
   Say "tests passed"
 }

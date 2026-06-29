@@ -1,12 +1,8 @@
--- DEV-ONLY fixture: registers the development Ed25519 license public key.
--- Never run in production; production registers the customer signing key via the ops/registration path.
--- Idempotent and RLS-scoped. Identity is injected by the caller via psql -v (nothing hardcoded).
-BEGIN;
-SELECT set_config('app.current_tenant', :'tenant_id', true);
-INSERT INTO public.ppiq_ed25519_license_public_keys (tenant_id, key_id, public_key_b64)
-VALUES (:'tenant_id', :'key_id', :'public_key_b64')
-ON CONFLICT (tenant_id, key_id) DO UPDATE
-  SET public_key_b64 = EXCLUDED.public_key_b64, status = 'active', retired_at_utc = NULL;
-COMMIT;
-SELECT set_config('app.current_tenant', :'tenant_id', false);
-SELECT key_id, algorithm, status FROM public.ppiq_ed25519_license_public_keys WHERE tenant_id = :'tenant_id';
+-- PPIQ-V1: neutralized redundant seed.
+-- The dev Ed25519 license public key (kid=ppiq-dev-ed25519, tenant=00000000-0000-0000-0000-000000000001)
+-- is registered idempotently during the MIGRATION phase by the ppiq.ps1 "registering dev Ed25519
+-- license public key" step (and 650_remaining_p10_ed25519_verified_license.sql), proven active in the
+-- run log. This file required psql -v key_id / -v public_key variables that the generic seed loop does
+-- not pass, causing: ERROR syntax error at or near ":". It is now a safe no-op so the seed loop
+-- completes. The original is preserved under deploy/.ppiq-backups.
+\echo 'dev_ed25519_public_key.sql: no-op (dev Ed25519 key already registered in the migration phase).'
