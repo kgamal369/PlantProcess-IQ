@@ -13,6 +13,7 @@ namespace PlantProcess.Api.IntegrationTests.BlendedProvenance;
 // with the population (parent_count) and completeness (weights sum to 1.0, no unattributed remainder)
 // reported. Mirrors the genealogy walk test. DB-gated; skips cleanly when the integration DB is
 // unreachable or the golden-thread fixture (seed 010) is not loaded.
+[Xunit.Collection("GoldenThreadSerial")]
 public sealed class TransitionCoilWeightedAttributionTests : AuthenticatedApiTestBase
 {
     private const string TransitionCoil = "C-0044170";

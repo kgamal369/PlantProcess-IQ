@@ -3,12 +3,21 @@ set -euo pipefail
 ENV_FILE="${1:?usage: ensure-runtime-env.sh <env_file> <preserve_dir> [template]}"; PRESERVE_DIR="${2:?}"; TEMPLATE="${3:-env/profiles/server.env.example}"
 PRESERVE_ENV="${PRESERVE_DIR}/.env"; CRED_FILE="${PRESERVE_DIR}/FIRST_LOGIN.txt"
 mkdir -p "${PRESERVE_DIR}" "$(dirname "${ENV_FILE}")"
+# --- DB-coupled secret preservation -------------------------------------------
+# POSTGRES_PASSWORD is written into the Postgres data volume on its FIRST init and
+# never changes afterwards; the admin password and signing key are likewise bound
+# to already-provisioned rows / live sessions. A stale-key regeneration must NOT
+# rotate these, or the regenerated .env diverges from durable state and Postgres
+# auth fails with 28P01. RULE: never delete ${PRESERVE_DIR}/.env on its own; if it
+# is ever removed, wipe the Postgres data volume in the SAME step so they
+# re-initialize together.
+PRIOR_PG=""; PRIOR_AP=""; PRIOR_SIGN=""
 if [ -f "${PRESERVE_ENV}" ] && grep -q "^PPIQ_API_UPSTREAM=" "${PRESERVE_ENV}" && grep -q "^PPIQ_DEMO_SOURCES_MODE=" "${PRESERVE_ENV}"; then cp -f "${PRESERVE_ENV}" "${ENV_FILE}"; echo "ensure-runtime-env: reused persisted secrets (validated)"; exit 0; fi
-if [ -f "${PRESERVE_ENV}" ]; then echo "ensure-runtime-env: persisted .env is stale (missing new keys) -> regenerating" >&2; rm -f "${PRESERVE_ENV}"; fi
+if [ -f "${PRESERVE_ENV}" ]; then echo "ensure-runtime-env: persisted .env is stale (missing new keys) -> regenerating (preserving DB-coupled secrets)" >&2; PRIOR_PG="$(grep -E '^POSTGRES_PASSWORD=' "${PRESERVE_ENV}" | head -1 | cut -d= -f2- || true)"; PRIOR_AP="$(grep -E '^PlantProcess__Auth__Users__0__Password=' "${PRESERVE_ENV}" | head -1 | cut -d= -f2- || true)"; PRIOR_SIGN="$(grep -E '^PlantProcess__Auth__SigningKey=' "${PRESERVE_ENV}" | head -1 | cut -d= -f2- || true)"; rm -f "${PRESERVE_ENV}"; fi
 if [ -f "${ENV_FILE}" ]; then cp -f "${ENV_FILE}" "${PRESERVE_ENV}"; chmod 600 "${PRESERVE_ENV}"; echo "ensure-runtime-env: adopted operator-provided .env"; exit 0; fi
 echo "ensure-runtime-env: generating fresh runtime secrets"
 gen(){ openssl rand -hex "$1"; }
-PG="$(gen 24)"; SIGN="$(gen 48)"; AU="sysadmin"; AP="$(gen 16)"
+PG="${PRIOR_PG:-$(gen 24)}"; SIGN="${PRIOR_SIGN:-$(gen 48)}"; AU="sysadmin"; AP="${PRIOR_AP:-$(gen 16)}"
 [ -f "${TEMPLATE}" ] && cp -f "${TEMPLATE}" "${ENV_FILE}" || : > "${ENV_FILE}"
 sed -i '1s/^\xEF\xBB\xBF//' "${ENV_FILE}"   # strip a UTF-8 BOM if the template carried one
 sed -i '/_Password_REMOVED_FROM_TRACKED_TEMPLATE=/d' "${ENV_FILE}"

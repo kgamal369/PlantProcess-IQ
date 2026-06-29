@@ -13,6 +13,7 @@ namespace PlantProcess.Api.IntegrationTests.Genealogy;
 // P6-01 â€” genealogy bidirectional walk ("golden thread"): proves ppiq_walk_genealogy resolves
 // connected nodes, respects the depth bound, rejects bad directions, and that the graph-safety
 // check is wired. DB-gated (inherits AuthenticatedApiTestBase).
+[Xunit.Collection("GoldenThreadSerial")]
 public sealed class GenealogyGoldenThreadTests : AuthenticatedApiTestBase
 {
     public GenealogyGoldenThreadTests(WebApplicationFactory<Program> factory) : base(factory) { }

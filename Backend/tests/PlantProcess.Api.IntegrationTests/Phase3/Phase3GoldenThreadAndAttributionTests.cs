@@ -18,6 +18,7 @@ using Xunit;
 
 namespace PlantProcess.Api.IntegrationTests.Phase3;
 
+[Xunit.Collection("GoldenThreadSerial")]
 public sealed class Phase3GoldenThreadAndAttributionTests : AuthenticatedApiTestBase
 {
     public Phase3GoldenThreadAndAttributionTests(WebApplicationFactory<Program> factory) : base(factory) { }

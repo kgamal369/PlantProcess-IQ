@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Text.Json;
 using System.Threading;
@@ -22,6 +22,13 @@ public sealed class NpgsqlAdvancedResultWriter : IAdvancedResultWriter
     {
         await using var conn = await _dataSource.OpenConnectionAsync(ct);
         await using var tx = await conn.BeginTransactionAsync(ct);
+
+        // PPIQ-V1: set app.current_tenant so RLS WITH CHECK passes under the least-privilege ppiq_app runtime role.
+        await using (var tctx = new NpgsqlCommand("SELECT set_config('app.current_tenant', @t, false)", conn, (NpgsqlTransaction)tx))
+        {
+            tctx.Parameters.AddWithValue("t", req.TenantId.ToString());
+            await tctx.ExecuteNonQueryAsync(ct);
+        }
 
         var status = !result.CanRun ? "Blocked" : (result.Findings.Count > 0 ? "Ok" : "NoData");
         var reqJson = JsonSerializer.Serialize(new { tenantId = req.TenantId, filters = req.Filters, fdrQ = req.FdrQ, correlationId = req.CorrelationId });

@@ -55,6 +55,22 @@ public sealed class FirstRunProvisioningHostedService : IHostedService
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
+        try
+        {
+            await ProvisionInternalAsync(cancellationToken);
+        }
+        catch (System.Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "PPIQ first-run provisioning failed for environment {Environment}; the API will continue to start. " +
+                "Provisioning can be retried via the provisioning endpoint.",
+                _environment.EnvironmentName);
+        }
+    }
+
+    private async Task ProvisionInternalAsync(CancellationToken cancellationToken)
+    {
         await using var scope = _scopeFactory.CreateAsyncScope();
         var store = scope.ServiceProvider.GetRequiredService<AuthStore>();
 

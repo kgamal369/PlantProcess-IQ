@@ -8,9 +8,9 @@
 # - WEBSITE_HOST: optional public website host, e.g. www.plantprocessiq.example.com
 # - ACME_EMAIL: certificate contact email
 # - CADDY_AUTO_HTTPS: usually "on" or "off" for local config parsing
-# - PPIQ_API_UPSTREAM: default ppiq-app-api:5063
-# - PPIQ_APP_UPSTREAM: default ppiq-app-web:80
-# - PPIQ_WEBSITE_UPSTREAM: default ppiq-website-web:80
+# - PPIQ_API_UPSTREAM: default plantprocess-api:5063
+# - PPIQ_APP_UPSTREAM: default plantprocess-web:80
+# - PPIQ_WEBSITE_UPSTREAM: default plantprocess-web:80
 
 {
     email {$ACME_EMAIL:admin@example.invalid}
@@ -30,23 +30,23 @@
     }
 
     handle_path /api/* {
-        reverse_proxy {$PPIQ_API_UPSTREAM:ppiq-app-api:5063}
+        reverse_proxy {$PPIQ_API_UPSTREAM:plantprocess-api:5063}
     }
 
     handle_path /health* {
-        reverse_proxy {$PPIQ_API_UPSTREAM:ppiq-app-api:5063}
+        reverse_proxy {$PPIQ_API_UPSTREAM:plantprocess-api:5063}
     }
 
     handle_path /readiness* {
-        reverse_proxy {$PPIQ_API_UPSTREAM:ppiq-app-api:5063}
+        reverse_proxy {$PPIQ_API_UPSTREAM:plantprocess-api:5063}
     }
 
     handle_path /website/* {
-        reverse_proxy {$PPIQ_WEBSITE_UPSTREAM:ppiq-website-web:80}
+        reverse_proxy {$PPIQ_WEBSITE_UPSTREAM:plantprocess-web:80}
     }
 
     handle {
-        reverse_proxy {$PPIQ_APP_UPSTREAM:ppiq-app-web:80}
+        reverse_proxy {$PPIQ_APP_UPSTREAM:plantprocess-web:80}
     }
 }
 
@@ -61,10 +61,10 @@
     }
 
     handle_path /api/* {
-        reverse_proxy {$PPIQ_API_UPSTREAM:ppiq-app-api:5063}
+        reverse_proxy {$PPIQ_API_UPSTREAM:plantprocess-api:5063}
     }
 
     handle {
-        reverse_proxy {$PPIQ_WEBSITE_UPSTREAM:ppiq-website-web:80}
+        reverse_proxy {$PPIQ_WEBSITE_UPSTREAM:plantprocess-web:80}
     }
 }

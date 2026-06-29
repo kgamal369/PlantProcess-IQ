@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -41,6 +41,11 @@ public sealed class AdvancedResultPersistenceTests
             "SELECT count(*) FROM public.ml_correlation_compute_runs WHERE id=@id AND tenant_id=@t", ds.CreateConnection()))
         {
             await c.Connection!.OpenAsync();
+            await using (var _tctx = new NpgsqlCommand("SELECT set_config('app.current_tenant', @tg, false)", c.Connection))
+            {
+                _tctx.Parameters.AddWithValue("tg", tenant.ToString());
+                await _tctx.ExecuteNonQueryAsync();
+            }
             c.Parameters.AddWithValue("id", result.RunId);
             c.Parameters.AddWithValue("t", tenant);
             Assert.Equal(1L, (long)(await c.ExecuteScalarAsync())!);
@@ -52,6 +57,11 @@ public sealed class AdvancedResultPersistenceTests
                 @"SELECT count(*) FROM public.ml_correlation_results_v2
                   WHERE compute_run_id=@id AND tenant_id=@t AND evidence_json ? 'provenanceHandle'", ds.CreateConnection());
             await c.Connection!.OpenAsync();
+            await using (var _tctx = new NpgsqlCommand("SELECT set_config('app.current_tenant', @tg, false)", c.Connection))
+            {
+                _tctx.Parameters.AddWithValue("tg", tenant.ToString());
+                await _tctx.ExecuteNonQueryAsync();
+            }
             c.Parameters.AddWithValue("id", result.RunId);
             c.Parameters.AddWithValue("t", tenant);
             var rows = (long)(await c.ExecuteScalarAsync())!;
