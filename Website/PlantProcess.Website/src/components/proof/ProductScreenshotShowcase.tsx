@@ -1,3 +1,4 @@
+
 export function ProductScreenshotShowcase() {
   return (
     <section className="website-section proof-screenshot-section" id="product-proof">
@@ -6,9 +7,9 @@ export function ProductScreenshotShowcase() {
         <div>
           <h2>Real PlantProcess IQ workspace, not a placeholder story.</h2>
           <p>
-            The Phase 1 website must show the actual product: connector truth,
-            source-shaped data, schema mapping, widget builder, investigation,
-            and customer-grade reporting.
+            The website shows the actual product: source connection, staging and import
+            monitoring, schema mapping, dashboards and widgets, material investigation,
+            correlation analysis, and customer-grade reporting.
           </p>
         </div>
       </div>
@@ -35,15 +36,15 @@ export function ProductScreenshotShowcase() {
       <div className="proof-grid">
         <div>
           <strong>Shown in app</strong>
-          <span>Connector truth, dashboard widgets, material investigation, and report export.</span>
+          <span>Source connection, import monitoring, dashboards, material investigation, correlation analysis, and report export.</span>
         </div>
         <div>
           <strong>Shown in data</strong>
-          <span>630 heats, 5,670 slabs/coils, 39,690 HSM pass measurements, 1,987 defects.</span>
+          <span>11,997 material units, 1,993 quality events, and 5,688 genealogy links unified from 6 live source systems.</span>
         </div>
         <div>
           <strong>Shown in message</strong>
-          <span>Evidence-based investigation, not root-cause theatre.</span>
+          <span>Evidence-based investigation with the population and method shown, not root-cause theatre.</span>
         </div>
       </div>
     </section>

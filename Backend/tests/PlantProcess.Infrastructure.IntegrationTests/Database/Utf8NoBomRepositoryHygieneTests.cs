@@ -45,12 +45,14 @@ public sealed class Utf8NoBomRepositoryHygieneTests
             relative.StartsWith("bin\\", StringComparison.OrdinalIgnoreCase) ||
             relative.StartsWith("obj\\", StringComparison.OrdinalIgnoreCase) ||
             relative.StartsWith("dist\\", StringComparison.OrdinalIgnoreCase) ||
+            relative.StartsWith("deploy\\.ppiq-backups\\", StringComparison.OrdinalIgnoreCase) ||
             relative.StartsWith(".phase1_phase2_backup\\", StringComparison.OrdinalIgnoreCase) ||
             relative.Contains("\\.git\\", StringComparison.OrdinalIgnoreCase) ||
             relative.Contains("\\node_modules\\", StringComparison.OrdinalIgnoreCase) ||
             relative.Contains("\\bin\\", StringComparison.OrdinalIgnoreCase) ||
             relative.Contains("\\obj\\", StringComparison.OrdinalIgnoreCase) ||
             relative.Contains("\\dist\\", StringComparison.OrdinalIgnoreCase) ||
+            relative.Contains("\\.ppiq-backups\\", StringComparison.OrdinalIgnoreCase) ||
             relative.Contains("\\.phase1_phase2_backup\\", StringComparison.OrdinalIgnoreCase))
         {
             return true;

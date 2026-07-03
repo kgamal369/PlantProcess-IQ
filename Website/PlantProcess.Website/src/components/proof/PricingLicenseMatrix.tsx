@@ -1,3 +1,4 @@
+
 import { licensePlans } from "../../content/phase1WebsiteProof";
 
 export function PricingLicenseMatrix() {
@@ -6,10 +7,11 @@ export function PricingLicenseMatrix() {
       <div className="section-kicker">Pricing and license logic</div>
       <div className="section-heading-row">
         <div>
-          <h2>Start small. Prove the workflow. Expand when the plant data story is real.</h2>
+          <h2>Start where you are. Expand when the value is proven on your data.</h2>
           <p>
-            The commercial packaging mirrors the product gating: users, feature
-            depth, connector readiness, refresh cadence and analysis allowance.
+            The commercial packaging mirrors the product gating: number of data sources,
+            feature depth, users, refresh cadence and enterprise controls. One deposit,
+            one subscription, no hidden line items.
           </p>
         </div>
       </div>
@@ -18,7 +20,10 @@ export function PricingLicenseMatrix() {
         {licensePlans.map((plan) => (
           <article className={`pricing-card pricing-card--${plan.code}`} key={plan.code}>
             <div className="pricing-card__top">
-              <span>{plan.name}</span>
+              <span>
+                {plan.name}
+                {plan.recommended ? " (Recommended)" : ""}
+              </span>
               <strong>{plan.monthlyPrice}</strong>
             </div>
 
@@ -26,16 +31,16 @@ export function PricingLicenseMatrix() {
 
             <dl>
               <div>
+                <dt>Deposit</dt>
+                <dd>{plan.deposit}</dd>
+              </div>
+              <div>
+                <dt>Data sources</dt>
+                <dd>{plan.sources}</dd>
+              </div>
+              <div>
                 <dt>Users</dt>
                 <dd>{plan.users}</dd>
-              </div>
-              <div>
-                <dt>Analysis allowance</dt>
-                <dd>{plan.tokens}</dd>
-              </div>
-              <div>
-                <dt>Refresh</dt>
-                <dd>{plan.refresh}</dd>
               </div>
               <div>
                 <dt>Connectors</dt>

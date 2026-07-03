@@ -1,3 +1,4 @@
+
 import type { ReactNode } from "react";
 import { NavLink, Route, Routes, useParams } from "react-router-dom";
 import {
@@ -24,7 +25,7 @@ import PricingLicenseMatrix from "./components/proof/PricingLicenseMatrix";
 import PositioningTruthBlock from "./components/proof/PositioningTruthBlock";
 import ConnectorHonestyBlock from "./components/proof/ConnectorHonestyBlock";
 import RequestDemoForm from "./components/proof/RequestDemoForm";
-import { licensePlans } from "./content/phase1WebsiteProof";
+import { licensePlans, provenAtScale } from "./content/phase1WebsiteProof";
 import "./styles/phase10.css";
 
 type ProductCode = "plantprocess-iq" | "mes" | "qes" | "yard" | "energy";
@@ -48,21 +49,21 @@ const productEcosystem: EcosystemProduct[] = [
     code: "plantprocess-iq",
     name: "PlantProcess IQ",
     shortName: "PPIQ",
-    eyebrow: "Quality Intelligence Layer",
-    headline: "Evidence-grade process and quality intelligence without replacing MES, SCADA or Level 2.",
+    eyebrow: "Process-to-Quality Intelligence",
+    headline: "Connect Your Plant Data. Understand Your Process.",
     description:
-      "PlantProcess IQ connects source-shaped plant data, maps it into a generic canonical model, and gives engineers a disciplined investigation workspace for quality, genealogy, risk, correlation and reporting.",
+      "PlantProcess IQ connects to your existing plant systems read-only, unifies their data into one canonical model, and takes your team from seeing the data to reasoning about it: correlation, AI/ML suggestions, and a grounded AI assistant that answers with citations.",
     benefit:
-      "Reduce manual quality forensics and make scattered manufacturing data usable for process, quality and management decisions.",
+      "Replace weeks of manual quality forensics across scattered systems with one evidence-grade workspace that shows suspected contributors to quality and downtime, with the population and the math shown.",
     licenseDetail:
-      "Available from Light diagnostic through Enterprise rollout. Advanced correlation, widget scripting and governed jobs unlock progressively by tier.",
-    bestFor: ["Quality teams", "Process engineers", "Plant managers", "MES / data teams"],
-    workflow: ["Connect sources", "Stage raw data", "Map model", "Investigate", "Score risk", "Report"],
+      "Available from Standard through Enterprise. Correlation, AI/ML suggestions and the grounded assistant unlock progressively by tier.",
+    bestFor: ["Quality teams", "Process engineers", "Plant managers", "Data and IT teams"],
+    workflow: ["Connect (read-only)", "Stage", "Unify", "Analyse and Correlate", "Suggest (AI/ML)", "Ask (Grounded AI)"],
     proofPoints: [
-      "Read-only intelligence layer",
-      "Generic manufacturing canonical model",
-      "Evidence-based investigation",
-      "ML readiness",
+      "Read-only: never writes to your systems",
+      "One canonical model for any industry, via configuration only",
+      "Evidence-grade: every number carries its population and method",
+      "Correlation, suggestions and grounded AI implemented, validation ongoing",
     ],
   },
   {
@@ -169,13 +170,64 @@ const trustPillars = [
   },
   {
     title: "AI honesty",
-    text: "Correlations, risk indicators and suggestions are presented as investigation evidence, not automatic root-cause proof or process-control commands.",
+    text: "Deterministic engines compute and rank; the AI assistant only explains, with citations. Results are suspected contributors with the population and method shown, never automatic root-cause proof, and never process-control commands.",
     icon: <BrainCircuit size={24} />,
   },
   {
     title: "Enterprise controls",
-    text: "RBAC, audit logs, tenant-aware access and license-feature gates are treated as product controls, not decorative UI.",
+    text: "RBAC, audit logs, tenant-aware access and signed license-feature gates are treated as product controls, not decorative UI.",
     icon: <ShieldCheck size={24} />,
+  },
+];
+
+const howItWorksSteps = [
+  {
+    step: "01",
+    title: "Connect, read-only",
+    text: "Register your existing systems as data sources: databases, files, historians. PlantProcess IQ never writes to them.",
+  },
+  {
+    step: "02",
+    title: "Stage",
+    text: "A two-stage import copies source data into a controlled staging layer, incrementally, with every run monitored and logged.",
+  },
+  {
+    step: "03",
+    title: "Unify",
+    text: "A no-code mapping workbench joins the staged tables into one canonical plant model: materials, process steps, quality events, downtime, KPIs, genealogy.",
+  },
+  {
+    step: "04",
+    title: "Analyse and correlate",
+    text: "Deterministic engines run disciplined statistics on the unified data and rank suspected contributors to quality and downtime, population and method shown.",
+  },
+  {
+    step: "05",
+    title: "Suggest",
+    text: "An AI/ML suggestion engine turns findings into evidence-ranked, workflow-bound recommendations your team can accept, track, and close.",
+  },
+  {
+    step: "06",
+    title: "Ask",
+    text: "A grounded AI assistant answers questions about your plant data with citations. It explains what the engines computed; it cannot invent a number.",
+  },
+];
+
+const beyondBiCards = [
+  {
+    icon: <GitBranch size={24} />,
+    title: "Correlation engine",
+    text: "Disciplined statistics on your unified data: correlation methods with readiness gates, false-discovery control and noise rejection. Ranked suspected contributors, never asserted causes.",
+  },
+  {
+    icon: <Workflow size={24} />,
+    title: "AI/ML suggestions",
+    text: "Deterministic, evidence-ranked recommendations with confidence scoring and a closed-loop outcome workflow, so suggestions are tracked to results, not forgotten.",
+  },
+  {
+    icon: <BrainCircuit size={24} />,
+    title: "Grounded AI assistant",
+    text: "Ask in plain language; get answers with resolvable citations. The assistant explains the engines' results and cannot render an uncited number. Self-hosted and no-egress options for sensitive plants.",
   },
 ];
 
@@ -242,11 +294,11 @@ function Layout({ children }: { children: ReactNode }) {
       <footer className="site-footer phase10-footer">
         <div>
           <strong>PlantProcess IQ</strong>
-          <p>Manufacturing quality intelligence, evidence-first analytics and customer-safe data diagnostics.</p>
+          <p>Process-to-quality intelligence: read-only, evidence-grade, for any industry via configuration only.</p>
         </div>
         <div className="footer-contact">
           <span><Mail size={16} /> info@plantprocessiq.com</span>
-          <span><MapPin size={16} /> Düsseldorf / MENA industrial network</span>
+          <span><MapPin size={16} /> Duesseldorf, Germany / MENA industrial network</span>
           <span><FileText size={16} /> Engineer brief and demo pack ready for customer conversations</span>
         </div>
       </footer>
@@ -284,8 +336,101 @@ function ProductCard({ product }: { product: EcosystemProduct }) {
         {statusBadge(product.code)}
       </strong>
       <p>{product.description}</p>
-      <span className="card-link-text">Open product page →</span>
+      <span className="card-link-text">Open product page</span>
     </NavLink>
+  );
+}
+
+function HowItWorksSection() {
+  return (
+    <section className="website-section ppiq-flow-section" id="how-it-works">
+      <div className="section-kicker">How it works</div>
+      <div className="section-heading-row">
+        <div>
+          <h2>From scattered plant systems to one line of reasoning.</h2>
+          <p>
+            One read-only pipeline, configured entirely from the application, no code:
+            connect, stage, unify, analyse and correlate, suggest, ask.
+          </p>
+        </div>
+      </div>
+
+      <div className="ppiq-flow">
+        {howItWorksSteps.map((item) => (
+          <article className="ppiq-flow__step" key={item.step}>
+            <span className="ppiq-flow__number">{item.step}</span>
+            <strong>{item.title}</strong>
+            <p>{item.text}</p>
+          </article>
+        ))}
+      </div>
+
+      <p className="ppiq-flow__note">
+        Every stage is read-only toward your systems. Your MES, SCADA, Level 2 and databases
+        are never written to, never controlled, never slowed down.
+      </p>
+    </section>
+  );
+}
+
+function ProvenAtScaleSection() {
+  return (
+    <section className="website-section ppiq-scale-section" id="proven-at-scale">
+      <div className="section-kicker">Proven at scale</div>
+      <div className="section-heading-row">
+        <div>
+          <h2>Validated on a full sample plant, not a toy dataset.</h2>
+          <p>
+            Every capability is exercised against a complete emulated plant: six live source
+            systems across four database engines, imported, unified and analysed through the
+            same generic pipeline a real customer would use.
+          </p>
+        </div>
+      </div>
+
+      <div className="ppiq-scale-grid">
+        {provenAtScale.map((stat) => (
+          <article className="ppiq-scale-card" key={stat.label}>
+            <strong>{stat.value}</strong>
+            <span>{stat.label}</span>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function BeyondBiSection() {
+  return (
+    <section className="website-section ppiq-beyond-section" id="beyond-bi">
+      <div className="section-kicker">Beyond conventional BI</div>
+      <div className="section-heading-row">
+        <div>
+          <h2>Standard BI stops at seeing. PlantProcess IQ takes you to reasoning.</h2>
+          <p>
+            Dashboards show you what happened. The intelligence layer on top tells you what
+            most likely contributed, suggests what to do about it, and answers your questions
+            with citations.
+          </p>
+        </div>
+      </div>
+
+      <div className="ppiq-beyond-grid">
+        {beyondBiCards.map((card) => (
+          <article className="trust-pillar-card" key={card.title}>
+            {card.icon}
+            <h3>{card.title}</h3>
+            <p>{card.text}</p>
+          </article>
+        ))}
+      </div>
+
+      <p className="ppiq-flow__note">
+        Honest status: the correlation engine, suggestion engine and grounded assistant are
+        implemented; validation on the full sample plant is ongoing. Results are always
+        suspected contributors with the population shown, never guaranteed root cause.
+      </p>
+    </section>
   );
 }
 
@@ -294,12 +439,13 @@ function HomePage() {
     <>
       <section className="page-hero phase10-hero">
         <div className="hero-copy">
-          <div className="section-kicker">Manufacturing intelligence ecosystem</div>
-          <h1>One industrial software brand. Clear product lines. No fake AI promises.</h1>
+          <div className="section-kicker">Process-to-quality intelligence</div>
+          <h1>Connect Your Plant Data. Understand Your Process.</h1>
           <p>
-            PlantProcess IQ is the first commercial wedge: a read-only intelligence layer for quality,
-            genealogy, risk and data diagnostics. The wider SOU ecosystem can later expand into MES,
-            QES, Yard and Energy products without confusing the core message.
+            Your plant already produces the data: quality systems, process automation,
+            downtime logs, lab files. PlantProcess IQ connects to them read-only, unifies
+            them into one model, and shows your team the suspected drivers of quality and
+            downtime, with the evidence attached.
           </p>
 
           <div className="hero-actions">
@@ -314,8 +460,8 @@ function HomePage() {
 
         <div className="hero-command-card">
           <Factory size={34} />
-          <strong>Generic manufacturing scope</strong>
-          <p>Steel, aluminum, paper, tires, pharma, food, chemicals and automotive-ready model direction.</p>
+          <strong>Any industry, via configuration only</strong>
+          <p>Food and beverage, steel, aluminum, paper, tires, pharma, chemicals, automotive: one generic model, zero code change per plant.</p>
           <div className="hero-mini-grid">
             <span>Read-only</span>
             <span>Evidence-first</span>
@@ -324,6 +470,10 @@ function HomePage() {
           </div>
         </div>
       </section>
+
+      <HowItWorksSection />
+      <BeyondBiSection />
+      <ProvenAtScaleSection />
 
       <section className="website-section product-ecosystem-section">
         <div className="section-kicker">Product ecosystem</div>
@@ -359,6 +509,7 @@ function ProductPage({ fixedCode }: { fixedCode?: ProductCode }) {
   const requestedCode = fixedCode ?? params.code;
   const product = productEcosystem.find((item) => item.code === requestedCode) ?? productEcosystem[0];
   const comingSoon = isComingSoon(product.code);
+  const isPpiq = product.code === "plantprocess-iq";
 
   return (
     <>
@@ -380,7 +531,7 @@ function ProductPage({ fixedCode }: { fixedCode?: ProductCode }) {
               Discuss {product.shortName}
             </a>
             <NavLink className="website-button website-button--secondary" to="/pricing">
-              View license logic
+              View pricing
             </NavLink>
           </div>
         </div>
@@ -424,6 +575,14 @@ function ProductPage({ fixedCode }: { fixedCode?: ProductCode }) {
         </div>
       </section>
 
+      {isPpiq && (
+        <>
+          <HowItWorksSection />
+          <BeyondBiSection />
+          <ProvenAtScaleSection />
+        </>
+      )}
+
       <RequestDemoForm />
     </>
   );
@@ -435,17 +594,19 @@ function PricingPage() {
       <section className="page-hero pricing-hero">
         <div>
           <div className="section-kicker">Pricing and license architecture</div>
-          <h1>Light → Pro → Pro Plus → Enterprise, aligned to feature depth and usage maturity.</h1>
+          <h1>One deposit, one subscription. Standard, Pro Plus, or Enterprise.</h1>
           <p>
-            The website pricing story mirrors the in-app license gates: users, connectors,
-            refresh cadence, dashboards, widget scripting, analysis allowance and enterprise controls.
+            A one-time deposit covers installation, source connection and setup, scaled by
+            the number of data sources and pages. The monthly subscription covers the license
+            tier, from connected dashboards up to the full grounded AI layer. Annual pre-pay
+            earns a discount.
           </p>
         </div>
 
         <div className="pricing-proof-card">
           <BadgeEuro size={36} />
-          <strong>Diagnostic-first commercialization</strong>
-          <p>Start with data diagnostic / pilot scope, then expand only when the workflow proves value.</p>
+          <strong>Value-chain aligned tiers</strong>
+          <p>Standard connects and shows. Pro Plus analyses and suggests. Enterprise reasons with you.</p>
         </div>
       </section>
 
@@ -457,18 +618,18 @@ function PricingPage() {
           <div className="phase10-matrix__row phase10-matrix__head">
             <span>Tier</span>
             <span>Best for</span>
-            <span>Users</span>
-            <span>Connectors</span>
-            <span>Analysis / automation</span>
+            <span>Deposit</span>
+            <span>Subscription</span>
+            <span>Data sources</span>
           </div>
 
           {licensePlans.map((plan) => (
             <div className="phase10-matrix__row" key={plan.code}>
               <strong>{plan.name}</strong>
               <span>{plan.idealFor}</span>
-              <span>{plan.users}</span>
-              <span>{plan.connectors}</span>
-              <span>{plan.tokens}; {plan.refresh}</span>
+              <span>{plan.deposit}</span>
+              <span>{plan.monthlyPrice}</span>
+              <span>{plan.sources}</span>
             </div>
           ))}
         </div>
@@ -496,7 +657,7 @@ function SecurityPage() {
         <div className="trust-stack-card">
           <ShieldCheck size={38} />
           <strong>Trust contract</strong>
-          <span>Read-only • auditable • license-gated • evidence-first</span>
+          <span>Read-only | auditable | license-gated | evidence-first</span>
         </div>
       </section>
 
@@ -535,7 +696,7 @@ function ContactPage() {
         <div className="contact-proof-card">
           <CalendarCheck size={38} />
           <strong>20-minute fit check</strong>
-          <span>Problem → data sources → demo fit → next step</span>
+          <span>Problem, data sources, demo fit, next step</span>
         </div>
       </section>
 

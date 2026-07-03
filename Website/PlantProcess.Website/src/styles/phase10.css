@@ -459,3 +459,172 @@ img { height: auto; }
 .status-banner { margin: 14px 0 0; padding: 12px 14px; border-radius: 10px; font-size: 14px; line-height: 1.5; }
 .status-banner--soon { background: rgba(255,176,32,0.10); border: 1px solid rgba(255,176,32,0.4); color: #FFD79A; }
 .status-note { margin-top: 10px; font-size: 13px; color: #FFB020; }
+
+/* ------------------------------------------------------------------ */
+/* Website refresh additions: how-it-works flow, proven-at-scale,     */
+/* beyond-BI. Mirrors existing phase10 card styling.                  */
+/* ------------------------------------------------------------------ */
+
+.ppiq-flow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(220px, 1fr));
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.ppiq-flow__step {
+  padding: 24px;
+  border-radius: 24px;
+  border: 1px solid rgba(0, 212, 255, 0.16);
+  background: rgba(11, 23, 48, 0.7);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ppiq-flow__number {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 13px;
+  color: #00D4FF;
+  letter-spacing: 0.08em;
+}
+
+.ppiq-flow__step strong {
+  font-size: 17px;
+}
+
+.ppiq-flow__step p {
+  margin: 0;
+  font-size: 14px;
+  opacity: 0.85;
+}
+
+.ppiq-flow__note {
+  margin-top: 20px;
+  padding: 14px 18px;
+  border-left: 3px solid #00D4FF;
+  background: rgba(0, 212, 255, 0.06);
+  border-radius: 0 12px 12px 0;
+  font-size: 14px;
+}
+
+.ppiq-scale-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(160px, 1fr));
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.ppiq-scale-card {
+  padding: 24px;
+  border-radius: 24px;
+  border: 1px solid rgba(0, 212, 255, 0.16);
+  background: rgba(11, 23, 48, 0.7);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ppiq-scale-card strong {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 30px;
+  color: #00D4FF;
+}
+
+.ppiq-scale-card span {
+  font-size: 13px;
+  opacity: 0.85;
+}
+
+.ppiq-beyond-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(220px, 1fr));
+  gap: 16px;
+  margin-top: 24px;
+}
+
+@media (max-width: 960px) {
+  .ppiq-flow,
+  .ppiq-beyond-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ppiq-scale-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+
+/* ------------------------------------------------------------------ */
+/* ppiq-nav-polish: real styling for the site-nav / brand header.     */
+/* Root cause: markup uses .site-nav but only .nav-links was styled.  */
+/* ------------------------------------------------------------------ */
+
+.site-header {
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(0, 212, 255, 0.10);
+  background: rgba(5, 11, 24, 0.72);
+}
+
+.site-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.site-nav a {
+  color: var(--phase10-muted, #91A9C5);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  padding: 9px 13px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.site-nav a:hover {
+  color: #EAF3FF;
+  background: rgba(0, 212, 255, 0.08);
+}
+
+.site-nav a.active {
+  color: #00D4FF;
+  background: rgba(0, 212, 255, 0.10);
+  border-color: rgba(0, 212, 255, 0.35);
+}
+
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1.15;
+  min-width: max-content;
+}
+
+.brand-text small {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--phase10-muted, #91A9C5);
+}
+
+@media (max-width: 1180px) {
+  .site-nav {
+    justify-content: flex-start;
+    gap: 4px;
+  }
+
+  .site-nav a {
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+}

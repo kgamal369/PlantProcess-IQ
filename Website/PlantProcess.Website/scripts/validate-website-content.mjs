@@ -1,3 +1,4 @@
+
 import fs from "node:fs";
 import path from "node:path";
 
@@ -56,8 +57,12 @@ for (const product of [
   contains("P10 product ecosystem", app, product);
 }
 
-for (const tier of ["Light", "Pro", "Pro Plus", "Enterprise"]) {
+for (const tier of ["Standard", "Pro Plus", "Enterprise"]) {
   contains("Pricing tier", app + content + pricingMatrix, tier);
+}
+
+for (const commercial of ["deposit", "month"]) {
+  contains("Deposit + subscription model", content, commercial);
 }
 
 for (const trust of [
@@ -69,6 +74,17 @@ for (const trust of [
   "PricingLicenseMatrix",
 ]) {
   contains("Pricing/security proof", app, trust);
+}
+
+for (const valueChain of [
+  "Connect (read-only)",
+  "Stage",
+  "Unify",
+  "Analyse and Correlate",
+  "Suggest (AI/ML)",
+  "Ask (Grounded AI)",
+]) {
+  contains("PPIQ value-chain workflow", app, valueChain);
 }
 
 for (const leadRequirement of [
@@ -103,6 +119,7 @@ contains("Font foundation JetBrains Mono", globalCss + phase10Css, "JetBrains Mo
 for (const honesty of [
   "implemented-certification-pending",
   "available-now",
+  "demo-certified",
   "simulated-source-shape",
   "Not MES",
   "Not SCADA",
@@ -110,6 +127,14 @@ for (const honesty of [
   "Not BI-only",
 ]) {
   contains("Website honesty/content", app + content, honesty);
+}
+
+for (const aiHonesty of [
+  "suspected contributors",
+  "citations",
+  "uncited number",
+]) {
+  contains("AI honesty language", app + content, aiHonesty);
 }
 
 const forbidden = [
