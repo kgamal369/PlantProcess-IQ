@@ -1,4 +1,4 @@
-﻿// Pack G · T-096 · What-if scenario simulation engine
+// Pack G · T-096 · What-if scenario simulation engine
 import { useEffect, useMemo, useState } from "react";
 import { P2T08_STANDARD_ROLLOUT_MARKER, StandardP2Input, StandardP2Table } from "@/components/standard/StandardP2Controls";
 import { StandardButton } from "@/components/standard";

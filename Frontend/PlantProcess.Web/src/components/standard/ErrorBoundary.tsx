@@ -1,4 +1,4 @@
-﻿/**
+/**
  * ErrorBoundary.tsx
  * --------------------------------------------------------------------
  * Global React error boundary for PlantProcess IQ.

@@ -1,9 +1,9 @@
+
 import { useMemo } from "react";
 import { ConnectorTruthPanel } from "../../components/license/ConnectorTruthPanel";
 import { LicenseGate } from "../../components/license/LicenseGate";
 import { LicenseUsagePanel } from "../../components/license/LicenseUsagePanel";
-import { DemoEnvironmentBanner } from "../../components/demo/DemoEnvironmentBanner";
-import { DimensionCompletionPanel } from "../../components/demo/DimensionCompletionPanel";
+import { DimensionCompletionPanel } from "../../components/license/DimensionCompletionPanel";
 import { useLicense } from "../../state/LicenseContext";
 import "../../components/license/license-components.css";
 
@@ -29,17 +29,15 @@ export function CommercialLicensePage() {
   );
 
   return (
-    <main className="demo-lifecycle-page">
-      <DemoEnvironmentBanner />
-
-      <section className="demo-hero-panel">
+    <main className="commercial-license-page">
+      <section className="license-hero-panel">
         <div>
           <p className="eyebrow">Dimension 5 + Dimension 8</p>
-          <h1>Commercial License & Demo Readiness Workspace</h1>
+          <h1>Commercial License Workspace</h1>
           <p className="hero-copy">
             This page proves that PlantProcess IQ has backend-controlled license
             gates, usage counters, connector truth, staging and mapping evidence,
-            dashboard limits, premium intelligence gates, and an honest ML/demo
+            dashboard limits, premium intelligence gates, and an honest ML
             lifecycle.
           </p>
         </div>
@@ -118,3 +116,4 @@ export function CommercialLicensePage() {
 }
 
 export default CommercialLicensePage;
+

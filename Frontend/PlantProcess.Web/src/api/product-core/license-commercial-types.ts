@@ -3,9 +3,9 @@
 // Runtime API behavior remains in productCoreApiClient.implementation.ts.
 
 
-export interface PlannedProvider {
-  providerType: string;
-  description: string;
-  roadmapStatus: string;
-  recommendedForFirstDemo: boolean;
+export interface PlannedProvider {
+  providerType: string;
+  description: string;
+  roadmapStatus: string;
+  recommendedForFirstDemo: boolean;
 }

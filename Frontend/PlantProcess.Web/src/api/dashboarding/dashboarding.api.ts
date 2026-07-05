@@ -1,4 +1,4 @@
-﻿import { apiClient } from "../http";
+import { apiClient } from "../http";
 export type * from "../productApiClient";
 import { productApi as legacyApi } from "../productApiClient";
 

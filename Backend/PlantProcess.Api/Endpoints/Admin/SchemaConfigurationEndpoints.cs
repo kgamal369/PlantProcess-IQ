@@ -276,7 +276,11 @@ public static class SchemaConfigurationEndpoints
         int timeoutSeconds,
         CancellationToken cancellationToken)
     {
-        var safety = SafeSqlValidator.Validate(sqlText);
+        var registeredDumpTables = await dbContext.Database
+            .SqlQueryRaw<string>("SELECT dump_table_name AS \"Value\" FROM public.source_table_dump_registry WHERE is_deleted = false")
+            .ToListAsync(cancellationToken);
+
+        var safety = SafeSqlValidator.Validate(sqlText, registeredDumpTables);
 
         if (!safety.IsValid)
         {

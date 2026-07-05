@@ -1,3 +1,4 @@
+
 import type { CommercialReadinessResponse } from "../../api/license";
 import "./dimension-completion-panel.css";
 
@@ -44,13 +45,13 @@ export function DimensionCompletionPanel({ readiness }: DimensionCompletionPanel
 
       <div className="dimension-completion-grid">
         <CompletionBlock
-          title="Dimension 5 — License / Feature / Pricing Enforcement"
+          title="Dimension 5 - License / Feature / Pricing Enforcement"
           isDone={dimension5Done}
           items={readiness.dimension5.checks}
         />
 
         <CompletionBlock
-          title="Dimension 8 — Demo Preparation"
+          title="Dimension 8 - Demo Preparation"
           isDone={dimension8Done}
           items={readiness.dimension8.checks}
         />
@@ -110,3 +111,4 @@ function Evidence({ label, value }: { label: string; value: number }) {
     </article>
   );
 }
+

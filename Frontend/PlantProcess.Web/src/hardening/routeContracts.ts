@@ -59,14 +59,6 @@ export const workflowRouteContracts: RouteContract[] = [
     customerVisible: false,
   },
   {
-    route: "/demo-lifecycle",
-    name: "Demo Lifecycle",
-    severity: "critical",
-    expectedText: /demo|lifecycle|golden|reset|report/i,
-    mustRefreshSafely: true,
-    customerVisible: true,
-  },
-  {
     route: "/ml-readiness",
     name: "ML Readiness",
     severity: "important",

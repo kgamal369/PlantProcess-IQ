@@ -1,2 +1,2 @@
-﻿export type * from "../productApiClient";
+export type * from "../productApiClient";
 export { integrationApi } from "./integration.api";

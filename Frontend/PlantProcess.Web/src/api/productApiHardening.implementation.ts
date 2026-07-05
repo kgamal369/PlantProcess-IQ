@@ -1,4 +1,4 @@
-﻿import { API_BASE_URL } from "./apiConfig";
+import { API_BASE_URL } from "./apiConfig";
 import { getAccessToken } from "./http";
 import { toast } from "@/notifications/toast";
 import { mapErrorToFriendly } from "@/utils/errorMapping";

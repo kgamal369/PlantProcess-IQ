@@ -1,4 +1,4 @@
-﻿import "./product-brand.css";
+import "./product-brand.css";
 
 type ProductBrandProps = {
   compact?: boolean;

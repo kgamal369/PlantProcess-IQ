@@ -1,10 +1,8 @@
 import { LockKeyhole } from "lucide-react";
 
-import type { DemoLicensePlan } from "@/demo/plantProcessDemoScenario";
-
 type LockedFeatureOverlayProps = {
   featureName: string;
-  requiredPlan: DemoLicensePlan | "Pro Plus";
+  requiredPlan: string;
   compact?: boolean;
 };
 
@@ -15,9 +13,7 @@ export function LockedFeatureOverlay({
 }: LockedFeatureOverlayProps) {
   return (
     <div
-      className={
-        compact ? "locked-feature-inline" : "locked-feature-overlay"
-      }
+      className={compact ? "locked-feature-inline" : "locked-feature-overlay"}
       role="note"
       aria-label={`${featureName} is locked`}
     >
@@ -28,8 +24,9 @@ export function LockedFeatureOverlay({
       <div>
         <strong>{featureName} is locked in the current license.</strong>
         <p>
-          This workflow is visible for demo/storytelling, but it should be
-          unlocked only for <strong>{requiredPlan}</strong> or higher.
+          Available on <strong>{requiredPlan}</strong> and higher plans. The
+          active license is resolved from the backend entitlement, never from
+          static frontend data.
         </p>
       </div>
     </div>

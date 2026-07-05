@@ -56,7 +56,7 @@ export function EdgeCollectorPage() {
   const [collectors, setCollectors] = useState<EdgeCollectorState[]>([]);
   const [collectorId, setCollectorId] = useState("edge-demo-collector-01");
   const [displayName, setDisplayName] = useState("Demo OT-safe Edge Collector 01");
-  const [siteName, setSiteName] = useState("Demo Plant");
+  const [siteName, setSiteName] = useState("Plant");
   const [networkZone, setNetworkZone] = useState("DMZ/Edge");
   const [status, setStatus] = useState("Loading edge collector backend...");
   const [busy, setBusy] = useState(false);

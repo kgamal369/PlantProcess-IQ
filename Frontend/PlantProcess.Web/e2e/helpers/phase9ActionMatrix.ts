@@ -8,11 +8,12 @@ export type Phase9Route = {
 
 export const phase9Routes: Phase9Route[] = [
   { name: "Home / Dashboard", path: "/dashboard", expectedText: /dashboard|quality|risk|plantprocess/i },
-  { name: "DB Links / Admin", path: "/admin", expectedText: /admin|configuration|database|source/i },
-  { name: "Source Objects / Admin", path: "/admin", expectedText: /source|schema|configuration|import/i },
-  { name: "Importing Data / Admin", path: "/admin", expectedText: /import|job|batch|configuration/i },
-  { name: "Schema Config / Admin", path: "/admin", expectedText: /schema|mapping|canonical|sql/i },
-  { name: "Jobs Monitor / Admin", path: "/admin", expectedText: /job|monitor|run|status/i },
+  { name: "Admin / DB Configuration", path: "/admin?adminTab=db-configuration", expectedText: /connection|provider|configuration|source/i },
+  { name: "Admin / Schema Configuration", path: "/admin?adminTab=schema-configuration", expectedText: /schema|mapping|canonical|sql/i },
+  { name: "Admin / Importing Data", path: "/admin?adminTab=importing-data", expectedText: /import|stage|canonical|refresh/i },
+  { name: "Admin / Jobs Monitor", path: "/admin?adminTab=jobs-monitor", expectedText: /job|monitor|run|status/i },
+  { name: "Admin / Connector Truth", path: "/admin?adminTab=connector-truth", expectedText: /connector|truth|tracked|status/i },
+  { name: "Admin / License", path: "/admin?adminTab=license", expectedText: /license|tier|signed/i },
   { name: "Page Builder", path: "/page-builder", expectedText: /page|builder|widget|dashboard/i },
   { name: "Widget Script Compiler", path: "/widget-script-compiler", expectedText: /widget|script|compiler|expression/i },
   { name: "Material Investigation", path: "/materials", expectedText: /material|investigation|genealogy|quality/i },
@@ -23,7 +24,6 @@ export const phase9Routes: Phase9Route[] = [
   { name: "Advanced Analysis", path: "/investigate/advanced", expectedText: /advanced|analysis|evidence|result/i },
   { name: "Suggestions", path: "/suggestions", expectedText: /suggestion|recommendation|evidence|action/i },
   { name: "License / User Admin", path: "/commercial/license", expectedText: /license|feature|tier|usage/i },
-  { name: "Reports / Demo Lifecycle", path: "/demo-lifecycle", expectedText: /demo|lifecycle|reset|report|workflow/i },
   { name: "Brand", path: "/brand", expectedText: /brand|sou|plantprocess|identity/i },
 ];
 

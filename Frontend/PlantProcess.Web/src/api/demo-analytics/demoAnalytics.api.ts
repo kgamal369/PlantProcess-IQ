@@ -1,35 +1,9 @@
+
 import { apiClient } from "../http";
-import { API_BASE_URL } from "../apiConfig";
 
-export type DemoResetScope = "data-only" | "full" | "identities-only";
 
-export interface DemoResetStep {
-  code: string;
-  label: string;
-  status: string;
-  percentComplete: number;
-  exceptionDetail?: string | null;
-}
 
-export interface DemoResetJob {
-  jobId: string;
-  status: string;
-  scope: DemoResetScope;
-  operatorName: string;
-  percentComplete: number;
-  startedAtUtc: string;
-  completedAtUtc?: string | null;
-  failureReason?: string | null;
-  steps: DemoResetStep[];
-}
 
-export interface DemoResetAccepted {
-  jobId: string;
-  statusUrl: string;
-  status: string;
-  scope: DemoResetScope;
-  acceptedAtUtc: string;
-}
 
 export interface Suggestion {
   id: string;
@@ -81,13 +55,7 @@ export interface SavedInvestigationResponse {
 }
 
 export const demoAnalyticsApi = {
-  startDemoReset(scope: DemoResetScope) {
-    return apiClient.post<DemoResetAccepted>("/demo-lifecycle/reset", { scope });
-  },
 
-  getDemoResetProgress(jobId: string) {
-    return apiClient.get<DemoResetJob>(`/demo-lifecycle/reset/${jobId}/progress`);
-  },
 
   getSuggestions(materialUnitId?: string | null, context = "current-investigation") {
     return apiClient.get<SuggestionsResponse>("/api/suggestions", {
@@ -104,7 +72,5 @@ export const demoAnalyticsApi = {
     return apiClient.post<SavedInvestigationResponse>("/api/investigations", request);
   },
 
-  resetProgressUrl(jobId: string) {
-    return `${API_BASE_URL}/demo-lifecycle/reset/${jobId}/progress`;
-  },
 };
+

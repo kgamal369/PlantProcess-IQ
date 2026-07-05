@@ -14,8 +14,7 @@ import {
   type StandardTabItem,
 } from "@/components/standard";
 import { workflowFoundationApi } from "@/api/workflow-foundation/workflowFoundation.api";
-import { demoAnalyticsApi, type DemoResetJob, type DemoResetScope, type DynamicPageResponse, type Suggestion } from "@/api/demo-analytics/demoAnalytics.api";
-import OperationProgressPanel from "@/components/inspection/OperationProgressPanel";
+import { demoAnalyticsApi, type DynamicPageResponse, type Suggestion } from "@/api/demo-analytics/demoAnalytics.api";
 import "./demo-analytics.css";
 
 type Row = Record<string, unknown>;
@@ -47,7 +46,7 @@ function PageShell({
     <main className="demo-analytics-page" data-demo-analytics-page={task}>
       <header className="demo-analytics-header">
         <div className="demo-analytics-title">
-          <p className="demo-analytics-eyebrow">{task}</p>
+          {import.meta.env.VITE_SHOW_TASK_CODES === "1" ? (<p className="demo-analytics-eyebrow">{task}</p>) : null}
           <h1>{title}</h1>
           <p>{subtitle}</p>
         </div>
@@ -168,130 +167,6 @@ export function DemoAnalyticsWorkflowTruthPage() {
   );
 }
 
-export function DemoAnalyticsDemoLifecyclePage() {
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [confirmText, setConfirmText] = useState("");
-  const [scope, setScope] = useState<DemoResetScope>("data-only");
-  const [resetJob, setResetJob] = useState<DemoResetJob | null>(null);
-  const [resetJobId, setResetJobId] = useState<string | null>(null);
-  const [isStarting, setIsStarting] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
-
-  async function startReset() {
-    if (confirmText !== "RESET") return;
-
-    setIsStarting(true);
-
-    try {
-      const accepted = await demoAnalyticsApi.startDemoReset(scope);
-      setResetJobId(accepted.jobId);
-      setMessage("Demo reset accepted. Progress polling started.");
-      setConfirmOpen(false);
-      setConfirmText("");
-    } finally {
-      setIsStarting(false);
-    }
-  }
-
-  useEffect(() => {
-    if (!resetJobId) return;
-
-    let active = true;
-    let timer: number | null = null;
-
-    const poll = async () => {
-      const next = await demoAnalyticsApi.getDemoResetProgress(resetJobId);
-      if (!active) return;
-
-      setResetJob(next);
-
-      if (next.status === "Completed") {
-        setMessage("Demo reset complete. Canonical layout active.");
-        return;
-      }
-
-      if (next.status === "Failed") {
-        setMessage(next.failureReason ?? "Demo reset failed.");
-        return;
-      }
-
-      timer = window.setTimeout(poll, 1000);
-    };
-
-    void poll();
-
-    return () => {
-      active = false;
-      if (timer) window.clearTimeout(timer);
-    };
-  }, [resetJobId]);
-
-  const inProgress = resetJob?.status === "Running" || resetJob?.status === "Queued" || isStarting;
-
-  return (
-    <PageShell
-      task="PPIQ-T050 / PPIQ-T051 / PPIQ-T052"
-      title="Demo Lifecycle Reset"
-      subtitle="Reset workflow now has confirmation, scope control, 202 job hand-off and 1s progress polling through OperationProgressPanel."
-      actions={
-        <>
-          <StandardButton variant="secondary" leadingIcon={<RefreshCw size={16} />} onClick={() => resetJobId && demoAnalyticsApi.getDemoResetProgress(resetJobId).then(setResetJob)} isDisabled={!resetJobId} data-disabled-reason={!resetJobId ? "Start a demo reset first to enable progress refresh." : undefined}>
-            Refresh Progress
-          </StandardButton>
-          <StandardButton
-            variant="danger"
-            leadingIcon={<TriangleAlert size={16} />}
-            onClick={() => setConfirmOpen(true)}
-            isDisabled={inProgress}
-            ariaLabel={inProgress ? "Reset already in progress — wait for completion" : "Reset Demo"}
-          >
-            Reset Demo
-          </StandardButton>
-        </>
-      }
-    >
-      {message ? (
-        <StandardCard title="Demo reset status" subtitle={message}>
-          <div className="demo-analytics-toolbar">
-            <Chip warning={inProgress}>{resetJob?.status ?? "Ready"}</Chip>
-            <Chip>{resetJob?.percentComplete ?? 0}%</Chip>
-            <Chip>{scope}</Chip>
-          </div>
-        </StandardCard>
-      ) : null}
-
-      <OperationProgressPanel resetJobId={resetJobId} title="Demo Reset Operation Progress" />
-
-      <StandardModal
-        open={confirmOpen}
-        title="Reset demo environment"
-        description="Type RESET to confirm. Default scope is Data only."
-        onClose={() => setConfirmOpen(false)}
-        footer={
-          <>
-            <StandardButton variant="ghost" onClick={() => setConfirmOpen(false)}>Cancel</StandardButton>
-            <StandardButton variant="danger" isLoading={isStarting} isDisabled={confirmText !== "RESET"} onClick={startReset}>
-              Confirm Reset
-            </StandardButton>
-          </>
-        }
-      >
-        <StandardSelect
-          label="Reset scope"
-          value={scope}
-          onChange={(value) => setScope(value as DemoResetScope)}
-          options={[
-            { value: "data-only", label: "Data only" },
-            { value: "full", label: "Full reset" },
-            { value: "identities-only", label: "Identities only" },
-          ]}
-        />
-        <StandardInput label="Confirmation" value={confirmText} onChange={setConfirmText} placeholder="Type RESET" />
-      </StandardModal>
-    </PageShell>
-  );
-}
-
 export function DemoAnalyticsSuggestionsPage() {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
@@ -362,68 +237,6 @@ export function DemoAnalyticsDynamicPage() {
       <DataFetchBoundary title="Dynamic page" isLoading={page.isLoading} error={page.error} onRetry={page.reload}>
         <StandardTable columns={columns} data={page.data.sections} getRowKey={(row) => row.code} enableDensityToggle />
       </DataFetchBoundary>
-    </PageShell>
-  );
-}
-
-export function DemoAnalyticsAdminPage() {
-  const [tab, setTab] = useState("connector-truth");
-
-  const tabs: StandardTabItem[] = [
-    {
-      id: "connector-truth",
-      label: "Connector Truth",
-      content: <DemoAnalyticsWorkflowTruthPage />,
-    },
-    {
-      id: "import-jobs",
-      label: "Import Jobs",
-      content: (
-        <PageShell
-          task="PPIQ-T050"
-          title="Import Job Progress"
-          subtitle="Administrator import jobs now share the same OperationProgressPanel pattern used by demo reset."
-        >
-          <OperationProgressPanel
-            rows={[
-              {
-                id: "import-demo",
-                operationCode: "IMPORT_DEMO",
-                operationType: "Import",
-                operationName: "Latest import workflow",
-                status: "Tracked",
-                percentComplete: 0,
-                currentStep: "Waiting",
-                message: "Start an import workflow to show live progress.",
-                metadataJson: "{}",
-              },
-            ]}
-          />
-        </PageShell>
-      ),
-    },
-    {
-      id: "tier-override",
-      label: "Tier Override",
-      content: (
-        <StandardCard title="License tier override" subtitle="Backend endpoints POST /admin/license/tier-override and GET /admin/license/effective-tier are wired.">
-          <div className="demo-analytics-toolbar">
-            {["Free", "Pro", "ProPlus", "Enterprise"].map((tier) => (
-              <StandardButton key={tier} variant={tier === "ProPlus" ? "primary" : "secondary"} isDisabled data-disabled-reason="In-app tier selection is not yet available.">{tier}</StandardButton>
-            ))}
-          </div>
-        </StandardCard>
-      ),
-    },
-  ];
-
-  return (
-    <PageShell
-      task="PPIQ-T048 / PPIQ-T050 / PPIQ-T053"
-      title="Administrator Workflow Orchestration"
-      subtitle="Connector truth, import progress and tier override are now visible inside the admin route."
-    >
-      <StandardTabs items={tabs} value={tab} onChange={setTab} searchParam="adminTab" ariaLabel="Phase 7 administrator workflow tabs" lazy />
     </PageShell>
   );
 }

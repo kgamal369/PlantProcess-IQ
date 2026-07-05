@@ -1,0 +1,188 @@
+[
+    {
+        "Task":  "V1-17 J1",
+        "Step":  "POST /auth/login returns accessToken (real signed session)",
+        "Status":  "PASS",
+        "Evidence":  "token length 827"
+    },
+    {
+        "Task":  "V1-17 J1",
+        "Step":  "GET /admin/overview 200 with populated payload",
+        "Status":  "PASS",
+        "Evidence":  "keys: cards,generatedAtUtc,latestImportBatch,status"
+    },
+    {
+        "Task":  "V1-17 J1",
+        "Step":  "HMI: cold-load ",
+        "Status":  "MANUAL",
+        "Evidence":  "Open the web URL in a FRESH incognito window: lands authenticated on a populated home, no login prompt, F12 console shows zero errors."
+    },
+    {
+        "Task":  "V1-13",
+        "Step":  "GET /admin/two-stage-import/overview -\u003e 200",
+        "Status":  "PASS",
+        "Evidence":  "two-stage overview (registries)"
+    },
+    {
+        "Task":  "V1-13",
+        "Step":  "GET /admin/connectors/connection-profiles -\u003e 200",
+        "Status":  "PASS",
+        "Evidence":  "connection profiles"
+    },
+    {
+        "Task":  "V1-13",
+        "Step":  "GET /admin/connectors/readiness",
+        "Status":  "FAIL",
+        "Evidence":  "API GET /admin/connectors/readiness failed: HTTP 404 "
+    },
+    {
+        "Task":  "V1-13",
+        "Step":  "GET /admin/jobs-monitor -\u003e 200",
+        "Status":  "PASS",
+        "Evidence":  "jobs monitor"
+    },
+    {
+        "Task":  "V1-13",
+        "Step":  "GET /admin/schema-configuration/summary -\u003e 200",
+        "Status":  "PASS",
+        "Evidence":  "schema-configuration summary"
+    },
+    {
+        "Task":  "V1-18 J2",
+        "Step":  "connection profiles listed (8)",
+        "Status":  "PASS",
+        "Evidence":  ", , , , , , , "
+    },
+    {
+        "Task":  "V1-18 J2",
+        "Step":  "meltshop profile not identified by code/name",
+        "Status":  "FAIL",
+        "Evidence":  "expected a profile matching meltshop/CP-01"
+    },
+    {
+        "Task":  "V1-18 J2",
+        "Step":  "source_table_dump_registry rows = 1",
+        "Status":  "PASS",
+        "Evidence":  "registry populated"
+    },
+    {
+        "Task":  "V1-18 J2",
+        "Step":  "HMI walk",
+        "Status":  "MANUAL",
+        "Evidence":  "Admin \u003e DB Configuration: open meltshop profile, click Test Connection (green), open the table picker (populates from live source), then break it once: stop the container, Test again -\u003e typed error not a crash."
+    },
+    {
+        "Task":  "V1-19 J3",
+        "Step":  "POST /admin/two-stage-import/stage1/run (all registries) -\u003e 200",
+        "Status":  "PASS",
+        "Evidence":  "rows payload length 4057"
+    },
+    {
+        "Task":  "V1-19 J3",
+        "Step":  "staging populated: src_meltshop_pg.heats = 54 (was 54)",
+        "Status":  "PASS",
+        "Evidence":  ""
+    },
+    {
+        "Task":  "V1-19 J3",
+        "Step":  "WATERMARK PROOF: immediate second Stage-1 imports 0 new rows",
+        "Status":  "PASS",
+        "Evidence":  "count stable at 54"
+    },
+    {
+        "Task":  "V1-19 J3",
+        "Step":  "runs endpoint lists the import runs",
+        "Status":  "PASS",
+        "Evidence":  "payload length 38030"
+    },
+    {
+        "Task":  "V1-19 J3",
+        "Step":  "HMI walk",
+        "Status":  "MANUAL",
+        "Evidence":  "Admin \u003e Importing Data: trigger Stage-1; Admin \u003e Jobs Monitor: the run shows status/rows/duration; run again -\u003e 0 new rows visible."
+    },
+    {
+        "Task":  "V1-20 J4",
+        "Step":  "schema-configuration summary returns source objects",
+        "Status":  "PASS",
+        "Evidence":  "payload length 2597"
+    },
+    {
+        "Task":  "V1-20 J4",
+        "Step":  "mapper/preview seam",
+        "Status":  "FAIL",
+        "Evidence":  "API POST /admin/schema-configuration/views/preview failed: HTTP 400 {\"isSuccess\":false,\"message\":\"SQL safety validation failed: Table or view \u0027src_meltshop_pg.heats\u0027 is not in the configured SQL allowlist.\",\"rowCount\":0,\"durationMs\":0,\"columns\":[],\"rows\":[]}"
+    },
+    {
+        "Task":  "V1-20 J4",
+        "Step":  "HMI walk",
+        "Status":  "MANUAL",
+        "Evidence":  "Admin \u003e Schema Configuration: mapper lists the real staging tables/columns; define a view + join across two dump tables; preview shows real rows; paste a bad SQL -\u003e typed validation error."
+    },
+    {
+        "Task":  "V1-21 J5",
+        "Step":  "POST stage2/run -\u003e 200",
+        "Status":  "PASS",
+        "Evidence":  "payload length 3594"
+    },
+    {
+        "Task":  "V1-21 J5",
+        "Step":  "canonical material_units = 49 (was 49)",
+        "Status":  "PASS",
+        "Evidence":  ""
+    },
+    {
+        "Task":  "V1-22 J6",
+        "Step":  "seam-6 proof",
+        "Status":  "FAIL",
+        "Evidence":  "docker exec insert failed (is the meltshop container running?)"
+    },
+    {
+        "Task":  "V1-22 J6",
+        "Step":  "HMI walk",
+        "Status":  "MANUAL",
+        "Evidence":  "Page Builder: create a page, drag a widget, bind it to a canonical view, save+reload (persists). Note its number, re-run the import from Importing Data, refresh: the number changes."
+    },
+    {
+        "Task":  "V1-10",
+        "Step":  "walk(C-0044170, both) returns BOTH heats H-3361 + H-3362",
+        "Status":  "PASS",
+        "Evidence":  "jsonb length 562"
+    },
+    {
+        "Task":  "V1-10",
+        "Step":  "walk direction=backward resolves",
+        "Status":  "PASS",
+        "Evidence":  "jsonb length 562"
+    },
+    {
+        "Task":  "V1-10",
+        "Step":  "walk direction=forward resolves",
+        "Status":  "PASS",
+        "Evidence":  "jsonb length 164"
+    },
+    {
+        "Task":  "V1-10",
+        "Step":  "HMI walk + clip",
+        "Status":  "MANUAL",
+        "Evidence":  "Material Investigation: search C-0044170, open it, walk coil-\u003emelt then melt-\u003ecoils in the evidence panel. Record the clip (this is the dry-run artifact)."
+    },
+    {
+        "Task":  "V1-11",
+        "Step":  "blended attribution returns weighted split: 0.700000,0.300000",
+        "Status":  "PASS",
+        "Evidence":  "H-3361/H-3362"
+    },
+    {
+        "Task":  "V1-11",
+        "Step":  "HMI walk + clip",
+        "Status":  "MANUAL",
+        "Evidence":  "Material Investigation on the transition coil: the panel shows the weighted 70/30 provenance across both heats with the population stated. Record the clip."
+    },
+    {
+        "Task":  "V1-14",
+        "Step":  "action-matrix e2e (run on your machine with app up)",
+        "Status":  "MANUAL",
+        "Evidence":  "cd Frontend\\PlantProcess.Web ; npx playwright test e2e/phase9-action-matrix.spec.ts --project=chromium   (matrix now enumerates the six admin tabs)"
+    }
+]

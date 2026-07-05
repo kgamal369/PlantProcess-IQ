@@ -14,7 +14,7 @@ type AppCommandHeaderProps = {
 export function AppCommandHeader({
   licenseTier = "Demo",
   environment = "Demo",
-  plantName = "Demo Plant",
+  plantName = "Plant",
   userName = "Admin",
 }: AppCommandHeaderProps) {
   return (

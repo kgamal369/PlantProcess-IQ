@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using PlantProcess.Infrastructure.Persistence;
 
 namespace PlantProcess.Api.Endpoints.Admin;
@@ -34,6 +34,9 @@ public static class AdminEndpoints
             .WithSummary("Get Admin overview")
             .WithDescription("Returns admin-level status for source systems, staging, mappings, dashboards, jobs, and canonical data.");
 
+        group.MapGet("/site-identity", GetSiteIdentityAsync)
+            .WithSummary("Get active site identity")
+            .WithDescription("Returns the configured plant/site display name. Neutral fallback is Plant.");
         group.MapGet("/two-stage-import-model", GetTwoStageImportModelAsync)
             .WithSummary("Get two-stage import model")
             .WithDescription("Explains the raw snapshot / dump stage and canonical refresh stage with current live counts.");
@@ -53,6 +56,43 @@ public static class AdminEndpoints
         return app;
     }
 
+
+    private static async Task<IResult> GetSiteIdentityAsync(
+        PlantProcessDbContext dbContext,
+        CancellationToken cancellationToken)
+    {
+        var site = await dbContext.Sites
+            .AsNoTracking()
+            .OrderBy(x => x.SiteCode)
+            .Select(x => new
+            {
+                x.Id,
+                x.SiteCode,
+                x.SiteName
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (site is null)
+        {
+            return Results.Ok(new
+            {
+                siteId = (Guid?)null,
+                siteCode = (string?)null,
+                siteName = "Plant"
+            });
+        }
+
+        var siteName = !string.IsNullOrWhiteSpace(site.SiteName)
+            ? site.SiteName
+            : (!string.IsNullOrWhiteSpace(site.SiteCode) ? site.SiteCode : "Plant");
+
+        return Results.Ok(new
+        {
+            siteId = site.Id,
+            siteCode = site.SiteCode,
+            siteName
+        });
+    }
     private static async Task<IResult> GetOverviewAsync(
         PlantProcessDbContext dbContext,
         CancellationToken cancellationToken)

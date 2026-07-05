@@ -39,9 +39,7 @@ import {
 import { productApi, type DashboardMaterialRow } from "../../api/productApiClient";
 import { apiClient } from "@/api/http";
 import { mlReadinessApi } from "@/api/ml";
-import { demoLifecycleApi } from "@/api/demo";
 import { licenseApi, type LicenseStatus, type LicenseTier } from "@/api/license";
-import { OperationProgressPanel } from "@/components/inspection/OperationProgressPanel";
 import { SaveInspectionJobModal } from "@/components/inspection/SaveInspectionJobModal";
 import * as tokens from "@/components/standard/tokens";
 import "./productModule56-standard.css";
@@ -192,7 +190,7 @@ function PageShell({
     <main className="productModule56-page" data-page-task={task}>
       <header className="productModule56-page__header">
         <div className="productModule56-page__title">
-          <p className="productModule56-page__eyebrow">{task}</p>
+          {import.meta.env.VITE_SHOW_TASK_CODES === "1" ? (<p className="productModule56-page__eyebrow">{task}</p>) : null}
           <h1>{title}</h1>
           <p>{subtitle}</p>
         </div>
@@ -813,115 +811,6 @@ export function MaterialAnalyticsMlReadinessPage() {
           </StandardCard>
         </div>
       </StandardDataState>
-    </PageShell>
-  );
-}
-
-export function MaterialAnalyticsDemoLifecyclePage() {
-  const [resetOpen, setResetOpen] = useState(false);
-  const [isResetting, setIsResetting] = useState(false);
-
-  const lifecycle = useResource(() => demoLifecycleApi.getLifecycle(), {
-    generatedAtUtc: new Date().toISOString(),
-    demoMode: "Demo",
-    license: {} as LicenseStatus,
-    steps: [],
-    connectorTruth: { connectors: [] },
-    stagingSummary: {} as any,
-    schemaMapping: {} as any,
-    jobChain: { totalJobs: 0, enabledJobs: 0, failedOrTimeoutJobs: 0, jobs: [] },
-    dashboardOutput: {} as any,
-    mlReadiness: {} as any,
-    reportClose: {} as any,
-  });
-
-  async function resetDemo() {
-    setIsResetting(true);
-    try {
-      await apiClient.post("/demo-lifecycle/reset", { requestedBy: "PlantProcess IQ UI", requestedAtUtc: new Date().toISOString() });
-    } catch {
-      await apiClient.post("/demo/reset", { requestedBy: "PlantProcess IQ UI", requestedAtUtc: new Date().toISOString() }).catch(() => undefined);
-    } finally {
-      setIsResetting(false);
-      setResetOpen(false);
-      lifecycle.reload();
-    }
-  }
-
-  const stepColumns: StandardTableColumn<Row>[] = [
-    { key: "order", header: "#", sortable: true, accessor: (row) => text(row.order) },
-    { key: "title", header: "Step", sortable: true, accessor: (row) => text(row.title ?? row.code) },
-    { key: "status", header: "Status", sortable: true, cell: (row) => <Chip value={row.status} /> },
-    { key: "license", header: "License", sortable: true, accessor: (row) => text(row.requiredLicenseTier) },
-  ];
-
-  const progressRows = lifecycle.data.jobChain.jobs.map((job, index) => ({
-    id: String(job.jobId ?? "demo-operation-" + index),
-    operationCode: String(job.jobCode ?? job.jobName ?? "DEMO_OPERATION_" + index)
-      .replace(/[^a-zA-Z0-9_]/g, "_")
-      .toUpperCase(),
-    operationType: String(job.jobType ?? "DemoLifecycle"),
-    operationName: String(job.jobName ?? "Demo lifecycle operation"),
-    status: String(job.lastRunStatus ?? "Tracked"),
-    percentComplete: job.lastRunStatus === "Succeeded" ? 100 : job.lastRunStatus === "Running" ? 65 : 25,
-    currentStep: String(job.jobType ?? "Workflow"),
-    totalSteps: 4,
-    completedSteps: job.lastRunStatus === "Succeeded" ? 4 : job.lastRunStatus === "Running" ? 2 : 1,
-    message: String(job.operationalRole ?? "Demo lifecycle operation is tracked."),
-    startedAtUtc: String(job.lastRunStartedAtUtc ?? lifecycle.data.generatedAtUtc ?? new Date().toISOString()),
-    completedAtUtc: job.lastRunFinishedAtUtc ?? null,
-    failedAtUtc: job.lastRunStatus === "Failed" ? String(job.lastRunFinishedAtUtc ?? lifecycle.data.generatedAtUtc ?? new Date().toISOString()) : null,
-    failureReason: job.lastRunStatus === "Failed" ? String(job.operationalRole ?? "Operation did not complete.") : null,
-    correlationId: null,
-    requestedBy: "PlantProcess IQ Demo",
-    metadataJson: JSON.stringify({
-      source: "MaterialAnalyticsDemoLifecyclePage",
-      jobId: job.jobId ?? null,
-      jobCode: job.jobCode ?? null,
-      jobType: job.jobType ?? null,
-      generatedAtUtc: lifecycle.data.generatedAtUtc,
-    }),
-  }));
-
-  return (
-    <PageShell
-      task="PPIQ-T041"
-      title="Demo Lifecycle"
-      subtitle="Connector-to-ML-result workflow uses Standard* primitives, reset confirmation modal, live demo status card and the wired OperationProgressPanel."
-      actions={
-        <>
-          <StandardButton variant="secondary" leadingIcon={<RefreshCw size={16} />} onClick={lifecycle.reload} isLoading={lifecycle.isLoading}>Refresh demo</StandardButton>
-          <StandardButton variant="danger" leadingIcon={<RefreshCw size={16} />} onClick={() => setResetOpen(true)}>Reset Demo</StandardButton>
-        </>
-      }
-    >
-      <div className="productModule56-grid productModule56-grid--4">
-        <Metric title="Current Step" value={lifecycle.data.steps.find((step) => step.status !== "Completed")?.title ?? "Ready"} note="Demo workflow state" />
-        <Metric title="Last Snapshot" value={text(lifecycle.data.stagingSummary.lastSnapshotUtc, "Pending")} note="Staging and mapping status" />
-        <Metric title="Persona" value={lifecycle.data.demoMode} note="Active demo mode" />
-        <Metric title="License" value={text(lifecycle.data.license.displayName ?? lifecycle.data.license.tier, "Demo")} note="Current tier" />
-      </div>
-
-      <StandardDataState state={lifecycle} title="Demo lifecycle">
-        <StandardTable columns={stepColumns} data={lifecycle.data.steps as unknown as Row[]} getRowKey={(row, i) => text(row.code, "step-" + i)} enableFiltering enableExport enableDensityToggle />
-      </StandardDataState>
-
-      <OperationProgressPanel rows={progressRows} onRefresh={lifecycle.reload} />
-
-      <StandardModal
-        open={resetOpen}
-        title="Reset demo environment"
-        description="This resets demo lifecycle state and refreshes dashboard evidence. Canonical data remains governed by backend scripts."
-        onClose={() => setResetOpen(false)}
-        footer={
-          <>
-            <StandardButton variant="ghost" onClick={() => setResetOpen(false)}>Cancel</StandardButton>
-            <StandardButton variant="danger" leadingIcon={<RefreshCw size={16} />} isLoading={isResetting} onClick={resetDemo}>Confirm reset</StandardButton>
-          </>
-        }
-      >
-        <p>Reset is intended for customer demo rehearsal. It should not be used as MES, L2, SCADA, or production-control behavior.</p>
-      </StandardModal>
     </PageShell>
   );
 }

@@ -1,0 +1,87 @@
+/* Commercial License workspace (recovered from the retired demo-lifecycle stylesheet, classes renamed) */
+
+.commercial-license-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 24px;
+}
+
+.license-hero-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 24px;
+  padding: 28px;
+  border: 1px solid rgba(0, 212, 255, 0.24);
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at top left, rgba(0, 212, 255, 0.18), transparent 34%),
+    linear-gradient(135deg, rgba(5, 11, 24, 0.96), rgba(11, 23, 48, 0.96));
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.34);
+}
+
+.license-hero-panel--error {
+  border-color: rgba(255, 77, 109, 0.45);
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: var(--color-accent-cyan, var(--ppiq-color-accent-cyan));
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.license-hero-panel h1 {
+  margin: 0;
+  color: var(--color-text-strong, #eaf6ff);
+  font-size: clamp(2rem, 4vw, 3.4rem);
+  line-height: 1;
+}
+
+.hero-copy {
+  max-width: 920px;
+  margin: 16px 0 0;
+  color: var(--color-text-muted, #8ea7c1);
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+.hero-license-card,
+.summary-card,
+.lifecycle-step-card,
+.metric-card,
+.job-chain-card,
+.report-close {
+  border: 1px solid rgba(142, 167, 193, 0.18);
+  border-radius: 22px;
+  background: rgba(11, 23, 48, 0.72);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.hero-license-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px;
+}
+
+.hero-license-card span,
+.hero-license-card small {
+  color: var(--color-text-muted, #8ea7c1);
+}
+
+.hero-license-card strong {
+  color: var(--color-text-strong, #eaf6ff);
+  font-size: 1.6rem;
+}
+
+.license-hero-panel,
+  .two-column {
+    grid-template-columns: 1fr;
+  }
+
+.commercial-license-page {
+    padding: 14px;
+  }

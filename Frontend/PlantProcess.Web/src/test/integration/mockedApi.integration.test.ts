@@ -1,4 +1,4 @@
-﻿import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
 describe("frontend integration with mocked backend", () => {
   it("calls mocked health endpoint", async () => {

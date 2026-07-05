@@ -1,4 +1,4 @@
-﻿import { productApi as legacyApi } from "../productApiClient";
+import { productApi as legacyApi } from "../productApiClient";
 export type * from "../productApiClient";
 
 type LegacyFunction = (...args: any[]) => unknown;

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * components/StateRenderer.tsx
  * --------------------------------------------------------------------
  * One component, three states. Eliminates the most common defect on

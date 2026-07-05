@@ -1,2 +1,2 @@
-﻿export type * from "../productApiClient";
+export type * from "../productApiClient";
 export { adminApi } from "./admin.api";

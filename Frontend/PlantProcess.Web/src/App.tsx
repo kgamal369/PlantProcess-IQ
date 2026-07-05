@@ -43,7 +43,6 @@
 //     /ml-readiness
 
 
-//     /demo-lifecycle
 
 
 //     /admin
@@ -136,7 +135,6 @@ import { DashboardGridLayoutProvider } from "./state/DashboardGridLayoutContext"
 import { DashboardSelectionProvider } from "./state/DashboardSelectionContext";
 
 
-import { DemoModeProvider } from "./state/DemoModeContext";
 
 
 import { ThemeProvider } from "./state/ThemeContext";
@@ -280,19 +278,6 @@ const AdminPreviewPage = lazy(() =>
 
 
 
-const DemoLifecyclePage = lazy(() =>
-
-
-  import("./pages/PlatformOps/DemoLifecyclePage").then((m) => ({
-
-
-    default: m.DemoLifecyclePage,
-
-
-  }))
-
-
-);
 
 
 
@@ -1206,7 +1191,6 @@ function AppRoutes() {
     >
 
 
-      <DemoModeProvider>
 
 
         <DashboardFilterProvider>
@@ -1989,31 +1973,10 @@ function AppRoutes() {
                     />
 
 
-                    {/* Demo lifecycle */}
 
 
-                    <Route
 
 
-                      path="/demo-lifecycle"
-
-
-                      element={withPageBoundary(
-
-
-                        "/demo-lifecycle",
-
-
-                        "Demo lifecycle view is refreshing",
-
-
-                        <DemoLifecyclePage />
-
-
-                      )}
-
-
-                    />
 
 
 
@@ -2351,7 +2314,6 @@ function AppRoutes() {
         </DashboardFilterProvider>
 
 
-      </DemoModeProvider>
 
 
     </ErrorBoundary>

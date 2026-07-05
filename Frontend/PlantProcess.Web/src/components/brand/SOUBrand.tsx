@@ -1,4 +1,4 @@
-﻿import "./sou-brand.css";
+import "./sou-brand.css";
 
 type SOUBrandProps = {
   compact?: boolean;

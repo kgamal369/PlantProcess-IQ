@@ -1,4 +1,4 @@
-﻿// P4 advanced-analysis client — on apiClient (base URL + auth handled centrally).
+// P4 advanced-analysis client — on apiClient (base URL + auth handled centrally).
 import { apiClient } from "./http";
 
 export interface AdvancedFindingDto {
@@ -57,4 +57,4 @@ export const getAnalysisReadiness = (outcomeKey: string, grain = "coil", windowD
 export const getAnalysisReadinessGates = (outcomeKey: string, grain = "coil", windowDays = 30) =>
   apiClient.get<AdvancedReadinessGateSummaryDto>(`${BASE}/readiness/gates?${qs({ outcomeKey, grain, windowDays })}`);
 export const runCorrelation = (outcomeKey: string, grain = "coil", windowDays = 30) =>
-  apiClient.post("/ml/foundation/compute/correlation", { outcomeKey, grain, windowDays });
+  apiClient.post("/ml/foundation/compute/correlation", { outcomeKey, grain, windowDays });

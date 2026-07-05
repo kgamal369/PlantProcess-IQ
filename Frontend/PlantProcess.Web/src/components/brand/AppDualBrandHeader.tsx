@@ -1,4 +1,4 @@
-﻿import { SOUBrand } from "./SOUBrand";
+import { SOUBrand } from "./SOUBrand";
 import { ProductBrand } from "./ProductBrand";
 import "./app-dual-brand-header.css";
 

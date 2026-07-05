@@ -49,22 +49,6 @@ export const workflowActionMatrix: ActionMatrixItem[] = [
     notes: "Schema/query preview should fail safely, never white-screen.",
   },
   {
-    id: "demo-reset",
-    route: "/demo-lifecycle",
-    labelRegex: /reset|seed|golden/i,
-    expectedBehavior: "optional",
-    severity: "critical",
-    notes: "Demo reset should be controlled and visible only in demo context.",
-  },
-  {
-    id: "demo-report",
-    route: "/demo-lifecycle",
-    labelRegex: /report|pdf|export|download/i,
-    expectedBehavior: "visible",
-    severity: "critical",
-    notes: "Customer-grade report action should be visible or route should show controlled unavailable state.",
-  },
-  {
     id: "license-upgrade",
     route: "/commercial-license",
     labelRegex: /upgrade|request|enterprise|pro plus/i,

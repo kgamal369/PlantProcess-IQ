@@ -1,8 +1,17 @@
-import type { DemoConnectorStatus } from "../../api/demo";
+type ConnectorStatusRecord = {
+  providerType: string;
+  displayName: string;
+  implementationStatus: string;
+  licenseStatus: string;
+  isAvailableNow: boolean;
+  isAllowedByLicense: boolean;
+  isSafeForDemo?: boolean;
+  message: string;
+};
 import { useLicense } from "../../state/LicenseContext";
 import "./license-components.css";
 
-const fallbackConnectors: DemoConnectorStatus[] = [
+const fallbackConnectors: ConnectorStatusRecord[] = [
   {
     providerType: "Csv",
     displayName: "CSV Snapshot",
@@ -68,7 +77,7 @@ const fallbackConnectors: DemoConnectorStatus[] = [
 export function ConnectorTruthPanel({
   connectors,
 }: {
-  connectors?: DemoConnectorStatus[];
+  connectors?: ConnectorStatusRecord[];
 }) {
   const { license } = useLicense();
   const rows = connectors?.length ? connectors : fallbackConnectors;

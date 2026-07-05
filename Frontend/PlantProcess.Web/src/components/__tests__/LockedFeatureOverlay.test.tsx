@@ -1,6 +1,7 @@
+
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { LockedFeatureOverlay } from "@/components/demo/LockedFeatureOverlay";
+import { LockedFeatureOverlay } from "@/components/license/LockedFeatureOverlay";
 
 describe("LockedFeatureOverlay", () => {
   it("shows required plan and feature name", () => {
@@ -15,3 +16,4 @@ describe("LockedFeatureOverlay", () => {
     expect(screen.getByText(/Pro Plus/i)).toBeInTheDocument();
   });
 });
+
