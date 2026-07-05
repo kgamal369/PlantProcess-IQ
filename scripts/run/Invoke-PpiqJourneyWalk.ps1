@@ -61,7 +61,7 @@ try {
 # ---- V1-18 connect + select ----
 $profiles = Invoke-RestMethod -Uri ($ApiBase + '/admin/connectors/connection-profiles') -Headers $H
 $list = @($profiles); if ($profiles.PSObject.Properties['items']) { $list = @($profiles.items) }
-$mp = $list | Where-Object { ($_.connectionProfileName + ' ' + $_.connectionProfileCode) -match 'melt|demo' } | Select-Object -First 1
+$mp = $list | Where-Object { ($_.connectionProfileName + ' ' + $_.connectionProfileCode) -match 'Meltshop|melt' } | Select-Object -First 1
 if (-not $mp) { $mp = $list | Select-Object -First 1 }
 Add-Ev 'V1-18' 'Connection profiles listed; profile identified' $(if ($mp) { 'PASS' } else { 'FAIL' }) ('profile=' + $mp.connectionProfileCode)
 if ($mp) {
@@ -126,9 +126,9 @@ Add-Ev 'V1-22' 'HMI: create page/widget, bind, save, reload persists; refresh ch
 # ---- V1-11 blended attribution (pass the FULL uuid; v1 passed the first char) ----
 $uid = (Sql "SELECT id FROM material_units WHERE material_code='C-0044170' LIMIT 1;")
 if ($uid -and $uid.Count -ge 1 -and $uid[0]) {
-    $rows = Sql ("SELECT weight FROM ppiq_v5_blended_attribution_for_child('" + $uid[0] + "'::uuid);")
-    $joined = ($rows -join ',')
-    Add-Ev 'V1-11' ('Blended attribution weights: ' + $joined) $(if (($rows.Count -ge 2) -and ($joined -match '0\.7') -and ($joined -match '0\.3')) { 'PASS' } else { 'EVIDENCE' }) ''
+    $attrRows = Sql ("SELECT * FROM ppiq_v5_blended_attribution_for_child('" + $uid[0] + "'::uuid);")
+    $joined = ($attrRows -join ',')
+    Add-Ev 'V1-11' ('Blended attribution weights: ' + $joined) $(if (($attrRows.Count -ge 2) -and ($joined -match '0\.7') -and ($joined -match '0\.3')) { 'PASS' } else { 'EVIDENCE' }) ''
 } else {
     Add-Ev 'V1-11' 'Blended attribution' 'EVIDENCE' 'C-0044170 absent (meltshop-only DB); needs the full demo fleet for the 70/30 coil.'
 }
@@ -154,12 +154,12 @@ try {
 } catch { Add-Ev 'V1-23' 'advanced results endpoint' 'EVIDENCE' ('needs a resolvable run: ' + $_.Exception.Message) }
 $top = Sql "SELECT feature_key || ' -> ' || outcome_key || ' eff=' || round(effect_size::numeric,3) || ' q=' || coalesce(round(q_value::numeric,4)::text,'-') FROM ml_correlation_results_v2 WHERE method <> 'cramers_v' ORDER BY effect_size DESC NULLS LAST LIMIT 3;"
 Add-Ev 'V1-50' 'Ranked contributors (population/method/q-value present, superheat on top)' $(if (($top -join ' ') -match 'superheat') { 'PASS' } else { 'EVIDENCE' }) ($top -join "`n")
-# ---- V1-42 window-recompute: same job, changed duration window, recomputes ----
-try {
-    $w30 = (Sql "SELECT status || '|' || result_count FROM ppiq_ml_run_learning_job_v1('ML_PROCESS_VS_DEFECT', NULL, 30);")[0]
-    $w60 = (Sql "SELECT status || '|' || result_count FROM ppiq_ml_run_learning_job_v1('ML_PROCESS_VS_DEFECT', NULL, 60);")[0]
-    Add-Ev 'V1-42' ('Window recompute 30d=' + $w30 + '  60d=' + $w60) $(if (($w30 -match 'Completed') -and ($w60 -match 'Completed')) { 'PASS' } else { 'EVIDENCE' }) 'Changed duration window recomputes (acceptance tail).'
-} catch { Add-Ev 'V1-42' 'Window recompute' 'EVIDENCE' $_.Exception.Message }
+# ---- V1-42 window-recompute: same job, changed duration window, recomputes ----
+try {
+    $w30 = (Sql "SELECT status || '|' || result_count FROM ppiq_ml_run_learning_job_v1('ML_PROCESS_VS_DEFECT', NULL, 30);")[0]
+    $w60 = (Sql "SELECT status || '|' || result_count FROM ppiq_ml_run_learning_job_v1('ML_PROCESS_VS_DEFECT', NULL, 60);")[0]
+    Add-Ev 'V1-42' ('Window recompute 30d=' + $w30 + '  60d=' + $w60) $(if (($w30 -match 'Completed') -and ($w60 -match 'Completed')) { 'PASS' } else { 'EVIDENCE' }) 'Changed duration window recomputes (acceptance tail).'
+} catch { Add-Ev 'V1-42' 'Window recompute' 'EVIDENCE' $_.Exception.Message }
 Add-Ev 'V1-23' 'HMI: inspection run renders ranked list + honesty bar; assistant cites (or V1-43 framing)' 'MANUAL' ''
 
 # ---- report ----
