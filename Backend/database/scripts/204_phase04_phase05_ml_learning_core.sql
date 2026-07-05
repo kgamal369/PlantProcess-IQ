@@ -311,6 +311,7 @@ RETURNS TABLE(
 LANGUAGE plpgsql
 AS $$
 DECLARE
+    v_started timestamptz := clock_timestamp();
     v_run_id uuid := gen_random_uuid();
     v_family text;
     v_window_days integer;
@@ -356,7 +357,7 @@ BEGIN
              jsonb_build_object('source', 'ppiq_ml_run_learning_job_v1', 'jobCode', p_job_code));
     EXCEPTION
         WHEN OTHERS THEN
-            NULL;
+            RAISE WARNING 'ppiq_ml_run_learning_job_v1: compute-run ledger insert skipped: %', SQLERRM;
     END;
 
     -- Numeric features against numeric/binary outcomes.
@@ -722,12 +723,19 @@ BEGIN
 
         UPDATE public.ml_correlation_compute_runs
         SET status = 'Completed',
-            finished_at_utc = now(),
-            result_count = v_result_count
+            completed_at_utc = now(),
+            duration_ms = GREATEST(0, (extract(epoch FROM clock_timestamp() - v_started) * 1000)::integer),
+            message = 'deterministic-core (golden dataset): ' || v_result_count || ' findings mirrored to results_v2'
         WHERE id = v_compute_run_id;
     EXCEPTION
         WHEN OTHERS THEN
-            NULL;
+            UPDATE public.ml_correlation_compute_runs
+            SET status = 'Failed',
+                completed_at_utc = now(),
+                duration_ms = GREATEST(0, (extract(epoch FROM clock_timestamp() - v_started) * 1000)::integer),
+                message = left('results_v2 mirror failed: ' || SQLERRM, 500)
+            WHERE id = v_compute_run_id;
+            RAISE WARNING 'ppiq_ml_run_learning_job_v1: results_v2 mirror failed: %', SQLERRM;
     END;
 
     UPDATE public.ml_learning_runs_v1
@@ -759,6 +767,9 @@ BEGIN
         'Completed'::text;
 END;
 $$;
+
+
+
 
 -- ----------------------------------------------------------------------------
 -- 5. Acceptance status

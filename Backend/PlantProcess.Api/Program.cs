@@ -124,7 +124,11 @@ using PlantProcess.Application.Licensing.Interfaces;
 
 var logDirectory = Path.Combine(AppContext.BaseDirectory, "logs");
 
-var logFilePath = Path.Combine(logDirectory, "plantprocess-api-.log");
+var logFilePath = Path.Combine(logDirectory, "systemlog_.log");
+var jobLogFilePath = Path.Combine(logDirectory, "joblog_.log");
+var fileMinLevel = string.Equals(Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT"), "Development", StringComparison.OrdinalIgnoreCase)
+    ? LogEventLevel.Verbose
+    : LogEventLevel.Information;
 
 
 
@@ -176,16 +180,25 @@ Log.Logger = new LoggerConfiguration()
 
         path: logFilePath,
 
-        rollingInterval: RollingInterval.Day,
+        rollingInterval: RollingInterval.Hour,
 
-        retainedFileCountLimit: 30,
+        retainedFileCountLimit: 336,
 
         shared: true,
 
         outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} {Level:u3}] [{MachineName}] [{AppVersion}] [{EnvironmentName}] {CorrelationId,-32} {Message:lj}{NewLine}{Properties:j}{NewLine}{Exception}",
 
-        restrictedToMinimumLevel: LogEventLevel.Verbose)
+        restrictedToMinimumLevel: fileMinLevel)
 
+    .WriteTo.Logger(joblogSink => joblogSink
+        .Filter.ByIncludingOnly(logEvent => logEvent.Properties.ContainsKey("JobLog"))
+        .WriteTo.File(
+            path: jobLogFilePath,
+            rollingInterval: RollingInterval.Hour,
+            retainedFileCountLimit: 336,
+            shared: true,
+            outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} {Level:u3}] [{JobType}] {Message:lj}{NewLine}",
+            restrictedToMinimumLevel: LogEventLevel.Information))
     .CreateLogger();
 
 
@@ -312,8 +325,10 @@ builder.Services.AddScoped<PlantProcess.Api.Analytics.KpiEvaluationService>();
 
 builder.Services.AddHostedService<PlantProcess.Api.Hosting.ReadModelRefreshHostedService>();
 builder.Services.AddHostedService<PlantProcess.Api.Security.FirstRunProvisioningHostedService>();
+builder.Services.AddHostedService<PlantProcess.Api.Hosting.ComputeRunReaperHostedService>();
 
     builder.Services.AddScoped<IAuditLogService, AuditLogService>();
+    builder.Services.AddScoped<PlantProcess.Api.Observability.IJobLogService, PlantProcess.Api.Observability.JobLogService>();
 
 builder.Services.AddScoped(typeof(PlantProcess.Api.Security.IAuditLogger<>), typeof(PlantProcess.Api.Security.NoopAuditLogger<>));
 
