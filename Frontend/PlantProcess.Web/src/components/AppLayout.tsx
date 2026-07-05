@@ -30,6 +30,7 @@ import { apiClient } from "../api/http";
 import { useAuth } from "../state/AuthContext";
 import { usePlantProcessTheme } from "../state/ThemeContext";
 import { AppToaster } from "../notifications/Toaster";
+import { LogPanel } from "./logging/LogPanel";
 
 import "./AppLayout.css";
 import { StandardButton } from "@/components/standard";
@@ -266,6 +267,8 @@ export function AppLayout() {
         <div className="piq-workspace">
           <Outlet />
         </div>
+
+        <LogPanel />
       </main>
     </div>
   );
