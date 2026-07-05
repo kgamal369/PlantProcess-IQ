@@ -34,14 +34,18 @@ LANGUAGE plpgsql
 AS $$
 DECLARE
     v_count integer := 0;
+    v_delta integer := 0;
 BEGIN
     UPDATE public.ml_correlation_compute_runs r
        SET status = 'Failed',
            completed_at_utc = now(),
-           duration_ms = GREATEST(
-                0,
-                FLOOR(EXTRACT(EPOCH FROM (now() - r.started_at_utc)) * 1000)::integer
-           ),
+           duration_ms = LEAST(
+                2147483647,
+                GREATEST(
+                    0,
+                    FLOOR(EXTRACT(EPOCH FROM (now() - r.started_at_utc)) * 1000)::bigint
+                )
+           )::integer,
            message = COALESCE(NULLIF(r.message, ''), '') ||
                      CASE WHEN COALESCE(NULLIF(r.message, ''), '') = '' THEN '' ELSE ' | ' END ||
                      'timeout'
@@ -50,15 +54,19 @@ BEGIN
        AND cfg.engine_key = COALESCE(NULLIF(r.engine_key, ''), 'default')
        AND r.started_at_utc < now() - make_interval(mins => cfg.max_runtime_minutes);
 
-    GET DIAGNOSTICS v_count = ROW_COUNT;
+    GET DIAGNOSTICS v_delta = ROW_COUNT;
+    v_count := v_count + v_delta;
 
     UPDATE public.ml_correlation_compute_runs r
        SET status = 'Failed',
            completed_at_utc = now(),
-           duration_ms = GREATEST(
-                0,
-                FLOOR(EXTRACT(EPOCH FROM (now() - r.started_at_utc)) * 1000)::integer
-           ),
+           duration_ms = LEAST(
+                2147483647,
+                GREATEST(
+                    0,
+                    FLOOR(EXTRACT(EPOCH FROM (now() - r.started_at_utc)) * 1000)::bigint
+                )
+           )::integer,
            message = COALESCE(NULLIF(r.message, ''), '') ||
                      CASE WHEN COALESCE(NULLIF(r.message, ''), '') = '' THEN '' ELSE ' | ' END ||
                      'timeout'
@@ -72,7 +80,8 @@ BEGIN
             mins => (SELECT max_runtime_minutes FROM public.ppiq_correlation_run_timeout_config WHERE engine_key = 'default')
        );
 
-    GET DIAGNOSTICS v_count = v_count + ROW_COUNT;
+    GET DIAGNOSTICS v_delta = ROW_COUNT;
+    v_count := v_count + v_delta;
 
     RETURN QUERY SELECT v_count;
 END;
@@ -83,10 +92,13 @@ $$;
 UPDATE public.ml_correlation_compute_runs r
    SET status = 'Failed',
        completed_at_utc = COALESCE(r.completed_at_utc, now()),
-       duration_ms = GREATEST(
-            0,
-            FLOOR(EXTRACT(EPOCH FROM (now() - r.started_at_utc)) * 1000)::integer
-       ),
+       duration_ms = LEAST(
+            2147483647,
+            GREATEST(
+                0,
+                FLOOR(EXTRACT(EPOCH FROM (now() - r.started_at_utc)) * 1000)::bigint
+            )
+       )::integer,
        message = COALESCE(NULLIF(r.message, ''), '') ||
                  CASE WHEN COALESCE(NULLIF(r.message, ''), '') = '' THEN '' ELSE ' | ' END ||
                  'timeout-backfill'
