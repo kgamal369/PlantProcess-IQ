@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using PlantProcess.Application.Licensing.Interfaces;
 using PlantProcess.Application.Integration.Connectors;
 using PlantProcess.Infrastructure.Persistence;
-
+
 using PlantProcess.Api.ErrorHandling;
 namespace PlantProcess.Api.Endpoints.Admin;
 
@@ -49,6 +49,7 @@ public static class ConnectorAdminEndpoints
             .WithSummary("Deactivate connection profile");
 
         group.MapPost("/connection-profiles/{id:guid}/test", TestConnectionProfileAsync)
+            .AddEndpointFilter(new PlantProcess.Api.Observability.JobLogEndpointFilter("ConnectorTest"))
             .WithSummary("Test connection profile");
 
         group.MapGet("/datasets", GetDatasetsAsync)

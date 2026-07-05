@@ -34,6 +34,10 @@ public static class AdminEndpoints
             .WithSummary("Get Admin overview")
             .WithDescription("Returns admin-level status for source systems, staging, mappings, dashboards, jobs, and canonical data.");
 
+        group.MapGet("/job-logs", GetJobLogsAsync)
+            .WithSummary("Get job event logs")
+            .WithDescription("Customer-oriented job event stream with jobType / jobName / severity / day filters (paged, max 500 per page).");
+
         group.MapGet("/site-identity", GetSiteIdentityAsync)
             .WithSummary("Get active site identity")
             .WithDescription("Returns the configured plant/site display name. Neutral fallback is Plant.");
@@ -56,6 +60,82 @@ public static class AdminEndpoints
         return app;
     }
 
+
+    private static async Task<IResult> GetJobLogsAsync(
+        string? jobType,
+        string? jobName,
+        string? severity,
+        DateOnly? day,
+        int? page,
+        PlantProcessDbContext dbContext,
+        CancellationToken cancellationToken)
+    {
+        var pageSize = 500;
+        var pageIndex = Math.Max(0, (page ?? 1) - 1);
+
+        var sql =
+            "SELECT id, occurred_at_utc, job_type, job_name, run_id, severity, message, context::text AS context, site_code " +
+            "FROM public.job_log WHERE 1 = 1";
+        var connection = dbContext.Database.GetDbConnection();
+        if (connection.State != System.Data.ConnectionState.Open)
+        {
+            await connection.OpenAsync(cancellationToken);
+        }
+
+        await using var command = connection.CreateCommand();
+        void AddParam(string name, object value)
+        {
+            var p = command.CreateParameter();
+            p.ParameterName = name;
+            p.Value = value;
+            command.Parameters.Add(p);
+        }
+
+        if (!string.IsNullOrWhiteSpace(jobType)) { sql += " AND job_type = @jobType"; AddParam("jobType", jobType); }
+        if (!string.IsNullOrWhiteSpace(jobName)) { sql += " AND job_name ILIKE @jobName"; AddParam("jobName", "%" + jobName + "%"); }
+        if (!string.IsNullOrWhiteSpace(severity)) { sql += " AND severity = @severity"; AddParam("severity", severity); }
+        if (day.HasValue)
+        {
+            sql += " AND occurred_at_utc >= @dayStart AND occurred_at_utc < @dayEnd";
+            var start = day.Value.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
+            AddParam("dayStart", start);
+            AddParam("dayEnd", start.AddDays(1));
+        }
+
+        sql += " ORDER BY occurred_at_utc DESC LIMIT " + pageSize + " OFFSET " + (pageIndex * pageSize);
+        command.CommandText = sql;
+
+        var entries = new List<JobLogEntryResponse>();
+        await using (var reader = await command.ExecuteReaderAsync(cancellationToken))
+        {
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                entries.Add(new JobLogEntryResponse(
+                    reader.GetGuid(0),
+                    reader.GetDateTime(1),
+                    reader.GetString(2),
+                    reader.GetString(3),
+                    reader.IsDBNull(4) ? null : reader.GetGuid(4),
+                    reader.GetString(5),
+                    reader.GetString(6),
+                    reader.GetString(7),
+                    reader.IsDBNull(8) ? null : reader.GetString(8)));
+            }
+        }
+
+        return Results.Ok(new { page = pageIndex + 1, pageSize, entries });
+    }
+
+    private sealed record JobLogEntryResponse(
+        Guid Id,
+        DateTime OccurredAtUtc,
+        string JobType,
+        string JobName,
+        Guid? RunId,
+        string Severity,
+        string Message,
+        string Context,
+        string? SiteCode);
 
     private static async Task<IResult> GetSiteIdentityAsync(
         PlantProcessDbContext dbContext,

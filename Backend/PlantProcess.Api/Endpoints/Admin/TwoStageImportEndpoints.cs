@@ -1,4 +1,4 @@
-﻿using System.Data;
+using System.Data;
 using System.Data.Common;
 using Microsoft.EntityFrameworkCore;
 using PlantProcess.Infrastructure.Persistence;
@@ -24,12 +24,15 @@ public static class TwoStageImportEndpoints
             .WithSummary("Get recent two-stage import runs");
 
         group.MapPost("/stage1/run", RunStage1Async)
+            .AddEndpointFilter(new PlantProcess.Api.Observability.JobLogEndpointFilter("Import-Stage1"))
             .WithSummary("Run Stage 1 delta import for one registry or all registries");
 
         group.MapPost("/stage2/run", RunStage2Async)
+            .AddEndpointFilter(new PlantProcess.Api.Observability.JobLogEndpointFilter("Import-Stage2"))
             .WithSummary("Run Stage 2 canonical refresh for one registry or all registries");
 
         group.MapPost("/run-full-cycle", RunFullCycleAsync)
+            .AddEndpointFilter(new PlantProcess.Api.Observability.JobLogEndpointFilter("Import-FullCycle"))
             .WithSummary("Run Stage 1 then Stage 2 for all active registries");
 
         group.MapPost("/provision-baseline", ProvisionBaselineAsync)

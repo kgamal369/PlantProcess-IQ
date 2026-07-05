@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Npgsql;
@@ -15,8 +15,8 @@ public static class AdvancedResultsEndpoints
     {
         var group = app.MapGroup("/api/analytics/advanced")
             .WithTags("Analytics Advanced")
-            .RequireAuthorization();
-        group.MapGet("/readiness", async (string outcomeKey, string? grain, int? windowDays, System.Guid? tenantId, PlantProcess.Application.Analytics.Advanced.IAnalysisReadinessService readiness, System.Threading.CancellationToken ct) =>
+            .RequireAuthorization();
+        group.MapGet("/readiness", async (string outcomeKey, string? grain, int? windowDays, System.Guid? tenantId, PlantProcess.Application.Analytics.Advanced.IAnalysisReadinessService readiness, System.Threading.CancellationToken ct) =>
             Results.Ok(await readiness.EvaluateAsync(new PlantProcess.Application.Analytics.Advanced.AdvancedAnalysisRequest(outcomeKey, string.IsNullOrWhiteSpace(grain) ? "coil" : grain!, windowDays ?? 3650, tenantId ?? PlantProcess.Application.Analytics.Advanced.AdvancedDefaults.DemoTenant), ct)));
 
         // PPIQ_REALIZATION_T045_READY_PARTIAL_BLOCKED_GATES: canonical API surface for HMI readiness badges.
@@ -49,7 +49,7 @@ public static class AdvancedResultsEndpoints
             if (resolvedRun is null)
             {
                 await using var rc = ds.CreateCommand(
-                    "SELECT id FROM public.ml_correlation_compute_runs WHERE engine_key IN ('dotnet-analytics-core-v1','managed-stat-v1') " +
+                    "SELECT id FROM public.ml_correlation_compute_runs WHERE engine_key IN ('dotnet-analytics-core-v1','managed-stat-v1','ppiql-deterministic-core-v1') " +
                     (string.IsNullOrWhiteSpace(outcomeKey) ? "" : "AND target_outcome_key = @o ") +
                     "ORDER BY completed_at_utc DESC NULLS LAST LIMIT 1");
                 if (!string.IsNullOrWhiteSpace(outcomeKey)) rc.Parameters.AddWithValue("o", outcomeKey!);
@@ -88,8 +88,8 @@ public static class AdvancedResultsEndpoints
                     stabilityConsistency = row.GetValueOrDefault("stability_score"),
                     isStable = row.GetValueOrDefault("is_stable"),
                     stratum,
-                    survivesStratification = EvidenceBool(row, "survivesStratification", true),
-                    significant = EvidenceBool(row, "significant", false),
+                    survivesStratification = EvidenceBool(row, "survivesStratification", true),
+                    significant = EvidenceBool(row, "significant", false),
                     provenanceHandle = EvidenceString(row, "provenanceHandle"),
                     windowDays = row.GetValueOrDefault("window_days"),
                     evidence = row.GetValueOrDefault("evidence_json")?.ToString(),
@@ -117,11 +117,11 @@ public static class AdvancedResultsEndpoints
               using var d = System.Text.Json.JsonDocument.Parse(t);
               return d.RootElement.TryGetProperty(key, out var v) ? v.GetString() : null; }
         catch { return null; }
-    }
-
+    }
+
     private static async Task<List<Dictionary<string, object?>>> ReadAsync(
         NpgsqlDataSource ds, string sql, (string Name, object Value)? p, CancellationToken ct)
-    {
+    {
 
 
         var rows = new List<Dictionary<string, object?>>();
@@ -137,8 +137,8 @@ public static class AdvancedResultsEndpoints
         }
         return rows;
     }
-}
-
-
-
-
+}
+
+
+
+
