@@ -261,32 +261,64 @@ function productIcon(code: ProductCode): ReactNode {
 function Layout({ children }: { children: ReactNode }) {
   return (
     <div className="site-shell phase10-shell">
-      <header className="site-header phase10-header">
-        <NavLink to="/" className="brand-link" aria-label="PlantProcess IQ home">
-          <span className="sou-mark">
+      <header className="site-header phase10-header website-premium-header" data-testid="website-premium-header">
+        <NavLink to="/" className="brand-link website-brand-link" aria-label="PlantProcess IQ home">
+          <span className="sou-mark website-brand-mark">
             <img src="/brand/sou-icon.svg" alt="SOU Industrial Software" width={38} height={38} />
           </span>
-          <span className="brand-text">
-            <strong>PlantProcess IQ</strong>
-            <small>SOU Industrial Software</small>
+          <span className="brand-text website-brand-text">
+            <strong className="brand-product-name">PlantProcess IQ</strong>
+            <small className="brand-company-name">SOU Industrial Software</small>
           </span>
         </NavLink>
 
-        <nav className="site-nav phase10-nav" aria-label="Main website navigation">
-          <NavLink to="/">Home</NavLink>
-          <NavLink to="/product">PPIQ</NavLink>
-          <NavLink to="/products/mes">MES</NavLink>
-          <NavLink to="/products/qes">QES</NavLink>
-          <NavLink to="/products/yard">Yard</NavLink>
-          <NavLink to="/products/energy">Energy</NavLink>
-          <NavLink to="/pricing">Pricing</NavLink>
-          <NavLink to="/security">Security</NavLink>
-          <NavLink to="/contact">Contact</NavLink>
+        <nav className="site-nav phase10-nav website-main-nav" aria-label="Main website navigation">
+          <NavLink to="/product" className="site-nav-item">
+            Product
+          </NavLink>
+
+          <div className="site-nav-menu" data-testid="website-solutions-menu">
+            <button className="site-nav-item site-nav-trigger" type="button" aria-haspopup="true">
+              Solutions
+              <span className="site-nav-trigger-caret" aria-hidden="true">⌄</span>
+            </button>
+
+            <div className="site-nav-popover" role="menu" aria-label="SOU product solutions">
+              <NavLink to="/products/mes" className="solution-link" role="menuitem">
+                <strong>SOU MES</strong>
+                <span>Execution backbone and production visibility</span>
+              </NavLink>
+              <NavLink to="/products/qes" className="solution-link" role="menuitem">
+                <strong>SOU QES</strong>
+                <span>Inspection, quality execution, and decision history</span>
+              </NavLink>
+              <NavLink to="/products/yard" className="solution-link" role="menuitem">
+                <strong>Yard & Warehouse</strong>
+                <span>Material location, movements, and bottlenecks</span>
+              </NavLink>
+              <NavLink to="/products/energy" className="solution-link" role="menuitem">
+                <strong>Energy Management</strong>
+                <span>Process-aware consumption and outlier intelligence</span>
+              </NavLink>
+            </div>
+          </div>
+
+          <NavLink to="/pricing" className="site-nav-item">
+            Pricing
+          </NavLink>
+          <NavLink to="/security" className="site-nav-item">
+            Security
+          </NavLink>
+          <NavLink to="/contact" className="site-nav-item">
+            Contact
+          </NavLink>
         </nav>
 
-        <a className="website-button website-button--primary header-cta" href="#request-demo">
-          Request demo
-        </a>
+        <div className="header-actions website-header-actions">
+          <a className="website-button website-button--primary header-cta website-header-cta" href="#request-demo">
+            Request demo
+          </a>
+        </div>
       </header>
 
       <main>{children}</main>

@@ -22,6 +22,12 @@ services:
       - plantprocess-private
       - ppiq-edge
 
+  plantprocess-website:
+    restart: unless-stopped
+    networks:
+      - plantprocess-private
+      - ppiq-edge
+
 networks:
   ppiq-edge:
     external: true

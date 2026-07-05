@@ -42,7 +42,7 @@
     }
 
     handle_path /website/* {
-        reverse_proxy {$PPIQ_WEBSITE_UPSTREAM:plantprocess-web:80}
+        reverse_proxy {$PPIQ_WEBSITE_UPSTREAM:plantprocess-website:80}
     }
 
     handle {
@@ -65,6 +65,6 @@
     }
 
     handle {
-        reverse_proxy {$PPIQ_WEBSITE_UPSTREAM:plantprocess-web:80}
+        reverse_proxy {$PPIQ_WEBSITE_UPSTREAM:plantprocess-website:80}
     }
 }

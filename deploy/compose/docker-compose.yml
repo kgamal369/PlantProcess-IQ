@@ -79,6 +79,18 @@ services:
     networks:
       - plantprocess-private
 
+
+  plantprocess-website:
+    image: ${PPIQ_WEBSITE_IMAGE:-plantprocess-website:local}
+    build:
+      context: ../../Website/PlantProcess.Website
+      dockerfile: Dockerfile
+      args:
+        VITE_WEBSITE_API_BASE_URL: ${VITE_WEBSITE_API_BASE_URL:-}
+    container_name: plantprocess-website
+    restart: unless-stopped
+    networks:
+      - plantprocess-private
 networks:
   plantprocess-private:
     driver: bridge
