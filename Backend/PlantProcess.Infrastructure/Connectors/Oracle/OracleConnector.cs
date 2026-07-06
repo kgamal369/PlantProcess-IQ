@@ -1,4 +1,4 @@
-﻿using System.Data;
+using System.Data;
 using System.Globalization;
 using System.Text.Json;
 using Oracle.ManagedDataAccess.Client;
@@ -373,8 +373,10 @@ public sealed class OracleConnector :
         if (string.IsNullOrWhiteSpace(serviceName) && string.IsNullOrWhiteSpace(sid))
             throw new InvalidOperationException("Oracle connection requires DatabaseName/serviceName or sid in ConnectionOptionsJson.");
 
-        var username = ResolveSecretValue(profile.SecretReference, "Oracle username");
-        var password = ResolveSecretValue($"{profile.SecretReference}_PASSWORD", "Oracle password");
+        var creds = PlantProcess.Infrastructure.Connectors.ConnectorCredentialResolver.Resolve(
+            profile.ConnectionOptionsJson, profile.SecretReference, "Oracle");
+        var username = creds.Username;
+        var password = creds.Password;
 
         var descriptor =
             !string.IsNullOrWhiteSpace(serviceName)

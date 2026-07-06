@@ -1,4 +1,4 @@
-﻿// ============================================================
+// ============================================================
 // FILE: Backend/PlantProcess.Infrastructure/Connectors/SqlServer/MsSqlConnector.cs
 //
 // Full SQL Server / MSSQL connector â€” matches the PostgreSqlConnector
@@ -309,13 +309,10 @@ public sealed class MsSqlConnector : IDataSourceConnector, ISchemaReader, IDataS
             throw new InvalidOperationException("SQL Server DatabaseName is required.");
 
         // Resolve credentials: prefer env-var secrets over stored values
-        var username = Environment.GetEnvironmentVariable(profile.SecretReference ?? "")
-            ?? profile.SecretReference;
-
-        var password =
-            Environment.GetEnvironmentVariable($"{profile.SecretReference}_PASSWORD") ??
-            Environment.GetEnvironmentVariable("PLANTPROCESS_SQLSERVER_PASSWORD") ??
-            "";
+        var creds = PlantProcess.Infrastructure.Connectors.ConnectorCredentialResolver.Resolve(
+            profile.ConnectionOptionsJson, profile.SecretReference, "SqlServer");
+        var username = creds.Username;
+        var password = creds.Password;
 
         var builder = new SqlConnectionStringBuilder
         {

@@ -1,4 +1,4 @@
-﻿// ============================================================
+// ============================================================
 // FILE: Backend/PlantProcess.Infrastructure/Connectors/MySql/MySqlConnector.cs
 //
 // Full MySQL / MariaDB connector â€” matches the PostgreSqlConnector
@@ -310,14 +310,10 @@ public sealed class MySqlDataConnector : IDataSourceConnector, ISchemaReader, ID
             throw new InvalidOperationException("MySQL DatabaseName is required.");
 
         // Resolve credentials from env-var secrets
-        var username = Environment.GetEnvironmentVariable(profile.SecretReference ?? "")
-            ?? profile.SecretReference
-            ?? "root";
-
-        var password =
-            Environment.GetEnvironmentVariable($"{profile.SecretReference}_PASSWORD") ??
-            Environment.GetEnvironmentVariable("PLANTPROCESS_MYSQL_PASSWORD") ??
-            "";
+        var creds = PlantProcess.Infrastructure.Connectors.ConnectorCredentialResolver.Resolve(
+            profile.ConnectionOptionsJson, profile.SecretReference, "MySQL");
+        var username = creds.Username;
+        var password = creds.Password;
 
         var builder = new MySqlConnectionStringBuilder
         {

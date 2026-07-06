@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using System.Text.Json;
 using Npgsql;
 using PlantProcess.Application.Integration.Contracts.Dtos;
@@ -254,13 +254,10 @@ public sealed class PostgreSqlConnector : IDataSourceConnector, ISchemaReader, I
         if (string.IsNullOrWhiteSpace(profile.DatabaseName))
             throw new InvalidOperationException("PostgreSQL DatabaseName is required.");
 
-        var username = Environment.GetEnvironmentVariable(profile.SecretReference ?? "")
-            ?? profile.SecretReference;
-
-        var password =
-            Environment.GetEnvironmentVariable($"{profile.SecretReference}_PASSWORD") ??
-            Environment.GetEnvironmentVariable("PLANTPROCESS_POSTGRES_PASSWORD") ??
-            "";
+        var creds = PlantProcess.Infrastructure.Connectors.ConnectorCredentialResolver.Resolve(
+            profile.ConnectionOptionsJson, profile.SecretReference, "PostgreSQL");
+        var username = creds.Username;
+        var password = creds.Password;
 
         var builder = new NpgsqlConnectionStringBuilder
         {

@@ -110,3 +110,18 @@ HSM	        hsm-oracle	            1521	FREEPDB1
 PKL	        pkl-mssql	              1433	pkl
 Downtime	  downtime-mysql	        3306	downtime
 Parsytec	  parsytec-mysql	        3306	parsytec
+
+
+
+running 
+Terminal 0 — source fleet 
+cd C:\Workspace\PlantProcess-IQ
+docker ps --format '{{.Names}}'
+
+Terminal 1 — backend API 
+cd C:\Workspace\PlantProcess-IQ
+.\scripts\run\start-api.ps1 -Profile local
+
+Terminal 2 — frontend web 
+cd C:\Workspace\PlantProcess-IQ
+.\scripts\run\start-web.ps1 -Profile local
