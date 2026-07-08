@@ -103,3 +103,9 @@ deploy/.ppiq-backups/
 # --- PPIQ: review/export dumps & backups (never commit) ---
 deploy/.ppiq-backups/
 Documentation/hygiene/*_DryRun_*.json
+
+ladder.txt
+loadA.sql.gz
+sessA-recon.txt
+*.20260609_*
+Apply-*.ps1
