@@ -158,6 +158,12 @@ import { StandardButton } from "@/components/standard";
 
 
 
+const SourceImportPrepPage = lazy(() =>
+  import("./pages/SourceImportPrepPage").then((m) => ({ default: m.default }))
+);
+const AnalysisJobConfigPage = lazy(() =>
+  import("./pages/AnalysisJobConfigPage").then((m) => ({ default: m.default }))
+);
 const DashboardPage = lazy(() =>
 
 
@@ -1209,6 +1215,26 @@ function AppRoutes() {
 
 
                   <Route element={<AppLayout />}>
+                    {/* M1-03 Surface-1: visual import-prep on live discovery */}
+                    <Route
+                      path="/data-integration/prepare"
+                      element={withPageBoundary(
+                        "/data-integration/prepare",
+                        "Import preparation is refreshing",
+                        <SourceImportPrepPage />
+                      )}
+                    />
+
+                    {/* M1-05 Surface-3: analysis-job definition on live data */}
+                    <Route
+                      path="/investigate/analysis-jobs"
+                      element={withPageBoundary(
+                        "/investigate/analysis-jobs",
+                        "Analysis job configuration is refreshing",
+                        <AnalysisJobConfigPage />
+                      )}
+                    />
+
 
 
                     {/* P4 Ãƒâ€šÃ‚Â§7.4 advanced analysis + inspection workflow */}

@@ -1,4 +1,5 @@
 import { API_BASE_URL } from "./apiConfig";
+import type { SourceTableRecord, SourceColumnRecord, RegisterSourceTableRequest, RegisterSourceTableResult, AnalysisJobDefinitionOptions, AnalysisJobListResponse, AnalysisJobDefinitionRow, CreateAnalysisJobDefinitionRequest, UpdateAnalysisJobDefinitionRequest, RunAnalysisJobRequest, AnalysisJobRunResponse, AnalysisJobResultsResponse, RuleCorrelationRunRequest, RuleCorrelationRunResponse } from "./product-core/shared-types";
 import {
   buildQuery,
   deleteJson,
@@ -381,6 +382,49 @@ export const productApi = {
       `/admin/connectors/connection-profiles/${id}/test`,
       {}
     ),
+
+  // ---- M1-04/M1-03 Surface-1: live source discovery + column-aware registration ----
+  listSourceTables: (connectionProfileId: string) =>
+    getJson<SourceTableRecord[]>(
+      `/admin/connectors/connection-profiles/${connectionProfileId}/tables`
+    ),
+
+  listSourceColumns: (connectionProfileId: string, schemaName: string, tableName: string) =>
+    getJson<SourceColumnRecord[]>(
+      `/admin/connectors/connection-profiles/${connectionProfileId}/tables/${encodeURIComponent(schemaName)}/${encodeURIComponent(tableName)}/columns`
+    ),
+
+  registerSourceTable: (connectionProfileId: string, request: RegisterSourceTableRequest) =>
+    postJson<RegisterSourceTableResult>(
+      `/admin/connectors/connection-profiles/${connectionProfileId}/register`,
+      request
+    ),
+
+  // ---- M1-05 Surface-3: analysis-job definitions over live data ----
+  getAnalysisJobDefinitionOptions: () =>
+    getJson<AnalysisJobDefinitionOptions>(`/api/analysis-jobs/definition-options`),
+
+  listAnalysisJobDefinitions: () =>
+    getJson<AnalysisJobListResponse>(`/api/analysis-jobs`),
+
+  getAnalysisJobDefinition: (code: string) =>
+    getJson<AnalysisJobDefinitionRow>(`/api/analysis-jobs/${encodeURIComponent(code)}`),
+
+  createAnalysisJobDefinition: (request: CreateAnalysisJobDefinitionRequest) =>
+    postJson<AnalysisJobDefinitionRow>(`/api/analysis-jobs`, request),
+
+  updateAnalysisJobDefinition: (code: string, request: UpdateAnalysisJobDefinitionRequest) =>
+    putJson<AnalysisJobDefinitionRow>(`/api/analysis-jobs/${encodeURIComponent(code)}`, request),
+
+  runAnalysisJobDefinition: (code: string, request: RunAnalysisJobRequest) =>
+    postJson<AnalysisJobRunResponse>(`/api/analysis-jobs/${encodeURIComponent(code)}/run`, request),
+
+  getAnalysisJobDefinitionResults: (code: string) =>
+    getJson<AnalysisJobResultsResponse>(`/api/analysis-jobs/${encodeURIComponent(code)}/results`),
+
+  runAnalysisRuleCorrelation: (request: RuleCorrelationRunRequest) =>
+    postJson<RuleCorrelationRunResponse>(`/analytics/phase2/rule-correlation/run`, request),
+
 
   activateConnectionProfile: (id: string) =>
     patchJson<ConnectionProfileRecord>(

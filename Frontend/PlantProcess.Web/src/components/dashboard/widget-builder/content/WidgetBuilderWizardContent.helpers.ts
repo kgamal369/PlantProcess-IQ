@@ -100,7 +100,7 @@ export function generateWidgetCode(title: string) {
   return `${slug || "WIDGET"}_${Date.now()}`;
 }
 
-function parseJson<T>(value: string | null | undefined, fallback: T): T {
+export function parseJson<T>(value: string | null | undefined, fallback: T): T {
   if (!value) return fallback;
 
   try {

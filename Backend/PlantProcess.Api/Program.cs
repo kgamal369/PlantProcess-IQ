@@ -1042,6 +1042,8 @@ app.MapConnectorSchemaDriftEndpoints();
 
     app.MapPhase2InvestigationEndpoints();
 
+    app.MapAnalysisJobDefinitionEndpoints();
+
     app.MapPhase2PilotReadinessEndpoints();
 
     app.MapGenericSchemaMappingEndpoints();
