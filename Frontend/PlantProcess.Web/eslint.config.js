@@ -53,10 +53,6 @@ export default defineConfig([
     rules: {
       "@typescript-eslint/no-explicit-any": "warn",
 
-      // CI-unblock (stopgap): HMR-only + transitional @ts-nocheck rules kept VISIBLE as warnings, not build-fatal.
-      "react-refresh/only-export-components": "warn",
-      "@typescript-eslint/ban-ts-comment": "warn",
-
       // Legacy/frontier code still has unused imports/locals. Keep visible,
       // but do not block the Phase 3/4 Material Search hardening validation.
       "@typescript-eslint/no-unused-vars": [

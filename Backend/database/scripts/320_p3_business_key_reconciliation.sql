@@ -1,13 +1,15 @@
 -- =============================================================================
--- 320_p3_business_key_reconciliation.sql       (PPIQ-301, collision-free)
--- Uses ppiq_bk_norm_rules (own table) to avoid colliding with the pre-existing
--- ppiq_business_key_definitions. Normalizes 'C-0044170' == '44170', rejects one-
--- key->two-units with a typed 'AmbiguousJoinKey' (rollback), admin-editable rules.
+-- 320_p3_business_key_reconciliation.sql            (PPIQ-301, idempotent)
+-- Business-key dictionary + conflict-rejecting reconciliation (B1.3 / G2).
+-- Normalizes 'C-0044170' == '44170', rejects one-key->two-units with a typed
+-- 'AmbiguousJoinKey' (transaction rolls back), admin-editable rule table.
 -- =============================================================================
 
-CREATE TABLE IF NOT EXISTS public.ppiq_bk_norm_rules (
+CREATE TABLE IF NOT EXISTS public.ppiq_business_key_definitions (
     id                  uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id           uuid NULL,
     key_type            text NOT NULL,
+    description         text NULL,
     strip_alpha_prefix  boolean NOT NULL DEFAULT true,
     strip_leading_zeros boolean NOT NULL DEFAULT true,
     case_insensitive    boolean NOT NULL DEFAULT true,
@@ -15,43 +17,46 @@ CREATE TABLE IF NOT EXISTS public.ppiq_bk_norm_rules (
     created_at_utc      timestamptz NOT NULL DEFAULT now()
 );
 
-INSERT INTO public.ppiq_bk_norm_rules (key_type)
-SELECT 'coil'
-WHERE NOT EXISTS (SELECT 1 FROM public.ppiq_bk_norm_rules WHERE key_type = 'coil');
+-- Default rule for the coil/heat business key family (admin can add/disable rows).
+INSERT INTO public.ppiq_business_key_definitions (key_type, description)
+SELECT 'coil', 'Default coil/heat/slab key normalization (strip alpha prefix + leading zeros).'
+WHERE NOT EXISTS (
+    SELECT 1 FROM public.ppiq_business_key_definitions WHERE key_type = 'coil' AND tenant_id IS NULL
+);
 
+-- Deterministic, definition-driven normalizer. Marked STABLE (reads the rule row).
 CREATE OR REPLACE FUNCTION public.ppiq_normalize_business_key(p_key_type text, p_raw text)
 RETURNS text
 LANGUAGE plpgsql
 STABLE
 AS $fn$
 DECLARE
-    v_strip_alpha boolean := true;
-    v_strip_zero  boolean := true;
-    v_ci          boolean := true;
-    v             text;
+    v_rule public.ppiq_business_key_definitions;
+    v      text;
 BEGIN
     IF p_raw IS NULL THEN RETURN NULL; END IF;
     v := trim(p_raw);
 
-    BEGIN
-        SELECT strip_alpha_prefix, strip_leading_zeros, case_insensitive
-          INTO v_strip_alpha, v_strip_zero, v_ci
-          FROM public.ppiq_bk_norm_rules
-         WHERE key_type = p_key_type AND is_active
-         LIMIT 1;
-    EXCEPTION WHEN others THEN
-        v_strip_alpha := true; v_strip_zero := true; v_ci := true;
-    END;
+    SELECT * INTO v_rule
+    FROM public.ppiq_business_key_definitions
+    WHERE key_type = p_key_type AND is_active
+    ORDER BY tenant_id NULLS LAST
+    LIMIT 1;
 
-    IF COALESCE(v_ci, true)          THEN v := upper(v); END IF;
-    v := regexp_replace(v, '[^A-Za-z0-9]', '', 'g');
-    IF COALESCE(v_strip_alpha, true) THEN v := regexp_replace(v, '^[A-Za-z]+', ''); END IF;
-    IF COALESCE(v_strip_zero, true)  THEN v := regexp_replace(v, '^0+', ''); END IF;
+    IF COALESCE(v_rule.case_insensitive, true) THEN v := upper(v); END IF;
+    v := regexp_replace(v, '[^A-Za-z0-9]', '', 'g');                 -- drop separators
+    IF COALESCE(v_rule.strip_alpha_prefix, true) THEN
+        v := regexp_replace(v, '^[A-Za-z]+', '');                    -- drop leading C/H/S/COIL
+    END IF;
+    IF COALESCE(v_rule.strip_leading_zeros, true) THEN
+        v := regexp_replace(v, '^0+', '');                           -- 0044170 -> 44170
+    END IF;
     IF v = '' THEN v := '0'; END IF;
     RETURN v;
 END;
 $fn$;
 
+-- Maintain a normalized projection column on the alias table.
 ALTER TABLE IF EXISTS public.material_aliases
     ADD COLUMN IF NOT EXISTS normalized_alias_code text;
 
@@ -68,6 +73,8 @@ $do$;
 CREATE INDEX IF NOT EXISTS ix_material_aliases_normalized
     ON public.material_aliases (normalized_alias_code);
 
+-- BEFORE INSERT/UPDATE guard: the SAME normalized key must not map to two
+-- different material units (across any source). Raises a typed error -> rollback.
 CREATE OR REPLACE FUNCTION public.ppiq_material_alias_conflict_guard()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -83,11 +90,6 @@ BEGIN
     FROM public.material_aliases a
     WHERE a.normalized_alias_code = v_norm
       AND a.material_unit_id <> NEW.material_unit_id
-      -- Namespace-scoped uniqueness: a business key is unique within its own id-type
-      -- (HeatId, CoilId, SourceSystemId, ...), not globally. Two different entities may
-      -- legitimately share a trailing number across different id namespaces; only a
-      -- collision WITHIN the same alias_type is a genuine ambiguous join.
-      AND a.alias_type IS NOT DISTINCT FROM NEW.alias_type
       AND COALESCE(a.is_deleted, false) = false
     LIMIT 1;
 
@@ -95,7 +97,7 @@ BEGIN
         RAISE EXCEPTION
             'AmbiguousJoinKey: business key % (normalized %) already maps to material unit % - refusing to silently merge two entities.',
             NEW.alias_code, v_norm, v_other
-            USING ERRCODE = '23P01';
+            USING ERRCODE = '23P01';   -- exclusion_violation
     END IF;
 
     RETURN NEW;
@@ -113,6 +115,7 @@ BEGIN
 END;
 $do$;
 
+-- Resolve a raw business key to exactly ONE material unit, or raise AmbiguousJoinKey.
 CREATE OR REPLACE FUNCTION public.ppiq_resolve_material_by_business_key(p_raw text)
 RETURNS uuid
 LANGUAGE plpgsql

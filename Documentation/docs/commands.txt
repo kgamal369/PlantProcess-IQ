@@ -125,3 +125,18 @@ cd C:\Workspace\PlantProcess-IQ
 Terminal 2 — frontend web 
 cd C:\Workspace\PlantProcess-IQ
 .\scripts\run\start-web.ps1 -Profile local
+
+
+
+test e2e 
+# 1. stop your manual servers (Ctrl+C in terminals 1 and 2, or:)
+Get-Process -Name 'PlantProcess.Api' -ErrorAction SilentlyContinue | Stop-Process -Force
+Get-Process -Name node -ErrorAction SilentlyContinue | Where-Object { $_.Path -like '*PlantProcess*' } | Stop-Process -Force
+
+# 2. run the suite - Playwright boots its own API + web with the E2E env
+cd C:\Workspace\PlantProcess-IQ\Frontend\PlantProcess.Web
+npm run e2e
+
+# 3. FIRST run on this machine: the ~17 visual tests will "fail" while WRITING baselines
+#    (that's creation, not regression). Run once more for the true result:
+npm run e2e

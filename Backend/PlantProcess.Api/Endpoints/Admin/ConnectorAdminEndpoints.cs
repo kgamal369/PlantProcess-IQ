@@ -52,6 +52,17 @@ public static class ConnectorAdminEndpoints
             .AddEndpointFilter(new PlantProcess.Api.Observability.JobLogEndpointFilter("ConnectorTest"))
             .WithSummary("Test connection profile");
 
+        group.MapGet("/connection-profiles/{id:guid}/tables", ListSourceTablesAsync)
+            .WithSummary("List live tables/views from the connected source (generic, all DB providers)");
+
+        group.MapGet("/connection-profiles/{id:guid}/tables/{schema}/{table}/columns", ListSourceColumnsAsync)
+            .WithSummary("List live columns for a source table (generic)");
+
+        group.MapPost("/connection-profiles/{id:guid}/register", RegisterSourceTableAsync)
+            .AddEndpointFilter(new PlantProcess.Api.Observability.JobLogEndpointFilter("ConnectorRegister"))
+            .WithSummary("Register a source table (with optional column subset + row filter) into the dump registry");
+
+
         group.MapGet("/datasets", GetDatasetsAsync)
             .WithSummary("Get source datasets");
 
@@ -228,5 +239,101 @@ public static class ConnectorAdminEndpoints
         var result = await service.ImportCsvSnapshotAsync(id, request, cancellationToken);
         return result.ToHttpResult(Results.Ok);
     }
-}
 
+    private static async Task<IResult> ListSourceTablesAsync(
+        Guid id,
+        [Microsoft.AspNetCore.Mvc.FromServices] IConnectorConfigurationService service,
+        CancellationToken cancellationToken)
+    {
+        var result = await service.ListSourceTablesAsync(id, cancellationToken);
+        return result.ToHttpResult(Results.Ok);
+    }
+
+    private static async Task<IResult> ListSourceColumnsAsync(
+        Guid id,
+        string schema,
+        string table,
+        [Microsoft.AspNetCore.Mvc.FromServices] IConnectorConfigurationService service,
+        CancellationToken cancellationToken)
+    {
+        var result = await service.ListSourceColumnsAsync(id, schema, table, cancellationToken);
+        return result.ToHttpResult(Results.Ok);
+    }
+
+    private static async Task<IResult> RegisterSourceTableAsync(
+        Guid id,
+        RegisterSourceTableRequest request,
+        [Microsoft.AspNetCore.Mvc.FromServices] IConnectorConfigurationService service,
+        PlantProcess.Infrastructure.Persistence.PlantProcessDbContext dbContext,
+        CancellationToken cancellationToken)
+    {
+        if (request is null || string.IsNullOrWhiteSpace(request.TableName))
+            return Results.BadRequest(new { error = "Table name is required." });
+        if (request.PrimaryKeyColumns is null || request.PrimaryKeyColumns.Count == 0)
+            return Results.BadRequest(new { error = "At least one primary key column is required." });
+
+        // Resolve the profile for provider/schema/source-system-code (via the pure-EF service list).
+        var profileResult = await service.GetConnectionProfileByIdAsync(id, cancellationToken);
+        if (profileResult.IsFailure)
+            return profileResult.ToHttpResult(Results.Ok);
+        var profile = profileResult.Value!;
+
+        var schemaName = string.IsNullOrWhiteSpace(request.SchemaName)
+            ? (profile.SchemaName ?? "public")
+            : request.SchemaName.Trim();
+        var sourceSystemCode = (profile.ConnectionProfileCode ?? profile.ProviderType).Trim().ToUpperInvariant();
+
+        var connection = dbContext.Database.GetDbConnection();
+        if (connection.State != System.Data.ConnectionState.Open)
+            await connection.OpenAsync(cancellationToken);
+
+        try
+        {
+            await using (var register = connection.CreateCommand())
+            {
+                register.CommandText = "SELECT public.ppiq_register_dump_source(@sys, @schema, @table, @pks, @wm, 2, 30);";
+                AddRegParam(register, "sys", sourceSystemCode);
+                AddRegParam(register, "schema", schemaName);
+                AddRegParam(register, "table", request.TableName.Trim());
+                AddRegParam(register, "pks", request.PrimaryKeyColumns.ToArray());
+                AddRegParam(register, "wm", (object?)request.WatermarkColumn ?? DBNull.Value);
+                await register.ExecuteScalarAsync(cancellationToken);
+            }
+
+            var selected = request.SelectedColumns is { Count: > 0 } ? request.SelectedColumns : null;
+            if (selected is not null || !string.IsNullOrWhiteSpace(request.RowFilter))
+            {
+                await using var prep = connection.CreateCommand();
+                prep.CommandText = @"UPDATE public.source_table_dump_registry
+                    SET source_columns_json = COALESCE(@cols::jsonb, source_columns_json), updated_at_utc = now()
+                    WHERE source_schema_name = @schema AND source_table_name = @table AND is_deleted = false;";
+                AddRegParam(prep, "schema", schemaName);
+                AddRegParam(prep, "table", request.TableName.Trim());
+                var colsJson = selected is null
+                    ? (object)DBNull.Value
+                    : System.Text.Json.JsonSerializer.Serialize(new { selectedColumns = selected, rowFilter = request.RowFilter });
+                AddRegParam(prep, "cols", colsJson);
+                await prep.ExecuteNonQueryAsync(cancellationToken);
+            }
+
+            return Results.Ok(new RegisterSourceTableResult(
+                schemaName, request.TableName.Trim(),
+                selected?.Count ?? 0,
+                !string.IsNullOrWhiteSpace(request.WatermarkColumn),
+                $"Registered {schemaName}.{request.TableName.Trim()}."));
+        }
+        catch (System.Data.Common.DbException ex)
+        {
+            return Results.BadRequest(new { error = $"Registration failed: {ex.Message}" });
+        }
+    }
+
+    private static void AddRegParam(System.Data.Common.DbCommand command, string name, object? value)
+    {
+        var p = command.CreateParameter();
+        p.ParameterName = name;
+        p.Value = value ?? DBNull.Value;
+        command.Parameters.Add(p);
+    }
+
+}

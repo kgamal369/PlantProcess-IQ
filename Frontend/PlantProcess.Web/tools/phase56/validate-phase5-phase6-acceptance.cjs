@@ -44,13 +44,7 @@ function noNative(task, file) {
 }
 
 function contains(file, patterns) {
-  // A page file may be a thin re-export shim whose real implementation was moved into a
-  // ".generated" / ".runtime.generated" sibling by an earlier split (T063). Inspect the
-  // shim AND any generated sibling so feature checks see the real, shipped implementation.
-  let text = read(file);
-  for (const sib of [file.replace(/\.tsx$/, ".generated.tsx"), file.replace(/\.tsx$/, ".runtime.generated.tsx")]) {
-    if (sib !== file) text += "\n" + read(sib);
-  }
+  const text = read(file);
   return patterns.every((pattern) => pattern.test(text));
 }
 
@@ -60,22 +54,22 @@ console.log("PlantProcess IQ — Phase 5 + Phase 6 Acceptance Validation");
 console.log("============================================================");
 console.log("");
 
-const central = "src/pages/MaterialAnalytics/MaterialAnalyticsPages.runtime.tsx";
+const central = "src/pages/Phase56/Phase56Pages.tsx";
 
-assert("PPIQ-T033", contains(central, [/MaterialAnalyticsCommandDashboardPage/, /StandardCard/, /StandardTable/, /StandardInput/]), "Command Dashboard uses StandardCard, StandardTable and StandardInput");
+assert("PPIQ-T033", contains(central, [/Phase56CommandDashboardPage/, /StandardCard/, /StandardTable/, /StandardInput/]), "Command Dashboard uses StandardCard, StandardTable and StandardInput");
 assert("PPIQ-T033", exists("src/pages/Dashboard/DashboardPageContent.tsx"), "Dashboard route wrapper exists");
 noNative("PPIQ-T033", "src/pages/Dashboard/DashboardPageContent.tsx");
 
-assert("PPIQ-T034", contains(central, [/MaterialAnalyticsMaterialInvestigationPage/, /StandardTabs/, /Genealogy/, /Process History/, /Quality Events/, /Feature Vector/, /searchParam="tab"/]), "Material Investigation has StandardTabs with URL-sync sub-tabs");
+assert("PPIQ-T034", contains(central, [/Phase56MaterialInvestigationPage/, /StandardTabs/, /Genealogy/, /Process History/, /Quality Events/, /Feature Vector/, /searchParam="tab"/]), "Material Investigation has StandardTabs with URL-sync sub-tabs");
 noNative("PPIQ-T034", "src/pages/MaterialInvestigationPage.tsx");
 
-assert("PPIQ-T035", contains(central, [/MaterialAnalyticsRiskIntelligencePage/, /StandardButton/, /StandardTable/, /productModule56-chip--/]), "Risk Intelligence uses StandardButton filter pills, StandardTable and shared chips");
+assert("PPIQ-T035", contains(central, [/Phase56RiskIntelligencePage/, /StandardButton/, /StandardTable/, /phase56-chip--/]), "Risk Intelligence uses StandardButton filter pills, StandardTable and shared chips");
 noNative("PPIQ-T035", "src/pages/RiskDashboard/RiskDashboardPage.tsx");
 
-assert("PPIQ-T036", contains(central, [/MaterialAnalyticsDataQualityPage/, /StandardSelect/, /Severity/, /navigate\("\/admin\?sourceSystem=/]), "Data Quality uses StandardSelect, StandardTable, severity chips and admin drill-through");
+assert("PPIQ-T036", contains(central, [/Phase56DataQualityPage/, /StandardSelect/, /Severity/, /navigate\("\/admin\?sourceSystem=/]), "Data Quality uses StandardSelect, StandardTable, severity chips and admin drill-through");
 noNative("PPIQ-T036", "src/pages/DataQuality/DataQualityPage.tsx");
 
-assert("PPIQ-T037", contains(central, [/MaterialAnalyticsCorrelationPage/, /type="range"/, /StandardTable/, /navigate\("\/materials\?tab=feature-vector/]), "Correlations page has threshold range, StandardTable and Material drill-through");
+assert("PPIQ-T037", contains(central, [/Phase56CorrelationPage/, /type="range"/, /StandardTable/, /navigate\("\/materials\?tab=feature-vector/]), "Correlations page has threshold range, StandardTable and Material drill-through");
 noNative("PPIQ-T037", "src/pages/Correlation/CorrelationPage.tsx");
 
 assert("PPIQ-T038", exists("e2e/visual/phase56-analytics-system.visual.spec.ts"), "Analytics visual regression spec exists");
@@ -84,20 +78,20 @@ assert("PPIQ-T038", exists("docs/visual-regression/phase56-baseline.md"), "Visua
 assert("PPIQ-T039", exists("e2e/phase56-primary-flows.spec.ts"), "Primary analytics Playwright flow spec exists");
 assert("PPIQ-T039", contains("e2e/phase56-primary-flows.spec.ts", [/ADV_COIL4002/, /could not be loaded\|could not load/]), "E2E covers material search and forbidden phrase assertion");
 
-assert("PPIQ-T040", contains(central, [/MaterialAnalyticsMlReadinessPage/, /Run training gate check/, /No models in production yet/, /StandardTable/]), "ML Readiness uses StandardTable, primary gate button and honest empty positioning");
+assert("PPIQ-T040", contains(central, [/Phase56MlReadinessPage/, /Run training gate check/, /No models in production yet/, /StandardTable/]), "ML Readiness uses StandardTable, primary gate button and honest empty positioning");
 noNative("PPIQ-T040", "src/pages/MlReadiness/MlReadinessPage.tsx");
 
-assert("PPIQ-T041", contains(central, [/MaterialAnalyticsDemoLifecyclePage/, /Reset Demo/, /StandardModal/, /OperationProgressPanel/]), "Demo Lifecycle has reset modal, status card and wired OperationProgressPanel");
+assert("PPIQ-T041", contains(central, [/Phase56DemoLifecyclePage/, /Reset Demo/, /StandardModal/, /OperationProgressPanel/]), "Demo Lifecycle has reset modal, status card and wired OperationProgressPanel");
 noNative("PPIQ-T041", "src/pages/DemoLifecycle/DemoLifecyclePage.tsx");
-noNative("PPIQ-T041", "src/components/inspection/OperationProgressPanel.tsx");
+noNative("PPIQ-T041", "src/components/phase2/OperationProgressPanel.tsx");
 
-assert("PPIQ-T042", contains(central, [/MaterialAnalyticsAdminPreviewPage/, /Live tier toggle/, /ML scripts/, /Download report/]), "Admin Preview has tier toggle, roles table, ML scripts table and ghost report download");
+assert("PPIQ-T042", contains(central, [/Phase56AdminPreviewPage/, /Live tier toggle/, /ML scripts/, /Download report/]), "Admin Preview has tier toggle, roles table, ML scripts table and ghost report download");
 noNative("PPIQ-T042", "src/pages/AdminPreview/AdminPreviewWorkspacePage.tsx");
 
-assert("PPIQ-T043", contains(central, [/MaterialAnalyticsAdministratorPage/, /DB Config/, /Schema/, /Jobs/, /SQL Editor/, /KPI Builder/, /StandardTextArea/]), "Administrator has DB/schema/jobs/SQL/KPI StandardTabs and StandardTextArea");
+assert("PPIQ-T043", contains(central, [/Phase56AdministratorPage/, /DB Config/, /Schema/, /Jobs/, /SQL Editor/, /KPI Builder/, /StandardTextArea/]), "Administrator has DB/schema/jobs/SQL/KPI StandardTabs and StandardTextArea");
 noNative("PPIQ-T043", "src/pages/Admin/AdminPageContent.tsx");
 
-assert("PPIQ-T044", contains(central, [/MaterialAnalyticsBrandIdentityPage/, /Brand Tokens/, /tokens/]), "Brand page imports live tokens and renders StandardTable");
+assert("PPIQ-T044", contains(central, [/Phase56BrandIdentityPage/, /Brand Tokens/, /tokens/]), "Brand page imports live tokens and renders StandardTable");
 noNative("PPIQ-T044", "src/pages/BrandIdentity/BrandIdentityPage.tsx");
 
 assert("PPIQ-T045", contains(central, [/Save Investigation/, /Share/, /Export PDF/, /Calculate Risk/, /searchParam="tab"/]), "Material drilldown has save/share/export/calculate action bar and StandardTabs");
@@ -134,7 +128,7 @@ const targetFiles = [
   "src/pages/AdminPreview/AdminPreviewWorkspacePage.tsx",
   "src/pages/Admin/AdminPageContent.tsx",
   "src/pages/BrandIdentity/BrandIdentityPage.tsx",
-  "src/components/inspection/OperationProgressPanel.tsx",
+  "src/components/phase2/OperationProgressPanel.tsx",
 ];
 
 for (const file of targetFiles) {

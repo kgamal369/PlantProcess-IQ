@@ -44,7 +44,8 @@ async function prepareAuthenticatedPage(page: Page, token: string) {
     /* P01: access token is memory-only; UI bootstraps via HttpOnly refresh cookie. */
     /* P01: removed forbidden browser auth-token storage. */
     /* P01: removed forbidden browser auth-token storage. */
-    void accessToken;
+    /* P01: removed forbidden browser auth-token storage. */ + 60 * 60 * 1000).toISOString()
+    );
   }, token);
 }
 

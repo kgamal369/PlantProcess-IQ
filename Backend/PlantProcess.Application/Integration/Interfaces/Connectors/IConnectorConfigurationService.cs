@@ -1,4 +1,4 @@
-﻿using PlantProcess.Application.Common.Results;
+using PlantProcess.Application.Common.Results;
 using PlantProcess.Application.Integration.Contracts.Dtos;
 
 namespace PlantProcess.Application.Integration.Interfaces.Connectors;
@@ -61,7 +61,15 @@ public interface IConnectorConfigurationService
         Guid sourceDatasetDefinitionId,
         CsvImportSnapshotRequest request,
         CancellationToken cancellationToken);
+
+    Task<ApplicationResult<IReadOnlyList<SourceTableDto>>> ListSourceTablesAsync(
+        Guid connectionProfileId,
+        CancellationToken cancellationToken);
+
+    Task<ApplicationResult<IReadOnlyList<SourceColumnDto>>> ListSourceColumnsAsync(
+        Guid connectionProfileId,
+        string schemaName,
+        string tableName,
+        CancellationToken cancellationToken);
+
 }
-
-
-
