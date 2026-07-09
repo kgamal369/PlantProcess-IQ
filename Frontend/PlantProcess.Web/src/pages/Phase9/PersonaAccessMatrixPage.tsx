@@ -1,4 +1,4 @@
-import { routeDecision, visibleNavigation, type CommercialTier, type FormalPlantRole } from "@/security/phase9RoleAccess";
+import { routeDecision, visibleNavigation, type CommercialTier, type FormalPlantRole } from "@/security/roleAccess";
 import "./phase9-personas.css";
 
 const demoRoles: FormalPlantRole[] = ["ChiefExecutiveOfficer", "MaintenanceEngineer", "ProcessEngineer", "PlantAdmin", "Viewer"];
@@ -12,6 +12,10 @@ export function PersonaAccessMatrixPage() {
         <h1>Persona Access Matrix</h1>
         <p className="phase9-muted">
           Routes are scoped by formal role and tier. Ungranted features are shown disabled with a reason instead of a dead click or unexplained 404.
+        </p>
+        <p className="phase9-muted">
+          This matrix is descriptive. Access is enforced by the server on every request; a
+          route absent from this table is denied, not permitted.
         </p>
       </section>
 
@@ -36,7 +40,7 @@ export function PersonaAccessMatrixPage() {
         <p className="phase9-muted">
           Maintenance engineer opening assistant configuration:
         </p>
-        <pre>{JSON.stringify(routeDecision("/phase8/assistant-config", "MaintenanceEngineer", "Enterprise"), null, 2)}</pre>
+        <pre>{JSON.stringify(routeDecision("/assistant/configuration", "MaintenanceEngineer", "Enterprise"), null, 2)}</pre>
       </section>
     </main>
   );

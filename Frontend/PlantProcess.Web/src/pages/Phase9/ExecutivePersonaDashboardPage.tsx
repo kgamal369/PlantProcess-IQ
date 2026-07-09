@@ -1,4 +1,4 @@
-import { executiveDashboardCards } from "@/security/phase9RoleAccess";
+import { executiveDashboardCards } from "@/security/roleAccess";
 import "./phase9-personas.css";
 
 export function ExecutivePersonaDashboardPage() {

@@ -257,3 +257,41 @@ describe("user-visible strings carry no phase tokens", () => {
     expect(bad, `phase tokens in accessible names:\n  ${bad.join("\n  ")}`).toHaveLength(0);
   });
 });
+
+// ============================================================
+// STRING LITERALS.
+// The checks above read App.tsx route paths and AppLayout nav labels. A phase
+// token sitting inside a DATA MAP was invisible to all of them - which is how
+// src/security/roleAccess.ts kept keying on "/phase8/assistant-config" after
+// M1-08 renamed that route, and kept showing a customer an access matrix for
+// routes that no longer exist.
+//
+// App.tsx is excluded: its <Navigate> declarations legitimately name the old
+// paths, and the canonical-route test above already governs it.
+// ============================================================
+// allPageFiles() collects .tsx only - it was written for pages. roleAccess.ts is
+// a .ts file, so reusing it here would have skipped the exact file this check
+// exists to catch. Walk both extensions.
+function allSourceFiles(dir: string, out: string[] = []): string[] {
+  for (const entry of readdirSync(dir)) {
+    const full = join(dir, entry);
+    if (/node_modules|_phase9_standardbutton_dedupe_backup/.test(full)) continue;
+    if (statSync(full).isDirectory()) allSourceFiles(full, out);
+    else if (/\.tsx?$/.test(entry)) out.push(full);
+  }
+  return out;
+}
+
+describe("no phase token survives inside a string literal", () => {
+  it("no src file keys on a /phaseN/ path", () => {
+    const offenders: string[] = [];
+    for (const file of allSourceFiles(resolve(webRoot, "src"))) {
+      if (file.endsWith("App.tsx")) continue;
+      if (/[\\/]test[\\/]architecture[\\/]/.test(file)) continue; // this suite documents them
+      const src = readFileSync(file, "utf8");
+      const matches = src.match(/["'`]\/phase\d+\/[^"'`]*["'`]/g);
+      if (matches) offenders.push(`${file.replace(webRoot, "")}: ${matches.join(", ")}`);
+    }
+    expect(offenders, `phase paths in string literals:\n  ${offenders.join("\n  ")}`).toHaveLength(0);
+  });
+});

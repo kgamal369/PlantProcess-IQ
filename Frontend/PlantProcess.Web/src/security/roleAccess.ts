@@ -1,3 +1,19 @@
+// ============================================================
+// FILE: src/security/roleAccess.ts
+//
+// THIS MAP IS DESCRIPTIVE, NOT ENFORCING.
+//
+// Its only consumers are PersonaAccessMatrixPage (a read-only display) and this
+// module's own tests. No router guard and no layout calls it. Authorization is
+// enforced server-side by AccessControlMiddleware
+// (Backend/PlantProcess.Api/Security/PlantAccessControl.cs), which denies any
+// path not present in its matrix.
+//
+// Keep the route keys in step with App.tsx. When a route is renamed, a stale key
+// here does not lock anyone out - it silently disappears from the matrix a
+// customer is reading. That is the failure mode to guard against.
+// ============================================================
+
 export type FormalPlantRole =
   | "Executive"
   | "ChiefExecutiveOfficer"
@@ -32,7 +48,7 @@ export type RouteDecision = {
   allowed: boolean;
   disabled: boolean;
   reason: string;
-  capability: PlantCapability;
+  capability: PlantCapability | null;
 };
 
 const roleCapabilities: Record<FormalPlantRole, PlantCapability[]> = {
@@ -77,18 +93,17 @@ const tierCapabilities: Record<CommercialTier, PlantCapability[]> = {
 };
 
 export const routeCapabilityMap: Record<string, PlantCapability> = {
-  "/phase9/executive": "ExecutiveDashboardView",
   "/executive": "ExecutiveDashboardView",
   "/roi": "RoiKpiView",
-  "/phase8/suggestions": "RecommendationReview",
-  "/phase8/assistant": "AssistantChat",
-  "/phase8/assistant-config": "AssistantConfiguration",
+  "/suggestions": "RecommendationReview",
+  "/assistant": "AssistantChat",
+  "/assistant/configuration": "AssistantConfiguration",
   "/admin": "AdminUserManagement",
-  "/connectors": "ConnectorConfiguration",
-  "/mapping": "MappingConfiguration",
+  "/data-integration/connections": "ConnectorConfiguration",
+  "/data-integration/registry": "MappingConfiguration",
   "/developer": "DeveloperDiagnostics",
   "/data-quality": "DataQualityView",
-  "/material-investigation": "EngineeringInvestigationView",
+  "/materials": "EngineeringInvestigationView",
 };
 
 export function canAccess(role: FormalPlantRole, tier: CommercialTier, capability: PlantCapability) {
@@ -106,7 +121,21 @@ export function personaFor(role: FormalPlantRole) {
 }
 
 export function routeDecision(path: string, role: FormalPlantRole, tier: CommercialTier): RouteDecision {
-  const capability = routeCapabilityMap[path] ?? "QualitySummaryView";
+  const capability = routeCapabilityMap[path];
+
+  // DENY BY DEFAULT. This used to fall back to "QualitySummaryView", a capability
+  // every role and every tier holds - so an unmapped route was granted to
+  // everyone. A permission map whose default is "yes" is not a permission map.
+  if (!capability) {
+    return {
+      path,
+      capability: null,
+      allowed: false,
+      disabled: true,
+      reason: "Route is not described in the access matrix; shown as denied by default.",
+    };
+  }
+
   const roleAllows = roleCapabilities[role].includes(capability);
   const tierAllows = tierCapabilities[tier].includes(capability);
 

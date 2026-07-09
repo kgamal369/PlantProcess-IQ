@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canAccess, executiveDashboardCards, personaFor, routeDecision, visibleNavigation } from "./phase9RoleAccess";
+import { canAccess, executiveDashboardCards, personaFor, routeDecision, visibleNavigation } from "./roleAccess";
 
 describe("Phase 9 role/access and persona visibility", () => {
   it("allows executive dashboard but blocks admin configuration for executive", () => {
@@ -8,7 +8,7 @@ describe("Phase 9 role/access and persona visibility", () => {
   });
 
   it("returns disabled-with-reason instead of a dead route", () => {
-    const decision = routeDecision("/phase8/assistant-config", "MaintenanceEngineer", "Enterprise");
+    const decision = routeDecision("/assistant/configuration", "MaintenanceEngineer", "Enterprise");
 
     expect(decision.allowed).toBe(false);
     expect(decision.disabled).toBe(true);
