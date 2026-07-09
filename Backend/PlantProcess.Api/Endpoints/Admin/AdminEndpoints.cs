@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using PlantProcess.Infrastructure.Persistence;
 
@@ -53,6 +54,10 @@ public static class AdminEndpoints
             .WithSummary("Get Schema Configuration summary")
             .WithDescription("Returns current mapping definitions and staging source-object coverage.");
 
+        group.MapGet("/system-logs", GetSystemLogsAsync)
+            .WithSummary("Tail the hourly system log")
+            .WithDescription("Reads logs/systemlog_YYYYMMDDHH.log. The client supplies a date and an hour, never a path.");
+
        group.MapGet("/jobs-monitor", GetJobsMonitorAsync)
             .WithSummary("Get Jobs Monitor")
             .WithDescription("Returns DB-backed job status from JobDefinition records.");
@@ -63,6 +68,7 @@ public static class AdminEndpoints
 
     private static async Task<IResult> GetJobLogsAsync(
         string? jobType,
+        string? q,
         string? jobName,
         string? severity,
         DateOnly? day,
@@ -93,6 +99,8 @@ public static class AdminEndpoints
 
         if (!string.IsNullOrWhiteSpace(jobType)) { sql += " AND job_type = @jobType"; AddParam("jobType", jobType); }
         if (!string.IsNullOrWhiteSpace(jobName)) { sql += " AND job_name ILIKE @jobName"; AddParam("jobName", "%" + jobName + "%"); }
+        // M1-10: free-text word filter across the message and the job name.
+        if (!string.IsNullOrWhiteSpace(q)) { sql += " AND (message ILIKE @q OR job_name ILIKE @q)"; AddParam("q", "%" + q.Trim() + "%"); }
         if (!string.IsNullOrWhiteSpace(severity)) { sql += " AND severity = @severity"; AddParam("severity", severity); }
         if (day.HasValue)
         {
@@ -136,6 +144,128 @@ public static class AdminEndpoints
         string Message,
         string Context,
         string? SiteCode);
+    // ---------------------------------------------------------------------
+    // M1-10: hourly system-log tail.
+    //
+    // Serilog writes AppContext.BaseDirectory/logs/systemlog_.log with
+    // RollingInterval.Hour -> systemlog_YYYYMMDDHH.log, using the template
+    //     [{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} {Level:u3}] [Machine] ...
+    // Level:u3 emits VRB DBG INF WRN ERR FTL.
+    //
+    // The CLIENT NEVER SUPPLIES A PATH. It supplies a date and an integer hour;
+    // the filename is composed here. The composed path is then resolved and
+    // asserted to remain inside the log directory before a single byte is read.
+    // ---------------------------------------------------------------------
+    private static readonly Regex SystemLogLineRegex = new(
+        @"^\[(?<ts>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}[^\]]*?) (?<lvl>VRB|DBG|INF|WRN|ERR|FTL)\]\s*(?<rest>.*)$",
+        RegexOptions.Compiled);
+
+    private static string MapSerilogLevel(string level) => level switch
+    {
+        "FTL" => "Error",
+        "ERR" => "Error",
+        "WRN" => "Warning",
+        "INF" => "Info",
+        _ => "Debug"
+    };
+
+    private static IResult GetSystemLogsAsync(
+        DateOnly? day,
+        int? hour,
+        string? severity,
+        string? q,
+        int? limit)
+    {
+        var maxLines = Math.Clamp(limit ?? 500, 1, 2000);
+        var now = DateTime.UtcNow;
+        var theDay = day ?? DateOnly.FromDateTime(now);
+        var theHour = Math.Clamp(hour ?? now.Hour, 0, 23);
+
+        // day/hour are strongly typed; a filename built from them cannot contain
+        // a separator, a dot or "..". The guard below is belt and braces.
+        var stamp = theDay.ToString("yyyyMMdd") + theHour.ToString("00");
+        var fileName = "systemlog_" + stamp + ".log";
+
+        var logDirectory = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "logs"));
+        var candidate = Path.GetFullPath(Path.Combine(logDirectory, fileName));
+
+        if (!candidate.StartsWith(logDirectory + Path.DirectorySeparatorChar, StringComparison.Ordinal))
+        {
+            return Results.BadRequest(new { message = "Resolved log path escaped the log directory." });
+        }
+
+        if (!File.Exists(candidate))
+        {
+            return Results.Ok(new
+            {
+                file = fileName,
+                exists = false,
+                count = 0,
+                entries = Array.Empty<SystemLogEntryResponse>(),
+                message = "No system log for that hour. The API may not have been running."
+            });
+        }
+
+        var entries = new List<SystemLogEntryResponse>();
+        var lineNumber = 0;
+
+        // Serilog holds the file open with shared: true, so read it the same way.
+        using (var stream = new FileStream(candidate, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+        using (var reader = new StreamReader(stream))
+        {
+            string? line;
+            while ((line = reader.ReadLine()) is not null)
+            {
+                lineNumber++;
+                var match = SystemLogLineRegex.Match(line);
+                if (!match.Success)
+                {
+                    // Continuation line (stack trace, properties). Attach it to the last entry.
+                    if (entries.Count > 0)
+                    {
+                        var last = entries[^1];
+                        entries[^1] = last with { Message = last.Message + "\n" + line };
+                    }
+                    continue;
+                }
+
+                entries.Add(new SystemLogEntryResponse(
+                    lineNumber,
+                    match.Groups["ts"].Value,
+                    MapSerilogLevel(match.Groups["lvl"].Value),
+                    match.Groups["rest"].Value));
+            }
+        }
+
+        IEnumerable<SystemLogEntryResponse> filtered = entries;
+
+        if (!string.IsNullOrWhiteSpace(severity))
+        {
+            filtered = filtered.Where(e => string.Equals(e.Severity, severity, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (!string.IsNullOrWhiteSpace(q))
+        {
+            var needle = q.Trim();
+            filtered = filtered.Where(e => e.Message.Contains(needle, StringComparison.OrdinalIgnoreCase));
+        }
+
+        var page = filtered.TakeLast(maxLines).Reverse().ToList();
+
+        return Results.Ok(new
+        {
+            file = fileName,
+            exists = true,
+            count = page.Count,
+            entries = page
+        });
+    }
+
+    private sealed record SystemLogEntryResponse(
+        int LineNumber,
+        string Timestamp,
+        string Severity,
+        string Message);
 
     private static async Task<IResult> GetSiteIdentityAsync(
         PlantProcessDbContext dbContext,

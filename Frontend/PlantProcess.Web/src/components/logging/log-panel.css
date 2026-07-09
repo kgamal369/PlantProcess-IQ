@@ -14,3 +14,14 @@
 .piq-log-panel__list { font-family: Consolas, monospace; font-size: 12px; color: #d7e5f7; }
 .piq-log-line { display: flex; gap: 14px; padding: 3px 4px; border-bottom: 1px solid rgba(94,151,214,0.08); white-space: nowrap; }
 .piq-log-line__msg { white-space: normal; }
+
+/* M1-10: source toggle + word filter */
+.piq-log-panel__filters { flex-wrap: wrap; align-items: center; }
+.piq-log-panel__source { display: inline-flex; gap: 0; }
+.piq-log-panel__source button { border-radius: 0; }
+.piq-log-panel__source button:first-child { border-radius: 4px 0 0 4px; }
+.piq-log-panel__source button:last-child { border-radius: 0 4px 4px 0; }
+.piq-log-panel__source--active { background: rgba(0, 212, 255, 0.18) !important; color: #eaf7ff !important; }
+.piq-log-panel__search { min-width: 200px; }
+.piq-log-panel__hour { width: 76px; }
+.piq-log-row--debug { color: #6d8eae; }
