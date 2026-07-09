@@ -141,7 +141,7 @@ export function DemoAnalyticsWorkflowTruthPage() {
   return (
     <PageShell
       task="PPIQ-T048"
-      title="Phase 1 Workflow Truth"
+      title="Workflow Truth"
       subtitle="Connector truth is now wired into the admin workflow with Standard* primitives and backend round-trip evidence."
       actions={<StandardButton variant="primary" leadingIcon={<RefreshCw size={16} />} onClick={truth.reload} isLoading={truth.isLoading}>Refresh Truth</StandardButton>}
     >
@@ -261,7 +261,7 @@ export function DemoAnalyticsWidgetScriptCompilerPage() {
     <PageShell
       task="PPIQ-T055 → PPIQ-T062"
       title="Widget Script Layer Compiler"
-      subtitle="Phase 8 implementation evidence page for entity mapping, EF configuration, compiler grammar and validation coverage."
+      subtitle="Implementation evidence page for entity mapping, EF configuration, compiler grammar and validation coverage."
       actions={<StandardButton variant="primary" leadingIcon={<Sparkles size={16} />} isDisabled data-disabled-reason="Expression validation is not yet available.">Validate Expression</StandardButton>}
     >
       <StandardCard title="Expression preview" subtitle="Structured grammar sample for compiled WidgetQueryExpression.">

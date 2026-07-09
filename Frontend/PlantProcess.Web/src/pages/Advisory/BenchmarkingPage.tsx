@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { phase15AdvisoryApi, type P15BenchmarkDashboardResponse, type P15BenchmarkingContract, type P15BenchmarkingHealth, type P15BenchmarkResponse } from "@/api/phase15Advisory";
+import { advisoryApi, type BenchmarkDashboardResponse, type BenchmarkingContract, type BenchmarkingHealth, type BenchmarkResponse } from "@/api/advisoryApi";
 
 import { P2T08_STANDARD_ROLLOUT_MARKER, StandardP2Table } from "@/components/standard/StandardP2Controls";
-import { StandardButton } from "@/components/standard";
+import { StandardButton, StandardPageHeader, StandardStatGrid } from "@/components/standard";
 const cardStyle = { border: "1px solid rgba(124,220,255,0.18)", borderRadius: 22, padding: 20, background: "linear-gradient(135deg, rgba(7,18,34,0.95), rgba(4,10,22,0.9))", boxShadow: "0 18px 50px rgba(0,0,0,0.22)" } as const;
 const buttonStyle = { border: "1px solid rgba(0,212,255,0.34)", borderRadius: 14, padding: "10px 14px", color: "#eaf7ff", background: "rgba(0,132,255,0.24)", cursor: "pointer", fontWeight: 700 } as const;
 
@@ -12,20 +12,20 @@ function asNumber(value?: number | null) {
 }
 
 export function BenchmarkingPage() {
-  const [health, setHealth] = useState<P15BenchmarkingHealth | null>(null);
-  const [contract, setContract] = useState<P15BenchmarkingContract | null>(null);
-  const [dashboard, setDashboard] = useState<P15BenchmarkDashboardResponse | null>(null);
-  const [suppressed, setSuppressed] = useState<P15BenchmarkResponse | null>(null);
-  const [status, setStatus] = useState("Loading Phase 15 benchmarking...");
+  const [health, setHealth] = useState<BenchmarkingHealth | null>(null);
+  const [contract, setContract] = useState<BenchmarkingContract | null>(null);
+  const [dashboard, setDashboard] = useState<BenchmarkDashboardResponse | null>(null);
+  const [suppressed, setSuppressed] = useState<BenchmarkResponse | null>(null);
+  const [status, setStatus] = useState("Loading benchmarking...");
   const [busy, setBusy] = useState(false);
 
   async function refresh() {
     setBusy(true);
     try {
       const [nextHealth, nextContract, nextDashboard] = await Promise.all([
-        phase15AdvisoryApi.benchmarkingHealth(),
-        phase15AdvisoryApi.benchmarkingContract(),
-        phase15AdvisoryApi.benchmarkingSummary(),
+        advisoryApi.benchmarkingHealth(),
+        advisoryApi.benchmarkingContract(),
+        advisoryApi.benchmarkingSummary(),
       ]);
       setHealth(nextHealth);
       setContract(nextContract);
@@ -44,9 +44,9 @@ export function BenchmarkingPage() {
   async function loadSuppressedDemo() {
     setBusy(true);
     try {
-      const result = await phase15AdvisoryApi.benchmarkingSuppressedDemo();
+      const result = await advisoryApi.benchmarkingSuppressionPreview();
       setSuppressed(result);
-      setStatus("Suppressed benchmark demo loaded. Below-minimum cohort does not expose aggregate bands.");
+      setStatus("This cohort is below the minimum privacy threshold, so no aggregate band is shown.");
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       setStatus(`Suppressed demo failed: ${message}`);
@@ -59,7 +59,6 @@ export function BenchmarkingPage() {
   const firstMetric = dashboard?.metricCards[0];
 
   const summaryCards = useMemo(() => [
-    { label: "Mode", value: health?.mode ?? "pending" },
     { label: "Industry", value: dashboard?.industryCode ?? "pending" },
     { label: "Median", value: asNumber(firstBand?.p50) },
     { label: "Cohort", value: String(firstBand?.cohortSize ?? "—") },
@@ -68,26 +67,15 @@ export function BenchmarkingPage() {
   ], [dashboard?.industryCode, firstBand, firstMetric, health?.mode, suppressed]);
 
   return (
-    <main data-testid="phase15-benchmarking-page">
-      <section>
-        <p>
-          Pack G · T-100 · Cross-plant & industry benchmarking
-        </p>
-        <h1>Phase 15 Benchmarking</h1>
-        <p>
-          Privacy-preserving cross-plant and industry benchmarking. The dashboard shows only anonymized aggregate bands and suppresses results below the minimum cohort threshold.
-        </p>
-        <strong>{status}</strong>
-      </section>
+    <main data-testid="benchmarking-page">
+      <StandardPageHeader
+        title="Cross-Plant Benchmarking"
+        subtitle="Compare this plant against an anonymised industry cohort, without exposing any other plant data."
+        description="Your plant is placed against an anonymised cohort of comparable plants. Only aggregate bands are ever shown. When a cohort is too small to protect anonymity, the result is suppressed rather than approximated."
+        status={status}
+      />
 
-      <section>
-        {summaryCards.map((card) => (
-          <div key={card.label}>
-            <span>{card.label}</span>
-            <strong>{card.value}</strong>
-          </div>
-        ))}
-      </section>
+      <StandardStatGrid items={summaryCards} emphasize="Plant percentile" />
 
       <section>
         <div>
@@ -111,7 +99,7 @@ export function BenchmarkingPage() {
           ) : <p>Benchmark data is loading...</p>}
           <div>
             <StandardButton type="button" isDisabled={busy} onClick={() => void refresh()}>Refresh benchmark</StandardButton>
-            <StandardButton type="button" isDisabled={busy} onClick={() => void loadSuppressedDemo()}>Demo suppressed benchmark</StandardButton>
+            <StandardButton type="button" isDisabled={busy} onClick={() => void loadSuppressedDemo()}>Preview suppression behaviour</StandardButton>
           </div>
         </div>
 

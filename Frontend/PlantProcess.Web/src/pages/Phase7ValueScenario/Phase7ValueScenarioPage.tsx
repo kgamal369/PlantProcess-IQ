@@ -144,9 +144,9 @@ export function Phase7ValueScenarioPage() {
 
       <section className="phase7-value-card phase7-value-formula">
         <span>Formula</span>
-        <strong>0.02 Ã— 10,000 tons = 200 affected tons</strong>
+        <strong>0.02 × 10,000 tons = 200 affected tons</strong>
         <p>
-          200 affected tons Ã— EUR 140 / 210 / 280 downgrade delta per ton =
+          200 affected tons × EUR 140 / 210 / 280 downgrade delta per ton =
           EUR 28k / 42k / 56k per month.
         </p>
       </section>
@@ -208,8 +208,8 @@ function RangeCard({
       <span>{title}</span>
       <strong>{range ? formatMoney(range.expected, currency) : "Not calculated"}</strong>
       <p>
-        Low: {range ? formatMoney(range.low, currency) : "-"} Â· Expected:{" "}
-        {range ? formatMoney(range.expected, currency) : "-"} Â· High:{" "}
+        Low: {range ? formatMoney(range.low, currency) : "-"} · Expected:{" "}
+        {range ? formatMoney(range.expected, currency) : "-"} · High:{" "}
         {range ? formatMoney(range.high, currency) : "-"}
       </p>
     </div>

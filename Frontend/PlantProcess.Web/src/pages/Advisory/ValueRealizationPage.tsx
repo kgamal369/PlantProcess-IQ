@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { phase15AdvisoryApi, type P15ValueRealizationContract, type P15ValueRealizationHealth, type P15ValueRealizationRequest, type P15ValueRealizationResponse } from "@/api/phase15Advisory";
+import { advisoryApi, type ValueRealizationContract, type ValueRealizationHealth, type ValueRealizationRequest, type ValueRealizationResponse } from "@/api/advisoryApi";
 
 import { P2T08_STANDARD_ROLLOUT_MARKER, StandardP2Input } from "@/components/standard/StandardP2Controls";
-import { StandardButton } from "@/components/standard";
+import { StandardButton, StandardPageHeader, StandardStatGrid } from "@/components/standard";
 const cardStyle = { border: "1px solid rgba(124,220,255,0.18)", borderRadius: 22, padding: 20, background: "linear-gradient(135deg, rgba(7,18,34,0.95), rgba(4,10,22,0.9))", boxShadow: "0 18px 50px rgba(0,0,0,0.22)" } as const;
 const buttonStyle = { border: "1px solid rgba(0,212,255,0.34)", borderRadius: 14, padding: "10px 14px", color: "#eaf7ff", background: "rgba(0,132,255,0.24)", cursor: "pointer", fontWeight: 700 } as const;
 const inputStyle = { width: "100%", border: "1px solid rgba(120,190,255,0.22)", borderRadius: 12, padding: "10px 12px", background: "rgba(2,7,18,0.75)", color: "#eaf7ff" } as const;
@@ -18,18 +18,18 @@ function asNumber(value?: number | null) {
 }
 
 export function ValueRealizationPage() {
-  const [health, setHealth] = useState<P15ValueRealizationHealth | null>(null);
-  const [contract, setContract] = useState<P15ValueRealizationContract | null>(null);
-  const [request, setRequest] = useState<P15ValueRealizationRequest | null>(null);
-  const [response, setResponse] = useState<P15ValueRealizationResponse | null>(null);
-  const [status, setStatus] = useState("Loading Phase 15 value-realization engine...");
+  const [health, setHealth] = useState<ValueRealizationHealth | null>(null);
+  const [contract, setContract] = useState<ValueRealizationContract | null>(null);
+  const [request, setRequest] = useState<ValueRealizationRequest | null>(null);
+  const [response, setResponse] = useState<ValueRealizationResponse | null>(null);
+  const [status, setStatus] = useState("Loading value-realization engine...");
   const [busy, setBusy] = useState(false);
 
   async function refresh() {
     const [nextHealth, nextContract, nextRequest] = await Promise.all([
-      phase15AdvisoryApi.valueRealizationHealth(),
-      phase15AdvisoryApi.valueRealizationContract(),
-      phase15AdvisoryApi.valueRealizationDemoRequest(),
+      advisoryApi.valueRealizationHealth(),
+      advisoryApi.valueRealizationContract(),
+      advisoryApi.valueRealizationDemoRequest(),
     ]);
     setHealth(nextHealth);
     setContract(nextContract);
@@ -54,7 +54,7 @@ export function ValueRealizationPage() {
     setBusy(true);
     setStatus("Calculating baseline-vs-actual realized value...");
     try {
-      const result = await phase15AdvisoryApi.calculateValueRealization(request);
+      const result = await advisoryApi.calculateValueRealization(request);
       setResponse(result);
       setStatus("Value-realization calculation completed with attribution caveat.");
     } catch (error) {
@@ -67,7 +67,6 @@ export function ValueRealizationPage() {
 
   const ledger = response?.ledgerEntry;
   const summaryCards = useMemo(() => [
-    { label: "Mode", value: health?.mode ?? "pending" },
     { label: "Baseline", value: asNumber(request?.baselineWindow.value) },
     { label: "Actual", value: asNumber(request?.actualWindow.value) },
     { label: "Delta", value: asNumber(response?.baselineVsActualDelta) },
@@ -76,26 +75,16 @@ export function ValueRealizationPage() {
   ], [health?.mode, ledger?.realizedValue.currencyCode, ledger?.realizedValue.expectedValue, request, response?.baselineVsActualDelta]);
 
   return (
-    <main data-testid="phase15-value-realization-page">
-      <section>
-        <p>
-          Pack G · T-098 · Value-realization tracking baseline vs actual
-        </p>
-        <h1>Phase 15 Value Realization</h1>
-        <p>
-          Tracks realized customer value by comparing a reproducible baseline KPI window against an actual KPI window after recommendation review. Attribution caveats remain visible.
-        </p>
-        <strong>{status}</strong>
-      </section>
+    <main data-testid="value-realization-page">
+      <StandardPageHeader
+        title="Value Realisation Tracking"
+        subtitle="Measured KPI movement after a recommendation was acted on, against a reproducible baseline."
+        description="When a recommendation is implemented, this page compares a frozen baseline KPI window against the actual window that followed. Attribution caveats remain visible: a measured improvement is not proof that the recommendation caused it."
+        status={status}
+      />
+      <p className="ppiq-std-sample-badge">Sample data - not from your plant</p>
 
-      <section>
-        {summaryCards.map((card) => (
-          <div key={card.label}>
-            <span>{card.label}</span>
-            <strong>{card.value}</strong>
-          </div>
-        ))}
-      </section>
+      <StandardStatGrid items={summaryCards} emphasize="Realized" />
 
       <section>
         <div>
@@ -109,9 +98,9 @@ export function ValueRealizationPage() {
                 <StandardP2Input type="number" value={request.actualWindow.value} onChange={(event) => updateActualValue(event.target.value)} />
               </label>
               <StandardButton type="button" isDisabled={busy} onClick={calculate}>Calculate realized value</StandardButton>
-              <StandardButton type="button" isDisabled={busy} onClick={() => void refresh()}>Reload demo request</StandardButton>
+              <StandardButton type="button" isDisabled={busy} onClick={() => void refresh()}>Load sample request</StandardButton>
             </>
-          ) : <p>Loading demo request...</p>}
+          ) : <p>Loading sample request...</p>}
         </div>
 
         <div>

@@ -110,7 +110,7 @@ export function GenealogyThreadPanel() {
   return (
     <StandardCard
       eyebrow="Material Investigation"
-      title="Genealogy â€” Traced Thread"
+      title="Genealogy — Traced Thread"
       subtitle="Bidirectional walk: coil to heat/melt (backward) and heat to defects/lab (forward), with per-node conditions."
       actions={
         <div>
@@ -157,9 +157,9 @@ export function GenealogyThreadPanel() {
         <>
           {hasDirections ? (
             <>
-              <Thread title="Backward â€” towards heat / melt" rows={backward} accent={C.cyan} />
+              <Thread title="Backward — towards heat / melt" rows={backward} accent={C.cyan} />
               {self.length > 0 && <Thread title="Material node" rows={self} accent={C.text} />}
-              <Thread title="Forward â€” towards defects / lab" rows={forward} accent={C.warning} />
+              <Thread title="Forward — towards defects / lab" rows={forward} accent={C.warning} />
             </>
           ) : (
             <Thread title="Traced thread (ordered)" rows={ordered} accent={C.cyan} />
@@ -193,7 +193,7 @@ function Thread({ title, rows, accent }: { title: string; rows: Record<string, u
               <div />
               <div>
                 <div>
-                  {label}{seq ? <span> Â· #{seq}</span> : null}
+                  {label}{seq ? <span> · #{seq}</span> : null}
                 </div>
                 {when && <div>{when}</div>}
                 {cond && <div>{cond}</div>}
@@ -211,7 +211,7 @@ function Evidence({ rows }: { rows: Record<string, unknown>[] }) {
   return (
     <details>
       <summary>
-        Evidence â€” raw observations ({rows.length} rows)
+        Evidence — raw observations ({rows.length} rows)
       </summary>
       <div>
         <StandardP2Table>

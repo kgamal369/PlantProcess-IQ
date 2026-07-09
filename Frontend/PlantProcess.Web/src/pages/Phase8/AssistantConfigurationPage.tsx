@@ -1,11 +1,11 @@
 
 import { useEffect, useState } from "react";
-import { phase8AssistantApi, type Phase8AssistantConfiguration } from "@/api/phase8Assistant";
+import { assistantApi, type AssistantConfiguration } from "@/api/assistantApi";
 import "./phase8-ai.css";
 
 import { P2T08_STANDARD_ROLLOUT_MARKER, StandardP2Input, StandardP2Select } from "@/components/standard/StandardP2Controls";
 import { StandardButton } from "@/components/standard";
-const defaultConfig: Phase8AssistantConfiguration = {
+const defaultConfig: AssistantConfiguration = {
   mode: "grounded-extractive",
   groundingPolicy: "strict-citations-required",
   evidencePolicy: "citations-and-provenance-required",
@@ -19,7 +19,7 @@ const defaultConfig: Phase8AssistantConfiguration = {
 };
 
 export function AssistantConfigurationPage() {
-  const [config, setConfig] = useState<Phase8AssistantConfiguration>(defaultConfig);
+  const [config, setConfig] = useState<AssistantConfiguration>(defaultConfig);
   const [status, setStatus] = useState("Loading assistant configuration...");
   const [findings, setFindings] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
@@ -27,7 +27,7 @@ export function AssistantConfigurationPage() {
   useEffect(() => {
     let active = true;
 
-    phase8AssistantApi.getAssistantConfig()
+    assistantApi.getAssistantConfig()
       .then((next) => {
         if (!active) return;
         setConfig(next);
@@ -47,7 +47,7 @@ export function AssistantConfigurationPage() {
     setBusy(true);
     setFindings([]);
     try {
-      const result = await phase8AssistantApi.saveAssistantConfig({
+      const result = await assistantApi.saveAssistantConfig({
         ...config,
         updatedAtUtc: new Date().toISOString(),
       });
@@ -65,7 +65,7 @@ export function AssistantConfigurationPage() {
     setBusy(true);
     setFindings([]);
     try {
-      const result = await phase8AssistantApi.resetAssistantConfig();
+      const result = await assistantApi.resetAssistantConfig();
       setConfig(result.normalized);
       setFindings(result.findings ?? []);
       setStatus("Assistant configuration reset to safe defaults.");
@@ -91,7 +91,7 @@ export function AssistantConfigurationPage() {
   return (
     <main className="phase8-page" data-testid="phase8-assistant-configuration-page">
       <section className="phase8-hero">
-        <p className="phase8-eyebrow">P08 · T-047 · Configure assistant from HMI</p>
+        <p className="phase8-eyebrow">Grounding, evidence and egress controls for the assistant.</p>
         <h1>Assistant Configuration</h1>
         <p className="phase8-muted">
           Configure assistant mode, grounding policy, evidence policy, allowed tools, no-egress posture and recommendation workflow directly from the HMI.

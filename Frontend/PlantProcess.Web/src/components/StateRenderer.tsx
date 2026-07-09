@@ -20,10 +20,10 @@
  *   </StateRenderer>
  *
  * Decision order:
- *   1. error      â†’ ErrorPanel + retry
- *   2. isLoading  â†’ loadingSkeleton (or default LoadingPanel)
- *   3. empty      â†’ EmptyInsightState (configurable)
- *   4. data       â†’ children(data)
+ *   1. error      → ErrorPanel + retry
+ *   2. isLoading  → loadingSkeleton (or default LoadingPanel)
+ *   3. empty      → EmptyInsightState (configurable)
+ *   4. data       → children(data)
  */
 
 import { ReactNode } from "react";
@@ -38,7 +38,7 @@ interface StateRendererProps<T> {
   error: unknown;
   /** The fetched data. May be null/undefined while loading. */
   data: T[] | T | null | undefined;
-  /** Render function for the "happy path" â€” only called when data is present. */
+  /** Render function for the "happy path" — only called when data is present. */
   children: (data: NonNullable<T>) => ReactNode;
   /** Custom skeleton shown during loading. Defaults to LoadingPanel. */
   loadingSkeleton?: ReactNode;
@@ -46,7 +46,7 @@ interface StateRendererProps<T> {
   emptyTitle?: string;
   /** Empty-state explanation / suggestion. */
   emptyHint?: string;
-  /** Optional retry handler â€” adds a "Retry" button to error and empty panels. */
+  /** Optional retry handler — adds a "Retry" button to error and empty panels. */
   onRetry?: () => void;
   /** Override the default empty check (data.length === 0 for arrays). */
   isEmpty?: (data: T[] | T) => boolean;
@@ -70,7 +70,7 @@ export function StateRenderer<T>({
   onRetry,
   isEmpty,
 }: StateRendererProps<T>) {
-  // â”€â”€ Error first â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Error first ─────────────────────────────────────────
   if (error) {
     return (
       <div className="ppiq-state-panel ppiq-state-panel--error" role="alert">
@@ -90,12 +90,12 @@ export function StateRenderer<T>({
     );
   }
 
-  // â”€â”€ Loading second â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Loading second ──────────────────────────────────────
   if (isLoading) {
     return <>{loadingSkeleton ?? <LoadingPanel />}</>;
   }
 
-  // â”€â”€ Empty third â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Empty third ─────────────────────────────────────────
   const empty = isEmpty
     ? data === null || data === undefined || isEmpty(data)
     : data === null || data === undefined || defaultIsEmpty(data);
@@ -117,7 +117,7 @@ export function StateRenderer<T>({
     );
   }
 
-  // â”€â”€ Data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Data ────────────────────────────────────────────────
   return <>{children(data as NonNullable<T>)}</>;
 }
 

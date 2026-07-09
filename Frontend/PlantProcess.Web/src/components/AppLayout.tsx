@@ -36,7 +36,16 @@ import "./AppLayout.css";
 import { StandardButton } from "@/components/standard";
 
 import { P2T08_STANDARD_ROLLOUT_MARKER } from "@/components/standard/StandardP2Controls";
-// â”€â”€ Navigation definition â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Navigation definition ─────────────────────────────────────
+const NAV_DATA_INTEGRATION = [
+  { to: "/data-integration/connections",     label: "Connections",     desc: "DB links: connect and test plant sources", icon: DatabaseZap },
+  { to: "/data-integration/registry",        label: "Table Registry",  desc: "Map source tables to the canonical model", icon: Network },
+  { to: "/data-integration/prepare",         label: "Prepare Import",  desc: "Pick columns, keys and watermark",         icon: GitBranch },
+  { to: "/data-integration/importing",       label: "Importing",       desc: "Stage-1 and Stage-2 pipeline",             icon: PlayCircle },
+  { to: "/data-integration/jobs",            label: "Jobs Monitor",    desc: "Run, pause, resume and inspect history",   icon: Cpu },
+  { to: "/data-integration/connector-truth", label: "Connector Truth", desc: "Per-connector sync and schema drift",      icon: ShieldCheck },
+];
+
 const NAV_ANALYTICS = [
   { to: "/dashboard",   label: "Command Dashboard",      desc: "Interactive intelligence workspace",    icon: LayoutDashboard },
   {
@@ -57,23 +66,23 @@ const NAV_INTELLIGENCE = [
   { to: "/ml-readiness",  label: "ML Readiness",    desc: "Labels, features and training gates",  icon: BrainCircuit },
 ];
 
-const NAV_PHASE8_AI = [
-  { to: "/phase8/suggestions", label: "P08 Suggestions", desc: "Guarded recommendations", icon: BrainCircuit },
-  { to: "/phase8/assistant", label: "P08 Assistant", desc: "Grounded chat runtime", icon: Sparkles },
-  { to: "/phase8/assistant-config", label: "Assistant Config", desc: "HMI grounding controls", icon: Settings2 },
+const NAV_ASSISTANT = [
+  { to: "/suggestions", label: "Suggestions", desc: "Guarded recommendations", icon: BrainCircuit },
+  { to: "/assistant", label: "Assistant", desc: "Grounded chat runtime", icon: Sparkles },
+  { to: "/assistant/configuration", label: "Assistant Configuration", desc: "HMI grounding controls", icon: Settings2 },
 ];
 
 const NAV_SYSTEM = [
-  { to: "/phase15/honesty-certification", label: "Honesty Cert.", desc: "Approval + no overclaim gate", icon: DatabaseZap },
-  { to: "/phase15/benchmarking", label: "Benchmarking", desc: "Cross-plant privacy bands", icon: DatabaseZap },
-  { to: "/phase15/roi-cfo-dashboard", label: "ROI/CFO Value", desc: "Potential vs realized value", icon: DatabaseZap },
-  { to: "/phase15/value-realization", label: "Value Realization", desc: "Baseline vs actual ledger", icon: DatabaseZap },
-  { to: "/phase15/recommendations", label: "Recommendations", desc: "Expected â‚¬ impact + approval", icon: DatabaseZap },
-  { to: "/phase15/scenario-simulation", label: "What-if Simulation", desc: "Phase 15 advisory projection", icon: DatabaseZap },
+  { to: "/advisory/honesty-certification", label: "Honesty Cert.", desc: "Approval + no overclaim gate", icon: DatabaseZap },
+  { to: "/advisory/benchmarking", label: "Benchmarking", desc: "Cross-plant privacy bands", icon: DatabaseZap },
+  { to: "/advisory/roi-cfo-dashboard", label: "ROI/CFO Value", desc: "Potential vs realized value", icon: DatabaseZap },
+  { to: "/advisory/value-realization", label: "Value Realization", desc: "Baseline vs actual ledger", icon: DatabaseZap },
+  { to: "/advisory/recommendations", label: "Recommendations", desc: "Expected € impact + approval", icon: DatabaseZap },
+  { to: "/advisory/scenario-simulation", label: "What-if Simulation", desc: "Phase 15 advisory projection", icon: DatabaseZap },
   { to: "/edge-collector", label: "Edge Collector", desc: "OT-safe one-way push status", icon: DatabaseZap },
   { to: "/historian-connector", label: "Historian Connector", desc: "Register, test, browse and map tags", icon: DatabaseZap },
   { to: "/admin-preview", label: "Admin Preview",  desc: "License, roles, ML scripts, report",   icon: BarChart3 },
-  { to: "/admin",         label: "Administrator",  desc: "DB config, schema mapping and jobs",    icon: Settings2 },
+  { to: "/admin",         label: "Administrator",  desc: "Site identity, license and access",     icon: Settings2 },
   { to: "/brand",         label: "Brand",          desc: "Identity, positioning and proof",       icon: Sparkles },
 ];
 
@@ -145,7 +154,7 @@ export function AppLayout() {
   return (
     <div className="piq-shell">
       <AppToaster />
-      {/* â”€â”€ Sidebar â”€â”€ */}
+      {/* ── Sidebar ── */}
       <aside className="piq-sidebar" aria-label="PlantProcess IQ navigation">
 
         {/* Brand header */}
@@ -178,6 +187,9 @@ export function AppLayout() {
 
         {/* Navigation */}
         <nav className="piq-nav">
+          <p className="piq-nav__section-label">Data Integration</p>
+          {NAV_DATA_INTEGRATION.map((item) => <NavItem key={item.to} {...item} />)}
+
           <p className="piq-nav__section-label">Analytics</p>
           {NAV_ANALYTICS.map((item) => <NavItem key={item.to} {...item} />)}
 
@@ -197,7 +209,7 @@ export function AppLayout() {
           </div>
           <div className="piq-sidebar-stat">
             <Network size={11} aria-hidden="true" />
-            <span>Phase 8â€“10 Interactive MVP</span>
+            <span>Interactive workspace</span>
           </div>
           <StandardButton className="piq-theme-btn" type="button" onClick={toggleTheme}
             title={`Switch to ${isDark ? "light" : "dark"} mode`}>
@@ -207,7 +219,7 @@ export function AppLayout() {
         </div>
       </aside>
 
-      {/* â”€â”€ Main â”€â”€ */}
+      {/* ── Main ── */}
       <main className="piq-main">
 
         {/* Command header */}

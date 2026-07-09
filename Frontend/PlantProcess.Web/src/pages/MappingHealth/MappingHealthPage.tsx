@@ -41,17 +41,17 @@ export function MappingHealthPage() {
   return (
     <main aria-labelledby="mapping-health-title">
       <section>
-        <p>Phase 4 Â· Mapping Health & Schema Drift</p>
+        <p>Phase 4 · Mapping Health & Schema Drift</p>
         <h1 id="mapping-health-title">Source mapping health command panel</h1>
         <p>This panel keeps PlantProcess IQ generic: it monitors source-schema snapshots, required-field coverage, open drift events and blocking drift without changing the customer source schema and without writing to MES, SCADA, L2 or PLC systems.</p>
-        <div role="status" aria-live="polite"><strong>Status:</strong> {summary.status} Â· {summary.evidence}{error ? <span>Backend note: {error}</span> : null}</div>
+        <div role="status" aria-live="polite"><strong>Status:</strong> {summary.status} · {summary.evidence}{error ? <span>Backend note: {error}</span> : null}</div>
       </section>
       <section aria-label="Mapping health KPIs">
         {[["Sources", summary.sources.length], ["Mapped coverage", `${coverage}%`], ["Total fields", totals.total], ["Mapped fields", totals.mapped], ["Unmapped required", totals.unmappedRequired], ["Open drift events", totals.drift], ["Blocked sources", totals.blocked]].map(([label, value]) => (<article key={String(label)}><p>{label}</p><p>{value}</p></article>))}
       </section>
       <section aria-label="Source mapping health table">
         <div><strong>Source-level evidence</strong><span>Population and exclusions must be shown on analysis surfaces.</span></div>
-        <div><StandardP2Table><thead><tr>{["Source", "Kind", "Status", "Fields", "Mapped", "Unmapped required", "Open drift", "Blocking", "Last snapshot"].map((header) => (<th key={header} scope="col">{header}</th>))}</tr></thead><tbody>{summary.sources.length === 0 ? (<tr><td colSpan={9}>No source-schema snapshots are available yet. Apply the Phase 4 DB script and run a connector sync to populate live evidence.</td></tr>) : (summary.sources.map((source) => (<tr key={source.sourceSystemCode}><td>{source.sourceSystemCode}</td><td>{source.sourceKind}</td><td><span>{source.healthStatus}</span></td><td>{source.totalFieldCount}</td><td>{source.mappedFieldCount}</td><td>{source.unmappedRequiredCount}</td><td>{source.driftEventCount}</td><td>{source.hasBlockingDrift ? "Yes" : "No"}</td><td>{source.lastSnapshotAtUtc ?? "â€”"}</td></tr>)))}</tbody></StandardP2Table></div>
+        <div><StandardP2Table><thead><tr>{["Source", "Kind", "Status", "Fields", "Mapped", "Unmapped required", "Open drift", "Blocking", "Last snapshot"].map((header) => (<th key={header} scope="col">{header}</th>))}</tr></thead><tbody>{summary.sources.length === 0 ? (<tr><td colSpan={9}>No source-schema snapshots are available yet. Apply the Phase 4 DB script and run a connector sync to populate live evidence.</td></tr>) : (summary.sources.map((source) => (<tr key={source.sourceSystemCode}><td>{source.sourceSystemCode}</td><td>{source.sourceKind}</td><td><span>{source.healthStatus}</span></td><td>{source.totalFieldCount}</td><td>{source.mappedFieldCount}</td><td>{source.unmappedRequiredCount}</td><td>{source.driftEventCount}</td><td>{source.hasBlockingDrift ? "Yes" : "No"}</td><td>{source.lastSnapshotAtUtc ?? "—"}</td></tr>)))}</tbody></StandardP2Table></div>
       </section>
     </main>
   );

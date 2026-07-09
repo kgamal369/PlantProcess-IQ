@@ -1,14 +1,14 @@
-// Pack G · T-096 · What-if scenario simulation engine
+// What-If Scenario Analysis
 import { useEffect, useMemo, useState } from "react";
 import { P2T08_STANDARD_ROLLOUT_MARKER, StandardP2Input, StandardP2Table } from "@/components/standard/StandardP2Controls";
-import { StandardButton } from "@/components/standard";
+import { StandardButton, StandardPageHeader, StandardStatGrid } from "@/components/standard";
 import {
-  phase15AdvisoryApi,
-  type P15ScenarioContract,
-  type P15ScenarioHealth,
-  type P15ScenarioRequest,
-  type P15ScenarioResponse,
-} from "@/api/phase15Advisory";
+  advisoryApi,
+  type ScenarioContract,
+  type ScenarioHealth,
+  type ScenarioRequest,
+  type ScenarioResponse,
+} from "@/api/advisoryApi";
 
 const cardStyle = {
   border: "1px solid rgba(124, 220, 255, 0.18)",
@@ -38,34 +38,34 @@ const inputStyle = {
 } as const;
 
 function asMoney(value?: number | null, currency = "EUR") {
-  if (value === undefined || value === null || Number.isNaN(value)) return "â€”";
+  if (value === undefined || value === null || Number.isNaN(value)) return "—";
   return new Intl.NumberFormat(undefined, { style: "currency", currency }).format(value);
 }
 
 function asNumber(value?: number | null) {
-  if (value === undefined || value === null || Number.isNaN(value)) return "â€”";
+  if (value === undefined || value === null || Number.isNaN(value)) return "—";
   return new Intl.NumberFormat(undefined, { maximumFractionDigits: 3 }).format(value);
 }
 
 export function ScenarioSimulationPage() {
-  const [health, setHealth] = useState<P15ScenarioHealth | null>(null);
-  const [contract, setContract] = useState<P15ScenarioContract | null>(null);
-  const [request, setRequest] = useState<P15ScenarioRequest | null>(null);
-  const [response, setResponse] = useState<P15ScenarioResponse | null>(null);
-  const [status, setStatus] = useState("Loading Phase 15 what-if engine...");
+  const [health, setHealth] = useState<ScenarioHealth | null>(null);
+  const [contract, setContract] = useState<ScenarioContract | null>(null);
+  const [request, setRequest] = useState<ScenarioRequest | null>(null);
+  const [response, setResponse] = useState<ScenarioResponse | null>(null);
+  const [status, setStatus] = useState("Loading what-if engine...");
   const [busy, setBusy] = useState(false);
 
   async function refresh() {
     const [nextHealth, nextContract, nextSample] = await Promise.all([
-      phase15AdvisoryApi.scenarioHealth(),
-      phase15AdvisoryApi.scenarioContract(),
-      phase15AdvisoryApi.sampleRequest(),
+      advisoryApi.scenarioHealth(),
+      advisoryApi.scenarioContract(),
+      advisoryApi.sampleRequest(),
     ]);
 
     setHealth(nextHealth);
     setContract(nextContract);
     setRequest(nextSample);
-    setStatus("Phase 15 what-if engine is reachable.");
+    setStatus("what-if engine is reachable.");
   }
 
   useEffect(() => {
@@ -79,12 +79,11 @@ export function ScenarioSimulationPage() {
   const valueImpact = response?.projectedValueImpact;
   const summaryCards = useMemo(
     () => [
-      { label: "Mode", value: health?.mode ?? "pending" },
       { label: "Projection only", value: health?.projectionOnly ? "YES" : "pending" },
       { label: "Auto write-back", value: health ? (health.automaticWriteBack ? "YES" : "NO") : "pending" },
       { label: "Support", value: String(response?.supportStatus ?? "not simulated") },
-      { label: "Seed", value: String(response?.seed ?? request?.seed ?? "â€”") },
-      { label: "Expected â‚¬ impact", value: asMoney(valueImpact?.expectedValue, valueImpact?.currencyCode ?? "EUR") },
+      { label: "Seed", value: String(response?.seed ?? request?.seed ?? "—") },
+      { label: "Expected € impact", value: asMoney(valueImpact?.expectedValue, valueImpact?.currencyCode ?? "EUR") },
     ],
     [health, request?.seed, response?.seed, response?.supportStatus, valueImpact?.currencyCode, valueImpact?.expectedValue],
   );
@@ -105,7 +104,7 @@ export function ScenarioSimulationPage() {
     setBusy(true);
     setStatus("Running deterministic what-if projection...");
     try {
-      const result = await phase15AdvisoryApi.simulate(request);
+      const result = await advisoryApi.simulate(request);
       setResponse(result);
       setStatus("Scenario projection completed. Review support status and projection-only caveat.");
     } catch (error) {
@@ -125,30 +124,19 @@ export function ScenarioSimulationPage() {
       ),
     });
     setResponse(null);
-    setStatus("Out-of-envelope demo prepared. Run simulation to confirm abstain/insufficient support behavior.");
+    setStatus("Out-of-envelope value prepared. Run the simulation to confirm the engine abstains.");
   }
 
   return (
-    <main data-testid="phase15-scenario-page">
-      <section>
-        <p>
-          Pack G Â· T-096 Â· What-if scenario simulation engine
-        </p>
-        <h1>Phase 15 What-if Scenario Simulation</h1>
-        <p>
-          Deterministic projection engine for guarded advisory scenarios. It is projection-only, rejects out-of-envelope changes, and never writes to the production process.
-        </p>
-        <strong>{status}</strong>
-      </section>
+    <main data-testid="scenario-simulation-page">
+      <StandardPageHeader
+        title="What-If Scenario Analysis"
+        subtitle="Projected outcomes for process changes inside the observed operating envelope."
+        description="Propose a change to a process parameter and see the projected effect. The engine refuses to project outside the envelope actually observed in your plant data, and it never writes a value back to the process."
+        status={status}
+      />
 
-      <section>
-        {summaryCards.map((card) => (
-          <div key={card.label}>
-            <span>{card.label}</span>
-            <strong>{card.value}</strong>
-          </div>
-        ))}
-      </section>
+      <StandardStatGrid items={summaryCards} emphasize="Support" />
 
       <section>
         <div>
@@ -161,14 +149,14 @@ export function ScenarioSimulationPage() {
                 {request.adjustments.map((adjustment, index) => (
                   <div key={adjustment.parameterCode}>
                     <strong>{adjustment.displayName}</strong>
-                    <p>Observed envelope: {asNumber(adjustment.minimumObservedValue)} â†’ {asNumber(adjustment.maximumObservedValue)} {adjustment.unit ?? ""}</p>
+                    <p>Observed envelope: {asNumber(adjustment.minimumObservedValue)} → {asNumber(adjustment.maximumObservedValue)} {adjustment.unit ?? ""}</p>
                     <label><span>Proposed value</span><StandardP2Input type="number" value={adjustment.proposedValue} onChange={(event) => updateProposedValue(index, event.target.value)} /></label>
                   </div>
                 ))}
               </div>
               <div>
                 <StandardButton type="button" isDisabled={busy} onClick={simulate}>Run what-if simulation</StandardButton>
-                <StandardButton type="button" isDisabled={busy} onClick={makeOutOfEnvelope}>Demo out-of-envelope abstain</StandardButton>
+                <StandardButton type="button" isDisabled={busy} onClick={makeOutOfEnvelope}>Test an out-of-envelope value</StandardButton>
                 <StandardButton type="button" isDisabled={busy} onClick={() => void refresh()}>Reload sample</StandardButton>
               </div>
             </>

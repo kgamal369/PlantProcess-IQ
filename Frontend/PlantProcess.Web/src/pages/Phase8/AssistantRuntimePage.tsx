@@ -1,21 +1,21 @@
 
 import { useEffect, useState } from "react";
-import { assistantModeLabel, phase8AssistantApi, type Phase8AssistantAnswer, type Phase8AssistantConfiguration } from "@/api/phase8Assistant";
+import { assistantModeLabel, assistantApi, type AssistantAnswer, type AssistantConfiguration } from "@/api/assistantApi";
 import "./phase8-ai.css";
 
 import { StandardP2Button, StandardP2TextArea } from "@/components/standard/StandardP2Controls";
 import { StandardButton } from "@/components/standard";
 export function AssistantRuntimePage() {
-  const [config, setConfig] = useState<Phase8AssistantConfiguration | null>(null);
+  const [config, setConfig] = useState<AssistantConfiguration | null>(null);
   const [question, setQuestion] = useState("What evidence supports the latest quality recommendation?");
-  const [answer, setAnswer] = useState<Phase8AssistantAnswer | null>(null);
+  const [answer, setAnswer] = useState<AssistantAnswer | null>(null);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState("Loading assistant runtime configuration...");
 
   useEffect(() => {
     let active = true;
 
-    phase8AssistantApi.getAssistantConfig()
+    assistantApi.getAssistantConfig()
       .then((next) => {
         if (!active) return;
         setConfig(next);
@@ -36,7 +36,7 @@ export function AssistantRuntimePage() {
     setAnswer(null);
     setStatus("Asking grounded assistant...");
     try {
-      const result = await phase8AssistantApi.askAssistant(question, ["phase8-hmi", "grounded"], config?.allowedTools ?? []);
+      const result = await assistantApi.askAssistant(question, ["phase8-hmi", "grounded"], config?.allowedTools ?? []);
       setAnswer(result);
       setStatus(result.isRefusal ? "Assistant abstained because evidence was insufficient." : "Grounded answer returned with evidence.");
     } catch (error) {
@@ -56,7 +56,7 @@ export function AssistantRuntimePage() {
   return (
     <main className="phase8-page" data-testid="phase8-assistant-runtime-page">
       <section className="phase8-hero">
-        <p className="phase8-eyebrow">P08 · T-046 · Assistant chat with grounding runtime</p>
+        <p className="phase8-eyebrow">Ask questions about your plant data and receive answers with cited evidence.</p>
         <h1>Grounded Assistant Runtime</h1>
         <p className="phase8-muted">
           The assistant can answer only with grounded evidence. Missing evidence produces an abstention, not an invented number or unsupported causal claim.

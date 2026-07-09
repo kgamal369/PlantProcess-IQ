@@ -7,7 +7,7 @@ export function ExecutivePersonaDashboardPage() {
   return (
     <main className="phase9-page" data-testid="phase9-executive-dashboard">
       <section className="phase9-hero">
-        <p className="phase9-eyebrow">P09 · T-052 · Executive / CEO persona scope</p>
+        <p className="phase9-eyebrow">Executive view of plant performance and realised value.</p>
         <h1>Executive Decision Dashboard</h1>
         <p className="phase9-muted">
           A curated CEO-facing view for value, ROI, KPI, quality and downtime summaries. Engineering and configuration pages are intentionally hidden from this persona scope.

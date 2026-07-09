@@ -9,9 +9,9 @@
 // FILE: Frontend/PlantProcess.Web/src/pages/Admin/AdminSchemaConfigurationTab.tsx
 //
 // HIGH PRIORITY ITEMS 11 + 12 + 13:
-//  11. Schema Configuration visual mapper â€” map source fields to canonical targets
-//  12. SQL View editor â€” full-featured textarea with syntax hints, save & preview
-//  13. KPI Definition UI â€” create/edit KPIs with SQL expressions
+//  11. Schema Configuration visual mapper — map source fields to canonical targets
+//  12. SQL View editor — full-featured textarea with syntax hints, save & preview
+//  13. KPI Definition UI — create/edit KPIs with SQL expressions
 //
 // Replaces the previous read-only version.
 // ============================================================
@@ -53,7 +53,7 @@ import {
   validateRequired,
 } from "@/hooks/useInlineFormValidation";
 
-// â”€â”€ SchemaConfigurationTab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── SchemaConfigurationTab ────────────────────────────────────────────────────
 
 export function SchemaConfigurationTab({
   data,
@@ -124,7 +124,7 @@ export function SchemaConfigurationTab({
   );
 }
 
-// â”€â”€ Item 12: SQL View Editor Panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Item 12: SQL View Editor Panel ────────────────────────────────────────────
 
 function SqlViewEditorPanel() {
   const [schemaViews, setSchemaViews] = useState<SchemaViewDefinitionRecord[]>([]);
@@ -233,7 +233,7 @@ LIMIT 100`,
     }
   }
 
-  // â”€â”€ FE-HARD-005: Optimistic save for saveView â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── FE-HARD-005: Optimistic save for saveView ──────────────────────────────
   // The hook computes a fresh successMessage on every render via the closure,
   // so it always reflects the current form.schemaViewName.
   const { isSaving: isSavingView, save: saveView, error: saveError } = useOptimisticSave({
@@ -281,7 +281,7 @@ LIMIT 100`,
     },
   });
 
-  // â”€â”€ FE-HARD-005: Optimistic save for approveView â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── FE-HARD-005: Optimistic save for approveView ───────────────────────────
   const { isSaving: isApproving, save: approveView, error: approveError } = useOptimisticSave({
     successMessage: "View approved for use in canonical mappings",
     toastId: `approve-schema-view-${selectedViewId || "none"}`,
@@ -325,18 +325,18 @@ LIMIT 100`,
               value={selectedViewId}
               onChange={(e) => loadSelectedViewIntoEditor(e.target.value)}
             >
-              <option value="">New viewâ€¦</option>
+              <option value="">New view…</option>
               {schemaViews.map((v) => (
                 <option key={v.id} value={v.id}>
-                  {v.schemaViewCode} â€” {v.schemaViewName}
-                  {v.isApproved ? " âœ…" : ""}
+                  {v.schemaViewCode} — {v.schemaViewName}
+                  {v.isApproved ? " ✅" : ""}
                 </option>
               ))}
             </StandardPageSelect>
             {selectedView ? (
               <span className="admin-copy">
-                Status: {selectedView.lastValidationStatus ?? "Not run"} Â·
-                Approved: {selectedView.isApproved ? "Yes" : "No"} Â·
+                Status: {selectedView.lastValidationStatus ?? "Not run"} ·
+                Approved: {selectedView.isApproved ? "Yes" : "No"} ·
                 Last: {formatDate(selectedView.lastValidatedAtUtc)}
               </span>
             ) : null}
@@ -372,10 +372,10 @@ LIMIT 100`,
             value={form.viewKind}
             onChange={(e) => setField("viewKind", e.target.value)}
           >
-            <option value="SqlView">SQL View â€” generic SELECT</option>
-            <option value="JoinView">Join View â€” multi-table JOIN</option>
-            <option value="KpiView">KPI View â€” aggregation for KPI</option>
-            <option value="MappingPreparationView">Mapping Prep â€” pre-canonical transform</option>
+            <option value="SqlView">SQL View — generic SELECT</option>
+            <option value="JoinView">Join View — multi-table JOIN</option>
+            <option value="KpiView">KPI View — aggregation for KPI</option>
+            <option value="MappingPreparationView">Mapping Prep — pre-canonical transform</option>
           </StandardPageSelect>
         </label>
         <label className="admin-form-label">
@@ -438,7 +438,7 @@ LIMIT 100`,
           disabled={isSavingView || isBusy || isApproving || !form.schemaViewCode.trim()}
         >
           {isSavingView
-            ? <><Loader2 size={14} className="spin" /> Savingâ€¦</>
+            ? <><Loader2 size={14} className="spin" /> Saving…</>
             : <><Save size={14} /> {selectedView ? "Update View" : "Save View"}</>}
         </StandardPageButton>
         {selectedView && !selectedView.isApproved ? (
@@ -449,7 +449,7 @@ LIMIT 100`,
             disabled={isApproving || isBusy || isSavingView}
           >
             {isApproving
-              ? <><Loader2 size={14} className="spin" /> Approvingâ€¦</>
+              ? <><Loader2 size={14} className="spin" /> Approving…</>
               : <><CheckCircle2 size={14} /> Approve for Mapping</>}
           </StandardPageButton>
         ) : null}
@@ -465,8 +465,8 @@ LIMIT 100`,
             <div>
               <h2>Preview Result</h2>
               <p>
-                {preview.isSuccess ? "âœ…" : "âŒ"} {preview.message} Â·
-                {preview.durationMs}ms Â· {preview.rowCount} rows
+                {preview.isSuccess ? "✅" : "❌"} {preview.message} ·
+                {preview.durationMs}ms · {preview.rowCount} rows
               </p>
             </div>
           </div>
@@ -489,7 +489,7 @@ LIMIT 100`,
                     <tr key={i}>
                       {preview.columns.map((c) => (
                         <td key={c.columnName}>
-                          {String(row[c.columnName] ?? "â€”")}
+                          {String(row[c.columnName] ?? "—")}
                         </td>
                       ))}
                     </tr>
@@ -531,7 +531,7 @@ LIMIT 100`,
                       statusClass={v.lastValidationStatus === "Success" ? "success" : "warning"}
                     />
                   </td>
-                  <td>{v.isApproved ? "âœ… Yes" : "â€”"}</td>
+                  <td>{v.isApproved ? "✅ Yes" : "—"}</td>
                   <td>{v.maxPreviewRows}</td>
                   <td>{formatDate(v.lastValidatedAtUtc)}</td>
                 </tr>
@@ -544,7 +544,7 @@ LIMIT 100`,
   );
 }
 
-// â”€â”€ Item 13: KPI Definition Panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Item 13: KPI Definition Panel ─────────────────────────────────────────────
 
 function KpiDefinitionPanel() {
   const [kpis, setKpis] = useState<KpiDefinitionRecord[]>([]);
@@ -584,7 +584,7 @@ function KpiDefinitionPanel() {
 
   useEffect(() => { load(); }, []);
 
-  // â”€â”€ FE-HARD-005: Optimistic save for createKpi â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── FE-HARD-005: Optimistic save for createKpi ─────────────────────────────
   const { isSaving: isCreatingKpi, save: createKpi, error: createKpiError } = useOptimisticSave({
     successMessage: `KPI "${form.kpiName}" created`,
     toastId: `create-kpi-${form.kpiCode || "new"}`,
@@ -745,10 +745,10 @@ function KpiDefinitionPanel() {
                 value={form.schemaViewDefinitionId}
                 onChange={(e) => setField("schemaViewDefinitionId", e.target.value)}
               >
-                <option value="">None â€” use raw staging directly</option>
+                <option value="">None — use raw staging directly</option>
                 {schemaViews.map((v) => (
                   <option key={v.id} value={v.id}>
-                    {v.schemaViewCode} â€” {v.schemaViewName}
+                    {v.schemaViewCode} — {v.schemaViewName}
                   </option>
                 ))}
               </StandardPageSelect>
@@ -778,7 +778,7 @@ function KpiDefinitionPanel() {
               disabled={isCreatingKpi}
             >
               {isCreatingKpi
-                ? <><Loader2 size={14} className="spin" /> Creatingâ€¦</>
+                ? <><Loader2 size={14} className="spin" /> Creating…</>
                 : <><Save size={14} /> Create KPI</>}
             </StandardPageButton>
           </div>
@@ -805,7 +805,7 @@ function KpiDefinitionPanel() {
                   <td>
                     <code>{kpi.valueExpression}</code>
                   </td>
-                  <td>{kpi.unit ?? "â€”"}</td>
+                  <td>{kpi.unit ?? "—"}</td>
                   <td>{kpi.aggregationType}</td>
                   <td>
                     <StatusPill
@@ -829,7 +829,7 @@ function KpiDefinitionPanel() {
   );
 }
 
-// â”€â”€ Item 11: Visual Field Mapper Panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Item 11: Visual Field Mapper Panel ────────────────────────────────────────
 
 function FieldMapperPanel({
   mappings, coverage,
@@ -892,7 +892,7 @@ function FieldMapperPanel({
           <StandardPageTable>
             <thead>
               <tr>
-                <th>Mapping</th><th>Source Object</th><th>â†’ Target Entity</th><th>Version</th><th>Status</th>
+                <th>Mapping</th><th>Source Object</th><th>→ Target Entity</th><th>Version</th><th>Status</th>
               </tr>
             </thead>
             <tbody>
@@ -906,7 +906,7 @@ function FieldMapperPanel({
                     <small>{m.mappingName}</small>
                   </td>
                   <td>{m.sourceObjectName}</td>
-                  <td>â†’ {m.targetEntityName}</td>
+                  <td>→ {m.targetEntityName}</td>
                   <td>{m.mappingVersion}</td>
                   <td>
                     <StatusPill
@@ -921,7 +921,7 @@ function FieldMapperPanel({
         </div>
       ) : null}
 
-      {/* Source object coverage â€” starting points for mapping */}
+      {/* Source object coverage — starting points for mapping */}
       {coverage.length > 0 ? (
         <div>
           <strong>
@@ -932,7 +932,7 @@ function FieldMapperPanel({
               <div className="admin-list-item" key={item.sourceObjectName}>
                 <div>
                   <strong>{item.sourceObjectName}</strong>
-                  <span>{item.totalRows} rows â€” {item.pendingRows} pending</span>
+                  <span>{item.totalRows} rows — {item.pendingRows} pending</span>
                 </div>
                 <span className="admin-pill info">Stageable</span>
               </div>

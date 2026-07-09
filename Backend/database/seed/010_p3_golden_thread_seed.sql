@@ -26,22 +26,28 @@ BEGIN
 
     INSERT INTO public.material_units
         (id, created_at_utc, is_synthetic, source_system, is_deleted,
-         material_code, material_unit_type, product_family, grade_or_recipe, site_id)
+         material_code, material_unit_type, product_family, grade_or_recipe, site_id,
+         plant_time_zone_id, plant_utc_offset_minutes)
     VALUES
-        (v_h1,   now(), true, 'PPIQ_P3_SEED', false, 'H-3361',    'Heat', 'FlatSteel', 'S235JR', v_site),
-        (v_h2,   now(), true, 'PPIQ_P3_SEED', false, 'H-3362',    'Heat', 'FlatSteel', 'S235JR', v_site),
-        (v_slab, now(), true, 'PPIQ_P3_SEED', false, 'S-0044170', 'Slab', 'FlatSteel', 'S235JR', v_site),
-        (v_coilT,now(), true, 'PPIQ_P3_SEED', false, 'C-0044170', 'Coil', 'FlatSteel', 'S235JR', v_site),
-        (v_coilN,now(), true, 'PPIQ_P3_SEED', false, 'C-0044171', 'Coil', 'FlatSteel', 'S235JR', v_site)
+        (v_h1,   now(), true, 'PPIQ_P3_SEED', false, 'H-3361',    'Heat', 'FlatSteel', 'S235JR', v_site, 'Europe/Berlin', 60),
+        (v_h2,   now(), true, 'PPIQ_P3_SEED', false, 'H-3362',    'Heat', 'FlatSteel', 'S235JR', v_site, 'Europe/Berlin', 60),
+        (v_slab, now(), true, 'PPIQ_P3_SEED', false, 'S-0044170', 'Slab', 'FlatSteel', 'S235JR', v_site, 'Europe/Berlin', 60),
+        (v_coilT,now(), true, 'PPIQ_P3_SEED', false, 'C-0044170', 'Coil', 'FlatSteel', 'S235JR', v_site, 'Europe/Berlin', 60),
+        (v_coilN,now(), true, 'PPIQ_P3_SEED', false, 'C-0044171', 'Coil', 'FlatSteel', 'S235JR', v_site, 'Europe/Berlin', 60)
     ON CONFLICT (id) DO NOTHING;
 
+    -- NOTE: the transition coil C-0044170 gets its provenance from HEATS ONLY
+    -- (0.70 H-3361 + 0.30 H-3362 = 1.0). It deliberately has NO SlabToCoil edge:
+    -- genealogy_edges is a weighted-provenance ledger and 550's trigger enforces
+    -- sum(weight) = 1.0 per child, across ALL relationship types. The structural
+    -- coil -> slab hop lives in canonical_genealogy_edges (ce0002), which is what
+    -- ppiq_walk_genealogy / ppiq_golden_thread actually read.
     INSERT INTO public.genealogy_edges
         (id, created_at_utc, is_synthetic, source_system, is_deleted,
          parent_material_unit_id, child_material_unit_id, relationship_type,
          contribution_weight, is_transition)
     VALUES
         ('3a000000-0000-0000-0000-0000000ed001', now(), true, 'PPIQ_P3_SEED', false, v_h1,   v_slab,  'HeatToSlab', 1.00, false),
-        ('3a000000-0000-0000-0000-0000000ed002', now(), true, 'PPIQ_P3_SEED', false, v_slab, v_coilT, 'SlabToCoil', 1.00, false),
         ('3a000000-0000-0000-0000-0000000ed003', now(), true, 'PPIQ_P3_SEED', false, v_h1,   v_coilT, 'HeatToCoil', 0.70, true),
         ('3a000000-0000-0000-0000-0000000ed004', now(), true, 'PPIQ_P3_SEED', false, v_h2,   v_coilT, 'HeatToCoil', 0.30, true),
         ('3a000000-0000-0000-0000-0000000ed005', now(), true, 'PPIQ_P3_SEED', false, v_h1,   v_coilN, 'HeatToCoil', 1.00, false)

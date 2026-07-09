@@ -1,3 +1,9 @@
+// ============================================================
+// FILE: Frontend/PlantProcess.Web/src/api/assistantApi.ts
+// M1-08: renamed from phase8Assistant.ts (Naming Golden Rule).
+// Backend endpoint paths (/api/phase8/...) are SERVER routes and are
+// intentionally unchanged; renaming them is separate backend debt.
+// ============================================================
 
 const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? "http://localhost:5063";
 
@@ -19,7 +25,7 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
   return (await response.json()) as T;
 }
 
-export type Phase8AssistantConfiguration = {
+export type AssistantConfiguration = {
   mode: string;
   groundingPolicy: string;
   evidencePolicy: string;
@@ -32,7 +38,7 @@ export type Phase8AssistantConfiguration = {
   updatedAtUtc: string;
 };
 
-export type Phase8SuggestionRequest = {
+export type SuggestionRequest = {
   scope: string;
   outcomeKey: string;
   materialScope: string;
@@ -40,7 +46,7 @@ export type Phase8SuggestionRequest = {
   includeValueProjection: boolean;
 };
 
-export type Phase8SuggestionRecommendation = {
+export type SuggestionRecommendation = {
   recommendationId: string;
   title: string;
   summary: string;
@@ -56,40 +62,40 @@ export type Phase8SuggestionRecommendation = {
   nextSteps: string[];
 };
 
-export type Phase8SuggestionResponse = {
+export type SuggestionResponse = {
   status: string;
   honestyCaveat: string;
-  recommendations: Phase8SuggestionRecommendation[];
+  recommendations: SuggestionRecommendation[];
 };
 
-export type Phase8AssistantCitation = {
+export type AssistantCitation = {
   kind: string;
   id: string;
   detail?: string | null;
 };
 
-export type Phase8AssistantAnswer = {
+export type AssistantAnswer = {
   isRefusal: boolean;
   refusalReason?: string | null;
   text: string;
-  citations: Phase8AssistantCitation[];
+  citations: AssistantCitation[];
   blocked: string[];
 };
 
-export type Phase8AssistantConfigSaveResponse = {
+export type AssistantConfigSaveResponse = {
   saved: boolean;
   tenantId: string;
   isValid: boolean;
-  normalized: Phase8AssistantConfiguration;
+  normalized: AssistantConfiguration;
   findings: string[];
 };
 
-export const phase8AssistantApi = {
+export const assistantApi = {
   getSuggestionHealth: () =>
     api<Record<string, unknown>>("/api/phase8/suggestions/health"),
 
-  generateSuggestions: (request: Phase8SuggestionRequest) =>
-    api<Phase8SuggestionResponse>("/api/phase8/suggestions/generate", {
+  generateSuggestions: (request: SuggestionRequest) =>
+    api<SuggestionResponse>("/api/phase8/suggestions/generate", {
       method: "POST",
       body: JSON.stringify(request),
     }),
@@ -109,7 +115,7 @@ export const phase8AssistantApi = {
     ),
 
   askAssistant: (question: string, contextChips: string[], tools: string[]) =>
-    api<Phase8AssistantAnswer>("/api/assistant/ask", {
+    api<AssistantAnswer>("/api/assistant/ask", {
       method: "POST",
       body: JSON.stringify({
         question,
@@ -119,21 +125,21 @@ export const phase8AssistantApi = {
     }),
 
   getAssistantConfig: () =>
-    api<Phase8AssistantConfiguration>("/api/phase8/assistant-config"),
+    api<AssistantConfiguration>("/api/phase8/assistant-config"),
 
-  saveAssistantConfig: (config: Phase8AssistantConfiguration) =>
-    api<Phase8AssistantConfigSaveResponse>("/api/phase8/assistant-config", {
+  saveAssistantConfig: (config: AssistantConfiguration) =>
+    api<AssistantConfigSaveResponse>("/api/phase8/assistant-config", {
       method: "PUT",
       body: JSON.stringify(config),
     }),
 
   resetAssistantConfig: () =>
-    api<Phase8AssistantConfigSaveResponse>("/api/phase8/assistant-config/reset", {
+    api<AssistantConfigSaveResponse>("/api/phase8/assistant-config/reset", {
       method: "POST",
     }),
 };
 
-export function formatEuroRange(item: Pick<Phase8SuggestionRecommendation, "expectedValueLow" | "expectedValueExpected" | "expectedValueHigh" | "currencyCode">) {
+export function formatEuroRange(item: Pick<SuggestionRecommendation, "expectedValueLow" | "expectedValueExpected" | "expectedValueHigh" | "currencyCode">) {
   const formatter = new Intl.NumberFormat(undefined, {
     style: "currency",
     currency: item.currencyCode || "EUR",
@@ -145,7 +151,7 @@ export function formatEuroRange(item: Pick<Phase8SuggestionRecommendation, "expe
     " expected " + formatter.format(item.expectedValueExpected);
 }
 
-export function assistantModeLabel(config?: Phase8AssistantConfiguration | null) {
+export function assistantModeLabel(config?: AssistantConfiguration | null) {
   if (!config) return "Configuration pending";
   if (config.noEgress) return config.mode + " no-egress";
   return config.mode + " private endpoint required";

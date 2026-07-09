@@ -1,24 +1,24 @@
 import { useEffect, useMemo, useState } from "react";
-import { phase15AdvisoryApi, type P15HonestyCertificationContract, type P15HonestyCertificationHealth, type P15HonestyCertificationReport } from "@/api/phase15Advisory";
+import { advisoryApi, type HonestyCertificationContract, type HonestyCertificationHealth, type HonestyCertificationReport } from "@/api/advisoryApi";
 
 import { P2T08_STANDARD_ROLLOUT_MARKER, StandardP2Table } from "@/components/standard/StandardP2Controls";
-import { StandardButton } from "@/components/standard";
+import { StandardButton, StandardPageHeader, StandardStatGrid } from "@/components/standard";
 const cardStyle = { border: "1px solid rgba(124,220,255,0.18)", borderRadius: 22, padding: 20, background: "linear-gradient(135deg, rgba(7,18,34,0.95), rgba(4,10,22,0.9))", boxShadow: "0 18px 50px rgba(0,0,0,0.22)" } as const;
 const buttonStyle = { border: "1px solid rgba(0,212,255,0.34)", borderRadius: 14, padding: "10px 14px", color: "#eaf7ff", background: "rgba(0,132,255,0.24)", cursor: "pointer", fontWeight: 700 } as const;
 
 export function HonestyCertificationPage() {
-  const [health, setHealth] = useState<P15HonestyCertificationHealth | null>(null);
-  const [contract, setContract] = useState<P15HonestyCertificationContract | null>(null);
-  const [report, setReport] = useState<P15HonestyCertificationReport | null>(null);
-  const [status, setStatus] = useState("Loading Phase 15 honesty certification...");
+  const [health, setHealth] = useState<HonestyCertificationHealth | null>(null);
+  const [contract, setContract] = useState<HonestyCertificationContract | null>(null);
+  const [report, setReport] = useState<HonestyCertificationReport | null>(null);
+  const [status, setStatus] = useState("Loading honesty certification...");
   const [busy, setBusy] = useState(false);
 
   async function refresh() {
     setBusy(true);
     try {
       const [nextHealth, nextContract] = await Promise.all([
-        phase15AdvisoryApi.honestyCertificationHealth(),
-        phase15AdvisoryApi.honestyCertificationContract(),
+        advisoryApi.honestyCertificationHealth(),
+        advisoryApi.honestyCertificationContract(),
       ]);
       setHealth(nextHealth);
       setContract(nextContract);
@@ -36,7 +36,7 @@ export function HonestyCertificationPage() {
   async function runCertification() {
     setBusy(true);
     try {
-      const result = await phase15AdvisoryApi.runHonestyCertification();
+      const result = await advisoryApi.runHonestyCertification();
       setReport(result);
       setStatus(result.failedCases === 0 ? "Certification passed." : "Certification failed. Review failed cases.");
     } catch (error) {
@@ -48,7 +48,6 @@ export function HonestyCertificationPage() {
   }
 
   const summaryCards = useMemo(() => [
-    { label: "Mode", value: health?.mode ?? "pending" },
     { label: "Status", value: report?.status ?? "not run" },
     { label: "Passed", value: String(report?.passedCases ?? 0) },
     { label: "Failed", value: String(report?.failedCases ?? 0) },
@@ -57,26 +56,15 @@ export function HonestyCertificationPage() {
   ], [health, report]);
 
   return (
-    <main data-testid="phase15-honesty-certification-page">
-      <section>
-        <p>
-          Pack G · T-101 · Recommendation honesty & approval certification
-        </p>
-        <h1>Phase 15 Honesty Certification</h1>
-        <p>
-          Adversarial certification for the advisory layer. It verifies no causal claims, no guaranteed savings, weak-evidence blocking, out-of-envelope abstain, explicit approval requirement and no automatic write-back.
-        </p>
-        <strong>{status}</strong>
-      </section>
+    <main data-testid="honesty-certification-page">
+      <StandardPageHeader
+        title="Advisory Honesty Certification"
+        subtitle="Independent verification that advisory output never overstates what the evidence supports."
+        description="Before any recommendation reaches an engineer, it is tested against a fixed set of honesty rules. This page runs those tests on demand and shows exactly which passed and which failed. A failed certification blocks the recommendation; it does not annotate it."
+        status={status}
+      />
 
-      <section>
-        {summaryCards.map((card) => (
-          <div key={card.label}>
-            <span>{card.label}</span>
-            <strong>{card.value}</strong>
-          </div>
-        ))}
-      </section>
+      <StandardStatGrid items={summaryCards} emphasize="Status" />
 
       <section>
         <div>

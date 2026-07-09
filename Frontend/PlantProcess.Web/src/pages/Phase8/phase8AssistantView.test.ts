@@ -1,6 +1,6 @@
 
 import { describe, expect, it } from "vitest";
-import { assistantModeLabel, formatEuroRange, type Phase8AssistantConfiguration } from "@/api/phase8Assistant";
+import { assistantModeLabel, formatEuroRange, type AssistantConfiguration } from "@/api/assistantApi";
 
 describe("Phase 8 assistant HMI helpers", () => {
   it("formats bounded recommendation euro ranges", () => {
@@ -17,7 +17,7 @@ describe("Phase 8 assistant HMI helpers", () => {
   });
 
   it("labels no-egress assistant mode", () => {
-    const config: Phase8AssistantConfiguration = {
+    const config: AssistantConfiguration = {
       mode: "grounded-extractive",
       groundingPolicy: "strict-citations-required",
       evidencePolicy: "citations-and-provenance-required",

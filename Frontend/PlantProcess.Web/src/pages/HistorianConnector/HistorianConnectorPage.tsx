@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { P2T08_STANDARD_ROLLOUT_MARKER, StandardP2Input, StandardP2Table } from "@/components/standard/StandardP2Controls";
-import { StandardButton } from "@/components/standard";
+import { StandardButton, StandardPageHeader, StandardStatGrid } from "@/components/standard";
 import {
   historianConnectorApi,
   type HistorianConnectionTestResult,
@@ -64,8 +64,8 @@ function toggle(list: string[], item: string) {
 export function HistorianConnectorPage() {
   const [health, setHealth] = useState<HistorianHealth | null>(null);
   const [provider, setProvider] = useState<HistorianProviderInfo | null>(null);
-  const [endpointUrl, setEndpointUrl] = useState("opc.tcp://demo-historian-gateway:4840");
-  const [namespaceUri, setNamespaceUri] = useState("urn:plantprocessiq:demo:historian");
+  const [endpointUrl, setEndpointUrl] = useState("");
+  const [namespaceUri, setNamespaceUri] = useState("");
   const [pathPrefix, setPathPrefix] = useState("plant.line1");
   const [selectedTags, setSelectedTags] = useState<string[]>(seedTags.slice(0, 3));
   const [testResult, setTestResult] = useState<HistorianConnectionTestResult | null>(null);
@@ -98,7 +98,6 @@ export function HistorianConnectorPage() {
   const statusCards = useMemo(
     () => [
       { label: "Provider", value: provider?.providerType ?? "pending" },
-      { label: "Mode", value: health?.mode ?? "pending" },
       { label: "Connection", value: testResult?.isSuccess ? "accepted" : "not tested" },
       { label: "Tags", value: String(tags.length) },
       { label: "Points", value: String(points.length) },
@@ -178,25 +177,14 @@ export function HistorianConnectorPage() {
 
   return (
     <main data-testid="historian-connector-page">
-      <section>
-        <p>
-          Pack E · T-063 · Historian connector UI
-        </p>
-        <h1>Historian Connector</h1>
-        <p>
-          Register a read-only OPC-UA / historian gateway source, test the configuration, browse tag metadata, read a bounded sample window, and hand selected tags into canonical mapping. This page is honest: live vendor handshake remains customer-environment specific.
-        </p>
-        <strong>{status}</strong>
-      </section>
+      <StandardPageHeader
+        title="Historian Connector"
+        subtitle="Register a read-only OPC-UA or historian gateway, browse its tags, and map them into canonical form."
+        description="Connect a historian as a read-only source, test the connection, browse available tags, read a bounded sample window, and hand selected tags into canonical mapping."
+        status={status}
+      />
 
-      <section>
-        {statusCards.map((card) => (
-          <div key={card.label}>
-            <span>{card.label}</span>
-            <strong>{card.value}</strong>
-          </div>
-        ))}
-      </section>
+      <StandardStatGrid items={statusCards} emphasize="Tags" />
 
       <section>
         <h2>1. Register configuration</h2>

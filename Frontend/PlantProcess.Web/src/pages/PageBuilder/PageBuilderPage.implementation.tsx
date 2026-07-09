@@ -293,7 +293,7 @@ export function PageBuilderPage() {
               <div>
                 <strong>{widget.title}</strong>
                 <small>
-                  {widget.kind} Â· {widget.source}
+                  {widget.kind} · {widget.source}
                 </small>
                 <small>
                   x:{widget.x} y:{widget.y} w:{widget.w} h:{widget.h}

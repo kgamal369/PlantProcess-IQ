@@ -8,7 +8,7 @@ export function PersonaAccessMatrixPage() {
   return (
     <main className="phase9-page" data-testid="phase9-persona-access-matrix">
       <section className="phase9-hero">
-        <p className="phase9-eyebrow">P09 · T-051/T-053 · Formal RBAC and route visibility</p>
+        <p className="phase9-eyebrow">Role and permission matrix by persona.</p>
         <h1>Persona Access Matrix</h1>
         <p className="phase9-muted">
           Routes are scoped by formal role and tier. Ungranted features are shown disabled with a reason instead of a dead click or unexplained 404.

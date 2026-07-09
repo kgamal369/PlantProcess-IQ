@@ -1,14 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { P2T08_STANDARD_ROLLOUT_MARKER, StandardP2Table } from "@/components/standard/StandardP2Controls";
-import { StandardButton } from "@/components/standard";
+import { StandardButton, StandardPageHeader, StandardStatGrid } from "@/components/standard";
+import { useAuth } from "@/state/AuthContext";
 import {
-  phase15AdvisoryApi,
-  type P15RecommendationCandidate,
-  type P15RecommendationContract,
-  type P15RecommendationGenerationRequest,
-  type P15RecommendationGenerationResponse,
-  type P15RecommendationHealth,
-} from "@/api/phase15Advisory";
+  advisoryApi,
+  type RecommendationCandidate,
+  type RecommendationContract,
+  type RecommendationGenerationRequest,
+  type RecommendationGenerationResponse,
+  type RecommendationHealth,
+} from "@/api/advisoryApi";
 
 const cardStyle = {
   border: "1px solid rgba(124, 220, 255, 0.18)",
@@ -39,19 +40,20 @@ function percent(value?: number | null) {
 }
 
 export function RecommendationsPage() {
-  const [health, setHealth] = useState<P15RecommendationHealth | null>(null);
-  const [contract, setContract] = useState<P15RecommendationContract | null>(null);
-  const [request, setRequest] = useState<P15RecommendationGenerationRequest | null>(null);
-  const [response, setResponse] = useState<P15RecommendationGenerationResponse | null>(null);
-  const [status, setStatus] = useState("Loading Phase 15 recommendation generator...");
+  const { user } = useAuth();
+  const [health, setHealth] = useState<RecommendationHealth | null>(null);
+  const [contract, setContract] = useState<RecommendationContract | null>(null);
+  const [request, setRequest] = useState<RecommendationGenerationRequest | null>(null);
+  const [response, setResponse] = useState<RecommendationGenerationResponse | null>(null);
+  const [status, setStatus] = useState("Loading recommendation generator...");
   const [busy, setBusy] = useState(false);
   const [decisionMessage, setDecisionMessage] = useState<string | null>(null);
 
   async function refresh() {
     const [nextHealth, nextContract, nextRequest] = await Promise.all([
-      phase15AdvisoryApi.recommendationHealth(),
-      phase15AdvisoryApi.recommendationContract(),
-      phase15AdvisoryApi.recommendationDemoRequest(),
+      advisoryApi.recommendationHealth(),
+      advisoryApi.recommendationContract(),
+      advisoryApi.recommendationDemoRequest(),
     ]);
     setHealth(nextHealth);
     setContract(nextContract);
@@ -73,7 +75,7 @@ export function RecommendationsPage() {
     setDecisionMessage(null);
     setStatus("Generating guarded recommendations...");
     try {
-      const result = await phase15AdvisoryApi.generateRecommendations(request);
+      const result = await advisoryApi.generateRecommendations(request);
       setResponse(result);
       setStatus("Recommendation generation completed. Review confidence, evidence and approval requirement.");
     } catch (error) {
@@ -84,14 +86,14 @@ export function RecommendationsPage() {
     }
   }
 
-  async function decide(recommendation: P15RecommendationCandidate, decision: 1 | 2) {
+  async function decide(recommendation: RecommendationCandidate, decision: 1 | 2) {
     setBusy(true);
     try {
-      const result = await phase15AdvisoryApi.approveRecommendation({
+      const result = await advisoryApi.approveRecommendation({
         recommendationId: recommendation.recommendationId,
-        approverUserId: "demo-approver",
+        approverUserId: user?.userName ?? "unknown",
         decision,
-        comment: decision === 1 ? "Approved for engineering review." : "Dismissed from demo workspace.",
+        comment: decision === 1 ? "Approved for engineering review." : "Recommendation dismissed.",
         decidedAtUtc: new Date().toISOString(),
       });
       setDecisionMessage(result.message);
@@ -108,7 +110,6 @@ export function RecommendationsPage() {
 
   const summaryCards = useMemo(
     () => [
-      { label: "Mode", value: health?.mode ?? "pending" },
       { label: "Expected € impact", value: health?.expectedEImpactRange ? "YES" : "pending" },
       { label: "Approval required", value: health?.humanApprovalRequired ? "YES" : "pending" },
       { label: "Auto write-back", value: health ? (health.automaticWriteBack ? "YES" : "NO") : "pending" },
@@ -119,36 +120,26 @@ export function RecommendationsPage() {
   );
 
   return (
-    <main data-testid="phase15-recommendations-page">
-      <section>
-        <p>
-          Pack G · T-097 · Recommendation generator with expected €-impact
-        </p>
-        <h1>Phase 15 Recommendations</h1>
-        <p>
-          Generates guarded advisory recommendations from supported what-if projections. Every recommendation carries expected €-impact, confidence, evidence, provenance and explicit approval requirement.
-        </p>
-        <strong>{status}</strong>
-        {decisionMessage ? <strong>{decisionMessage}</strong> : null}
-      </section>
+    <main data-testid="recommendations-page">
+      <StandardPageHeader
+        title="Advisory Recommendations"
+        subtitle="Guarded suggestions with expected impact, evidence, and a required human approval step."
+        description="Recommendations are generated only from scenarios the evidence supports. Each carries an expected impact range, its supporting evidence, and its provenance. Nothing is applied to the plant: approval is explicit, and PlantProcess IQ never writes back to process control."
+        status={status}
+      />
+      <p className="ppiq-std-sample-badge">Sample data - not from your plant</p>
+      {decisionMessage ? <strong>{decisionMessage}</strong> : null}
 
-      <section>
-        {summaryCards.map((card) => (
-          <div key={card.label}>
-            <span>{card.label}</span>
-            <strong>{card.value}</strong>
-          </div>
-        ))}
-      </section>
+      <StandardStatGrid items={summaryCards} emphasize="Recommendations" />
 
       <section>
         <h2>1. Generate recommendation</h2>
         <p>
-          Demo request uses the Pack G-3 deterministic scenario engine. The recommendation generator blocks unsupported scenarios and weak evidence.
+          This is a sample request evaluated by the deterministic scenario engine. The recommendation generator blocks unsupported scenarios and weak evidence.
         </p>
         <div>
           <StandardButton type="button" isDisabled={busy || !request} onClick={generate}>Generate recommendation</StandardButton>
-          <StandardButton type="button" isDisabled={busy} onClick={() => void refresh()}>Reload demo request</StandardButton>
+          <StandardButton type="button" isDisabled={busy} onClick={() => void refresh()}>Load sample request</StandardButton>
         </div>
       </section>
 

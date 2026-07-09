@@ -28,13 +28,13 @@ export function I18nRtlReadinessPage() {
           <StandardButton type="button" onClick={() => setLocale("ar")}>{t("arabic", locale)}</StandardButton>
         </div>
       </section>
-      <section className="phase78-readiness-grid" aria-label="Phase 7 and Phase 8 readiness cards">
+      <section className="phase78-readiness-grid" aria-label="Internationalisation readiness cards">
         <article className="phase78-readiness-card"><span>{t("locale", locale)}</span><strong>{locale}</strong></article>
         <article className="phase78-readiness-card"><span>{t("direction", locale)}</span><strong>{direction}</strong></article>
         <article className="phase78-readiness-card"><span>{t("numberSample", locale)}</span><strong>{formatPhase78Number(5670.25, locale)}</strong></article>
         <article className="phase78-readiness-card"><span>{t("dateSample", locale)}</span><strong>{formatPhase78Date(new Date("2026-06-06T08:00:00Z"), locale)}</strong></article>
         <article className="phase78-readiness-card"><span>{t("rtlReady", locale)}</span><strong>RTL</strong></article>
-        <article className="phase78-readiness-card"><span>{t("backendHygieneReady", locale)}</span><strong>P08</strong></article>
+        <article className="phase78-readiness-card"><span>{t("backendHygieneReady", locale)}</span><strong>Ready</strong></article>
       </section>
     </main>
   );

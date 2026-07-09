@@ -2,9 +2,9 @@
 // FILE: Frontend/PlantProcess.Web/src/pages/Admin/AdminDbConfigurationTab.tsx
 //
 // HIGH PRIORITY ITEMS 7 + 8 + 9:
-//  7. DB Link Configuration UI â€” Create / Edit connection profiles
-//  8. Table Browser UI â€” Discover & register tables from a live DB
-//  9. Import Job Configuration UI â€” Schedule import per dataset
+//  7. DB Link Configuration UI — Create / Edit connection profiles
+//  8. Table Browser UI — Discover & register tables from a live DB
+//  9. Import Job Configuration UI — Schedule import per dataset
 //
 // Replaces the previous read-only version.
 // All API calls match the existing productApi methods exactly.
@@ -56,7 +56,7 @@ import {
   validatePort,
   validateRequired,
 } from "@/hooks/useInlineFormValidation";
-// â”€â”€ Local types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Local types ───────────────────────────────────────────────────────────────
 
 interface ConnectionTestResult {
   isSuccess: boolean;
@@ -76,7 +76,7 @@ const PROVIDER_DEFAULTS: Record<string, { port: number; schemaName: string }> = 
   excel: { port: 0, schemaName: "" },
 };
 
-// â”€â”€ DbConfigurationTab (orchestrator) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── DbConfigurationTab (orchestrator) ────────────────────────────────────────
 
 export function DbConfigurationTab({
   data,
@@ -127,7 +127,7 @@ export function DbConfigurationTab({
   return (
     <section className="admin-panel-grid">
 
-      {/* â”€â”€ DB Link Configuration â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ── DB Link Configuration ──────────────────────────────── */}
       <AdminPanel
         title="DB Link Configuration"
         subtitle="Connection profiles to customer source databases and files"
@@ -177,7 +177,7 @@ export function DbConfigurationTab({
         ) : null}
       </AdminPanel>
 
-      {/* â”€â”€ Provider types grid â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ── Provider types grid ────────────────────────────────── */}
       <AdminPanel
         title="Supported Connectors"
         subtitle="Available and planned data source provider types"
@@ -210,7 +210,7 @@ export function DbConfigurationTab({
         </div>
       </AdminPanel>
 
-      {/* â”€â”€ Existing source systems (read-only overview) â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ── Existing source systems (read-only overview) ───────── */}
       {(data?.sourceSystems ?? []).length > 0 ? (
         <AdminPanel
           title="Source Systems Overview"
@@ -249,13 +249,13 @@ export function DbConfigurationTab({
         </AdminPanel>
       ) : null}
 
-      {/* â”€â”€ Import Job Scheduling â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ── Import Job Scheduling ──────────────────────────────── */}
       <ImportJobSchedulePanel onRefresh={onRefresh} />
     </section>
   );
 }
 
-// â”€â”€ ConnectionProfileList â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── ConnectionProfileList ─────────────────────────────────────────────────────
 
 function ConnectionProfileList({
   connections, providerTypes, isLoading, onEdit, onBrowseTables, onRefresh,
@@ -277,14 +277,14 @@ function ConnectionProfileList({
       setTestResults((r) => ({
         ...r,
         [id]: result.isSuccess
-          ? `âœ… ${result.message ?? "Connection succeeded."}`
-          : `âŒ ${result.message ?? "Connection failed."}`,
+          ? `✅ ${result.message ?? "Connection succeeded."}`
+          : `❌ ${result.message ?? "Connection failed."}`,
       }));
       await onRefresh();
     } catch (err) {
       setTestResults((r) => ({
         ...r,
-        [id]: `âŒ ${err instanceof Error ? err.message : "Test failed."}`,
+        [id]: `❌ ${err instanceof Error ? err.message : "Test failed."}`,
       }));
     } finally {
       setTestingId(null);
@@ -292,7 +292,7 @@ function ConnectionProfileList({
   }
 
   if (isLoading) {
-    return <div className="admin-copy"><Loader2 size={16} className="spin" /> Loading connectionsâ€¦</div>;
+    return <div className="admin-copy"><Loader2 size={16} className="spin" /> Loading connections…</div>;
   }
 
   if (connections.length === 0) {
@@ -329,8 +329,8 @@ function ConnectionProfileList({
                     {conn.providerType}
                   </span>
                 </td>
-                <td>{conn.hostName ?? conn.fileRootPath ?? "â€”"}</td>
-                <td>{conn.databaseName ?? "â€”"}</td>
+                <td>{conn.hostName ?? conn.fileRootPath ?? "—"}</td>
+                <td>{conn.databaseName ?? "—"}</td>
                 <td>
                   <StatusPill
                     status={conn.isActive ? "Active" : "Inactive"}
@@ -343,7 +343,7 @@ function ConnectionProfileList({
                       status={conn.lastTestStatus}
                       statusClass={conn.lastTestStatus === "Success" ? "success" : "danger"}
                     />
-                  ) : "â€”"}
+                  ) : "—"}
                   {conn.lastTestMessage ? (
                     <small>
                       {conn.lastTestMessage}
@@ -360,7 +360,7 @@ function ConnectionProfileList({
                       title="Test connection"
                     >
                       {testingId === conn.id
-                        ? <><Loader2 size={13} className="spin" /> Testingâ€¦</>
+                        ? <><Loader2 size={13} className="spin" /> Testing…</>
                         : <><Link2 size={13} /> Test</>}
                     </StandardPageButton>
                     <StandardPageButton
@@ -397,7 +397,7 @@ function ConnectionProfileList({
   );
 }
 
-// â”€â”€ ConnectionProfileForm (Create + Edit) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── ConnectionProfileForm (Create + Edit) ─────────────────────────────────────
 
 function ConnectionProfileForm({
   profile, providerTypes, sourceSystems, onSaved, onCancel,
@@ -477,11 +477,11 @@ function ConnectionProfileForm({
     setForm((f) => ({ ...f, [field]: value }));
   }
 
-  // â”€â”€ FE-HARD-005: Optimistic save â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── FE-HARD-005: Optimistic save ────────────────────────────────────────────
   // Replaces ~50 lines of manual isSaving/error state + try/catch boilerplate.
-  // - Button label flips to "Savingâ€¦" within ~50ms of click (no network wait).
-  // - Success â†’ green toast with auto-dismiss, then `onSaved()` is called.
-  // - Failure â†’ red toast (from apiClient) + `error` exposed below for inline display.
+  // - Button label flips to "Saving…" within ~50ms of click (no network wait).
+  // - Success → green toast with auto-dismiss, then `onSaved()` is called.
+  // - Failure → red toast (from apiClient) + `error` exposed below for inline display.
   // - Double-submit guard built in (button disabled + in-flight ref).
   const { isSaving, save, error } = useOptimisticSave({
     successMessage: isEdit
@@ -489,7 +489,7 @@ function ConnectionProfileForm({
       : `Connection profile "${form.connectionProfileName}" created`,
     toastId: `save-connection-profile-${profile?.id ?? "new"}`,
     onSave: async () => {
-      // Validation â€” throw to surface as inline error + toast.
+      // Validation — throw to surface as inline error + toast.
       if (!validation.prepareSubmit()) {
         throw new Error("Please fix the highlighted fields before saving.");
       }
@@ -749,7 +749,7 @@ function ConnectionProfileForm({
           onClick={save}
           disabled={isSaving}
         >
-          {isSaving ? <><Loader2 size={14} className="spin" /> Savingâ€¦</> : <><PlayCircle size={14} /> {isEdit ? "Save Changes" : "Create Profile"}</>}
+          {isSaving ? <><Loader2 size={14} className="spin" /> Saving…</> : <><PlayCircle size={14} /> {isEdit ? "Save Changes" : "Create Profile"}</>}
         </StandardPageButton>
         <StandardPageButton className="secondary-button" type="button" onClick={onCancel} disabled={isSaving}>
           Cancel
@@ -759,7 +759,7 @@ function ConnectionProfileForm({
   );
 }
 
-// â”€â”€ TableBrowser (Item 8) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── TableBrowser (Item 8) ─────────────────────────────────────────────────────
 
 function TableBrowser({
   connectionProfileId, connections, onBack, onRefresh,
@@ -803,7 +803,7 @@ function TableBrowser({
 
   async function registerDataset() {
     if (!newDatasetForm.sourceObjectName.trim()) {
-      setMessage("âŒ Table/object name is required.");
+      setMessage("❌ Table/object name is required.");
       return;
     }
     setIsCreating(true);
@@ -826,12 +826,12 @@ function TableBrowser({
         sourceSystem: "PlantProcessIQ.Admin",
         sourceRecordId: null,
       });
-      setMessage(`âœ… Dataset "${tableName}" registered.`);
+      setMessage(`✅ Dataset "${tableName}" registered.`);
       setNewDatasetForm((f) => ({ ...f, sourceObjectName: "", description: "" }));
       await loadDatasets();
       await onRefresh();
     } catch (err) {
-      setMessage(`âŒ ${err instanceof Error ? err.message : "Registration failed."}`);
+      setMessage(`❌ ${err instanceof Error ? err.message : "Registration failed."}`);
     } finally {
       setIsCreating(false);
     }
@@ -858,9 +858,9 @@ function TableBrowser({
     <div>
       <div className="admin-panel__header">
         <div>
-          <h3>Table Browser â€” {profile?.connectionProfileName}</h3>
+          <h3>Table Browser — {profile?.connectionProfileName}</h3>
           <p>
-            {profile?.providerType} Â· {profile?.hostName ?? profile?.fileRootPath ?? "No host"} Â· {profile?.databaseName ?? ""}
+            {profile?.providerType} · {profile?.hostName ?? profile?.fileRootPath ?? "No host"} · {profile?.databaseName ?? ""}
           </p>
         </div>
       </div>
@@ -937,7 +937,7 @@ function TableBrowser({
             disabled={isCreating}
           >
             {isCreating
-              ? <><Loader2 size={14} className="spin" /> Registeringâ€¦</>
+              ? <><Loader2 size={14} className="spin" /> Registering…</>
               : <><Plus size={14} /> Register Dataset</>}
           </StandardPageButton>
         </div>
@@ -950,7 +950,7 @@ function TableBrowser({
       </h3>
 
       {isLoading ? (
-        <div className="admin-copy"><Loader2 size={16} className="spin" /> Loadingâ€¦</div>
+        <div className="admin-copy"><Loader2 size={16} className="spin" /> Loading…</div>
       ) : datasets.length === 0 ? (
         <div className="empty-insight">
           <TableProperties size={20} />
@@ -1022,8 +1022,8 @@ function TableBrowser({
                                     <td><strong>{f.fieldName}</strong></td>
                                     <td>{f.sourceDataType}</td>
                                     <td>{f.isNullable ? "Yes" : "No"}</td>
-                                    <td>{f.isPrimaryKeyCandidate ? "âœ“" : ""}</td>
-                                    <td>{f.isTimestampCandidate ? "âœ“" : ""}</td>
+                                    <td>{f.isPrimaryKeyCandidate ? "✓" : ""}</td>
+                                    <td>{f.isTimestampCandidate ? "✓" : ""}</td>
                                   </tr>
                                 ))}
                               </tbody>
@@ -1048,7 +1048,7 @@ function TableBrowser({
   );
 }
 
-// â”€â”€ ImportJobSchedulePanel (Item 9) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── ImportJobSchedulePanel (Item 9) ───────────────────────────────────────────
 
 function ImportJobSchedulePanel({
   onRefresh,
@@ -1066,10 +1066,10 @@ function ImportJobSchedulePanel({
     });
   }, []);
 
-  // â”€â”€ FE-HARD-005: Optimistic save â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── FE-HARD-005: Optimistic save ────────────────────────────────────────────
   // Replaces local isSaving/message state + manual try/catch.
   // Toast handles both success and failure feedback.
-  // Form stays open after save â€” user may want to schedule another connection.
+  // Form stays open after save — user may want to schedule another connection.
   const { isSaving, save } = useOptimisticSave({
     successMessage: `Raw snapshot schedule set to every ${intervalMinutes} minutes`,
     toastId: "save-import-schedule",
@@ -1140,7 +1140,7 @@ function ImportJobSchedulePanel({
           disabled={isSaving || !selectedConnectionId}
         >
           {isSaving
-            ? <><Loader2 size={14} className="spin" /> Savingâ€¦</>
+            ? <><Loader2 size={14} className="spin" /> Saving…</>
             : <><Settings2 size={14} /> Save Import Schedule</>}
         </StandardPageButton>
       </div>

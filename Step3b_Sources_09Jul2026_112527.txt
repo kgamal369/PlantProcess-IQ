@@ -1,0 +1,3405 @@
+PPIQ Step 3b source bundle
+Generated: 2026-07-09 11:25:27
+
+==================== FILE: src\App.tsx (2397 lines) ====================
+// ============================================================
+
+
+// FILE: Frontend/PlantProcess.Web/src/App.tsx
+
+
+//
+
+
+// Phase 2 E2E Stability Update:
+
+
+//
+
+
+// - Uses the existing ErrorBoundary only.
+
+
+// - Keeps one global app boundary plus route-level page boundaries.
+
+
+// - Mounts exactly one global Sonner toast host.
+
+
+// - Keeps canonical routes:
+
+
+//     /dashboard
+
+
+//     /materials
+
+
+//     /risk
+
+
+//     /data-quality
+
+
+//     /correlations
+
+
+//     /ml-readiness
+
+
+
+
+//     /admin
+
+
+//     /admin-preview
+
+
+//     /brand
+
+
+//     /commercial/license
+
+
+//
+
+
+// - Adds compatibility aliases required by old E2E/direct-route tests:
+
+
+//     /quality                -> /data-quality
+
+
+//     /correlation            -> /correlations
+
+
+//     /material-investigation -> /materials
+
+
+//     /commercial-license     -> /commercial/license
+
+
+//
+
+
+// Product guard:
+
+
+// - This file does not change product positioning.
+
+
+// - It only stabilizes shell routing, refresh survival, and toast mounting.
+
+
+// ============================================================
+
+
+
+
+
+import { lazy, Suspense, type ReactNode } from "react";
+
+
+import { Navigate, Route, Routes } from "react-router-dom";
+
+
+import "react-grid-layout/css/styles.css";
+
+
+import "react-resizable/css/styles.css";
+
+
+
+
+
+import { AppLayout } from "./components/AppLayout";
+
+
+import { ErrorBoundary } from "./components/standard/ErrorBoundary";
+
+
+import { SkeletonWidgetGrid } from "./components/skeletons/Skeleton";
+
+
+import { AppToastHost } from "./notifications/AppToastHost";
+
+
+
+
+
+import { AuthProvider, useAuth } from "./state/AuthContext";
+
+
+import { DashboardFilterProvider } from "./state/DashboardFilterContext";
+
+
+import { DashboardGridLayoutProvider } from "./state/DashboardGridLayoutContext";
+
+
+import { DashboardSelectionProvider } from "./state/DashboardSelectionContext";
+
+
+
+
+import { ThemeProvider } from "./state/ThemeContext";
+
+
+import { LicenseProvider } from "./state/LicenseContext";
+
+
+import "./index.css";
+
+
+import { StandardButton } from "@/components/standard";
+
+
+
+
+
+// --- Lazy pages ---
+
+
+
+
+
+const SourceImportPrepPage = lazy(() =>
+  import("./pages/SourceImportPrepPage").then((m) => ({ default: m.default }))
+);
+const AnalysisJobConfigPage = lazy(() =>
+  import("./pages/AnalysisJobConfigPage").then((m) => ({ default: m.default }))
+);
+const DashboardPage = lazy(() =>
+
+
+  import("./pages/Dashboard/DashboardPage").then((m) => ({ default: m.DashboardPage }))
+
+
+);
+
+
+
+
+
+const MaterialInvestigationPage = lazy(() =>
+
+
+  import("./pages/MaterialInvestigationPage").then((m) => ({
+
+
+    default: m.MaterialInvestigationPage,
+
+
+  }))
+
+
+);
+
+
+
+
+
+const RiskDashboardPage = lazy(() =>
+
+
+  import("./pages/RiskDashboard/RiskDashboardPage").then((m) => ({
+
+
+    default: m.RiskDashboardPage,
+
+
+  }))
+
+
+);
+
+
+
+
+
+const DataQualityPage = lazy(() =>
+
+
+  import("./pages/DataQuality/DataQualityPage").then((m) => ({
+
+
+    default: m.DataQualityPage,
+
+
+  }))
+
+
+);
+
+
+
+
+
+const CorrelationPage = lazy(() =>
+
+
+  import("./pages/Correlation/CorrelationPage").then((m) => ({
+
+
+    default: m.CorrelationPage,
+
+
+  }))
+
+
+);
+
+
+
+
+
+const AdminPage = lazy(() =>
+
+
+  import("./pages/Admin/AdminPage").then((m) => ({
+
+
+    default: m.AdminPage,
+
+
+  }))
+
+
+);
+
+
+
+
+
+const AdminPreviewPage = lazy(() =>
+
+
+  import("./pages/AdminPreview/AdminPreviewWorkspacePage").then((m) => ({
+
+
+    default: m.AdminPreviewWorkspacePage,
+
+
+  }))
+
+
+);
+
+
+
+
+
+
+
+
+
+
+const CommercialLicensePage = lazy(() =>
+
+
+  import("./pages/CommercialLicense/CommercialLicensePage").then((m) => ({
+
+
+    default: m.CommercialLicensePage,
+
+
+  }))
+
+
+);
+
+
+
+
+
+const BrandIdentityPage = lazy(() =>
+
+
+  import("./pages/BrandIdentity/BrandIdentityPage").then((m) => ({
+
+
+    default: m.BrandIdentityPage,
+
+
+  }))
+
+
+);
+
+
+
+
+
+
+
+
+
+
+
+const DynamicPage = lazy(() =>
+
+
+  import("./pages/DynamicPage/DynamicPage").then((m) => ({
+
+
+    default: m.DynamicPage,
+
+
+  }))
+
+
+);
+
+
+
+
+
+const WidgetScriptCompilerPage = lazy(() =>
+
+
+  import("./pages/PlatformOps/DemoAnalyticsPages").then((m) => ({
+
+
+    default: m.DemoAnalyticsWidgetScriptCompilerPage,
+
+
+  }))
+
+
+);
+
+
+
+
+
+const PageBuilderPage = lazy(() =>
+
+
+  import("./pages/PageBuilder/PageBuilderPage").then((m) => ({
+
+
+    default: m.PageBuilderPage,
+
+
+  }))
+
+
+);
+
+
+
+
+
+const AnalyticsWidgetsPage = lazy(() =>
+
+
+  import("./pages/Analytics/AnalyticsWidgetsPage").then((m) => ({
+
+
+    default: m.AnalyticsWidgetsPage,
+
+
+  }))
+
+
+);
+
+
+const MlReadinessPage = lazy(() =>
+
+
+  import("./pages/MlReadiness/MlReadinessPage").then((m) => ({
+
+
+    default: m.MlReadinessPage,
+
+
+  }))
+
+
+);
+
+
+
+
+
+// --- Boundary helper ---
+
+
+
+
+
+const AdvancedAnalysisPage = lazy(() =>
+
+
+  import("./pages/Analytics/AdvancedAnalysisPage").then((m) => ({ default: m.AdvancedAnalysisPage }))
+
+
+);
+
+
+const InspectionJobsPage = lazy(() =>
+
+
+  import("./pages/Analytics/InspectionJobsPage").then((m) => ({ default: m.InspectionJobsPage }))
+
+
+);
+
+
+const MappingHealthPage = lazy(() =>
+
+
+  import("./pages/MappingHealth/MappingHealthPage").then((module) => ({
+
+
+    default: module.MappingHealthPage,
+
+
+  }))
+
+
+);
+
+
+
+
+
+const HonestyCertificationPage = lazy(() =>
+
+
+  import("./pages/Advisory/HonestyCertificationPage").then((m) => ({
+
+
+    default: m.HonestyCertificationPage,
+
+
+  }))
+
+
+);
+
+
+const BenchmarkingPage = lazy(() =>
+
+
+  import("./pages/Advisory/BenchmarkingPage").then((m) => ({
+
+
+    default: m.BenchmarkingPage,
+
+
+  }))
+
+
+);
+
+
+const RoiCfoDashboardPage = lazy(() =>
+
+
+  import("./pages/Advisory/RoiCfoDashboardPage").then((m) => ({
+
+
+    default: m.RoiCfoDashboardPage,
+
+
+  }))
+
+
+);
+
+
+const ValueRealizationPage = lazy(() =>
+
+
+  import("./pages/Advisory/ValueRealizationPage").then((m) => ({
+
+
+    default: m.ValueRealizationPage,
+
+
+  }))
+
+
+);
+
+
+
+const SuggestionRecommendationPage = lazy(() =>
+  import("./pages/Phase8/SuggestionRecommendationPage").then((m) => ({
+    default: m.SuggestionRecommendationPage,
+  }))
+);
+const AssistantRuntimePage = lazy(() =>
+  import("./pages/Phase8/AssistantRuntimePage").then((m) => ({
+    default: m.AssistantRuntimePage,
+  }))
+);
+const AssistantConfigurationPage = lazy(() =>
+  import("./pages/Phase8/AssistantConfigurationPage").then((m) => ({
+    default: m.AssistantConfigurationPage,
+  }))
+);
+
+const RecommendationsPage = lazy(() =>
+
+
+  import("./pages/Advisory/RecommendationsPage").then((m) => ({
+
+
+    default: m.RecommendationsPage,
+
+
+  }))
+
+
+);
+
+
+const ScenarioSimulationPage = lazy(() =>
+
+
+  import("./pages/Advisory/ScenarioSimulationPage").then((m) => ({
+
+
+    default: m.ScenarioSimulationPage,
+
+
+  }))
+
+
+);
+
+
+const EdgeCollectorPage = lazy(() =>
+
+
+  import("./pages/EdgeCollector/EdgeCollectorPage").then((m) => ({
+
+
+    default: m.EdgeCollectorPage,
+
+
+  }))
+
+
+);
+
+
+const HistorianConnectorPage = lazy(() =>
+
+
+  import("./pages/HistorianConnector/HistorianConnectorPage").then((m) => ({
+
+
+    default: m.HistorianConnectorPage,
+
+
+  }))
+
+
+);
+
+
+const I18nRtlReadinessPage = lazy(() =>
+
+
+  import("./pages/I18nRtlReadinessPage").then((m) => ({ default: m.I18nRtlReadinessPage }))
+
+
+);
+
+
+
+
+
+const ExecutivePersonaDashboardPage = lazy(() =>
+  import("./pages/Phase9/ExecutivePersonaDashboardPage").then((m) => ({
+    default: m.ExecutivePersonaDashboardPage,
+  }))
+);
+const PersonaAccessMatrixPage = lazy(() =>
+  import("./pages/Phase9/PersonaAccessMatrixPage").then((m) => ({
+    default: m.PersonaAccessMatrixPage,
+  }))
+);
+const LicenseDemoPage = lazy(() =>
+  import("./pages/Phase10/Phase10LicenseDemoPage").then((m) => ({
+    default: m.Phase10LicenseDemoPage,
+  }))
+);
+function withPageBoundary(
+
+
+  routePath: string,
+
+
+  fallbackTitle: string,
+
+
+  element: ReactNode
+
+
+) {
+
+
+  return (
+
+
+    <ErrorBoundary routePath={routePath} fallbackTitle={fallbackTitle}>
+
+
+      {element}
+
+
+    </ErrorBoundary>
+
+
+  );
+
+
+}
+
+
+
+
+
+// --- Bootstrap screen ---
+
+
+
+
+
+function BootstrapScreen() {
+
+
+  const { isBootstrapping, bootstrapError, retryBootstrap } = useAuth();
+
+
+
+
+
+  if (isBootstrapping) {
+
+
+    return (
+
+
+      <div
+
+
+        style={{
+
+
+          minHeight: "100vh",
+
+
+          display: "flex",
+
+
+          flexDirection: "column",
+
+
+          alignItems: "center",
+
+
+          justifyContent: "center",
+
+
+          gap: "1rem",
+
+
+          background:
+
+
+            "linear-gradient(180deg,var(--ppiq-color-bg-deep) 0%,#081426 52%,var(--ppiq-color-bg-deep) 100%)",
+
+
+          color: "#eaf6ff",
+
+
+          fontFamily: "Inter,ui-sans-serif,system-ui,sans-serif",
+
+
+        }}
+
+
+      >
+
+
+        <div
+
+
+          style={{
+
+
+            width: 48,
+
+
+            height: 48,
+
+
+            borderRadius: 14,
+
+
+            overflow: "hidden",
+
+
+            boxShadow: "0 0 28px rgba(0,212,255,0.3)",
+
+
+          }}
+
+
+        >
+
+
+          <img
+
+
+            src="/brand/sou-icon.svg"
+
+
+            alt="SOU"
+
+
+            style={{ width: "100%", height: "100%" }}
+
+
+          />
+
+
+        </div>
+
+
+
+
+
+        <div style={{ textAlign: "center" }}>
+
+
+          <p style={{ margin: "0 0 0.3rem", fontSize: 18, fontWeight: 700 }}>
+
+
+            PlantProcess <span style={{ color: "var(--ppiq-color-accent-cyan)" }}>IQ</span>
+
+
+          </p>
+
+
+          <p style={{ margin: 0, fontSize: 13, color: "#5a7a9a" }}>
+
+
+            Connecting to backend...
+
+
+          </p>
+
+
+        </div>
+
+
+
+
+
+        <div
+
+
+          style={{
+
+
+            width: 200,
+
+
+            height: 3,
+
+
+            borderRadius: 2,
+
+
+            background: "rgba(0,212,255,0.12)",
+
+
+            overflow: "hidden",
+
+
+          }}
+
+
+        >
+
+
+          <div
+
+
+            style={{
+
+
+              height: "100%",
+
+
+              width: "40%",
+
+
+              background: "linear-gradient(90deg,var(--ppiq-color-accent-cyan),#0a84ff)",
+
+
+              borderRadius: 2,
+
+
+              animation: "piq-shimmer 1.4s ease-in-out infinite",
+
+
+            }}
+
+
+          />
+
+
+        </div>
+
+
+
+
+
+        <style>{`
+
+
+          @keyframes piq-shimmer {
+
+
+            0% { transform: translateX(-250%); }
+
+
+            100% { transform: translateX(350%); }
+
+
+          }
+
+
+        `}</style>
+
+
+      </div>
+
+
+    );
+
+
+  }
+
+
+
+
+
+  if (bootstrapError) {
+
+
+    return (
+
+
+      <div
+
+
+        style={{
+
+
+          minHeight: "100vh",
+
+
+          display: "flex",
+
+
+          flexDirection: "column",
+
+
+          alignItems: "center",
+
+
+          justifyContent: "center",
+
+
+          gap: "1.25rem",
+
+
+          background:
+
+
+            "linear-gradient(180deg,var(--ppiq-color-bg-deep) 0%,#081426 52%,var(--ppiq-color-bg-deep) 100%)",
+
+
+          color: "#eaf6ff",
+
+
+          fontFamily: "Inter,ui-sans-serif,system-ui,sans-serif",
+
+
+          padding: "2rem",
+
+
+          textAlign: "center",
+
+
+        }}
+
+
+      >
+
+
+        <div
+
+
+          style={{
+
+
+            width: 48,
+
+
+            height: 48,
+
+
+            borderRadius: 14,
+
+
+            overflow: "hidden",
+
+
+            opacity: 0.5,
+
+
+          }}
+
+
+        >
+
+
+          <img
+
+
+            src="/brand/sou-icon.svg"
+
+
+            alt="SOU"
+
+
+            style={{ width: "100%", height: "100%" }}
+
+
+          />
+
+
+        </div>
+
+
+
+
+
+        <div>
+
+
+          <p style={{ margin: "0 0 0.5rem", fontSize: 18, fontWeight: 700 }}>
+
+
+            Backend connection failed
+
+
+          </p>
+
+
+
+
+
+          <p
+
+
+            style={{
+
+
+              margin: "0 0 1.5rem",
+
+
+              fontSize: 13,
+
+
+              color: "#5a7a9a",
+
+
+              maxWidth: 480,
+
+
+              lineHeight: 1.6,
+
+
+            }}
+
+
+          >
+
+
+            {bootstrapError}
+
+
+          </p>
+
+
+
+
+
+          <StandardButton
+
+
+            type="button"
+
+
+            onClick={retryBootstrap}
+
+
+            style={{
+
+
+              padding: "0.55rem 1.5rem",
+
+
+              borderRadius: 8,
+
+
+              border: "1px solid rgba(0,212,255,0.25)",
+
+
+              background: "rgba(0,212,255,0.08)",
+
+
+              color: "var(--ppiq-color-accent-cyan)",
+
+
+              fontSize: 13,
+
+
+              fontWeight: 600,
+
+
+              cursor: "pointer",
+
+
+            }}
+
+
+          >
+
+
+            Retry connection
+
+
+          </StandardButton>
+
+
+        </div>
+
+
+      </div>
+
+
+    );
+
+
+  }
+
+
+
+
+
+  return null;
+
+
+}
+
+
+
+
+
+// --- Route loading fallback ---
+
+
+
+
+
+function RouteLoadingFallback() {
+
+
+  return (
+
+
+    <div className="ppiq-suspense-shell">
+
+
+      <SkeletonWidgetGrid widgetCount={6} />
+
+
+    </div>
+
+
+  );
+
+
+}
+
+
+
+
+
+// --- Routes ---
+
+
+
+
+
+function AppRoutes() {
+
+
+  const { isBootstrapping, bootstrapError } = useAuth();
+
+
+
+
+
+  if (isBootstrapping || bootstrapError) {
+
+
+    return <BootstrapScreen />;
+
+
+  }
+
+
+
+
+
+  return (
+
+
+    <ErrorBoundary
+
+
+      routePath="app"
+
+
+      fallbackTitle="The application could not start"
+
+
+    >
+
+
+
+
+        <DashboardFilterProvider>
+
+
+          <DashboardSelectionProvider>
+
+
+            <DashboardGridLayoutProvider>
+
+
+              <Suspense fallback={<RouteLoadingFallback />}>
+
+
+                <Routes>
+
+
+                  <Route element={<AppLayout />}>
+                    {/* M1-03 Surface-1: visual import-prep on live discovery */}
+                    <Route
+                      path="/data-integration/prepare"
+                      element={withPageBoundary(
+                        "/data-integration/prepare",
+                        "Import preparation is refreshing",
+                        <SourceImportPrepPage />
+                      )}
+                    />
+
+                    {/* M1-05 Surface-3: analysis-job definition on live data */}
+                    <Route
+                      path="/investigate/analysis-jobs"
+                      element={withPageBoundary(
+                        "/investigate/analysis-jobs",
+                        "Analysis job configuration is refreshing",
+                        <AnalysisJobConfigPage />
+                      )}
+                    />
+
+
+
+                    {/* P4 §7.4 advanced analysis + inspection workflow */}
+
+
+                    <Route
+
+
+                      path="/investigate/advanced"
+
+
+                      element={withPageBoundary("/investigate/advanced", "Advanced analysis is refreshing", <AdvancedAnalysisPage />)}
+
+
+                    />
+
+
+                    <Route
+
+
+                      path="/investigate/inspect"
+
+
+                      element={withPageBoundary("/investigate/inspect", "Inspection jobs are refreshing", <InspectionJobsPage />)}
+
+
+                    />
+
+
+                    <Route
+
+
+                      index
+
+
+                      element={<Navigate to="/dashboard" replace />}
+
+
+                    />
+
+
+
+
+
+                    {/* Canonical dashboard route */}
+
+
+                    <Route
+
+
+                      path="/dashboard"
+
+
+                      element={withPageBoundary(
+
+
+                        "/dashboard",
+
+
+                        "The dashboard is refreshing",
+
+
+                        <DashboardPage />
+
+
+                      )}
+
+
+                    />
+
+
+
+
+
+                    {/* Material investigation */}
+
+
+                    <Route
+
+
+                      path="/materials/:materialUnitId"
+
+
+                      element={withPageBoundary(
+
+
+                        "/materials/:materialUnitId",
+
+
+                        "Material details is refreshing",
+
+
+                        <MaterialInvestigationPage />
+
+
+                      )}
+
+
+                    />
+
+
+
+
+
+                    <Route
+
+
+                      path="/materials"
+
+
+                      element={withPageBoundary(
+
+
+                        "/materials",
+
+
+                        "The material investigation view is refreshing",
+
+
+                        <MaterialInvestigationPage />
+
+
+                      )}
+
+
+                    />
+
+
+
+
+
+                    {/* Compatibility alias for older E2E/deep links */}
+
+
+                    <Route
+
+
+                      path="/material-investigation"
+
+
+                      element={<Navigate to="/materials" replace />}
+
+
+                    />
+
+
+
+
+
+                    <Route
+
+
+                      path="/material-investigation/:materialUnitId"
+
+
+                      element={<Navigate to="/materials/:materialUnitId" replace />}
+
+
+                    />
+
+
+
+
+
+                    {/* Risk */}
+
+
+                    <Route
+
+
+                      path="/risk"
+
+
+                      element={withPageBoundary(
+
+
+                        "/risk",
+
+
+                        "Risk dashboard is refreshing",
+
+
+                        <RiskDashboardPage />
+
+
+                      )}
+
+
+                    />
+
+
+
+
+
+                    {/* Data quality */}
+
+
+                    <Route
+
+
+                      path="/data-quality"
+
+
+                      element={withPageBoundary(
+
+
+                        "/data-quality",
+
+
+                        "Data quality view is refreshing",
+
+
+                        <DataQualityPage />
+
+
+                      )}
+
+
+                    />
+
+
+
+
+
+                    {/* Compatibility alias for older E2E/deep links */}
+
+
+                    <Route
+
+
+                      path="/quality"
+
+
+                      element={<Navigate to="/data-quality" replace />}
+
+
+                    />
+
+
+
+
+
+                    {/* Correlations */}
+
+
+                    <Route
+
+
+                      path="/correlations"
+
+
+                      element={withPageBoundary(
+
+
+                        "/correlations",
+
+
+                        "Correlation analysis is refreshing",
+
+
+                        <CorrelationPage />
+
+
+                      )}
+
+
+                    />
+
+
+
+
+
+                    {/* Compatibility alias for older E2E/deep links */}
+
+
+                    <Route
+
+
+                      path="/correlation"
+
+
+                      element={<Navigate to="/correlations" replace />}
+
+
+                    />
+
+
+
+
+
+                    {/* ML readiness */}
+
+
+                    <Route
+
+
+                      path="/ml-readiness"
+
+
+                      element={withPageBoundary(
+
+
+                        "/ml-readiness",
+
+
+                        "ML readiness view is refreshing",
+
+
+                        <MlReadinessPage />
+
+
+                      )}
+
+
+                    />                    {/* Mapping health + schema drift */}
+
+
+                    <Route
+
+
+                      path="/mapping-health"
+
+
+                      element={withPageBoundary(
+
+
+                        "/mapping-health",
+
+
+                        "Mapping health view is refreshing",
+
+
+                        <MappingHealthPage />
+
+
+                      )}
+
+
+                    />
+
+
+                    {/* Phase 7 i18n + Arabic RTL readiness */}
+
+
+                    <Route
+
+
+                      path="/i18n-rtl"
+
+
+                      element={withPageBoundary(
+
+
+                        "/i18n-rtl",
+
+
+                        "Internationalization readiness is refreshing",
+
+
+                        <I18nRtlReadinessPage />
+
+
+                      )}
+
+
+                    />
+
+
+
+
+
+                    <Route
+
+
+                      path="/analytics-widgets"
+
+
+                      element={withPageBoundary(
+
+
+                        "/analytics-widgets",
+
+
+                        "Analytics widgets are loading",
+
+
+                        <AnalyticsWidgetsPage />
+
+
+                      )}
+
+
+                    />
+
+
+
+
+
+                    {/* Pack G Phase 15 honesty certification */}
+
+
+                    <Route
+
+
+                      path="/advisory/honesty-certification"
+
+
+                      element={withPageBoundary(
+
+
+                        "/advisory/honesty-certification",
+
+
+                        "Honesty certification is refreshing",
+
+
+                        <HonestyCertificationPage />
+
+
+                      )}
+
+
+                    />
+
+
+
+
+
+                    <Route
+
+
+                      path="/phase15/honesty-certification"
+
+
+                      element={<Navigate to="/advisory/honesty-certification" replace />}
+
+
+                    />
+
+
+                    {/* Pack G Phase 15 benchmarking */}
+
+
+                    <Route
+
+
+                      path="/advisory/benchmarking"
+
+
+                      element={withPageBoundary(
+
+
+                        "/advisory/benchmarking",
+
+
+                        "Benchmarking is refreshing",
+
+
+                        <BenchmarkingPage />
+
+
+                      )}
+
+
+                    />
+
+
+
+
+
+                    <Route
+
+
+                      path="/phase15/benchmarking"
+
+
+                      element={<Navigate to="/advisory/benchmarking" replace />}
+
+
+                    />
+
+
+                    {/* Pack G Phase 15 ROI CFO dashboard */}
+
+
+                    <Route
+
+
+                      path="/advisory/roi-cfo-dashboard"
+
+
+                      element={withPageBoundary(
+
+
+                        "/advisory/roi-cfo-dashboard",
+
+
+                        "ROI/CFO dashboard is refreshing",
+
+
+                        <RoiCfoDashboardPage />
+
+
+                      )}
+
+
+                    />
+
+
+
+
+
+                    <Route
+
+
+                      path="/phase15/roi-cfo-dashboard"
+
+
+                      element={<Navigate to="/advisory/roi-cfo-dashboard" replace />}
+
+
+                    />
+
+
+                    {/* Pack G Phase 15 value realization */}
+
+
+                    <Route
+
+
+                      path="/advisory/value-realization"
+
+
+                      element={withPageBoundary(
+
+
+                        "/advisory/value-realization",
+
+
+                        "Value realization is refreshing",
+
+
+                        <ValueRealizationPage />
+
+
+                      )}
+
+
+                    />
+
+
+
+
+
+                    <Route
+
+
+                      path="/phase15/value-realization"
+
+
+                      element={<Navigate to="/advisory/value-realization" replace />}
+
+
+                    />
+
+
+                    
+                    {/* Phase 8 AI suggestion and assistant HMI */}
+                    <Route
+                      path="/suggestions"
+                      element={withPageBoundary(
+                        "/suggestions",
+                        "Suggestions are refreshing",
+                        <SuggestionRecommendationPage />
+                      )}
+                    />
+                    <Route path="/phase8/suggestions" element={<Navigate to="/suggestions" replace />} />
+                    <Route
+                      path="/assistant"
+                      element={withPageBoundary(
+                        "/assistant",
+                        "Assistant is refreshing",
+                        <AssistantRuntimePage />
+                      )}
+                    />
+                    <Route path="/phase8/assistant" element={<Navigate to="/assistant" replace />} />
+                    <Route
+                      path="/assistant/configuration"
+                      element={withPageBoundary(
+                        "/assistant/configuration",
+                        "Assistant configuration is refreshing",
+                        <AssistantConfigurationPage />
+                      )}
+                    />
+                    <Route path="/phase8/assistant-config" element={<Navigate to="/assistant/configuration" replace />} />
+
+                    {/* Pack G Phase 15 recommendation generator */}
+
+
+                    <Route
+
+
+                      path="/advisory/recommendations"
+
+
+                      element={withPageBoundary(
+
+
+                        "/advisory/recommendations",
+
+
+                        "Recommendations are refreshing",
+
+
+                        <RecommendationsPage />
+
+
+                      )}
+
+
+                    />
+
+
+
+
+
+                    <Route
+
+
+                      path="/phase15/recommendations"
+
+
+                      element={<Navigate to="/advisory/recommendations" replace />}
+
+
+                    />
+
+
+                    {/* Pack G Phase 15 scenario simulation */}
+
+
+                    <Route
+
+
+                      path="/advisory/scenario-simulation"
+
+
+                      element={withPageBoundary(
+
+
+                        "/advisory/scenario-simulation",
+
+
+                        "Scenario simulation is refreshing",
+
+
+                        <ScenarioSimulationPage />
+
+
+                      )}
+
+
+                    />
+
+
+
+
+
+                    <Route
+
+
+                      path="/phase15/scenario-simulation"
+
+
+                      element={<Navigate to="/advisory/scenario-simulation" replace />}
+
+
+                    />
+
+
+                    {/* Pack F edge collector management UX */}
+
+
+                    <Route
+
+
+                      path="/edge-collector"
+
+
+                      element={withPageBoundary(
+
+
+                        "/edge-collector",
+
+
+                        "Edge collector management is refreshing",
+
+
+                        <EdgeCollectorPage />
+
+
+                      )}
+
+
+                    />
+
+
+
+
+
+                    <Route
+
+
+                      path="/edge-agent"
+
+
+                      element={<Navigate to="/edge-collector" replace />}
+
+
+                    />
+
+
+                    {/* Pack E historian connector UI */}
+
+
+                    <Route
+
+
+                      path="/historian-connector"
+
+
+                      element={withPageBoundary(
+
+
+                        "/historian-connector",
+
+
+                        "Historian connector is refreshing",
+
+
+                        <HistorianConnectorPage />
+
+
+                      )}
+
+
+                    />
+
+
+
+
+
+                    <Route
+
+
+                      path="/connectors/historian"
+
+
+                      element={<Navigate to="/historian-connector" replace />}
+
+
+                    />
+
+
+
+
+
+
+
+
+
+
+
+                    {/* Admin preview workspace */}
+
+
+                    <Route
+
+
+                      path="/admin-preview"
+
+
+                      element={withPageBoundary(
+
+
+                        "/admin-preview",
+
+
+                        "Admin preview is refreshing",
+
+
+                        <AdminPreviewPage />
+
+
+                      )}
+
+
+                    />
+
+
+
+
+
+                    {/* Admin area, including nested admin tabs */}
+
+
+                    <Route
+
+
+                      path="/admin/*"
+
+
+                      element={withPageBoundary(
+
+
+                        "/admin",
+
+
+                        "The admin area is refreshing",
+
+
+                        <AdminPage />
+
+
+                      )}
+
+
+                    />
+
+
+
+
+
+                    {/* Brand identity */}
+
+
+                    <Route
+
+
+                      path="/brand"
+
+
+                      element={withPageBoundary(
+
+
+                        "/brand",
+
+
+                        "The brand page is refreshing",
+
+
+                        <BrandIdentityPage />
+
+
+                      )}
+
+
+                    />
+
+
+
+
+
+                    {/* Phase 7 dynamic routes */}
+
+
+                    
+
+
+
+
+
+                    <Route
+
+
+                      path="/page-builder"
+
+
+                      element={withPageBoundary(
+
+
+                        "/page-builder",
+
+
+                        "Page builder is refreshing",
+
+
+                        <PageBuilderPage />
+
+
+                      )}
+
+
+                    />
+
+
+
+
+
+                    <Route
+
+
+                      path="/pages/:slug"
+
+
+                      element={withPageBoundary(
+
+
+                        "/pages/:slug",
+
+
+                        "Dynamic page is refreshing",
+
+
+                        <DynamicPage />
+
+
+                      )}
+
+
+                    />
+
+
+
+
+
+                    <Route
+
+
+                      path="/widget-script-compiler"
+
+
+                      element={withPageBoundary(
+
+
+                        "/widget-script-compiler",
+
+
+                        "Widget compiler is refreshing",
+
+
+                        <WidgetScriptCompilerPage />
+
+
+                      )}
+
+
+                    />
+
+
+
+
+
+                    {/* Commercial license */}
+
+
+                    <Route
+
+
+                      path="/commercial/license"
+
+
+                      element={withPageBoundary(
+
+
+                        "/commercial/license",
+
+
+                        "The license page is refreshing",
+
+
+                        <CommercialLicensePage />
+
+
+                      )}
+
+
+                    />
+
+
+
+
+
+                    {/* Compatibility alias for older E2E/deep links */}
+
+
+                    <Route
+
+
+                      path="/commercial-license"
+
+
+                      element={<Navigate to="/commercial/license" replace />}
+
+
+                    />
+                    {/* P3-T14 value executive surface */}
+                    <Route
+                      path="/value/executive"
+                      element={withPageBoundary(
+                        "/value/executive",
+                        "Value executive dashboard is refreshing",
+                        <ValueExecutiveDashboardPage />
+                      )}
+                    />
+                    {/* P3-T15 widget schema-drift root-cause proof */}
+                    <Route
+                      path="/dashboard/widgets/schema-drift"
+                      element={withPageBoundary(
+                        "/dashboard/widgets/schema-drift",
+                        "Widget schema-drift proof is refreshing",
+                        <P3T15WidgetSchemaDriftPage />
+                      )}
+                    />
+
+
+
+
+
+
+
+
+
+                    {/* Default */}
+
+
+                    <Route
+
+
+                      path="*"
+
+
+                      element={<Navigate to="/dashboard" replace />}
+
+
+                    />
+
+
+                                    <Route path="/value/scenario" element={<ValueScenarioPage />} />
+
+                </Route>
+
+
+                                    <Route
+                      path="/executive"
+                      element={withPageBoundary(
+                        "/executive",
+                        "Executive dashboard is refreshing",
+                        <ExecutivePersonaDashboardPage />
+                      )}
+                    />
+                    <Route path="/phase9/executive" element={<Navigate to="/executive" replace />} />
+                    <Route
+                      path="/access-matrix"
+                      element={withPageBoundary(
+                        "/access-matrix",
+                        "Persona access matrix is refreshing",
+                        <PersonaAccessMatrixPage />
+                      )}
+                    />
+                                      <Route
+                      path="/license"
+                      element={withPageBoundary(
+                        "/license",
+                        "License page is refreshing",
+                        <LicenseDemoPage />
+                      )}
+                    />
+                    <Route path="/phase10/license" element={<Navigate to="/license" replace />} />
+                  {/* M1-08: legacy path redirects (Naming Golden Rule) */}
+                    <Route path="/phase9/access" element={<Navigate to="/access-matrix" replace />} />
+                    <Route path="/assistant-config" element={<Navigate to="/assistant/configuration" replace />} />
+                    <Route path="/license-demo" element={<Navigate to="/license" replace />} />
+                  </Routes>
+
+
+              </Suspense>
+
+
+            </DashboardGridLayoutProvider>
+
+
+          </DashboardSelectionProvider>
+
+
+        </DashboardFilterProvider>
+
+
+
+
+    </ErrorBoundary>
+
+
+  );
+
+
+}
+
+
+
+
+
+// --- Root App ---
+
+
+
+
+
+
+
+const ValueScenarioPage = lazy(() =>
+
+  import("./pages/Phase7ValueScenario/Phase7ValueScenarioPage").then((module) => ({
+
+    default: module.Phase7ValueScenarioPage,
+
+  }))
+
+);
+
+const ValueExecutiveDashboardPage = lazy(() =>
+  import("./pages/ValueExecutive/ValueExecutiveDashboardPage").then((m) => ({
+    default: m.ValueExecutiveDashboardPage,
+  }))
+);
+
+const P3T15WidgetSchemaDriftPage = lazy(() =>
+  import("./pages/Dashboard/P3T15WidgetSchemaDriftPage").then((m) => ({
+    default: m.P3T15WidgetSchemaDriftPage,
+  }))
+);
+
+export default function App() {
+
+
+  return (
+
+
+    <ThemeProvider>
+
+
+      <AuthProvider>
+
+
+        <LicenseProvider>
+
+
+          <AppToastHost />
+
+
+          <AppRoutes />
+
+
+        </LicenseProvider>
+
+
+      </AuthProvider>
+
+
+    </ThemeProvider>
+
+
+  );
+
+
+}
+
+
+
+
+
+
+==================== END: src\App.tsx ====================
+
+==================== FILE: src\pages\Advisory\RecommendationsPage.tsx (204 lines) ====================
+import { useEffect, useMemo, useState } from "react";
+import { P2T08_STANDARD_ROLLOUT_MARKER, StandardP2Table } from "@/components/standard/StandardP2Controls";
+import { StandardButton, StandardPageHeader, StandardStatGrid } from "@/components/standard";
+import {
+  advisoryApi,
+  type RecommendationCandidate,
+  type RecommendationContract,
+  type RecommendationGenerationRequest,
+  type RecommendationGenerationResponse,
+  type RecommendationHealth,
+} from "@/api/advisoryApi";
+
+const cardStyle = {
+  border: "1px solid rgba(124, 220, 255, 0.18)",
+  borderRadius: 22,
+  padding: 20,
+  background: "linear-gradient(135deg, rgba(7, 18, 34, 0.95), rgba(4, 10, 22, 0.9))",
+  boxShadow: "0 18px 50px rgba(0, 0, 0, 0.22)",
+} as const;
+
+const buttonStyle = {
+  border: "1px solid rgba(0, 212, 255, 0.34)",
+  borderRadius: 14,
+  padding: "10px 14px",
+  color: "#eaf7ff",
+  background: "rgba(0, 132, 255, 0.24)",
+  cursor: "pointer",
+  fontWeight: 700,
+} as const;
+
+function asMoney(value?: number | null, currency = "EUR") {
+  if (value === undefined || value === null || Number.isNaN(value)) return "—";
+  return new Intl.NumberFormat(undefined, { style: "currency", currency }).format(value);
+}
+
+function percent(value?: number | null) {
+  if (value === undefined || value === null || Number.isNaN(value)) return "—";
+  return `${Math.round(value * 100)}%`;
+}
+
+export function RecommendationsPage() {
+  const [health, setHealth] = useState<RecommendationHealth | null>(null);
+  const [contract, setContract] = useState<RecommendationContract | null>(null);
+  const [request, setRequest] = useState<RecommendationGenerationRequest | null>(null);
+  const [response, setResponse] = useState<RecommendationGenerationResponse | null>(null);
+  const [status, setStatus] = useState("Loading recommendation generator...");
+  const [busy, setBusy] = useState(false);
+  const [decisionMessage, setDecisionMessage] = useState<string | null>(null);
+
+  async function refresh() {
+    const [nextHealth, nextContract, nextRequest] = await Promise.all([
+      advisoryApi.recommendationHealth(),
+      advisoryApi.recommendationContract(),
+      advisoryApi.recommendationDemoRequest(),
+    ]);
+    setHealth(nextHealth);
+    setContract(nextContract);
+    setRequest(nextRequest);
+    setStatus("Recommendation generator is reachable.");
+  }
+
+  useEffect(() => {
+    let active = true;
+    refresh().catch((error: Error) => {
+      if (active) setStatus(`Recommendation generator not reachable: ${error.message}`);
+    });
+    return () => { active = false; };
+  }, []);
+
+  async function generate() {
+    if (!request) return;
+    setBusy(true);
+    setDecisionMessage(null);
+    setStatus("Generating guarded recommendations...");
+    try {
+      const result = await advisoryApi.generateRecommendations(request);
+      setResponse(result);
+      setStatus("Recommendation generation completed. Review confidence, evidence and approval requirement.");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      setStatus(`Recommendation generation failed: ${message}`);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function decide(recommendation: RecommendationCandidate, decision: 1 | 2) {
+    setBusy(true);
+    try {
+      const result = await advisoryApi.approveRecommendation({
+        recommendationId: recommendation.recommendationId,
+        approverUserId: "demo-approver",
+        decision,
+        comment: decision === 1 ? "Approved for engineering review." : "Dismissed from demo workspace.",
+        decidedAtUtc: new Date().toISOString(),
+      });
+      setDecisionMessage(result.message);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      setDecisionMessage(`Approval failed: ${message}`);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const firstRecommendation = response?.recommendations[0];
+  const impact = firstRecommendation?.expectedImpact;
+
+  const summaryCards = useMemo(
+    () => [
+      { label: "Expected € impact", value: health?.expectedEImpactRange ? "YES" : "pending" },
+      { label: "Approval required", value: health?.humanApprovalRequired ? "YES" : "pending" },
+      { label: "Auto write-back", value: health ? (health.automaticWriteBack ? "YES" : "NO") : "pending" },
+      { label: "Recommendations", value: String(response?.recommendations.length ?? 0) },
+      { label: "Expected value", value: asMoney(impact?.expectedValue, impact?.currencyCode ?? "EUR") },
+    ],
+    [health, impact?.currencyCode, impact?.expectedValue, response?.recommendations.length],
+  );
+
+  return (
+    <main data-testid="recommendations-page">
+      <StandardPageHeader
+        title="Advisory Recommendations"
+        subtitle="Guarded suggestions with expected impact, evidence, and a required human approval step."
+        description="Recommendations are generated only from scenarios the evidence supports. Each carries an expected impact range, its supporting evidence, and its provenance. Nothing is applied to the plant: approval is explicit, and PlantProcess IQ never writes back to process control."
+        status={status}
+      />
+      {decisionMessage ? <strong>{decisionMessage}</strong> : null}
+
+      <StandardStatGrid items={summaryCards} emphasize="Recommendations" />
+
+      <section>
+        <h2>1. Generate recommendation</h2>
+        <p>
+          Demo request uses the Pack G-3 deterministic scenario engine. The recommendation generator blocks unsupported scenarios and weak evidence.
+        </p>
+        <div>
+          <StandardButton type="button" isDisabled={busy || !request} onClick={generate}>Generate recommendation</StandardButton>
+          <StandardButton type="button" isDisabled={busy} onClick={() => void refresh()}>Reload demo request</StandardButton>
+        </div>
+      </section>
+
+      <section>
+        <div>
+          <h2>2. Recommendation output</h2>
+          {response?.recommendations.length ? (
+            <div>
+              {response.recommendations.map((recommendation) => (
+                <div key={recommendation.recommendationId}>
+                  <h3>{recommendation.title}</h3>
+                  <p>{recommendation.advisoryText}</p>
+                  <p>{recommendation.honestyCaveat}</p>
+                  <div>
+                    <div><small>Confidence</small><strong>{percent(recommendation.confidence)}</strong></div>
+                    <div><small>Status</small><strong>{String(recommendation.status)}</strong></div>
+                    <div><small>Expected</small><strong>{asMoney(recommendation.expectedImpact?.expectedValue, recommendation.expectedImpact?.currencyCode ?? "EUR")}</strong></div>
+                    <div><small>Approval</small><strong>{recommendation.requiresHumanApproval ? "Required" : "Not required"}</strong></div>
+                  </div>
+                  <h4>Parameter windows</h4>
+                  <StandardP2Table>
+                    <thead><tr><th>Parameter</th><th>Min</th><th>Max</th><th>Basis</th></tr></thead>
+                    <tbody>
+                      {recommendation.parameterWindows.map((window) => (
+                        <tr key={window.parameterCode}>
+                          <td>{window.displayName}</td>
+                          <td>{window.recommendedMinimum} {window.unit ?? ""}</td>
+                          <td>{window.recommendedMaximum} {window.unit ?? ""}</td>
+                          <td>{window.basis}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </StandardP2Table>
+                  <div>
+                    <StandardButton type="button" isDisabled={busy} onClick={() => void decide(recommendation, 1)}>Approve for review</StandardButton>
+                    <StandardButton type="button" isDisabled={busy} onClick={() => void decide(recommendation, 2)}>Dismiss</StandardButton>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p>{response?.message ?? "Generate a recommendation to view guarded advisory output."}</p>
+          )}
+        </div>
+
+        <div>
+          <h2>3. Guardrails</h2>
+          <ul>
+            {(response?.guardrails ?? contract?.guardrails ?? [
+              "No causal language.",
+              "Expected e-impact is projection-only.",
+              "Human approval is required.",
+              "No automatic process write-back.",
+            ]).map((rule) => <li key={rule}>{rule}</li>)}
+          </ul>
+          <h3>Provenance</h3>
+          <ul>
+            {(firstRecommendation?.provenance ?? ["No recommendation generated yet."]).map((item) => <li key={item}>{item}</li>)}
+          </ul>
+        </div>
+      </section>
+    </main>
+  );
+}
+
+==================== END: src\pages\Advisory\RecommendationsPage.tsx ====================
+
+==================== FILE: src\pages\Advisory\ValueRealizationPage.tsx (139 lines) ====================
+import { useEffect, useMemo, useState } from "react";
+import { advisoryApi, type ValueRealizationContract, type ValueRealizationHealth, type ValueRealizationRequest, type ValueRealizationResponse } from "@/api/advisoryApi";
+
+import { P2T08_STANDARD_ROLLOUT_MARKER, StandardP2Input } from "@/components/standard/StandardP2Controls";
+import { StandardButton, StandardPageHeader, StandardStatGrid } from "@/components/standard";
+const cardStyle = { border: "1px solid rgba(124,220,255,0.18)", borderRadius: 22, padding: 20, background: "linear-gradient(135deg, rgba(7,18,34,0.95), rgba(4,10,22,0.9))", boxShadow: "0 18px 50px rgba(0,0,0,0.22)" } as const;
+const buttonStyle = { border: "1px solid rgba(0,212,255,0.34)", borderRadius: 14, padding: "10px 14px", color: "#eaf7ff", background: "rgba(0,132,255,0.24)", cursor: "pointer", fontWeight: 700 } as const;
+const inputStyle = { width: "100%", border: "1px solid rgba(120,190,255,0.22)", borderRadius: 12, padding: "10px 12px", background: "rgba(2,7,18,0.75)", color: "#eaf7ff" } as const;
+
+function asMoney(value?: number | null, currency = "EUR") {
+  if (value === undefined || value === null || Number.isNaN(value)) return "—";
+  return new Intl.NumberFormat(undefined, { style: "currency", currency }).format(value);
+}
+
+function asNumber(value?: number | null) {
+  if (value === undefined || value === null || Number.isNaN(value)) return "—";
+  return new Intl.NumberFormat(undefined, { maximumFractionDigits: 3 }).format(value);
+}
+
+export function ValueRealizationPage() {
+  const [health, setHealth] = useState<ValueRealizationHealth | null>(null);
+  const [contract, setContract] = useState<ValueRealizationContract | null>(null);
+  const [request, setRequest] = useState<ValueRealizationRequest | null>(null);
+  const [response, setResponse] = useState<ValueRealizationResponse | null>(null);
+  const [status, setStatus] = useState("Loading value-realization engine...");
+  const [busy, setBusy] = useState(false);
+
+  async function refresh() {
+    const [nextHealth, nextContract, nextRequest] = await Promise.all([
+      advisoryApi.valueRealizationHealth(),
+      advisoryApi.valueRealizationContract(),
+      advisoryApi.valueRealizationDemoRequest(),
+    ]);
+    setHealth(nextHealth);
+    setContract(nextContract);
+    setRequest(nextRequest);
+    setStatus("Value-realization engine is reachable.");
+  }
+
+  useEffect(() => {
+    let active = true;
+    refresh().catch((error: Error) => { if (active) setStatus(`Value-realization engine not reachable: ${error.message}`); });
+    return () => { active = false; };
+  }, []);
+
+  function updateActualValue(value: string) {
+    if (!request) return;
+    setRequest({ ...request, actualWindow: { ...request.actualWindow, value: Number(value) } });
+    setResponse(null);
+  }
+
+  async function calculate() {
+    if (!request) return;
+    setBusy(true);
+    setStatus("Calculating baseline-vs-actual realized value...");
+    try {
+      const result = await advisoryApi.calculateValueRealization(request);
+      setResponse(result);
+      setStatus("Value-realization calculation completed with attribution caveat.");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      setStatus(`Value-realization calculation failed: ${message}`);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const ledger = response?.ledgerEntry;
+  const summaryCards = useMemo(() => [
+    { label: "Baseline", value: asNumber(request?.baselineWindow.value) },
+    { label: "Actual", value: asNumber(request?.actualWindow.value) },
+    { label: "Delta", value: asNumber(response?.baselineVsActualDelta) },
+    { label: "Realized €", value: asMoney(ledger?.realizedValue.expectedValue, ledger?.realizedValue.currencyCode ?? request?.currencyCode ?? "EUR") },
+    { label: "Recommendation link", value: request?.recommendationId ? "YES" : "pending" },
+  ], [health?.mode, ledger?.realizedValue.currencyCode, ledger?.realizedValue.expectedValue, request, response?.baselineVsActualDelta]);
+
+  return (
+    <main data-testid="value-realization-page">
+      <StandardPageHeader
+        title="Value Realisation Tracking"
+        subtitle="Measured KPI movement after a recommendation was acted on, against a reproducible baseline."
+        description="When a recommendation is implemented, this page compares a frozen baseline KPI window against the actual window that followed. Attribution caveats remain visible: a measured improvement is not proof that the recommendation caused it."
+        status={status}
+      />
+
+      <StandardStatGrid items={summaryCards} emphasize="Realized" />
+
+      <section>
+        <div>
+          <h2>1. Baseline vs actual input</h2>
+          {request ? (
+            <>
+              <p>Recommendation: <strong>{request.recommendationId}</strong></p>
+              <p>Metric: <strong>{request.baselineWindow.metricCode}</strong></p>
+              <label>
+                <span>Actual KPI value</span>
+                <StandardP2Input type="number" value={request.actualWindow.value} onChange={(event) => updateActualValue(event.target.value)} />
+              </label>
+              <StandardButton type="button" isDisabled={busy} onClick={calculate}>Calculate realized value</StandardButton>
+              <StandardButton type="button" isDisabled={busy} onClick={() => void refresh()}>Reload demo request</StandardButton>
+            </>
+          ) : <p>Loading demo request...</p>}
+        </div>
+
+        <div>
+          <h2>2. Ledger result</h2>
+          {ledger ? (
+            <div>
+              <strong>{ledger.ledgerEntryId}</strong>
+              <p>{response?.message}</p>
+              <p>{ledger.attributionCaveat}</p>
+              <div>
+                <strong>Realized value range</strong>
+                <p>Min: {asMoney(ledger.realizedValue.minValue, ledger.realizedValue.currencyCode)}</p>
+                <p>Expected: {asMoney(ledger.realizedValue.expectedValue, ledger.realizedValue.currencyCode)}</p>
+                <p>Max: {asMoney(ledger.realizedValue.maxValue, ledger.realizedValue.currencyCode)}</p>
+              </div>
+              <h3>Provenance</h3>
+              <ul>{ledger.provenance.map((item) => <li key={item}>{item}</li>)}</ul>
+            </div>
+          ) : <p>Calculate realized value to create a ledger entry preview.</p>}
+        </div>
+      </section>
+
+      <section>
+        <h2>3. Guardrails</h2>
+        <ul>
+          {(contract?.guardrails ?? [
+            "Baseline and actual windows must use the same KPI metric.",
+            "Realized value must link to a source recommendation.",
+            "Attribution caveat must be visible.",
+            "Correlation is not causation.",
+          ]).map((rule) => <li key={rule}>{rule}</li>)}
+        </ul>
+      </section>
+    </main>
+  );
+}
+
+==================== END: src\pages\Advisory\ValueRealizationPage.tsx ====================
+
+==================== FILE: src\pages\Phase9\PersonaAccessMatrixPage.tsx (45 lines) ====================
+import { routeDecision, visibleNavigation, type CommercialTier, type FormalPlantRole } from "@/security/phase9RoleAccess";
+import "./phase9-personas.css";
+
+const demoRoles: FormalPlantRole[] = ["ChiefExecutiveOfficer", "MaintenanceEngineer", "ProcessEngineer", "PlantAdmin", "Viewer"];
+const tier: CommercialTier = "Enterprise";
+
+export function PersonaAccessMatrixPage() {
+  return (
+    <main className="phase9-page" data-testid="phase9-persona-access-matrix">
+      <section className="phase9-hero">
+        <p className="phase9-eyebrow">P09 · T-051/T-053 · Formal RBAC and route visibility</p>
+        <h1>Persona Access Matrix</h1>
+        <p className="phase9-muted">
+          Routes are scoped by formal role and tier. Ungranted features are shown disabled with a reason instead of a dead click or unexplained 404.
+        </p>
+      </section>
+
+      {demoRoles.map((role) => (
+        <section className="phase9-card" key={role}>
+          <h2>{role}</h2>
+          <div className="phase9-grid">
+            {visibleNavigation(role, tier).slice(0, 10).map((item) => (
+              <article className="phase9-card" key={role + item.path}>
+                <strong>{item.path}</strong>
+                <p className={item.allowed ? "phase9-muted" : "phase9-disabled"}>
+                  {item.allowed ? "Allowed" : "Disabled"} — {item.reason}
+                </p>
+              </article>
+            ))}
+          </div>
+        </section>
+      ))}
+
+      <section className="phase9-card">
+        <h2>Example route guard</h2>
+        <p className="phase9-muted">
+          Maintenance engineer opening assistant configuration:
+        </p>
+        <pre>{JSON.stringify(routeDecision("/phase8/assistant-config", "MaintenanceEngineer", "Enterprise"), null, 2)}</pre>
+      </section>
+    </main>
+  );
+}
+
+export default PersonaAccessMatrixPage;
+==================== END: src\pages\Phase9\PersonaAccessMatrixPage.tsx ====================
+
+==================== FILE: src\pages\Phase10\Phase10LicenseDemoPage.tsx (85 lines) ====================
+import { useMemo, useState } from "react";
+import {
+  buildPhase10FeatureMatrix, liveTierToggleResult, phase10LifecycleBadge, phase10TierVisuals, type Phase10Tier, } from "@/license/phase10License";
+import "./phase10-license.css";
+
+import { StandardP2Button } from "@/components/standard/StandardP2Controls";
+import { StandardButton } from "@/components/standard";
+const tiers: Phase10Tier[] = ["Lite", "Pro", "ProPlus", "Enterprise"];
+
+export function Phase10LicenseDemoPage() {
+  const [tier, setTier] = useState<Phase10Tier>("Enterprise");
+
+  const featureMatrix = useMemo(() => buildPhase10FeatureMatrix(tier), [tier]);
+  const proToggle = useMemo(() => liveTierToggleResult("Enterprise", "Pro"), []);
+  const enterpriseToggle = useMemo(() => liveTierToggleResult("Pro", "Enterprise"), []);
+
+  const visual = phase10TierVisuals[tier];
+
+  return (
+    <main className="phase10-license-page" data-testid="phase10-license-demo">
+      <section className="phase10-hero">
+        <p className="phase10-eyebrow">P10 · T-058/T-062 · Live tier-toggle demo</p>
+        <h1>Phase 10 License Runtime Demo</h1>
+        <p className="phase10-copy">
+          Switching the active tier in the HMI updates feature visibility immediately. Existing dashboard read access remains protected during grace, expiry and overage flows.
+        </p>
+        <span className={visual.className}>{visual.label} · {visual.accentName}</span>
+      </section>
+
+      <section className="phase10-panel">
+        <p className="phase10-eyebrow">Live tier toggle</p>
+        <div className="phase10-toggle-row">
+          {tiers.map((item) => (
+            <StandardButton
+              key={item}
+              type="button"
+              data-active={tier === item}
+              onClick={() => setTier(item)}
+            >
+              {phase10TierVisuals[item].label}
+            </StandardButton>
+          ))}
+        </div>
+        <p className="phase10-copy">
+          Enterprise to Pro hides: {proToggle.hiddenNow.join(", ")}. Pro to Enterprise restores: {enterpriseToggle.restoredNow.join(", ")}.
+        </p>
+      </section>
+
+      <section className="phase10-grid">
+        {featureMatrix.map((feature) => (
+          <article className="phase10-card" key={feature.code}>
+            <span className={feature.enabled ? "phase10-feature-enabled" : "phase10-feature-disabled"}>
+              {feature.enabled ? "Enabled" : "Disabled"}
+            </span>
+            <h2>{feature.label}</h2>
+            <p className="phase10-copy">
+              Required tier: {phase10TierVisuals[feature.requiredTier].label}
+            </p>
+            <strong>{feature.upgradePath}</strong>
+          </article>
+        ))}
+      </section>
+
+      <section className="phase10-grid">
+        <article className="phase10-card">
+          <p className="phase10-eyebrow">T-059 Grace / expiry / overage</p>
+          <h2>{phase10LifecycleBadge("GraceReadOnly")}</h2>
+          <p className="phase10-copy">
+            Expired or over-limit licenses become read-only for existing dashboards. Customer data is never deleted by the license flow.
+          </p>
+        </article>
+
+        <article className="phase10-card">
+          <p className="phase10-eyebrow">T-061 Offline activation</p>
+          <h2>Ed25519 signed-license envelope</h2>
+          <p className="phase10-copy">
+            Air-gapped activation is certified by a signed envelope contract. Tampered payloads are rejected and audited.
+          </p>
+        </article>
+      </section>
+    </main>
+  );
+}
+
+export default Phase10LicenseDemoPage;
+==================== END: src\pages\Phase10\Phase10LicenseDemoPage.tsx ====================
+
+==================== FILE: src\test\architecture\noPhaseTokensOnDemoPath.test.ts (161 lines) ====================
+// ============================================================
+// M1-08 STRICT GATE - Naming Golden Rule, no allowlist.
+// "Zero phase tokens in any canonical route, period."
+//
+// Redirects ARE permitted to name the old /phaseN/* paths: that is precisely
+// their job (keeping old links alive). A canonical route is any <Route> whose
+// element is not a <Navigate>.
+//
+// Parsing note: this gate splits App.tsx on "<Route" so each chunk is exactly
+// one route. An earlier version used a fixed 240-char lookahead and silently
+// missed whitespace-heavy routes; do not reintroduce that.
+// ============================================================
+import { describe, expect, it } from "vitest";
+import { readFileSync, existsSync } from "node:fs";
+import { resolve } from "node:path";
+
+const webRoot = resolve(__dirname, "../../..");
+const read = (rel: string): string => {
+  const p = resolve(webRoot, rel);
+  return existsSync(p) ? readFileSync(p, "utf8") : "";
+};
+
+const PHASE_IN_PATH = /\/phase\d+\//i;
+
+describe("M1-08 Naming Golden Rule: zero phase tokens on the demo path", () => {
+  it("the assistant api file is not phase-named", () => {
+    expect(existsSync(resolve(webRoot, "src/api/assistantApi.ts"))).toBe(true);
+    expect(existsSync(resolve(webRoot, "src/api/phase8Assistant.ts"))).toBe(false);
+  });
+
+  it("no canonical route path contains a phase token", () => {
+    const app = read("src/App.tsx");
+    expect(app.length).toBeGreaterThan(0);
+
+    const offenders: string[] = [];
+    // Each chunk after splitting on "<Route" is exactly one route element, so a
+    // <Navigate> inside the chunk means this route IS a redirect.
+    for (const chunk of app.split("<Route").slice(1)) {
+      const pathMatch = /path="([^"]+)"/.exec(chunk);
+      if (!pathMatch) continue;
+      const routePath = pathMatch[1];
+      const isRedirect = chunk.includes("<Navigate");
+      if (!isRedirect && PHASE_IN_PATH.test(routePath)) {
+        offenders.push(`canonical route "${routePath}" still carries a phase token`);
+      }
+    }
+    expect(offenders, `M1-08:\n  ${offenders.join("\n  ")}`).toHaveLength(0);
+  });
+
+  it("no loading label announces a phase number", () => {
+    const app = read("src/App.tsx");
+    const bad = app.match(/"Phase\s+\d+[^"]*"/g) ?? [];
+    expect(bad, `M1-08 phase-named loading labels: ${bad.join(", ")}`).toHaveLength(0);
+  });
+
+  it("no nav target or nav label carries a phase token", () => {
+    const layout = read("src/components/AppLayout.tsx");
+    expect(layout.length).toBeGreaterThan(0);
+
+    const badTargets: string[] = [];
+    const toRe = /to:\s*"([^"]+)"/g;
+    let m: RegExpExecArray | null;
+    while ((m = toRe.exec(layout)) !== null) {
+      if (PHASE_IN_PATH.test(m[1])) badTargets.push(`nav target "${m[1]}"`);
+    }
+    expect(badTargets, `M1-08: ${badTargets.join(", ")}`).toHaveLength(0);
+
+    const badLabels: string[] = [];
+    const labelRe = /label:\s*"([^"]+)"/g;
+    while ((m = labelRe.exec(layout)) !== null) {
+      if (/\bP\d{2}\b|phase\s*\d+/i.test(m[1])) badLabels.push(`nav label "${m[1]}"`);
+    }
+    expect(badLabels, `M1-08: ${badLabels.join(", ")}`).toHaveLength(0);
+  });
+
+  it("the legacy phase paths still redirect (no broken bookmarks)", () => {
+    const app = read("src/App.tsx");
+    const mustRedirect = [
+      ["/phase8/assistant", "/assistant"],
+      ["/phase8/assistant-config", "/assistant/configuration"],
+      ["/phase8/suggestions", "/suggestions"],
+      ["/phase9/executive", "/executive"],
+      ["/phase9/access", "/access-matrix"],
+      ["/phase10/license", "/license"],
+      ["/phase15/honesty-certification", "/advisory/honesty-certification"],
+      ["/phase15/benchmarking", "/advisory/benchmarking"],
+      ["/phase15/roi-cfo-dashboard", "/advisory/roi-cfo-dashboard"],
+      ["/phase15/value-realization", "/advisory/value-realization"],
+      ["/phase15/recommendations", "/advisory/recommendations"],
+      ["/phase15/scenario-simulation", "/advisory/scenario-simulation"],
+    ];
+    const missing: string[] = [];
+    for (const [from, to] of mustRedirect) {
+      const re = new RegExp(`path="${from}"[\\s\\S]{0,160}?to="${to}"`);
+      if (!re.test(app)) missing.push(`${from} -> ${to}`);
+    }
+    expect(missing, `M1-08 broken redirects: ${missing.join(", ")}`).toHaveLength(0);
+  });
+
+  it("the canonical descriptive routes exist", () => {
+    const app = read("src/App.tsx");
+    for (const p of ["/assistant", "/assistant/configuration", "/suggestions", "/access-matrix", "/advisory/benchmarking"]) {
+      expect(app, `missing canonical route ${p}`).toContain(`path="${p}"`);
+    }
+  });
+});
+
+// ============================================================
+// STEP 2 - PAGE CONTENT assertions.
+// Scoped to the 8 customer-facing pages. /license and /access-matrix are
+// reachable pages that still carry demo/phase wording and have NOT been ruled
+// on; widening this scope before that decision would fail on unauthorised work.
+// ============================================================
+const PAGE_FILES = [
+  "src/pages/Advisory/HonestyCertificationPage.tsx",
+  "src/pages/Advisory/BenchmarkingPage.tsx",
+  "src/pages/Advisory/RoiCfoDashboardPage.tsx",
+  "src/pages/Advisory/ValueRealizationPage.tsx",
+  "src/pages/Advisory/RecommendationsPage.tsx",
+  "src/pages/Advisory/ScenarioSimulationPage.tsx",
+  "src/pages/EdgeCollector/EdgeCollectorPage.tsx",
+  "src/pages/HistorianConnector/HistorianConnectorPage.tsx",
+];
+
+describe("Step 2: the 8 customer-facing pages carry no phase or pack tokens", () => {
+  it("no <h1> announces a phase number", () => {
+    const bad: string[] = [];
+    for (const rel of PAGE_FILES) {
+      const src = read(rel);
+      expect(src.length, `${rel} is missing`).toBeGreaterThan(0);
+      const m = src.match(/<h1>[^<]*Phase\s*\d+[^<]*<\/h1>/gi);
+      if (m) bad.push(`${rel}: ${m.join(", ")}`);
+    }
+    expect(bad, `phase-named page titles:\n  ${bad.join("\n  ")}`).toHaveLength(0);
+  });
+
+  it("no data-testid carries a phase token", () => {
+    const bad: string[] = [];
+    for (const rel of PAGE_FILES) {
+      const m = read(rel).match(/data-testid="[^"]*phase\d[^"]*"/gi);
+      if (m) bad.push(`${rel}: ${m.join(", ")}`);
+    }
+    expect(bad, `phase-named test-ids:\n  ${bad.join("\n  ")}`).toHaveLength(0);
+  });
+
+  it("no Pack/T-id kicker survives", () => {
+    const bad: string[] = [];
+    for (const rel of PAGE_FILES) {
+      const m = read(rel).match(/Pack\s+[A-G][^\n]*T-\d+/g);
+      if (m) bad.push(`${rel}: ${m.join(", ")}`);
+    }
+    expect(bad, `Pack/T-id kickers still shipping:\n  ${bad.join("\n  ")}`).toHaveLength(0);
+  });
+
+  it("the advisory pages no longer live under a PhaseNN directory", () => {
+    expect(existsSync(resolve(webRoot, "src/pages/Advisory"))).toBe(true);
+    expect(existsSync(resolve(webRoot, "src/pages/Phase15"))).toBe(false);
+    expect(existsSync(resolve(webRoot, "src/api/advisoryApi.ts"))).toBe(true);
+    expect(existsSync(resolve(webRoot, "src/api/phase15Advisory.ts"))).toBe(false);
+  });
+});
+==================== END: src\test\architecture\noPhaseTokensOnDemoPath.test.ts ====================
+
+==================== FILE: src\state\AuthContext.tsx (325 lines) ====================
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
+import {
+  ApiError,
+  apiClient,
+  type AuthenticatedUser,
+} from "../api/http/apiClient";
+
+const DEMO_USER =
+  (import.meta.env.VITE_SMOKE_USERNAME as string | undefined)?.trim() || "admin";
+
+const DEMO_PASS =
+  (import.meta.env.VITE_SMOKE_PASSWORD as string | undefined) ?? "";
+
+const EXPIRY_BUFFER_MS = 60_000;
+const MAX_AUTO_BOOTSTRAP_ATTEMPTS = 3;
+const AUTH_RETRY_BACKOFF_MS = [0, 500, 1500];
+
+type AuthBootstrapReason =
+  | "initial"
+  | "manual"
+  | "token-refresh"
+  | "auth-failure";
+
+type AuthErrorKind =
+  | "missing-smoke-password"
+  | "invalid-credentials"
+  | "forbidden"
+  | "backend-unreachable"
+  | "server-error"
+  | "unknown";
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
+
+function isTokenStillValid(user: AuthenticatedUser | null): boolean {
+  if (!user) return false;
+
+  try {
+    return new Date(user.expiresAtUtc).getTime() - Date.now() > EXPIRY_BUFFER_MS;
+  } catch {
+    return false;
+  }
+}
+
+function classifyAuthError(err: unknown): AuthErrorKind {
+  if (err instanceof ApiError) {
+    if (err.status === 401) return "invalid-credentials";
+    if (err.status === 403) return "forbidden";
+    if (err.status >= 500) return "server-error";
+    if (err.status === 0) return "backend-unreachable";
+  }
+
+  if (err instanceof DOMException && err.name === "AbortError") {
+    return "backend-unreachable";
+  }
+
+  if (err instanceof TypeError) {
+    return "backend-unreachable";
+  }
+
+  return "unknown";
+}
+
+function buildAuthMessage(kind: AuthErrorKind, err?: unknown): string {
+  const detail = err instanceof Error ? err.message : undefined;
+
+  switch (kind) {
+    case "missing-smoke-password":
+      return (
+        "Demo login is not configured. Set VITE_SMOKE_USERNAME and " +
+        "VITE_SMOKE_PASSWORD in Frontend/PlantProcess.Web/.env.local."
+      );
+    case "invalid-credentials":
+      return "Invalid login credentials or refresh session expired.";
+    case "forbidden":
+      return "Your account is authenticated but not allowed to access this view.";
+    case "backend-unreachable":
+      return (
+        "Backend API is unreachable. Confirm PlantProcess.Api is running and " +
+        "VITE_API_BASE_URL points to it." +
+        (detail ? ` Details: ${detail}` : "")
+      );
+    case "server-error":
+      return "Backend API returned a server error during authentication.";
+    default:
+      return "Authentication failed unexpectedly." + (detail ? ` Details: ${detail}` : "");
+  }
+}
+
+interface AuthContextValue {
+  user: AuthenticatedUser | null;
+  isAuthenticated: boolean;
+  isBootstrapping: boolean;
+  bootstrapError: string | null;
+  bootstrapAttemptCount: number;
+  logout: () => void;
+  retryBootstrap: () => void;
+}
+
+const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<AuthenticatedUser | null>(null);
+  const [isBootstrapping, setIsBootstrapping] = useState(true);
+  const [bootstrapError, setBootstrapError] = useState<string | null>(null);
+  const [bootstrapAttemptCount, setBootstrapAttemptCount] = useState(0);
+
+  const inFlightRef = useRef<Promise<void> | null>(null);
+  const automaticAttemptsRef = useRef(0);
+  const lastErrorKindRef = useRef<AuthErrorKind | null>(null);
+
+  const applyAuthenticatedUser = useCallback((response: {
+    userName: string;
+    displayName?: string | null;
+    role: string;
+    plantRole?: string;
+    tenantId?: string;
+    tenantCode?: string;
+    expiresAtUtc: string;
+    scopes?: string[];
+    entitlements?: AuthenticatedUser["entitlements"];
+  }) => {
+    const nextUser: AuthenticatedUser = {
+      userName: response.userName,
+      displayName: response.displayName,
+      role: response.role,
+      plantRole: response.plantRole,
+      tenantId: response.tenantId,
+      tenantCode: response.tenantCode,
+      expiresAtUtc: response.expiresAtUtc,
+      scopes: response.scopes ?? response.entitlements?.permissions ?? [],
+      entitlements: response.entitlements,
+    };
+
+    setUser(nextUser);
+    apiClient.setAuthenticatedUser(nextUser);
+
+    setBootstrapError(null);
+    automaticAttemptsRef.current = 0;
+    setBootstrapAttemptCount(0);
+    lastErrorKindRef.current = null;
+  }, []);
+
+  const bootstrap = useCallback(
+    async (reason: AuthBootstrapReason = "initial", force = false) => {
+      if (inFlightRef.current) {
+        await inFlightRef.current;
+        return;
+      }
+
+      const run = async () => {
+        setIsBootstrapping(true);
+
+        try {
+          const existing = apiClient.getAuthenticatedUser();
+          if (!force && isTokenStillValid(existing)) {
+            setUser(existing);
+            setBootstrapError(null);
+            return;
+          }
+
+          const refreshResponse = await apiClient.refresh();
+          if (refreshResponse) {
+            applyAuthenticatedUser(refreshResponse);
+            return;
+          }
+
+          if (!DEMO_PASS.trim()) {
+            apiClient.clearAuthentication();
+            setUser(null);
+            setBootstrapError(buildAuthMessage("missing-smoke-password"));
+            lastErrorKindRef.current = "missing-smoke-password";
+            return;
+          }
+
+          if (reason !== "manual") {
+            if (automaticAttemptsRef.current >= MAX_AUTO_BOOTSTRAP_ATTEMPTS) {
+              setBootstrapError(
+                "Automatic login stopped after 3 failed attempts. " +
+                "Fix credentials/backend connection, then press Retry.",
+              );
+              return;
+            }
+
+            const attemptIndex = automaticAttemptsRef.current;
+            automaticAttemptsRef.current += 1;
+            setBootstrapAttemptCount(automaticAttemptsRef.current);
+
+            const delay = AUTH_RETRY_BACKOFF_MS[attemptIndex] ?? 1500;
+            if (delay > 0) await sleep(delay);
+          } else {
+            automaticAttemptsRef.current = 0;
+            setBootstrapAttemptCount(0);
+            setBootstrapError(null);
+          }
+
+          const response = await apiClient.login(DEMO_USER, DEMO_PASS);
+          applyAuthenticatedUser(response);
+        } catch (err) {
+          const kind = classifyAuthError(err);
+          lastErrorKindRef.current = kind;
+
+          if (kind === "invalid-credentials") {
+            automaticAttemptsRef.current = MAX_AUTO_BOOTSTRAP_ATTEMPTS;
+            setBootstrapAttemptCount(MAX_AUTO_BOOTSTRAP_ATTEMPTS);
+            apiClient.clearAuthentication();
+            setUser(null);
+            setBootstrapError(buildAuthMessage("invalid-credentials"));
+            return;
+          }
+
+          if (kind === "forbidden") {
+            automaticAttemptsRef.current = MAX_AUTO_BOOTSTRAP_ATTEMPTS;
+            setBootstrapAttemptCount(MAX_AUTO_BOOTSTRAP_ATTEMPTS);
+            apiClient.clearAuthentication();
+            setUser(null);
+            setBootstrapError(buildAuthMessage("forbidden"));
+            return;
+          }
+
+          apiClient.clearAuthentication();
+          setUser(null);
+          setBootstrapError(buildAuthMessage(kind, err));
+        } finally {
+          setIsBootstrapping(false);
+        }
+      };
+
+      inFlightRef.current = run();
+      try {
+        await inFlightRef.current;
+      } finally {
+        inFlightRef.current = null;
+      }
+    },
+    [applyAuthenticatedUser],
+  );
+
+  useEffect(() => {
+    void bootstrap("initial");
+  }, [bootstrap]);
+
+  useEffect(() => {
+    function handleAuthFailure(event: Event) {
+      const customEvent = event as CustomEvent<{ status?: number }>;
+      const status = customEvent.detail?.status;
+
+      if (status === 403) {
+        setBootstrapError(buildAuthMessage("forbidden"));
+        return;
+      }
+
+      if (status === 401) {
+        apiClient.clearAuthentication();
+        setUser(null);
+        void bootstrap("auth-failure", true);
+      }
+    }
+
+    window.addEventListener("plantprocess:auth-failure", handleAuthFailure);
+    return () => window.removeEventListener("plantprocess:auth-failure", handleAuthFailure);
+  }, [bootstrap]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const msUntilRefresh =
+      new Date(user.expiresAtUtc).getTime() - Date.now() - 5 * 60_000;
+
+    if (msUntilRefresh <= 0) return;
+
+    const timer = window.setTimeout(
+      () => void bootstrap("token-refresh", true),
+      msUntilRefresh,
+    );
+
+    return () => window.clearTimeout(timer);
+  }, [user, bootstrap]);
+
+  const logout = useCallback(() => {
+    void apiClient.logout();
+    setUser(null);
+    setBootstrapError("Signed out.");
+    automaticAttemptsRef.current = 0;
+    setBootstrapAttemptCount(0);
+  }, []);
+
+  const retryBootstrap = useCallback(() => {
+    automaticAttemptsRef.current = 0;
+    setBootstrapAttemptCount(0);
+    void bootstrap("manual", true);
+  }, [bootstrap]);
+
+  const value = useMemo<AuthContextValue>(
+    () => ({
+      user,
+      isAuthenticated: !!user,
+      isBootstrapping,
+      bootstrapError,
+      bootstrapAttemptCount,
+      logout,
+      retryBootstrap,
+    }),
+    [user, isBootstrapping, bootstrapError, bootstrapAttemptCount, logout, retryBootstrap],
+  );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
+export function useAuth() {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error("useAuth must be used inside AuthProvider");
+  return ctx;
+}
+
+==================== END: src\state\AuthContext.tsx ====================
+
+---- grep: license route wiring in App.tsx ----
+57: //     /commercial/license
+75: //     /commercial-license     -> /commercial/license
+143: import { LicenseProvider } from "./state/LicenseContext";
+292: const CommercialLicensePage = lazy(() =>
+295: import("./pages/CommercialLicense/CommercialLicensePage").then((m) => ({
+298: default: m.CommercialLicensePage,
+622: const LicenseDemoPage = lazy(() =>
+623: import("./pages/Phase10/Phase10LicenseDemoPage").then((m) => ({
+624: default: m.Phase10LicenseDemoPage,
+2179: {/* Commercial license */}
+2185: path="/commercial/license"
+2191: "/commercial/license",
+2194: "The license page is refreshing",
+2197: <CommercialLicensePage />
+2215: path="/commercial-license"
+2218: element={<Navigate to="/commercial/license" replace />}
+2287: path="/license"
+2289: "/license",
+2290: "License page is refreshing",
+2291: <LicenseDemoPage />
+2294: <Route path="/phase10/license" element={<Navigate to="/license" replace />} />
+2298: <Route path="/license-demo" element={<Navigate to="/license" replace />} />
+2370: <LicenseProvider>
+2379: </LicenseProvider>

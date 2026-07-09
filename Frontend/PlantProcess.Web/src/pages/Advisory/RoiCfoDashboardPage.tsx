@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { phase15AdvisoryApi, type P15CfoEvidencePack, type P15RoiCfoDashboardContract, type P15RoiCfoDashboardHealth, type P15RoiCfoDashboardResponse } from "@/api/phase15Advisory";
+import { advisoryApi, type CfoEvidencePack, type RoiCfoDashboardContract, type RoiCfoDashboardHealth, type RoiCfoDashboardResponse } from "@/api/advisoryApi";
 
 import { P2T08_STANDARD_ROLLOUT_MARKER, StandardP2Table } from "@/components/standard/StandardP2Controls";
-import { StandardButton } from "@/components/standard";
+import { StandardButton, StandardPageHeader, StandardStatGrid } from "@/components/standard";
 const cardStyle = { border: "1px solid rgba(124,220,255,0.18)", borderRadius: 22, padding: 20, background: "linear-gradient(135deg, rgba(7,18,34,0.95), rgba(4,10,22,0.9))", boxShadow: "0 18px 50px rgba(0,0,0,0.22)" } as const;
 const buttonStyle = { border: "1px solid rgba(0,212,255,0.34)", borderRadius: 14, padding: "10px 14px", color: "#eaf7ff", background: "rgba(0,132,255,0.24)", cursor: "pointer", fontWeight: 700 } as const;
 
@@ -17,20 +17,20 @@ function asNumber(value?: number | null) {
 }
 
 export function RoiCfoDashboardPage() {
-  const [health, setHealth] = useState<P15RoiCfoDashboardHealth | null>(null);
-  const [contract, setContract] = useState<P15RoiCfoDashboardContract | null>(null);
-  const [dashboard, setDashboard] = useState<P15RoiCfoDashboardResponse | null>(null);
-  const [evidencePack, setEvidencePack] = useState<P15CfoEvidencePack | null>(null);
-  const [status, setStatus] = useState("Loading Phase 15 ROI/CFO dashboard...");
+  const [health, setHealth] = useState<RoiCfoDashboardHealth | null>(null);
+  const [contract, setContract] = useState<RoiCfoDashboardContract | null>(null);
+  const [dashboard, setDashboard] = useState<RoiCfoDashboardResponse | null>(null);
+  const [evidencePack, setEvidencePack] = useState<CfoEvidencePack | null>(null);
+  const [status, setStatus] = useState("Loading ROI/CFO dashboard...");
   const [busy, setBusy] = useState(false);
 
   async function refresh() {
     setBusy(true);
     try {
       const [nextHealth, nextContract, nextDashboard] = await Promise.all([
-        phase15AdvisoryApi.roiCfoDashboardHealth(),
-        phase15AdvisoryApi.roiCfoDashboardContract(),
-        phase15AdvisoryApi.roiCfoDashboardSummary(),
+        advisoryApi.roiCfoDashboardHealth(),
+        advisoryApi.roiCfoDashboardContract(),
+        advisoryApi.roiCfoDashboardSummary(),
       ]);
       setHealth(nextHealth);
       setContract(nextContract);
@@ -49,7 +49,7 @@ export function RoiCfoDashboardPage() {
   async function exportEvidencePack() {
     setBusy(true);
     try {
-      const pack = await phase15AdvisoryApi.roiCfoEvidencePack();
+      const pack = await advisoryApi.roiCfoEvidencePack();
       setEvidencePack(pack);
       setStatus("CFO evidence pack loaded. It reconciles with the dashboard ledger snapshot.");
     } catch (error) {
@@ -64,7 +64,6 @@ export function RoiCfoDashboardPage() {
   const currency = summary?.realizedValue.currencyCode ?? "EUR";
 
   const summaryCards = useMemo(() => [
-    { label: "Mode", value: health?.mode ?? "pending" },
     { label: "Potential value", value: asMoney(summary?.potentialValue.expectedValue, currency) },
     { label: "Realized value", value: asMoney(summary?.realizedValue.expectedValue, currency) },
     { label: "Payback months", value: asNumber(summary?.paybackPeriodMonths) },
@@ -73,26 +72,15 @@ export function RoiCfoDashboardPage() {
   ], [currency, health?.mode, summary]);
 
   return (
-    <main data-testid="phase15-roi-cfo-dashboard-page">
-      <section>
-        <p>
-          Pack G · T-099 · ROI / CFO value dashboard
-        </p>
-        <h1>Phase 15 ROI / CFO Value Dashboard</h1>
-        <p>
-          Buyer-facing value dashboard separating potential value from realized value, showing payback period and producing an exportable CFO evidence pack with ledger IDs, provenance and caveats.
-        </p>
-        <strong>{status}</strong>
-      </section>
+    <main data-testid="roi-cfo-dashboard-page">
+      <StandardPageHeader
+        title="Value &amp; Payback"
+        subtitle="Potential value, realised value and payback, each traceable to its ledger entry."
+        description="This view separates what PlantProcess IQ could deliver from what it has delivered. Realised value is reconciled against a ledger; potential value is a projection from open recommendations and is never counted as savings."
+        status={status}
+      />
 
-      <section>
-        {summaryCards.map((card) => (
-          <div key={card.label}>
-            <span>{card.label}</span>
-            <strong>{card.value}</strong>
-          </div>
-        ))}
-      </section>
+      <StandardStatGrid items={summaryCards} emphasize="Realized value" />
 
       <section>
         <div>

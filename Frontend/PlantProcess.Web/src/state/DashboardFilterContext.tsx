@@ -1,10 +1,10 @@
 // ============================================================
-// TASK 7 â€” Validate filter interaction
+// TASK 7 — Validate filter interaction
 // FILE: Frontend/PlantProcess.Web/src/state/DashboardFilterContext.tsx
 //
 // CHANGES vs current version:
 //  1. activeFilterCount excludes pagination and sort params (page,
-//     pageSize, sortBy, sortDirection) â€” these are not user filters.
+//     pageSize, sortBy, sortDirection) — these are not user filters.
 //  2. clearAllFilters preserves sort/pagination params when clearing.
 //  3. setFilter now resets page to 1 automatically so users always
 //     see the first page after applying a new filter.
@@ -46,7 +46,7 @@ const filterKeys: (keyof DashboardFilters)[] = [
   "page", "pageSize", "sortBy", "sortDirection",
 ];
 
-// These are not user-facing filters â€” excluded from activeFilterCount.
+// These are not user-facing filters — excluded from activeFilterCount.
 const paginationKeys = new Set<keyof DashboardFilters>([
   "page", "pageSize", "sortBy", "sortDirection",
 ]);

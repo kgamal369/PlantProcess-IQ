@@ -21,7 +21,7 @@ function perfEstimate(rows: number, cols: number): { label: string; tone: string
   const cells = rows * Math.max(cols, 1);
   if (cells < 2000) return { label: "Light", tone: "#2CE6A2", detail: `${rows} rows x ${cols} cols (preview sample)` };
   if (cells < 50000) return { label: "Moderate", tone: "#FFD166", detail: `${rows} rows x ${cols} cols (preview sample)` };
-  return { label: "Heavy", tone: "#FF4D6D", detail: `${rows} rows x ${cols} cols (preview sample) â€” consider tighter filters` };
+  return { label: "Heavy", tone: "#FF4D6D", detail: `${rows} rows x ${cols} cols (preview sample) — consider tighter filters` };
 }
 
 export function WidgetScriptBuilderPanel({ onPublish }: { onPublish?: (widget: Record<string, unknown>) => void }) {
@@ -71,7 +71,7 @@ export function WidgetScriptBuilderPanel({ onPublish }: { onPublish?: (widget: R
       fallbackDescription="Compiling widget scripts (group_by, aggregates, having) into safe queries requires a ProPlus license."
     >
       <StandardCard
-        eyebrow="Widget Builder Â· PPIQ-WF-012/013/014"
+        eyebrow="Widget Builder · PPIQ-WF-012/013/014"
         title="Widget Script Studio"
         subtitle="Compile a widget script into a safe, parameterized, read-only query. Validate, preview (row-limited) and review a cost estimate before publishing."
         actions={

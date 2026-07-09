@@ -1,11 +1,15 @@
 -- =============================================================================
 -- 320_p3_business_key_reconciliation.sql            (PPIQ-301, idempotent)
--- Business-key dictionary + conflict-rejecting reconciliation (B1.3 / G2).
+-- Business-key NORMALIZATION RULES + conflict-rejecting reconciliation (B1.3 / G2).
+-- NOTE: the rules table is ppiq_business_key_rules. It is NOT the business-key
+-- dictionary created by 310 (ppiq_business_key_definitions, key_code/entity_scope),
+-- which 312 and 313 read. The two are unrelated; they collided on one name and
+-- CREATE TABLE IF NOT EXISTS silently hid it until the INSERT below failed.
 -- Normalizes 'C-0044170' == '44170', rejects one-key->two-units with a typed
 -- 'AmbiguousJoinKey' (transaction rolls back), admin-editable rule table.
 -- =============================================================================
 
-CREATE TABLE IF NOT EXISTS public.ppiq_business_key_definitions (
+CREATE TABLE IF NOT EXISTS public.ppiq_business_key_rules (
     id                  uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id           uuid NULL,
     key_type            text NOT NULL,
@@ -18,10 +22,10 @@ CREATE TABLE IF NOT EXISTS public.ppiq_business_key_definitions (
 );
 
 -- Default rule for the coil/heat business key family (admin can add/disable rows).
-INSERT INTO public.ppiq_business_key_definitions (key_type, description)
+INSERT INTO public.ppiq_business_key_rules (key_type, description)
 SELECT 'coil', 'Default coil/heat/slab key normalization (strip alpha prefix + leading zeros).'
 WHERE NOT EXISTS (
-    SELECT 1 FROM public.ppiq_business_key_definitions WHERE key_type = 'coil' AND tenant_id IS NULL
+    SELECT 1 FROM public.ppiq_business_key_rules WHERE key_type = 'coil' AND tenant_id IS NULL
 );
 
 -- Deterministic, definition-driven normalizer. Marked STABLE (reads the rule row).
@@ -31,14 +35,14 @@ LANGUAGE plpgsql
 STABLE
 AS $fn$
 DECLARE
-    v_rule public.ppiq_business_key_definitions;
+    v_rule public.ppiq_business_key_rules;
     v      text;
 BEGIN
     IF p_raw IS NULL THEN RETURN NULL; END IF;
     v := trim(p_raw);
 
     SELECT * INTO v_rule
-    FROM public.ppiq_business_key_definitions
+    FROM public.ppiq_business_key_rules
     WHERE key_type = p_key_type AND is_active
     ORDER BY tenant_id NULLS LAST
     LIMIT 1;

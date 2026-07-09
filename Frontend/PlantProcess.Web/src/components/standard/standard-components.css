@@ -1137,3 +1137,148 @@
   }
 }
 /* P2-T011 TABS NAVIGATION STANDARDIZATION END */
+
+/* ============================================================
+   Step 3a: page header + stat grid.
+   Uses the existing --ppiq-std-* custom properties only.
+   ============================================================ */
+
+.ppiq-std-page-header {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 0 20px;
+  margin: 0 0 24px;
+  border-bottom: 1px solid var(--ppiq-std-border-subtle);
+}
+
+.ppiq-std-page-header__row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.ppiq-std-page-header__titles {
+  min-width: 0;
+}
+
+.ppiq-std-page-header__title {
+  margin: 0;
+  color: var(--ppiq-std-text);
+  font-size: 26px;
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.ppiq-std-page-header__subtitle {
+  margin: 6px 0 0;
+  color: var(--ppiq-std-brand-cyan);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.ppiq-std-page-header__description {
+  margin: 0;
+  max-width: 78ch;
+  color: var(--ppiq-std-text-soft);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.ppiq-std-page-header__actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.ppiq-std-page-header__status {
+  margin: 2px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ppiq-std-text-soft);
+}
+
+.ppiq-std-page-header__status--good { color: var(--ppiq-std-success, #2CE6A2); }
+.ppiq-std-page-header__status--warn { color: var(--ppiq-std-warning, #FFD166); }
+.ppiq-std-page-header__status--bad  { color: var(--ppiq-std-danger); }
+
+/* ---- stat grid ---- */
+
+.ppiq-std-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+  margin: 0 0 24px;
+  padding: 0;
+}
+
+.ppiq-std-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px;
+  border: 1px solid var(--ppiq-std-border-subtle);
+  border-radius: var(--ppiq-std-radius-md);
+  background: linear-gradient(180deg, var(--ppiq-std-surface-1), rgba(5, 11, 24, 0.84));
+  min-width: 0;
+}
+
+.ppiq-std-stat__label {
+  margin: 0;
+  color: var(--ppiq-std-text-soft);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ppiq-std-stat__value {
+  margin: 0;
+  color: var(--ppiq-std-text);
+  font-size: 20px;
+  line-height: 1.25;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.ppiq-std-stat__hint {
+  margin: 0;
+  color: var(--ppiq-std-text-soft);
+  font-size: 11px;
+}
+
+.ppiq-std-stat--emphasis {
+  border-color: var(--ppiq-std-border-strong);
+  box-shadow: 0 0 22px rgba(0, 212, 255, 0.14);
+}
+
+.ppiq-std-stat--emphasis .ppiq-std-stat__value {
+  font-size: 26px;
+  color: var(--ppiq-std-brand-cyan);
+}
+
+.ppiq-std-stat--good .ppiq-std-stat__value { color: var(--ppiq-std-success, #2CE6A2); }
+.ppiq-std-stat--warn .ppiq-std-stat__value { color: var(--ppiq-std-warning, #FFD166); }
+.ppiq-std-stat--bad  .ppiq-std-stat__value { color: var(--ppiq-std-danger); }
+
+/* Step 3b: sample-data disclosure badge. */
+.ppiq-std-sample-badge {
+  display: inline-block;
+  margin: 0 0 16px;
+  padding: 5px 10px;
+  border: 1px solid var(--ppiq-std-border-strong);
+  border-radius: var(--ppiq-std-radius-sm);
+  background: rgba(255, 209, 102, 0.10);
+  color: var(--ppiq-std-warning, #FFD166);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}

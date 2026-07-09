@@ -1,0 +1,281 @@
+PPIQ phase-directory recon
+Generated: 2026-07-09 11:40:37
+
+==========================================================
+1. CONTENTS OF PHASE-NAMED DIRECTORIES
+==========================================================
+
+--- src\pages\Phase7ValueScenario
+    pages\Phase7ValueScenario\phase7-value-scenario.css   [1628 bytes]
+    pages\Phase7ValueScenario\phase7ValueScenarioMath.test.ts   [1829 bytes]
+    pages\Phase7ValueScenario\phase7ValueScenarioMath.ts   [4101 bytes]
+    pages\Phase7ValueScenario\Phase7ValueScenarioPage.tsx   [8252 bytes]
+
+--- src\pages\Phase8
+    pages\Phase8\AssistantConfigurationPage.tsx   [7848 bytes]
+    pages\Phase8\AssistantRuntimePage.tsx   [5288 bytes]
+    pages\Phase8\phase8-ai.css   [2179 bytes]
+    pages\Phase8\phase8AssistantView.test.ts   [1154 bytes]
+    pages\Phase8\SuggestionRecommendationPage.tsx   [7835 bytes]
+
+--- src\pages\Phase9
+    pages\Phase9\ExecutivePersonaDashboardPage.tsx   [1258 bytes]
+    pages\Phase9\PersonaAccessMatrixPage.tsx   [1883 bytes]
+    pages\Phase9\phase9-personas.css   [980 bytes]
+
+--- src\pages\Phase10
+    pages\Phase10\phase10-license.css   [1841 bytes]
+
+--- src\phase11
+    phase11\phase11HeatmapInteractions.test.ts   [1480 bytes]
+    phase11\phase11HeatmapInteractions.ts   [2514 bytes]
+    phase11\phase11StandardControlContract.test.ts   [1352 bytes]
+    phase11\phase11StandardControlContract.ts   [2091 bytes]
+    phase11\phase11UiState.test.ts   [1691 bytes]
+    phase11\phase11UiState.ts   [2463 bytes]
+    phase11\phase11WidgetLayout.test.ts   [1951 bytes]
+    phase11\phase11WidgetLayout.ts   [2406 bytes]
+    phase11\phase5HeatmapRegression.test.ts   [2965 bytes]
+
+==========================================================
+2. RENAME COLLISION CHECK (proposed target -> already exists?)
+==========================================================
+  pages\Phase9                 -> pages\Personas           EXISTS: False
+  pages\Phase7ValueScenario    -> pages\ValueScenario      EXISTS: False
+  pages\Phase10  ->  (delete - orphan css only)
+  phase11                      -> dashboard-widgets        EXISTS: False
+  pages\Phase8                 -> pages\Assistant          EXISTS: True
+       existing: GroundedAssistantPage.tsx
+       existing: GroundedAssistantPage.test.tsx
+
+==========================================================
+3. IMPORTERS (every file referencing a phase-named path)
+==========================================================
+
+--- references to "pages/Phase7ValueScenario"
+    App.tsx:2323  import("./pages/Phase7ValueScenario/Phase7ValueScenarioPage").then((module) => ({
+
+--- references to "pages/Phase8"
+    App.tsx:525  import("./pages/Phase8/SuggestionRecommendationPage").then((m) => ({
+    App.tsx:530  import("./pages/Phase8/AssistantRuntimePage").then((m) => ({
+    App.tsx:535  import("./pages/Phase8/AssistantConfigurationPage").then((m) => ({
+
+--- references to "pages/Phase9"
+    App.tsx:613  import("./pages/Phase9/ExecutivePersonaDashboardPage").then((m) => ({
+    App.tsx:618  import("./pages/Phase9/PersonaAccessMatrixPage").then((m) => ({
+
+--- references to "pages/Phase10"
+    test\architecture\noPhaseTokensOnDemoPath.test.ts:208  expect(existsSync(resolve(webRoot, "src/pages/Phase10/Phase10LicenseDemoPage.tsx"))).toBe(false);
+
+--- references to "phase11"
+    phase11\phase11HeatmapInteractions.test.ts:7  } from "./phase11HeatmapInteractions";
+    phase11\phase11HeatmapInteractions.ts:1  export type Phase11HeatmapPoint = {
+    phase11\phase11HeatmapInteractions.ts:8  export type Phase11HeatmapBucket = "low" | "medium" | "high" | "critical";
+    phase11\phase11HeatmapInteractions.ts:10  export type Phase11HeatmapCell = Phase11HeatmapPoint & {
+    phase11\phase11HeatmapInteractions.ts:11  bucket: Phase11HeatmapBucket;
+    phase11\phase11HeatmapInteractions.ts:15  export type Phase11ChartFilter = {
+    phase11\phase11HeatmapInteractions.ts:22  export function bucketForValue(value: number): Phase11HeatmapBucket {
+    phase11\phase11HeatmapInteractions.ts:29  export function colorTokenForBucket(bucket: Phase11HeatmapBucket) {
+    phase11\phase11HeatmapInteractions.ts:38  export function buildHeatmap(points: Phase11HeatmapPoint[]): Phase11HeatmapCell[] {
+    phase11\phase11HeatmapInteractions.ts:51  points: Phase11HeatmapPoint[],
+    phase11\phase11HeatmapInteractions.ts:52  filter: Phase11ChartFilter,
+    phase11\phase11HeatmapInteractions.ts:53  ): Phase11HeatmapCell[] {
+    phase11\phase11HeatmapInteractions.ts:78  export function chartSeriesSignature(points: Phase11HeatmapCell[]) {
+    phase11\phase11HeatmapInteractions.ts:83  export function pointsInGroup(points: Phase11HeatmapPoint[], group: string): Phase11HeatmapPoint[] {
+    phase11\phase11StandardControlContract.test.ts:4  phase11StandardControlRules,
+    phase11\phase11StandardControlContract.test.ts:6  } from "./phase11StandardControlContract";
+    phase11\phase11StandardControlContract.test.ts:19  expect(phase11StandardControlRules.every((rule) => rule.required)).toBe(true);
+    phase11\phase11StandardControlContract.test.ts:20  expect(phase11StandardControlRules.every((rule) => rule.reason.length > 10)).toBe(true);
+    phase11\phase11StandardControlContract.ts:1  export type Phase11StandardControlKind =
+    phase11\phase11StandardControlContract.ts:9  export type Phase11StandardControlRule = {
+    phase11\phase11StandardControlContract.ts:10  nativeElement: Phase11StandardControlKind;
+    phase11\phase11StandardControlContract.ts:16  export const phase11StandardControlRules: Phase11StandardControlRule[] = [
+    phase11\phase11StandardControlContract.ts:55  export function standardComponentFor(nativeElement: Phase11StandardControlKind) {
+    phase11\phase11StandardControlContract.ts:56  return phase11StandardControlRules.find((rule) => rule.nativeElement === nativeElement)?.standardComponent ?? "StandardSurface";
+    phase11\phase11UiState.test.ts:5  resolvePhase11FiveState,
+    phase11\phase11UiState.test.ts:7  } from "./phase11UiState";
+    phase11\phase11UiState.test.ts:11  const decision = resolvePhase11FiveState({ error: new Error("boom") });
+    phase11\phase11UiState.test.ts:18  const decision = resolvePhase11FiveState({ isLoading: true, itemCount: 4, expectedCount: 10 });
+    phase11\phase11UiState.test.ts:27  const decision = resolvePhase11FiveState({ itemCount: 0 });
+    phase11\phase11UiState.test.ts:34  expect(resolvePhase11FiveState({ hasPartialData: true, itemCount: 2 }).state).toBe("partial");
+    phase11\phase11UiState.test.ts:35  expect(resolvePhase11FiveState({ itemCount: 3 }).state).toBe("ready");
+    phase11\phase11UiState.ts:1  export type Phase11FiveState = "idle" | "loading" | "empty" | "partial" | "ready" | "error";
+    phase11\phase11UiState.ts:3  export type Phase11StateInput = {
+    phase11\phase11UiState.ts:11  export type Phase11StateDecision = {
+    phase11\phase11UiState.ts:12  state: Phase11FiveState;
+    phase11\phase11UiState.ts:20  export function resolvePhase11FiveState(input: Phase11StateInput): Phase11StateDecision {
+    phase11\phase11WidgetLayout.test.ts:10  type Phase11WidgetLayoutItem,
+    phase11\phase11WidgetLayout.test.ts:11  } from "./phase11WidgetLayout";
+    phase11\phase11WidgetLayout.test.ts:15  const widget: Phase11WidgetLayoutItem = {
+    phase11\phase11WidgetLayout.ts:1  export type Phase11WidgetLayoutItem = {
+    phase11\phase11WidgetLayout.ts:15  export type Phase11GridBounds = {
+    phase11\phase11WidgetLayout.ts:20  export function normalizeWidgetLayout(item: Phase11WidgetLayoutItem, bounds: Phase11GridBounds): Phase11WidgetLayoutItem {
+    phase11\phase11WidgetLayout.ts:37  item: Phase11WidgetLayoutItem,
+    phase11\phase11WidgetLayout.ts:38  bounds: Phase11GridBounds,
+    phase11\phase11WidgetLayout.ts:53  item: Phase11WidgetLayoutItem,
+    phase11\phase11WidgetLayout.ts:54  bounds: Phase11GridBounds,
+    phase11\phase11WidgetLayout.ts:68  export function minimizeWidget(item: Phase11WidgetLayoutItem): Phase11WidgetLayoutItem {
+    phase11\phase11WidgetLayout.ts:76  export function maximizeWidget(item: Phase11WidgetLayoutItem, bounds: Phase11GridBounds): Phase11WidgetLayoutItem {
+    phase11\phase11WidgetLayout.ts:91  export function serializeWidgetLayout(items: Phase11WidgetLayoutItem[]) {
+    phase11\phase11WidgetLayout.ts:98  export function restoreWidgetLayout(serialized: string, bounds: Phase11GridBounds) {
+    phase11\phase11WidgetLayout.ts:99  const parsed = JSON.parse(serialized) as Phase11WidgetLayoutItem[];
+    phase11\phase5HeatmapRegression.test.ts:11  type Phase11HeatmapPoint,
+    phase11\phase5HeatmapRegression.test.ts:12  } from "@/phase11/phase11HeatmapInteractions";
+    phase11\phase5HeatmapRegression.test.ts:14  const DEMO: Phase11HeatmapPoint[] = [
+
+--- references to "phase10-license"
+    pages\Phase10\phase10-license.css:1  .phase10-license-page {
+
+--- references to "phase8-ai"
+    pages\Phase8\AssistantConfigurationPage.tsx:4  import "./phase8-ai.css";
+    pages\Phase8\AssistantRuntimePage.tsx:4  import "./phase8-ai.css";
+    pages\Phase8\SuggestionRecommendationPage.tsx:5  import "./phase8-ai.css";
+
+--- references to "phase9-"
+    pages\Phase9\ExecutivePersonaDashboardPage.tsx:2  import "./phase9-personas.css";
+    pages\Phase9\ExecutivePersonaDashboardPage.tsx:8  <main className="phase9-page" data-testid="phase9-executive-dashboard">
+    pages\Phase9\ExecutivePersonaDashboardPage.tsx:9  <section className="phase9-hero">
+    pages\Phase9\ExecutivePersonaDashboardPage.tsx:10  <p className="phase9-eyebrow">Executive view of plant performance and realised value.</p>
+    pages\Phase9\ExecutivePersonaDashboardPage.tsx:12  <p className="phase9-muted">
+    pages\Phase9\ExecutivePersonaDashboardPage.tsx:15  <strong className="phase9-badge">Decision-grade summary</strong>
+    pages\Phase9\ExecutivePersonaDashboardPage.tsx:18  <section className="phase9-grid">
+    pages\Phase9\ExecutivePersonaDashboardPage.tsx:20  <article className="phase9-card" key={card.code}>
+    pages\Phase9\ExecutivePersonaDashboardPage.tsx:21  <span className="phase9-badge">{card.code}</span>
+    pages\Phase9\ExecutivePersonaDashboardPage.tsx:24  <p className="phase9-muted">{card.caveat}</p>
+    pages\Phase9\PersonaAccessMatrixPage.tsx:2  import "./phase9-personas.css";
+    pages\Phase9\PersonaAccessMatrixPage.tsx:9  <main className="phase9-page" data-testid="phase9-persona-access-matrix">
+    pages\Phase9\PersonaAccessMatrixPage.tsx:10  <section className="phase9-hero">
+    pages\Phase9\PersonaAccessMatrixPage.tsx:11  <p className="phase9-eyebrow">Role and permission matrix by persona.</p>
+    pages\Phase9\PersonaAccessMatrixPage.tsx:13  <p className="phase9-muted">
+    pages\Phase9\PersonaAccessMatrixPage.tsx:19  <section className="phase9-card" key={role}>
+    pages\Phase9\PersonaAccessMatrixPage.tsx:21  <div className="phase9-grid">
+    pages\Phase9\PersonaAccessMatrixPage.tsx:23  <article className="phase9-card" key={role + item.path}>
+    pages\Phase9\PersonaAccessMatrixPage.tsx:25  <p className={item.allowed ? "phase9-muted" : "phase9-disabled"}>
+    pages\Phase9\PersonaAccessMatrixPage.tsx:34  <section className="phase9-card">
+    pages\Phase9\PersonaAccessMatrixPage.tsx:36  <p className="phase9-muted">
+    pages\Phase9\phase9-personas.css:1  .phase9-page {
+    pages\Phase9\phase9-personas.css:7  .phase9-hero,
+    pages\Phase9\phase9-personas.css:8  .phase9-card {
+    pages\Phase9\phase9-personas.css:16  .phase9-eyebrow {
+    pages\Phase9\phase9-personas.css:25  .phase9-grid {
+    pages\Phase9\phase9-personas.css:31  .phase9-muted {
+    pages\Phase9\phase9-personas.css:36  .phase9-badge {
+    pages\Phase9\phase9-personas.css:48  .phase9-disabled {
+
+==========================================================
+4. ORPHAN CHECK: phase10-license.css
+==========================================================
+    referenced by: pages\Phase10\phase10-license.css
+
+==========================================================
+5. PHASE-NAMED className / data-testid (internal, not user-visible)
+==========================================================
+    pages\I18nRtlReadinessPage.tsx:21  <main className="phase78-readiness-page" id="main-content">
+    pages\I18nRtlReadinessPage.tsx:22  <section className="phase78-readiness-hero">
+    pages\I18nRtlReadinessPage.tsx:26  <div className="phase78-readiness-actions" aria-label={t("toggleLanguage", locale)}>
+    pages\I18nRtlReadinessPage.tsx:31  <section className="phase78-readiness-grid" aria-label="Phase 7 and Phase 8 readiness cards">
+    pages\I18nRtlReadinessPage.tsx:32  <article className="phase78-readiness-card"><span>{t("locale", locale)}</span><strong>{locale}</strong></article>
+    pages\I18nRtlReadinessPage.tsx:33  <article className="phase78-readiness-card"><span>{t("direction", locale)}</span><strong>{direction}</strong></article>
+    pages\I18nRtlReadinessPage.tsx:34  <article className="phase78-readiness-card"><span>{t("numberSample", locale)}</span><strong>{formatPhase78Number(5670.25, locale)}</strong></article>
+    pages\I18nRtlReadinessPage.tsx:35  <article className="phase78-readiness-card"><span>{t("dateSample", locale)}</span><strong>{formatPhase78Date(new Date("2026-06-06T08:00:00Z"), locale)}</strong></article>
+    pages\I18nRtlReadinessPage.tsx:36  <article className="phase78-readiness-card"><span>{t("rtlReady", locale)}</span><strong>RTL</strong></article>
+    pages\I18nRtlReadinessPage.tsx:37  <article className="phase78-readiness-card"><span>{t("backendHygieneReady", locale)}</span><strong>P08</strong></article>
+    pages\Analytics\AdvancedAnalysisPage.tsx:86  data-testid="phase8-readiness-state-badge"
+    pages\Analytics\AdvancedAnalysisPage.tsx:157  <div data-testid="phase8-readiness-gates">
+    pages\Analytics\AdvancedAnalysisPage.tsx:170  data-testid="phase8-readiness-gate-row"
+    pages\Analytics\AdvancedAnalysisPage.tsx:183  <div key={dimension.name} data-testid="phase8-readiness-gate-row">
+    pages\Phase7ValueScenario\Phase7ValueScenarioPage.tsx:120  <main className="page-shell phase7-value-scenario" data-testid="phase7-value-scenario-page">
+    pages\Phase7ValueScenario\Phase7ValueScenarioPage.tsx:135  <div className="phase7-value-actions">
+    pages\Phase7ValueScenario\Phase7ValueScenarioPage.tsx:136  <StandardButton className="phase7-value-button" type="button" onClick={runScenario} isDisabled={isRunning}>
+    pages\Phase7ValueScenario\Phase7ValueScenarioPage.tsx:139  <StandardButton className="phase7-value-button" type="button" onClick={recordTrackedValue} isDisabled={isRunning || !realization}>
+    pages\Phase7ValueScenario\Phase7ValueScenarioPage.tsx:145  <section className="phase7-value-card phase7-value-formula">
+    pages\Phase7ValueScenario\Phase7ValueScenarioPage.tsx:154  <section className="phase7-value-grid">
+    pages\Phase7ValueScenario\Phase7ValueScenarioPage.tsx:160  <section className="phase7-value-grid">
+    pages\Phase7ValueScenario\Phase7ValueScenarioPage.tsx:161  <div className="phase7-value-card">
+    pages\Phase7ValueScenario\Phase7ValueScenarioPage.tsx:163  <strong className="phase7-value-status">{realization?.status ?? "Not calculated"}</strong>
+    pages\Phase7ValueScenario\Phase7ValueScenarioPage.tsx:169  <div className="phase7-value-card">
+    pages\Phase7ValueScenario\Phase7ValueScenarioPage.tsx:178  <section className="phase7-value-caveat">
+    pages\Phase7ValueScenario\Phase7ValueScenarioPage.tsx:188  <section className="phase7-value-error">
+    pages\Phase7ValueScenario\Phase7ValueScenarioPage.tsx:207  <div className="phase7-value-card">
+    pages\Phase8\AssistantConfigurationPage.tsx:92  <main className="phase8-page" data-testid="phase8-assistant-configuration-page">
+    pages\Phase8\AssistantConfigurationPage.tsx:93  <section className="phase8-hero">
+    pages\Phase8\AssistantConfigurationPage.tsx:94  <p className="phase8-eyebrow">Grounding, evidence and egress controls for the assistant.</p>
+    pages\Phase8\AssistantConfigurationPage.tsx:96  <p className="phase8-muted">
+    pages\Phase8\AssistantConfigurationPage.tsx:99  <strong className="phase8-badge">{status}</strong>
+    pages\Phase8\AssistantConfigurationPage.tsx:102  <section className="phase8-two-col">
+    pages\Phase8\AssistantConfigurationPage.tsx:103  <div className="phase8-card">
+    pages\Phase8\AssistantConfigurationPage.tsx:108  <StandardP2Select className="phase8-select" value={config.mode} onChange={(event) => setConfig({ ...config, mode: event.target.value })}>
+    pages\Phase8\AssistantConfigurationPage.tsx:117  <StandardP2Select className="phase8-select" value={config.groundingPolicy} onChange={(event) => setConfig({ ...config, groundingPolicy: event.target.value })}>
+    pages\Phase8\AssistantConfigurationPage.tsx:126  <StandardP2Select className="phase8-select" value={config.evidencePolicy} onChange={(event) => setConfig({ ...config, evidencePolicy: event.target.value })}>
+    pages\Phase8\AssistantConfigurationPage.tsx:135  <StandardP2Input className="phase8-input" type="number" min="1" max="12" value={config.maxCitations} onChange={(event) => setConfig({ ...config, maxCitations: Number(event.target.value) })} />
+    pages\Phase8\AssistantConfigurationPage.tsx:139  <div className="phase8-card">
+    pages\Phase8\AssistantConfigurationPage.tsx:169  <section className="phase8-card">
+    pages\Phase8\AssistantConfigurationPage.tsx:171  <p className="phase8-muted">
+    pages\Phase8\AssistantConfigurationPage.tsx:175  <StandardButton className="phase8-button" type="button" isDisabled={busy} onClick={() => void save()}>Save configuration</StandardButton>
+    pages\Phase8\AssistantConfigurationPage.tsx:176  <StandardButton className="phase8-button" type="button" isDisabled={busy} onClick={() => void reset()}>Reset safe defaults</StandardButton>
+    pages\Phase8\AssistantConfigurationPage.tsx:182  <ul className="phase8-list">
+    pages\Phase8\AssistantRuntimePage.tsx:57  <main className="phase8-page" data-testid="phase8-assistant-runtime-page">
+    pages\Phase8\AssistantRuntimePage.tsx:58  <section className="phase8-hero">
+    pages\Phase8\AssistantRuntimePage.tsx:59  <p className="phase8-eyebrow">Ask questions about your plant data and receive answers with cited evidence.</p>
+    pages\Phase8\AssistantRuntimePage.tsx:61  <p className="phase8-muted">
+    pages\Phase8\AssistantRuntimePage.tsx:64  <strong className="phase8-badge">{status}</strong>
+    pages\Phase8\AssistantRuntimePage.tsx:67  <section className="phase8-grid">
+    pages\Phase8\AssistantRuntimePage.tsx:68  <div className="phase8-card phase8-kpi">
+    pages\Phase8\AssistantRuntimePage.tsx:72  <div className="phase8-card phase8-kpi">
+    pages\Phase8\AssistantRuntimePage.tsx:76  <div className="phase8-card phase8-kpi">
+    pages\Phase8\AssistantRuntimePage.tsx:82  <section className="phase8-two-col">
+    pages\Phase8\AssistantRuntimePage.tsx:83  <div className="phase8-card">
+    pages\Phase8\AssistantRuntimePage.tsx:85  <StandardP2TextArea className="phase8-textarea" value={question} onChange={(event) => setQuestion(event.target.value)} />
+    pages\Phase8\AssistantRuntimePage.tsx:86  <StandardButton className="phase8-button" type="button" isDisabled={busy || question.trim().length === 0} onClick={() => void ask()}>
+    pages\Phase8\AssistantRuntimePage.tsx:91  <div className="phase8-card">
+    pages\Phase8\AssistantRuntimePage.tsx:93  <ul className="phase8-list">
+    pages\Phase8\AssistantRuntimePage.tsx:103  <section className="phase8-card" aria-live="polite">
+    pages\Phase8\AssistantRuntimePage.tsx:106  <p className="phase8-muted">No grounded answer. Reason: {answer.refusalReason ?? "insufficient evidence"}</p>
+    pages\Phase8\AssistantRuntimePage.tsx:113  <ul className="phase8-list">
+    pages\Phase8\AssistantRuntimePage.tsx:121  <p className="phase8-muted">No citations returned.</p>
+    pages\Phase8\AssistantRuntimePage.tsx:127  <ul className="phase8-list">
+    pages\Phase8\SuggestionRecommendationPage.tsx:85  <main className="phase8-page" data-testid="phase8-suggestion-recommendation-page">
+    pages\Phase8\SuggestionRecommendationPage.tsx:86  <section className="phase8-hero">
+    pages\Phase8\SuggestionRecommendationPage.tsx:87  <p className="phase8-eyebrow">Guarded recommendations generated only from scenarios the evidence supports.</p>
+    pages\Phase8\SuggestionRecommendationPage.tsx:89  <p className="phase8-muted">
+    pages\Phase8\SuggestionRecommendationPage.tsx:92  <strong className="phase8-badge">{status}</strong>
+    pages\Phase8\SuggestionRecommendationPage.tsx:93  {decision ? <p className="phase8-muted">{decision}</p> : null}
+    pages\Phase8\SuggestionRecommendationPage.tsx:96  <section className="phase8-grid">
+    pages\Phase8\SuggestionRecommendationPage.tsx:98  <div className="phase8-card phase8-kpi" key={item.label}>
+    pages\Phase8\SuggestionRecommendationPage.tsx:105  <section className="phase8-two-col">
+    pages\Phase8\SuggestionRecommendationPage.tsx:106  <div className="phase8-card">
+    pages\Phase8\SuggestionRecommendationPage.tsx:110  <StandardP2Input className="phase8-input" value={request.outcomeKey} onChange={(event) => setRequest({ ...request, outcomeKey: event.target.value })} />
+    pages\Phase8\SuggestionRecommendationPage.tsx:114  <StandardP2Input className="phase8-input" value={request.materialScope} onChange={(event) => setRequest({ ...request, materialScope: event.target.value })} />
+    pages\Phase8\SuggestionRecommendationPage.tsx:118  <StandardP2Input className="phase8-input" type="number" min="0.1" max="0.98" step="0.01" value={request.minimumConfidence} onChange={(event) => setRequest({ ...request, minimumConfidence: Number(event.target.value) })} />
+    pages\Phase8\SuggestionRecommendationPage.tsx:124  <StandardButton className="phase8-button" type="button" isDisabled={busy} onClick={() => void generate()}>
+    pages\Phase8\SuggestionRecommendationPage.tsx:129  <div className="phase8-card">
+    pages\Phase8\SuggestionRecommendationPage.tsx:131  <ul className="phase8-list">
+    pages\Phase8\SuggestionRecommendationPage.tsx:140  <section className="phase8-card">
+    pages\Phase8\SuggestionRecommendationPage.tsx:142  {response?.honestyCaveat ? <p className="phase8-muted">{response.honestyCaveat}</p> : null}
+    pages\Phase8\SuggestionRecommendationPage.tsx:144  <div className="phase8-grid">
+    pages\Phase8\SuggestionRecommendationPage.tsx:146  <article className="phase8-card" key={item.recommendationId}>
+    pages\Phase8\SuggestionRecommendationPage.tsx:147  <span className="phase8-badge">{item.actionType}</span>
+    pages\Phase8\SuggestionRecommendationPage.tsx:149  <p className="phase8-muted">{item.summary}</p>
+    pages\Phase8\SuggestionRecommendationPage.tsx:155  <ul className="phase8-list">
+    pages\Phase8\SuggestionRecommendationPage.tsx:160  <ul className="phase8-list">
+    pages\Phase8\SuggestionRecommendationPage.tsx:165  <StandardButton className="phase8-button" type="button" isDisabled={busy} onClick={() => void decide(item, "approve")}>Approve for review</StandardButton>
+    pages\Phase8\SuggestionRecommendationPage.tsx:166  <StandardButton className="phase8-button" type="button" isDisabled={busy} onClick={() => void decide(item, "dismiss")}>Dismiss</StandardButton>
+    pages\Phase8\SuggestionRecommendationPage.tsx:172  <p className="phase8-muted">No recommendation generated yet.</p>
+    pages\Phase9\ExecutivePersonaDashboardPage.tsx:8  <main className="phase9-page" data-testid="phase9-executive-dashboard">
+    pages\Phase9\ExecutivePersonaDashboardPage.tsx:9  <section className="phase9-hero">
+    pages\Phase9\ExecutivePersonaDashboardPage.tsx:10  <p className="phase9-eyebrow">Executive view of plant performance and realised value.</p>
+    pages\Phase9\ExecutivePersonaDashboardPage.tsx:12  <p className="phase9-muted">
+    pages\Phase9\ExecutivePersonaDashboardPage.tsx:15  <strong className="phase9-badge">Decision-grade summary</strong>
+    pages\Phase9\ExecutivePersonaDashboardPage.tsx:18  <section className="phase9-grid">
+    pages\Phase9\ExecutivePersonaDashboardPage.tsx:20  <article className="phase9-card" key={card.code}>
+    pages\Phase9\ExecutivePersonaDashboardPage.tsx:21  <span className="phase9-badge">{card.code}</span>
+    pages\Phase9\ExecutivePersonaDashboardPage.tsx:24  <p className="phase9-muted">{card.caveat}</p>
+    pages\Phase9\PersonaAccessMatrixPage.tsx:9  <main className="phase9-page" data-testid="phase9-persona-access-matrix">
+    pages\Phase9\PersonaAccessMatrixPage.tsx:10  <section className="phase9-hero">
+    pages\Phase9\PersonaAccessMatrixPage.tsx:11  <p className="phase9-eyebrow">Role and permission matrix by persona.</p>
+    pages\Phase9\PersonaAccessMatrixPage.tsx:13  <p className="phase9-muted">
+    pages\Phase9\PersonaAccessMatrixPage.tsx:19  <section className="phase9-card" key={role}>
+    pages\Phase9\PersonaAccessMatrixPage.tsx:21  <div className="phase9-grid">
+    pages\Phase9\PersonaAccessMatrixPage.tsx:23  <article className="phase9-card" key={role + item.path}>
+    pages\Phase9\PersonaAccessMatrixPage.tsx:34  <section className="phase9-card">
+    pages\Phase9\PersonaAccessMatrixPage.tsx:36  <p className="phase9-muted">

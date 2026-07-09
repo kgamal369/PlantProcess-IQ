@@ -10,7 +10,7 @@
  * Side effect:
  *   On componentDidCatch, fires a best-effort POST to
  *   /diagnostics/client-error with the error details. The beacon is
- *   fire-and-forget â€” it never blocks the UI and never re-throws.
+ *   fire-and-forget — it never blocks the UI and never re-throws.
  *
  * Usage:
  *   <ErrorBoundary routePath="/dashboard"
@@ -91,7 +91,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
         // keepalive so the beacon completes even if the user navigates away
         keepalive: true,
       }).catch(() => {
-        /* swallow â€” beacon is best-effort */
+        /* swallow — beacon is best-effort */
       });
     } catch {
       /* swallow */

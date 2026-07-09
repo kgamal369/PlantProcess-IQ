@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { P2T08_STANDARD_ROLLOUT_MARKER, StandardP2Input, StandardP2Table } from "@/components/standard/StandardP2Controls";
-import { StandardButton } from "@/components/standard";
+import { StandardButton, StandardPageHeader, StandardStatGrid } from "@/components/standard";
 import {
   edgeCollectorApi,
   type EdgeCollectorContract,
@@ -54,8 +54,8 @@ export function EdgeCollectorPage() {
   const [contract, setContract] = useState<EdgeCollectorContract | null>(null);
   const [profiles, setProfiles] = useState<EdgeCollectorProfile[]>([]);
   const [collectors, setCollectors] = useState<EdgeCollectorState[]>([]);
-  const [collectorId, setCollectorId] = useState("edge-demo-collector-01");
-  const [displayName, setDisplayName] = useState("Demo OT-safe Edge Collector 01");
+  const [collectorId, setCollectorId] = useState("");
+  const [displayName, setDisplayName] = useState("");
   const [siteName, setSiteName] = useState("Plant");
   const [networkZone, setNetworkZone] = useState("DMZ/Edge");
   const [status, setStatus] = useState("Loading edge collector backend...");
@@ -96,7 +96,6 @@ export function EdgeCollectorPage() {
 
   const summaryCards = useMemo(
     () => [
-      { label: "Mode", value: health?.mode ?? "pending" },
       { label: "No inbound OT", value: health ? safetyLabel(health.noInboundOtAccessRequired) : "pending" },
       { label: "Inbound listener", value: health ? safetyLabel(health.opensInboundListener) : "pending" },
       { label: "Collectors", value: String(collectors.length) },
@@ -186,25 +185,14 @@ export function EdgeCollectorPage() {
 
   return (
     <main data-testid="edge-collector-page">
-      <section>
-        <p>
-          Pack F · T-068 · Edge collector management UX
-        </p>
-        <h1>Edge Collector Management</h1>
-        <p>
-          Register and monitor OT-safe edge collectors. The contract is read-only toward OT sources, outbound-only toward PlantProcess IQ, and does not require inbound OT firewall access.
-        </p>
-        <strong>{status}</strong>
-      </section>
+      <StandardPageHeader
+        title="Edge Collector Management"
+        subtitle="Register and monitor OT-safe collectors. Data flows one way, out of the plant network."
+        description="Edge collectors read from OT sources and push outbound to PlantProcess IQ. There is no inbound listener and no inbound firewall rule is required. The contract is read-only toward OT at all times."
+        status={status}
+      />
 
-      <section>
-        {summaryCards.map((card) => (
-          <div key={card.label}>
-            <span>{card.label}</span>
-            <strong>{card.value}</strong>
-          </div>
-        ))}
-      </section>
+      <StandardStatGrid items={summaryCards} emphasize="Queue depth" />
 
       <section>
         <h2>1. Register edge collector</h2>
