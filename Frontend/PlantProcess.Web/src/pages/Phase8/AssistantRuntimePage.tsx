@@ -1,21 +1,33 @@
-
+// ============================================================
+// FILE: src/pages/Phase8/AssistantRuntimePage.tsx
+// M1-11: THE assistant page. Routed at /assistant.
+//
+// Holds the conversation, renders <AssistantChat/>, and wires its onAsk to
+// assistantApi.askAssistant(), which is the ONLY place the ask endpoint is
+// called. (The endpoint path is deliberately not written here: the M1-11 gate
+// greps src/ for it to prove nothing bypasses the api client.)
+//
+// If no LLM provider is configured, the backend abstains and the abstention is
+// shown as an abstention. Nothing is fabricated to fill the silence.
+// ============================================================
 import { useEffect, useState } from "react";
-import { assistantModeLabel, assistantApi, type AssistantAnswer, type AssistantConfiguration } from "@/api/assistantApi";
+import { assistantModeLabel, assistantApi, type AssistantCitation, type AssistantConfiguration } from "@/api/assistantApi";
+import { AssistantChat, type Turn } from "@/components/assistant/AssistantChat";
+import { StandardStatGrid } from "@/components/standard";
 import "./phase8-ai.css";
 
-import { StandardP2Button, StandardP2TextArea } from "@/components/standard/StandardP2Controls";
-import { StandardButton } from "@/components/standard";
+const CONTEXT_CHIPS = ["grounded", "approved findings"];
+
 export function AssistantRuntimePage() {
   const [config, setConfig] = useState<AssistantConfiguration | null>(null);
-  const [question, setQuestion] = useState("What evidence supports the latest quality recommendation?");
-  const [answer, setAnswer] = useState<AssistantAnswer | null>(null);
+  const [turns, setTurns] = useState<Turn[]>([]);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState("Loading assistant runtime configuration...");
 
   useEffect(() => {
     let active = true;
-
-    assistantApi.getAssistantConfig()
+    assistantApi
+      .getAssistantConfig()
       .then((next) => {
         if (!active) return;
         setConfig(next);
@@ -25,67 +37,81 @@ export function AssistantRuntimePage() {
         if (!active) return;
         setStatus("Assistant configuration not reachable: " + error.message);
       });
-
     return () => {
       active = false;
     };
   }, []);
 
-  async function ask() {
+  async function ask(question: string) {
     setBusy(true);
-    setAnswer(null);
     setStatus("Asking grounded assistant...");
+    setTurns((prev) => [...prev, { role: "user", text: question }]);
+
     try {
-      const result = await assistantApi.askAssistant(question, ["phase8-hmi", "grounded"], config?.allowedTools ?? []);
-      setAnswer(result);
-      setStatus(result.isRefusal ? "Assistant abstained because evidence was insufficient." : "Grounded answer returned with evidence.");
+      const result = await assistantApi.askAssistant(question, CONTEXT_CHIPS, config?.allowedTools ?? []);
+      setTurns((prev) => [...prev, { role: "assistant", answer: result }]);
+      setStatus(
+        result.isRefusal
+          ? "Assistant abstained because evidence was insufficient."
+          : "Grounded answer returned with evidence.",
+      );
     } catch (error) {
-      setAnswer({
-        isRefusal: true,
-        refusalReason: error instanceof Error ? error.message : String(error),
-        text: "",
-        citations: [],
-        blocked: [],
-      });
+      setTurns((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          answer: {
+            isRefusal: true,
+            refusalReason: error instanceof Error ? error.message : String(error),
+            text: "",
+            citations: [],
+            blocked: [],
+          },
+        },
+      ]);
       setStatus("Assistant request failed.");
     } finally {
       setBusy(false);
     }
   }
 
+  function openEvidence(handle: AssistantCitation) {
+    // No evidence-row route exists yet; AssistantChat expands the handle inline.
+    // When a material/evidence route lands, navigate here instead.
+    setStatus("Evidence handle: " + handle.kind + " " + handle.id);
+  }
+
+  const stats = [
+    { label: "Mode", value: assistantModeLabel(config) },
+    { label: "Grounding", value: config?.groundingPolicy ?? "pending" },
+    { label: "Evidence policy", value: config?.evidencePolicy ?? "pending" },
+    { label: "External egress", value: config?.noEgress ? "Blocked" : "Per configuration" },
+  ];
+
   return (
-    <main className="phase8-page" data-testid="phase8-assistant-runtime-page">
+    <main className="phase8-page" data-testid="assistant-runtime-page">
       <section className="phase8-hero">
         <p className="phase8-eyebrow">Ask questions about your plant data and receive answers with cited evidence.</p>
-        <h1>Grounded Assistant Runtime</h1>
+        <h1>Grounded Assistant</h1>
         <p className="phase8-muted">
-          The assistant can answer only with grounded evidence. Missing evidence produces an abstention, not an invented number or unsupported causal claim.
+          The assistant can answer only with grounded evidence. Missing evidence produces an
+          abstention, not an invented number or an unsupported causal claim.
         </p>
         <strong className="phase8-badge">{status}</strong>
       </section>
 
-      <section className="phase8-grid">
-        <div className="phase8-card phase8-kpi">
-          <span>Mode</span>
-          <strong>{assistantModeLabel(config)}</strong>
-        </div>
-        <div className="phase8-card phase8-kpi">
-          <span>Grounding</span>
-          <strong>{config?.groundingPolicy ?? "pending"}</strong>
-        </div>
-        <div className="phase8-card phase8-kpi">
-          <span>Evidence policy</span>
-          <strong>{config?.evidencePolicy ?? "pending"}</strong>
-        </div>
-      </section>
+      <StandardStatGrid items={stats} emphasize="Grounding" ariaLabel="Assistant runtime configuration" />
 
       <section className="phase8-two-col">
         <div className="phase8-card">
-          <h2>Ask a grounded question</h2>
-          <StandardP2TextArea className="phase8-textarea" value={question} onChange={(event) => setQuestion(event.target.value)} />
-          <StandardButton className="phase8-button" type="button" isDisabled={busy || question.trim().length === 0} onClick={() => void ask()}>
-            {busy ? "Asking..." : "Ask assistant"}
-          </StandardButton>
+          <h2>Conversation</h2>
+          <AssistantChat
+            turns={turns}
+            chips={CONTEXT_CHIPS}
+            isBusy={busy}
+            onAsk={(question) => void ask(question)}
+            onOpenEvidence={openEvidence}
+          />
         </div>
 
         <div className="phase8-card">
@@ -98,39 +124,6 @@ export function AssistantRuntimePage() {
           </ul>
         </div>
       </section>
-
-      {answer ? (
-        <section className="phase8-card" aria-live="polite">
-          <h2>Assistant answer</h2>
-          {answer.isRefusal ? (
-            <p className="phase8-muted">No grounded answer. Reason: {answer.refusalReason ?? "insufficient evidence"}</p>
-          ) : (
-            <p>{answer.text}</p>
-          )}
-
-          <h3>Citations</h3>
-          {answer.citations.length ? (
-            <ul className="phase8-list">
-              {answer.citations.map((citation) => (
-                <li key={citation.kind + ":" + citation.id + ":" + (citation.detail ?? "")}>
-                  {citation.kind}:{citation.id}{citation.detail ? " - " + citation.detail : ""}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="phase8-muted">No citations returned.</p>
-          )}
-
-          {answer.blocked.length ? (
-            <>
-              <h3>Blocked unsupported claims</h3>
-              <ul className="phase8-list">
-                {answer.blocked.map((item) => <li key={item}>{item}</li>)}
-              </ul>
-            </>
-          ) : null}
-        </section>
-      ) : null}
     </main>
   );
 }
