@@ -9,7 +9,7 @@ using Xunit;
 
 namespace PlantProcess.Api.IntegrationTests.Mapping;
 
-// P6-03 â€” mapping validate/publish/rollback with typed errors + safe-SQL rejection. DB-gated.
+// P6-03 — mapping validate/publish/rollback with typed errors + safe-SQL rejection. DB-gated.
 public sealed class MappingLifecycleProofTests : AuthenticatedApiTestBase
 {
     public MappingLifecycleProofTests(WebApplicationFactory<Program> factory) : base(factory) { }

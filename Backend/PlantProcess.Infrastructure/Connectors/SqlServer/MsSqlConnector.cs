@@ -1,7 +1,7 @@
 // ============================================================
 // FILE: Backend/PlantProcess.Infrastructure/Connectors/SqlServer/MsSqlConnector.cs
 //
-// Full SQL Server / MSSQL connector â€” matches the PostgreSqlConnector
+// Full SQL Server / MSSQL connector — matches the PostgreSqlConnector
 // interface contract exactly.
 //
 // REQUIRED NuGet package (add to PlantProcess.Infrastructure.csproj):
@@ -31,7 +31,7 @@ public sealed class MsSqlConnector : IDataSourceConnector, ISchemaReader, IDataS
 
     public string ProviderType => "SqlServer";
 
-    // â”€â”€ Connection Test â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Connection Test ───────────────────────────────────────────────────
 
     public async Task<DataSourceConnectionTestResult> TestConnectionAsync(
         ConnectionProfile connectionProfile,
@@ -69,7 +69,7 @@ public sealed class MsSqlConnector : IDataSourceConnector, ISchemaReader, IDataS
         }
     }
 
-    // â”€â”€ Dataset Discovery â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Dataset Discovery ─────────────────────────────────────────────────
 
     public async Task<IReadOnlyList<DiscoveredSourceDataset>> DiscoverDatasetsAsync(
         ConnectionProfile connectionProfile,
@@ -127,7 +127,7 @@ public sealed class MsSqlConnector : IDataSourceConnector, ISchemaReader, IDataS
         return datasets;
     }
 
-    // â”€â”€ Field Discovery â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Field Discovery ───────────────────────────────────────────────────
 
     public async Task<IReadOnlyList<DiscoveredSourceField>> DiscoverFieldsForDatasetAsync(
         ConnectionProfile connectionProfile,
@@ -205,7 +205,7 @@ public sealed class MsSqlConnector : IDataSourceConnector, ISchemaReader, IDataS
         return fields;
     }
 
-    // â”€â”€ Full Read â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Full Read ─────────────────────────────────────────────────────────
 
     public async Task<IReadOnlyList<DataSourceRow>> ReadRowsAsync(
         ConnectionProfile connectionProfile,
@@ -227,7 +227,7 @@ public sealed class MsSqlConnector : IDataSourceConnector, ISchemaReader, IDataS
         }, cancellationToken);
     }
 
-    // â”€â”€ Incremental (cursor) Read â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Incremental (cursor) Read ─────────────────────────────────────────
 
     public async Task<IReadOnlyList<DataSourceRow>> ReadRowsSinceKeyAsync(
         ConnectionProfile connectionProfile,
@@ -261,7 +261,7 @@ public sealed class MsSqlConnector : IDataSourceConnector, ISchemaReader, IDataS
 
     public string? GetLastError() => _lastError;
 
-    // â”€â”€ Private Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Private Helpers ───────────────────────────────────────────────────
 
     private static async Task<IReadOnlyList<DataSourceRow>> ExecuteReadAsync(
         ConnectionProfile profile,
@@ -372,7 +372,7 @@ public sealed class MsSqlConnector : IDataSourceConnector, ISchemaReader, IDataS
 
         if (clean.Contains('[') || clean.Contains(']'))
             throw new InvalidOperationException(
-                $"Unsafe SQL Server identifier '{value}' â€” contains bracket characters.");
+                $"Unsafe SQL Server identifier '{value}' — contains bracket characters.");
 
         // Allow letters, digits, underscores, spaces and dots (schema.table patterns)
         if (clean.Any(ch => !(char.IsLetterOrDigit(ch) || ch is '_' or ' ' or '.')))

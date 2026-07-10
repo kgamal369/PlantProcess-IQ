@@ -1,12 +1,12 @@
 // ============================================================
 // FILE: Backend/PlantProcess.Infrastructure/Connectors/MySql/MySqlConnector.cs
 //
-// Full MySQL / MariaDB connector â€” matches the PostgreSqlConnector
+// Full MySQL / MariaDB connector — matches the PostgreSqlConnector
 // interface contract exactly.
 //
 // REQUIRED NuGet package (add to PlantProcess.Infrastructure.csproj):
 //   <PackageReference Include="MySqlConnector" Version="2.3.7" />
-//   (MySqlConnector â€” the async-first community driver, NOT Oracle's MySql.Data)
+//   (MySqlConnector — the async-first community driver, NOT Oracle's MySql.Data)
 // ============================================================
 
 using System.Globalization;
@@ -32,7 +32,7 @@ public sealed class MySqlDataConnector : IDataSourceConnector, ISchemaReader, ID
 
     public string ProviderType => "MySql";
 
-    // â”€â”€ Connection Test â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Connection Test ───────────────────────────────────────────────────
 
     public async Task<DataSourceConnectionTestResult> TestConnectionAsync(
         ConnectionProfile connectionProfile,
@@ -70,7 +70,7 @@ public sealed class MySqlDataConnector : IDataSourceConnector, ISchemaReader, ID
         }
     }
 
-    // â”€â”€ Dataset Discovery â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Dataset Discovery ─────────────────────────────────────────────────
 
     public async Task<IReadOnlyList<DiscoveredSourceDataset>> DiscoverDatasetsAsync(
         ConnectionProfile connectionProfile,
@@ -132,7 +132,7 @@ public sealed class MySqlDataConnector : IDataSourceConnector, ISchemaReader, ID
         return datasets;
     }
 
-    // â”€â”€ Field Discovery â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Field Discovery ───────────────────────────────────────────────────
 
     public async Task<IReadOnlyList<DiscoveredSourceField>> DiscoverFieldsForDatasetAsync(
         ConnectionProfile connectionProfile,
@@ -202,7 +202,7 @@ public sealed class MySqlDataConnector : IDataSourceConnector, ISchemaReader, ID
         return fields;
     }
 
-    // â”€â”€ Full Read â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Full Read ─────────────────────────────────────────────────────────
 
     public async Task<IReadOnlyList<DataSourceRow>> ReadRowsAsync(
         ConnectionProfile connectionProfile,
@@ -225,7 +225,7 @@ public sealed class MySqlDataConnector : IDataSourceConnector, ISchemaReader, ID
         }, cancellationToken);
     }
 
-    // â”€â”€ Incremental (cursor) Read â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Incremental (cursor) Read ─────────────────────────────────────────
 
     public async Task<IReadOnlyList<DataSourceRow>> ReadRowsSinceKeyAsync(
         ConnectionProfile connectionProfile,
@@ -262,7 +262,7 @@ public sealed class MySqlDataConnector : IDataSourceConnector, ISchemaReader, ID
 
     public string? GetLastError() => _lastError;
 
-    // â”€â”€ Private Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Private Helpers ───────────────────────────────────────────────────
 
     private static async Task<IReadOnlyList<DataSourceRow>> ExecuteReadAsync(
         ConnectionProfile profile,
@@ -360,7 +360,7 @@ public sealed class MySqlDataConnector : IDataSourceConnector, ISchemaReader, ID
 
         if (clean.Contains('`'))
             throw new InvalidOperationException(
-                $"Unsafe MySQL identifier '{value}' â€” contains backtick character.");
+                $"Unsafe MySQL identifier '{value}' — contains backtick character.");
 
         if (clean.Any(ch => !(char.IsLetterOrDigit(ch) || ch is '_' or ' ' or '.')))
             throw new InvalidOperationException(

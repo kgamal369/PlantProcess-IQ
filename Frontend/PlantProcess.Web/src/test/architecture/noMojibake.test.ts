@@ -6,7 +6,7 @@
 // Fix by re-saving as UTF-8 (no BOM), not by deleting the characters.
 // ============================================================
 import { describe, expect, it } from "vitest";
-import { readdirSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { resolve, join } from "node:path";
 
 const srcRoot = resolve(__dirname, "../..");
@@ -35,5 +35,44 @@ describe("encoding: no mojibake in source", () => {
       });
     }
     expect(offenders, `Mojibake found:\n  ${offenders.join("\n  ")}`).toHaveLength(0);
+  });
+});
+
+// ============================================================
+// BACKEND .cs
+// A corrupted C# literal passes every gate we own: noMojibake scanned only
+// Frontend/PlantProcess.Web/src. A .cs string can reach an API response body, a
+// job_log row, or a SQL fragment, where a changed byte is a bug rather than an
+// eyesore. Scanning the backend from vitest is unusual - it is done here because
+// this suite is the gate everyone already runs, and a check nobody runs is not
+// a check. Move it to a C# analyzer when one exists.
+// ============================================================
+describe("encoding: no mojibake in backend C# sources", () => {
+  it("no .cs file contains UTF-8-as-cp1252 corruption", () => {
+    const backendRoot = resolve(srcRoot, "../../../Backend");
+    if (!existsSync(backendRoot)) return; // frontend-only checkout
+
+    const skip = /[\\/](bin|obj)[\\/]|\.Designer\.cs$/;
+    const files: string[] = [];
+    const walkCs = (dir: string): void => {
+      for (const entry of readdirSync(dir)) {
+        const full = join(dir, entry);
+        if (skip.test(full)) continue;
+        if (statSync(full).isDirectory()) walkCs(full);
+        else if (full.endsWith(".cs")) files.push(full);
+      }
+    };
+    walkCs(backendRoot);
+    expect(files.length, "scanned 0 .cs files - a false clean").toBeGreaterThan(0);
+
+    const offenders: string[] = [];
+    for (const file of files) {
+      readFileSync(file, "utf8").split(/\r?\n/).forEach((line, i) => {
+        if (MOJIBAKE.test(line)) {
+          offenders.push(`${file.replace(backendRoot, "Backend")}:${i + 1}: ${line.trim().slice(0, 60)}`);
+        }
+      });
+    }
+    expect(offenders, `Mojibake in backend sources:\n  ${offenders.join("\n  ")}`).toHaveLength(0);
   });
 });
