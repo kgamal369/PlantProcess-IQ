@@ -3,7 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using PlantProcess.Infrastructure.Persistence;
-
+
+
 using PlantProcess.Api.ErrorHandling;
 namespace PlantProcess.Api.Endpoints.Admin;
 
@@ -188,7 +189,7 @@ public static class Phase2PilotReadinessEndpoints
         {
             new DeploymentChecklistRow("PPIQ-WEB-001", "Public DNS points to server", "Manual", false, "Create A records for app, api, and website hostnames."),
             new DeploymentChecklistRow("PPIQ-DEMO-023", "Caddy reverse proxy configured", "File", false, "Deploy Caddyfile and verify HTTPS."),
-            new DeploymentChecklistRow("PPIQ-DEMO-023", "Letâ€™s Encrypt certificates issued", "Runtime", false, "Verify https:// hostnames in browser."),
+            new DeploymentChecklistRow("PPIQ-DEMO-023", "Let's Encrypt certificates issued", "Runtime", false, "Verify https:// hostnames in browser."),
             new DeploymentChecklistRow("PPIQ-WEB-001", "Website build deployed", "Runtime", false, "Website static dist served by Caddy."),
             new DeploymentChecklistRow("PPIQ-WEB-001", "API health reachable", "Runtime", false, "GET /health returns 200 through public API hostname."),
             new DeploymentChecklistRow("PPIQ-WEB-001", "Demo language truth audit passed", "Validation", false, "No AI/root-cause/MES-replacement overclaiming.")

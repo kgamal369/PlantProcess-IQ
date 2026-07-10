@@ -199,6 +199,11 @@ public sealed class AccessControlMiddleware
         ("/analytics/phase2", All(), "analysis.execute", false),
         ("/api/ml/learning", new[] { "GET", "POST" }, "job.manage", false),
         ("/api/analysis-jobs", All(), "job.manage", false),
+        // M1-07: the assistant group. Without this line the middleware denies every
+        // POST to /api/assistant/ask ("not mapped in the P01/P02 permission matrix"),
+        // while GETs slip through anonymously via the ("/", GET, anonymous) entry.
+        // assistant.use is an existing permission, already carried by /analytics/dashboard.
+        ("/api/assistant", All(), "assistant.use", false),
         ("/analytics/dashboard/definitions", All(), "page.design", false),
         ("/analytics/dashboard", new[] { "GET", "POST" }, "assistant.use", false),
         ("/page-definitions", All(), "page.design", false),
