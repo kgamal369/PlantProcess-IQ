@@ -79,6 +79,7 @@ using PlantProcess.Api.Endpoints.Demo;
 using PlantProcess.Application.Integration.Interfaces.Jobs;
 
 using PlantProcess.Infrastructure;
+using PlantProcess.Infrastructure.Assistant;
 
 using PlantProcess.Infrastructure.Audit;
 
@@ -716,6 +717,7 @@ builder.Services.AddScoped<ITenantContextAccessor, TenantContextAccessor>();
 builder.Services.AddScoped<PlantProcess.Application.Security.Tenancy.ITenantAccessor, PlantProcess.Api.Security.HttpTenantAccessor>();
 
 builder.Services.AddV5AssistantGateway(builder.Configuration);
+builder.Services.AddAssistant();
 // PPIQ_API_STARTUP_SERVICE_INFERENCE_FIX:
 // Register Phase 09/10 application services used by Minimal API endpoint handlers.
 // Without this, ASP.NET cannot infer parameters named "service" and API startup fails.
@@ -1051,7 +1053,7 @@ app.MapConnectorSchemaDriftEndpoints();
 
 app.MapPhase34MappingHealthEndpoints();
 
-app.MapTwoStageImportEndpoints();
+// [retired] Architecture-B two-stage import unregistered (Stage C.1a): ppiq_run_stage1_delta_import / ppiq_run_stage2_canonical_refresh read hardcoded src_* demo schemas (Generic-Only violation). The generic projector (MappingExecutionService) is the sole path to material_units. SQL functions + src_* schemas are dropped in Stage C.2.
 
     
 

@@ -1,0 +1,142 @@
+new migration:
+
+dotnet ef migrations add AddPlantLayoutAndIntegrationMasterData `
+  --project PlantProcess.Infrastructure `
+  --startup-project PlantProcess.Api `
+  --context PlantProcessDbContext
+
+  Update DB
+  dotnet ef database update `
+  --project PlantProcess.Infrastructure `
+  --startup-project PlantProcess.Api `
+  --context PlantProcessDbContext
+
+
+dotnet ef migrations list `
+  --project PlantProcess.Infrastructure `
+  --startup-project PlantProcess.Api `
+  --context PlantProcessDbContext
+
+  & "C:\Program Files\PostgreSQL\16\bin\psql.exe" -U plantprocess -h localhost -d plantprocessiq -f "C:\Workspace\PlantProcess-IQ\db\seed\001_basic_genealogy_seed.sql"
+
+
+dotnet run --project PlantProcess.Api
+dotnet run --project .\PlantProcess.Api\PlantProcess.Api.csproj
+
+cd C:\Workspace\PlantProcess-IQ\Backend
+dotnet run --project .\PlantProcess.Api
+
+
+cd C:\Workspace\PlantProcess-IQ\Frontend\PlantProcess.Web
+npm run dev
+
+dotnet restore .\PlantProcessIQ.sln
+dotnet build .\PlantProcessIQ.sln
+
+dotnet test .\PlantProcessIQ.sln
+
+ssh root@178.105.152.180 
+password:369369
+
+acces DB 
+Host: 178.105.152.180
+Port: 5432
+Database: plantprocess_app_db
+Username: plantprocess_admin
+Password: THEspider369
+
+
+https://website.178.105.152.180.sslip.io
+https://app.178.105.152.180.sslip.io
+https://jenkins.178.105.152.180.sslip.io
+
+cd C:\Workspace\PlantProcess-IQ
+.\tools\GeneratePlantProcessIQ_UltimateAudit.ps1 -OpenAfterGeneration
+
+
+Command server :
+# SSH into server
+ssh root@178.105.152.180
+password:369369
+
+# Pull and redeploy
+cd /opt/PlantProcess-IQ/Backend && git pull origin main
+cd /opt/PlantProcess-IQ/Infrastructure/deploy
+docker compose -f docker-compose.demo.yml up -d --build
+
+
+If only the frontend changed (faster rebuild):
+docker compose -f docker-compose.demo.yml up -d --build plantprocess-app-web
+
+If only the backend changed:
+docker compose -f docker-compose.demo.yml up -d --build plantprocess-api plantprocess-workers
+
+If .env variables changed (no rebuild needed, just recreate):
+docker compose -f docker-compose.demo.yml up -d
+
+Full teardown and fresh start (nuclear option):
+docker compose -f docker-compose.demo.yml down
+cd 
+//Jenkins
+https://jenkins.178.105.152.180.sslip.io/
+https://jenkins.178.105.152.180.sslip.io/
+UserName :kgamal369
+password :THEspider369
+
+
+
+cd C:\Workspace\PlantProcess-IQ\Backend
+
+$env:ASPNETCORE_ENVIRONMENT = "Development"
+$env:DOTNET_ENVIRONMENT = "Development"
+$env:ASPNETCORE_URLS = "http://localhost:5063"
+$env:ConnectionStrings__PlantProcessDb = "Host=127.0.0.1;Port=5432;Database=plantprocessiq;Username=plantprocess;Password=plantprocess123"
+$env:PLANTPROCESS_ALLOWED_ORIGINS = "http://localhost:5173,http://localhost:3000"
+
+dotnet run --no-launch-profile --project .\PlantProcess.Api\PlantProcess.Api.csproj
+
+
+rom now on, start the API with:
+cd C:\Workspace\PlantProcess-IQ
+.\scripts\dev\run-api-local.ps1
+
+
+
+Demo Database:
+Source	    host(service name)	    port	database
+Meltshop	  meltshop-postgres	      5432	meltshop
+Caster	    caster-oracle	          1521	FREEPDB1
+HSM	        hsm-oracle	            1521	FREEPDB1
+PKL	        pkl-mssql	              1433	pkl
+Downtime	  downtime-mysql	        3306	downtime
+Parsytec	  parsytec-mysql	        3306	parsytec
+
+
+
+running 
+Terminal 0 — source fleet 
+cd C:\Workspace\PlantProcess-IQ
+docker ps --format '{{.Names}}'
+
+Terminal 1 — backend API 
+cd C:\Workspace\PlantProcess-IQ
+.\scripts\run\start-api.ps1 -Profile local
+
+Terminal 2 — frontend web 
+cd C:\Workspace\PlantProcess-IQ
+.\scripts\run\start-web.ps1 -Profile local
+
+
+
+test e2e 
+# 1. stop your manual servers (Ctrl+C in terminals 1 and 2, or:)
+Get-Process -Name 'PlantProcess.Api' -ErrorAction SilentlyContinue | Stop-Process -Force
+Get-Process -Name node -ErrorAction SilentlyContinue | Where-Object { $_.Path -like '*PlantProcess*' } | Stop-Process -Force
+
+# 2. run the suite - Playwright boots its own API + web with the E2E env
+cd C:\Workspace\PlantProcess-IQ\Frontend\PlantProcess.Web
+npm run e2e
+
+# 3. FIRST run on this machine: the ~17 visual tests will "fail" while WRITING baselines
+#    (that's creation, not regression). Run once more for the true result:
+npm run e2e

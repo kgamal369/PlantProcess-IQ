@@ -104,8 +104,7 @@ pipeline {
       }
     }
 
-    stage('5. Frontend e2e (gated off by default; set PPIQ_RUN_E2E=on to enable)') {
-      when { expression { return sh(script: 'set -a; . "${ENV_FILE}"; set +a; [ "${PPIQ_RUN_E2E:-off}" = "on" ] && echo yes || echo no', returnStdout: true).trim() == 'yes' } }
+    stage('5. Frontend e2e - BLOCKING') {
       steps { sh 'bash deploy/scripts/ci-e2e-stack.sh' }
     }
 

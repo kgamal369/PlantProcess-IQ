@@ -1,0 +1,103 @@
+rules
+and the remaining tasks I guess they are important as well 
+
+the whole M1 should be done and test by you then me within 6 days 
+
+where our 2nd meeting with the customer next Thrusday 16 
+
+
+
+3 rules I guess you know it well but no problem to repeat my self 
+
+
+
+
+
+my software product should be standard generic for all indutries and plants , it should never ever be demo or have a single line or single word regarding any demo ,or not even single line or certain page or any component define or preperapared for specific data set , 
+
+ I only define and prepared  an emulation or demo extrenal data set to test my  software product as emulation when I will setup my  software product in the customer side and my  software product will connect to customer side DB and read his data and start to give the customer the analysis and suggestion and prediction .  
+
+that why I create a data set which emulate the customer data set which will read it as input 
+
+So I need to eumalte my system input to test the system ,and show in any presentation that my system is tested 
+
+
+
+my  software product should start empty in first day at customer side my plant data schema will start empy where I didn't read any data yet , then customer will start to configure DB -link in my application to his data sources then my  software product will import this data and start to analysis it and make his task , so when you see that my application didn't have yet any data in plant data Schema that the target where I was testing the DBlink and I should had any data inside before where the data will come from 
+
+the only source of data is after importing the data via dblink 
+
+
+
+the journey is very abstract I guess you know it more and very deep detailed 
+
+if you dont know it tell me I will give you more detailed but for know I will just say the head lines  
+
+
+
+
+
+user create and configure db link to connect to the customer data sources 
+
+
+
+user  link each  DB link to job with type db link to schedule and monitor the importing 
+
+
+
+data is imported from customer data sources to dump staging files each db link to an incremental files , so each job cycle update the file with the incremental 
+
+
+
+user create via 1st no code or low code UI/UX the data preparetion and filter and linking and data grouping  between the  all dump staging files , and make each in a data preparation file ,and also to match our schema 
+
+
+
+user link each data preparation file to a data loading job with schedule and monitor the data loading from the dump staging file to our plant data schema 
+
+
+
+data is loaded to our schema 
+
+
+
+user  create via 2nd no code or low code UI/UX the data link and configuration for all dashboard and widget and charts and kpi filtering  , and make special table and link them to our data in table , so create new page and drop down a donut chart and then link this chart with data and select the parameters from our data base which should be displayed in this chart and can make formules and casting or make some use cases , so low code and data preparation as well 
+
+
+
+user create via 3rd no code or low code UI/UX files which make data analysis or data correlation or stataticiscs job , and in this 3rd ui/ux should contain a lot of tools can be drag and drop or imported or add which help user to make all required data analysis and correlation between selected parameters from our tables material id and certain defect from defect table , 
+
+
+
+user link each file of data analysis with job type data analysis which schedule and monitor his run 
+
+
+
+user create page and configure dashboard and widget which display the data exported from the job type  data analysis  which save in the related table 
+
+
+
+user with higher license can create via the same 3rd no code or low code UI/UX file for ML + AI more advanced data analysis and more advanced   
+
+
+
+user link each file of data analysis with job type AI+ML  which schedule and monitor his run 
+
+
+
+user create page and configure dashboard and widget which display the data exported from the job type  AI+ML which save in the related table 
+
+
+
+all jobs called  data analysis and Ai+ML  which had  all data analysis and correlation and statitics which export result into certain tables , this called our engine
+
+our engine has two layers normal data analysis (coming from job data analyis ) and deep high  advanced (coming from AI+ML) , our engine make all job enhance the result of each other and make everything better where our engine is our brain , it's not just job which run , our engine  had one job premade   , which run once in weekend which revise and make the result of all jobs of engine become better , all jobs of engine as hand and arms and legs can reply within min or hours but one a day in night or once a week in end the engine job run to enhance some coeeffienet or adjust some parameter to all engine job based on deep detailed advance proffesional thinking and understanding of the whole job and whole data set    
+
+
+
+
+
+user with higher licence will had  a chatpot with some LLM which reply from the engine 
+
+
+

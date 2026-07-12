@@ -195,13 +195,13 @@ public sealed class PostgreSqlConnector : IDataSourceConnector, ISchemaReader, I
         var limit = Math.Clamp(request.Limit <= 0 ? 1000 : request.Limit, 1, 5000);
         var sql =
             $"SELECT * FROM \"{schemaName}\".\"{tableName}\" " +
-            $"WHERE \"{cursorField}\" > @lastCursor " +
+            (string.IsNullOrWhiteSpace(request.LastCursorValue) ? string.Empty : $"WHERE \"{cursorField}\" > @lastCursor ") +
             $"ORDER BY \"{cursorField}\" ASC " +
             "LIMIT @limit;";
 
         return await ExecuteReadAsync(connectionProfile, sql, command =>
         {
-            command.Parameters.AddWithValue("lastCursor", request.LastCursorValue ?? "");
+            if (!string.IsNullOrWhiteSpace(request.LastCursorValue)) { command.Parameters.Add(new NpgsqlParameter("lastCursor", NpgsqlTypes.NpgsqlDbType.Unknown) { Value = request.LastCursorValue }); }
             command.Parameters.AddWithValue("limit", limit);
         }, cancellationToken);
     }
@@ -237,7 +237,7 @@ public sealed class PostgreSqlConnector : IDataSourceConnector, ISchemaReader, I
             {
                 values[reader.GetName(i)] = reader.IsDBNull(i)
                     ? null
-                    : Convert.ToString(reader.GetValue(i), CultureInfo.InvariantCulture);
+                    : PlantProcess.Infrastructure.Connectors.Common.SourceValueFormatter.Format(reader.GetValue(i));
             }
 
             rows.Add(new DataSourceRow(rowNumber, values));

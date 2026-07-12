@@ -332,7 +332,7 @@ public sealed class OracleConnector :
             {
                 var value = reader.IsDBNull(i)
                     ? null
-                    : Convert.ToString(reader.GetValue(i), CultureInfo.InvariantCulture);
+                    : PlantProcess.Infrastructure.Connectors.Common.SourceValueFormatter.Format(reader.GetValue(i));
 
                 values[reader.GetName(i)] = value;
             }

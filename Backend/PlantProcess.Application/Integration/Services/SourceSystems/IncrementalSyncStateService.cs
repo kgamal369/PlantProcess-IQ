@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using PlantProcess.Application.Common.Persistence;
 using PlantProcess.Application.Common.Results;
 using PlantProcess.Application.Integration.Interfaces.SourceSystems;
@@ -70,14 +70,14 @@ public sealed class IncrementalSyncStateService : IIncrementalSyncStateService
 
     private static int CompareCursorValues(string sourceMaxCursorValue, string lastCursorValue)
     {
-        if (decimal.TryParse(sourceMaxCursorValue, out var sourceNumber) &&
-            decimal.TryParse(lastCursorValue, out var lastNumber))
+        if (decimal.TryParse(sourceMaxCursorValue, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var sourceNumber) &&
+            decimal.TryParse(lastCursorValue, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var lastNumber))
         {
             return sourceNumber.CompareTo(lastNumber);
         }
 
-        if (DateTime.TryParse(sourceMaxCursorValue, out var sourceDate) &&
-            DateTime.TryParse(lastCursorValue, out var lastDate))
+        if (DateTime.TryParse(sourceMaxCursorValue, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.RoundtripKind, out var sourceDate) &&
+            DateTime.TryParse(lastCursorValue, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.RoundtripKind, out var lastDate))
         {
             return sourceDate.ToUniversalTime().CompareTo(lastDate.ToUniversalTime());
         }

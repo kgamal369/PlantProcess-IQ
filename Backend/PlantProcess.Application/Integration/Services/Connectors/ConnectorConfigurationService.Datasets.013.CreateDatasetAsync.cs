@@ -67,8 +67,8 @@ public async Task<ApplicationResult<SourceDatasetDefinitionDto>> CreateDatasetAs
         _dbContext.SourceDatasetDefinitions.Add(entity);
         await _dbContext.SaveChangesAsync(cancellationToken);
 
-        var created = await GetDatasetDtoQuery()
-            .FirstAsync(x => x.Id == entity.Id, cancellationToken);
+        var created = await GetDatasetDtoQuery(entity.Id)
+            .FirstAsync(cancellationToken);
 
         return ApplicationResult<SourceDatasetDefinitionDto>.Success(created);
     }

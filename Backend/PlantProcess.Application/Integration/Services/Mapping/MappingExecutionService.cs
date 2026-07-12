@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -694,6 +694,9 @@ public sealed class MappingExecutionService : IMappingExecutionService
     {
         if (!fieldMap.TryGetValue(targetField, out var sourceField))
             return null;
+
+        if (!string.IsNullOrEmpty(sourceField) && sourceField.StartsWith("const:", StringComparison.Ordinal))
+            return sourceField.Substring("const:".Length).Trim();
 
         return sourceRow.TryGetValue(sourceField, out var value)
             ? value?.Trim()

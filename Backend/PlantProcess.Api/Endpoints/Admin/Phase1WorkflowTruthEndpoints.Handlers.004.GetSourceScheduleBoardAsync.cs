@@ -27,6 +27,7 @@ private static async Task<IResult> GetSourceScheduleBoardAsync(
                     on dataset.ConnectionProfileId equals profile.Id
                 join source in dbContext.SourceSystemDefinitions.AsNoTracking()
                     on profile.SourceSystemDefinitionId equals source.Id
+                orderby (dataset.NextRunAtUtc ?? DateTime.MinValue), profile.ProviderType, dataset.DatasetCode
                 select new SourceScheduleRow(
                     dataset.Id,
                     dataset.ConnectionProfileId,
@@ -52,9 +53,9 @@ private static async Task<IResult> GetSourceScheduleBoardAsync(
                     dataset.Description,
                     dataset.CreatedAtUtc,
                     dataset.UpdatedAtUtc))
-            .OrderBy(x => x.NextRunAtUtc ?? DateTime.MinValue)
-            .ThenBy(x => x.ProviderType)
-            .ThenBy(x => x.DatasetCode)
+            
+            
+            
             .ToListAsync(cancellationToken);
 
         var response = new SourceScheduleBoardResponse(

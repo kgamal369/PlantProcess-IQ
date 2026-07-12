@@ -13,13 +13,13 @@ namespace PlantProcess.Application.Integration.Services.Connectors;
 // PPIQ_REALIZATION_T028_CONNECTOR_CONFIGURATION_SERVICE_DATASETS_SPLIT
 public sealed partial class ConnectorConfigurationService
 {
-private IQueryable<SourceDatasetDefinitionDto> GetDatasetDtoQuery()
+private IQueryable<SourceDatasetDefinitionDto> GetDatasetDtoQuery(Guid? datasetId = null)
     {
         return
             from dataset in _dbContext.SourceDatasetDefinitions.AsNoTracking()
             join profile in _dbContext.ConnectionProfiles.AsNoTracking()
                 on dataset.ConnectionProfileId equals profile.Id
-            where !dataset.IsDeleted && !profile.IsDeleted
+            where !dataset.IsDeleted && !profile.IsDeleted && (datasetId == null || dataset.Id == datasetId.Value)
             select new SourceDatasetDefinitionDto(
                 dataset.Id,
                 dataset.ConnectionProfileId,
