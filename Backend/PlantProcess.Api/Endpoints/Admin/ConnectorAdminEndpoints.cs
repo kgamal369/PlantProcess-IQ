@@ -8,6 +8,7 @@ using PlantProcess.Application.Integration.Connectors;
 using PlantProcess.Infrastructure.Persistence;
 
 using PlantProcess.Api.ErrorHandling;
+using PlantProcess.Domain.Entities.Integration;
 namespace PlantProcess.Api.Endpoints.Admin;
 
 /// <summary>
@@ -58,7 +59,7 @@ public static class ConnectorAdminEndpoints
         group.MapGet("/connection-profiles/{id:guid}/tables/{schema}/{table}/columns", ListSourceColumnsAsync)
             .WithSummary("List live columns for a source table (generic)");
 
-        group.MapPost("/connection-profiles/{id:guid}/register", RegisterSourceTableAsync)
+        group.MapPost("/connection-profiles/{id:guid}/register", RegisterSourceDatasetAsync)
             .AddEndpointFilter(new PlantProcess.Api.Observability.JobLogEndpointFilter("ConnectorRegister"))
             .WithSummary("Register a source table (with optional column subset + row filter) into the dump registry");
 
@@ -258,6 +259,83 @@ public static class ConnectorAdminEndpoints
     {
         var result = await service.ListSourceColumnsAsync(id, schema, table, cancellationToken);
         return result.ToHttpResult(Results.Ok);
+    }
+
+    private static async Task<IResult> RegisterSourceDatasetAsync(
+        Guid id,
+        RegisterSourceTableRequest request,
+        [Microsoft.AspNetCore.Mvc.FromServices] IConnectorConfigurationService service,
+        PlantProcess.Infrastructure.Persistence.PlantProcessDbContext dbContext,
+        CancellationToken cancellationToken)
+    {
+        if (request is null || string.IsNullOrWhiteSpace(request.TableName))
+            return Results.BadRequest(new { error = "Table name is required." });
+        if (request.PrimaryKeyColumns is null || request.PrimaryKeyColumns.Count == 0)
+            return Results.BadRequest(new { error = "At least one primary key column is required." });
+
+        var profileResult = await service.GetConnectionProfileByIdAsync(id, cancellationToken);
+        if (profileResult.IsFailure)
+            return profileResult.ToHttpResult(Results.Ok);
+        var profile = profileResult.Value!;
+
+        var schemaName = string.IsNullOrWhiteSpace(request.SchemaName)
+            ? (profile.SchemaName ?? "public")
+            : request.SchemaName.Trim();
+        var objectName = request.TableName.Trim();
+        var selected = request.SelectedColumns is { Count: > 0 } ? request.SelectedColumns : null;
+        var watermark = string.IsNullOrWhiteSpace(request.WatermarkColumn) ? null : request.WatermarkColumn!.Trim();
+        var optionsJson = System.Text.Json.JsonSerializer.Serialize(new
+        {
+            selectedColumns = selected,
+            rowFilter = request.RowFilter,
+            primaryKeyColumns = request.PrimaryKeyColumns
+        });
+
+        var existing = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.FirstOrDefaultAsync(
+            dbContext.SourceDatasetDefinitions,
+            x => x.ConnectionProfileId == id && x.SourceObjectName == objectName && !x.IsDeleted,
+            cancellationToken);
+
+        if (existing is null)
+        {
+            var datasetCode = ($"{schemaName}_{objectName}").ToUpperInvariant();
+            var entity = new SourceDatasetDefinition(
+                connectionProfileId: id,
+                datasetCode: datasetCode,
+                datasetName: objectName,
+                datasetKind: "Table",
+                sourceObjectName: objectName,
+                isSynthetic: false,
+                sourceSchemaName: schemaName,
+                primaryTimestampField: watermark,
+                incrementalCursorField: watermark,
+                refreshIntervalSeconds: 300,
+                datasetOptionsJson: optionsJson);
+            entity.ScheduleNextRunImmediately();
+            dbContext.SourceDatasetDefinitions.Add(entity);
+        }
+        else
+        {
+            existing.Update(
+                datasetName: objectName,
+                sourceObjectName: objectName,
+                sourceSchemaName: schemaName,
+                primaryTimestampField: watermark,
+                incrementalCursorField: watermark,
+                datasetOptionsJson: optionsJson,
+                refreshIntervalSeconds: 300,
+                description: null);
+            existing.Activate();
+            existing.ScheduleNextRunImmediately();
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return Results.Ok(new RegisterSourceTableResult(
+            schemaName, objectName,
+            selected?.Count ?? 0,
+            watermark is not null,
+            $"Registered {schemaName}.{objectName} as an Architecture-A source dataset (DB-link import)."));
     }
 
     private static async Task<IResult> RegisterSourceTableAsync(

@@ -17,8 +17,8 @@ public async Task<ApplicationResult<ConnectionProfileDto>> GetConnectionProfileB
         Guid id,
         CancellationToken cancellationToken)
     {
-        var profile = await GetConnectionProfileDtoQuery()
-            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+        var profile = await GetConnectionProfileDtoQuery(id)
+            .FirstOrDefaultAsync(cancellationToken);
 
         return profile is null
             ? ApplicationResult<ConnectionProfileDto>.Failure(ApplicationError.NotFound("Connection profile not found."))

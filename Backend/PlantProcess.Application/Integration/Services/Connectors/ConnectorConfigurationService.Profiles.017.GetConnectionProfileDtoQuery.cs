@@ -13,13 +13,13 @@ namespace PlantProcess.Application.Integration.Services.Connectors;
 // PPIQ_REALIZATION_T028_CONNECTOR_CONFIGURATION_SERVICE_PROFILES_SPLIT
 public sealed partial class ConnectorConfigurationService
 {
-private IQueryable<ConnectionProfileDto> GetConnectionProfileDtoQuery()
+private IQueryable<ConnectionProfileDto> GetConnectionProfileDtoQuery(Guid? profileId = null)
     {
         return
             from profile in _dbContext.ConnectionProfiles.AsNoTracking()
             join source in _dbContext.SourceSystemDefinitions.AsNoTracking()
                 on profile.SourceSystemDefinitionId equals source.Id
-            where !profile.IsDeleted && !source.IsDeleted
+            where !profile.IsDeleted && !source.IsDeleted && (profileId == null || profile.Id == profileId)
             select new ConnectionProfileDto(
                 profile.Id,
                 profile.SourceSystemDefinitionId,
