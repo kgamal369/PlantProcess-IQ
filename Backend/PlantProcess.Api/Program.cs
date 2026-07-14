@@ -1078,6 +1078,8 @@ app.MapKpiEvaluationEndpoints();
 
 app.MapV5AssistantGatewayEndpoints();
 app.MapAssistantEndpoints();
+PlantProcess.Api.Endpoints.Engine.AlertEndpoints.MapAlertEndpoints(app);
+PlantProcess.Api.Endpoints.Engine.SupervisorEndpoints.MapSupervisorEndpoints(app);
 app.MapPhase8AssistantRuntimeEndpoints();
 app.MapPhase8SuggestionOutcomeLoopEndpoints();
 app.MapPhase9RoleAccessEndpoints();

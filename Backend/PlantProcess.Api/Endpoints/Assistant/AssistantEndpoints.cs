@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -39,6 +40,26 @@ public static class AssistantEndpoints
                 text = answer.Text,
                 citations = answer.Citations.Select(h => new { kind = h.Kind.ToString(), id = h.Id, detail = h.Detail }).ToArray(),
                 blocked = answer.BlockedSentences
+            });
+        });
+
+        group.MapPost("/reindex", async (ClaimsPrincipal user, [FromServices] IAssistantChunkProducer producer, [FromServices] IRetrievalIndex index, CancellationToken ct) =>
+        {
+            if (!TryTenant(user, out var tenantId)) return ApplicationProblems.Validation("no_tenant");
+
+            var correlationId = Guid.NewGuid().ToString("N");
+            var chunks = await producer.BuildAsync(tenantId, ct);
+            var result = await index.ReindexAsync(new ReindexRequest(tenantId, chunks, correlationId), ct);
+
+            var scoped = chunks.Count(ch => !string.IsNullOrEmpty(ch.ScopeRole));
+            return Results.Ok(new
+            {
+                chunkCount = result.ChunkCount,
+                replaced = result.ReplacedCount,
+                engineerScopedChunks = scoped,
+                correlationId = result.CorrelationId,
+                bySource = chunks.GroupBy(ch => ch.SourceKind)
+                                 .ToDictionary(g => g.Key, g => g.Count())
             });
         });
 

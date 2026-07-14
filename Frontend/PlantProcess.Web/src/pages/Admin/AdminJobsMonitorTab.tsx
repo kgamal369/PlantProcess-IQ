@@ -7,7 +7,7 @@
 // ============================================================
 
 import { Fragment, useMemo, useState } from "react";
-import { TwoStageImportMonitorPanel } from "./TwoStageImportMonitorPanel";
+
 import { Activity, PlayCircle } from "lucide-react";
 import { StandardPageButton, StandardPageTable } from "@/components/standard/StandardPageCompat";
 import {
@@ -344,7 +344,7 @@ export function JobsMonitorTab({
           </StandardPageTable>
         </div>
       </AdminPanel>
-      <TwoStageImportMonitorPanel />
+      
     </section>
   );
 }

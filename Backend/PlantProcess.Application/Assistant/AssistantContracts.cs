@@ -5,7 +5,7 @@ namespace PlantProcess.Application.Assistant;
 public sealed record RetrievalQuery(Guid TenantId, string Role, string Text, int TopK = 6);
 
 public sealed record RetrievedChunk(
-    Guid Id, string SourceKind, string SourceRef, string Content, ProvenanceHandle Handle, double Score, bool IsSynthetic = false);
+    Guid Id, string SourceKind, string SourceRef, string Content, ProvenanceHandle Handle, double Score, bool IsSynthetic = false, string? ScopeRole = null);
 
 /// <summary>A single grounded statement the assistant may surface, with the exact numbers it authorizes.</summary>
 public sealed record AssistantClaim(

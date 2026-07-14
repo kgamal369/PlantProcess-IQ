@@ -257,6 +257,19 @@ function Do-Up {
   Say ("starting web (npm run dev, " + $WebDir + ")")
   Push-Location (Join-Path $RepoRoot $WebDir)
   $web = Start-Process -FilePath 'npm' -ArgumentList @('run','dev') -PassThru -WindowStyle Hidden
+  # M1-13: wait for the API to listen instead of a fixed sleep
+  $ppiqReadyDeadline = (Get-Date).AddSeconds(60)
+  $ppiqReady = $false
+  while ((Get-Date) -lt $ppiqReadyDeadline) {
+    try {
+      $null = Invoke-WebRequest -Uri 'http://localhost:5063/' -Method Get -TimeoutSec 3 -UseBasicParsing -ErrorAction Stop
+      $ppiqReady = $true; break
+    } catch {
+      if ($null -ne $_.Exception.Response) { $ppiqReady = $true; break }  # any HTTP status = listening
+      Start-Sleep -Milliseconds 500
+    }
+  }
+  if ($ppiqReady) { Say 'API is listening on :5063' } else { Say 'WARNING: API not confirmed listening within 60s; continuing' }
   Pop-Location
   $web.Id | Set-Content (Join-Path $RunDir 'web.pid')
   Say ("API pid " + $api.Id + " -> http://localhost:5063   web pid " + $web.Id + " -> http://localhost:5173")

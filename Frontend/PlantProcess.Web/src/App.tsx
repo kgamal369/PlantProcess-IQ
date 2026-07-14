@@ -101,6 +101,15 @@ const ImportingRoute = lazy(() =>
 const JobsMonitorRoute = lazy(() =>
   import("./pages/DataIntegration/DataIntegrationRoutes").then((m) => ({ default: m.JobsMonitorRoute }))
 );
+const AuthorMappingPage = lazy(() =>
+  import("./pages/DataIntegration/AuthorMappingPage").then((m) => ({ default: m.AuthorMappingPage }))
+);
+const SupervisorReportPage = lazy(() =>
+  import("./pages/DataIntegration/SupervisorReportPage").then((m) => ({ default: m.SupervisorReportPage }))
+);
+const AlertingPage = lazy(() =>
+  import("./pages/DataIntegration/AlertingPage").then((m) => ({ default: m.AlertingPage }))
+);
 const ConnectorTruthPage = lazy(() =>
   import("./pages/DataIntegration/ConnectorTruthPage").then((m) => ({ default: m.ConnectorTruthPage }))
 );
@@ -467,6 +476,9 @@ function AppRoutes() {
                       <Route path="importing" element={<ImportingRoute />} />
                       <Route path="jobs" element={<JobsMonitorRoute />} />
                       <Route path="connector-truth" element={<ConnectorTruthPage />} />
+                      <Route path="alerting" element={<AlertingPage />} />
+                      <Route path="supervisor" element={<SupervisorReportPage />} />
+                      <Route path="author-mapping" element={<AuthorMappingPage />} />
                     </Route> <Route
                     
                       path="/data-integration/prepare"

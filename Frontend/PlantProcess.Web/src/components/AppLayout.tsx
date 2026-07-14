@@ -31,6 +31,7 @@ import { useAuth } from "../state/AuthContext";
 import { usePlantProcessTheme } from "../state/ThemeContext";
 import { AppToaster } from "../notifications/Toaster";
 import { LogPanel } from "./logging/LogPanel";
+import { JourneyRail } from "./journey/JourneyRail";
 
 import "./AppLayout.css";
 import { StandardButton } from "@/components/standard";
@@ -38,6 +39,9 @@ import { StandardButton } from "@/components/standard";
 import { P2T08_STANDARD_ROLLOUT_MARKER } from "@/components/standard/StandardP2Controls";
 // ── Navigation definition ─────────────────────────────────────
 const NAV_DATA_INTEGRATION = [
+  { to: "/data-integration/alerting", label: "Plant Data Log", desc: "Threshold alerts on imported observations", icon: AlertTriangle },
+  { to: "/data-integration/supervisor", label: "Engine Supervisor", desc: "Weekly engine review (step 14)", icon: BrainCircuit },
+  { to: "/data-integration/author-mapping", label: "Load to Plant Data", desc: "Author a mapping and project staged rows", icon: Network },
   { to: "/data-integration/connections",     label: "Connections",     desc: "DB links: connect and test plant sources", icon: DatabaseZap },
   { to: "/data-integration/registry",        label: "Table Registry",  desc: "Map source tables to the canonical model", icon: Network },
   { to: "/data-integration/prepare",         label: "Prepare Import",  desc: "Pick columns, keys and watermark",         icon: GitBranch },
@@ -221,6 +225,7 @@ export function AppLayout() {
 
       {/* ── Main ── */}
       <main className="piq-main">
+        <JourneyRail />
 
         {/* Command header */}
         <header className="piq-cmd-header">

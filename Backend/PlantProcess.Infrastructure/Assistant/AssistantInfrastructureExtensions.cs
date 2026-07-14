@@ -29,6 +29,7 @@ public static class AssistantInfrastructureExtensions
                 ? new Top15RealAssistantModel(phase34ModelConfig, sp.GetRequiredService<ITop15AssistantModelClient>())
                 : new ExtractiveAssistantModel();
         });
+        services.AddScoped<IAssistantChunkProducer, CanonicalChunkProducer>();
         services.AddScoped<AssistantService>();
         return services;
     }

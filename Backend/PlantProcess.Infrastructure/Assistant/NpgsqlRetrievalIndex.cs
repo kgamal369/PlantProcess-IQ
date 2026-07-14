@@ -76,7 +76,7 @@ public sealed class NpgsqlRetrievalIndex : IRetrievalIndex
                 "content=EXCLUDED.content, embedding_json=EXCLUDED.embedding_json, content_hash=EXCLUDED.content_hash, " +
                 "is_synthetic=EXCLUDED.is_synthetic, is_stale=false, indexed_at=now()";
             cmd.Parameters.AddWithValue("t", request.TenantId);
-            cmd.Parameters.AddWithValue("scope", (object?)null ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("scope", (object?)chunk.ScopeRole ?? DBNull.Value);
             cmd.Parameters.AddWithValue("kind", chunk.SourceKind);
             cmd.Parameters.AddWithValue("ref", chunk.SourceRef);
             cmd.Parameters.AddWithValue("content", chunk.Content);

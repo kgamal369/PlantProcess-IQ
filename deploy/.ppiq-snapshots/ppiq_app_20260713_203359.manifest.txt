@@ -1,0 +1,6 @@
+﻿PPIQ snapshot manifest
+Taken: 20260713_203359
+Dump: C:\Workspace\PlantProcess-IQ\deploy\.ppiq-snapshots\ppiq_app_20260713_203359.dump
+Size: 29.36 MB
+----- baseline row counts -----
+SET parameter_definitions=21 defect_catalogs=9 parameter_observations=14433 material_units=40148 quality_events=51691 genealogy_edges=35906 by_source:PPIQ_P3_SEED=5 by_source:phase3-dump:src_caster_oracle_shape.cast_pieces=18070 by_source:phase3-dump:src_meltshop_pg.heats=2431 by_source:phase3-dump:src_hsm_oracle_shape.hsm_coils=17817 by_source:postgresql=1802 by_source:ADVANCED_DEMO_SEED=14 by_source:PHASE_F_SEED=5 by_source:sql-seed=4

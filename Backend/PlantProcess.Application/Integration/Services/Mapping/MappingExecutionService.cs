@@ -208,6 +208,8 @@ public sealed class MappingExecutionService : IMappingExecutionService
             "ParameterObservation" => await MapParameterObservationAsync(mapping, fieldMap, sourceRow, stagingRecord, previewOnly, cancellationToken),
             "QualityEvent" => await MapQualityEventAsync(mapping, fieldMap, sourceRow, stagingRecord, previewOnly, cancellationToken),
             "GenealogyEdge" => await MapGenealogyEdgeAsync(mapping, fieldMap, sourceRow, stagingRecord, previewOnly, cancellationToken),
+            "DefectCatalog" => await MapDefectCatalogAsync(mapping, fieldMap, sourceRow, stagingRecord, previewOnly, cancellationToken),
+            "ParameterDefinition" => await MapParameterDefinitionAsync(mapping, fieldMap, sourceRow, stagingRecord, previewOnly, cancellationToken),
             _ => FailOrThrow(stagingRecord, previewOnly, $"Target entity '{target}' is not supported by MappingExecutionService yet.")
         };
     }
@@ -456,6 +458,93 @@ public sealed class MappingExecutionService : IMappingExecutionService
         return new MappingExecutionRowResult(stagingRecord.Id, stagingRecord.RowNumber, "Mapped", edge.Id, "GenealogyEdge", null);
     }
 
+    private async Task<MappingExecutionRowResult> MapDefectCatalogAsync(
+        MappingDefinition mapping,
+        IReadOnlyDictionary<string, string> fieldMap,
+        IReadOnlyDictionary<string, string?> sourceRow,
+        StagingRecord stagingRecord,
+        bool previewOnly,
+        CancellationToken cancellationToken)
+    {
+        var defectCode = Required(fieldMap, sourceRow, "DefectCode");
+        var defectName = Optional(fieldMap, sourceRow, "DefectName") ?? defectCode;
+
+        // Code-keyed upsert: if the defect code already exists, this row is
+        // idempotently mapped to the existing catalog id (re-projection = 0 new rows).
+        var existingId = await _dbContext.DefectCatalogs
+            .AsNoTracking()
+            .Where(x => x.DefectCode == defectCode)
+            .Select(x => x.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (existingId != Guid.Empty)
+        {
+            if (!previewOnly)
+                stagingRecord.MarkMapped(existingId, "DefectCatalog");
+            return new MappingExecutionRowResult(stagingRecord.Id, stagingRecord.RowNumber, "Mapped", existingId, "DefectCatalog", null);
+        }
+
+        var defect = new DefectCatalog(
+            defectCode: defectCode,
+            defectName: defectName,
+            defectCategory: Optional(fieldMap, sourceRow, "DefectCategory"),
+            industryTemplate: Optional(fieldMap, sourceRow, "IndustryTemplate"),
+            isSynthetic: stagingRecord.IsSynthetic,
+            sourceSystem: stagingRecord.SourceSystem ?? mapping.SourceSystem,
+            sourceRecordId: stagingRecord.SourceRecordId);
+
+        if (!previewOnly)
+        {
+            _dbContext.DefectCatalogs.Add(defect);
+            stagingRecord.MarkMapped(defect.Id, "DefectCatalog");
+        }
+
+        return new MappingExecutionRowResult(stagingRecord.Id, stagingRecord.RowNumber, "Mapped", defect.Id, "DefectCatalog", null);
+    }
+
+    private async Task<MappingExecutionRowResult> MapParameterDefinitionAsync(
+        MappingDefinition mapping,
+        IReadOnlyDictionary<string, string> fieldMap,
+        IReadOnlyDictionary<string, string?> sourceRow,
+        StagingRecord stagingRecord,
+        bool previewOnly,
+        CancellationToken cancellationToken)
+    {
+        var parameterCode = Required(fieldMap, sourceRow, "ParameterCode");
+        var parameterName = Optional(fieldMap, sourceRow, "ParameterName") ?? parameterCode;
+
+        var existingId = await _dbContext.ParameterDefinitions
+            .AsNoTracking()
+            .Where(x => x.ParameterCode == parameterCode)
+            .Select(x => x.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (existingId != Guid.Empty)
+        {
+            if (!previewOnly)
+                stagingRecord.MarkMapped(existingId, "ParameterDefinition");
+            return new MappingExecutionRowResult(stagingRecord.Id, stagingRecord.RowNumber, "Mapped", existingId, "ParameterDefinition", null);
+        }
+
+        var definition = new ParameterDefinition(
+            parameterCode: parameterCode,
+            parameterName: parameterName,
+            valueType: Optional(fieldMap, sourceRow, "ValueType") ?? "Numeric",
+            unitOfMeasure: Optional(fieldMap, sourceRow, "UnitOfMeasure"),
+            parameterCategory: Optional(fieldMap, sourceRow, "ParameterCategory"),
+            industryTemplate: Optional(fieldMap, sourceRow, "IndustryTemplate"),
+            isSynthetic: stagingRecord.IsSynthetic,
+            sourceSystem: stagingRecord.SourceSystem ?? mapping.SourceSystem,
+            sourceRecordId: stagingRecord.SourceRecordId);
+
+        if (!previewOnly)
+        {
+            _dbContext.ParameterDefinitions.Add(definition);
+            stagingRecord.MarkMapped(definition.Id, "ParameterDefinition");
+        }
+
+        return new MappingExecutionRowResult(stagingRecord.Id, stagingRecord.RowNumber, "Mapped", definition.Id, "ParameterDefinition", null);
+    }
     private static MappingExecutionRowResult FailOrThrow(StagingRecord stagingRecord, bool previewOnly, string message)
     {
         if (!previewOnly)
