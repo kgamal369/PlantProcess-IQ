@@ -250,7 +250,7 @@ export default function SourceImportPrepPage() {
             <input
               value={rowFilter}
               onChange={(e) => setRowFilter(e.target.value)}
-              placeholder="e.g. steel_grade = 'S355J2'"
+              placeholder="e.g. status = 'CLOSED'"
               style={selectStyle}
             />
           </div>

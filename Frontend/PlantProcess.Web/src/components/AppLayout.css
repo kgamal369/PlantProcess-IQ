@@ -1,10 +1,10 @@
 /* ============================================================
-   PlantProcess IQ — Professional App Shell
+   PlantProcess IQ - Professional App Shell
    FILE: Frontend/PlantProcess.Web/src/components/AppLayout.css
    Self-contained: does NOT rely on legacy-global.css.
    ============================================================ */
 
-/* ── Shell ──────────────────────────────────────────────────── */
+/* - Shell - */
 .piq-shell {
   display: flex;
   min-height: 100vh;
@@ -16,7 +16,7 @@
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
-/* ── Sidebar ────────────────────────────────────────────────── */
+/* - Sidebar - */
 .piq-sidebar {
   width: 268px;
   min-width: 268px;
@@ -303,7 +303,7 @@
   border-color: rgba(0,212,255,0.22);
 }
 
-/* ── Main area ──────────────────────────────────────────────── */
+/* - Main area - */
 .piq-main {
   flex: 1;
   display: flex;
@@ -504,3 +504,17 @@
   border-bottom: 1px solid rgba(0,212,255,0.07);
   flex-wrap: wrap;
 }
+
+/* PPIQ FE4: sidebar accordion */
+.piq-nav-group { margin-bottom: 4px; }
+.piq-nav-group__header {
+  display: flex; align-items: center; justify-content: space-between;
+  width: 100%; background: transparent; border: 0; cursor: pointer;
+  padding: 8px 12px; color: inherit;
+}
+.piq-nav-group__title {
+  font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.75;
+}
+.piq-nav-group__header:hover .piq-nav-group__title { opacity: 1; }
+.piq-nav-group__chevron { font-size: 10px; opacity: 0.6; }
+.piq-nav-group__items { padding-left: 2px; }

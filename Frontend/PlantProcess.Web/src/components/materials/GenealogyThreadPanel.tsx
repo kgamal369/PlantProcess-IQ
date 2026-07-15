@@ -12,7 +12,7 @@ const C = {
   success: "#2CE6A2", warning: "#FFD166", danger: "#FF4D6D",
   border: "rgba(122,176,224,0.18)", borderStrong: "rgba(122,176,224,0.35)",
 };
-const DEMO_KEY = "ADV_COIL4002";
+const DEMO_KEY = "";
 
 function asArray(payload: ApiRows<ThreadRow> | ThreadRow[] | null | undefined): ThreadRow[] {
   if (!payload) return [];
@@ -131,7 +131,7 @@ export function GenealogyThreadPanel() {
       <div>
         <label>
           <span>Material code</span>
-          <StandardP2Input value={pending} placeholder="e.g. ADV_COIL4002"
+          <StandardP2Input value={pending} placeholder="Enter a material code"
             onChange={(e) => setPending(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") load(pending); }} />
         </label>

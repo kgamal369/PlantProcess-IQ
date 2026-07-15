@@ -6,6 +6,7 @@
 // across all admin tab sub-pages.
 // ============================================================
 
+import { StandardButton } from "../../components/standard/StandardButton";
 import {
   Activity,
   AlertTriangle,
@@ -18,6 +19,7 @@ import {
   Settings2,
 } from "lucide-react";
 import type { ReactNode } from "react";
+import { useState } from "react";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -52,16 +54,24 @@ export function AdminPanel({
   wide?: boolean;
   children: ReactNode;
 }) {
+  const [open, setOpen] = useState<boolean>(true);
   return (
-    <section className={`admin-panel ${wide ? "admin-panel--wide" : ""}`}>
-      <div className="admin-panel__header">
+    <section className={`admin-panel ${wide ? "admin-panel--wide" : ""} ${open ? "" : "admin-panel--collapsed"}`}>
+      <StandardButton
+        variant="ghost"
+        type="button"
+        className="admin-panel__header admin-panel__header--toggle"
+        aria-expanded={open}
+        onClick={() => setOpen((o) => !o)}
+      >
         <div className="admin-panel__icon">{icon}</div>
-        <div>
+        <div className="admin-panel__titles">
           <h2>{title}</h2>
           <p>{subtitle}</p>
         </div>
-      </div>
-      {children}
+        <span className="admin-panel__chevron" aria-hidden="true">{open ? "\u25BE" : "\u25B8"}</span>
+      </StandardButton>
+      {open ? children : null}
     </section>
   );
 }

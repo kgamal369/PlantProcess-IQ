@@ -156,7 +156,7 @@ export function AuthorMappingPage() {
         sourceRecordId: null,
       });
       setMappingId(res.id);
-      setNotice(`Mapping saved (id ${res.id}). Now Execute to project this batch.`);
+      setNotice(`Mapping saved. Now Execute to project this batch.`);
     } catch (e: unknown) {
       setFormError(e instanceof Error ? e.message : "Could not save the mapping.");
     } finally {

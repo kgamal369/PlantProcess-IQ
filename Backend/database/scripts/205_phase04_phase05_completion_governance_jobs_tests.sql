@@ -433,7 +433,7 @@ BEGIN
             ELSE 'Ready'
         END,
         CASE
-            WHEN v_observation_count < 30 THEN 'At least 30 observations are required for demo learning.'
+            WHEN v_observation_count < 30 THEN 'At least 30 observations are required for learning.'
             WHEN v_effective_n < p_min_effective_n THEN 'Effective-n must use distinct heat_id and meet the configured minimum.'
             WHEN v_label_completeness < 0.95 THEN 'Outcome labels are incomplete for the requested family.'
             ELSE 'Learning governance gates passed for the selected window.'

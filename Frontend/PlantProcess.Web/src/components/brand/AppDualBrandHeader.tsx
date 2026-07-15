@@ -7,7 +7,7 @@ type AppDualBrandHeaderProps = {
 };
 
 export function AppDualBrandHeader({
-  licenseTier = "Demo",
+  licenseTier = "Light",
 }: AppDualBrandHeaderProps) {
   return (
     <div className="app-dual-brand-header">

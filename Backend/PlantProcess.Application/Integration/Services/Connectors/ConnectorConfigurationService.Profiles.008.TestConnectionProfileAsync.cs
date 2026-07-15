@@ -41,7 +41,7 @@ public async Task<ApplicationResult<DataSourceConnectionTestResult>> TestConnect
             await _dbContext.SaveChangesAsync(cancellationToken);
 
            return ApplicationResult<DataSourceConnectionTestResult>.Failure(
-                 ApplicationError.Validation($"Some error message: {ex.Message}"));     
+                 ApplicationError.Validation($"Connector operation failed: {ex.Message}"));     
         }
     }
 }

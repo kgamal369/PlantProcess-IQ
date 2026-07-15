@@ -20,7 +20,7 @@ const fallbackConnectors: ConnectorStatusRecord[] = [
     isAvailableNow: true,
     isAllowedByLicense: true,
     isSafeForDemo: true,
-    message: "Safe to show in controlled demo.",
+    message: "Certified and safe to present.",
   },
   {
     providerType: "Excel",
@@ -89,7 +89,7 @@ export function ConnectorTruthPanel({
           <p className="license-eyebrow">Dimension 8</p>
           <h2>Connector Truth Matrix</h2>
           <p>
-            A connector is demo-safe only when implementation, tests, backend
+            A connector is certified only when implementation, tests, backend
             registration, frontend label, website label, and license tier all
             agree.
           </p>
@@ -102,7 +102,7 @@ export function ConnectorTruthPanel({
           <span>Connector</span>
           <span>Implementation</span>
           <span>License</span>
-          <span>Demo safe</span>
+          <span>Certified</span>
         </div>
 
         {rows.map((connector) => (

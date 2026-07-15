@@ -125,8 +125,8 @@ export function normalizePageVisibility(value: string | string[]): PageVisibilit
 
 export function createInitialPageBuilderState(): PageBuilderState {
   return {
-    title: "Demo Quality Investigation",
-    slug: "demo-quality-investigation",
+    title: "Quality Investigation",
+    slug: "quality-investigation",
     visibility: "Shared",
     widgets: cloneWidgets(defaultPageBuilderWidgets),
   };

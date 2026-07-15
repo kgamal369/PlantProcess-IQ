@@ -38,8 +38,7 @@ export function ActiveFilterChips() {
   if (entries.length === 0) {
     return (
       <div className="chip-row muted">
-        No active filters. Dashboard is showing the current available demo
-        dataset.
+        No active filters. The dashboard is showing the full imported dataset.
       </div>
     );
   }

@@ -158,7 +158,7 @@ export function MaterialInvestigationPage() {
   const [mappingRows, setMappingRows] = useState<ProofRow[]>([]);
   const [materialRows, setMaterialRows] = useState<ProofRow[]>([]);
   const [safeSqlRows, setSafeSqlRows] = useState<ProofRow[]>([]);
-  const [materialKey, setMaterialKey] = useState("ADV_COIL4002");
+  const [materialKey, setMaterialKey] = useState("");
   const [sqlText, setSqlText] = useState("SELECT * FROM public.v_ppiq_p04_completion_golden_thread");
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -297,8 +297,8 @@ export function MaterialInvestigationPage() {
               <DatabaseZap size={24} />
               <h2>Source Catalog</h2>
               <p>
-                Source-specific demo systems stay as fixtures. The product layer remains generic
-                through business keys, canonical mapping, recursive genealogy and quality events.
+                The product layer is generic end to end: business keys, canonical mapping,
+                recursive genealogy and quality events.
               </p>
             </article>
             <article>
@@ -414,7 +414,7 @@ export function MaterialInvestigationPage() {
               <StandardP2Input
                 value={materialKey}
                 onChange={(event) => setMaterialKey(event.target.value)}
-                placeholder="Material key, for example ADV_COIL4002"
+                placeholder="Enter a material key"
               />
               <StandardButton className="p03p04-primary ppiq-p2t09-material-button ppiq-p2t09-action-ghost" type="submit" variant="ghost">
                 <Search size={14} />

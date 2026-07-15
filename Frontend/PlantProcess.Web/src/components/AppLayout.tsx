@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 // Update: reads real logged-in user from AuthContext
 // ============================================================
 
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
 import {
   AlertTriangle,
   BarChart3,
@@ -37,7 +37,7 @@ import "./AppLayout.css";
 import { StandardButton } from "@/components/standard";
 
 import { P2T08_STANDARD_ROLLOUT_MARKER } from "@/components/standard/StandardP2Controls";
-// ── Navigation definition ─────────────────────────────────────
+// - Navigation definition -
 const NAV_DATA_INTEGRATION = [
   { to: "/data-integration/alerting", label: "Plant Data Log", desc: "Threshold alerts on imported observations", icon: AlertTriangle },
   { to: "/data-integration/supervisor", label: "Engine Supervisor", desc: "Weekly engine review (step 14)", icon: BrainCircuit },
@@ -81,7 +81,7 @@ const NAV_SYSTEM = [
   { to: "/advisory/benchmarking", label: "Benchmarking", desc: "Cross-plant privacy bands", icon: DatabaseZap },
   { to: "/advisory/roi-cfo-dashboard", label: "ROI/CFO Value", desc: "Potential vs realized value", icon: DatabaseZap },
   { to: "/advisory/value-realization", label: "Value Realization", desc: "Baseline vs actual ledger", icon: DatabaseZap },
-  { to: "/advisory/recommendations", label: "Recommendations", desc: "Expected € impact + approval", icon: DatabaseZap },
+  { to: "/advisory/recommendations", label: "Recommendations", desc: "Expected - impact + approval", icon: DatabaseZap },
   { to: "/advisory/scenario-simulation", label: "What-if Simulation", desc: "Phase 15 advisory projection", icon: DatabaseZap },
   { to: "/edge-collector", label: "Edge Collector", desc: "OT-safe one-way push status", icon: DatabaseZap },
   { to: "/historian-connector", label: "Historian Connector", desc: "Register, test, browse and map tags", icon: DatabaseZap },
@@ -91,11 +91,16 @@ const NAV_SYSTEM = [
 ];
 
 function getRuntimeEnvironment(): "Demo" | "Development" | "Staging" | "Production" {
+  // Configured, never compiled-in. Set VITE_PPIQ_ENVIRONMENT to override.
+  const configured = (import.meta.env.VITE_PPIQ_ENVIRONMENT as string | undefined)?.trim();
+  if (configured === "Production" || configured === "Staging" || configured === "Development") {
+    return configured;
+  }
   const mode = import.meta.env.MODE?.toLowerCase();
-  if (mode === "production") return "Demo";
+  if (mode === "production") return "Production";
   if (mode === "development") return "Development";
   if (mode === "staging") return "Staging";
-  return "Demo";
+  return "Production";
 }
 
 function NavItem({
@@ -125,6 +130,28 @@ function NavItem({
   );
 }
 
+function NavGroup({ title, items }: { title: string; items: ReadonlyArray<{ to: string; label: string; desc: string; icon: React.ElementType }> }) {
+  const location = useLocation();
+  const containsCurrent = items.some((i) => location.pathname === i.to || location.pathname.startsWith(i.to + "/"));
+  const [open, setOpen] = useState<boolean>(containsCurrent);
+  return (
+    <div className={"piq-nav-group" + (open ? " piq-nav-group--open" : "")}>
+      <StandardButton
+        variant="ghost"
+        type="button"
+        className="piq-nav-group__header"
+        aria-expanded={open}
+        onClick={() => setOpen((o) => !o)}
+      >
+        <span className="piq-nav-group__title">{title}</span>
+        <span className="piq-nav-group__chevron" aria-hidden="true">{open ? "\u25BE" : "\u25B8"}</span>
+      </StandardButton>
+      <div className="piq-nav-group__items" hidden={!open}>
+        {items.map((item) => <NavItem key={item.to} {...item} />)}
+      </div>
+    </div>
+  );
+}
 export function AppLayout() {
   const { isDark, toggleTheme } = usePlantProcessTheme();
 
@@ -158,7 +185,7 @@ export function AppLayout() {
   return (
     <div className="piq-shell">
       <AppToaster />
-      {/* ── Sidebar ── */}
+      {/* - Sidebar - */}
       <aside className="piq-sidebar" aria-label="PlantProcess IQ navigation">
 
         {/* Brand header */}
@@ -191,17 +218,10 @@ export function AppLayout() {
 
         {/* Navigation */}
         <nav className="piq-nav">
-          <p className="piq-nav__section-label">Data Integration</p>
-          {NAV_DATA_INTEGRATION.map((item) => <NavItem key={item.to} {...item} />)}
-
-          <p className="piq-nav__section-label">Analytics</p>
-          {NAV_ANALYTICS.map((item) => <NavItem key={item.to} {...item} />)}
-
-          <p className="piq-nav__section-label">Intelligence</p>
-          {NAV_INTELLIGENCE.map((item) => <NavItem key={item.to} {...item} />)}
-
-          <p className="piq-nav__section-label">System</p>
-          {NAV_SYSTEM.map((item) => <NavItem key={item.to} {...item} />)}
+          <NavGroup title="Data Integration" items={NAV_DATA_INTEGRATION} />
+          <NavGroup title="Analytics" items={NAV_ANALYTICS} />
+          <NavGroup title="Intelligence" items={NAV_INTELLIGENCE} />
+          <NavGroup title="System" items={NAV_SYSTEM} />
         </nav>
 
         {/* Bottom */}
@@ -223,7 +243,7 @@ export function AppLayout() {
         </div>
       </aside>
 
-      {/* ── Main ── */}
+      {/* - Main - */}
       <main className="piq-main">
         <JourneyRail />
 

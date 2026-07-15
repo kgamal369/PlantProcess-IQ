@@ -2,9 +2,9 @@
 // FILE: Frontend/PlantProcess.Web/src/pages/Admin/AdminDbConfigurationTab.tsx
 //
 // HIGH PRIORITY ITEMS 7 + 8 + 9:
-//  7. DB Link Configuration UI — Create / Edit connection profiles
-//  8. Table Browser UI — Discover & register tables from a live DB
-//  9. Import Job Configuration UI — Schedule import per dataset
+//  7. DB Link Configuration UI - Create / Edit connection profiles
+//  8. Table Browser UI - Discover & register tables from a live DB
+//  9. Import Job Configuration UI - Schedule import per dataset
 //
 // Replaces the previous read-only version.
 // All API calls match the existing productApi methods exactly.
@@ -12,6 +12,10 @@
 
 import { useEffect, useState } from "react";
 import {
+  Boxes,
+  Cloud,
+  FileSpreadsheet,
+  FileText,
   CheckCircle2,
   ChevronDown,
   ChevronRight,
@@ -56,7 +60,7 @@ import {
   validatePort,
   validateRequired,
 } from "@/hooks/useInlineFormValidation";
-// ── Local types ───────────────────────────────────────────────────────────────
+// - Local types -
 
 interface ConnectionTestResult {
   isSuccess: boolean;
@@ -76,8 +80,31 @@ const PROVIDER_DEFAULTS: Record<string, { port: number; schemaName: string }> = 
   excel: { port: 0, schemaName: "" },
 };
 
-// ── DbConfigurationTab (orchestrator) ────────────────────────────────────────
+// - DbConfigurationTab (orchestrator) -
 
+const PROVIDER_ICON: Record<string, React.ElementType> = {
+  Csv: FileText,
+  Excel: FileSpreadsheet,
+  PostgreSql: Database,
+  SqlServer: Database,
+  MySql: Database,
+  Oracle: Database,
+  Sap: Boxes,
+  RestApi: Cloud,
+  OpcUaHistorian: RadioTower,
+};
+
+const PROVIDER_DETAIL: Record<string, string> = {
+  Csv: "Point at a folder of CSV exports. Each file is read into the staging layer, then mapped to the plant model. No agent is installed on your systems.",
+  Excel: "Reads Excel workbooks and named sheets into the staging layer, then maps them to the plant model. Useful for lab, QA and yard files kept in Excel.",
+  PostgreSql: "Read-only DB link to a PostgreSQL database. Browses schemas and tables, imports the delta each cycle using a watermark column, and never writes to the source.",
+  SqlServer: "Read-only DB link to Microsoft SQL Server. Browses schemas and tables, imports the delta each cycle using a watermark column, and never writes to the source.",
+  MySql: "Read-only DB link to MySQL. Browses schemas and tables, imports the delta each cycle using a watermark column, and never writes to the source.",
+  Oracle: "Read-only DB link to Oracle. Browses schemas and tables, imports the delta each cycle using a watermark column, and never writes to the source.",
+  Sap: "Planned: read-only access to SAP source systems. Not available yet - SAP data can be onboarded today via file or database snapshot.",
+  RestApi: "Planned: reads snapshots from REST endpoints into the staging layer.",
+  OpcUaHistorian: "Planned: read-only gateway for OPC-UA historians. Browses tags and points and takes bounded sample reads for mapping.",
+};
 export function DbConfigurationTab({
   data,
   onRefresh,
@@ -127,7 +154,7 @@ export function DbConfigurationTab({
   return (
     <section className="admin-panel-grid">
 
-      {/* ── DB Link Configuration ──────────────────────────────── */}
+      {/* - DB Link Configuration - */}
       <AdminPanel
         title="DB Link Configuration"
         subtitle="Connection profiles to customer source databases and files"
@@ -177,40 +204,48 @@ export function DbConfigurationTab({
         ) : null}
       </AdminPanel>
 
-      {/* ── Provider types grid ────────────────────────────────── */}
+      {/* - Provider types grid - */}
       <AdminPanel
         title="Supported Connectors"
         subtitle="Available and planned data source provider types"
         icon={<Database size={18} />}
       >
         <div className="admin-provider-grid">
-          {providerTypes.map((pt) => (
-            <div
-              key={pt.providerType}
-              className={`admin-provider-card ${pt.isAvailableNow ? "available" : ""}`}
-            >
-              <div className="admin-provider-card__head">
-                <strong>{pt.displayName ?? pt.providerType}</strong>
-                {pt.isAvailableNow ? (
-                  <span className="admin-pill success">
-                    <CheckCircle2 size={11} /> Available
+          {providerTypes.map((pt) => {
+            const Icon = PROVIDER_ICON[pt.providerType] ?? Database;
+            const detail = PROVIDER_DETAIL[pt.providerType] ?? pt.description;
+            return (
+              <div
+                key={pt.providerType}
+                className={`admin-provider-card ${pt.isAvailableNow ? "available" : ""}`}
+                title={detail}
+              >
+                <div className="admin-provider-card__head">
+                  <span className="admin-provider-card__icon" aria-hidden="true">
+                    <Icon size={16} />
                   </span>
-                ) : (
-                  <span className="admin-pill neutral">Planned</span>
-                )}
+                  <strong>{pt.displayName ?? pt.providerType}</strong>
+                  {pt.isAvailableNow ? (
+                    <span className="admin-pill success">
+                      <CheckCircle2 size={11} /> Available
+                    </span>
+                  ) : (
+                    <span className="admin-pill neutral">Planned</span>
+                  )}
+                </div>
+                <p className="admin-provider-card__desc">{pt.description}</p>
+                <div className="admin-provider-caps">
+                  {pt.supportsSchemaDiscovery && <span className="admin-pill info">Schema</span>}
+                  {pt.supportsSnapshotImport && <span className="admin-pill info">Snapshot</span>}
+                  {pt.supportsIncrementalImport && <span className="admin-pill info">Incremental</span>}
+                </div>
               </div>
-              <p>{pt.description}</p>
-              <div className="admin-provider-caps">
-                {pt.supportsSchemaDiscovery && <span className="admin-pill info">Schema</span>}
-                {pt.supportsSnapshotImport && <span className="admin-pill info">Snapshot</span>}
-                {pt.supportsIncrementalImport && <span className="admin-pill info">Incremental</span>}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </AdminPanel>
 
-      {/* ── Existing source systems (read-only overview) ───────── */}
+      {/* - Existing source systems (read-only overview) - */}
       {(data?.sourceSystems ?? []).length > 0 ? (
         <AdminPanel
           title="Source Systems Overview"
@@ -249,13 +284,13 @@ export function DbConfigurationTab({
         </AdminPanel>
       ) : null}
 
-      {/* ── Import Job Scheduling ──────────────────────────────── */}
+      {/* - Import Job Scheduling - */}
       <ImportJobSchedulePanel onRefresh={onRefresh} />
     </section>
   );
 }
 
-// ── ConnectionProfileList ─────────────────────────────────────────────────────
+// - ConnectionProfileList -
 
 function ConnectionProfileList({
   connections, providerTypes, isLoading, onEdit, onBrowseTables, onRefresh,
@@ -277,14 +312,14 @@ function ConnectionProfileList({
       setTestResults((r) => ({
         ...r,
         [id]: result.isSuccess
-          ? `✅ ${result.message ?? "Connection succeeded."}`
-          : `❌ ${result.message ?? "Connection failed."}`,
+          ? `${result.message ?? "Connection succeeded."}`
+          : `${result.message ?? "Connection failed."}`,
       }));
       await onRefresh();
     } catch (err) {
       setTestResults((r) => ({
         ...r,
-        [id]: `❌ ${err instanceof Error ? err.message : "Test failed."}`,
+        [id]: `- ${err instanceof Error ? err.message : "Test failed."}`,
       }));
     } finally {
       setTestingId(null);
@@ -292,7 +327,7 @@ function ConnectionProfileList({
   }
 
   if (isLoading) {
-    return <div className="admin-copy"><Loader2 size={16} className="spin" /> Loading connections…</div>;
+    return <div className="admin-copy"><Loader2 size={16} className="spin" /> Loading connections-</div>;
   }
 
   if (connections.length === 0) {
@@ -320,7 +355,6 @@ function ConnectionProfileList({
               <tr key={conn.id}>
                 <td>
                   <strong>{conn.connectionProfileName}</strong>
-                  <small>{conn.connectionProfileCode}</small>
                 </td>
                 <td>
                   <span className={`admin-pill ${
@@ -329,8 +363,8 @@ function ConnectionProfileList({
                     {conn.providerType}
                   </span>
                 </td>
-                <td>{conn.hostName ?? conn.fileRootPath ?? "—"}</td>
-                <td>{conn.databaseName ?? "—"}</td>
+                <td>{conn.hostName ?? conn.fileRootPath ?? "-"}</td>
+                <td>{conn.databaseName ?? "-"}</td>
                 <td>
                   <StatusPill
                     status={conn.isActive ? "Active" : "Inactive"}
@@ -343,7 +377,7 @@ function ConnectionProfileList({
                       status={conn.lastTestStatus}
                       statusClass={conn.lastTestStatus === "Success" ? "success" : "danger"}
                     />
-                  ) : "—"}
+                  ) : "-"}
                   {conn.lastTestMessage ? (
                     <small>
                       {conn.lastTestMessage}
@@ -360,7 +394,7 @@ function ConnectionProfileList({
                       title="Test connection"
                     >
                       {testingId === conn.id
-                        ? <><Loader2 size={13} className="spin" /> Testing…</>
+                        ? <><Loader2 size={13} className="spin" /> Testing-</>
                         : <><Link2 size={13} /> Test</>}
                     </StandardPageButton>
                     <StandardPageButton
@@ -397,7 +431,7 @@ function ConnectionProfileList({
   );
 }
 
-// ── ConnectionProfileForm (Create + Edit) ─────────────────────────────────────
+// - ConnectionProfileForm (Create + Edit) -
 
 function ConnectionProfileForm({
   profile, providerTypes, sourceSystems, onSaved, onCancel,
@@ -477,11 +511,11 @@ function ConnectionProfileForm({
     setForm((f) => ({ ...f, [field]: value }));
   }
 
-  // ── FE-HARD-005: Optimistic save ────────────────────────────────────────────
+  // - FE-HARD-005: Optimistic save -
   // Replaces ~50 lines of manual isSaving/error state + try/catch boilerplate.
-  // - Button label flips to "Saving…" within ~50ms of click (no network wait).
-  // - Success → green toast with auto-dismiss, then `onSaved()` is called.
-  // - Failure → red toast (from apiClient) + `error` exposed below for inline display.
+  // - Button label flips to "Saving-" within ~50ms of click (no network wait).
+  // - Success - green toast with auto-dismiss, then `onSaved()` is called.
+  // - Failure - red toast (from apiClient) + `error` exposed below for inline display.
   // - Double-submit guard built in (button disabled + in-flight ref).
   const { isSaving, save, error } = useOptimisticSave({
     successMessage: isEdit
@@ -489,7 +523,7 @@ function ConnectionProfileForm({
       : `Connection profile "${form.connectionProfileName}" created`,
     toastId: `save-connection-profile-${profile?.id ?? "new"}`,
     onSave: async () => {
-      // Validation — throw to surface as inline error + toast.
+      // Validation - throw to surface as inline error + toast.
       if (!validation.prepareSubmit()) {
         throw new Error("Please fix the highlighted fields before saving.");
       }
@@ -540,7 +574,7 @@ function ConnectionProfileForm({
   });
 
   return (
-    <div className="admin-form-card admin-form-card--wide">
+    <div className="admin-form-card admin-form-card - wide">
       <h3>{isEdit ? `Edit: ${profile!.connectionProfileName}` : "New Connection Profile"}</h3>
 
       {error instanceof Error ? <div className="admin-inline-error">{error.message}</div> : null}
@@ -573,12 +607,15 @@ function ConnectionProfileForm({
               value={form.sourceSystemDefinitionId}
               onChange={(e) => set("sourceSystemDefinitionId", e.target.value)}
             >
-              <option value="">-- Select a source system --</option>
-              {sourceSystems.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.sourceSystemName} ({s.sourceSystemCode})
-                </option>
-              ))}
+              <option value=""> - Select a source system - </option>
+              {sourceSystems.map((s) => {
+                const isPlanned = s.sourceSystemCode === "SAP";
+                return (
+                  <option key={s.id} value={s.id} disabled={isPlanned}>
+                    {s.sourceSystemName} ({s.sourceSystemCode}){isPlanned ? " \u2014 planned" : ""}
+                  </option>
+                );
+              })}
             </StandardPageSelect>
           </label>
         ) : null}
@@ -732,7 +769,7 @@ function ConnectionProfileForm({
         </label>
 
         {/* Read-only enforcement */}
-        <label className="admin-form-label admin-form-label--checkbox">
+        <label className="admin-form-label admin-form-label - checkbox">
           <StandardPageInput
             type="checkbox"
             checked={form.readOnlyEnforced}
@@ -749,7 +786,7 @@ function ConnectionProfileForm({
           onClick={save}
           disabled={isSaving}
         >
-          {isSaving ? <><Loader2 size={14} className="spin" /> Saving…</> : <><PlayCircle size={14} /> {isEdit ? "Save Changes" : "Create Profile"}</>}
+          {isSaving ? <><Loader2 size={14} className="spin" /> Saving-</> : <><PlayCircle size={14} /> {isEdit ? "Save Changes" : "Create Profile"}</>}
         </StandardPageButton>
         <StandardPageButton className="secondary-button" type="button" onClick={onCancel} disabled={isSaving}>
           Cancel
@@ -759,7 +796,7 @@ function ConnectionProfileForm({
   );
 }
 
-// ── TableBrowser (Item 8) ─────────────────────────────────────────────────────
+// - TableBrowser (Item 8) -
 
 function TableBrowser({
   connectionProfileId, connections, onBack, onRefresh,
@@ -803,7 +840,7 @@ function TableBrowser({
 
   async function registerDataset() {
     if (!newDatasetForm.sourceObjectName.trim()) {
-      setMessage("❌ Table/object name is required.");
+      setMessage("- Table/object name is required.");
       return;
     }
     setIsCreating(true);
@@ -826,12 +863,12 @@ function TableBrowser({
         sourceSystem: "PlantProcessIQ.Admin",
         sourceRecordId: null,
       });
-      setMessage(`✅ Dataset "${tableName}" registered.`);
+      setMessage(`- Dataset "${tableName}" registered.`);
       setNewDatasetForm((f) => ({ ...f, sourceObjectName: "", description: "" }));
       await loadDatasets();
       await onRefresh();
     } catch (err) {
-      setMessage(`❌ ${err instanceof Error ? err.message : "Registration failed."}`);
+      setMessage(`- ${err instanceof Error ? err.message : "Registration failed."}`);
     } finally {
       setIsCreating(false);
     }
@@ -858,9 +895,9 @@ function TableBrowser({
     <div>
       <div className="admin-panel__header">
         <div>
-          <h3>Table Browser — {profile?.connectionProfileName}</h3>
+          <h3>Table Browser - {profile?.connectionProfileName}</h3>
           <p>
-            {profile?.providerType} · {profile?.hostName ?? profile?.fileRootPath ?? "No host"} · {profile?.databaseName ?? ""}
+            {profile?.providerType} - {profile?.hostName ?? profile?.fileRootPath ?? "No host"} - {profile?.databaseName ?? ""}
           </p>
         </div>
       </div>
@@ -908,7 +945,7 @@ function TableBrowser({
           <label className="admin-form-label">
             Refresh Interval (seconds)
             <StandardPageSelect
-              className="admin-select admin-select--narrow"
+              className="admin-select admin-select - narrow"
               value={newDatasetForm.refreshIntervalSeconds}
               onChange={(e) => setNewDatasetForm((f) => ({ ...f, refreshIntervalSeconds: Number(e.target.value) }))}
             >
@@ -937,7 +974,7 @@ function TableBrowser({
             disabled={isCreating}
           >
             {isCreating
-              ? <><Loader2 size={14} className="spin" /> Registering…</>
+              ? <><Loader2 size={14} className="spin" /> Registering-</>
               : <><Plus size={14} /> Register Dataset</>}
           </StandardPageButton>
         </div>
@@ -950,7 +987,7 @@ function TableBrowser({
       </h3>
 
       {isLoading ? (
-        <div className="admin-copy"><Loader2 size={16} className="spin" /> Loading…</div>
+        <div className="admin-copy"><Loader2 size={16} className="spin" /> Loading-</div>
       ) : datasets.length === 0 ? (
         <div className="empty-insight">
           <TableProperties size={20} />
@@ -1022,8 +1059,8 @@ function TableBrowser({
                                     <td><strong>{f.fieldName}</strong></td>
                                     <td>{f.sourceDataType}</td>
                                     <td>{f.isNullable ? "Yes" : "No"}</td>
-                                    <td>{f.isPrimaryKeyCandidate ? "✓" : ""}</td>
-                                    <td>{f.isTimestampCandidate ? "✓" : ""}</td>
+                                    <td>{f.isPrimaryKeyCandidate ? "-" : ""}</td>
+                                    <td>{f.isTimestampCandidate ? "-" : ""}</td>
                                   </tr>
                                 ))}
                               </tbody>
@@ -1048,7 +1085,7 @@ function TableBrowser({
   );
 }
 
-// ── ImportJobSchedulePanel (Item 9) ───────────────────────────────────────────
+// - ImportJobSchedulePanel (Item 9) -
 
 function ImportJobSchedulePanel({
   onRefresh,
@@ -1066,10 +1103,10 @@ function ImportJobSchedulePanel({
     });
   }, []);
 
-  // ── FE-HARD-005: Optimistic save ────────────────────────────────────────────
+  // - FE-HARD-005: Optimistic save -
   // Replaces local isSaving/message state + manual try/catch.
   // Toast handles both success and failure feedback.
-  // Form stays open after save — user may want to schedule another connection.
+  // Form stays open after save - user may want to schedule another connection.
   const { isSaving, save } = useOptimisticSave({
     successMessage: `Raw snapshot schedule set to every ${intervalMinutes} minutes`,
     toastId: "save-import-schedule",
@@ -1120,7 +1157,7 @@ function ImportJobSchedulePanel({
       <div className="admin-form-row">
         <label className="admin-form-label">Import Frequency</label>
         <StandardPageSelect
-          className="admin-select admin-select--narrow"
+          className="admin-select admin-select - narrow"
           value={intervalMinutes}
           onChange={(e) => setIntervalMinutes(Number(e.target.value))}
         >
@@ -1140,7 +1177,7 @@ function ImportJobSchedulePanel({
           disabled={isSaving || !selectedConnectionId}
         >
           {isSaving
-            ? <><Loader2 size={14} className="spin" /> Saving…</>
+            ? <><Loader2 size={14} className="spin" /> Saving-</>
             : <><Settings2 size={14} /> Save Import Schedule</>}
         </StandardPageButton>
       </div>

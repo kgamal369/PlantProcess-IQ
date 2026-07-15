@@ -325,3 +325,23 @@
 .admin-provider-card small {
   color: var(--text-soft);
 }
+
+/* PPIQ FE5: collapsible admin panels */
+.admin-panel__header--toggle {
+  width: 100%; background: transparent; border: 0; cursor: pointer;
+  display: flex; align-items: center; gap: 12px; text-align: left;
+  color: inherit; font: inherit; padding: 0;
+}
+.admin-panel__titles { flex: 1 1 auto; min-width: 0; }
+.admin-panel__chevron { flex: 0 0 auto; opacity: 0.6; font-size: 12px; padding: 4px; }
+.admin-panel__header--toggle:hover .admin-panel__chevron { opacity: 1; }
+.admin-panel--collapsed { padding-bottom: 12px; }
+/* PPIQ FE6: connector cards */
+.admin-provider-card__head { display: flex; align-items: center; gap: 8px; }
+.admin-provider-card__icon { display: inline-flex; opacity: 0.8; flex: 0 0 auto; }
+.admin-provider-card__head strong { flex: 1 1 auto; min-width: 0; }
+.admin-provider-card__desc {
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden; opacity: 0.85; margin: 6px 0 8px;
+}
+.admin-provider-card { cursor: default; }

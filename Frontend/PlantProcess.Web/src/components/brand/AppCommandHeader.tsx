@@ -1,4 +1,4 @@
-import { Bell, CircleUserRound, DatabaseZap, ShieldCheck } from "lucide-react";
+import { CircleUserRound, DatabaseZap, ShieldCheck } from "lucide-react";
 import { SOUBrand } from "./SOUBrand";
 import { ProductBrand } from "./ProductBrand";
 import "./app-command-header.css";
@@ -12,8 +12,8 @@ type AppCommandHeaderProps = {
 };
 
 export function AppCommandHeader({
-  licenseTier = "Demo",
-  environment = "Demo",
+  licenseTier = "Light",
+  environment = "Production",
   plantName = "Plant",
   userName = "Admin",
 }: AppCommandHeaderProps) {
@@ -54,31 +54,9 @@ export function AppCommandHeader({
           {licenseTier}
         </span>
 
-        <span title="Notifications - coming soon" style={{ display: "inline-flex" }}>
-          <StandardButton
-            className="app-command-header__icon-button"
-            type="button"
-            variant="ghost"
-            isDisabled
-            ariaLabel="Notifications (coming soon)"
-            data-disabled-reason="Coming soon"
-          >
-            <Bell size={17} aria-hidden="true" />
-          </StandardButton>
-        </span>
-
-        <span title="Account menu - coming soon" style={{ display: "inline-flex" }}>
-          <StandardButton
-            className="app-command-header__user"
-            type="button"
-            variant="ghost"
-            isDisabled
-            ariaLabel="Account menu (coming soon)"
-            data-disabled-reason="Coming soon"
-          >
+        <span className="app-command-header__user" style={{ display: "inline-flex" }}>
             <CircleUserRound size={18} aria-hidden="true" />
             <span>{userName}</span>
-          </StandardButton>
         </span>
       </div>
     </header>

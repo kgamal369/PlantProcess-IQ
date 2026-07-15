@@ -344,7 +344,7 @@ BEGIN
             v_window_days,
             'Running',
             'PassedForDemoLearningCore',
-            'Golden dataset contains sufficient deterministic samples; production prediction remains disabled.',
+            'Dataset contains sufficient deterministic samples; production prediction remains disabled.',
             jsonb_build_object('jobCode', p_job_code, 'outcomeFamily', v_family, 'windowDays', v_window_days)
         );
 
@@ -725,7 +725,7 @@ BEGIN
         SET status = 'Completed',
             completed_at_utc = now(),
             duration_ms = GREATEST(0, (extract(epoch FROM clock_timestamp() - v_started) * 1000)::integer),
-            message = 'deterministic-core (golden dataset): ' || v_result_count || ' findings mirrored to results_v2'
+            message = 'deterministic-core: ' || v_result_count || ' findings mirrored to results_v2'
         WHERE id = v_compute_run_id;
     EXCEPTION
         WHEN OTHERS THEN

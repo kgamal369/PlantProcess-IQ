@@ -117,7 +117,7 @@ export function AssistantConfigurationPage() {
             <StandardP2Select className="phase8-select" value={config.groundingPolicy} onChange={(event) => setConfig({ ...config, groundingPolicy: event.target.value })}>
               <option value="strict-citations-required">strict-citations-required</option>
               <option value="abstain-on-missing-evidence">abstain-on-missing-evidence</option>
-              <option value="demo-extractive-only">demo-extractive-only</option>
+              <option value="demo-extractive-only">extractive-only</option>
             </StandardP2Select>
           </label>
 

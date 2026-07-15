@@ -8,7 +8,7 @@
 // ============================================================
 
 import { useState } from "react";
-import { Clock, Layers3, Loader2, PlayCircle, Workflow } from "lucide-react";
+import { Clock, Loader2, PlayCircle, Workflow } from "lucide-react";
 import {
   productApi,
   type AdminJobsMonitor,
@@ -38,7 +38,6 @@ export function ImportingDataTab({
   jobs: AdminJobsMonitor | null;
   onRefresh: () => Promise<void> | void;
 }) {
-  const stages = data?.stages ?? [];
   const mappings = schemaConfig?.mappings ?? [];
   const metrics = data?.metrics ?? [];
   const canonicalJobs = (jobs?.jobs ?? []).filter(
@@ -68,39 +67,6 @@ export function ImportingDataTab({
 
   return (
     <section className="admin-panel-grid">
-
-      {/* Two-stage model overview */}
-      <AdminPanel
-        title="Two-Stage Import Model"
-        subtitle="Raw source snapshot first, canonical refresh second"
-        icon={<Layers3 size={18} />}
-        wide
-      >
-        <p className="admin-copy">
-          {data?.summary ?? "The two-stage model is not available yet."}
-        </p>
-
-        <div className="admin-stage-flow">
-          {stages.map((stage) => (
-            <div className="admin-stage-card" key={stage.stageCode}>
-              <div className="admin-stage-card__number">{stage.stageNo}</div>
-              <div>
-                <strong>{stage.stageName}</strong>
-                <p>{stage.purpose}</p>
-                <small>{stage.currentImplementation}</small>
-              </div>
-              <StatusPill
-                status={stage.status}
-                statusClass={stage.status === "Available" ? "success" : "warning"}
-              />
-            </div>
-          ))}
-
-          {stages.length === 0 ? (
-            <p className="admin-copy">No stage definitions returned from API yet.</p>
-          ) : null}
-        </div>
-      </AdminPanel>
 
       {/* Canonical refresh scheduling */}
       <AdminPanel

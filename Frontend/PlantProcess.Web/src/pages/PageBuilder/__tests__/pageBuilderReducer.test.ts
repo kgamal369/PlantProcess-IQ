@@ -124,7 +124,7 @@ describe("pageBuilderReducer", () => {
 
     const payload = createPageBuilderPayload(state);
 
-    expect(payload.slug).toBe("demo-quality-investigation");
+    expect(payload.slug).toBe("quality-investigation");
     expect(payload.layoutJson.grid).toEqual({
       columns: 12,
       rowHeight: 80,

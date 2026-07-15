@@ -118,3 +118,121 @@
   color: rgba(248, 250, 252, 0.95);
   padding: 8px 10px;
 }
+
+/* ============================================================================
+   PPIQ SWEEP C1: connection profile form grid
+   Structural layout for the New Connection Profile form. Every field keeps a
+   fixed three-row rhythm (label / control / message slot) so the grid never
+   shifts when a validation message appears or the provider changes the fields.
+   ========================================================================== */
+.admin-form-card--wide { padding: 20px 22px 22px; }
+
+.admin-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 18px 20px;
+  align-items: start;
+}
+
+/* each field: label text | control | reserved message row */
+.admin-form-grid > .admin-form-label {
+  display: grid;
+  grid-template-rows: 18px 40px 18px;
+  row-gap: 6px;
+  align-content: start;
+  margin: 0;
+  min-width: 0;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+.admin-form-grid > .admin-form-label > .admin-input,
+.admin-form-grid > .admin-form-label > .admin-select,
+.admin-form-grid > .admin-form-label input,
+.admin-form-grid > .admin-form-label select {
+  width: 100%;
+  height: 40px;
+  box-sizing: border-box;
+  text-transform: none;
+  letter-spacing: normal;
+  font-size: 13px;
+  margin: 0;
+}
+/* the reserved message row: text sits inside it, never pushes the grid */
+.admin-form-grid > .admin-form-label > *:nth-child(3) {
+  grid-row: 3;
+  font-size: 10px;
+  line-height: 18px;
+  margin: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.admin-form-grid > .admin-form-label.invalid > .admin-input,
+.admin-form-grid > .admin-form-label.invalid input,
+.admin-form-grid > .admin-form-label.invalid select { outline: 1px solid rgba(255, 96, 96, 0.55); }
+
+/* hint text: constrained, spans its own cell, never shoves neighbours */
+.admin-form-hint {
+  grid-row: 3;
+  font-size: 10px;
+  line-height: 18px;
+  opacity: 0.6;
+  text-transform: none;
+  letter-spacing: normal;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* checkbox: a real inline control, not a stretched input */
+.admin-form-grid > .admin-form-label--checkbox {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  grid-template-rows: none;
+  min-height: 40px;
+  align-self: center;
+  text-transform: none;
+  letter-spacing: normal;
+  font-size: 12px;
+  opacity: 0.9;
+  cursor: pointer;
+}
+.admin-form-grid > .admin-form-label--checkbox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  margin: 0;
+  accent-color: currentColor;
+  cursor: pointer;
+}
+
+/* action row: right aligned, real spacing, visual separation */
+.admin-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.admin-form-actions .primary-button,
+.admin-form-actions .secondary-button {
+  min-width: 132px;
+  height: 38px;
+  padding: 0 18px;
+  justify-content: center;
+}
+.admin-inline-error { margin-bottom: 12px; }
+
+@media (max-width: 860px) {
+  .admin-form-grid { grid-template-columns: 1fr; }
+  .admin-form-actions { justify-content: stretch; }
+  .admin-form-actions .primary-button,
+  .admin-form-actions .secondary-button { flex: 1 1 auto; }
+}

@@ -1,0 +1,150 @@
+{
+    "App.tsx":  {
+                    "d1":  0,
+                    "d2":  15
+                },
+    "components/analytics/BidirectionalThread.tsx":  {
+                                                         "d1":  0,
+                                                         "d2":  11
+                                                     },
+    "components/analytics/EvidencePanel.tsx":  {
+                                                   "d1":  0,
+                                                   "d2":  8
+                                               },
+    "components/brand/AppCommandHeader.tsx":  {
+                                                  "d1":  0,
+                                                  "d2":  2
+                                              },
+    "components/conflict/ConflictDialog.tsx":  {
+                                                   "d1":  2,
+                                                   "d2":  0
+                                               },
+    "components/dashboard/widget-builder/content/WidgetBuilderWizardContent.data-steps.tsx":  {
+                                                                                                  "d1":  7,
+                                                                                                  "d2":  0
+                                                                                              },
+    "components/dashboard/widget-builder/content/WidgetBuilderWizardContent.filter-step.tsx":  {
+                                                                                                   "d1":  13,
+                                                                                                   "d2":  0
+                                                                                               },
+    "components/DashboardFilterBar.tsx":  {
+                                              "d1":  2,
+                                              "d2":  0
+                                          },
+    "components/exec/EntitlementGate.tsx":  {
+                                                "d1":  0,
+                                                "d2":  1
+                                            },
+    "components/exec/ValueRangePanel.tsx":  {
+                                                "d1":  0,
+                                                "d2":  16
+                                            },
+    "components/inspection/SaveInspectionJobModal.tsx":  {
+                                                             "d1":  1,
+                                                             "d2":  0
+                                                         },
+    "components/logging/LogPanel.tsx":  {
+                                            "d1":  5,
+                                            "d2":  0
+                                        },
+    "components/materials/GenealogyThreadPanel.tsx":  {
+                                                          "d1":  1,
+                                                          "d2":  0
+                                                      },
+    "components/ops/JobsMonitorTable.tsx":  {
+                                                "d1":  0,
+                                                "d2":  3
+                                            },
+    "components/standard/DataFetchBoundary.tsx":  {
+                                                      "d1":  0,
+                                                      "d2":  2
+                                                  },
+    "components/standard/StandardFields.tsx":  {
+                                                   "d1":  0,
+                                                   "d2":  4
+                                               },
+    "components/standard/StandardSurface.tsx":  {
+                                                    "d1":  0,
+                                                    "d2":  5
+                                                },
+    "components/standard/StandardTable.implementation.tsx":  {
+                                                                 "d1":  0,
+                                                                 "d2":  7
+                                                             },
+    "pages/Admin/AdminDbConfigurationTab.tsx":  {
+                                                    "d1":  18,
+                                                    "d2":  0
+                                                },
+    "pages/Admin/AdminImportingDataTab.tsx":  {
+                                                  "d1":  2,
+                                                  "d2":  0
+                                              },
+    "pages/Admin/AdminSchemaConfigurationTab.implementation.generated.tsx":  {
+                                                                                 "d1":  17,
+                                                                                 "d2":  0
+                                                                             },
+    "pages/Admin/CanonicalSchemaMappingPanel.implementation.tsx":  {
+                                                                       "d1":  12,
+                                                                       "d2":  0
+                                                                   },
+    "pages/Advisory/ScenarioSimulationPage.tsx":  {
+                                                      "d1":  3,
+                                                      "d2":  0
+                                                  },
+    "pages/Advisory/ValueRealizationPage.tsx":  {
+                                                    "d1":  1,
+                                                    "d2":  0
+                                                },
+    "pages/AnalysisJobConfigPage.tsx":  {
+                                            "d1":  18,
+                                            "d2":  25
+                                        },
+    "pages/Analytics/InspectionJobsPage.tsx":  {
+                                                   "d1":  5,
+                                                   "d2":  0
+                                               },
+    "pages/Dashboard/P3T15WidgetSchemaDriftPage.tsx":  {
+                                                           "d1":  4,
+                                                           "d2":  0
+                                                       },
+    "pages/DataIntegration/AlertingPage.tsx":  {
+                                                   "d1":  10,
+                                                   "d2":  0
+                                               },
+    "pages/DataIntegration/AuthorMappingPage.tsx":  {
+                                                        "d1":  6,
+                                                        "d2":  0
+                                                    },
+    "pages/EdgeCollector/EdgeCollectorPage.tsx":  {
+                                                      "d1":  4,
+                                                      "d2":  0
+                                                  },
+    "pages/HistorianConnector/HistorianConnectorPage.tsx":  {
+                                                                "d1":  4,
+                                                                "d2":  0
+                                                            },
+    "pages/Phase8/AssistantConfigurationPage.tsx":  {
+                                                        "d1":  8,
+                                                        "d2":  0
+                                                    },
+    "pages/Phase8/SuggestionRecommendationPage.tsx":  {
+                                                          "d1":  4,
+                                                          "d2":  0
+                                                      },
+    "pages/SourceImportPrepPage.tsx":  {
+                                           "d1":  9,
+                                           "d2":  13
+                                       },
+    "pages/V5OutboundI18nMobilePage.tsx":  {
+                                               "d1":  1,
+                                               "d2":  0
+                                           },
+    "pages/ValueEvidence/CostAssumptionManagementPage.tsx":  {
+                                                                 "d1":  3,
+                                                                 "d2":  0
+                                                             },
+    "pages/ValueExecutive/ValueExecutiveDashboardPage.tsx":  {
+                                                                 "d1":  1,
+                                                                 "d2":  0
+                                                             }
+}

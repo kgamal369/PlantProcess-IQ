@@ -12,7 +12,7 @@ public static class ConnectorProviderCatalog
             new ProviderTypeDto(
                 ProviderType: "Csv",
                 DisplayName: "CSV Snapshot",
-                Description: "Available now. Reads CSV snapshot exports into the raw staging layer.",
+                Description: "Reads CSV exports from a file share into the staging layer.",
                 IsAvailableNow: ProviderAvailability.IsAvailableNow("Csv"),
                 RequiresSecretReference: false,
                 SupportsSchemaDiscovery: true,
@@ -22,7 +22,7 @@ public static class ConnectorProviderCatalog
             new ProviderTypeDto(
                 ProviderType: "Excel",
                 DisplayName: "Excel Snapshot",
-                Description: "Available now. Reads Excel workbook/sheet snapshots into the raw staging layer.",
+                Description: "Reads Excel workbooks and sheets into the staging layer.",
                 IsAvailableNow: ProviderAvailability.IsAvailableNow("Excel"),
                 RequiresSecretReference: false,
                 SupportsSchemaDiscovery: true,
@@ -32,7 +32,7 @@ public static class ConnectorProviderCatalog
             new ProviderTypeDto(
                 ProviderType: "PostgreSql",
                 DisplayName: "PostgreSQL Read-only DB Link",
-                Description: "Planned/conditional read-only connector for PostgreSQL source systems. Show as available only after demo-certification smoke tests are part of the API contract suite.",
+                Description: "Read-only DB link to PostgreSQL source systems.",
                 IsAvailableNow: ProviderAvailability.IsAvailableNow("PostgreSql"),
                 RequiresSecretReference: true,
                 SupportsSchemaDiscovery: true,
@@ -42,7 +42,7 @@ public static class ConnectorProviderCatalog
             new ProviderTypeDto(
                 ProviderType: "SqlServer",
                 DisplayName: "Microsoft SQL Server Read-only DB Link",
-                Description: "Planned/conditional read-only connector for SQL Server / MSSQL source systems.",
+                Description: "Read-only DB link to Microsoft SQL Server source systems.",
                 IsAvailableNow: ProviderAvailability.IsAvailableNow("SqlServer"),
                 RequiresSecretReference: true,
                 SupportsSchemaDiscovery: true,
@@ -52,7 +52,7 @@ public static class ConnectorProviderCatalog
             new ProviderTypeDto(
                 ProviderType: "MySql",
                 DisplayName: "MySQL Read-only DB Link",
-                Description: "Planned/conditional read-only connector for MySQL source systems and inspection devices.",
+                Description: "Read-only DB link to MySQL source systems.",
                 IsAvailableNow: ProviderAvailability.IsAvailableNow("MySql"),
                 RequiresSecretReference: true,
                 SupportsSchemaDiscovery: true,
@@ -62,8 +62,18 @@ public static class ConnectorProviderCatalog
             new ProviderTypeDto(
                 ProviderType: "Oracle",
                 DisplayName: "Oracle Read-only DB Link",
-                Description: "Planned read-only Oracle connector for MES/L2/QMS source systems.",
+                Description: "Read-only DB link to Oracle source systems.",
                 IsAvailableNow: ProviderAvailability.IsAvailableNow("Oracle"),
+                RequiresSecretReference: true,
+                SupportsSchemaDiscovery: true,
+                SupportsSnapshotImport: true,
+                SupportsIncrementalImport: true),
+
+            new ProviderTypeDto(
+                ProviderType: "Sap",
+                DisplayName: "SAP",
+                Description: "Read-only connector for SAP source systems.",
+                IsAvailableNow: ProviderAvailability.IsAvailableNow("Sap"),
                 RequiresSecretReference: true,
                 SupportsSchemaDiscovery: true,
                 SupportsSnapshotImport: true,
@@ -72,7 +82,7 @@ public static class ConnectorProviderCatalog
             new ProviderTypeDto(
                 ProviderType: "RestApi",
                 DisplayName: "REST API Snapshot",
-                Description: "Future API snapshot connector. Not part of the current demo availability.",
+                Description: "Reads snapshots from REST endpoints.",
                 IsAvailableNow: ProviderAvailability.IsAvailableNow("RestApi"),
                 RequiresSecretReference: true,
                 SupportsSchemaDiscovery: false,
@@ -83,7 +93,7 @@ public static class ConnectorProviderCatalog
             new ProviderTypeDto(
                 ProviderType: "OpcUaHistorian",
                 DisplayName: "OPC-UA / Historian Gateway",
-                Description: "Read-only historian gateway onboarding: configuration validation, tag/point browse metadata, bounded sample reads, and mapping handoff. Presented as available only after intentional demo certification via PPIQ_CONNECTOR_CERTIFIED_OPCUAHISTORIAN (truth contract: stays Planned otherwise).",
+                Description: "Read-only gateway for OPC-UA historians and tag archives.",
                 IsAvailableNow: ConnectorCertification.IsCertified("OpcUaHistorian"),
                 RequiresSecretReference: true,
                 SupportsSchemaDiscovery: true,
