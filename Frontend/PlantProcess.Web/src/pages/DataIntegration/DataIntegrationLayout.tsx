@@ -69,11 +69,11 @@ export function DataIntegrationLayout() {
   const context: DataIntegrationContext = { data, isLoading, refresh };
 
   return (
-    <div data-testid="data-integration-area">
+    <div className="ppiq-journey-workspace" data-testid="data-integration-area">
       <StandardPageHeader
         title="Data Integration"
-        subtitle="Connect plant sources, map them to the canonical model, run imports and watch every job."
-        description="Everything needed to get plant data into PlantProcess IQ. Connections are read-only toward your source systems at all times."
+        subtitle="Connect, import, map and monitor plant data through one governed workflow."
+        description="Source access is read-only. Refresh updates the operational state without changing customer systems."
         actions={
           <StandardButton
             variant="secondary"

@@ -1,37 +1,43 @@
-// FILE: src/components/journey/JourneyRail.tsx
-// M1-17: persistent, read-only "step X of N" affordance. Reflects route only;
-// no backend logic. Alerts is a roadmap node (4th UI, M1-06) shown as "soon".
 import { NavLink, useLocation } from "react-router-dom";
+import { BellRing, Check, ChevronRight } from "lucide-react";
 import "./JourneyRail.css";
 
 type Stage = {
   n: number;
   label: string;
-  to: string | null;       // null => roadmap node (not yet a destination)
-  match: string[];         // path prefixes that mean "you are on this stage"
+  shortLabel: string;
+  to: string;
+  match: string[];
+  group: "Data" | "Experience" | "Intelligence" | "Governance";
 };
 
-const STAGES: Stage[] = [
-  { n: 1,  label: "Connect",    to: "/data-integration/connections", match: ["/data-integration/connections"] },
-  { n: 2,  label: "Schedule",   to: "/data-integration/jobs",        match: ["/data-integration/jobs"] },
-  { n: 3,  label: "Import",     to: "/data-integration/importing",   match: ["/data-integration/importing"] },
-  { n: 4,  label: "Prepare",    to: "/data-integration/prepare",     match: ["/data-integration/prepare"] },
-  { n: 5,  label: "Load",       to: "/data-integration/registry",    match: ["/data-integration/registry"] },
-  { n: 6,  label: "Dashboards", to: "/dashboard",                    match: ["/dashboard"] },
-  { n: 7,  label: "Analysis",   to: "/correlations",                 match: ["/correlations"] },
-  { n: 8,  label: "Findings",   to: "/risk",                         match: ["/risk", "/materials", "/data-quality"] },
-  { n: 9,  label: "Alerts",     to: null,                            match: [] },
-  { n: 10, label: "Assistant",  to: "/assistant",                    match: ["/assistant", "/suggestions"] },
+const STAGES: ReadonlyArray<Stage> = [
+  { n: 1, label: "Connect", shortLabel: "Connect", to: "/data-integration/connections", match: ["/data-integration/connections"], group: "Data" },
+  { n: 2, label: "Register & schedule", shortLabel: "Register", to: "/data-integration/registry", match: ["/data-integration/registry", "/data-integration/prepare"], group: "Data" },
+  { n: 3, label: "Incremental import", shortLabel: "Import", to: "/data-integration/importing", match: ["/data-integration/importing"], group: "Data" },
+  { n: 4, label: "Prepare mapping", shortLabel: "Prepare", to: "/data-integration/prepare", match: ["/data-integration/prepare"], group: "Data" },
+  { n: 5, label: "Load to plant data", shortLabel: "Map", to: "/data-integration/author-mapping", match: ["/data-integration/author-mapping"], group: "Data" },
+  { n: 6, label: "Verify loaded data", shortLabel: "Loaded", to: "/materials", match: ["/materials", "/material-investigation"], group: "Data" },
+  { n: 7, label: "Dashboards & widgets", shortLabel: "Dashboards", to: "/dashboard", match: ["/dashboard", "/page-builder", "/analytics-widgets"], group: "Experience" },
+  { n: 8, label: "Author analysis", shortLabel: "Analysis", to: "/investigate/analysis-jobs", match: ["/investigate/analysis-jobs"], group: "Intelligence" },
+  { n: 9, label: "Run analysis jobs", shortLabel: "Run", to: "/investigate/inspect", match: ["/investigate/inspect", "/investigate/advanced"], group: "Intelligence" },
+  { n: 10, label: "Review findings", shortLabel: "Findings", to: "/correlations", match: ["/correlations", "/correlation", "/risk", "/data-quality", "/quality"], group: "Intelligence" },
+  { n: 11, label: "AI/ML readiness", shortLabel: "ML ready", to: "/ml-readiness", match: ["/ml-readiness"], group: "Intelligence" },
+  { n: 12, label: "AI/ML jobs", shortLabel: "ML jobs", to: "/data-integration/jobs", match: ["/data-integration/jobs"], group: "Intelligence" },
+  { n: 13, label: "AI/ML results", shortLabel: "ML results", to: "/suggestions", match: ["/suggestions"], group: "Intelligence" },
+  { n: 14, label: "Engine supervisor", shortLabel: "Supervisor", to: "/data-integration/supervisor", match: ["/data-integration/supervisor"], group: "Governance" },
+  { n: 15, label: "Grounded assistant", shortLabel: "Assistant", to: "/assistant", match: ["/assistant"], group: "Governance" },
 ];
 
 function activeIndex(pathname: string): number {
-  // longest-prefix wins so /assistant/configuration still resolves to Assistant
   let best = -1;
-  let bestLen = -1;
-  STAGES.forEach((s, i) => {
-    s.match.forEach((m) => {
-      if (pathname === m || pathname.startsWith(m + "/") || pathname.startsWith(m)) {
-        if (m.length > bestLen) { bestLen = m.length; best = i; }
+  let bestLength = -1;
+  STAGES.forEach((stage, index) => {
+    stage.match.forEach((prefix) => {
+      const matches = pathname === prefix || pathname.startsWith(prefix + "/");
+      if (matches && prefix.length > bestLength) {
+        best = index;
+        bestLength = prefix.length;
       }
     });
   });
@@ -41,56 +47,53 @@ function activeIndex(pathname: string): number {
 export function JourneyRail() {
   const { pathname } = useLocation();
   const current = activeIndex(pathname);
-
-  // next actionable stage after the current one (skip roadmap nodes without a route)
-  let nextStage: Stage | null = null;
-  for (let i = current + 1; i < STAGES.length; i++) {
-    if (STAGES[i].to) { nextStage = STAGES[i]; break; }
-  }
-
-  const currentLabel = current >= 0 ? STAGES[current].label : "Start";
-  const currentNumber = current >= 0 ? STAGES[current].n : 0;
+  const currentStage = current >= 0 ? STAGES[current] : null;
+  const nextStage = current >= 0 && current < STAGES.length - 1 ? STAGES[current + 1] : STAGES[0];
 
   return (
-    <nav className="piq-journey-rail" aria-label="Product journey progress">
+    <nav className="piq-journey-rail" aria-label="PlantProcess IQ canonical journey">
       <div className="piq-journey-rail__head">
-        <span className="piq-journey-rail__step">
-          Step {currentNumber} of 15
-        </span>
-        <span className="piq-journey-rail__here">{currentLabel}</span>
-        {nextStage && (
-          <NavLink className="piq-journey-rail__next" to={nextStage.to as string}>
-            Next: {nextStage.label} &rarr;
+        <div className="piq-journey-rail__identity">
+          <span className="piq-journey-rail__eyebrow">Canonical journey</span>
+          <strong className="piq-journey-rail__current">
+            {currentStage ? `Step ${currentStage.n} of 15 - ${currentStage.label}` : "15-step product journey"}
+          </strong>
+        </div>
+
+        <div className="piq-journey-rail__actions">
+          <NavLink className="piq-journey-rail__alerts" to="/data-integration/alerting">
+            <BellRing size={15} aria-hidden="true" />
+            Plant data log
           </NavLink>
-        )}
+          <NavLink className="piq-journey-rail__next" to={nextStage.to}>
+            Next: {nextStage.shortLabel}
+            <ChevronRight size={15} aria-hidden="true" />
+          </NavLink>
+        </div>
       </div>
 
-      <ol className="piq-journey-rail__track">
-        {STAGES.map((s, i) => {
-          const state =
-            i === current ? "current" : i < current ? "done" : "upcoming";
-          const roadmap = s.to === null;
-          const cls = `piq-journey-node piq-journey-node--${state}${roadmap ? " piq-journey-node--roadmap" : ""}`;
-          const inner = (
-            <span className="piq-journey-node__inner">
-              <span className="piq-journey-node__dot" aria-hidden="true">{s.n}</span>
-              <span className="piq-journey-node__label">{s.label}</span>
-              {roadmap && <span className="piq-journey-node__soon">soon</span>}
-            </span>
-          );
-          return (
-            <li key={s.n} className={cls}>
-              {roadmap || !s.to ? (
-                <span className="piq-journey-node__link" aria-disabled="true">{inner}</span>
-              ) : (
-                <NavLink className="piq-journey-node__link" to={s.to} aria-current={i === current ? "step" : undefined}>
-                  {inner}
+      <div className="piq-journey-rail__viewport" tabIndex={0} aria-label="Journey steps; scroll horizontally on small screens">
+        <ol className="piq-journey-rail__track">
+          {STAGES.map((stage, index) => {
+            const state = index === current ? "current" : current >= 0 && index < current ? "done" : "upcoming";
+            return (
+              <li key={stage.n} className={`piq-journey-node piq-journey-node--${state}`} data-group={stage.group}>
+                <NavLink
+                  className="piq-journey-node__link"
+                  to={stage.to}
+                  title={`${stage.n}. ${stage.label}`}
+                  aria-current={state === "current" ? "step" : undefined}
+                >
+                  <span className="piq-journey-node__dot" aria-hidden="true">
+                    {state === "done" ? <Check size={12} strokeWidth={3} /> : stage.n}
+                  </span>
+                  <span className="piq-journey-node__label">{stage.shortLabel}</span>
                 </NavLink>
-              )}
-            </li>
-          );
-        })}
-      </ol>
+              </li>
+            );
+          })}
+        </ol>
+      </div>
     </nav>
   );
 }

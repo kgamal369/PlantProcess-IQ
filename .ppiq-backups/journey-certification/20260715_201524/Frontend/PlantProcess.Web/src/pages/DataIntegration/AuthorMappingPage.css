@@ -1,0 +1,49 @@
+/* M1-04 AuthorMappingPage - minimal, theme-safe, no polish (M2/M3 later) */
+.ppiq-author-mapping { padding: 4px 0 24px; }
+.ppiq-am-muted { color: var(--color-fg-muted, #6b7280); font-size: 13px; }
+.ppiq-am-empty {
+  margin-top: 12px; padding: 16px;
+  border: 1px dashed var(--color-border-default, #d0d7de);
+  border-radius: 8px; color: var(--color-fg-muted, #6b7280);
+}
+.ppiq-am-row { display: flex; gap: 16px; flex-wrap: wrap; margin: 12px 0; }
+.ppiq-am-label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; }
+.ppiq-am-select, .ppiq-am-input {
+  font-size: 13px; padding: 6px 8px;
+  border: 1px solid var(--color-border-default, #d0d7de);
+  border-radius: 6px;
+  background: var(--color-canvas-default, #fff);
+  color: var(--color-fg-default, inherit);
+}
+.ppiq-am-select { min-width: 260px; }
+.ppiq-am-grid { width: 100%; border-collapse: collapse; margin-top: 8px; }
+.ppiq-am-grid th, .ppiq-am-grid td {
+  text-align: left; padding: 6px 8px;
+  border-bottom: 1px solid var(--color-border-muted, #eaecef);
+  font-size: 13px;
+}
+.ppiq-am-grid th { color: var(--color-fg-muted, #6b7280); font-weight: 600; }
+.ppiq-am-input { width: 100%; }
+.ppiq-am-x {
+  border: 1px solid var(--color-border-default, #d0d7de);
+  background: transparent; border-radius: 6px; cursor: pointer;
+  padding: 2px 8px; color: var(--color-fg-muted, #6b7280);
+}
+.ppiq-am-actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+.ppiq-am-notice {
+  margin-top: 12px; padding: 10px 12px; border-radius: 6px; font-size: 13px;
+  background: var(--color-success-subtle, #eaffea);
+  color: var(--color-success-fg, #1a7f37);
+}
+.ppiq-am-error {
+  margin-top: 12px; padding: 10px 12px; border-radius: 6px; font-size: 13px;
+  background: var(--color-danger-subtle, #ffebe9);
+  color: var(--color-danger-fg, #cf222e);
+}
+.ppiq-am-result { margin-top: 16px; }
+.ppiq-am-result-nums { display: flex; gap: 16px; margin: 6px 0; font-weight: 600; }
+.ppiq-am-json {
+  font-size: 12px; padding: 12px; overflow: auto; max-height: 240px;
+  background: var(--color-canvas-subtle, rgba(127,127,127,0.06));
+  border: 1px solid var(--color-border-muted, #eaecef); border-radius: 6px;
+}

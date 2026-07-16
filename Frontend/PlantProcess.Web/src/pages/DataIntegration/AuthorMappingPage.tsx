@@ -1,10 +1,13 @@
-// M1-04 AuthorMappingPage - design-system compliant (PPIQ-T09/T11).
 import { useEffect, useMemo, useState } from "react";
 import {
-  StandardPageHeader,
-  StandardButton,
-  StandardTable,
   DataFetchBoundary,
+  StandardButton,
+  StandardCard,
+  StandardInput,
+  StandardPageHeader,
+  StandardSelect,
+  StandardTable,
+  type StandardSelectOption,
   type StandardTableColumn,
 } from "@/components/standard";
 import {
@@ -19,9 +22,15 @@ import "./AuthorMappingPage.css";
 type FieldRow = { idx: number; target: string; source: string };
 
 const TARGET_ENTITIES = [
-  "DefectCatalog", "ParameterDefinition", "MaterialUnit", "MaterialAlias",
-  "ProcessStepExecution", "ParameterObservation", "QualityEvent", "GenealogyEdge",
-];
+  "DefectCatalog",
+  "ParameterDefinition",
+  "MaterialUnit",
+  "MaterialAlias",
+  "ProcessStepExecution",
+  "ParameterObservation",
+  "QualityEvent",
+  "GenealogyEdge",
+] as const;
 
 const SUGGESTED: Record<string, string[]> = {
   DefectCatalog: ["DefectCode", "DefectName", "DefectCategory"],
@@ -34,8 +43,16 @@ const SUGGESTED: Record<string, string[]> = {
   GenealogyEdge: ["ParentMaterialCode", "ChildMaterialCode", "RelationshipType"],
 };
 
-function readNum(r: ExecuteResult, keys: string[]): number | null {
-  for (const k of keys) { const v = r[k]; if (typeof v === "number") return v; }
+const targetOptions: ReadonlyArray<StandardSelectOption> = TARGET_ENTITIES.map((entity) => ({
+  value: entity,
+  label: entity,
+}));
+
+function readNum(result: ExecuteResult, keys: string[]): number | null {
+  for (const key of keys) {
+    const value = result[key];
+    if (typeof value === "number") return value;
+  }
   return null;
 }
 
@@ -43,12 +60,10 @@ export function AuthorMappingPage() {
   const [batches, setBatches] = useState<ImportBatch[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<unknown>(null);
-
-  const [batchId, setBatchId] = useState<string>("");
+  const [batchId, setBatchId] = useState("");
   const [targetEntity, setTargetEntity] = useState<string>("DefectCatalog");
   const [rows, setRows] = useState<FieldRow[]>([{ idx: 0, target: "", source: "" }]);
   const [nextIdx, setNextIdx] = useState(1);
-
   const [busy, setBusy] = useState(false);
   const [mappingId, setMappingId] = useState<string | null>(null);
   const [result, setResult] = useState<ExecuteResult | null>(null);
@@ -59,12 +74,12 @@ export function AuthorMappingPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const b = await listImportBatches();
-      setBatches(Array.isArray(b) ? b : []);
-      const first = Array.isArray(b) ? b[0] : undefined;
-      if (first) setBatchId(first.id);
-    } catch (e: unknown) {
-      setError(e);
+      const response = await listImportBatches();
+      const next = Array.isArray(response) ? response : [];
+      setBatches(next);
+      if (next[0]) setBatchId((current) => current || next[0].id);
+    } catch (caught: unknown) {
+      setError(caught);
     } finally {
       setIsLoading(false);
     }
@@ -73,59 +88,95 @@ export function AuthorMappingPage() {
   useEffect(() => {
     let cancelled = false;
     listImportBatches()
-      .then((b) => {
+      .then((response) => {
         if (cancelled) return;
-        setBatches(Array.isArray(b) ? b : []);
-        const first = Array.isArray(b) ? b[0] : undefined;
-        if (first) setBatchId(first.id);
+        const next = Array.isArray(response) ? response : [];
+        setBatches(next);
+        if (next[0]) setBatchId(next[0].id);
       })
-      .catch((e: unknown) => { if (!cancelled) setError(e); })
-      .finally(() => { if (!cancelled) setIsLoading(false); });
-    return () => { cancelled = true; };
+      .catch((caught: unknown) => {
+        if (!cancelled) setError(caught);
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const selectedBatch = useMemo(() => batches.find((b) => b.id === batchId) ?? null, [batches, batchId]);
+  const selectedBatch = useMemo(
+    () => batches.find((batch) => batch.id === batchId) ?? null,
+    [batches, batchId],
+  );
+
+  const batchOptions = useMemo<ReadonlyArray<StandardSelectOption>>(
+    () =>
+      batches.map((batch) => ({
+        value: batch.id,
+        label: `${batch.sourceObjectName} - ${batch.status ?? "Unknown"} - ${batch.startedAtUtc ?? "No start time"}`,
+        searchText: `${batch.sourceObjectName} ${batch.sourceSystem ?? ""} ${batch.status ?? ""}`,
+      })),
+    [batches],
+  );
 
   function seedRows(entity: string) {
-    const s = SUGGESTED[entity] ?? [];
-    if (s.length > 0) {
-      setRows(s.map((t, i) => ({ idx: i, target: t, source: "" })));
-      setNextIdx(s.length);
-    } else {
-      setRows([{ idx: 0, target: "", source: "" }]);
-      setNextIdx(1);
-    }
+    const suggestions = SUGGESTED[entity] ?? [];
+    const next = suggestions.length
+      ? suggestions.map((target, index) => ({ idx: index, target, source: "" }))
+      : [{ idx: 0, target: "", source: "" }];
+    setRows(next);
+    setNextIdx(next.length);
   }
+
   function updateRow(idx: number, patch: Partial<FieldRow>) {
-    setRows((prev) => prev.map((r) => (r.idx === idx ? { ...r, ...patch } : r)));
+    setRows((current) => current.map((row) => (row.idx === idx ? { ...row, ...patch } : row)));
   }
+
   function addRow() {
-    setRows((prev) => [...prev, { idx: nextIdx, target: "", source: "" }]);
-    setNextIdx((n) => n + 1);
+    setRows((current) => [...current, { idx: nextIdx, target: "", source: "" }]);
+    setNextIdx((current) => current + 1);
   }
+
   function removeRow(idx: number) {
-    setRows((prev) => prev.filter((r) => r.idx !== idx));
+    setRows((current) => current.filter((row) => row.idx !== idx));
   }
 
   const fieldColumns: ReadonlyArray<StandardTableColumn<FieldRow>> = [
     {
-      key: "target", header: "Target field",
-      cell: (r) => (
-        <input className="ppiq-am-input" value={r.target} placeholder="e.g. DefectCode"
-          onChange={(e) => updateRow(r.idx, { target: e.target.value })} />
+      key: "target",
+      header: "Target field",
+      cell: (row) => (
+        <StandardInput
+          className="ppiq-am-table-field"
+          value={row.target}
+          placeholder="e.g. DefectCode"
+          aria-label={`Target field ${row.idx + 1}`}
+          size="sm"
+          onChange={(value) => updateRow(row.idx, { target: value })}
+        />
       ),
     },
     {
-      key: "source", header: "Source (column or const:VALUE)",
-      cell: (r) => (
-        <input className="ppiq-am-input" value={r.source} placeholder="e.g. defect_code or const:CRACK_LONG"
-          onChange={(e) => updateRow(r.idx, { source: e.target.value })} />
+      key: "source",
+      header: "Source column or literal",
+      cell: (row) => (
+        <StandardInput
+          className="ppiq-am-table-field"
+          value={row.source}
+          placeholder="e.g. defect_code or const:CRACK_LONG"
+          aria-label={`Source field ${row.idx + 1}`}
+          size="sm"
+          onChange={(value) => updateRow(row.idx, { source: value })}
+        />
       ),
     },
     {
-      key: "actions", header: "", align: "right",
-      cell: (r) => (
-        <StandardButton variant="secondary" size="sm" onClick={() => removeRow(r.idx)}>
+      key: "actions",
+      header: "Action",
+      align: "right",
+      cell: (row) => (
+        <StandardButton variant="ghost" size="sm" onClick={() => removeRow(row.idx)}>
           Remove
         </StandardButton>
       ),
@@ -133,16 +184,26 @@ export function AuthorMappingPage() {
   ];
 
   async function onSave() {
-    if (!selectedBatch) { setFormError("Pick an import batch first."); return; }
+    if (!selectedBatch) {
+      setFormError("Select an import batch first.");
+      return;
+    }
+
     const map: Record<string, string> = {};
-    rows.forEach((r) => { if (r.target.trim() && r.source.trim()) map[r.target.trim()] = r.source.trim(); });
+    rows.forEach((row) => {
+      if (row.target.trim() && row.source.trim()) map[row.target.trim()] = row.source.trim();
+    });
+
     if (Object.keys(map).length === 0) {
       setFormError("Add at least one field map (target field + source column or const:VALUE).");
       return;
     }
-    setFormError(null); setNotice(null); setBusy(true);
+
+    setFormError(null);
+    setNotice(null);
+    setBusy(true);
     try {
-      const res = await createMappingDefinition({
+      const response = await createMappingDefinition({
         sourceSystemDefinitionId: selectedBatch.sourceSystemDefinitionId,
         mappingCode: `UI-${selectedBatch.sourceObjectName}-${targetEntity}-${Date.now()}`,
         mappingName: `${targetEntity} from ${selectedBatch.sourceObjectName}`,
@@ -150,15 +211,15 @@ export function AuthorMappingPage() {
         targetEntityName: targetEntity,
         mappingJson: JSON.stringify(map),
         mappingVersion: "v1",
-        description: "Authored in HMI (M1-04 step-4)",
+        description: "Authored in the PlantProcess IQ data-preparation workspace.",
         isSynthetic: false,
         sourceSystem: selectedBatch.sourceSystem ?? null,
         sourceRecordId: null,
       });
-      setMappingId(res.id);
-      setNotice(`Mapping saved. Now Execute to project this batch.`);
-    } catch (e: unknown) {
-      setFormError(e instanceof Error ? e.message : "Could not save the mapping.");
+      setMappingId(response.id);
+      setNotice("Mapping saved. Review it, then execute the projection for this batch.");
+    } catch (caught: unknown) {
+      setFormError(caught instanceof Error ? caught.message : "Could not save the mapping.");
     } finally {
       setBusy(false);
     }
@@ -166,91 +227,131 @@ export function AuthorMappingPage() {
 
   async function onExecute() {
     if (!mappingId || !selectedBatch) return;
-    setFormError(null); setBusy(true);
+    setFormError(null);
+    setBusy(true);
     try {
-      const res = await executeMapping(mappingId, selectedBatch.id);
-      setResult(res);
-      setNotice("Executed. Staged rows for this batch should now be Mapped and canonical rows grew.");
-    } catch (e: unknown) {
-      setFormError(e instanceof Error ? e.message : "Could not execute the mapping.");
+      const response = await executeMapping(mappingId, selectedBatch.id);
+      setResult(response);
+      setNotice("Projection completed. Review mapped and failed rows below.");
+    } catch (caught: unknown) {
+      setFormError(caught instanceof Error ? caught.message : "Could not execute the mapping.");
     } finally {
       setBusy(false);
     }
   }
 
   const mapped = result ? readNum(result, ["mapped", "mappedCount", "mappedRows"]) : null;
-  const failed = result ? readNum(result, ["failed", "failedCount", "errors"]) : null;
+  const failed = result ? readNum(result, ["failed", "failedCount", "failedRows", "errors"]) : null;
   const total = result ? readNum(result, ["total", "processed", "rowCount"]) : null;
 
   return (
     <div className="ppiq-author-mapping">
       <StandardPageHeader
         title="Load to Plant Data"
-        subtitle="Author a mapping for a staged object and project it into the canonical plant schema (journey step 4-6)."
+        subtitle="Map staged source fields into the canonical plant model, then execute the projection."
+        description="Use customer taxonomy first, keep every source field explicit, and review failures before moving to analysis."
       />
+
       <DataFetchBoundary
         title="Import batches"
         isLoading={isLoading}
         error={error}
         isEmpty={batches.length === 0}
-        emptyMessage="No import batches yet. Connect a source and import data first (steps 1-3), then return here."
+        emptyMessage="No import batches yet. Connect a source and run an import, then return here."
         onRetry={() => void load()}
       >
-        <div className="ppiq-am-row">
-          <label className="ppiq-am-label">
-            Import batch
-            <select className="ppiq-am-select" value={batchId}
-              onChange={(e) => { setBatchId(e.target.value); setMappingId(null); setResult(null); }}>
-              {batches.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.sourceObjectName} - {b.status ?? "unknown"} - {b.startedAtUtc ?? ""}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="ppiq-am-label">
-            Target entity
-            <select className="ppiq-am-select" value={targetEntity}
-              onChange={(e) => { setTargetEntity(e.target.value); seedRows(e.target.value); setMappingId(null); setResult(null); }}>
-              {TARGET_ENTITIES.map((t) => (<option key={t} value={t}>{t}</option>))}
-            </select>
-          </label>
-        </div>
-
-        {selectedBatch && (
-          <p className="ppiq-am-muted">
-            Source object <strong>{selectedBatch.sourceObjectName}</strong> from system{" "}
-            <strong>{selectedBatch.sourceSystem ?? "-"}</strong>. Source can be a column name or{" "}
-            <code>const:VALUE</code> for a literal.
-          </p>
-        )}
-
-        <StandardTable
-          columns={fieldColumns}
-          data={rows}
-          getRowKey={(r) => String(r.idx)}
-        />
-
-        <div className="ppiq-am-actions">
-          <StandardButton onClick={addRow} isDisabled={busy}>Add field</StandardButton>
-          <StandardButton onClick={onSave} isDisabled={busy || !selectedBatch}>Save mapping</StandardButton>
-          <StandardButton onClick={onExecute} isDisabled={busy || !mappingId}>Execute (project)</StandardButton>
-        </div>
-
-        {notice && <div className="ppiq-am-notice">{notice}</div>}
-        {formError && <div className="ppiq-am-error">{formError}</div>}
-
-        {result && (
-          <div className="ppiq-am-result">
-            <strong>Projection result</strong>
-            <div className="ppiq-am-result-nums">
-              {mapped !== null && <span>Mapped: {mapped}</span>}
-              {failed !== null && <span>Failed: {failed}</span>}
-              {total !== null && <span>Total: {total}</span>}
+        <div className="ppiq-am-workbench">
+          <StandardCard
+            eyebrow="Step 1"
+            title="Choose the source and target"
+            subtitle="Select one completed import batch and the canonical entity it should populate."
+            elevation="flat"
+          >
+            <div className="ppiq-am-row">
+              <StandardSelect
+                label="Import batch"
+                helperText="Search by source object, provider or run status."
+                value={batchId}
+                options={batchOptions}
+                searchable
+                onChange={(value) => {
+                  setBatchId(String(value));
+                  setMappingId(null);
+                  setResult(null);
+                }}
+              />
+              <StandardSelect
+                label="Target entity"
+                helperText="The target determines the required canonical fields."
+                value={targetEntity}
+                options={targetOptions}
+                onChange={(value) => {
+                  const entity = String(value);
+                  setTargetEntity(entity);
+                  seedRows(entity);
+                  setMappingId(null);
+                  setResult(null);
+                }}
+              />
             </div>
-            <pre className="ppiq-am-json">{JSON.stringify(result, null, 2)}</pre>
-          </div>
-        )}
+
+            {selectedBatch ? (
+              <div className="ppiq-am-source-summary" aria-label="Selected import batch summary">
+                <span><small>Source object</small><strong>{selectedBatch.sourceObjectName}</strong></span>
+                <span><small>Source system</small><strong>{selectedBatch.sourceSystem ?? "Not reported"}</strong></span>
+                <span><small>Literal syntax</small><code>const:VALUE</code></span>
+              </div>
+            ) : null}
+          </StandardCard>
+
+          <StandardCard
+            eyebrow="Step 2"
+            title="Define the field map"
+            subtitle="Each row maps one canonical target field to a source column or an explicit literal."
+            elevation="flat"
+          >
+            <div className="ppiq-am-table-wrap">
+              <StandardTable columns={fieldColumns} data={rows} getRowKey={(row) => String(row.idx)} />
+            </div>
+
+            <div className="ppiq-am-actions">
+              <StandardButton variant="secondary" onClick={addRow} isDisabled={busy}>
+                Add field
+              </StandardButton>
+              <StandardButton variant="secondary" onClick={onSave} isDisabled={busy || !selectedBatch} isLoading={busy && !mappingId}>
+                Save mapping
+              </StandardButton>
+              <StandardButton onClick={onExecute} isDisabled={busy || !mappingId} isLoading={busy && Boolean(mappingId)}>
+                Execute projection
+              </StandardButton>
+            </div>
+
+            {notice ? <div className="ppiq-am-notice" role="status">{notice}</div> : null}
+            {formError ? <div className="ppiq-am-error" role="alert">{formError}</div> : null}
+          </StandardCard>
+
+          {result ? (
+            <StandardCard
+              eyebrow="Step 3"
+              title="Projection result"
+              subtitle="Mapped and failed rows are reported separately; failures remain traceable in job logs."
+              elevation="flat"
+            >
+              <div className="ppiq-am-result-nums">
+                {mapped !== null ? <span>Mapped: {mapped}</span> : null}
+                {failed !== null ? <span>Failed: {failed}</span> : null}
+                {total !== null ? <span>Total: {total}</span> : null}
+              </div>
+
+              <details className="ppiq-journey-disclosure">
+                <summary>Technical response details</summary>
+                <div className="ppiq-journey-disclosure__content">
+                  <pre className="ppiq-am-json">{JSON.stringify(result, null, 2)}</pre>
+                </div>
+              </details>
+            </StandardCard>
+          ) : null}
+        </div>
       </DataFetchBoundary>
     </div>
   );

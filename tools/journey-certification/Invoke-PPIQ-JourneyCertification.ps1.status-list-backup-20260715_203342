@@ -1,0 +1,256 @@
+[CmdletBinding()]
+param(
+    [string]$ProjectRoot = "C:\Workspace\PlantProcess-IQ",
+    [string]$ConnectionString = "Host=127.0.0.1;Port=5432;Database=ppiq_app;Username=ppiq_dev;Password=ppiq_dev_local_only",
+    [string]$SmokeUserName = "e2eadmin",
+    [string]$SmokePassword = "E2eAdmin_Local123!",
+    [switch]$SkipBackendIntegration,
+    [switch]$SkipE2E,
+    [switch]$InstallPlaywrightBrowser
+)
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = "Stop"
+$ProgressPreference = "SilentlyContinue"
+
+function Resolve-RequiredPath {
+    param([Parameter(Mandatory = $true)][string]$Path, [Parameter(Mandatory = $true)][string]$Label)
+    if (-not (Test-Path -LiteralPath $Path)) {
+        throw "$Label not found: $Path"
+    }
+    return (Resolve-Path -LiteralPath $Path).Path
+}
+
+function Resolve-CommandPath {
+    param([Parameter(Mandatory = $true)][string]$Name)
+    $command = Get-Command $Name -ErrorAction SilentlyContinue
+    if (-not $command) { throw "Required command '$Name' is not available in PATH." }
+    return $command.Source
+}
+
+$ProjectRoot = Resolve-RequiredPath -Path $ProjectRoot -Label "Project root"
+$BackendRoot = Resolve-RequiredPath -Path (Join-Path $ProjectRoot "Backend") -Label "Backend root"
+$FrontendRoot = Resolve-RequiredPath -Path (Join-Path $ProjectRoot "Frontend\PlantProcess.Web") -Label "Frontend root"
+$ToolsRoot = Resolve-RequiredPath -Path (Join-Path $ProjectRoot "tools\journey-certification") -Label "Journey certification tools"
+
+$DotNet = Resolve-CommandPath "dotnet"
+$Node = Resolve-CommandPath "node"
+$Npm = Resolve-CommandPath "npm"
+$Npx = Resolve-CommandPath "npx"
+
+$ResultRoot = Join-Path $FrontendRoot "test-results\journey-certification"
+$LogRoot = Join-Path $ResultRoot "logs"
+New-Item -ItemType Directory -Path $ResultRoot -Force | Out-Null
+New-Item -ItemType Directory -Path $LogRoot -Force | Out-Null
+
+$script:CommandResults = New-Object System.Collections.Generic.List[object]
+
+function Invoke-LoggedCommand {
+    param(
+        [Parameter(Mandatory = $true)][string]$Id,
+        [Parameter(Mandatory = $true)][string]$WorkingDirectory,
+        [Parameter(Mandatory = $true)][string]$FilePath,
+        [Parameter(Mandatory = $true)][string[]]$Arguments,
+        [hashtable]$Environment = @{},
+        [bool]$Required = $true
+    )
+
+    $logPath = Join-Path $LogRoot ($Id + ".log")
+    $started = Get-Date
+    $oldEnvironment = @{}
+
+    foreach ($key in $Environment.Keys) {
+        $oldEnvironment[$key] = [Environment]::GetEnvironmentVariable($key, "Process")
+        [Environment]::SetEnvironmentVariable($key, [string]$Environment[$key], "Process")
+    }
+
+    Write-Host ""
+    Write-Host ("=" * 96) -ForegroundColor DarkGray
+    Write-Host ("[{0}] {1} {2}" -f $Id, $FilePath, ($Arguments -join " ")) -ForegroundColor Cyan
+    Write-Host ("Working directory: {0}" -f $WorkingDirectory) -ForegroundColor DarkGray
+    Write-Host ("=" * 96) -ForegroundColor DarkGray
+
+    $exitCode = 1
+    $errorText = $null
+    Push-Location $WorkingDirectory
+    try {
+        & $FilePath @Arguments *>&1 | Tee-Object -FilePath $logPath
+        $exitCode = $LASTEXITCODE
+        if ($null -eq $exitCode) { $exitCode = 0 }
+    }
+    catch {
+        $errorText = $_.Exception.ToString()
+        $errorText | Add-Content -LiteralPath $logPath
+        $exitCode = 1
+    }
+    finally {
+        Pop-Location
+        foreach ($key in $Environment.Keys) {
+            [Environment]::SetEnvironmentVariable($key, $oldEnvironment[$key], "Process")
+        }
+    }
+
+    $finished = Get-Date
+    $status = if ($exitCode -eq 0) { "PASS" } else { "FAIL" }
+    $result = [pscustomobject]@{
+        id = $Id
+        status = $status
+        exitCode = [int]$exitCode
+        required = $Required
+        startedAt = $started.ToUniversalTime().ToString("o")
+        finishedAt = $finished.ToUniversalTime().ToString("o")
+        durationSeconds = [Math]::Round(($finished - $started).TotalSeconds, 2)
+        log = $logPath
+        error = $errorText
+    }
+    $script:CommandResults.Add($result)
+
+    if ($status -eq "PASS") {
+        Write-Host "[$Id] PASS" -ForegroundColor Green
+    }
+    else {
+        Write-Host "[$Id] FAIL - see $logPath" -ForegroundColor Red
+    }
+
+    return $exitCode
+}
+
+function Write-CommandStatus {
+    $payload = [pscustomobject]@{
+        generatedAtUtc = (Get-Date).ToUniversalTime().ToString("o")
+        projectRoot = $ProjectRoot
+        connectionStringMasked = ($ConnectionString -replace '(?i)(Password|Pwd)=[^;]*', '$1=***')
+        commands = @($script:CommandResults)
+    }
+    $payload | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $ResultRoot "command-status.json") -Encoding UTF8
+}
+
+Write-Host "PlantProcess IQ Automated Journey Certification" -ForegroundColor Cyan
+Write-Host "Project: $ProjectRoot"
+Write-Host "Results: $ResultRoot"
+
+if (-not (Test-Path -LiteralPath (Join-Path $FrontendRoot "node_modules"))) {
+    $packageLock = Join-Path $FrontendRoot "package-lock.json"
+    $installArgs = if (Test-Path -LiteralPath $packageLock) { @("ci") } else { @("install") }
+    [void](Invoke-LoggedCommand -Id "frontend-dependencies" -WorkingDirectory $FrontendRoot -FilePath $Npm -Arguments $installArgs)
+}
+else {
+    $script:CommandResults.Add([pscustomobject]@{
+        id = "frontend-dependencies"; status = "PASS"; exitCode = 0; required = $true
+        startedAt = (Get-Date).ToUniversalTime().ToString("o")
+        finishedAt = (Get-Date).ToUniversalTime().ToString("o")
+        durationSeconds = 0; log = $null; error = $null
+    })
+}
+
+if ($InstallPlaywrightBrowser -and -not $SkipE2E) {
+    [void](Invoke-LoggedCommand -Id "playwright-browser" -WorkingDirectory $FrontendRoot -FilePath $Npx -Arguments @("playwright", "install", "chromium"))
+}
+
+[void](Invoke-LoggedCommand `
+    -Id "backend-unit-analytics" `
+    -WorkingDirectory $ProjectRoot `
+    -FilePath $DotNet `
+    -Arguments @(
+        "test", "Backend\tests\PlantProcess.Analytics.Core.Tests\PlantProcess.Analytics.Core.Tests.csproj",
+        "-c", "Release",
+        "--filter", "FullyQualifiedName~CanonicalJourneyAnalyticsContractTests",
+        "--logger", "trx;LogFileName=journey-analytics.trx",
+        "--results-directory", (Join-Path $ResultRoot "backend")
+    ))
+
+[void](Invoke-LoggedCommand `
+    -Id "backend-unit-assistant" `
+    -WorkingDirectory $ProjectRoot `
+    -FilePath $DotNet `
+    -Arguments @(
+        "test", "Backend\tests\PlantProcess.Application.UnitTests\PlantProcess.Application.UnitTests.csproj",
+        "-c", "Release",
+        "--filter", "FullyQualifiedName~CanonicalJourneyAssistantContractTests",
+        "--logger", "trx;LogFileName=journey-assistant.trx",
+        "--results-directory", (Join-Path $ResultRoot "backend")
+    ))
+
+if (-not $SkipBackendIntegration) {
+    [void](Invoke-LoggedCommand `
+        -Id "backend-integration" `
+        -WorkingDirectory $ProjectRoot `
+        -FilePath $DotNet `
+        -Environment @{
+            "PPIQ_FORCE_EXTERNAL_API_TEST_HOST" = "1"
+            "PPIQ_TEST_CONNECTION_STRING" = $ConnectionString
+            "ConnectionStrings__PlantProcessDb" = $ConnectionString
+        } `
+        -Arguments @(
+            "test", "Backend\tests\PlantProcess.Api.IntegrationTests\PlantProcess.Api.IntegrationTests.csproj",
+            "-c", "Release",
+            "--filter", "FullyQualifiedName~CanonicalJourneyApiContractTests",
+            "--logger", "trx;LogFileName=journey-api-integration.trx",
+            "--results-directory", (Join-Path $ResultRoot "backend")
+        ))
+}
+else {
+    $script:CommandResults.Add([pscustomobject]@{
+        id = "backend-integration"; status = "SKIPPED"; exitCode = 0; required = $true
+        startedAt = (Get-Date).ToUniversalTime().ToString("o")
+        finishedAt = (Get-Date).ToUniversalTime().ToString("o")
+        durationSeconds = 0; log = $null; error = "Skipped by user switch."
+    })
+}
+
+[void](Invoke-LoggedCommand -Id "frontend-build" -WorkingDirectory $FrontendRoot -FilePath $Npm -Arguments @("run", "build"))
+
+[void](Invoke-LoggedCommand `
+    -Id "frontend-unit" `
+    -WorkingDirectory $FrontendRoot `
+    -FilePath $Npm `
+    -Arguments @(
+        "run", "test:journey:unit", "--",
+        "--reporter=json",
+        "--outputFile=test-results/journey-certification/vitest.json"
+    ))
+
+[void](Invoke-LoggedCommand -Id "ui-static-audit" -WorkingDirectory $FrontendRoot -FilePath $Npm -Arguments @("run", "audit:journey:ui"))
+
+if (-not $SkipE2E) {
+    [void](Invoke-LoggedCommand `
+        -Id "journey-e2e" `
+        -WorkingDirectory $FrontendRoot `
+        -FilePath $Npm `
+        -Environment @{
+            "PPIQ_SMOKE_USERNAME" = $SmokeUserName
+            "PPIQ_SMOKE_PASSWORD" = $SmokePassword
+            "VITE_SMOKE_USERNAME" = $SmokeUserName
+            "VITE_SMOKE_PASSWORD" = $SmokePassword
+            "PPIQ_TEST_CONNECTION_STRING" = $ConnectionString
+            "ConnectionStrings__PlantProcessDb" = $ConnectionString
+        } `
+        -Arguments @("run", "test:journey:e2e"))
+}
+else {
+    $script:CommandResults.Add([pscustomobject]@{
+        id = "journey-e2e"; status = "SKIPPED"; exitCode = 0; required = $true
+        startedAt = (Get-Date).ToUniversalTime().ToString("o")
+        finishedAt = (Get-Date).ToUniversalTime().ToString("o")
+        durationSeconds = 0; log = $null; error = "Skipped by user switch."
+    })
+}
+
+Write-CommandStatus
+
+$scoreExit = Invoke-LoggedCommand -Id "journey-score" -WorkingDirectory $FrontendRoot -FilePath $Npm -Arguments @("run", "score:journey") -Required $false
+Write-CommandStatus
+
+$scoreMarkdown = Join-Path $ResultRoot "journey-score.md"
+Write-Host ""
+Write-Host ("=" * 96) -ForegroundColor DarkGray
+if (Test-Path -LiteralPath $scoreMarkdown) {
+    Get-Content -LiteralPath $scoreMarkdown | ForEach-Object { Write-Host $_ }
+}
+Write-Host ("=" * 96) -ForegroundColor DarkGray
+Write-Host "Evidence folder: $ResultRoot" -ForegroundColor Cyan
+
+if ($scoreExit -ne 0) {
+    exit 1
+}
+exit 0

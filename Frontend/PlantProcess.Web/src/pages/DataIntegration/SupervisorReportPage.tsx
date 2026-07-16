@@ -1,6 +1,10 @@
-// M1-05 SupervisorReportPage - design-system compliant (PPIQ-T09/T11).
 import { useEffect, useState } from "react";
-import { StandardPageHeader, StandardButton, DataFetchBoundary } from "@/components/standard";
+import {
+  DataFetchBoundary,
+  StandardButton,
+  StandardCard,
+  StandardPageHeader,
+} from "@/components/standard";
 import {
   listSupervisorReports,
   runSupervisor,
@@ -18,10 +22,10 @@ export function SupervisorReportPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const r = await listSupervisorReports();
-      setReports(Array.isArray(r) ? r : []);
-    } catch (e: unknown) {
-      setError(e);
+      const response = await listSupervisorReports();
+      setReports(Array.isArray(response) ? response : []);
+    } catch (caught: unknown) {
+      setError(caught);
     } finally {
       setIsLoading(false);
     }
@@ -30,10 +34,18 @@ export function SupervisorReportPage() {
   useEffect(() => {
     let cancelled = false;
     listSupervisorReports()
-      .then((r) => { if (!cancelled) setReports(Array.isArray(r) ? r : []); })
-      .catch((e: unknown) => { if (!cancelled) setError(e); })
-      .finally(() => { if (!cancelled) setIsLoading(false); });
-    return () => { cancelled = true; };
+      .then((response) => {
+        if (!cancelled) setReports(Array.isArray(response) ? response : []);
+      })
+      .catch((caught: unknown) => {
+        if (!cancelled) setError(caught);
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   async function onRun() {
@@ -42,8 +54,8 @@ export function SupervisorReportPage() {
     try {
       await runSupervisor();
       await load();
-    } catch (e: unknown) {
-      setError(e);
+    } catch (caught: unknown) {
+      setError(caught);
     } finally {
       setBusy(false);
     }
@@ -53,33 +65,44 @@ export function SupervisorReportPage() {
     <div className="ppiq-supervisor">
       <StandardPageHeader
         title="Engine Supervisor"
-        subtitle="A weekly review of the engine's findings (journey step 14). Read-only: it never changes a job automatically."
+        subtitle="Review the latest governed analysis results and generate a concise operational report."
+        description="Current release: read-only review. It does not change job configuration or weaken readiness and evidence rules."
         actions={
           <StandardButton onClick={onRun} isDisabled={busy} isLoading={busy}>
             Run review now
           </StandardButton>
         }
       />
-      <DataFetchBoundary
+
+      <StandardCard
+        eyebrow="Journey step 14"
         title="Supervisor reports"
-        isLoading={isLoading}
-        error={error}
-        isEmpty={reports.length === 0}
-        emptyMessage={'No supervisor reports yet. Click "Run review now" to generate the first one.'}
-        onRetry={() => void load()}
+        subtitle="The newest report stays open; older reviews are folded to keep the page focused."
+        elevation="flat"
       >
-        <ol className="ppiq-sup-list">
-          {reports.map((r) => (
-            <li key={r.id} className="ppiq-sup-item">
-              <div className="ppiq-sup-item-head">
-                <span className="ppiq-sup-title">{r.title}</span>
-                <span className="ppiq-sup-date">{r.createdAtUtc}</span>
-              </div>
-              <pre className="ppiq-sup-body">{r.body}</pre>
-            </li>
-          ))}
-        </ol>
-      </DataFetchBoundary>
+        <DataFetchBoundary
+          title="Supervisor reports"
+          isLoading={isLoading}
+          error={error}
+          isEmpty={reports.length === 0}
+          emptyMessage={'No supervisor reports yet. Click "Run review now" to generate the first one.'}
+          onRetry={() => void load()}
+        >
+          <ol className="ppiq-sup-list">
+            {reports.map((report, index) => (
+              <li key={report.id} className="ppiq-sup-item">
+                <details open={index === 0}>
+                  <summary>
+                    <span className="ppiq-sup-title">{report.title}</span>
+                    <span className="ppiq-sup-date">{report.createdAtUtc}</span>
+                  </summary>
+                  <pre className="ppiq-sup-body">{report.body}</pre>
+                </details>
+              </li>
+            ))}
+          </ol>
+        </DataFetchBoundary>
+      </StandardCard>
     </div>
   );
 }

@@ -1,10 +1,13 @@
-// M1-06 AlertingPage - design-system compliant (PPIQ-T09/T11).
 import { useEffect, useState } from "react";
 import {
-  StandardPageHeader,
-  StandardButton,
-  StandardTable,
   DataFetchBoundary,
+  StandardButton,
+  StandardCard,
+  StandardInput,
+  StandardPageHeader,
+  StandardSelect,
+  StandardTable,
+  type StandardSelectOption,
   type StandardTableColumn,
 } from "@/components/standard";
 import {
@@ -17,24 +20,24 @@ import {
 } from "@/api/engine/alerts.api";
 import "./AlertingPage.css";
 
-const COMPARATORS = [">", ">=", "<", "<=", "="];
-const SEVERITIES = ["Info", "Warning", "Critical"];
+const comparatorOptions: ReadonlyArray<StandardSelectOption> = [">", ">=", "<", "<=", "="].map((value) => ({ value, label: value }));
+const severityOptions: ReadonlyArray<StandardSelectOption> = ["Info", "Warning", "Critical"].map((value) => ({ value, label: value }));
 
 const ruleColumns: ReadonlyArray<StandardTableColumn<AlertRule>> = [
-  { key: "name", header: "Name", cell: (r) => r.ruleName },
-  { key: "param", header: "Parameter", cell: (r) => r.parameterCode },
-  { key: "cond", header: "Condition", cell: (r) => `${r.comparator} ${r.limitValue}` },
-  { key: "sev", header: "Severity", cell: (r) => r.severity },
+  { key: "name", header: "Rule", cell: (row) => row.ruleName },
+  { key: "param", header: "Parameter", cell: (row) => row.parameterCode },
+  { key: "cond", header: "Condition", cell: (row) => `${row.comparator} ${row.limitValue}` },
+  { key: "sev", header: "Severity", cell: (row) => row.severity },
 ];
 
 const logColumns: ReadonlyArray<StandardTableColumn<PlantDataLogRow>> = [
-  { key: "time", header: "Time", cell: (r) => r.loggedAtUtc },
-  { key: "rule", header: "Rule", cell: (r) => r.ruleName },
-  { key: "mat", header: "Material", cell: (r) => r.materialCode ?? "-" },
-  { key: "param", header: "Parameter", cell: (r) => r.parameterCode },
-  { key: "val", header: "Value", cell: (r) => (r.observedValue ?? "-") as React.ReactNode },
-  { key: "cond", header: "Condition", cell: (r) => `${r.comparator} ${r.limitValue}` },
-  { key: "sev", header: "Severity", cell: (r) => r.severity },
+  { key: "time", header: "Time", cell: (row) => row.loggedAtUtc },
+  { key: "rule", header: "Rule", cell: (row) => row.ruleName },
+  { key: "mat", header: "Material", cell: (row) => row.materialCode ?? "-" },
+  { key: "param", header: "Parameter", cell: (row) => row.parameterCode },
+  { key: "val", header: "Value", align: "right", cell: (row) => (row.observedValue ?? "-") as React.ReactNode },
+  { key: "cond", header: "Condition", cell: (row) => `${row.comparator} ${row.limitValue}` },
+  { key: "sev", header: "Severity", cell: (row) => row.severity },
 ];
 
 export function AlertingPage() {
@@ -45,7 +48,6 @@ export function AlertingPage() {
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
-
   const [ruleName, setRuleName] = useState("");
   const [parameterCode, setParameterCode] = useState("");
   const [comparator, setComparator] = useState(">");
@@ -56,11 +58,11 @@ export function AlertingPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const [rs, lg] = await Promise.all([listRules(), listLog()]);
-      setRules(Array.isArray(rs) ? rs : []);
-      setLog(Array.isArray(lg) ? lg : []);
-    } catch (e: unknown) {
-      setError(e);
+      const [ruleResponse, logResponse] = await Promise.all([listRules(), listLog()]);
+      setRules(Array.isArray(ruleResponse) ? ruleResponse : []);
+      setLog(Array.isArray(logResponse) ? logResponse : []);
+    } catch (caught: unknown) {
+      setError(caught);
     } finally {
       setIsLoading(false);
     }
@@ -69,14 +71,20 @@ export function AlertingPage() {
   useEffect(() => {
     let cancelled = false;
     Promise.all([listRules(), listLog()])
-      .then(([rs, lg]) => {
+      .then(([ruleResponse, logResponse]) => {
         if (cancelled) return;
-        setRules(Array.isArray(rs) ? rs : []);
-        setLog(Array.isArray(lg) ? lg : []);
+        setRules(Array.isArray(ruleResponse) ? ruleResponse : []);
+        setLog(Array.isArray(logResponse) ? logResponse : []);
       })
-      .catch((e: unknown) => { if (!cancelled) setError(e); })
-      .finally(() => { if (!cancelled) setIsLoading(false); });
-    return () => { cancelled = true; };
+      .catch((caught: unknown) => {
+        if (!cancelled) setError(caught);
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   async function onCreate() {
@@ -86,19 +94,29 @@ export function AlertingPage() {
       setFormError("Rule name and parameter code are required.");
       return;
     }
+
     const limit = Number(limitValue);
     if (Number.isNaN(limit)) {
       setFormError("Limit must be a number.");
       return;
     }
+
     setBusy(true);
     try {
-      await createRule({ ruleName: ruleName.trim(), parameterCode: parameterCode.trim(), comparator, limitValue: limit, severity });
-      setRuleName(""); setParameterCode(""); setLimitValue("");
-      setNotice("Rule created. Click 'Run evaluation' to scan observations.");
+      await createRule({
+        ruleName: ruleName.trim(),
+        parameterCode: parameterCode.trim(),
+        comparator,
+        limitValue: limit,
+        severity,
+      });
+      setRuleName("");
+      setParameterCode("");
+      setLimitValue("");
+      setNotice("Rule created. Run an evaluation to scan new observations.");
       await load();
-    } catch (e: unknown) {
-      setFormError(e instanceof Error ? e.message : "Could not create the rule.");
+    } catch (caught: unknown) {
+      setFormError(caught instanceof Error ? caught.message : "Could not create the rule.");
     } finally {
       setBusy(false);
     }
@@ -108,11 +126,11 @@ export function AlertingPage() {
     setFormError(null);
     setBusy(true);
     try {
-      const res = await evaluateAlerts();
-      setNotice(`Evaluation complete: ${res.logged} new log row(s).`);
+      const response = await evaluateAlerts();
+      setNotice(`Evaluation complete: ${response.logged} new log row(s).`);
       await load();
-    } catch (e: unknown) {
-      setFormError(e instanceof Error ? e.message : "Could not run evaluation.");
+    } catch (caught: unknown) {
+      setFormError(caught instanceof Error ? caught.message : "Could not run evaluation.");
     } finally {
       setBusy(false);
     }
@@ -122,7 +140,8 @@ export function AlertingPage() {
     <div className="ppiq-alerting">
       <StandardPageHeader
         title="Plant Data Log"
-        subtitle="Define threshold rules; the evaluator scans imported observations and logs breaches (journey step: alerting)."
+        subtitle="Create governed threshold rules and review breaches against imported observations."
+        description="Evaluations are read-only toward plant systems and are idempotent for each rule and observation."
         actions={
           <StandardButton onClick={onEvaluate} isDisabled={busy} isLoading={busy}>
             Run evaluation
@@ -130,62 +149,98 @@ export function AlertingPage() {
         }
       />
 
-      <div className="ppiq-al-form">
-        <label className="ppiq-al-label">
-          Rule name
-          <input className="ppiq-al-input" value={ruleName} onChange={(e) => setRuleName(e.target.value)} placeholder="Superheat high" />
-        </label>
-        <label className="ppiq-al-label">
-          Parameter code
-          <input className="ppiq-al-input" value={parameterCode} onChange={(e) => setParameterCode(e.target.value)} placeholder="SUPERHEAT_C" />
-        </label>
-        <label className="ppiq-al-label">
-          Comparator
-          <select className="ppiq-al-input" value={comparator} onChange={(e) => setComparator(e.target.value)}>
-            {COMPARATORS.map((c) => (<option key={c} value={c}>{c}</option>))}
-          </select>
-        </label>
-        <label className="ppiq-al-label">
-          Limit
-          <input className="ppiq-al-input" value={limitValue} onChange={(e) => setLimitValue(e.target.value)} placeholder="36" inputMode="decimal" />
-        </label>
-        <label className="ppiq-al-label">
-          Severity
-          <select className="ppiq-al-input" value={severity} onChange={(e) => setSeverity(e.target.value)}>
-            {SEVERITIES.map((s) => (<option key={s} value={s}>{s}</option>))}
-          </select>
-        </label>
-        <StandardButton onClick={onCreate} isDisabled={busy}>Add rule</StandardButton>
+      <div className="ppiq-al-stack">
+        <StandardCard
+          eyebrow="Rule builder"
+          title="Create a threshold rule"
+          subtitle="Choose a canonical parameter, comparator, limit and operational severity."
+          elevation="flat"
+        >
+          <div className="ppiq-al-form">
+            <StandardInput
+              label="Rule name"
+              value={ruleName}
+              placeholder="Superheat high"
+              required
+              onChange={setRuleName}
+            />
+            <StandardInput
+              label="Parameter code"
+              value={parameterCode}
+              placeholder="SUPERHEAT_C"
+              helperText="Use the imported canonical parameter code."
+              required
+              onChange={setParameterCode}
+            />
+            <StandardSelect
+              label="Comparator"
+              value={comparator}
+              options={comparatorOptions}
+              onChange={(value) => setComparator(String(value))}
+            />
+            <StandardInput
+              label="Limit"
+              value={limitValue}
+              placeholder="36"
+              inputMode="decimal"
+              required
+              onChange={setLimitValue}
+            />
+            <StandardSelect
+              label="Severity"
+              value={severity}
+              options={severityOptions}
+              onChange={(value) => setSeverity(String(value))}
+            />
+            <div className="ppiq-al-form-actions">
+              <StandardButton onClick={onCreate} isDisabled={busy}>
+                Add rule
+              </StandardButton>
+            </div>
+          </div>
+
+          {notice ? <div className="ppiq-al-notice" role="status">{notice}</div> : null}
+          {formError ? <div className="ppiq-al-error" role="alert">{formError}</div> : null}
+        </StandardCard>
+
+        <StandardCard
+          eyebrow="Active configuration"
+          title="Rules"
+          subtitle="Rules are evaluated against newly imported canonical observations."
+          elevation="flat"
+        >
+          <div className="ppiq-al-table-wrap">
+            <StandardTable
+              columns={ruleColumns}
+              data={rules}
+              getRowKey={(row) => row.id}
+              isLoading={isLoading}
+              emptyTitle="No rules yet"
+              emptyDescription="Create the first rule above."
+            />
+          </div>
+        </StandardCard>
+
+        <StandardCard
+          eyebrow="Operational evidence"
+          title="Breach log"
+          subtitle="Every row identifies the rule, material, parameter, observed value and severity."
+          elevation="flat"
+        >
+          <DataFetchBoundary
+            title="Plant data log"
+            isLoading={isLoading}
+            error={error}
+            isEmpty={log.length === 0}
+            emptyMessage="No breaches logged yet. Create a rule and run an evaluation."
+            onRetry={() => void load()}
+          >
+            <div className="ppiq-al-table-wrap">
+              <StandardTable columns={logColumns} data={log} getRowKey={(row) => row.id} />
+            </div>
+          </DataFetchBoundary>
+        </StandardCard>
       </div>
-
-      {notice && <div className="ppiq-al-notice">{notice}</div>}
-      {formError && <div className="ppiq-al-error">{formError}</div>}
-
-      <h3 className="ppiq-al-h3">Rules</h3>
-      <StandardTable
-        columns={ruleColumns}
-        data={rules}
-        getRowKey={(r) => r.id}
-        isLoading={isLoading}
-        emptyTitle="No rules yet"
-        emptyDescription="Add one above."
-      />
-
-      <h3 className="ppiq-al-h3">Plant data log</h3>
-      <DataFetchBoundary
-        title="Plant data log"
-        isLoading={isLoading}
-        error={error}
-        isEmpty={log.length === 0}
-        emptyMessage="No breaches logged yet. Create a rule and run evaluation."
-        onRetry={() => void load()}
-      >
-        <StandardTable
-          columns={logColumns}
-          data={log}
-          getRowKey={(r) => r.id}
-        />
-      </DataFetchBoundary>
     </div>
   );
 }
