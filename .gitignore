@@ -136,3 +136,9 @@ WipeTrap_*.txt
 OracleSchema_*.txt
 wipetrap_state.json
 Finish-M1-18_*.txt
+
+# M1-18: session evidence artifacts stay out of the tree
+/*_2026*.txt
+/importchain_state.json
+/wipetrap_state.json
+*.runner-binding-backup-*
