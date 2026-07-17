@@ -38,6 +38,7 @@ import {
 
 import { productApi, type DashboardMaterialRow } from "../../api/productApiClient";
 import { apiClient } from "@/api/http";
+import { LiveWidgetChart } from "@/components/dashboard/LiveWidgetChart";
 import { mlReadinessApi } from "@/api/ml";
 import { licenseApi, type LicenseStatus, type LicenseTier } from "@/api/license";
 import { SaveInspectionJobModal } from "@/components/inspection/SaveInspectionJobModal";
@@ -380,11 +381,11 @@ export function MaterialAnalyticsCommandDashboardPage() {
 
       <div className="productModule56-grid productModule56-grid--2">
         <StandardCard title="Quality trend" subtitle="Chart wrapper uses StandardCard. Visualization layer remains replaceable.">
-          <ChartPlaceholder title="Quality trend" note="Defect trend and volume trend are rendered in the standard dashboard frame." />
+          <LiveWidgetChart title="Quality trend" chartType="line" dimensionCode="day" measureCode="defectRate" />
         </StandardCard>
 
         <StandardCard title="Risk distribution" subtitle="Color treatment is aligned with Material Search risk chips.">
-          <ChartPlaceholder title="Risk distribution" note="Low, Medium and High buckets share the same tokenized risk-chip treatment." />
+          <LiveWidgetChart title="Severity distribution" chartType="donut" dimensionCode="severity" measureCode="defectCount" />
         </StandardCard>
       </div>
 

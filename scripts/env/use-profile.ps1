@@ -1,5 +1,5 @@
 param(
-    [ValidateSet("local", "test", "server")]
+    [ValidateSet("local", "test", "server", "presentation")]
     [string]$Profile = "local",
 
     [switch]$WriteAppEnvFiles

@@ -40,6 +40,7 @@ import { AppToastHost } from "./notifications/AppToastHost";
 import { AuthProvider, useAuth } from "./state/AuthContext";
 import { DashboardFilterProvider } from "./state/DashboardFilterContext";
 import { DashboardGridLayoutProvider } from "./state/DashboardGridLayoutContext";
+import { RoutedInteractiveWorkspacePage } from "./pages/Dashboard/InteractiveWorkspacePage";
 import { DashboardSelectionProvider } from "./state/DashboardSelectionContext";
 import { ThemeProvider } from "./state/ThemeContext";
 import { LicenseProvider } from "./state/LicenseContext";
@@ -469,6 +470,7 @@ function AppRoutes() {
                 <Routes>
                   <Route element={<AppLayout />}>
                     {/* M1-03 Surface-1: visual import-prep on live discovery */}
+                    <Route path="/workspace/:dashboardCode" element={<RoutedInteractiveWorkspacePage />} />
                     <Route path="/data-integration" element={<DataIntegrationLayout />}>
                       <Route index element={<Navigate to="/data-integration/connections" replace />} />
                       <Route path="connections" element={<ConnectionsRoute />} />

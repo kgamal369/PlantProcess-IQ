@@ -188,6 +188,36 @@ the 4 UI/UX low code 
 
 ---
 
+
+
+rule 7 UI/UX standard 
+all component and interactive with filter 
+
+
+
+filter is applied in all widget and all charts, and if I select certain material or certain steel grade in on chart all widget filter 
+
+
+
+Qlik style and coloring and standard in UI/UX 
+
+
+
+each chart or each widget can max or minize 
+
+
+
+chart  types , heat maps types , interactive tables with conditionining display  or coloring option  , KPI components , filter componetns , list components , filter by date time  component ,   
+
+
+
+during creating a page we drag drop component then click on it to select link each with which parameter , then make the neccessary sql or script or low code grouping , filtering , linking 
+
+
+
+compoenent drag drop , for example if page 3x3 cells  so if copmoenent can with drag drop move and replace other or max or minize within the page layout exact as QLik
+
+
 ## 0 · How to use this document
 
 Three layers, applied in order:

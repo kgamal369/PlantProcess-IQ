@@ -586,7 +586,16 @@ function ConnectionProfileForm({
           Provider Type *
           <StandardPageSelect
             className="admin-select"
-            value={form.providerType}
+            value={
+              // The catalog publishes PascalCase ("Oracle"); stored profiles use
+              // lowercase ("oracle"). Without this resolution the select matches
+              // no option and the browser falls back to the first one, showing an
+              // Oracle profile as "CSV Snapshot". Same comparison the list view
+              // above already uses.
+              providerTypes.find(
+                (pt) => pt.providerType.toLowerCase() === form.providerType.toLowerCase()
+              )?.providerType ?? form.providerType
+            }
             onChange={(e) => handleProviderChange(e.target.value)}
             disabled={isEdit}
           >

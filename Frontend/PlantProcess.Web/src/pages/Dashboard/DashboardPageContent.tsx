@@ -1,5 +1,5 @@
-import { MaterialAnalyticsCommandDashboardPage } from "../MaterialAnalytics/MaterialAnalyticsPages";
+import { InteractiveWorkspacePage } from "./InteractiveWorkspacePage";
 
 export function DashboardPageContent() {
-  return <MaterialAnalyticsCommandDashboardPage />;
+  return <InteractiveWorkspacePage dashboardCode="PRODUCTION_OVERVIEW" />;
 }
