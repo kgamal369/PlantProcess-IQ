@@ -198,6 +198,16 @@ public sealed class AccessControlMiddleware
         ("/analytics/ml", new[] { "GET", "POST" }, "analysis.execute", false),
         ("/analytics/phase2", All(), "analysis.execute", false),
         ("/api/ml/learning", new[] { "GET", "POST" }, "job.manage", false),
+        // M1-21: the ML foundation group (feature store + correlation engine).
+        // Without this line the middleware denies every POST to
+        // /api/ml/foundation/compute/correlation and /feature-store/refresh
+        // ("not mapped in the P01/P02 permission matrix"), while the GET
+        // readiness/outcomes calls slip through anonymously via ("/", GET).
+        // Consequence: the correlation engine cannot be invoked at all and
+        // journey step 9 (Run) is undemonstrable. analysis.execute is the
+        // permission already carried by /analytics/correlations and
+        // /analytics/ml - the sibling engine routes.
+        ("/api/ml/foundation", All(), "analysis.execute", false),
         ("/api/analysis-jobs", All(), "job.manage", false),
         ("/api/alerts", All(), "job.manage", false),
         ("/api/supervisor", All(), "job.manage", false),
