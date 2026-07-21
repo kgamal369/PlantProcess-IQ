@@ -1,4 +1,4 @@
-﻿using PlantProcess.Application.Dashboarding.Contracts;
+using PlantProcess.Application.Dashboarding.Contracts;
 
 namespace PlantProcess.Application.Dashboarding.Services.Widgets;
 
@@ -55,6 +55,7 @@ public static class DashboardWidgetQuerySafetyRegistry
     {
         DashboardMetadataCodes.Measures.MaterialCount,
         DashboardMetadataCodes.Measures.DefectCount,
+        DashboardMetadataCodes.Measures.ObservationCount,
         DashboardMetadataCodes.Measures.DefectRate,
         DashboardMetadataCodes.Measures.AvgParameterValue,
         DashboardMetadataCodes.Measures.MaxParameterValue,

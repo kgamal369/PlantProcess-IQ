@@ -1,4 +1,4 @@
-﻿namespace PlantProcess.Application.Dashboarding.Contracts;
+namespace PlantProcess.Application.Dashboarding.Contracts;
 
 public sealed record DashboardMetadataDto(
     DateTime GeneratedAtUtc,
@@ -185,6 +185,7 @@ public static class DashboardMetadataCodes
     {
         public const string MaterialCount = "materialCount";
         public const string DefectCount = "defectCount";
+        public const string ObservationCount = "observationCount";
         public const string DefectRate = "defectRate";
         public const string AvgParameterValue = "avgParameterValue";
         public const string MaxParameterValue = "maxParameterValue";

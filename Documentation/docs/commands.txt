@@ -121,6 +121,7 @@ docker ps --format '{{.Names}}'
 Terminal 1 — backend API 
 cd C:\Workspace\PlantProcess-IQ
 .\scripts\run\start-api.ps1 -Profile local
+.\scripts\run\start-api.ps1 -Profile presentation
 
 Terminal 2 — frontend web 
 cd C:\Workspace\PlantProcess-IQ
