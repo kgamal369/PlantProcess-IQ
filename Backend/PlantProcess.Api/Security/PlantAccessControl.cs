@@ -216,6 +216,11 @@ public sealed class AccessControlMiddleware
         // while GETs slip through anonymously via the ("/", GET, anonymous) entry.
         // assistant.use is an existing permission, already carried by /analytics/dashboard.
         ("/api/assistant", All(), "assistant.use", false),
+        // M1-22: the suggestions group (step-13 page). Without this the middleware
+        // denies POST/GET to /api/suggestions ("not mapped"), surfacing the red
+        // "SUGGESTION RUNTIME NOT REACHABLE: 401" banner. analysis.execute matches
+        // the sibling analytics routes; adjust if the page role-gates differently.
+        ("/api/suggestions", All(), "analysis.execute", false),
         ("/analytics/dashboard/definitions", All(), "page.design", false),
         ("/analytics/dashboard", new[] { "GET", "POST" }, "assistant.use", false),
         ("/page-definitions", All(), "page.design", false),
