@@ -659,3 +659,877 @@ chatpot , LLM , how it will read and write from my engine 
 
 
 
+M1 Rules : 
+1. I had 4 power point edge for marketing shoud be shown as max during customer presentation 
+I had 5 UI/UX no code low code page : 
+the First one when the user prepare the data from Staging dump storing area to fit and to insert it into the plant Data , and make all preparation and filtering and linking and alias and all ETL  
+The 2nd one when the user use the Raw data and  make special parameter or special variable or some query to display it on some widget or some charts or link a chart to some group by sql or no code 
+the 3rd one when User use the raw data and make advanced correlation or statictics or maths or data analysis methods and export more detailed and better information and advanced understanding of the problems  for example link 100 parameter in correlation block save this file and draw in chart 
+the 4th when the user user the raw data in AI+ML
+the 5th when the user make some plant data logs , so he can get warning log  or info log  or error logs in some use case , for example get warning when temperature of certain machine become above certain value , get error when weight of certain process stage become zero , get info when having new chemical sample   
+   
+   the 5 pages has common functionality 
+   on the top a bar where I can toggle between : 
+no code wiring , or sql 
+if no code wiring I will see : 
+
+on the right side tool box where it contain all required tools which I can drap drop into the white board 
+
+1st group arithmatc logical box contain blocks as : AND , OR , NOT , + , - , % , >, < , >= , <= , if else ,...............
+2nd group sql blocks as : filter , group by , sort by
+3rd group : flow chart diagram : if else , then , loop
+4th group : ....
+on the left side  :  I had all table and when I select one of them I can see all parameter insise the table and I can  select all parameter and drap drop it on the white board ,  or I can select paramter by paramter and drag drop it into the white board 
+then I wire on tool block and parameter block then on the top left save as file and name the file 
+if bad wiring on not possible wiring , I should get error 
+
+if user toggle select sql , I can  only the left bar which contain all tables and write a sql and I can test the result of my sql and see the return of my query down    
+if error I get the error 
+
+then save it as a file 
+
+
+as discrept where 
+# Visual Data Preparation and Transformation Builder - Design Specification
+
+A dual-mode, no-code / low-code surface for building ETL and data-preparation
+logic against linked source tables. The user either wires a visual transform
+graph or writes SQL, tests the result on a sample, and saves the result as a
+named, versioned transformation definition.
+
+This spec assumes a read-only, evidence-grade platform: the builder never
+mutates source data. It produces a saved definition (linked to a job), and the
+generated output is a derived view or a governed materialised result, never a
+write-back to the source system. This matches the dual-mode "config surface"
+pattern (a surface that saves a definition linked to a job).
+
+---
+
+## 1. The single most important correction to the draft
+
+The draft treats three different kinds of block as if they all sit on the same
+canvas and wire to each other freely: arithmetic/logical operators
+(`AND`, `OR`, `+`, `>`), relational operators (`filter`, `group by`, `sort`),
+and control flow (`if/else`, `loop`). They operate at three different
+granularities and must not share one wiring surface. Mixing them is the root
+cause of most "what does this wire even mean" ambiguity.
+
+Three layers, cleanly separated:
+
+| Layer | Lives where | Nodes operate on | Wire carries |
+|-------|-------------|------------------|--------------|
+| Dataflow (transform graph) | The canvas | Whole datasets (relations) | A dataset: rows x typed columns |
+| Expression | Inside a single node's editor | Scalars, columns, literals | Nothing on the canvas; expressions are node config |
+| Orchestration | A separate pipeline surface (out of scope here) | Steps / jobs | Control tokens (success, branch, iterate) |
+
+Consequences:
+
+- The canvas is a Directed Acyclic Graph (DAG) of relational transforms.
+  Cycles are illegal.
+- `AND / OR / NOT / + / - / % / > / < / >= / <= / if-else` are not canvas
+  blocks. They are the vocabulary of the Expression editor that opens inside
+  a Filter node, a Derived-Column node, or a Join-condition editor.
+- `loop`, `if-then` (as flow control), and scheduling belong to orchestration,
+  not to a row-level transform graph. A transform graph is declarative: it
+  describes what the output relation is, not an imperative sequence of steps.
+
+Everything below follows from this.
+
+---
+
+## 2. Canonical artifact: what "save" actually produces
+
+"Save as a file" is underspecified. Define the saved object precisely so it is
+reproducible, portable, and auditable.
+
+A saved **Transformation Definition** contains:
+
+- `id` (stable UUID), `name`, `description`, `author`, `created_utc`,
+  `updated_utc`, `version`, `status` (draft | published).
+- `authoring_mode`: `visual` or `sql` (see section 5).
+- `graph`: the node/edge model as JSON (nodes, ports, wires, expressions,
+  layout). Present only in visual mode.
+- `compiled_sql`: the SQL the graph compiles to (or the hand-written SQL in
+  SQL mode), pinned to a target dialect.
+- `target_dialect`: postgres | mysql | sqlserver (or an internal logical plan
+  that transpiles, see section 14).
+- `source_bindings`: references to source tables/columns by stable internal ID,
+  never by display name, so a source rename does not silently break the
+  definition.
+- `output_schema`: inferred columns, types, nullability of the final output.
+- `lineage`: per-output-column provenance back to source columns and the
+  operations applied (section 11).
+- `validation_snapshot`: status and any warnings at save time.
+- `definition_hash`: hash over the normalised graph + bindings, for change
+  detection and reproducibility.
+
+Rules:
+
+- A published version is immutable. Editing a published definition creates a
+  new draft version; publishing supersedes the previous version but never
+  overwrites it.
+- Names are descriptive only. No phase, task, or version codes embedded in the
+  name. Version is a separate field.
+- The definition is linked to a job/owner object; it does not float free.
+
+---
+
+## 3. Screen layout
+
+```
++------------------------------------------------------------------+
+|  TOP BAR: [Visual | SQL] toggle   name   Validate  Preview  Save |
++-----------+--------------------------------------+---------------+
+|  LEFT     |            CANVAS                     |   RIGHT       |
+|  Schema   |   (node graph, pan/zoom, minimap)     |   Node        |
+|  browser  |                                       |   palette     |
+|           |                                       |               |
++-----------+--------------------------------------+---------------+
+|  BOTTOM: Preview grid  |  Problems  |  Generated SQL  |  Lineage  |
++------------------------------------------------------------------+
+```
+
+- **Top bar**: mode toggle, definition name, Validate, Preview (sample run),
+  Save / Publish, undo/redo, zoom-to-fit. In SQL mode the palette collapses
+  and only the schema browser plus the SQL editor and result grid remain.
+- **Left - schema browser**: linked source tables only (the platform starts
+  empty; only imported/linked tables appear). Per table: qualified name, source
+  connector, row-count estimate, columns with type / nullable / PK / FK,
+  sample values on hover. Search and filter. Multi-select columns and drag a
+  whole table or selected columns onto the canvas to create a Source node.
+  FK relationships are surfaced to suggest joins.
+- **Canvas**: the transform DAG. Pan, zoom, snap-to-grid, minimap,
+  multi-select, copy/paste, undo/redo, node comments/annotations, node search
+  (spacebar or right-click), keyboard shortcuts. Nodes are colour-coded by
+  state: valid, warning, error. While dragging a wire, compatible input ports
+  highlight and incompatible ones dim.
+- **Right - node palette**: the transform catalogue (section 7), grouped and
+  searchable. Drag onto canvas.
+- **Bottom dock (tabs)**:
+  - Preview: sample result grid for the currently selected node.
+  - Problems: the full validation list (errors and warnings), each linking to
+    the offending node/port.
+  - Generated SQL: read-only view of what the graph compiles to.
+  - Lineage: provenance for a selected output column.
+- **Inspector** (opens on node select): the node's configuration, including its
+  Expression editor where relevant.
+
+---
+
+## 4. The wiring correctness engine: node and port types
+
+This is what turns "if bad wiring, I should get error" into a precise,
+predictable rule instead of an afterthought.
+
+Every node exposes typed ports. A wire is legal only if the output port type is
+compatible with the input port type and the schema constraints hold.
+
+Port types:
+
+- **Dataset**: a relation with a known schema (ordered columns, each with a
+  type and nullability). This is what flows along most wires.
+- **Column reference**: a pointer to a column within a dataset (used by node
+  config such as a group key, not usually a free canvas wire).
+- **Scalar**: a single typed value (used inside expressions).
+- **Predicate**: a boolean expression (a filter condition, a join condition).
+
+Wire legality (checked live, at drag time):
+
+- Dataset out -> Dataset in: legal if the consuming node accepts the upstream
+  schema. Some nodes require specific columns or types; those constraints are
+  checked here.
+- You cannot wire a Dataset into a scalar input, or a Scalar into a Dataset
+  input. This is the type error that stops the nonsense wiring the draft was
+  worried about.
+- Multi-input nodes declare arity: Filter has 1 dataset input; Join has 2;
+  Union has 2 or more; a Source has 0 inputs; a Sink has 1 input and 0 outputs.
+
+Structural rules enforced continuously:
+
+- No cycles. Adding a wire that would create a cycle is rejected at drag time
+  with a clear reason.
+- Every node's required inputs must be connected before it is considered valid.
+- At least one Sink/Output node is required before a definition can be saved as
+  runnable (draft can be saved incomplete, published cannot).
+- Orphan nodes (not reaching any sink) are a warning, not an error.
+
+---
+
+## 5. Dual mode: Visual and SQL, and the honest toggle contract
+
+The draft implies free two-way toggling. Naive round-tripping between a visual
+graph and arbitrary SQL is lossy and a reliability trap. Define the contract
+explicitly.
+
+- **Visual -> SQL is always available and deterministic.** The graph compiles
+  to SQL for the target dialect. Users can view the generated SQL read-only at
+  any time.
+- **SQL mode is a first-class authoring mode**, not a transient view. In SQL
+  mode the user writes SQL directly; it is validated by parse + schema
+  inference + a sampled dry run, and produces the same artifact type (a saved
+  definition).
+- **Switching a visual definition to SQL mode forks it.** The generated SQL is
+  handed to the SQL editor; the graph detaches and becomes read-only history.
+  The user is warned this direction is one-way.
+- **SQL -> visual reconstruction is best-effort and limited.** Offer it only
+  for the SQL subset the parser can faithfully map to nodes (simple
+  select/filter/join/group/sort). For anything outside that subset (window
+  functions, vendor-specific syntax, correlated subqueries, CTEs) the tool
+  keeps the definition in SQL mode rather than producing a wrong or partial
+  graph. Do not pretend a full round trip exists.
+
+State the target SQL dialect explicitly on the definition. If the platform has
+multiple connector engines, compile to an internal logical plan first and
+transpile per dialect (section 14), so one definition can target Postgres,
+MySQL, or SQL Server without hand-editing.
+
+---
+
+## 6. SQL-mode workflow
+
+- Left schema browser stays available; clicking a table or column inserts a
+  qualified reference at the cursor.
+- Editor features: syntax highlighting, schema-aware autocomplete
+  (tables/columns/functions), identifier quoting per dialect, format/prettify.
+- **Test** runs the query in read-only mode on a capped sample and shows the
+  result grid plus the inferred result schema below. Row cap and statement
+  timeout are enforced; the query is wrapped or rewritten to guarantee a LIMIT
+  and to reject any statement that is not a single read (no INSERT, UPDATE,
+  DELETE, DDL, or multi-statement batches).
+- On error, show the engine error with line/column, the offending token, and a
+  plain-language hint where the class of error is recognised (unknown column,
+  ambiguous column, type mismatch, missing group key).
+- Save produces the same versioned definition, with `authoring_mode = sql`.
+
+---
+
+## 7. Node catalogue (replacing the draft's four groups)
+
+Grouped by what they do to a relation. This is the right-hand palette.
+
+**Sources**
+- Source Table: bind to a linked table (created by dragging from the schema
+  browser). 0 inputs.
+- Reference to another saved definition: compose pipelines by consuming a
+  previously saved transformation's output (with cycle protection across
+  definitions).
+
+**Row-level transforms** (1 dataset in, 1 out; do not change row count)
+- Derived Column / Compute: add or replace a column from an Expression.
+- Rename Column.
+- Cast / Convert Type (with explicit handling of lossy casts, section 13).
+- Replace Nulls / Coalesce.
+- String ops: split, extract, trim, case-fold, pad, concat (via Expression).
+- Conditional value: `if / else` at the value level (a CASE expression), which
+  is where the draft's "if else" actually belongs.
+
+**Filtering and sampling** (may reduce row count)
+- Filter: keep rows where a Predicate is true. Note the NULL semantics in
+  section 8.
+- Distinct / Deduplicate (with an optional key set).
+- Limit / Top N / Sample.
+
+**Aggregation**
+- Group By: one or more group keys plus aggregate expressions
+  (count, sum, avg, min, max, count distinct, first/last with explicit order).
+  Selecting a non-aggregated, non-key column is an error, surfaced at edit time.
+
+**Relational / set** (2+ inputs)
+- Join: inner / left / right / full, with an explicit key mapping and join
+  Predicate. Warns on fan-out risk and on accidental cross join when no key is
+  given.
+- Union / Union All: requires column-compatible inputs; provides a column
+  mapping UI when names or order differ.
+- Except / Intersect.
+
+**Reshape**
+- Pivot / Unpivot.
+- Window functions: partition by, order by, frame; running totals, rank,
+  lag/lead. (Available in visual mode as an explicit node; this is one of the
+  constructs that will not round-trip cleanly from SQL.)
+
+**Ordering**
+- Sort: one or more keys with direction and null-ordering. Note: sort order is
+  only guaranteed at a Sink or an explicit Limit/Top-N boundary; intermediate
+  ordering is not guaranteed to survive later operators (section 13).
+
+**Sinks / Outputs**
+- Output: names the final relation, defines the output schema, and is the
+  target of Save. At least one is required to publish.
+
+The draft's "flowchart: if/else, then, loop" group is removed from this surface.
+Value-level `if/else` becomes the Conditional value node; pipeline-level
+branching and loops belong to the orchestration surface.
+
+---
+
+## 8. Expression editor and NULL semantics
+
+Opened from inside Filter, Derived Column, Join condition, and aggregate
+definitions. This is the home of the arithmetic and logical operators from the
+draft. Offer both a small visual sub-builder and a text formula box backed by
+the same grammar and validated identically.
+
+Operators: `+ - * / % ( )`, comparison `= <> > < >= <=`, logical
+`AND OR NOT`, `IN`, `BETWEEN`, `LIKE`, `IS NULL`, `CASE WHEN ... THEN ...
+ELSE ... END`, plus a curated function library (string, numeric, date/time,
+cast).
+
+Static checks in the editor: referenced column exists in the input schema,
+operand types are compatible, functions get the right argument types, and the
+result type is inferred and shown.
+
+NULL and three-valued logic must be explicit, because it is the most common
+source of "the filter dropped rows I expected to keep":
+
+| A | B | A AND B | A OR B | NOT A |
+|---|---|---------|--------|-------|
+| T | T | T | T | F |
+| T | F | F | T | F |
+| T | NULL | NULL | T | F |
+| F | NULL | F | NULL | T |
+| NULL | NULL | NULL | NULL | NULL |
+
+A Filter keeps a row only when the predicate is TRUE. NULL (unknown) is not
+kept. Surface this in the UI (for example, an explicit "treat NULL as ..."
+choice on comparisons, and an `IS NULL` helper) so users do not silently lose
+rows.
+
+---
+
+## 9. Validation model and error taxonomy
+
+Three levels, always distinguishable:
+
+1. **Continuous static validation** while editing (no execution): wiring
+   legality, schema inference, expression checks. Results stream into the
+   Problems panel and colour the nodes.
+2. **Validate** (explicit, still no execution): full graph compile to SQL,
+   confirming the definition is structurally and semantically sound end to end.
+3. **Preview** (sampled execution, section 10): proves it actually runs against
+   real data.
+
+Distinguish hard errors (block save/publish) from warnings (allowed, flagged).
+
+Hard errors:
+- Structural: cycle, missing required input, no sink, disconnected required
+  port.
+- Type: dataset wired to scalar port, incompatible union schemas, wrong operand
+  types in an expression.
+- Schema: unknown column, ambiguous column after a join, group-by selecting a
+  bare non-key column, aggregate used outside an aggregation context.
+
+Warnings:
+- Cross join with no key (possible but usually a mistake).
+- Fan-out join that multiplies rows.
+- Lossy implicit cast (for example numeric to text, wide to narrow).
+- Float equality comparison.
+- Orphan node not reaching any sink.
+- Sort followed by an operator that does not preserve order.
+
+Every problem entry names the node/port, states the rule, and offers a "reveal"
+action. Errors block publish; drafts may be saved with warnings, and with
+errors only as an explicit "save incomplete draft".
+
+---
+
+## 10. Preview and test execution
+
+- Read-only always. The preview path can only issue read queries; it is
+  physically prevented from writing (section 15).
+- Sample-based: cap rows (for example the first or a sampled N), enforce a
+  statement timeout, and never pull an unbounded result into the client.
+- Per-node preview: selecting any node shows the sample output at that node, not
+  just the final one. This is the biggest debugging aid and is missing from the
+  draft.
+- Show the inferred schema alongside the sample so type surprises are visible
+  before a full run.
+- Preview reflects the compiled SQL, so what the user tests is what the saved
+  definition will run. Note clearly that a sample can hide data-dependent issues
+  (a cast that fails only on a row not in the sample); full validation on the
+  real run still applies.
+
+---
+
+## 11. Lineage and evidence-grade provenance
+
+For an evidence-grade platform this is not optional and is a genuine
+differentiator.
+
+- Every output column records its provenance: which source column(s) it derives
+  from and the ordered operations applied (filter, cast, aggregate, join key,
+  expression).
+- Lineage is computed at compile time and stored on the definition, and it is
+  browsable in the Lineage tab: click an output column, see the graph path back
+  to source columns.
+- Reproducibility: pin the source snapshot/version used for a published run so
+  the same definition over the same source snapshot yields the same output. The
+  `definition_hash` plus source snapshot id together identify a reproducible
+  result.
+
+---
+
+## 12. Governance and access
+
+- Read-only guarantee enforced at the execution layer, not just by convention.
+- Permissions: who can create drafts, who can publish, who can run. A saved
+  definition inherits ownership and is subject to the platform's access control
+  (deny-by-default; every new endpoint/action explicitly granted).
+- Audit: creation, edits, publish, and runs are logged with author and time.
+
+---
+
+## 13. Bug and edge-case register (anticipated failure modes)
+
+Grouped so each has an owner during build. These are the things that break
+data-prep tools in production.
+
+**NULL and logic**
+- Three-valued logic dropping rows unexpectedly (section 8). Make NULL handling
+  explicit on comparisons and filters.
+- Aggregates ignoring NULLs (for example AVG over NULLs) versus counting them;
+  make count vs count-distinct vs count(*) explicit.
+
+**Numeric**
+- Division by zero: guard with a nullif/zero-safe option; define the result
+  (error vs NULL) and surface the choice.
+- Integer vs floating division and truncation.
+- Overflow on sum/product over large columns; choose a wide accumulator type.
+- Floating-point equality: warn and suggest tolerance-based comparison.
+
+**Types and casts**
+- Lossy or failing casts (text to number on dirty data). Offer safe-cast
+  (invalid -> NULL) vs strict-cast (row/run error), and make the choice visible.
+- Implicit coercions differing by dialect.
+
+**Date, time, locale, encoding** (a class this platform has already been bitten
+by)
+- Timezone handling: store and compare in a defined zone; do not compare a
+  timestamp with and without timezone.
+- Locale-sensitive date parsing (day/month order) on differently configured
+  machines. Parse with explicit formats, never machine locale.
+- Text encoding: render preview as UTF-8; guard against mojibake from
+  code-page round-trips.
+
+**Relational**
+- Column name collisions after a join; require aliasing/prefixing and flag
+  ambiguity as a hard error.
+- Identifier case-folding differences across dialects (unquoted identifiers
+  folded to lower vs upper); quote consistently in generated SQL.
+- Join fan-out silently multiplying rows; warn and show row-count deltas in
+  preview.
+- Accidental cross join when a key is omitted; warn.
+- Union of schemas that differ in column count/order/type; require an explicit
+  mapping.
+
+**Ordering and determinism**
+- No guaranteed order without an explicit sort at the sink; a mid-graph sort may
+  not survive downstream operators. Warn.
+- Non-deterministic first/last in aggregation without an explicit order key.
+
+**Data shape and scale**
+- Empty input dataset: define behaviour (valid, produces empty output, not an
+  error).
+- All-NULL or single-value columns.
+- Very wide tables (hundreds of columns): virtualise the schema browser and
+  preview grid; do not render everything.
+- Large previews: hard row cap and pagination; never stream a full table to the
+  client.
+
+**Definition lifecycle**
+- Schema drift: source table changed columns/types since the definition was
+  saved. Re-validate on load and before run; block with a clear diff rather than
+  failing mid-run.
+- Broken source binding after a rename: bindings are by stable id, so a rename
+  does not break silently; a delete is caught at validation.
+- Circular reference across composed definitions (definition A consumes B
+  consumes A): detect at save.
+- Expression referencing a column produced later in the same node or not yet
+  computed: reject with a clear message.
+
+**Authoring / editor**
+- Autosave versus concurrent edit conflicts: last-writer-wins is unsafe; use
+  optimistic version checks and warn on conflict.
+- Undo/redo across destructive ops (node delete, wire delete) must restore
+  wires and config, not just node position.
+- Copy/paste of a node must not duplicate a stable id in a way that corrupts
+  lineage.
+
+**Security (SQL generation and execution)**
+- Identifier and literal handling in generated SQL: quote identifiers, avoid
+  string-concatenating user values into SQL; parameterise. Prevents injection
+  and quoting bugs in one move.
+- Enforce single-read-statement only on any executed SQL (preview and run);
+  reject DDL/DML and multi-statement batches by parse, not by string search.
+- Timeouts and row/cost caps on every execution path.
+
+---
+
+## 14. Non-functional
+
+- **Dialect strategy**: compile the graph to an internal logical plan, then
+  transpile per target dialect (Postgres, MySQL, SQL Server). One definition,
+  multiple engines, without hand edits. SQL-mode definitions are pinned to a
+  single dialect.
+- **Performance**: static validation and schema inference run incrementally on
+  edit, not as a full recompute each keystroke. Preview is sampled and capped.
+- **Internationalisation**: UTF-8 throughout; explicit date/number formats;
+  no reliance on machine locale.
+- **Portability**: the definition JSON plus compiled SQL is exportable and
+  re-importable; `definition_hash` detects drift.
+- **Accessibility**: keyboard-navigable canvas and palette; colour is not the
+  only signal of node state (icons/text too).
+
+---
+
+## 15. Read-only enforcement (execution layer)
+
+Do not rely on the UI to keep the tool read-only. Enforce it where queries run:
+
+- Execute preview and run under a role/connection with read-only privileges on
+  source.
+- Parse every statement and reject anything that is not a single SELECT.
+- Wrap or rewrite to guarantee a LIMIT on preview; enforce timeout and max rows.
+- Outputs go only to the platform's own governed store (a view or a materialised
+  result linked to the job), never back to the source.
+
+---
+
+## 16. Suggested build order (MVP first)
+
+1. Schema browser + Source node + Output node + wire type system + static
+   validation + generated-SQL view. (Proves the core model and the error
+   engine.)
+2. Filter, Derived Column, Sort, Limit + Expression editor with NULL semantics
+   + per-node sampled preview.
+3. Group By and Join (with fan-out and collision handling) + lineage capture.
+4. Save/version/publish + read-only execution enforcement + governance.
+5. SQL mode (authoring + test + save) and the one-way visual-to-SQL fork.
+6. Reshape/window nodes, multi-dialect transpile, composed-definition
+   references.
+
+Ship each phase as something that runs end to end rather than half-building
+every node at once.
+
+the different between them is the which table will appear on the right and which tools on the tool box will appear on the left , for example in first on preparing the dump data to fit on our plant data , I should to see 2 group the dump data schema and plant data schema  , but for the other I should to see only plant data schema 
+
+
+
+
+I had 3 analysis pages types  as mentioned before 
+1. Raw data analysis page Type :  
+	where as mentioned before user Display and link all raw data 
+    Raw data : are the customer data which is existing in our plant data schema which is transfered from customer data based passing through stage dump files 
+    the advantage of Raw data analysis page Type display data from several location togther and from several customer DB in the same chart and the same dashboard help normal eye to analysis and detect with good UI/UX chart can do amazing staff 
+	
+2. Correlation , statistics , Math analyis page Type : 
+  display  more the charts and data and result of job of this type , charts here are more related to display this kind of data , for example correlation charts , , big amount of data in one chart 
+
+3. AI+ ML analysis page Type  
+	display more the charts and data result of job of this type , table charts widget here are more related to display those data 
+	
+the common here that all widget , charts , dashboard , page layout 
+Style , 
+UI/UX standard 
+functionality 	are with the way of qlik 
+	for example this a check list for that 
+	# Analytics Dashboard and Widget Layer - Build Checklist
+
+Modeled on Qlik Sense patterns, adapted for a read-only, evidence-grade,
+process-to-quality platform. Tick items as you build. Items marked CORE are the
+minimum for a credible demo; items marked PPIQ are domain-specific and matter
+more here than in generic BI; items marked LATER are enhancements.
+
+The dashboard/widget builder is itself a config surface: it saves a named,
+versioned dashboard definition (sheets + widgets + bindings), consistent with
+the transformation-definition artifact.
+
+---
+
+## 0. Associative / selection engine (this is what makes it "like Qlik")
+
+The chart list is the easy part. The associative model is the differentiator.
+Build this first or the rest is just static charts.
+
+- [ ] CORE Selection state per value: selected, possible (associated), excluded,
+      alternative (Qlik green / white / gray / light-gray semantics)
+- [ ] CORE Click any data point to select; the selection filters every widget
+      on the page (cross-filtering / linked views)
+- [ ] CORE Global selections bar showing all active selections as removable chips
+- [ ] CORE Clear-all, clear-one, and clear-others actions
+- [ ] CORE Selection history: step back / step forward
+- [ ] CORE "Possible vs excluded" visually distinct inside filter panes and
+      list boxes (so the user sees what is still reachable)
+- [ ] Lock / unlock a selection so it survives clear-all
+- [ ] Global smart search across dimensions (type a value, see where it exists)
+- [ ] Alternate states (two independent selection sets for side-by-side compare)
+- [ ] Selection applied as chip AND reflected in the URL / shareable state
+- [ ] Debounced recompute so rapid clicks do not fire a query per click
+
+---
+
+## 1. Global filters and controls (page-level)
+
+- [ ] CORE Global date / time range picker (presets: today, 7d, 30d, quarter,
+      YTD, custom; plus relative ranges)
+- [ ] CORE Filter pane / list box (single and multi-select, search within,
+      select-all, show frequency/associated count)
+- [ ] CORE Dropdown / combo filter
+- [ ] Slider and range slider (numeric and date)
+- [ ] Button set / toggle group (segmented control)
+- [ ] Variable input control (drives an expression or threshold live)
+- [ ] Hierarchical / cascading filters (plant > line > unit)
+- [ ] Filter that respects associative state (options gray out when excluded)
+- [ ] "Applied filters" summary and one-click reset per widget and per page
+
+---
+
+## 2. Chart catalogue (grouped by analytical purpose)
+
+Pick by the question the chart answers, not by looks.
+
+### Comparison (categories side by side)
+- [ ] CORE Bar (vertical, horizontal)
+- [ ] CORE Grouped bar, stacked bar, 100% stacked bar
+- [ ] CORE Combo chart (bars + line, dual axis)
+- [ ] Bullet chart (value vs target vs bands)
+- [ ] Radar / spider
+- [ ] Mekko / marimekko (varying width bars)
+
+### Trend over time
+- [ ] CORE Line (single and multi-series)
+- [ ] CORE Area and stacked area
+- [ ] Spline / step line
+- [ ] Sparkline (inline mini-trend in tables and KPIs)
+- [ ] Dual-axis time series (rate vs count)
+
+### Part to whole
+- [ ] CORE Pie / donut (keep slices few)
+- [ ] CORE Treemap
+- [ ] Funnel
+- [ ] Waterfall (contribution / bridge)
+- [ ] Sunburst (hierarchical part-to-whole)
+
+### Distribution
+- [ ] CORE Histogram
+- [ ] Box plot (per group)
+- [ ] Distribution / density plot
+- [ ] Violin (LATER)
+
+### Correlation and relationship
+- [ ] CORE Scatter plot (with optional trend/regression line)
+- [ ] Bubble chart (third measure as size)
+- [ ] Heatmap / matrix (two dimensions, color = measure)
+- [ ] PPIQ Correlation matrix (measure-to-measure, the platform differentiator)
+
+### Ranking
+- [ ] Sorted / ranked bar with top-N
+- [ ] Pareto (bars + cumulative line, 80/20)
+
+### Single value / KPI
+- [ ] CORE KPI tile (value, delta vs prior, delta vs target, trend arrow,
+      conditional color)
+- [ ] Gauge (radial), with bands
+- [ ] Bullet gauge (linear)
+- [ ] KPI grid (many KPIs in one widget)
+
+### Tabular
+- [ ] CORE Straight table (sortable, searchable, conditional formatting,
+      totals, inline mini-bars/sparklines)
+- [ ] CORE Pivot table (row/column dimensions, expand/collapse, subtotals)
+
+### Flow / process / relationship
+- [ ] PPIQ Genealogy / provenance graph (node-link, weighted edges, walk
+      up/down lineage) - first-class here, not optional
+- [ ] Sankey (flow volumes between stages)
+- [ ] Network / node-link graph
+- [ ] Gantt / timeline (events, batches, jobs over time)
+
+### Geospatial (if plants are geo-tagged)
+- [ ] Point map, bubble map
+- [ ] Area / choropleth map
+- [ ] Density / heat map layer
+
+### Process-quality specific (PPIQ core, uncommon in generic BI)
+- [ ] PPIQ SPC control chart (individuals / X-bar-R / moving range, with UCL/LCL
+      and rule violations flagged)
+- [ ] PPIQ Run chart (with median and run-rule detection)
+- [ ] PPIQ Process capability histogram (spec limits + Cp / Cpk / Pp / Ppk)
+- [ ] PPIQ Pareto of defect causes
+- [ ] PPIQ Scatter with spec/target reference regions
+- [ ] PPIQ Batch / heat comparison (small multiples)
+
+### Text and media
+- [ ] CORE Text and image widget (rich text / markdown, dynamic values inline)
+- [ ] Narrative / auto-generated insight text (PPIQ: correlation + AI summary)
+
+---
+
+## 3. Non-chart widgets and containers
+
+- [ ] CORE Container: tabbed
+- [ ] Container: stacked / accordion
+- [ ] CORE Button (navigate to sheet, apply selection, clear, set variable,
+      export, open URL)
+- [ ] Title / subtitle / footnote elements
+- [ ] Divider / line / shape / spacer
+- [ ] Legend as a standalone shared element
+- [ ] Bookmark / saved-view launcher widget
+- [ ] Search box widget
+- [ ] Embedded external content / iframe (governed) (LATER)
+
+---
+
+## 4. Dashboard-level constructs
+
+- [ ] CORE Sheets / pages (multiple per app, ordered, named descriptively)
+- [ ] CORE Master items: master dimensions, master measures, master
+      visualizations (define once, reuse everywhere, edit in one place)
+- [ ] CORE Master color mapping (a category is the same color in every chart)
+- [ ] CORE Bookmarks (save a selection + sheet state, share by link)
+- [ ] Default bookmark / landing state per app
+- [ ] Storytelling: snapshots + narrative slides built from live charts
+- [ ] Annotations on charts (callouts, notes)
+- [ ] Alerts / thresholds (notify when a measure crosses a limit)
+- [ ] Subscriptions / scheduled delivery (LATER)
+- [ ] Insight Advisor equivalent: auto-suggest charts and correlations (PPIQ
+      differentiator)
+- [ ] CORE Export: chart image (PNG), sheet PDF, data (Excel/CSV) - with the
+      current selection applied and disclosed
+
+---
+
+## 5. Page layout system
+
+- [ ] CORE Responsive grid (column-based, snap-to-grid placement)
+- [ ] CORE Drag, resize, and reorder widgets on a grid
+- [ ] CORE Z-order and no-overlap rules (or explicit free-form with overlap)
+- [ ] Fixed vs fluid layout choice per sheet
+- [ ] CORE Breakpoints: desktop / tablet / mobile, with reflow rules
+- [ ] Per-widget minimum size and "hide below breakpoint" option
+- [ ] Sheet regions: header/title bar, global filter bar, body, footer
+- [ ] Density modes: compact / comfortable
+- [ ] Grid gutters, margins, and consistent spacing tokens
+- [ ] Full-screen / focus mode for a single widget (drill-in)
+- [ ] Print / export layout distinct from screen layout (LATER)
+
+---
+
+## 6. Style and design system
+
+- [ ] CORE Design tokens: color, typography scale, spacing, radius, elevation,
+      border - one source of truth
+- [ ] CORE Theme system: Dark-Industrial as the default (matches the platform's
+      established visual language); light theme optional
+- [ ] CORE Categorical palette + sequential palette + diverging palette, all
+      colorblind-safe
+- [ ] CORE Chart styling standards: axis titles, gridlines, tick formatting,
+      legend placement, data labels on/off, tooltip content
+- [ ] CORE Number, date, and unit formatting - explicit formats, locale-aware,
+      never machine-locale dependent
+- [ ] CORE Reference lines / target lines / control-limit bands as a styling
+      primitive (reused by KPI, SPC, bullet)
+- [ ] Conditional formatting rules (color by threshold / status) shared across
+      widgets
+- [ ] Consistent empty-state, loading-skeleton, and error-state visuals
+- [ ] Iconography set (status: ok / warning / breach; trend up / down)
+- [ ] Chart title, subtitle, footnote, and source/timestamp caption pattern
+- [ ] Custom theme as JSON so a customer can be re-skinned without code
+
+---
+
+## 7. UI/UX standards (behavior, not looks)
+
+- [ ] CORE Consistent interaction grammar: click = select, hover = tooltip,
+      lasso/drag = range select - identical across all charts
+- [ ] CORE Tooltip on hover with dimension, measure, and formatted value
+- [ ] CORE Loading skeletons, not spinners, per widget
+- [ ] CORE Empty state ("no data") distinct from filtered-to-empty state
+      ("no rows match current selection - here is what to relax")
+- [ ] CORE Error state per widget (query failed) without breaking the page
+- [ ] CORE Drill down (within a dimension hierarchy) and drill through (to a
+      detail sheet), with a visible affordance
+- [ ] Cross-filter feedback: clicking here visibly updates there
+- [ ] Undo/redo of selections reachable by keyboard
+- [ ] Keyboard navigation and focus order across widgets
+- [ ] Accessibility: ARIA roles, screen-reader labels, min contrast, focus
+      rings, do-not-rely-on-color-alone
+- [ ] Responsive reflow tested on tablet and phone widths
+- [ ] Latency budget: first paint fast, progressive data fill, virtualized
+      tables for large results
+- [ ] Sensible defaults: sort, top-N cap, label overlap avoidance, axis start
+      at zero where honest
+- [ ] Confirm-before-destructive on layout edits (delete widget, delete sheet)
+- [ ] Autosave with version/conflict handling in the builder
+
+---
+
+## 8. Cross-cutting functionality
+
+- [ ] CORE Calculated dimensions and measures (expression editor with schema
+      awareness and validation)
+- [ ] CORE Set-analysis equivalent: measures scoped to a sub-selection
+      (for example "vs all", "vs previous period") independent of page filters
+- [ ] CORE Period-over-period and vs-target comparisons as reusable measures
+- [ ] Variables driving thresholds, targets, and what-if inputs
+- [ ] Conditional show/hide of widgets based on selection or variable
+- [ ] Drill-to-detail / drill-to-evidence action from any chart
+- [ ] Share: link with selection state; embed a single widget (governed)
+- [ ] Refresh: on-demand and scheduled data refresh from source (still
+      read-only; refresh the cache/view, never write source)
+
+---
+
+## 9. Evidence-grade and read-only requirements (PPIQ)
+
+These separate this from a generic BI clone and should be non-negotiable.
+
+- [ ] PPIQ Every widget traces to its underlying query/definition (lineage view:
+      "what data and transforms produced this number")
+- [ ] PPIQ Drill-to-evidence: from a KPI or bar down to the source rows/units
+      behind it
+- [ ] PPIQ Sample-data disclosure badge when a widget renders emulated/sample
+      data rather than real imported data
+- [ ] PPIQ "As-of" timestamp and source snapshot id on every sheet/widget for
+      reproducibility
+- [ ] PPIQ Read-only enforced at the query layer; dashboards can never write back
+- [ ] PPIQ No hardcoded/demo content in any widget (Generic Only; Starts Empty -
+      an unconfigured app shows empty states, not fake charts)
+
+---
+
+## 10. Performance and scale
+
+- [ ] CORE Server-side aggregation; never pull raw rows to the client for charts
+- [ ] CORE Row caps and pagination on tables; virtualization for long lists
+- [ ] Query result caching keyed by selection + definition hash
+- [ ] Progressive / streaming render for heavy sheets
+- [ ] Debounced/coalesced filter recompute
+- [ ] Guardrails: max data points per chart, degrade gracefully (sample + warn)
+- [ ] Wide-table handling (hundreds of columns) in table widgets
+
+---
+
+## 11. Access, governance, multi-tenant
+
+- [ ] CORE Per-tenant isolation of apps, sheets, and data
+- [ ] CORE Row-level / section-access security (a user sees only permitted rows)
+- [ ] Role-based edit vs view vs publish permissions on dashboards
+- [ ] Audit: who created/edited/published/viewed which dashboard and when
+- [ ] Access control deny-by-default on every dashboard action/endpoint
+
+---
+
+## 12. Suggested MVP cut (build order)
+
+1. Associative engine + global selections bar + one filter pane + cross-filter.
+2. CORE charts: bar, line, KPI, straight table + master items + Dark-Industrial
+   theme + tooltip/empty/loading/error states.
+3. Sheets + responsive grid + save dashboard definition + export.
+4. Drill-down, conditional formatting, reference/target lines.
+5. PPIQ pack: genealogy graph, SPC/capability charts, drill-to-evidence,
+   sample-data badge, lineage view.
+6. Bookmarks, storytelling, alerts, Insight/correlation auto-suggest, maps.
+
+Ship each layer working end to end before widening the chart list.
+

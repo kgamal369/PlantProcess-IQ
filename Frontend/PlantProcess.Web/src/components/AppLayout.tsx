@@ -130,6 +130,40 @@ function NavItem({
   );
 }
 
+function useWorkspaceLinks() {
+  const [links, setLinks] = useState<Array<{ to: string; label: string }>>([]);
+  useEffect(() => {
+    let ignore = false;
+    (async () => {
+      try {
+        const res = await fetch("/analytics/dashboard/definitions", {
+          headers: (() => {
+            const t = (window as unknown as { __ppiqToken?: string }).__ppiqToken;
+            return t ? { Authorization: "Bearer " + t } : {};
+          })(),
+        });
+        if (!res.ok) return;
+        const body = await res.json();
+        const arr = Array.isArray(body)
+          ? body
+          : body.items ?? body.definitions ?? body.dashboards ?? body.results ?? [];
+        const mapped = (arr as Array<Record<string, unknown>>)
+          .map((d) => ({
+            code: String(d["dashboardCode"] ?? d["dashboard_code"] ?? d["code"] ?? ""),
+            name: String(d["name"] ?? d["dashboardCode"] ?? d["code"] ?? "Workspace"),
+          }))
+          .filter((d) => d.code)
+          .sort((a, b) => a.name.localeCompare(b.name))
+          .map((d) => ({ to: "/workspace/" + d.code, label: d.name }));
+        if (!ignore) setLinks(mapped);
+      } catch {
+        /* nav is best-effort; typed URLs still work */
+      }
+    })();
+    return () => { ignore = true; };
+  }, []);
+  return links;
+}
 function NavGroup({ title, items }: { title: string; items: ReadonlyArray<{ to: string; label: string; desc: string; icon: React.ElementType }> }) {
   const location = useLocation();
   const containsCurrent = items.some((i) => location.pathname === i.to || location.pathname.startsWith(i.to + "/"));
@@ -153,6 +187,7 @@ function NavGroup({ title, items }: { title: string; items: ReadonlyArray<{ to: 
   );
 }
 export function AppLayout() {
+  const workspaceLinks = useWorkspaceLinks();
   const { isDark, toggleTheme } = usePlantProcessTheme();
 
   const [plantName, setPlantName] = useState<string>("Plant");
@@ -220,6 +255,15 @@ export function AppLayout() {
         <nav className="piq-nav">
           <NavGroup title="Data Integration" items={NAV_DATA_INTEGRATION} />
           <NavGroup title="Analytics" items={NAV_ANALYTICS} />
+        <div className="piq-nav-group">
+          <p className="piq-nav-group__title">Workspaces</p>
+          {workspaceLinks.map((l) => (
+            <NavLink key={l.to} to={l.to} className={({ isActive }) => isActive ? "piq-nav-link active" : "piq-nav-link"}>
+              <span className="piq-nav-link__copy"><span className="piq-nav-link__label">{l.label}</span></span>
+            </NavLink>
+          ))}
+        </div>
+        
           <NavGroup title="Intelligence" items={NAV_INTELLIGENCE} />
           <NavGroup title="System" items={NAV_SYSTEM} />
         </nav>

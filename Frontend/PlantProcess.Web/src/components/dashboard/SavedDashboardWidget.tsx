@@ -17,6 +17,8 @@ import { DashboardWidgetCard } from "./DashboardWidgetCard";
 import { EmptyInsightState } from "./EmptyInsightState";
 
 import { StandardP2Table } from "@/components/standard/StandardP2Controls";
+import { useDashboardFilters } from "../../state/DashboardFilterContext";
+import { useDashboardSelection } from "../../state/DashboardSelectionContext";
 interface SavedDashboardWidgetProps {
   dashboardDefinitionId: string;
   widget: DashboardWidgetDefinitionRecord;
@@ -35,14 +37,29 @@ export function SavedDashboardWidget({
 }: SavedDashboardWidgetProps) {
   const [result, setResult] = useState<DashboardWidgetQueryResult | null>(null);
   const [error, setError] = useState<unknown>(null);
+  const { filters: globalFilters } = useDashboardFilters();
+  const { getWidgetState } = useDashboardSelection();
+  const widgetState = getWidgetState(("saved-" + widget.id) as never);
+  const activeChartType = widgetState.chartType ?? widget.chartType;
 
   const filters = useMemo(() => {
     try {
-      return widget.filterJson ? JSON.parse(widget.filterJson) : {};
+      const base: Record<string, unknown> = widget.filterJson
+        ? JSON.parse(widget.filterJson)
+        : {};
+      const g = (globalFilters ?? {}) as Record<string, unknown>;
+      for (const k of [
+        "siteId", "areaId", "equipmentId", "materialCode", "sourceSystem",
+        "defectType", "riskClass", "shiftCode", "fromUtc", "toUtc",
+      ]) {
+        const v = g[k];
+        if (v !== undefined && v !== null && v !== "") { base[k] = v; }
+      }
+      return base;
     } catch {
       return {};
     }
-  }, [widget.filterJson]);
+  }, [widget.filterJson, globalFilters]);
 
   const displayOptions = useMemo(() => {
     try {
@@ -131,12 +148,12 @@ export function SavedDashboardWidget({
       {result && !rows.length ? <EmptyInsightState /> : null}
 
       {result && rows.length ? (
-        widget.chartType === "line" || widget.chartType === "area" ? (
+        activeChartType === "line" || activeChartType === "area" ? (
           <InteractiveLineChart
             data={rows}
             categoryKey={categoryKey}
             valueKey={valueKey}
-            area={widget.chartType === "area"}
+            area={activeChartType === "area"}
             selection={{
               type: "generic",
               field: "materialCode",
@@ -145,12 +162,12 @@ export function SavedDashboardWidget({
               labelKey: "dimensionLabel",
             }}
           />
-        ) : widget.chartType === "pie" || widget.chartType === "donut" ? (
+        ) : activeChartType === "pie" || activeChartType === "donut" ? (
           <InteractivePieChart
             data={rows}
             categoryKey={categoryKey}
             valueKey={valueKey}
-            donut={widget.chartType === "donut"}
+            donut={activeChartType === "donut"}
             selection={{
               type: "generic",
               field: "materialCode",
@@ -159,7 +176,7 @@ export function SavedDashboardWidget({
               labelKey: "dimensionLabel",
             }}
           />
-        ) : widget.chartType === "table" ? (
+        ) : activeChartType === "table" ? (
           <MiniTable rows={rows} />
         ) : (
           <InteractiveBarChart

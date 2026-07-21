@@ -136,6 +136,17 @@ foreach ($t in @('material_units', 'parameter_observations', 'quality_events', '
 }
 W ""
 
+# ---- 1b. engine migrations (heat lineage + coil projection + defect outcomes)
+W "[1b/7] engine migrations 741+742 (or the engine re-blinds on every rebuild)"
+foreach ($mig in @('741_feature_store_coil_grain_projection.sql','742_feature_regrain_generic.sql')) {
+    $migPath = Join-Path $PSScriptRoot ('..\..\Backend\database\scripts\' + $mig)
+    if (Test-Path -LiteralPath $migPath) {
+        $mo = & $Psql -h 127.0.0.1 -p 5432 -U ppiq_dev -d $TargetDb -w -v ON_ERROR_STOP=1 -X -q -1 -f $migPath 2>&1
+        if ($LASTEXITCODE -eq 0) { W ("      applied " + $mig) } else { W ("      FAILED " + $mig + ": " + ($mo -join ' ')) }
+    } else { W ("      MISSING " + $migPath) }
+}
+W ("      lineage view rows: " + (Q1 "SELECT COUNT(*) FROM ppiq_ml_unit_heat_lineage;"))
+W ""
 # ---- 2. Rule-1 fixes -------------------------------------------------------
 W "[2/7] Rule-1 fixes (the fixture predates the 15-Jul cleanup)"
 [void](RunSql 'sites -> PLANT-NN' @"
