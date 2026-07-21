@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 // ============================================================
 // FILE: Frontend/PlantProcess.Web/src/components/AppLayout.tsx
 // Update: reads real logged-in user from AuthContext
@@ -139,7 +139,7 @@ function useWorkspaceLinks() {
         const res = await fetch("/analytics/dashboard/definitions", {
           headers: (() => {
             const t = (window as unknown as { __ppiqToken?: string }).__ppiqToken;
-            return t ? { Authorization: "Bearer " + t } : {};
+            const h: Record<string, string> = {}; if (t) h["Authorization"] = "Bearer " + t; return h;
           })(),
         });
         if (!res.ok) return;
