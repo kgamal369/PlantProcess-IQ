@@ -1,0 +1,46 @@
+/* ===== PPIQ enhancement pack: scroll-draw, ecosystem, ROI ===== */
+/* Uses existing SOU brand tokens; falls back to their literal values. */
+
+/* golden thread / architecture text */
+.ppiq-goldenthread .gt-label,
+.ppiq-archflow .af-t { font-family: "Chakra Petch", var(--disp, sans-serif); font-size: 12px; letter-spacing: .08em; fill: var(--sou-text, #eaf6ff); font-weight: 600; }
+.ppiq-goldenthread .gt-id { font-family: var(--body, "Inter", sans-serif); font-size: 11px; fill: var(--sou-muted, #8ea7c1); }
+.ppiq-goldenthread .gt-ev { font-family: var(--body, "Inter", sans-serif); font-size: 11px; fill: var(--sou-muted, #8ea7c1); }
+.ppiq-archflow .af-s { font-family: var(--body, "Inter", sans-serif); font-size: 10.5px; fill: var(--sou-muted, #8ea7c1); }
+
+/* ---------- ecosystem ---------- */
+.ppiq-ecosystem { padding: 96px 0; }
+.eco-eyebrow, .roi-eyebrow { font-family: "Chakra Petch", sans-serif; font-size: 12.5px; letter-spacing: .22em; color: var(--sou-cyan, #00d4ff); font-weight: 600; text-transform: uppercase; }
+.ppiq-ecosystem h2, .ppiq-roi h2 { font-family: "Chakra Petch", sans-serif; font-size: clamp(26px, 3.4vw, 38px); color: #fff; margin: 10px 0 14px; }
+.eco-lead { color: var(--sou-muted, #8ea7c1); max-width: 640px; font-size: 17px; }
+.eco-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 40px; }
+@media (max-width: 960px) { .eco-grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 640px) { .eco-grid { grid-template-columns: 1fr; } }
+.eco-card { background: var(--sou-panel, #0b1730); border: 1px solid #16294a; border-radius: 10px; padding: 20px 22px; transition: border-color .25s, transform .25s; }
+.eco-card:hover { border-color: #27507f; transform: translateY(-3px); }
+.eco-card h3 { font-family: "Chakra Petch", sans-serif; font-size: 13px; letter-spacing: .1em; text-transform: uppercase; color: var(--sou-cyan, #00d4ff); margin-bottom: 12px; }
+.eco-card ul { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; }
+.eco-card li { font-size: 13.5px; color: var(--sou-text, #eaf6ff); border: 1px solid #1d3a63; border-radius: 6px; padding: 6px 12px; background: var(--sou-panel-2, #102a43); }
+.eco-note { margin-top: 26px; font-size: 12px; color: #5c7391; }
+
+/* ---------- ROI ---------- */
+.ppiq-roi { padding: 96px 0; }
+.roi-grid { display: grid; grid-template-columns: 1.1fr 1fr; gap: 40px; margin-top: 44px; align-items: stretch; }
+@media (max-width: 920px) { .roi-grid { grid-template-columns: 1fr; } }
+.roi-inputs { display: flex; flex-direction: column; gap: 30px; background: var(--sou-panel, #0b1730); border: 1px solid #16294a; border-radius: 12px; padding: 32px; }
+.roi-inputs label { display: block; }
+.roi-label { display: inline-block; font-family: "Chakra Petch", sans-serif; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--sou-muted, #8ea7c1); }
+.roi-value { float: right; font-family: "Chakra Petch", sans-serif; font-size: 15px; color: var(--sou-cyan, #00d4ff); font-weight: 600; }
+.roi-inputs input[type="range"] { width: 100%; margin-top: 14px; accent-color: var(--sou-cyan, #00d4ff); height: 4px; }
+.roi-result { background: linear-gradient(165deg, #0d1f3a, var(--sou-panel, #0b1730)); border: 1px solid #1e4a6e; border-radius: 12px; padding: 36px; display: flex; flex-direction: column; }
+.roi-headline { font-family: "Chakra Petch", sans-serif; font-size: clamp(34px, 4.4vw, 52px); font-weight: 700; color: var(--sou-green, #2ce6a2); letter-spacing: .01em; }
+.roi-sub { font-size: 14.5px; color: var(--sou-muted, #8ea7c1); margin-top: 4px; }
+.roi-explain { font-size: 14.5px; color: var(--sou-text, #eaf6ff); margin-top: 18px; line-height: 1.6; }
+.roi-cta { margin-top: auto; align-self: flex-start; margin-top: 26px; font-family: "Chakra Petch", sans-serif; font-weight: 600; font-size: 15px; color: #03222c; background: linear-gradient(90deg, var(--sou-cyan, #00d4ff), #4de3ff); padding: 13px 26px; border-radius: 7px; transition: box-shadow .25s, transform .2s; }
+.roi-cta:hover { box-shadow: 0 0 26px rgba(0, 212, 255, .45); transform: translateY(-1px); }
+.roi-disclaimer { margin-top: 16px; font-size: 12px; color: #5c7391; line-height: 1.55; }
+
+/* interactive-widget hover feel for existing chart mocks */
+.ppiq-widget-hover rect, .ppiq-widget-hover circle, .ppiq-widget-hover path { transition: opacity .18s, filter .18s; }
+.ppiq-widget-hover:hover [data-dim] { opacity: .35; }
+.ppiq-widget-hover [data-focus]:hover { opacity: 1 !important; filter: drop-shadow(0 0 6px rgba(0, 212, 255, .6)); cursor: pointer; }

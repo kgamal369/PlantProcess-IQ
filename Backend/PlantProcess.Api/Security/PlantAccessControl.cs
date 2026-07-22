@@ -221,6 +221,7 @@ public sealed class AccessControlMiddleware
         // "SUGGESTION RUNTIME NOT REACHABLE: 401" banner. analysis.execute matches
         // the sibling analytics routes; adjust if the page role-gates differently.
         ("/api/suggestions", All(), "analysis.execute", false),
+        ("/api/prep/visual-mapper", All(), "analysis.execute", false),
         ("/analytics/dashboard/definitions", All(), "page.design", false),
         ("/analytics/dashboard", new[] { "GET", "POST" }, "assistant.use", false),
         ("/page-definitions", All(), "page.design", false),

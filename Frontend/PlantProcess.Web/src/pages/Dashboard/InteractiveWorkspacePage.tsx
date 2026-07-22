@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { DashboardFilterBar } from "@/components/DashboardFilterBar";
 import { DashboardGridLayout } from "@/components/dashboard/DashboardGridLayout";
 import { SavedDashboardWidget } from "@/components/dashboard/SavedDashboardWidget";
+import { AssociativePanel } from "@/components/dashboard/AssociativePanel";
 import { SelectionBreadcrumb } from "@/components/dashboard/SelectionBreadcrumb";
 import { useDashboardLayoutPersistence } from "@/hooks/useDashboardLayoutPersistence";
 import { dashboardingApi } from "@/api/dashboarding/dashboarding.api";
@@ -140,7 +141,8 @@ export function InteractiveWorkspacePage({ dashboardCode }: { dashboardCode: str
         </div>
       </header>
       <DashboardFilterBar />
-      <SelectionBreadcrumb />
+      <AssociativePanel />
+        <SelectionBreadcrumb />
       <DashboardGridLayout>
         {dashboard.widgets.map((widget) => (
           <div key={String((widget as { id?: unknown }).id ?? Math.random())}>

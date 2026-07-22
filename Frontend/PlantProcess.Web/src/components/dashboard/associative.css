@@ -1,0 +1,24 @@
+.assoc { border: 1px solid #1b2740; background: #0c1220; border-radius: 8px; margin: 12px 0 16px; }
+.assoc__head { display: flex; align-items: center; gap: 16px; padding: 9px 14px; border-bottom: 1px solid #1b2740; }
+.assoc__toggle { background: none; border: none; color: #8ea7c1; font-family: "Chakra Petch", sans-serif; font-size: 11.5px; letter-spacing: .16em; cursor: pointer; }
+.assoc__toggle:hover { color: #eaf6ff; }
+.assoc__legend { display: flex; align-items: center; gap: 8px; font-size: 11px; color: #7c8aa0; margin-left: auto; }
+.assoc__legend .lg { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.lg--sel { background: #2ce6a2; } .lg--pos { background: #eaf6ff; } .lg--exc { background: #37425a; }
+.assoc__enable { font-size: 11px; color: #7c8aa0; display: flex; gap: 6px; align-items: center; }
+.assoc__grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; }
+@media (max-width: 1100px) { .assoc__grid { grid-template-columns: repeat(2, 1fr); } }
+.assoc__field { padding: 12px 14px; border-right: 1px solid #131d33; border-top: 1px solid #131d33; min-height: 84px; }
+.assoc__label { font-family: "Chakra Petch", sans-serif; font-size: 11px; letter-spacing: .12em; color: #8ea7c1; text-transform: uppercase; display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.assoc__count { color: #00d4ff; font-family: "IBM Plex Mono", monospace; font-size: 10.5px; }
+.assoc__na { color: #4a5870; font-size: 10px; }
+.assoc__spin { width: 9px; height: 9px; border: 1.5px solid #1d3a63; border-top-color: #00d4ff; border-radius: 50%; animation: aspin .8s linear infinite; }
+@keyframes aspin { to { transform: rotate(360deg); } }
+.assoc__values { display: flex; flex-wrap: wrap; gap: 5px; }
+.assoc__chip { font-family: "IBM Plex Mono", monospace; font-size: 10.5px; padding: 3px 9px; border-radius: 5px; cursor: pointer; transition: all .15s; border: 1px solid transparent; }
+.assoc__chip--selected { background: rgba(44,230,162,.16); color: #2ce6a2; border-color: #2ce6a2; box-shadow: 0 0 8px rgba(44,230,162,.35); }
+.assoc__chip--possible { background: #101a2e; color: #eaf6ff; border-color: #1d3a63; }
+.assoc__chip--possible:hover { border-color: #00d4ff; color: #00d4ff; }
+.assoc__chip--excluded { background: #0a0f1b; color: #4a5870; border-color: #131d33; text-decoration: line-through; opacity: .75; }
+.assoc__chip--excluded:hover { opacity: 1; color: #7c8aa0; }
+.assoc__more { font-size: 10px; color: #4a5870; align-self: center; }
