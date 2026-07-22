@@ -1,3 +1,4 @@
+import { DrilldownDrawer } from "@/components/dashboard/DrilldownDrawer";
 import { useCallback, useEffect, useState, type ComponentProps } from "react";
 import { useParams } from "react-router-dom";
 import { DashboardFilterBar } from "@/components/DashboardFilterBar";
@@ -142,6 +143,7 @@ export function InteractiveWorkspacePage({ dashboardCode }: { dashboardCode: str
       </header>
       <DashboardFilterBar />
       <AssociativePanel />
+        <DrilldownDrawer />
         <SelectionBreadcrumb />
       <DashboardGridLayout>
         {dashboard.widgets.map((widget) => (

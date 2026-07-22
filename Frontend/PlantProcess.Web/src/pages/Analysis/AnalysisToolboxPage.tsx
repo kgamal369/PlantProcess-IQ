@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useEdgesState, useNodesState, addEdge, type Connection, type Edge, type Node } from "@xyflow/react";
+import { StandardP2Button } from "@/components/standard/StandardP2Controls";
 import { CanvasShell } from "../../canvas/CanvasShell";
 import { BlockNode, type BlockNodeData } from "../../canvas/nodes/BlockNode";
 import { runCorrelation } from "../../api/advancedAnalysis";
@@ -27,12 +28,11 @@ export default function AnalysisToolboxPage() {
   ];
   const [nodes, , onNodesChange] = useNodesState<Node>(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([
-    { id: "e1", source: "outcome", target: "method", style: { stroke: "#2ce6a2" } },
-    { id: "e2", source: "method", target: "run", style: { stroke: "#2ce6a2" } },
+    { id: "e1", source: "outcome", target: "method", className: "ppiq-flow-edge" },
+    { id: "e2", source: "method", target: "run", className: "ppiq-flow-edge" },
   ]);
-  const onConnect = (c: Connection) => setEdges((es) => addEdge({ ...c, style: { stroke: "#2ce6a2" } }, es));
+  const onConnect = (c: Connection) => setEdges((es) => addEdge({ ...c, className: "ppiq-flow-edge" }, es));
 
-  // live sync of field values into node render
   const liveNodes = useMemo(() => nodes.map((n) => ({
     ...n,
     data: { ...(n.data as BlockNodeData), onField, fields: (n.data as BlockNodeData).fields?.map(f => ({ ...f, value: values[f.key] ?? f.value })) },
@@ -41,7 +41,7 @@ export default function AnalysisToolboxPage() {
   const canvasPayload = useMemo(() => ({
     outcomeKey: values.outcomeKey, grain: values.grain, windowDays: Number(values.windowDays),
   }), [values]);
-  const formPayload = canvasPayload; // identical by construction: same shape, same api fn
+  const formPayload = canvasPayload;
 
   const [status, setStatus] = useState("");
   const run = async () => {
@@ -53,17 +53,17 @@ export default function AnalysisToolboxPage() {
   };
 
   return (
-    <div className="canvas-page" style={{ gridTemplateColumns: "1fr 340px" }}>
+    <div className="canvas-page canvas-page--toolbox">
       <CanvasShell nodes={liveNodes} edges={edges} nodeTypes={nodeTypes}
         onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} onConnect={onConnect} />
       <aside className="canvas-side">
         <h4>Compiled job payload</h4>
         <div className="parity">{JSON.stringify(canvasPayload, null, 2)}</div>
-        <h4 style={{ marginTop: 14 }}>Form payload (same api fn)</h4>
+        <h4 className="canvas-side__h4--mt">Form payload (same api fn)</h4>
         <div className="parity">{JSON.stringify(formPayload, null, 2)}</div>
         <div className="status-line ok">parity: {JSON.stringify(canvasPayload) === JSON.stringify(formPayload) ? "IDENTICAL" : "DIFFERS"}</div>
         <div className="canvas-actions">
-          <button className="cbtn primary" onClick={run}>Run governed analysis</button>
+          <StandardP2Button variant="primary" className="cbtn" onClick={run}>Run governed analysis</StandardP2Button>
         </div>
         {status && <div className="status-line">{status}</div>}
       </aside>

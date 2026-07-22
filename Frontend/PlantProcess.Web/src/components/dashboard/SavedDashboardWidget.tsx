@@ -1,3 +1,5 @@
+import { ExtraChart, isExtraChartType, extendChartTypes } from "./ChartExtras";
+import { dimensionToFilterField } from "@/state/widgetSelectionMap";
 import { BarChart3 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
@@ -28,7 +30,7 @@ interface SavedDashboardWidgetProps {
   onHidden?: () => void | Promise<void>;
 }
 
-export function SavedDashboardWidget({
+export function SavedDashboardWidget({ dashboardDefinitionId,
   widget,
   onEdit,
   onRemoved,
@@ -124,12 +126,12 @@ export function SavedDashboardWidget({
       title={widget.widgetTitle}
       subtitle={`${widget.chartType} · ${widget.dimensionCode} · ${widget.measureCode}`}
       icon={<BarChart3 size={18} />}
-      chartTypes={["bar", "line", "pie", "table"] as any}
+      chartTypes={extendChartTypes(widget.measureCode) as any}
       exportRows={rows as Record<string, unknown>[]}
       onEdit={onEdit}
       onRename={onEdit}
-      onRemove={onRemoved}
-      onClone={onCloned}
+      onRemove={async () => { await productApi.deleteDashboardWidget(dashboardDefinitionId, widget.id); await Promise.resolve(onRemoved()); }}
+      onClone={async () => { await productApi.cloneDashboardWidget(dashboardDefinitionId, widget.id, { widgetTitle: widget.widgetTitle + " (copy)" }); await Promise.resolve(onCloned()); }}
       onHide={onHidden}
     >
       {error ? (
@@ -148,7 +150,9 @@ export function SavedDashboardWidget({
       {result && !rows.length ? <EmptyInsightState /> : null}
 
       {result && rows.length ? (
-        activeChartType === "line" || activeChartType === "area" ? (
+        isExtraChartType(activeChartType) ? (
+          <ExtraChart type={String(activeChartType)} rows={rows as Record<string, unknown>[]} categoryKey={categoryKey} valueKey={valueKey} field={dimensionToFilterField(widget.dimensionCode)} />
+        ) : activeChartType === "line" || activeChartType === "area" ? (
           <InteractiveLineChart
             data={rows}
             categoryKey={categoryKey}
@@ -156,7 +160,7 @@ export function SavedDashboardWidget({
             area={activeChartType === "area"}
             selection={{
               type: "generic",
-              field: "materialCode",
+              field: dimensionToFilterField(widget.dimensionCode),
               sourceWidget: widget.widgetTitle,
               valueKey: categoryKey,
               labelKey: "dimensionLabel",
@@ -170,7 +174,7 @@ export function SavedDashboardWidget({
             donut={activeChartType === "donut"}
             selection={{
               type: "generic",
-              field: "materialCode",
+              field: dimensionToFilterField(widget.dimensionCode),
               sourceWidget: widget.widgetTitle,
               valueKey: categoryKey,
               labelKey: "dimensionLabel",
@@ -185,7 +189,7 @@ export function SavedDashboardWidget({
             valueKey={valueKey}
             selection={{
               type: "generic",
-              field: "materialCode",
+              field: dimensionToFilterField(widget.dimensionCode),
               sourceWidget: widget.widgetTitle,
               valueKey: categoryKey,
               labelKey: "dimensionLabel",

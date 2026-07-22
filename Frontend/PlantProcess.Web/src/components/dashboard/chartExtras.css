@@ -1,0 +1,22 @@
+/* M2-38-lite heatmap: bucketed intensity classes (no inline styles - UI ratchet D2) */
+.ppiq-heatmap { display: grid; gap: 4px; padding: 6px 2px; }
+.ppiq-heatmap--c4 { grid-template-columns: repeat(4, 1fr); }
+.ppiq-heatmap--c5 { grid-template-columns: repeat(5, 1fr); }
+.ppiq-heatmap--c6 { grid-template-columns: repeat(6, 1fr); }
+.ppiq-heatmap--c7 { grid-template-columns: repeat(7, 1fr); }
+.ppiq-heatmap--c8 { grid-template-columns: repeat(8, 1fr); }
+.ppiq-heatmap .standard-p2-button.ppiq-heat {
+  border: 1px solid #16294a; border-radius: 5px; padding: 10px 4px; min-height: 46px;
+  font-family: "IBM Plex Mono", monospace; font-size: 10.5px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer;
+}
+.ppiq-heatmap .standard-p2-button.ppiq-heat--0 { background: rgba(0, 212, 255, 0.100); color: #c7d1df; }
+.ppiq-heatmap .standard-p2-button.ppiq-heat--1 { background: rgba(0, 212, 255, 0.172); color: #c7d1df; }
+.ppiq-heatmap .standard-p2-button.ppiq-heat--2 { background: rgba(0, 212, 255, 0.244); color: #c7d1df; }
+.ppiq-heatmap .standard-p2-button.ppiq-heat--3 { background: rgba(0, 212, 255, 0.316); color: #c7d1df; }
+.ppiq-heatmap .standard-p2-button.ppiq-heat--4 { background: rgba(0, 212, 255, 0.388); color: #c7d1df; }
+.ppiq-heatmap .standard-p2-button.ppiq-heat--5 { background: rgba(0, 212, 255, 0.460); color: #c7d1df; }
+.ppiq-heatmap .standard-p2-button.ppiq-heat--6 { background: rgba(0, 212, 255, 0.532); color: #03222c; }
+.ppiq-heatmap .standard-p2-button.ppiq-heat--7 { background: rgba(0, 212, 255, 0.604); color: #03222c; }
+.ppiq-heatmap .standard-p2-button.ppiq-heat--8 { background: rgba(0, 212, 255, 0.676); color: #03222c; }
+.ppiq-heatmap .standard-p2-button.ppiq-heat--9 { background: rgba(0, 212, 255, 0.748); color: #03222c; }

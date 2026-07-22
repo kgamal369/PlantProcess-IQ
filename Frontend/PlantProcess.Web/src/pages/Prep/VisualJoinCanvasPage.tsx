@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { addEdge, useEdgesState, useNodesState, type Connection, type Edge, type Node } from "@xyflow/react";
+import { StandardP2Button, StandardP2Input, StandardP2Table } from "@/components/standard/StandardP2Controls";
 import { CanvasShell } from "../../canvas/CanvasShell";
 import { DatasetNode, type DatasetNodeData } from "../../canvas/nodes/DatasetNode";
 import { listStagedDatasets, createSession, saveGraph, runDryRun, publishVersion, type StagedDataset, type DryRunResult } from "../../api/canvasApi";
@@ -35,10 +36,9 @@ export default function VisualJoinCanvasPage() {
   };
 
   const onConnect = useCallback((c: Connection) => {
-    // column->column equality join; label it for reading
     const l = c.sourceHandle?.replace(/^out:/, "");
     const r = c.targetHandle?.replace(/^in:/, "");
-    setEdges((es) => addEdge({ ...c, label: `${l} = ${r}`, style: { stroke: "#00d4ff" }, labelStyle: { fill: "#8ea7c1", fontSize: 10 } }, es));
+    setEdges((es) => addEdge({ ...c, label: l + " = " + r, className: "ppiq-join-edge" }, es));
   }, [setEdges]);
 
   const graph = useMemo(() => ({
@@ -66,8 +66,8 @@ export default function VisualJoinCanvasPage() {
       const r = await runDryRun(sid);
       setPreview(r);
       setStatus(r.status === "succeeded"
-        ? { text: `dry-run ok - ${r.rowCount} sample rows`, kind: "ok" }
-        : { text: `dry-run ${r.status}: ${r.message ?? ""}`, kind: "err" });
+        ? { text: "dry-run ok - " + r.rowCount + " sample rows", kind: "ok" }
+        : { text: "dry-run " + r.status + ": " + (r.message ?? ""), kind: "err" });
     } catch (e) { setStatus({ text: String(e), kind: "err" }); }
   };
 
@@ -76,7 +76,7 @@ export default function VisualJoinCanvasPage() {
       const sid = await ensureSession();
       await saveGraph(sid, graph);
       const v = await publishVersion(sid);
-      setStatus({ text: `published version ${v.versionNumber} (immutable, rollback-able)`, kind: "ok" });
+      setStatus({ text: "published version " + v.versionNumber + " (immutable, rollback-able)", kind: "ok" });
     } catch (e) { setStatus({ text: String(e), kind: "err" }); }
   };
 
@@ -85,9 +85,11 @@ export default function VisualJoinCanvasPage() {
       <aside className="canvas-side">
         <h4>Staged datasets</h4>
         {palette.map((d) => (
-          <div key={d.table} className="palette-item" onClick={() => addDataset(d)} role="button" tabIndex={0}>
-            {d.table}<div style={{ color: "#5c7391", fontSize: 10 }}>{d.source} &middot; {d.columns.length} cols</div>
-          </div>
+          <StandardP2Button key={d.table} variant="ghost" className="palette-item"
+            onClick={() => addDataset(d)}>
+            {d.table}
+            <span className="palette-item__meta">{d.source} &middot; {d.columns.length} cols</span>
+          </StandardP2Button>
         ))}
       </aside>
 
@@ -98,22 +100,23 @@ export default function VisualJoinCanvasPage() {
 
       <aside className="canvas-side">
         <h4>Preparation definition</h4>
-        <input className="cbtn" style={{ width: "100%", textAlign: "left" }} value={name} onChange={(e) => setName(e.target.value)} aria-label="Definition name" />
+        <StandardP2Input className="canvas-side__name" value={name}
+          onChange={(e) => setName(e.target.value)} aria-label="Definition name" />
         <div className="canvas-actions">
-          <button className="cbtn primary" onClick={doPreview}>Preview (dry-run)</button>
-          <button className="cbtn" onClick={doPublish}>Publish version</button>
+          <StandardP2Button variant="primary" className="cbtn" onClick={doPreview}>Preview (dry-run)</StandardP2Button>
+          <StandardP2Button variant="secondary" className="cbtn" onClick={doPublish}>Publish version</StandardP2Button>
         </div>
-        {status.text && <div className={`status-line ${status.kind}`}>{status.text}</div>}
+        {status.text && <div className={"status-line " + status.kind}>{status.text}</div>}
         {preview && preview.rows?.length > 0 && (
-          <div style={{ maxHeight: 320, overflow: "auto" }}>
-            <table className="preview-table">
+          <div className="preview-scroll">
+            <StandardP2Table className="preview-table">
               <thead><tr>{preview.columns.map((c) => <th key={c}>{c}</th>)}</tr></thead>
               <tbody>{preview.rows.slice(0, 25).map((r, i) =>
                 <tr key={i}>{r.map((v, j) => <td key={j}>{String(v ?? "")}</td>)}</tr>)}</tbody>
-            </table>
+            </StandardP2Table>
           </div>
         )}
-        <h4 style={{ marginTop: 18 }}>Joins</h4>
+        <h4 className="canvas-side__h4--mt">Joins</h4>
         {graph.joins.map((j, i) => (
           <div key={i} className="status-line">{j.leftTable}.{j.leftColumn} = {j.rightTable}.{j.rightColumn}</div>
         ))}

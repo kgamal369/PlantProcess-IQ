@@ -161,6 +161,7 @@ public static class DashboardMetadataCodes
         public const string Scatter = "scatter";
         public const string Heatmap = "heatmap";
         public const string Table = "table";
+        public const string Pareto = "pareto";
     }
 
     public static class Dimensions

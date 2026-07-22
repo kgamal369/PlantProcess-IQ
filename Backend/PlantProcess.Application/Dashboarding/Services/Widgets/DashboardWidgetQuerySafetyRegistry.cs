@@ -30,6 +30,7 @@ public static class DashboardWidgetQuerySafetyRegistry
         DashboardMetadataCodes.ChartTypes.Donut,
         DashboardMetadataCodes.ChartTypes.Scatter,
         DashboardMetadataCodes.ChartTypes.Heatmap,
+        DashboardMetadataCodes.ChartTypes.Pareto,
         DashboardMetadataCodes.ChartTypes.Table
     };
 

@@ -1,24 +1,28 @@
 import { useState } from "react";
+import { StandardP2Button } from "@/components/standard/StandardP2Controls";
 import { AssociativeProvider, useAssociative } from "../../state/AssociativeContext";
 import "./associative.css";
 
 /** M2-37: the green-white-grey strip. Additive + behind its own toggle:
- * mounts under the global filters without touching the existing bar. */
+ * mounts under the global filters without touching the existing bar.
+ * Design-system conformant: Standard* primitives, no raw controls. */
 function PanelInner() {
   const { enabled, setEnabled, fields, toggleValue } = useAssociative();
   const [open, setOpen] = useState(true);
   return (
     <section className="assoc" aria-label="Associative selection view">
       <header className="assoc__head">
-        <button className="assoc__toggle" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
+        <StandardP2Button variant="ghost" className="assoc__toggle"
+          onClick={() => setOpen((o) => !o)} aria-expanded={open}>
           {open ? "\u25BE" : "\u25B8"} ASSOCIATIVE VIEW
-        </button>
+        </StandardP2Button>
         <span className="assoc__legend">
           <i className="lg lg--sel" /> selected <i className="lg lg--pos" /> possible <i className="lg lg--exc" /> excluded
         </span>
-        <label className="assoc__enable">
-          <input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} /> live
-        </label>
+        <StandardP2Button variant="ghost" className="assoc__enable"
+          aria-pressed={enabled} onClick={() => setEnabled(!enabled)}>
+          {enabled ? "live: on" : "live: off"}
+        </StandardP2Button>
       </header>
       {open && (
         <div className="assoc__grid">
@@ -35,14 +39,12 @@ function PanelInner() {
                 {fa.all.slice(0, 40).map((v) => {
                   const st = fa.states.get(v) ?? "possible";
                   return (
-                    <button
-                      key={v}
-                      className={`assoc__chip assoc__chip--${st}`}
+                    <StandardP2Button key={v} variant="ghost"
+                      className={"assoc__chip assoc__chip--" + st}
                       onClick={() => toggleValue(fa.field.key, v)}
-                      title={`${fa.field.label}: ${v} (${st})`}
-                    >
+                      title={fa.field.label + ": " + v + " (" + st + ")"}>
                       {v}
-                    </button>
+                    </StandardP2Button>
                   );
                 })}
                 {fa.all.length > 40 && <span className="assoc__more">+{fa.all.length - 40}</span>}

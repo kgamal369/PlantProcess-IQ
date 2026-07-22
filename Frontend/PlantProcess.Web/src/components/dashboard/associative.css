@@ -22,3 +22,15 @@
 .assoc__chip--excluded { background: #0a0f1b; color: #4a5870; border-color: #131d33; text-decoration: line-through; opacity: .75; }
 .assoc__chip--excluded:hover { opacity: 1; color: #7c8aa0; }
 .assoc__more { font-size: 10px; color: #4a5870; align-self: center; }
+
+/* --- M2-43 conformance: chips/toggles are StandardP2Button; keep the look --- */
+.assoc .standard-p2-button.assoc__toggle { background: none; border: none; color: #8ea7c1; font-family: "Chakra Petch", sans-serif; font-size: 11.5px; letter-spacing: .16em; padding: 0; }
+.assoc .standard-p2-button.assoc__toggle:hover { color: #eaf6ff; }
+.assoc .standard-p2-button.assoc__enable { background: none; border: 1px solid #1d3a63; color: #7c8aa0; font-size: 11px; padding: 3px 10px; border-radius: 5px; }
+.assoc .standard-p2-button.assoc__enable[aria-pressed="true"] { color: #2ce6a2; border-color: rgba(44,230,162,.4); }
+.assoc .standard-p2-button.assoc__chip { font-family: "IBM Plex Mono", monospace; font-size: 10.5px; padding: 3px 9px; border-radius: 5px; border: 1px solid transparent; }
+.assoc .standard-p2-button.assoc__chip--selected { background: rgba(44,230,162,.16); color: #2ce6a2; border-color: #2ce6a2; box-shadow: 0 0 8px rgba(44,230,162,.35); }
+.assoc .standard-p2-button.assoc__chip--possible { background: #101a2e; color: #eaf6ff; border-color: #1d3a63; }
+.assoc .standard-p2-button.assoc__chip--possible:hover { border-color: #00d4ff; color: #00d4ff; }
+.assoc .standard-p2-button.assoc__chip--excluded { background: #0a0f1b; color: #4a5870; border-color: #131d33; text-decoration: line-through; opacity: .75; }
+.assoc .standard-p2-button.assoc__chip--excluded:hover { opacity: 1; color: #7c8aa0; }
