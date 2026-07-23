@@ -33,7 +33,7 @@ export interface ChartRow {
 
 interface SelectionConfig {
   type: DashboardSelectionType;
-  field: keyof DashboardFilters;
+  field: keyof DashboardFilters | null;
   sourceWidget: string;
   valueKey?: string;
   labelKey?: string;
@@ -60,6 +60,17 @@ const palette = [
   "#9333ea",
 ];
 
+/** PPIQ-CHARTSIZE: every ResponsiveContainer below declares initialDimension.
+ *  Without it recharts paints its first frame at width(-1) height(-1), before
+ *  its ResizeObserver has measured, and draws nothing. Measured on /dashboard
+ *  on 23-Jul: 12 such warnings; one forced resize then made 5 of 6 containers
+ *  draw correctly, proving the charts and the data were never the problem.
+ *  minHeight is a CSS floor on the wrapper, not a measurement, so it cannot
+ *  prevent this on its own. */
+/** PPIQ-SELFIX: selection.field may be null - a dimension with no honest
+ *  filter counterpart must never fabricate one. Guarded here; drilldown still
+ *  opens. initialDimension is present because recharts otherwise paints its
+ *  first frame at width(-1) height(-1), before its ResizeObserver measures. */
 export function InteractiveBarChart({
   data,
   categoryKey,
@@ -77,13 +88,15 @@ export function InteractiveBarChart({
 
     if (value === null || value === undefined) return;
 
-    applySelection({
-      type: selection.type,
-      field: selection.field,
-      value,
-      label: String(label ?? value),
-      sourceWidget: selection.sourceWidget,
-    });
+    if (selection.field) {
+      applySelection({
+        type: selection.type,
+        field: selection.field,
+        value,
+        label: String(label ?? value),
+        sourceWidget: selection.sourceWidget,
+      });
+    }
 
     openDrilldown({
       title: String(label ?? value),
@@ -95,7 +108,7 @@ export function InteractiveBarChart({
 
   return (
     <div className="chart-box">
-      <ResponsiveContainer width="100%" height={height}>
+      <ResponsiveContainer width="100%" height={height} initialDimension={{ width: 600, height: 300 }}>
         <BarChart data={data}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey={categoryKey} />
@@ -134,13 +147,15 @@ export function InteractivePieChart({
 
     if (value === null || value === undefined) return;
 
-    applySelection({
-      type: selection.type,
-      field: selection.field,
-      value,
-      label: String(label ?? value),
-      sourceWidget: selection.sourceWidget,
-    });
+    if (selection.field) {
+      applySelection({
+        type: selection.type,
+        field: selection.field,
+        value,
+        label: String(label ?? value),
+        sourceWidget: selection.sourceWidget,
+      });
+    }
 
     openDrilldown({
       title: String(label ?? value),
@@ -152,7 +167,7 @@ export function InteractivePieChart({
 
   return (
     <div className="chart-box">
-      <ResponsiveContainer width="100%" height={height}>
+      <ResponsiveContainer width="100%" height={height} initialDimension={{ width: 600, height: 300 }}>
         <PieChart>
           <Tooltip />
           <Legend />
@@ -198,13 +213,15 @@ export function InteractiveLineChart({
 
     if (value === null || value === undefined) return;
 
-    applySelection({
-      type: selection.type,
-      field: selection.field,
-      value,
-      label: String(label ?? value),
-      sourceWidget: selection.sourceWidget,
-    });
+    if (selection.field) {
+      applySelection({
+        type: selection.type,
+        field: selection.field,
+        value,
+        label: String(label ?? value),
+        sourceWidget: selection.sourceWidget,
+      });
+    }
 
     openDrilldown({
       title: String(label ?? value),
@@ -225,7 +242,7 @@ export function InteractiveLineChart({
   if (area) {
     return (
       <div className="chart-box">
-        <ResponsiveContainer width="100%" height={height}>
+        <ResponsiveContainer width="100%" height={height} initialDimension={{ width: 600, height: 300 }}>
           <AreaChart {...commonProps}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey={categoryKey} />
@@ -247,7 +264,7 @@ export function InteractiveLineChart({
 
   return (
     <div className="chart-box">
-      <ResponsiveContainer width="100%" height={height}>
+      <ResponsiveContainer width="100%" height={height} initialDimension={{ width: 600, height: 300 }}>
         <LineChart {...commonProps}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey={categoryKey} />
@@ -295,13 +312,15 @@ export function InteractiveScatterChart({
 
     if (value === null || value === undefined) return;
 
-    applySelection({
-      type: selection.type,
-      field: selection.field,
-      value,
-      label: String(label ?? value),
-      sourceWidget: selection.sourceWidget,
-    });
+    if (selection.field) {
+      applySelection({
+        type: selection.type,
+        field: selection.field,
+        value,
+        label: String(label ?? value),
+        sourceWidget: selection.sourceWidget,
+      });
+    }
 
     openDrilldown({
       title: String(label ?? value),
@@ -313,7 +332,7 @@ export function InteractiveScatterChart({
 
   return (
     <div className="chart-box">
-      <ResponsiveContainer width="100%" height={height}>
+      <ResponsiveContainer width="100%" height={height} initialDimension={{ width: 600, height: 300 }}>
         <ScatterChart>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey={xKey} name={xKey} />
@@ -371,13 +390,15 @@ export function InteractiveHeatmap({
 
     if (value === null || value === undefined) return;
 
-    applySelection({
-      type: selection.type,
-      field: selection.field,
-      value,
-      label: String(label ?? value),
-      sourceWidget: selection.sourceWidget,
-    });
+    if (selection.field) {
+      applySelection({
+        type: selection.type,
+        field: selection.field,
+        value,
+        label: String(label ?? value),
+        sourceWidget: selection.sourceWidget,
+      });
+    }
 
     openDrilldown({
       title: String(label ?? value),

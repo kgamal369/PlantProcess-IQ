@@ -31,15 +31,16 @@ const CYAN = "#00d4ff";
 const BLUE = "#0a84ff";
 const GREEN = "#2ce6a2";
 
-type P = { type: string; rows: ExtraRow[]; categoryKey: string; valueKey: string; field?: string };
+type P = { type: string; rows: ExtraRow[]; categoryKey: string; valueKey: string; field?: string | null };
 
-export function ExtraChart({ type, rows, categoryKey, valueKey, field = "materialCode" }: P) {
+export function ExtraChart({ type, rows, categoryKey, valueKey, field = null }: P) {
   const { filters, setFilter } = useDashboardFilters();
   const data = useMemo(
     () => rows.map((r) => ({ cat: String(r[categoryKey] ?? ""), val: Number(r[valueKey] ?? 0) })),
     [rows, categoryKey, valueKey]
   );
   const toggle = (cat: string) => {
+    if (!field) return;
     const g = (filters ?? {}) as Record<string, unknown>;
     const cur = g[field] !== undefined && g[field] !== null ? String(g[field]) : null;
     setFilter(field as never, (cur === cat ? undefined : cat) as never);
@@ -56,7 +57,7 @@ export function ExtraChart({ type, rows, categoryKey, valueKey, field = "materia
     let run = 0;
     const pd = sorted.map((d) => { run += d.val; return { ...d, cum: Math.round((run / total) * 1000) / 10 }; });
     return (
-      <ResponsiveContainer width="100%" height={260}>
+      <ResponsiveContainer width="100%" height="100%">
         <ComposedChart data={pd} margin={{ top: 8, right: 10, left: -14, bottom: 4 }}>
           <CartesianGrid stroke={GRID} vertical={false} />
           <XAxis dataKey="cat" tick={AXIS} interval={0} angle={-28} textAnchor="end" height={54} />
@@ -93,7 +94,7 @@ export function ExtraChart({ type, rows, categoryKey, valueKey, field = "materia
 
   const sd = data.map((d, i) => ({ x: i + 1, y: d.val, cat: d.cat }));
   return (
-    <ResponsiveContainer width="100%" height={260}>
+    <ResponsiveContainer width="100%" height="100%">
       <ScatterChart margin={{ top: 10, right: 12, left: -14, bottom: 4 }}>
         <CartesianGrid stroke={GRID} />
         <XAxis dataKey="x" tick={AXIS} tickFormatter={(v: number) => sd[v - 1]?.cat ?? ""} interval={0} angle={-28} textAnchor="end" height={54} />
