@@ -11,7 +11,7 @@ const nodeTypes = { block: BlockNode };
  *  registry endpoint yet, so these are declared once here and consumed by both
  *  the canvas blocks and the form-equivalent payload below. When the registry
  *  lands, replace these two constants with its response - nothing else changes. */
-export const OUTCOMES = ["defect.class", "defect.severity", "defect.rate_per_m2", "kpi.prime_yield"];
+export const OUTCOMES = ["defect.rate_per_m2", "defect.class", "defect.severity", "kpi.prime_yield"];
 export const GRAINS = ["coil", "slab", "heat"];
 
 type GatesSummary = {

@@ -28,9 +28,9 @@ const num = (x?: number | null, d = 3) => (x == null ? "—" : x.toFixed(d));
 
 export function AdvancedAnalysisPage() {
   const [params] = useSearchParams();
-  const outcomeKey = params.get("outcomeKey") ?? "defect.edge_crack_rate";
+  const outcomeKey = params.get("outcomeKey") ?? "defect.rate_per_m2";
   const grain = params.get("grain") ?? "coil";
-  const windowDays = Number(params.get("windowDays") ?? "30");
+  const windowDays = Number(params.get("windowDays") ?? "3650");
   const runId = params.get("runId") ?? undefined;
 
   const [readiness, setReadiness] = useState<AnalysisReadinessDto | null>(null);

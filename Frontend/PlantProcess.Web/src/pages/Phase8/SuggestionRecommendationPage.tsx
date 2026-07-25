@@ -8,7 +8,7 @@ import { P2T08_STANDARD_ROLLOUT_MARKER, StandardP2Input } from "@/components/sta
 import { StandardButton } from "@/components/standard";
 const defaultRequest: SuggestionRequest = {
   scope: "demo",
-  outcomeKey: "defect.edge_crack_rate",
+  outcomeKey: "defect.rate_per_m2",
   materialScope: "coil",
   minimumConfidence: 0.72,
   includeValueProjection: true,
