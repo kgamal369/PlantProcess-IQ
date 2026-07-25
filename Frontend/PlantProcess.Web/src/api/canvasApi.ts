@@ -3,7 +3,7 @@ import { apiClient } from "./http";
 export type StagedDataset = { table: string; source: string; columns: { name: string; sqlType: string; isKeyCandidate: boolean }[] };
 export type JoinSpec = { leftTable: string; leftColumn: string; rightTable: string; rightColumn: string };
 export type MapperGraph = { name: string; targetEntity: string; tables: string[]; joins: JoinSpec[] };
-export type DryRunResult = { dryRunId: string; status: string; rowCount: number; columns: string[]; rows: unknown[][]; message?: string };
+export type DryRunResult = { dryRunId: string; status: string; rowCount: number; columns: string[]; rows: unknown[][]; message?: string; sql?: string };
 
 const BASE = "/api/prep/visual-mapper";
 

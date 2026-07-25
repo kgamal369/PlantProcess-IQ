@@ -1,0 +1,98 @@
+.schema-tree { display: flex; flex-direction: column; gap: 2px; }
+
+.schema-tree__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ppiq-color-text-primary, #eaf6ff);
+  font-family: inherit;
+  font-size: 12.5px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.schema-tree__row:hover { background: rgba(0, 212, 255, 0.07); }
+
+.schema-tree__chev {
+  flex: 0 0 auto;
+  width: 0;
+  height: 0;
+  margin-left: 2px;
+  border-left: 5px solid var(--ppiq-color-accent, #00d4ff);
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  transition: transform 130ms ease;
+}
+
+.schema-tree__chev--open { transform: rotate(90deg); }
+
+.schema-tree__name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.schema-tree__meta {
+  flex: 0 0 auto;
+  color: var(--ppiq-color-text-muted, #8ba9c4);
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.schema-tree__row--schema {
+  font-weight: 750;
+  letter-spacing: 0.02em;
+  color: var(--ppiq-color-accent, #00d4ff);
+  text-transform: none;
+}
+
+.schema-tree__row--table { padding-left: 20px; }
+
+.schema-tree__col {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  width: 100%;
+  padding: 3px 8px 3px 40px;
+  border: 0;
+  background: transparent;
+  color: var(--ppiq-color-text-secondary, #c9dcec);
+  font-family: inherit;
+  font-size: 11.5px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.schema-tree__col:hover { background: rgba(0, 212, 255, 0.05); }
+
+.schema-tree__coltype {
+  margin-left: auto;
+  color: var(--ppiq-color-text-muted, #8ba9c4);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 10px;
+}
+
+.schema-tree__key {
+  flex: 0 0 auto;
+  padding: 0 5px;
+  border: 1px solid rgba(44, 230, 162, 0.4);
+  border-radius: 3px;
+  color: #2ce6a2;
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.schema-tree__empty {
+  padding: 14px 8px;
+  color: var(--ppiq-color-text-muted, #8ba9c4);
+  font-size: 12px;
+  line-height: 1.6;
+}

@@ -1,0 +1,93 @@
+.canvas-modeshell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.canvas-modebar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--ppiq-journey-border, rgba(0, 212, 255, 0.14));
+  background: var(--ppiq-color-surface, #0b1730);
+  flex: 0 0 auto;
+}
+
+.canvas-modebar__label {
+  margin-right: 6px;
+  color: var(--ppiq-color-text-muted, #8ba9c4);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.canvas-modebar__spacer { flex: 1 1 auto; }
+
+.canvas-modebar__hint {
+  color: var(--ppiq-color-text-muted, #8ba9c4);
+  font-size: 12px;
+}
+
+.canvas-sqlpane {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  border: 1px solid var(--ppiq-journey-border, rgba(0, 212, 255, 0.14));
+  border-radius: 10px;
+  background: var(--ppiq-color-surface, #0b1730);
+  overflow: hidden;
+}
+
+.canvas-sqlpane__head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--ppiq-journey-border, rgba(0, 212, 255, 0.14));
+  background: var(--ppiq-color-surface-raised, #102a43);
+}
+
+.canvas-sqlpane__title {
+  font-weight: 750;
+  font-size: 13px;
+  color: var(--ppiq-color-text-primary, #eaf6ff);
+}
+
+.canvas-sqlpane__badge {
+  padding: 2px 8px;
+  border: 1px solid var(--ppiq-journey-border, rgba(0, 212, 255, 0.22));
+  border-radius: 999px;
+  color: var(--ppiq-color-accent, #00d4ff);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.canvas-sqlpane__note {
+  margin-left: auto;
+  color: var(--ppiq-color-text-muted, #8ba9c4);
+  font-size: 11px;
+}
+
+.canvas-sqlpane__body {
+  margin: 0;
+  padding: 14px 16px;
+  overflow: auto;
+  flex: 1 1 auto;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: var(--ppiq-color-text-secondary, #c9dcec);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.canvas-sqlpane__empty {
+  padding: 24px 16px;
+  color: var(--ppiq-color-text-muted, #8ba9c4);
+  font-size: 13px;
+  line-height: 1.6;
+}

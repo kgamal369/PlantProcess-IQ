@@ -95,7 +95,7 @@ ORDER BY table_name, ordinal_position;";
                     }
                 }
                 var dr = await RecordDryRun(ds, id, "succeeded", rows.Count, null);
-                return Results.Ok(new { dryRunId = dr, status = "succeeded", rowCount = rows.Count, columns = cols, rows, message = (string?)null });
+                return Results.Ok(new { dryRunId = dr, status = "succeeded", rowCount = rows.Count, columns = cols, rows, message = (string?)null, sql });
             }
             catch (Exception ex)
             {
