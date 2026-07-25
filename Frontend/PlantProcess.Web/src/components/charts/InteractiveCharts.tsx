@@ -23,6 +23,8 @@ import {
   useDashboardSelections,
   type DashboardSelectionType,
 } from "../../state/DashboardSelectionContext";
+import { useDashboardFilters } from "../../state/DashboardFilterContext";
+import { timeDimensionRange } from "../../state/widgetSelectionMap";
 import { EmptyInsightState } from "../dashboard/EmptyInsightState";
 import { StandardButton } from "@/components/standard";
 
@@ -34,6 +36,11 @@ export interface ChartRow {
 interface SelectionConfig {
   type: DashboardSelectionType;
   field: keyof DashboardFilters | null;
+  /** 
+PPIQ-WIDGETFIX
+: day/week/month have no single filter key; they narrow the
+   *  fromUtc/toUtc range instead. */
+  timeDimension?: string | null;
   sourceWidget: string;
   valueKey?: string;
   labelKey?: string;
@@ -79,6 +86,7 @@ export function InteractiveBarChart({
   height = 300,
 }: InteractiveChartProps) {
   const { applySelection, openDrilldown } = useDashboardSelections();
+  const { mergeFilters } = useDashboardFilters();
 
   if (!data.length) return <EmptyInsightState />;
 
@@ -88,7 +96,10 @@ export function InteractiveBarChart({
 
     if (value === null || value === undefined) return;
 
-    if (selection.field) {
+    const timeRange = timeDimensionRange(selection.timeDimension, value as string | number | null);
+    if (timeRange) {
+      mergeFilters({ fromUtc: timeRange.fromUtc, toUtc: timeRange.toUtc, page: 1 });
+    } else if (selection.field) {
       applySelection({
         type: selection.type,
         field: selection.field,
@@ -138,6 +149,7 @@ export function InteractivePieChart({
   donut = false,
 }: InteractiveChartProps & { donut?: boolean }) {
   const { applySelection, openDrilldown } = useDashboardSelections();
+  const { mergeFilters } = useDashboardFilters();
 
   if (!data.length) return <EmptyInsightState />;
 
@@ -147,7 +159,10 @@ export function InteractivePieChart({
 
     if (value === null || value === undefined) return;
 
-    if (selection.field) {
+    const timeRange = timeDimensionRange(selection.timeDimension, value as string | number | null);
+    if (timeRange) {
+      mergeFilters({ fromUtc: timeRange.fromUtc, toUtc: timeRange.toUtc, page: 1 });
+    } else if (selection.field) {
       applySelection({
         type: selection.type,
         field: selection.field,
@@ -204,6 +219,7 @@ export function InteractiveLineChart({
   area = false,
 }: InteractiveChartProps & { area?: boolean }) {
   const { applySelection, openDrilldown } = useDashboardSelections();
+  const { mergeFilters } = useDashboardFilters();
 
   if (!data.length) return <EmptyInsightState />;
 
@@ -213,7 +229,10 @@ export function InteractiveLineChart({
 
     if (value === null || value === undefined) return;
 
-    if (selection.field) {
+    const timeRange = timeDimensionRange(selection.timeDimension, value as string | number | null);
+    if (timeRange) {
+      mergeFilters({ fromUtc: timeRange.fromUtc, toUtc: timeRange.toUtc, page: 1 });
+    } else if (selection.field) {
       applySelection({
         type: selection.type,
         field: selection.field,
@@ -303,6 +322,7 @@ export function InteractiveScatterChart({
   height?: number;
 }) {
   const { applySelection, openDrilldown } = useDashboardSelections();
+  const { mergeFilters } = useDashboardFilters();
 
   if (!data.length) return <EmptyInsightState />;
 
@@ -312,7 +332,10 @@ export function InteractiveScatterChart({
 
     if (value === null || value === undefined) return;
 
-    if (selection.field) {
+    const timeRange = timeDimensionRange(selection.timeDimension, value as string | number | null);
+    if (timeRange) {
+      mergeFilters({ fromUtc: timeRange.fromUtc, toUtc: timeRange.toUtc, page: 1 });
+    } else if (selection.field) {
       applySelection({
         type: selection.type,
         field: selection.field,
@@ -365,6 +388,7 @@ export function InteractiveHeatmap({
   selection: SelectionConfig;
 }) {
   const { applySelection, openDrilldown } = useDashboardSelections();
+  const { mergeFilters } = useDashboardFilters();
 
   if (!data.length) return <EmptyInsightState />;
 
@@ -390,7 +414,10 @@ export function InteractiveHeatmap({
 
     if (value === null || value === undefined) return;
 
-    if (selection.field) {
+    const timeRange = timeDimensionRange(selection.timeDimension, value as string | number | null);
+    if (timeRange) {
+      mergeFilters({ fromUtc: timeRange.fromUtc, toUtc: timeRange.toUtc, page: 1 });
+    } else if (selection.field) {
       applySelection({
         type: selection.type,
         field: selection.field,

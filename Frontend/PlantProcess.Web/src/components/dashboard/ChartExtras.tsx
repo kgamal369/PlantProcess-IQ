@@ -5,6 +5,7 @@ import {
 } from "recharts";
 import { StandardP2Button } from "@/components/standard/StandardP2Controls";
 import { useDashboardFilters } from "../../state/DashboardFilterContext";
+import { timeDimensionRange } from "@/state/widgetSelectionMap";
 import "./chartExtras.css";
 
 /** M2-38-lite: scatter, heatmap, pareto renderers for the saved-widget switcher.
@@ -19,7 +20,7 @@ export const isExtraChartType = (t: unknown): boolean => EXTRA.includes(String(t
 
 const SCATTER_MEASURES = ["avgParameterValue", "riskScore", "defectRate"];
 export function extendChartTypes(measureCode: string | undefined): string[] {
-  const base = ["bar", "line", "area", "pie", "donut", "table", "heatmap", "pareto"];
+  const base = ["kpi", "bar", "line", "area", "pie", "donut", "table", "heatmap", "pareto"];
   if (measureCode && SCATTER_MEASURES.includes(measureCode)) base.splice(6, 0, "scatter");
   return base;
 }
@@ -31,15 +32,21 @@ const CYAN = "#00d4ff";
 const BLUE = "#0a84ff";
 const GREEN = "#2ce6a2";
 
-type P = { type: string; rows: ExtraRow[]; categoryKey: string; valueKey: string; field?: string | null };
+type P = { type: string; rows: ExtraRow[]; categoryKey: string; valueKey: string; field?: string | null; timeDimension?: string | null };
 
-export function ExtraChart({ type, rows, categoryKey, valueKey, field = null }: P) {
-  const { filters, setFilter } = useDashboardFilters();
+export function ExtraChart({ type, rows, categoryKey, valueKey, field = null, timeDimension = null }: P) {
+  const { filters, setFilter, mergeFilters } = useDashboardFilters();
   const data = useMemo(
     () => rows.map((r) => ({ cat: String(r[categoryKey] ?? ""), val: Number(r[valueKey] ?? 0) })),
     [rows, categoryKey, valueKey]
   );
   const toggle = (cat: string) => {
+    // PPIQ-WIDGETFIX: a temporal category narrows the workspace time range.
+    const timeRange = timeDimensionRange(timeDimension, cat);
+    if (timeRange) {
+      mergeFilters({ fromUtc: timeRange.fromUtc, toUtc: timeRange.toUtc, page: 1 });
+      return;
+    }
     if (!field) return;
     const g = (filters ?? {}) as Record<string, unknown>;
     const cur = g[field] !== undefined && g[field] !== null ? String(g[field]) : null;

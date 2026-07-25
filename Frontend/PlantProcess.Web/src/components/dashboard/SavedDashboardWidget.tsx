@@ -1,5 +1,6 @@
 import { ExtraChart, isExtraChartType, extendChartTypes } from "./ChartExtras";
-import { dimensionToFilterField } from "@/state/widgetSelectionMap";
+import { dimensionToFilterField, isTemporalDimension } from "@/state/widgetSelectionMap";
+import { MetricCard } from "@/components/MetricCard";
 import { BarChart3 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
@@ -24,13 +25,13 @@ import { useDashboardSelection } from "../../state/DashboardSelectionContext";
 interface SavedDashboardWidgetProps {
   dashboardDefinitionId: string;
   widget: DashboardWidgetDefinitionRecord;
-  onEdit: () => void | Promise<void>;
+  onEdit?: () => void | Promise<void>;
   onRemoved: () => void | Promise<void>;
   onCloned: () => void | Promise<void>;
   onHidden?: () => void | Promise<void>;
 }
 
-export function SavedDashboardWidget({ dashboardDefinitionId,
+/** PPIQ-WIDGETFIX: widgets stored with chartType "kpi" previously fell through  *  every branch below into InteractiveBarChart, so a KPI tile rendered as a  *  50-bar chart of daily counts. MetricCard already existed and was unused  *  for this. Rate, score and avg measures are averaged; max/min take the  *  extreme; everything else sums. */ const AVERAGED_MEASURES = ["defectRate", "riskScore", "avgParameterValue", "processStepDuration"];  function kpiValue(rows: ChartRow[], valueKey: string, measureCode?: string | null): string {   const numbers = rows     .map((row) => Number(row[valueKey]))     .filter((n) => Number.isFinite(n));   if (!numbers.length) return "-";    let result: number;   if (measureCode === "maxParameterValue") {     result = Math.max(...numbers);   } else if (measureCode === "minParameterValue") {     result = Math.min(...numbers);   } else if (measureCode && AVERAGED_MEASURES.indexOf(measureCode) >= 0) {     result = numbers.reduce((a, b) => a + b, 0) / numbers.length;   } else {     result = numbers.reduce((a, b) => a + b, 0);   }    const decimals = Number.isInteger(result) ? 0 : 2;   return result.toLocaleString(undefined, {     minimumFractionDigits: decimals,     maximumFractionDigits: decimals,   }); }  export function SavedDashboardWidget({ dashboardDefinitionId,
   widget,
   onEdit,
   onRemoved,
@@ -129,7 +130,7 @@ export function SavedDashboardWidget({ dashboardDefinitionId,
       chartTypes={extendChartTypes(widget.measureCode) as any}
       exportRows={rows as Record<string, unknown>[]}
       onEdit={onEdit}
-      onRename={onEdit}
+      onRename={onEdit ? onEdit : undefined}
       onRemove={async () => { await productApi.deleteDashboardWidget(dashboardDefinitionId, widget.id); await Promise.resolve(onRemoved()); }}
       onClone={async () => { await productApi.cloneDashboardWidget(dashboardDefinitionId, widget.id, { widgetTitle: widget.widgetTitle + " (copy)" }); await Promise.resolve(onCloned()); }}
       onHide={onHidden}
@@ -150,8 +151,14 @@ export function SavedDashboardWidget({ dashboardDefinitionId,
       {result && !rows.length ? <EmptyInsightState /> : null}
 
       {result && rows.length ? (
-        isExtraChartType(activeChartType) ? (
-          <ExtraChart type={String(activeChartType)} rows={rows as Record<string, unknown>[]} categoryKey={categoryKey} valueKey={valueKey} field={dimensionToFilterField(widget.dimensionCode)} />
+        activeChartType === "kpi" ? (
+          <MetricCard
+            title={widget.widgetTitle}
+            value={kpiValue(rows, valueKey, widget.measureCode)}
+            subtitle={widget.measureCode}
+          />
+        ) : isExtraChartType(activeChartType) ? (
+          <ExtraChart type={String(activeChartType)} rows={rows as Record<string, unknown>[]} categoryKey={categoryKey} valueKey={valueKey} field={dimensionToFilterField(widget.dimensionCode)} timeDimension={isTemporalDimension(widget.dimensionCode) ? widget.dimensionCode : null} />
         ) : activeChartType === "line" || activeChartType === "area" ? (
           <InteractiveLineChart
             data={rows}
@@ -161,6 +168,7 @@ export function SavedDashboardWidget({ dashboardDefinitionId,
             selection={{
               type: "generic",
               field: dimensionToFilterField(widget.dimensionCode),
+              timeDimension: isTemporalDimension(widget.dimensionCode) ? widget.dimensionCode : null,
               sourceWidget: widget.widgetTitle,
               valueKey: categoryKey,
               labelKey: "dimensionLabel",
@@ -175,6 +183,7 @@ export function SavedDashboardWidget({ dashboardDefinitionId,
             selection={{
               type: "generic",
               field: dimensionToFilterField(widget.dimensionCode),
+              timeDimension: isTemporalDimension(widget.dimensionCode) ? widget.dimensionCode : null,
               sourceWidget: widget.widgetTitle,
               valueKey: categoryKey,
               labelKey: "dimensionLabel",
@@ -190,6 +199,7 @@ export function SavedDashboardWidget({ dashboardDefinitionId,
             selection={{
               type: "generic",
               field: dimensionToFilterField(widget.dimensionCode),
+              timeDimension: isTemporalDimension(widget.dimensionCode) ? widget.dimensionCode : null,
               sourceWidget: widget.widgetTitle,
               valueKey: categoryKey,
               labelKey: "dimensionLabel",

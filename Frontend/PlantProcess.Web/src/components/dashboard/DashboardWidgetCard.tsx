@@ -23,7 +23,6 @@ import {
   Maximize2,
   Minimize2,
   MoreVertical,
-  PanelTop,
   Scan,
   Shrink,
   Trash2,
@@ -84,8 +83,15 @@ export function DashboardWidgetCard({
   disableActions = false,
 }: DashboardWidgetCardProps) {
   const { getWidgetState, setWidgetChartType } = useDashboardSelections();
-  const { expandWidgetToFullRow, expandWidgetToHalfRow, compactWidget } =
-    useDashboardGridLayout();
+  const { expandWidgetToFullRow, compactWidget } = useDashboardGridLayout();
+
+  /** 
+PPIQ-WIDGETFIX
+: react-grid-layout keys each item by the child key, which is
+   *  the raw widget id. This card receives "saved-<id>", so every resize call
+   *  used to look up an id that no layout item carried and silently did nothing.
+   *  Strip the prefix before touching the grid. */
+  const gridItemId = String(widgetId).replace(/^saved-/, "");
 
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -190,26 +196,11 @@ export function DashboardWidgetCard({
             </div>
           ) : null}
 
-          {/* Resize: half row */}
-          <StandardButton
-            type="button"
-            className="icon-button"
-            onClick={() =>
-              activeChartType === "table"
-                ? compactWidget(String(widgetId))
-                : expandWidgetToHalfRow(String(widgetId))
-            }
-            title="Half-row width"
-            aria-label="Half-row width"
-          >
-            <PanelTop size={15} />
-          </StandardButton>
-
           {/* Resize: full row */}
           <StandardButton
             type="button"
             className="icon-button"
-            onClick={() => expandWidgetToFullRow(String(widgetId))}
+            onClick={() => expandWidgetToFullRow(gridItemId)}
             title="Full-row width"
             aria-label="Full-row width"
           >
@@ -220,7 +211,7 @@ export function DashboardWidgetCard({
           <StandardButton
             type="button"
             className="icon-button"
-            onClick={() => compactWidget(String(widgetId))}
+            onClick={() => compactWidget(gridItemId)}
             title="Compact size"
             aria-label="Compact size"
           >

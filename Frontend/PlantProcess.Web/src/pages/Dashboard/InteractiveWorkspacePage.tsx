@@ -151,7 +151,6 @@ export function InteractiveWorkspacePage({ dashboardCode }: { dashboardCode: str
             <SavedDashboardWidget
               dashboardDefinitionId={dashboard.id}
               widget={widget}
-              onEdit={() => undefined}
               onRemoved={refresh}
               onCloned={refresh}
               onHidden={refresh}
