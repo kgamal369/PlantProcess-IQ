@@ -13,13 +13,14 @@ import { useState } from "react";
 import { StandardButton } from "@/components/standard";
 import { StandardP2Input } from "@/components/standard/StandardP2Controls";
 import type { AssistantAnswer, AssistantCitation } from "@/api/assistantApi";
+import "./AssistantChat.css";
 
-export type Turn = { role: "user" | "assistant"; answer?: AssistantAnswer; text?: string };
+export type Turn = { role: "user" | "assistant"; answer?: AssistantAnswer; text?: string; error?: string };
 
 const SUGGESTED = [
-  "Summarise the top risk this week",
-  "What is associated with edge-crack defects?",
-  "Show open suggestions by impact",
+  "Which source systems are registered?",
+  "What data has been imported so far?",
+  "Which findings have the strongest evidence?",
 ];
 
 export function AssistantChat({
@@ -69,6 +70,19 @@ export function AssistantChat({
             <div className="ppiq-assistant-chat__turn ppiq-assistant-chat__turn--user" key={i}>
               {t.text}
             </div>
+          ) : t.error ? (
+            <div
+              className="ppiq-assistant-chat__turn ppiq-assistant-chat__turn--error"
+              data-testid="assistant-technical-error"
+              key={i}
+            >
+              <strong>Request failed</strong>
+              <p>
+                The assistant could not be reached. This is a technical fault, not a
+                judgement about the evidence.
+              </p>
+              <code>{t.error}</code>
+            </div>
           ) : t.answer ? (
             <AssistantBubble key={i} answer={t.answer} onOpenEvidence={onOpenEvidence} />
           ) : null,
@@ -87,6 +101,12 @@ export function AssistantChat({
         <StandardP2Input
           value={text}
           onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              submit(text);
+            }
+          }}
           placeholder="Ask about your approved findings..."
         />
         <StandardButton

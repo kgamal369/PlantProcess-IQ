@@ -1,0 +1,204 @@
+/* Assistant conversation surface.
+   Every class here is applied by AssistantChat.tsx. Before this file existed,
+   none of them had a rule and the chat rendered as unstyled stacked divs. */
+
+.ppiq-assistant-chat {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+}
+
+.ppiq-assistant-chat__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ppiq-assistant-chat__chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border: 1px solid var(--ppiq-journey-border, rgba(0, 212, 255, 0.22));
+  border-radius: 999px;
+  background: rgba(0, 212, 255, 0.06);
+  color: var(--ppiq-color-accent, #00d4ff);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.ppiq-assistant-chat__transcript {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 220px;
+  max-height: 460px;
+  overflow-y: auto;
+  padding: 14px;
+  border: 1px solid var(--ppiq-journey-border, rgba(0, 212, 255, 0.14));
+  border-radius: 10px;
+  background: var(--ppiq-color-surface, #0b1730);
+}
+
+.ppiq-assistant-chat__empty {
+  margin: auto 0;
+  padding: 8px 4px;
+  color: var(--ppiq-color-text-muted, #8ba9c4);
+  font-size: 13px;
+  line-height: 1.6;
+  text-align: center;
+}
+
+.ppiq-assistant-chat__turn {
+  max-width: 88%;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.ppiq-assistant-chat__turn--user {
+  align-self: flex-end;
+  background: rgba(10, 132, 255, 0.16);
+  border: 1px solid rgba(10, 132, 255, 0.34);
+  color: var(--ppiq-color-text-primary, #eaf6ff);
+}
+
+.ppiq-assistant-chat__turn--answer {
+  align-self: flex-start;
+  background: var(--ppiq-color-surface-raised, #102a43);
+  border: 1px solid var(--ppiq-journey-border, rgba(0, 212, 255, 0.14));
+  color: var(--ppiq-color-text-primary, #eaf6ff);
+}
+
+.ppiq-assistant-chat__turn--answer > p { margin: 0 0 8px; }
+.ppiq-assistant-chat__turn--answer > p:last-child { margin-bottom: 0; }
+
+.ppiq-assistant-chat__turn--refusal {
+  align-self: flex-start;
+  background: rgba(255, 176, 32, 0.08);
+  border: 1px solid rgba(255, 176, 32, 0.34);
+  border-left-width: 3px;
+  color: var(--ppiq-color-text-primary, #eaf6ff);
+}
+
+.ppiq-assistant-chat__turn--refusal strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #ffb020;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.ppiq-assistant-chat__turn--refusal p { margin: 0; }
+
+.ppiq-assistant-chat__turn--error {
+  align-self: flex-start;
+  background: rgba(255, 77, 109, 0.08);
+  border: 1px solid rgba(255, 77, 109, 0.34);
+  border-left-width: 3px;
+  color: var(--ppiq-color-text-primary, #eaf6ff);
+}
+
+.ppiq-assistant-chat__turn--error strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #ff4d6d;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.ppiq-assistant-chat__turn--error p { margin: 0; }
+
+.ppiq-assistant-chat__turn--error code {
+  display: block;
+  margin-top: 6px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: rgba(5, 11, 24, 0.6);
+  color: var(--ppiq-color-text-muted, #8ba9c4);
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+
+.ppiq-assistant-chat__citations {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--ppiq-journey-border, rgba(0, 212, 255, 0.14));
+}
+
+.ppiq-assistant-chat__nocite {
+  margin: 10px 0 0;
+  color: var(--ppiq-color-text-muted, #8ba9c4);
+  font-size: 12px;
+  font-style: italic;
+}
+
+.ppiq-assistant-chat__evidence {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  margin: 6px 0 2px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(5, 11, 24, 0.5);
+  font-size: 12px;
+}
+
+.ppiq-assistant-chat__evidence dt {
+  color: var(--ppiq-color-text-muted, #8ba9c4);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.ppiq-assistant-chat__evidence dd {
+  margin: 0;
+  color: var(--ppiq-color-text-primary, #eaf6ff);
+  overflow-wrap: anywhere;
+}
+
+.ppiq-assistant-chat__blocked {
+  margin-top: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px dashed rgba(255, 176, 32, 0.4);
+  font-size: 12px;
+}
+
+.ppiq-assistant-chat__blocked strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #ffb020;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.ppiq-assistant-chat__blocked ul { margin: 0; padding-left: 18px; }
+
+.ppiq-assistant-chat__suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ppiq-assistant-chat__composer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ppiq-assistant-chat__composer .standard-p2-field { flex: 1 1 auto; min-width: 0; }
+
+@media (max-width: 720px) {
+  .ppiq-assistant-chat__turn { max-width: 100%; }
+  .ppiq-assistant-chat__composer { flex-direction: column; align-items: stretch; }
+}

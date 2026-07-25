@@ -60,13 +60,7 @@ export function AssistantRuntimePage() {
         ...prev,
         {
           role: "assistant",
-          answer: {
-            isRefusal: true,
-            refusalReason: error instanceof Error ? error.message : String(error),
-            text: "",
-            citations: [],
-            blocked: [],
-          },
+          error: error instanceof Error ? error.message : String(error),
         },
       ]);
       setStatus("Assistant request failed.");

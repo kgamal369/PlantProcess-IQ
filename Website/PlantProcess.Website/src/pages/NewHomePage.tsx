@@ -1,6 +1,10 @@
-﻿import React, { useEffect } from "react";
+import React, { useEffect } from "react";
 import "../styles/new-landing.css";
 import RequestDemoForm from "../components/proof/RequestDemoForm";
+import { ArchitectureFlowScroll } from "../components/graphics/ArchitectureFlowScroll";
+import { GoldenThreadScroll } from "../components/graphics/GoldenThreadScroll";
+import { IntegrationEcosystem } from "../components/sections/IntegrationEcosystem";
+import { RoiCalculator } from "../components/roi/RoiCalculator";
 
 export function NewHomePage() {
   useEffect(() => {
@@ -94,6 +98,8 @@ export function NewHomePage() {
         </div>
       </div>
 
+      <ArchitectureFlowScroll />
+
       <section className="section" id="platform">
         <div className="wrap">
           <p className="eyebrow rv">HOW IT WORKS</p>
@@ -151,6 +157,8 @@ export function NewHomePage() {
           </div>
         </div>
       </section>
+
+      <GoldenThreadScroll />
 
       <section className="section" id="nocode">
         <div className="wrap">
@@ -219,7 +227,13 @@ export function NewHomePage() {
         </div>
       </section>
 
-      <RequestDemoForm />
+      <IntegrationEcosystem />
+
+      <RoiCalculator />
+
+      <div id="request-demo">
+        <RequestDemoForm />
+      </div>
     </div>
   );
 }
