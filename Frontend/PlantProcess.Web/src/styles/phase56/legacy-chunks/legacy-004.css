@@ -279,7 +279,16 @@ button.risk-pill {
    Drilldown Drawer
    -------------------------------------------------------------------------- */
 
+/* PPIQ-SCENE5678: the drawer snapped into existence with no motion at all
+   while the demo contract asks for a slide from the right. */
+@keyframes ppiq-drawer-in { from { transform: translateX(100%); } to { transform: translateX(0); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .drilldown-drawer { animation: none !important; }
+}
+
 .drilldown-drawer {
+  animation: ppiq-drawer-in 220ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
   position: fixed;
   top: 0;
   right: 0;

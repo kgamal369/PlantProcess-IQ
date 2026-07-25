@@ -518,3 +518,11 @@
 .piq-nav-group__header:hover .piq-nav-group__title { opacity: 1; }
 .piq-nav-group__chevron { font-size: 10px; opacity: 0.6; }
 .piq-nav-group__items { padding-left: 2px; }
+/* PPIQ-NAVFIX: an honestly empty nav group says so rather than showing a
+   bare heading with nothing beneath it. */
+.piq-nav-group__empty {
+  margin: 2px 0 6px 10px;
+  font-size: 11px;
+  font-family: "IBM Plex Mono", monospace;
+  color: #5c7391;
+}

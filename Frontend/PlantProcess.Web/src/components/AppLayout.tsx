@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 // ============================================================
 // FILE: Frontend/PlantProcess.Web/src/components/AppLayout.tsx
 // Update: reads real logged-in user from AuthContext
@@ -50,7 +50,10 @@ const NAV_DATA_INTEGRATION = [
   { to: "/data-integration/connector-truth", label: "Connector Truth", desc: "Per-connector sync and schema drift",      icon: ShieldCheck },
 ];
 
+/* PPIQ-SCENE5678 (M1-01): the two no-code surfaces get real nav entries. */
 const NAV_ANALYTICS = [
+  { to: "/prep/canvas",       label: "Join Canvas",      desc: "Wire staged tables into a published mapping", icon: GitBranch },
+  { to: "/analysis/toolbox",  label: "Analysis Toolbox", desc: "Compose a governed analysis from blocks",     icon: Cpu },
   { to: "/dashboard",   label: "Command Dashboard",      desc: "Interactive intelligence workspace",    icon: LayoutDashboard },
   {
     to: "/dashboard/widgets/schema-drift",
@@ -130,23 +133,35 @@ function NavItem({
   );
 }
 
-function useWorkspaceLinks() {
-  const [links, setLinks] = useState<Array<{ to: string; label: string }>>([]);
+/** PPIQ-NAVFIX: this hook used the ONLY raw fetch in the whole src tree, and it
+ *  failed three ways at once, silently:
+ *    - the URL was relative, so it resolved against the Vite dev server on 5173
+ *      instead of the API on 5063. There is no proxy block in vite.config.ts, so
+ *      Vite's history fallback answered with index.html and HTTP 200 - res.ok was
+ *      true, the JSON parse threw on HTML, and the catch swallowed it.
+ *    - it read its bearer token from a window global that is assigned NOWHERE in
+ *      the codebase, so the request would have been unauthenticated anyway.
+ *    - every failure path returned an empty list with no console line, so the
+ *      WORKSPACES group rendered a header with nothing under it.
+ *  It now goes through apiClient like every other call in the product, which
+ *  carries the configured base URL and the auth interceptor. A failure is
+ *  reported once to the console instead of vanishing. */
+function useWorkspaceLinks(): NavEntry[] {
+  const [links, setLinks] = useState<NavEntry[]>([]);
   useEffect(() => {
     let ignore = false;
-    (async () => {
-      try {
-        const res = await fetch("/analytics/dashboard/definitions", {
-          headers: (() => {
-            const t = (window as unknown as { __ppiqToken?: string }).__ppiqToken;
-            const h: Record<string, string> = {}; if (t) h["Authorization"] = "Bearer " + t; return h;
-          })(),
-        });
-        if (!res.ok) return;
-        const body = await res.json();
-        const arr = Array.isArray(body)
-          ? body
-          : body.items ?? body.definitions ?? body.dashboards ?? body.results ?? [];
+    apiClient
+      .get<unknown>("/analytics/dashboard/definitions")
+      .then((body) => {
+        if (ignore) return;
+        const container = body as Record<string, unknown> | unknown[] | null;
+        const arr = Array.isArray(container)
+          ? container
+          : ((container?.["items"] ??
+              container?.["definitions"] ??
+              container?.["dashboards"] ??
+              container?.["results"] ??
+              []) as unknown[]);
         const mapped = (arr as Array<Record<string, unknown>>)
           .map((d) => ({
             code: String(d["dashboardCode"] ?? d["dashboard_code"] ?? d["code"] ?? ""),
@@ -154,17 +169,29 @@ function useWorkspaceLinks() {
           }))
           .filter((d) => d.code)
           .sort((a, b) => a.name.localeCompare(b.name))
-          .map((d) => ({ to: "/workspace/" + d.code, label: d.name }));
-        if (!ignore) setLinks(mapped);
-      } catch {
-        /* nav is best-effort; typed URLs still work */
-      }
-    })();
+          .map((d) => ({
+            to: "/workspace/" + d.code,
+            label: d.name,
+            desc: "Interactive analytics workspace",
+            icon: LayoutDashboard,
+          }));
+        setLinks(mapped);
+      })
+      .catch((err) => {
+        if (ignore) return;
+        console.warn("[nav] workspace list unavailable:", err);
+        setLinks([]);
+      });
     return () => { ignore = true; };
   }, []);
   return links;
 }
-function NavGroup({ title, items }: { title: string; items: ReadonlyArray<{ to: string; label: string; desc: string; icon: React.ElementType }> }) {
+/** PPIQ-NAVFIX: one shape for every nav entry, so the Workspaces group can use
+ *  the same collapsible NavGroup as its four neighbours instead of a hand-rolled
+ *  block that could not fold and sat at a different indent. */
+export type NavEntry = { to: string; label: string; desc: string; icon: React.ElementType };
+
+function NavGroup({ title, items, emptyHint }: { title: string; items: ReadonlyArray<NavEntry>; emptyHint?: string }) {
   const location = useLocation();
   const containsCurrent = items.some((i) => location.pathname === i.to || location.pathname.startsWith(i.to + "/"));
   const [open, setOpen] = useState<boolean>(containsCurrent);
@@ -181,7 +208,11 @@ function NavGroup({ title, items }: { title: string; items: ReadonlyArray<{ to: 
         <span className="piq-nav-group__chevron" aria-hidden="true">{open ? "\u25BE" : "\u25B8"}</span>
       </StandardButton>
       <div className="piq-nav-group__items" hidden={!open}>
-        {items.map((item) => <NavItem key={item.to} {...item} />)}
+        {items.length > 0
+          ? items.map((item) => <NavItem key={item.to} {...item} />)
+          : emptyHint
+            ? <p className="piq-nav-group__empty">{emptyHint}</p>
+            : null}
       </div>
     </div>
   );
@@ -255,15 +286,8 @@ export function AppLayout() {
         <nav className="piq-nav">
           <NavGroup title="Data Integration" items={NAV_DATA_INTEGRATION} />
           <NavGroup title="Analytics" items={NAV_ANALYTICS} />
-        <div className="piq-nav-group">
-          <p className="piq-nav-group__title">Workspaces</p>
-          {workspaceLinks.map((l) => (
-            <NavLink key={l.to} to={l.to} className={({ isActive }) => isActive ? "piq-nav-link active" : "piq-nav-link"}>
-              <span className="piq-nav-link__copy"><span className="piq-nav-link__label">{l.label}</span></span>
-            </NavLink>
-          ))}
-        </div>
-        
+          <NavGroup title="Workspaces" items={workspaceLinks} emptyHint="No workspaces published yet" />
+
           <NavGroup title="Intelligence" items={NAV_INTELLIGENCE} />
           <NavGroup title="System" items={NAV_SYSTEM} />
         </nav>

@@ -44,13 +44,20 @@ export function SelectionBreadcrumb() {
           Show widgets
         </StandardButton>
 
-        <StandardButton className="secondary-button" onClick={resetLayout} type="button">
+        {/* PPIQ-SCENE5678: one control. Two near-identically labelled reset
+            buttons used to sit side by side doing different things, and no
+            customer could tell them apart - one even had an icon and the other
+            did not. Both resets now run behind a single labelled button. */}
+        <StandardButton
+          className="secondary-button"
+          onClick={() => {
+            resetLayout();
+            resetGridLayout();
+          }}
+          type="button"
+        >
           <RotateCcw size={15} />
           Reset layout
-        </StandardButton>
-
-        <StandardButton className="secondary-button" onClick={resetGridLayout} type="button">
-            Reset grid
         </StandardButton>
       </div>
 

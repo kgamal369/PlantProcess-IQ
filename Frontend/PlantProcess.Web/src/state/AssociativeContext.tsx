@@ -34,6 +34,11 @@ export const useAssociative = () => {
   return c;
 };
 
+/** PPIQ-SCENE5678: never forward pagination or sort params into a dimension
+ *  enumeration - they are not filters and they change nothing about which values
+ *  are still possible. */
+const PAGINATION_KEYS = ["page", "pageSize", "sortBy", "sortDirection"];
+
 type QueryRow = Record<string, unknown>;
 async function dimensionValues(dimension: string, filters: Record<string, unknown>): Promise<string[] | null> {
   try {
@@ -65,17 +70,25 @@ export function AssociativeProvider({ children }: { children: ReactNode }) {
   const timer = useRef<number | null>(null);
   const generation = useRef(0);
 
-  // all-sets once at mount (unfiltered enumeration per field)
+  // PPIQ-SCENE5678: enumerate all fields in PARALLEL. The previous version
+  // awaited each dimension in a for loop, so the eight columns appeared one at a
+  // time over a second or more - on the first thing the customer sees.
   useEffect(() => {
     let stop = false;
-    (async () => {
-      for (const f of ASSOC_FIELDS) {
+    Promise.all(
+      ASSOC_FIELDS.map(async (f) => {
         const vals = await dimensionValues(f.dimension, {});
-        if (stop) return;
-        setAllSets((s) => ({ ...s, [f.key]: vals }));
-        if (vals === null) console.warn(`[associative] dimension '${f.dimension}' unavailable; field ${f.key} degraded`);
+        return { key: f.key, dimension: f.dimension, vals };
+      })
+    ).then((results) => {
+      if (stop) return;
+      const next: Record<string, string[] | null> = {};
+      for (const r of results) {
+        next[r.key] = r.vals;
+        if (r.vals === null) console.warn(`[associative] dimension '${r.dimension}' unavailable; field ${r.key} degraded`);
       }
-    })();
+      setAllSets((s) => ({ ...s, ...next }));
+    });
     return () => { stop = true; };
   }, []);
 
@@ -85,9 +98,14 @@ export function AssociativeProvider({ children }: { children: ReactNode }) {
     ASSOC_FIELDS.forEach(async (f) => {
       if (allSets[f.key] === null) return; // unavailable
       setLoading((l) => ({ ...l, [f.key]: true }));
+      // PPIQ-SCENE5678: carry EVERY active workspace filter, minus this field's
+      // own selection. The previous version copied only the eight associative
+      // keys, so a time-range selection (fromUtc/toUtc) narrowed the widgets but
+      // not the panel - the chips and the charts then disagreed on screen.
       const minusOwn: Record<string, unknown> = {};
-      for (const k of ASSOC_FIELDS.map((x) => x.key)) {
+      for (const k of Object.keys(g)) {
         if (k === f.key) continue;
+        if (PAGINATION_KEYS.indexOf(k) >= 0) continue;
         const v = g[k];
         if (v !== undefined && v !== null && v !== "") minusOwn[k] = v;
       }
@@ -121,7 +139,10 @@ export function AssociativeProvider({ children }: { children: ReactNode }) {
       }
       return {
         field: f,
-        available: all !== null && all !== undefined,
+        // PPIQ-SCENE5678: an empty enumeration is not an available field. It used
+        // to render as a titled column with a 0/0 count and no chips, which reads
+        // as broken rather than honest. Zero values now degrades to n/a.
+        available: all !== null && all !== undefined && all.length > 0,
         loading: !!loading[f.key],
         all: all ?? [],
         states,

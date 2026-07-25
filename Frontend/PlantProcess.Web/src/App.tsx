@@ -53,6 +53,15 @@ import { StandardButton } from "@/components/standard";
 const SourceImportPrepPage = lazy(() =>
   import("./pages/SourceImportPrepPage").then((m) => ({ default: m.default }))
 );
+/* PPIQ-SCENE5678 (M1-01): the canvas and the toolbox were built, gated and
+   committed, and never routed. Both pages sat on disk with no way to reach
+   them from the running application. */
+const VisualJoinCanvasPage = lazy(() =>
+  import("./pages/Prep/VisualJoinCanvasPage").then((m) => ({ default: m.default }))
+);
+const AnalysisToolboxPage = lazy(() =>
+  import("./pages/Analysis/AnalysisToolboxPage").then((m) => ({ default: m.default }))
+);
 const AnalysisJobConfigPage = lazy(() =>
   import("./pages/AnalysisJobConfigPage").then((m) => ({ default: m.default }))
 );
@@ -488,6 +497,22 @@ function AppRoutes() {
                         "/data-integration/prepare",
                         "Import preparation is refreshing",
                         <SourceImportPrepPage />
+                      )}
+                    />
+                    <Route
+                      path="/prep/canvas"
+                      element={withPageBoundary(
+                        "/prep/canvas",
+                        "The join canvas is refreshing",
+                        <VisualJoinCanvasPage />
+                      )}
+                    />
+                    <Route
+                      path="/analysis/toolbox"
+                      element={withPageBoundary(
+                        "/analysis/toolbox",
+                        "The analysis toolbox is refreshing",
+                        <AnalysisToolboxPage />
                       )}
                     /> {/* M1-05 Surface-3: analysis-job definition on live data */}
                     <Route

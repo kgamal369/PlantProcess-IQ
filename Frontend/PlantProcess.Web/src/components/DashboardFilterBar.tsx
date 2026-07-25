@@ -222,10 +222,11 @@ export function DashboardFilterBar() {
         <FilterSelect
           label="Parameter"
           icon={Thermometer}
-          value={filters.parameterCode ?? "CastingSpeed"}
+          value={filters.parameterCode ?? ""}
           onChange={(v) => setFilter("parameterCode", v || undefined)}
           active={!!filters.parameterCode}
         >
+          <option value="">All parameters</option>
           {referenceData?.parameters.length ? (
             referenceData.parameters.map((item) => (
               <option key={item.id} value={item.code}>
@@ -233,11 +234,12 @@ export function DashboardFilterBar() {
               </option>
             ))
           ) : (
-            <>
-              <option value="CastingSpeed">CastingSpeed</option>
-              <option value="Superheat">Superheat</option>
-              <option value="RollingForce">RollingForce</option>
-            </>
+            /* PPIQ-SCENE5678: no hardcoded, industry-specific fallback. Those
+               three codes did not exist in the data, so choosing one emptied
+               every widget on the page. An unselectable line says so. */
+            <option value="__unavailable__" disabled>
+              Parameter catalogue unavailable
+            </option>
           )}
         </FilterSelect>
 

@@ -49,6 +49,11 @@ using PlantProcess.Api.Endpoints.Materials;
 
 using PlantProcess.Api.Endpoints.PlantLayout;
 
+// PPIQ-SCENE5678 (M1-01): VisualMapperEndpoints lives in
+// PlantProcess.Api.Endpoints.Prep, a namespace Program.cs never imported.
+// Without this using the extension method does not resolve at all.
+using PlantProcess.Api.Endpoints.Prep;
+
 using PlantProcess.Api.Endpoints.Process;
 
 using PlantProcess.Api.Endpoints.Quality;
@@ -1087,6 +1092,11 @@ app.MapPhase9RoleAccessEndpoints();
 
 
 app.MapV5VisualMapperEndpoints();
+
+// PPIQ-SCENE5678 (M1-01): the visual-mapper endpoint group was written,
+// built and committed but never registered, so every canvas call 404d.
+// The access-matrix row for /api/prep/visual-mapper already exists.
+app.MapVisualMapperEndpoints();
 
 app.MapV5BlendedProvenanceEndpoints();
 
