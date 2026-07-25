@@ -9,6 +9,7 @@ import { SelectionBreadcrumb } from "@/components/dashboard/SelectionBreadcrumb"
 import { useDashboardLayoutPersistence } from "@/hooks/useDashboardLayoutPersistence";
 import { dashboardingApi } from "@/api/dashboarding/dashboarding.api";
 import { StandardButton } from "@/components/standard";
+import WidgetBuilderWizard from "@/components/dashboard/widget-builder/WidgetBuilderWizard";
 
 type WidgetRecord = ComponentProps<typeof SavedDashboardWidget>["widget"];
 
@@ -121,6 +122,8 @@ export function InteractiveWorkspacePage({ dashboardCode }: { dashboardCode: str
     );
   }
 
+  const [wizardOpen, setWizardOpen] = useState(false);
+
   return (
     <section aria-label={dashboard.name}>
       <header className="ppiq-std-card__header">
@@ -139,8 +142,25 @@ export function InteractiveWorkspacePage({ dashboardCode }: { dashboardCode: str
           <StandardButton variant="ghost" onClick={refresh}>
             Refresh widgets
           </StandardButton>
+          <StandardButton
+            variant="primary"
+            data-testid="workspace-add-widget"
+            onClick={() => setWizardOpen(true)}
+          >
+            Add widget
+          </StandardButton>
         </div>
       </header>
+
+      {/* Constitution v3 II.6.7: widget authoring opens from the page the
+          widget lives on. The wizard was built and reachable from no control;
+          this is the control. */}
+      <WidgetBuilderWizard
+        isOpen={wizardOpen}
+        dashboardDefinitionId={dashboard.id}
+        onClose={() => setWizardOpen(false)}
+        onWidgetSaved={async () => { setWizardOpen(false); await refresh(); }}
+      />
       <DashboardFilterBar />
       <AssociativePanel />
         <DrilldownDrawer />
