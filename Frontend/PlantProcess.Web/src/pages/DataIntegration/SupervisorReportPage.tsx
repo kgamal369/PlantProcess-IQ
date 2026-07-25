@@ -12,6 +12,14 @@ import {
 } from "@/api/engine/supervisor.api";
 import "./SupervisorReportPage.css";
 
+function formatReportDate(value: string): string {
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) { return value; }
+  return parsed.toLocaleString(undefined, {
+    year: "numeric", month: "short", day: "2-digit",
+    hour: "2-digit", minute: "2-digit",
+  });
+}
 export function SupervisorReportPage() {
   const [reports, setReports] = useState<SupervisorReport[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -94,7 +102,7 @@ export function SupervisorReportPage() {
                 <details open={index === 0}>
                   <summary>
                     <span className="ppiq-sup-title">{report.title}</span>
-                    <span className="ppiq-sup-date">{report.createdAtUtc}</span>
+                    <span className="ppiq-sup-date">{formatReportDate(report.createdAtUtc)}</span>
                   </summary>
                   <pre className="ppiq-sup-body">{report.body}</pre>
                 </details>
