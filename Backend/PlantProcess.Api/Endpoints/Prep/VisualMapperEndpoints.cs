@@ -70,11 +70,13 @@ ORDER BY table_name, ordinal_position;";
             return n == 1 ? Results.Ok(new { ok = true }) : Results.NotFound();
         });
 
-        g.MapPost("/sessions/{id:guid}/dry-run", async (Guid id, NpgsqlDataSource ds) =>
+        g.MapPost("/sessions/{id:guid}/dry-run", async (Guid id, NpgsqlDataSource ds, IConfiguration cfg) =>
         {
             var graph = await LoadGraph(ds, id);
             if (graph is null) return Results.BadRequest(new { message = "no graph saved for session" });
-            var (sql, err) = BuildSafeSelect(graph);
+            // Same configuration key the catalogue query uses, so the panel and
+            // the generated query can never target different schemas again.
+            var (sql, err) = BuildSafeSelect(graph, cfg["Prep:StagingSchema"] ?? "dump_store");
             if (err is not null)
             {
                 await RecordDryRun(ds, id, "rejected_by_safe_sql", 0, err);
@@ -153,9 +155,11 @@ SELECT tenant_id, id, $2, $3, $4 FROM public.ppiq_visual_mapper_sessions WHERE i
     }
 
     /// Server-side SQL from the graph: staging-only identifiers, equality joins, LIMIT.
-    private static (string? sql, string? err) BuildSafeSelect(MapperGraph g)
+    private static (string? sql, string? err) BuildSafeSelect(MapperGraph g, string schema)
     {
         if (g.Tables.Length == 0) return (null, "graph has no tables");
+        if (!System.Text.RegularExpressions.Regex.IsMatch(schema, "^[a-zA-Z0-9_]+$"))
+            return (null, $"illegal schema identifier '{schema}'");
         foreach (var t in g.Tables)
             if (!System.Text.RegularExpressions.Regex.IsMatch(t, "^[a-zA-Z0-9_]+$"))
                 return (null, $"illegal table identifier '{t}'");
@@ -165,7 +169,7 @@ SELECT tenant_id, id, $2, $3, $4 FROM public.ppiq_visual_mapper_sessions WHERE i
                     return (null, $"illegal column identifier '{c}'");
 
         var sb = new StringBuilder();
-        sb.Append("SELECT * FROM staging.\"").Append(g.Tables[0]).Append("\" t0");
+        sb.Append("SELECT * FROM \"").Append(schema).Append("\".\"").Append(g.Tables[0]).Append("\" t0");
         var alias = new Dictionary<string, string> { [g.Tables[0]] = "t0" };
         var i = 1;
         foreach (var t in g.Tables.Skip(1)) { alias[t] = $"t{i}"; i++; }
@@ -174,7 +178,7 @@ SELECT tenant_id, id, $2, $3, $4 FROM public.ppiq_visual_mapper_sessions WHERE i
             var joins = g.Joins.Where(j => j.RightTable == t || j.LeftTable == t)
                 .Where(j => alias.ContainsKey(j.LeftTable) && alias.ContainsKey(j.RightTable)).ToArray();
             if (joins.Length == 0) return (null, $"table '{t}' has no join to the graph");
-            sb.Append(" JOIN staging.\"").Append(t).Append("\" ").Append(alias[t]).Append(" ON ");
+            sb.Append(" JOIN \"").Append(schema).Append("\".\"").Append(t).Append("\" ").Append(alias[t]).Append(" ON ");
             sb.Append(string.Join(" AND ", joins.Select(j =>
                 $"{alias[j.LeftTable]}.\"{j.LeftColumn}\" = {alias[j.RightTable]}.\"{j.RightColumn}\"")));
         }
