@@ -5,7 +5,7 @@ export type JoinSpec = { leftTable: string; leftColumn: string; rightTable: stri
 export type MapperGraph = { name: string; targetEntity: string; tables: string[]; joins: JoinSpec[] };
 export type DryRunResult = { dryRunId: string; status: string; rowCount: number; columns: string[]; rows: unknown[][]; message?: string };
 
-const BASE = "/prep/visual-mapper";
+const BASE = "/api/prep/visual-mapper";
 
 export const listStagedDatasets = () => apiClient.get<StagedDataset[]>(`${BASE}/datasets`);
 export const createSession = (name: string) => apiClient.post<{ sessionId: string }>(`${BASE}/sessions`, { name });
