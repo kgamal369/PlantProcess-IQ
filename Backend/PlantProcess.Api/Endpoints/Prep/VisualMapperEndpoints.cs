@@ -23,15 +23,20 @@ public static class VisualMapperEndpoints
         var g = app.MapGroup("/api/prep/visual-mapper").RequireAuthorization();
 
         // catalog: staging tables + typed columns + key candidates (name heuristics)
-        g.MapGet("/datasets", async (NpgsqlDataSource ds) =>
+        g.MapGet("/datasets", async (NpgsqlDataSource ds, IConfiguration cfg) =>
         {
+            // Constitution v3 II.6.3: the canvas lists the customer's staging layer.
+            // The physical schema name is configuration, not a literal, because
+            // Amendment 6 (Part III.16) renames it to ppiq_staging in M2.
+            var stagingSchema = cfg["Prep:StagingSchema"] ?? "dump_store";
             const string sql = @"
 SELECT table_name, column_name, data_type
 FROM information_schema.columns
-WHERE table_schema = 'staging'
+WHERE table_schema = $1
 ORDER BY table_name, ordinal_position;";
             var byTable = new Dictionary<string, List<object>>();
             await using var cmd = ds.CreateCommand(sql);
+            cmd.Parameters.AddWithValue(stagingSchema);
             await using var r = await cmd.ExecuteReaderAsync();
             while (await r.ReadAsync())
             {
@@ -40,7 +45,7 @@ ORDER BY table_name, ordinal_position;";
                 if (!byTable.TryGetValue(t, out var list)) byTable[t] = list = new();
                 list.Add(new { name = c, sqlType = ty, isKeyCandidate = isKey });
             }
-            return Results.Ok(byTable.Select(kv => new { table = kv.Key, source = "staging", columns = kv.Value }));
+            return Results.Ok(byTable.Select(kv => new { table = kv.Key, source = stagingSchema, columns = kv.Value }));
         });
 
         g.MapPost("/sessions", async (NpgsqlDataSource ds, HttpContext ctx, JsonElement body) =>
