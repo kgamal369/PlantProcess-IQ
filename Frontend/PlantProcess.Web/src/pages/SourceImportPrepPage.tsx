@@ -4,10 +4,16 @@
 // Select connected profile -> live tables (M1-04 /tables) -> live columns (/columns)
 // -> pick column subset + PK + watermark + row filter -> Register (/register) -> bound to import job.
 // 100% generic: no table/column name is hardcoded; works for any registered schema/provider.
-// Replaces the demo-only V5NoCodeMapper discover-demo path (golden rule: no demo in app).
-// PPIQ-T11: table-picker uses StandardPageButton; column grid uses StandardTable.
+//
+// PPIQ-SCENE234: restyled onto the demo palette. This page predated the design
+// system. It carried six local style objects, thirteen inline styles, a raw
+// select, four raw text fields, and eight hardcoded colours that matched
+// nothing else in the product. All of that now lives in sourceImportPrep.css on
+// the mandated token set, and the failure state is an amber honest notice
+// rather than a red banner - a red banner on the demo path is an automatic
+// fail by contract. Wiring, API calls and discovery defaults are unchanged.
 // ============================================================
-import { useEffect, useState, useCallback, type CSSProperties } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { productApi, type ConnectionProfileRecord } from "../api/productApiClient";
 import type {
   SourceTableRecord,
@@ -15,6 +21,8 @@ import type {
 } from "../api/product-core/shared-types";
 import { StandardPageButton } from "@/components/standard/StandardPageCompat";
 import { StandardTable } from "@/components/standard/StandardTable";
+import { StandardP2Input, StandardP2Select } from "@/components/standard/StandardP2Controls";
+import "./sourceImportPrep.css";
 
 type Step = "source" | "table" | "columns" | "done";
 
@@ -88,7 +96,7 @@ export default function SourceImportPrepPage() {
   const register = useCallback(async () => {
     if (!selectedTable) return;
     if (primaryKeys.size === 0) {
-      setError("Select at least one primary key column.");
+      setError("Select at least one primary key column before registering.");
       return;
     }
     setError(null);
@@ -122,30 +130,34 @@ export default function SourceImportPrepPage() {
   };
 
   return (
-    <div className="piq-surface1" style={{ maxWidth: 960, margin: "0 auto", padding: "1.5rem" }}>
-      <header style={{ marginBottom: "1rem" }}>
-        <h1 style={{ margin: 0 }}>Prepare Source for Import</h1>
-        <p style={{ color: "var(--piq-text-dim, #8AA3C0)", marginTop: 4 }}>
+    <div className="piq-surface1 sip-page">
+      <header className="sip-header">
+        <h1>Prepare Source for Import</h1>
+        <p className="sip-lede">
           Select a connected source, choose a table and columns, and register it to drive the import job.
         </p>
       </header>
 
       {error && (
-        <div role="alert" style={alertStyle}>
-          {error}
+        <div role="status" className="sip-notice">
+          <span className="sip-notice__label">Not registered</span>
+          <span>{error}</span>
         </div>
       )}
 
       {/* STEP 1: source */}
-      <section style={cardStyle}>
-        <label style={labelStyle}>1. Connected source</label>
-        <select
+      <section className="sip-card">
+        <div className="sip-step">
+          <span className="sip-step__index">Step 1</span>
+          <span className="sip-step__label">Connected source</span>
+        </div>
+        <StandardP2Select
+          aria-label="Connected source"
           value={profileId}
           onChange={(e) => {
             setProfileId(e.target.value);
             if (e.target.value) loadTables(e.target.value);
           }}
-          style={selectStyle}
         >
           <option value="">Select a connection profile...</option>
           {profiles.map((p) => (
@@ -153,30 +165,33 @@ export default function SourceImportPrepPage() {
               {p.connectionProfileName} ({p.providerType})
             </option>
           ))}
-        </select>
+        </StandardP2Select>
       </section>
 
       {/* STEP 2: table */}
       {step !== "source" && (
-        <section style={cardStyle}>
-          <label style={labelStyle}>2. Source table</label>
+        <section className="sip-card">
+          <div className="sip-step">
+            <span className="sip-step__index">Step 2</span>
+            <span className="sip-step__label">Source table</span>
+            {tables.length > 0 && (
+              <span className="sip-faint">{tables.length} discovered</span>
+            )}
+          </div>
           {loading && tables.length === 0 ? (
-            <p style={{ color: "var(--piq-text-dim,#8AA3C0)" }}>Discovering tables...</p>
+            <p className="sip-muted">Discovering tables...</p>
           ) : (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(220px,1fr))", gap: 8 }}>
+            <div className="sip-table-grid">
               {tables.map((t) => {
                 const active = selectedTable?.tableName === t.tableName;
                 return (
                   <StandardPageButton
                     key={`${t.schemaName}.${t.tableName}`}
                     onClick={() => loadColumns(t)}
-                    style={{
-                      ...tableBtnStyle,
-                      borderColor: active ? "var(--piq-accent,#4F9CF9)" : "var(--piq-line,#27466B)",
-                    }}
+                    className={"sip-table-card" + (active ? " sip-table-card--active" : "")}
                   >
-                    <strong>{t.tableName}</strong>
-                    <span style={{ color: "var(--piq-text-dim,#8AA3C0)", fontSize: 12 }}>
+                    <span className="sip-table-card__name">{t.tableName}</span>
+                    <span className="sip-table-card__meta">
                       {t.schemaName} - {t.kind}
                     </span>
                   </StandardPageButton>
@@ -189,10 +204,14 @@ export default function SourceImportPrepPage() {
 
       {/* STEP 3: columns + prep */}
       {step === "columns" && selectedTable && (
-        <section style={cardStyle}>
-          <label style={labelStyle}>
-            3. Columns &amp; preparation - {selectedTable.schemaName}.{selectedTable.tableName}
-          </label>
+        <section className="sip-card">
+          <div className="sip-step">
+            <span className="sip-step__index">Step 3</span>
+            <span className="sip-step__label">Columns and preparation</span>
+            <span className="sip-step__target">
+              {selectedTable.schemaName}.{selectedTable.tableName}
+            </span>
+          </div>
           <StandardTable<SourceColumnRecord>
             data={columns}
             getRowKey={(c) => c.columnName}
@@ -201,8 +220,9 @@ export default function SourceImportPrepPage() {
                 key: "import",
                 header: "Import",
                 cell: (c) => (
-                  <input
+                  <StandardP2Input
                     type="checkbox"
+                    aria-label={`Import ${c.columnName}`}
                     checked={selectedColumns.has(c.columnName)}
                     onChange={() => toggle(selectedColumns, c.columnName, setSelectedColumns)}
                   />
@@ -212,10 +232,10 @@ export default function SourceImportPrepPage() {
                 key: "column",
                 header: "Column",
                 cell: (c) => (
-                  <span>
+                  <span className="sip-colname">
                     {c.columnName}
-                    {c.isPrimaryKeyCandidate && <span style={pill}>pk?</span>}
-                    {c.isTimestampCandidate && <span style={pill}>ts?</span>}
+                    {c.isPrimaryKeyCandidate && <span className="sip-pill">pk?</span>}
+                    {c.isTimestampCandidate && <span className="sip-pill">ts?</span>}
                   </span>
                 ),
               },
@@ -224,8 +244,9 @@ export default function SourceImportPrepPage() {
                 key: "pk",
                 header: "PK",
                 cell: (c) => (
-                  <input
+                  <StandardP2Input
                     type="checkbox"
+                    aria-label={`Primary key ${c.columnName}`}
                     checked={primaryKeys.has(c.columnName)}
                     onChange={() => toggle(primaryKeys, c.columnName, setPrimaryKeys)}
                   />
@@ -235,9 +256,10 @@ export default function SourceImportPrepPage() {
                 key: "watermark",
                 header: "Watermark",
                 cell: (c) => (
-                  <input
+                  <StandardP2Input
                     type="radio"
                     name="watermark"
+                    aria-label={`Watermark ${c.columnName}`}
                     checked={watermark === c.columnName}
                     onChange={() => setWatermark(c.columnName)}
                   />
@@ -245,20 +267,23 @@ export default function SourceImportPrepPage() {
               },
             ]}
           />
-          <div style={{ marginTop: 12 }}>
-            <label style={labelStyle}>Optional row filter (SQL WHERE, no keyword)</label>
-            <input
+          <div className="sip-field-row">
+            <div className="sip-step">
+              <span className="sip-step__label">Optional row filter</span>
+              <span className="sip-faint">SQL WHERE, without the keyword</span>
+            </div>
+            <StandardP2Input
+              aria-label="Optional row filter"
               value={rowFilter}
               onChange={(e) => setRowFilter(e.target.value)}
               placeholder="e.g. status = 'CLOSED'"
-              style={selectStyle}
             />
           </div>
-          <div style={{ marginTop: 16, display: "flex", gap: 8 }}>
+          <div className="sip-actions">
             <StandardPageButton className="ppiq-std-button--primary" onClick={register} isLoading={loading}>
-              Register &amp; Prepare
+              Register and Prepare
             </StandardPageButton>
-            <span style={{ color: "var(--piq-text-dim,#8AA3C0)", alignSelf: "center", fontSize: 12 }}>
+            <span className="sip-summary">
               {selectedColumns.size}/{columns.length} columns - {primaryKeys.size} PK - watermark: {watermark || "none"}
             </span>
           </div>
@@ -267,20 +292,26 @@ export default function SourceImportPrepPage() {
 
       {/* STEP 4: done */}
       {step === "done" && (
-        <section style={{ ...cardStyle, borderColor: "var(--piq-accent,#30C48D)" }}>
-          <strong>Registered.</strong> {resultMsg}
-          <p style={{ color: "var(--piq-text-dim,#8AA3C0)", marginTop: 8 }}>
+        <section className="sip-card sip-card--done">
+          <div className="sip-step">
+            <span className="sip-step__index">Step 4</span>
+            <span className="sip-done-title">Registered</span>
+          </div>
+          <p className="sip-muted">{resultMsg}</p>
+          <p className="sip-muted">
             This source is now bound to the two-stage import job. Run Stage-1 from the Importing Data area to load it.
           </p>
-          <StandardPageButton
-            onClick={() => {
-              setStep("source");
-              setProfileId("");
-              setResultMsg(null);
-            }}
-          >
-            Prepare another
-          </StandardPageButton>
+          <div className="sip-actions">
+            <StandardPageButton
+              onClick={() => {
+                setStep("source");
+                setProfileId("");
+                setResultMsg(null);
+              }}
+            >
+              Prepare another
+            </StandardPageButton>
+          </div>
         </section>
       )}
     </div>
@@ -291,53 +322,8 @@ function isDbProvider(p: string): boolean {
   const v = (p ?? "").toLowerCase();
   return ["postgresql", "mysql", "sqlserver", "oracle"].includes(v);
 }
+
 function describeError(e: unknown): string {
   if (e && typeof e === "object" && "message" in e) return String((e as { message: unknown }).message);
   return String(e);
 }
-
-const cardStyle: CSSProperties = {
-  background: "var(--piq-surface,#0E2238)",
-  border: "1px solid var(--piq-line,#27466B)",
-  borderRadius: 8,
-  padding: 16,
-  marginBottom: 12,
-};
-const labelStyle: CSSProperties = { display: "block", fontWeight: 600, marginBottom: 8 };
-const selectStyle: CSSProperties = {
-  width: "100%",
-  padding: "8px 10px",
-  background: "var(--piq-bg,#0B1B2E)",
-  color: "var(--piq-text,#D7E5F7)",
-  border: "1px solid var(--piq-line,#27466B)",
-  borderRadius: 6,
-};
-const tableBtnStyle: CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "flex-start",
-  gap: 2,
-  padding: 10,
-  background: "var(--piq-bg,#0B1B2E)",
-  color: "var(--piq-text,#D7E5F7)",
-  border: "1px solid var(--piq-line,#27466B)",
-  borderRadius: 6,
-  cursor: "pointer",
-  textAlign: "left",
-};
-const pill: CSSProperties = {
-  marginLeft: 6,
-  fontSize: 10,
-  padding: "1px 5px",
-  borderRadius: 8,
-  background: "var(--piq-line,#27466B)",
-  color: "var(--piq-text,#D7E5F7)",
-};
-const alertStyle: CSSProperties = {
-  background: "rgba(229,72,77,0.12)",
-  border: "1px solid #E5484D",
-  color: "#E5484D",
-  padding: "10px 12px",
-  borderRadius: 6,
-  marginBottom: 12,
-};

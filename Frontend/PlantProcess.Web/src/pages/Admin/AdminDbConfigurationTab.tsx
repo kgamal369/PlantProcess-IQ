@@ -1076,8 +1076,9 @@ function TableBrowser({
                             </StandardPageTable>
                           ) : (
                             <p className="admin-copy">
-                              Field schema discovery via the Integration API populates this section.
-                              For CSV files, use the CSV schema discovery action in DB Configuration.
+                              No fields discovered for this table yet. Run discovery on the
+                              connection to read its live schema, or open Prepare Import to
+                              select the columns you want to bring across.
                             </p>
                           )}
                         </div>

@@ -1,0 +1,201 @@
+/* PPIQ-SCENE234: Scene 3 (Prepare Import) restyled onto the demo palette.
+   The page previously carried eight hardcoded hex colours of its own, none of
+   which matched the contract, plus local CSSProperties objects. Every rule here
+   uses the mandated token set so the page reads as one product beside the
+   dashboard. */
+
+.sip-page {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.sip-header {
+  margin-bottom: 1.25rem;
+}
+
+.sip-header h1 {
+  margin: 0;
+  font-family: "Chakra Petch", "Inter", sans-serif;
+  letter-spacing: 0.01em;
+  color: #eaf6ff;
+}
+
+.sip-lede {
+  color: #8ea7c1;
+  margin-top: 6px;
+  max-width: 70ch;
+}
+
+/* Honest status line - amber, never red. A red banner on the demo path is an
+   automatic fail by the demo contract, and a discovery miss is not a failure. */
+.sip-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: rgba(214, 158, 46, 0.10);
+  border: 1px solid #6b5320;
+  border-left: 3px solid #d69e2e;
+  color: #f0d9a8;
+  padding: 10px 12px;
+  border-radius: 7px;
+  margin-bottom: 14px;
+  font-size: 13px;
+}
+
+.sip-notice__label {
+  font-family: "Chakra Petch", "Inter", sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 11px;
+  color: #d69e2e;
+  white-space: nowrap;
+  padding-top: 1px;
+}
+
+.sip-card {
+  background: #0b1730;
+  border: 1px solid #16294a;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 14px;
+}
+
+.sip-card--done {
+  border-color: #2ce6a2;
+}
+
+.sip-step {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.sip-step__index {
+  font-family: "Chakra Petch", "Inter", sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #00d4ff;
+  border: 1px solid #1d3a63;
+  border-radius: 4px;
+  padding: 2px 7px;
+}
+
+.sip-step__label {
+  font-family: "Chakra Petch", "Inter", sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 12px;
+  color: #8ea7c1;
+}
+
+.sip-step__target {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  color: #eaf6ff;
+}
+
+.sip-muted {
+  color: #8ea7c1;
+  font-size: 13px;
+}
+
+.sip-faint {
+  color: #5c7391;
+  font-size: 12px;
+}
+
+.sip-table-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 8px;
+}
+
+.sip-table-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  padding: 10px 12px;
+  background: #102a43;
+  color: #eaf6ff;
+  border: 1px solid #16294a;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.sip-table-card:hover {
+  border-color: #00d4ff;
+  box-shadow: 0 0 0 1px rgba(0, 212, 255, 0.25);
+}
+
+.sip-table-card:focus-visible {
+  outline: none;
+  border-color: #00d4ff;
+  box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.45);
+}
+
+.sip-table-card--active {
+  border-color: #00d4ff;
+  box-shadow: 0 0 0 1px rgba(0, 212, 255, 0.35);
+}
+
+.sip-table-card__name {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 13px;
+  color: #eaf6ff;
+}
+
+.sip-table-card__meta {
+  color: #8ea7c1;
+  font-size: 11px;
+  font-family: "IBM Plex Mono", monospace;
+}
+
+.sip-pill {
+  margin-left: 6px;
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 8px;
+  background: #16294a;
+  color: #8ea7c1;
+  font-family: "IBM Plex Mono", monospace;
+}
+
+.sip-colname {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12.5px;
+  color: #eaf6ff;
+}
+
+.sip-field-row {
+  margin-top: 14px;
+}
+
+.sip-field-row .standard-p2-field {
+  width: 100%;
+}
+
+.sip-actions {
+  margin-top: 16px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.sip-summary {
+  color: #8ea7c1;
+  font-size: 12px;
+  font-family: "IBM Plex Mono", monospace;
+}
+
+.sip-done-title {
+  font-family: "Chakra Petch", "Inter", sans-serif;
+  color: #2ce6a2;
+  letter-spacing: 0.02em;
+}
