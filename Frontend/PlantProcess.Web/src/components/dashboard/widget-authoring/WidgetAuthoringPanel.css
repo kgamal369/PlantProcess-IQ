@@ -123,3 +123,31 @@
 @media (max-width: 720px) {
   .wauth-filterrow { grid-template-columns: 1fr; }
 }
+/* ---- C1: binding mode and the query editor -------------------------- */
+
+.wauth-modebar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  min-width: 0;
+}
+
+.wauth-modebar .wauth-label { margin-bottom: 0; }
+
+.wauth-query {
+  width: 100%;
+  min-width: 0;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+
+.wauth-result {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--ppiq-journey-border, rgba(0, 212, 255, 0.14));
+  border-radius: 8px;
+  overflow: auto;
+  min-width: 0;
+}

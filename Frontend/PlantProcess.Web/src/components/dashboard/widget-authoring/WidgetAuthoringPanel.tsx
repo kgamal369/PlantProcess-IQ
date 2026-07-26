@@ -8,7 +8,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { StandardButton } from "@/components/standard";
-import { StandardP2Input, StandardP2Select } from "@/components/standard/StandardP2Controls";
+import { StandardP2Input, StandardP2Select, StandardP2Table, StandardP2TextArea } from "@/components/standard/StandardP2Controls";
 import { dashboardingApi } from "@/api/dashboarding/dashboarding.api";
 import "./WidgetAuthoringPanel.css";
 
@@ -81,6 +81,13 @@ export function WidgetAuthoringPanel({
   const [measureCode, setMeasureCode] = useState("");
   const [parameterCode, setParameterCode] = useState("");
   const [filters, setFilters] = useState<FilterRow[]>([]);
+  // Constitution v3 II.6.2 applied to S2: catalogue binding is the simple mode,
+  // an authored query is the general one. Declared with the other hooks.
+  const [bindMode, setBindMode] = useState<"catalogue" | "query">("catalogue");
+  const [expression, setExpression] = useState("");
+  const [queryResult, setQueryResult] = useState<{ columns: string[]; rows: unknown[][]; warnings: string[] } | null>(null);
+  const [queryError, setQueryError] = useState("");
+  const [running, setRunning] = useState(false);
 
   const isEdit = Boolean(existing?.id);
 
@@ -146,6 +153,57 @@ export function WidgetAuthoringPanel({
     if (p.recommendedMeasures[0]) { setMeasureCode(p.recommendedMeasures[0]); }
   };
 
+  // The client method that reaches /analytics/dashboard/widgets/execute is not
+  // confirmed in the api surface, so it is resolved by name at runtime. If none
+  // of the candidates exists the panel says which methods DO exist, rather than
+  // failing with something unreadable.
+  const runQuery = async () => {
+    setQueryError("");
+    setQueryResult(null);
+    if (!expression.trim()) { setQueryError("Write a query first."); return; }
+
+    const api = dashboardingApi as unknown as Record<string, unknown>;
+    // queryDashboardWidget is the only query-shaped method the client exposes,
+    // so it is tried first. Its parameter shape is NOT confirmed - it may expect
+    // a widget id and filters rather than an expression. If it does, the server's
+    // own error is shown whole below, and that error names the shape C2 needs.
+    const candidates = [
+      "queryDashboardWidget",
+      "executeWidgetQueryExpression",
+      "executeWidgetQuery",
+      "runWidgetQueryExpression",
+      "postWidgetQueryExpression",
+      "executeDashboardWidgetQuery",
+    ];
+    const found = candidates.find((n) => typeof api[n] === "function");
+
+    if (!found) {
+      setQueryError(
+        "No execute method is exposed by the dashboarding client. Available: " +
+        Object.keys(api).filter((k) => typeof api[k] === "function").join(", "),
+      );
+      return;
+    }
+
+    setRunning(true);
+    try {
+      const fn = api[found] as (req: unknown) => Promise<unknown>;
+      const raw = await fn({ expression, filters: null, options: null });
+      const r = (raw ?? {}) as { columns?: unknown; rows?: unknown; warnings?: unknown };
+      setQueryResult({
+        columns: Array.isArray(r.columns) ? (r.columns as unknown[]).map((c) => String(c)) : [],
+        rows: Array.isArray(r.rows) ? (r.rows as unknown[][]) : [],
+        warnings: Array.isArray(r.warnings) ? (r.warnings as unknown[]).map((w) => String(w)) : [],
+      });
+    } catch (e) {
+      // The service returns typed refusals - UnknownKeyword, MissingValue,
+      // TypeMismatch, InvalidGrammar - so the message is worth showing whole.
+      setQueryError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setRunning(false);
+    }
+  };
+
   const save = async () => {
     setProblem("");
     if (!title.trim()) { setProblem("Give the widget a title."); return; }
@@ -207,6 +265,22 @@ export function WidgetAuthoringPanel({
 
           {meta && (
             <>
+              <div className="wauth-modebar">
+                <span className="wauth-label">Binding</span>
+                <StandardButton
+                  variant={bindMode === "catalogue" ? "primary" : "ghost"}
+                  onClick={() => setBindMode("catalogue")}
+                >
+                  Catalogue
+                </StandardButton>
+                <StandardButton
+                  variant={bindMode === "query" ? "primary" : "ghost"}
+                  onClick={() => setBindMode("query")}
+                >
+                  Query
+                </StandardButton>
+              </div>
+
               <div className="wauth-field">
                 <span className="wauth-label">Title</span>
                 <StandardP2Input aria-label="Title" value={title} placeholder="What this widget shows"
@@ -227,7 +301,7 @@ export function WidgetAuthoringPanel({
                 </div>
               )}
 
-              <div className="wauth-grid">
+              <div className="wauth-grid" hidden={bindMode === "query"}>
                 <div className="wauth-field">
                   <span className="wauth-label">Chart type</span>
                   <StandardP2Select aria-label="Chart type" value={chartType} onChange={(e) => setChartType(e.target.value)}>
@@ -322,6 +396,69 @@ export function WidgetAuthoringPanel({
                   the widget follows the page alone.
                 </p>
               </div>
+
+              {bindMode === "query" && (
+                <div className="wauth-field" data-testid="wauth-query-mode">
+                  <span className="wauth-label">Query</span>
+                  <StandardP2TextArea
+                    aria-label="Query"
+                    className="wauth-query"
+                    rows={8}
+                    value={expression}
+                    placeholder={"source: v_your_view\ndimension: shift_code\nmeasure: avg(speed_mpm) as avg_speed\nfilter: temperature_c > 900\nsort: avg_speed DESC\nlimit: 200"}
+                    onChange={(e) => setExpression(e.target.value)}
+                  />
+                  <p className="wauth-hint">
+                    One statement per line. Measures take an aggregate, a column and an
+                    optional alias. Filters take a column, an operator from
+                    = != &gt;= &lt;= &gt; &lt; contains in, and a value. Anything the
+                    grammar does not permit is refused by name rather than guessed at.
+                  </p>
+
+                  <div className="wauth-rowhead">
+                    <span className="wauth-spacer" />
+                    <StandardButton variant="primary" onClick={runQuery} isDisabled={running}>
+                      {running ? "Running..." : "Run test"}
+                    </StandardButton>
+                  </div>
+
+                  {queryError && <p className="wauth-problem" role="alert">{queryError}</p>}
+
+                  {queryResult && (
+                    <div className="wauth-result" data-testid="wauth-query-result">
+                      <p className="wauth-hint">
+                        {queryResult.rows.length} row(s), {queryResult.columns.length} column(s).
+                      </p>
+                      {queryResult.warnings.map((w, i) => (
+                        <p className="wauth-hint" key={"qw" + i}>{w}</p>
+                      ))}
+                      {queryResult.columns.length > 0 && (
+                        <StandardP2Table>
+                          <thead>
+                            <tr>
+                              {queryResult.columns.map((c) => <th key={"qh" + c} scope="col">{c}</th>)}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {queryResult.rows.slice(0, 20).map((r, ri) => (
+                              <tr key={"qr" + ri}>
+                                {r.map((cell, ci) => <td key={"qc" + ri + "_" + ci}>{String(cell ?? "")}</td>)}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </StandardP2Table>
+                      )}
+                    </div>
+                  )}
+
+                  <p className="wauth-hint">
+                    Running a query here proves it and shows what it returns. Saving it as
+                    this widget's source is the next pack: the definition has to carry the
+                    expression and the chart has to take its axes from these columns, and
+                    that is backend work in the widget query path.
+                  </p>
+                </div>
+              )}
 
               {problem && <p className="wauth-problem" role="alert">{problem}</p>}
             </>
