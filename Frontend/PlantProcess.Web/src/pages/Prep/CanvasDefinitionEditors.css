@@ -1,0 +1,59 @@
+.defn-block { margin-top: 14px; }
+
+.defn-block__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.defn-block__title {
+  font-family: "Chakra Petch", system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--ppiq-color-text-primary, #eaf6ff);
+}
+
+.defn-block__count {
+  color: var(--ppiq-color-text-muted, #8ba9c4);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.defn-block__spacer { flex: 1 1 auto; }
+
+.defn-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 8px;
+  margin-bottom: 6px;
+  border: 1px solid var(--ppiq-journey-border, rgba(0, 212, 255, 0.14));
+  border-radius: 8px;
+  background: var(--ppiq-color-surface-raised, #102a43);
+}
+
+.defn-row__field { flex: 1 1 90px; min-width: 0; }
+.defn-row__op { flex: 0 0 96px; }
+.defn-row__drop { flex: 0 0 auto; }
+
+.defn-row__sep {
+  color: var(--ppiq-color-text-muted, #8ba9c4);
+  font-size: 11px;
+  padding: 0 2px;
+}
+
+.defn-empty {
+  padding: 8px;
+  color: var(--ppiq-color-text-muted, #8ba9c4);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.defn-note {
+  margin-top: 6px;
+  color: var(--ppiq-color-text-muted, #8ba9c4);
+  font-size: 11px;
+  line-height: 1.5;
+}

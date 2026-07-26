@@ -16,7 +16,20 @@ namespace PlantProcess.Api.Endpoints.Prep;
 public static class VisualMapperEndpoints
 {
     public record JoinSpec(string LeftTable, string LeftColumn, string RightTable, string RightColumn);
-    public record MapperGraph(string Name, string TargetEntity, string[] Tables, JoinSpec[] Joins);
+
+    // M1-16. A filter is a WHERE predicate. Op comes from a whitelist and Value
+    // is NEVER placed in the SQL string - it is bound as a parameter.
+    public record FilterSpec(string Table, string Column, string Op, string? Value);
+
+    // M1-16. A derived column is one arithmetic operation over two column
+    // references, or a column and a numeric constant. Alias is quoted on emit.
+    public record DerivedSpec(string Alias, string LeftTable, string LeftColumn, string Op,
+                              string? RightTable, string? RightColumn, string? Constant);
+
+    // Filters and Derived default to null so every graph saved before M1-16
+    // deserialises unchanged and compiles to byte-identical SQL.
+    public record MapperGraph(string Name, string TargetEntity, string[] Tables, JoinSpec[] Joins,
+                              FilterSpec[]? Filters = null, DerivedSpec[]? Derived = null);
 
     public static IEndpointRouteBuilder MapVisualMapperEndpoints(this IEndpointRouteBuilder app)
     {
@@ -76,7 +89,7 @@ ORDER BY table_name, ordinal_position;";
             if (graph is null) return Results.BadRequest(new { message = "no graph saved for session" });
             // Same configuration key the catalogue query uses, so the panel and
             // the generated query can never target different schemas again.
-            var (sql, err) = BuildSafeSelect(graph, cfg["Prep:StagingSchema"] ?? "dump_store");
+            var (sql, err, prms) = BuildSafeSelect(graph, cfg["Prep:StagingSchema"] ?? "dump_store");
             if (err is not null)
             {
                 await RecordDryRun(ds, id, "rejected_by_safe_sql", 0, err);
@@ -86,8 +99,11 @@ ORDER BY table_name, ordinal_position;";
             {
                 var cols = new List<string>(); var rows = new List<object[]>();
                 await using (var cmd = ds.CreateCommand(sql!))
-                await using (var r = await cmd.ExecuteReaderAsync())
                 {
+                    // M1-16: filter values arrive here as bound parameters, never
+                    // as text inside the statement.
+                    foreach (var p in prms ?? new List<object>()) cmd.Parameters.AddWithValue(p);
+                    await using var r = await cmd.ExecuteReaderAsync();
                     for (var i = 0; i < r.FieldCount; i++) cols.Add(r.GetName(i));
                     while (await r.ReadAsync() && rows.Count < 50)
                     {
@@ -154,35 +170,113 @@ SELECT tenant_id, id, $2, $3, $4 FROM public.ppiq_visual_mapper_sessions WHERE i
         return (Guid)(await cmd.ExecuteScalarAsync())!;
     }
 
-    /// Server-side SQL from the graph: staging-only identifiers, equality joins, LIMIT.
-    private static (string? sql, string? err) BuildSafeSelect(MapperGraph g, string schema)
+    private static bool Ident(string? s)
+        => s is not null && System.Text.RegularExpressions.Regex.IsMatch(s, "^[a-zA-Z0-9_]+$");
+
+    // Whitelists. Anything outside them is refused with a named reason and the
+    // dry run is recorded as rejected_by_safe_sql, exactly as an illegal
+    // identifier already is. This is the honest-refusal contract applied to
+    // predicates rather than to identifiers.
+    private static readonly string[] FilterOps =
+        { "=", "<>", ">", ">=", "<", "<=", "LIKE", "NOT LIKE", "IS NULL", "IS NOT NULL" };
+    private static readonly string[] MathOps = { "+", "-", "*", "/" };
+
+    /// Server-side SQL from the graph: staging-only identifiers, equality joins,
+    /// whitelisted predicates with bound values, whitelisted arithmetic, LIMIT.
+    private static (string? sql, string? err, List<object>? prms) BuildSafeSelect(MapperGraph g, string schema)
     {
-        if (g.Tables.Length == 0) return (null, "graph has no tables");
-        if (!System.Text.RegularExpressions.Regex.IsMatch(schema, "^[a-zA-Z0-9_]+$"))
-            return (null, $"illegal schema identifier '{schema}'");
+        if (g.Tables.Length == 0) return (null, "graph has no tables", null);
+        if (!Ident(schema)) return (null, $"illegal schema identifier '{schema}'", null);
         foreach (var t in g.Tables)
-            if (!System.Text.RegularExpressions.Regex.IsMatch(t, "^[a-zA-Z0-9_]+$"))
-                return (null, $"illegal table identifier '{t}'");
+            if (!Ident(t)) return (null, $"illegal table identifier '{t}'", null);
         foreach (var j in g.Joins)
             foreach (var c in new[] { j.LeftColumn, j.RightColumn })
-                if (!System.Text.RegularExpressions.Regex.IsMatch(c, "^[a-zA-Z0-9_]+$"))
-                    return (null, $"illegal column identifier '{c}'");
+                if (!Ident(c)) return (null, $"illegal column identifier '{c}'", null);
 
-        var sb = new StringBuilder();
-        sb.Append("SELECT * FROM \"").Append(schema).Append("\".\"").Append(g.Tables[0]).Append("\" t0");
+        // Alias map is built first so the SELECT list can reference it.
         var alias = new Dictionary<string, string> { [g.Tables[0]] = "t0" };
         var i = 1;
         foreach (var t in g.Tables.Skip(1)) { alias[t] = $"t{i}"; i++; }
+
+        var prms = new List<object>();
+
+        // ---- SELECT list: everything, plus one column per derived expression
+        var select = new StringBuilder("SELECT *");
+        foreach (var d in g.Derived ?? Array.Empty<DerivedSpec>())
+        {
+            if (!Ident(d.Alias)) return (null, $"illegal derived alias '{d.Alias}'", null);
+            if (!alias.ContainsKey(d.LeftTable)) return (null, $"derived column references table '{d.LeftTable}' which is not on the board", null);
+            if (!Ident(d.LeftColumn)) return (null, $"illegal column identifier '{d.LeftColumn}'", null);
+            if (!MathOps.Contains(d.Op)) return (null, $"operator '{d.Op}' is not permitted in a derived column", null);
+
+            var left = $"{alias[d.LeftTable]}.\"{d.LeftColumn}\"";
+            string right;
+            if (!string.IsNullOrWhiteSpace(d.RightColumn))
+            {
+                var rt = string.IsNullOrWhiteSpace(d.RightTable) ? d.LeftTable : d.RightTable!;
+                if (!alias.ContainsKey(rt)) return (null, $"derived column references table '{rt}' which is not on the board", null);
+                if (!Ident(d.RightColumn)) return (null, $"illegal column identifier '{d.RightColumn}'", null);
+                right = $"{alias[rt]}.\"{d.RightColumn}\"";
+            }
+            else if (double.TryParse(d.Constant, System.Globalization.NumberStyles.Any,
+                                     System.Globalization.CultureInfo.InvariantCulture, out var cv))
+            {
+                // A numeric constant is emitted in invariant form. It cannot carry
+                // a quote or an identifier, so it is safe without a parameter.
+                right = cv.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            }
+            else
+            {
+                return (null, $"derived column '{d.Alias}' needs a second column or a numeric constant", null);
+            }
+
+            // Division guards against divide-by-zero rather than failing the run.
+            if (d.Op == "/") select.Append(", (").Append(left).Append(" / NULLIF(").Append(right).Append(", 0)) AS \"").Append(d.Alias).Append('"');
+            else select.Append(", (").Append(left).Append(' ').Append(d.Op).Append(' ').Append(right).Append(") AS \"").Append(d.Alias).Append('"');
+        }
+
+        // ---- FROM and JOIN
+        var sb = new StringBuilder();
+        sb.Append(select).Append(" FROM \"").Append(schema).Append("\".\"").Append(g.Tables[0]).Append("\" t0");
         foreach (var t in g.Tables.Skip(1))
         {
             var joins = g.Joins.Where(j => j.RightTable == t || j.LeftTable == t)
                 .Where(j => alias.ContainsKey(j.LeftTable) && alias.ContainsKey(j.RightTable)).ToArray();
-            if (joins.Length == 0) return (null, $"table '{t}' has no join to the graph");
+            if (joins.Length == 0) return (null, $"table '{t}' has no join to the graph", null);
             sb.Append(" JOIN \"").Append(schema).Append("\".\"").Append(t).Append("\" ").Append(alias[t]).Append(" ON ");
             sb.Append(string.Join(" AND ", joins.Select(j =>
                 $"{alias[j.LeftTable]}.\"{j.LeftColumn}\" = {alias[j.RightTable]}.\"{j.RightColumn}\"")));
         }
+
+        // ---- WHERE: whitelisted operators, values ALWAYS bound
+        var preds = new List<string>();
+        foreach (var f in g.Filters ?? Array.Empty<FilterSpec>())
+        {
+            if (!alias.ContainsKey(f.Table)) return (null, $"filter references table '{f.Table}' which is not on the board", null);
+            if (!Ident(f.Column)) return (null, $"illegal column identifier '{f.Column}'", null);
+            var op = (f.Op ?? string.Empty).Trim().ToUpperInvariant();
+            if (op is "=" or "<>" or ">" or ">=" or "<" or "<=") { /* symbols keep their case */ }
+            if (!FilterOps.Contains(op)) return (null, $"operator '{f.Op}' is not permitted in a filter", null);
+
+            var colRef = $"{alias[f.Table]}.\"{f.Column}\"";
+            if (op is "IS NULL" or "IS NOT NULL")
+            {
+                preds.Add($"{colRef} {op}");
+                continue;
+            }
+            if (f.Value is null) return (null, $"filter on '{f.Column}' needs a value for operator '{op}'", null);
+
+            // Bound as a number when it reads as one, so a comparison against a
+            // numeric column works; otherwise as text.
+            object val = double.TryParse(f.Value, System.Globalization.NumberStyles.Any,
+                                         System.Globalization.CultureInfo.InvariantCulture, out var nv)
+                         ? nv : f.Value;
+            prms.Add(val);
+            preds.Add($"{colRef} {op} ${prms.Count}");
+        }
+        if (preds.Count > 0) sb.Append(" WHERE ").Append(string.Join(" AND ", preds));
+
         sb.Append(" LIMIT 50;");
-        return (sb.ToString(), null);
+        return (sb.ToString(), null, prms);
     }
 }

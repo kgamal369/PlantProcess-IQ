@@ -1,0 +1,51 @@
+/* Corrective layout for the widget builder wizard.
+
+   The legacy chunk already defines these classes and its structure is sound.
+   The card grid is a real auto-fit grid at minmax(220px, 1fr), and the choice
+   card is a grid with sensible padding and a border. NOTHING RESTYLES ANY OF
+   THAT HERE. Two layout properties are missing, and only those
+   two are added, because changing display modes or track sizes under cover of a
+   bug fix would be a redesign nobody asked for.
+
+   WHAT IS MISSING AND WHY IT OVERLAPS
+
+   1. .wizard-progress-step is inline-flex inside a bounded flex row with no
+      flex-shrink:0. Six items therefore shrink BELOW their content width
+      instead of overflowing, the labels escape their pills, and the parent's
+      overflow-x:auto never engages because nothing ever exceeds the container.
+
+   2. .wizard-choice-card is a grid item, and a grid item defaults to
+      min-width:auto, which refuses to shrink below its content. A long sentence
+      widens the card past its 1fr track and into its neighbour. min-width:0 is
+      the standard correction, and it has to reach the card's children too.
+
+   Every selector is scoped under .widget-builder-modal so these rules win by
+   specificity regardless of the order the bundler loads the legacy chunks in. */
+
+/* ---- the step rail --------------------------------------------------- */
+
+.widget-builder-modal .wizard-progress-step {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+/* ---- the choice cards ------------------------------------------------ */
+
+.widget-builder-modal .wizard-choice-card {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.widget-builder-modal .wizard-choice-card > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* ---- containers whose children must be allowed to shrink ------------- */
+
+.widget-builder-modal .wizard-section,
+.widget-builder-modal .wizard-section-header > *,
+.widget-builder-modal .form-grid > *,
+.widget-builder-modal .widget-builder-body {
+  min-width: 0;
+}

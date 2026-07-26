@@ -2,7 +2,18 @@ import { apiClient } from "./http";
 
 export type StagedDataset = { table: string; source: string; columns: { name: string; sqlType: string; isKeyCandidate: boolean }[] };
 export type JoinSpec = { leftTable: string; leftColumn: string; rightTable: string; rightColumn: string };
-export type MapperGraph = { name: string; targetEntity: string; tables: string[]; joins: JoinSpec[] };
+// M1-16. Mirrors FilterSpec / DerivedSpec on the server. Op values must stay in
+// step with the whitelists in BuildSafeSelect - the interface never offers an
+// operator the generator would refuse.
+export type FilterSpec = { table: string; column: string; op: string; value: string | null };
+export type DerivedSpec = {
+  alias: string; leftTable: string; leftColumn: string; op: string;
+  rightTable: string | null; rightColumn: string | null; constant: string | null;
+};
+export type MapperGraph = {
+  name: string; targetEntity: string; tables: string[]; joins: JoinSpec[];
+  filters?: FilterSpec[]; derived?: DerivedSpec[];
+};
 export type DryRunResult = { dryRunId: string; status: string; rowCount: number; columns: string[]; rows: unknown[][]; message?: string; sql?: string };
 
 const BASE = "/api/prep/visual-mapper";

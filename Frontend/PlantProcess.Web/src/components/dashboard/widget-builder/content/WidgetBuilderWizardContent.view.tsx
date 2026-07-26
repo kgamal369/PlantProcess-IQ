@@ -6,6 +6,7 @@ import { PurposeStep, ChartTypeStep, DataStep } from "./WidgetBuilderWizardConte
 import { FilterStep } from "./WidgetBuilderWizardContent.filter-step";
 import { ScriptStep, PreviewStep } from "./WidgetBuilderWizardContent.preview-steps";
 import { mapValidationIssues, stepLabels, stepOrder, formatError } from "./WidgetBuilderWizardContent.helpers";
+import "./WidgetBuilderWizardLayout.css";
 
 export function WidgetBuilderWizardContentView({ vm }: { vm: Record<string, any> }) {
   const {

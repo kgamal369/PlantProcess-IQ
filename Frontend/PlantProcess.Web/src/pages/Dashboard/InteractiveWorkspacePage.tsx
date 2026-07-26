@@ -1,5 +1,5 @@
 import { DrilldownDrawer } from "@/components/dashboard/DrilldownDrawer";
-import { useCallback, useEffect, useState, type ComponentProps } from "react";
+import { Component, lazy, Suspense, useCallback, useEffect, useState, type ComponentProps, type ErrorInfo, type ReactNode } from "react";
 import { useParams } from "react-router-dom";
 import { DashboardFilterBar } from "@/components/DashboardFilterBar";
 import { DashboardGridLayout } from "@/components/dashboard/DashboardGridLayout";
@@ -11,6 +11,41 @@ import { dashboardingApi } from "@/api/dashboarding/dashboarding.api";
 import { StandardButton } from "@/components/standard";
 
 type WidgetRecord = ComponentProps<typeof SavedDashboardWidget>["widget"];
+
+// Deferred on purpose: the wizard stays out of this page's chunk until it is
+// opened. This was never the cause of the earlier failures, but it is still the
+// right way to reference a large optional subtree.
+const WidgetBuilderWizard = lazy(
+  () => import("@/components/dashboard/widget-builder/WidgetBuilderWizard"),
+);
+
+// Imports nothing, so it cannot itself be the thing that fails.
+class WizardBoundary extends Component<
+  { children: ReactNode; onClose: () => void },
+  { message: string | null }
+> {
+  constructor(props: { children: ReactNode; onClose: () => void }) {
+    super(props);
+    this.state = { message: null };
+  }
+  static getDerivedStateFromError(error: unknown) {
+    return { message: error instanceof Error ? error.message : String(error) };
+  }
+  componentDidCatch(error: unknown, info: ErrorInfo) {
+    console.error("Widget builder failed", error, info);
+  }
+  render() {
+    if (this.state.message === null) { return this.props.children; }
+    return (
+      <div role="alert" className="ppiq-std-card">
+        <h3>The widget builder did not open</h3>
+        <p>The fault is inside the builder itself. This workspace is unaffected.</p>
+        <code>{this.state.message}</code>
+        <StandardButton variant="ghost" onClick={this.props.onClose}>Close</StandardButton>
+      </div>
+    );
+  }
+}
 
 type LoadedDashboard = {
   id: string;
@@ -65,6 +100,12 @@ export function InteractiveWorkspacePage({ dashboardCode }: { dashboardCode: str
   const [dashboard, setDashboard] = useState<LoadedDashboard | null>(null);
   const [failed, setFailed] = useState<string | null>(null);
   const [reloadNonce, setReloadNonce] = useState(0);
+  // THIS LINE'S POSITION IS THE WHOLE FIX. Two earlier packs and the probe
+  // declared it far lower in the component, below the guard clauses, which made
+  // it a conditional hook call. React threw at runtime and the top-level
+  // boundary said the application could not start. Hooks belong together, at
+  // the top, before any guard.
+  const [wizardOpen, setWizardOpen] = useState(false);
 
   const persistence = useDashboardLayoutPersistence(dashboard?.id);
 
@@ -139,8 +180,30 @@ export function InteractiveWorkspacePage({ dashboardCode }: { dashboardCode: str
           <StandardButton variant="ghost" onClick={refresh}>
             Refresh widgets
           </StandardButton>
+          <StandardButton
+            variant="primary"
+            data-testid="workspace-add-widget"
+            onClick={() => setWizardOpen(true)}
+          >
+            Add widget
+          </StandardButton>
         </div>
       </header>
+
+      {/* Constitution v3 II.6.7: widget authoring opens from the page the
+          widget lives on. */}
+      {wizardOpen && (
+        <WizardBoundary onClose={() => setWizardOpen(false)}>
+          <Suspense fallback={<div className="ppiq-std-card">Loading the widget builder...</div>}>
+            <WidgetBuilderWizard
+              isOpen={wizardOpen}
+              dashboardDefinitionId={dashboard.id}
+              onClose={() => setWizardOpen(false)}
+              onWidgetSaved={async () => { setWizardOpen(false); await refresh(); }}
+            />
+          </Suspense>
+        </WizardBoundary>
+      )}
       <DashboardFilterBar />
       <AssociativePanel />
         <DrilldownDrawer />
