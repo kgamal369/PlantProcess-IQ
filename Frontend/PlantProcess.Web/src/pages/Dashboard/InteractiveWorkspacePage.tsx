@@ -15,8 +15,8 @@ type WidgetRecord = ComponentProps<typeof SavedDashboardWidget>["widget"];
 // Deferred on purpose: the wizard stays out of this page's chunk until it is
 // opened. This was never the cause of the earlier failures, but it is still the
 // right way to reference a large optional subtree.
-const WidgetBuilderWizard = lazy(
-  () => import("@/components/dashboard/widget-builder/WidgetBuilderWizard"),
+const WidgetAuthoringPanel = lazy(
+  () => import("@/components/dashboard/widget-authoring/WidgetAuthoringPanel"),
 );
 
 // Imports nothing, so it cannot itself be the thing that fails.
@@ -106,6 +106,9 @@ export function InteractiveWorkspacePage({ dashboardCode }: { dashboardCode: str
   // boundary said the application could not start. Hooks belong together, at
   // the top, before any guard.
   const [wizardOpen, setWizardOpen] = useState(false);
+  // Null means add; a record means edit. Declared here with the other hooks,
+  // above every guard clause, for the reason recorded in the add-widget pack.
+  const [editing, setEditing] = useState<WidgetRecord | null>(null);
 
   const persistence = useDashboardLayoutPersistence(dashboard?.id);
 
@@ -183,7 +186,7 @@ export function InteractiveWorkspacePage({ dashboardCode }: { dashboardCode: str
           <StandardButton
             variant="primary"
             data-testid="workspace-add-widget"
-            onClick={() => setWizardOpen(true)}
+            onClick={() => { setEditing(null); setWizardOpen(true); }}
           >
             Add widget
           </StandardButton>
@@ -194,12 +197,13 @@ export function InteractiveWorkspacePage({ dashboardCode }: { dashboardCode: str
           widget lives on. */}
       {wizardOpen && (
         <WizardBoundary onClose={() => setWizardOpen(false)}>
-          <Suspense fallback={<div className="ppiq-std-card">Loading the widget builder...</div>}>
-            <WidgetBuilderWizard
+          <Suspense fallback={<div className="ppiq-std-card">Opening the authoring panel...</div>}>
+            <WidgetAuthoringPanel
               isOpen={wizardOpen}
               dashboardDefinitionId={dashboard.id}
-              onClose={() => setWizardOpen(false)}
-              onWidgetSaved={async () => { setWizardOpen(false); await refresh(); }}
+              existing={editing as never}
+              onClose={() => { setWizardOpen(false); setEditing(null); }}
+              onSaved={async () => { await refresh(); }}
             />
           </Suspense>
         </WizardBoundary>
@@ -214,6 +218,7 @@ export function InteractiveWorkspacePage({ dashboardCode }: { dashboardCode: str
             <SavedDashboardWidget
               dashboardDefinitionId={dashboard.id}
               widget={widget}
+              onEdit={() => { setEditing(widget); setWizardOpen(true); }}
               onRemoved={refresh}
               onCloned={refresh}
               onHidden={refresh}

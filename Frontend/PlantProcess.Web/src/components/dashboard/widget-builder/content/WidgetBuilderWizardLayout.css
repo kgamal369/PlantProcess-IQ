@@ -1,44 +1,102 @@
 /* Corrective layout for the widget builder wizard.
 
-   The legacy chunk already defines these classes and its structure is sound.
-   The card grid is a real auto-fit grid at minmax(220px, 1fr), and the choice
-   card is a grid with sensible padding and a border. NOTHING RESTYLES ANY OF
-   THAT HERE. Two layout properties are missing, and only those
-   two are added, because changing display modes or track sizes under cover of a
-   bug fix would be a redesign nobody asked for.
+   THE ACTUAL CAUSE, found by reading StandardButton.
 
-   WHAT IS MISSING AND WHY IT OVERLAPS
+   The wizard's cards and step pills are StandardButton with a wizard class on
+   them. StandardButton does not render its children directly - it wraps them:
 
-   1. .wizard-progress-step is inline-flex inside a bounded flex row with no
-      flex-shrink:0. Six items therefore shrink BELOW their content width
-      instead of overflowing, the labels escape their pills, and the parent's
-      overflow-x:auto never engages because nothing ever exceeds the container.
+       <button class="ppiq-std-button wizard-choice-card">
+         <span>            <- inserted by the primitive
+           <strong>Quality</strong>
+           Analyze defect count and defect rate.
+         </span>
+       </button>
 
-   2. .wizard-choice-card is a grid item, and a grid item defaults to
-      min-width:auto, which refuses to shrink below its content. A long sentence
-      widens the card past its 1fr track and into its neighbour. min-width:0 is
-      the standard correction, and it has to reach the card's children too.
+   The legacy rule says the card is a grid with gap 8px, and it was written for
+   a raw button with two direct children. With the primitive's wrapper there is
+   now exactly ONE grid child, so the gap has nothing to separate, the title and
+   the description collapse onto one line, and the button's own nowrap keeps
+   them from breaking. That is precisely what is on screen.
 
-   Every selector is scoped under .widget-builder-modal so these rules win by
-   specificity regardless of the order the bundler loads the legacy chunks in. */
+   So the wrapper span has to become the layout box the card's design expected.
+   That is not a restyle: it compensates for an element the original CSS never
+   saw. Nothing here touches colour, border, radius or padding - the card keeps
+   its own appearance exactly.
+
+   Everything is scoped under .widget-builder-modal so it wins by specificity
+   whatever order the legacy chunks load in. */
 
 /* ---- the step rail --------------------------------------------------- */
 
 .widget-builder-modal .wizard-progress-step {
   flex: 0 0 auto;
   white-space: nowrap;
+  height: auto;
+}
+
+/* Same cause as the cards, second location. The legacy rule
+   `.wizard-progress-step span` was written to style the NUMBER BADGE - a 22px
+   circle. The primitive's wrapper is also a span and also a descendant, so it
+   collects the badge styling too: the number AND the label are crammed into a
+   22px circle and the label spills out over its neighbour.
+
+   These declarations do not add appearance. They RESET what landed on the wrong
+   element. The inner number span still matches the legacy rule and keeps its
+   badge exactly as designed. */
+.widget-builder-modal .wizard-progress-step > span {
+  display: inline-flex;
+  gap: 8px;
+  width: auto;
+  height: auto;
+  min-width: 0;
+  border-radius: 0;
+  background: none;
+  white-space: nowrap;
+  /* place-items is shorthand for align-items and justify-items, so the legacy
+     rule's `place-items: center` was still deciding the cross-axis after the
+     longhand above it. Setting the shorthand here is what actually wins, and it
+     is what puts the badge and its label on one baseline. */
+  place-items: center start;
+}
+
+/* The badge keeps its own circle; it just must not stretch or shrink. */
+.widget-builder-modal .wizard-progress-step > span > span {
+  flex: 0 0 auto;
+  align-self: center;
 }
 
 /* ---- the choice cards ------------------------------------------------ */
 
 .widget-builder-modal .wizard-choice-card {
   min-width: 0;
+  height: auto;
+  align-items: start;
+  justify-content: flex-start;
+  text-align: left;
+  white-space: normal;
   overflow-wrap: anywhere;
 }
 
-.widget-builder-modal .wizard-choice-card > * {
+/* The primitive's wrapper becomes the stack the card was designed around. */
+.widget-builder-modal .wizard-choice-card > span {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+  text-align: left;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.widget-builder-modal .wizard-choice-card > span > * {
   min-width: 0;
   max-width: 100%;
+  white-space: normal;
+}
+
+.widget-builder-modal .wizard-choice-card strong {
+  display: block;
+  line-height: 1.35;
 }
 
 /* ---- containers whose children must be allowed to shrink ------------- */
