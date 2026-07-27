@@ -36,6 +36,8 @@ export type AuthoredWidget = {
   layoutJson?: string;
   displayOptionsJson?: string;
   sortOrder?: number;
+  queryExpression?: string | null;
+  expressionEnabled?: boolean;
 };
 
 export type WidgetAuthoringPanelProps = {
@@ -110,6 +112,11 @@ export function WidgetAuthoringPanel({
     setMeasureCode(existing?.measureCode ?? "");
     setParameterCode(existing?.parameterCode ?? "");
     setFilters(parseFilters(existing?.filterJson));
+    // A widget authored as a query reopens as a query. Showing an empty
+    // catalogue form for a widget that has an expression would look like the
+    // expression was lost.
+    setExpression(existing?.queryExpression ?? "");
+    setBindMode(existing?.queryExpression ? "query" : "catalogue");
     setPurpose("");
   }, [isOpen, existing]);
 
@@ -162,42 +169,35 @@ export function WidgetAuthoringPanel({
     setQueryResult(null);
     if (!expression.trim()) { setQueryError("Write a query first."); return; }
 
-    const api = dashboardingApi as unknown as Record<string, unknown>;
-    // queryDashboardWidget is the only query-shaped method the client exposes,
-    // so it is tried first. Its parameter shape is NOT confirmed - it may expect
-    // a widget id and filters rather than an expression. If it does, the server's
-    // own error is shown whole below, and that error names the shape C2 needs.
-    const candidates = [
-      "queryDashboardWidget",
-      "executeWidgetQueryExpression",
-      "executeWidgetQuery",
-      "runWidgetQueryExpression",
-      "postWidgetQueryExpression",
-      "executeDashboardWidgetQuery",
-    ];
-    const found = candidates.find((n) => typeof api[n] === "function");
-
-    if (!found) {
-      setQueryError(
-        "No execute method is exposed by the dashboarding client. Available: " +
-        Object.keys(api).filter((k) => typeof api[k] === "function").join(", "),
-      );
-      return;
-    }
-
     setRunning(true);
     try {
-      const fn = api[found] as (req: unknown) => Promise<unknown>;
-      const raw = await fn({ expression, filters: null, options: null });
-      const r = (raw ?? {}) as { columns?: unknown; rows?: unknown; warnings?: unknown };
+      const result = await dashboardingApi.executeWidgetQueryExpression({
+        expression,
+        filters: null,
+        options: null,
+      });
+      // The server returns columns as objects carrying code, label and
+      // dataType, and rows as dictionaries keyed by the column code. The row
+      // order is therefore derived from the column list rather than assumed.
+      const cols = Array.isArray(result?.columns) ? result.columns : [];
+      const codes = cols.map((c) => String(c?.code ?? ""));
+      const labels = cols.map((c) => String(c?.label ?? c?.code ?? ""));
+      const rows = Array.isArray(result?.rows) ? result.rows : [];
       setQueryResult({
-        columns: Array.isArray(r.columns) ? (r.columns as unknown[]).map((c) => String(c)) : [],
-        rows: Array.isArray(r.rows) ? (r.rows as unknown[][]) : [],
-        warnings: Array.isArray(r.warnings) ? (r.warnings as unknown[]).map((w) => String(w)) : [],
+        columns: labels,
+        rows: rows.map((row) =>
+          codes.map((code) => {
+            const cell = (row ?? {})[code];
+            return cell === null || cell === undefined ? "" : cell;
+          }),
+        ),
+        warnings: Array.isArray(result?.warnings)
+          ? result.warnings.map((w) => String(w))
+          : [],
       });
     } catch (e) {
-      // The service returns typed refusals - UnknownKeyword, MissingValue,
-      // TypeMismatch, InvalidGrammar - so the message is worth showing whole.
+      // The expression service returns typed refusals, so the message is
+      // worth showing whole rather than summarising.
       setQueryError(e instanceof Error ? e.message : String(e));
     } finally {
       setRunning(false);
@@ -228,6 +228,9 @@ export function WidgetAuthoringPanel({
       layoutJson: existing?.layoutJson ?? "{}",
       displayOptionsJson: existing?.displayOptionsJson ?? "{}",
       sortOrder: existing?.sortOrder ?? 0,
+      // Sent only in query mode. Null clears any expression the widget had,
+      // which is how a user moves a widget back to catalogue binding.
+      queryExpression: bindMode === "query" && expression.trim() ? expression : null,
       isSynthetic: false,
     };
 

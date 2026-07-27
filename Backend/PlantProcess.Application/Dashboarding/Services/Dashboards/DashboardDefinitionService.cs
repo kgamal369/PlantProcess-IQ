@@ -1,4 +1,4 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using PlantProcess.Application.Dashboarding.Contracts;
 using PlantProcess.Application.Common.Persistence;
@@ -12,13 +12,16 @@ public sealed class DashboardDefinitionService : IDashboardDefinitionService
 {
     private readonly IPlantProcessDbContext _dbContext;
     private readonly IDashboardWidgetValidationService _validator;
+    private readonly IWidgetQueryExpressionService _expressions;
 
     public DashboardDefinitionService(
         IPlantProcessDbContext dbContext,
-        IDashboardWidgetValidationService validator)
+        IDashboardWidgetValidationService validator,
+        IWidgetQueryExpressionService expressions)
     {
         _dbContext = dbContext;
         _validator = validator;
+        _expressions = expressions;
     }
 
     public async Task<ApplicationResult<IReadOnlyList<DashboardDefinitionDto>>> GetDashboardsAsync(
@@ -219,6 +222,8 @@ public sealed class DashboardDefinitionService : IDashboardDefinitionService
             sourceSystem: NormalizeNullable(request.SourceSystem),
             sourceRecordId: NormalizeNullable(request.SourceRecordId));
 
+        ApplyExpression(widget, request.QueryExpression);
+
         _dbContext.DashboardWidgetDefinitions.Add(widget);
         await _dbContext.SaveChangesAsync(cancellationToken);
 
@@ -269,6 +274,8 @@ public sealed class DashboardDefinitionService : IDashboardDefinitionService
             parameterCode: request.ParameterCode,
             filterJson: request.FilterJson,
             displayOptionsJson: request.DisplayOptionsJson);
+
+        ApplyExpression(widget, request.QueryExpression);
 
         if (request.IsActive == true)
             widget.Activate();
@@ -707,8 +714,62 @@ private static string BuildWidgetLayout(int index)
             widget.IsActive,
             widget.IsSynthetic,
             widget.SourceSystem,
-            widget.SourceRecordId);
+            widget.SourceRecordId,
+            widget.QueryExpression,
+            widget.ExpressionEnabled);
 
+    /// <summary>
+    /// Persists an authored query expression against a widget.
+    ///
+    /// The parse IS the validation event. The domain refuses to enable an
+    /// expression whose status is not Valid, so a failed parse is stored
+    /// disabled, carrying the parser's own message. The widget keeps its
+    /// catalogue binding in that case and still draws, which is why a bad
+    /// expression can never blank a page.
+    ///
+    /// A null or blank expression clears any previous one.
+    /// </summary>
+    private void ApplyExpression(DashboardWidgetDefinition widget, string? queryExpression)
+    {
+        if (string.IsNullOrWhiteSpace(queryExpression))
+        {
+            widget.ConfigureExpression(
+                queryExpression: null,
+                advancedExpressionJson: "{}",
+                expressionVersion: 1,
+                expressionEnabled: false,
+                validationStatus: WidgetExpressionStatus.Pending,
+                validationMessage: null);
+
+            return;
+        }
+
+        var parsed = _expressions.Parse(new WidgetQueryExpressionRequest(
+            Expression: queryExpression,
+            Filters: null,
+            Options: null));
+
+        if (parsed.IsSuccess)
+        {
+            widget.ConfigureExpression(
+                queryExpression: queryExpression,
+                advancedExpressionJson: "{}",
+                expressionVersion: 1,
+                expressionEnabled: true,
+                validationStatus: WidgetExpressionStatus.Valid,
+                validationMessage: "Validated on save.");
+
+            return;
+        }
+
+        widget.ConfigureExpression(
+            queryExpression: queryExpression,
+            advancedExpressionJson: "{}",
+            expressionVersion: 1,
+            expressionEnabled: false,
+            validationStatus: WidgetExpressionStatus.Invalid,
+            validationMessage: parsed.Error?.Message);
+    }
     private ApplicationError? ValidateWidgetRequest(CreateDashboardWidgetDefinitionRequest request)
     {
         var errors = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase);

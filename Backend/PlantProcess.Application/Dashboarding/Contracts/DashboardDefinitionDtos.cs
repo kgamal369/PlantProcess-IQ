@@ -1,4 +1,4 @@
-﻿namespace PlantProcess.Application.Dashboarding.Contracts;
+namespace PlantProcess.Application.Dashboarding.Contracts;
 
 public sealed record DashboardDefinitionDto(
     Guid Id,
@@ -32,7 +32,9 @@ public sealed record DashboardWidgetDefinitionDto(
     bool IsActive,
     bool IsSynthetic,
     string? SourceSystem,
-    string? SourceRecordId);
+    string? SourceRecordId,
+    string? QueryExpression,
+    bool ExpressionEnabled);
 
 public sealed record CreateDashboardDefinitionRequest(
     string DashboardCode,
@@ -68,7 +70,8 @@ public sealed record CreateDashboardWidgetDefinitionRequest(
     int? SortOrder,
     bool IsSynthetic,
     string? SourceSystem,
-    string? SourceRecordId);
+    string? SourceRecordId,
+    string? QueryExpression = null);
 
 public sealed record UpdateDashboardWidgetDefinitionRequest(
     string WidgetTitle,
@@ -79,7 +82,8 @@ public sealed record UpdateDashboardWidgetDefinitionRequest(
     string? ParameterCode,
     string? FilterJson,
     string? DisplayOptionsJson,
-    bool? IsActive);
+    bool? IsActive,
+    string? QueryExpression = null);
 
 public sealed record UpdateDashboardWidgetLayoutRequest(
     string LayoutJson,

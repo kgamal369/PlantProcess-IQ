@@ -242,6 +242,8 @@ export interface DashboardWidgetDefinitionRecord {
   isSynthetic: boolean;
   sourceSystem?: string | null;
   sourceRecordId?: string | null;
+  queryExpression?: string | null;
+  expressionEnabled?: boolean;
 }
 
 export interface CreateDashboardWidgetDefinitionPayload {
@@ -259,6 +261,7 @@ export interface CreateDashboardWidgetDefinitionPayload {
   isSynthetic: boolean;
   sourceSystem?: string | null;
   sourceRecordId?: string | null;
+  queryExpression?: string | null;
 }
 
 export type WidgetQueryExpressionRequest = {

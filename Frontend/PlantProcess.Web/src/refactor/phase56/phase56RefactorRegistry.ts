@@ -8,13 +8,6 @@ export type Phase56RefactorTarget = {
 
 export const phase56RefactorTargets: Phase56RefactorTarget[] = [
   {
-    taskId: 'T-036',
-    source: 'src/components/dashboarding/WidgetBuilderWizardContent.implementation.tsx',
-    targetModule: 'src/components/dashboarding/widget-builder/',
-    status: 'protected',
-    rationale: 'God-file split target is now tracked by file-size and interaction gates. Manual AST-aware split must preserve wizard behavior exactly.'
-  },
-  {
     taskId: 'T-037',
     source: 'src/api/productCoreApiClient.implementation.ts',
     targetModule: 'src/api/product-core/',

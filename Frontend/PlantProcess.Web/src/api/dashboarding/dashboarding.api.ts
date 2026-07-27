@@ -1,19 +1,35 @@
 import { apiClient } from "../http";
 export type * from "../productApiClient";
 import { productApi as legacyApi } from "../productApiClient";
-
 type LegacyFunction = (...args: any[]) => unknown;
 const legacy = legacyApi as unknown as Record<string, LegacyFunction>;
-
 function call<T>(name: string, ...args: any[]): Promise<T> {
   const fn = legacy[name];
-
   if (typeof fn !== "function") {
     return Promise.reject(new Error(`Legacy API function not found: ${name}`));
   }
-
   return Promise.resolve(fn(...args) as T);
 }
+
+export type WidgetQueryExpressionRequest = {
+  expression: string;
+  filters?: unknown;
+  options?: unknown;
+};
+
+export type WidgetQueryColumn = {
+  code: string;
+  label: string;
+  dataType: string;
+};
+
+export type WidgetQueryExpressionResult = {
+  generatedAtUtc: string;
+  widget: unknown;
+  columns: WidgetQueryColumn[];
+  rows: Record<string, unknown>[];
+  warnings: string[];
+};
 
 export const dashboardingApi = {
   getDashboardWorkspace: (...args: any[]) => call("getDashboardWorkspace", ...args),
@@ -28,7 +44,6 @@ export const dashboardingApi = {
   createDashboardWidgetDefinition: (...args: any[]) => call("createDashboardWidgetDefinition", ...args),
   updateDashboardWidgetDefinition: (...args: any[]) => call("updateDashboardWidgetDefinition", ...args),
   deleteDashboardWidgetDefinition: (...args: any[]) => call("deleteDashboardWidgetDefinition", ...args),
-
   updateDashboardLayout: (dashboardDefinitionId: string, layoutJson: string) =>
     apiClient.patch<{
       dashboardDefinitionId: string;
@@ -37,4 +52,9 @@ export const dashboardingApi = {
     }>(`/analytics/dashboard/definitions/${dashboardDefinitionId}/layout`, {
       layoutJson,
     }),
+  executeWidgetQueryExpression: (request: WidgetQueryExpressionRequest) =>
+    apiClient.post<WidgetQueryExpressionResult>(
+      "/analytics/dashboard/widgets/execute",
+      request,
+    ),
 };

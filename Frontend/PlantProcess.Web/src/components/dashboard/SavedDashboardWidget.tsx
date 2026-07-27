@@ -5,6 +5,7 @@ import { BarChart3 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { productApi } from "../../api/productApiClient";
+import { dashboardingApi } from "../../api/dashboarding/dashboarding.api";
 import type {
   DashboardWidgetDefinitionRecord,
   DashboardWidgetQueryResult,
@@ -81,20 +82,40 @@ interface SavedDashboardWidgetProps {
       setError(null);
 
       try {
-        const response = await productApi.queryDashboardWidget({
-          widgetType: widget.widgetType,
-          chartType: widget.chartType,
-          dimensionCode: widget.dimensionCode,
-          measureCode: widget.measureCode,
-          parameterCode: widget.parameterCode,
-          filters,
-          options: {
-            maxRows: displayOptions.maxRows ?? 100,
-            rawRowLimit: displayOptions.rawRowLimit ?? 500,
-            sortDirection: "desc",
-            includeWarnings: true,
-          },
-        });
+        // sortDirection is pinned with "as const". Inline in the call below,
+        // TypeScript contextually typed it as the literal "desc"; hoisted into
+        // a shared const it widens to string, which DashboardWidgetQueryOptions
+        // rejects because SortDirection is "asc" | "desc".
+        const options = {
+          maxRows: displayOptions.maxRows ?? 100,
+          rawRowLimit: displayOptions.rawRowLimit ?? 500,
+          sortDirection: "desc" as const,
+          includeWarnings: true,
+        };
+
+        // An expression is enabled only when the server parsed it at save
+        // time, so this branch is never taken by an expression that failed
+        // validation - such a widget keeps its catalogue binding and draws
+        // exactly as before. Filters are passed to both paths so that
+        // cross-filtering behaves the same on either kind of widget.
+        const useExpression =
+          Boolean(widget.expressionEnabled) && Boolean(widget.queryExpression);
+
+        const response = useExpression
+          ? ((await dashboardingApi.executeWidgetQueryExpression({
+              expression: String(widget.queryExpression),
+              filters,
+              options,
+            })) as unknown as DashboardWidgetQueryResult)
+          : await productApi.queryDashboardWidget({
+              widgetType: widget.widgetType,
+              chartType: widget.chartType,
+              dimensionCode: widget.dimensionCode,
+              measureCode: widget.measureCode,
+              parameterCode: widget.parameterCode,
+              filters,
+              options,
+            });
 
         if (!ignore) setResult(response);
       } catch (loadError) {

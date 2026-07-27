@@ -151,3 +151,9 @@
   overflow: auto;
   min-width: 0;
 }
+/* C2: the hidden attribute loses to display: grid, so the catalogue fields
+   stayed visible in Query mode. A control that looks active and is not is a
+   lens-three failure, not a styling detail. */
+.wauth-grid[hidden] {
+  display: none;
+}
