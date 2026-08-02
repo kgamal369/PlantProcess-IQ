@@ -5,6 +5,9 @@ import { BarChart3 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { productApi } from "../../api/productApiClient";
+import {
+  readRoleBinding, staleRoles, describeStale,
+} from "../../api/product-core/widget-role-binding";
 import { dashboardingApi } from "../../api/dashboarding/dashboarding.api";
 import type {
   DashboardWidgetDefinitionRecord,
@@ -132,12 +135,30 @@ interface SavedDashboardWidgetProps {
 
   const rows = (result?.rows ?? []) as ChartRow[];
 
+  // M1-16. An explicitly bound widget READS its mapping. Only a widget that
+  // has never been bound falls back to inference, so every widget authored
+  // before this shipped keeps rendering exactly as it did.
+  const roleBinding = useMemo(
+    () => readRoleBinding(widget.displayOptionsJson),
+    [widget.displayOptionsJson],
+  );
+  const resultColumns = useMemo(
+    () => (result?.columns ?? []).map((c) => c.code),
+    [result],
+  );
+  const stale = useMemo(
+    () => (result ? staleRoles(roleBinding, resultColumns) : []),
+    [roleBinding, resultColumns, result],
+  );
+
   const categoryKey =
+    (roleBinding?.category ?? null) ??
     result?.columns.find((column) => column.code === widget.dimensionCode)?.code ??
     result?.columns.find((column) => column.code !== "value")?.code ??
     widget.dimensionCode;
 
   const valueKey =
+    (roleBinding?.value ?? null) ??
     result?.columns.find((column) => column.code === "value")?.code ??
     result?.columns.find((column) => column.dataType === "number")?.code ??
     "value";
@@ -156,6 +177,23 @@ interface SavedDashboardWidgetProps {
       onClone={async () => { await productApi.cloneDashboardWidget(dashboardDefinitionId, widget.id, { widgetTitle: widget.widgetTitle + " (copy)" }); await Promise.resolve(onCloned()); }}
       onHide={onHidden}
     >
+      {/* M1-16. A bound column that the query no longer returns is REPORTED
+          BY NAME. It is never repaired by repointing to another column: a
+          chart that silently moves to a different column is the exact failure
+          this bind step exists to prevent, and it is invisible to the viewer.
+          The chart below still renders, so the widget degrades honestly
+          instead of going blank. */}
+      {stale.length > 0 ? (
+        <div className="widget-stale" role="alert" data-testid="widget-stale">
+          <strong>This widget's column mapping is out of date.</strong>
+          <p>
+            {describeStale(roleBinding, stale)} {stale.length === 1 ? "is" : "are"} not in
+            what the query returns now. Open the widget and choose again -
+            nothing has been repointed for you.
+          </p>
+        </div>
+      ) : null}
+
       {error ? (
         <div className="empty-insight">
           <strong>Widget failed</strong>

@@ -1,0 +1,37 @@
+{
+ "packId": "M1-PREREQ-authoring-support",
+ "title": "M1-19/M1-20 prerequisites: SQL run endpoint + method catalogue endpoint",
+ "root": "backend",
+ "newFiles": [
+  {
+   "from": "AuthoringSupportEndpoints.cs",
+   "to": "Backend/PlantProcess.Api/Endpoints/Prep/AuthoringSupportEndpoints.cs"
+  }
+ ],
+ "edits": [
+  {
+   "target": "Backend/PlantProcess.Api/Program.cs",
+   "file": "edits.Program.json"
+  }
+ ],
+ "selfChecks": [
+  {
+   "target": "Backend/PlantProcess.Api/Program.cs",
+   "mustContain": [
+    "app.MapAuthoringSupportEndpoints();"
+   ]
+  },
+  {
+   "target": "Backend/PlantProcess.Api/Endpoints/Prep/AuthoringSupportEndpoints.cs",
+   "mustContain": [
+    "ppiq_resolve_safe_sql",
+    "rejected_by_safe_sql",
+    "MethodSelector.Select"
+   ],
+   "mustNotContain": [
+    "MustBeSelectOnly"
+   ]
+  }
+ ],
+ "gate": "dotnet build Backend/PlantProcess.Api"
+}

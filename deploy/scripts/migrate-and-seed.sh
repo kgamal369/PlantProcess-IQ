@@ -62,7 +62,50 @@ run_app() {
   shopt -s nullglob
   local files=( Backend/database/scripts/*.sql )
   [ ${#files[@]} -gt 0 ] || { echo "FATAL: no .sql in Backend/database/scripts (wrong path/case?)"; exit 1; }
-  for f in "${files[@]}"; do echo "  -> ${f}"; psql_in < "${f}"; done
+
+  # M1-07. HONOUR THE MANIFEST.
+  #
+  # This loop used to be a bare glob, so every classification in
+  # database.apply-order.manifest.csv was documentation that nothing enforced.
+  # A script marked DO_NOT_AUTO_APPLY ran on every deploy anyway. That is how
+  # 070 kept reinstalling the broken widget codes, and it applies equally to
+  # VALIDATION_ONLY and OPTIONAL_DEMO_ONLY.
+  local manifest="Backend/database/database.apply-order.manifest.csv"
+  local matched=0
+  local skipped=0
+
+  for f in "${files[@]}"; do
+    local base; base="$(basename "${f}")"
+    local decision=""
+    if [ -f "${manifest}" ]; then
+      local line; line="$(grep -F "${base}" "${manifest}" || true)"
+      if [ -n "${line}" ]; then
+        matched=$((matched + 1))
+        case "${line}" in
+          *DO_NOT_AUTO_APPLY*)   decision="DO_NOT_AUTO_APPLY" ;;
+          *VALIDATION_ONLY*)     decision="VALIDATION_ONLY" ;;
+          *OPTIONAL_DEMO_ONLY*)  decision="OPTIONAL_DEMO_ONLY" ;;
+        esac
+      fi
+    fi
+    if [ -n "${decision}" ]; then
+      echo "  -- SKIP ${f}  (${decision} per the manifest)"
+      skipped=$((skipped + 1))
+      continue
+    fi
+    echo "  -> ${f}"
+    psql_in < "${f}"
+  done
+
+  # A gate that never fires is not a gate. If the manifest is present but
+  # matched nothing, the guard is inert and the operator is told so rather than
+  # being left with a false sense that classifications are being enforced.
+  if [ -f "${manifest}" ] && [ "${matched}" -eq 0 ]; then
+    echo "  !! WARNING: the manifest was read but matched no script filename."
+    echo "  !! Classifications are NOT being enforced. Check the path column format."
+  else
+    echo "  == manifest: ${matched} script(s) classified, ${skipped} skipped =="
+  fi
 
   local seeds=( Backend/database/seed/*.sql )
   if [ ${#seeds[@]} -gt 0 ]; then

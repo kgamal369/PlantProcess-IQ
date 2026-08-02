@@ -4,6 +4,8 @@ import { StandardP2Button } from "@/components/standard/StandardP2Controls";
 import { CanvasShell } from "../../canvas/CanvasShell";
 import { BlockNode, type BlockNodeData } from "../../canvas/nodes/BlockNode";
 import { runCorrelation, getAnalysisReadinessGates } from "../../api/advancedAnalysis";
+import type { AdvancedReadinessGateSummaryDto } from "../../api/advancedAnalysis";
+import { GateReadinessPanel } from "@/components/analysis/GateReadinessPanel";
 
 const nodeTypes = { block: BlockNode };
 
@@ -14,12 +16,10 @@ const nodeTypes = { block: BlockNode };
 export const OUTCOMES = ["defect.rate_per_m2", "defect.class", "defect.severity", "kpi.prime_yield"];
 export const GRAINS = ["coil", "slab", "heat"];
 
-type GatesSummary = {
-  readyCount?: number;
-  partialCount?: number;
-  blockedCount?: number;
-  gates?: unknown[];
-};
+// M1-18. The local shape below used to keep three counts and throw the rest of
+// the payload away, so the panel could not have been built against it. The
+// endpoint has always returned the whole summary; this now names it.
+type GatesSummary = AdvancedReadinessGateSummaryDto;
 
 /**
  * UI-3 Analysis Toolbox: blocks wired Outcome -> Method -> Run compile to the
@@ -140,15 +140,9 @@ export default function AnalysisToolboxPage() {
         </div>
 
         <h4 className="canvas-side__h4--mt">Readiness gates</h4>
-        {gatesError ? (
-          <div className="status-line">Gate summary unavailable for this outcome and window.</div>
-        ) : gates ? (
-          <div className="status-line">
-            ready {gates.readyCount ?? 0} / partial {gates.partialCount ?? 0} / blocked {gates.blockedCount ?? 0}
-          </div>
-        ) : (
-          <div className="status-line">Reading gates...</div>
-        )}
+        {/* M1-18. Above the run button, refetching whenever outcome, grain or
+            window change - the effect on canvasPayload already does that. */}
+        <GateReadinessPanel summary={gates} failed={gatesError} runId={runId} />
 
         <div className="canvas-actions">
           <StandardP2Button variant="primary" className="cbtn" onClick={run} disabled={busy}>

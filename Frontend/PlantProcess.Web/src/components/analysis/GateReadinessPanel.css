@@ -1,0 +1,152 @@
+
+/* M1-18. Bucketed bar fills, b0..b10. The task names the constraint: NO inline
+   style objects, the UI conformance ratchet forbids them. A width computed in
+   JavaScript would need one, so the width lives here in eleven classes and the
+   component picks the bucket. */
+
+.gaterp {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.gaterp__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--ppiq-journey-border, rgba(0, 212, 255, 0.14));
+  flex-wrap: wrap;
+}
+
+.gaterp__spacer { flex: 1 1 auto; }
+
+.gaterp__counts,
+.gaterp__population {
+  font-size: 11px;
+  font-family: "IBM Plex Mono", monospace;
+  color: var(--ppiq-color-text-muted, #8ba9c4);
+}
+
+.gaterp__chip {
+  font-size: 10px;
+  font-family: "IBM Plex Mono", monospace;
+  letter-spacing: 0.1em;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+}
+
+.gaterp__chip--ready   { color: var(--ppiq-color-success, #2ce6a2); }
+.gaterp__chip--partial { color: var(--ppiq-color-warning, #ffb020); }
+.gaterp__chip--blocked { color: var(--ppiq-color-danger,  #ff4d6d); }
+
+.gaterp__rows {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.gaterp__row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 10px;
+  border: 1px solid var(--ppiq-journey-border, rgba(0, 212, 255, 0.14));
+  border-radius: 8px;
+  background: var(--ppiq-color-surface, #0b1730);
+}
+
+.gaterp__rowhead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gaterp__title {
+  font-size: 12.5px;
+  color: var(--ppiq-color-text, #eaf6ff);
+}
+
+.gaterp__blocking {
+  font-size: 10px;
+  font-family: "IBM Plex Mono", monospace;
+  letter-spacing: 0.08em;
+  color: var(--ppiq-color-danger, #ff4d6d);
+}
+
+.gaterp__bar {
+  position: relative;
+  height: 6px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--ppiq-color-surface-sunken, rgba(0, 212, 255, 0.08));
+}
+
+.gaterp__fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.gaterp__bar--ready   { color: var(--ppiq-color-success, #2ce6a2); }
+.gaterp__bar--partial { color: var(--ppiq-color-warning, #ffb020); }
+.gaterp__bar--blocked { color: var(--ppiq-color-danger,  #ff4d6d); }
+
+.gaterp__fill--b0  { width: 0; }
+.gaterp__fill--b1  { width: 10%; }
+.gaterp__fill--b2  { width: 20%; }
+.gaterp__fill--b3  { width: 30%; }
+.gaterp__fill--b4  { width: 40%; }
+.gaterp__fill--b5  { width: 50%; }
+.gaterp__fill--b6  { width: 60%; }
+.gaterp__fill--b7  { width: 70%; }
+.gaterp__fill--b8  { width: 80%; }
+.gaterp__fill--b9  { width: 90%; }
+.gaterp__fill--b10 { width: 100%; }
+
+.gaterp__reason {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ppiq-color-text, #eaf6ff);
+}
+
+.gaterp__evidence {
+  font-size: 11px;
+  font-family: "IBM Plex Mono", monospace;
+  color: var(--ppiq-color-text-muted, #8ba9c4);
+  word-break: break-word;
+}
+
+.gaterp__foot {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 6px;
+  border-top: 1px solid var(--ppiq-journey-border, rgba(0, 212, 255, 0.14));
+}
+
+.gaterp__message {
+  font-size: 12px;
+  color: var(--ppiq-color-text, #eaf6ff);
+}
+
+.gaterp__runid {
+  font-size: 11px;
+  font-family: "IBM Plex Mono", monospace;
+  color: var(--ppiq-color-text-muted, #8ba9c4);
+}
+
+.gaterp__refusal,
+.gaterp__unavailable {
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--ppiq-color-text-muted, #8ba9c4);
+}
+
+.gaterp__loading {
+  font-size: 12px;
+  color: var(--ppiq-color-text-muted, #8ba9c4);
+}

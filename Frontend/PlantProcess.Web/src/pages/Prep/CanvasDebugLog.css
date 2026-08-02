@@ -1,0 +1,114 @@
+
+/* M1-17 debug log. Every colour is a token with a literal fallback, matching
+   CanvasModeBar.css. No inline style objects anywhere - the UI conformance
+   ratchet forbids them and this panel is the one a customer reads most. */
+
+.dbglog {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+  max-height: 220px;
+  min-height: 92px;
+  border-top: 1px solid var(--ppiq-journey-border, rgba(0, 212, 255, 0.14));
+  background: var(--ppiq-color-surface, #0b1730);
+}
+
+.dbglog__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 14px;
+  border-bottom: 1px solid var(--ppiq-journey-border, rgba(0, 212, 255, 0.14));
+  flex: 0 0 auto;
+}
+
+.dbglog__title {
+  color: var(--ppiq-color-text-muted, #8ba9c4);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.dbglog__count {
+  font-size: 11px;
+  font-family: "IBM Plex Mono", monospace;
+  padding: 1px 7px;
+  border-radius: 999px;
+  border: 1px solid var(--ppiq-journey-border, rgba(0, 212, 255, 0.14));
+  color: var(--ppiq-color-text-muted, #8ba9c4);
+}
+
+.dbglog__count--error { color: var(--ppiq-color-danger, #ff4d6d); }
+.dbglog__count--warning { color: var(--ppiq-color-warning, #ffb020); }
+.dbglog__count--success { color: var(--ppiq-color-success, #2ce6a2); }
+
+.dbglog__spacer { flex: 1 1 auto; }
+
+.dbglog__body {
+  overflow-y: auto;
+  min-height: 0;
+  padding: 4px 0 6px;
+}
+
+.dbglog__empty {
+  padding: 12px 14px;
+  color: var(--ppiq-color-text-muted, #8ba9c4);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.dbglog__row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 5px 14px;
+  border-left: 3px solid transparent;
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.dbglog__row--error { border-left-color: var(--ppiq-color-danger, #ff4d6d); }
+.dbglog__row--warning { border-left-color: var(--ppiq-color-warning, #ffb020); }
+.dbglog__row--success { border-left-color: var(--ppiq-color-success, #2ce6a2); }
+
+.dbglog__at {
+  flex: 0 0 auto;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  color: var(--ppiq-color-text-muted, #8ba9c4);
+}
+
+.dbglog__sev {
+  flex: 0 0 62px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+}
+
+.dbglog__sev--error { color: var(--ppiq-color-danger, #ff4d6d); }
+.dbglog__sev--warning { color: var(--ppiq-color-warning, #ffb020); }
+.dbglog__sev--success { color: var(--ppiq-color-success, #2ce6a2); }
+
+.dbglog__text {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--ppiq-color-text, #eaf6ff);
+}
+
+.dbglog__subject {
+  display: inline-block;
+  margin-right: 8px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11.5px;
+  color: var(--ppiq-color-accent, #00d4ff);
+}
+
+.dbglog__message { display: inline; }
+
+.dbglog__facts {
+  display: block;
+  margin-top: 2px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  color: var(--ppiq-color-text-muted, #8ba9c4);
+}

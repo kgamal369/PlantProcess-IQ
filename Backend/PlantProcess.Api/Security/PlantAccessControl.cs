@@ -222,6 +222,12 @@ public sealed class AccessControlMiddleware
         // the sibling analytics routes; adjust if the page role-gates differently.
         ("/api/suggestions", All(), "analysis.execute", false),
         ("/api/prep/visual-mapper", All(), "analysis.execute", false),
+        // M1-PREREQ: the SQL authoring group. The middleware is deny-by-default,
+        // so without this line every POST to /api/prep/sql/run is refused 403
+        // ("not mapped in the P01/P02 permission matrix") even for an
+        // authenticated user. analysis.execute matches the sibling
+        // /api/prep/visual-mapper, which is the same act on the same surface.
+        ("/api/prep/sql", All(), "analysis.execute", false),
         ("/analytics/dashboard/definitions", All(), "page.design", false),
         ("/analytics/dashboard", new[] { "GET", "POST" }, "assistant.use", false),
         ("/page-definitions", All(), "page.design", false),

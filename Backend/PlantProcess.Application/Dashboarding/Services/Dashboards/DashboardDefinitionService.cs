@@ -404,9 +404,9 @@ public async Task<ApplicationResult<int>> EnsureSystemTemplatesAsync(
             "Default quality intelligence dashboard showing defect trend, defect breakdown, and material population.",
         widgets:
         [
-            TemplateWidget("DEFECT_TREND", "Defect Rate Trend", "line", "Day", "DefectRate", 0),
-            TemplateWidget("DEFECT_BREAKDOWN", "Defect Breakdown", "bar", "DefectType", "DefectCount", 1),
-            TemplateWidget("MATERIAL_BY_TYPE", "Material by Type", "bar", "MaterialUnitType", "MaterialCount", 2),
+            TemplateWidget("DEFECT_TREND", "Defect Rate Trend", "line", DashboardMetadataCodes.Dimensions.Day, DashboardMetadataCodes.Measures.DefectRate, 0),
+            TemplateWidget("DEFECT_BREAKDOWN", "Defect Breakdown", "bar", DashboardMetadataCodes.Dimensions.DefectType, DashboardMetadataCodes.Measures.DefectCount, 1),
+            TemplateWidget("MATERIAL_BY_TYPE", "Material by Type", "bar", DashboardMetadataCodes.Dimensions.MaterialUnitType, DashboardMetadataCodes.Measures.MaterialCount, 2),
         ],
         cancellationToken);
 
@@ -417,9 +417,9 @@ public async Task<ApplicationResult<int>> EnsureSystemTemplatesAsync(
             "Default risk dashboard showing risk score distribution, risk by equipment, and risk by material type.",
         widgets:
         [
-            TemplateWidget("RISK_BY_CLASS", "Risk by Class", "donut", "RiskClass", "RiskScore", 0),
-            TemplateWidget("RISK_BY_EQUIPMENT", "Risk by Equipment", "bar", "Equipment", "RiskScore", 1),
-            TemplateWidget("RISK_BY_MATERIAL_TYPE", "Risk by Material Type", "bar", "MaterialUnitType", "RiskScore", 2),
+            TemplateWidget("RISK_BY_CLASS", "Risk by Class", "donut", DashboardMetadataCodes.Dimensions.RiskClass, DashboardMetadataCodes.Measures.RiskScore, 0),
+            TemplateWidget("RISK_BY_EQUIPMENT", "Risk by Equipment", "bar", DashboardMetadataCodes.Dimensions.Equipment, DashboardMetadataCodes.Measures.RiskScore, 1),
+            TemplateWidget("RISK_BY_MATERIAL_TYPE", "Risk by Material Type", "bar", DashboardMetadataCodes.Dimensions.MaterialUnitType, DashboardMetadataCodes.Measures.RiskScore, 2),
         ],
         cancellationToken);
 
@@ -430,9 +430,9 @@ public async Task<ApplicationResult<int>> EnsureSystemTemplatesAsync(
             "Default data quality monitoring dashboard showing issue counts by source system and material type.",
         widgets:
         [
-            TemplateWidget("DQ_BY_SOURCE", "Issues by Source", "bar", "SourceSystem", "DataQualityIssueCount", 0),
-            TemplateWidget("DQ_BY_MATERIAL_TYPE", "Issues by Material Type", "bar", "MaterialUnitType", "DataQualityIssueCount", 1),
-            TemplateWidget("DQ_BY_RISK_CLASS", "Issues by Risk Class", "bar", "RiskClass", "DataQualityIssueCount", 2),
+            TemplateWidget("DQ_BY_SOURCE", "Issues by Source", "bar", DashboardMetadataCodes.Dimensions.SourceSystem, DashboardMetadataCodes.Measures.DataQualityIssueCount, 0),
+            TemplateWidget("DQ_BY_MATERIAL_TYPE", "Issues by Material Type", "bar", DashboardMetadataCodes.Dimensions.MaterialUnitType, DashboardMetadataCodes.Measures.DataQualityIssueCount, 1),
+            TemplateWidget("DQ_BY_RISK_CLASS", "Issues by Risk Class", "bar", DashboardMetadataCodes.Dimensions.RiskClass, DashboardMetadataCodes.Measures.DataQualityIssueCount, 2),
         ],
         cancellationToken);
 
@@ -443,9 +443,9 @@ public async Task<ApplicationResult<int>> EnsureSystemTemplatesAsync(
             "Default correlation exploration dashboard for suspected contributors, defect rates, and equipment-level patterns.",
         widgets:
         [
-            TemplateWidget("CORR_DEFECT_RATE_BY_EQUIPMENT", "Defect Rate by Equipment", "bar", "Equipment", "DefectRate", 0),
-            TemplateWidget("CORR_DEFECT_RATE_BY_TYPE", "Defect Rate by Defect Type", "bar", "DefectType", "DefectRate", 1),
-            TemplateWidget("CORR_RISK_BY_DAY", "Risk Trend by Day", "line", "Day", "RiskScore", 2),
+            TemplateWidget("CORR_DEFECT_RATE_BY_EQUIPMENT", "Defect Rate by Equipment", "bar", DashboardMetadataCodes.Dimensions.Equipment, DashboardMetadataCodes.Measures.DefectRate, 0),
+            TemplateWidget("CORR_DEFECT_RATE_BY_TYPE", "Defect Rate by Defect Type", "bar", DashboardMetadataCodes.Dimensions.DefectType, DashboardMetadataCodes.Measures.DefectRate, 1),
+            TemplateWidget("CORR_RISK_BY_DAY", "Risk Trend by Day", "line", DashboardMetadataCodes.Dimensions.Day, DashboardMetadataCodes.Measures.RiskScore, 2),
         ],
         cancellationToken);
 
@@ -456,9 +456,9 @@ public async Task<ApplicationResult<int>> EnsureSystemTemplatesAsync(
             "Default material investigation launcher showing material populations by source and type.",
         widgets:
         [
-            TemplateWidget("INV_MATERIAL_BY_SOURCE", "Material by Source", "bar", "SourceSystem", "MaterialCount", 0),
-            TemplateWidget("INV_MATERIAL_BY_TYPE", "Material by Type", "table", "MaterialUnitType", "MaterialCount", 1),
-            TemplateWidget("INV_RISK_BY_SOURCE", "Risk by Source", "bar", "SourceSystem", "RiskScore", 2),
+            TemplateWidget("INV_MATERIAL_BY_SOURCE", "Material by Source", "bar", DashboardMetadataCodes.Dimensions.SourceSystem, DashboardMetadataCodes.Measures.MaterialCount, 0),
+            TemplateWidget("INV_MATERIAL_BY_TYPE", "Material by Type", "table", DashboardMetadataCodes.Dimensions.MaterialUnitType, DashboardMetadataCodes.Measures.MaterialCount, 1),
+            TemplateWidget("INV_RISK_BY_SOURCE", "Risk by Source", "bar", DashboardMetadataCodes.Dimensions.SourceSystem, DashboardMetadataCodes.Measures.RiskScore, 2),
         ],
         cancellationToken);
 
@@ -551,12 +551,17 @@ private async Task<int> EnsureTemplateAsync(
             continue;
         }
 
+        // Ordinal, not OrdinalIgnoreCase. Under the insensitive comparison a row
+        // carrying MaterialCount was judged equal to materialCount, so the repair
+        // path looked at a widget the engine cannot execute and moved on. The
+        // codes are case-sensitive to the query engine, so they are compared that
+        // way here.
         var shouldUpdate =
             !string.Equals(existingWidget.WidgetTitle, seed.Title, StringComparison.Ordinal) ||
-            !string.Equals(existingWidget.WidgetType, "chart", StringComparison.OrdinalIgnoreCase) ||
-            !string.Equals(existingWidget.ChartType, seed.ChartType, StringComparison.OrdinalIgnoreCase) ||
-            !string.Equals(existingWidget.DimensionCode, seed.DimensionCode, StringComparison.OrdinalIgnoreCase) ||
-            !string.Equals(existingWidget.MeasureCode, seed.MeasureCode, StringComparison.OrdinalIgnoreCase);
+            !string.Equals(existingWidget.WidgetType, "chart", StringComparison.Ordinal) ||
+            !string.Equals(existingWidget.ChartType, seed.ChartType, StringComparison.Ordinal) ||
+            !string.Equals(existingWidget.DimensionCode, seed.DimensionCode, StringComparison.Ordinal) ||
+            !string.Equals(existingWidget.MeasureCode, seed.MeasureCode, StringComparison.Ordinal);
 
         if (shouldUpdate)
         {

@@ -1,0 +1,152 @@
+1. Chapter1 : Marketing and sales
+1.1. what is the problem existing in the plant 
+a.  repeated Quality defects happen  don't know the source and need alot of troubleshooting until solve , repeated down time happening for unkow root cause  , equipement or operation repeated failures happens , not could KPI (productivity , ....)not know how to enhance , and also wast time in troubleshooting until may be partially enhance or need a very high cost expert to make short time consulation to make some fixation and leave  
+b.  every large industry plant which have several stagging as food industry , mineral water , steel industry , paper industry , tyres industry , pharmacy industry have serveral phase and product pass through several machines and several inspection device and inspector  
+c.  normally each machine  and each inspection device store what happend during his proccess into data base or excel sheet or log file  
+d.  plant need a very experince person to know by experince and link process parameters with each other through the massive large plant , 
+    3.1. quality issuse : plant always seek for high experince person to know for example the reason of certain defect happend recently and this high experince person who know by experince or  go through all logs and all data then may be the reason become high temperature or low speed in an early beggging stage . 
+    3.2. KPI : all plant what to increase productivity or less down time happen due process failures or production failures or equipment failures
+
+e. normally each production unit and inspection device had one hmi or front end page which display it's own data only 
+
+
+1.2. what is the aim of our software product : the in house expert person who learn and well know your exact plant fingerprint and give you online and day per day a very advanced suggestion and recommendation with AI and Machine learning knowldge and experince based on all customer data bases which customer dont really well use it on max benefit  we can train our model based on it and make the magic using connect it beside each other as a puzzle from our locations of the plant to get the best benefit 
+1.3. how it solve this problem using  : 
+                                       a. link defects and equipemenst and operation failures with the all process parameter and operation parameters from the whole plants and make correlation and track parameters and can defects and variation so may be slight change in early begining stage and early begining production unit lead to repeated failure or quality issuse produced in late production unit and at the last stage of production 
+									   b. based on the learning of production pratices based on data existing on data base along several months can know what was the practices to make max productivity without failures where he know the practices which lead to down time and failures and start to make linke between them so increase productivity									   
+									   c. if a piece had a bad practices or extra addtivit or this amount of (raw material + this high speed) this combination always lead to problem  in early stage he can predicte and make predication that this piece based on history data set will had the same story and this bad , but can make suggestion that in later stage make some practices which will solve this issuse based on history of practices 
+									   d. get the benefit of AI + ML and deep data analysis function which will make the in house expert who learn and well know your exact your plant fingerprint
+1.4. Target audience CEO of big industry and plant and Purchasing Departement of plant  speak as marketing and sales person
+
+2. General rules and concept of designing 
+	What my product solution Provide : 
+
+a. Able to connect and collect data from all kind of DB and data source then link all data togther 
+b. provide 5 layer of helping 
+ 2.1. normal dashboard and widget where all data from all production unit are togther beside each in colorful beautiful widgets , tables  and charts or heat map with some interactive filter can help normal eye to detect easy information easily
+ 2.2. create more advanced statistics function and correlation jobs (between all proccess parameters with each other and with defect and quality issuses through whole plant and all production unit and inspection devices ) which generate information from data then display those in colorful beautiful widgets, tables  and charts or heat map with some interactive filter can help normal eye to detect hard information easily
+ 2.3. create jobs of AI+ML  which deep dive into data and learn it  ,which define pattern and learn which can easily get the reason of any quality issuse or define bottle neck of increasing productivity , or define the reason of reppeated failure which increase down time which is loss in equipment and material and down time as well which is high loss 
+ 2.4. / 2.5  (point 4, 5 are prediction / suggestion)   
+  for example some material can had some higher temperature in early production unit , my system can predicte based on pattern that this material will had a quality issuse later one based on his learning
+      after prediction suggest what to do in later production unit  to don't get this quality defect 
+  for example operator driving with high temperature and high speed , can be prediction a operation failure could happne  and suggestion what to do 
+   
+d. so over all data collection from all production unit through all the plant  and reading and learning over all the plant 
+ d.1.  enhance quality by define what is the root cause through all the plant and production unit , and may be predicte an up comming defect and suggest how to avoid it   
+ d.2.  enhance Kpi , less down time , more productivity from data analysis 
+
+e. had chat pot as GPT with LLM so may not everyone easily configure job and create dashboard and filter and go through chart so chat pot as gpt can chat until get all info 
+f. had feature of return of Value embedded  into every susgetion or prediction or  statistics  , as if you do my susgetion you will gain that amount , if you avoid that down time you will save this amount of money as proven of my effect
+ 
+ 
+ 
+2.1. rules of generic to fit any user any customer plant data set ......
+1. my software product should be standard generic for all indutries and plants 
+2. it should never ever be demo or have a single line or single word regarding any demo ,or not even single line or certain page or any component define or preperapared for specific data set 
+3. I only define and prepared  an emulation or demo external data set to test my software product as emulation when I will setup my software product in the customer side and my  software product will connect to customer side DB and read his data and start to give the customer the analysis and suggestion and prediction .  
+that why I create a data set which emulate the customer data set which will read it as input 
+So I need to eumalte my system input to test the system ,and show in any presentation that my system is tested 
+
+for example 
+start empty even for defect table 
+where flat steel defect are different than paper defect different than mineral water defect 
+each plant has it's own defect 
+even each production unit had it's own defect , so every semi product has it's own defect , 
+and even each inspection device can detect different type of defect , 
+so still defect table need to start empty and the user who will configure on the UI/UX low code page need to make and configure this link , with the tables of his data bases  which contain the definition of those defect to import them 
+
+
+
+generic had more deep concept , it mean that this software product should match the need of any customer with any specification and be felixibale enough 
+1. my classes where the customer data will be imported should  be generic , so those classes should be able to import data of pharmacy industry and food industry and steel industry 
+2. Data base types , Data base structures and differnet tables 
+3. my workflow should be generic  , different Proccess and different and unqiue worklows
+4.  Inpsection devices which generate different defect type and different structure 
+5. different Proccess and different and unqiue worklows
+6. every CEO and process engnieer in every plant have different focus and want to monitor different process parameter and different KPI and different type of correlation 
+
+
+2.2. rule of being a high standard ( speed , UI/UX , design , no error , being a big high budget product talking to big company , accurate data)
+2.3. All others rules and concept and all our golden rules , other wise may we will design with several concept or several point of view
+2.4. .....
+
+
+3. Chapter 2 : Technical overview
+3.1. general  Concept and idea of software 
+3.2. General technical features and aim key and add values of our software product 
+3.3. workflows and data flows  and technical flow 
+3.4. General  and list of all our pages technical data pages and  overview about each of them 
+3.5. general adminstration features of our  software products (user/role , logging , jobs Monitors and logs , license configuration , creating some pages limited per user ,setting , translation , configure new logs , limitation of pages creation.....)
+3.6. list of of pages of adminstration features and technical overview about each of them 
+3.7. target audience Mid Manager and operation engineers or Quality Engineers or process engineers 
+3.8. Speak as senior product owner
+
+
+4. Chapter 3: General software product techincal Function Description 
+4.1. List of steps of data flows steps by steps  every step and each step
+4.2. Deep deep detailed advanced proffesional description technical detailed for every step and each step from concept of the steps up description to the details of  all related and required api and endpoint levels
+4.3. List of UI pages 
+4.4. Deep deep detailed advanced proffesional description technical detailed of each and every page from concept and aim and functionality to the UI/UX design and and oritentation of componentto button level and design and style and location and oritentation  and every hook and and every call  
+4.5. DB schemas and tables and pk , fk and joins 
+4.6. Credential and Topolgy  all user name and credinatial and Ip addresses of DB and login and every thing 
+4.7. Target audience advanced IT and software from customer and our developer for hand over and helping in further developing phases 
+4.8. speak as senior product owner or senior software engineer or tech lead 
+
+
+5. Chapter 4 Sepecific software product techincal Function Description  
+5.1. Qlik sense style Analysis Page :  feature , component , widget , style , standard , UI/UX . filter , Dynamic interaction , Add page , Add widget , Edit widget Query , link data to widget , charts type and chart style , Page Layout , KPI
+5.2. UI/UX no code low code : features , fucntionalities , layout , UI/UX , schemas Table bar , Tool box drage drop design , wiring diagram debugging and saving and transfer it to code and joining and use it in data analysis  , sql editor debugging and running and save it and use it   , predefined tool box and and advanced tools 
+5.3. Deep detailed advanced proffesional Design of Multi threading and load balancing of jobs, how to don't make our server crash of hundreds of jobs running every 2 or 3 min which will load 10 M of data , one  work around will be  make the dump import from customer data bases to use will be data incremental so don't import everything but all other job will remain huge  
+5.4. Deep detailed advanced proffesional Design of Gate and engine , : rules and validation ,  how will enhance and adjust the coeffient of whole system with increasing of learning curves , how chat pot will get data from it , how will be the hub of all data analysis and AI and Machine learning data and jobs 
+5.5. Deep detailed advanced proffesional Design of Statitics and Correlation and data analysis functionality , all blocks of them which will be used the UI/UX no code wiring diagrams and which charts best chart which will display everyfunction , which data input to those function which data output to validated the block diagrams
+5.6. Deep detailed advanced proffesional Desing of AI+ML functionalities all blocks of them which will be used the UI/UX no code wiring diagrams and which charts best chart which will display everyfunction , which data input to those function which data output to validated the block diagrams
+5.7. Deep detailed advanced proffesional Design of ChatPOT LLM  "AI Assitant" which bring the data from Engine it should be a chat box which appear down right which remain always with me in all pages 
+5.8. Target audience advanced IT and software from customer and our developer for hand over and helping in further developing phases 
+5.9. speak as senior product owner or senior software engineer or tech lead 
+
+
+ 
+6.Chapter 5: Tutorial User Journey step by step starting what to do and how to do and which button to press 
+6.1.make Deep detailed advanced proffesional Tutorial from junior user who don't have any engineering backgroud.
+6.2. I want to make the single step break down it into at least 15 steps , step by step 
+6.3. for example :select on right main menu bar this button ,which will open this page , then click on top bar this button , then you will find this drop down menu select this option then press save. 
+6.4. user journey which :
+6.4.1. Create and Configure DB link get Data from customer Data sources and database and select the table and the coloumn which user want to import 
+6.4.2. create and configure and scheuele the jobs which will bring run those import data function and use those db link and import those data to dump database with incremental way  then montior those jobs 
+6.4.3. create and configure the data preparation (linking , joining, filter , ETL , grouping ,.....) for the data in the dump store to fit and able to insert in our plant data  using UI/UX no code low the   page (wiring diagram / or SQL editor)
+6.4.4. create and configure and scheuele the jobs which will bring run based on those Data preparation to load and import data from dump store to our plant data schema
+6.4.5. create and configure empty pages for analysis base on the raw data store on the plant data schema , drag drop from add widget tool box ( filter , widget , charts, KPI label ) and start link and configure and edit each  widget after drop into the page to the data base on the same UI/UX no code low code (wiring diagram / or SQL Editor)
+6.4.6. Create and configure some file which had some deep analysis or advanced data analysis function or advanced correlation and staticitcs or some AI+ML functions on UI/UX no code low code (wiring diagram / or SQL Editor) then save that into file 
+6.4.7. create and configure a job and then link the staticitcs correlation or AI+ML file to this job , which will schedule and montioring the runing of this function 
+6.4.8. create and configure an empty page and add to this page some widgets and link the widget to the data generate from this function 
+6.5. Target audience the user how will configure and use this software may be he had low software knowldge and may be he don't have at all
+6.6. speak as senior product owner
+
+ 
+
+7. Infrasturcture and hosting 
+7.1. jenkins 
+7.2. docker 
+7.3. deployement 
+7.4. Testing Unit test and e2e all other test 
+7.5. my backlog standard 
+7.6. to run this software and his database what will need as server the forumla between amount of (number of DB-Links , amount of imported data , number of running jobs , number of users , limitation of pages creation  ) vs (server requirement and data base and limitation ) (
+7.7. Target audience QA Engineer and infrasturcure engineer 
+7.8. speak as Senior  QA Engineer and Senior infrasturcure engineer 
+
+
+8. website : as first saler and marketing person 
+8.1. Company 
+8.2. all other software products
+8.3. PPIQ product : overview functionality
+8.4. Target audience : CEO of Customer and purchasing person of customer which gonna see this website in order to buy or products 
+8.5. Speak as Senior UI/UX and Senior Frontend Web developer and product owner 
+
+
+9. Admistration and sales :
+9.1. license cost function : price /feature   
+9.2. calculation the cost  forumla based  (number of DB-Links , amount of imported data , number of running jobs , number of users , limitation of pages creation  ) vs (server requirement and data base and limitation ) 
+9.3. user spliting :  deep detailed advanced proffesional deisgn how  and in techincal way how to split the visulation and control access authorization  per user which user can see what and can't see what in  UI/UX and developing as well 
+9.4. license spliting :  deep detailed advanced proffesional deisgn how  and in techincal way how to split the visulation and control access authorization  per license level  which license level can see what and can't see what in  UI/UX and developing as well 
+9.5. logging 
+

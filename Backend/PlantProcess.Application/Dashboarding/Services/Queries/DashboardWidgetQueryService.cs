@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using PlantProcess.Application.Dashboarding.Contracts;
 using PlantProcess.Application.Common.Persistence;
 using PlantProcess.Application.Common.Results;
@@ -33,6 +33,28 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
         var resolved = validation.Value!.ResolvedWidget!;
         var warnings = validation.Value!.Warnings.ToList();
 
+        // The validator compares measure codes case-insensitively; this switch
+        // is case-sensitive, so a code the validator accepted could fall to the
+        // default arm and return an empty array with HTTP 200. Ten widgets sat
+        // silently empty that way. A measure this engine cannot serve is now a
+        // NAMED refusal, so the two halves can still disagree but never again
+        // without saying so.
+        if (!ExecutableMeasures.Contains(resolved.MeasureCode))
+        {
+            return ApplicationResult<DashboardWidgetQueryResultDto>.Failure(
+                ApplicationError.Validation(
+                    "The widget measure is published but this engine cannot execute it.",
+                    new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
+                    {
+                        [nameof(resolved.MeasureCode)] = new[]
+                        {
+                            $"'{resolved.MeasureCode}' is not executable. Executable measures are: " +
+                            string.Join(", ", ExecutableMeasures.OrderBy(x => x, StringComparer.Ordinal)) +
+                            ". Codes are case-sensitive."
+                        }
+                    }));
+        }
+
         var rows = resolved.MeasureCode switch
         {
             DashboardMetadataCodes.Measures.MaterialCount =>
@@ -64,6 +86,9 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
 
             DashboardMetadataCodes.Measures.DataQualityIssueCount =>
                 await ExecuteDataQualityIssueCountAsync(resolved, query.Filters, cancellationToken),
+
+            DashboardMetadataCodes.Measures.ObservationCount =>
+                await ExecuteObservationCountAsync(resolved, query.Filters, cancellationToken),
 
             _ => Array.Empty<DashboardAggregateRow>()
         };
@@ -249,6 +274,103 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
         return SortAndTake(grouped, resolved);
     }
 
+    /// <summary>
+    /// observationCount: how many parameter observations exist, grouped by the
+    /// chosen dimension.
+    ///
+    /// It was declared in the registry, published by the metadata endpoint and
+    /// offered in the authoring panel, and it had no implementation at all - the
+    /// only reference to the constant in the backend was its own declaration.
+    /// Five widgets across three dashboards bound to it and every one returned
+    /// nothing, with HTTP 200.
+    ///
+    /// Modelled on ExecuteParameterAggregateAsync so it inherits the same joins,
+    /// the same material filter, the same date filter and the same dimension
+    /// resolution. Two deliberate differences:
+    ///
+    ///   The parameter code is OPTIONAL here. Counting how many observations a
+    ///   piece of equipment produced is a meaningful question without naming a
+    ///   parameter, whereas averaging across different parameters is not. When a
+    ///   parameter IS given the count narrows to it.
+    ///
+    ///   A null numeric value is still an observation. The aggregate methods
+    ///   exclude them because there is nothing to average; a count must not,
+    ///   or a text-valued reading would vanish from its own tally.
+    /// </summary>
+    private async Task<IReadOnlyList<DashboardAggregateRow>> ExecuteObservationCountAsync(
+        DashboardWidgetResolvedDto resolved,
+        DashboardWidgetFiltersDto? filters,
+        CancellationToken cancellationToken)
+    {
+        var parameterCode = resolved.ParameterCode ?? filters?.ParameterCode;
+        var materialIds = await GetFilteredMaterialIdsAsync(filters, cancellationToken);
+
+        var facts = await (
+                from observation in _dbContext.ParameterObservations.AsNoTracking()
+                join material in _dbContext.MaterialUnits.AsNoTracking()
+                    on observation.MaterialUnitId equals material.Id
+                join parameter in _dbContext.ParameterDefinitions.AsNoTracking()
+                    on observation.ParameterDefinitionId equals parameter.Id
+                join equipment in _dbContext.Equipment.AsNoTracking()
+                    on observation.EquipmentId equals equipment.Id into equipmentJoin
+                from equipment in equipmentJoin.DefaultIfEmpty()
+                where
+                    !observation.IsDeleted &&
+                    !material.IsDeleted &&
+                    materialIds.Contains(observation.MaterialUnitId) &&
+                    (parameterCode == null || parameter.ParameterCode == parameterCode)
+                select new WidgetFact(
+                    observation.MaterialUnitId,
+                    material.SiteId,
+                    equipment != null ? equipment.AreaId : null,
+                    observation.EquipmentId,
+                    material.MaterialCode,
+                    material.MaterialUnitType,
+                    material.ProductFamily,
+                    material.GradeOrRecipe,
+                    material.SourceSystem,
+                    null,
+                    null,
+                    parameter.ParameterCode,
+                    null,
+                    observation.ObservedAtUtc,
+                    1m))
+            .Take(resolved.RawRowLimit)
+            .ToListAsync(cancellationToken);
+
+        facts = ApplyFactDateFilter(facts, filters).ToList();
+
+        var grouped = facts
+            .GroupBy(x => ResolveDimension(resolved.DimensionCode, x))
+            .Select(g => new DashboardAggregateRow(
+                g.Key.Key,
+                g.Key.Label,
+                g.Count(),
+                g.Count(),
+                0));
+
+        return SortAndTake(grouped, resolved);
+    }
+    /// <summary>
+    /// Every measure this engine can actually execute. It exists so that a code
+    /// published in the metadata registry but absent from the switch below is
+    /// refused by name rather than answered with an empty result. Adding an arm
+    /// to the switch without adding it here is caught on the first request.
+    /// </summary>
+    private static readonly HashSet<string> ExecutableMeasures = new(StringComparer.Ordinal)
+    {
+        DashboardMetadataCodes.Measures.MaterialCount,
+        DashboardMetadataCodes.Measures.DefectCount,
+        DashboardMetadataCodes.Measures.ObservationCount,
+        DashboardMetadataCodes.Measures.DefectRate,
+        DashboardMetadataCodes.Measures.AvgParameterValue,
+        DashboardMetadataCodes.Measures.MaxParameterValue,
+        DashboardMetadataCodes.Measures.MinParameterValue,
+        DashboardMetadataCodes.Measures.DowntimeMinutes,
+        DashboardMetadataCodes.Measures.RiskScore,
+        DashboardMetadataCodes.Measures.ProcessStepDuration,
+        DashboardMetadataCodes.Measures.DataQualityIssueCount,
+    };
     private async Task<IReadOnlyList<DashboardAggregateRow>> ExecuteParameterAggregateAsync(
         DashboardWidgetResolvedDto resolved,
         DashboardWidgetFiltersDto? filters,

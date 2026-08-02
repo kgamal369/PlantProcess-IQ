@@ -1,0 +1,6 @@
+[
+ {
+  "old": "app.MapVisualMapperEndpoints();",
+  "new": "app.MapVisualMapperEndpoints();\n// M1-19 / M1-20 prerequisites: SQL execute-after-validate, method catalogue.\napp.MapAuthoringSupportEndpoints();"
+ }
+]

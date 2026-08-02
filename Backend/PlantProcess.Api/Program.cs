@@ -1097,6 +1097,7 @@ app.MapV5VisualMapperEndpoints();
 // built and committed but never registered, so every canvas call 404d.
 // The access-matrix row for /api/prep/visual-mapper already exists.
 app.MapVisualMapperEndpoints();
+app.MapAuthoringSupportEndpoints();
 
 app.MapV5BlendedProvenanceEndpoints();
 

@@ -10,6 +10,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { StandardButton } from "@/components/standard";
 import { StandardP2Input, StandardP2Select, StandardP2Table, StandardP2TextArea } from "@/components/standard/StandardP2Controls";
 import { dashboardingApi } from "@/api/dashboarding/dashboarding.api";
+import {
+  readRoleBinding, writeRoleBinding, staleRoles, describeStale,
+  EMPTY_ROLE_BINDING, type WidgetRoleBinding, type WidgetRole,
+} from "@/api/product-core/widget-role-binding";
 import "./WidgetAuthoringPanel.css";
 
 type Meta = {
@@ -86,6 +90,8 @@ export function WidgetAuthoringPanel({
   // Constitution v3 II.6.2 applied to S2: catalogue binding is the simple mode,
   // an authored query is the general one. Declared with the other hooks.
   const [bindMode, setBindMode] = useState<"catalogue" | "query">("catalogue");
+  // M1-16. The mapping from returned columns to chart roles.
+  const [roleBinding, setRoleBinding] = useState<WidgetRoleBinding>(EMPTY_ROLE_BINDING);
   const [expression, setExpression] = useState("");
   const [queryResult, setQueryResult] = useState<{ columns: string[]; rows: unknown[][]; warnings: string[] } | null>(null);
   const [queryError, setQueryError] = useState("");
@@ -117,6 +123,8 @@ export function WidgetAuthoringPanel({
     // expression was lost.
     setExpression(existing?.queryExpression ?? "");
     setBindMode(existing?.queryExpression ? "query" : "catalogue");
+    // M1-16. Reopen with the saved mapping loaded and changeable.
+    setRoleBinding(readRoleBinding(existing?.displayOptionsJson) ?? EMPTY_ROLE_BINDING);
     setPurpose("");
   }, [isOpen, existing]);
 
@@ -226,7 +234,11 @@ export function WidgetAuthoringPanel({
       parameterCode: needsParameter && parameterCode ? parameterCode : null,
       filterJson: JSON.stringify(filterObject),
       layoutJson: existing?.layoutJson ?? "{}",
-      displayOptionsJson: existing?.displayOptionsJson ?? "{}",
+      // M1-16. The role mapping persists here, beside the expression, by column
+      // NAME. Every other key already in displayOptionsJson is preserved.
+      displayOptionsJson: bindMode === "query"
+        ? writeRoleBinding(existing?.displayOptionsJson ?? "{}", roleBinding)
+        : writeRoleBinding(existing?.displayOptionsJson ?? "{}", EMPTY_ROLE_BINDING),
       sortOrder: existing?.sortOrder ?? 0,
       // Sent only in query mode. Null clears any expression the widget had,
       // which is how a user moves a widget back to catalogue binding.
@@ -454,12 +466,58 @@ export function WidgetAuthoringPanel({
                     </div>
                   )}
 
-                  <p className="wauth-hint">
-                    Running a query here proves it and shows what it returns. Saving it as
-                    this widget's source is the next pack: the definition has to carry the
-                    expression and the chart has to take its axes from these columns, and
-                    that is backend work in the widget query path.
-                  </p>
+                  {/* M1-16. THE BIND STEP. Specification 16.3: the query's
+                      returned columns become the choices for the widget's
+                      roles, and nothing else is offered. Before this, the card
+                      inferred its category column and guessed. */}
+                  {queryResult && queryResult.columns.length > 0 && (
+                    <div className="wauth-field" data-testid="wauth-bind">
+                      <span className="wauth-label">Bind columns to roles</span>
+
+                      {(["category", "value", "secondary"] as WidgetRole[]).map((role) => {
+                        const bound = roleBinding[role];
+                        const isStale = Boolean(bound) && queryResult.columns.indexOf(String(bound)) < 0;
+                        return (
+                          <div className="wauth-bindrow" key={"bind-" + role}>
+                            <span className="wauth-bindrow__role">{role}</span>
+                            <StandardP2Select
+                              aria-label={"Bind " + role}
+                              value={isStale ? "" : (bound ?? "")}
+                              onChange={(e) => setRoleBinding((b) => ({
+                                ...b, [role]: e.target.value ? e.target.value : null,
+                              }))}
+                            >
+                              <option value="">{role === "category" || role === "value" ? "choose a column..." : "none"}</option>
+                              {queryResult.columns.map((c) => (
+                                <option key={"bo-" + role + "-" + c} value={c}>{c}</option>
+                              ))}
+                            </StandardP2Select>
+                            {isStale && (
+                              <span className="wauth-bindrow__stale">
+                                {String(bound)} is not in this result
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+
+                      {staleRoles(roleBinding, queryResult.columns).length > 0 ? (
+                        <p className="wauth-problem" role="alert">
+                          The saved mapping points at columns this query no longer
+                          returns: {describeStale(roleBinding, staleRoles(roleBinding, queryResult.columns))}.
+                          Choose again. Nothing has been repointed for you, because a
+                          chart that silently moves to another column is the failure
+                          this step exists to prevent.
+                        </p>
+                      ) : (
+                        <p className="wauth-hint">
+                          Roles are stored by column name, so reordering the query
+                          keeps them. A column that disappears is reported here by
+                          name rather than replaced.
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
 
