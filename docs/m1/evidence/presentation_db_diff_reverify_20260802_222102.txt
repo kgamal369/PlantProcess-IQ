@@ -1,13 +1,13 @@
 T-006 / T-007 presentation database reproducibility diff
-Mode      : Diff
-Timestamp : 2026-08-02 22:20:58
+Mode      : ReVerify
+Timestamp : 2026-08-02 22:24:58
 Live      : ppiq_presentation
 Scratch   : ppiq_presentation_scratch
 Verdict   : REBUILD FAILED
 
 
 ==============================================================================
-PRESENTATION DATABASE REPRODUCIBILITY - MODE Diff
+PRESENTATION DATABASE REPRODUCIBILITY - MODE ReVerify
 ==============================================================================
 [OK] guards passed. Live ppiq_presentation is never written by this script.
 
@@ -25,7 +25,7 @@ create one. The first run of this script failed for exactly that reason.
 Running scripts/demo/Rebuild-PresentationDb.ps1 with -TargetDb pointed at scratch.
 This restores the 13 July snapshot and replays every scripted step on top.
 
-REBUILD PRESENTATION DB - 2026-08-02 22:16:52
+REBUILD PRESENTATION DB - 2026-08-02 22:21:07
 Fixture: C:\Workspace\PlantProcess-IQ\deploy\.ppiq-snapshots\ppiq_app_20260713_203359.dump
 Target : ppiq_presentation_scratch   (ppiq_app guarded)
 ==============================================================================
@@ -65,9 +65,9 @@ Fixture date: 07/13/2026 21:34:08   29.4 MB
 
 [4/7] engine-message scrub (history rows AND the functions that regenerate them)
       OK   ml messages: demo/golden -> neutral
-      REDEFINED function oid 151799
-      REDEFINED function oid 151810
-      REDEFINED function oid 151810
+      REDEFINED function oid 155989
+      REDEFINED function oid 156000
+      REDEFINED function oid 156000
       residual demo/golden in ml_learning_runs_v1: 0
       residual in ml_correlation_compute_runs:     0
 
@@ -135,6 +135,6 @@ This exit code is deliberate. Before 02-Aug this script printed COMPLETE and
 returned 0 even when every step had failed, which is worse than failing,
 because it teaches everyone to trust the wrong signal.
 
-[FAILED] Report -> C:\Workspace\PlantProcess-IQ\RebuildPresentationDb_20260802_221652.txt
+[FAILED] Report -> C:\Workspace\PlantProcess-IQ\RebuildPresentationDb_20260802_222107.txt
 [REBUILD] exit code 1
 [STOP] the rebuild did not complete. Nothing can be concluded from a diff against a half-built database.
