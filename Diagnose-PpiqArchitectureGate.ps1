@@ -78,10 +78,24 @@ Head "1. BASELINE PRECONDITION - is the tree clean?"
 
 $Status = & git status --porcelain
 if ($null -eq $Status) { $Status = @() }
-$Dirty = @($Status | Where-Object { $_ -ne "" })
+
+# v2 fix: the script must not count ITSELF as a dirty entry. In v1 it refused to
+# run because the only untracked file was this file, which is a self-inflicted
+# false refusal.
+$SelfName = Split-Path $PSCommandPath -Leaf
+$Dirty = @($Status | Where-Object { $_ -ne "" -and $_ -notmatch [regex]::Escape($SelfName) })
 
 if ($Dirty.Count -eq 0) {
-    Say "[OK] working tree is clean. This run measures the BASELINE, without the T-002 change."
+    Say "[OK] working tree is clean - no UNCOMMITTED change is in play."
+    Say ""
+    Say "    READ THIS PRECISELY. A clean tree does NOT mean the T-002 change is absent."
+    Say "    If T-002 is already committed, this run measures the suite WITH the change"
+    Say "    included. v1 of this script printed 'BASELINE, without the T-002 change'"
+    Say "    here, which was wrong whenever the change had been committed. To measure a"
+    Say "    true before-baseline you must check out a commit that predates the change."
+    Say ""
+    Say ("    Current HEAD : " + (& git rev-parse --short HEAD))
+    Say ("    Test files   : counted in section 2 below - 16 means navigationContract is present, 15 means it is not.")
 } else {
     Say ("[WARN] working tree has " + $Dirty.Count + " modified or untracked entries:")
     foreach ($d in $Dirty) { Say ("       " + $d) }
@@ -140,24 +154,77 @@ $Results = @()
 $LogDir = Join-Path $EvidenceDir "_gate_logs"
 New-Item -ItemType Directory -Path $LogDir -Force | Out-Null
 
+# v2 ENCODING FIX. Vitest emits UTF-8. PowerShell 5.1 decodes native-command
+# output using [Console]::OutputEncoding, which defaults to the OEM code page.
+# The check mark U+2713 arrives as bytes E2 9C 93 and decodes to three Latin-1
+# characters - the mojibake that ended up committed in the v1 logs. The fix is
+# to set the decoder BEFORE invoking node. Tee-Object is also gone: in PS 5.1 it
+# writes UTF-16 by default, which was a second corruption on top of the first.
+$PrevConsoleEnc = [Console]::OutputEncoding
+$PrevOutputEnc  = $OutputEncoding
+$Utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+
+$AsciiMap = @{
+    [char]0x2713 = "PASS"; [char]0x2714 = "PASS"
+    [char]0x2717 = "FAIL"; [char]0x2718 = "FAIL"; [char]0x00D7 = "FAIL"
+    [char]0x2192 = "->";   [char]0x2190 = "<-"
+    [char]0x2026 = "...";  [char]0x00B7 = "-"
+    [char]0x2500 = "-";    [char]0x2502 = "|"
+    [char]0x201C = '"';    [char]0x201D = '"'
+    [char]0x2018 = "'";    [char]0x2019 = "'"
+    [char]0x2013 = "-";    [char]0x2014 = "-"
+    [char]0x00A0 = " "
+}
+
+function ConvertTo-AsciiLine([string]$Text) {
+    # Strip ANSI escape sequences first, then map known symbols, then drop any
+    # remaining non-ASCII. The evidence file is pure ASCII by construction, so
+    # this whole class of defect cannot recur in a committed artifact.
+    $clean = [regex]::Replace($Text, "\x1B\[[0-9;?]*[A-Za-z]", "")
+    $clean = [regex]::Replace($clean, "\x1B\][^\x07]*\x07", "")
+    $sb = New-Object System.Text.StringBuilder
+    foreach ($ch in $clean.ToCharArray()) {
+        if ([int]$ch -le 126 -and [int]$ch -ge 9) {
+            [void]$sb.Append($ch)
+        } elseif ($AsciiMap.ContainsKey($ch)) {
+            [void]$sb.Append($AsciiMap[$ch])
+        }
+    }
+    return $sb.ToString()
+}
+
 Push-Location $Web
 try {
+    [Console]::OutputEncoding = $Utf8NoBom
+    $OutputEncoding = $Utf8NoBom
+
     for ($i = 1; $i -le $Runs; $i++) {
         Say ""
         Say ("--- run " + $i + " of " + $Runs + " ---")
         $log = Join-Path $LogDir ("run_" + $Stamp + "_" + $i + ".log")
         $sw = [System.Diagnostics.Stopwatch]::StartNew()
 
-        # Streamed live AND captured. ErrorActionPreference is Continue, so a
-        # native command writing to stderr does not become a terminating error.
-        & node $VitestEntry run "src/test/architecture" 2>&1 | Tee-Object -FilePath $log
+        # Streamed live AND captured, with the encoding under our control.
+        $captured = New-Object System.Collections.ArrayList
+        & node $VitestEntry run "src/test/architecture" 2>&1 | ForEach-Object {
+            $ascii = ConvertTo-AsciiLine ([string]$_)
+            Write-Host $ascii
+            [void]$captured.Add($ascii)
+        }
         $code = $LASTEXITCODE
 
         $sw.Stop()
         $secs = [math]::Round($sw.Elapsed.TotalSeconds, 1)
 
-        $body = ""
-        if (Test-Path $log) { $body = [System.IO.File]::ReadAllText($log) }
+        $body = ($captured.ToArray() -join "`r`n")
+        [System.IO.File]::WriteAllText($log, $body, $Utf8NoBom)
+
+        $nonAscii = 0
+        foreach ($ch in $body.ToCharArray()) { if ([int]$ch -gt 126) { $nonAscii++ } }
+        if ($nonAscii -gt 0) {
+            Say ("[FAIL] the log for run " + $i + " still contains " + $nonAscii + " non-ASCII characters.")
+            Say "       Do not commit it. The encoding fix did not hold on this machine."
+        }
 
         $workerTimeout = $false
         $timeoutFile = ""
@@ -187,6 +254,8 @@ try {
     }
 }
 finally {
+    [Console]::OutputEncoding = $PrevConsoleEnc
+    $OutputEncoding = $PrevOutputEnc
     Pop-Location
 }
 

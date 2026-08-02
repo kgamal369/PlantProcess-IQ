@@ -142,3 +142,4 @@ Finish-M1-18_*.txt
 /importchain_state.json
 /wipetrap_state.json
 *.runner-binding-backup-*
+docs/m1/evidence/_gate_logs/
