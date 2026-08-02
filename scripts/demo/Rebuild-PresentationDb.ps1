@@ -44,6 +44,7 @@ $RepoRoot = (Get-Location).Path
 $Stamp = Get-Date -Format 'yyyyMMdd_HHmmss'
 $Report = Join-Path $RepoRoot ('RebuildPresentationDb_' + $Stamp + '.txt')
 $sb = New-Object System.Text.StringBuilder
+$Script:PpiqFailCount = 0   # every RunSql failure increments this; the tail refuses to say COMPLETE if it is not zero
 function W([string]$s) { [void]$sb.AppendLine($s); Write-Host $s }
 function Save { [System.IO.File]::WriteAllText($Report, $sb.ToString(), (New-Object System.Text.UTF8Encoding($false))) }
 
@@ -76,6 +77,7 @@ function RunSql([string]$label, [string]$sql) {
     $code = $LASTEXITCODE
     Remove-Item $tmp -ErrorAction SilentlyContinue
     if ($code -eq 0) { W ("      OK   " + $label) } else {
+        $Script:PpiqFailCount = $Script:PpiqFailCount + 1
         W ("      FAIL " + $label)
         @($o | Select-Object -First 4) | ForEach-Object { W ("           " + $_) }
     }
@@ -169,7 +171,16 @@ W ""
 
 # ---- 3. provenance ---------------------------------------------------------
 W "[3/7] provenance neutralization (Material Investigation shows this column)"
+# PROVENANCE PERFORMANCE, 02-Aug: the genealogy UPDATE ran past ten minutes,
+# active and unblocked. Cause: ppiq_genealogy_edge_weight_guard_after_change is
+# a ROW-LEVEL AFTER trigger (tgtype 29) firing 35,906 times, on a table with ten
+# indexes. It is suspended for these four statements ONLY, inside one
+# transaction so a failure rolls the suspension back too, and the invariant it
+# guards is verified by query immediately afterwards.
+# source_system is provenance metadata and cannot affect attribution weights.
 [void](RunSql 'phase3-dump:src_* -> system names' @"
+BEGIN;
+ALTER TABLE genealogy_edges DISABLE TRIGGER ppiq_genealogy_edge_weight_guard_after_change;
 UPDATE material_units SET source_system='MELTSHOP_L2' WHERE source_system LIKE 'phase3-dump:src_meltshop%';
 UPDATE material_units SET source_system='CASTER_L2'   WHERE source_system LIKE 'phase3-dump:src_caster%';
 UPDATE material_units SET source_system='HSM_L2'      WHERE source_system LIKE 'phase3-dump:src_hsm%';
@@ -177,6 +188,38 @@ UPDATE material_units SET source_system='REF_BASELINE' WHERE source_system IN ('
 UPDATE quality_events SET source_system='INSPECTION_L2' WHERE source_system LIKE 'phase3-dump%';
 UPDATE genealogy_edges SET source_system='GENEALOGY_L2' WHERE source_system LIKE 'phase3-dump%';
 UPDATE parameter_observations SET source_system='PROCESS_L2' WHERE source_system LIKE 'phase3-dump%';
+ALTER TABLE genealogy_edges ENABLE TRIGGER ppiq_genealogy_edge_weight_guard_after_change;
+COMMIT;
+"@)
+[void](RunSql 'genealogy weight invariant still holds after the suspended update' @"
+DO `$`$
+DECLARE bad INT;
+BEGIN
+  SELECT COUNT(*) INTO bad FROM (
+    SELECT child_material_unit_id
+    FROM genealogy_edges
+    WHERE COALESCE(is_deleted,false) = false
+    GROUP BY child_material_unit_id
+    HAVING ABS(SUM(contribution_weight) - 1.0) > 0.0001
+  ) q;
+  IF bad > 0 THEN
+    RAISE EXCEPTION 'genealogy weight invariant broken for % children', bad;
+  END IF;
+END
+`$`$;
+"@)
+[void](RunSql 'genealogy weight guard is re-enabled' @"
+DO `$`$
+DECLARE st CHAR;
+BEGIN
+  SELECT tgenabled INTO st FROM pg_trigger
+   WHERE tgrelid='genealogy_edges'::regclass
+     AND tgname='ppiq_genealogy_edge_weight_guard_after_change';
+  IF st IS DISTINCT FROM 'O' THEN
+    RAISE EXCEPTION 'weight guard left in state %, expected O', st;
+  END IF;
+END
+`$`$;
 "@)
 W ""
 
@@ -327,6 +370,20 @@ W "      provenance on screen:"
 Rows "SELECT source_system, COUNT(*) FROM material_units GROUP BY 1 ORDER BY 2 DESC;" | ForEach-Object { W ("        " + $_) }
 W ""
 W "=" * 78
+if ($Script:PpiqFailCount -gt 0) {
+    W ("REBUILD FAILED - " + $Script:PpiqFailCount + " step(s) reported FAIL above.")
+    W ""
+    W "The database is in an unknown state and must NOT be demonstrated."
+    W "Read the FAIL lines, fix the cause, and run this script again from the start."
+    W ""
+    W "This exit code is deliberate. Before 02-Aug this script printed COMPLETE and"
+    W "returned 0 even when every step had failed, which is worse than failing,"
+    W "because it teaches everyone to trust the wrong signal."
+    Save
+    Write-Host ""
+    Write-Host ("[FAILED] Report -> " + $Report) -ForegroundColor Red
+    exit 1
+}
 W "REBUILD COMPLETE. Start the API:"
 W "    .\scripts\run\start-api.ps1 -Profile presentation"
 W ""
