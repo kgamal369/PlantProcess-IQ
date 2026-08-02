@@ -27,6 +27,32 @@
 #   This script adds a second guard: the scratch name must ALSO contain
 #   'scratch', and it refuses if scratch and live resolve to the same database.
 #
+# WHAT THE FIRST RUN PROVED - TWO DEFECTS, ONE OF THEM SERIOUS
+#
+#   DEFECT A, mine. Rebuild-PresentationDb.ps1 does NOT create its target
+#   database. It pg_restores into one that already exists. This script called
+#   it against a scratch database that had never been created, so every step
+#   failed with 'database ppiq_presentation_scratch does not exist'. Fixed:
+#   this script now creates the scratch database first, and drops it first with
+#   -Fresh so a half-built scratch cannot be mistaken for a rebuild.
+#
+#   DEFECT B, and this one matters far more than the diff.
+#   REBUILD-PRESENTATIONDB.PS1 EXITED 0 AFTER EVERY SINGLE STEP FAILED.
+#   pg_restore failed. Engine migrations 741 and 742 failed. All four Rule-1
+#   fixes failed. Provenance neutralization failed. The engine-message scrub
+#   failed. The dashboard upsert failed. The widget step was skipped. And the
+#   script printed 'REBUILD COMPLETE' and returned success.
+#
+#   That script's own header calls itself 'the ONLY supported way to rebuild
+#   the demo database'. If it is run on demonstration morning and anything
+#   transient goes wrong, it will report success over a broken database and
+#   nobody will know until a page is opened in the room. This is a Severity 1
+#   defect in the demonstration toolchain and it needs its own task.
+#
+#   This script no longer trusts that exit code. After the rebuild it VERIFIES
+#   the scratch database is readable and populated, and refuses to diff if not.
+#   A diff against a database that was never built is a false green.
+#
 # RUN FROM REPO ROOT. Commands at the bottom.
 # ============================================================================
 [CmdletBinding()]
@@ -40,7 +66,8 @@ param(
     [int]   $Port      = 5432,
     [string]$User      = "ppiq_dev",
     [string]$Password  = "ppiq_dev_local_only",
-    [switch]$SkipRebuild
+    [switch]$SkipRebuild,
+    [switch]$Fresh
 )
 
 Set-StrictMode -Version 2.0
@@ -149,7 +176,28 @@ Say ("[OK] guards passed. Live " + $LiveDb + " is never written by this script."
 
 # ------------------------------------------------------------- REBUILD ------
 if (-not $SkipRebuild) {
-    Head "1. REBUILD INTO SCRATCH"
+    Head "1a. CREATE THE SCRATCH DATABASE"
+    Say "Rebuild-PresentationDb.ps1 restores INTO an existing database; it does not"
+    Say "create one. The first run of this script failed for exactly that reason."
+
+    if ($Fresh) {
+        & psql -h $DbHost -p $Port -U $User -d postgres -v ON_ERROR_STOP=1 -c ("DROP DATABASE IF EXISTS " + $ScratchDb) 2>&1 | Out-Null
+        Say ("[DROP] " + $ScratchDb + " - a half-built scratch must never be mistaken for a rebuild")
+    }
+
+    $exists = ("" + (& psql -h $DbHost -p $Port -U $User -d postgres -tAc ("SELECT 1 FROM pg_database WHERE datname='" + $ScratchDb + "'"))).Trim()
+    if ($exists -eq "1") {
+        Say ("[SKIP] " + $ScratchDb + " already exists. Use -Fresh to rebuild it from nothing.")
+    } else {
+        & psql -h $DbHost -p $Port -U $User -d postgres -v ON_ERROR_STOP=1 -c ("CREATE DATABASE " + $ScratchDb + " OWNER " + $User) 2>&1 | Out-Null
+        if ($LASTEXITCODE -ne 0) {
+            Say ("[FAIL] could not create " + $ScratchDb)
+            Save "SCRATCH CREATE FAILED"; exit 1
+        }
+        Say ("[OK] created " + $ScratchDb)
+    }
+
+    Head "1b. REBUILD INTO SCRATCH"
     Say "Running scripts/demo/Rebuild-PresentationDb.ps1 with -TargetDb pointed at scratch."
     Say "This restores the 13 July snapshot and replays every scripted step on top."
     Say ""
@@ -175,6 +223,36 @@ if (-not $SkipRebuild) {
     if ($rc -ne 0) {
         Say "[STOP] the rebuild did not complete. Nothing can be concluded from a diff against a half-built database."
         Save "REBUILD FAILED"; exit 1
+    }
+
+    # The exit code is not evidence. On 02-Aug this script reported exit 0 while
+    # every step inside the rebuild had failed. Read the output instead.
+    $joined = ($Lines.ToArray() -join "`n")
+    $failLines = @([regex]::Matches($joined, '(?m)^\s*(FAIL|FAILED)\b.*$') | ForEach-Object { $_.Value.Trim() })
+    if ($failLines.Count -gt 0) {
+        Say ""
+        Say ("[STOP] the rebuild returned exit 0 but printed " + $failLines.Count + " failure lines:")
+        foreach ($f in $failLines) { Say ("   " + $f) }
+        Say ""
+        Say "A script that reports success while failing is worse than one that fails,"
+        Say "because it teaches everyone to trust the wrong signal. Fix the rebuild's"
+        Say "exit code before using it again - it calls itself the only supported way"
+        Say "to rebuild the demonstration database."
+        Save "REBUILD SILENTLY FAILED"; exit 1
+    }
+
+    Head "1c. VERIFY THE SCRATCH DATABASE IS ACTUALLY BUILT"
+    $tblCount = ("" + (& psql -h $DbHost -p $Port -U $User -d $ScratchDb -tAc "SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE c.relkind='r' AND n.nspname='public'")).Trim()
+    if ($LASTEXITCODE -ne 0 -or $tblCount -eq "" -or [int]$tblCount -lt 20) {
+        Say ("[STOP] scratch holds " + $tblCount + " public tables. It was not built.")
+        Say "       A diff against a database that does not exist is a false green."
+        Save "SCRATCH NOT BUILT"; exit 1
+    }
+    $mu = ("" + (& psql -h $DbHost -p $Port -U $User -d $ScratchDb -tAc "SELECT count(*) FROM material_units")).Trim()
+    Say ("[OK] scratch has " + $tblCount + " public tables and " + $mu + " material_units")
+    if ($mu -ne "" -and [int]$mu -eq 0) {
+        Say "[STOP] zero material units. The restore did not load data."
+        Save "SCRATCH EMPTY"; exit 1
     }
 } else {
     Head "1. REBUILD SKIPPED"
@@ -292,7 +370,7 @@ exit 1
 #   # T-006. Stop the API first - the rebuild stops it anyway, but a clean start
 #   # makes the log readable.
 #   powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run\free-ports.ps1 -Ports 5063 -Force
-#   powershell -NoProfile -ExecutionPolicy Bypass -File .\Invoke-PpiqPresentationDbDiff.ps1 -Mode Diff
+#   powershell -NoProfile -ExecutionPolicy Bypass -File .\Invoke-PpiqPresentationDbDiff.ps1 -Mode Diff -Fresh
 #
 #   # read docs/m1/evidence/presentation_db_diff.txt and classify every line
 #
@@ -301,7 +379,7 @@ exit 1
 #   powershell -NoProfile -ExecutionPolicy Bypass -File .\Invoke-PpiqPresentationDbDiff.ps1 -Mode ReVerify
 #
 #   # re-diff without paying for another rebuild, while iterating
-#   powershell -NoProfile -ExecutionPolicy Bypass -File .\Invoke-PpiqPresentationDbDiff.ps1 -Mode Diff -SkipRebuild
+#   powershell -NoProfile -ExecutionPolicy Bypass -File .\Invoke-PpiqPresentationDbDiff.ps1 -Mode Diff -Fresh -SkipRebuild
 #
 #   git add -A
 #   git commit -m "T-006: presentation database reproducibility diff"

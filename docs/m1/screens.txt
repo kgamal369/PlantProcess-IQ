@@ -1,0 +1,29 @@
+# PPIQ M1 PRESENTED SCREENS - DATA, NOT CODE
+#
+# One line per screen: id|name|route|Chapter 3 contract|beat
+# Adding a screen here is a reviewed change. Every screen opened in the room is
+# a frozen contract, so this file is the list of contracts M1 freezes.
+#
+# Source: M1_Traceability_Matrix v1.1 plus the T-002 presented-surface audit.
+# /data-integration/author-mapping is deliberately ABSENT: Chapter 3 DF5 names
+# B4 Importing as the surface for the projection run, so J8 is demonstrated
+# there rather than on a third authoring page.
+#
+S01|Connections|/data-integration/connections|B1|3
+S02|Dataset Registry|/data-integration/registry|B2|3
+S03|Prepare Import|/data-integration/prepare|B3|3
+S04|Importing|/data-integration/importing|B4|3
+S05|Jobs Monitor|/data-integration/jobs|B5|3
+S06|Transformation Studio|/prep/canvas|C1|1,3
+S07|Relationship Browser|/relationships|C6|3
+S08|Mapping Health|/mapping-health|C2|3
+S09|Data Quality|/data-quality|C3|3
+S10|Genealogy Explorer|/materials|C5|3
+S11|Page Builder|/page-builder|D2|2
+S12|Interactive Workspace|/workspace/:dashboardCode|D1|2,3
+S13|Analysis Toolbox|/analysis/toolbox|D3|1,4
+S14|Findings|/correlations|D4|4
+S15|Risk Dashboard|/risk|D5|4
+S16|ML Readiness and Models|/ml-readiness|D8|4
+S17|Website presentation path|/|Ch6 6.2|6
+S18|Assistant dock|shell component - no route|G1|5
