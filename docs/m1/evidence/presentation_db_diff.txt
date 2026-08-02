@@ -1,123 +1,98 @@
 T-006 / T-007 presentation database reproducibility diff
-Mode      : Diff
-Timestamp : 2026-08-02 18:49:17
+Mode      : Detail
+Timestamp : 2026-08-02 20:03:33
 Live      : ppiq_presentation
 Scratch   : ppiq_presentation_scratch
-Verdict   : REBUILD SILENTLY FAILED
+Verdict   : DETAIL
 
 
 ==============================================================================
-PRESENTATION DATABASE REPRODUCIBILITY - MODE Diff
+PRESENTATION DATABASE REPRODUCIBILITY - MODE Detail
 ==============================================================================
-[OK] guards passed. Live ppiq_presentation is never written by this script.
-
-==============================================================================
-1a. CREATE THE SCRATCH DATABASE
-==============================================================================
-Rebuild-PresentationDb.ps1 restores INTO an existing database; it does not
-create one. The first run of this script failed for exactly that reason.
-[DROP] ppiq_presentation_scratch - a half-built scratch must never be mistaken for a rebuild
-[OK] created ppiq_presentation_scratch
 
 ==============================================================================
-1b. REBUILD INTO SCRATCH
+DETAIL - WHAT EXISTS ONLY IN THE LIVE DATABASE
 ==============================================================================
-Running scripts/demo/Rebuild-PresentationDb.ps1 with -TargetDb pointed at scratch.
-This restores the 13 July snapshot and replays every scripted step on top.
+   [WARN] none of (widget_code, code) exist on dashboard_widget_definitions - using id::text
+   [WARN] none of (widget_title, title, name) exist on dashboard_widget_definitions - using id::text
+   [WARN] none of (chart_type, widget_type, kind) exist on dashboard_widget_definitions - using id::text
+   [WARN] none of (dataset_code, code, dataset_name) exist on source_dataset_definitions - using id::text
+[COLUMNS] widget code=id::text title=id::text chart=id::text | dataset=id::text
 
-REBUILD PRESENTATION DB - 2026-08-02 18:29:52
-Fixture: C:\Workspace\PlantProcess-IQ\deploy\.ppiq-snapshots\ppiq_app_20260713_203359.dump
-Target : ppiq_presentation_scratch   (ppiq_app guarded)
+--- dashboards ---
+live 16 / scratch 12 / ONLY IN LIVE 4
+   + PRESENTATION_0987EFEC3167 | Presentation certification dashboard | system=false
+   + PRESENTATION_6767A27078A4 | Presentation certification dashboard | system=false
+   + PRESENTATION_9E3C7ABBA204 | Presentation certification dashboard | system=false
+   + PRESENTATION_CC69E7B91E8F | Presentation certification dashboard | system=false
+
+--- widgets ---
+live 42 / scratch 38 / ONLY IN LIVE 4
+   + 65467a2b-78d8-4e91-8964-f002fb332702 | 65467a2b-78d8-4e91-8964-f002fb332702 | 65467a2b-78d8-4e91-8964-f002fb332702 | dash=PRESENTATION_9E3C7ABBA204
+   + 7d69b8f4-7596-47f5-a3f3-cc8e80a6316b | 7d69b8f4-7596-47f5-a3f3-cc8e80a6316b | 7d69b8f4-7596-47f5-a3f3-cc8e80a6316b | dash=PRESENTATION_6767A27078A4
+   + b8e9bf27-7c1a-467a-9ba4-942deadd55bd | b8e9bf27-7c1a-467a-9ba4-942deadd55bd | b8e9bf27-7c1a-467a-9ba4-942deadd55bd | dash=PRESENTATION_CC69E7B91E8F
+   + fcef3fd5-b130-4b61-b5bb-0d5e9a891b8f | fcef3fd5-b130-4b61-b5bb-0d5e9a891b8f | fcef3fd5-b130-4b61-b5bb-0d5e9a891b8f | dash=PRESENTATION_0987EFEC3167
+
+--- mapping versions ---
+live 83 / scratch 78 / ONLY IN LIVE 5
+   + 2d24bfd2-4573-4bc5-ab7d-4ad5a3596cae | Published
+   + 3da8ce53-4b81-4f87-a23b-d893105cfe9a | RolledBack
+   + bcfe347e-d044-4636-a5e1-8465d2ee15bd | RolledBack
+   + c4067781-5921-4f61-acdd-11f000e372a2 | Published
+   + c5a07e42-c0ef-45bc-bfc1-ab630aaee700 | Published
+
+--- source dataset definitions ---
+live 4 / scratch 3 / ONLY IN LIVE 1
+   + af97f5fd-c33a-4392-b8c1-ab5a0a941c8d
+
 ==============================================================================
-Fixture date: 07/13/2026 21:34:08   29.4 MB
+PPIQ-404 DEMO TRUTH TABLES - DO THEY EXIST, AND DOES ANY PRODUCT CODE READ THEM?
+==============================================================================
+The 18 trapped events are all one script dropping ppiq_p4_demo_features,
+ppiq_p4_demo_outcomes and ppiq_p4_demo_truth. A table named demo_truth,
+described as a demo correctness signal, is worth knowing the status of.
+   ppiq_p4_demo_features | rows=1080
+   ppiq_p4_demo_outcomes | rows=180
+   ppiq_p4_demo_truth | rows=5
 
-[0/7] stopping the API (it holds DB connections and locks build DLLs)
-      no PlantProcess.Api process found.
-      clear.
-
-[1/7] pg_restore --clean --if-exists (rewinds EVERYTHING, dashboards included)
-      (missing-object warnings on --clean are normal)
-      material_units                 40148
-      parameter_observations         14433
-      quality_events                 51691
-      genealogy_edges                35906
-      ml_correlation_results_v2      320
-
-[1b/7] engine migrations 741+742 (or the engine re-blinds on every rebuild)
-      applied 741_feature_store_coil_grain_projection.sql
-      applied 742_feature_regrain_generic.sql
-      lineage view rows: 40136
-
-[2/7] Rule-1 fixes (the fixture predates the 15-Jul cleanup)
-      OK   sites -> PLANT-NN
-      OK   connection profile codes -> CP-NN
-      OK   canonical_schema_views: drop demo-era rows
-      OK   job_log: truncate internal dumps
-
-[3/7] provenance neutralization (Material Investigation shows this column)
-      FAIL phase3-dump:src_* -> system names
-           UPDATE 2431
-           UPDATE 18070
-           UPDATE 17817
-           UPDATE 28
-
-[4/7] engine-message scrub (history rows AND the functions that regenerate them)
-      OK   ml messages: demo/golden -> neutral
-      REDEFINED function oid 131574
-      REDEFINED function oid 131585
-      REDEFINED function oid 131585
-      residual demo/golden in ml_learning_runs_v1: 0
-      residual in ml_correlation_compute_runs:     0
-
-[5/7] dashboards (7) - parents FIRST, or the widget FK fails
-      analysis widgets bind to: rolling.cooling_rate
-      OK   dashboard_definitions upsert (7)
-      dashboards now: 12
-
-[6/7] widgets (29 + heatmap/scatter clones)
-      OK   widgets + clones
-
-[7/7] VERIFY
-      data:
-        material_units                 40148
-        parameter_observations         14433
-        quality_events                 51691
-        genealogy_edges                35906
-        ml_correlation_results_v2      320
-      dashboards (code | widgets):
-        CORRELATION_EXPLORER | 1
-        CORRELATION_FINDINGS_BOARD | 2
-        DATA_QUALITY | 2
-        EQUIPMENT_OPERATIONS | 4
-        MATERIAL_INVESTIGATION_LAUNCHER | 1
-        MODEL_INSIGHTS | 2
-        PARAMETER_DEEP_ANALYSIS | 5
-        PRODUCTION_OVERVIEW | 8
-        QUALITY_MONITORING | 4
-        QUALITY_OVERVIEW | 3
-        RISK_DASHBOARD | 2
-        RISK_INTELLIGENCE | 4
-      provenance on screen:
-        CASTER_L2 | 18070
-        HSM_L2 | 17817
-        MELTSHOP_L2 | 2431
-        postgresql | 1802
-        REF_BASELINE | 28
-
-=
-REBUILD COMPLETE. Start the API:
-    .\scripts\run\start-api.ps1 -Profile presentation
-
-This command is now the ONLY supported way to rebuild the demo database.
-Commit it to scripts/demo/ (v23 M2-18) and never hand-sequence again.
-
-[DONE] Report -> C:\Workspace\PlantProcess-IQ\RebuildPresentationDb_20260802_182952.txt
-[REBUILD] exit code 0
-
-[STOP] the rebuild returned exit 0 but printed 1 failure lines:
-   FAIL phase3-dump:src_* -> system names
-
-A script that reports success while failing is worse than one that fails,
-because it teaches everyone to trust the wrong signal. Fix the rebuild's
-exit code before using it again - it calls itself the only supported way
-to rebuild the demonstration database.
+==============================================================================
+THE 18 TRAPPED WIPE EVENTS
+==============================================================================
+These are the reason the forensics subsystem exists. Read them before
+deciding anything about it.
+   1|2026-07-25 21:39:27.021726+03|public.ppiq_p4_demo_truth|DROP:table||-- PPIQ-404 demo correctness signal + PPIQ-401 standing-job ensure. Deterministic; safe to re-run.
+   DROP TABLE IF EXISTS public.ppiq_p4_demo_features, public.ppiq_p4_demo_outcomes, public.ppiq_p4_demo_truth CASCADE||127.0.0.1/32|ppiq_dev|51172
+   2|2026-07-25 21:39:27.021726+03|public.ppiq_p4_demo_outcomes|DROP:table||-- PPIQ-404 demo correctness signal + PPIQ-401 standing-job ensure. Deterministic; safe to re-run.
+   DROP TABLE IF EXISTS public.ppiq_p4_demo_features, public.ppiq_p4_demo_outcomes, public.ppiq_p4_demo_truth CASCADE||127.0.0.1/32|ppiq_dev|51172
+   3|2026-07-25 21:39:27.021726+03|public.ppiq_p4_demo_features|DROP:table||-- PPIQ-404 demo correctness signal + PPIQ-401 standing-job ensure. Deterministic; safe to re-run.
+   DROP TABLE IF EXISTS public.ppiq_p4_demo_features, public.ppiq_p4_demo_outcomes, public.ppiq_p4_demo_truth CASCADE||127.0.0.1/32|ppiq_dev|51172
+   4|2026-07-25 21:39:30.856405+03|public.ppiq_p4_demo_truth|DROP:table||-- PPIQ-404 demo correctness signal + PPIQ-401 standing-job ensure. Deterministic; safe to re-run.
+   DROP TABLE IF EXISTS public.ppiq_p4_demo_features, public.ppiq_p4_demo_outcomes, public.ppiq_p4_demo_truth CASCADE||127.0.0.1/32|ppiq_dev|51172
+   5|2026-07-25 21:39:30.856405+03|public.ppiq_p4_demo_outcomes|DROP:table||-- PPIQ-404 demo correctness signal + PPIQ-401 standing-job ensure. Deterministic; safe to re-run.
+   DROP TABLE IF EXISTS public.ppiq_p4_demo_features, public.ppiq_p4_demo_outcomes, public.ppiq_p4_demo_truth CASCADE||127.0.0.1/32|ppiq_dev|51172
+   6|2026-07-25 21:39:30.856405+03|public.ppiq_p4_demo_features|DROP:table||-- PPIQ-404 demo correctness signal + PPIQ-401 standing-job ensure. Deterministic; safe to re-run.
+   DROP TABLE IF EXISTS public.ppiq_p4_demo_features, public.ppiq_p4_demo_outcomes, public.ppiq_p4_demo_truth CASCADE||127.0.0.1/32|ppiq_dev|51172
+   7|2026-07-25 21:39:31.219186+03|public.ppiq_p4_demo_truth|DROP:table||-- PPIQ-404 demo correctness signal + PPIQ-401 standing-job ensure. Deterministic; safe to re-run.
+   DROP TABLE IF EXISTS public.ppiq_p4_demo_features, public.ppiq_p4_demo_outcomes, public.ppiq_p4_demo_truth CASCADE||127.0.0.1/32|ppiq_dev|51172
+   8|2026-07-25 21:39:31.219186+03|public.ppiq_p4_demo_outcomes|DROP:table||-- PPIQ-404 demo correctness signal + PPIQ-401 standing-job ensure. Deterministic; safe to re-run.
+   DROP TABLE IF EXISTS public.ppiq_p4_demo_features, public.ppiq_p4_demo_outcomes, public.ppiq_p4_demo_truth CASCADE||127.0.0.1/32|ppiq_dev|51172
+   9|2026-07-25 21:39:31.219186+03|public.ppiq_p4_demo_features|DROP:table||-- PPIQ-404 demo correctness signal + PPIQ-401 standing-job ensure. Deterministic; safe to re-run.
+   DROP TABLE IF EXISTS public.ppiq_p4_demo_features, public.ppiq_p4_demo_outcomes, public.ppiq_p4_demo_truth CASCADE||127.0.0.1/32|ppiq_dev|51172
+   10|2026-07-26 10:02:03.57815+03|public.ppiq_p4_demo_truth|DROP:table||-- PPIQ-404 demo correctness signal + PPIQ-401 standing-job ensure. Deterministic; safe to re-run.
+   DROP TABLE IF EXISTS public.ppiq_p4_demo_features, public.ppiq_p4_demo_outcomes, public.ppiq_p4_demo_truth CASCADE||127.0.0.1/32|ppiq_dev|43400
+   11|2026-07-26 10:02:03.57815+03|public.ppiq_p4_demo_outcomes|DROP:table||-- PPIQ-404 demo correctness signal + PPIQ-401 standing-job ensure. Deterministic; safe to re-run.
+   DROP TABLE IF EXISTS public.ppiq_p4_demo_features, public.ppiq_p4_demo_outcomes, public.ppiq_p4_demo_truth CASCADE||127.0.0.1/32|ppiq_dev|43400
+   12|2026-07-26 10:02:03.57815+03|public.ppiq_p4_demo_features|DROP:table||-- PPIQ-404 demo correctness signal + PPIQ-401 standing-job ensure. Deterministic; safe to re-run.
+   DROP TABLE IF EXISTS public.ppiq_p4_demo_features, public.ppiq_p4_demo_outcomes, public.ppiq_p4_demo_truth CASCADE||127.0.0.1/32|ppiq_dev|43400
+   13|2026-07-26 10:02:04.668754+03|public.ppiq_p4_demo_truth|DROP:table||-- PPIQ-404 demo correctness signal + PPIQ-401 standing-job ensure. Deterministic; safe to re-run.
+   DROP TABLE IF EXISTS public.ppiq_p4_demo_features, public.ppiq_p4_demo_outcomes, public.ppiq_p4_demo_truth CASCADE||127.0.0.1/32|ppiq_dev|43400
+   14|2026-07-26 10:02:04.668754+03|public.ppiq_p4_demo_outcomes|DROP:table||-- PPIQ-404 demo correctness signal + PPIQ-401 standing-job ensure. Deterministic; safe to re-run.
+   DROP TABLE IF EXISTS public.ppiq_p4_demo_features, public.ppiq_p4_demo_outcomes, public.ppiq_p4_demo_truth CASCADE||127.0.0.1/32|ppiq_dev|43400
+   15|2026-07-26 10:02:04.668754+03|public.ppiq_p4_demo_features|DROP:table||-- PPIQ-404 demo correctness signal + PPIQ-401 standing-job ensure. Deterministic; safe to re-run.
+   DROP TABLE IF EXISTS public.ppiq_p4_demo_features, public.ppiq_p4_demo_outcomes, public.ppiq_p4_demo_truth CASCADE||127.0.0.1/32|ppiq_dev|43400
+   16|2026-07-26 10:02:04.853698+03|public.ppiq_p4_demo_truth|DROP:table||-- PPIQ-404 demo correctness signal + PPIQ-401 standing-job ensure. Deterministic; safe to re-run.
+   DROP TABLE IF EXISTS public.ppiq_p4_demo_features, public.ppiq_p4_demo_outcomes, public.ppiq_p4_demo_truth CASCADE||127.0.0.1/32|ppiq_dev|43400
+   17|2026-07-26 10:02:04.853698+03|public.ppiq_p4_demo_outcomes|DROP:table||-- PPIQ-404 demo correctness signal + PPIQ-401 standing-job ensure. Deterministic; safe to re-run.
+   DROP TABLE IF EXISTS public.ppiq_p4_demo_features, public.ppiq_p4_demo_outcomes, public.ppiq_p4_demo_truth CASCADE||127.0.0.1/32|ppiq_dev|43400
+   18|2026-07-26 10:02:04.853698+03|public.ppiq_p4_demo_features|DROP:table||-- PPIQ-404 demo correctness signal + PPIQ-401 standing-job ensure. Deterministic; safe to re-run.
+   DROP TABLE IF EXISTS public.ppiq_p4_demo_features, public.ppiq_p4_demo_outcomes, public.ppiq_p4_demo_truth CASCADE||127.0.0.1/32|ppiq_dev|43400

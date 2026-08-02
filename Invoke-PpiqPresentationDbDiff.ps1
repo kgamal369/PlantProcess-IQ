@@ -57,7 +57,7 @@
 # ============================================================================
 [CmdletBinding()]
 param(
-    [ValidateSet("Diff", "ReVerify")]
+    [ValidateSet("Diff", "ReVerify", "Detail")]
     [string]$Mode = "Diff",
 
     [string]$LiveDb    = "ppiq_presentation",
@@ -81,8 +81,63 @@ $Rebuild     = Join-Path $RepoRoot "scripts\demo\Rebuild-PresentationDb.ps1"
 $env:PGPASSWORD = $Password
 $env:PGCLIENTENCODING = "UTF8"
 
+$IgnorePath  = Join-Path $RepoRoot "docs\m1\presentation_diff_ignore.txt"
+
 $Lines = New-Object System.Collections.ArrayList
 function Say([string]$T) { Write-Host $T; [void]$Lines.Add($T) }
+
+# ---------------------------------------------------------------------------
+# THE IGNORE LIST, AND WHY IT EXISTS.
+# ReVerify demands an EMPTY diff. Ten tables in this database are records of
+# things having happened - audit trails, refresh histories, job runs, refresh
+# tokens - and they can never match between a fortnight-old live database and a
+# fresh rebuild. Without this list T-006 was unachievable by construction, which
+# was a defect in this script, not in the data.
+#
+# A table is compared BY DEFAULT. Ignoring one is a reviewed decision recorded
+# in a checked-in file with a reason, exactly like the Rule 2 prefill allowlist,
+# so a new table nobody classified shows up as a difference rather than
+# vanishing. Seeding a fake audit trail would be worse than the mismatch.
+# ---------------------------------------------------------------------------
+function Get-IgnoreList {
+    if (-not (Test-Path $IgnorePath)) {
+        New-Item -ItemType Directory -Path (Split-Path $IgnorePath -Parent) -Force | Out-Null
+        $seed = @'
+# PRESENTATION DIFF - ROW-COUNT IGNORE LIST
+#
+# One qualified table per line, then a reason. These are records of things
+# having happened. They cannot match between a live database and a fresh
+# rebuild, and seeding a fake history would be worse than the mismatch.
+#
+# A table not listed here IS compared. Adding one is a reviewed decision.
+# Schema objects are NEVER ignored - an object that exists only in live is a
+# fix that is not in source control, and that is the point of this tool.
+#
+public.audit_log_entries            Runtime audit trail.
+public.auth_refresh_tokens          Session tokens issued while the demo ran.
+public.job_log                      Job execution log.
+public.job_run_histories            Job run history.
+public.read_model_refresh_runs      Read-model refresh history.
+public.ml_correlation_compute_runs  Engine compute history.
+public.ml_feature_store_refresh_runs Feature refresh history. NOTE: 11 in live vs 1 in scratch also signals the missing refresh step - do not let this line hide that.
+public.ppiq_catalog_audit           Audit trail of the catalog.
+public.ppiq_purge_audit             Audit trail of purges.
+#
+# NOT YET LISTED, DELIBERATELY:
+# ppiq_forensics.wipe_audit - 18 trapped events. Read them before ignoring them.
+# public.ppiq_layout_backup - decide whether the table is a feature or debris.
+'@
+        $enc = New-Object System.Text.UTF8Encoding($false)
+        [System.IO.File]::WriteAllText($IgnorePath, ($seed -replace "`r`n", "`n" -replace "`n", "`r`n"), $enc)
+    }
+    $set = @{}
+    foreach ($line in ([System.IO.File]::ReadAllText($IgnorePath) -split "`r?`n")) {
+        $t = $line.Trim()
+        if ($t -eq "" -or $t.StartsWith("#")) { continue }
+        $set[($t -split "\s+")[0]] = $true
+    }
+    return $set
+}
 function Head([string]$T) { Say ""; Say ("=" * 78); Say $T; Say ("=" * 78) }
 
 function Write-Utf8NoBom([string]$P, [string]$T) {
@@ -151,6 +206,73 @@ SELECT n.nspname || '.' || c.relname || '|' ||
 "@
 
 Head ("PRESENTATION DATABASE REPRODUCIBILITY - MODE " + $Mode)
+
+if ($Mode -eq "Detail") {
+    # Enumerates the rows that exist ONLY in live, so they can be classified.
+    # Read-only against both databases. Nothing is written to either.
+    Head "DETAIL - WHAT EXISTS ONLY IN THE LIVE DATABASE"
+
+    function ShowBoth([string]$label, [string]$sql) {
+        Say ""
+        Say ("--- " + $label + " ---")
+        $liveRows = Query $LiveDb $sql
+        $scrRows  = Query $ScratchDb $sql
+        $scrSet = @{}
+        if ($null -ne $scrRows) { foreach ($r in $scrRows) { $scrSet[$r] = $true } }
+        if ($null -eq $liveRows) { Say "   (query failed against live)"; return }
+        $only = @($liveRows | Where-Object { -not $scrSet.ContainsKey($_) })
+        Say ("live " + $liveRows.Count + " / scratch " + $(if ($null -eq $scrRows) { 0 } else { $scrRows.Count }) + " / ONLY IN LIVE " + $only.Count)
+        foreach ($r in $only) { Say ("   + " + $r) }
+    }
+
+    # v3.1: DISCOVER the columns instead of guessing them. Two queries failed on
+    # the first run because I guessed `title` and `code`; the real names are
+    # widget_title and dataset_code. The rebuild script learned this same lesson
+    # in its own v2 - "parameter_definitions has no code column, v2 DISCOVERS the
+    # real code column from information_schema" - and I repeated the mistake.
+    function PickCol([string]$table, [string[]]$candidates, [string]$fallback) {
+        foreach ($c in $candidates) {
+            $r = Query $LiveDb ("SELECT 1 FROM information_schema.columns WHERE table_name='" + $table + "' AND column_name='" + $c + "' LIMIT 1;")
+            if ($null -ne $r -and $r.Count -gt 0) { return $c }
+        }
+        Say ("   [WARN] none of (" + ($candidates -join ", ") + ") exist on " + $table + " - using " + $fallback)
+        return $fallback
+    }
+
+    $wCode  = PickCol "dashboard_widget_definitions" @("widget_code", "code") "id::text"
+    $wTitle = PickCol "dashboard_widget_definitions" @("widget_title", "title", "name") "id::text"
+    $wChart = PickCol "dashboard_widget_definitions" @("chart_type", "widget_type", "kind") "id::text"
+    $dCode  = PickCol "source_dataset_definitions" @("dataset_code", "code", "dataset_name") "id::text"
+    Say ("[COLUMNS] widget code=" + $wCode + " title=" + $wTitle + " chart=" + $wChart + " | dataset=" + $dCode)
+
+    ShowBoth "dashboards" "SELECT dashboard_code || ' | ' || COALESCE(name,'') || ' | system=' || is_system_template FROM dashboard_definitions WHERE COALESCE(is_deleted,false)=false ORDER BY 1;"
+    ShowBoth "widgets"    ("SELECT COALESCE(w." + $wCode + ",'?') || ' | ' || COALESCE(w." + $wTitle + ",'') || ' | ' || COALESCE(w." + $wChart + ",'') || ' | dash=' || COALESCE(d.dashboard_code,'?') FROM dashboard_widget_definitions w LEFT JOIN dashboard_definitions d ON d.id=w.dashboard_definition_id WHERE COALESCE(w.is_deleted,false)=false ORDER BY 1;")
+    ShowBoth "mapping versions" "SELECT id::text || ' | ' || COALESCE(status,'') FROM ppiq_mapping_versions ORDER BY 1;"
+    ShowBoth "source dataset definitions" ("SELECT COALESCE(" + $dCode + ", id::text) FROM source_dataset_definitions ORDER BY 1;")
+
+    Head "PPIQ-404 DEMO TRUTH TABLES - DO THEY EXIST, AND DOES ANY PRODUCT CODE READ THEM?"
+    Say "The 18 trapped events are all one script dropping ppiq_p4_demo_features,"
+    Say "ppiq_p4_demo_outcomes and ppiq_p4_demo_truth. A table named demo_truth,"
+    Say "described as a demo correctness signal, is worth knowing the status of."
+    $dt = Query $LiveDb "SELECT c.relname || ' | rows=' || COALESCE((xpath('/row/c/text()', query_to_xml(format('SELECT count(*) AS c FROM %I.%I', n.nspname, c.relname), false, true, '')))[1]::text,'?') FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE c.relkind='r' AND c.relname LIKE 'ppiq_p4_demo%' ORDER BY 1;"
+    if ($null -eq $dt -or $dt.Count -eq 0) {
+        Say "   NONE PRESENT in live. The script dropped them and nothing recreated them."
+        Say "   If any product code path reads them, it is reading a table that no longer exists."
+    } else {
+        foreach ($r in $dt) { Say ("   " + $r) }
+    }
+
+    Head "THE 18 TRAPPED WIPE EVENTS"
+    Say "These are the reason the forensics subsystem exists. Read them before"
+    Say "deciding anything about it."
+    $w = Query $LiveDb "SELECT * FROM ppiq_forensics.wipe_audit ORDER BY 1 LIMIT 30;"
+    if ($null -eq $w) { Say "   (could not read ppiq_forensics.wipe_audit)" } else {
+        foreach ($r in $w) { Say ("   " + $r) }
+    }
+
+    Save "DETAIL"
+    exit 0
+}
 
 # ------------------------------------------------------------- GUARDS -------
 if ($ScratchDb -notmatch "presentation") {
@@ -301,14 +423,24 @@ $all = @($lr.Keys) + @($sr.Keys) | Sort-Object -Unique
 $diffRows = 0
 Say ("table".PadRight(52) + "live".PadLeft(12) + "scratch".PadLeft(12) + "  delta")
 Say ("-" * 92)
+$Ignored = Get-IgnoreList
+$ignoredHits = 0
 foreach ($t in $all) {
     $l = 0; if ($lr.ContainsKey($t)) { $l = $lr[$t] }
     $s = 0; if ($sr.ContainsKey($t)) { $s = $sr[$t] }
     if ($l -ne $s) {
+        if ($Ignored.ContainsKey($t)) {
+            $ignoredHits++
+            Say ($t.PadRight(52) + $l.ToString().PadLeft(12) + $s.ToString().PadLeft(12) + "  " + ($s - $l) + "   (ignored: runtime history)")
+            continue
+        }
         $diffRows++
         Say ($t.PadRight(52) + $l.ToString().PadLeft(12) + $s.ToString().PadLeft(12) + "  " + ($s - $l))
     }
 }
+Say ""
+Say ("Ignored by " + $IgnorePath + " : " + $ignoredHits + " table(s)")
+Say "Schema objects are never ignored."
 if ($diffRows -eq 0) { Say "(no table differs)" }
 
 # ------------------------------------------------------------- VERDICT -----
@@ -371,6 +503,9 @@ exit 1
 #   # makes the log readable.
 #   powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run\free-ports.ps1 -Ports 5063 -Force
 #   powershell -NoProfile -ExecutionPolicy Bypass -File .\Invoke-PpiqPresentationDbDiff.ps1 -Mode Diff -Fresh
+#
+#   # enumerate the rows that exist only in live, so they can be classified
+#   powershell -NoProfile -ExecutionPolicy Bypass -File .\Invoke-PpiqPresentationDbDiff.ps1 -Mode Detail
 #
 #   # read docs/m1/evidence/presentation_db_diff.txt and classify every line
 #
