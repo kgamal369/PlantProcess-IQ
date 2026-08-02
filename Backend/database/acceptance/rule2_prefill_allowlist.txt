@@ -1,0 +1,38 @@
+# PPIQ RULE 2 - PREFILL ALLOWLIST
+#
+# Rule 2: the plant schema starts empty, provable in one query. The metadata
+# schema MAY ship content, but only under a declared per-table prefill contract.
+# This file IS that declaration. It is data, deliberately, so that classifying a
+# new table is a reviewed change and not a code edit.
+#
+# FORMAT: table_name<TAB or spaces>reason
+# Everything NOT listed here must hold zero rows in a freshly migrated database.
+# A new table is therefore plant data by default and the proof goes red until
+# somebody puts it here on purpose. That default is the point.
+#
+# ---- product grammar and system templates ----
+industry_templates                 Shipped industry templates. Structural, not customer data.
+material_unit_type_definitions     Structural type grammar for the multi-grain canonical model.
+dashboard_definitions              System dashboard templates ship with the product.
+dashboard_widget_definitions       Widgets belonging to the system templates.
+kpi_definitions                    System KPI definitions.
+#
+# ---- platform bookkeeping written by migration, not by a customer ----
+__EFMigrationsHistory              EF migration ledger.
+schema_migrations                  Post-EF SQL ledger, if present.
+#
+# ---- NOT allowlisted, and each absence is deliberate ----
+# sites, areas, equipment, routes, route_steps       - the plant model arrives by import
+# material_units, material_aliases, genealogy_edges  - customer material identity
+# parameter_definitions, defect_catalogs             - taxonomy arrives through the same
+#                                                      pipeline as data, per the taxonomy route
+# operation_definitions                              - route taxonomy, same reason
+# parameter_observations, quality_events,
+# downtime_events, process_events,
+# process_step_executions                            - customer facts
+# import_batches, staging_records                    - created by the first import
+# connection_profiles, source_*_definitions          - the customer declares their own sources
+# mapping_definitions, schema_view_definitions       - the customer authors these
+# job_definitions, job_run_histories                 - created when a job is scheduled
+# correlation_results, risk_scores, model_registries - produced by the engine
+# data_quality_issues, audit_log_entries             - produced at runtime
