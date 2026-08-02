@@ -96,3 +96,12 @@ CREATE TRIGGER ppiq_wipe_trap_quality_events BEFORE DELETE OR TRUNCATE ON public
 DROP TRIGGER IF EXISTS ppiq_wipe_trap_staging_records ON public.staging_records;
 CREATE TRIGGER ppiq_wipe_trap_staging_records BEFORE DELETE OR TRUNCATE ON public.staging_records FOR EACH STATEMENT EXECUTE FUNCTION ppiq_forensics.audit_wipe();
 
+-- ---- event triggers -------------------------------------------------
+-- ppiq_wipe_trap_ddl is what recorded the DROP:table rows. A table trigger
+-- cannot see DDL. It was missing from the first four attempts because a NULL
+-- evttags collapsed the whole concatenation to NULL and the row vanished
+-- silently instead of failing.
+-- CREATE EVENT TRIGGER requires superuser.
+DROP EVENT TRIGGER IF EXISTS ppiq_wipe_trap_ddl;
+CREATE EVENT TRIGGER ppiq_wipe_trap_ddl ON sql_drop EXECUTE FUNCTION ppiq_forensics.audit_ddl();
+
