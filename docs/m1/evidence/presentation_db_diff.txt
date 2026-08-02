@@ -1,6 +1,6 @@
 T-006 / T-007 presentation database reproducibility diff
 Mode      : Diff
-Timestamp : 2026-08-02 21:17:36
+Timestamp : 2026-08-02 21:31:04
 Live      : ppiq_presentation
 Scratch   : ppiq_presentation_scratch
 Verdict   : DIFF - CLASSIFICATION REQUIRED
@@ -25,7 +25,7 @@ create one. The first run of this script failed for exactly that reason.
 Running scripts/demo/Rebuild-PresentationDb.ps1 with -TargetDb pointed at scratch.
 This restores the 13 July snapshot and replays every scripted step on top.
 
-REBUILD PRESENTATION DB - 2026-08-02 21:07:53
+REBUILD PRESENTATION DB - 2026-08-02 21:26:32
 Fixture: C:\Workspace\PlantProcess-IQ\deploy\.ppiq-snapshots\ppiq_app_20260713_203359.dump
 Target : ppiq_presentation_scratch   (ppiq_app guarded)
 ==============================================================================
@@ -64,9 +64,9 @@ Fixture date: 07/13/2026 21:34:08   29.4 MB
 
 [4/7] engine-message scrub (history rows AND the functions that regenerate them)
       OK   ml messages: demo/golden -> neutral
-      REDEFINED function oid 143427
-      REDEFINED function oid 143438
-      REDEFINED function oid 143438
+      REDEFINED function oid 147616
+      REDEFINED function oid 147627
+      REDEFINED function oid 147627
       residual demo/golden in ml_learning_runs_v1: 0
       residual in ml_correlation_compute_runs:     0
 
@@ -80,7 +80,6 @@ Fixture date: 07/13/2026 21:34:08   29.4 MB
 
 [6b/7] debris cleanup (certification dashboards, rolled-back mappings)
       OK   delete certification-run dashboards and their widgets
-      OK   delete rolled-back mapping versions
       dashboards remaining: 12
       certification leftovers: 0
 
@@ -110,10 +109,10 @@ Fixture date: 07/13/2026 21:34:08   29.4 MB
         MELTSHOP_L2 | 4233
         REF_BASELINE | 28
       residual phase3-dump / raw driver names, ALL FOUR tables:
-        parameter_observations | 14416
+        parameter_observations | 0
         genealogy_edges | 0
         material_units | 0
-        quality_events | 420
+        quality_events | 0
       (every one of those four must read 0)
 
 =
@@ -123,7 +122,7 @@ REBUILD COMPLETE. Start the API:
 This command is now the ONLY supported way to rebuild the demo database.
 Commit it to scripts/demo/ (v23 M2-18) and never hand-sequence again.
 
-[DONE] Report -> C:\Workspace\PlantProcess-IQ\RebuildPresentationDb_20260802_210753.txt
+[DONE] Report -> C:\Workspace\PlantProcess-IQ\RebuildPresentationDb_20260802_212632.txt
 [REBUILD] exit code 0
 
 ==============================================================================
@@ -174,7 +173,7 @@ public.ml_correlation_compute_runs                           449         384  -6
 public.ml_feature_store_refresh_runs                          11           2  -9   (ignored: runtime history)
 public.ppiq_catalog_audit                                     37           0  -37   (ignored: runtime history)
 public.ppiq_layout_backup                                     37           0  -37
-public.ppiq_mapping_versions                                  83          42  -41
+public.ppiq_mapping_versions                                  83          78  -5
 public.ppiq_purge_audit                                       21           0  -21   (ignored: runtime history)
 public.read_model_refresh_runs                               915         391  -524   (ignored: runtime history)
 public.source_dataset_definitions                              4           3  -1

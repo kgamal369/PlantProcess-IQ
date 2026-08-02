@@ -191,6 +191,9 @@ SELECT kind || '|' || nspname || '.' || objname FROM (
     FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
    WHERE n.nspname NOT IN ('pg_catalog','information_schema')
   UNION ALL
+  SELECT 'event_trigger', 'pg_catalog', e.evtname
+    FROM pg_event_trigger e
+  UNION ALL
   SELECT 'trigger', n.nspname, t.tgname
     FROM pg_trigger t JOIN pg_class c ON c.oid=t.tgrelid JOIN pg_namespace n ON n.oid=c.relnamespace
    WHERE NOT t.tgisinternal

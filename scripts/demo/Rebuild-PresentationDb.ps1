@@ -140,7 +140,7 @@ W ""
 
 # ---- 1b. engine migrations (heat lineage + coil projection + defect outcomes)
 W "[1b/7] engine migrations 741+742 (or the engine re-blinds on every rebuild)"
-foreach ($mig in @('741_feature_store_coil_grain_projection.sql','742_feature_regrain_generic.sql')) {
+foreach ($mig in @('741_feature_store_coil_grain_projection.sql','742_feature_regrain_generic.sql','750_forensics_audit_subsystem.sql')) {
     $migPath = Join-Path $PSScriptRoot ('..\..\Backend\database\scripts\' + $mig)
     if (Test-Path -LiteralPath $migPath) {
         $mo = & $Psql -h 127.0.0.1 -p 5432 -U ppiq_dev -d $TargetDb -w -v ON_ERROR_STOP=1 -X -q -1 -f $migPath 2>&1
@@ -399,6 +399,21 @@ DELETE FROM dashboard_definitions
 # definition store exists to keep. Nothing replaces this step.
 W ("      dashboards remaining: " + (Q1 "SELECT COUNT(*) FROM dashboard_definitions WHERE is_deleted=FALSE;"))
 W ("      certification leftovers: " + (Q1 "SELECT COUNT(*) FROM dashboard_definitions WHERE dashboard_code LIKE 'PRESENTATION\_%' ESCAPE '\';"))
+W ""
+
+# ---- 6c. authored definitions the fixture predates (T-006) -----------------
+W "[6c/7] authored definitions seed"
+$seedPath = Join-Path $PSScriptRoot 'seed_authored_definitions.sql'
+if (Test-Path -LiteralPath $seedPath) {
+    $so = & $Psql -h 127.0.0.1 -p 5432 -U ppiq_dev -d $TargetDb -w -X -v ON_ERROR_STOP=1 -q -f $seedPath 2>&1
+    if ($LASTEXITCODE -eq 0) { W "      OK   authored definitions" } else {
+        $Script:PpiqFailCount = $Script:PpiqFailCount + 1
+        W "      FAIL authored definitions"
+        @($so | Select-Object -First 4) | ForEach-Object { W ("           " + $_) }
+    }
+} else { W "      MISSING seed_authored_definitions.sql" }
+W ("      mapping versions: " + (Q1 "SELECT COUNT(*) FROM ppiq_mapping_versions;"))
+W ("      source datasets:  " + (Q1 "SELECT COUNT(*) FROM source_dataset_definitions;"))
 W ""
 
 W "[7/7] VERIFY"
