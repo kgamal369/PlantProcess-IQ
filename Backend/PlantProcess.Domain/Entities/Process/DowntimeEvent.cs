@@ -1,4 +1,4 @@
-﻿using PlantProcess.Domain.Common;
+using PlantProcess.Domain.Common;
 
 namespace PlantProcess.Domain.Entities.Process;
 
@@ -24,6 +24,22 @@ public class DowntimeEvent : BaseEntity
 
     public string DowntimeType { get; private set; } = null!;
 
+    /// <summary>
+    /// Chapter 3 4.5.4: stopped_minutes numeric(12,3) NOT NULL, CHECK >= 0.
+    /// The raw time the equipment was halted.
+    /// </summary>
+    public decimal StoppedMinutes { get; private set; }
+
+    /// <summary>
+    /// Chapter 3 4.5.4: production_impact_minutes numeric(12,3) NOT NULL, CHECK >= 0.
+    /// The time production output was actually lost. THIS IS A DIFFERENT QUANTITY
+    /// and one may never stand in for the other: a twenty-minute mill stoppage
+    /// absorbed by buffer slabs costs no production, while a three-minute caster
+    /// pump stoppage can force a sequence rebuild and cost six hours.
+    /// Neither value is ever derived from the other, or from the timestamps.
+    /// </summary>
+    public decimal ProductionImpactMinutes { get; private set; }
+
     public string? ReasonCode { get; private set; }
 
     public string? Description { get; private set; }
@@ -35,6 +51,8 @@ public class DowntimeEvent : BaseEntity
     public DowntimeEvent(
         DateTime startedAtUtc,
         string downtimeType,
+        decimal stoppedMinutes,
+        decimal productionImpactMinutes,
         bool isSynthetic,
         DateTime? endedAtUtc = null,
         Guid? materialUnitId = null,
@@ -49,6 +67,18 @@ public class DowntimeEvent : BaseEntity
     {
         if (string.IsNullOrWhiteSpace(downtimeType))
             throw new ArgumentException("Downtime type is required.", nameof(downtimeType));
+
+        if (stoppedMinutes < 0m)
+            throw new ArgumentOutOfRangeException(nameof(stoppedMinutes), "Stopped minutes cannot be negative.");
+
+        if (productionImpactMinutes < 0m)
+            throw new ArgumentOutOfRangeException(
+                nameof(productionImpactMinutes), "Production impact minutes cannot be negative.");
+
+        // Deliberately NOT validated: production impact may exceed stopped minutes.
+        // A three-minute caster pump trip can force a sequence rebuild costing six
+        // hours of production. Constraining one by the other would encode a
+        // relationship the plant does not have.
 
         StartedAtUtc = EnsureUtc(startedAtUtc);
         EndedAtUtc = endedAtUtc.HasValue ? EnsureUtc(endedAtUtc.Value) : null;
@@ -71,6 +101,8 @@ public class DowntimeEvent : BaseEntity
         PlantUtcOffsetMinutes = plantUtcOffsetMinutes;
 
         DowntimeType = downtimeType.Trim();
+        StoppedMinutes = stoppedMinutes;
+        ProductionImpactMinutes = productionImpactMinutes;
         MaterialUnitId = materialUnitId;
         ProcessStepExecutionId = processStepExecutionId;
         EquipmentId = equipmentId;

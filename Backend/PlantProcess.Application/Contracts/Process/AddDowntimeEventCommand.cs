@@ -1,4 +1,4 @@
-﻿using PlantProcess.Application.Contracts.Common;
+using PlantProcess.Application.Contracts.Common;
 
 namespace PlantProcess.Application.Contracts.Process;
 
@@ -9,6 +9,8 @@ public sealed record AddDowntimeEventCommand(
     DateTime StartedAtUtc,
     DateTime? EndedAtUtc,
     string DowntimeType,
+    decimal StoppedMinutes,
+    decimal ProductionImpactMinutes,
     string? ReasonCode,
     string? Description,
     string? PlantTimeZoneId,

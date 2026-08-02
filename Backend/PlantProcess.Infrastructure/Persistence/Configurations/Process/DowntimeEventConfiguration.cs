@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using PlantProcess.Domain.Entities.Materials;
 using PlantProcess.Domain.Entities.Process;
@@ -11,11 +11,26 @@ public class DowntimeEventConfiguration : IEntityTypeConfiguration<DowntimeEvent
 {
     public void Configure(EntityTypeBuilder<DowntimeEvent> builder)
     {
-        builder.ToTable("downtime_events");
+        // Chapter 3 4.5.4 names both columns, their type and their CHECK.
+        builder.ToTable("downtime_events", t =>
+        {
+            t.HasCheckConstraint("ck_downtime_events_stopped_minutes_nonneg", "stopped_minutes >= 0");
+            t.HasCheckConstraint("ck_downtime_events_production_impact_minutes_nonneg", "production_impact_minutes >= 0");
+        });
 
         builder.HasKey(x => x.Id);
 
         builder.Property(x => x.DowntimeType).IsRequired().HasMaxLength(100);
+
+        builder.Property(x => x.StoppedMinutes)
+            .HasColumnName("stopped_minutes")
+            .HasColumnType("numeric(12,3)")
+            .IsRequired();
+
+        builder.Property(x => x.ProductionImpactMinutes)
+            .HasColumnName("production_impact_minutes")
+            .HasColumnType("numeric(12,3)")
+            .IsRequired();
         builder.Property(x => x.ReasonCode).HasMaxLength(100);
         builder.Property(x => x.Description).HasMaxLength(1000);
         builder.Property(x => x.PlantTimeZoneId).IsRequired().HasMaxLength(100);

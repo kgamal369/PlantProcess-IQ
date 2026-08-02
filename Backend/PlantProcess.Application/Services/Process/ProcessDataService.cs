@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using PlantProcess.Application.Common.Persistence;
 using PlantProcess.Application.Common.Results;
@@ -324,6 +324,8 @@ public sealed class ProcessDataService : IProcessDataService
         var downtime = new DowntimeEvent(
             startedAtUtc: command.StartedAtUtc,
             downtimeType: command.DowntimeType,
+            stoppedMinutes: command.StoppedMinutes,
+            productionImpactMinutes: command.ProductionImpactMinutes,
             isSynthetic: command.Metadata.IsSynthetic,
             endedAtUtc: command.EndedAtUtc,
             materialUnitId: command.MaterialUnitId,

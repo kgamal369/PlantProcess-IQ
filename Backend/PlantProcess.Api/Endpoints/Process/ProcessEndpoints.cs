@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using PlantProcess.Domain.Entities.Process;
 using PlantProcess.Infrastructure.Persistence;
 
@@ -588,6 +588,8 @@ public static class ProcessEndpoints
             var downtimeEvent = new DowntimeEvent(
                 startedAtUtc: request.StartedAtUtc,
                 downtimeType: request.DowntimeType,
+                stoppedMinutes: request.StoppedMinutes,
+                productionImpactMinutes: request.ProductionImpactMinutes,
                 isSynthetic: request.IsSynthetic,
                 endedAtUtc: request.EndedAtUtc,
                 materialUnitId: request.MaterialUnitId,
@@ -751,6 +753,8 @@ public static class ProcessEndpoints
         DateTime StartedAtUtc,
         DateTime? EndedAtUtc,
         string DowntimeType,
+        decimal StoppedMinutes,
+        decimal ProductionImpactMinutes,
         string? ReasonCode,
         string? Description,
         bool IsSynthetic,

@@ -1,0 +1,141 @@
+T-007 ARTIFACT 1 OF 2 - EMULATED PLANT INVENTORY
+================================================================================
+
+Task      : T-007 | Milestone M1 | Phase M1-P1
+Save as   : docs/m1/evidence/T-007_emulation_inventory.txt
+Date      : 2 August 2026
+
+Validation this artifact satisfies:
+  "the emulation inventory with a source and a row count per structure"
+
+Sources read, not assumed:
+  docs/emulation/FLEET_RELATIONS.md  (30 lines, 06-Jul, seed=42, 3 months)
+  docs/demo/demo-source-systems.md
+  the staged source schema names measured from the repository dump
+
+
+1. STRUCTURE, SOURCE AND ROW COUNT
+--------------------------------------------------------------------------------
+
+structure                  source system            staged schema.table                                 rows
+-------------------------  -----------------------  --------------------------------------------  ---------
+heats                      Postgres MeltShop        src_meltshop_pg.heats                             1,802
+casting sequences          Oracle Caster            src_caster_oracle_shape.cast_sequence               956
+slabs                      Oracle Caster            src_caster_oracle_shape.cast_pieces              18,661
+coils                      Oracle HSM               src_hsm_oracle_shape.hsm_coils                   18,661
+HSM stand passes           Oracle HSM               src_hsm_oracle_shape.hsm_pass_measurements      111,966
+surface defects, 20 codes  MySQL Parsytec           src_inspection_mysql_shape.parsytec_surface_defects  34,312
+downtime events            MySQL Downtime           src_inspection_mysql_shape.downtime_events       not counted
+pickled coils              MSSQL PKL                src_pkl_mssql_shape.pickle_orders                15,782
+QA tests                   Excel QA                 src_pkl_mssql_shape.qa_lab_results                8,920
+yard movements             Excel Yard               file source                                     not counted
+
+TWO GAPS STATED RATHER THAN GUESSED.
+  Downtime and yard carry no recorded row count in FLEET_RELATIONS.md. The
+  document describes downtime semantics - equipment stoppage against production
+  stoppage, buffer absorption, breakout cascades - but never states a count.
+  Neither figure is invented here. Count them before the widget coverage matrix
+  binds a chart to either.
+
+ONE NAMING SURPRISE WORTH RECORDING.
+  Downtime is staged under src_inspection_mysql_shape, not a downtime schema of
+  its own, and QA results sit under src_pkl_mssql_shape. The staged schema names
+  therefore do NOT map one-to-one onto the eight declared source systems. That is
+  a staging-layout fact, not a defect, but a mapping written from the source list
+  alone would be wrong.
+
+
+2. THE EIGHT SOURCE SYSTEMS
+--------------------------------------------------------------------------------
+
+  1. Postgres MeltShop   meltshop-postgres
+  2. Oracle Caster       caster-oracle
+  3. Oracle HSM          hsm-oracle
+  4. MSSQL PKL           pkl-mssql
+  5. Excel Yard          excel-yard, mounted file source
+  6. MySQL Downtime      downtime-mysql
+  7. MySQL Parsytec      parsytec-mysql
+  8. Excel QA            excel-qa, mounted file source
+
+No source publishes a host port; the product connects by Docker service name.
+Four engines and two file sources. The heterogeneity IS the demonstration - it is
+what proves a configurable platform rather than one hardcoded schema.
+
+
+3. GENEALOGY AND CONSERVATION
+--------------------------------------------------------------------------------
+
+  heat_id -> cc_slabs.slab_id -> hsm_coils.coil_id -> parsytec / pkl / QA / yard
+  grade inherited down the chain
+
+Conservation is ENFORCED IN THE GENERATOR, not asserted in a document:
+  coil_width  = slab_width - 2..6 mm
+  coil_weight = slab_weight * 0.985
+  coil_length = slab_length * thickness_ratio * 0.985
+
+
+4. THE SEVENTEEN PLANTED RELATIONS
+--------------------------------------------------------------------------------
+
+Effect size is the exposed against baseline defect rate per coil, where recorded.
+
+  id   relation                                                            effect
+  ---  ------------------------------------------------------------------  ------
+  R1   CRACK_LONG    ~ peritectic C-band x superheat x cast speed            9.3x
+  R2   INCLUSION     ~ scrap/DRI ratio + low Al + tundish age                4.5x
+  R3   WAVY_EDGE     ~ rolling force per gauge + roll wear                   9.5x
+  R4   SLIPPAGE_MARK ~ lubrication viscosity outside 33-50 cSt              28.9x
+  R5   ROLL_MARK     ~ roll campaign wear, age since roll change             3.8x
+  R6   EDGE_CRACK    ~ sulfur + low finishing temperature                       -
+  R7   SCALE_ROLLED  ~ high finishing temperature + thick gauge                  -
+  R8   CRACK_TRANS   ~ peritectic + Nb microalloying                             -
+  R9   SLIVER / LAMINATION / BLISTER ~ scrap ratio, nitrogen                     -
+  R10  PINHOLE / OSCILLATION_MARK ~ superheat, cast speed                        -
+  R11  GAUGE_DEV ~ slippage;  WIDTH_DEV ~ campaign wear                          -
+  R12  oxygen_ppm ~ scrap ratio, meltshop-internal                               -
+  R13  electricity_mwh ~ scrap ratio + cold furnace + bucket count               -
+  R14  power_on_min ~ buckets + scrap ratio + furnace state                      -
+  R15  breakout probability ~ superheat + scrap ratio -> 4-6 h stoppage          -
+  R16  HSM cobble downtime ~ slippage, buffer absorbs the first 45 min           -
+  R17  pkl line_speed ~ inverse gauge;  QA yield / UTS ~ grade family            -
+
+  CONTROLS, which MUST NOT correlate:  SCRATCH 1.0x, DENT, SEAM - pure noise.
+
+TWELVE OF SEVENTEEN HAVE NO RECORDED EFFECT SIZE. They are described but not
+measured. Any chart that depends on R6 to R17 must have its effect measured
+before it is placed, or the chart is a hope rather than a specification.
+
+R4 AT 28.9x IS A RISK, NOT A PRIZE. A twenty-nine-fold effect is close to
+deterministic, and a customer engineer may read it as planted rather than
+discovered. R2 at 4.5x is the most believable of the five measured.
+
+
+5. SYSTEMIC STRUCTURE ALREADY PRESENT
+--------------------------------------------------------------------------------
+
+  chemistry by grade, 12 elements x 3 sample stations (EAF, LF, trim)
+  additive quantities by grade
+  sequence grouping by grade family
+  crew rotation
+  ladle reline counters
+  cold-furnace and maintenance reheating
+  downtime propagation, equipment stoppage against production stoppage
+  roll wear
+  lubrication windows
+
+
+6. WHAT THIS INVENTORY MEANS FOR THE BLUEPRINT
+--------------------------------------------------------------------------------
+
+The emulated plant is close to complete. The gap is not the data.
+
+All twenty-nine seeded widgets bind to EIGHT generic dimensions - day, week,
+month, materialUnitType, defectType, severity, equipment, parameterCode - and SIX
+generic measures - materialCount, observationCount, defectCount, defectRate,
+riskScore, avgParameterValue.
+
+NOT ONE widget touches grade, shift, crew, superheat, casting speed, finishing
+temperature, chemistry, gauge, roll campaign age, tundish age, lubrication
+viscosity, scrap ratio, coil position, or the downtime split.
+
+Artifact 2 is the specification that closes that gap.

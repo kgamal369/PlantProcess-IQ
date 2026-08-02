@@ -162,7 +162,11 @@ public sealed record AddWorkflowDowntimeEventRequest(
         Guid? EquipmentId,
         DateTime StartedAtUtc,
         DateTime? EndedAtUtc,
-        string DowntimeType,
+        string DowntimeType,
+
+        decimal StoppedMinutes,
+
+        decimal ProductionImpactMinutes,
         string? ReasonCode,
         string? Description,
         bool IsSynthetic,

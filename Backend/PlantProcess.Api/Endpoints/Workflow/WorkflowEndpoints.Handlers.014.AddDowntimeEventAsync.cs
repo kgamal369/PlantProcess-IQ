@@ -40,7 +40,11 @@ private static async Task<IResult> AddDowntimeEventAsync(
             EquipmentId: request.EquipmentId,
             StartedAtUtc: request.StartedAtUtc,
             EndedAtUtc: request.EndedAtUtc,
-            DowntimeType: request.DowntimeType,
+            DowntimeType: request.DowntimeType,
+
+            StoppedMinutes: request.StoppedMinutes,
+
+            ProductionImpactMinutes: request.ProductionImpactMinutes,
             ReasonCode: request.ReasonCode,
             Description: request.Description,
             PlantTimeZoneId: request.PlantTimeZoneId,

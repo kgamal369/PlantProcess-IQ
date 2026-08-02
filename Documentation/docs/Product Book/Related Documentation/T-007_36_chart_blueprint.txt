@@ -1,0 +1,171 @@
+T-007 ARTIFACT 2 OF 2 - THE 36-CHART BLUEPRINT
+================================================================================
+
+Task      : T-007 | Milestone M1 | Phase M1-P1
+Save as   : docs/m1/evidence/T-007_36_chart_blueprint.txt
+Date      : 2 August 2026
+Reads with: T-007_emulation_inventory.txt
+
+Validation this artifact satisfies:
+  "the blueprint with 36 rows each naming its page, chart type, and the visual
+   story it must tell. A reviewer must be able to say, for each of the 36, what
+   would make that chart boring - because that is the specification the data has
+   to beat."
+
+Six primary presentation pages x six visual stories. The seventh seeded
+dashboard is the technical backup page and is not part of the 36.
+
+THE ACCEPTANCE STANDARD FOR THE DATASET, STATED ONCE.
+  Every one of the 36 needs an intentional visual story, sufficient population
+  and cardinality, realistic variation, and at least one meaningful drill or
+  filter interaction.
+  NOT EVERY CHART MUST REVEAL A CORRELATION. Planting a hundred clean
+  correlations would make the plant look fabricated, and that costs more
+  credibility than a flat chart does.
+
+HOW TO READ THE BORING COLUMN. It is not commentary. It is the specification:
+the data has to beat it, and any chart whose boring condition is true on the day
+is a chart that should not be shown.
+
+
+PAGE 1 - PRODUCTION AND OPERATING PRACTICE
+--------------------------------------------------------------------------------
+ #  chart type       must show                                boring if
+ 1  line             strong and weak days, weekly rhythm      a near-flat line
+ 2  stacked column   three shifts with different mixes        three bars within 5 pct
+ 3  bar              real product mix across grades           one grade at 80 pct
+ 4  bar              different contribution per unit          one unit, or an even split
+ 5  line             faster and slower periods, a regime      uniform noise around a mean
+                     boundary in heat-to-coil cycle time
+ 6  table            heat, slab, coil, grade, shift, weight   only counts, no genealogy
+                     on one row
+
+
+PAGE 2 - QUALITY, DEFECTS AND CHEMISTRY
+--------------------------------------------------------------------------------
+ #  chart type       must show                                boring if
+ 7  line             stable periods punctuated by excursions  flat, or pure noise
+ 8  Pareto           six to ten meaningful classes of the 20  three bars
+ 9  stacked bar      some grades materially more sensitive    even across grades
+10  bar              an equipment or context effect           ONE ROW - which is what
+                                                              this returns today
+11  heatmap          clusters along coil length and width     uniform scatter
+12  conditional      actual against grade specification       all rows inside band, or
+    table            minima and maxima, cells flagged         limits hardcoded in the
+                                                              product
+
+Chart 12 is the low-code showcase. The limits must come from the customer's own
+grade specification data, and the formatting rule must be editable in the
+interface, in front of the customer.
+
+
+PAGE 3 - EQUIPMENT, MAINTENANCE AND DOWNTIME
+--------------------------------------------------------------------------------
+ #  chart type       must show                                boring if
+13  Pareto           a clear loss concentration by equipment  even distribution
+14  stacked column   an operating-practice difference         equal thirds
+                     between shifts
+15  paired column    equipment stopped against production     the two bars equal, which
+                     lost - 145 stopped, 92 impact, 53        means the distinction was
+                     absorbed by the buffer                   never modelled
+16  Pareto           breakdown, cobble, changeover and        one catch-all reason
+                     maintenance as separate reasons
+17  box plot         a decaying difference across the first   no difference - the regime
+                     three to five heats after maintenance    is not planted yet
+18  line             gradual degradation across a campaign    a step, or a flat line
+
+Chart 15 is the most distinctive in the set. Equipment stoppage is not production
+stoppage, and almost no BI tool in this market shows the difference.
+
+
+PAGE 4 - PROCESS PARAMETER ANALYSIS
+--------------------------------------------------------------------------------
+ #  chart type       must show                                boring if
+19  line             regimes and shift changes, not noise     a random walk
+20  histogram        a believable operating distribution      a perfect normal, or a
+                     with tails                               uniform block
+21  box plot         different bands per grade                identical boxes
+22  box plot         overlapping distributions with           three cleanly separated
+                     different VARIANCE by shift              means, which reads as
+                                                              fabricated
+23  scatter          a continuous relationship with real      a straight line, or a
+                     spread against the outcome               shapeless cloud
+24  conditional      individual coils outside the operating   aggregates only
+    table            window, drillable
+
+Chart 22 carries the shift story. The means must overlap and the variance must
+differ. Three tidy separated means would look planted.
+
+
+PAGE 5 - CORRELATION AND STATISTICAL FINDINGS
+--------------------------------------------------------------------------------
+ #  chart type       must show                                boring if
+25  heatmap          10 to 15 parameters against outcomes,    all cells strong, or all
+                     mixed strengths                          weak
+26  bar              strongest associations ranked by         ranked by p-value
+                     EFFECT SIZE
+27  scatter          the continuous relation behind R1        no visible gradient
+28  heatmap          the INTERACTION of superheat by          a flat surface
+                     casting speed - a hot region, not a
+                     gradient
+29  paired result    an association that shrinks materially   no change either way
+                     once grade is conditioned on
+30  table            n, effect, q after Benjamini-Hochberg,   correlation coefficients
+                     method, evidence link                    with no population
+
+Chart 29 is the honesty moment and the hardest to fake. It needs a real
+confounder, which R1 and the grade families already provide.
+
+
+PAGE 6 - INTELLIGENCE, RISK AND MODEL READINESS
+--------------------------------------------------------------------------------
+ #  chart type       must show                                boring if
+31  status cards     five readiness dimensions, each with     a green tick with no number
+                     THE MEASURED VALUE BESIDE ITS THRESHOLD
+32  bar              how much evidence exists per cohort      one total
+33  line             the current deterministic engine output  a prediction the engine did
+                                                              not make
+34  ranked table     evidence-backed drivers with provenance  an unsourced list
+35  evidence table   individual coils and heats, drillable    aggregates
+                     to source
+36  status           an honest Ready, Partial or Blocked      ANYTHING TITLED
+                     with its reason                          "PREDICTED" THAT WAS NOT
+                                                              PREDICTED
+
+Chart 36 replaces the seeded widget MI_SEV, currently titled "Predicted Severity
+Mix" and actually a donut of defectCount by severity. Nothing predicted it. If
+the model is not ready, say why in five dimensions - that refusal is the selling
+point, and a fabricated curve destroys it.
+
+
+WHAT THE BLUEPRINT COSTS, MEASURED NOT ESTIMATED
+--------------------------------------------------------------------------------
+
+Of the 29 seeded widgets, roughly 8 to 10 map onto a blueprint chart without
+change. Roughly 26 to 28 of the 36 do not exist today.
+
+ALMOST NONE OF THAT IS A DATA GAP. Casting speed, superheat, finishing
+temperature, grade, chemistry, gauge, campaign age and the downtime split are all
+in the sources already. They are simply not bound to any widget, and several are
+not projected into canonical parameters at all.
+
+THREE CHARTS ARE GENUINELY BLOCKED ON MISSING DATA, AND ONLY THREE:
+  chart 17  needs the post-maintenance recovery regime
+  chart 22  needs the shift variance regime
+  chart 12  needs the grade specification table
+
+CHART 10 ALREADY FAILS TODAY. Defects by Equipment returns one row. That is
+canonical equipment attribution, not a data shortage, and it must be diagnosed
+before anyone touches the generator.
+
+
+OPEN RULINGS - NOT PART OF THIS TASK'S VALIDATION
+--------------------------------------------------------------------------------
+
+These are gaps named for a ruling, not acceptance criteria for T-007. They will
+be needed while mapping phenomena onto the blueprint.
+
+  1. Is the blueprint accepted as the dataset specification?
+  2. Do we demonstrate R4 at 28.9x, or lead with R2 at 4.5x as more believable?
+  3. MI_SEV "Predicted Severity Mix" - retitle, rebuild as chart 36, or remove?
+  4. Is the seventh dashboard confirmed as technical backup rather than shown?
