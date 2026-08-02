@@ -1,0 +1,23 @@
+# PRESENTATION DIFF - ROW-COUNT IGNORE LIST
+#
+# One qualified table per line, then a reason. These are records of things
+# having happened. They cannot match between a live database and a fresh
+# rebuild, and seeding a fake history would be worse than the mismatch.
+#
+# A table not listed here IS compared. Adding one is a reviewed decision.
+# Schema objects are NEVER ignored - an object that exists only in live is a
+# fix that is not in source control, and that is the point of this tool.
+#
+public.audit_log_entries            Runtime audit trail.
+public.auth_refresh_tokens          Session tokens issued while the demo ran.
+public.job_log                      Job execution log.
+public.job_run_histories            Job run history.
+public.read_model_refresh_runs      Read-model refresh history.
+public.ml_correlation_compute_runs  Engine compute history.
+public.ml_feature_store_refresh_runs Feature refresh history. NOTE: 11 in live vs 1 in scratch also signals the missing refresh step - do not let this line hide that.
+public.ppiq_catalog_audit           Audit trail of the catalog.
+public.ppiq_purge_audit             Audit trail of purges.
+#
+# NOT YET LISTED, DELIBERATELY:
+# ppiq_forensics.wipe_audit - 18 trapped events. Read them before ignoring them.
+# public.ppiq_layout_backup - decide whether the table is a feature or debris.

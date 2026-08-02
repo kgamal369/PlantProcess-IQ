@@ -199,6 +199,13 @@ UPDATE quality_events SET source_system='INSPECTION_L2' WHERE source_system LIKE
 UPDATE genealogy_edges SET source_system='GENEALOGY_L2' WHERE source_system LIKE 'phase3-dump%';
 UPDATE parameter_observations SET source_system='PROCESS_L2' WHERE source_system LIKE 'phase3-dump%';
 UPDATE material_units SET source_system='MELTSHOP_L2' WHERE source_system='postgresql';
+-- CORRECTION: the raw-driver rule originally covered material_units only,
+-- because material_units was the only table the old verify displayed. The wider
+-- verify found 14,416 parameter_observations and 420 quality_events still
+-- carrying it. Fix what is true, not what is visible.
+UPDATE quality_events SET source_system='INSPECTION_L2' WHERE source_system='postgresql';
+UPDATE parameter_observations SET source_system='PROCESS_L2' WHERE source_system='postgresql';
+UPDATE genealogy_edges SET source_system='GENEALOGY_L2' WHERE source_system='postgresql';
 ALTER TABLE genealogy_edges ENABLE TRIGGER ppiq_genealogy_edge_weight_guard_after_change;
 COMMIT;
 "@)
@@ -385,9 +392,11 @@ DELETE FROM dashboard_widget_definitions w
 DELETE FROM dashboard_definitions
  WHERE dashboard_code LIKE 'PRESENTATION\_%' ESCAPE '\';
 "@)
-[void](RunSql 'delete rolled-back mapping versions' @"
-DELETE FROM ppiq_mapping_versions WHERE status = 'RolledBack';
-"@)
+# CORRECTION: a blanket delete of RolledBack mapping versions removed THIRTY-SIX
+# rows present in both databases, to close a difference of five. -5 became -41.
+# The classification behind it was wrong as well: a rolled-back version is the
+# record of an authoring decision, which is exactly the history a versioned
+# definition store exists to keep. Nothing replaces this step.
 W ("      dashboards remaining: " + (Q1 "SELECT COUNT(*) FROM dashboard_definitions WHERE is_deleted=FALSE;"))
 W ("      certification leftovers: " + (Q1 "SELECT COUNT(*) FROM dashboard_definitions WHERE dashboard_code LIKE 'PRESENTATION\_%' ESCAPE '\';"))
 W ""
