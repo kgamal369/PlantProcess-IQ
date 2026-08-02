@@ -1,0 +1,13 @@
+FORENSICS TRIGGER LEVEL VERDICT - 2026-08-02 21:07:19
+
+  ppiq_wipe_trap_genealogy_edges|42|STATEMENT
+  ppiq_wipe_trap_import_batches|42|STATEMENT
+  ppiq_wipe_trap_material_units|42|STATEMENT
+  ppiq_wipe_trap_parameter_observations|42|STATEMENT
+  ppiq_wipe_trap_quality_events|42|STATEMENT
+  ppiq_wipe_trap_staging_records|42|STATEMENT
+
+CLEAR: every trap is STATEMENT-level. Safe to promote as captured.
+
+Also required before promotion: an allowlist for ppiq_p4_demo_% so the
+subsystem stops trapping its own seed. 18 of 18 events so far are that seed.

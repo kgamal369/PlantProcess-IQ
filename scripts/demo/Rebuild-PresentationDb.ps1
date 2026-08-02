@@ -148,6 +148,16 @@ foreach ($mig in @('741_feature_store_coil_grain_projection.sql','742_feature_re
     } else { W ("      MISSING " + $migPath) }
 }
 W ("      lineage view rows: " + (Q1 "SELECT COUNT(*) FROM ppiq_ml_unit_heat_lineage;"))
+
+# T-006: 741 and 742 DEFINE ppiq_ml_refresh_feature_store and never CALL it.
+# Live holds 195,221 ml_outcome_values; a rebuild without this line produces
+# 91,839. Rebuild before the demonstration and 53 percent of the evidence base
+# vanishes with every page still rendering.
+[void](RunSql 'feature and outcome refresh (ppiq_ml_refresh_feature_store)' @"
+SELECT public.ppiq_ml_refresh_feature_store(365);
+"@)
+W ("      ml_outcome_values after refresh: " + (Q1 "SELECT COUNT(*) FROM ml_outcome_values;"))
+W ("      feature refresh runs:            " + (Q1 "SELECT COUNT(*) FROM ml_feature_store_refresh_runs;"))
 W ""
 # ---- 2. Rule-1 fixes -------------------------------------------------------
 W "[2/7] Rule-1 fixes (the fixture predates the 15-Jul cleanup)"
@@ -188,6 +198,7 @@ UPDATE material_units SET source_system='REF_BASELINE' WHERE source_system IN ('
 UPDATE quality_events SET source_system='INSPECTION_L2' WHERE source_system LIKE 'phase3-dump%';
 UPDATE genealogy_edges SET source_system='GENEALOGY_L2' WHERE source_system LIKE 'phase3-dump%';
 UPDATE parameter_observations SET source_system='PROCESS_L2' WHERE source_system LIKE 'phase3-dump%';
+UPDATE material_units SET source_system='MELTSHOP_L2' WHERE source_system='postgresql';
 ALTER TABLE genealogy_edges ENABLE TRIGGER ppiq_genealogy_edge_weight_guard_after_change;
 COMMIT;
 "@)
@@ -359,6 +370,28 @@ WHERE w.is_deleted=FALSE
 W ""
 
 # ---- 7. verify -------------------------------------------------------------
+# ---- 6b. debris cleanup (T-006) --------------------------------------------
+# Four PRESENTATION_<hex> dashboards named "Presentation certification
+# dashboard" and their four widgets were created by a certification run and
+# would appear in the customer's Workspaces navigation. Two mapping versions
+# sit in RolledBack. Deleted BY PATTERN and BY STATUS, never by hardcoded id,
+# so this still works after the next certification run creates four more.
+W "[6b/7] debris cleanup (certification dashboards, rolled-back mappings)"
+[void](RunSql 'delete certification-run dashboards and their widgets' @"
+DELETE FROM dashboard_widget_definitions w
+ USING dashboard_definitions d
+ WHERE w.dashboard_definition_id = d.id
+   AND d.dashboard_code LIKE 'PRESENTATION\_%' ESCAPE '\';
+DELETE FROM dashboard_definitions
+ WHERE dashboard_code LIKE 'PRESENTATION\_%' ESCAPE '\';
+"@)
+[void](RunSql 'delete rolled-back mapping versions' @"
+DELETE FROM ppiq_mapping_versions WHERE status = 'RolledBack';
+"@)
+W ("      dashboards remaining: " + (Q1 "SELECT COUNT(*) FROM dashboard_definitions WHERE is_deleted=FALSE;"))
+W ("      certification leftovers: " + (Q1 "SELECT COUNT(*) FROM dashboard_definitions WHERE dashboard_code LIKE 'PRESENTATION\_%' ESCAPE '\';"))
+W ""
+
 W "[7/7] VERIFY"
 W "      data:"
 foreach ($t in @('material_units', 'parameter_observations', 'quality_events', 'genealogy_edges', 'ml_correlation_results_v2')) {
@@ -368,6 +401,17 @@ W "      dashboards (code | widgets):"
 Rows "SELECT d.dashboard_code, COUNT(w.id) FROM dashboard_definitions d LEFT JOIN dashboard_widget_definitions w ON w.dashboard_definition_id=d.id AND w.is_deleted=FALSE WHERE d.is_deleted=FALSE GROUP BY 1 ORDER BY 1;" | ForEach-Object { W ("        " + $_) }
 W "      provenance on screen:"
 Rows "SELECT source_system, COUNT(*) FROM material_units GROUP BY 1 ORDER BY 2 DESC;" | ForEach-Object { W ("        " + $_) }
+# T-006: the check above covers material_units ONLY - its counts sum to exactly
+# that table's row count. When the genealogy update was cancelled on 02-Aug, two
+# other tables kept their phase3-dump values and this verify still looked clean.
+W "      residual phase3-dump / raw driver names, ALL FOUR tables:"
+Rows @"
+SELECT 'material_units', COUNT(*) FROM material_units WHERE source_system LIKE 'phase3-dump%' OR source_system='postgresql'
+UNION ALL SELECT 'quality_events', COUNT(*) FROM quality_events WHERE source_system LIKE 'phase3-dump%' OR source_system='postgresql'
+UNION ALL SELECT 'genealogy_edges', COUNT(*) FROM genealogy_edges WHERE source_system LIKE 'phase3-dump%' OR source_system='postgresql'
+UNION ALL SELECT 'parameter_observations', COUNT(*) FROM parameter_observations WHERE source_system LIKE 'phase3-dump%' OR source_system='postgresql';
+"@ | ForEach-Object { W ("        " + $_) }
+W "      (every one of those four must read 0)"
 W ""
 W "=" * 78
 if ($Script:PpiqFailCount -gt 0) {
