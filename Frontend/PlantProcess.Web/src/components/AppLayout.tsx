@@ -40,7 +40,7 @@ import { P2T08_STANDARD_ROLLOUT_MARKER } from "@/components/standard/StandardP2C
 // - Navigation definition -
 const NAV_DATA_INTEGRATION = [
   { to: "/data-integration/alerting", label: "Plant Data Log", desc: "Threshold alerts on imported observations", icon: AlertTriangle },
-  { to: "/data-integration/supervisor", label: "Engine Supervisor", desc: "Weekly engine review (step 14)", icon: BrainCircuit },
+  { to: "/data-integration/supervisor", label: "Engine Supervisor", desc: "Weekly engine review of jobs, models and coefficients", icon: BrainCircuit },
   { to: "/data-integration/author-mapping", label: "Load to Plant Data", desc: "Author a mapping and project staged rows", icon: Network },
   { to: "/data-integration/connections",     label: "Connections",     desc: "DB links: connect and test plant sources", icon: DatabaseZap },
   { to: "/data-integration/registry",        label: "Table Registry",  desc: "Map source tables to the canonical model", icon: Network },
@@ -85,7 +85,7 @@ const NAV_SYSTEM = [
   { to: "/advisory/roi-cfo-dashboard", label: "ROI/CFO Value", desc: "Potential vs realized value", icon: DatabaseZap },
   { to: "/advisory/value-realization", label: "Value Realization", desc: "Baseline vs actual ledger", icon: DatabaseZap },
   { to: "/advisory/recommendations", label: "Recommendations", desc: "Expected - impact + approval", icon: DatabaseZap },
-  { to: "/advisory/scenario-simulation", label: "What-if Simulation", desc: "Phase 15 advisory projection", icon: DatabaseZap },
+  { to: "/advisory/scenario-simulation", label: "What-if Simulation", desc: "Projected outcome under an alternative operating scenario", icon: DatabaseZap },
   { to: "/edge-collector", label: "Edge Collector", desc: "OT-safe one-way push status", icon: DatabaseZap },
   { to: "/historian-connector", label: "Historian Connector", desc: "Register, test, browse and map tags", icon: DatabaseZap },
   { to: "/admin-preview", label: "Admin Preview",  desc: "License, roles, ML scripts, report",   icon: BarChart3 },

@@ -1,0 +1,19 @@
+T-002 architecture gate diagnosis
+Timestamp : 2026-08-02 15:08:16
+Runs      : 3
+Verdict   : REFUSED - DIRTY TREE
+
+
+==============================================================================
+T-002 ARCHITECTURE GATE DIAGNOSIS
+==============================================================================
+
+==============================================================================
+1. BASELINE PRECONDITION - is the tree clean?
+==============================================================================
+[WARN] working tree has 1 modified or untracked entries:
+       ?? Diagnose-PpiqArchitectureGate.ps1
+
+[REFUSED] a baseline measured on a modified tree is not a baseline.
+          Commit or stash first, or re-run with -AllowDirtyTree if you
+          deliberately want to measure WITH a change applied.
