@@ -1,9 +1,9 @@
 T-006 / T-007 presentation database reproducibility diff
 Mode      : Diff
-Timestamp : 2026-08-02 18:24:18
+Timestamp : 2026-08-02 18:49:17
 Live      : ppiq_presentation
 Scratch   : ppiq_presentation_scratch
-Verdict   : SCRATCH UNREADABLE
+Verdict   : REBUILD SILENTLY FAILED
 
 
 ==============================================================================
@@ -12,12 +12,20 @@ PRESENTATION DATABASE REPRODUCIBILITY - MODE Diff
 [OK] guards passed. Live ppiq_presentation is never written by this script.
 
 ==============================================================================
-1. REBUILD INTO SCRATCH
+1a. CREATE THE SCRATCH DATABASE
+==============================================================================
+Rebuild-PresentationDb.ps1 restores INTO an existing database; it does not
+create one. The first run of this script failed for exactly that reason.
+[DROP] ppiq_presentation_scratch - a half-built scratch must never be mistaken for a rebuild
+[OK] created ppiq_presentation_scratch
+
+==============================================================================
+1b. REBUILD INTO SCRATCH
 ==============================================================================
 Running scripts/demo/Rebuild-PresentationDb.ps1 with -TargetDb pointed at scratch.
 This restores the 13 July snapshot and replays every scripted step on top.
 
-REBUILD PRESENTATION DB - 2026-08-02 18:21:53
+REBUILD PRESENTATION DB - 2026-08-02 18:29:52
 Fixture: C:\Workspace\PlantProcess-IQ\deploy\.ppiq-snapshots\ppiq_app_20260713_203359.dump
 Target : ppiq_presentation_scratch   (ppiq_app guarded)
 ==============================================================================
@@ -28,59 +36,73 @@ Fixture date: 07/13/2026 21:34:08   29.4 MB
       clear.
 
 [1/7] pg_restore --clean --if-exists (rewinds EVERYTHING, dashboards included)
-      pg_restore: error: connection to server at "127.0.0.1", port 5432 failed: FATAL:  database "ppiq_presentation_scratch" does not exist
       (missing-object warnings on --clean are normal)
-      material_units                 n/a
-      parameter_observations         n/a
-      quality_events                 n/a
-      genealogy_edges                n/a
-      ml_correlation_results_v2      n/a
+      material_units                 40148
+      parameter_observations         14433
+      quality_events                 51691
+      genealogy_edges                35906
+      ml_correlation_results_v2      320
 
 [1b/7] engine migrations 741+742 (or the engine re-blinds on every rebuild)
-      FAILED 741_feature_store_coil_grain_projection.sql: psql: error: connection to server at "127.0.0.1", port 5432 failed: FATAL:  database "ppiq_presentation_scratch" does not exist
-      FAILED 742_feature_regrain_generic.sql: psql: error: connection to server at "127.0.0.1", port 5432 failed: FATAL:  database "ppiq_presentation_scratch" does not exist
-      lineage view rows: n/a
+      applied 741_feature_store_coil_grain_projection.sql
+      applied 742_feature_regrain_generic.sql
+      lineage view rows: 40136
 
 [2/7] Rule-1 fixes (the fixture predates the 15-Jul cleanup)
-      FAIL sites -> PLANT-NN
-           psql: error: connection to server at "127.0.0.1", port 5432 failed: FATAL:  database "ppiq_presentation_scratch" does not exist
-      FAIL connection profile codes -> CP-NN
-           psql: error: connection to server at "127.0.0.1", port 5432 failed: FATAL:  database "ppiq_presentation_scratch" does not exist
-      FAIL canonical_schema_views: drop demo-era rows
-           psql: error: connection to server at "127.0.0.1", port 5432 failed: FATAL:  database "ppiq_presentation_scratch" does not exist
-      FAIL job_log: truncate internal dumps
-           psql: error: connection to server at "127.0.0.1", port 5432 failed: FATAL:  database "ppiq_presentation_scratch" does not exist
+      OK   sites -> PLANT-NN
+      OK   connection profile codes -> CP-NN
+      OK   canonical_schema_views: drop demo-era rows
+      OK   job_log: truncate internal dumps
 
 [3/7] provenance neutralization (Material Investigation shows this column)
       FAIL phase3-dump:src_* -> system names
-           psql: error: connection to server at "127.0.0.1", port 5432 failed: FATAL:  database "ppiq_presentation_scratch" does not exist
+           UPDATE 2431
+           UPDATE 18070
+           UPDATE 17817
+           UPDATE 28
 
 [4/7] engine-message scrub (history rows AND the functions that regenerate them)
-      FAIL ml messages: demo/golden -> neutral
-           psql: error: connection to server at "127.0.0.1", port 5432 failed: FATAL:  database "ppiq_presentation_scratch" does not exist
-      residual demo/golden in ml_learning_runs_v1: n/a
-      residual in ml_correlation_compute_runs:     n/a
+      OK   ml messages: demo/golden -> neutral
+      REDEFINED function oid 131574
+      REDEFINED function oid 131585
+      REDEFINED function oid 131585
+      residual demo/golden in ml_learning_runs_v1: 0
+      residual in ml_correlation_compute_runs:     0
 
 [5/7] dashboards (7) - parents FIRST, or the widget FK fails
       analysis widgets bind to: rolling.cooling_rate
-      FAIL dashboard_definitions upsert (7)
-           psql: error: connection to server at "127.0.0.1", port 5432 failed: FATAL:  database "ppiq_presentation_scratch" does not exist
-      dashboards now: n/a
+      OK   dashboard_definitions upsert (7)
+      dashboards now: 12
 
 [6/7] widgets (29 + heatmap/scatter clones)
-      SKIPPED - dashboards failed, widgets would FK-fail (this is the 17-Jul defect)
+      OK   widgets + clones
 
 [7/7] VERIFY
       data:
-        material_units                 n/a
-        parameter_observations         n/a
-        quality_events                 n/a
-        genealogy_edges                n/a
-        ml_correlation_results_v2      n/a
+        material_units                 40148
+        parameter_observations         14433
+        quality_events                 51691
+        genealogy_edges                35906
+        ml_correlation_results_v2      320
       dashboards (code | widgets):
-        psql: error: connection to server at "127.0.0.1", port 5432 failed: FATAL:  database "ppiq_presentation_scratch" does not exist
+        CORRELATION_EXPLORER | 1
+        CORRELATION_FINDINGS_BOARD | 2
+        DATA_QUALITY | 2
+        EQUIPMENT_OPERATIONS | 4
+        MATERIAL_INVESTIGATION_LAUNCHER | 1
+        MODEL_INSIGHTS | 2
+        PARAMETER_DEEP_ANALYSIS | 5
+        PRODUCTION_OVERVIEW | 8
+        QUALITY_MONITORING | 4
+        QUALITY_OVERVIEW | 3
+        RISK_DASHBOARD | 2
+        RISK_INTELLIGENCE | 4
       provenance on screen:
-        psql: error: connection to server at "127.0.0.1", port 5432 failed: FATAL:  database "ppiq_presentation_scratch" does not exist
+        CASTER_L2 | 18070
+        HSM_L2 | 17817
+        MELTSHOP_L2 | 2431
+        postgresql | 1802
+        REF_BASELINE | 28
 
 =
 REBUILD COMPLETE. Start the API:
@@ -89,10 +111,13 @@ REBUILD COMPLETE. Start the API:
 This command is now the ONLY supported way to rebuild the demo database.
 Commit it to scripts/demo/ (v23 M2-18) and never hand-sequence again.
 
-[DONE] Report -> C:\Workspace\PlantProcess-IQ\RebuildPresentationDb_20260802_182153.txt
+[DONE] Report -> C:\Workspace\PlantProcess-IQ\RebuildPresentationDb_20260802_182952.txt
 [REBUILD] exit code 0
 
-==============================================================================
-2. OBJECT INVENTORY
-==============================================================================
-[FAIL] could not read ppiq_presentation_scratch
+[STOP] the rebuild returned exit 0 but printed 1 failure lines:
+   FAIL phase3-dump:src_* -> system names
+
+A script that reports success while failing is worse than one that fails,
+because it teaches everyone to trust the wrong signal. Fix the rebuild's
+exit code before using it again - it calls itself the only supported way
+to rebuild the demonstration database.
