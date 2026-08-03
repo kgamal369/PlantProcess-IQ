@@ -1,3 +1,4 @@
+// @vitest-environment node
 // ============================================================
 // Encoding regression gate (Step 1, 09-Jul-2026).
 // Source files must never again contain UTF-8-decoded-as-Windows-1252 text

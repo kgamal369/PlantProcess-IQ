@@ -1,3 +1,4 @@
+// @vitest-environment node
 // PPIQ Phase-3: forbid the rename-to-close-gate TOMBSTONE - a thin re-export whose
 // only job is to front a .runtime / .runtime.generated sibling. Legitimate thin
 // re-exports (barrels, public-surface X.tsx -> X.implementation) are allowed: this

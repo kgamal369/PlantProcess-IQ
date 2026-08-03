@@ -1,3 +1,4 @@
+// @vitest-environment node
 // ============================================================
 // M1-11 gate: there is exactly ONE assistant, and it goes through the api client.
 // ============================================================

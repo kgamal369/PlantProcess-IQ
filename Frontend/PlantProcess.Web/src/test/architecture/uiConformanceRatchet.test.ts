@@ -1,3 +1,4 @@
+// @vitest-environment node
 // uiConformanceRatchet.test.ts - Sweep C2-2
 // RATCHET: raw form controls (D1) and inline style objects (D2) per file must
 // never EXCEED the committed baseline, and no NEW file may introduce them.

@@ -1,3 +1,4 @@
+// @vitest-environment node
 // PPIQ-T09: no raw load-failure string may survive outside the DataFetchBoundary component.
 // Every data-fetch failure must render the branded, retryable boundary. Pins the migrated state.
 import { describe, expect, it } from "vitest";

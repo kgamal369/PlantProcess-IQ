@@ -1,3 +1,4 @@
+// @vitest-environment node
 // PPIQ-202: architecture gate. Fails the build if any catch block under src/pages renders JSX
 // inline (bespoke try/catch error UI) instead of delegating to the standard ErrorBoundary /
 // DataFetchBoundary. Error UI must come from the standard primitives or from error STATE, never

@@ -1,3 +1,4 @@
+// @vitest-environment node
 // ============================================================
 // M1-06 gate: Data Integration is its own area, and Connector Truth tells the truth.
 // ============================================================

@@ -1,3 +1,4 @@
+// @vitest-environment node
 // ============================================================
 // M1-08 STRICT GATE - Naming Golden Rule, no allowlist.
 // "Zero phase tokens in any canonical route, period."

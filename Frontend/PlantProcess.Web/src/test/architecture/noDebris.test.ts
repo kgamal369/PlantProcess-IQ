@@ -1,3 +1,4 @@
+// @vitest-environment node
 // PPIQ Phase-3: fail if hygiene debris returns to the repo (mirrors scripts/hygiene-check.mjs).
 import { describe, expect, it } from "vitest";
 import { readdirSync, statSync } from "node:fs";

@@ -1,3 +1,4 @@
+// @vitest-environment node
 // PPIQ-T11: enforce Standard* primitives. Fails if a raw <button> or <table> appears in a page or
 // component, where StandardButton / StandardTable exist. The standard/ primitives are excluded -
 // they are the canonical place raw elements are allowed. Pins the current clean tree (npm run test).

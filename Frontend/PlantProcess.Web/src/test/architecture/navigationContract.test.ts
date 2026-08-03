@@ -1,3 +1,4 @@
+// @vitest-environment node
 // PPIQ-T12: the navigation contract.
 //
 // Two rules, both about what a customer can see and click.

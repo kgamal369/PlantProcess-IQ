@@ -1,3 +1,4 @@
+// @vitest-environment node
 // PPIQ-T14 Golden Rule: demo pages are authored through the HMI (page-builder -> PageDefinition ->
 // DynamicPage at /pages/:slug), never as hardcoded React routes. The guard lives at the repo root
 // (scripts/verify-no-hardcoded-demo-pages.mjs). This test locates it by walking up from cwd and runs
