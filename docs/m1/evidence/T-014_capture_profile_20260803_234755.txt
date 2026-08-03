@@ -1,7 +1,7 @@
 ================================================================
 PPIQ T-014 STEP 1 - CAPTURE-GRADE PROFILE (READ-ONLY)
 ================================================================
-Generated At : 2026-08-03 18:37:40
+Generated At : 2026-08-03 23:48:02
 Database     : ppiq_presentation on 127.0.0.1:5432
 psql exit    : 0
 
@@ -16,6 +16,10 @@ quantiles, timestamp ranges, genealogy and conservation, and the
 identifier shapes without which cross-layer identity cannot hold.
 ================================================================
 
+
+================================================================
+SECTION A - TABLE INVENTORY
+================================================================
 +----------------------------+--------------------------+-----------+--------------+
 |        schema_name         |        table_name        | row_count | column_count |
 +----------------------------+--------------------------+-----------+--------------+
@@ -32,6 +36,11 @@ identifier shapes without which cross-layer identity cannot hold.
 +----------------------------+--------------------------+-----------+--------------+
 (10 rows)
 
+
+================================================================
+SECTION B - NUMERIC PROFILE. A MEAN WITHOUT QUANTILES IS NOT A
+DISTRIBUTION. THE GENERATOR IS WRITTEN FROM THESE NUMBERS.
+================================================================
 +----------------------------+--------------------------+------------------------+-----------+------------+------------+------------+------------+------------+-------------+------------+--------------+-------------------+
 |        schema_name         |        table_name        |      column_name       | min_value |    p10     |    p25     |    p50     |    p75     |    p90     |  max_value  | mean_value | stddev_value | max_decimal_scale |
 +----------------------------+--------------------------+------------------------+-----------+------------+------------+------------+------------+------------+-------------+------------+--------------+-------------------+
@@ -86,6 +95,10 @@ identifier shapes without which cross-layer identity cannot hold.
 +----------------------------+--------------------------+------------------------+-----------+------------+------------+------------+------------+------------+-------------+------------+--------------+-------------------+
 (48 rows)
 
+
+================================================================
+SECTION C - TIMESTAMP PROFILE
+================================================================
 +----------------------------+--------------------------+-----------------------+------------------------+------------------------+-----------+-------------+
 |        schema_name         |        table_name        |      column_name      |         min_ts         |         max_ts         | span_days | distinct_ts |
 +----------------------------+--------------------------+-----------------------+------------------------+------------------------+-----------+-------------+
@@ -118,7 +131,144 @@ identifier shapes without which cross-layer identity cannot hold.
 +----------------------------+--------------------------+-----------------------+------------------------+------------------------+-----------+-------------+
 (26 rows)
 
-DO
+
+================================================================
+SECTION D - COMPLETE CATEGORICAL INVENTORY (30 DISTINCT OR FEWER)
+THIS IS THE CATALOGUE. EVERY VALUE, EVERY COUNT.
+================================================================
++----------------------------+--------------------------+--------------------+------------------------+-------------+---------+
+|        schema_name         |        table_name        |    column_name     |         value          | occurrences |   pct   |
++----------------------------+--------------------------+--------------------+------------------------+-------------+---------+
+| src_caster_oracle_shape    | cast_pieces              | caster_id          | CCM-01                 |        2862 |  50.476 |
+| src_caster_oracle_shape    | cast_pieces              | caster_id          | CCM-02                 |        2808 |  49.524 |
+| src_caster_oracle_shape    | cast_sequence            | actual_grade       | HSLA-420               |         114 |  18.095 |
+| src_caster_oracle_shape    | cast_sequence            | actual_grade       | DX51D                  |         109 |  17.302 |
+| src_caster_oracle_shape    | cast_sequence            | actual_grade       | S235JR                 |         108 |  17.143 |
+| src_caster_oracle_shape    | cast_sequence            | actual_grade       | S355MC                 |         105 |  16.667 |
+| src_caster_oracle_shape    | cast_sequence            | actual_grade       | IF-LOW-C               |          98 |  15.556 |
+| src_caster_oracle_shape    | cast_sequence            | actual_grade       | DP600                  |          96 |  15.238 |
+| src_caster_oracle_shape    | cast_sequence            | caster_id          | CCM-01                 |         318 |  50.476 |
+| src_caster_oracle_shape    | cast_sequence            | caster_id          | CCM-02                 |         312 |  49.524 |
+| src_caster_oracle_shape    | cast_sequence            | planned_grade      | HSLA-420               |         114 |  18.095 |
+| src_caster_oracle_shape    | cast_sequence            | planned_grade      | DX51D                  |         109 |  17.302 |
+| src_caster_oracle_shape    | cast_sequence            | planned_grade      | S235JR                 |         108 |  17.143 |
+| src_caster_oracle_shape    | cast_sequence            | planned_grade      | S355MC                 |         105 |  16.667 |
+| src_caster_oracle_shape    | cast_sequence            | planned_grade      | IF-LOW-C               |          98 |  15.556 |
+| src_caster_oracle_shape    | cast_sequence            | planned_grade      | DP600                  |          96 |  15.238 |
+| src_caster_oracle_shape    | cast_sequence            | sequence_status    | Completed              |         630 | 100.000 |
+| src_caster_oracle_shape    | cast_sequence            | tundish_no         | TD-4                   |         117 |  18.571 |
+| src_caster_oracle_shape    | cast_sequence            | tundish_no         | TD-5                   |         116 |  18.413 |
+| src_caster_oracle_shape    | cast_sequence            | tundish_no         | TD-6                   |         115 |  18.254 |
+| src_caster_oracle_shape    | cast_sequence            | tundish_no         | TD-3                   |         101 |  16.032 |
+| src_caster_oracle_shape    | cast_sequence            | tundish_no         | TD-2                   |          94 |  14.921 |
+| src_caster_oracle_shape    | cast_sequence            | tundish_no         | TD-1                   |          87 |  13.810 |
+| src_hsm_oracle_shape       | hsm_coils                | mill_line          | HSM-01                 |        5670 | 100.000 |
+| src_inspection_mysql_shape | downtime_events          | downtime_category  | unplanned              |          91 |  43.333 |
+| src_inspection_mysql_shape | downtime_events          | downtime_category  | quality                |          47 |  22.381 |
+| src_inspection_mysql_shape | downtime_events          | downtime_category  | planned                |          41 |  19.524 |
+| src_inspection_mysql_shape | downtime_events          | downtime_category  | logistics              |          31 |  14.762 |
+| src_inspection_mysql_shape | downtime_events          | equipment_code     | CCM-02                 |          32 |  15.238 |
+| src_inspection_mysql_shape | downtime_events          | equipment_code     | HSM-01                 |          26 |  12.381 |
+| src_inspection_mysql_shape | downtime_events          | equipment_code     | PKL-02                 |          26 |  12.381 |
+| src_inspection_mysql_shape | downtime_events          | equipment_code     | CCM-01                 |          22 |  10.476 |
+| src_inspection_mysql_shape | downtime_events          | equipment_code     | EAF-01                 |          22 |  10.476 |
+| src_inspection_mysql_shape | downtime_events          | equipment_code     | EAF-02                 |          22 |  10.476 |
+| src_inspection_mysql_shape | downtime_events          | equipment_code     | LF-01                  |          22 |  10.476 |
+| src_inspection_mysql_shape | downtime_events          | equipment_code     | PKL-01                 |          20 |   9.524 |
+| src_inspection_mysql_shape | downtime_events          | equipment_code     | LF-02                  |          18 |   8.571 |
+| src_inspection_mysql_shape | downtime_events          | reason_code        | HYDRAULIC_ALARM        |          50 |  23.810 |
+| src_inspection_mysql_shape | downtime_events          | reason_code        | QUALITY_HOLD           |          47 |  22.381 |
+| src_inspection_mysql_shape | downtime_events          | reason_code        | MECH_ROLL_CHANGE       |          41 |  19.524 |
+| src_inspection_mysql_shape | downtime_events          | reason_code        | SENSOR_FAULT           |          41 |  19.524 |
+| src_inspection_mysql_shape | downtime_events          | reason_code        | ENTRY_DELAY            |          31 |  14.762 |
+| src_inspection_mysql_shape | downtime_events          | reason_text        | Hydraulic alarm        |          50 |  23.810 |
+| src_inspection_mysql_shape | downtime_events          | reason_text        | Quality hold           |          47 |  22.381 |
+| src_inspection_mysql_shape | downtime_events          | reason_text        | Mechanical roll change |          41 |  19.524 |
+| src_inspection_mysql_shape | downtime_events          | reason_text        | Sensor fault           |          41 |  19.524 |
+| src_inspection_mysql_shape | downtime_events          | reason_text        | Entry section delay    |          31 |  14.762 |
+| src_inspection_mysql_shape | downtime_events          | source_line        | CCM                    |          54 |  25.714 |
+| src_inspection_mysql_shape | downtime_events          | source_line        | PKL                    |          46 |  21.905 |
+| src_inspection_mysql_shape | downtime_events          | source_line        | EAF                    |          44 |  20.952 |
+| src_inspection_mysql_shape | downtime_events          | source_line        | LF                     |          40 |  19.048 |
+| src_inspection_mysql_shape | downtime_events          | source_line        | HSM                    |          26 |  12.381 |
+| src_inspection_mysql_shape | parsytec_surface_defects | defect_class       | surface                |        1352 |  68.042 |
+| src_inspection_mysql_shape | parsytec_surface_defects | defect_class       | edge                   |         341 |  17.162 |
+| src_inspection_mysql_shape | parsytec_surface_defects | defect_class       | shape                  |         294 |  14.796 |
+| src_inspection_mysql_shape | parsytec_surface_defects | defect_code        | PINHOLE                |         351 |  17.665 |
+| src_inspection_mysql_shape | parsytec_surface_defects | defect_code        | SCALE                  |         347 |  17.464 |
+| src_inspection_mysql_shape | parsytec_surface_defects | defect_code        | EDGE_CRACK             |         341 |  17.162 |
+| src_inspection_mysql_shape | parsytec_surface_defects | defect_code        | ROLLED_IN              |         335 |  16.860 |
+| src_inspection_mysql_shape | parsytec_surface_defects | defect_code        | SCRATCH                |         319 |  16.054 |
+| src_inspection_mysql_shape | parsytec_surface_defects | defect_code        | WAVINESS               |         294 |  14.796 |
+| src_inspection_mysql_shape | parsytec_surface_defects | defect_name        | Pinhole                |         351 |  17.665 |
+| src_inspection_mysql_shape | parsytec_surface_defects | defect_name        | Scale                  |         347 |  17.464 |
+| src_inspection_mysql_shape | parsytec_surface_defects | defect_name        | Edge crack             |         341 |  17.162 |
+| src_inspection_mysql_shape | parsytec_surface_defects | defect_name        | Rolled-in scale        |         335 |  16.860 |
+| src_inspection_mysql_shape | parsytec_surface_defects | defect_name        | Scratch                |         319 |  16.054 |
+| src_inspection_mysql_shape | parsytec_surface_defects | defect_name        | Waviness               |         294 |  14.796 |
+| src_inspection_mysql_shape | parsytec_surface_defects | defect_severity    | medium                 |         699 |  35.179 |
+| src_inspection_mysql_shape | parsytec_surface_defects | defect_severity    | high                   |         648 |  32.612 |
+| src_inspection_mysql_shape | parsytec_surface_defects | defect_severity    | low                    |         640 |  32.209 |
+| src_inspection_mysql_shape | parsytec_surface_defects | inspection_device  | PARSYTEC-01            |        1987 | 100.000 |
+| src_inspection_mysql_shape | parsytec_surface_defects | side_code          | BOT                    |        1016 |  51.132 |
+| src_inspection_mysql_shape | parsytec_surface_defects | side_code          | TOP                    |         971 |  48.868 |
+| src_meltshop_pg            | heats                    | furnace_code       | EAF-02                 |         327 |  51.905 |
+| src_meltshop_pg            | heats                    | furnace_code       | EAF-01                 |         303 |  48.095 |
+| src_meltshop_pg            | heats                    | plant_code         | DEMO_PLANT             |         630 | 100.000 |
+| src_meltshop_pg            | heats                    | route_code         | EAF-LF-CCM-HSM-PKL     |         630 | 100.000 |
+| src_meltshop_pg            | heats                    | steel_grade        | HSLA-420               |         114 |  18.095 |
+| src_meltshop_pg            | heats                    | steel_grade        | DX51D                  |         109 |  17.302 |
+| src_meltshop_pg            | heats                    | steel_grade        | S235JR                 |         108 |  17.143 |
+| src_meltshop_pg            | heats                    | steel_grade        | S355MC                 |         105 |  16.667 |
+| src_meltshop_pg            | heats                    | steel_grade        | IF-LOW-C               |          98 |  15.556 |
+| src_meltshop_pg            | heats                    | steel_grade        | DP600                  |          96 |  15.238 |
+| src_meltshop_pg            | lf_treatment             | lf_code            | LF-02                  |         318 |  50.476 |
+| src_meltshop_pg            | lf_treatment             | lf_code            | LF-01                  |         312 |  49.524 |
+| src_meltshop_pg            | lf_treatment             | sample_result_code | OK                     |         579 |  91.905 |
+| src_meltshop_pg            | lf_treatment             | sample_result_code | CHECK                  |          51 |   8.095 |
+| src_pkl_mssql_shape        | pickle_orders            | inspection_result  | OK                     |        4970 |  87.654 |
+| src_pkl_mssql_shape        | pickle_orders            | inspection_result  | CHECK                  |         700 |  12.346 |
+| src_pkl_mssql_shape        | pickle_orders            | line_id            | PKL-02                 |        2857 |  50.388 |
+| src_pkl_mssql_shape        | pickle_orders            | line_id            | PKL-01                 |        2813 |  49.612 |
+| src_pkl_mssql_shape        | pickle_orders            | qa_decision        | Accepted               |        4970 |  87.654 |
+| src_pkl_mssql_shape        | pickle_orders            | qa_decision        | Downgraded             |         418 |   7.372 |
+| src_pkl_mssql_shape        | pickle_orders            | qa_decision        | Hold                   |         219 |   3.862 |
+| src_pkl_mssql_shape        | pickle_orders            | qa_decision        | Rejected               |          63 |   1.111 |
+| src_pkl_mssql_shape        | qa_lab_results           | result_status      | OK                     |       16359 |  96.173 |
+| src_pkl_mssql_shape        | qa_lab_results           | result_status      | CHECK                  |         651 |   3.827 |
+| src_pkl_mssql_shape        | qa_lab_results           | test_code          | ROUGHNESS              |        5670 |  33.333 |
+| src_pkl_mssql_shape        | qa_lab_results           | test_code          | THK                    |        5670 |  33.333 |
+| src_pkl_mssql_shape        | qa_lab_results           | test_code          | WIDTH                  |        5670 |  33.333 |
+| src_pkl_mssql_shape        | qa_lab_results           | unit_code          | mm                     |       11340 |  66.667 |
+| src_pkl_mssql_shape        | qa_lab_results           | unit_code          | um                     |        5670 |  33.333 |
++----------------------------+--------------------------+--------------------+------------------------+-------------+---------+
+(102 rows)
+
+
+================================================================
+SECTION E - IDENTIFIER SHAPE. DIGITS -> 9, LETTERS -> A.
+A GENERATOR THAT INVENTS ITS OWN KEY FORMAT BREAKS EVERY LATER
+CROSS-LAYER IDENTITY CHECK.
+================================================================
++---------------------------------------------------+--------------+-------------+--------------+
+|                    column_ref                     |    shape     | occurrences |   example    |
++---------------------------------------------------+--------------+-------------+--------------+
+| src_caster_oracle_shape.cast_pieces.piece_id      | AAA9999999   |        5670 | SLB0000101   |
+| src_caster_oracle_shape.cast_sequence.sequence_no | AAA99999     |         630 | SEQ00001     |
+| src_hsm_oracle_shape.hsm_coils.coil_id            | A9999999     |        5670 | C0000001     |
+| src_meltshop_pg.heats.heat_no                     | A999999999   |         630 | H202600001   |
+| src_pkl_mssql_shape.pickle_orders.customer_code   | AAAA-999     |        5670 | CUST-100     |
+| src_pkl_mssql_shape.pickle_orders.order_id        | AAA-A9999999 |        5670 | PKL-C0000001 |
++---------------------------------------------------+--------------+-------------+--------------+
+(6 rows)
+
+
+================================================================
+SECTION F - PARENT-CHILD CARDINALITY. THE DISTRIBUTION, NOT THE
+AVERAGE. EXACTLY NINE PER HEAT AND A MEAN OF NINE ARE DIFFERENT
+PLANTS.
+================================================================
+--- slabs per heat ---
 +----------+---------+
 | children | parents |
 +----------+---------+
@@ -126,6 +276,7 @@ DO
 +----------+---------+
 (1 row)
 
+--- pieces per sequence ---
 +----------+---------+
 | children | parents |
 +----------+---------+
@@ -133,6 +284,7 @@ DO
 +----------+---------+
 (1 row)
 
+--- coils per heat ---
 +----------+---------+
 | children | parents |
 +----------+---------+
@@ -140,6 +292,7 @@ DO
 +----------+---------+
 (1 row)
 
+--- passes per coil ---
 +----------+---------+
 | children | parents |
 +----------+---------+
@@ -147,6 +300,7 @@ DO
 +----------+---------+
 (1 row)
 
+--- qa rows per coil ---
 +----------+---------+
 | children | parents |
 +----------+---------+
@@ -154,6 +308,7 @@ DO
 +----------+---------+
 (1 row)
 
+--- defects per coil, INCLUDING coils with none ---
 +---------+-------+
 | defects | coils |
 +---------+-------+
@@ -164,6 +319,7 @@ DO
 +---------+-------+
 (4 rows)
 
+--- lf treatments per heat ---
 +----------+---------+
 | children | parents |
 +----------+---------+
@@ -171,6 +327,11 @@ DO
 +----------+---------+
 (1 row)
 
+
+================================================================
+SECTION G - GENEALOGY CONSERVATION
+================================================================
+--- referential completeness ---
 +--------------------------------------------+------------+
 |                 check_name                 | violations |
 +--------------------------------------------+------------+
@@ -182,27 +343,31 @@ DO
 +--------------------------------------------+------------+
 (5 rows)
 
-+-------------+-------------+-------------+
-| min_density | avg_density | max_density |
-+-------------+-------------+-------------+
-|      4078.6 |      8612.4 |     17390.6 |
-+-------------+-------------+-------------+
+--- slab weight against its dimensions, implied density kg per m3 ---
++-------------+-------------+-------------+------------+
+| min_density | avg_density | max_density | sd_density |
++-------------+-------------+-------------+------------+
+|      4078.6 |      8612.4 |     17390.6 |     2274.4 |
++-------------+-------------+-------------+------------+
 (1 row)
 
-+-----------+-----------+-----------+
-| min_ratio | avg_ratio | max_ratio |
-+-----------+-----------+-----------+
-|    0.4077 |    0.8563 |    1.5774 |
-+-----------+-----------+-----------+
+--- coil weight against its slab weight ---
++-----------+-----------+-----------+----------+
+| min_ratio | avg_ratio | max_ratio | sd_ratio |
++-----------+-----------+-----------+----------+
+|    0.4077 |    0.8563 |    1.5774 |   0.2388 |
++-----------+-----------+-----------+----------+
 (1 row)
 
-+-----------+-----------+-----------+
-| min_ratio | avg_ratio | max_ratio |
-+-----------+-----------+-----------+
-|    1.0995 |    1.3842 |    1.6504 |
-+-----------+-----------+-----------+
+--- heat weight against the sum of its slabs ---
++-----------+-----------+-----------+----------+
+| min_ratio | avg_ratio | max_ratio | sd_ratio |
++-----------+-----------+-----------+----------+
+|    1.0995 |    1.3842 |    1.6504 |   0.1011 |
++-----------+-----------+-----------+----------+
 (1 row)
 
+--- HSM target against actual deviation ---
 +--------------+------------+--------------+------------+--------------+------------+
 | mean_thk_dev | sd_thk_dev | mean_wid_dev | sd_wid_dev | mean_fdt_dev | sd_fdt_dev |
 +--------------+------------+--------------+------------+--------------+------------+
@@ -210,6 +375,7 @@ DO
 +--------------+------------+--------------+------------+--------------+------------+
 (1 row)
 
+--- rolling force by stand, the mill profile ---
 +----------+--------+------------+----------+------------+-----------+
 | stand_no | passes | mean_force | mean_gap | mean_speed | mean_temp |
 +----------+--------+------------+----------+------------+-----------+
@@ -223,6 +389,10 @@ DO
 +----------+--------+------------+----------+------------+-----------+
 (7 rows)
 
+
+================================================================
+SECTION H - TIMESTAMP ORDERING PER UNIT
+================================================================
 +--------------------------------------------+------------+
 |                 check_name                 | violations |
 +--------------------------------------------+------------+
@@ -236,6 +406,7 @@ DO
 +--------------------------------------------+------------+
 (7 rows)
 
+--- production rhythm: gap between consecutive heats, seconds ---
 +---------+------------+----------+---------+
 | min_gap | median_gap | mean_gap | max_gap |
 +---------+------------+----------+---------+
@@ -243,6 +414,10 @@ DO
 +---------+------------+----------+---------+
 (1 row)
 
+
+================================================================
+SECTION I - TEXT LENGTH PROFILE FOR HIGH-CARDINALITY TEXT
+================================================================
 +----------------------------+--------------------------+--------------------+---------+---------+-----------------+
 |        schema_name         |        table_name        |    column_name     | min_len | max_len | distinct_values |
 +----------------------------+--------------------------+--------------------+---------+---------+-----------------+
@@ -294,3 +469,7 @@ DO
 +----------------------------+--------------------------+--------------------+---------+---------+-----------------+
 (45 rows)
 
+
+================================================================
+END OF CAPTURE PROFILE
+================================================================

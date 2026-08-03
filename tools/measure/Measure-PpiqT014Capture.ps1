@@ -96,7 +96,14 @@ if ($null -eq $psql) { exit 2 }
 Write-Host "psql       : $psql"
 
 $stamp     = Get-Date -Format "yyyyMMdd_HHmmss"
-$outFolder = Join-Path $repoRoot $OutDir
+# -OutDir may be ABSOLUTE. The T-014 proof runner passes a scratch folder under
+# TEMP so the presentation evidence folder is not polluted. Join-Path does not
+# detect an absolute second argument and would build 'C:\Repo\C:\Users\...',
+# leaving the evidence somewhere the caller never looks.
+$outFolder = $OutDir
+if (-not [System.IO.Path]::IsPathRooted($OutDir)) {
+    $outFolder = Join-Path $repoRoot $OutDir
+}
 if (-not (Test-Path -LiteralPath $outFolder)) {
     New-Item -ItemType Directory -Path $outFolder -Force | Out-Null
 }
@@ -329,18 +336,21 @@ LEFT JOIN src_hsm_oracle_shape.hsm_coils c ON c.coil_id = d.coil_id WHERE c.coil
 \qecho --- slab weight against its dimensions, implied density kg per m3 ---
 SELECT round(min(weight_kg / NULLIF(width_mm*thickness_mm*length_mm/1e9, 0)), 1) AS min_density,
        round(avg(weight_kg / NULLIF(width_mm*thickness_mm*length_mm/1e9, 0)), 1) AS avg_density,
-       round(max(weight_kg / NULLIF(width_mm*thickness_mm*length_mm/1e9, 0)), 1) AS max_density
+       round(max(weight_kg / NULLIF(width_mm*thickness_mm*length_mm/1e9, 0)), 1) AS max_density,
+       round(coalesce(stddev_samp(weight_kg / NULLIF(width_mm*thickness_mm*length_mm/1e9, 0)), 0), 1) AS sd_density
 FROM src_caster_oracle_shape.cast_pieces;
 
 \qecho --- coil weight against its slab weight ---
 SELECT round(min(c.coil_weight_kg / NULLIF(p.weight_kg,0))::numeric, 4) AS min_ratio,
        round(avg(c.coil_weight_kg / NULLIF(p.weight_kg,0))::numeric, 4) AS avg_ratio,
-       round(max(c.coil_weight_kg / NULLIF(p.weight_kg,0))::numeric, 4) AS max_ratio
+       round(max(c.coil_weight_kg / NULLIF(p.weight_kg,0))::numeric, 4) AS max_ratio,
+       round(coalesce(stddev_samp(c.coil_weight_kg / NULLIF(p.weight_kg,0)), 0)::numeric, 4) AS sd_ratio
 FROM src_hsm_oracle_shape.hsm_coils c
 JOIN src_caster_oracle_shape.cast_pieces p ON p.piece_id = c.input_piece_id;
 
 \qecho --- heat weight against the sum of its slabs ---
-SELECT round(min(ratio),4) AS min_ratio, round(avg(ratio),4) AS avg_ratio, round(max(ratio),4) AS max_ratio
+SELECT round(min(ratio),4) AS min_ratio, round(avg(ratio),4) AS avg_ratio, round(max(ratio),4) AS max_ratio,
+       round(coalesce(stddev_samp(ratio), 0),4) AS sd_ratio
 FROM (
   SELECT h.heat_no, (sum(p.weight_kg)/1000.0) / NULLIF(h.heat_weight_ton,0) AS ratio
   FROM src_meltshop_pg.heats h
@@ -525,6 +535,19 @@ Write-Host "Non-ASCII  : $nonAscii"
 if ($nonAscii -gt 0) {
     Write-Host "[FAIL] $nonAscii non-ASCII characters in the evidence file."
     exit 4
+}
+
+if (-not (Test-Path -LiteralPath $evidencePath)) {
+    Write-Host ""
+    Write-Host "[FAIL] the evidence file does not exist at the path this script"
+    Write-Host "       reported. Nothing was captured."
+    Write-Host ("       expected: " + $evidencePath)
+    exit 5
+}
+if ((Get-Item -LiteralPath $evidencePath).Length -lt 1024) {
+    Write-Host ""
+    Write-Host "[FAIL] the evidence file is under 1 KB. Nothing useful was captured."
+    exit 5
 }
 
 Write-Host ""
