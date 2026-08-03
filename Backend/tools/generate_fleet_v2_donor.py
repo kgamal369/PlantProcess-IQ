@@ -361,6 +361,141 @@ def largest_remainder(shares, total):
     return base
 
 
+
+# ================================================================== T-017 TARGET
+# Two additions to the EMULATED CUSTOMER WORLD, never to the product.
+
+# --- the plant timezone, DERIVED not assumed -----------------------------------
+# CAPTURE section C shows offsets of +02 in early April and +03 from late April.
+# That is Egypt: EET +02 with EEST +03 from the last Friday of April, which in
+# 2026 is the 24th. The plant is on Africa/Cairo. Shift derivation must honour the
+# switch or every night shift after 24 April is an hour wrong.
+PLANT_TZ_NAME = "Africa/Cairo"
+DST_START_UTC = datetime(2026, 4, 23, 22, 0, 0, tzinfo=timezone.utc)
+
+
+def plant_offset_hours(dt):
+    return 3 if dt.astimezone(timezone.utc) >= DST_START_UTC else 2
+
+
+def plant_local(dt):
+    """The wall clock a plant operator would read."""
+    return dt.astimezone(timezone(timedelta(hours=plant_offset_hours(dt))))
+
+
+# --- shift as BEHAVIOUR, not a label ------------------------------------------
+# v2.6 correction 3: do NOT add a shift column to a source that would not
+# realistically record one. Generate the behaviour; expose the field in ONE place;
+# derive it everywhere else in a saved transformation from local timestamp plus
+# this calendar.
+SHIFTS = (
+    # code, start hour, end hour, parameter spread multiplier, night bias
+    ("A", 6, 14, 0.85, 0.0),    # day, conservative, lower variance
+    ("B", 14, 22, 1.00, 0.0),   # evening, the reference
+    ("C", 22, 6, 1.25, -1.0),   # night, wider variance and a slightly cooler bias
+)
+CREWS = ("CREW-1", "CREW-2", "CREW-3", "CREW-4")
+ROTATION_DAYS = 7
+
+
+def shift_of(dt):
+    h = plant_local(dt).hour
+    for code, a, b, spread, bias in SHIFTS:
+        if a < b:
+            if a <= h < b:
+                return code, spread, bias
+        else:
+            if h >= a or h < b:
+                return code, spread, bias
+    return SHIFTS[1][0], SHIFTS[1][3], SHIFTS[1][4]
+
+
+def crew_of(dt, shift_code):
+    """Four crews on a weekly rotation. The crew is a property of the calendar,
+    not of the row, which is what makes the calendar worth reading."""
+    week = (plant_local(dt) - plant_local(T0_TAP)).days // ROTATION_DAYS
+    base = {"A": 0, "B": 1, "C": 2}[shift_code]
+    return CREWS[(base + week) % len(CREWS)]
+
+
+# --- grade specification -------------------------------------------------------
+# Six grades x six elements. min_value is NULL for sulphur and phosphorus, which
+# carry a MAXIMUM ONLY - that is why C12 gets two conditional-format rule shapes
+# rather than one, per target specification section 4.
+# Values are ordinary steel-standard bands. Generation aims at target_value with a
+# spread that puts about five percent of heats outside their own band, so C12 has
+# both states to colour.
+GRADE_SPEC = {
+    "S235JR":   {"C":  (0.10, 0.15, 0.20), "Mn": (0.40, 0.90, 1.40),
+                 "Si": (None, 0.20, 0.30), "P":  (None, 0.018, 0.035),
+                 "S":  (None, 0.018, 0.035), "Al": (0.015, 0.035, 0.060)},
+    "S355MC":   {"C":  (None, 0.090, 0.120), "Mn": (0.80, 1.20, 1.50),
+                 "Si": (None, 0.25, 0.50), "P":  (None, 0.012, 0.025),
+                 "S":  (None, 0.010, 0.020), "Al": (0.015, 0.040, 0.070)},
+    "DX51D":    {"C":  (None, 0.060, 0.180), "Mn": (None, 0.35, 0.60),
+                 "Si": (None, 0.10, 0.50), "P":  (None, 0.015, 0.030),
+                 "S":  (None, 0.014, 0.028), "Al": (0.020, 0.045, 0.070)},
+    "HSLA-420": {"C":  (None, 0.080, 0.120), "Mn": (1.00, 1.30, 1.60),
+                 "Si": (None, 0.30, 0.50), "P":  (None, 0.012, 0.025),
+                 "S":  (None, 0.009, 0.018), "Al": (0.020, 0.040, 0.065)},
+    "IF-LOW-C": {"C":  (None, 0.0040, 0.0100), "Mn": (0.10, 0.20, 0.35),
+                 "Si": (None, 0.020, 0.050), "P":  (None, 0.008, 0.014),
+                 "S":  (None, 0.006, 0.012), "Al": (0.035, 0.055, 0.080)},
+    "DP600":    {"C":  (0.08, 0.11, 0.15), "Mn": (1.30, 1.60, 2.00),
+                 "Si": (None, 0.30, 0.60), "P":  (None, 0.009, 0.018),
+                 "S":  (None, 0.005, 0.010), "Al": (0.020, 0.045, 0.070)},
+}
+SPEC_ELEMENTS = ("C", "Mn", "Si", "P", "S", "Al")
+SPEC_COLUMN = {"C": "carbon_pct", "Mn": "manganese_pct", "Si": "silicon_pct",
+               "P": "phosphorus_pct", "S": "sulphur_pct", "Al": "aluminium_pct"}
+# A small share of heats miss their specification. This is DELIBERATE and
+# assigned, not left to the draw: relying on a tail to produce a violation makes
+# the acceptance depend on the seed, and a first run had DX51D manganese at zero
+# out of 109 heats - about an 8 percent event, so it would pass on some seeds and
+# fail on others. A validation that depends on luck is not a validation.
+OFF_SPEC_RATE = 0.04
+
+
+def spec_draw(rnd, band):
+    """In-band draw. The spread is deliberately tight - reach/3 - so a conforming
+    heat conforms, and every violation in the data is one this generator chose."""
+    lo, target, hi = band
+    reach = (hi - target) if lo is None else min(hi - target, target - lo)
+    sd = reach / 3.0 if reach > 0 else abs(target) * 0.02
+    v = rnd.gauss(target, sd)
+    if lo is not None:
+        v = max(v, lo + reach * 0.02)
+    v = min(v, hi - reach * 0.02)
+    return max(v, 0.0)
+
+
+def spec_violate(rnd, band):
+    """Push a value just outside its band. Just outside, not absurd: an off-spec
+    heat is a process miss, not a different alloy."""
+    lo, target, hi = band
+    if lo is not None and rnd.random() < 0.4:
+        return max(lo * 0.92, 0.0)
+    return hi * rnd.uniform(1.03, 1.12)
+
+
+FLEET_ALTERS_T017 = (
+    # The ONE place the field is exposed. A meltshop Level 2 heat record carries
+    # the operating crew because the heat sheet is signed off by it; a rolling
+    # mill pass measurement does not, so it is derived there instead.
+    "ALTER TABLE src_meltshop_pg.heats ADD COLUMN IF NOT EXISTS crew_code text;",
+    "CREATE TABLE IF NOT EXISTS src_meltshop_pg.grade_specification ("
+    "grade_code text NOT NULL, element_code text NOT NULL, min_value numeric(8,5), "
+    "target_value numeric(8,5) NOT NULL, max_value numeric(8,5) NOT NULL, "
+    "unit_code text NOT NULL, effective_from date NOT NULL, effective_to date, "
+    "PRIMARY KEY (grade_code, element_code));",
+    "CREATE TABLE IF NOT EXISTS src_meltshop_pg.shift_calendar ("
+    "shift_code text NOT NULL, start_local_time time NOT NULL, "
+    "end_local_time time NOT NULL, crew_code text NOT NULL, "
+    "effective_from date NOT NULL, effective_to date NOT NULL, "
+    "timezone text NOT NULL, PRIMARY KEY (shift_code, effective_from));",
+)
+
+
 def build_pools(rnd):
     """One exact pool per interval, shuffled once. Popping from it reproduces the
     measured distribution exactly rather than approximately."""
@@ -399,6 +534,13 @@ def ts(dt):
     return "'" + dt.astimezone(TZ).strftime("%Y-%m-%d %H:%M:%S%z") + "'"
 
 
+def ts_plant(dt):
+    """fleet-v2 emits the plant's own offset, so it reads +02 before the DST
+    switch and +03 after, exactly as the captured donor does. The instant is
+    unchanged; only the displayed offset moves."""
+    return "'" + plant_local(dt).strftime("%Y-%m-%d %H:%M:%S%z") + "'"
+
+
 class Writer(object):
     def __init__(self, handle, batch=500):
         self.h = handle
@@ -424,6 +566,8 @@ def generate(seed, mode="capture"):
     pools = build_pools(rnd)
     data = {}
 
+    grade_seen = {}
+    off_spec_seq = [0]
     grade_pool = weighted_pool(GRADES, rnd)
     tundish_pool = weighted_pool(TUNDISH, rnd)
     furnace_pool = weighted_pool(FURNACE, rnd)
@@ -463,18 +607,48 @@ def generate(seed, mode="capture"):
             ts(tap_end + timedelta(seconds=UPDATE_LAG_S["heat"])),
         ])
         if mode == "fleet-v2":
-            s_band, p_band, al_band = FLEET_CHEMISTRY[grade]
+            # T-017: chemistry is produced TO GRADE. Leaving it ungrouped would
+            # put most heats outside most bands, and a plant that produces mostly
+            # non-conforming steel is not a plant. This is the distribution the
+            # SPECIFICATION implies, not a hidden relationship invented beyond it.
+            spec = GRADE_SPEC[grade]
+            vals = dict((e, spec_draw(rnd, spec[e])) for e in SPEC_ELEMENTS)
+            # every OFF_SPEC_RATE-th heat of a grade misses on ONE element, and
+            # the element cycles so every one of the six is violated somewhere in
+            # the plant rather than only the widest-banded ones
+            seen = grade_seen.get(grade, 0)
+            grade_seen[grade] = seen + 1
+            step = max(int(round(1.0 / OFF_SPEC_RATE)), 1)
+            if seen % step == step - 1:
+                # the cycle is GLOBAL, not per grade. A per-grade cycle only ever
+                # reached the first four elements, because four off-spec heats per
+                # grade cannot walk a six-element list - the acceptance check
+                # caught sulphur and aluminium never being violated at all.
+                el = SPEC_ELEMENTS[off_spec_seq[0] % len(SPEC_ELEMENTS)]
+                off_spec_seq[0] += 1
+                vals[el] = spec_violate(rnd, spec[el])
+            shift_code, spread, bias = shift_of(tap_start)
+            heat_rows[-1][9] = "%.2f" % norm(rnd, 1647.7157 + bias, 21.8501 * spread,
+                                             1577.38, 1711.43, 2)
+            heat_rows[-1][12] = "%.5f" % vals["C"]
+            heat_rows[-1][13] = "%.5f" % vals["Mn"]
+            heat_rows[-1][14] = "%.5f" % vals["Si"]
             heat_rows[-1].extend([
-                "%.5f" % unif(rnd, s_band[0], s_band[1], 5),
-                "%.5f" % unif(rnd, p_band[0], p_band[1], 5),
-                "%.5f" % unif(rnd, al_band[0], al_band[1], 5),
+                "%.5f" % vals["S"],
+                "%.5f" % vals["P"],
+                "%.5f" % vals["Al"],
+                q(crew_of(tap_start, shift_code)),
             ])
+            rec["shift"] = shift_code
+            rec["spread"] = spread
+            rec["bias"] = bias
     data["src_meltshop_pg.heats"] = (
         ["heat_no", "plant_code", "furnace_code", "tap_start_utc", "tap_end_utc",
          "steel_grade", "route_code", "heat_weight_ton", "target_temp_c",
          "actual_temp_c", "oxygen_nm3", "power_kwh", "carbon_pct",
          "manganese_pct", "silicon_pct", "source_updated_at_utc"]
-        + (["sulphur_pct", "phosphorus_pct", "aluminium_pct"] if mode == "fleet-v2" else []),
+        + (["sulphur_pct", "phosphorus_pct", "aluminium_pct", "crew_code"]
+           if mode == "fleet-v2" else []),
         heat_rows)
 
     # ---------------------------------------------------------- lf_treatment
@@ -544,9 +718,12 @@ def generate(seed, mode="capture"):
                 "%.2f" % width, "%.2f" % thick, "%.2f" % length, "%.3f" % weight,
                 ts(cut),
                 "%.4f" % norm(rnd, -0.0841, 2.5241, -8.7648, 9.0856, 4),
-                "%.4f" % norm(rnd, 1.3497, 0.1221, 0.9114, 1.8262, 4),
+                "%.4f" % norm(rnd, 1.3497 + (0.0 if mode != "fleet-v2" else h.get("bias", 0.0) * 0.02),
+                              0.1221 * (1.0 if mode != "fleet-v2" else h.get("spread", 1.0)),
+                              0.9114, 1.8262, 4),
                 # superheat goes NEGATIVE at the low tail - physically impossible
-                "%.4f" % norm(rnd, 23.9157, 7.8133, -3.0036, 51.4916, 4),
+                "%.4f" % norm(rnd, 23.9157, 7.8133 * (1.0 if mode != "fleet-v2" else h.get("spread", 1.0)),
+                              -3.0036, 51.4916, 4),
                 ts(cut + timedelta(seconds=UPDATE_LAG_S["piece"])),
             ])
     data["src_caster_oracle_shape.cast_pieces"] = (
@@ -579,7 +756,9 @@ def generate(seed, mode="capture"):
                 q(coil_id), q(MILL_LINE), q(piece["piece_id"]), q(h["heat_no"]),
                 ts(rs), ts(re_),
                 "%.2f" % TARGET_FDT_C,
-                "%.2f" % norm(rnd, 874.9533, 21.8351, 798.34, 958.13, 2),
+                "%.2f" % norm(rnd, 874.9533 + (0.0 if mode != "fleet-v2" else h.get("bias", 0.0) * 3.0),
+                              21.8351 * (1.0 if mode != "fleet-v2" else h.get("spread", 1.0)),
+                              798.34, 958.13, 2),
                 "%.2f" % TARGET_CT_C,
                 "%.2f" % norm(rnd, 609.3825, 27.6698, 491.56, 729.02, 2),
                 "%.4f" % tgt_thk,
@@ -765,6 +944,67 @@ def generate(seed, mode="capture"):
             str(i + 1), q(equip), q(equip.split("-")[0]), ts(st), ts(en),
             str(dur), q(code), q(text), q(category), ts(en),
         ])
+    if mode == "fleet-v2":
+        # T-017 acceptance, asserted here rather than hoped for downstream
+        cols_h, rows_h = data["src_meltshop_pg.heats"]
+        gi = cols_h.index("steel_grade")
+        viol_by_grade = {}
+        viol_by_element = {}
+        for r in rows_h:
+            gr = r[gi].strip("'")
+            viol_by_grade.setdefault(gr, [0, 0])
+            out = False
+            for el in SPEC_ELEMENTS:
+                lo, tgt, hi = GRADE_SPEC[gr][el]
+                v = float(r[cols_h.index(SPEC_COLUMN[el])])
+                if v > hi or (lo is not None and v < lo):
+                    out = True
+                    viol_by_element[el] = viol_by_element.get(el, 0) + 1
+            viol_by_grade[gr][0 if out else 1] += 1
+        problems = []
+        for gr, (out_n, in_n) in sorted(viol_by_grade.items()):
+            if out_n == 0:
+                problems.append("%s has no heat outside its band" % gr)
+            if in_n == 0:
+                problems.append("%s has no heat inside its band" % gr)
+        for el in SPEC_ELEMENTS:
+            if viol_by_element.get(el, 0) == 0:
+                problems.append("element %s is never violated anywhere" % el)
+        if problems:
+            raise SystemExit("T-017 ACCEPTANCE FAILED:\n  " + "\n  ".join(problems))
+
+        spec_rows = []
+        for grade in sorted(GRADE_SPEC):
+            for el in SPEC_ELEMENTS:
+                lo, tgt, hi = GRADE_SPEC[grade][el]
+                spec_rows.append([
+                    q(grade), q(el),
+                    "NULL" if lo is None else "%.5f" % lo,
+                    "%.5f" % tgt, "%.5f" % hi, q("pct"),
+                    q("2026-01-01"), "NULL",
+                ])
+        data["src_meltshop_pg.grade_specification"] = (
+            ["grade_code", "element_code", "min_value", "target_value",
+             "max_value", "unit_code", "effective_from", "effective_to"], spec_rows)
+
+        cal_rows = []
+        first = plant_local(T0_TAP).date()
+        last = plant_local(heats[-1]["tap_start"]).date()
+        weeks = ((last - first).days // ROTATION_DAYS) + 1
+        for w in range(weeks):
+            eff_from = first + timedelta(days=w * ROTATION_DAYS)
+            eff_to = eff_from + timedelta(days=ROTATION_DAYS - 1)
+            for idx, (code, a, b, _sp, _bi) in enumerate(SHIFTS):
+                cal_rows.append([
+                    q(code), q("%02d:00:00" % a), q("%02d:00:00" % b),
+                    q(CREWS[(idx + w) % len(CREWS)]),
+                    q(eff_from.isoformat()), q(eff_to.isoformat()),
+                    q(PLANT_TZ_NAME),
+                ])
+        data["src_meltshop_pg.shift_calendar"] = (
+            ["shift_code", "start_local_time", "end_local_time", "crew_code",
+             "effective_from", "effective_to", "timezone"], cal_rows)
+
     data["src_inspection_mysql_shape.downtime_events"] = (
         ["downtime_id", "equipment_code", "source_line", "start_time_utc",
          "end_time_utc", "duration_seconds", "reason_code", "reason_text",
@@ -772,6 +1012,8 @@ def generate(seed, mode="capture"):
 
     return data
 
+
+ORDER_T017 = ["src_meltshop_pg.grade_specification", "src_meltshop_pg.shift_calendar"]
 
 ORDER = [
     "src_meltshop_pg.heats",
@@ -867,14 +1109,14 @@ def main():
             fh.write("-- T-016 adds the chemistry columns the target specification\n")
             fh.write("-- names. 110_phase1_demo_source_shapes.sql is NOT edited: it\n")
             fh.write("-- describes the donor schemas, which are scheduled for retirement.\n")
-            for a in FLEET_ALTERS:
+            for a in FLEET_ALTERS + FLEET_ALTERS_T017:
                 fh.write(a + "\n")
             fh.write("\n")
-        for name in ORDER:
+        for name in ORDER + ([n for n in ORDER_T017 if n in data]):
             fh.write("DELETE FROM " + name + ";\n")
         fh.write("\n")
         w = Writer(fh)
-        for name in ORDER:
+        for name in ORDER + ([n for n in ORDER_T017 if n in data]):
             cols, rows = data[name]
             fh.write("-- " + name + " : " + str(len(rows)) + " rows\n")
             w.table(name, cols, rows)
