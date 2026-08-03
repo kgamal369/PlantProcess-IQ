@@ -1,0 +1,359 @@
+================================================================
+PPIQ T-013 - STAGED SOURCE MEASUREMENT (READ-ONLY)
+================================================================
+Generated At : 2026-08-03 13:22:33
+Database     : ppiq_presentation on 127.0.0.1:5432
+psql exit    : 0
+
+This file is INPUT to the T-013 three-way reconciliation. Section 2 is
+the one that decides KEEP against EXTEND: a column that exists in the
+DDL but is entirely NULL has never carried data and cannot serve a
+chart, so it is an EXTEND row with a measured reason.
+================================================================
+
++----------------------------+--------------------------+-----------+
+|        schema_name         |        table_name        | row_count |
++----------------------------+--------------------------+-----------+
+| src_caster_oracle_shape    | cast_pieces              |      5670 |
+| src_caster_oracle_shape    | cast_sequence            |       630 |
+| src_hsm_oracle_shape       | hsm_coils                |      5670 |
+| src_hsm_oracle_shape       | hsm_pass_measurements    |     39690 |
+| src_inspection_mysql_shape | downtime_events          |       210 |
+| src_inspection_mysql_shape | parsytec_surface_defects |      1987 |
+| src_meltshop_pg            | heats                    |       630 |
+| src_meltshop_pg            | lf_treatment             |       630 |
+| src_pkl_mssql_shape        | pickle_orders            |      5670 |
+| src_pkl_mssql_shape        | qa_lab_results           |     17010 |
++----------------------------+--------------------------+-----------+
+(10 rows)
+
++----------------------------+--------------------------+------------------------+--------------------------+-------------+------------+---------------+-----------------+
+|        table_schema        |        table_name        |      column_name       |        data_type         | is_nullable | total_rows | non_null_rows | distinct_values |
++----------------------------+--------------------------+------------------------+--------------------------+-------------+------------+---------------+-----------------+
+| src_caster_oracle_shape    | cast_pieces              | piece_id               | text                     | NO          |       5670 |          5670 |            5670 |
+| src_caster_oracle_shape    | cast_pieces              | heat_no                | text                     | NO          |       5670 |          5670 |             630 |
+| src_caster_oracle_shape    | cast_pieces              | sequence_no            | text                     | NO          |       5670 |          5670 |             630 |
+| src_caster_oracle_shape    | cast_pieces              | caster_id              | text                     | NO          |       5670 |          5670 |               2 |
+| src_caster_oracle_shape    | cast_pieces              | strand_no              | integer                  | NO          |       5670 |          5670 |               2 |
+| src_caster_oracle_shape    | cast_pieces              | slab_no                | integer                  | NO          |       5670 |          5670 |               9 |
+| src_caster_oracle_shape    | cast_pieces              | cut_time               | timestamp with time zone | NO          |       5670 |          5670 |            5269 |
+| src_caster_oracle_shape    | cast_pieces              | width_mm               | numeric                  | YES         |       5670 |          5670 |            3870 |
+| src_caster_oracle_shape    | cast_pieces              | thickness_mm           | numeric                  | YES         |       5670 |          5670 |            1191 |
+| src_caster_oracle_shape    | cast_pieces              | length_mm              | numeric                  | YES         |       5670 |          5670 |            5619 |
+| src_caster_oracle_shape    | cast_pieces              | weight_kg              | numeric                  | YES         |       5670 |          5670 |            5668 |
+| src_caster_oracle_shape    | cast_pieces              | mould_level_avg        | numeric                  | YES         |       5670 |          5670 |            5502 |
+| src_caster_oracle_shape    | cast_pieces              | casting_speed_avg      | numeric                  | YES         |       5670 |          5670 |            3290 |
+| src_caster_oracle_shape    | cast_pieces              | superheat_c            | numeric                  | YES         |       5670 |          5670 |            5601 |
+| src_caster_oracle_shape    | cast_pieces              | last_update_ts         | timestamp with time zone | NO          |       5670 |          5670 |            5269 |
+| src_caster_oracle_shape    | cast_sequence            | sequence_no            | text                     | NO          |        630 |           630 |             630 |
+| src_caster_oracle_shape    | cast_sequence            | caster_id              | text                     | NO          |        630 |           630 |               2 |
+| src_caster_oracle_shape    | cast_sequence            | tundish_no             | text                     | YES         |        630 |           630 |               6 |
+| src_caster_oracle_shape    | cast_sequence            | start_time             | timestamp with time zone | NO          |        630 |           630 |             630 |
+| src_caster_oracle_shape    | cast_sequence            | end_time               | timestamp with time zone | YES         |        630 |           630 |             630 |
+| src_caster_oracle_shape    | cast_sequence            | planned_grade          | text                     | YES         |        630 |           630 |               6 |
+| src_caster_oracle_shape    | cast_sequence            | actual_grade           | text                     | YES         |        630 |           630 |               6 |
+| src_caster_oracle_shape    | cast_sequence            | sequence_status        | text                     | YES         |        630 |           630 |               1 |
+| src_caster_oracle_shape    | cast_sequence            | last_update_ts         | timestamp with time zone | NO          |        630 |           630 |             630 |
+| src_hsm_oracle_shape       | hsm_coils                | coil_id                | text                     | NO          |       5670 |          5670 |            5670 |
+| src_hsm_oracle_shape       | hsm_coils                | input_piece_id         | text                     | NO          |       5670 |          5670 |            5670 |
+| src_hsm_oracle_shape       | hsm_coils                | heat_no                | text                     | YES         |       5670 |          5670 |             630 |
+| src_hsm_oracle_shape       | hsm_coils                | mill_line              | text                     | NO          |       5670 |          5670 |               1 |
+| src_hsm_oracle_shape       | hsm_coils                | rolling_start_time     | timestamp with time zone | NO          |       5670 |          5670 |            5340 |
+| src_hsm_oracle_shape       | hsm_coils                | rolling_end_time       | timestamp with time zone | YES         |       5670 |          5670 |            5335 |
+| src_hsm_oracle_shape       | hsm_coils                | target_fdt_c           | numeric                  | YES         |       5670 |          5670 |               1 |
+| src_hsm_oracle_shape       | hsm_coils                | actual_fdt_c           | numeric                  | YES         |       5670 |          5670 |            4062 |
+| src_hsm_oracle_shape       | hsm_coils                | target_ct_c            | numeric                  | YES         |       5670 |          5670 |               1 |
+| src_hsm_oracle_shape       | hsm_coils                | actual_ct_c            | numeric                  | YES         |       5670 |          5670 |            4335 |
+| src_hsm_oracle_shape       | hsm_coils                | target_thickness_mm    | numeric                  | YES         |       5670 |          5670 |            4027 |
+| src_hsm_oracle_shape       | hsm_coils                | actual_thickness_mm    | numeric                  | YES         |       5670 |          5670 |            4027 |
+| src_hsm_oracle_shape       | hsm_coils                | target_width_mm        | numeric                  | YES         |       5670 |          5670 |            3870 |
+| src_hsm_oracle_shape       | hsm_coils                | actual_width_mm        | numeric                  | YES         |       5670 |          5670 |            4126 |
+| src_hsm_oracle_shape       | hsm_coils                | coil_weight_kg         | numeric                  | YES         |       5670 |          5670 |            5668 |
+| src_hsm_oracle_shape       | hsm_coils                | last_update_ts         | timestamp with time zone | NO          |       5670 |          5670 |            5335 |
+| src_hsm_oracle_shape       | hsm_pass_measurements    | measurement_id         | bigint                   | NO          |      39690 |         39690 |           39690 |
+| src_hsm_oracle_shape       | hsm_pass_measurements    | coil_id                | text                     | NO          |      39690 |         39690 |            5670 |
+| src_hsm_oracle_shape       | hsm_pass_measurements    | stand_no               | integer                  | NO          |      39690 |         39690 |               7 |
+| src_hsm_oracle_shape       | hsm_pass_measurements    | sample_time            | timestamp with time zone | NO          |      39690 |         39690 |           26423 |
+| src_hsm_oracle_shape       | hsm_pass_measurements    | rolling_force_kn       | numeric                  | YES         |      39690 |         39690 |           39636 |
+| src_hsm_oracle_shape       | hsm_pass_measurements    | roll_gap_mm            | numeric                  | YES         |      39690 |         39690 |           38311 |
+| src_hsm_oracle_shape       | hsm_pass_measurements    | speed_mps              | numeric                  | YES         |      39690 |         39690 |           39151 |
+| src_hsm_oracle_shape       | hsm_pass_measurements    | temperature_c          | numeric                  | YES         |      39690 |         39690 |           12037 |
+| src_hsm_oracle_shape       | hsm_pass_measurements    | last_update_ts         | timestamp with time zone | NO          |      39690 |         39690 |           26423 |
+| src_inspection_mysql_shape | downtime_events          | downtime_id            | bigint                   | NO          |        210 |           210 |             210 |
+| src_inspection_mysql_shape | downtime_events          | equipment_code         | text                     | NO          |        210 |           210 |               9 |
+| src_inspection_mysql_shape | downtime_events          | source_line            | text                     | NO          |        210 |           210 |               5 |
+| src_inspection_mysql_shape | downtime_events          | reason_code            | text                     | NO          |        210 |           210 |               5 |
+| src_inspection_mysql_shape | downtime_events          | reason_text            | text                     | YES         |        210 |           210 |               5 |
+| src_inspection_mysql_shape | downtime_events          | downtime_category      | text                     | YES         |        210 |           210 |               4 |
+| src_inspection_mysql_shape | downtime_events          | start_time_utc         | timestamp with time zone | NO          |        210 |           210 |             209 |
+| src_inspection_mysql_shape | downtime_events          | end_time_utc           | timestamp with time zone | YES         |        210 |           210 |             210 |
+| src_inspection_mysql_shape | downtime_events          | duration_seconds       | integer                  | YES         |        210 |           210 |             204 |
+| src_inspection_mysql_shape | downtime_events          | updated_at_utc         | timestamp with time zone | NO          |        210 |           210 |             210 |
+| src_inspection_mysql_shape | parsytec_surface_defects | defect_row_id          | bigint                   | NO          |       1987 |          1987 |            1987 |
+| src_inspection_mysql_shape | parsytec_surface_defects | coil_id                | text                     | NO          |       1987 |          1987 |            1000 |
+| src_inspection_mysql_shape | parsytec_surface_defects | inspection_device      | text                     | NO          |       1987 |          1987 |               1 |
+| src_inspection_mysql_shape | parsytec_surface_defects | defect_code            | text                     | NO          |       1987 |          1987 |               6 |
+| src_inspection_mysql_shape | parsytec_surface_defects | defect_name            | text                     | YES         |       1987 |          1987 |               6 |
+| src_inspection_mysql_shape | parsytec_surface_defects | defect_class           | text                     | YES         |       1987 |          1987 |               3 |
+| src_inspection_mysql_shape | parsytec_surface_defects | defect_severity        | text                     | YES         |       1987 |          1987 |               3 |
+| src_inspection_mysql_shape | parsytec_surface_defects | side_code              | text                     | YES         |       1987 |          1987 |               2 |
+| src_inspection_mysql_shape | parsytec_surface_defects | position_start_m       | numeric                  | YES         |       1987 |          1987 |            1985 |
+| src_inspection_mysql_shape | parsytec_surface_defects | position_end_m         | numeric                  | YES         |       1987 |          1987 |            1986 |
+| src_inspection_mysql_shape | parsytec_surface_defects | width_position_mm      | numeric                  | YES         |       1987 |          1987 |            1986 |
+| src_inspection_mysql_shape | parsytec_surface_defects | confidence_pct         | numeric                  | YES         |       1987 |          1987 |            1980 |
+| src_inspection_mysql_shape | parsytec_surface_defects | event_time_utc         | timestamp with time zone | NO          |       1987 |          1987 |            1877 |
+| src_inspection_mysql_shape | parsytec_surface_defects | updated_at_utc         | timestamp with time zone | NO          |       1987 |          1987 |            1877 |
+| src_meltshop_pg            | heats                    | heat_no                | text                     | NO          |        630 |           630 |             630 |
+| src_meltshop_pg            | heats                    | plant_code             | text                     | NO          |        630 |           630 |               1 |
+| src_meltshop_pg            | heats                    | furnace_code           | text                     | NO          |        630 |           630 |               2 |
+| src_meltshop_pg            | heats                    | steel_grade            | text                     | NO          |        630 |           630 |               6 |
+| src_meltshop_pg            | heats                    | route_code             | text                     | NO          |        630 |           630 |               1 |
+| src_meltshop_pg            | heats                    | tap_start_utc          | timestamp with time zone | NO          |        630 |           630 |             630 |
+| src_meltshop_pg            | heats                    | tap_end_utc            | timestamp with time zone | YES         |        630 |           630 |             630 |
+| src_meltshop_pg            | heats                    | heat_weight_ton        | numeric                  | YES         |        630 |           630 |             625 |
+| src_meltshop_pg            | heats                    | target_temp_c          | numeric                  | YES         |        630 |           630 |               1 |
+| src_meltshop_pg            | heats                    | actual_temp_c          | numeric                  | YES         |        630 |           630 |             608 |
+| src_meltshop_pg            | heats                    | oxygen_nm3             | numeric                  | YES         |        630 |           630 |             630 |
+| src_meltshop_pg            | heats                    | power_kwh              | numeric                  | YES         |        630 |           630 |             630 |
+| src_meltshop_pg            | heats                    | carbon_pct             | numeric                  | YES         |        630 |           630 |             617 |
+| src_meltshop_pg            | heats                    | manganese_pct          | numeric                  | YES         |        630 |           630 |             626 |
+| src_meltshop_pg            | heats                    | silicon_pct            | numeric                  | YES         |        630 |           630 |             618 |
+| src_meltshop_pg            | heats                    | source_updated_at_utc  | timestamp with time zone | NO          |        630 |           630 |             630 |
+| src_meltshop_pg            | lf_treatment             | treatment_id           | bigint                   | NO          |        630 |           630 |             630 |
+| src_meltshop_pg            | lf_treatment             | heat_no                | text                     | NO          |        630 |           630 |             630 |
+| src_meltshop_pg            | lf_treatment             | lf_code                | text                     | NO          |        630 |           630 |               2 |
+| src_meltshop_pg            | lf_treatment             | treatment_start_utc    | timestamp with time zone | NO          |        630 |           630 |             630 |
+| src_meltshop_pg            | lf_treatment             | treatment_end_utc      | timestamp with time zone | YES         |        630 |           630 |             630 |
+| src_meltshop_pg            | lf_treatment             | argon_flow_nm3         | numeric                  | YES         |        630 |           630 |             628 |
+| src_meltshop_pg            | lf_treatment             | calcium_wire_m         | numeric                  | YES         |        630 |           630 |             627 |
+| src_meltshop_pg            | lf_treatment             | final_temp_c           | numeric                  | YES         |        630 |           630 |             591 |
+| src_meltshop_pg            | lf_treatment             | sample_result_code     | text                     | YES         |        630 |           630 |               2 |
+| src_meltshop_pg            | lf_treatment             | source_updated_at_utc  | timestamp with time zone | NO          |        630 |           630 |             630 |
+| src_pkl_mssql_shape        | pickle_orders            | order_id               | text                     | NO          |       5670 |          5670 |            5670 |
+| src_pkl_mssql_shape        | pickle_orders            | coil_id                | text                     | NO          |       5670 |          5670 |            5670 |
+| src_pkl_mssql_shape        | pickle_orders            | line_id                | text                     | NO          |       5670 |          5670 |               2 |
+| src_pkl_mssql_shape        | pickle_orders            | customer_code          | text                     | YES         |       5670 |          5670 |             899 |
+| src_pkl_mssql_shape        | pickle_orders            | entry_time_utc         | timestamp with time zone | NO          |       5670 |          5670 |            5308 |
+| src_pkl_mssql_shape        | pickle_orders            | exit_time_utc          | timestamp with time zone | YES         |       5670 |          5670 |            5352 |
+| src_pkl_mssql_shape        | pickle_orders            | acid_concentration_pct | numeric                  | YES         |       5670 |          5670 |            5398 |
+| src_pkl_mssql_shape        | pickle_orders            | bath_temperature_c     | numeric                  | YES         |       5670 |          5670 |            1878 |
+| src_pkl_mssql_shape        | pickle_orders            | line_speed_mpm         | numeric                  | YES         |       5670 |          5670 |            5558 |
+| src_pkl_mssql_shape        | pickle_orders            | inspection_result      | text                     | YES         |       5670 |          5670 |               2 |
+| src_pkl_mssql_shape        | pickle_orders            | qa_decision            | text                     | YES         |       5670 |          5670 |               4 |
+| src_pkl_mssql_shape        | pickle_orders            | modified_at_utc        | timestamp with time zone | NO          |       5670 |          5670 |            5352 |
+| src_pkl_mssql_shape        | qa_lab_results           | lab_result_id          | bigint                   | NO          |      17010 |         17010 |           17010 |
+| src_pkl_mssql_shape        | qa_lab_results           | coil_id                | text                     | NO          |      17010 |         17010 |            5670 |
+| src_pkl_mssql_shape        | qa_lab_results           | sample_time_utc        | timestamp with time zone | NO          |      17010 |         17010 |            5352 |
+| src_pkl_mssql_shape        | qa_lab_results           | test_code              | text                     | NO          |      17010 |         17010 |               3 |
+| src_pkl_mssql_shape        | qa_lab_results           | measured_value         | numeric                  | YES         |      17010 |         17010 |           17010 |
+| src_pkl_mssql_shape        | qa_lab_results           | unit_code              | text                     | YES         |      17010 |         17010 |               2 |
+| src_pkl_mssql_shape        | qa_lab_results           | result_status          | text                     | YES         |      17010 |         17010 |               2 |
+| src_pkl_mssql_shape        | qa_lab_results           | modified_at_utc        | timestamp with time zone | NO          |      17010 |         17010 |            5352 |
++----------------------------+--------------------------+------------------------+--------------------------+-------------+------------+---------------+-----------------+
+(119 rows)
+
++-------------+--------------+-----------------+--------+
+| defect_code | defect_class | defect_severity | events |
++-------------+--------------+-----------------+--------+
+| ROLLED_IN   | surface      | medium          |    131 |
+| SCALE       | surface      | high            |    123 |
+| PINHOLE     | surface      | low             |    121 |
+| EDGE_CRACK  | edge         | medium          |    120 |
+| SCALE       | surface      | medium          |    116 |
+| PINHOLE     | surface      | medium          |    115 |
+| PINHOLE     | surface      | high            |    115 |
+| EDGE_CRACK  | edge         | low             |    112 |
+| WAVINESS    | shape        | medium          |    110 |
+| EDGE_CRACK  | edge         | high            |    109 |
+| SCRATCH     | surface      | high            |    109 |
+| SCALE       | surface      | low             |    108 |
+| SCRATCH     | surface      | medium          |    107 |
+| ROLLED_IN   | surface      | low             |    106 |
+| SCRATCH     | surface      | low             |    103 |
+| ROLLED_IN   | surface      | high            |     98 |
+| WAVINESS    | shape        | high            |     94 |
+| WAVINESS    | shape        | low             |     90 |
++-------------+--------------+-----------------+--------+
+(18 rows)
+
++-------------+--------+-----------+
+| defect_code | events | pct_share |
++-------------+--------+-----------+
+| PINHOLE     |    351 |     17.66 |
+| SCALE       |    347 |     17.46 |
+| EDGE_CRACK  |    341 |     17.16 |
+| ROLLED_IN   |    335 |     16.86 |
+| SCRATCH     |    319 |     16.05 |
+| WAVINESS    |    294 |     14.80 |
++-------------+--------+-----------+
+(6 rows)
+
++-------------------+------------------+--------+-------------+-------------+-------------+
+| downtime_category |   reason_code    | events | min_seconds | avg_seconds | max_seconds |
++-------------------+------------------+--------+-------------+-------------+-------------+
+| unplanned         | HYDRAULIC_ALARM  |     50 |         369 |        2843 |        5253 |
+| quality           | QUALITY_HOLD     |     47 |         325 |        2833 |        5209 |
+| planned           | MECH_ROLL_CHANGE |     41 |         241 |        2645 |        5374 |
+| unplanned         | SENSOR_FAULT     |     41 |         196 |        2642 |        5305 |
+| logistics         | ENTRY_DELAY      |     31 |         607 |        2188 |        4871 |
++-------------------+------------------+--------+-------------+-------------+-------------+
+(5 rows)
+
++----------------+-------------+--------+---------------+
+| equipment_code | source_line | events | total_seconds |
++----------------+-------------+--------+---------------+
+| CCM-02         | CCM         |     32 |         86338 |
+| PKL-02         | PKL         |     26 |         75984 |
+| HSM-01         | HSM         |     26 |         57077 |
+| CCM-01         | CCM         |     22 |         64951 |
+| LF-01          | LF          |     22 |         56259 |
+| EAF-02         | EAF         |     22 |         57126 |
+| EAF-01         | EAF         |     22 |         63255 |
+| PKL-01         | PKL         |     20 |         50841 |
+| LF-02          | LF          |     18 |         48072 |
++----------------+-------------+--------+---------------+
+(9 rows)
+
++-----------+-----------+---------------+---------+-----------+-------------+
+| test_code | unit_code | result_status | results | min_value |  max_value  |
++-----------+-----------+---------------+---------+-----------+-------------+
+| WIDTH     | mm        | OK            |    5466 |  1.113123 | 1599.881510 |
+| THK       | mm        | OK            |    5448 |  1.097764 | 1599.824174 |
+| ROUGHNESS | um        | OK            |    5445 |  1.067509 | 1599.635079 |
+| ROUGHNESS | um        | CHECK         |     225 | 11.344836 | 1584.797167 |
+| THK       | mm        | CHECK         |     222 |  1.732974 | 1596.132038 |
+| WIDTH     | mm        | CHECK         |     204 | 11.006824 | 1595.050927 |
++-----------+-----------+---------------+---------+-----------+-------------+
+(6 rows)
+
++---------------+---------+---------------+
+| coils_with_qa | qa_rows | rows_per_coil |
++---------------+---------+---------------+
+|          5670 |   17010 |         3.000 |
++---------------+---------+---------------+
+(1 row)
+
++-------------+--------------------+-------+
+| steel_grade |     route_code     | heats |
++-------------+--------------------+-------+
+| HSLA-420    | EAF-LF-CCM-HSM-PKL |   114 |
+| DX51D       | EAF-LF-CCM-HSM-PKL |   109 |
+| S235JR      | EAF-LF-CCM-HSM-PKL |   108 |
+| S355MC      | EAF-LF-CCM-HSM-PKL |   105 |
+| IF-LOW-C    | EAF-LF-CCM-HSM-PKL |    98 |
+| DP600       | EAF-LF-CCM-HSM-PKL |    96 |
++-------------+--------------------+-------+
+(6 rows)
+
++---------------+--------------+-----------+
+| planned_grade | actual_grade | sequences |
++---------------+--------------+-----------+
+| HSLA-420      | HSLA-420     |       114 |
+| DX51D         | DX51D        |       109 |
+| S235JR        | S235JR       |       108 |
+| S355MC        | S355MC       |       105 |
+| IF-LOW-C      | IF-LOW-C     |        98 |
+| DP600         | DP600        |        96 |
++---------------+--------------+-----------+
+(6 rows)
+
++-----------------------------------------------------+-----------+
+|                     dump_table                      | row_count |
++-----------------------------------------------------+-----------+
+| src_caster_oracle_shape_cast_pieces                 |     18070 |
+| src_caster_oracle_shape_cast_sequence               |      1275 |
+| src_hsm_oracle_shape_hsm_coils                      |     17817 |
+| src_hsm_oracle_shape_hsm_pass_measurements          |     39690 |
+| src_inspection_mysql_shape_downtime_events          |       248 |
+| src_inspection_mysql_shape_parsytec_surface_defects |     51987 |
+| src_meltshop_pg_heats                               |      2431 |
+| src_meltshop_pg_lf_treatment                        |       630 |
+| src_pkl_mssql_shape_pickle_orders                   |     15669 |
+| src_pkl_mssql_shape_qa_lab_results                  |     17010 |
++-----------------------------------------------------+-----------+
+(10 rows)
+
++-------------------------+---------------------------------------+---------------+-----------------+-----------+
+| connection_profile_code |        connection_profile_name        | provider_type | connection_mode | is_active |
++-------------------------+---------------------------------------+---------------+-----------------+-----------+
+| CP-01                   | Meltshop Level 2 (PostgreSQL)         | postgresql    | Snapshot        | t         |
+| CP-02                   | Downtime Tracking (MySQL)             | mysql         | Snapshot        | t         |
+| CP-03                   | Surface Inspection (Parsytec / MySQL) | mysql         | Snapshot        | t         |
+| CP-04                   | HSM Level 2 (Oracle)                  | oracle        | Snapshot        | t         |
+| CP-05                   | Pickling Line (SQL Server)            | sqlserver     | Snapshot        | t         |
+| CP-06                   | Continuous Caster (Oracle)            | oracle        | Snapshot        | t         |
+| CP-07                   | Coil Logistics Export                 | FileShare     | Snapshot        | t         |
+| CP-08                   | Energy and Utilities Telemetry        | RestApi       | Snapshot        | t         |
++-------------------------+---------------------------------------+---------------+-----------------+-----------+
+(8 rows)
+
++--------------------------------+-------------------------+-----------+
+|          dataset_code          |   source_object_name    | is_active |
++--------------------------------+-------------------------+-----------+
+| MELTSHOP_HEATS                 | meltshop_heats          | t         |
+| PPIQ_SRC_CC_HEATS              | CC_HEATS                | t         |
+| PUBLIC_MELTSHOP_DEFECT_EVENTS  | meltshop_defect_events  | t         |
+| PUBLIC_MELTSHOP_PARAM_READINGS | meltshop_param_readings | t         |
++--------------------------------+-------------------------+-----------+
+(4 rows)
+
++--------------------------------------------------------+----------------------------+-----------+-----------+
+|                   import_batch_code                    |     source_object_name     |  status   | row_count |
++--------------------------------------------------------+----------------------------+-----------+-----------+
+| ADV_CMMS_DOWNTIME_FAILED_20260101                      | cmms_downtime_export       | Failed    |         0 |
+| ADV_HIST_PARAMETERS_20260101                           | historian_parameter_export | Completed |       500 |
+| ADV_L2_STEPS_20260101                                  | l2_step_export             | Completed |        18 |
+| ADV_LAB_CHEMISTRY_20260101                             | lab_chemistry_export       | Running   |           |
+| ADV_MES_MATERIALS_20260101                             | mes_materials_export       | Completed |        30 |
+| ADV_QMS_QUALITY_20260101                               | qms_quality_export         | Completed |        18 |
+| DELTA_MELTSHOP_HEATS_20260712131136803                 | meltshop_heats             | Completed |      1802 |
+| DELTA_MELTSHOP_HEATS_20260713080716971                 | meltshop_heats             | Completed |         0 |
+| DELTA_MELTSHOP_HEATS_20260713081413292                 | meltshop_heats             | Completed |         0 |
+| DELTA_PUBLIC_MELTSHOP_DEFECT_EVENTS_20260713080716759  | meltshop_defect_events     | Completed |       420 |
+| DELTA_PUBLIC_MELTSHOP_DEFECT_EVENTS_20260713080819363  | meltshop_defect_events     | Completed |         0 |
+| DELTA_PUBLIC_MELTSHOP_DEFECT_EVENTS_20260713081413231  | meltshop_defect_events     | Completed |         0 |
+| DELTA_PUBLIC_MELTSHOP_PARAM_READINGS_20260713080716837 | meltshop_param_readings    | Completed |      5000 |
+| DELTA_PUBLIC_MELTSHOP_PARAM_READINGS_20260713080819383 | meltshop_param_readings    | Completed |      5000 |
+| DELTA_PUBLIC_MELTSHOP_PARAM_READINGS_20260713081413251 | meltshop_param_readings    | Completed |      4416 |
+| DEMO-READY-BATCH-01                                    |                            | Completed |           |
++--------------------------------------------------------+----------------------------+-----------+-----------+
+(16 rows)
+
++---------------------------------------+----------------------------+-----------------+-----------+
+|             mapping_code              |     target_entity_name     | mapping_version | is_active |
++---------------------------------------+----------------------------+-----------------+-----------+
+| ADV_MAP_HIST_PARAMETER_OBSERVATION    | ParameterObservation       | v1              | t         |
+| ADV_MAP_L2_PROCESS_STEP               | ProcessStepExecution       | v1              | t         |
+| ADV_MAP_MES_MATERIAL_UNIT             | MaterialUnit               | v1              | t         |
+| ADV_MAP_QMS_QUALITY_EVENT             | QualityEvent               | v1              | t         |
+| ADV_MAP_UNKNOWN_TARGET_FOR_VALIDATION | UnknownEntityForValidation | v1              | t         |
+| DEMO-READY-MAP-HEAT                   | Heat                       | v1              | t         |
+| MELTSHOP_DEFECT_EVENTS_TO_QE          | QualityEvent               | v1              | t         |
+| MELTSHOP_HEATS_TO_MATERIALUNIT        | MaterialUnit               | v1              | t         |
+| MELTSHOP_PARAM_READINGS_TO_PARAMOBS   | ParameterObservation       | v1              | t         |
++---------------------------------------+----------------------------+-----------------+-----------+
+(9 rows)
+
++------------------------+-------+
+|         entity         | rows  |
++------------------------+-------+
+| downtime_events        |     3 |
+| genealogy_edges        | 35906 |
+| material_units         | 40148 |
+| parameter_observations | 14433 |
+| quality_events         | 51691 |
+| staging_records        | 16640 |
++------------------------+-------+
+(6 rows)
+
++---------------+-------+
+| source_system | units |
++---------------+-------+
+| CASTER_L2     | 18070 |
+| HSM_L2        | 17817 |
+| MELTSHOP_L2   |  2431 |
+| postgresql    |  1802 |
+| REF_BASELINE  |    28 |
++---------------+-------+
+(5 rows)
+
