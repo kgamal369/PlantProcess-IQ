@@ -113,10 +113,10 @@ $sql = @'
 \pset border 2
 \timing off
 
-\echo
-\echo ================================================================
-\echo SECTION A - TABLE INVENTORY
-\echo ================================================================
+\qecho
+\qecho ================================================================
+\qecho SECTION A - TABLE INVENTORY
+\qecho ================================================================
 SELECT n.nspname AS schema_name, c.relname AS table_name,
        (xpath('/row/c/text()', query_to_xml(
             format('SELECT count(*) AS c FROM %I.%I', n.nspname, c.relname),
@@ -129,11 +129,11 @@ WHERE c.relkind = 'r'
                     'src_pkl_mssql_shape','src_inspection_mysql_shape')
 ORDER BY 1, 2;
 
-\echo
-\echo ================================================================
-\echo SECTION B - NUMERIC PROFILE. A MEAN WITHOUT QUANTILES IS NOT A
-\echo DISTRIBUTION. THE GENERATOR IS WRITTEN FROM THESE NUMBERS.
-\echo ================================================================
+\qecho
+\qecho ================================================================
+\qecho SECTION B - NUMERIC PROFILE. A MEAN WITHOUT QUANTILES IS NOT A
+\qecho DISTRIBUTION. THE GENERATOR IS WRITTEN FROM THESE NUMBERS.
+\qecho ================================================================
 WITH cols AS (
   SELECT c.table_schema s, c.table_name t, c.column_name k, c.ordinal_position p
   FROM information_schema.columns c
@@ -167,10 +167,10 @@ SELECT s AS schema_name, t AS table_name, k AS column_name,
     'SELECT max(scale(%I::numeric))::text AS c FROM %I.%I', k, s, t), false, true, '')))[1]::text AS max_decimal_scale
 FROM cols ORDER BY s, t, p;
 
-\echo
-\echo ================================================================
-\echo SECTION C - TIMESTAMP PROFILE
-\echo ================================================================
+\qecho
+\qecho ================================================================
+\qecho SECTION C - TIMESTAMP PROFILE
+\qecho ================================================================
 WITH cols AS (
   SELECT c.table_schema s, c.table_name t, c.column_name k, c.ordinal_position p
   FROM information_schema.columns c
@@ -192,17 +192,17 @@ SELECT s AS schema_name, t AS table_name, k AS column_name,
     'SELECT count(DISTINCT %I)::text AS c FROM %I.%I', k, s, t), false, true, '')))[1]::text AS distinct_ts
 FROM cols ORDER BY s, t, p;
 
-\echo
-\echo ================================================================
-\echo SECTION D - COMPLETE CATEGORICAL INVENTORY (30 DISTINCT OR FEWER)
-\echo THIS IS THE CATALOGUE. EVERY VALUE, EVERY COUNT.
-\echo ================================================================
+\qecho
+\qecho ================================================================
+\qecho SECTION D - COMPLETE CATEGORICAL INVENTORY (30 DISTINCT OR FEWER)
+\qecho THIS IS THE CATALOGUE. EVERY VALUE, EVERY COUNT.
+\qecho ================================================================
 
 WITH raw AS (
   SELECT c.table_schema AS s, c.table_name AS t, c.column_name AS k,
-         unnest(xpath('/rows/row', query_to_xml(format(
+         unnest(xpath('/table/row', query_to_xml(format(
            'SELECT %I::text AS v, count(*) AS n FROM %I.%I GROUP BY 1 ORDER BY 2 DESC, 1',
-           c.column_name, c.table_schema, c.table_name), false, true, ''))) AS node
+           c.column_name, c.table_schema, c.table_name), false, false, ''))) AS node
   FROM information_schema.columns c
   JOIN pg_class pc ON pc.relname = c.table_name
   JOIN pg_namespace pn ON pn.oid = pc.relnamespace AND pn.nspname = c.table_schema
@@ -224,12 +224,12 @@ SELECT s AS schema_name, t AS table_name, k AS column_name, value, occurrences,
 FROM vals
 ORDER BY s, t, k, occurrences DESC, value;
 
-\echo
-\echo ================================================================
-\echo SECTION E - IDENTIFIER SHAPE. DIGITS -> 9, LETTERS -> A.
-\echo A GENERATOR THAT INVENTS ITS OWN KEY FORMAT BREAKS EVERY LATER
-\echo CROSS-LAYER IDENTITY CHECK.
-\echo ================================================================
+\qecho
+\qecho ================================================================
+\qecho SECTION E - IDENTIFIER SHAPE. DIGITS -> 9, LETTERS -> A.
+\qecho A GENERATOR THAT INVENTS ITS OWN KEY FORMAT BREAKS EVERY LATER
+\qecho CROSS-LAYER IDENTITY CHECK.
+\qecho ================================================================
 SELECT 'src_meltshop_pg.heats.heat_no' AS column_ref,
        regexp_replace(regexp_replace(heat_no,'[0-9]','9','g'),'[A-Za-z]','A','g') AS shape,
        count(*) AS occurrences, min(heat_no) AS example
@@ -256,38 +256,38 @@ SELECT 'src_pkl_mssql_shape.pickle_orders.customer_code',
        count(*), min(customer_code) FROM src_pkl_mssql_shape.pickle_orders GROUP BY 2
 ORDER BY 1, 3 DESC;
 
-\echo
-\echo ================================================================
-\echo SECTION F - PARENT-CHILD CARDINALITY. THE DISTRIBUTION, NOT THE
-\echo AVERAGE. EXACTLY NINE PER HEAT AND A MEAN OF NINE ARE DIFFERENT
-\echo PLANTS.
-\echo ================================================================
-\echo --- slabs per heat ---
+\qecho
+\qecho ================================================================
+\qecho SECTION F - PARENT-CHILD CARDINALITY. THE DISTRIBUTION, NOT THE
+\qecho AVERAGE. EXACTLY NINE PER HEAT AND A MEAN OF NINE ARE DIFFERENT
+\qecho PLANTS.
+\qecho ================================================================
+\qecho --- slabs per heat ---
 SELECT children, count(*) AS parents FROM (
   SELECT heat_no, count(*) AS children FROM src_caster_oracle_shape.cast_pieces GROUP BY 1) x
 GROUP BY 1 ORDER BY 1;
 
-\echo --- pieces per sequence ---
+\qecho --- pieces per sequence ---
 SELECT children, count(*) AS parents FROM (
   SELECT sequence_no, count(*) AS children FROM src_caster_oracle_shape.cast_pieces GROUP BY 1) x
 GROUP BY 1 ORDER BY 1;
 
-\echo --- coils per heat ---
+\qecho --- coils per heat ---
 SELECT children, count(*) AS parents FROM (
   SELECT heat_no, count(*) AS children FROM src_hsm_oracle_shape.hsm_coils GROUP BY 1) x
 GROUP BY 1 ORDER BY 1;
 
-\echo --- passes per coil ---
+\qecho --- passes per coil ---
 SELECT children, count(*) AS parents FROM (
   SELECT coil_id, count(*) AS children FROM src_hsm_oracle_shape.hsm_pass_measurements GROUP BY 1) x
 GROUP BY 1 ORDER BY 1;
 
-\echo --- qa rows per coil ---
+\qecho --- qa rows per coil ---
 SELECT children, count(*) AS parents FROM (
   SELECT coil_id, count(*) AS children FROM src_pkl_mssql_shape.qa_lab_results GROUP BY 1) x
 GROUP BY 1 ORDER BY 1;
 
-\echo --- defects per coil, INCLUDING coils with none ---
+\qecho --- defects per coil, INCLUDING coils with none ---
 SELECT defects, count(*) AS coils FROM (
   SELECT h.coil_id, count(d.defect_row_id) AS defects
   FROM src_hsm_oracle_shape.hsm_coils h
@@ -295,16 +295,16 @@ SELECT defects, count(*) AS coils FROM (
   GROUP BY 1) x
 GROUP BY 1 ORDER BY 1;
 
-\echo --- lf treatments per heat ---
+\qecho --- lf treatments per heat ---
 SELECT children, count(*) AS parents FROM (
   SELECT heat_no, count(*) AS children FROM src_meltshop_pg.lf_treatment GROUP BY 1) x
 GROUP BY 1 ORDER BY 1;
 
-\echo
-\echo ================================================================
-\echo SECTION G - GENEALOGY CONSERVATION
-\echo ================================================================
-\echo --- referential completeness ---
+\qecho
+\qecho ================================================================
+\qecho SECTION G - GENEALOGY CONSERVATION
+\qecho ================================================================
+\qecho --- referential completeness ---
 SELECT 'cast_pieces.heat_no orphan' AS check_name, count(*) AS violations
 FROM src_caster_oracle_shape.cast_pieces p
 LEFT JOIN src_meltshop_pg.heats h ON h.heat_no = p.heat_no WHERE h.heat_no IS NULL
@@ -326,20 +326,20 @@ SELECT 'defects.coil_id orphan', count(*)
 FROM src_inspection_mysql_shape.parsytec_surface_defects d
 LEFT JOIN src_hsm_oracle_shape.hsm_coils c ON c.coil_id = d.coil_id WHERE c.coil_id IS NULL;
 
-\echo --- slab weight against its dimensions, implied density kg per m3 ---
+\qecho --- slab weight against its dimensions, implied density kg per m3 ---
 SELECT round(min(weight_kg / NULLIF(width_mm*thickness_mm*length_mm/1e9, 0)), 1) AS min_density,
        round(avg(weight_kg / NULLIF(width_mm*thickness_mm*length_mm/1e9, 0)), 1) AS avg_density,
        round(max(weight_kg / NULLIF(width_mm*thickness_mm*length_mm/1e9, 0)), 1) AS max_density
 FROM src_caster_oracle_shape.cast_pieces;
 
-\echo --- coil weight against its slab weight ---
+\qecho --- coil weight against its slab weight ---
 SELECT round(min(c.coil_weight_kg / NULLIF(p.weight_kg,0))::numeric, 4) AS min_ratio,
        round(avg(c.coil_weight_kg / NULLIF(p.weight_kg,0))::numeric, 4) AS avg_ratio,
        round(max(c.coil_weight_kg / NULLIF(p.weight_kg,0))::numeric, 4) AS max_ratio
 FROM src_hsm_oracle_shape.hsm_coils c
 JOIN src_caster_oracle_shape.cast_pieces p ON p.piece_id = c.input_piece_id;
 
-\echo --- heat weight against the sum of its slabs ---
+\qecho --- heat weight against the sum of its slabs ---
 SELECT round(min(ratio),4) AS min_ratio, round(avg(ratio),4) AS avg_ratio, round(max(ratio),4) AS max_ratio
 FROM (
   SELECT h.heat_no, (sum(p.weight_kg)/1000.0) / NULLIF(h.heat_weight_ton,0) AS ratio
@@ -347,7 +347,7 @@ FROM (
   JOIN src_caster_oracle_shape.cast_pieces p ON p.heat_no = h.heat_no
   GROUP BY h.heat_no, h.heat_weight_ton) x;
 
-\echo --- HSM target against actual deviation ---
+\qecho --- HSM target against actual deviation ---
 SELECT round(avg(actual_thickness_mm - target_thickness_mm)::numeric,4) AS mean_thk_dev,
        round(stddev_samp(actual_thickness_mm - target_thickness_mm)::numeric,4) AS sd_thk_dev,
        round(avg(actual_width_mm - target_width_mm)::numeric,4) AS mean_wid_dev,
@@ -356,7 +356,7 @@ SELECT round(avg(actual_thickness_mm - target_thickness_mm)::numeric,4) AS mean_
        round(stddev_samp(actual_fdt_c - target_fdt_c)::numeric,4) AS sd_fdt_dev
 FROM src_hsm_oracle_shape.hsm_coils;
 
-\echo --- rolling force by stand, the mill profile ---
+\qecho --- rolling force by stand, the mill profile ---
 SELECT stand_no, count(*) AS passes,
        round(avg(rolling_force_kn)::numeric,1) AS mean_force,
        round(avg(roll_gap_mm)::numeric,3) AS mean_gap,
@@ -364,10 +364,10 @@ SELECT stand_no, count(*) AS passes,
        round(avg(temperature_c)::numeric,1) AS mean_temp
 FROM src_hsm_oracle_shape.hsm_pass_measurements GROUP BY 1 ORDER BY 1;
 
-\echo
-\echo ================================================================
-\echo SECTION H - TIMESTAMP ORDERING PER UNIT
-\echo ================================================================
+\qecho
+\qecho ================================================================
+\qecho SECTION H - TIMESTAMP ORDERING PER UNIT
+\qecho ================================================================
 SELECT 'heat tap_end before tap_start' AS check_name, count(*) AS violations
 FROM src_meltshop_pg.heats WHERE tap_end_utc < tap_start_utc
 UNION ALL
@@ -396,16 +396,16 @@ FROM src_inspection_mysql_shape.parsytec_surface_defects d
 JOIN src_hsm_oracle_shape.hsm_coils c ON c.coil_id = d.coil_id
 WHERE d.event_time_utc < c.rolling_start_time;
 
-\echo --- production rhythm: gap between consecutive heats, seconds ---
+\qecho --- production rhythm: gap between consecutive heats, seconds ---
 SELECT round(min(gap))::bigint AS min_gap, round(percentile_cont(0.5) WITHIN GROUP (ORDER BY gap))::bigint AS median_gap,
        round(avg(gap))::bigint AS mean_gap, round(max(gap))::bigint AS max_gap
 FROM (SELECT EXTRACT(epoch FROM (tap_start_utc - lag(tap_start_utc) OVER (ORDER BY tap_start_utc))) AS gap
       FROM src_meltshop_pg.heats) x WHERE gap IS NOT NULL;
 
-\echo
-\echo ================================================================
-\echo SECTION I - TEXT LENGTH PROFILE FOR HIGH-CARDINALITY TEXT
-\echo ================================================================
+\qecho
+\qecho ================================================================
+\qecho SECTION I - TEXT LENGTH PROFILE FOR HIGH-CARDINALITY TEXT
+\qecho ================================================================
 WITH cols AS (
   SELECT c.table_schema s, c.table_name t, c.column_name k, c.ordinal_position p
   FROM information_schema.columns c
@@ -425,10 +425,10 @@ SELECT s AS schema_name, t AS table_name, k AS column_name,
     'SELECT count(DISTINCT %I)::text AS c FROM %I.%I', k, s, t), false, true, '')))[1]::text AS distinct_values
 FROM cols ORDER BY s, t, p;
 
-\echo
-\echo ================================================================
-\echo END OF CAPTURE PROFILE
-\echo ================================================================
+\qecho
+\qecho ================================================================
+\qecho END OF CAPTURE PROFILE
+\qecho ================================================================
 '@
 
 [System.IO.File]::WriteAllText($sqlFile, $sql, (New-Object System.Text.UTF8Encoding($false)))
