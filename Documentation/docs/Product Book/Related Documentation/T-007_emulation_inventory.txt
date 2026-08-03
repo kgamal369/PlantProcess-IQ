@@ -1,141 +1,215 @@
-T-007 ARTIFACT 1 OF 2 - EMULATED PLANT INVENTORY
+T-007 ARTIFACT 1 OF 2 - EMULATED PLANT INVENTORY, MEASURED
 ================================================================================
 
-Task      : T-007 | Milestone M1 | Phase M1-P1
+Task      : T-007 (REOPENED in v2.5; closes HERE as a PRE-GENERATION SPECIFICATION)
+Milestone : M1 | Phase M1-P1
 Save as   : docs/m1/evidence/T-007_emulation_inventory.txt
-Date      : 2 August 2026
+Date      : 3 August 2026
+Supersedes: the 2 August version, which quoted FLEET_RELATIONS.md and labelled it
+            "measured". It was documented. That error is mine and it is the whole
+            reason this task was reopened.
 
 Validation this artifact satisfies:
   "the emulation inventory with a source and a row count per structure"
 
-Sources read, not assumed:
-  docs/emulation/FLEET_RELATIONS.md  (30 lines, 06-Jul, seed=42, 3 months)
-  docs/demo/demo-source-systems.md
-  the staged source schema names measured from the repository dump
+EVERY NUMBER BELOW WAS READ FROM ppiq_presentation ON 3 AUGUST 2026.
+Where something has not been measured it says UNVERIFIED rather than carrying a
+plausible figure.
 
 
-1. STRUCTURE, SOURCE AND ROW COUNT
+1. STRUCTURE, SOURCE AND ROW COUNT - MEASURED
 --------------------------------------------------------------------------------
 
-structure                  source system            staged schema.table                                 rows
--------------------------  -----------------------  --------------------------------------------  ---------
-heats                      Postgres MeltShop        src_meltshop_pg.heats                             1,802
-casting sequences          Oracle Caster            src_caster_oracle_shape.cast_sequence               956
-slabs                      Oracle Caster            src_caster_oracle_shape.cast_pieces              18,661
-coils                      Oracle HSM               src_hsm_oracle_shape.hsm_coils                   18,661
-HSM stand passes           Oracle HSM               src_hsm_oracle_shape.hsm_pass_measurements      111,966
-surface defects, 20 codes  MySQL Parsytec           src_inspection_mysql_shape.parsytec_surface_defects  34,312
-downtime events            MySQL Downtime           src_inspection_mysql_shape.downtime_events       not counted
-pickled coils              MSSQL PKL                src_pkl_mssql_shape.pickle_orders                15,782
-QA tests                   Excel QA                 src_pkl_mssql_shape.qa_lab_results                8,920
-yard movements             Excel Yard               file source                                     not counted
+structure            staged schema.table                                    rows
+-------------------  --------------------------------------------------  -------
+heats                src_meltshop_pg.heats                                    630
+LF treatments        src_meltshop_pg.lf_treatment                             630
+casting sequences    src_caster_oracle_shape.cast_sequence                    630
+slabs                src_caster_oracle_shape.cast_pieces                    5,670
+coils                src_hsm_oracle_shape.hsm_coils                         5,670
+HSM stand passes     src_hsm_oracle_shape.hsm_pass_measurements            39,690
+surface defects      src_inspection_mysql_shape.parsytec_surface_defects    1,987
+downtime events      src_inspection_mysql_shape.downtime_events               210
+pickled coils        src_pkl_mssql_shape.pickle_orders                      5,670
+QA lab results       src_pkl_mssql_shape.qa_lab_results                    17,010
 
-TWO GAPS STATED RATHER THAN GUESSED.
-  Downtime and yard carry no recorded row count in FLEET_RELATIONS.md. The
-  document describes downtime semantics - equipment stoppage against production
-  stoppage, buffer absorption, breakout cascades - but never states a count.
-  Neither figure is invented here. Count them before the widget coverage matrix
-  binds a chart to either.
+TEN staged tables, not eight. `lf_treatment` was absent from the 2 August
+inventory entirely.
 
-ONE NAMING SURPRISE WORTH RECORDING.
-  Downtime is staged under src_inspection_mysql_shape, not a downtime schema of
-  its own, and QA results sit under src_pkl_mssql_shape. The staged schema names
-  therefore do NOT map one-to-one onto the eight declared source systems. That is
-  a staging-layout fact, not a defect, but a mapping written from the source list
-  alone would be wrong.
+TWO STAGING-LAYOUT FACTS a mapping written from the source-system list alone
+would get wrong: downtime is staged under src_inspection_mysql_shape, not a
+downtime schema of its own, and QA results sit under src_pkl_mssql_shape.
 
 
-2. THE EIGHT SOURCE SYSTEMS
+2. MEASURED AGAINST WHAT FLEET_RELATIONS.md CLAIMS
 --------------------------------------------------------------------------------
 
-  1. Postgres MeltShop   meltshop-postgres
-  2. Oracle Caster       caster-oracle
-  3. Oracle HSM          hsm-oracle
-  4. MSSQL PKL           pkl-mssql
-  5. Excel Yard          excel-yard, mounted file source
-  6. MySQL Downtime      downtime-mysql
-  7. MySQL Parsytec      parsytec-mysql
-  8. Excel QA            excel-qa, mounted file source
+structure               documented     measured      ratio
+--------------------  ------------  -----------  ---------
+heats                         1802          630       0.35
+casting sequences              956          630       0.66
+slabs                        18661        5,670       0.30
+coils                        18661        5,670       0.30
+HSM stand passes            111966       39,690       0.35
+surface defects              34312        1,987       0.06
+pickled coils                15782        5,670       0.36
+QA tests                      8920       17,010       1.91
 
-No source publishes a host port; the product connects by Docker service name.
-Four engines and two file sources. The heterogeneity IS the demonstration - it is
-what proves a configurable platform rather than one hardcoded schema.
+THE RATIO IS NOT UNIFORM, AND THAT IS THE FINDING. A uniform third would mean
+the generator simply ran smaller. Defects at 0.06 and QA at 1.91 mean these are
+not the same dataset at a different scale.
+
+FLEET_RELATIONS.md IS NOT EXECUTABLE TRUTH FOR THIS DATABASE. It is a source of
+ideas. Every figure here comes from the database instead.
 
 
-3. GENEALOGY AND CONSERVATION
+3. THE DEFECT CATALOGUE - SIX CODES, NEARLY UNIFORM
 --------------------------------------------------------------------------------
 
-  heat_id -> cc_slabs.slab_id -> hsm_coils.coil_id -> parsytec / pkl / QA / yard
-  grade inherited down the chain
+  PINHOLE       351
+  SCALE         347
+  EDGE_CRACK    341
+  ROLLED_IN     335
+  SCRATCH       319
+  WAVINESS      294
 
-Conservation is ENFORCED IN THE GENERATOR, not asserted in a document:
-  coil_width  = slab_width - 2..6 mm
-  coil_weight = slab_weight * 0.985
-  coil_length = slab_length * thickness_ratio * 0.985
+Density 1,987 over 5,670 coils = 0.350 per coil.
+
+A PARETO OF SIX NEAR-EQUAL BARS IS THE BORING CONDITION CHART 8 WAS WRITTEN
+AGAINST. Top to bottom is 351 to 294, a ratio of 1.19. No dominant code, no
+tail, nothing for a Pareto to say.
+
+THE THREE STRONGEST DOCUMENTED RELATIONS HAVE NO CODE HERE AT ALL:
+  R1 CRACK_LONG     9.3x  - no staged code
+  R2 INCLUSION      4.5x  - no staged code
+  R4 SLIPPAGE_MARK 28.9x  - no staged code
+
+Analogues that DO exist, under different names:
+  WAVINESS   ~ WAVY_EDGE    (R3)      ROLLED_IN ~ ROLL_MARK    (R5)
+  EDGE_CRACK ~ EDGE_CRACK   (R6)      SCALE     ~ SCALE_ROLLED (R7)
+  PINHOLE    ~ PINHOLE      (R10a)    SCRATCH   = negative control
+
+Absent entirely: CRACK_TRANS, SLIVER, LAMINATION, BLISTER, OSCILLATION_MARK,
+GAUGE_DEV, WIDTH_DEV, DENT, SEAM.
 
 
-4. THE SEVENTEEN PLANTED RELATIONS
+4. CHEMISTRY - THREE ELEMENTS AT ONE STATION
 --------------------------------------------------------------------------------
 
-Effect size is the exposed against baseline defect rate per coil, where recorded.
+src_meltshop_pg.heats, in full:
+  heat_no, plant_code, furnace_code, steel_grade, route_code,
+  tap_start_utc, tap_end_utc, heat_weight_ton,
+  target_temp_c, actual_temp_c, oxygen_nm3, power_kwh,
+  carbon_pct, manganese_pct, silicon_pct, source_updated_at_utc
 
-  id   relation                                                            effect
-  ---  ------------------------------------------------------------------  ------
-  R1   CRACK_LONG    ~ peritectic C-band x superheat x cast speed            9.3x
-  R2   INCLUSION     ~ scrap/DRI ratio + low Al + tundish age                4.5x
-  R3   WAVY_EDGE     ~ rolling force per gauge + roll wear                   9.5x
-  R4   SLIPPAGE_MARK ~ lubrication viscosity outside 33-50 cSt              28.9x
-  R5   ROLL_MARK     ~ roll campaign wear, age since roll change             3.8x
-  R6   EDGE_CRACK    ~ sulfur + low finishing temperature                       -
-  R7   SCALE_ROLLED  ~ high finishing temperature + thick gauge                  -
-  R8   CRACK_TRANS   ~ peritectic + Nb microalloying                             -
-  R9   SLIVER / LAMINATION / BLISTER ~ scrap ratio, nitrogen                     -
-  R10  PINHOLE / OSCILLATION_MARK ~ superheat, cast speed                        -
-  R11  GAUGE_DEV ~ slippage;  WIDTH_DEV ~ campaign wear                          -
-  R12  oxygen_ppm ~ scrap ratio, meltshop-internal                               -
-  R13  electricity_mwh ~ scrap ratio + cold furnace + bucket count               -
-  R14  power_on_min ~ buckets + scrap ratio + furnace state                      -
-  R15  breakout probability ~ superheat + scrap ratio -> 4-6 h stoppage          -
-  R16  HSM cobble downtime ~ slippage, buffer absorbs the first 45 min           -
-  R17  pkl line_speed ~ inverse gauge;  QA yield / UTS ~ grade family            -
+src_meltshop_pg.lf_treatment, in full:
+  treatment_id, heat_no, lf_code, treatment_start_utc, treatment_end_utc,
+  argon_flow_nm3, calcium_wire_m, final_temp_c, sample_result_code,
+  source_updated_at_utc
 
-  CONTROLS, which MUST NOT correlate:  SCRATCH 1.0x, DENT, SEAM - pure noise.
+CARBON, MANGANESE AND SILICON. ONE SAMPLING STATION. NO LF CHEMISTRY.
+The 2 August inventory said twelve elements across three stations. That was the
+document speaking, not the database.
 
-TWELVE OF SEVENTEEN HAVE NO RECORDED EFFECT SIZE. They are described but not
-measured. Any chart that depends on R6 to R17 must have its effect measured
-before it is placed, or the chart is a hope rather than a specification.
-
-R4 AT 28.9x IS A RISK, NOT A PRIZE. A twenty-nine-fold effect is close to
-deterministic, and a customer engineer may read it as planted rather than
-discovered. R2 at 4.5x is the most believable of the five measured.
+CONSEQUENCE, AND IT IS NOT SMALL: aluminium, sulfur, niobium and nitrogen are
+absent, so R2 (needs Al), R6 (needs S), R8 (needs Nb) and R9 (needs N) CANNOT
+EXIST in this data whatever any document says.
 
 
-5. SYSTEMIC STRUCTURE ALREADY PRESENT
+5. DOWNTIME - GOOD MATERIAL, NEVER PROJECTED
 --------------------------------------------------------------------------------
 
-  chemistry by grade, 12 elements x 3 sample stations (EAF, LF, trim)
-  additive quantities by grade
-  sequence grouping by grade family
-  crew rotation
-  ladle reline counters
-  cold-furnace and maintenance reheating
-  downtime propagation, equipment stoppage against production stoppage
-  roll wear
-  lubrication windows
+src_inspection_mysql_shape.downtime_events, in full:
+  downtime_id, equipment_code, source_line, reason_code, reason_text,
+  downtime_category, start_time_utc, end_time_utc, duration_seconds,
+  updated_at_utc
+
+210 events across NINE equipment units:
+  CCM-02 32, PKL-02 26, HSM-01 26, LF-01 22, EAF-01 22,
+  CCM-01 22, EAF-02 22, PKL-01 20, LF-02 18
+
+FIVE reasons across FOUR categories:
+  unplanned  HYDRAULIC_ALARM   50
+  quality    QUALITY_HOLD      47
+  planned    MECH_ROLL_CHANGE  41
+  unplanned  SENSOR_FAULT      41
+  logistics  ENTRY_DELAY       31
+
+Durations 196 to 5,374 seconds; per-unit means 2,195 to 2,952.
+
+THE CANONICAL TABLE HOLDS THREE ROWS - DT-CAST-SPEED-HOLD, DT-HSM-SENSOR and
+DT-NO-REFERENCE, all source_system ADVANCED_DEMO_SEED - and ZERO of the 210
+staged source_record_ids appear in canonical. This is not a lossy projection:
+NO DOWNTIME MAPPING HAS EVER RUN, and the three canonical rows are hand-seeded
+fixtures unrelated to the source.
+
+ONE QUANTITY ONLY. The source carries duration_seconds. There is no second
+quantity, so production impact must be GENERATED, never derived.
 
 
-6. WHAT THIS INVENTORY MEANS FOR THE BLUEPRINT
+6. WHAT DOES NOT EXIST
 --------------------------------------------------------------------------------
 
-The emulated plant is close to complete. The gap is not the data.
+NO SHIFT OR CREW ON ANY SOURCE. Nothing in the staged schemas matches shift,
+crew, rota or team. The canonical side already has
+process_step_executions.crew_code and ml_learning_observations_v1.crew_shift, so
+the landing exists and no new canonical column is needed.
 
-All twenty-nine seeded widgets bind to EIGHT generic dimensions - day, week,
-month, materialUnitType, defectType, severity, equipment, parameterCode - and SIX
-generic measures - materialCount, observationCount, defectCount, defectRate,
+Timestamps available to derive a shift from:
+  heats.tap_start_utc / .tap_end_utc
+  lf_treatment.treatment_start_utc / .treatment_end_utc
+  cast_sequence.start_time / .end_time;  cast_pieces.cut_time
+  hsm_coils.rolling_start_time / .rolling_end_time
+  hsm_pass_measurements.sample_time
+  downtime_events.start_time_utc / .end_time_utc
+  parsytec_surface_defects.event_time_utc
+  pickle_orders.entry_time_utc / .exit_time_utc
+  qa_lab_results.sample_time_utc
+
+NO GRADE SPECIFICATION ANYWHERE. No spec table, no min or max column.
+Grade keys that do exist: heats.steel_grade, cast_sequence.planned_grade and
+.actual_grade, canonical material_units.grade_or_recipe,
+ml_learning_observations_v1.grade_family.
+
+
+7. GENEALOGY AND CONSERVATION
+--------------------------------------------------------------------------------
+
+heat_no -> cast_pieces -> hsm_coils -> parsytec / pkl / QA, grade inherited.
+Conservation is enforced in the generator rather than asserted in a document:
+coil_width = slab_width - 2..6 mm; coil_weight = slab_weight * 0.985;
+coil_length = slab_length * thickness_ratio * 0.985.
+
+
+8. WHAT THE 29 SEEDED WIDGETS BIND TO
+--------------------------------------------------------------------------------
+
+Eight dimensions: day, week, month, materialUnitType, defectType, severity,
+equipment, parameterCode.
+Six measures: materialCount, observationCount, defectCount, defectRate,
 riskScore, avgParameterValue.
 
-NOT ONE widget touches grade, shift, crew, superheat, casting speed, finishing
-temperature, chemistry, gauge, roll campaign age, tundish age, lubrication
-viscosity, scrap ratio, coil position, or the downtime split.
+NOT ONE touches grade, shift, crew, chemistry, gauge, campaign age, coil
+position or the downtime split. That was true on 2 August and it is still true.
 
-Artifact 2 is the specification that closes that gap.
+
+9. UNVERIFIED - STATED RATHER THAN GUESSED
+--------------------------------------------------------------------------------
+
+Full column lists were read for heats, lf_treatment and downtime_events, and
+partially for parsytec_surface_defects. They have NOT been read for:
+
+  src_caster_oracle_shape.cast_sequence
+  src_caster_oracle_shape.cast_pieces
+  src_hsm_oracle_shape.hsm_coils
+  src_hsm_oracle_shape.hsm_pass_measurements
+  src_pkl_mssql_shape.pickle_orders
+  src_pkl_mssql_shape.qa_lab_results
+
+Any claim in artifact 2 or in the phenomena matrix that depends on a column in
+those six tables is marked UNVERIFIED rather than EXISTING. Run
+Measure-PpiqStagedColumns.ps1 to close this, then upgrade those rows.
+
+THIS SECTION EXISTS BECAUSE ON 2 AUGUST I WROTE "SCALE, MEASURED" OVER FIGURES I
+HAD READ IN A MARKDOWN FILE. An inventory that cannot say what it has not
+checked is not an inventory.

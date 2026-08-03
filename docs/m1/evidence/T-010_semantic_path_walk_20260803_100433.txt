@@ -1,0 +1,217 @@
+
+==============================================================================
+T-010 CANONICAL SEMANTIC PATH WALK - 2026-08-03 10:04:33
+==============================================================================
+Base URL : http://localhost:5063
+Database : ppiq_presentation
+Mode     : EXECUTE - writes through product services
+
+==============================================================================
+0. WHICH API ANSWERS, AND ON WHICH DATABASE
+==============================================================================
+Both profiles bind port 5063. A walk against the wrong profile proves the
+wrong thing, so the answering process is identified before anything else.
+   PID     : 48172
+   Process : PlantProcess.Api
+   Started : 08/03/2026 09:25:12
+   Login   : OK, role Admin, tenant default-demo
+   outcome_values : 195221
+
+==============================================================================
+1. STAGE COUNTS BEFORE THE WALK
+==============================================================================
+   stage                                      count   note
+   connection profiles                            8   DF1
+   source dataset definitions                     4   DF2
+   import batches                                16   DF3
+   staging records                            16640   DF3
+   mapping definitions                            9   DF4
+   material units                             40148   DF5 canonical
+   parameter observations                     14433   DF5 canonical
+   quality events                             51691   DF5 canonical
+   genealogy edges                            35906   DF6
+   ml feature values                         151752   engine
+   ml outcome values                         195221   engine
+   ml correlation results                       320   engine
+
+==============================================================================
+2. DF1 - CONNECTION TEST, THROUGH THE CONNECTOR SERVICE
+==============================================================================
+   profiles returned: 8
+     dddd0000-0000-0000-0000-000000000207  CP-07  
+     dddd0000-0000-0000-0000-000000000202  CP-02  
+     dddd0000-0000-0000-0000-000000000203  CP-03  
+     dddd0000-0000-0000-0000-000000000204  CP-04  
+     dddd0000-0000-0000-0000-000000000206  CP-06  
+     dddd0000-0000-0000-0000-000000000201  CP-01  
+     dddd0000-0000-0000-0000-000000000208  CP-08  
+     dddd0000-0000-0000-0000-000000000205  CP-05  
+
+   Property names on the first profile, so nothing is guessed next time:
+     id, sourceSystemDefinitionId, sourceSystemCode, sourceSystemName, connectionProfileCode, connectionProfileName, providerType, connectionMode, hostName, port, databaseName, schemaName, fileRootPath, apiBaseUrl, secretReference, connectionOptionsJson, isActive, readOnlyEnforced, description, lastTestedAtUtc, lastTestStatus, lastTestMessage, isSynthetic, createdAtUtc, updatedAtUtc
+
+   TESTING profile dddd0000-0000-0000-0000-000000000207 through POST /connection-profiles/{id}/test
+   THIS IS THE POINT: the connection is tested by the product, not by psql.
+   [API FAIL] POST /admin/connectors/connection-profiles/dddd0000-0000-0000-0000-000000000207/test -> The remote server returned an error: (400) Bad Request.
+
+==============================================================================
+3. DF2 - REGISTERED DATASETS
+==============================================================================
+   source systems: 10
+   mapping definitions: 9
+     ADV_MAP_HIST_PARAMETER_OBSERVATION  ->  ParameterObservation  active=True
+     ADV_MAP_L2_PROCESS_STEP  ->  ProcessStepExecution  active=True
+     ADV_MAP_MES_MATERIAL_UNIT  ->  MaterialUnit  active=True
+     ADV_MAP_QMS_QUALITY_EVENT  ->  QualityEvent  active=True
+     ADV_MAP_UNKNOWN_TARGET_FOR_VALIDATION  ->  UnknownEntityForValidation  active=True
+     DEMO-READY-MAP-HEAT  ->  Heat  active=True
+     MELTSHOP_DEFECT_EVENTS_TO_QE  ->  QualityEvent  active=True
+     MELTSHOP_HEATS_TO_MATERIALUNIT  ->  MaterialUnit  active=True
+     MELTSHOP_PARAM_READINGS_TO_PARAMOBS  ->  ParameterObservation  active=True
+   mapping definitions targeting downtime: 0
+   [FINDING] NO mapping targets downtime. That matches the T-010 measurement:
+             210 staged rows, 3 canonical rows, and none of them projected.
+
+==============================================================================
+4. DF3 - INCREMENTAL IMPORT INTO STAGING
+==============================================================================
+   ROUTE FINDING FROM THE FIRST RUN: /admin/two-stage-import/* is 404 on every
+   route. The class exists, but MapTwoStageImportEndpoints is never called in
+   Program.cs - grep finds it only in its own file and a phase-gate script.
+   THE TWO-STAGE IMPORT IS UNREACHABLE OVER HTTP. Probing both surfaces:
+   [API FAIL] GET /admin/two-stage-import/overview -> The remote server returned an error: (404) Not Found.
+   /admin/two-stage-import/overview  : UNREACHABLE (expected)
+   /integration/import-batches       : 16 batch(es)
+   /integration/summary              : {"sourceSystems":10,"importBatches":16,"mappingDefinitions":9}
+
+   /workflow/import/run IS A PUSH ENDPOINT, NOT A PULL. Its request record
+   requires SourceSystemDefinitionId, MappingDefinitionId, SourceObjectName
+   AND Rows - the caller supplies the data. Posting an empty body returns 400,
+   correctly. That is not the incremental import DF3 describes.
+
+   So: is there ANY reachable endpoint that PULLS from a registered source?
+   Probing POST /admin/jobs/datasets/{datasetId}/backfill, the last candidate.
+   [API FAIL] POST /admin/jobs/datasets/a02db0b6-06d8-4a7d-9df6-64c3e793db14/backfill -> The remote server returned an error: (400) Bad Request.
+   [FINDING] the backfill did not answer either. If no reachable endpoint
+             pulls from a source, then DF3 CANNOT BE DEMONSTRATED OVER HTTP
+             today, and that is a Severity 1 for the connector beat.
+   staging records after stage 1              16640   DF3
+
+==============================================================================
+5. DF5 - CANONICAL PROJECTION THROUGH THE AUTHORED MAPPING
+==============================================================================
+   canonical schema views in the catalog: 0
+
+   PROJECTING through POST /workflow/import/process-queue
+   NOTHING IS WRITTEN TO material_units BY THIS SCRIPT. The product writes it.
+   stage2: {"startedAtUtc":"2026-08-03T07:04:52.0274582Z","finishedAtUtc":"2026-08-03T07:04:52.0582012Z","duration":"00:00:00.0307430","batchesScanned":1,"batchesProcessed":0,"batchesCompleted":0,"batchesFailed":0,"batchesSkipped":1,"items":[{"importBatchId":"02000000-0000-0000-0000-000000000005","importBatchCode":"ADV_LAB_CHEMISTRY_20260101","sourceObjectName":"lab_chemistry_export","status":"Skipped","mappingDefinitionId":null,"mappingCode":null,"processedRows":0,"mappedRows":0,"failedRows":0,"message":"No pending staging rows."}]}
+   material units after projection            40148   DF5
+   quality events after projection            51691   DF5
+
+==============================================================================
+6. DF6 - GENEALOGY
+==============================================================================
+   [API FAIL] GET /admin/p03p04/readiness -> The remote server returned an error: (500) Internal Server Error.
+
+   ONE ROW, END TO END - the acceptance the task actually names.
+   A single unit is followed from its source record to its canonical row and
+   its genealogy, THROUGH THE MATERIALS SERVICE, not by joining tables.
+   unit id: fd997d38-0ce4-42c2-a142-e407ae5518d4
+   /materials/{id} returns: id, materialCode, materialUnitType, productFamily, gradeOrRecipe, siteId, productionStartUtc, productionEndUtc, productionStartLocal, productionEndLocal, plantTimeZoneId, plantUtcOffsetMinutes, isSynthetic
+   code  = H-27802
+   type  = Heat
+   grade = DC01
+   NOTE: this endpoint carries NO provenance, and that is BY DESIGN.
+   It is the slim read model. Provenance lives on investigation-full.
+
+   PROVENANCE, through GET /materials/{id}/investigation-full - the
+   endpoint the Material Investigation screen actually uses.
+   unit record keys: id, materialCode, materialUnitType, productFamily, gradeOrRecipe, siteId, productionStartUtc, productionEndUtc, productionStartLocal, productionEndLocal, plantTimeZoneId, plantUtcOffsetMinutes, sourceSystem, sourceRecordId, isSynthetic
+   top-level keys: requestedMaterialUnitId, maxDepth, license, summary, parameterObservationPage, materials, aliases, genealogyEdges, processSteps, parameterObservations, processEvents, downtimeEvents, qualityEvents, riskScores, dataQualityIssues
+   code            = H-27802
+   source_system   = postgresql
+   source_record_id= 2026-07-02T05:42:44.0000000Z
+   [OK] the unit traces back to a named source system and source record.
+        THAT is the one-row-end-to-end the task asks for.
+
+   HOW MUCH OF THE CANONICAL MODEL ACTUALLY CAME THROUGH THE PATH:
+     CASTER_L2|18070
+     HSM_L2|17817
+     MELTSHOP_L2|2431
+     postgresql|1802
+     REF_BASELINE|28
+   A source_system naming a PLANT SYSTEM means the unit travelled the path.
+   ADVANCED_DEMO_SEED means it was hand-seeded and proves nothing about DF1-DF6.
+   genealogy service returns 1 related node(s)
+
+==============================================================================
+7. FEATURE AND OUTCOME REFRESH, THROUGH THE ML SERVICE
+==============================================================================
+   POST /api/ml/foundation/feature-store/refresh
+   refresh: {"message":"Feature store refreshed from canonical schema.","windowDays":365,"result":{"feature_rows":111611,"outcome_rows":155073,"run_id":"249ec544-f3ce-4e00-96b3-b47bfb1cfa91"}}
+   ml feature values after refresh           151752   engine
+   ml outcome values after refresh           195221   engine
+
+==============================================================================
+8. AN ANALYSIS RUN, THROUGH THE ANALYSIS SERVICE
+==============================================================================
+   analysis datasets available: 4
+   analysis primitives available: 9
+   POST /api/ml/foundation/compute/correlation
+   The request record is CorrelationComputeRequest(OutcomeKey, Grain,
+   WindowDays, Filters?). v3 sent an empty object and got 400, correctly.
+   outcome keys available: 8, using defect.rate_per_m2
+   correlation run: {"computeRunId":"f8de2f7e-07dc-4c10-9e58-9f7d6247300a","resultCount":0,"engineKey":"dotnet-analytics-core-v1","status":"Blocked","message":"Blocked by the data-readiness gate; analysis refused (honest abstain)."}
+   ml correlation results after run             320   engine
+
+==============================================================================
+9. STAGE LADDER - MONOTONIC AND EXPLAINABLE?
+==============================================================================
+   The acceptance is not that the numbers are large. It is that each stage's
+   count is explainable from the one before it, and that no write on this
+   path went through a table name.
+
+   stage                                      count   note
+   connection profiles                            8   DF1
+   source dataset definitions                     4   DF2
+   import batches                                16   DF3
+   staging records                            16640   DF3
+   mapping definitions                            9   DF4
+   material units                             40148   DF5 canonical
+   parameter observations                     14433   DF5 canonical
+   quality events                             51691   DF5 canonical
+   genealogy edges                            35906   DF6
+   ml feature values                         151752   engine
+   ml outcome values                         195221   engine
+   ml correlation results                       320   engine
+   staging records after stage 1              16640   DF3
+   material units after projection            40148   DF5
+   quality events after projection            51691   DF5
+   ml feature values after refresh           151752   engine
+   ml outcome values after refresh           195221   engine
+   ml correlation results after run             320   engine
+
+   READ IT LIKE THIS:
+     staging >= canonical is expected - not every staged row projects.
+     canonical > staging is a DEFECT - rows arrived from somewhere else.
+
+   THE FIRST RUN TRIPPED THAT RULE. 16,640 staging records against 40,148
+   material units, 14,433 parameter observations and 51,691 quality events -
+   106,272 canonical rows from 16,640 staged. THE CANONICAL CONTENT OF THIS
+   DATABASE IS NOT PREDOMINANTLY THE PRODUCT OF THIS PATH. Most of it was
+   seeded directly, which is exactly what T-010 exists to expose.
+     canonical downtime far below staged downtime is the known open finding:
+     no downtime mapping exists, and the three canonical rows are hand-seeded.
+
+   EVERY WRITE ON THIS WALK WENT THROUGH A SERVICE:
+     connection test  POST /admin/connectors/connection-profiles/{id}/test
+     import           POST /workflow/import/run
+     projection       POST /workflow/import/process-queue
+     feature refresh  POST /api/ml/foundation/feature-store/refresh
+     analysis         POST /api/ml/foundation/compute/correlation
+   psql was used ONLY to observe counts. Observing is not writing, and that
+   distinction is what lets M2a replace the storage without this test changing.
+
+   THIS WALK IS REPEATED after the external definition contract lands in
+   M1-P2. Keep this file: it is the BEFORE, and the second walk is what
+   proves the contract did not change behaviour.

@@ -1,0 +1,135 @@
+
+==============================================================================
+T-010 CANONICAL SEMANTIC PATH WALK - 2026-08-03 09:26:47
+==============================================================================
+Base URL : http://localhost:5063
+Database : ppiq_presentation
+Mode     : OBSERVE ONLY - no writes
+
+==============================================================================
+0. WHICH API ANSWERS, AND ON WHICH DATABASE
+==============================================================================
+Both profiles bind port 5063. A walk against the wrong profile proves the
+wrong thing, so the answering process is identified before anything else.
+   PID     : 48172
+   Process : PlantProcess.Api
+   Started : 08/03/2026 09:25:12
+   Login   : OK, role Admin, tenant default-demo
+   outcome_values : 195221
+
+==============================================================================
+1. STAGE COUNTS BEFORE THE WALK
+==============================================================================
+   stage                                      count   note
+   connection profiles                            8   DF1
+   source dataset definitions                     4   DF2
+   import batches                                16   DF3
+   staging records                            16640   DF3
+   mapping definitions                            9   DF4
+   material units                             40148   DF5 canonical
+   parameter observations                     14433   DF5 canonical
+   quality events                             51691   DF5 canonical
+   genealogy edges                            35906   DF6
+   ml feature values                         151752   engine
+   ml outcome values                         195221   engine
+   ml correlation results                       320   engine
+
+==============================================================================
+2. DF1 - CONNECTION TEST, THROUGH THE CONNECTOR SERVICE
+==============================================================================
+   profiles returned: 8
+   [OBSERVE] pass -Execute to test a live connection.
+   Source containers must be RUNNING for this step - they are stopped by default.
+
+==============================================================================
+3. DF2 - REGISTERED DATASETS
+==============================================================================
+   source systems: 10
+   mapping definitions: 9
+     ADV_MAP_HIST_PARAMETER_OBSERVATION  ->  ParameterObservation  active=True
+     ADV_MAP_L2_PROCESS_STEP  ->  ProcessStepExecution  active=True
+     ADV_MAP_MES_MATERIAL_UNIT  ->  MaterialUnit  active=True
+     ADV_MAP_QMS_QUALITY_EVENT  ->  QualityEvent  active=True
+     ADV_MAP_UNKNOWN_TARGET_FOR_VALIDATION  ->  UnknownEntityForValidation  active=True
+     DEMO-READY-MAP-HEAT  ->  Heat  active=True
+     MELTSHOP_DEFECT_EVENTS_TO_QE  ->  QualityEvent  active=True
+     MELTSHOP_HEATS_TO_MATERIALUNIT  ->  MaterialUnit  active=True
+     MELTSHOP_PARAM_READINGS_TO_PARAMOBS  ->  ParameterObservation  active=True
+   mapping definitions targeting downtime: 0
+   [FINDING] NO mapping targets downtime. That matches the T-010 measurement:
+             210 staged rows, 3 canonical rows, and none of them projected.
+
+==============================================================================
+4. DF3 - INCREMENTAL IMPORT INTO STAGING
+==============================================================================
+   [API FAIL] GET /admin/two-stage-import/overview -> The remote server returned an error: (404) Not Found.
+   [OBSERVE] pass -Execute to run an incremental import.
+
+==============================================================================
+5. DF5 - CANONICAL PROJECTION THROUGH THE AUTHORED MAPPING
+==============================================================================
+   canonical schema views in the catalog: 0
+   [OBSERVE] pass -Execute to project.
+
+==============================================================================
+6. DF6 - GENEALOGY
+==============================================================================
+   [API FAIL] GET /admin/p03p04/readiness -> The remote server returned an error: (500) Internal Server Error.
+
+   ONE ROW, END TO END - the acceptance the task actually names.
+   A single unit is followed from its source record to its canonical row and
+   its genealogy, THROUGH THE MATERIALS SERVICE, not by joining tables.
+   unit id: fd997d38-0ce4-42c2-a142-e407ae5518d4
+   genealogy service returns 1 related node(s)
+
+==============================================================================
+7. FEATURE AND OUTCOME REFRESH, THROUGH THE ML SERVICE
+==============================================================================
+   [OBSERVE] pass -Execute to refresh.
+
+==============================================================================
+8. AN ANALYSIS RUN, THROUGH THE ANALYSIS SERVICE
+==============================================================================
+   [API FAIL] GET /api/analysis/primitives -> The remote server returned an error: (404) Not Found.
+   [API FAIL] GET /analysis/primitives -> The remote server returned an error: (404) Not Found.
+   [OBSERVE] pass -Execute to run the analysis.
+
+==============================================================================
+9. STAGE LADDER - MONOTONIC AND EXPLAINABLE?
+==============================================================================
+   The acceptance is not that the numbers are large. It is that each stage's
+   count is explainable from the one before it, and that no write on this
+   path went through a table name.
+
+   stage                                      count   note
+   connection profiles                            8   DF1
+   source dataset definitions                     4   DF2
+   import batches                                16   DF3
+   staging records                            16640   DF3
+   mapping definitions                            9   DF4
+   material units                             40148   DF5 canonical
+   parameter observations                     14433   DF5 canonical
+   quality events                             51691   DF5 canonical
+   genealogy edges                            35906   DF6
+   ml feature values                         151752   engine
+   ml outcome values                         195221   engine
+   ml correlation results                       320   engine
+
+   READ IT LIKE THIS:
+     staging >= canonical is expected - not every staged row projects.
+     canonical > staging is a DEFECT - rows arrived from somewhere else.
+     canonical downtime far below staged downtime is the known open finding:
+     no downtime mapping exists, and the three canonical rows are hand-seeded.
+
+   EVERY WRITE ON THIS WALK WENT THROUGH A SERVICE:
+     connection test  POST /admin/connectors/connection-profiles/{id}/test
+     import           POST /admin/two-stage-import/stage1/run
+     projection       POST /admin/two-stage-import/stage2/run
+     feature refresh  POST /api/ml/foundation/feature-store/refresh
+     analysis         POST /api/ml/foundation/compute/correlation
+   psql was used ONLY to observe counts. Observing is not writing, and that
+   distinction is what lets M2a replace the storage without this test changing.
+
+   THIS WALK IS REPEATED after the external definition contract lands in
+   M1-P2. Keep this file: it is the BEFORE, and the second walk is what
+   proves the contract did not change behaviour.

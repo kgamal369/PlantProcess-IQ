@@ -1,0 +1,92 @@
+
+==============================================================================
+T-010 GAP MEASUREMENT - ppiq_presentation - 2026-08-03 00:15:15
+==============================================================================
+Read-only. Nothing is created or altered.
+
+==============================================================================
+1. THE DOWNTIME FUNNEL - 248 to 210 to 3
+==============================================================================
+A generator gap and a projection gap need OPPOSITE fixes, so this is
+measured before anything is written.
+
+   dump_store.src_inspection_mysql_shape_downtime_events           248
+   public.downtime_events                                            3
+   src_inspection_mysql_shape.downtime_events                      210
+
+Staged downtime rows by whatever status or processed marker exists:
+   downtime_id                              bigint
+   equipment_code                           text
+   source_line                              text
+   reason_code                              text
+   reason_text                              text
+   downtime_category                        text
+   start_time_utc                           timestamp with time zone
+   end_time_utc                             timestamp with time zone
+   duration_seconds                         integer
+   updated_at_utc                           timestamp with time zone
+
+The THREE canonical rows, with whatever provenance they carry:
+   DT-CAST-SPEED-HOLD                     ADVANCED_DEMO_SEED ProcessDelay           2026-01-03 09:20:00+02
+   DT-HSM-SENSOR                          ADVANCED_DEMO_SEED SensorIssue            2026-01-04 14:04:00+02
+   DT-NO-REFERENCE                        ADVANCED_DEMO_SEED UnknownDowntime        2026-01-07 12:05:00+02
+
+Do the staged source_record_id values match the canonical three?
+   staged ids that appear in canonical: 0 of 210
+
+==============================================================================
+2. DOES A SHIFT OR CREW ATTRIBUTE ALREADY EXIST?
+==============================================================================
+T-010 says add one IF the sources do not already carry one. This decides it.
+
+
+Timestamp columns available to derive a shift from, on the plant sources:
+   QUERY FAILED
+
+==============================================================================
+3. DOES A GRADE SPECIFICATION EXIST?
+==============================================================================
+Chart 12 needs per-grade chemistry minima and maxima, and they must come
+from the customer's own data, never from a literal in the product.
+
+
+Grade-bearing columns, so the specification can be keyed correctly:
+   QUERY FAILED
+
+Chemistry element columns already present on the meltshop source:
+   QUERY FAILED
+
+==============================================================================
+4. STAGED SOURCE INVENTORY, WITH ROW COUNTS
+==============================================================================
+The eight source systems as they actually exist in this database. Note from
+T-007 that the staged schema names do NOT map one-to-one onto the eight.
+
+   src_caster_oracle_shape.cast_pieces                              5670
+   src_caster_oracle_shape.cast_sequence                             630
+   src_hsm_oracle_shape.hsm_coils                                   5670
+   src_hsm_oracle_shape.hsm_pass_measurements                      39690
+   src_inspection_mysql_shape.downtime_events                        210
+   src_inspection_mysql_shape.parsytec_surface_defects              1987
+   src_meltshop_pg.heats                                             630
+   src_meltshop_pg.lf_treatment                                      630
+   src_pkl_mssql_shape.pickle_orders                                5670
+   src_pkl_mssql_shape.qa_lab_results                              17010
+
+==============================================================================
+5. WHAT THIS DECIDES
+==============================================================================
+GAP 1, SHIFT        : add it only if section 2 found nothing. If it found a
+                      column, T-010's own text says do not add one.
+GAP 2, GRADE SPEC   : section 3 names the grade key and the elements the
+                      specification table must cover. No invented columns.
+GAP 3, DOWNTIME     : section 1 decides whether the two quantities can be
+                      populated meaningfully at all. Three canonical rows
+                      cannot carry charts 13 to 18, and the fix for a
+                      PROJECTION gap is not the fix for a GENERATOR gap.
+
+RULING REQUIRED, and it is outside T-010's written scope: does T-010 include
+repairing the 210-to-3 projection, or is that a separate item? T-010 says
+only 'the two downtime quantities populated independently once the schema
+slice lands'. Populating three rows independently is achievable and
+meaningless.

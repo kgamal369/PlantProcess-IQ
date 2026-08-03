@@ -1,0 +1,358 @@
+
+==============================================================================
+T-010 GAP MEASUREMENT v3 - ppiq_presentation - 2026-08-03 00:24:10
+==============================================================================
+Read-only. Nothing is created or altered.
+
+==============================================================================
+1. DOWNTIME - NOT A LOSSY PROJECTION. NO PROJECTION AT ALL.
+==============================================================================
+v2 proved it: the three canonical rows are DT-CAST-SPEED-HOLD, DT-HSM-SENSOR
+and DT-NO-REFERENCE, all source_system ADVANCED_DEMO_SEED, and ZERO of the
+210 staged ids appear in canonical. They are hand-seeded fixture rows. The
+210 staged rows have never been projected. A missing mapping and a lossy
+mapping need different fixes.
+
+Canonical downtime rows by source_system:
+   ADVANCED_DEMO_SEED|3
+
+Tables whose name suggests a mapping definition, and their row counts:
+   acquisition|historian_tag_mappings|0
+   pg_catalog|pg_user_mapping|0
+   public|mapping_definitions|9
+   public|ppiq_defect_catalog_mappings|0
+   public|ppiq_mapping_versions|83
+   public|ppiq_sso_role_mappings|4
+   public|schema_mapping_executions|0
+
+Columns of every mapping-ish table, because v2 guessed 'target_entity' and it does not exist:
+   acquisition|historian_tag_mappings|id|uuid
+   acquisition|historian_tag_mappings|tenant_id|uuid
+   acquisition|historian_tag_mappings|source_system_code|text
+   acquisition|historian_tag_mappings|tag_name|text
+   acquisition|historian_tag_mappings|parameter_code|text
+   acquisition|historian_tag_mappings|unit_override|text
+   acquisition|historian_tag_mappings|is_active|boolean
+   acquisition|historian_tag_mappings|created_at_utc|timestamp with time zone
+   public|mapping_definitions|id|uuid
+   public|mapping_definitions|source_system_definition_id|uuid
+   public|mapping_definitions|mapping_code|character varying
+   public|mapping_definitions|mapping_name|character varying
+   public|mapping_definitions|source_object_name|character varying
+   public|mapping_definitions|target_entity_name|character varying
+   public|mapping_definitions|mapping_json|jsonb
+   public|mapping_definitions|mapping_version|character varying
+   public|mapping_definitions|is_active|boolean
+   public|mapping_definitions|description|character varying
+   public|mapping_definitions|created_at_utc|timestamp with time zone
+   public|mapping_definitions|updated_at_utc|timestamp with time zone
+   public|mapping_definitions|is_synthetic|boolean
+   public|mapping_definitions|source_system|character varying
+   public|mapping_definitions|source_record_id|character varying
+   public|mapping_definitions|is_deleted|boolean
+   public|mapping_definitions|deleted_at_utc|timestamp with time zone
+   public|mapping_definitions|deleted_reason|character varying
+   public|ppiq_defect_catalog_mappings|id|uuid
+   public|ppiq_defect_catalog_mappings|tenant_id|uuid
+   public|ppiq_defect_catalog_mappings|source_system|text
+   public|ppiq_defect_catalog_mappings|source_defect_code|text
+   public|ppiq_defect_catalog_mappings|source_defect_name|text
+   public|ppiq_defect_catalog_mappings|canonical_defect_code|text
+   public|ppiq_defect_catalog_mappings|canonical_defect_name|text
+   public|ppiq_defect_catalog_mappings|confidence|numeric
+   public|ppiq_defect_catalog_mappings|status|text
+   public|ppiq_defect_catalog_mappings|created_at_utc|timestamp with time zone
+   public|ppiq_mapping_versions|id|uuid
+   public|ppiq_mapping_versions|tenant_id|uuid
+   public|ppiq_mapping_versions|mapping_code|text
+   public|ppiq_mapping_versions|display_name|text
+   public|ppiq_mapping_versions|canonical_entity|text
+   public|ppiq_mapping_versions|environment|text
+   public|ppiq_mapping_versions|version_number|integer
+   public|ppiq_mapping_versions|definition|jsonb
+   public|ppiq_mapping_versions|status|text
+   public|ppiq_mapping_versions|created_at_utc|timestamp with time zone
+   public|ppiq_sso_role_mappings|id|uuid
+   public|ppiq_sso_role_mappings|tenant_id|uuid
+   public|ppiq_sso_role_mappings|provider_id|uuid
+   public|ppiq_sso_role_mappings|claim_type|text
+   public|ppiq_sso_role_mappings|claim_value|text
+   public|ppiq_sso_role_mappings|app_role|text
+   public|ppiq_sso_role_mappings|plant_role|text
+   public|ppiq_sso_role_mappings|priority|integer
+   public|ppiq_sso_role_mappings|is_enabled|boolean
+   public|ppiq_sso_role_mappings|created_at_utc|timestamp with time zone
+   public|ppiq_v_phase34_mapping_health_summary|tenant_id|uuid
+   public|ppiq_v_phase34_mapping_health_summary|source_system_code|text
+   public|ppiq_v_phase34_mapping_health_summary|source_kind|text
+   public|ppiq_v_phase34_mapping_health_summary|schema_hash|text
+   public|ppiq_v_phase34_mapping_health_summary|total_field_count|bigint
+   public|ppiq_v_phase34_mapping_health_summary|mapped_field_count|bigint
+   public|ppiq_v_phase34_mapping_health_summary|unmapped_required_count|bigint
+   public|ppiq_v_phase34_mapping_health_summary|drift_event_count|bigint
+   public|ppiq_v_phase34_mapping_health_summary|has_blocking_drift|boolean
+   public|ppiq_v_phase34_mapping_health_summary|last_snapshot_at_utc|timestamp with time zone
+   public|ppiq_v_phase34_mapping_health_summary|health_status|text
+   public|schema_mapping_executions|id|uuid
+   public|schema_mapping_executions|canonical_schema_view_id|uuid
+   public|schema_mapping_executions|view_code|text
+   public|schema_mapping_executions|target_entity|text
+   public|schema_mapping_executions|execution_mode|text
+   public|schema_mapping_executions|status|text
+   public|schema_mapping_executions|message|text
+   public|schema_mapping_executions|row_count|integer
+   public|schema_mapping_executions|duration_ms|integer
+   public|schema_mapping_executions|executed_by|text
+   public|schema_mapping_executions|started_at_utc|timestamp with time zone
+   public|schema_mapping_executions|completed_at_utc|timestamp with time zone
+   public|schema_mapping_executions|details_json|jsonb
+
+Staged downtime source, shape and a sample of the data:
+   CCM-02|MECH_ROLL_CHANGE|planned|5374
+   CCM-02|MECH_ROLL_CHANGE|planned|5322
+   EAF-01|SENSOR_FAULT|unplanned|5305
+   HSM-01|MECH_ROLL_CHANGE|planned|5277
+   CCM-02|HYDRAULIC_ALARM|unplanned|5253
+   CCM-02|MECH_ROLL_CHANGE|planned|5246
+   PKL-02|QUALITY_HOLD|quality|5209
+   CCM-01|HYDRAULIC_ALARM|unplanned|5206
+   LF-01|QUALITY_HOLD|quality|5200
+   LF-01|SENSOR_FAULT|unplanned|5178
+   EAF-01|QUALITY_HOLD|quality|5114
+   CCM-01|QUALITY_HOLD|quality|5109
+
+Staged downtime spread - the material for charts 13 to 16:
+   CCM-02|32|391|5374|2698
+   PKL-02|26|325|5209|2922
+   HSM-01|26|241|5277|2195
+   LF-01|22|551|5200|2557
+   EAF-01|22|196|5305|2875
+   CCM-01|22|573|5206|2952
+   EAF-02|22|574|4457|2597
+   PKL-01|20|475|4903|2542
+   LF-02|18|905|4943|2671
+
+Distinct downtime reasons and categories staged:
+   unplanned|HYDRAULIC_ALARM|50
+   quality|QUALITY_HOLD|47
+   planned|MECH_ROLL_CHANGE|41
+   unplanned|SENSOR_FAULT|41
+   logistics|ENTRY_DELAY|31
+
+==============================================================================
+2. DOES A SHIFT OR CREW ATTRIBUTE ALREADY EXIST?
+==============================================================================
+T-010 says add one ONLY IF the sources do not already carry one. A
+measurement, not an assumption.
+
+Any column named for a shift, crew, rota or team, anywhere:
+   acquisition|edge_collectors|credential_rotated_at_utc
+   public|ml_learning_observations_v1|crew_shift
+   public|ppiq_secret_store|rotated_at_utc
+   public|process_step_executions|crew_code
+
+Timestamp columns on the staged sources, to derive a shift from:
+   src_caster_oracle_shape|cast_pieces|cut_time
+   src_caster_oracle_shape|cast_pieces|last_update_ts
+   src_caster_oracle_shape|cast_sequence|end_time
+   src_caster_oracle_shape|cast_sequence|last_update_ts
+   src_caster_oracle_shape|cast_sequence|start_time
+   src_hsm_oracle_shape|hsm_coils|last_update_ts
+   src_hsm_oracle_shape|hsm_coils|rolling_end_time
+   src_hsm_oracle_shape|hsm_coils|rolling_start_time
+   src_hsm_oracle_shape|hsm_pass_measurements|last_update_ts
+   src_hsm_oracle_shape|hsm_pass_measurements|sample_time
+   src_inspection_mysql_shape|downtime_events|end_time_utc
+   src_inspection_mysql_shape|downtime_events|start_time_utc
+   src_inspection_mysql_shape|downtime_events|updated_at_utc
+   src_inspection_mysql_shape|parsytec_surface_defects|event_time_utc
+   src_inspection_mysql_shape|parsytec_surface_defects|updated_at_utc
+   src_meltshop_pg|heats|source_updated_at_utc
+   src_meltshop_pg|heats|tap_end_utc
+   src_meltshop_pg|heats|tap_start_utc
+   src_meltshop_pg|lf_treatment|source_updated_at_utc
+   src_meltshop_pg|lf_treatment|treatment_end_utc
+   src_meltshop_pg|lf_treatment|treatment_start_utc
+   src_pkl_mssql_shape|pickle_orders|entry_time_utc
+   src_pkl_mssql_shape|pickle_orders|exit_time_utc
+   src_pkl_mssql_shape|pickle_orders|modified_at_utc
+   src_pkl_mssql_shape|qa_lab_results|modified_at_utc
+   src_pkl_mssql_shape|qa_lab_results|sample_time_utc
+
+==============================================================================
+3. DOES A GRADE SPECIFICATION EXIST?
+==============================================================================
+Chart 12 needs per-grade chemistry minima and maxima, drawn from the
+customer's own data and never from a literal in the product.
+
+Any specification table or min/max column, anywhere:
+   dump_store|src_inspection_mysql_shape_downtime_events|downtime_category
+   dump_store|src_inspection_mysql_shape_downtime_events|downtime_id
+   dump_store|src_inspection_mysql_shape_downtime_events|duration_seconds
+   dump_store|src_inspection_mysql_shape_downtime_events|end_time_utc
+   dump_store|src_inspection_mysql_shape_downtime_events|equipment_code
+   dump_store|src_inspection_mysql_shape_downtime_events|reason_code
+   dump_store|src_inspection_mysql_shape_downtime_events|reason_text
+   dump_store|src_inspection_mysql_shape_downtime_events|source_line
+   dump_store|src_inspection_mysql_shape_downtime_events|start_time_utc
+   dump_store|src_inspection_mysql_shape_downtime_events|updated_at_utc
+   dump_store|src_inspection_mysql_shape_parsytec_surface_defects|coil_id
+   dump_store|src_inspection_mysql_shape_parsytec_surface_defects|confidence_pct
+   dump_store|src_inspection_mysql_shape_parsytec_surface_defects|defect_class
+   dump_store|src_inspection_mysql_shape_parsytec_surface_defects|defect_code
+   dump_store|src_inspection_mysql_shape_parsytec_surface_defects|defect_name
+   dump_store|src_inspection_mysql_shape_parsytec_surface_defects|defect_row_id
+   dump_store|src_inspection_mysql_shape_parsytec_surface_defects|defect_severity
+   dump_store|src_inspection_mysql_shape_parsytec_surface_defects|event_time_utc
+   dump_store|src_inspection_mysql_shape_parsytec_surface_defects|inspection_device
+   dump_store|src_inspection_mysql_shape_parsytec_surface_defects|position_end_m
+   dump_store|src_inspection_mysql_shape_parsytec_surface_defects|position_start_m
+   dump_store|src_inspection_mysql_shape_parsytec_surface_defects|side_code
+   dump_store|src_inspection_mysql_shape_parsytec_surface_defects|updated_at_utc
+   dump_store|src_inspection_mysql_shape_parsytec_surface_defects|width_position_mm
+   dump_store|src_pkl_mssql_shape_pickle_orders|inspection_result
+   public|alert_rules|limit_value
+   public|inspection_jobs|created_at_utc
+   public|inspection_jobs|defect_type
+   public|inspection_jobs|deleted_at_utc
+   public|inspection_jobs|deleted_reason
+   public|inspection_jobs|description
+   public|inspection_jobs|equipment_id
+   public|inspection_jobs|honest_state
+   public|inspection_jobs|id
+   public|inspection_jobs|inspection_job_code
+   public|inspection_jobs|inspection_job_name
+   public|inspection_jobs|inspection_type
+   public|inspection_jobs|is_deleted
+   public|inspection_jobs|is_enabled
+   public|inspection_jobs|is_synthetic
+   public|inspection_jobs|last_result_json
+   public|inspection_jobs|last_run_at_utc
+   public|inspection_jobs|last_run_status
+   public|inspection_jobs|parameter_code
+   public|inspection_jobs|rule_json
+   public|inspection_jobs|schedule_expression
+   public|inspection_jobs|site_id
+   public|inspection_jobs|source_correlation_run_id
+   public|inspection_jobs|source_record_id
+   public|inspection_jobs|source_system
+   public|inspection_jobs|updated_at_utc
+   public|plant_data_log|limit_value
+   public|ppiq_ed25519_activated_licenses|limits_json
+   public|ppiq_v_ed25519_current_entitlements|limits_json
+   src_inspection_mysql_shape|parsytec_surface_defects|inspection_device
+   src_pkl_mssql_shape|pickle_orders|inspection_result
+
+Grade-bearing columns, so the specification is keyed to a real name:
+   canon|cost_assumption|downgrade_delta_high
+   canon|cost_assumption|downgrade_delta_low
+   canon|cost_assumption|downgrade_delta_mid
+   canon|cost_assumption|grade_premium_high
+   canon|cost_assumption|grade_premium_low
+   canon|cost_assumption|grade_premium_mid
+   dump_store|src_caster_oracle_shape_cast_sequence|actual_grade
+   dump_store|src_caster_oracle_shape_cast_sequence|planned_grade
+   dump_store|src_meltshop_pg_heats|steel_grade
+   public|material_units|grade_or_recipe
+   public|ml_knowledge_base_items|grade
+   public|ml_learning_observations_v1|grade_family
+   public|ml_narrative_safety_audit_v1|degraded_offline
+   public|v_phase1_material_genealogy_join|steel_grade
+   public|v_phase3_dump_material_genealogy_join|steel_grade
+   src_caster_oracle_shape|cast_sequence|actual_grade
+   src_caster_oracle_shape|cast_sequence|planned_grade
+   src_meltshop_pg|heats|steel_grade
+
+Every column on the meltshop heats source - the chemistry lives here:
+   heat_no|text
+   plant_code|text
+   furnace_code|text
+   steel_grade|text
+   route_code|text
+   tap_start_utc|timestamp with time zone
+   tap_end_utc|timestamp with time zone
+   heat_weight_ton|numeric
+   target_temp_c|numeric
+   actual_temp_c|numeric
+   oxygen_nm3|numeric
+   power_kwh|numeric
+   carbon_pct|numeric
+   manganese_pct|numeric
+   silicon_pct|numeric
+   source_updated_at_utc|timestamp with time zone
+
+Every column on lf_treatment, which was missing from my T-007 inventory:
+   treatment_id|bigint
+   heat_no|text
+   lf_code|text
+   treatment_start_utc|timestamp with time zone
+   treatment_end_utc|timestamp with time zone
+   argon_flow_nm3|numeric
+   calcium_wire_m|numeric
+   final_temp_c|numeric
+   sample_result_code|text
+   source_updated_at_utc|timestamp with time zone
+
+==============================================================================
+4. STAGED SOURCE INVENTORY
+==============================================================================
+
+Every staged table with its row count:
+   src_caster_oracle_shape.cast_pieces|5670
+   src_caster_oracle_shape.cast_sequence|630
+   src_hsm_oracle_shape.hsm_coils|5670
+   src_hsm_oracle_shape.hsm_pass_measurements|39690
+   src_inspection_mysql_shape.downtime_events|210
+   src_inspection_mysql_shape.parsytec_surface_defects|1987
+   src_meltshop_pg.heats|630
+   src_meltshop_pg.lf_treatment|630
+   src_pkl_mssql_shape.pickle_orders|5670
+   src_pkl_mssql_shape.qa_lab_results|17010
+
+==============================================================================
+4b. MEASURED SCALE AGAINST WHAT FLEET_RELATIONS.md CLAIMS
+==============================================================================
+T-007 artifact 1 quoted these as MEASURED. They were DOCUMENTED. Mine to own.
+
+   structure               documented      measured        ratio
+   heats                         1802           630         0.35
+   casting sequences              956           630         0.66
+   slabs                        18661          5670         0.30
+   coils                        18661          5670         0.30
+   HSM stand passes            111966         39690         0.35
+   surface defects              34312          1987         0.06
+   pickled coils                15782          5670         0.36
+   QA tests                      8920         17010         1.91
+
+A UNIFORM ratio means the generator simply ran at a smaller scale, which is
+recoverable. A ratio that collapses for one structure means something else,
+and the defect charts are the ones to look at hardest.
+
+Defect density, the number that decides charts 8, 9, 11 and 25 to 30:
+   1987|5670|0.350
+
+Distinct defect codes staged - the Pareto needs six to ten meaningful classes:
+   PINHOLE|351
+   SCALE|347
+   EDGE_CRACK|341
+   ROLLED_IN|335
+   SCRATCH|319
+   WAVINESS|294
+
+==============================================================================
+5. WHAT THIS DECIDES
+==============================================================================
+GAP 1, SHIFT      : section 2 decides it. No column found means derive from
+                    the production timestamp, which is T-010's own fallback.
+GAP 2, GRADE SPEC : section 3 names the grade key and the real chemistry
+                    columns. No column name is invented from here on.
+GAP 3, DOWNTIME   : section 1 shows 210 staged rows with equipment, reason,
+                    category and duration - everything a projection needs.
+                    The gap is that NO MAPPING EXISTS, not that data is thin.
+
+RULING REQUIRED, outside T-010's written scope: T-010 says only 'the two
+downtime quantities populated independently once the schema slice lands'.
+There is nothing to populate - the 210 staged rows were never projected.
+Does T-010 include authoring the downtime mapping, or is that a separate
+item? MY READING: separate. It is a mapping gap, not an emulated-source gap.
+But charts 13 to 18 are blocked until it is done, whoever does it.
