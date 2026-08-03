@@ -61,7 +61,7 @@ def parse_tables(text):
     out, section, label, i = [], "?", "", 0
     while i < len(lines):
         ln = lines[i]
-        m = re.match(r"SECTION ([A-I]) - ", ln)
+        m = re.match(r"SECTION ([A-J]) - ", ln)
         if m:
             section, label = m.group(1), ""
             i += 1
