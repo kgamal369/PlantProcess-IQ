@@ -295,6 +295,72 @@ def pick_step(rnd, steps, jitter, lo, hi, places):
     return round(min(max(v, lo), hi), places)
 
 
+
+# ================================================================= T-016 TARGET
+# Source: docs/m1/evidence/presentation_fleet_v2_target.md, sections 3 and 4.
+# These apply in --mode fleet-v2 ONLY. Capture mode is frozen so that retirement
+# gate condition 1 stays re-provable at T-031.
+
+# Section 3. Fourteen codes with a role each. Shares sum to 100.0.
+# OIL_SPOT and SENSOR_ARTEFACT are NEGATIVE CONTROLS: generated independently of
+# every process parameter so a correlation surface can be seen REJECTING them.
+FLEET_DEFECTS = (
+    # code,              name,               class,     share, role,        severity weights low/med/high
+    ("SCALE",            "Scale",            "surface", 26.0, "dominant",         (30, 45, 25)),
+    ("EDGE_CRACK",       "Edge crack",       "edge",    15.0, "meaningful",       (10, 30, 60)),
+    ("ROLLED_IN_SCALE",  "Rolled-in scale",  "surface", 12.0, "meaningful",       (25, 45, 30)),
+    ("SLIVER",           "Sliver",           "surface",  9.0, "meaningful",       (20, 45, 35)),
+    ("INCLUSION",        "Inclusion",        "surface",  7.0, "moderate",         (15, 40, 45)),
+    ("PINHOLE",          "Pinhole",          "surface",  6.0, "moderate",         (35, 45, 20)),
+    ("SCRATCH",          "Scratch",          "surface",  5.0, "rare",             (60, 33, 7)),
+    ("WAVINESS",         "Waviness",         "shape",    4.0, "rare",             (40, 45, 15)),
+    ("CENTRE_BUCKLE",    "Centre buckle",    "shape",    3.5, "rare",             (25, 45, 30)),
+    ("EDGE_WAVE",        "Edge wave",        "shape",    3.0, "rare",             (35, 45, 20)),
+    ("ROLL_MARK",        "Roll mark",        "surface",  2.5, "rare",             (30, 50, 20)),
+    ("LAMINATION",       "Lamination",       "surface",  2.0, "rare",             (5,  25, 70)),
+    ("OIL_SPOT",         "Oil spot",         "surface",  3.0, "negative control", (70, 27, 3)),
+    ("SENSOR_ARTEFACT",  "Sensor artefact",  "surface",  2.0, "negative control", (80, 18, 2)),
+)
+
+# Section 4. Six elements, each because a chart needs it. C, Mn and Si are
+# CAPTURED and are not touched by T-016 - the element SET is what changes.
+# S and P carry a maximum only, which is why C12 gets two conditional-format rule
+# shapes rather than one. Al is added because IF-LOW-C and DP600 constrain it.
+# Bands are grade-aware because T-016's validation asks for a plausible per-grade
+# distribution; the SPECIFICATION table that judges them arrives in T-017.
+FLEET_CHEMISTRY = {
+    #                sulphur         phosphorus        aluminium
+    "S235JR":   ((0.008, 0.035), (0.010, 0.032), (0.020, 0.055)),
+    "S355MC":   ((0.005, 0.022), (0.008, 0.025), (0.025, 0.060)),
+    "DX51D":    ((0.006, 0.028), (0.009, 0.028), (0.030, 0.070)),
+    "HSLA-420": ((0.004, 0.018), (0.006, 0.020), (0.028, 0.065)),
+    "IF-LOW-C": ((0.003, 0.012), (0.004, 0.014), (0.035, 0.080)),
+    "DP600":    ((0.004, 0.016), (0.006, 0.018), (0.030, 0.075)),
+}
+
+# fleet-v2 mode adds the three columns rather than editing
+# 110_phase1_demo_source_shapes.sql, because that file describes the DONOR
+# schemas, which are scheduled for retirement and must not be mutated.
+FLEET_ALTERS = (
+    "ALTER TABLE src_meltshop_pg.heats ADD COLUMN IF NOT EXISTS sulphur_pct    numeric(7,5);",
+    "ALTER TABLE src_meltshop_pg.heats ADD COLUMN IF NOT EXISTS phosphorus_pct numeric(7,5);",
+    "ALTER TABLE src_meltshop_pg.heats ADD COLUMN IF NOT EXISTS aluminium_pct  numeric(7,5);",
+)
+
+
+def largest_remainder(shares, total):
+    """Turn percentage shares into integer counts that sum EXACTLY to total.
+    Rounding each share independently does not sum to the total, and a generator
+    that quietly loses or invents a defect row would fail its own row-count gate."""
+    raw = [total * sh / 100.0 for sh in shares]
+    base = [int(x) for x in raw]
+    rem = total - sum(base)
+    order = sorted(range(len(raw)), key=lambda i: raw[i] - base[i], reverse=True)
+    for i in range(rem):
+        base[order[i % len(order)]] += 1
+    return base
+
+
 def build_pools(rnd):
     """One exact pool per interval, shuffled once. Popping from it reproduces the
     measured distribution exactly rather than approximately."""
@@ -353,7 +419,7 @@ class Writer(object):
 # ---------------------------------------------------------------- generation
 
 
-def generate(seed):
+def generate(seed, mode="capture"):
     rnd = random.Random(seed)
     pools = build_pools(rnd)
     data = {}
@@ -396,11 +462,20 @@ def generate(seed):
             "%.5f" % unif(rnd, 0.01069, 0.31996, 5),
             ts(tap_end + timedelta(seconds=UPDATE_LAG_S["heat"])),
         ])
+        if mode == "fleet-v2":
+            s_band, p_band, al_band = FLEET_CHEMISTRY[grade]
+            heat_rows[-1].extend([
+                "%.5f" % unif(rnd, s_band[0], s_band[1], 5),
+                "%.5f" % unif(rnd, p_band[0], p_band[1], 5),
+                "%.5f" % unif(rnd, al_band[0], al_band[1], 5),
+            ])
     data["src_meltshop_pg.heats"] = (
         ["heat_no", "plant_code", "furnace_code", "tap_start_utc", "tap_end_utc",
          "steel_grade", "route_code", "heat_weight_ton", "target_temp_c",
          "actual_temp_c", "oxygen_nm3", "power_kwh", "carbon_pct",
-         "manganese_pct", "silicon_pct", "source_updated_at_utc"], heat_rows)
+         "manganese_pct", "silicon_pct", "source_updated_at_utc"]
+        + (["sulphur_pct", "phosphorus_pct", "aluminium_pct"] if mode == "fleet-v2" else []),
+        heat_rows)
 
     # ---------------------------------------------------------- lf_treatment
     lf_rows = []
@@ -608,10 +683,22 @@ def generate(seed):
     for count, coil_n in DEFECT_LADDER:
         ladder.extend([count] * coil_n)
     rnd.shuffle(ladder)
-    code_pool = weighted_pool([(d[0], d[3]) for d in DEFECTS], rnd)
-    sev_pool = weighted_pool(SEVERITY, rnd)
+    if mode == "fleet-v2":
+        counts = largest_remainder([d[3] for d in FLEET_DEFECTS], N_DEFECTS)
+        code_pool = weighted_pool(
+            [(FLEET_DEFECTS[i][0], counts[i]) for i in range(len(FLEET_DEFECTS))], rnd)
+        meta = dict((d[0], (d[1], d[2])) for d in FLEET_DEFECTS)
+        # severity is CONDITIONED ON CODE. Captured severity is uniform across all
+        # eighteen code-and-severity combinations, which is target-spec section 3's
+        # second finding and not only a Pareto problem.
+        sev_weights = dict((d[0], d[5]) for d in FLEET_DEFECTS)
+        sev_pool = None
+    else:
+        code_pool = weighted_pool([(d[0], d[3]) for d in DEFECTS], rnd)
+        sev_pool = weighted_pool(SEVERITY, rnd)
+        meta = dict((d[0], (d[1], d[2])) for d in DEFECTS)
+        sev_weights = None
     side_pool = weighted_pool(SIDE_CODE, rnd)
-    meta = dict((d[0], (d[1], d[2])) for d in DEFECTS)
     def_rows = []
     di = 0
     for i, coil in enumerate(coils):
@@ -620,12 +707,18 @@ def generate(seed):
                 break
             code = code_pool[di]
             name, klass = meta[code]
+            if sev_weights is not None:
+                lo, md, hi = sev_weights[code]
+                severity = rnd.choices(("low", "medium", "high"),
+                                       weights=(lo, md, hi))[0]
+            else:
+                severity = sev_pool[di]
             et = coil["rs"] + timedelta(seconds=take(pools, "H01_defect_lag", di))
             et = et.replace(second=0, microsecond=0)
             start_m = unif(rnd, 0.220, 799.798, 3)
             def_rows.append([
                 str(di + 1), q(coil["coil_id"]), q(INSPECTION_DEVICE), ts(et),
-                q(code), q(name), q(klass), q(sev_pool[di]),
+                q(code), q(name), q(klass), q(severity),
                 "%.3f" % start_m,
                 "%.3f" % round(min(start_m + rnd.uniform(0.5, 25.0), 817.308), 3),
                 "%.3f" % unif(rnd, 51.581, 1449.613, 3),
@@ -712,12 +805,16 @@ def main():
     ap.add_argument("--out", default="")
     ap.add_argument("--seed", type=int, default=SEED_DEFAULT)
     ap.add_argument("--profile", action="store_true")
+    ap.add_argument("--mode", choices=("capture", "fleet-v2"), default="capture",
+                    help="capture reproduces the T-014 baseline and is FROZEN so "
+                         "retirement gate condition 1 stays re-provable at T-031; "
+                         "fleet-v2 carries the target specification changes")
     ap.add_argument("--columns", action="store_true",
                     help="print the column manifest and exit, for the runner to check "
                          "against information_schema BEFORE loading anything")
     args = ap.parse_args()
 
-    data = generate(args.seed)
+    data = generate(args.seed, args.mode)
 
     if args.columns:
         for name in ORDER:
@@ -743,6 +840,7 @@ def main():
             sys.stderr.write("  [FAIL] " + f + "\n")
         return 2
 
+    print("mode: " + args.mode)
     print("row counts, generated against captured")
     for name in ORDER:
         print("  [OK] %-52s %6d" % (name, len(data[name][1])))
@@ -752,11 +850,26 @@ def main():
         return 0
 
     with open(args.out, "w", encoding="utf-8", newline="\n") as fh:
-        fh.write("-- PPIQ Fleet v2 donor capture, seed %d\n" % args.seed)
+        # CAPTURE MODE EMITS ITS ORIGINAL HEADER VERBATIM. The capture output is the
+        # permanent regression test for retirement gate condition 1, so its SHA256
+        # must stay a stable fingerprint - 11EDF4B275A106C86D75EA3147D47B56F7763AD9
+        # EE2D258487953B7155939AD7 for seed 20260803. Changing this comment line
+        # once already moved the hash while leaving every data row identical.
+        if args.mode == "capture":
+            fh.write("-- PPIQ Fleet v2 donor capture, seed %d\n" % args.seed)
+        else:
+            fh.write("-- PPIQ donor data, mode %s, seed %d\n" % (args.mode, args.seed))
         fh.write("-- Generated by Backend/tools/generate_fleet_v2_donor.py\n")
         fh.write("-- Reproduces the captured donor state INCLUDING its six measured\n")
         fh.write("-- faults. T-014 captures; T-015 onward corrects.\n")
         fh.write("BEGIN;\n\n")
+        if args.mode == "fleet-v2":
+            fh.write("-- T-016 adds the chemistry columns the target specification\n")
+            fh.write("-- names. 110_phase1_demo_source_shapes.sql is NOT edited: it\n")
+            fh.write("-- describes the donor schemas, which are scheduled for retirement.\n")
+            for a in FLEET_ALTERS:
+                fh.write(a + "\n")
+            fh.write("\n")
         for name in ORDER:
             fh.write("DELETE FROM " + name + ";\n")
         fh.write("\n")
