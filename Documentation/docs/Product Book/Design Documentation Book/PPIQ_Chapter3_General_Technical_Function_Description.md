@@ -1,7 +1,11 @@
 # PlantProcess IQ - Master Design Document
 
-**Version 4.5 | Author: Karim, SOU Industrial Software, Dusseldorf** | **MASTER DESIGN FREEZE CANDIDATE**
+**Version 4.6.1 | Author: Karim, SOU Industrial Software, Dusseldorf** | **MASTER DESIGN FREEZE CANDIDATE**
 
+> **Change log - Consistency correction (v4.6 to v4.6.1).** The data asset lifecycle row for the donor schemas said RETIRE after capture is proven while the gate three paragraphs below requires four conditions; the row now says RETIRE after the retirement gate passes. Rule 2 now states explicitly that the generator emits staging and canonical operational data while the analytical rows are computed by the real engines.
+>
+> **Change log - M1 Presentation Data Topology (v4.5 to v4.6).** No product capability added, no target architecture changed. One section added, 4.5.2a, recording the governed M1 presentation-data exception, the one-Fleet-v2 rule, the data asset lifecycle, the `src_*` donor role with its retirement gate, and the M1 to M2a convergence where the frozen generator emits native customer-source fixtures. Three consistency corrections outside that section: the authority paragraph now names 4.5.2a as the one transitional exception it carries; the staging isolation rule is corrected because it forbade what C1 and DF4 require, since the S1 authoring surface must read staging shapes to declare how staged data becomes canonical; and the retirement gate is strengthened from three proof dimensions to nine, because a generator can match row counts and categorical distributions while silently losing numeric ranges, null profiles, timestamp horizons, genealogy conservation and the phenomenon manifest.
+>
 > **Change log - Second-Order Consistency Pass (v4.4 to v4.5). MASTER DESIGN FREEZE CANDIDATE.** No product capability added. Seven structural corrections: the global `remediation_candidates` template is separated from the per-prediction `prediction_remediation_evaluations`, because actionability is a property of one unit at one moment and not of a historical template; `can_accept` is defined in 4.5.12a as the **complete** seven-condition server authority for the whole decision boundary, so no client re-derives it; `prediction_current` becomes the complete operational read model with the deadline, latency, scoring mode, fallback state and `can_accept` projected onto it, and `prediction_runs` gains `scoring_mode` separate from `trigger_kind`; serving identity is fixed as `(tenant_id, model_code, outcome_code, grain_code)` with tenant-aware uniqueness stated as a general rule and a CHECK forbidding one version being both primary and fallback; Reject and Defer are gated by `can_accept` exactly as Accept is, and `RM10` protects the whole boundary; `backoff_rule`, `sensitivity_state` and `delivery_latency_seconds` become `NOT NULL` with `not_tested` and `deadline_basis` as explicit unavailability states; and `remediation_escalations` is promoted to DDL grade in 4.5.12b.
 
 ---
@@ -14,7 +18,7 @@
 >
 > **Authority.** Chapter 2 is the naming, structure and positioning authority. This chapter uses its canonical journey **J1 to J15**, its technical codes **DF1 to DF15**, its inventory of **40 route pages and 6 global shell components**, its glossary (Ch2 3.9), its plant model (Ch2 3.14), its relationship model (Ch2 3.15) and its positioning rule (Ch2 3.19) without variation.
 >
-> **Target design only.** This chapter states the target contract. It contains no statement of what is currently built, no current endpoint namespace, no current limitation and no plaintext credential. Build state lives in the Implementation Status Register; credential values live in the protected deployment runbook.
+> **Target design authority.** This chapter states the target product contract. It contains no current endpoint namespace, no current limitation and no plaintext credential. Build state lives in the Implementation Status Register; credential values live in the protected deployment runbook. **The single exception is section 4.5.2a**, which records the governed M1 presentation-data exception together with its mandatory M2a convergence and retirement boundary. It is recorded here rather than in the register because it is a governed architectural boundary with an expiry, not a build status. **It does not redefine the target architecture**, and nothing in it survives M2a unproven.
 
 ---
 
@@ -2095,7 +2099,120 @@ Applied to every table unless its own entry overrides it. A table entry below li
 
 **The classification test, one question: whose knowledge is this row?** The customer's plant reality goes to `ppiq_plant`. The product's configuration goes to `ppiq_meta`. An uninterpreted copy of what a source sent goes to `ppiq_staging`. A row that seems to belong to two is two tables.
 
-**Isolation as topology.** No surface reads `ppiq_staging`. Administration surfaces read `ppiq_meta` and never plant rows. Analytical surfaces read `ppiq_plant` only. Log surfaces read `ppiq_meta` log tables and `ppiq_plant.plant_data_log`.
+**Isolation as topology.** **No analytical or business-consumption surface reads `ppiq_staging` directly.** Data-integration and S1 authoring surfaces may read staging for discovery, preparation, preview, mapping and lineage inspection - C1 Transformation Studio presents staging shapes beside the plant schema on S1 precisely because S1 exists to declare how staged data becomes canonical, and DF4 authors joins over staged tables. Analytical surfaces read `ppiq_plant` only. Administration surfaces read `ppiq_meta` and never plant rows. Log surfaces read `ppiq_meta` log tables and `ppiq_plant.plant_data_log`.
+
+### 4.5.2a M1 presentation data topology and M2 convergence
+
+**This section describes a transitional exception, not the target architecture.** Section 4.5.2 above remains the authority for what this product is. Everything here expires at the start of M2a, and the expiry is a dated, gated event rather than an intention.
+
+**TARGET ARCHITECTURE** is the normal path: external customer source, into `ppiq_staging`, through published transformation and projection definitions, into `ppiq_plant` operational entities, through the engines, into `ppiq_plant` analytical entities, out to the surfaces.
+
+**M1 PRESENTATION STRATEGY** is a controlled prepared-data exception to that path, and only to that path. It changes where the presentation database's rows come from. It changes nothing about what the product does with them.
+
+**CONVERGENCE POINT** is the start of M2a, where the frozen Fleet v2 generator emits the native customer-source fixtures and the full external path resumes as the only authority.
+
+#### One dataset, several representations
+
+There is exactly one logical dataset, **Fleet v2**. Everything else is a representation of it, an environment that runs it, or an obsolete artifact awaiting retirement. **No second logical dataset may remain active after convergence.** A historical donor generation may be reconciled into Fleet v2 exactly once, under a recorded decision per conflict; after its useful information is captured and the replacement is certified, it is retired. Reconcile once and retire is the rule. Maintaining a parallel dataset indefinitely is what this rule forbids, not preserving the knowledge inside one.
+
+```text
+                         ONE FLEET v2 SEMANTIC TRUTH
+                                     |
+                  +------------------+------------------+
+                  |                                     |
+            M1 PRESENTATION                            M2+
+                  |                                     |
+        +---------+---------+                           |
+        |                   |                           |
+  presentation         presentation                Docker native
+  staging              plant                       customer sources
+  (source-shaped,      (operational                        |
+   unprepared)          + analytical)                   DB-Link
+        |                   |                              |
+   Canvas, wiring,     Charts, tables,                ppiq_staging
+   SQL editor          statistics, AI and ML                |
+                                                     transformation
+                                                            |
+                                                       ppiq_plant
+                                                            |
+                                                    analysis and models
+```
+
+#### The five rules
+
+1. **M1 may pre-populate both the staging and the plant representations.** Prepared rows are permitted; presentation-only product behaviour is not. A surface that would refuse on real data refuses here too.
+2. **Both representations must derive from one Fleet v2 semantic truth**, emitted by one deterministic generator from one seed. Neither is hand-edited after emission. The generator emits the source-shaped staging representation and the canonical operational entities; **the analytical rows are COMPUTED by the real engines from the canonical operational data and are never emitted as authored answers**, because an authored analysis row is a presentation-only behaviour wearing the clothes of a result.
+3. **Docker is connection-test-only for the M1 presentation.** DF1 Test Connection is executed **live** against the emulators. DF2 and DF3 may show prepared registration and import state without a live bulk import. DF4 authoring, validation, preview and SQL interaction **operate normally and live** against the prepared staging representation. DF5 and DF6 are demonstrated from the prepared canonical representation. **No customer-visible control may claim that an import or a projection ran live when it did not** - a button that appears to run something is a presentation-only behaviour, which rule 1 forbids. Requiring a live bulk import would add presentation risk for no product evidence.
+4. **`src_*` is temporary donor state, not a product layer.** It carries the newest manual enhancements, it is captured into the generator, and it is retired under an explicit gate. **It is not staging and must never be called staging.** The three names are distinct and stay distinct: `src_*` is a source-shaped donor schema, `dump_store` is the current transitional physical name of staging, and `ppiq_staging` is the final staging name.
+5. **M2a restores and certifies the full external-source pipeline.** No part of the exception survives into M2a unproven.
+
+#### Physical row counts differ; the plant universe does not
+
+The staging representation is source-shaped and the plant representation is canonical, so their row counts are not expected to match, and a test asserting that they do would be wrong.
+
+What must match is the plant universe. **Same grades. Same equipment identities. Same defect vocabulary. Same downtime semantics. Same chemistry vocabulary. Same QA definitions and units. Same genealogy. Same time horizon where both carry one. Same planted phenomena.**
+
+A coil identifier visible in the canvas is the same coil in the dashboard. **A defect catalogue shown in the wiring surface never differs from the catalogue behind the Pareto.** The customer must not see one plant in the canvas and another plant in the chart, and the cross-layer consistency gate exists to make that impossible rather than unlikely.
+
+#### The data asset lifecycle
+
+Nothing is deleted because it looks stale. Nothing survives because it already exists. Every asset below has a stated end state, and every retirement waits for its replacement to be generated, validated and dependency-checked.
+
+| Asset | M1 role | End of M1 | M2 role |
+|---|---|---|---|
+| Fleet v2 generator | Source of dataset truth | **FREEZE** | Reference, benchmark and emulator producer |
+| `src_*` source-shaped donor schemas | Enhancement donor | **RETIRE after the retirement gate passes** | None |
+| Old Docker fixtures | Connection-test demonstration only | **REPLACE** | Fleet v2 customer emulators |
+| `ppiq_presentation` staging | Canvas, wiring and SQL editor data | KEEP | Presentation archive only |
+| `ppiq_presentation` plant operational | Operational dashboards | KEEP | Presentation archive only |
+| `ppiq_presentation` plant analytical | Statistics, correlation and ML surfaces | KEEP | Presentation archive only |
+| Older `dump_store` population | None | **REPLACE with Fleet v2** | None |
+| Older canonical population | None | **REPLACE with Fleet v2** | None |
+| Legacy registered datasets and stale import batches | None | **DELETE after dependency check** | None |
+| Validation-fixture and DEMO-vocabulary mappings | None | **DELETE or REPLACE** | None |
+| `ppiq_app` staging and plant | Not used | Empty at clean start | Filled by the normal path only |
+
+The order is fixed: **capture, merge, generate, validate, back up once, then retire.** Deleting before capture is how the only copy of a good dataset is lost.
+
+#### The `src_*` retirement gate
+
+`src_*` is deleted when, and only when, all four hold:
+
+1. The deterministic generator reproduces the captured baseline with zero differences on **schema, row counts, key and cardinality checks, null and population profiles, categorical distributions, numeric ranges and declared quantiles, timestamp ranges, genealogy and conservation checks, and the captured phenomenon manifest.** Where exact fixture identity is declared, the fixture hash matches too. Three dimensions are not enough: a generator can match row counts, column sets and categorical distributions while silently losing a casting-speed distribution, a superheat spread, a physical QA range, a timestamp horizon, a null pattern or a continuous correlation. Once `src_*` is deleted, a forgotten dimension cannot be recovered.
+2. The presentation staging and plant representations have been regenerated from that generator.
+3. The cross-layer consistency certification passes.
+4. One backup of the pre-retirement state exists and has been restored successfully at least once.
+
+Until all four hold, `src_*` is protected state and no cleanup task may touch it.
+
+#### The M1 to M2 boundary
+
+The sources are heterogeneous, so the boundary operation is **not** a backup of one PostgreSQL schema restored into all of them. A PostgreSQL staging dump cannot be restored into Oracle or SQL Server.
+
+The boundary operation is generation:
+
+```text
+Certified M1 Fleet v2 truth
+            |
+    frozen deterministic generator
+            |
+   +--------+--------+--------+--------+--------+
+   |        |        |        |        |        |
+PostgreSQL Oracle  MSSQL   MySQL    QA file  Yard file
+ fixtures  fixtures fixtures fixtures
+            |
+   replace the old Docker emulator dataset
+            |
+      full external path resumes
+```
+
+After this point the emulators carry Fleet v2 in each engine's native shape, and the prepared presentation representations become an archive rather than a source.
+
+#### On metadata, and what is actually deferred
+
+The **role** of `ppiq_meta` is already decided and is not open: it holds product configuration, and the definition store is the single versioned authority for every transformation, analysis, model, page, widget and filter definition. A job references a definition identity and version, never a loose file on disk. That contract stands unchanged through M1.
+
+What is deferred to M2 is narrower and should be stated as such: **the migration of the current metadata persistence into the final `ppiq_meta` topology.** Deferring a migration is not deferring a decision.
 
 ### 4.5.3 `ppiq_staging` - transit
 

@@ -197,53 +197,31 @@ FROM cols ORDER BY s, t, p;
 \echo SECTION D - COMPLETE CATEGORICAL INVENTORY (30 DISTINCT OR FEWER)
 \echo THIS IS THE CATALOGUE. EVERY VALUE, EVERY COUNT.
 \echo ================================================================
-DO $do$
-DECLARE r record; q text;
-BEGIN
-  FOR r IN
-    SELECT c.table_schema s, c.table_name t, c.column_name k
-    FROM information_schema.columns c
-    JOIN pg_class pc ON pc.relname = c.table_name
-    JOIN pg_namespace pn ON pn.oid = pc.relnamespace AND pn.nspname = c.table_schema
-    WHERE pc.relkind = 'r'
-      AND c.table_schema IN ('src_meltshop_pg','src_caster_oracle_shape','src_hsm_oracle_shape',
-                             'src_pkl_mssql_shape','src_inspection_mysql_shape')
-      AND c.data_type = 'text'
-    ORDER BY c.table_schema, c.table_name, c.ordinal_position
-  LOOP
-    EXECUTE format('SELECT count(DISTINCT %I) FROM %I.%I', r.k, r.s, r.t) INTO q;
-    IF q::bigint <= 30 THEN
-      RAISE INFO 'CATALOGUE % . % . %', r.s, r.t, r.k;
-    END IF;
-  END LOOP;
-END $do$;
 
-SELECT s AS schema_name, t AS table_name, k AS column_name, value, occurrences,
-       round(100.0 * occurrences / total, 3) AS pct
-FROM (
-  SELECT c.table_schema s, c.table_name t, c.column_name k,
-         (x.y).value AS value, (x.y).cnt AS occurrences,
-         sum((x.y).cnt) OVER (PARTITION BY c.table_schema, c.table_name, c.column_name) AS total
+WITH raw AS (
+  SELECT c.table_schema AS s, c.table_name AS t, c.column_name AS k,
+         unnest(xpath('/rows/row', query_to_xml(format(
+           'SELECT %I::text AS v, count(*) AS n FROM %I.%I GROUP BY 1 ORDER BY 2 DESC, 1',
+           c.column_name, c.table_schema, c.table_name), false, true, ''))) AS node
   FROM information_schema.columns c
   JOIN pg_class pc ON pc.relname = c.table_name
   JOIN pg_namespace pn ON pn.oid = pc.relnamespace AND pn.nspname = c.table_schema
-  CROSS JOIN LATERAL (
-    SELECT unnest(xpath('/rows/row', query_to_xml(format(
-      'SELECT %I::text AS value, count(*) AS cnt FROM %I.%I GROUP BY 1 ORDER BY 2 DESC, 1',
-      c.column_name, c.table_schema, c.table_name), false, true, ''))) AS node
-  ) n
-  CROSS JOIN LATERAL (
-    SELECT ROW((xpath('/row/value/text()', n.node))[1]::text,
-               (xpath('/row/cnt/text()',   n.node))[1]::text::bigint)::record AS y
-  ) x(y)
   WHERE pc.relkind = 'r'
+    AND c.data_type = 'text'
     AND c.table_schema IN ('src_meltshop_pg','src_caster_oracle_shape','src_hsm_oracle_shape',
                            'src_pkl_mssql_shape','src_inspection_mysql_shape')
-    AND c.data_type = 'text'
     AND (xpath('/row/c/text()', query_to_xml(format(
-          'SELECT count(DISTINCT %I) AS c FROM %I.%I', c.column_name, c.table_schema, c.table_name),
-          false, true, '')))[1]::text::bigint <= 30
-) z(s, t, k, value, occurrences, total)
+          'SELECT count(DISTINCT %I) AS c FROM %I.%I',
+          c.column_name, c.table_schema, c.table_name), false, true, '')))[1]::text::bigint <= 30
+), vals AS (
+  SELECT s, t, k,
+         (xpath('/row/v/text()', node))[1]::text AS value,
+         (xpath('/row/n/text()', node))[1]::text::bigint AS occurrences
+  FROM raw
+)
+SELECT s AS schema_name, t AS table_name, k AS column_name, value, occurrences,
+       round(100.0 * occurrences / sum(occurrences) OVER (PARTITION BY s, t, k), 3) AS pct
+FROM vals
 ORDER BY s, t, k, occurrences DESC, value;
 
 \echo
@@ -255,7 +233,7 @@ ORDER BY s, t, k, occurrences DESC, value;
 SELECT 'src_meltshop_pg.heats.heat_no' AS column_ref,
        regexp_replace(regexp_replace(heat_no,'[0-9]','9','g'),'[A-Za-z]','A','g') AS shape,
        count(*) AS occurrences, min(heat_no) AS example
-FROM src_meltshop_pg.heats GROUP BY 2 ORDER BY 3 DESC
+FROM src_meltshop_pg.heats GROUP BY 2
 UNION ALL
 SELECT 'src_caster_oracle_shape.cast_sequence.sequence_no',
        regexp_replace(regexp_replace(sequence_no,'[0-9]','9','g'),'[A-Za-z]','A','g'),
