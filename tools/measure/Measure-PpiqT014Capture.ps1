@@ -437,6 +437,116 @@ FROM cols ORDER BY s, t, p;
 
 \qecho
 \qecho ================================================================
+\qecho SECTION J - PROCESS INTERVAL DISTRIBUTIONS
+\qecho THIS IS WHAT THE TIMESTAMP COMPARISON READS. sd 0 MEANS THE
+\qecho INTERVAL IS DETERMINISTIC AND IS COMPARED EXACTLY.
+\qecho ================================================================
+WITH iv AS (
+    SELECT 'A01_heat_cadence' AS interval_name,
+           EXTRACT(epoch FROM (tap_start_utc - lag(tap_start_utc) OVER (ORDER BY tap_start_utc))) AS s
+    FROM src_meltshop_pg.heats
+  UNION ALL
+    SELECT 'A02_tap_duration', EXTRACT(epoch FROM (tap_end_utc - tap_start_utc))
+    FROM src_meltshop_pg.heats
+  UNION ALL
+    SELECT 'A03_heat_update_lag', EXTRACT(epoch FROM (source_updated_at_utc - tap_end_utc))
+    FROM src_meltshop_pg.heats
+  UNION ALL
+    SELECT 'B01_lf_start_offset', EXTRACT(epoch FROM (l.treatment_start_utc - h.tap_start_utc))
+    FROM src_meltshop_pg.lf_treatment l
+    JOIN src_meltshop_pg.heats h ON h.heat_no = l.heat_no
+  UNION ALL
+    SELECT 'B02_lf_duration', EXTRACT(epoch FROM (treatment_end_utc - treatment_start_utc))
+    FROM src_meltshop_pg.lf_treatment
+  UNION ALL
+    SELECT 'B03_lf_update_lag', EXTRACT(epoch FROM (source_updated_at_utc - treatment_end_utc))
+    FROM src_meltshop_pg.lf_treatment
+  UNION ALL
+    SELECT 'C01_seq_start_offset', EXTRACT(epoch FROM (q.start_time - h.tap_start_utc))
+    FROM src_caster_oracle_shape.cast_sequence q
+    JOIN src_caster_oracle_shape.cast_pieces p ON p.sequence_no = q.sequence_no AND p.slab_no = 1
+    JOIN src_meltshop_pg.heats h ON h.heat_no = p.heat_no
+  UNION ALL
+    SELECT 'C02_seq_duration', EXTRACT(epoch FROM (end_time - start_time))
+    FROM src_caster_oracle_shape.cast_sequence
+  UNION ALL
+    SELECT 'C03_seq_update_lag', EXTRACT(epoch FROM (last_update_ts - end_time))
+    FROM src_caster_oracle_shape.cast_sequence
+  UNION ALL
+    SELECT 'C04_cut_step_per_slab',
+           EXTRACT(epoch FROM (p.cut_time - q.start_time)) / p.slab_no
+    FROM src_caster_oracle_shape.cast_pieces p
+    JOIN src_caster_oracle_shape.cast_sequence q ON q.sequence_no = p.sequence_no
+  UNION ALL
+    SELECT 'C05_piece_update_lag', EXTRACT(epoch FROM (last_update_ts - cut_time))
+    FROM src_caster_oracle_shape.cast_pieces
+  UNION ALL
+    SELECT 'D01_rolling_lag_from_tap', EXTRACT(epoch FROM (c.rolling_start_time - h.tap_start_utc))
+    FROM src_hsm_oracle_shape.hsm_coils c
+    JOIN src_meltshop_pg.heats h ON h.heat_no = c.heat_no
+  UNION ALL
+    SELECT 'D02_rolling_duration', EXTRACT(epoch FROM (rolling_end_time - rolling_start_time))
+    FROM src_hsm_oracle_shape.hsm_coils
+  UNION ALL
+    SELECT 'D03_coil_update_lag', EXTRACT(epoch FROM (last_update_ts - rolling_end_time))
+    FROM src_hsm_oracle_shape.hsm_coils
+  UNION ALL
+    SELECT 'E01_pass_offset_per_stand',
+           EXTRACT(epoch FROM (m.sample_time - c.rolling_start_time)) / m.stand_no
+    FROM src_hsm_oracle_shape.hsm_pass_measurements m
+    JOIN src_hsm_oracle_shape.hsm_coils c ON c.coil_id = m.coil_id
+  UNION ALL
+    SELECT 'E02_pass_update_lag', EXTRACT(epoch FROM (last_update_ts - sample_time))
+    FROM src_hsm_oracle_shape.hsm_pass_measurements
+  UNION ALL
+    SELECT 'F01_pkl_entry_lag', EXTRACT(epoch FROM (o.entry_time_utc - c.rolling_end_time))
+    FROM src_pkl_mssql_shape.pickle_orders o
+    JOIN src_hsm_oracle_shape.hsm_coils c ON c.coil_id = o.coil_id
+  UNION ALL
+    SELECT 'F02_pkl_duration', EXTRACT(epoch FROM (exit_time_utc - entry_time_utc))
+    FROM src_pkl_mssql_shape.pickle_orders
+  UNION ALL
+    SELECT 'F03_pkl_update_lag', EXTRACT(epoch FROM (modified_at_utc - exit_time_utc))
+    FROM src_pkl_mssql_shape.pickle_orders
+  UNION ALL
+    SELECT 'G01_qa_sample_lag', EXTRACT(epoch FROM (r.sample_time_utc - o.exit_time_utc))
+    FROM src_pkl_mssql_shape.qa_lab_results r
+    JOIN src_pkl_mssql_shape.pickle_orders o ON o.coil_id = r.coil_id
+  UNION ALL
+    SELECT 'G02_qa_update_lag', EXTRACT(epoch FROM (modified_at_utc - sample_time_utc))
+    FROM src_pkl_mssql_shape.qa_lab_results
+  UNION ALL
+    SELECT 'H01_defect_lag_from_rolling', EXTRACT(epoch FROM (d.event_time_utc - c.rolling_start_time))
+    FROM src_inspection_mysql_shape.parsytec_surface_defects d
+    JOIN src_hsm_oracle_shape.hsm_coils c ON c.coil_id = d.coil_id
+  UNION ALL
+    SELECT 'H02_defect_update_lag', EXTRACT(epoch FROM (updated_at_utc - event_time_utc))
+    FROM src_inspection_mysql_shape.parsytec_surface_defects
+  UNION ALL
+    SELECT 'I01_downtime_span', EXTRACT(epoch FROM (end_time_utc - start_time_utc))
+    FROM src_inspection_mysql_shape.downtime_events
+  UNION ALL
+    SELECT 'I02_downtime_update_lag', EXTRACT(epoch FROM (updated_at_utc - end_time_utc))
+    FROM src_inspection_mysql_shape.downtime_events
+)
+SELECT interval_name,
+       count(*) AS observations,
+       round(min(s)::numeric, 3) AS min_s,
+       round(percentile_cont(0.10) WITHIN GROUP (ORDER BY s)::numeric, 3) AS p10,
+       round(percentile_cont(0.25) WITHIN GROUP (ORDER BY s)::numeric, 3) AS p25,
+       round(percentile_cont(0.50) WITHIN GROUP (ORDER BY s)::numeric, 3) AS p50,
+       round(percentile_cont(0.75) WITHIN GROUP (ORDER BY s)::numeric, 3) AS p75,
+       round(percentile_cont(0.90) WITHIN GROUP (ORDER BY s)::numeric, 3) AS p90,
+       round(max(s)::numeric, 3) AS max_s,
+       round(avg(s)::numeric, 3) AS mean_s,
+       round(coalesce(stddev_samp(s), 0)::numeric, 3) AS sd_s,
+       count(DISTINCT s) AS distinct_values
+FROM iv
+WHERE s IS NOT NULL
+GROUP BY interval_name
+ORDER BY interval_name;
+\qecho
+\qecho ================================================================
 \qecho END OF CAPTURE PROFILE
 \qecho ================================================================
 '@

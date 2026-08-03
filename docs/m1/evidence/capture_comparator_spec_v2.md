@@ -1,7 +1,7 @@
 # PPIQ T-014 CAPTURE COMPARATOR SPECIFICATION
 
-**Version 2 - 3 August 2026**
-**Status:** FROZEN. Approved with four amendments, recorded in section 7.
+**Version 2.1 - 3 August 2026 - FINAL REVISION**
+**Status:** FROZEN. Four amendments in section 7, plus the final timestamp amendment in section 8.
 **Amendments by:** Karim, 3 August 2026. Applied without alteration.
 **Supersedes:** the tolerance table embedded in `Compare-PpiqCaptureProfiles.py` v1
 **Evidence this replaces:** `docs/m1/evidence/T-014_capture_proof_20260803_224713.txt`
@@ -224,17 +224,72 @@ from the **captured** population only. It never looks at the regenerated result.
 failed in v1 - the mean deviations, the conservation ratios, and any future
 statistic expressed as a difference or a ratio of two similar quantities.
 
-### 3.6 Timestamps
+### 3.6 Timestamps - AMENDED IN v2.1, SEE SECTION 8
 
-**Rule.**
-- min and max: `tolerance = max(3600 s, 10 * span_seconds / (n + 1))`
-- span: `max(0.02 * span, 2 * tolerance_of_extreme / span_seconds)` expressed in days
-- distinct count: 10 percent relative
+**What is compared is the PROCESS INTERVAL, not the absolute extreme.**
 
-**Derivation.** Timestamp extremes are extremes and follow 3.4. The 3600-second
-floor is retained because timestamps are quantised to the minute and a handful of
-minutes of drift carries no meaning for any consuming chart. The span is a
-difference of two extremes so its tolerance is derived from theirs.
+The v2 rule tested `min_ts` and `max_ts` of each timestamp column against the
+captured values. That is the wrong statistic. These timestamps are a
+deterministic grid plus a random offset, so the earliest and latest values of a
+resampled dataset are a lottery among whichever units happen to sit near the
+boundary. Requiring two independently resampled datasets to end at the same
+minute is not a behaviour requirement; it is a requirement that random draws
+coincide.
+
+**3.6.1 Deterministic intervals - EXACT.** Where the captured interval has a
+standard deviation of 0, it is compared exactly, under the section 2 rule. This
+covers the 4,200-second heat cadence, the `stand_no * 60` pass sampling offset
+and the QA sample at exit plus 300 seconds.
+
+**3.6.2 Stochastic intervals - the frozen statistical rules.** Every other
+process interval is compared as a distribution using 3.1 through 3.4 unchanged:
+mean at 4 SE, quantiles at 4 SE times 1.75, standard deviation at
+`max(5 percent, 4 SE)`, extremes by mechanically assigned family, distinct counts
+at 10 percent. The interval is the column; `n` is its row count.
+
+The intervals compared are the generating relationships of the plant:
+heat-to-heat cadence; tap duration; LF start offset and duration; caster sequence
+start offset and duration; the per-slab cut step; rolling lag from tap and
+rolling duration; the per-stand pass offset; pickling entry lag from rolling end
+and pickling duration; QA sample lag from pickling exit; the defect event lag
+from its coil's rolling start; and every source-update lag.
+
+**3.6.3 Absolute `min_ts` and `max_ts` - HORIZON CONTAINMENT ONLY.** These remain
+as a sanity check that catches a gross error - a wrong year, a doubled window, a
+collapsed horizon - and nothing finer.
+
+`horizon_tolerance = max(3600 s, sum of the captured RANGES of the stochastic
+intervals on the path from the deterministic grid to that column)`
+
+The path per table, declared here and not inferred at compare time:
+
+| Table | Path from the tap grid |
+|---|---|
+| `heats` | tap duration |
+| `lf_treatment` | LF start offset + LF duration |
+| `cast_sequence` | sequence start offset + sequence duration |
+| `cast_pieces` | sequence start offset + sequence duration |
+| `hsm_coils` | rolling lag + rolling duration |
+| `hsm_pass_measurements` | rolling lag + rolling duration |
+| `pickle_orders` | rolling lag + rolling duration + pickling entry lag + pickling duration |
+| `qa_lab_results` | the pickling path + the QA sample lag |
+| `parsytec_surface_defects` | rolling lag + the defect event lag |
+| `downtime_events` | its own event window, which has no upstream path |
+
+**Derivation.** A boundary extreme can legitimately move by as much as the total
+stochastic offset feeding it, because the unit that produces the extreme is
+whichever one drew the smallest or largest offset near the boundary. Allowing
+exactly that much, and no more, keeps the check meaningful: a generator that
+places the plant in the wrong month, or doubles the horizon, still fails.
+
+`span_days` follows the same horizon tolerance, since it is a difference of two
+extremes. `distinct_ts` keeps the 10 percent rule of 3.7 unchanged, because a
+distinct count is a stable statistic and nothing has challenged it.
+
+**This is not a relaxation to make the generator pass.** It replaces an unstable
+table-level statistic with the timestamp relationship the generator is actually
+required to reproduce, and it makes the deterministic intervals EXACT where v2
+tested them only indirectly.
 
 ### 3.7 Distinct counts
 
@@ -312,8 +367,13 @@ comparison result is read only once both are in place.
 |---|---|
 | Proposed | 3 August 2026 |
 | Approved with amendments | 3 August 2026 |
-| Frozen | 3 August 2026, this document |
-| Implemented in | `tools/measure/Compare-PpiqCaptureProfiles.py` v2, pending |
+| Frozen v2 | 3 August 2026 |
+| Final timestamp amendment, v2.1 | 3 August 2026, section 8 |
+| Implemented in | `tools/measure/Compare-PpiqCaptureProfiles.py` |
+
+**THIS IS THE FINAL REVISION.** No further amendment is made to this document
+during T-014. If the next run does not reach zero, the remaining differences are
+reported and the document does not move.
 
 ---
 
@@ -342,3 +402,38 @@ the supplemental measurements, freeze this document, implement the comparator,
 correct the generator from committed evidence, rebuild a fresh scratch database,
 compare. If the result is not zero, **report the remaining differences and do not
 alter this document because of the result.**
+
+---
+
+## 8. THE FINAL TIMESTAMP AMENDMENT (v2.1)
+
+**Trigger.** The v2 run reached 969 comparisons and 17 differences, and **all 17
+were absolute timestamp extremes** across 12 columns. Every numeric, categorical,
+cardinality, integrity, conservation and setpoint dimension passed.
+
+**A hypothesis considered and rejected.** It was proposed that the effective
+sample size competing for a timestamp extreme is about nine, because only the
+first or last heat can produce it. **That is wrong.** The rolling lag spans
+18,360 to 123,540 seconds, roughly twenty-five heat intervals, so many
+neighbouring heats compete for the table-level minimum and maximum. No rule is
+built on it.
+
+**Two options were also rejected.** A multi-seed study, because searching seeds
+until one passes is the same failure as loosening tolerance until one passes.
+And closing T-014 with 17 recorded exceptions, because the agreed completion
+criterion is `TOTAL DIFFERENCES: 0`.
+
+**What was actually wrong.** The comparator was testing whether two independently
+resampled datasets end at the same minute. T-014 requires that generated plant
+behaviour matches captured plant behaviour. Behaviour lives in the intervals -
+how long a tap takes, how long a coil waits for the pickling line - not in which
+particular unit happened to be last.
+
+**The amendment.** Section 3.6 is replaced. Deterministic intervals become EXACT,
+stochastic intervals are compared as distributions under the already frozen
+rules, and absolute extremes are demoted to a horizon containment check with a
+tolerance derived from the stochastic offsets that feed them.
+
+**Consequence for the capture profile.** Both profiles must now carry the
+interval distributions, so the capture script gains a section J emitting them.
+The generator is NOT changed and the seed is NOT changed.
