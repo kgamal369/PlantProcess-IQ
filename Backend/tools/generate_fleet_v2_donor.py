@@ -58,6 +58,7 @@ USAGE
 """
 
 import argparse
+import math
 import random
 import sys
 from datetime import datetime, timedelta, timezone
@@ -547,6 +548,146 @@ FLEET_ALTERS_T018 = (
 )
 
 
+
+# ================================================================== T-019 TARGET
+# Shift and crew operating-practice regimes. ONE phenomenon, eight charts.
+#
+# THE ANALYSIS UNIT IS THE HEAT'S SHIFT, NOT THE COIL'S. A coil rolls 5 to 34
+# hours after its heat, so the rolling shift is all but independent of the tap
+# shift and a grade confound built on the rolling shift would evaporate. The
+# coherent chain is metallurgical: the crew that MADE the steel sets both the
+# grade campaign it was scheduled to run and the meltshop process variance it ran
+# with.
+#
+#   shift ---> grade family ------------------> defect probability   (CONFOUND)
+#   shift ---> tap temperature variance ------> defect probability   (RESIDUAL)
+#
+# Conditioning on grade removes the first path and must NOT remove the second.
+# The contract names both failure modes: if the conditioned difference vanishes
+# the confounder is too strong and the phenomenon is uninteresting; if it does not
+# move the confounder is absent and the story does not exist.
+
+# Harder grades are more defect-prone. This is the grade family the night crew is
+# scheduled onto more often, which is the whole confound.
+GRADE_HARDNESS = {
+    "DP600": 1.00, "HSLA-420": 0.82, "S355MC": 0.52,
+    "S235JR": 0.33, "DX51D": 0.28, "IF-LOW-C": 0.12,
+}
+# Scheduling bias by shift. Positive means this shift draws harder grades. The
+# marginal grade counts are UNCHANGED - only which shift runs them moves.
+SHIFT_GRADE_BIAS = {"A": -1.15, "B": 0.0, "C": 1.15}
+# How strongly grade hardness raises defect risk
+HARDNESS_TO_RISK = 1.35
+# How strongly the residual process deviation raises defect risk. This is the
+# path that must SURVIVE conditioning on grade.
+DEVIATION_TO_RISK = 0.95
+TAP_TARGET_C = 1650.0
+TAP_SD_C = 21.85
+
+
+
+def t019_report(data, coils, defect_count):
+    """T-019 proof. Naive against grade-conditioned, and the two failure modes the
+    contract names explicitly."""
+    rows = []
+    for idx, coil in enumerate(coils):
+        h = coil["heat"]
+        rows.append((h.get("shift", "B"), h["grade"], defect_count[idx],
+                     h.get("temp_dev", 0.0)))
+
+    def rate(sel):
+        return (sum(r[2] for r in sel) / len(sel)) if sel else 0.0
+
+    shifts = ("A", "B", "C")
+    naive = dict((sh, rate([r for r in rows if r[0] == sh])) for sh in shifts)
+    grades = sorted(GRADE_HARDNESS)
+    cond = {}
+    for sh in shifts:
+        per = [rate([r for r in rows if r[0] == sh and r[1] == g]) for g in grades]
+        per = [x for x in per if x > 0]
+        cond[sh] = sum(per) / len(per) if per else 0.0
+
+    naive_diff = naive["C"] - naive["A"]
+    cond_diff = cond["C"] - cond["A"]
+    shrink = (1.0 - cond_diff / naive_diff) if naive_diff else 0.0
+
+    def sd(vals):
+        if len(vals) < 2:
+            return 0.0
+        mu = sum(vals) / len(vals)
+        return (sum((v - mu) ** 2 for v in vals) / len(vals)) ** 0.5
+
+    sd_naive = dict((sh, sd([r[3] for r in rows if r[0] == sh])) for sh in shifts)
+    sd_cond = {}
+    for sh in shifts:
+        per = [sd([r[3] for r in rows if r[0] == sh and r[1] == g]) for g in grades]
+        per = [x for x in per if x > 0]
+        sd_cond[sh] = sum(per) / len(per) if per else 0.0
+
+    hard_share = {}
+    for sh in shifts:
+        sel = [r for r in rows if r[0] == sh]
+        hard = [r for r in sel if GRADE_HARDNESS[r[1]] >= 0.5]
+        hard_share[sh] = 100.0 * len(hard) / len(sel) if sel else 0.0
+
+    out = []
+    out.append("")
+    out.append("T-019 shift and crew operating-practice regimes")
+    out.append("  The analysis unit is the HEAT'S shift - the crew that made the")
+    out.append("  steel - because a coil rolls 5 to 34 hours later and its rolling")
+    out.append("  shift is all but independent of its tap shift.")
+    out.append("")
+    out.append("  THE CONFOUND, hard-grade share scheduled per shift")
+    for sh in shifts:
+        out.append("    shift %s  %5.1f percent hard grades" % (sh, hard_share[sh]))
+    out.append("")
+    out.append("  NAIVE defect rate per coil")
+    for sh in shifts:
+        out.append("    shift %s  %.4f" % (sh, naive[sh]))
+    out.append("    night minus day  %+.4f  (%+.1f percent)"
+               % (naive_diff, 100.0 * naive_diff / naive["A"]))
+    out.append("")
+    out.append("  GRADE-CONDITIONED, stratified with equal grade weights")
+    for sh in shifts:
+        out.append("    shift %s  %.4f" % (sh, cond[sh]))
+    out.append("    night minus day  %+.4f  (%+.1f percent)"
+               % (cond_diff, 100.0 * cond_diff / cond["A"]))
+    out.append("    SHRINKAGE  %.1f percent of the naive difference was the grade mix"
+               % (100.0 * shrink))
+    out.append("")
+    out.append("  VARIANCE OF TAP DEVIATION - this must SURVIVE conditioning")
+    for sh in shifts:
+        out.append("    shift %s  naive sd %.3f   within-grade sd %.3f"
+                   % (sh, sd_naive[sh], sd_cond[sh]))
+    out.append("    night/day ratio  naive %.3f   within-grade %.3f"
+               % (sd_naive["C"] / sd_naive["A"], sd_cond["C"] / sd_cond["A"]))
+
+    problems = []
+    if naive_diff <= 0 or 100.0 * naive_diff / naive["A"] < 15.0:
+        problems.append("the naive shift comparison shows no material difference, "
+                        "so there is nothing to condition")
+    if shrink < 0.25:
+        problems.append("CONFOUNDER ABSENT: conditioning removed only %.1f percent of "
+                        "the difference, so the grade-mix story does not exist"
+                        % (100.0 * shrink))
+    if shrink > 0.80 or cond_diff <= 0 or 100.0 * cond_diff / cond["A"] < 8.0:
+        problems.append("CONFOUNDER TOO STRONG: the conditioned difference all but "
+                        "vanished, so the phenomenon is uninteresting")
+    if sd_cond["C"] / sd_cond["A"] < 1.15:
+        problems.append("the variance difference did not survive conditioning, so the "
+                        "residual that actually drives defect probability is absent")
+    if problems:
+        out.append("")
+        out.append("T-019 ACCEPTANCE FAILED:")
+        for pr in problems:
+            out.append("  " + pr)
+        return out, False
+    out.append("")
+    out.append("  Both required outcomes hold: the mean difference shrinks materially")
+    out.append("  under conditioning and the variance difference survives it.")
+    return out, True
+
+
 def build_pools(rnd):
     """One exact pool per interval, shuffled once. Popping from it reproduces the
     measured distribution exactly rather than approximately."""
@@ -620,6 +761,30 @@ def generate(seed, mode="capture"):
     grade_seen = {}
     off_spec_seq = [0]
     grade_pool = weighted_pool(GRADES, rnd)
+    if mode == "fleet-v2":
+        # T-019: reassign the SAME grade pool so that harder grades land more
+        # often on the night crew. Counts per grade are untouched; only which
+        # shift runs them moves, so nothing downstream of the grade marginal
+        # changes and the confound is purely a scheduling one.
+        remaining = {}
+        for gname, gcount in GRADES:
+            remaining[gname] = gcount
+        assigned = []
+        for i in range(N_HEATS):
+            t = T0_TAP + timedelta(seconds=i * HEAT_INTERVAL_S)
+            sc = shift_of(t)[0]
+            bias = SHIFT_GRADE_BIAS[sc]
+            choices, weights = [], []
+            for gname in remaining:
+                if remaining[gname] <= 0:
+                    continue
+                choices.append(gname)
+                weights.append(remaining[gname]
+                               * math.exp(bias * GRADE_HARDNESS[gname]))
+            pick = rnd.choices(choices, weights=weights)[0]
+            remaining[pick] -= 1
+            assigned.append(pick)
+        grade_pool = assigned
     tundish_pool = weighted_pool(TUNDISH, rnd)
     furnace_pool = weighted_pool(FURNACE, rnd)
     lfcode_pool = weighted_pool(LF_CODE, rnd)
@@ -693,6 +858,8 @@ def generate(seed, mode="capture"):
             rec["shift"] = shift_code
             rec["spread"] = spread
             rec["bias"] = bias
+            rec["hardness"] = GRADE_HARDNESS[grade]
+            rec["temp_dev"] = abs(float(heat_rows[-1][9]) - TAP_TARGET_C)
     data["src_meltshop_pg.heats"] = (
         ["heat_no", "plant_code", "furnace_code", "tap_start_utc", "tap_end_utc",
          "steel_grade", "route_code", "heat_weight_ton", "target_temp_c",
@@ -912,7 +1079,25 @@ def generate(seed, mode="capture"):
     ladder = []
     for count, coil_n in DEFECT_LADDER:
         ladder.extend([count] * coil_n)
-    rnd.shuffle(ladder)
+    if mode != "fleet-v2":
+        rnd.shuffle(ladder)
+    else:
+        # T-019: the ladder VALUES are unchanged - the same 4,670 clean coils and
+        # the same 326 / 361 / 313 - but WHICH coil gets which is now a race
+        # weighted by the two causal paths. An exponential race preserves the
+        # ladder exactly while making defect count monotone in risk.
+        keys = []
+        for idx, coil in enumerate(coils):
+            h = coil["heat"]
+            risk = math.exp(HARDNESS_TO_RISK * h.get("hardness", 0.4)
+                            + DEVIATION_TO_RISK * h.get("temp_dev", 0.0) / TAP_SD_C)
+            keys.append((rnd.expovariate(1.0) / risk, idx))
+        keys.sort()
+        ladder_sorted = sorted(ladder, reverse=True)
+        ladder = [0] * len(coils)
+        for rank, (_k, idx) in enumerate(keys):
+            ladder[idx] = ladder_sorted[rank]
+        data["_t019"] = (coils, list(ladder))
     if mode == "fleet-v2":
         counts = largest_remainder([d[3] for d in FLEET_DEFECTS], N_DEFECTS)
         code_pool = weighted_pool(
@@ -1162,6 +1347,7 @@ def main():
 
     print("mode: " + args.mode)
     posture = data.pop("_t018_posture", None)
+    t019 = data.pop("_t019", None)
     print("row counts, generated against captured")
     for name in ORDER:
         print("  [OK] %-52s %6d" % (name, len(data[name][1])))
@@ -1193,6 +1379,13 @@ def main():
                   "-> absorbed %.1f, cascade %.1f"
                   % (d / 60.0, i / 60.0, max(d - i, 0) / 60.0, max(i - d, 0) / 60.0))
         print("  NEITHER derived metric is stored. Canonical keeps exactly two columns.")
+
+    if t019 is not None:
+        lines, ok = t019_report(data, t019[0], t019[1])
+        for ln in lines:
+            print(ln)
+        if not ok:
+            return 4
 
     if args.profile or not args.out:
         print("\nno --out given, nothing written")
