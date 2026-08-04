@@ -688,6 +688,258 @@ def t019_report(data, coils, defect_count):
     return out, True
 
 
+# ================================================================== T-020 TARGET
+# Post-maintenance recovery and campaign ageing run in OPPOSITE directions, and
+# that is the point: recovery DECAYS over three to five units after an event,
+# campaign ageing RISES gradually across a whole campaign.
+#
+# FOUR REPAIR TYPES, FOUR SHAPES. The contract requires at least two to differ
+# materially, so the two meltshop ones are deliberately unalike:
+#   EAF_WARMUP     cold furnace. Large first hit, FAST decay - nearly gone by
+#                  the fourth heat.
+#   LADLE_RELINE   new refractory. Smaller first hit, SLOW decay - still visible
+#                  at heat five. A different SHAPE, not a smaller version.
+#   ROLL_CHANGE    HSM. Surface quality IMPROVES at once, then degrades with age.
+#   TUNDISH_CHANGE caster campaign boundary.
+MAINT_TYPES = (
+    ("EAF_WARMUP", ("EAF-01", "EAF-02"), 4),
+    ("LADLE_RELINE", ("LF-01", "LF-02"), 8),
+    ("ROLL_CHANGE", ("HSM-01",), 10),
+    ("TUNDISH_CHANGE", ("CCM-01", "CCM-02"), 12),
+)
+RECOVERY_SHAPE = {
+    "EAF_WARMUP":   (1.00, 0.45, 0.18, 0.05, 0.00),
+    "LADLE_RELINE": (0.62, 0.52, 0.40, 0.28, 0.16),
+}
+# The two shapes differ in WHICH METRIC MOVES, not only by how much. A ladle
+# reline modelled as a smaller furnace warm-up was invisible at n=8 - about one
+# standard error - and "materially different shapes" is not "the same effect,
+# fainter". A new refractory lining costs THERMAL CONTROL, not furnace energy.
+RECOVERY_GAIN = {
+    "EAF_WARMUP":   {"power_on": 0.26, "energy_per_t": 0.21, "temp_spread": 0.55},
+    # A LADLE RELINE IS A MEAN SHIFT, NOT A VARIANCE CHANGE, and modelling it as
+    # wider scatter was wrong twice over. Physically: fresh refractory absorbs
+    # heat, so the ladle arrives COLDER and recovers as the lining saturates.
+    # Statistically: a variance change is the hardest thing to detect at n=7,
+    # while a mean shift needs a fraction of the sample. The earlier version also
+    # truncated - at sigma 54 the captured clip bounds sit 1.3 sigma from the
+    # mean, so the distribution flattened and more gain bought nothing.
+    "LADLE_RELINE": {"power_on": 0.00, "energy_per_t": 0.00, "lf_temp_shift": -21.0},
+}
+CAMPAIGN_RISK_START = 0.68
+CAMPAIGN_RISK_END = 1.62
+CODE_AGE_AFFINITY = {"ROLL_MARK": 2.2, "EDGE_WAVE": 1.4, "WAVINESS": 0.6}
+
+FLEET_ALTERS_T020 = (
+    "ALTER TABLE src_hsm_oracle_shape.hsm_coils "
+    "ADD COLUMN IF NOT EXISTS roll_campaign_code text;",
+    "ALTER TABLE src_hsm_oracle_shape.hsm_coils "
+    "ADD COLUMN IF NOT EXISTS campaign_coil_index integer;",
+    "CREATE TABLE IF NOT EXISTS src_inspection_mysql_shape.maintenance_events ("
+    "maintenance_id integer PRIMARY KEY, equipment_code text NOT NULL, "
+    "maintenance_type text NOT NULL, maintenance_start_utc timestamptz NOT NULL, "
+    "maintenance_end_utc timestamptz NOT NULL, "
+    "is_campaign_boundary boolean NOT NULL, updated_at_utc timestamptz NOT NULL);",
+)
+
+
+
+def t020_report(data, heats, coils, ladder):
+    """T-020 proof. Recovery decay, two different shapes, and a campaign trend
+    tested as a TREND rather than as a binned jump - 567 coils per decile against
+    a rate near 0.35 gives a standard error of about 0.030, so a largest-step test
+    on decile means measures noise and not shape."""
+    hc, hr = data["src_meltshop_pg.heats"]
+    ix_hn, ix_pk = hc.index("heat_no"), hc.index("power_kwh")
+    ix_wt, ix_tc = hc.index("heat_weight_ton"), hc.index("actual_temp_c")
+    ix_s, ix_e = hc.index("tap_start_utc"), hc.index("tap_end_utc")
+    info = {}
+    for r in hr:
+        a = datetime.strptime(r[ix_s].strip("'"), "%Y-%m-%d %H:%M:%S%z")
+        b = datetime.strptime(r[ix_e].strip("'"), "%Y-%m-%d %H:%M:%S%z")
+        info[r[ix_hn].strip("'")] = (float(r[ix_pk]) / float(r[ix_wt]),
+                                     (b - a).total_seconds(),
+                                     abs(float(r[ix_tc]) - TAP_TARGET_C))
+
+    def mean(xs):
+        xs = list(xs)
+        return sum(xs) / len(xs) if xs else 0.0
+
+    steady = [h for h in heats if h.get("maint_type") is None]
+    base = (mean(info[h["heat_no"]][0] for h in steady),
+            mean(info[h["heat_no"]][1] for h in steady),
+            mean(info[h["heat_no"]][2] for h in steady))
+
+    out = ["", "T-020 post-maintenance recovery and campaign ageing", ""]
+    out.append("  RECOVERY - the two meltshop shapes differ in WHICH METRIC MOVES")
+    out.append("    %-14s %6s %4s %10s %10s %9s"
+               % ("type", "offset", "n", "energy/t", "power-on", "|tempdev|"))
+    profiles = {}
+    for t in ("EAF_WARMUP", "LADLE_RELINE"):
+        prof = []
+        for off in range(len(RECOVERY_SHAPE[t])):
+            sel = [h for h in heats
+                   if h.get("maint_type") == t and h.get("maint_offset") == off]
+            if not sel:
+                continue
+            e = mean(info[h["heat_no"]][0] for h in sel)
+            po = mean(info[h["heat_no"]][1] for h in sel)
+            dv = mean(info[h["heat_no"]][2] for h in sel)
+            prof.append((off + 1, len(sel), e, po, dv))
+            out.append("    %-14s %6d %4d %10.1f %10.0f %9.2f"
+                       % (t, off + 1, len(sel), e, po, dv))
+        profiles[t] = prof
+    out.append("    %-14s %6s %4d %10.1f %10.0f %9.2f"
+               % ("STEADY", "-", len(steady), base[0], base[1], base[2]))
+
+    # excess over steady, in units of the steady value, per offset
+    lc, lr = data["src_meltshop_pg.lf_treatment"]
+    lf_by_heat = dict((r[lc.index("heat_no")].strip("'"),
+                       float(r[lc.index("final_temp_c")])) for r in lr)
+    lf_steady = mean(lf_by_heat[h["heat_no"]] for h in steady)
+    lad_prof = []
+    for off in range(len(RECOVERY_SHAPE["LADLE_RELINE"])):
+        sel = [h for h in heats if h.get("maint_type") == "LADLE_RELINE"
+               and h.get("maint_offset") == off]
+        if sel:
+            lad_prof.append((off + 1, len(sel),
+                             mean(lf_by_heat[h["heat_no"]] for h in sel)))
+    eaf_excess = [(p[2] - base[0]) / base[0] for p in profiles["EAF_WARMUP"]]
+    # the ladle deficit is a COLDER ladle, so it is a shortfall not an excess
+    lad_excess = [(lf_steady - p[2]) / lf_steady for p in lad_prof]
+    out.append("")
+    out.append("    LADLE_RELINE ladle final temperature, steady %.2f C" % lf_steady)
+    for off, n_, v in lad_prof:
+        out.append("      offset %d  n=%d  %.2f C  (%+.2f C)" % (off, n_, v, v - lf_steady))
+    out.append("")
+    out.append("    EAF_WARMUP   energy/t excess by offset  "
+               + "  ".join("%+.1f%%" % (100 * x) for x in eaf_excess))
+    out.append("    LADLE_RELINE cold-ladle shortfall by offset "
+               + "  ".join("%+.2f%%" % (100 * x) for x in lad_excess))
+
+    # campaign trend, on all coils rather than on binned means
+    xs = [c.get("campaign_age", 0.0) for c in coils]
+    ys = [float(ladder[i]) for i in range(len(coils))]
+    n = len(xs)
+    mx, my = sum(xs) / n, sum(ys) / n
+    sxy = sum((a - mx) * (b - my) for a, b in zip(xs, ys))
+    sxx = sum((a - mx) ** 2 for a in xs)
+    syy = sum((b - my) ** 2 for b in ys)
+    slope = sxy / sxx if sxx else 0.0
+    r_all = sxy / ((sxx * syy) ** 0.5) if sxx and syy else 0.0
+
+    deciles = {}
+    for i, c in enumerate(coils):
+        dk = min(int(c.get("campaign_age", 0.0) * 10), 9)
+        d = deciles.setdefault(dk, [0, 0])
+        d[0] += ladder[i]
+        d[1] += 1
+    dvals = [deciles[k][0] / deciles[k][1] for k in sorted(deciles)]
+    dmx = sum(range(len(dvals))) / len(dvals)
+    dmy = sum(dvals) / len(dvals)
+    dsxy = sum((i - dmx) * (v - dmy) for i, v in enumerate(dvals))
+    dsxx = sum((i - dmx) ** 2 for i in range(len(dvals)))
+    dslope = dsxy / dsxx
+    fitted = [dmy + dslope * (i - dmx) for i in range(len(dvals))]
+    ss_res = sum((v - f) ** 2 for v, f in zip(dvals, fitted))
+    ss_tot = sum((v - dmy) ** 2 for v in dvals)
+    r2 = 1.0 - ss_res / ss_tot if ss_tot else 0.0
+    fitted_rise = dslope * (len(dvals) - 1)
+
+    out.append("")
+    out.append("  CAMPAIGN AGEING - defect rate by campaign-age decile")
+    out.append("    " + "  ".join("%.3f" % v for v in dvals))
+    out.append("    linear fit across deciles  slope %+.4f per decile, "
+               "total fitted rise %+.3f, R2 %.3f" % (dslope, fitted_rise, r2))
+    out.append("    coil-level correlation of defect count with campaign age  r %+.4f"
+               % r_all)
+    out.append("    GRADUAL, NOT A STEP: R2 above 0.55 means the rise is carried by")
+    out.append("    the trend rather than by one boundary.")
+
+    # code affinity in three bands, because 50 ROLL_MARK events cannot fill ten
+    dc, dr = data["src_inspection_mysql_shape.parsytec_surface_defects"]
+    age_of = dict((c["coil_id"], c.get("campaign_age", 0.0)) for c in coils)
+    bands = {0: [0, 0], 1: [0, 0], 2: [0, 0]}
+    for r in dr:
+        a = age_of[r[dc.index("coil_id")].strip("'")]
+        bk = 0 if a < 0.34 else (1 if a < 0.67 else 2)
+        bands[bk][1] += 1
+        if r[dc.index("defect_code")].strip("'") in ("ROLL_MARK", "EDGE_WAVE"):
+            bands[bk][0] += 1
+    out.append("")
+    out.append("  ROLL_MARK plus EDGE_WAVE share by campaign-age third")
+    out.append("    early %.1f%%   middle %.1f%%   late %.1f%%"
+               % tuple(100.0 * bands[k][0] / bands[k][1] for k in (0, 1, 2)))
+    out.append("    (three bands, not ten: about 90 events cannot fill ten deciles)")
+
+    # DECAY IS TESTED AS A TREND, NOT AT TWO ENDPOINTS. An earlier version checked
+    # only offset 1 and offset 5, and passed on a ladle profile reading
+    # +27, +34, -1, +81, +12 - which is noise wearing the shape's clothes.
+    def decay_slope(ex):
+        k = len(ex)
+        mx = (k - 1) / 2.0
+        my = sum(ex) / k
+        sxy = sum((i - mx) * (v - my) for i, v in enumerate(ex))
+        sxx = sum((i - mx) ** 2 for i in range(k))
+        return sxy / sxx if sxx else 0.0
+
+    eaf_slope = decay_slope(eaf_excess)
+    lad_slope = decay_slope(lad_excess)
+
+    def half_life(ex):
+        """First offset where the excess has fallen below half its opening value."""
+        if ex[0] <= 0:
+            return 99
+        for i, v in enumerate(ex):
+            if v < 0.5 * ex[0]:
+                return i + 1
+        return len(ex) + 1
+
+    eaf_hl, lad_hl = half_life(eaf_excess), half_life(lad_excess)
+    out.append("    decay slope per offset      EAF %+.3f   LADLE %+.3f"
+               % (eaf_slope, lad_slope))
+    out.append("    offset at which the excess halves   EAF %d   LADLE %d"
+               % (eaf_hl, lad_hl))
+    out.append("")
+    out.append("    POWER NOTE, stated rather than hidden: there are 4 furnace and")
+    out.append("    8 ladle events at this scale, so each offset cell holds 4 to 8")
+    out.append("    heats. The opening effect and the decay direction are carried by")
+    out.append("    that sample; the individual offset-5 cell is NOT independently")
+    out.append("    significant and is not asserted as such. T-023 triples the plant")
+    out.append("    to 1,890 heats, which triples the events and halves these")
+    out.append("    standard errors.")
+
+    problems = []
+    if not (eaf_excess[0] > 0.08 and eaf_slope < 0):
+        problems.append("EAF_WARMUP does not show a decaying excess - opening %.3f, "
+                        "slope %+.4f" % (eaf_excess[0], eaf_slope))
+    if not (lad_excess[0] > 0.004 and lad_slope < 0):
+        problems.append("LADLE_RELINE does not show a decaying cold-ladle shortfall - "
+                        "opening %.4f, slope %+.5f" % (lad_excess[0], lad_slope))
+    if lad_hl <= eaf_hl:
+        problems.append("the two repair shapes are not materially different: the "
+                        "ladle excess halves at offset %d and the furnace at %d, so "
+                        "one is a fainter copy of the other rather than a different "
+                        "shape" % (lad_hl, eaf_hl))
+    if r2 < 0.55:
+        problems.append("the campaign trend has R2 %.3f, so the rise is not carried "
+                        "by a gradual trend - it looks like a step or like noise" % r2)
+    if r_all <= 0.02:
+        problems.append("defect count does not rise with campaign age at coil level")
+    if bands[2][0] / bands[2][1] <= bands[0][0] / bands[0][1]:
+        problems.append("the age-linked codes do not rise across the campaign")
+    if problems:
+        out.append("")
+        out.append("T-020 ACCEPTANCE FAILED:")
+        for pr in problems:
+            out.append("  " + pr)
+        return out, False
+    out.append("")
+    out.append("  All three hold: a decaying recovery, two materially different")
+    out.append("  repair shapes, and a gradual campaign trend rather than a step.")
+    return out, True
+
+
 def build_pools(rnd):
     """One exact pool per interval, shuffled once. Popping from it reproduces the
     measured distribution exactly rather than approximately."""
@@ -792,6 +1044,33 @@ def generate(seed, mode="capture"):
     caster_pool = weighted_pool(CASTER_SEQ, rnd)
 
     # ---------------------------------------------------------- heats
+    maint_events = []
+    heat_recovery = {}
+    if mode == "fleet-v2":
+        span = (N_HEATS - 1) * HEAT_INTERVAL_S
+        mid = 0
+        for mtype, equips, count in MAINT_TYPES:
+            for k in range(count):
+                mid += 1
+                frac = (k + 0.5) / count
+                at = int(frac * span + rnd.uniform(-0.30, 0.30) * span / count)
+                at = max(0, min(span, at))
+                start = T0_TAP + timedelta(seconds=at)
+                dur_m = rnd.randint(40 * 60, 260 * 60)
+                maint_events.append({
+                    "id": mid, "type": mtype, "equip": rnd.choice(equips),
+                    "start": start, "end": start + timedelta(seconds=dur_m),
+                    "boundary": mtype in ("ROLL_CHANGE", "TUNDISH_CHANGE"),
+                    "heat_index": at // HEAT_INTERVAL_S,
+                })
+        for ev in maint_events:
+            if ev["type"] not in RECOVERY_SHAPE:
+                continue
+            for offset in range(len(RECOVERY_SHAPE[ev["type"]])):
+                hi = ev["heat_index"] + 1 + offset
+                if hi < N_HEATS and hi not in heat_recovery:
+                    heat_recovery[hi] = (ev["type"], offset)
+
     heats = []
     heat_rows = []
     for i in range(N_HEATS):
@@ -844,8 +1123,24 @@ def generate(seed, mode="capture"):
                 off_spec_seq[0] += 1
                 vals[el] = spec_violate(rnd, spec[el])
             shift_code, spread, bias = shift_of(tap_start)
-            heat_rows[-1][9] = "%.2f" % norm(rnd, 1647.7157 + bias, 21.8501 * spread,
-                                             1577.38, 1711.43, 2)
+            rtype, roff = heat_recovery.get(i, (None, 0))
+            rw = RECOVERY_SHAPE[rtype][roff] if rtype else 0.0
+            gain = RECOVERY_GAIN.get(rtype, {}) if rtype else {}
+            if rw > 0.0 and gain.get("power_on"):
+                base_dur = (tap_end - tap_start).total_seconds()
+                tap_end = tap_start + timedelta(
+                    seconds=int(base_dur * (1.0 + gain["power_on"] * rw)))
+                heat_rows[-1][4] = ts(tap_end)
+                heat_rows[-1][15] = ts(tap_end + timedelta(seconds=UPDATE_LAG_S["heat"]))
+            if rw > 0.0 and gain.get("energy_per_t"):
+                heat_rows[-1][11] = "%.3f" % (float(heat_rows[-1][11])
+                                              * (1.0 + gain["energy_per_t"] * rw))
+            heat_rows[-1][9] = "%.2f" % norm(
+                rnd, 1647.7157 + bias,
+                21.8501 * spread * (1.0 + gain.get("temp_spread", 0.0) * rw),
+                1577.38, 1711.43, 2)
+            rec["maint_type"] = rtype
+            rec["maint_offset"] = roff if rtype else None
             heat_rows[-1][12] = "%.5f" % vals["C"]
             heat_rows[-1][13] = "%.5f" % vals["Mn"]
             heat_rows[-1][14] = "%.5f" % vals["Si"]
@@ -874,11 +1169,18 @@ def generate(seed, mode="capture"):
     for i, h in enumerate(heats):
         st = h["tap_start"] + timedelta(seconds=take(pools, "B01_lf_start_offset", i))
         en = st + timedelta(seconds=take(pools, "B02_lf_duration", i))
+        lf_shift = 0.0
+        if mode == "fleet-v2":
+            rt = h.get("maint_type")
+            if rt and RECOVERY_GAIN.get(rt, {}).get("lf_temp_shift"):
+                lf_shift = (RECOVERY_GAIN[rt]["lf_temp_shift"]
+                            * RECOVERY_SHAPE[rt][h["maint_offset"]])
         lf_rows.append([
             str(i + 1), q(h["heat_no"]), q(lfcode_pool[i]), ts(st), ts(en),
             "%.3f" % unif(rnd, 120.003, 279.898, 3),
             "%.3f" % unif(rnd, 20.198, 109.868, 3),
-            "%.2f" % norm(rnd, 1609.8018, 16.4367, 1562.20, 1665.47, 2),
+            "%.2f" % norm(rnd, 1609.8018 + lf_shift, 16.4367,
+                          1562.20 + min(lf_shift, 0.0), 1665.47, 2),
             q(lfsample_pool[i]),
             ts(en + timedelta(seconds=UPDATE_LAG_S["lf"])),
         ])
@@ -986,11 +1288,33 @@ def generate(seed, mode="capture"):
                 "%.3f" % coil_weight,
                 ts(re_),
             ])
+    if mode == "fleet-v2":
+        boundaries = sorted(ev["start"] for ev in maint_events
+                            if ev["type"] == "ROLL_CHANGE")
+        order = sorted(range(len(coils)), key=lambda ix: coils[ix]["rs"])
+        camp_no, seen_in_camp, bi = 1, 0, 0
+        for ix in order:
+            while bi < len(boundaries) and coils[ix]["rs"] >= boundaries[bi]:
+                bi += 1
+                camp_no += 1
+                seen_in_camp = 0
+            seen_in_camp += 1
+            coils[ix]["campaign"] = "RC-%03d" % camp_no
+            coils[ix]["campaign_index"] = seen_in_camp
+        sizes = {}
+        for c in coils:
+            sizes[c["campaign"]] = max(sizes.get(c["campaign"], 0), c["campaign_index"])
+        for ix, c in enumerate(coils):
+            c["campaign_age"] = ((c["campaign_index"] - 1)
+                                 / max(sizes[c["campaign"]] - 1, 1))
+            coil_rows[ix].extend([q(c["campaign"]), str(c["campaign_index"])])
+
     data["src_hsm_oracle_shape.hsm_coils"] = (
         ["coil_id", "mill_line", "input_piece_id", "heat_no", "rolling_start_time",
          "rolling_end_time", "target_fdt_c", "actual_fdt_c", "target_ct_c",
          "actual_ct_c", "target_thickness_mm", "actual_thickness_mm",
-         "target_width_mm", "actual_width_mm", "coil_weight_kg", "last_update_ts"],
+         "target_width_mm", "actual_width_mm", "coil_weight_kg", "last_update_ts"]
+        + (["roll_campaign_code", "campaign_coil_index"] if mode == "fleet-v2" else []),
         coil_rows)
 
     # ---------------------------------------------------------- pass measurements
@@ -1089,8 +1413,12 @@ def generate(seed, mode="capture"):
         keys = []
         for idx, coil in enumerate(coils):
             h = coil["heat"]
-            risk = math.exp(HARDNESS_TO_RISK * h.get("hardness", 0.4)
-                            + DEVIATION_TO_RISK * h.get("temp_dev", 0.0) / TAP_SD_C)
+            age = coil.get("campaign_age", 0.0)
+            camp_mult = (CAMPAIGN_RISK_START
+                         + (CAMPAIGN_RISK_END - CAMPAIGN_RISK_START) * age)
+            risk = camp_mult * math.exp(
+                HARDNESS_TO_RISK * h.get("hardness", 0.4)
+                + DEVIATION_TO_RISK * h.get("temp_dev", 0.0) / TAP_SD_C)
             keys.append((rnd.expovariate(1.0) / risk, idx))
         keys.sort()
         ladder_sorted = sorted(ladder, reverse=True)
@@ -1114,13 +1442,34 @@ def generate(seed, mode="capture"):
         meta = dict((d[0], (d[1], d[2])) for d in DEFECTS)
         sev_weights = None
     side_pool = weighted_pool(SIDE_CODE, rnd)
+    code_by_slot = None
+    if mode == "fleet-v2":
+        slots = []
+        for ix, coil in enumerate(coils):
+            for _ in range(ladder[ix]):
+                slots.append(coil.get("campaign_age", 0.0))
+        remaining = {}
+        for cd in code_pool:
+            remaining[cd] = remaining.get(cd, 0) + 1
+        code_by_slot = []
+        for age in slots:
+            names, weights = [], []
+            for cd, left in remaining.items():
+                if left <= 0:
+                    continue
+                names.append(cd)
+                weights.append(left * math.exp(CODE_AGE_AFFINITY.get(cd, 0.0) * age))
+            pick = rnd.choices(names, weights=weights)[0]
+            remaining[pick] -= 1
+            code_by_slot.append(pick)
+
     def_rows = []
     di = 0
     for i, coil in enumerate(coils):
         for _ in range(ladder[i]):
             if di >= N_DEFECTS:
                 break
-            code = code_pool[di]
+            code = code_by_slot[di] if code_by_slot is not None else code_pool[di]
             name, klass = meta[code]
             if sev_weights is not None:
                 lo, md, hi = sev_weights[code]
@@ -1215,6 +1564,19 @@ def generate(seed, mode="capture"):
         if problems:
             raise SystemExit("T-017 ACCEPTANCE FAILED:\n  " + "\n  ".join(problems))
 
+        m_rows = []
+        for ev in sorted(maint_events, key=lambda e: e["start"]):
+            m_rows.append([
+                str(ev["id"]), q(ev["equip"]), q(ev["type"]),
+                ts(ev["start"]), ts(ev["end"]),
+                "true" if ev["boundary"] else "false", ts(ev["end"]),
+            ])
+        data["src_inspection_mysql_shape.maintenance_events"] = (
+            ["maintenance_id", "equipment_code", "maintenance_type",
+             "maintenance_start_utc", "maintenance_end_utc",
+             "is_campaign_boundary", "updated_at_utc"], m_rows)
+        data["_t020"] = (list(heats), list(coils), list(ladder))
+
         spec_rows = []
         for grade in sorted(GRADE_SPEC):
             for el in SPEC_ELEMENTS:
@@ -1276,7 +1638,8 @@ def generate(seed, mode="capture"):
     return data
 
 
-ORDER_T017 = ["src_meltshop_pg.grade_specification", "src_meltshop_pg.shift_calendar"]
+ORDER_T017 = ["src_meltshop_pg.grade_specification", "src_meltshop_pg.shift_calendar",
+              "src_inspection_mysql_shape.maintenance_events"]
 
 ORDER = [
     "src_meltshop_pg.heats",
@@ -1348,6 +1711,7 @@ def main():
     print("mode: " + args.mode)
     posture = data.pop("_t018_posture", None)
     t019 = data.pop("_t019", None)
+    t020 = data.pop("_t020", None)
     print("row counts, generated against captured")
     for name in ORDER:
         print("  [OK] %-52s %6d" % (name, len(data[name][1])))
@@ -1387,6 +1751,13 @@ def main():
         if not ok:
             return 4
 
+    if t020 is not None:
+        lines, ok = t020_report(data, t020[0], t020[1], t020[2])
+        for ln in lines:
+            print(ln)
+        if not ok:
+            return 5
+
     if args.profile or not args.out:
         print("\nno --out given, nothing written")
         return 0
@@ -1409,7 +1780,8 @@ def main():
             fh.write("-- T-016 adds the chemistry columns the target specification\n")
             fh.write("-- names. 110_phase1_demo_source_shapes.sql is NOT edited: it\n")
             fh.write("-- describes the donor schemas, which are scheduled for retirement.\n")
-            for a in FLEET_ALTERS + FLEET_ALTERS_T017 + FLEET_ALTERS_T018:
+            for a in (FLEET_ALTERS + FLEET_ALTERS_T017 + FLEET_ALTERS_T018
+                      + FLEET_ALTERS_T020):
                 fh.write(a + "\n")
             fh.write("\n")
         for name in ORDER + ([n for n in ORDER_T017 if n in data]):
