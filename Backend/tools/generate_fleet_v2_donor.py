@@ -58,7 +58,9 @@ USAGE
 """
 
 import argparse
+import hashlib
 import math
+import os
 import random
 import sys
 from datetime import datetime, timedelta, timezone
@@ -1119,6 +1121,229 @@ def t021_report(data, coils, ladder, regime_event):
     return out, True
 
 
+# ================================================================== T-022 TARGET
+# THE ONE CONTROLLED MERGE. Three generations of the same plant existed: the
+# captured donor schemas, an older and roughly three times larger dump
+# population, and canonical rows matching that older generation. This is where
+# they become ONE definition - expressed in this generator, never by copying rows
+# between layers. Copying a piece here and fixing a piece there is what produced
+# three generations in the first place.
+#
+# EVERY CONFLICT CARRIES A DECISION AND A REASON. The table is the deliverable.
+MERGE_DECISIONS = (
+    ("plant scale",
+     "630 heats, 5,670 coils, 31 days",
+     "2,431 heats, 17,817 coils",
+     "NEITHER - the T-015 derived target of 1,890 heats and 17,010 coils",
+     "both generations are historical accidents. The target was DERIVED from the "
+     "chart population requirement - 18 strata at 85 defect-positive coils each - "
+     "and a number derived from a requirement beats one inherited from either "
+     "generation. Applied by T-023, not here."),
+    ("pieces per heat",
+     "exactly 9 without one exception - captured FAULT-5",
+     "18,070 pieces over 2,431 heats, so it varied",
+     "ADOPT THE OLDER GENERATION'S VARIATION, 7 to 11 with mean exactly 9",
+     "fixed cardinality is a captured fault, and the older generation is the "
+     "evidence that the plant it modelled did vary. The per-heat counts sum to "
+     "exactly 5,670, so no downstream total moves - a structural fix, not a "
+     "scale change."),
+    ("pickling coverage",
+     "5,670 of 5,670 coils, 100 percent",
+     "15,669 of 17,817 coils, 88 percent",
+     "ADOPT THE OLDER GENERATION'S PARTIAL COVERAGE, about 90 percent",
+     "a plant that pickles every single coil has exactly one route. The older "
+     "generation is evidence of route variation, and route_code was a T-013 VARY "
+     "target with no other home. The uncovered coils are what MAKES it vary."),
+    ("defect incidence",
+     "1,987 defects over 5,670 coils = 0.35 per coil",
+     "51,987 over 17,817 = 2.92 per coil",
+     "KEEP THE CAPTURED RATE, REJECT THE OLDER GENERATION'S",
+     "2.92 defects per coil means almost every coil carries three. That is not a "
+     "plant, it is an inspection system with its threshold set wrong. Rejected on "
+     "physical grounds, not preference."),
+    ("defect catalogue",
+     "6 codes inside a three-point spread",
+     "5 different codes, sharing only two with the captured set",
+     "NEITHER - the T-015 fourteen-code Pareto with two negative controls",
+     "both catalogues are flat and neither carries a code that exists to be "
+     "REJECTED. Applied by T-016."),
+    ("chemistry elements",
+     "carbon, manganese, silicon",
+     "the same three",
+     "EXTEND TO SIX, adding sulphur, phosphorus and aluminium",
+     "no conflict between the generations - both fall short of what C12 needs. "
+     "Applied by T-016 and T-017."),
+    ("ladle furnace, pass measurements, QA row counts",
+     "630 / 39,690 / 17,010",
+     "identical on all three",
+     "KEEP - no conflict exists",
+     "where the two generations agree there is nothing to merge, and saying so is "
+     "part of the record."),
+    ("downtime vocabulary",
+     "5 reason codes across 4 categories, 210 events",
+     "248 events",
+     "KEEP THE CAPTURED VOCABULARY AND RATE",
+     "the 18 percent count difference is horizon, not semantics, and the captured "
+     "vocabulary is the richer of the two."),
+    ("QA measurement values",
+     "one distribution 1.07 to 1599.88 across three different tests",
+     "identical - the same fault",
+     "REJECT BOTH, repair per test code",
+     "the generations agree, and they are both wrong. AGREEMENT BETWEEN TWO "
+     "SOURCES IS NOT EVIDENCE WHEN BOTH INHERIT THE SAME DEFECT."),
+)
+
+# Route variation makes route_code vary AND produces the partial pickling
+# coverage adopted from the older generation - one decision with two effects
+# rather than two unrelated fixes.
+ROUTES = (
+    ("EAF-LF-CCM-HSM-PKL", 0.90, True),
+    ("EAF-LF-CCM-HSM", 0.08, False),
+    ("EAF-LF-CCM-HSM-DS", 0.02, False),
+)
+# Per-grade setpoints. T-013 recorded these columns as populated-but-constant, and
+# a plant does not tap every grade to the same temperature.
+GRADE_SETPOINTS = {
+    "IF-LOW-C": {"tap": 1640.0, "fdt": 860.0, "ct": 650.0},
+    "DX51D":    {"tap": 1645.0, "fdt": 870.0, "ct": 630.0},
+    "S235JR":   {"tap": 1650.0, "fdt": 875.0, "ct": 610.0},
+    "S355MC":   {"tap": 1655.0, "fdt": 885.0, "ct": 600.0},
+    "HSLA-420": {"tap": 1660.0, "fdt": 895.0, "ct": 580.0},
+    "DP600":    {"tap": 1660.0, "fdt": 895.0, "ct": 580.0},
+}
+SEQUENCE_STATUSES = (("Completed", 580), ("Short", 25), ("Aborted", 15), ("Held", 10))
+GRADE_DEVIATION_RATE = 0.04
+INSPECTION_DEVICES = (("PARSYTEC-01", 0.62), ("PARSYTEC-02", 0.38))
+PIECES_PER_HEAT_MIX = ((7, 63), (8, 126), (9, 252), (10, 126), (11, 63))
+
+
+
+def t022_report(data):
+    """T-022 proof. The merge decisions are the deliverable; the coverage check is
+    what proves no semantic element was dropped in silence."""
+    out = ["", "T-022 the one controlled merge", ""]
+    out.append("  CONFLICT DECISIONS - captured baseline against the older generation")
+    for subject, cap, old, decision, reason in MERGE_DECISIONS:
+        out.append("")
+        out.append("    %s" % subject.upper())
+        out.append("      captured : %s" % cap)
+        out.append("      older    : %s" % old)
+        out.append("      DECISION : %s" % decision)
+        for line in _wrap(reason, 66):
+            out.append("      why      : " + line if line is reason.split()[0:1] else
+                       "                 " + line)
+    # simpler, stable rendering
+    out = ["", "T-022 the one controlled merge", "",
+           "  CONFLICT DECISIONS - captured baseline against the older generation"]
+    for subject, cap, old, decision, reason in MERGE_DECISIONS:
+        out.append("")
+        out.append("    %s" % subject.upper())
+        out.append("      captured : %s" % cap)
+        out.append("      older    : %s" % old)
+        out.append("      DECISION : %s" % decision)
+        w = _wrap(reason, 64)
+        out.append("      why      : %s" % w[0])
+        for extra in w[1:]:
+            out.append("                 %s" % extra)
+
+    structures = (
+        "src_meltshop_pg.heats", "src_meltshop_pg.lf_treatment",
+        "src_caster_oracle_shape.cast_sequence", "src_caster_oracle_shape.cast_pieces",
+        "src_hsm_oracle_shape.hsm_coils", "src_hsm_oracle_shape.hsm_pass_measurements",
+        "src_inspection_mysql_shape.parsytec_surface_defects",
+        "src_inspection_mysql_shape.downtime_events",
+        "src_pkl_mssql_shape.pickle_orders", "src_pkl_mssql_shape.qa_lab_results",
+        "src_meltshop_pg.shift_calendar", "src_meltshop_pg.grade_specification",
+        "src_inspection_mysql_shape.maintenance_events",
+    )
+    out.append("")
+    out.append("  RECONCILIATION COVERAGE - all 13 T-013 structures")
+    missing = [t for t in structures if t not in data]
+    out.append("    present %d of %d%s"
+               % (len(structures) - len(missing), len(structures),
+                  "" if not missing else "   MISSING: " + ", ".join(missing)))
+
+    # the seven VARY targets that had no other task
+    varied = []
+    checks = (
+        ("heats.route_code", "src_meltshop_pg.heats", "route_code", 2),
+        ("heats.target_temp_c", "src_meltshop_pg.heats", "target_temp_c", 2),
+        ("hsm_coils.target_fdt_c", "src_hsm_oracle_shape.hsm_coils", "target_fdt_c", 2),
+        ("hsm_coils.target_ct_c", "src_hsm_oracle_shape.hsm_coils", "target_ct_c", 2),
+        ("cast_sequence.sequence_status", "src_caster_oracle_shape.cast_sequence",
+         "sequence_status", 2),
+        ("parsytec.inspection_device",
+         "src_inspection_mysql_shape.parsytec_surface_defects", "inspection_device", 2),
+    )
+    out.append("")
+    out.append("  VARY TARGETS FROM THE SOURCE RECONCILIATION")
+    out.append("    these had no task of their own; T-022 is where they survive or")
+    out.append("    carry a reason for being dropped")
+    problems = []
+    for label, tbl, col, want in checks:
+        cols, rows = data[tbl]
+        n = len(set(r[cols.index(col)] for r in rows))
+        varied.append((label, n))
+        out.append("    %-34s %d distinct" % (label, n))
+        if n < want:
+            problems.append("%s is still single-valued after the merge" % label)
+
+    cols, rows = data["src_caster_oracle_shape.cast_sequence"]
+    dev = sum(1 for r in rows
+              if r[cols.index("planned_grade")] != r[cols.index("actual_grade")])
+    out.append("    %-34s %d of %d sequences (%.1f percent)"
+               % ("planned grade differs from actual", dev, len(rows),
+                  100.0 * dev / len(rows)))
+    if dev == 0:
+        problems.append("planned grade never differs from actual, so no deviation "
+                        "story exists")
+
+    hc, hr = data["src_meltshop_pg.heats"]
+    per_heat = {}
+    pc, pr = data["src_caster_oracle_shape.cast_pieces"]
+    for r in pr:
+        k = r[pc.index("heat_no")]
+        per_heat[k] = per_heat.get(k, 0) + 1
+    spread = sorted(set(per_heat.values()))
+    out.append("")
+    out.append("  SCALE LESSONS ADOPTED FROM THE OLDER GENERATION")
+    out.append("    pieces per heat  %s   mean %.2f, total %d"
+               % (spread, sum(per_heat.values()) / float(len(per_heat)),
+                  sum(per_heat.values())))
+    if len(spread) < 3:
+        problems.append("pieces per heat did not become variable")
+
+    kc, kr = data["src_pkl_mssql_shape.pickle_orders"]
+    cc, cr = data["src_hsm_oracle_shape.hsm_coils"]
+    share = 100.0 * len(kr) / len(cr)
+    out.append("    pickling coverage %.1f percent of coils, from route_code"
+               % share)
+
+    if problems:
+        out.append("")
+        out.append("T-022 ACCEPTANCE FAILED:")
+        for pr_ in problems:
+            out.append("  " + pr_)
+        return out, False
+    out.append("")
+    out.append("  One reconciled definition, nine recorded conflict decisions, all 13")
+    out.append("  structures present, and no row copied between layers to get here.")
+    return out, True
+
+
+def _wrap(text, width):
+    words, lines, cur = text.split(), [], ""
+    for w in words:
+        if len(cur) + len(w) + 1 > width:
+            lines.append(cur)
+            cur = w
+        else:
+            cur = (cur + " " + w).strip()
+    if cur:
+        lines.append(cur)
+    return lines
+
+
 def build_pools(rnd):
     """One exact pool per interval, shuffled once. Popping from it reproduces the
     measured distribution exactly rather than approximately."""
@@ -1191,6 +1416,13 @@ def generate(seed, mode="capture"):
 
     grade_seen = {}
     off_spec_seq = [0]
+    if mode == "fleet-v2":
+        per_heat = []
+        for v, c in PIECES_PER_HEAT_MIX:
+            per_heat.extend([v] * c)
+        rnd.shuffle(per_heat)
+    else:
+        per_heat = [SLABS_PER_HEAT] * N_HEATS
     grade_pool = weighted_pool(GRADES, rnd)
     if mode == "fleet-v2":
         # T-019: reassign the SAME grade pool so that harder grades land more
@@ -1257,6 +1489,14 @@ def generate(seed, mode="capture"):
         tap_start = T0_TAP + timedelta(seconds=i * HEAT_INTERVAL_S)   # FAULT-4
         tap_end = tap_start + timedelta(seconds=take(pools, "A02_tap_duration", i))
         grade = grade_pool[i]
+        route_code, route_pickled = ROUTE_CODE, True
+        if mode == "fleet-v2":
+            rr, acc = rnd.random(), 0.0
+            for rname, rshare, rpick in ROUTES:
+                acc += rshare
+                if rr <= acc:
+                    route_code, route_pickled = rname, rpick
+                    break
         rec = {
             "heat_no": heat_no,
             "tap_start": tap_start,
@@ -1265,13 +1505,17 @@ def generate(seed, mode="capture"):
             "furnace": furnace_pool[i],
             # FAULT-1: weight is independent of every downstream dimension
             "weight_ton": unif(rnd, 145.016, 174.937, 3),
+            "pickled": route_pickled,
+            "n_pieces": per_heat[i],
         }
         heats.append(rec)
         heat_rows.append([
             q(heat_no), q(PLANT_CODE), q(rec["furnace"]),
-            ts(tap_start), ts(tap_end), q(grade), q(ROUTE_CODE),
+            ts(tap_start), ts(tap_end), q(grade),
+            q(ROUTE_CODE if mode != "fleet-v2" else route_code),
             "%.3f" % rec["weight_ton"],
-            "%.2f" % TARGET_TEMP_C,
+            "%.2f" % (TARGET_TEMP_C if mode != "fleet-v2"
+                      else GRADE_SETPOINTS[grade]["tap"]),
             "%.2f" % norm(rnd, 1647.7157, 21.8501, 1577.38, 1711.43, 2),
             "%.3f" % unif(rnd, 3200.815, 5095.138, 3),
             "%.3f" % unif(rnd, 69034.392, 84984.125, 3),
@@ -1315,7 +1559,7 @@ def generate(seed, mode="capture"):
                 heat_rows[-1][11] = "%.3f" % (float(heat_rows[-1][11])
                                               * (1.0 + gain["energy_per_t"] * rw))
             heat_rows[-1][9] = "%.2f" % norm(
-                rnd, 1647.7157 + bias,
+                rnd, GRADE_SETPOINTS[grade]["tap"] - 2.3 + bias,
                 21.8501 * spread * (1.0 + gain.get("temp_spread", 0.0) * rw),
                 1577.38, 1711.43, 2)
             rec["maint_type"] = rtype
@@ -1369,20 +1613,26 @@ def generate(seed, mode="capture"):
          "sample_result_code", "source_updated_at_utc"], lf_rows)
 
     # ---------------------------------------------------------- cast_sequence
+    seq_status_pool = (weighted_pool(SEQUENCE_STATUSES, rnd)
+                       if mode == "fleet-v2" else None)
     seq_rows = []
     sequences = []
     for i, h in enumerate(heats):
         seq_no = "SEQ%05d" % (i + 1)
         st = h["tap_start"] + timedelta(seconds=take(pools, "C01_seq_start_offset", i))
         en = st + timedelta(seconds=take(pools, "C02_seq_duration", i))
+        planned_grade = h["grade"]
+        if mode == "fleet-v2" and rnd.random() < GRADE_DEVIATION_RATE:
+            others = [g for g, _c in GRADES if g != h["grade"]]
+            planned_grade = rnd.choice(others)
         caster = caster_pool[i]
         sequences.append({"seq_no": seq_no, "start": st, "caster": caster})
         seq_rows.append([
             q(seq_no), q(caster), ts(st), ts(en),
             q(tundish_pool[i]),
             # planned always equals actual - no deviation story exists
-            q(h["grade"]), q(h["grade"]),
-            q(SEQUENCE_STATUS),
+            q(planned_grade if mode == "fleet-v2" else h["grade"]), q(h["grade"]),
+            q(SEQUENCE_STATUS if mode != "fleet-v2" else seq_status_pool[i]),
             ts(en),
         ])
     # NOTE: cast_sequence carries NO heat_no. The heat-to-sequence link exists
@@ -1399,7 +1649,7 @@ def generate(seed, mode="capture"):
     pieces = []
     for i, h in enumerate(heats):
         seq = sequences[i]
-        for s in range(SLABS_PER_HEAT):
+        for s in range(h["n_pieces"] if mode == "fleet-v2" else SLABS_PER_HEAT):
             piece_id = "SLB%05d%02d" % (i + 1, s + 1)
             # the step is drawn PER SLAB - section K counts are not multiples of 9
             step = take(pools, "C04_cut_step_per_slab", i * SLABS_PER_HEAT + s)
@@ -1450,9 +1700,11 @@ def generate(seed, mode="capture"):
 
     coil_rows = []
     coils = []
+    piece_cursor = 0
     for i, h in enumerate(heats):
-        for c in range(COILS_PER_HEAT):
-            idx = i * COILS_PER_HEAT + c
+        n_c = h["n_pieces"] if mode == "fleet-v2" else COILS_PER_HEAT
+        for c in range(n_c):
+            idx = piece_cursor + c
             coil_id = "C%07d" % (idx + 1)
             piece = pieces[idx]
             lo = ROLL_LAG_S[0]
@@ -1472,12 +1724,18 @@ def generate(seed, mode="capture"):
             coil_rows.append([
                 q(coil_id), q(MILL_LINE), q(piece["piece_id"]), q(h["heat_no"]),
                 ts(rs), ts(re_),
-                "%.2f" % TARGET_FDT_C,
-                "%.2f" % norm(rnd, 874.9533 + (0.0 if mode != "fleet-v2" else h.get("bias", 0.0) * 3.0),
+                "%.2f" % (TARGET_FDT_C if mode != "fleet-v2"
+                          else GRADE_SETPOINTS[h["grade"]]["fdt"]),
+                "%.2f" % norm(rnd, (874.9533 if mode != "fleet-v2"
+                                    else GRADE_SETPOINTS[h["grade"]]["fdt"] - 0.05)
+                              + (0.0 if mode != "fleet-v2" else h.get("bias", 0.0) * 3.0),
                               21.8351 * (1.0 if mode != "fleet-v2" else h.get("spread", 1.0)),
                               798.34, 958.13, 2),
-                "%.2f" % TARGET_CT_C,
-                "%.2f" % norm(rnd, 609.3825 + (REGIME_CT_SHIFT_C if after_regime else 0.0),
+                "%.2f" % (TARGET_CT_C if mode != "fleet-v2"
+                          else GRADE_SETPOINTS[h["grade"]]["ct"]),
+                "%.2f" % norm(rnd, (609.3825 if mode != "fleet-v2"
+                                    else GRADE_SETPOINTS[h["grade"]]["ct"] - 0.6)
+                              + (REGIME_CT_SHIFT_C if after_regime else 0.0),
                               27.6698 * (REGIME_CT_SD_MULT if after_regime else 1.0),
                               491.56, 729.02, 2),
                 "%.4f" % tgt_thk,
@@ -1487,6 +1745,7 @@ def generate(seed, mode="capture"):
                 "%.3f" % coil_weight,
                 ts(re_),
             ])
+        piece_cursor += n_c
     if mode == "fleet-v2":
         boundaries = sorted(ev["start"] for ev in maint_events
                             if ev["type"] == "ROLL_CHANGE")
@@ -1551,6 +1810,8 @@ def generate(seed, mode="capture"):
     orders = []
     ni = 0
     for i, coil in enumerate(coils):
+        if mode == "fleet-v2" and not coil["heat"].get("pickled", True):
+            continue
         entry = coil["re"] + timedelta(hours=rnd.randint(PKL_LAG_HOURS[0], PKL_LAG_HOURS[1]))
         entry = entry.replace(second=0, microsecond=0)
         exit_ = entry + timedelta(seconds=take(pools, "F02_pkl_duration", i))
@@ -1668,6 +1929,13 @@ def generate(seed, mode="capture"):
             remaining[pick] -= 1
             code_by_slot.append(pick)
 
+    device_pool = None
+    if mode == "fleet-v2":
+        n_dev = int(round(N_DEFECTS * INSPECTION_DEVICES[0][1]))
+        device_pool = weighted_pool(
+            ((INSPECTION_DEVICES[0][0], n_dev),
+             (INSPECTION_DEVICES[1][0], N_DEFECTS - n_dev)), rnd)
+
     def_rows = []
     di = 0
     for i, coil in enumerate(coils):
@@ -1686,7 +1954,8 @@ def generate(seed, mode="capture"):
             et = et.replace(second=0, microsecond=0)
             start_m = unif(rnd, 0.220, 799.798, 3)
             def_rows.append([
-                str(di + 1), q(coil["coil_id"]), q(INSPECTION_DEVICE), ts(et),
+                str(di + 1), q(coil["coil_id"]),
+                q(INSPECTION_DEVICE if mode != "fleet-v2" else device_pool[di]), ts(et),
                 q(code), q(name), q(klass), q(severity),
                 "%.3f" % start_m,
                 "%.3f" % round(min(start_m + rnd.uniform(0.5, 25.0), 817.308), 3),
@@ -1903,23 +2172,68 @@ def main():
                 failures.append("%s row %d has %d values for %d columns"
                                 % (name, n + 1, len(r), len(cols)))
                 break
-    for name in ORDER:
-        actual = len(data[name][1])
-        if actual != EXPECTED[name]:
-            failures.append("%s produced %d rows, captured %d"
-                            % (name, actual, EXPECTED[name]))
+    counts = dict((name, len(data[name][1])) for name in ORDER)
+    if args.mode == "capture":
+        for name in ORDER:
+            if counts[name] != EXPECTED[name]:
+                failures.append("%s produced %d rows, captured %d"
+                                % (name, counts[name], EXPECTED[name]))
+    else:
+        # fleet-v2 DIVERGES FROM THE CAPTURE BY DESIGN - route variation means not
+        # every coil is pickled - so equality with the captured counts is the wrong
+        # check. What must hold is INTERNAL CONSISTENCY: every child count follows
+        # from its parent, or a row was lost or invented somewhere.
+        heats_n = counts["src_meltshop_pg.heats"]
+        pieces_n = counts["src_caster_oracle_shape.cast_pieces"]
+        coils_n = counts["src_hsm_oracle_shape.hsm_coils"]
+        pkl_n = counts["src_pkl_mssql_shape.pickle_orders"]
+        checks = [
+            ("lf per heat", counts["src_meltshop_pg.lf_treatment"], heats_n),
+            ("sequence per heat", counts["src_caster_oracle_shape.cast_sequence"], heats_n),
+            ("coil per piece", coils_n, pieces_n),
+            ("passes per coil", counts["src_hsm_oracle_shape.hsm_pass_measurements"],
+             PASSES_PER_COIL * coils_n),
+            ("qa per pickled coil", counts["src_pkl_mssql_shape.qa_lab_results"],
+             QA_ROWS_PER_COIL * pkl_n),
+            ("defects", counts["src_inspection_mysql_shape.parsytec_surface_defects"],
+             N_DEFECTS),
+            ("downtime", counts["src_inspection_mysql_shape.downtime_events"], N_DOWNTIME),
+            ("pieces sum to the captured total", pieces_n, N_PIECES),
+        ]
+        for label, got, want in checks:
+            if got != want:
+                failures.append("%s: %d against %d" % (label, got, want))
+        share = pkl_n / float(coils_n) if coils_n else 0.0
+        if not (0.85 <= share <= 0.95):
+            failures.append("pickling coverage %.1f percent is outside the 85 to 95 "
+                            "band the merge adopted" % (100 * share))
     if failures:
         sys.stderr.write("REFUSING TO EMIT - row counts do not match the capture:\n")
         for f in failures:
             sys.stderr.write("  [FAIL] " + f + "\n")
         return 2
 
+    # PROVENANCE. A per-task evidence file no longer reproduces from a later
+    # generator, because every task consumes the random stream differently. The
+    # source hash below is what makes each file REPRODUCIBLE rather than merely
+    # dated: find it in git log, check that revision out, re-run, and the numbers
+    # return exactly. The filename carries which task the file belongs to.
+    try:
+        import hashlib
+        with open(os.path.abspath(__file__), "rb") as _fh:
+            gen_sha = hashlib.sha256(_fh.read()).hexdigest().upper()
+    except Exception:
+        gen_sha = "UNAVAILABLE"
+    print("generator : " + os.path.basename(os.path.abspath(__file__)))
+    print("source sha256 : " + gen_sha)
+    print("seed      : %d" % args.seed)
     print("mode: " + args.mode)
     posture = data.pop("_t018_posture", None)
     t019 = data.pop("_t019", None)
     t020 = data.pop("_t020", None)
     t021 = data.pop("_t021", None)
-    print("row counts, generated against captured")
+    print("row counts, %s" % ("against the capture" if args.mode == "capture"
+                               else "internally consistent"))
     for name in ORDER:
         print("  [OK] %-52s %6d" % (name, len(data[name][1])))
 
@@ -1971,6 +2285,13 @@ def main():
             print(ln)
         if not ok:
             return 6
+
+    if args.mode == "fleet-v2":
+        lines, ok = t022_report(data)
+        for ln in lines:
+            print(ln)
+        if not ok:
+            return 7
 
     if args.profile or not args.out:
         print("\nno --out given, nothing written")
