@@ -186,8 +186,18 @@ FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
 WHERE n.nspname='public' AND p.proname='ppiq_ml_refresh_feature_store_v6' AND p.prokind='f'
   AND pg_get_functiondef(p.oid) LIKE '%engine_version = ''v6''%'
 UNION ALL
-SELECT 'stale rows given manufactured lineage', count(*), 0
-FROM public.ml_feature_values WHERE refresh_run_id IS NOT NULL;
+-- NOT "does any row have lineage" - that was true the moment the first real
+-- refresh succeeded, and the check then failed on correct data. The invariant is
+-- that no row may point at a run that does not exist.
+SELECT 'rows pointing at a run that does not exist', count(*), 0
+FROM (
+  SELECT 1 FROM public.ml_feature_values f
+   LEFT JOIN public.ml_feature_store_refresh_runs r ON r.id = f.refresh_run_id
+   WHERE f.refresh_run_id IS NOT NULL AND r.id IS NULL
+  UNION ALL
+  SELECT 1 FROM public.ml_outcome_values o
+   LEFT JOIN public.ml_feature_store_refresh_runs r ON r.id = o.refresh_run_id
+   WHERE o.refresh_run_id IS NOT NULL AND r.id IS NULL) x;
 '@
     if ($liveChecks.ExitCode -ne 0) { Say $liveChecks.Error; throw "live" }
     Say $liveChecks.Output
@@ -253,8 +263,11 @@ ORDER BY 1;
     $clear = Invoke-Sql -Tag "clear" -Sql @'
 \pset border 2
 BEGIN;
-DELETE FROM public.ml_feature_values WHERE refresh_run_id IS NULL;
-DELETE FROM public.ml_outcome_values WHERE refresh_run_id IS NULL;
+-- ALL derived values go, not only the unlineaged ones. A previous successful
+-- refresh leaves correctly-lineaged rows behind, and those are still the
+-- PREVIOUS run's output - the incoming refresh must own everything.
+DELETE FROM public.ml_feature_values;
+DELETE FROM public.ml_outcome_values;
 DELETE FROM public.ml_correlation_results_v2;
 DELETE FROM public.ml_learning_observations_v1;
 DELETE FROM public.ml_learning_results_v1;

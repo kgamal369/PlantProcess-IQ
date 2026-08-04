@@ -1,0 +1,43 @@
+
+==============================================================================
+PPIQ T-025 - ENGINE EXECUTION AND LINEAGE PROOF
+==============================================================================
+API      : http://localhost:5063
+Database : ppiq_presentation
+Mode     : APPLY - clear, refresh, prove
+
+==============================================================================
+1 - LIVE POST-APPLY VERIFICATION. THE DATABASE IS THE AUTHORITY.
+==============================================================================
++---------------------------------------+--------+----------+
+|              check_name               | found  | required |
++---------------------------------------+--------+----------+
+| base stamps its run                   |      1 |        1 |
+| base stamps only unowned rows         |      1 |        1 |
+| base carries the single-flight lock   |      1 |        1 |
+| v6 stamps with the BASE run id        |      1 |        1 |
+| v6 promotes the run to v6 identity    |      1 |        1 |
+| stale rows given manufactured lineage | 505680 |        0 |
++---------------------------------------+--------+----------+
+(6 rows)
+
+
+[FAIL] live engine - stale rows given manufactured lineage: found 505680, required 0
+THE ORDERING QUESTION, answered from the live bodies:
++----------------------------------+----------------------+--------------------------+----------+----------+
+|          function_name           | counts_by_source_tag | counts_by_refresh_run_id | stamp_at | count_at |
++----------------------------------+----------------------+--------------------------+----------+----------+
+| ppiq_ml_refresh_feature_store    | t                    | f                        |    11144 |    11678 |
+| ppiq_ml_refresh_feature_store_v6 | f                    | t                        |     4143 |     4557 |
++----------------------------------+----------------------+--------------------------+----------+----------+
+(2 rows)
+
+
+Where the counts use refresh_run_id, stamp_at must be LESS than count_at.
+Where they use the source tag, the ordering cannot affect cardinality.
+[STOP] live verification failed; refusing to proceed.
+
+==============================================================================
+RESULT
+==============================================================================
+[FAIL] 2 problem(s).

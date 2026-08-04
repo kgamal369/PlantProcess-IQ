@@ -3,6 +3,7 @@ using System.Data.Common;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using PlantProcess.Application.Analytics.Contracts;
 using PlantProcess.Application.Analytics.Interfaces;
 using PlantProcess.Infrastructure.Persistence;
@@ -264,6 +265,41 @@ public static class MlFoundationEndpoints
             cancellationToken);
     }
 
+    // T-025: the ML engine command timeout is CONFIGURATION-OWNED, not a magic
+    // number. The feature-store refresh against a full-scale plant legitimately
+    // exceeds two minutes - 35,910 material units and 301,560 parameter
+    // observations measured at 199.8 s - so a hardcoded 120 made the
+    // authenticated product path impossible to complete.
+    //
+    // The DEFAULT stays 120 so no other environment shifts silently; the
+    // presentation profile raises it explicitly.
+    private const int DefaultEngineCommandTimeoutSeconds = 120;
+    private const int MinEngineCommandTimeoutSeconds = 30;
+    private const int MaxEngineCommandTimeoutSeconds = 900;
+
+    private static int _engineCommandTimeoutSeconds = DefaultEngineCommandTimeoutSeconds;
+
+    internal static int EngineCommandTimeoutSeconds => _engineCommandTimeoutSeconds;
+
+    /// <summary>
+    /// Binds the engine command timeout from configuration once at startup.
+    /// QueryAsync has six callers, so the timeout is process-wide configuration
+    /// rather than a parameter threaded through all of them.
+    /// </summary>
+    internal static void ConfigureEngineTimeout(IConfiguration configuration)
+    {
+        var seconds = configuration.GetValue<int>(
+            "PlantProcess:Analytics:EngineCommandTimeoutSeconds",
+            DefaultEngineCommandTimeoutSeconds);
+
+        if (seconds <= 0)
+            seconds = DefaultEngineCommandTimeoutSeconds;
+
+        _engineCommandTimeoutSeconds = Math.Clamp(
+            seconds,
+            MinEngineCommandTimeoutSeconds,
+            MaxEngineCommandTimeoutSeconds);
+    }
     private static async Task<IReadOnlyList<Dictionary<string, object?>>> QueryAsync(
         PlantProcessDbContext db,
         string sql,
@@ -278,7 +314,7 @@ public static class MlFoundationEndpoints
         await using var command = connection.CreateCommand();
         command.CommandText = sql;
         command.CommandType = CommandType.Text;
-        command.CommandTimeout = 120;
+        command.CommandTimeout = EngineCommandTimeoutSeconds;
 
         foreach (var parameter in parameters)
             AddParameter(command, parameter.Name, parameter.Value);
@@ -317,7 +353,7 @@ public static class MlFoundationEndpoints
         await using var command = connection.CreateCommand();
         command.CommandText = sql;
         command.CommandType = CommandType.Text;
-        command.CommandTimeout = 120;
+        command.CommandTimeout = EngineCommandTimeoutSeconds;
 
         foreach (var parameter in parameters)
             AddParameter(command, parameter.Name, parameter.Value);

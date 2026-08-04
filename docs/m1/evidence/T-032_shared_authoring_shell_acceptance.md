@@ -192,13 +192,27 @@ Two C# variable-shadowing errors, `c` and then `m`, reached the machine because 
 One production build and one full frontend suite, run once at the end rather than after every correction.
 
 ```
-Tests   1 failed | 273 passed (274)
+Tests   3 failed | 274 passed (277)
 ```
 
-FAILURES OUTSIDE JOURNEYRAIL ARE PRESENT AND ARE NOT ACCOUNTED FOR:
-- T-032 part B: the four regions render in every mode Run is refused while the validity indicator reads Invalid
+All three failures are the JourneyRail certification tests recorded in `docs/m1/evidence/T-012_journeyrail_corrective_defect.md`. There is no failure outside JourneyRail, and the three reproduce identically on the pre-T-032 tree as recorded in section 4.
 
-The three JourneyRail failures reproduce identically on the pre-T-032 tree, as recorded in section 4.
+### 10.1 An anomalous gate run, recorded rather than quietly replaced
+
+The first attempt at this gate reported `1 failed | 273 passed (274)` - three tests FEWER than the suite contains, with the three JourneyRail tests absent from collection altogether, and one unrelated failure reported in `sharedAuthoringShell.test.tsx`.
+
+That result does not reproduce. Two runs disprove it:
+
+- an isolated run of the two files in question returned 11 of 11 passing in `sharedAuthoringShell.test.tsx` and 3 of 3 failing in JourneyRail, 14 tests, reconciling exactly;
+- a second full run on a quiet tree returned the figures recorded above.
+
+No frontend source file changed between the three runs. The most likely explanation is that the working tree moved while vitest was collecting - the parallel T-025 lineage work wrote evidence files during that window, and several architecture tests walk the tree as they run. **That is a hypothesis and is recorded as one.** It was not investigated further, because two subsequent runs agree with each other and with the pre-T-032 baseline.
+
+The anomalous number is written down here rather than erased. A gate figure that silently changes between versions of a record is worth less than one that explains why.
+
+### 10.2 A defect in the closure pack itself
+
+`apply-T-032-close.ps1` read the anomalous gate faithfully, wrote *failures outside JourneyRail are present and are not accounted for* into this section, and then marked the task DONE regardless. **A closure pack must refuse to close on a red gate.** The correction pack that rewrote this section carries that check: any failure outside JourneyRail and it writes nothing.
 
 ## 11. STATUS
 

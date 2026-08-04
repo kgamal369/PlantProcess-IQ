@@ -977,6 +977,7 @@ app.UseMiddleware<AdminMfaRequirementMiddleware>();
 
     app.MapMlReadinessEndpoints();
 
+MlFoundationEndpoints.ConfigureEngineTimeout(builder.Configuration);
 app.MapMlFoundationEndpoints();
 
 app.MapMlLearningEndpoints();
