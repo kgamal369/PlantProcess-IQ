@@ -940,6 +940,185 @@ def t020_report(data, heats, coils, ladder):
     return out, True
 
 
+# ================================================================== T-021 TARGET
+# Equipment personality and temporal regime change. Both are extensions of
+# structures that already exist, not new subsystems.
+#
+# EQUIPMENT PERSONALITY. The same parameter set behaves differently between two
+# units, so an AGGREGATE view hides a unit-level truth that appears the moment the
+# customer filters by equipment. Two unit pairs already exist and vary - the two
+# casters and the two pickling lines - so no unit is invented to make a chart
+# draw. CCM-01 is the older machine: slower, with a less stable mould level and
+# more superheat scatter, and its coils carry more surface defects as a result.
+EQUIPMENT_PERSONALITY = {
+    "CCM-01": {"casting_speed": -0.062, "mould_sd": 1.38, "superheat": +2.6,
+               "defect_mult": 1.14},
+    "CCM-02": {"casting_speed": +0.058, "mould_sd": 0.74, "superheat": -2.4,
+               "defect_mult": 0.88},
+    "PKL-01": {"line_speed": -19.0, "bath_temp": -1.6, "acid_sd": 1.22},
+    "PKL-02": {"line_speed": +18.0, "bath_temp": +1.5, "acid_sd": 0.82},
+}
+
+# TEMPORAL REGIME CHANGE. A recorded maintenance event shifts behaviour mid-period,
+# so a trend chart shows a BOUNDARY rather than drift. The boundary must be
+# explainable: it is pinned to the ROLL_CHANGE nearest the midpoint, and its
+# maintenance_id is reported so a reader can find the row that caused it.
+REGIME_CT_SHIFT_C = -19.0     # coiling-temperature practice changed at the boundary
+REGIME_CT_SD_MULT = 0.72      # and was held tighter afterwards
+
+
+
+def t021_report(data, coils, ladder, regime_event):
+    """T-021 proof. Equipment personality must change the SHAPE of at least two
+    charts when the customer filters, and the temporal boundary must be
+    EXPLAINABLE - its date has to match a recorded maintenance or downtime row."""
+    def mean(xs):
+        xs = list(xs)
+        return sum(xs) / len(xs) if xs else 0.0
+
+    def sd(xs):
+        xs = list(xs)
+        if len(xs) < 2:
+            return 0.0
+        mu = sum(xs) / len(xs)
+        return (sum((v - mu) ** 2 for v in xs) / len(xs)) ** 0.5
+
+    out = ["", "T-021 equipment personality and temporal regime change", ""]
+
+    pc, pr = data["src_caster_oracle_shape.cast_pieces"]
+    ix_c, ix_sp = pc.index("caster_id"), pc.index("casting_speed_avg")
+    ix_ml, ix_sh = pc.index("mould_level_avg"), pc.index("superheat_c")
+    by_caster = {}
+    for r in pr:
+        by_caster.setdefault(r[ix_c].strip("'"), []).append(
+            (float(r[ix_sp]), float(r[ix_ml]), float(r[ix_sh])))
+
+    out.append("  EQUIPMENT PERSONALITY - the two casters, same parameter set")
+    out.append("    %-8s %6s %14s %14s %14s"
+               % ("unit", "n", "casting speed", "mould level sd", "superheat"))
+    for u in sorted(by_caster):
+        v = by_caster[u]
+        out.append("    %-8s %6d %14.4f %14.4f %14.2f"
+                   % (u, len(v), mean(x[0] for x in v), sd(x[1] for x in v),
+                      mean(x[2] for x in v)))
+    us = sorted(by_caster)
+    sp_gap = abs(mean(x[0] for x in by_caster[us[0]])
+                 - mean(x[0] for x in by_caster[us[1]]))
+    sp_pooled = sd([x[0] for u in us for x in by_caster[u]])
+    sp_effect = sp_gap / sp_pooled if sp_pooled else 0.0
+    ml_ratio = (sd(x[1] for x in by_caster[us[0]])
+                / max(sd(x[1] for x in by_caster[us[1]]), 1e-9))
+    out.append("    casting-speed separation %.3f pooled sd, mould-level sd ratio %.3f"
+               % (sp_effect, ml_ratio))
+
+    caster_of = {}
+    for c in coils:
+        caster_of[c["coil_id"]] = c["piece"].get("caster", "")
+    rate = {}
+    for u in us:
+        sel = [ladder[i] for i, c in enumerate(coils)
+               if c["piece"].get("caster") == u]
+        rate[u] = mean(sel)
+    out.append("    defect rate per coil   %s %.4f   %s %.4f   ratio %.3f"
+               % (us[0], rate[us[0]], us[1], rate[us[1]],
+                  rate[us[0]] / max(rate[us[1]], 1e-9)))
+
+    kc, kr = data["src_pkl_mssql_shape.pickle_orders"]
+    ix_l, ix_ls = kc.index("line_id"), kc.index("line_speed_mpm")
+    ix_bt, ix_ac = kc.index("bath_temperature_c"), kc.index("acid_concentration_pct")
+    by_line = {}
+    for r in kr:
+        by_line.setdefault(r[ix_l].strip("'"), []).append(
+            (float(r[ix_ls]), float(r[ix_bt]), float(r[ix_ac])))
+    out.append("")
+    out.append("  EQUIPMENT PERSONALITY - the two pickling lines")
+    out.append("    %-8s %6s %12s %12s %14s"
+               % ("unit", "n", "line speed", "bath temp", "acid conc sd"))
+    for u in sorted(by_line):
+        v = by_line[u]
+        out.append("    %-8s %6d %12.2f %12.2f %14.4f"
+                   % (u, len(v), mean(x[0] for x in v), mean(x[1] for x in v),
+                      sd(x[2] for x in v)))
+    ls = sorted(by_line)
+    ls_gap = abs(mean(x[0] for x in by_line[ls[0]])
+                 - mean(x[0] for x in by_line[ls[1]]))
+    ls_pooled = sd([x[0] for u in ls for x in by_line[u]])
+    ls_effect = ls_gap / ls_pooled if ls_pooled else 0.0
+    out.append("    line-speed separation %.3f pooled sd" % ls_effect)
+
+    out.append("")
+    out.append("  TEMPORAL REGIME CHANGE - coiling temperature practice")
+    step = 0.0
+    drift = 0.0
+    if regime_event is None:
+        out.append("    NO BOUNDARY EVENT SELECTED")
+    else:
+        cc, cr = data["src_hsm_oracle_shape.hsm_coils"]
+        ix_rs, ix_ct = cc.index("rolling_start_time"), cc.index("actual_ct_c")
+        before, after = [], []
+        for r in cr:
+            t = datetime.strptime(r[ix_rs].strip("'"), "%Y-%m-%d %H:%M:%S%z")
+            (after if t >= regime_event["start"] else before).append(
+                (t, float(r[ix_ct])))
+        out.append("    boundary  %s" % regime_event["start"].isoformat())
+        out.append("    explained by maintenance_id %d, %s on %s"
+                   % (regime_event["id"], regime_event["type"], regime_event["equip"]))
+        out.append("    before  n=%5d  mean %.2f C  sd %.2f"
+                   % (len(before), mean(v for _t, v in before),
+                      sd(v for _t, v in before)))
+        out.append("    after   n=%5d  mean %.2f C  sd %.2f"
+                   % (len(after), mean(v for _t, v in after),
+                      sd(v for _t, v in after)))
+        step = abs(mean(v for _t, v in after) - mean(v for _t, v in before))
+
+        # a BOUNDARY, not drift: compare the step against the within-period drift
+        def half_drift(seq):
+            seq = sorted(seq)
+            if len(seq) < 4:
+                return 0.0
+            h = len(seq) // 2
+            return abs(mean(v for _t, v in seq[h:]) - mean(v for _t, v in seq[:h]))
+        drift = max(half_drift(before), half_drift(after))
+        out.append("    step at the boundary %.2f C, largest within-period drift %.2f C"
+                   % (step, drift))
+        out.append("    A BOUNDARY, NOT DRIFT: the step must dominate the drift inside")
+        out.append("    either period, or the trend chart is showing a slope and not")
+        out.append("    a regime change.")
+
+    problems = []
+    if sp_effect < 0.5:
+        problems.append("the two casters are not materially different on casting "
+                        "speed - separation %.3f pooled sd" % sp_effect)
+    if ml_ratio < 1.3:
+        problems.append("mould-level stability does not differ between the casters - "
+                        "sd ratio %.3f" % ml_ratio)
+    if ls_effect < 0.5:
+        problems.append("the two pickling lines are not materially different on line "
+                        "speed - separation %.3f pooled sd" % ls_effect)
+    if regime_event is None:
+        problems.append("no maintenance event was available to anchor the regime "
+                        "boundary, so it would be decorative rather than explainable")
+    else:
+        if step < 8.0:
+            problems.append("the regime step is only %.2f C, too small to read as a "
+                            "boundary" % step)
+        if step < 2.5 * drift:
+            problems.append("the regime step %.2f C does not dominate the within-period "
+                            "drift %.2f C, so the chart shows drift and not a boundary"
+                            % (step, drift))
+    if problems:
+        out.append("")
+        out.append("T-021 ACCEPTANCE FAILED:")
+        for pr in problems:
+            out.append("  " + pr)
+        return out, False
+    out.append("")
+    out.append("  Both hold: filtering by equipment changes the shape of the caster")
+    out.append("  and pickling-line charts materially, and the regime boundary is")
+    out.append("  explainable by a recorded maintenance row rather than decorative.")
+    return out, True
+
+
 def build_pools(rnd):
     """One exact pool per interval, shuffled once. Popping from it reproduces the
     measured distribution exactly rather than approximately."""
@@ -1225,24 +1404,30 @@ def generate(seed, mode="capture"):
             # the step is drawn PER SLAB - section K counts are not multiples of 9
             step = take(pools, "C04_cut_step_per_slab", i * SLABS_PER_HEAT + s)
             cut = seq["start"] + timedelta(seconds=(s + 1) * step)
+            pers = EQUIPMENT_PERSONALITY.get(seq["caster"], {}) if mode == "fleet-v2" else {}
             width = pick_step(rnd, [950.0, 1050.0, 1250.0, 1450.0, 1550.0], 8.0, 943.01, 1557.00, 2)
             thick = pick_step(rnd, [220.0, 230.0, 250.0], 2.0, 218.01, 252.00, 2)
             length = unif(rnd, 8501.03, 11799.68, 2)
             # FAULT-1: weight drawn independently of width, thickness and length
             weight = unif(rnd, 18000.274, 30999.427, 3)
             pieces.append({"piece_id": piece_id, "heat": h, "width": width,
-                           "thick": thick, "weight": weight, "cut": cut})
+                           "thick": thick, "weight": weight, "cut": cut,
+                           "caster": seq["caster"]})
             piece_rows.append([
                 q(piece_id), q(seq["seq_no"]), q(h["heat_no"]), q(seq["caster"]),
                 str(rnd.randint(1, 2)), str(s + 1),
                 "%.2f" % width, "%.2f" % thick, "%.2f" % length, "%.3f" % weight,
                 ts(cut),
-                "%.4f" % norm(rnd, -0.0841, 2.5241, -8.7648, 9.0856, 4),
-                "%.4f" % norm(rnd, 1.3497 + (0.0 if mode != "fleet-v2" else h.get("bias", 0.0) * 0.02),
+                "%.4f" % norm(rnd, -0.0841, 2.5241 * pers.get("mould_sd", 1.0),
+                              -8.7648, 9.0856, 4),
+                "%.4f" % norm(rnd, 1.3497
+                              + (0.0 if mode != "fleet-v2" else h.get("bias", 0.0) * 0.02)
+                              + pers.get("casting_speed", 0.0),
                               0.1221 * (1.0 if mode != "fleet-v2" else h.get("spread", 1.0)),
                               0.9114, 1.8262, 4),
                 # superheat goes NEGATIVE at the low tail - physically impossible
-                "%.4f" % norm(rnd, 23.9157, 7.8133 * (1.0 if mode != "fleet-v2" else h.get("spread", 1.0)),
+                "%.4f" % norm(rnd, 23.9157 + pers.get("superheat", 0.0),
+                              7.8133 * (1.0 if mode != "fleet-v2" else h.get("spread", 1.0)),
                               -3.0036, 51.4916, 4),
                 ts(cut + timedelta(seconds=UPDATE_LAG_S["piece"])),
             ])
@@ -1253,6 +1438,16 @@ def generate(seed, mode="capture"):
         piece_rows)
 
     # ---------------------------------------------------------- hsm_coils
+    regime_at = None
+    regime_event = None
+    if mode == "fleet-v2":
+        rolls = sorted((ev for ev in maint_events if ev["type"] == "ROLL_CHANGE"),
+                       key=lambda e: e["start"])
+        if rolls:
+            mid = T0_TAP + timedelta(seconds=(N_HEATS - 1) * HEAT_INTERVAL_S / 2)
+            regime_event = min(rolls, key=lambda e: abs((e["start"] - mid).total_seconds()))
+            regime_at = regime_event["start"]
+
     coil_rows = []
     coils = []
     for i, h in enumerate(heats):
@@ -1265,6 +1460,8 @@ def generate(seed, mode="capture"):
             lag = 60 * rnd.randint(lo // 60, hi // 60) + c * ROLL_LAG_POS_DRIFT_S
             rs = (h["tap_start"] + timedelta(seconds=lag)).replace(second=0, microsecond=0)
             re_ = rs + timedelta(seconds=take(pools, "D02_rolling_duration", idx))
+            after_regime = (mode == "fleet-v2" and regime_at is not None
+                            and rs >= regime_at)
             tgt_thk = pick_step(rnd, [1.5, 2.0, 2.5, 3.0, 4.0], 0.08, 1.42, 4.0799, 4)
             tgt_wid = piece["width"]
             act_wid = round(min(max(tgt_wid + rnd.gauss(0.012, 1.7343), 940.25), 1559.33), 2)
@@ -1280,7 +1477,9 @@ def generate(seed, mode="capture"):
                               21.8351 * (1.0 if mode != "fleet-v2" else h.get("spread", 1.0)),
                               798.34, 958.13, 2),
                 "%.2f" % TARGET_CT_C,
-                "%.2f" % norm(rnd, 609.3825, 27.6698, 491.56, 729.02, 2),
+                "%.2f" % norm(rnd, 609.3825 + (REGIME_CT_SHIFT_C if after_regime else 0.0),
+                              27.6698 * (REGIME_CT_SD_MULT if after_regime else 1.0),
+                              491.56, 729.02, 2),
                 "%.4f" % tgt_thk,
                 # FAULT-2: actual thickness IS the target, to the last decimal
                 "%.4f" % tgt_thk,
@@ -1355,6 +1554,7 @@ def generate(seed, mode="capture"):
         entry = coil["re"] + timedelta(hours=rnd.randint(PKL_LAG_HOURS[0], PKL_LAG_HOURS[1]))
         entry = entry.replace(second=0, microsecond=0)
         exit_ = entry + timedelta(seconds=take(pools, "F02_pkl_duration", i))
+        ppers = EQUIPMENT_PERSONALITY.get(line_pool[i].strip("'") if isinstance(line_pool[i], str) else "", {}) if mode == "fleet-v2" else {}
         insp = insp_pool[i]
         if insp == "OK":
             decision = "Accepted"
@@ -1365,9 +1565,12 @@ def generate(seed, mode="capture"):
         pkl_rows.append([
             q("PKL-" + coil["coil_id"]), q(coil["coil_id"]), q(line_pool[i]),
             ts(entry), ts(exit_),
-            "%.4f" % unif(rnd, 5.5009, 11.5000, 4),
-            "%.2f" % unif(rnd, 72.01, 91.99, 2),
-            "%.3f" % unif(rnd, 80.021, 239.998, 3),
+            "%.4f" % round(min(max(8.5005 + (unif(rnd, 5.5009, 11.5000, 4) - 8.5005)
+                                    * ppers.get("acid_sd", 1.0), 5.5009), 11.5), 4),
+            "%.2f" % round(min(max(unif(rnd, 72.01, 91.99, 2)
+                                   + ppers.get("bath_temp", 0.0), 72.01), 91.99), 2),
+            "%.3f" % round(min(max(unif(rnd, 80.021, 239.998, 3)
+                                   + ppers.get("line_speed", 0.0), 80.021), 239.998), 3),
             q(insp), q(decision),
             q("CUST-%03d" % rnd.randint(100, 998)),
             ts(exit_),
@@ -1416,7 +1619,9 @@ def generate(seed, mode="capture"):
             age = coil.get("campaign_age", 0.0)
             camp_mult = (CAMPAIGN_RISK_START
                          + (CAMPAIGN_RISK_END - CAMPAIGN_RISK_START) * age)
-            risk = camp_mult * math.exp(
+            cast_mult = EQUIPMENT_PERSONALITY.get(
+                coil["piece"].get("caster", ""), {}).get("defect_mult", 1.0)
+            risk = camp_mult * cast_mult * math.exp(
                 HARDNESS_TO_RISK * h.get("hardness", 0.4)
                 + DEVIATION_TO_RISK * h.get("temp_dev", 0.0) / TAP_SD_C)
             keys.append((rnd.expovariate(1.0) / risk, idx))
@@ -1576,6 +1781,7 @@ def generate(seed, mode="capture"):
              "maintenance_start_utc", "maintenance_end_utc",
              "is_campaign_boundary", "updated_at_utc"], m_rows)
         data["_t020"] = (list(heats), list(coils), list(ladder))
+        data["_t021"] = (list(coils), list(ladder), regime_event)
 
         spec_rows = []
         for grade in sorted(GRADE_SPEC):
@@ -1712,6 +1918,7 @@ def main():
     posture = data.pop("_t018_posture", None)
     t019 = data.pop("_t019", None)
     t020 = data.pop("_t020", None)
+    t021 = data.pop("_t021", None)
     print("row counts, generated against captured")
     for name in ORDER:
         print("  [OK] %-52s %6d" % (name, len(data[name][1])))
@@ -1757,6 +1964,13 @@ def main():
             print(ln)
         if not ok:
             return 5
+
+    if t021 is not None:
+        lines, ok = t021_report(data, t021[0], t021[1], t021[2])
+        for ln in lines:
+            print(ln)
+        if not ok:
+            return 6
 
     if args.profile or not args.out:
         print("\nno --out given, nothing written")
