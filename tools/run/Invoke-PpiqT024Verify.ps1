@@ -207,14 +207,44 @@ FROM public.downtime_events;
     Say "holds on the overlapping range, not that the two are the same size."
     $idr = Invoke-Sql -Tag "identity" -Sql @'
 \pset border 2
+-- Heat and coil identifiers are SEQUENTIAL, so the donor range is a clean prefix
+-- of canonical's and the overlap is total.
+--
+-- THE SLAB IDENTIFIER IS COMPOSITE: SLB + heat + slab index. T-022 made
+-- pieces-per-heat vary from 7 to 11, so a heat that now carries 8 slabs no longer
+-- has SLB...09. The overlap is sum(min(9, slabs_per_heat)) over heats 1 to 630 -
+-- arithmetically exact, not approximate. An earlier version asserted 5,670 by
+-- copying the heat and coil pattern without noticing that one of the three
+-- identifiers encodes cardinality.
+--
+-- What must hold is the CONVENTION, so that is what is checked.
 SELECT 'heat codes shared' AS check_name, count(*) AS found, 630 AS required
 FROM public.material_units m JOIN src_meltshop_pg.heats h ON h.heat_no = m.material_code
 UNION ALL
-SELECT 'slab codes shared', count(*), 5670
-FROM public.material_units m JOIN src_caster_oracle_shape.cast_pieces p ON p.piece_id = m.material_code
-UNION ALL
 SELECT 'coil codes shared', count(*), 5670
-FROM public.material_units m JOIN src_hsm_oracle_shape.hsm_coils c ON c.coil_id = m.material_code;
+FROM public.material_units m JOIN src_hsm_oracle_shape.hsm_coils c ON c.coil_id = m.material_code
+UNION ALL
+SELECT 'slab overlap equals sum(min(9, slabs per heat))', (
+  SELECT count(*) FROM public.material_units m
+  JOIN src_caster_oracle_shape.cast_pieces p ON p.piece_id = m.material_code), (
+  SELECT coalesce(sum(least(9, n)), 0)::bigint FROM (
+    SELECT count(*) AS n FROM public.material_units
+    WHERE material_unit_type = 'Slab'
+      AND substring(material_code from 4 for 5) ~ '^[0-9]+$'
+      AND substring(material_code from 4 for 5)::int <= 630
+    GROUP BY substring(material_code from 4 for 5)) q)
+UNION ALL
+SELECT 'slab identifiers off-convention', (
+  SELECT count(*) FROM public.material_units
+  WHERE material_unit_type = 'Slab' AND material_code !~ '^SLB[0-9]{7}$'), 0
+UNION ALL
+SELECT 'heat identifiers off-convention', (
+  SELECT count(*) FROM public.material_units
+  WHERE material_unit_type = 'Heat' AND material_code !~ '^H2026[0-9]{5}$'), 0
+UNION ALL
+SELECT 'coil identifiers off-convention', (
+  SELECT count(*) FROM public.material_units
+  WHERE material_unit_type = 'Coil' AND material_code !~ '^C[0-9]{7}$'), 0;
 '@
     Say $idr.Output
     $bad = $bad + (Check-Table -Output $idr.Output -Label "identity")
