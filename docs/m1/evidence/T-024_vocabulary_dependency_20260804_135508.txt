@@ -1,0 +1,141 @@
+================================================================
+PPIQ T-024 REQUIREMENT 7 - VOCABULARY DEPENDENCY CHECK
+================================================================
+Generated At : 2026-08-04 13:55:11
+Database     : ppiq_presentation
+psql exit    : 0
+
+REPORT ONLY. Nothing was deleted or updated.
+
+Q5 IS THE ONE TO READ FIRST. The Fleet v2 defect and parameter rows
+carry industry_template NULL while the legacy rows are tagged by
+industry. If a selector filters on that column, the same filter that
+hides Pharma and Tire would also hide Fleet v2 - so the tag must be
+corrected BEFORE any legacy vocabulary is retired, not after.
+================================================================
+
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+
+================================================================
+Q1 - WHICH NON-FLEET-V2 REFERENCE ROWS ARE STILL PRESENT
+================================================================
+--- defect_catalogs ---
+--- parameter_definitions ---
+--- equipment ---
+--- material_unit_type_definitions ---
+
+================================================================
+Q4 - WHAT industry_template VALUE DOES THE FLAT STEEL SET USE
+================================================================
+--- industry_templates, all of them ---
++----------------+-----------------------------------+---------------+-----------+
+| template_code  |           template_name           | industry_name | is_active |
++----------------+-----------------------------------+---------------+-----------+
+| ADV_ALUMINUM   | Advanced Aluminum Demo Template   | Aluminum      | t         |
+| ADV_FLAT_STEEL | Advanced Flat Steel Demo Template | FlatSteel     | t         |
+| ADV_PAPER      | Advanced Paper Demo Template      | Paper         | t         |
+| ADV_PHARMA     | Advanced Pharma Demo Template     | Pharma        | t         |
+| ADV_TIRE       | Advanced Tire Demo Template       | Tire          | t         |
++----------------+-----------------------------------+---------------+-----------+
+(5 rows)
+
+--- industry_template as it appears on the reference tables ---
++-----------------------+-------------------+------+
+|      table_name       | industry_template | rows |
++-----------------------+-------------------+------+
+| defect_catalogs       | (null)            |   12 |
+| defect_catalogs       | FlatSteel         |    5 |
+| defect_catalogs       | Pharma            |    2 |
+| defect_catalogs       | Tire              |    2 |
+| parameter_definitions | (null)            |   27 |
+| parameter_definitions | Aluminum          |    1 |
+| parameter_definitions | FlatSteel         |   14 |
+| parameter_definitions | Pharma            |    3 |
+| parameter_definitions | Tire              |    3 |
++-----------------------+-------------------+------+
+(9 rows)
+
+
+================================================================
+Q3 - WHICH SELECTORS FILTER BY industry_template
+views, matviews and functions whose body mentions the column
+================================================================
++-------------+------+
+| object_name | kind |
++-------------+------+
++-------------+------+
+(0 rows)
+
+
+================================================================
+Q2 - WHICH LEGACY CODES ARE REFERENCED ANYWHERE
+Every text, varchar and json column of every dashboard, widget,
+page, definition, binding, mapping and kpi table is searched.
+Nothing is assumed about which column holds a configuration.
+================================================================
+CREATE TABLE
+CREATE TABLE
+--- columns actually searched ---
++-----------------------------------+------------------+
+|            table_name             | columns_searched |
++-----------------------------------+------------------+
+| dashboard_definitions             |                7 |
+| dashboard_widget_definitions      |               16 |
+| dashboard_widget_expression_audit |                3 |
+| job_definitions                   |               14 |
+| kpi_definitions                   |               13 |
+| kpi_evaluation_alerts             |                3 |
+| kpi_parameter_bindings            |                8 |
+| kpi_targets                       |                3 |
+| mapping_definitions               |               10 |
+| ml_feature_definitions            |               12 |
+| ml_outcome_definitions            |               12 |
+| page_definition_audit             |                3 |
+| page_definition_shares            |                2 |
+| page_definitions                  |                7 |
+| ppiq_business_key_definitions     |                2 |
+| ppiq_defect_catalog_mappings      |                6 |
+| ppiq_demo_canonical_layout        |                7 |
+| ppiq_mapping_versions             |                6 |
+| ppiq_sso_role_mappings            |                4 |
+| schema_mapping_executions         |                7 |
+| schema_view_definitions           |               12 |
+| source_dataset_definitions        |               13 |
+| source_system_definitions         |                7 |
++-----------------------------------+------------------+
+(23 rows)
+
+--- every hit ---
+--- hits summarised per code ---
+
+================================================================
+Q2b - LEGACY ROWS REFERENCED BY OPERATIONAL DATA
+after the replacement this should be empty, since every
+operational row is Fleet v2
+================================================================
+
+================================================================
+Q5 - WOULD TAGGING FLEET V2 AS FLAT STEEL CREATE A CONFLICT
+parameter_definitions is UNIQUE on (industry_template, parameter_code)
+and defect_catalogs is UNIQUE on defect_code alone
+================================================================
+--- fleet v2 rows currently carrying a NULL industry_template ---
+--- collisions IF the fleet v2 rows were tagged with each candidate value ---
+
+================================================================
+CLASSIFICATION - EVERY NON-FLEET-V2 REFERENCE ROW
+KEEP steel vocabulary that belongs to this plant
+FILTER FROM PRESENTATION referenced somewhere, so it cannot be removed
+RETIRE/DEACTIVATE not steel and referenced nowhere
+BLOCKED BY DEPENDENCY still used by operational or definition data
+================================================================
+
+--- classification totals ---
+(recomputed independently of the listing above)
+
+================================================================
+END - NOTHING WAS DELETED OR UPDATED
+================================================================
