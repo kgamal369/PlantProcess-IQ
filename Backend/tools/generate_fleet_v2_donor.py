@@ -1344,6 +1344,32 @@ def _wrap(text, width):
     return lines
 
 
+# ================================================================== T-023 TARGET
+# SCALE IS A PARAMETER, never a copy of the older generation's rows. The captured
+# baseline is 630 heats and 5,670 coils; the target is three times that.
+#
+# A CONFLICT IN THE CONTRACT ITSELF, decided and recorded rather than picked
+# quietly. T-023's text asks for "about 2,400 heats and about 17,000 coils".
+# Those two numbers are inconsistent at the cardinality T-022 fixed: at a mean of
+# 9 pieces per heat, 2,400 heats gives 21,600 coils, and 17,010 coils needs 1,890
+# heats. The 2,400 figure is inherited from the older generation's 2,431 heats at
+# 7.33 coils each.
+#   DECISION: 17,010 COILS WINS, so 1,890 heats.
+#   REASON:   T-015 DERIVED the coil count from the chart population requirement -
+#             18 strata at 85 defect-positive coils each. Coils are what the
+#             requirement constrains; heats follow from cardinality. A number
+#             derived from a requirement beats one inherited from a generation.
+#             1,890 heats at the captured 4,200 s cadence is 91.9 days, which is
+#             also the 90-day horizon T-015 requires for campaign ageing.
+SCALE_DEFAULT = {"capture": 1, "fleet-v2": 3}
+
+
+def scale_pairs(pairs, k):
+    """Multiply a (value, count) table by the scale factor. Counts stay exact, so
+    every categorical distribution is preserved to the row."""
+    return tuple((v, c * k) for v, c in pairs)
+
+
 def build_pools(rnd):
     """One exact pool per interval, shuffled once. Popping from it reproduces the
     measured distribution exactly rather than approximately."""
@@ -1409,34 +1435,41 @@ class Writer(object):
 # ---------------------------------------------------------------- generation
 
 
-def generate(seed, mode="capture"):
+def generate(seed, mode="capture", scale=1):
     rnd = random.Random(seed)
     pools = build_pools(rnd)
+    sc = int(scale)
+    n_heats = N_HEATS * sc
+    n_pieces = N_PIECES * sc
+    n_defects = N_DEFECTS * sc
+    n_downtime = N_DOWNTIME * sc
     data = {}
 
     grade_seen = {}
     off_spec_seq = [0]
     if mode == "fleet-v2":
         per_heat = []
-        for v, c in PIECES_PER_HEAT_MIX:
+        for v, c in scale_pairs(PIECES_PER_HEAT_MIX, sc):
             per_heat.extend([v] * c)
         rnd.shuffle(per_heat)
     else:
-        per_heat = [SLABS_PER_HEAT] * N_HEATS
-    grade_pool = weighted_pool(GRADES, rnd)
+        per_heat = [SLABS_PER_HEAT] * n_heats
+    grade_pool = weighted_pool(scale_pairs(GRADES, sc), rnd)
     if mode == "fleet-v2":
         # T-019: reassign the SAME grade pool so that harder grades land more
         # often on the night crew. Counts per grade are untouched; only which
         # shift runs them moves, so nothing downstream of the grade marginal
         # changes and the confound is purely a scheduling one.
         remaining = {}
-        for gname, gcount in GRADES:
+        for gname, gcount in scale_pairs(GRADES, sc):
             remaining[gname] = gcount
         assigned = []
-        for i in range(N_HEATS):
+        for i in range(n_heats):
             t = T0_TAP + timedelta(seconds=i * HEAT_INTERVAL_S)
-            sc = shift_of(t)[0]
-            bias = SHIFT_GRADE_BIAS[sc]
+            # NOT `sc` - that is the scale factor, and reusing the name here
+            # silently turned the scale into the string "A" after the first heat.
+            shift_c = shift_of(t)[0]
+            bias = SHIFT_GRADE_BIAS[shift_c]
             choices, weights = [], []
             for gname in remaining:
                 if remaining[gname] <= 0:
@@ -1448,22 +1481,22 @@ def generate(seed, mode="capture"):
             remaining[pick] -= 1
             assigned.append(pick)
         grade_pool = assigned
-    tundish_pool = weighted_pool(TUNDISH, rnd)
-    furnace_pool = weighted_pool(FURNACE, rnd)
-    lfcode_pool = weighted_pool(LF_CODE, rnd)
-    lfsample_pool = weighted_pool(LF_SAMPLE, rnd)
-    caster_pool = weighted_pool(CASTER_SEQ, rnd)
+    tundish_pool = weighted_pool(scale_pairs(TUNDISH, sc), rnd)
+    furnace_pool = weighted_pool(scale_pairs(FURNACE, sc), rnd)
+    lfcode_pool = weighted_pool(scale_pairs(LF_CODE, sc), rnd)
+    lfsample_pool = weighted_pool(scale_pairs(LF_SAMPLE, sc), rnd)
+    caster_pool = weighted_pool(scale_pairs(CASTER_SEQ, sc), rnd)
 
     # ---------------------------------------------------------- heats
     maint_events = []
     heat_recovery = {}
     if mode == "fleet-v2":
-        span = (N_HEATS - 1) * HEAT_INTERVAL_S
+        span = (n_heats - 1) * HEAT_INTERVAL_S
         mid = 0
         for mtype, equips, count in MAINT_TYPES:
-            for k in range(count):
+            for k in range(count * sc):
                 mid += 1
-                frac = (k + 0.5) / count
+                frac = (k + 0.5) / (count * sc)
                 at = int(frac * span + rnd.uniform(-0.30, 0.30) * span / count)
                 at = max(0, min(span, at))
                 start = T0_TAP + timedelta(seconds=at)
@@ -1479,12 +1512,12 @@ def generate(seed, mode="capture"):
                 continue
             for offset in range(len(RECOVERY_SHAPE[ev["type"]])):
                 hi = ev["heat_index"] + 1 + offset
-                if hi < N_HEATS and hi not in heat_recovery:
+                if hi < n_heats and hi not in heat_recovery:
                     heat_recovery[hi] = (ev["type"], offset)
 
     heats = []
     heat_rows = []
-    for i in range(N_HEATS):
+    for i in range(n_heats):
         heat_no = "H2026%05d" % (i + 1)
         tap_start = T0_TAP + timedelta(seconds=i * HEAT_INTERVAL_S)   # FAULT-4
         tap_end = tap_start + timedelta(seconds=take(pools, "A02_tap_duration", i))
@@ -1613,7 +1646,7 @@ def generate(seed, mode="capture"):
          "sample_result_code", "source_updated_at_utc"], lf_rows)
 
     # ---------------------------------------------------------- cast_sequence
-    seq_status_pool = (weighted_pool(SEQUENCE_STATUSES, rnd)
+    seq_status_pool = (weighted_pool(scale_pairs(SEQUENCE_STATUSES, sc), rnd)
                        if mode == "fleet-v2" else None)
     seq_rows = []
     sequences = []
@@ -1694,7 +1727,7 @@ def generate(seed, mode="capture"):
         rolls = sorted((ev for ev in maint_events if ev["type"] == "ROLL_CHANGE"),
                        key=lambda e: e["start"])
         if rolls:
-            mid = T0_TAP + timedelta(seconds=(N_HEATS - 1) * HEAT_INTERVAL_S / 2)
+            mid = T0_TAP + timedelta(seconds=(n_heats - 1) * HEAT_INTERVAL_S / 2)
             regime_event = min(rolls, key=lambda e: abs((e["start"] - mid).total_seconds()))
             regime_at = regime_event["start"]
 
@@ -1798,11 +1831,11 @@ def generate(seed, mode="capture"):
          "roll_gap_mm", "speed_mps", "temperature_c", "last_update_ts"], pass_rows)
 
     # ---------------------------------------------------------- pickle orders
-    line_pool = weighted_pool(LINE_ID, rnd)
-    insp_pool = weighted_pool(INSPECTION_RESULT, rnd)
+    line_pool = weighted_pool(scale_pairs(LINE_ID, sc), rnd)
+    insp_pool = weighted_pool(scale_pairs(INSPECTION_RESULT, sc), rnd)
     dec_pool = []
     # Accepted count equals the OK count exactly, so the two columns are linked
-    for value, count in QA_DECISION:
+    for value, count in scale_pairs(QA_DECISION, sc):
         dec_pool.extend([value] * count)
     not_ok = [d for d in dec_pool if d != "Accepted"]
     rnd.shuffle(not_ok)
@@ -1843,7 +1876,7 @@ def generate(seed, mode="capture"):
         pkl_rows)
 
     # ---------------------------------------------------------- qa lab results
-    status_pool = weighted_pool(QA_STATUS, rnd)
+    status_pool = weighted_pool(scale_pairs(QA_STATUS, sc), rnd)
     qa_rows = []
     lid = 0
     tests = [("WIDTH", "mm"), ("THK", "mm"), ("ROUGHNESS", "um")]
@@ -1866,7 +1899,7 @@ def generate(seed, mode="capture"):
     # ---------------------------------------------------------- surface defects
     ladder = []
     for count, coil_n in DEFECT_LADDER:
-        ladder.extend([count] * coil_n)
+        ladder.extend([count] * (coil_n * sc))
     if mode != "fleet-v2":
         rnd.shuffle(ladder)
     else:
@@ -1893,7 +1926,7 @@ def generate(seed, mode="capture"):
             ladder[idx] = ladder_sorted[rank]
         data["_t019"] = (coils, list(ladder))
     if mode == "fleet-v2":
-        counts = largest_remainder([d[3] for d in FLEET_DEFECTS], N_DEFECTS)
+        counts = largest_remainder([d[3] for d in FLEET_DEFECTS], n_defects)
         code_pool = weighted_pool(
             [(FLEET_DEFECTS[i][0], counts[i]) for i in range(len(FLEET_DEFECTS))], rnd)
         meta = dict((d[0], (d[1], d[2])) for d in FLEET_DEFECTS)
@@ -1903,11 +1936,12 @@ def generate(seed, mode="capture"):
         sev_weights = dict((d[0], d[5]) for d in FLEET_DEFECTS)
         sev_pool = None
     else:
-        code_pool = weighted_pool([(d[0], d[3]) for d in DEFECTS], rnd)
-        sev_pool = weighted_pool(SEVERITY, rnd)
+        code_pool = weighted_pool(
+            scale_pairs(tuple((d[0], d[3]) for d in DEFECTS), sc), rnd)
+        sev_pool = weighted_pool(scale_pairs(SEVERITY, sc), rnd)
         meta = dict((d[0], (d[1], d[2])) for d in DEFECTS)
         sev_weights = None
-    side_pool = weighted_pool(SIDE_CODE, rnd)
+    side_pool = weighted_pool(scale_pairs(SIDE_CODE, sc), rnd)
     code_by_slot = None
     if mode == "fleet-v2":
         slots = []
@@ -1931,16 +1965,16 @@ def generate(seed, mode="capture"):
 
     device_pool = None
     if mode == "fleet-v2":
-        n_dev = int(round(N_DEFECTS * INSPECTION_DEVICES[0][1]))
+        n_dev = int(round(n_defects * INSPECTION_DEVICES[0][1]))
         device_pool = weighted_pool(
             ((INSPECTION_DEVICES[0][0], n_dev),
-             (INSPECTION_DEVICES[1][0], N_DEFECTS - n_dev)), rnd)
+             (INSPECTION_DEVICES[1][0], n_defects - n_dev)), rnd)
 
     def_rows = []
     di = 0
     for i, coil in enumerate(coils):
         for _ in range(ladder[i]):
-            if di >= N_DEFECTS:
+            if di >= n_defects:
                 break
             code = code_by_slot[di] if code_by_slot is not None else code_pool[di]
             name, klass = meta[code]
@@ -1972,13 +2006,14 @@ def generate(seed, mode="capture"):
          "confidence_pct", "updated_at_utc"], def_rows)
 
     # ---------------------------------------------------------- downtime
-    reason_pool = weighted_pool([(r[0], r[3]) for r in DOWNTIME_REASONS], rnd)
-    equip_pool = weighted_pool(DOWNTIME_EQUIPMENT, rnd)
+    reason_pool = weighted_pool(
+        scale_pairs(tuple((r[0], r[3]) for r in DOWNTIME_REASONS), sc), rnd)
+    equip_pool = weighted_pool(scale_pairs(DOWNTIME_EQUIPMENT, sc), rnd)
     rmeta = dict((r[0], (r[1], r[2])) for r in DOWNTIME_REASONS)
     dt_posture = []
     window = int((DT_END - DT_START).total_seconds())
     if DT_ANCHOR_HORIZON:
-        raw = sorted(rnd.random() for _ in range(N_DOWNTIME))
+        raw = sorted(rnd.random() for _ in range(n_downtime))
         lo, hi = raw[0], raw[-1]
         span = (hi - lo) if hi > lo else 1.0
         dt_starts = [DT_START + timedelta(seconds=60 * int(round(
@@ -1987,7 +2022,7 @@ def generate(seed, mode="capture"):
     else:
         dt_starts = None
     dt_rows = []
-    for i in range(N_DOWNTIME):
+    for i in range(n_downtime):
         code = reason_pool[i]
         text, category = rmeta[code]
         equip = equip_pool[i]
@@ -2152,12 +2187,22 @@ def main():
                     help="capture reproduces the T-014 baseline and is FROZEN so "
                          "retirement gate condition 1 stays re-provable at T-031; "
                          "fleet-v2 carries the target specification changes")
+    ap.add_argument("--scale", type=int, default=0,
+                    help="plant size as a multiple of the captured baseline. "
+                         "0 uses the default for the mode: 1 for capture, which is "
+                         "frozen, and 3 for fleet-v2, which is the T-015 target of "
+                         "1,890 heats and 17,010 coils over 91.9 days")
     ap.add_argument("--columns", action="store_true",
                     help="print the column manifest and exit, for the runner to check "
                          "against information_schema BEFORE loading anything")
     args = ap.parse_args()
 
-    data = generate(args.seed, args.mode)
+    sc = args.scale if args.scale > 0 else SCALE_DEFAULT[args.mode]
+    if args.mode == "capture" and sc != 1:
+        sys.stderr.write("capture mode is FROZEN at scale 1 - it is the "
+                         "regression test for retirement gate condition 1\n")
+        return 2
+    data = generate(args.seed, args.mode, sc)
 
     if args.columns:
         for name in ORDER:
@@ -2175,9 +2220,9 @@ def main():
     counts = dict((name, len(data[name][1])) for name in ORDER)
     if args.mode == "capture":
         for name in ORDER:
-            if counts[name] != EXPECTED[name]:
-                failures.append("%s produced %d rows, captured %d"
-                                % (name, counts[name], EXPECTED[name]))
+            if counts[name] != EXPECTED[name] * sc:
+                failures.append("%s produced %d rows, expected %d"
+                                % (name, counts[name], EXPECTED[name] * sc))
     else:
         # fleet-v2 DIVERGES FROM THE CAPTURE BY DESIGN - route variation means not
         # every coil is pickled - so equality with the captured counts is the wrong
@@ -2196,9 +2241,10 @@ def main():
             ("qa per pickled coil", counts["src_pkl_mssql_shape.qa_lab_results"],
              QA_ROWS_PER_COIL * pkl_n),
             ("defects", counts["src_inspection_mysql_shape.parsytec_surface_defects"],
-             N_DEFECTS),
-            ("downtime", counts["src_inspection_mysql_shape.downtime_events"], N_DOWNTIME),
-            ("pieces sum to the captured total", pieces_n, N_PIECES),
+             N_DEFECTS * sc),
+            ("downtime", counts["src_inspection_mysql_shape.downtime_events"],
+             N_DOWNTIME * sc),
+            ("pieces sum to the scaled total", pieces_n, N_PIECES * sc),
         ]
         for label, got, want in checks:
             if got != want:
@@ -2227,6 +2273,7 @@ def main():
     print("generator : " + os.path.basename(os.path.abspath(__file__)))
     print("source sha256 : " + gen_sha)
     print("seed      : %d" % args.seed)
+    print("scale     : %dx the captured baseline" % sc)
     print("mode: " + args.mode)
     posture = data.pop("_t018_posture", None)
     t019 = data.pop("_t019", None)
