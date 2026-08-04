@@ -4,7 +4,7 @@
 **Governing design** Chapter 4 sections 5.2.1 (one shell, five purposes), 5.2.2 (two modes), 5.2.3 (the four regions), 5.2.4 (the schema table bar), 5.2.5 (the toolbox), 5.2.7 (drag-time refusal), 5.2.8 (the debug log), 5.2.9 (run and validity).
 **Executed** 04-Aug-2026.
 
-**STATUS: NOT YET DONE.** Code and suite evidence are complete and recorded below. The browser acceptance of section 6 has not been run, and law 5 makes a task Done only when its validation passes in a browser or against a running system.
+**STATUS: DONE.** Closed 04-Aug-2026. The browser acceptance of section 6 is complete; see sections 6 to 11. Code and suite evidence are complete and recorded below. The browser acceptance of section 6 has not been run, and law 5 makes a task Done only when its validation passes in a browser or against a running system.
 
 ---
 
@@ -123,3 +123,87 @@ Defects 2, 3 and 4 were caught before or at delivery. Defect 1 reached the machi
 1. The S2 schema tree renders an honest empty state rather than fetching staging, because section 5.2.4 says S2 to S5 show the canonical model only and no canonical catalogue endpoint exists yet. Is that the right reading, or should S2 read the same catalogue until one does?
 2. Every toolbox block is declared and rendered unavailable until T-033. Confirm that is the intended T-032 to T-033 line.
 3. The mode bar carries the definition name, validity, Run and Publish. Confirm Publish belongs there, given that section 5.2.13 separates Save, Validate and Publish and only Run appears in the 5.2.3 diagram.
+
+---
+
+## 6. BROWSER ACCEPTANCE - COMPLETE
+
+Run 04-Aug-2026 against the running API and `ppiq_presentation`, on the semantic plant chain rather than a merely type-compatible one:
+
+```
+cast_pieces.heat_no  ->  hsm_coils.heat_no
+hsm_coils.coil_id    ->  parsytec_surface_defects.coil_id
+```
+
+| Check | Result | How it is evidenced |
+|---|---|---|
+| A - mode bar: purpose, Block/SQL, definition name, validity, Run, Publish | PASS | screenshot |
+| B - schema tree, three levels, typed columns, key markers | PASS | screenshot |
+| C - double-click puts a table on the board with typed ports | PASS | screenshot |
+| D - incompatible wire refused, one named error | PASS | attested |
+| E - key-to-key wire accepted, one success per wire | PASS | screenshot, two SUCCESS lines for two wires |
+| F - Run executes and returns preview rows | PASS | attested |
+| G - SQL mode: toolbox absent from the page, schema tree retained, compiled query read-only | PASS | screenshot |
+| H - fork warning, two steps, read-only history naming tables and joins | PASS | screenshot |
+| I - Publish version returns a version identity | PASS | screenshot, `Published version 6. immutable, with a rollback pointer` |
+
+**Attested rather than captured:** D and F were confirmed by the reviewer without a pasted Job Log. They are recorded as attested, not as verbatim output, because an evidence file that cannot tell the difference is worth less later.
+
+## 7. WHAT THE BROWSER WALK FOUND, AND WHAT IT COST
+
+The walk was not a formality. It exposed five defects that no test in the repository covered, four of them mine.
+
+**7.1 A false interaction hint.** The mode bar read *Drag datasets from the left, wire key to key.* Dragging from the tree is T-034 scope and does not exist yet. Carried over verbatim from `VisualJoinCanvasPage` without checking whether it was true of the surface being shipped. A control hint promising an impossible action is the same class as a fake product answer. Corrected by hand to *Double-click a table on the left to put it on the board, then wire key to key.*
+
+**7.2 Two Job Log entries for one wire.** `onConnect` wrote its log entry INSIDE the `setEdges` updater. A state updater must be pure, and React invokes it twice in development precisely to surface impurity. Section 5.2.8 asks for one entry per event. Corrected in pack T-032c: the refusal is computed and the entry written outside the updater; the updater does one thing.
+
+**7.3 The fork was offered with nothing to fork.** Pressing SQL and then *Author SQL from here* before any dry run detached the graph and returned an empty editor. Section 5.2.2 says block-to-SQL always succeeds BECAUSE the graph compiles and the SQL is loaded; with nothing compiled that precondition is absent. Corrected in pack T-032d: the fork renders only when a compiled query exists, and states the reason otherwise.
+
+**7.4 THE VISUAL MAPPER HAD NEVER WORKED.** `POST /api/prep/visual-mapper/sessions` returned 500. A live read-only check found `session_name` present in NO database and in NO migration, while the table requires `source_code` and `display_name`; `RecordDryRun` wrote `row_count` and `error_message`, which exist on no version of the dry-run table, and a status the CHECK constraint forbids. **A count returned ZERO sessions ever created, in both `ppiq_app` and `ppiq_presentation`.** Preview and Publish had never once succeeded in the life of the repository, and no test covered the path. Corrected in pack T-032e by semantic alignment - the endpoint moved to the table, no column was added to preserve a stale statement - plus migration 541 putting `draft_definition` into source control, where it had been added by hand to one database only.
+
+**7.5 The join planner could not emit a three-table chain.** With the sessions path unblocked, Run returned `42P01: missing FROM-clause entry for table "t2"`. The emitter filtered each table's joins on `alias.ContainsKey`, and the alias map is built for every table before any SQL is emitted, so the filter was always true. Corrected across two packs: T-032f restored the scope invariant, and T-032g replaced list-order walking with a frontier planner, because a legal graph wired A-B and B-C arrives as `[A, C, B]` whenever the author drops the tables in that order.
+
+## 8. BACKEND EVIDENCE
+
+`Backend/tests/PlantProcess.Api.IntegrationTests/Mapping/VisualMapperSessionLifecycleTests.cs`, run against the live API with `PPIQ_FORCE_EXTERNAL_API_TEST_HOST=1` and `ppiq_presentation`:
+
+```
+Test summary: total: 2, failed: 0, succeeded: 2, skipped: 0
+```
+
+- **Create, save graph, dry-run, publish** - the whole path, plus two sessions sharing a display name, which the generated `source_code` must allow.
+- **Three-node chain submitted as `[A, C, B]`** - connected but not in connectivity order, so it fails against the original emitter AND against a list-order fix. It asserts EXECUTION, and then walks the compiled statement proving every alias referenced in an `ON` clause was already introduced. The chain is discovered from the live catalogue, so no plant table or column name appears in the test.
+
+## 9. DEFECTS OF MINE IN THE CLOSING PHASE
+
+Beyond those in section 7, four of my own guards matched something other than what they forbade, each reverting correct work:
+
+1. The straggler scan matched the acceptance test that must name the retired page.
+2. A needle for `session_name` matched the comment explaining its removal.
+3. A needle for `foreach (var t in g.Tables.Skip(1))` matched the alias-map builder, a correct unrelated loop.
+4. An assertion that `t1 ON` precedes `t2 ON` failed on correct SQL, asserting the alias numbering the fix deliberately decouples from emission order.
+
+The rule is the same in all four: **a guard names the exact artifact it forbids, never a shape or a word that also appears in prose about it.** I rediscovered it four times instead of adopting it after the first.
+
+Two C# variable-shadowing errors, `c` and then `m`, reached the machine because there is no C# compiler in my environment. Knowing that, the enclosing method should have been scanned for every identifier introduced - certainly by the second occurrence.
+
+## 10. THE FINAL GATE
+
+One production build and one full frontend suite, run once at the end rather than after every correction.
+
+```
+Tests   1 failed | 273 passed (274)
+```
+
+FAILURES OUTSIDE JOURNEYRAIL ARE PRESENT AND ARE NOT ACCOUNTED FOR:
+- T-032 part B: the four regions render in every mode Run is refused while the validity indicator reads Invalid
+
+The three JourneyRail failures reproduce identically on the pre-T-032 tree, as recorded in section 4.
+
+## 11. STATUS
+
+**T-032 = DONE.** Closed 04-Aug-2026.
+
+Carried forward to T-033 as a scope clarification, not as new scope: `docs/m1/evidence/T-033_scope_clarification.md`.
+
+Carried forward to T-030: the schema tree shows donor `src_*` names, and this browser acceptance is re-run against the regenerated source-shaped staging representation once T-030 lands. A later T-030 failure is an integration regression, not a reason to reopen T-032.

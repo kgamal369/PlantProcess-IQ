@@ -1,0 +1,47 @@
+/* PPIQ T-032. Styles for the two regions the shell introduces - the mode-bar
+   action area and the inline-end toolbox - plus the SQL-mode grid. Everything
+   else reuses the existing canvas stylesheets unchanged.
+
+   No inline style objects anywhere in the shell: the UI conformance ratchet
+   gives a new file a baseline of zero and this file is why it can stay zero. */
+
+.canvas-modebar__name { min-width: 220px; max-width: 320px; text-align: left; }
+
+.canvas-modebar__validity {
+  font-family: "Chakra Petch", sans-serif;
+  font-size: 11px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid #16294a;
+}
+.canvas-modebar__validity--ok { color: #2ce6a2; border-color: #1d5a45; }
+.canvas-modebar__validity--bad { color: #ff5470; border-color: #5a1d2b; }
+
+/* Section 5.2.3: in SQL mode the toolbox is not rendered at all, so the grid
+   loses its inline-end track rather than leaving an empty column behind. */
+.canvas-page--sqlmode { grid-template-columns: 250px 1fr; }
+
+.authoring-toolbox { display: flex; flex-direction: column; gap: 8px; }
+.authoring-toolbox__search { width: 100%; text-align: left; }
+.authoring-toolbox__note { font-size: 11px; line-height: 1.5; color: #6f88a3; }
+.authoring-toolbox__group { display: flex; flex-direction: column; gap: 4px; }
+
+.authoring-toolbox__grouphead {
+  display: flex; align-items: center; gap: 8px; width: 100%;
+  padding: 6px 8px; border-radius: 6px; background: #0d1c38;
+}
+.authoring-toolbox__grouplabel {
+  font-family: "Chakra Petch", sans-serif; font-size: 11px;
+  letter-spacing: .12em; text-transform: uppercase; color: #8ea7c1;
+}
+.authoring-toolbox__groupcount { margin-inline-start: auto; font-size: 11px; color: #6f88a3; }
+
+.authoring-toolbox__block {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+  width: 100%; padding: 6px 10px; border-radius: 6px; text-align: start;
+}
+.authoring-toolbox__blocklabel { font-size: 13px; color: #cfe0f0; }
+.authoring-toolbox__blockports { font-size: 10px; color: #6f88a3; }
+.authoring-toolbox__block[aria-disabled="true"] { opacity: .55; cursor: not-allowed; }

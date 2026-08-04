@@ -55,9 +55,9 @@ const SourceImportPrepPage = lazy(() =>
 );
 /* PPIQ-SCENE5678 (M1-01): the canvas and the toolbox were built, gated and
    committed, and never routed. Both pages sat on disk with no way to reach
-   them from the running application. */
-const VisualJoinCanvasPage = lazy(() =>
-  import("./pages/Prep/VisualJoinCanvasPage").then((m) => ({ default: m.default }))
+   them from the running application. PPIQ T-032: the canvas is no longer a page of its own - Chapter 4 section 5.2.1 rules ONE authoring shell serving five purposes, and this route opens it in S1 mode. */
+const SharedAuthoringShell = lazy(() =>
+  import("./authoring/SharedAuthoringShell").then((m) => ({ default: m.default }))
 );
 const AnalysisToolboxPage = lazy(() =>
   import("./pages/Analysis/AnalysisToolboxPage").then((m) => ({ default: m.default }))
@@ -504,7 +504,7 @@ function AppRoutes() {
                       element={withPageBoundary(
                         "/prep/canvas",
                         "The join canvas is refreshing",
-                        <VisualJoinCanvasPage />
+                        <SharedAuthoringShell purpose="S1" />
                       )}
                     />
                     <Route

@@ -63,11 +63,25 @@ ORDER BY table_name, ordinal_position;";
 
         g.MapPost("/sessions", async (NpgsqlDataSource ds, HttpContext ctx, JsonElement body) =>
         {
+            // T-032. The previous statement wrote a column called session_name.
+            // It exists in no migration and in no database - a live check on
+            // 04-Aug found ZERO sessions ever created, so this call had never
+            // once succeeded. The table already owns the concept: display_name
+            // is the human name and source_code is the stable identifier, so
+            // the endpoint is aligned to the table rather than a column added
+            // to preserve a stale statement.
             var name = body.TryGetProperty("name", out var n) ? n.GetString() ?? "canvas-session" : "canvas-session";
             var tenant = TenantId(ctx);
+            // UNIQUE(tenant_id, source_code) means a per-name code would refuse
+            // the second visit to the canvas, because the shell sends the same
+            // default definition name every time. The code is generated.
+            var sourceCode = NewSourceCode(name);
             await using var cmd = ds.CreateCommand(
-                "INSERT INTO public.ppiq_visual_mapper_sessions (tenant_id, session_name, status) VALUES ($1,$2,'draft') RETURNING id;");
-            cmd.Parameters.AddWithValue(tenant); cmd.Parameters.AddWithValue(name);
+                "INSERT INTO public.ppiq_visual_mapper_sessions (tenant_id, source_code, display_name, source_kind, status) " +
+                "VALUES ($1,$2,$3,'generic_relational','draft') RETURNING id;");
+            cmd.Parameters.AddWithValue(tenant);
+            cmd.Parameters.AddWithValue(sourceCode);
+            cmd.Parameters.AddWithValue(name);
             var id = (Guid)(await cmd.ExecuteScalarAsync())!;
             return Results.Ok(new { sessionId = id });
         });
@@ -158,15 +172,47 @@ RETURNING id, version_number;");
     private static async Task<MapperGraph?> LoadGraph(NpgsqlDataSource ds, Guid id)
         => await LoadGraphJson2(await LoadGraphJson(ds, id));
 
+    /// T-032. A stable, unique source_code for a new authoring session. The
+    /// display name is the human label; this is the identifier the UNIQUE
+    /// constraint governs, so it carries a suffix and two sessions may share a
+    /// name without colliding.
+    private static string NewSourceCode(string displayName)
+    {
+        var slug = System.Text.RegularExpressions.Regex
+            .Replace(displayName.ToLowerInvariant(), "[^a-z0-9]+", "_")
+            .Trim('_');
+        if (slug.Length == 0) { slug = "canvas_session"; }
+        if (slug.Length > 40) { slug = slug.Substring(0, 40); }
+        return slug + "_" + Guid.NewGuid().ToString("n").Substring(0, 8);
+    }
+
     private static async Task<Guid> RecordDryRun(NpgsqlDataSource ds, Guid sessionId, string status, int rows, string? message)
     {
+        // T-032. THREE separate contradictions with the table lived in the old
+        // statement: row_count and error_message exist on no version of
+        // ppiq_visual_mapper_dry_runs, and the status it wrote - "succeeded" -
+        // is not one of the four the CHECK constraint allows. The table has
+        // total_rows, mapped_rows, safe_sql_passed and a details jsonb.
+        //
+        // THE WIRE STATUS DOES NOT CHANGE. The client tests for "succeeded",
+        // so the mapping to the persisted vocabulary happens here and nowhere
+        // else - a rename on the wire would break the authoring shell.
+        var persisted = status switch
+        {
+            "succeeded" => "passed",
+            "rejected_by_safe_sql" => "rejected_by_safe_sql",
+            _ => "failed"
+        };
         await using var cmd = ds.CreateCommand(@"
-INSERT INTO public.ppiq_visual_mapper_dry_runs (tenant_id, session_id, status, row_count, error_message)
-SELECT tenant_id, id, $2, $3, $4 FROM public.ppiq_visual_mapper_sessions WHERE id = $1 RETURNING id;");
+INSERT INTO public.ppiq_visual_mapper_dry_runs
+       (tenant_id, session_id, status, safe_sql_passed, total_rows, mapped_rows, details)
+SELECT tenant_id, id, $2, $5, $3, $3, $4::jsonb
+FROM public.ppiq_visual_mapper_sessions WHERE id = $1 RETURNING id;");
         cmd.Parameters.AddWithValue(sessionId);
-        cmd.Parameters.AddWithValue(status);
-        cmd.Parameters.AddWithValue(rows);
-        cmd.Parameters.AddWithValue((object?)message ?? DBNull.Value);
+        cmd.Parameters.AddWithValue(persisted);
+        cmd.Parameters.AddWithValue((long)rows);
+        cmd.Parameters.AddWithValue(JsonSerializer.Serialize(new { message }));
+        cmd.Parameters.AddWithValue(persisted == "passed");
         return (Guid)(await cmd.ExecuteScalarAsync())!;
     }
 
@@ -238,14 +284,64 @@ SELECT tenant_id, id, $2, $3, $4 FROM public.ppiq_visual_mapper_sessions WHERE i
         // ---- FROM and JOIN
         var sb = new StringBuilder();
         sb.Append(select).Append(" FROM \"").Append(schema).Append("\".\"").Append(g.Tables[0]).Append("\" t0");
-        foreach (var t in g.Tables.Skip(1))
+        // T-032. A JOIN MAY ONLY REFERENCE TABLES ALREADY IN THE FROM CLAUSE.
+        //
+        // The previous filter tested alias.ContainsKey on both sides of every
+        // join, but the alias map is built for EVERY table BEFORE this loop
+        // starts, so that test was always true and filtered nothing.
+        //
+        // With three tables wired t0-t1 and t1-t2, the ON clause emitted while
+        // joining t1 contained "t1.x = t2.y" - and t2 was not in the query yet.
+        // PostgreSQL refused with 42P01, missing FROM-clause entry for table
+        // "t2". Two tables always worked, which is why this survived: the path
+        // had never been run, and a live check found ZERO sessions ever created.
+        //
+        // `emitted` tracks what is genuinely in the FROM clause so far.
+        // T-032. THE PLANNER WORKS FROM A FRONTIER, NOT FROM LIST ORDER.
+        //
+        // Two things are being satisfied here and they are not the same thing.
+        //
+        // THE SCOPE INVARIANT. An ON clause may reference only aliases already
+        // in the FROM clause plus the alias this JOIN introduces. Breaking it
+        // produced 42P01, missing FROM-clause entry for table "t2", because an
+        // earlier version filtered joins on alias.ContainsKey - and the alias
+        // map is built for EVERY table before any SQL is emitted, so that test
+        // was always true and filtered nothing.
+        //
+        // THE REACHABILITY INVARIANT. Which table is emitted next is decided by
+        // CONNECTIVITY, never by position in g.Tables. The board sends tables in
+        // the order the author dropped them, so a legal graph wired A-B and B-C
+        // can arrive as [A, C, B]. Walking the list in order would reach C,
+        // find no edge back to {A}, and refuse a graph that is perfectly valid.
+        //
+        // The loop below takes, on each pass, any pending table with an edge to
+        // something already emitted, in either direction - LeftTable or
+        // RightTable, it makes no difference. Only when NO pending table can be
+        // reached is the graph genuinely disconnected, and then it is refused
+        // with a sentence rather than compiled into SQL that cannot run.
+        var emitted = new HashSet<string> { g.Tables[0] };
+        var pending = new List<string>(g.Tables.Skip(1));
+        while (pending.Count > 0)
         {
-            var joins = g.Joins.Where(j => j.RightTable == t || j.LeftTable == t)
-                .Where(j => alias.ContainsKey(j.LeftTable) && alias.ContainsKey(j.RightTable)).ToArray();
-            if (joins.Length == 0) return (null, $"table '{t}' has no join to the graph", null);
-            sb.Append(" JOIN \"").Append(schema).Append("\".\"").Append(t).Append("\" ").Append(alias[t]).Append(" ON ");
-            sb.Append(string.Join(" AND ", joins.Select(j =>
+            string? next = null;
+            var nextJoins = Array.Empty<JoinSpec>();
+            foreach (var candidate in pending)
+            {
+                var edges = g.Joins
+                    .Where(j => (j.LeftTable == candidate && emitted.Contains(j.RightTable))
+                             || (j.RightTable == candidate && emitted.Contains(j.LeftTable)))
+                    .ToArray();
+                if (edges.Length > 0) { next = candidate; nextJoins = edges; break; }
+            }
+            if (next is null)
+            {
+                return (null, $"table '{pending[0]}' has no join reaching the rest of the board. Wire it to a table that is already connected, or remove it.", null);
+            }
+            sb.Append(" JOIN \"").Append(schema).Append("\".\"").Append(next).Append("\" ").Append(alias[next]).Append(" ON ");
+            sb.Append(string.Join(" AND ", nextJoins.Select(j =>
                 $"{alias[j.LeftTable]}.\"{j.LeftColumn}\" = {alias[j.RightTable]}.\"{j.RightColumn}\"")));
+            emitted.Add(next);
+            pending.Remove(next);
         }
 
         // ---- WHERE: whitelisted operators, values ALWAYS bound

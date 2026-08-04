@@ -1,0 +1,489 @@
+================================================================
+PPIQ T-025 LINEAGE PREFLIGHT (READ-ONLY)
+================================================================
+Generated At : 2026-08-04 15:15:26
+Database     : ppiq_presentation
+psql exit    : 0
+
+SECTION 4 IS THE AUTHORITY. Four repository scripts define
+ppiq_ml_refresh_feature_store - 200, 201, 740 and 741 - and the live
+function is whichever ran last. The migration is written against the
+live body, never against a repository copy.
+
+Nothing was altered by this script.
+================================================================
+
+
+================================================================
+1 - THE RUN REGISTRY AS IT EXISTS
+================================================================
++-----+-------------------+--------------------------+-------------+-------------------+
+| pos |    column_name    |        data_type         | is_nullable |  column_default   |
++-----+-------------------+--------------------------+-------------+-------------------+
+|   1 | id                | uuid                     | NO          | gen_random_uuid() |
+|   2 | status            | text                     | NO          |                   |
+|   3 | window_days       | integer                  | NO          |                   |
+|   4 | feature_row_count | integer                  | NO          | 0                 |
+|   5 | outcome_row_count | integer                  | NO          | 0                 |
+|   6 | started_at_utc    | timestamp with time zone | NO          | now()             |
+|   7 | completed_at_utc  | timestamp with time zone | YES         |                   |
+|   8 | duration_ms       | integer                  | NO          | 0                 |
+|   9 | message           | text                     | YES         |                   |
++-----+-------------------+--------------------------+-------------+-------------------+
+(9 rows)
+
+--- does any engine or version field already exist? ---
++---------------------------+
+| engine_or_version_columns |
++---------------------------+
+|                         0 |
++---------------------------+
+(1 row)
+
+--- existing run rows ---
++--------------------------------------+---------+-------------+-------------------+-------------------+-------------------------------+-------------------------------+---------------------------------------------------------------------------------------+
+|                  id                  | status  | window_days | feature_row_count | outcome_row_count |        started_at_utc         |       completed_at_utc        |                                        message                                        |
++--------------------------------------+---------+-------------+-------------------+-------------------+-------------------------------+-------------------------------+---------------------------------------------------------------------------------------+
+| 249ec544-f3ce-4e00-96b3-b47bfb1cfa91 | Success |         365 |            111611 |            155073 | 2026-08-03 10:04:55.177397+03 | 2026-08-03 10:04:55.177397+03 | Feature store refreshed from canonical schema (heat lineage + defect.class/severity). |
+| 0c98dfdc-b26b-4ba4-8219-541c137d6ac2 | Success |         365 |            111611 |            155073 | 2026-08-03 09:59:42.749754+03 | 2026-08-03 09:59:42.749754+03 | Feature store refreshed from canonical schema (heat lineage + defect.class/severity). |
+| 530a418c-15bb-4006-97ef-1212a3377856 | Success |        3650 |            111611 |            155073 | 2026-07-20 23:02:00.859462+03 | 2026-07-20 23:02:00.859462+03 | Feature store refreshed from canonical schema (heat lineage + defect.class/severity). |
+| 164ff7a8-acc3-4617-8ec5-b7cd04266dc5 | Success |        3650 |            111611 |            155073 | 2026-07-20 22:59:14.914641+03 | 2026-07-20 22:59:14.914641+03 | Feature store refreshed from canonical schema (heat lineage + defect.class/severity). |
+| ea18f1d6-ad31-45ee-bdb8-feca809d9b2b | Success |        3650 |            111611 |            155073 | 2026-07-20 22:42:34.75248+03  | 2026-07-20 22:42:34.75248+03  | Feature store refreshed from canonical schema (heat lineage + defect.class/severity). |
+| 6456f9a6-9633-4282-98cd-e852c82f53d9 | Success |        3650 |            111611 |            155073 | 2026-07-20 16:31:14.130804+03 | 2026-07-20 16:31:14.130804+03 | Feature store refreshed from canonical schema (heat lineage + defect.class/severity). |
+| 10bf4fef-d428-40bc-8f22-66c1da5c694c | Success |        3650 |            111611 |            155073 | 2026-07-20 16:22:35.552656+03 | 2026-07-20 16:22:35.552656+03 | Feature store refreshed from canonical schema (heat lineage + defect.class/severity). |
+| fe47b1bc-a4b2-45b6-9309-f9af396fac13 | Success |        3650 |             14433 |            155073 | 2026-07-20 16:00:58.915514+03 | 2026-07-20 16:00:58.915514+03 | Feature store refreshed from canonical schema (heat lineage + defect.class/severity). |
+| b9704ea0-97dd-4866-8d22-279841b6d686 | Success |        3650 |             14433 |            155073 | 2026-07-20 14:31:39.78104+03  | 2026-07-20 14:31:39.78104+03  | Feature store refreshed from canonical schema (heat lineage + defect.class/severity). |
+| 866b3c86-be14-4b11-8448-e998cc0913b8 | Success |        3650 |             14433 |            155073 | 2026-07-20 14:25:40.563931+03 | 2026-07-20 14:25:40.563931+03 | Feature store refreshed from canonical schema (heat lineage + defect.class/severity). |
++--------------------------------------+---------+-------------+-------------------+-------------------+-------------------------------+-------------------------------+---------------------------------------------------------------------------------------+
+(10 rows)
+
++------------+
+| total_runs |
++------------+
+|         13 |
++------------+
+(1 row)
+
+
+================================================================
+2 - DO THE VALUE TABLES ALREADY CARRY A RUN COLUMN?
+under any name, before one is added
+================================================================
++-------------------+-----------------+-----------+
+|    table_name     |   column_name   | data_type |
++-------------------+-----------------+-----------+
+| ml_feature_values | provenance_json | jsonb     |
+| ml_outcome_values | provenance_json | jsonb     |
++-------------------+-----------------+-----------+
+(2 rows)
+
+--- their full column contract, so the INSERT lists can be edited exactly ---
++-------------------+-----+---------------------------+--------------------------+-------------+
+|    table_name     | pos |        column_name        |        data_type         | is_nullable |
++-------------------+-----+---------------------------+--------------------------+-------------+
+| ml_feature_values |   1 | id                        | uuid                     | NO          |
+| ml_feature_values |   2 | feature_definition_id     | uuid                     | YES         |
+| ml_feature_values |   3 | feature_key               | text                     | NO          |
+| ml_feature_values |   4 | feature_version           | integer                  | NO          |
+| ml_feature_values |   5 | grain                     | text                     | NO          |
+| ml_feature_values |   6 | material_unit_id          | uuid                     | YES         |
+| ml_feature_values |   7 | heat_id                   | text                     | YES         |
+| ml_feature_values |   8 | sequence_id               | text                     | YES         |
+| ml_feature_values |   9 | strand                    | text                     | YES         |
+| ml_feature_values |  10 | slab_id                   | text                     | YES         |
+| ml_feature_values |  11 | coil_id                   | text                     | YES         |
+| ml_feature_values |  12 | location_id               | text                     | YES         |
+| ml_feature_values |  13 | batch_id                  | text                     | YES         |
+| ml_feature_values |  14 | lot_id                    | text                     | YES         |
+| ml_feature_values |  15 | roll_id                   | text                     | YES         |
+| ml_feature_values |  16 | generic_unit_id           | text                     | YES         |
+| ml_feature_values |  17 | effective_sample_key      | text                     | NO          |
+| ml_feature_values |  18 | observed_at_utc           | timestamp with time zone | YES         |
+| ml_feature_values |  19 | window_start_utc          | timestamp with time zone | YES         |
+| ml_feature_values |  20 | window_end_utc            | timestamp with time zone | YES         |
+| ml_feature_values |  21 | numeric_value             | double precision         | YES         |
+| ml_feature_values |  22 | text_value                | text                     | YES         |
+| ml_feature_values |  23 | boolean_value             | boolean                  | YES         |
+| ml_feature_values |  24 | category_value            | text                     | YES         |
+| ml_feature_values |  25 | missing_reason            | text                     | YES         |
+| ml_feature_values |  26 | missingness_flag          | boolean                  | NO          |
+| ml_feature_values |  27 | source_system             | text                     | YES         |
+| ml_feature_values |  28 | source_record_id          | text                     | YES         |
+| ml_feature_values |  29 | source_json               | jsonb                    | NO          |
+| ml_feature_values |  30 | created_at_utc            | timestamp with time zone | NO          |
+| ml_feature_values |  31 | native_grain              | text                     | YES         |
+| ml_feature_values |  32 | genealogy_json            | jsonb                    | NO          |
+| ml_feature_values |  33 | provenance_json           | jsonb                    | NO          |
+| ml_feature_values |  34 | feature_quality_score     | double precision         | YES         |
+| ml_outcome_values |   1 | id                        | uuid                     | NO          |
+| ml_outcome_values |   2 | outcome_definition_id     | uuid                     | YES         |
+| ml_outcome_values |   3 | outcome_key               | text                     | NO          |
+| ml_outcome_values |   4 | outcome_version           | integer                  | NO          |
+| ml_outcome_values |   5 | grain                     | text                     | NO          |
+| ml_outcome_values |   6 | material_unit_id          | uuid                     | YES         |
+| ml_outcome_values |   7 | heat_id                   | text                     | YES         |
+| ml_outcome_values |   8 | sequence_id               | text                     | YES         |
+| ml_outcome_values |   9 | strand                    | text                     | YES         |
+| ml_outcome_values |  10 | slab_id                   | text                     | YES         |
+| ml_outcome_values |  11 | coil_id                   | text                     | YES         |
+| ml_outcome_values |  12 | effective_sample_key      | text                     | NO          |
+| ml_outcome_values |  13 | observed_at_utc           | timestamp with time zone | YES         |
+| ml_outcome_values |  14 | window_start_utc          | timestamp with time zone | YES         |
+| ml_outcome_values |  15 | window_end_utc            | timestamp with time zone | YES         |
+| ml_outcome_values |  16 | numeric_value             | double precision         | YES         |
+| ml_outcome_values |  17 | category_value            | text                     | YES         |
+| ml_outcome_values |  18 | severity_value            | text                     | YES         |
+| ml_outcome_values |  19 | position_value            | text                     | YES         |
+| ml_outcome_values |  20 | duration_seconds          | double precision         | YES         |
+| ml_outcome_values |  21 | normalization_denominator | double precision         | YES         |
+| ml_outcome_values |  22 | source_system             | text                     | YES         |
+| ml_outcome_values |  23 | source_record_id          | text                     | YES         |
+| ml_outcome_values |  24 | source_json               | jsonb                    | NO          |
+| ml_outcome_values |  25 | created_at_utc            | timestamp with time zone | NO          |
+| ml_outcome_values |  26 | native_grain              | text                     | YES         |
+| ml_outcome_values |  27 | location_id               | text                     | YES         |
+| ml_outcome_values |  28 | batch_id                  | text                     | YES         |
+| ml_outcome_values |  29 | lot_id                    | text                     | YES         |
+| ml_outcome_values |  30 | roll_id                   | text                     | YES         |
+| ml_outcome_values |  31 | generic_unit_id           | text                     | YES         |
+| ml_outcome_values |  32 | genealogy_json            | jsonb                    | NO          |
+| ml_outcome_values |  33 | provenance_json           | jsonb                    | NO          |
+| ml_outcome_values |  34 | outcome_quality_score     | double precision         | YES         |
++-------------------+-----+---------------------------+--------------------------+-------------+
+(68 rows)
+
+
+================================================================
+3 - SOURCE_SYSTEM TAGS ON THE VALUE TABLES
+the refresh functions key their own DELETE statements off these,
+so the migration must not disturb them
+================================================================
++-------------------+----------------------+--------+
+|    table_name     |    source_system     |  rows  |
++-------------------+----------------------+--------+
+| ml_feature_values | PPIQ-ML-Refresh      | 111611 |
+| ml_feature_values | PPIQ.V6.FeatureStore |  40141 |
+| ml_outcome_values | PPIQ-ML-Refresh      | 155073 |
+| ml_outcome_values | PPIQ.V6.FeatureStore |  40148 |
++-------------------+----------------------+--------+
+(4 rows)
+
+
+================================================================
+4 - THE LIVE FUNCTION BODIES. THIS IS THE AUTHORITY.
+================================================================
+--- ppiq_ml_refresh_feature_store ---
++---------------------------------------------------------------------------------------------------------------------------------------+
+|                                                            live_definition                                                            |
++---------------------------------------------------------------------------------------------------------------------------------------+
+| CREATE OR REPLACE FUNCTION public.ppiq_ml_refresh_feature_store(p_window_days integer DEFAULT 90)                                    +|
+|  RETURNS TABLE(feature_rows integer, outcome_rows integer, run_id uuid)                                                              +|
+|  LANGUAGE plpgsql                                                                                                                    +|
+| AS $function$\r                                                                                                                      +|
+| DECLARE\r                                                                                                                            +|
+|     v_run_id uuid := gen_random_uuid();\r                                                                                            +|
+|     v_started timestamptz := now();\r                                                                                                +|
+| BEGIN\r                                                                                                                              +|
+|     PERFORM public.ppiq_ml_seed_foundation_catalog();\r                                                                              +|
+| \r                                                                                                                                   +|
+|     INSERT INTO public.ml_feature_store_refresh_runs(id, status, window_days)\r                                                      +|
+|     VALUES (v_run_id, 'Running', p_window_days);\r                                                                                   +|
+| \r                                                                                                                                   +|
+|     DELETE FROM public.ml_feature_values  WHERE source_system = 'PPIQ-ML-Refresh';\r                                                 +|
+|     DELETE FROM public.ml_outcome_values  WHERE source_system = 'PPIQ-ML-Refresh';\r                                                 +|
+| \r                                                                                                                                   +|
+|     INSERT INTO public.ml_feature_definitions\r                                                                                      +|
+|         (feature_key, display_name, feature_group, grain, value_type, unit, formula_kind, source_column, metadata_json)\r            +|
+|     SELECT DISTINCT\r                                                                                                                +|
+|         'param.' || lower(pd.parameter_code),\r                                                                                      +|
+|         pd.parameter_name,\r                                                                                                         +|
+|         COALESCE(pd.parameter_category, 'Process Parameter'),\r                                                                      +|
+|         'generic',\r                                                                                                                 +|
+|         CASE\r                                                                                                                       +|
+|             WHEN lower(COALESCE(pd.value_type, 'numeric')) IN ('numeric','decimal','double','integer') THEN 'numeric'\r              +|
+|             WHEN lower(COALESCE(pd.value_type, 'numeric')) IN ('boolean','bool') THEN 'boolean'\r                                    +|
+|             ELSE 'categorical'\r                                                                                                     +|
+|         END,\r                                                                                                                       +|
+|         pd.unit_of_measure,\r                                                                                                        +|
+|         'Observed',\r                                                                                                                +|
+|         pd.parameter_code,\r                                                                                                         +|
+|         jsonb_build_object('source','parameter_definitions')\r                                                                       +|
+|     FROM public.parameter_definitions pd\r                                                                                           +|
+|     WHERE pd.is_deleted = false\r                                                                                                    +|
+|     ON CONFLICT ((lower(feature_key)), version) WHERE is_deleted = false DO NOTHING;\r                                               +|
+| \r                                                                                                                                   +|
+|     -- FEATURES: heat_id now resolved via lineage for non-heat grains.\r                                                             +|
+|     INSERT INTO public.ml_feature_values\r                                                                                           +|
+|     (\r                                                                                                                              +|
+|         feature_definition_id, feature_key, grain, material_unit_id,\r                                                               +|
+|         heat_id, slab_id, coil_id, generic_unit_id,\r                                                                                +|
+|         effective_sample_key, observed_at_utc, numeric_value, text_value,\r                                                          +|
+|         boolean_value, category_value, missingness_flag,\r                                                                           +|
+|         source_system, source_record_id, source_json\r                                                                               +|
+|     )\r                                                                                                                              +|
+|     SELECT\r                                                                                                                         +|
+|         fd.id, fd.feature_key,\r                                                                                                     +|
+|         CASE\r                                                                                                                       +|
+|             WHEN lower(COALESCE(mu.material_unit_type, '')) LIKE '%heat%' THEN 'heat'\r                                              +|
+|             WHEN lower(COALESCE(mu.material_unit_type, '')) LIKE '%slab%' THEN 'slab'\r                                              +|
+|             WHEN lower(COALESCE(mu.material_unit_type, '')) LIKE '%coil%' THEN 'coil'\r                                              +|
+|             ELSE 'generic'\r                                                                                                         +|
+|         END,\r                                                                                                                       +|
+|         mu.id,\r                                                                                                                     +|
+|         CASE\r                                                                                                                       +|
+|             WHEN lower(COALESCE(mu.material_unit_type, '')) LIKE '%heat%' THEN mu.material_code\r                                    +|
+|             ELSE lin.heat_code\r                                                                                                     +|
+|         END,\r                                                                                                                       +|
+|         CASE WHEN lower(COALESCE(mu.material_unit_type, '')) LIKE '%slab%' THEN mu.material_code ELSE NULL END,\r                    +|
+|         CASE WHEN lower(COALESCE(mu.material_unit_type, '')) LIKE '%coil%' THEN mu.material_code ELSE NULL END,\r                    +|
+|         mu.material_code,\r                                                                                                          +|
+|         COALESCE(mu.material_code, mu.id::text),\r                                                                                   +|
+|         po.observed_at_utc,\r                                                                                                        +|
+|         po.numeric_value::double precision,\r                                                                                        +|
+|         po.text_value,\r                                                                                                             +|
+|         po.boolean_value,\r                                                                                                          +|
+|         COALESCE(po.text_value, CASE WHEN po.boolean_value IS NULL THEN NULL ELSE po.boolean_value::text END),\r                     +|
+|         po.numeric_value IS NULL AND po.text_value IS NULL AND po.boolean_value IS NULL,\r                                           +|
+|         'PPIQ-ML-Refresh',\r                                                                                                         +|
+|         po.id::text,\r                                                                                                               +|
+|         jsonb_build_object('parameterDefinitionId', pd.id, 'parameterCode', pd.parameter_code,\r                                     +|
+|                            'qualityFlag', po.quality_flag, 'unit', po.unit_of_measure)\r                                             +|
+|     FROM public.parameter_observations po\r                                                                                          +|
+|     JOIN public.parameter_definitions pd ON pd.id = po.parameter_definition_id AND pd.is_deleted = false\r                           +|
+|     JOIN public.material_units mu ON mu.id = po.material_unit_id AND mu.is_deleted = false\r                                         +|
+|     JOIN public.ml_feature_definitions fd ON lower(fd.feature_key) = lower('param.' || pd.parameter_code) AND fd.is_deleted = false\r+|
+|     LEFT JOIN public.ppiq_ml_unit_heat_lineage lin ON lin.unit_id = mu.id\r                                                          +|
+|     WHERE po.is_deleted = false\r                                                                                                    +|
+|       AND po.observed_at_utc >= now() - make_interval(days => p_window_days);\r                                                      +|
+| \r                                                                                                                                   +|
+|     -- FEATURE PROJECTION (741): attribute heat-grain parameter features to every\r                                                  +|
+|     -- descendant coil via the genealogy lineage, so same-grain correlation at\r                                                     +|
+|     -- 'coil' can regress heat-level parameters (superheat, temperature, chemistry)\r                                                +|
+|     -- against coil-level outcomes (CRACK_LONG et al). One row per (feature, coil).\r                                                +|
+|     INSERT INTO public.ml_feature_values\r                                                                                           +|
+|     (\r                                                                                                                              +|
+|         feature_definition_id, feature_key, grain, material_unit_id,\r                                                               +|
+|         heat_id, slab_id, coil_id, generic_unit_id,\r                                                                                +|
+|         effective_sample_key, observed_at_utc, numeric_value, text_value,\r                                                          +|
+|         boolean_value, category_value, missingness_flag,\r                                                                           +|
+|         source_system, source_record_id, source_json\r                                                                               +|
+|     )\r                                                                                                                              +|
+|     SELECT\r                                                                                                                         +|
+|         fv.feature_definition_id, fv.feature_key, 'coil',\r                                                                          +|
+|         mu_coil.id,\r                                                                                                                +|
+|         fv.heat_id, NULL, mu_coil.material_code, NULL,\r                                                                             +|
+|         mu_coil.material_code,\r                                                                                                     +|
+|         fv.observed_at_utc, fv.numeric_value, fv.text_value,\r                                                                       +|
+|         fv.boolean_value, fv.category_value, fv.missingness_flag,\r                                                                  +|
+|         'PPIQ-ML-Refresh', fv.source_record_id,\r                                                                                    +|
+|         COALESCE(fv.source_json, '{}'::jsonb) || jsonb_build_object('attributedFromGrain', 'heat', 'attributionPath', 'genealogy')\r +|
+|     FROM public.ml_feature_values fv\r                                                                                               +|
+|     JOIN public.material_units mu_coil\r                                                                                             +|
+|         ON lower(COALESCE(mu_coil.material_unit_type, '')) LIKE '%coil%'\r                                                           +|
+|        AND mu_coil.is_deleted = false\r                                                                                              +|
+|     JOIN public.ppiq_ml_unit_heat_lineage lin\r                                                                                      +|
+|         ON lin.unit_id = mu_coil.id\r                                                                                                +|
+|        AND lin.heat_code = fv.heat_id\r                                                                                              +|
+|     WHERE fv.source_system = 'PPIQ-ML-Refresh'\r                                                                                     +|
+|       AND fv.grain = 'heat'\r                                                                                                        +|
+|       AND fv.heat_id IS NOT NULL;\r                                                                                                  +|
+| \r                                                                                                                                   +|
+|     -- OUTCOME 1: defect.rate_per_m2 (unchanged shape) with heat_id resolved.\r                                                      +|
+|     INSERT INTO public.ml_outcome_values\r                                                                                           +|
+|     (\r                                                                                                                              +|
+|         outcome_definition_id, outcome_key, grain, material_unit_id,\r                                                               +|
+|         heat_id, slab_id, coil_id, effective_sample_key, observed_at_utc,\r                                                          +|
+|         numeric_value, category_value, severity_value, position_value,\r                                                             +|
+|         normalization_denominator, source_system, source_record_id, source_json\r                                                    +|
+|     )\r                                                                                                                              +|
+|     SELECT\r                                                                                                                         +|
+|         od.id, 'defect.rate_per_m2',\r                                                                                               +|
+|         CASE\r                                                                                                                       +|
+|             WHEN lower(COALESCE(mu.material_unit_type, '')) LIKE '%coil%' THEN 'coil'\r                                              +|
+|             WHEN lower(COALESCE(mu.material_unit_type, '')) LIKE '%slab%' THEN 'slab'\r                                              +|
+|             WHEN lower(COALESCE(mu.material_unit_type, '')) LIKE '%heat%' THEN 'heat'\r                                              +|
+|             ELSE 'generic'\r                                                                                                         +|
+|         END,\r                                                                                                                       +|
+|         mu.id,\r                                                                                                                     +|
+|         CASE\r                                                                                                                       +|
+|             WHEN lower(COALESCE(mu.material_unit_type, '')) LIKE '%heat%' THEN mu.material_code\r                                    +|
+|             ELSE lin.heat_code\r                                                                                                     +|
+|         END,\r                                                                                                                       +|
+|         CASE WHEN lower(COALESCE(mu.material_unit_type, '')) LIKE '%slab%' THEN mu.material_code ELSE NULL END,\r                    +|
+|         CASE WHEN lower(COALESCE(mu.material_unit_type, '')) LIKE '%coil%' THEN mu.material_code ELSE NULL END,\r                    +|
+|         COALESCE(mu.material_code, mu.id::text),\r                                                                                   +|
+|         qe.event_at_utc, 1.0,\r                                                                                                      +|
+|         COALESCE(dc.defect_category, dc.defect_code, qe.event_type),\r                                                               +|
+|         qe.severity, NULL, NULL,\r                                                                                                   +|
+|         'PPIQ-ML-Refresh', qe.id::text,\r                                                                                            +|
+|         jsonb_build_object('eventType', qe.event_type, 'decision', qe.decision, 'defectCatalogId', qe.defect_catalog_id)\r           +|
+|     FROM public.quality_events qe\r                                                                                                  +|
+|     JOIN public.material_units mu ON mu.id = qe.material_unit_id AND mu.is_deleted = false\r                                         +|
+|     JOIN public.ml_outcome_definitions od ON od.outcome_key = 'defect.rate_per_m2' AND od.is_deleted = false\r                       +|
+|     LEFT JOIN public.defect_catalogs dc ON dc.id = qe.defect_catalog_id AND dc.is_deleted = false\r                                  +|
+|     LEFT JOIN public.ppiq_ml_unit_heat_lineage lin ON lin.unit_id = mu.id\r                                                          +|
+|     WHERE qe.is_deleted = false\r                                                                                                    +|
+|       AND qe.event_at_utc >= now() - make_interval(days => p_window_days);\r                                                         +|
+| \r                                                                                                                                   +|
+|     -- OUTCOME 2 (NEW): defect.class + defect.severity - the money-slide outcomes.\r                                                 +|
+|     -- One row per (quality_event, outcome_key) so CRACK_LONG etc. become a\r                                                        +|
+|     -- multinomial outcome the correlation engine can regress superheat against.\r                                                   +|
+|     INSERT INTO public.ml_outcome_values\r                                                                                           +|
+|     (\r                                                                                                                              +|
+|         outcome_definition_id, outcome_key, grain, material_unit_id,\r                                                               +|
+|         heat_id, slab_id, coil_id, effective_sample_key, observed_at_utc,\r                                                          +|
+|         numeric_value, category_value, severity_value, position_value,\r                                                             +|
+|         normalization_denominator, source_system, source_record_id, source_json\r                                                    +|
+|     )\r                                                                                                                              +|
+|     SELECT\r                                                                                                                         +|
+|         od.id, od.outcome_key,\r                                                                                                     +|
+|         CASE\r                                                                                                                       +|
+|             WHEN lower(COALESCE(mu.material_unit_type, '')) LIKE '%coil%' THEN 'coil'\r                                              +|
+|             WHEN lower(COALESCE(mu.material_unit_type, '')) LIKE '%slab%' THEN 'slab'\r                                              +|
+|             WHEN lower(COALESCE(mu.material_unit_type, '')) LIKE '%heat%' THEN 'heat'\r                                              +|
+|             ELSE 'generic'\r                                                                                                         +|
+|         END,\r                                                                                                                       +|
+|         mu.id,\r                                                                                                                     +|
+|         CASE\r                                                                                                                       +|
+|             WHEN lower(COALESCE(mu.material_unit_type, '')) LIKE '%heat%' THEN mu.material_code\r                                    +|
+|             ELSE lin.heat_code\r                                                                                                     +|
+|         END,\r                                                                                                                       +|
+|         CASE WHEN lower(COALESCE(mu.material_unit_type, '')) LIKE '%slab%' THEN mu.material_code ELSE NULL END,\r                    +|
+|         CASE WHEN lower(COALESCE(mu.material_unit_type, '')) LIKE '%coil%' THEN mu.material_code ELSE NULL END,\r                    +|
+|         COALESCE(mu.material_code, mu.id::text),\r                                                                                   +|
+|         qe.event_at_utc,\r                                                                                                           +|
+|         NULL,\r                                                                                                                      +|
+|         CASE WHEN od.outcome_key = 'defect.class'\r                                                                                  +|
+|              THEN COALESCE(dc.defect_code, dc.defect_category, qe.event_type)\r                                                      +|
+|              ELSE NULL END,\r                                                                                                        +|
+|         CASE WHEN od.outcome_key = 'defect.severity'\r                                                                               +|
+|              THEN qe.severity\r                                                                                                      +|
+|              ELSE NULL END,\r                                                                                                        +|
+|         NULL,\r                                                                                                                      +|
+|         NULL,\r                                                                                                                      +|
+|         'PPIQ-ML-Refresh', qe.id::text,\r                                                                                            +|
+|         jsonb_build_object('eventType', qe.event_type, 'defectCatalogId', qe.defect_catalog_id)\r                                    +|
+|     FROM public.quality_events qe\r                                                                                                  +|
+|     JOIN public.material_units mu ON mu.id = qe.material_unit_id AND mu.is_deleted = false\r                                         +|
+|     JOIN public.ml_outcome_definitions od ON od.outcome_key IN ('defect.class','defect.severity') AND od.is_deleted = false\r        +|
+|     LEFT JOIN public.defect_catalogs dc ON dc.id = qe.defect_catalog_id AND dc.is_deleted = false\r                                  +|
+|     LEFT JOIN public.ppiq_ml_unit_heat_lineage lin ON lin.unit_id = mu.id\r                                                          +|
+|     WHERE qe.is_deleted = false\r                                                                                                    +|
+|       AND qe.event_at_utc >= now() - make_interval(days => p_window_days)\r                                                          +|
+|       AND (\r                                                                                                                        +|
+|             (od.outcome_key = 'defect.class'    AND COALESCE(dc.defect_code, dc.defect_category, qe.event_type) IS NOT NULL)\r       +|
+|          OR (od.outcome_key = 'defect.severity' AND qe.severity IS NOT NULL)\r                                                       +|
+|       );\r                                                                                                                           +|
+| \r                                                                                                                                   +|
+|     UPDATE public.ml_feature_store_refresh_runs\r                                                                                    +|
+|     SET status = 'Success', completed_at_utc = now(),\r                                                                              +|
+|         duration_ms = (EXTRACT(EPOCH FROM (now() - v_started)) * 1000)::integer,\r                                                   +|
+|         feature_row_count = (SELECT count(*) FROM public.ml_feature_values WHERE source_system = 'PPIQ-ML-Refresh'),\r               +|
+|         outcome_row_count = (SELECT count(*) FROM public.ml_outcome_values WHERE source_system = 'PPIQ-ML-Refresh'),\r               +|
+|         message = 'Feature store refreshed from canonical schema (heat lineage + defect.class/severity).'\r                          +|
+|     WHERE id = v_run_id;\r                                                                                                           +|
+| \r                                                                                                                                   +|
+|     RETURN QUERY\r                                                                                                                   +|
+|     SELECT\r                                                                                                                         +|
+|         (SELECT count(*)::integer FROM public.ml_feature_values WHERE source_system = 'PPIQ-ML-Refresh'),\r                          +|
+|         (SELECT count(*)::integer FROM public.ml_outcome_values WHERE source_system = 'PPIQ-ML-Refresh'),\r                          +|
+|         v_run_id;\r                                                                                                                  +|
+| EXCEPTION\r                                                                                                                          +|
+|     WHEN OTHERS THEN\r                                                                                                               +|
+|         UPDATE public.ml_feature_store_refresh_runs\r                                                                                +|
+|         SET status = 'Failed', completed_at_utc = now(),\r                                                                           +|
+|             duration_ms = (EXTRACT(EPOCH FROM (now() - v_started)) * 1000)::integer,\r                                               +|
+|             message = SQLERRM\r                                                                                                      +|
+|         WHERE id = v_run_id;\r                                                                                                       +|
+|         RAISE;\r                                                                                                                     +|
+| END $function$                                                                                                                       +|
+|                                                                                                                                       |
++---------------------------------------------------------------------------------------------------------------------------------------+
+(1 row)
+
+--- ppiq_ml_refresh_feature_store_v6 ---
++-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+|                                                                                        live_definition                                                                                        |
++-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| CREATE OR REPLACE FUNCTION public.ppiq_ml_refresh_feature_store_v6(p_window_days integer DEFAULT 3650)                                                                                       +|
+|  RETURNS TABLE(run_id uuid, feature_rows integer, outcome_rows integer, message text)                                                                                                        +|
+|  LANGUAGE plpgsql                                                                                                                                                                            +|
+| AS $function$\r                                                                                                                                                                              +|
+| DECLARE\r                                                                                                                                                                                    +|
+|     v_base record;\r                                                                                                                                                                         +|
+|     v_extra_features integer := 0;\r                                                                                                                                                         +|
+|     v_extra_outcomes integer := 0;\r                                                                                                                                                         +|
+| BEGIN\r                                                                                                                                                                                      +|
+|     SELECT * INTO v_base FROM public.ppiq_ml_refresh_feature_store(p_window_days);\r                                                                                                         +|
+| \r                                                                                                                                                                                           +|
+|     DELETE FROM public.ml_feature_values WHERE source_system = 'PPIQ.V6.FeatureStore';\r                                                                                                     +|
+|     DELETE FROM public.ml_outcome_values WHERE source_system = 'PPIQ.V6.FeatureStore';\r                                                                                                     +|
+| \r                                                                                                                                                                                           +|
+|     INSERT INTO public.ml_feature_values\r                                                                                                                                                   +|
+|     (feature_definition_id, feature_key, grain, native_grain, material_unit_id, coil_id, generic_unit_id,\r                                                                                  +|
+|      effective_sample_key, observed_at_utc, numeric_value, source_system, source_record_id, source_json, genealogy_json, provenance_json, feature_quality_score)\r                           +|
+|     SELECT fd.id, 'material.production_duration_minutes', 'generic', lower(mu.material_unit_type), mu.id,\r                                                                                  +|
+|            CASE WHEN lower(mu.material_unit_type) LIKE '%coil%' THEN mu.material_code END,\r                                                                                                 +|
+|            mu.material_code, mu.material_code,\r                                                                                                                                             +|
+|            COALESCE(mu.production_end_utc, mu.production_start_utc, now()),\r                                                                                                                +|
+|            GREATEST(0, EXTRACT(EPOCH FROM (COALESCE(mu.production_end_utc, mu.production_start_utc) - mu.production_start_utc)) / 60.0),\r                                                   +|
+|            'PPIQ.V6.FeatureStore', mu.id::text,\r                                                                                                                                            +|
+|            jsonb_build_object('materialCode', mu.material_code, 'materialUnitType', mu.material_unit_type),\r                                                                                +|
+|            jsonb_build_object('materialUnitId', mu.id, 'materialCode', mu.material_code),\r                                                                                                  +|
+|            jsonb_build_object('source', 'material_units', 'formula', 'production_end_utc - production_start_utc'),\r                                                                         +|
+|            CASE WHEN mu.production_start_utc IS NULL THEN 0.5 ELSE 1.0 END\r                                                                                                                 +|
+|     FROM public.material_units mu\r                                                                                                                                                          +|
+|     JOIN public.ml_feature_definitions fd ON lower(fd.feature_key) = 'material.production_duration_minutes' AND fd.is_deleted = false\r                                                      +|
+|     WHERE mu.is_deleted = false\r                                                                                                                                                            +|
+|       AND mu.production_start_utc IS NOT NULL;\r                                                                                                                                             +|
+| \r                                                                                                                                                                                           +|
+|     GET DIAGNOSTICS v_extra_features = ROW_COUNT;\r                                                                                                                                          +|
+| \r                                                                                                                                                                                           +|
+|     INSERT INTO public.ml_outcome_values\r                                                                                                                                                   +|
+|     (outcome_definition_id, outcome_key, grain, native_grain, material_unit_id, coil_id, generic_unit_id,\r                                                                                  +|
+|      effective_sample_key, observed_at_utc, numeric_value, normalization_denominator, source_system, source_record_id, source_json, genealogy_json, provenance_json, outcome_quality_score)\r+|
+|     SELECT od.id, 'defect.rate_per_m2', 'coil', lower(mu.material_unit_type), mu.id,\r                                                                                                       +|
+|            CASE WHEN lower(mu.material_unit_type) LIKE '%coil%' THEN mu.material_code END,\r                                                                                                 +|
+|            mu.material_code, mu.material_code,\r                                                                                                                                             +|
+|            COALESCE(MAX(qe.event_at_utc), mu.production_end_utc, mu.production_start_utc, now()),\r                                                                                          +|
+|            COUNT(qe.id)::double precision,\r                                                                                                                                                 +|
+|            1.0,\r                                                                                                                                                                            +|
+|            'PPIQ.V6.FeatureStore', mu.id::text,\r                                                                                                                                            +|
+|            jsonb_build_object('normalization', 'area_m2_missing_fallback_to_unit', 'defectCount', COUNT(qe.id)),\r                                                                           +|
+|            jsonb_build_object('materialUnitId', mu.id, 'materialCode', mu.material_code),\r                                                                                                  +|
+|            jsonb_build_object('source','quality_events','formula','defect count / denominator'),\r                                                                                           +|
+|            CASE WHEN COUNT(qe.id) = 0 THEN 0.9 ELSE 1.0 END\r                                                                                                                                +|
+|     FROM public.material_units mu\r                                                                                                                                                          +|
+|     LEFT JOIN public.quality_events qe ON qe.material_unit_id = mu.id AND qe.is_deleted = false AND lower(qe.event_type) = 'defect'\r                                                        +|
+|     JOIN public.ml_outcome_definitions od ON lower(od.outcome_key) = 'defect.rate_per_m2' AND od.is_deleted = false\r                                                                        +|
+|     WHERE mu.is_deleted = false\r                                                                                                                                                            +|
+|     GROUP BY od.id, mu.id, mu.material_code, mu.material_unit_type, mu.production_start_utc, mu.production_end_utc;\r                                                                        +|
+| \r                                                                                                                                                                                           +|
+|     GET DIAGNOSTICS v_extra_outcomes = ROW_COUNT;\r                                                                                                                                          +|
+| \r                                                                                                                                                                                           +|
+|     RETURN QUERY SELECT v_base.run_id, COALESCE(v_base.feature_rows, 0) + v_extra_features, COALESCE(v_base.outcome_rows, 0) + v_extra_outcomes,\r                                           +|
+|         'PPIQ v6 feature-store refresh completed with base + v6 multi-grain/provenance rows'::text;\r                                                                                        +|
+| END;\r                                                                                                                                                                                       +|
+| $function$                                                                                                                                                                                   +|
+|                                                                                                                                                                                               |
++-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+(1 row)
+
+
+================================================================
+5 - WHICH REFRESH FUNCTIONS EXIST AT ALL
+================================================================
++------------------------------------+---------------------------------------------------------+------------------------------------------------------------------------------+
+|           function_name            |                        arguments                        |                                   returns                                    |
++------------------------------------+---------------------------------------------------------+------------------------------------------------------------------------------+
+| ppiq_ml_compute_basic_correlations | p_outcome_key text, p_grain text, p_window_days integer | TABLE(compute_run_id uuid, result_count integer)                             |
+| ppiq_ml_compute_correlations_v6    | p_outcome_key text, p_grain text, p_window_days integer | TABLE(compute_run_id uuid, result_count integer, method_count integer)       |
+| ppiq_ml_refresh_feature_store      | p_window_days integer                                   | TABLE(feature_rows integer, outcome_rows integer, run_id uuid)               |
+| ppiq_ml_refresh_feature_store_v6   | p_window_days integer                                   | TABLE(run_id uuid, feature_rows integer, outcome_rows integer, message text) |
++------------------------------------+---------------------------------------------------------+------------------------------------------------------------------------------+
+(4 rows)
+
+
+================================================================
+END - NOTHING WAS ALTERED
+================================================================

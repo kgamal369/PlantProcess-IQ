@@ -19,7 +19,7 @@ import "./CanvasDebugLog.css";
  *
  * The five drag-time refusal sentences and the run-time unjoined-table
  * sentence move in here UNCHANGED. They were written to this shape on 27-Jul,
- * which is why VisualJoinCanvasPage carries the note "when the debug log lands
+ * which is why the shared authoring shell carries the note "when the debug log lands
  * these sentences move into it unchanged".
  */
 

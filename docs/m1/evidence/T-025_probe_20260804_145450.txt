@@ -1,0 +1,134 @@
+
+==============================================================================
+PPIQ T-025 STEP 1 - AUTH PROOF AND ANALYSIS-LAYER STATE (READ-ONLY)
+==============================================================================
+API      : http://localhost:5063
+User     : e2eadmin   the presentation profile's configured admin
+Database : ppiq_presentation
+Mode     : READ-ONLY. No engine is run. Nothing is written or deleted.
+
+==============================================================================
+A - AUTHENTICATION, VIA THE SUPPORTED FLOW
+==============================================================================
+The same path scripts/run/Invoke-PpiqJourneyProof.ps1 uses: POST /auth/login,
+take accessToken, send Bearer. No bypass and no new mechanism.
+
+POST /auth/login  -> 200
+[OK] accessToken received, length 827
+
+Now one PROTECTED endpoint, to prove the token is actually accepted:
+GET /api/ml/foundation/readiness -> 200
+[OK] the token is accepted by a protected engine endpoint
+
+==============================================================================
+B - WHICH ENGINE SURFACES ANSWER
+==============================================================================
+GET only. Nothing is computed. A 401 here would mean the token is not
+being carried; a 404 would mean the route does not exist on this build.
+
+  /api/ml/foundation/readiness                   -> 200
+  /api/ml/foundation/feature-definitions         -> 200
+  /api/ml/foundation/outcomes                    -> 200
+  /api/analytics/correlation/runs                -> 404
+  /api/analytics/risk-scores                     -> 404
+  /api/analysis-jobs                             -> 200
+
+==============================================================================
+C - THE ANALYSIS LAYER AS IT STANDS
+==============================================================================
+These rows describe the plant T-024 replaced. Reported, not judged.
++-----------------------------+--------+
+|           entity            |  rows  |
++-----------------------------+--------+
+| data_quality_issues         |      7 |
+| ml_correlation_compute_runs |    450 |
+| ml_correlation_results_v2   |    320 |
+| ml_feature_values           | 151752 |
+| ml_learning_observations_v1 |    120 |
+| ml_learning_results_v1      |  16797 |
+| ml_learning_runs_v1         |    375 |
+| ml_outcome_values           | 195221 |
+| risk_scores                 |      0 |
++-----------------------------+--------+
+(9 rows)
+
+
+How much of it still points at material units that exist?
++---------------------------------------------+------+--------+
+|                 check_name                  | live | stale  |
++---------------------------------------------+------+--------+
+| risk_scores with a live material unit       |    0 |      0 |
+| ml_feature_values with a live material unit |    0 | 151752 |
+| ml_outcome_values with a live material unit |    0 | 195221 |
++---------------------------------------------+------+--------+
+(3 rows)
+
+
+
+==============================================================================
+D - COMPUTE-RUN COVERAGE TODAY
+==============================================================================
+T-025 must end with every analysis row carrying a compute run. This is
+where it starts from.
++----------------------------+----------------+
+|         table_name         |  column_name   |
++----------------------------+----------------+
+| ml_correlation_results_v2  | compute_run_id |
+| ml_learning_job_catalog_v1 | last_run_id    |
+| ml_learning_results_v1     | run_id         |
++----------------------------+----------------+
+(3 rows)
+
+
+
+==============================================================================
+E - WHAT MUST SURVIVE THE CLEAR
+==============================================================================
+Definitions and registries are inputs, not results. They are not cleared.
++--------------------------+------+--------+
+|         registry         | rows | active |
++--------------------------+------+--------+
+| analysis job definitions |   51 |     17 |
+| kpi_definitions          |    0 |      0 |
+| ml_feature_definitions   |   33 |     33 |
+| ml_outcome_definitions   |    8 |      8 |
++--------------------------+------+--------+
+(4 rows)
+
+
+Do the feature definitions still resolve against the Fleet v2 parameters?
++--------------------------+-------------+-------------------------+
+|      source_column       | definitions | resolves_to_a_parameter |
++--------------------------+-------------+-------------------------+
+| (null)                   |          12 |                       0 |
+| CARBON_PCT               |           1 |                       1 |
+| casting.speed_mean       |           1 |                       1 |
+| CASTING_SPEED            |           1 |                       1 |
+| chemistry.cev            |           1 |                       1 |
+| CoolingActive            |           1 |                       1 |
+| CURING_PRESSURE_BAR      |           1 |                       1 |
+| CURING_TEMP_C            |           1 |                       1 |
+| downtime.cascade_minutes |           1 |                       1 |
+| FLATNESS_IUNIT           |           1 |                       1 |
+| HUMIDITY_PCT             |           1 |                       1 |
+| kpi.energy_per_ton       |           1 |                       1 |
+| kpi.prime_yield          |           1 |                       1 |
+| MOULD_ID                 |           1 |                       1 |
+| PH_VALUE                 |           1 |                       1 |
+| RECIPE_CODE              |           1 |                       1 |
+| rolling.cooling_rate     |           1 |                       1 |
+| rolling.reduction_ratio  |           1 |                       1 |
+| ROLLING_FORCE            |           1 |                       1 |
+| SUPERHEAT_C              |           1 |                       1 |
+| thermal.true_superheat   |           1 |                       1 |
+| UNIFORMITY_INDEX         |           1 |                       1 |
++--------------------------+-------------+-------------------------+
+(22 rows)
+
+
+
+==============================================================================
+RESULT
+==============================================================================
+[OK] authentication proven and the starting state recorded.
+     No engine was run. Nothing was written or deleted.
