@@ -496,6 +496,57 @@ FLEET_ALTERS_T017 = (
 )
 
 
+
+# ================================================================== T-018 TARGET
+# The second downtime quantity, and the buffer posture behind it.
+#
+# THE SOURCE CARRIES ONLY duration_seconds. stopped_minutes derives from it.
+# production_impact_seconds IS GENERATED INDEPENDENTLY - no code path below
+# computes it from the duration, from the timestamps, or from the other quantity.
+# Its parameters depend on WHERE in the plant the stoppage happened, which is a
+# property of the equipment and not of the event's own length.
+#
+# THE TWO DERIVED METRICS ARE NOT STORED HERE OR ANYWHERE:
+#     buffer_absorbed_minutes      = MAX(stopped - impact, 0)
+#     cascade_amplification_minutes = MAX(impact - stopped, 0)
+# A plain subtraction was wrong. Stopped 3 with impact 260 would report minus 257
+# minutes of buffer absorption, which is not a quantity that exists. The canonical
+# model still stores exactly TWO columns.
+#
+# POSTURE, by where the equipment sits relative to its buffers:
+#   ABSORBED   the downstream buffer swallowed it, impact is ZERO
+#   CONTAINED  some production was lost, drawn on its own scale
+#   CASCADE    a short stoppage forced a sequence rebuild, impact far exceeds it
+POSTURE_BY_LINE = {
+    # line, (absorbed, contained, cascade) - upstream units have more buffer
+    "EAF": (0.55, 0.40, 0.05),
+    "LF":  (0.50, 0.42, 0.08),
+    "CCM": (0.22, 0.53, 0.25),   # a caster stop aborts the sequence
+    "HSM": (0.15, 0.63, 0.22),
+    "PKL": (0.38, 0.54, 0.08),   # downstream, coils wait rather than vanish
+}
+CONTAINED_IMPACT_S = (60, 2400)
+CASCADE_IMPACT_S = (3600, 18000)
+
+
+def draw_impact(rnd, source_line):
+    """Independent of duration_seconds by construction: the only inputs are the
+    equipment line and the random stream."""
+    weights = POSTURE_BY_LINE.get(source_line, (0.30, 0.55, 0.15))
+    posture = rnd.choices(("ABSORBED", "CONTAINED", "CASCADE"), weights=weights)[0]
+    if posture == "ABSORBED":
+        return 0, posture
+    if posture == "CONTAINED":
+        return rnd.randint(CONTAINED_IMPACT_S[0], CONTAINED_IMPACT_S[1]), posture
+    return rnd.randint(CASCADE_IMPACT_S[0], CASCADE_IMPACT_S[1]), posture
+
+
+FLEET_ALTERS_T018 = (
+    "ALTER TABLE src_inspection_mysql_shape.downtime_events "
+    "ADD COLUMN IF NOT EXISTS production_impact_seconds integer;",
+)
+
+
 def build_pools(rnd):
     """One exact pool per interval, shuffled once. Popping from it reproduces the
     measured distribution exactly rather than approximately."""
@@ -916,6 +967,7 @@ def generate(seed, mode="capture"):
     reason_pool = weighted_pool([(r[0], r[3]) for r in DOWNTIME_REASONS], rnd)
     equip_pool = weighted_pool(DOWNTIME_EQUIPMENT, rnd)
     rmeta = dict((r[0], (r[1], r[2])) for r in DOWNTIME_REASONS)
+    dt_posture = []
     window = int((DT_END - DT_START).total_seconds())
     if DT_ANCHOR_HORIZON:
         raw = sorted(rnd.random() for _ in range(N_DOWNTIME))
@@ -940,10 +992,15 @@ def generate(seed, mode="capture"):
         st = st.replace(second=0, microsecond=0)
         dur = rnd.randint(196, 5374)
         en = st + timedelta(seconds=dur)
-        dt_rows.append([
+        row = [
             str(i + 1), q(equip), q(equip.split("-")[0]), ts(st), ts(en),
             str(dur), q(code), q(text), q(category), ts(en),
-        ])
+        ]
+        if mode == "fleet-v2":
+            impact, posture = draw_impact(rnd, equip.split("-")[0])
+            row.append(str(impact))
+            dt_posture.append((dur, impact, posture))
+        dt_rows.append(row)
     if mode == "fleet-v2":
         # T-017 acceptance, asserted here rather than hoped for downstream
         cols_h, rows_h = data["src_meltshop_pg.heats"]
@@ -1008,7 +1065,28 @@ def generate(seed, mode="capture"):
     data["src_inspection_mysql_shape.downtime_events"] = (
         ["downtime_id", "equipment_code", "source_line", "start_time_utc",
          "end_time_utc", "duration_seconds", "reason_code", "reason_text",
-         "downtime_category", "updated_at_utc"], dt_rows)
+         "downtime_category", "updated_at_utc"]
+        + (["production_impact_seconds"] if mode == "fleet-v2" else []), dt_rows)
+
+    if mode == "fleet-v2":
+        # T-018 acceptance, asserted rather than hoped for. The two shapes must be
+        # present IN MEANINGFUL NUMBERS, not as single planted rows.
+        absorbed = [(d, im) for d, im, p in dt_posture if im == 0 and d > 0]
+        cascade = [(d, im) for d, im, p in dt_posture if im > 2 * d]
+        troubles = []
+        if len(absorbed) < 10:
+            troubles.append("only %d absorbed events (stopped above zero, impact zero); "
+                            "a single planted row is not a distribution" % len(absorbed))
+        if len(cascade) < 10:
+            troubles.append("only %d cascade events with impact above twice stopped"
+                            % len(cascade))
+        for d, im, p in dt_posture:
+            if im < 0:
+                troubles.append("negative production impact emitted")
+                break
+        if troubles:
+            raise SystemExit("T-018 ACCEPTANCE FAILED:\n  " + "\n  ".join(troubles))
+        data["_t018_posture"] = dt_posture
 
     return data
 
@@ -1083,9 +1161,38 @@ def main():
         return 2
 
     print("mode: " + args.mode)
+    posture = data.pop("_t018_posture", None)
     print("row counts, generated against captured")
     for name in ORDER:
         print("  [OK] %-52s %6d" % (name, len(data[name][1])))
+
+    if posture is not None:
+        import collections as _c
+        counts = _c.Counter(p for _d, _i, p in posture)
+        print("")
+        print("T-018 downtime, the two quantities. production_impact_seconds is")
+        print("drawn from the equipment line and the random stream ONLY - never")
+        print("from duration_seconds, the timestamps, or the other quantity.")
+        print("  posture           " + "  ".join(
+            "%s %d" % (k, counts.get(k, 0)) for k in ("ABSORBED", "CONTAINED", "CASCADE")))
+        absorbed = [(d, i) for d, i, p in posture if i == 0 and d > 0]
+        cascade = sorted(((d, i) for d, i, p in posture if i > 2 * d),
+                         key=lambda x: x[1] - x[0], reverse=True)
+        print("  buffer absorbed   %d events, stopped above zero with impact zero"
+              % len(absorbed))
+        print("  cascade           %d events with impact above twice stopped"
+              % len(cascade))
+        if absorbed:
+            d, i = max(absorbed)
+            print("    example absorbed  stopped %5.1f min  impact %5.1f min  "
+                  "-> absorbed %.1f, cascade %.1f"
+                  % (d / 60.0, i / 60.0, max(d - i, 0) / 60.0, max(i - d, 0) / 60.0))
+        if cascade:
+            d, i = cascade[0]
+            print("    example cascade   stopped %5.1f min  impact %5.1f min  "
+                  "-> absorbed %.1f, cascade %.1f"
+                  % (d / 60.0, i / 60.0, max(d - i, 0) / 60.0, max(i - d, 0) / 60.0))
+        print("  NEITHER derived metric is stored. Canonical keeps exactly two columns.")
 
     if args.profile or not args.out:
         print("\nno --out given, nothing written")
@@ -1109,7 +1216,7 @@ def main():
             fh.write("-- T-016 adds the chemistry columns the target specification\n")
             fh.write("-- names. 110_phase1_demo_source_shapes.sql is NOT edited: it\n")
             fh.write("-- describes the donor schemas, which are scheduled for retirement.\n")
-            for a in FLEET_ALTERS + FLEET_ALTERS_T017:
+            for a in FLEET_ALTERS + FLEET_ALTERS_T017 + FLEET_ALTERS_T018:
                 fh.write(a + "\n")
             fh.write("\n")
         for name in ORDER + ([n for n in ORDER_T017 if n in data]):
