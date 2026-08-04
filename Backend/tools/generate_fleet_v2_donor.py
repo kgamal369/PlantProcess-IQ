@@ -62,6 +62,7 @@ import hashlib
 import math
 import os
 import random
+import uuid
 import sys
 from datetime import datetime, timedelta, timezone
 
@@ -1370,6 +1371,651 @@ def scale_pairs(pairs, k):
     return tuple((v, c * k) for v, c in pairs)
 
 
+# ================================================================== T-024 TARGET
+# CANONICAL REFERENCE VOCABULARY.
+#
+# WHY THIS EXISTS AND WHY IT IS SCOPE THE CONTRACT DID NOT NAME. T-024 says
+# materialise the canonical OPERATIONAL entities. The deep measurement found the
+# reference tables do not carry the Fleet v2 vocabulary at all: defect_catalogs
+# holds nine codes and NOT ONE of the fourteen; parameter_definitions holds a mix
+# of steel, pharma and tyre codes; equipment is named EAF_1 and CASTER_1 rather
+# than EAF-01 and CCM-01. Since parameter_observations.parameter_definition_id is
+# NOT NULL with RESTRICT, NOT ONE OPERATIONAL ROW CAN BE WRITTEN until this
+# exists. Approved as T-024 scope rather than invented.
+#
+# THIS EMISSION IS ADDITIVE. It deletes nothing. Identifiers are derived from the
+# code with uuid5, so re-running it is idempotent rather than duplicating.
+# NOTE, learned the hard way. The unique constraint on defect_catalogs is
+# defect_code, NOT id. My deep measurement listed unique indexes for the six
+# OPERATIONAL tables and never asked for them on the REFERENCE tables, so an
+# id-targeted guard never fired and the apply failed on INCLUSION, which already
+# existed under the old catalogue's own identifier. Every guard below is now
+# UNTARGETED, which is correct against any unique constraint, known or not.
+#
+# THE CONSEQUENCE THAT MATTERS MORE: a code that already exists KEEPS ITS OLD
+# IDENTIFIER, so the uuid5 identity this file computes is not guaranteed to be
+# the one in the table. Step B therefore RESOLVES REFERENCE IDS BY CODE and must
+# never assume its own uuid5 value is present.
+CANON_SITE_ID = "09000000-0000-0000-0000-000000000001"   # PLANT-01, measured
+CANON_SOURCE = "FLEET_V2"
+CANON_NS = uuid.UUID("6f9619ff-8b86-d011-b42d-00c04fc964ff")
+
+
+def canon_id(kind, code):
+    """Deterministic identity. The same code always yields the same uuid, so a
+    second run updates nothing and inserts nothing."""
+    return str(uuid.uuid5(CANON_NS, kind + "|" + code))
+
+
+# Every parameter is here because a generator field feeds it and a chart reads it.
+CANON_PARAMETERS = (
+    # code, name, unit, category, expected min, max
+    ("CARBON_PCT", "Carbon", "pct", "Chemistry", 0.0, 0.30),
+    ("MANGANESE_PCT", "Manganese", "pct", "Chemistry", 0.0, 2.20),
+    ("SILICON_PCT", "Silicon", "pct", "Chemistry", 0.0, 0.70),
+    ("SULPHUR_PCT", "Sulphur", "pct", "Chemistry", 0.0, 0.05),
+    ("PHOSPHORUS_PCT", "Phosphorus", "pct", "Chemistry", 0.0, 0.05),
+    ("ALUMINIUM_PCT", "Aluminium", "pct", "Chemistry", 0.0, 0.10),
+    ("TAP_TEMP_C", "Tap temperature", "degC", "Meltshop", 1500.0, 1750.0),
+    ("OXYGEN_NM3", "Oxygen volume", "Nm3", "Meltshop", 0.0, 6000.0),
+    ("POWER_KWH", "Electrical energy", "kWh", "Meltshop", 0.0, 100000.0),
+    ("LF_ARGON_NM3", "Ladle argon flow", "Nm3", "LadleFurnace", 0.0, 400.0),
+    ("LF_CALCIUM_M", "Calcium wire fed", "m", "LadleFurnace", 0.0, 200.0),
+    ("LF_FINAL_TEMP_C", "Ladle final temperature", "degC", "LadleFurnace", 1500.0, 1700.0),
+    ("CASTING_SPEED_MPM", "Casting speed", "m/min", "Caster", 0.0, 3.0),
+    ("SUPERHEAT_C", "Superheat", "degC", "Caster", -10.0, 80.0),
+    ("MOULD_LEVEL_AVG", "Mould level deviation", "mm", "Caster", -20.0, 20.0),
+    ("FDT_C", "Finishing delivery temperature", "degC", "HotMill", 700.0, 1000.0),
+    ("CT_C", "Coiling temperature", "degC", "HotMill", 450.0, 780.0),
+    ("THICKNESS_MM", "Coil thickness", "mm", "HotMill", 0.5, 6.0),
+    ("WIDTH_MM", "Coil width", "mm", "HotMill", 800.0, 1700.0),
+    ("ROLL_FORCE_KN", "Rolling force", "kN", "HotMill", 0.0, 30000.0),
+    ("ROLL_GAP_MM", "Roll gap", "mm", "HotMill", 0.0, 10.0),
+    ("ROLL_SPEED_MPS", "Rolling speed", "m/s", "HotMill", 0.0, 25.0),
+    ("ROLL_TEMP_C", "Stand temperature", "degC", "HotMill", 700.0, 1050.0),
+    ("ACID_CONC_PCT", "Acid concentration", "pct", "Pickling", 0.0, 20.0),
+    ("BATH_TEMP_C", "Bath temperature", "degC", "Pickling", 50.0, 110.0),
+    ("LINE_SPEED_MPM", "Line speed", "m/min", "Pickling", 0.0, 300.0),
+    ("QA_WIDTH_MM", "Laboratory width", "mm", "Quality", 0.0, 2000.0),
+    ("QA_THK_MM", "Laboratory thickness", "mm", "Quality", 0.0, 2000.0),
+    ("QA_ROUGHNESS_UM", "Laboratory roughness", "um", "Quality", 0.0, 2000.0),
+)
+
+# The nine plant units the donor names, plus the seven finishing stands, so a
+# per-stand parameter observation has an equipment to hang from.
+CANON_EQUIPMENT = (
+    ("EAF-01", "Electric arc furnace 1", "Furnace"),
+    ("EAF-02", "Electric arc furnace 2", "Furnace"),
+    ("LF-01", "Ladle furnace 1", "LadleFurnace"),
+    ("LF-02", "Ladle furnace 2", "LadleFurnace"),
+    ("CCM-01", "Continuous caster 1", "Caster"),
+    ("CCM-02", "Continuous caster 2", "Caster"),
+    ("HSM-01", "Hot strip mill", "RollingMill"),
+    ("PKL-01", "Pickling line 1", "PicklingLine"),
+    ("PKL-02", "Pickling line 2", "PicklingLine"),
+    ("PARSYTEC-01", "Surface inspection 1", "Inspection"),
+    ("PARSYTEC-02", "Surface inspection 2", "Inspection"),
+)
+
+
+def emit_reference_sql(fh):
+    """Additive reference vocabulary. Deletes nothing; ON CONFLICT DO NOTHING so a
+    second run is a no-op rather than a duplicate."""
+    now = "now()"
+    fh.write("-- PPIQ T-024 step A: Fleet v2 canonical reference vocabulary\n")
+    fh.write("-- ADDITIVE ONLY. No DELETE, no UPDATE, no DDL. Identifiers are\n")
+    fh.write("-- uuid5 of the code, so re-running inserts nothing new.\n")
+    fh.write("BEGIN;\n\n")
+
+    fh.write("-- the fourteen Fleet v2 defect codes\n")
+    for code, name, klass, share, role, _sev in FLEET_DEFECTS:
+        fh.write(
+            "INSERT INTO public.defect_catalogs "
+            "(id, defect_code, defect_name, defect_category, created_at_utc, "
+            "is_synthetic, source_system, source_record_id, is_deleted) VALUES "
+            "('%s', %s, %s, %s, %s, true, %s, %s, false) "
+            "ON CONFLICT DO NOTHING;\n"
+            % (canon_id("defect", code), q(code), q(name), q(klass), now,
+               q(CANON_SOURCE), q("FLEETV2-DEFECT-" + code)))
+    fh.write("\n-- the Fleet v2 parameter set, one row per generator field a chart reads\n")
+    for code, name, unit, cat, lo, hi in CANON_PARAMETERS:
+        fh.write(
+            "INSERT INTO public.parameter_definitions "
+            "(id, parameter_code, parameter_name, value_type, unit_of_measure, "
+            "parameter_category, expected_min_value, expected_max_value, "
+            "created_at_utc, is_synthetic, source_system, source_record_id, "
+            "is_deleted) VALUES "
+            "('%s', %s, %s, 'Numeric', %s, %s, %s, %s, %s, true, %s, %s, false) "
+            "ON CONFLICT DO NOTHING;\n"
+            % (canon_id("param", code), q(code), q(name), q(unit), q(cat),
+               ("%.6f" % lo), ("%.6f" % hi), now, q(CANON_SOURCE),
+               q("FLEETV2-PARAM-" + code)))
+    fh.write("\n-- the plant units the donor names\n")
+    for i, (code, name, etype) in enumerate(CANON_EQUIPMENT):
+        fh.write(
+            "INSERT INTO public.equipment "
+            "(id, site_id, equipment_code, equipment_name, equipment_type, "
+            "is_active, sort_order, created_at_utc, is_synthetic, source_system, "
+            "source_record_id, is_deleted) VALUES "
+            "('%s', '%s', %s, %s, %s, true, %d, %s, true, %s, %s, false) "
+            "ON CONFLICT DO NOTHING;\n"
+            % (canon_id("equip", code), CANON_SITE_ID, q(code), q(name), q(etype),
+               (i + 1) * 10, now, q(CANON_SOURCE), q("FLEETV2-EQUIP-" + code)))
+    for stand in range(1, PASSES_PER_COIL + 1):
+        code = "HSM-01-F%d" % stand
+        fh.write(
+            "INSERT INTO public.equipment "
+            "(id, site_id, parent_equipment_id, equipment_code, equipment_name, "
+            "equipment_type, is_active, sort_order, created_at_utc, is_synthetic, "
+            "source_system, source_record_id, is_deleted) VALUES "
+            "('%s', '%s', '%s', %s, %s, 'MillStand', true, %d, %s, true, %s, %s, "
+            "false) ON CONFLICT DO NOTHING;\n"
+            % (canon_id("equip", code), CANON_SITE_ID, canon_id("equip", "HSM-01"),
+               q(code), q("Finishing stand F%d" % stand), 200 + stand, now,
+               q(CANON_SOURCE), q("FLEETV2-EQUIP-" + code)))
+    fh.write("\nCOMMIT;\n")
+    return (len(FLEET_DEFECTS), len(CANON_PARAMETERS),
+            len(CANON_EQUIPMENT) + PASSES_PER_COIL)
+
+
+# ============================================================ T-024 STEP B
+# CANONICAL OPERATIONAL MATERIALISATION.
+#
+# ORDER. The unique index on material_units (site_id, material_code) means the
+# new population cannot be inserted alongside the old - the Fleet v2 heat codes
+# collide with the 630 that already match. So the replacement is DELETE then
+# INSERT, wrapped in ONE TRANSACTION, so any failure rolls the whole thing back
+# and the presentation database is never left half replaced. The contract's
+# "only after the replacement rows exist" is satisfied by the rows existing as a
+# validated artifact before the transaction opens, which is what the gate list
+# enforces.
+#
+# THE DELETE ORDER IS THE MEASURED ONE, INCLUDING risk_scores - seven rows that
+# reference material_units with RESTRICT and were not on the first list.
+
+CANON_PROLOGUE = """-- PPIQ T-024 step B: canonical operational replacement
+-- ONE TRANSACTION. Any failure rolls the whole thing back and the presentation
+-- database is never left half replaced.
+--
+-- NO REFERENCE ID IS COMPUTED HERE. Codes that already existed keep the OLDER
+-- row identity - INCLUSION, SCRATCH, CARBON_PCT and SUPERHEAT_C all do - so every
+-- reference is resolved BY CODE inside this transaction, and an assertion aborts
+-- if any code resolves to more than one row.
+BEGIN;
+
+-- additive prologue: Pickling has no operation definition
+INSERT INTO public.operation_definitions (id, industry_template_id, operation_code,
+    operation_name, operation_category, sort_order, is_active, created_at_utc,
+    is_synthetic, source_system, source_record_id, is_deleted)
+SELECT '%s', o.industry_template_id, 'Pickling', 'Pickling', 'Finishing', 60, true,
+       now(), true, '%s', 'FLEETV2-OP-PICKLING', false
+FROM public.operation_definitions o WHERE o.operation_code = 'Hot_Rolling' LIMIT 1
+ON CONFLICT DO NOTHING;
+
+-- resolution tables, built from the LIVE reference tables
+CREATE TEMP TABLE ref_param ON COMMIT DROP AS
+  SELECT parameter_code AS code, min(id::text)::uuid AS id, count(*) AS n
+  FROM public.parameter_definitions GROUP BY parameter_code;
+CREATE TEMP TABLE ref_defect ON COMMIT DROP AS
+  SELECT defect_code AS code, min(id::text)::uuid AS id, count(*) AS n
+  FROM public.defect_catalogs GROUP BY defect_code;
+CREATE TEMP TABLE ref_equip ON COMMIT DROP AS
+  SELECT equipment_code AS code, min(id::text)::uuid AS id, count(*) AS n
+  FROM public.equipment GROUP BY equipment_code;
+CREATE TEMP TABLE ref_op ON COMMIT DROP AS
+  SELECT operation_code AS code, min(id::text)::uuid AS id, count(*) AS n
+  FROM public.operation_definitions GROUP BY operation_code;
+
+DO $ppiq$
+DECLARE bad int;
+BEGIN
+  SELECT count(*) INTO bad FROM (
+    SELECT 1 FROM ref_param WHERE n > 1
+    UNION ALL SELECT 1 FROM ref_defect WHERE n > 1
+    UNION ALL SELECT 1 FROM ref_equip WHERE n > 1
+    UNION ALL SELECT 1 FROM ref_op WHERE n > 1) x;
+  IF bad > 0 THEN
+    RAISE EXCEPTION 'a reference code resolves to more than one row, so joining by code would multiply rows';
+  END IF;
+END
+$ppiq$;
+
+-- delete in the MEASURED foreign key order, risk_scores first
+"""
+
+CANON_STAGING_DDL = """
+-- staging carries CODES; the real inserts join through the resolution tables
+CREATE TEMP TABLE stg_steps (id uuid, material_unit_id uuid, equipment_code text,
+  operation_code text, operation_type text, crew_code text,
+  started_at_utc timestamptz, ended_at_utc timestamptz,
+  started_at_local timestamp, ended_at_local timestamp, plant_time_zone_id text,
+  plant_utc_offset_minutes int, execution_status text, created_at_utc timestamptz,
+  is_synthetic boolean, source_system text, source_record_id text,
+  is_deleted boolean) ON COMMIT DROP;
+CREATE TEMP TABLE stg_obs (id uuid, material_unit_id uuid,
+  process_step_execution_id uuid, parameter_code text, equipment_code text,
+  observed_at_utc timestamptz, observed_at_local timestamp,
+  plant_time_zone_id text, plant_utc_offset_minutes int, numeric_value numeric,
+  unit_of_measure text, quality_flag text, created_at_utc timestamptz,
+  is_synthetic boolean, source_system text, source_record_id text,
+  is_deleted boolean) ON COMMIT DROP;
+CREATE TEMP TABLE stg_qe (id uuid, material_unit_id uuid, defect_code text,
+  event_at_utc timestamptz, event_at_local timestamp, plant_time_zone_id text,
+  plant_utc_offset_minutes int, event_type text, severity text, decision text,
+  description text, created_at_utc timestamptz, is_synthetic boolean,
+  source_system text, source_record_id text, is_deleted boolean) ON COMMIT DROP;
+CREATE TEMP TABLE stg_dt (id uuid, equipment_code text, started_at_utc timestamptz,
+  ended_at_utc timestamptz, started_at_local timestamp, ended_at_local timestamp,
+  plant_time_zone_id text, plant_utc_offset_minutes int, downtime_type text,
+  stopped_minutes numeric, production_impact_minutes numeric, reason_code text,
+  description text, created_at_utc timestamptz, is_synthetic boolean,
+  source_system text, source_record_id text, is_deleted boolean) ON COMMIT DROP;
+
+"""
+
+CANON_INSERTS = """-- resolve by code, then insert
+INSERT INTO public.process_step_executions (id, material_unit_id, equipment_id,
+  operation_definition_id, operation_type, operation_code, crew_code,
+  started_at_utc, ended_at_utc, started_at_local, ended_at_local,
+  plant_time_zone_id, plant_utc_offset_minutes, execution_status, created_at_utc,
+  is_synthetic, source_system, source_record_id, is_deleted)
+SELECT s.id, s.material_unit_id, e.id, o.id, s.operation_type, s.operation_code,
+       s.crew_code, s.started_at_utc, s.ended_at_utc, s.started_at_local,
+       s.ended_at_local, s.plant_time_zone_id, s.plant_utc_offset_minutes,
+       s.execution_status, s.created_at_utc, s.is_synthetic, s.source_system,
+       s.source_record_id, s.is_deleted
+FROM stg_steps s
+LEFT JOIN ref_equip e ON e.code = s.equipment_code
+LEFT JOIN ref_op o ON o.code = s.operation_code;
+
+-- INNER join on the parameter, deliberately: parameter_definition_id is NOT NULL,
+-- so an unresolved code must drop the row loudly into the count check below
+-- rather than null silently.
+INSERT INTO public.parameter_observations (id, material_unit_id,
+  process_step_execution_id, parameter_definition_id, equipment_id,
+  observed_at_utc, observed_at_local, plant_time_zone_id,
+  plant_utc_offset_minutes, numeric_value, unit_of_measure, quality_flag,
+  created_at_utc, is_synthetic, source_system, source_record_id, is_deleted)
+SELECT s.id, s.material_unit_id, s.process_step_execution_id, p.id, e.id,
+       s.observed_at_utc, s.observed_at_local, s.plant_time_zone_id,
+       s.plant_utc_offset_minutes, s.numeric_value, s.unit_of_measure,
+       s.quality_flag, s.created_at_utc, s.is_synthetic, s.source_system,
+       s.source_record_id, s.is_deleted
+FROM stg_obs s
+JOIN ref_param p ON p.code = s.parameter_code
+LEFT JOIN ref_equip e ON e.code = s.equipment_code;
+
+INSERT INTO public.quality_events (id, material_unit_id, defect_catalog_id,
+  event_at_utc, event_at_local, plant_time_zone_id, plant_utc_offset_minutes,
+  event_type, severity, decision, description, created_at_utc, is_synthetic,
+  source_system, source_record_id, is_deleted)
+SELECT s.id, s.material_unit_id, d.id, s.event_at_utc, s.event_at_local,
+       s.plant_time_zone_id, s.plant_utc_offset_minutes, s.event_type, s.severity,
+       s.decision, s.description, s.created_at_utc, s.is_synthetic,
+       s.source_system, s.source_record_id, s.is_deleted
+FROM stg_qe s
+LEFT JOIN ref_defect d ON d.code = s.defect_code;
+
+INSERT INTO public.downtime_events (id, equipment_id, started_at_utc,
+  ended_at_utc, started_at_local, ended_at_local, plant_time_zone_id,
+  plant_utc_offset_minutes, downtime_type, stopped_minutes,
+  production_impact_minutes, reason_code, description, created_at_utc,
+  is_synthetic, source_system, source_record_id, is_deleted)
+SELECT s.id, e.id, s.started_at_utc, s.ended_at_utc, s.started_at_local,
+       s.ended_at_local, s.plant_time_zone_id, s.plant_utc_offset_minutes,
+       s.downtime_type, s.stopped_minutes, s.production_impact_minutes,
+       s.reason_code, s.description, s.created_at_utc, s.is_synthetic,
+       s.source_system, s.source_record_id, s.is_deleted
+FROM stg_dt s
+LEFT JOIN ref_equip e ON e.code = s.equipment_code;
+
+DO $ppiq$
+DECLARE staged bigint; landed bigint; unresolved bigint;
+BEGIN
+  SELECT count(*) INTO staged FROM stg_obs;
+  SELECT count(*) INTO landed FROM public.parameter_observations;
+  IF staged <> landed THEN
+    SELECT count(*) INTO unresolved FROM stg_obs s
+      LEFT JOIN ref_param p ON p.code = s.parameter_code WHERE p.id IS NULL;
+    RAISE EXCEPTION 'parameter observations staged % but landed %, % rows had a parameter code that did not resolve', staged, landed, unresolved;
+  END IF;
+  SELECT count(*) INTO unresolved FROM public.quality_events
+    WHERE event_type = 'SurfaceDefect' AND defect_catalog_id IS NULL;
+  IF unresolved > 0 THEN
+    RAISE EXCEPTION '% surface defect events have no catalogue row, so a defect code did not resolve', unresolved;
+  END IF;
+END
+$ppiq$;
+
+"""
+
+CANON_DELETE_ORDER = (
+    "risk_scores", "quality_events", "genealogy_edges", "parameter_observations",
+    "process_step_executions", "downtime_events", "material_units",
+)
+
+# A DECISION, RECORDED. Stand-level pass observations are NOT materialised into
+# canonical for M1. There are 119,070 of them at target scale, and the captured
+# mill has NO STAND PROFILE - FAULT-3, still uncorrected - so all seven stands
+# draw from one distribution. Seven identical distributions per coil would add
+# 476,280 rows and no information. The four mill parameters are materialised as
+# per-coil means against the rolling step instead. If a chart later needs the
+# stand dimension, this is the decision to revisit.
+CANON_TZ = "Africa/Cairo"
+
+
+def _loc(dt):
+    """The naive plant wall clock. Every *_at_local column is timestamp WITHOUT
+    time zone, so the offset must be applied and then dropped."""
+    return plant_local(dt).strftime("%Y-%m-%d %H:%M:%S")
+
+
+def _utc(dt):
+    return dt.astimezone(timezone.utc).strftime("%Y-%m-%d %H:%M:%S+00")
+
+
+def _off(dt):
+    return plant_offset_hours(dt) * 60
+
+
+def _n(v):
+    return "\\N" if v is None else str(v)
+
+
+def emit_canonical_sql(fh, data, coils, heats, sc):
+    """Emit the whole replacement as ONE transaction.
+
+    NO REFERENCE ID IS EVER COMPUTED. An earlier design wrote canon_id("param",
+    code) straight into parameter_definition_id. That is wrong: a code that
+    already existed keeps the OLDER row's identity - INCLUSION, SCRATCH,
+    CARBON_PCT and SUPERHEAT_C all do - and parameter_definition_id is NOT NULL
+    with a RESTRICT foreign key, so the load would have failed outright.
+
+    Instead the data lands in TEMP STAGING TABLES CARRYING CODES, resolution
+    tables are built from the live reference tables, an assertion fails the whole
+    transaction if any code resolves to more than one row, and the real inserts
+    join through them. Material unit and step identities ARE computed, because
+    this transaction creates every one of them.
+    """
+    rows = {}
+
+    def copy(table, cols, records):
+        rows[table] = len(records)
+        fh.write("COPY %s (%s) FROM stdin;\n" % (table, ", ".join(cols)))
+        for r in records:
+            fh.write("\t".join(r) + "\n")
+        fh.write("\\.\n\n")
+
+    hc, hr = data["src_meltshop_pg.heats"]
+    heat_by_no = dict((r[hc.index("heat_no")].strip("'"), r) for r in hr)
+    pc, pr = data["src_caster_oracle_shape.cast_pieces"]
+    cc, cr = data["src_hsm_oracle_shape.hsm_coils"]
+    lc, lr = data["src_meltshop_pg.lf_treatment"]
+    lf_by_heat = dict((r[lc.index("heat_no")].strip("'"), r) for r in lr)
+    kc, kr = data["src_pkl_mssql_shape.pickle_orders"]
+    qc, qr = data["src_pkl_mssql_shape.qa_lab_results"]
+    dc, dr = data["src_inspection_mysql_shape.parsytec_surface_defects"]
+    wc, wr = data["src_inspection_mysql_shape.downtime_events"]
+    mc, mr = data["src_hsm_oracle_shape.hsm_pass_measurements"]
+
+    def uid(code):
+        return canon_id("unit", code)
+
+    def sid(unit_code, op_code):
+        return canon_id("step", unit_code + "|" + op_code)
+
+    now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S+00")
+
+    # ------------------------------------------------------------ units
+    unit_cols = ["id", "material_code", "material_unit_type", "product_family",
+                 "grade_or_recipe", "site_id", "production_start_utc",
+                 "production_end_utc", "production_start_local",
+                 "production_end_local", "plant_time_zone_id",
+                 "plant_utc_offset_minutes", "created_at_utc", "is_synthetic",
+                 "source_system", "source_record_id", "is_deleted"]
+    units = []
+
+    def unit_row(code, utype, grade, start, end):
+        return [uid(code), code, utype, "FlatSteel", grade, CANON_SITE_ID,
+                _utc(start), _utc(end), _loc(start), _loc(end), CANON_TZ,
+                str(_off(start)), now, "t", CANON_SOURCE,
+                "FLEETV2-" + utype.upper() + "-" + code, "f"]
+
+    for h in heats:
+        units.append(unit_row(h["heat_no"], "Heat", h["grade"],
+                              h["tap_start"], h["tap_end"]))
+    piece_of = {}
+    for r in pr:
+        code = r[pc.index("piece_id")].strip("'")
+        hn = r[pc.index("heat_no")].strip("'")
+        cut = datetime.strptime(r[pc.index("cut_time")].strip("'"),
+                                "%Y-%m-%d %H:%M:%S%z")
+        grade = heat_by_no[hn][hc.index("steel_grade")].strip("'")
+        piece_of[code] = (hn, cut, grade, r)
+        units.append(unit_row(code, "Slab", grade, cut, cut))
+    coil_of = {}
+    for r in cr:
+        code = r[cc.index("coil_id")].strip("'")
+        hn = r[cc.index("heat_no")].strip("'")
+        pid = r[cc.index("input_piece_id")].strip("'")
+        rs = datetime.strptime(r[cc.index("rolling_start_time")].strip("'"),
+                               "%Y-%m-%d %H:%M:%S%z")
+        re_ = datetime.strptime(r[cc.index("rolling_end_time")].strip("'"),
+                                "%Y-%m-%d %H:%M:%S%z")
+        grade = heat_by_no[hn][hc.index("steel_grade")].strip("'")
+        coil_of[code] = (hn, pid, rs, re_, grade, r)
+        units.append(unit_row(code, "Coil", grade, rs, re_))
+    copy("public.material_units", unit_cols, units)
+
+    # ------------------------------------------------------------ genealogy
+    edge_cols = ["id", "parent_material_unit_id", "child_material_unit_id",
+                 "relationship_type", "effective_from_utc", "contribution_weight",
+                 "is_transition", "provenance_confidence", "created_at_utc",
+                 "is_synthetic", "source_system", "source_record_id", "is_deleted"]
+    edges = []
+    for code, (hn, cut, _g, _r) in piece_of.items():
+        edges.append([canon_id("edge", hn + ">" + code), uid(hn), uid(code),
+                      "ProducedInto", _utc(cut), "1.0", "f", "1.0", now, "t",
+                      CANON_SOURCE, "FLEETV2-EDGE-" + hn + ">" + code, "f"])
+    for code, (hn, pid, rs, _re, _g, _r) in coil_of.items():
+        edges.append([canon_id("edge", pid + ">" + code), uid(pid), uid(code),
+                      "RolledInto", _utc(rs), "1.0", "f", "1.0", now, "t",
+                      CANON_SOURCE, "FLEETV2-EDGE-" + pid + ">" + code, "f"])
+    copy("public.genealogy_edges", edge_cols, edges)
+
+    # ------------------------------------------------------------ steps, staged
+    stg_step_cols = ["id", "material_unit_id", "equipment_code", "operation_code",
+                     "operation_type", "crew_code", "started_at_utc",
+                     "ended_at_utc", "started_at_local", "ended_at_local",
+                     "plant_time_zone_id", "plant_utc_offset_minutes",
+                     "execution_status", "created_at_utc", "is_synthetic",
+                     "source_system", "source_record_id", "is_deleted"]
+    steps = []
+
+    def step_row(unit_code, op_type, op_code, equip, start, end, crew):
+        steps.append([sid(unit_code, op_code), uid(unit_code),
+                      equip if equip else "\\N", op_code, op_type,
+                      crew if crew else "\\N", _utc(start), _utc(end),
+                      _loc(start), _loc(end), CANON_TZ, str(_off(start)),
+                      "Completed", now, "t", CANON_SOURCE,
+                      "FLEETV2-STEP-" + unit_code + "-" + op_code, "f"])
+
+    has_crew = "crew_code" in hc
+    for h in heats:
+        hrow = heat_by_no[h["heat_no"]]
+        crew = hrow[hc.index("crew_code")].strip("'") if has_crew else None
+        step_row(h["heat_no"], "Melting", "EAF_Melting",
+                 hrow[hc.index("furnace_code")].strip("'"),
+                 h["tap_start"], h["tap_end"], crew)
+        lf = lf_by_heat.get(h["heat_no"])
+        if lf:
+            st = datetime.strptime(lf[lc.index("treatment_start_utc")].strip("'"),
+                                   "%Y-%m-%d %H:%M:%S%z")
+            en = datetime.strptime(lf[lc.index("treatment_end_utc")].strip("'"),
+                                   "%Y-%m-%d %H:%M:%S%z")
+            step_row(h["heat_no"], "LadleTreatment", "LF_Treatment",
+                     lf[lc.index("lf_code")].strip("'"), st, en, crew)
+    for code, (hn, cut, _g, r) in piece_of.items():
+        step_row(code, "Casting", "Continuous_Casting",
+                 r[pc.index("caster_id")].strip("'"), cut, cut, None)
+    for code, (hn, pid, rs, re_, _g, r) in coil_of.items():
+        step_row(code, "Rolling", "Hot_Rolling",
+                 r[cc.index("mill_line")].strip("'"), rs, re_, None)
+    pkl_of = {}
+    for r in kr:
+        code = r[kc.index("coil_id")].strip("'")
+        en_t = datetime.strptime(r[kc.index("entry_time_utc")].strip("'"),
+                                 "%Y-%m-%d %H:%M:%S%z")
+        ex_t = datetime.strptime(r[kc.index("exit_time_utc")].strip("'"),
+                                 "%Y-%m-%d %H:%M:%S%z")
+        pkl_of[code] = (en_t, ex_t, r)
+        step_row(code, "Pickling", "Pickling",
+                 r[kc.index("line_id")].strip("'"), en_t, ex_t, None)
+    copy("stg_steps", stg_step_cols, steps)
+
+    # ------------------------------------------------------------ observations
+    stg_obs_cols = ["id", "material_unit_id", "process_step_execution_id",
+                    "parameter_code", "equipment_code", "observed_at_utc",
+                    "observed_at_local", "plant_time_zone_id",
+                    "plant_utc_offset_minutes", "numeric_value",
+                    "unit_of_measure", "quality_flag", "created_at_utc",
+                    "is_synthetic", "source_system", "source_record_id",
+                    "is_deleted"]
+    obs = []
+    unit_by_param = dict((c[0], c[2]) for c in CANON_PARAMETERS)
+
+    def obs_row(unit_code, op_code, param, equip, at, value):
+        obs.append([canon_id("obs", unit_code + "|" + param), uid(unit_code),
+                    sid(unit_code, op_code), param, equip if equip else "\\N",
+                    _utc(at), _loc(at), CANON_TZ, str(_off(at)),
+                    "%.6f" % value, unit_by_param[param], "Valid", now, "t",
+                    CANON_SOURCE, "FLEETV2-OBS-" + unit_code + "-" + param, "f"])
+
+    heat_params = (("carbon_pct", "CARBON_PCT"), ("manganese_pct", "MANGANESE_PCT"),
+                   ("silicon_pct", "SILICON_PCT"), ("sulphur_pct", "SULPHUR_PCT"),
+                   ("phosphorus_pct", "PHOSPHORUS_PCT"),
+                   ("aluminium_pct", "ALUMINIUM_PCT"),
+                   ("actual_temp_c", "TAP_TEMP_C"), ("oxygen_nm3", "OXYGEN_NM3"),
+                   ("power_kwh", "POWER_KWH"))
+    for h in heats:
+        hrow = heat_by_no[h["heat_no"]]
+        equip = hrow[hc.index("furnace_code")].strip("'")
+        for col, param in heat_params:
+            if col in hc:
+                obs_row(h["heat_no"], "EAF_Melting", param, equip, h["tap_end"],
+                        float(hrow[hc.index(col)]))
+        lf = lf_by_heat.get(h["heat_no"])
+        if lf:
+            en = datetime.strptime(lf[lc.index("treatment_end_utc")].strip("'"),
+                                   "%Y-%m-%d %H:%M:%S%z")
+            le = lf[lc.index("lf_code")].strip("'")
+            for col, param in (("argon_flow_nm3", "LF_ARGON_NM3"),
+                               ("calcium_wire_m", "LF_CALCIUM_M"),
+                               ("final_temp_c", "LF_FINAL_TEMP_C")):
+                obs_row(h["heat_no"], "LF_Treatment", param, le, en,
+                        float(lf[lc.index(col)]))
+    for code, (hn, cut, _g, r) in piece_of.items():
+        equip = r[pc.index("caster_id")].strip("'")
+        for col, param in (("casting_speed_avg", "CASTING_SPEED_MPM"),
+                           ("superheat_c", "SUPERHEAT_C"),
+                           ("mould_level_avg", "MOULD_LEVEL_AVG")):
+            obs_row(code, "Continuous_Casting", param, equip, cut,
+                    float(r[pc.index(col)]))
+    mill_sum = {}
+    for r in mr:
+        cid = r[mc.index("coil_id")].strip("'")
+        acc = mill_sum.setdefault(cid, [0.0, 0.0, 0.0, 0.0, 0])
+        acc[0] += float(r[mc.index("rolling_force_kn")])
+        acc[1] += float(r[mc.index("roll_gap_mm")])
+        acc[2] += float(r[mc.index("speed_mps")])
+        acc[3] += float(r[mc.index("temperature_c")])
+        acc[4] += 1
+    for code, (hn, pid, rs, re_, _g, r) in coil_of.items():
+        equip = r[cc.index("mill_line")].strip("'")
+        for col, param in (("actual_fdt_c", "FDT_C"), ("actual_ct_c", "CT_C"),
+                           ("actual_thickness_mm", "THICKNESS_MM"),
+                           ("actual_width_mm", "WIDTH_MM")):
+            obs_row(code, "Hot_Rolling", param, equip, re_, float(r[cc.index(col)]))
+        a = mill_sum.get(code)
+        if a and a[4]:
+            for idx, param in ((0, "ROLL_FORCE_KN"), (1, "ROLL_GAP_MM"),
+                               (2, "ROLL_SPEED_MPS"), (3, "ROLL_TEMP_C")):
+                obs_row(code, "Hot_Rolling", param, equip, re_, a[idx] / a[4])
+    for code, (en_t, ex_t, r) in pkl_of.items():
+        equip = r[kc.index("line_id")].strip("'")
+        for col, param in (("acid_concentration_pct", "ACID_CONC_PCT"),
+                           ("bath_temperature_c", "BATH_TEMP_C"),
+                           ("line_speed_mpm", "LINE_SPEED_MPM")):
+            obs_row(code, "Pickling", param, equip, ex_t, float(r[kc.index(col)]))
+    qa_param = {"WIDTH": "QA_WIDTH_MM", "THK": "QA_THK_MM",
+                "ROUGHNESS": "QA_ROUGHNESS_UM"}
+    for r in qr:
+        code = r[qc.index("coil_id")].strip("'")
+        tcode = r[qc.index("test_code")].strip("'")
+        if code in pkl_of and tcode in qa_param:
+            at = datetime.strptime(r[qc.index("sample_time_utc")].strip("'"),
+                                   "%Y-%m-%d %H:%M:%S%z")
+            obs_row(code, "Pickling", qa_param[tcode], None, at,
+                    float(r[qc.index("measured_value")]))
+    copy("stg_obs", stg_obs_cols, obs)
+
+    # ------------------------------------------------------------ quality
+    stg_qe_cols = ["id", "material_unit_id", "defect_code", "event_at_utc",
+                   "event_at_local", "plant_time_zone_id",
+                   "plant_utc_offset_minutes", "event_type", "severity",
+                   "decision", "description", "created_at_utc", "is_synthetic",
+                   "source_system", "source_record_id", "is_deleted"]
+    qes = []
+    for r in dr:
+        code = r[dc.index("coil_id")].strip("'")
+        if code not in coil_of:
+            continue
+        rid = str(r[dc.index("defect_row_id")])
+        at = datetime.strptime(r[dc.index("event_time_utc")].strip("'"),
+                               "%Y-%m-%d %H:%M:%S%z")
+        qes.append([canon_id("qe", "defect|" + rid), uid(code),
+                    r[dc.index("defect_code")].strip("'"), _utc(at), _loc(at),
+                    CANON_TZ, str(_off(at)), "SurfaceDefect",
+                    r[dc.index("defect_severity")].strip("'"), "\\N",
+                    r[dc.index("defect_name")].strip("'"), now, "t",
+                    CANON_SOURCE, "FLEETV2-QE-DEFECT-" + rid, "f"])
+    for code, (en_t, ex_t, r) in pkl_of.items():
+        dec = r[kc.index("qa_decision")].strip("'")
+        if dec == "Accepted":
+            continue
+        qes.append([canon_id("qe", "disp|" + code), uid(code), "\\N",
+                    _utc(ex_t), _loc(ex_t), CANON_TZ, str(_off(ex_t)),
+                    "Disposition", "\\N", dec, "Pickling line disposition",
+                    now, "t", CANON_SOURCE, "FLEETV2-QE-DISP-" + code, "f"])
+    copy("stg_qe", stg_qe_cols, qes)
+
+    # ------------------------------------------------------------ downtime
+    stg_dt_cols = ["id", "equipment_code", "started_at_utc", "ended_at_utc",
+                   "started_at_local", "ended_at_local", "plant_time_zone_id",
+                   "plant_utc_offset_minutes", "downtime_type", "stopped_minutes",
+                   "production_impact_minutes", "reason_code", "description",
+                   "created_at_utc", "is_synthetic", "source_system",
+                   "source_record_id", "is_deleted"]
+    dts = []
+    for r in wr:
+        did = str(r[wc.index("downtime_id")])
+        st = datetime.strptime(r[wc.index("start_time_utc")].strip("'"),
+                               "%Y-%m-%d %H:%M:%S%z")
+        en = datetime.strptime(r[wc.index("end_time_utc")].strip("'"),
+                               "%Y-%m-%d %H:%M:%S%z")
+        dts.append([canon_id("dt", did),
+                    r[wc.index("equipment_code")].strip("'"), _utc(st), _utc(en),
+                    _loc(st), _loc(en), CANON_TZ, str(_off(st)),
+                    r[wc.index("downtime_category")].strip("'"),
+                    "%.3f" % (float(r[wc.index("duration_seconds")]) / 60.0),
+                    "%.3f" % (float(r[wc.index("production_impact_seconds")]) / 60.0),
+                    r[wc.index("reason_code")].strip("'"),
+                    r[wc.index("reason_text")].strip("'"), now, "t",
+                    CANON_SOURCE, "FLEETV2-DT-" + did, "f"])
+    copy("stg_dt", stg_dt_cols, dts)
+    return rows
+
+
 def build_pools(rnd):
     """One exact pool per interval, shuffled once. Popping from it reproduces the
     measured distribution exactly rather than approximately."""
@@ -2192,12 +2838,36 @@ def main():
                          "0 uses the default for the mode: 1 for capture, which is "
                          "frozen, and 3 for fleet-v2, which is the T-015 target of "
                          "1,890 heats and 17,010 coils over 91.9 days")
+    ap.add_argument("--emit", choices=("donor", "reference", "canonical"),
+                    default="donor",
+                    help="donor emits the source-shaped tables; reference emits the "
+                         "Fleet v2 canonical reference vocabulary, which is ADDITIVE "
+                         "and deletes nothing")
     ap.add_argument("--columns", action="store_true",
                     help="print the column manifest and exit, for the runner to check "
                          "against information_schema BEFORE loading anything")
     args = ap.parse_args()
 
+    if args.emit == "reference":
+        if not args.out:
+            sys.stderr.write("--emit reference needs --out\n")
+            return 2
+        with open(args.out, "w", encoding="utf-8", newline="\n") as fh:
+            d_n, p_n, e_n = emit_reference_sql(fh)
+        print("Fleet v2 canonical reference vocabulary written to " + args.out)
+        print("  defect codes         %d" % d_n)
+        print("  parameter definitions %d" % p_n)
+        print("  equipment units      %d" % e_n)
+        print("")
+        print("ADDITIVE ONLY - the file contains no DELETE, no UPDATE and no DDL,")
+        print("and every insert carries ON CONFLICT DO NOTHING, so a second run")
+        print("changes nothing.")
+        return 0
+
     sc = args.scale if args.scale > 0 else SCALE_DEFAULT[args.mode]
+    if args.emit == "canonical" and args.mode != "fleet-v2":
+        sys.stderr.write("--emit canonical requires --mode fleet-v2\n")
+        return 2
     if args.mode == "capture" and sc != 1:
         sys.stderr.write("capture mode is FROZEN at scale 1 - it is the "
                          "regression test for retirement gate condition 1\n")
@@ -2279,6 +2949,31 @@ def main():
     t019 = data.pop("_t019", None)
     t020 = data.pop("_t020", None)
     t021 = data.pop("_t021", None)
+    if args.emit == "canonical":
+        if not args.out:
+            sys.stderr.write("--emit canonical needs --out\n")
+            return 2
+        # NOT data.get("_t020") - main pops it several lines above, so reading it
+        # here returned None and emitted slabs and coils with NO HEATS, leaving
+        # 17,010 genealogy edges pointing at units that did not exist.
+        if t020 is None:
+            sys.stderr.write("the T-020 payload is missing; canonical cannot be "
+                             "emitted without the heat and coil lists\n")
+            return 2
+        heats_l, coils_l = t020[0], t020[1]
+        with open(args.out, "w", encoding="utf-8", newline="\n") as fh:
+            fh.write(CANON_PROLOGUE % (canon_id("op", "Pickling"), CANON_SOURCE))
+            for t in CANON_DELETE_ORDER:
+                fh.write("DELETE FROM public.%s;\n" % t)
+            fh.write(CANON_STAGING_DDL)
+            counts = emit_canonical_sql(fh, data, coils_l, heats_l, sc)
+            fh.write(CANON_INSERTS)
+            fh.write("COMMIT;\n")
+        print("canonical replacement written to " + args.out)
+        for k in sorted(counts):
+            print("  %-30s %8d" % (k, counts[k]))
+        return 0
+
     print("row counts, %s" % ("against the capture" if args.mode == "capture"
                                else "internally consistent"))
     for name in ORDER:
