@@ -1,0 +1,120 @@
+
+==============================================================================
+PPIQ T-028 - CONFOUNDED CORRELATION AND INSUFFICIENT-SUPPORT REFUSAL
+==============================================================================
+Database : ppiq_presentation
+No write, no engine call, no threshold changed.
+Server reports transaction_read_only = on (required on)
+
+==============================================================================
+A - THE CONFOUNDED ASSOCIATION: NAIVE, THEN CONDITIONED
+==============================================================================
+Spearman over AVERAGE ranks, the same statistic the harness computes.
+x = mean CT_C per coil. y = catalogued defect count on that coil.
+Events with no defect_catalog_id are excluded, so a disposition cannot
+inflate the count.
++--------------------+-------+--------------+
+|      analysis      |   n   | spearman_rho |
++--------------------+-------+--------------+
+| NAIVE, whole fleet | 17010 |      -0.1035 |
++--------------------+-------+--------------+
+(1 row)
+
+
+CONDITIONED ON GRADE - within-stratum effect, then the population-weighted
+mean, skipping strata under 8 pairs exactly as the harness does.
++---------------+-------+--------------+
+|    stratum    |   n   | spearman_rho |
++---------------+-------+--------------+
+| DP600         |  2559 |      -0.0048 |
+| DX51D         |  2934 |      -0.0062 |
+| HSLA-420      |  3102 |      -0.0123 |
+| IF-LOW-C      |  2658 |      -0.0148 |
+| S235JR        |  2914 |       0.0344 |
+| S355MC        |  2843 |       0.0047 |
+| WEIGHTED MEAN | 17010 |       0.0004 |
++---------------+-------+--------------+
+(7 rows)
+
+
+CONDITIONED ON THICKNESS - quartiles of mean THICKNESS_MM per coil, so the
+second conditioning variable the task names is measured too.
++----------------------+-------+--------------+
+|       stratum        |   n   | spearman_rho |
++----------------------+-------+--------------+
+| thickness quartile 1 |  4253 |      -0.1211 |
+| thickness quartile 2 |  4253 |      -0.0987 |
+| thickness quartile 3 |  4252 |      -0.0843 |
+| thickness quartile 4 |  4252 |      -0.1091 |
+| WEIGHTED MEAN        | 17010 |      -0.1033 |
++----------------------+-------+--------------+
+(5 rows)
+
+
+
+  THE FINDING: naive rho -0.1035 over the whole fleet.
+  If the conditioned weighted means above are near zero, the association
+  SURVIVES NAIVE ANALYSIS AND DOES NOT SURVIVE STRATIFICATION - the
+  grades differ in both coiling temperature and defect rate, so the
+  pooled correlation measures the grade mix and not any process effect.
+
+==============================================================================
+B - THE NEGATIVE CONTROLS, MEASURED NOT ASSUMED
+==============================================================================
+The task names SCRATCH, DENT and SEAM. A control that does not exist in
+the generated catalogue is reported ABSENT, never silent.
++------------------+-------------------------------------+--------+
+| declared_control |              presence               | events |
++------------------+-------------------------------------+--------+
+| DENT             | ABSENT from the generated catalogue |      0 |
+| SCRATCH          | present                             |    298 |
+| SEAM             | ABSENT from the generated catalogue |      0 |
++------------------+-------------------------------------+--------+
+(3 rows)
+
+
+Association of each PRESENT control with the same exposure, CT_C:
++---------+-------+--------------+
+|  code   |   n   | spearman_rho |
++---------+-------+--------------+
+| SCRATCH | 17010 |      -0.0372 |
++---------+-------+--------------+
+(1 row)
+
+
+
+==============================================================================
+C - THE BLOCKED OUTCOME, WITH ITS MEASURED VALUE AND ITS THRESHOLD
+==============================================================================
+ReadinessGate.cs thresholds, quoted and NOT modified:
+  independent heats           Ready >= 60     Partial >= 30
+  outcome events              Ready >= 40     Partial >= 15
+  minority-class balance      Ready >= 0.10   Partial >= 0.03
+  required-field completeness Ready >= 0.95   Partial >= 0.85
+Overall is the WORST dimension. Fewer than two classes gives 0.0.
+
++-----------------+-------------------+----------------+-------------+-------------------+--------------+-----------------------------------+
+|   outcome_key   | independent_heats | outcome_events | class_count | minority_fraction | completeness |           gate_verdict            |
++-----------------+-------------------+----------------+-------------+-------------------+--------------+-----------------------------------+
+| defect.class    |              1341 |           5961 |          14 |            0.0200 |       1.0000 | BLOCKED on minority-class balance |
+| defect.severity |              1341 |           5961 |           3 |            0.2855 |       1.0000 | not blocked                       |
++-----------------+-------------------+----------------+-------------+-------------------+--------------+-----------------------------------+
+(2 rows)
+
+
+
+  THE BLOCKED OUTCOME(S), each naming its measured value and threshold:
+    defect.class - minority-class balance measured 0.0200, below the Partial threshold 0.0300 and the Ready threshold 0.1000.
+      Support is NOT the constraint: 1341 independent heats against a Ready threshold of 60, and 5961 outcome events against 40.
+      The engine refuses because one class is too rare to support a
+      class-conditional claim, not because the population is small.
+
+==============================================================================
+T-028 DELIVERABLES
+==============================================================================
+  A  a finding that survives naive analysis and does NOT survive
+     stratification, with the naive and conditioned values side by side
+  B  a Blocked outcome whose reason names the measured value and its
+     threshold, recomputed from ReadinessGate's own constants
+
+NO THRESHOLD WAS WEAKENED AND NO GENERATOR CHANGE WAS MADE.
