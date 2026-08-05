@@ -181,11 +181,19 @@ WHERE n.nspname = $1 AND c.relkind IN ('r', 'p', 'm', 'v');";
             if (err is not null)
             {
                 await RecordDryRun(ds, id, "rejected_by_safe_sql", 0, err);
-                return Results.Ok(new { dryRunId = Guid.Empty, status = "rejected_by_safe_sql", rowCount = 0, columns = Array.Empty<string>(), rows = Array.Empty<object>(), message = err });
+                return Results.Ok(new { dryRunId = Guid.Empty, status = "rejected_by_safe_sql", rowCount = 0, previewTruncated = false, plannerCost = (double?)null, estimatedRows = (long?)null, columns = Array.Empty<string>(), rows = Array.Empty<object>(), message = err });
             }
             try
             {
+                // T-035. THE PLANNER'S ESTIMATE, taken before the preview runs.
+                // Plain EXPLAIN: it plans the statement and executes NOTHING, so
+                // it costs the customer's database almost nothing and cannot
+                // change anything. It is an ESTIMATE - not a runtime, not a
+                // price - and the interface labels it as one.
+                var (plannerCost, estimatedRows) = await TryExplain(ds, sql!, prms);
+
                 var cols = new List<string>(); var rows = new List<object[]>();
+                var truncated = false;
                 await using (var cmd = ds.CreateCommand(sql!))
                 {
                     // M1-16: filter values arrive here as bound parameters, never
@@ -193,20 +201,34 @@ WHERE n.nspname = $1 AND c.relkind IN ('r', 'p', 'm', 'v');";
                     foreach (var p in prms ?? new List<object>()) cmd.Parameters.AddWithValue(p);
                     await using var r = await cmd.ExecuteReaderAsync();
                     for (var i = 0; i < r.FieldCount; i++) cols.Add(r.GetName(i));
-                    while (await r.ReadAsync() && rows.Count < 50)
+                    while (await r.ReadAsync())
                     {
+                        // THE PREVIEW STOPS AT 50 AND SAYS SO. Before T-035 the
+                        // reported count was the number of rows read, capped at
+                        // 50, and was presented as the row count - so a query
+                        // returning four thousand rows reported fifty. The cap
+                        // stays; the claim is now truthful about being a cap.
+                        if (rows.Count >= 50) { truncated = true; break; }
                         var row = new object[r.FieldCount];
                         for (var i = 0; i < r.FieldCount; i++) row[i] = r.IsDBNull(i) ? "" : r.GetValue(i)?.ToString() ?? "";
                         rows.Add(row);
                     }
                 }
                 var dr = await RecordDryRun(ds, id, "succeeded", rows.Count, null);
-                return Results.Ok(new { dryRunId = dr, status = "succeeded", rowCount = rows.Count, columns = cols, rows, message = (string?)null, sql });
+                return Results.Ok(new { dryRunId = dr, status = "succeeded", rowCount = rows.Count, previewTruncated = truncated, plannerCost, estimatedRows, columns = cols, rows, message = (string?)null, sql });
             }
             catch (Exception ex)
             {
+                // T-035. THE RAW EXCEPTION NEVER LEAVES THE SERVER.
+                //
+                // This used to return ex.Message straight to the browser, so a
+                // Postgres error - its SQLSTATE, its internal wording, sometimes
+                // a fragment of the statement - was rendered in the Job Log. The
+                // real text is still RECORDED against the dry run, where support
+                // can read it; what the engineer sees is a sentence about their
+                // definition.
                 await RecordDryRun(ds, id, "failed", 0, ex.Message);
-                return Results.Ok(new { dryRunId = Guid.Empty, status = "failed", rowCount = 0, columns = Array.Empty<string>(), rows = Array.Empty<object>(), message = ex.Message });
+                return Results.Ok(new { dryRunId = Guid.Empty, status = "failed", rowCount = 0, previewTruncated = false, plannerCost = (double?)null, estimatedRows = (long?)null, columns = Array.Empty<string>(), rows = Array.Empty<object>(), message = SafeDatabaseMessage(ex) });
             }
         });
 
@@ -302,6 +324,58 @@ FROM public.ppiq_visual_mapper_sessions WHERE id = $1 RETURNING id;");
         column.Equals("id", StringComparison.OrdinalIgnoreCase)
         || column.EndsWith("_id", StringComparison.OrdinalIgnoreCase)
         || column.EndsWith("_no", StringComparison.OrdinalIgnoreCase);
+
+    // T-035. The planner's estimate for a statement, without running it.
+    //
+    // Plain EXPLAIN, never the ANALYZE form: the statement is planned and not
+    // executed, so this cannot alter anything and costs the customer's database
+    // almost nothing. Returns nulls rather than throwing - a preview that works
+    // must not be lost because the estimate could not be obtained.
+    private static async Task<(double? cost, long? rows)> TryExplain(
+        NpgsqlDataSource ds, string sql, List<object>? prms)
+    {
+        try
+        {
+            await using var cmd = ds.CreateCommand("EXPLAIN (FORMAT JSON) " + sql);
+            foreach (var p in prms ?? new List<object>()) cmd.Parameters.AddWithValue(p);
+            var raw = (await cmd.ExecuteScalarAsync())?.ToString();
+            if (string.IsNullOrWhiteSpace(raw)) return (null, null);
+            using var doc = JsonDocument.Parse(raw);
+            if (doc.RootElement.ValueKind != JsonValueKind.Array || doc.RootElement.GetArrayLength() == 0) return (null, null);
+            if (!doc.RootElement[0].TryGetProperty("Plan", out var plan)) return (null, null);
+            double? cost = plan.TryGetProperty("Total Cost", out var c) && c.ValueKind == JsonValueKind.Number ? c.GetDouble() : null;
+            long? rows = plan.TryGetProperty("Plan Rows", out var n) && n.ValueKind == JsonValueKind.Number ? n.GetInt64() : null;
+            return (cost, rows);
+        }
+        catch
+        {
+            return (null, null);
+        }
+    }
+
+    // T-035. What the engineer is told when the database refuses the statement.
+    //
+    // Section 5.2.8 asks for a message written for a plant engineer, and the
+    // PPIQ-T09 architecture test forbids a stack trace and the load-failure
+    // phrases it enumerates - which is why this comment describes them instead
+    // of quoting one. Each sentence names something in THEIR definition and says what
+    // to do about it. The SQLSTATE decides which sentence; the database's own
+    // wording is never passed through, because it describes the generated
+    // statement rather than the board that produced it.
+    private static string SafeDatabaseMessage(Exception ex)
+    {
+        var state = (ex as PostgresException)?.SqlState ?? "";
+        return state switch
+        {
+            "42P01" => "A table used by this definition is no longer in the staging schema. Reopen the page to refresh the schema list, then put the table back on the board.",
+            "42703" => "A column used by this definition is no longer in its table. Reopen the page to refresh the schema list, then choose the column again.",
+            "42883" or "42804" or "42P08" => "Two columns in this definition cannot be compared, because their types do not match. Check the join and the filters, and compare columns of the same type.",
+            "22P02" or "22003" or "22007" => "A filter value does not suit the type of the column it compares. Check the value on the filter block.",
+            "57014" => "The preview was stopped because it ran too long. Narrow it with a filter and try again.",
+            "53300" or "53400" => "The database is refusing new work at the moment. Wait a little and run the preview again.",
+            _ => "The preview did not run. The definition was safe to compile, so this is a problem in the database rather than on the board. The full reason is recorded against this dry run.",
+        };
+    }
 
     private static bool Ident(string? s)
         => s is not null && System.Text.RegularExpressions.Regex.IsMatch(s, "^[a-zA-Z0-9_]+$");

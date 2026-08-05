@@ -1,0 +1,29 @@
+
+==============================================================================
+PPIQ T-027 COVERAGE LEDGER - READ ONLY
+==============================================================================
+Database : ppiq_presentation
+
+==============================================================================
+1 - INPUTS
+==============================================================================
+  matrix     : docs\m1\evidence\phenomena_widget_matrix.csv
+  classifier : Backend\tools\t027_coverage_ledger.py
+  server reports transaction_read_only = on (required on)
+
+==============================================================================
+2 - WHAT THE PLANT ACTUALLY CONTAINS
+==============================================================================
+Queried, never typed. A hand-written list that omitted a real column would
+report a false SOURCE_VARIABLE_NOT_MATERIALISED and the ledger would be
+wrong in the direction that looks safe.
+  identifiers available to a population_query : 141
+  of which parameter_definitions codes        : 48
+
+==============================================================================
+3 - CLASSIFY
+==============================================================================
+
+  classifier exit code : 0
+  ledger : C:\Workspace\PlantProcess-IQ\docs\m1\phenomena\T-027_coverage_ledger.csv
+  report : C:\Workspace\PlantProcess-IQ\docs\m1\evidence\T-027_coverage_report_20260805_150209.txt
