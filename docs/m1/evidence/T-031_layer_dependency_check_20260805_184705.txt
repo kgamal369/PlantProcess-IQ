@@ -1,0 +1,143 @@
+
+==============================================================================
+PPIQ T-031 STEP 1 - WHICH LAYER IS LIVE, AND WHAT DEPENDS ON src_*
+==============================================================================
+Database : ppiq_presentation
+READ ONLY. NOTHING IS DELETED BY THIS RUNNER.
+Read-only : on (required on)
+
+==============================================================================
+1 - EVERY NON-CANONICAL SCHEMA, WITH REAL ROW COUNTS
+==============================================================================
+reltuples is an estimate, so live counts are taken per table.
++----------------------------+-----------------------------------------------------+---------+-----------+
+|        schema_name         |                     table_name                      | columns | live_rows |
++----------------------------+-----------------------------------------------------+---------+-----------+
+| acquisition                | edge_collector_batches                              |      13 |         0 |
+| acquisition                | edge_collector_buffer_status                        |       9 |         0 |
+| acquisition                | edge_collectors                                     |      14 |         0 |
+| acquisition                | historian_tag_mappings                              |       8 |         0 |
+| acquisition                | schema_drift_events                                 |      15 |         0 |
+| canon                      | assistant_audit_log                                 |      16 |         0 |
+| canon                      | assistant_chunk                                     |      11 |        25 |
+| canon                      | assistant_embedding_provider_config                 |       9 |         0 |
+| canon                      | assistant_eval_case                                 |      10 |         2 |
+| canon                      | assistant_index_run                                 |       7 |         6 |
+| canon                      | assistant_retrieval_index_job                       |      11 |         0 |
+| canon                      | blended_material_provenance                         |       7 |         0 |
+| canon                      | cost_assumption                                     |      25 |         2 |
+| canon                      | cost_assumption_audit                               |       8 |         0 |
+| canon                      | finding_coverage_evidence                           |       7 |         0 |
+| canon                      | suggestion                                          |      19 |         0 |
+| canon                      | suggestion_audit                                    |       8 |         0 |
+| canon                      | suggestion_comment                                  |       6 |         0 |
+| canon                      | value_impact                                        |      14 |         0 |
+| canon                      | value_impact_result                                 |      16 |         0 |
+| canon                      | value_realization_ledger                            |      23 |         0 |
+| dump_store                 | src_caster_oracle_shape_cast_pieces                 |      15 |     18070 |
+| dump_store                 | src_caster_oracle_shape_cast_sequence               |       9 |      1275 |
+| dump_store                 | src_hsm_oracle_shape_hsm_coils                      |      16 |     17817 |
+| dump_store                 | src_hsm_oracle_shape_hsm_pass_measurements          |       9 |     39690 |
+| dump_store                 | src_inspection_mysql_shape_downtime_events          |      10 |       248 |
+| dump_store                 | src_inspection_mysql_shape_parsytec_surface_defects |      14 |     51987 |
+| dump_store                 | src_meltshop_pg_heats                               |      16 |      2431 |
+| dump_store                 | src_meltshop_pg_lf_treatment                        |      10 |       630 |
+| dump_store                 | src_pkl_mssql_shape_pickle_orders                   |      12 |     15669 |
+| dump_store                 | src_pkl_mssql_shape_qa_lab_results                  |       8 |     17010 |
+| src_caster_oracle_shape    | cast_pieces                                         |      15 |      5670 |
+| src_caster_oracle_shape    | cast_sequence                                       |       9 |       630 |
+| src_hsm_oracle_shape       | hsm_coils                                           |      16 |      5670 |
+| src_hsm_oracle_shape       | hsm_pass_measurements                               |       9 |     39690 |
+| src_inspection_mysql_shape | downtime_events                                     |      10 |       210 |
+| src_inspection_mysql_shape | parsytec_surface_defects                            |      14 |      1987 |
+| src_meltshop_pg            | heats                                               |      16 |       630 |
+| src_meltshop_pg            | lf_treatment                                        |      10 |       630 |
+| src_pkl_mssql_shape        | pickle_orders                                       |      12 |      5670 |
+| src_pkl_mssql_shape        | qa_lab_results                                      |       8 |     17010 |
++----------------------------+-----------------------------------------------------+---------+-----------+
+(41 rows)
+
+
+
+==============================================================================
+2 - IS dump_store THE LIVE SOURCE-SHAPED LAYER
+==============================================================================
+If dump_store carries the 3x population it is the live layer and src_* is
+a superseded 1x donor. If it is empty, src_* is the only source-shaped
+layer there is and deleting it would destroy what the shell reads.
++-----------------------+--------+--------+
+|         layer         |  rows  | tables |
++-----------------------+--------+--------+
+| src_* total rows      |  77797 |     10 |
+| dump_store total rows | 164827 |     10 |
++-----------------------+--------+--------+
+(2 rows)
+
+
+
+==============================================================================
+3 - WHAT STILL REFERENCES src_* - T-031's OWN DEPENDENCY CHECK
+==============================================================================
+Nothing may be deleted whose replacement is not already generated and
+certified, so every live reference has to be named first.
+
+3a. Database objects - views, matviews and functions mentioning src_
+[FAIL] dbrefs : psql:C:/Users/elka01/AppData/Local/Temp/ppiq_t031_20260805_184705/dbrefs.sql:11: ERROR:  "array_agg" is an aggregate function
+
+3b. Registered datasets, source systems and connection profiles
++----------------------------+-------+
+|          registry          | rows  |
++----------------------------+-------+
+| connection_profiles        |     8 |
+| import_batches             |    16 |
+| mapping_definitions        |     9 |
+| source_dataset_definitions |     4 |
+| source_field_definitions   |     0 |
+| source_system_definitions  |    10 |
+| source_table_dump_registry |    10 |
+| staging_records            | 16640 |
++----------------------------+-------+
+(8 rows)
+
+
+3c. Which of those actually name a src_ schema
++----------------------------+------------+
+|          registry          | naming_src |
++----------------------------+------------+
+| connection_profiles        |          6 |
+| mapping_definitions        |          0 |
+| source_dataset_definitions |          1 |
+| source_system_definitions  |          0 |
+| source_table_dump_registry |         10 |
++----------------------------+------------+
+(5 rows)
+
+
+
+==============================================================================
+4 - THE RETIREMENT-GATE PRECONDITIONS, STATED NOT ASSUMED
+==============================================================================
+T-031 requires all four, IN ORDER, before anything is deleted:
+  1 the generator reproduces the captured baseline on all nine dimensions
+  2 both presentation representations were regenerated from it
+  3 this certification passed
+  4 one backup was taken AND RESTORED SUCCESSFULLY
+
+None of the four has been evidenced yet. The certification in condition 3
+must be a TEST THAT FAILS THE BUILD, not a document, and must run in CI.
+No deletion is possible until all four are recorded.
+
+==============================================================================
+WHAT THIS DECIDES
+==============================================================================
+If dump_store is POPULATED at the canonical scale:
+  src_* is the superseded donor, T-031's deletion target is correct, and the
+  T-030 closure needs a correction naming dump_store as the staging layer.
+
+If dump_store is EMPTY:
+  src_* is the only source-shaped layer in the database. Deleting it would
+  remove what the schema tree, canvas, SQL editor and preview read, and
+  T-031's retirement step cannot proceed as written without first
+  materialising its replacement - which its own rule demands anyway.
+
+NOTHING WAS DELETED. NOTHING WAS WRITTEN.

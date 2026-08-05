@@ -76,6 +76,13 @@ public static class AuthoringSupportEndpoints
     /// Mirrors DryRunResult on the wire so the debug log and the preview table
     /// need no new branch: status, rowCount, columns, rows, message.
     /// </summary>
+    // T-036. The returned column list gains its DATABASE TYPE, taken from the
+    // reader's own metadata. The browser must never infer a SQL type from a
+    // sample JavaScript value - "3" is a text column as often as it is an
+    // integer one, and guessing would put a wrong type in front of an engineer
+    // deciding whether a column can be joined.
+    public sealed record AuthoredColumn(string Name, string DatabaseType);
+
     public sealed record RunSqlResponse(
         string Status,
         int RowCount,
@@ -84,7 +91,10 @@ public static class AuthoringSupportEndpoints
         string Message,
         string? ErrorCode,
         string? Sql,
-        int AppliedRowLimit);
+        int AppliedRowLimit,
+        // Defaulted so the refusal and failure paths - which have no columns to
+        // describe - are untouched, and no existing caller of Columns breaks.
+        IReadOnlyList<AuthoredColumn>? ColumnDetails = null);
 
     private static async Task<IResult> RunAsync(
         [FromBody] RunSqlRequest request,
@@ -147,6 +157,7 @@ public static class AuthoringSupportEndpoints
         // The ceiling is re-applied by the server regardless of any LIMIT the
         // author wrote, per Specification 12.1.
         var columns = new List<string>();
+        var columnDetails = new List<AuthoredColumn>();
         var rows = new List<IReadOnlyList<object?>>();
 
         try
@@ -157,7 +168,11 @@ public static class AuthoringSupportEndpoints
                 $"SELECT * FROM ({normalized}) __ppiq_authored LIMIT {appliedLimit};";
             await using var reader = await exec.ExecuteReaderAsync(ct);
 
-            for (var i = 0; i < reader.FieldCount; i++) { columns.Add(reader.GetName(i)); }
+            for (var i = 0; i < reader.FieldCount; i++)
+            {
+                columns.Add(reader.GetName(i));
+                columnDetails.Add(new AuthoredColumn(reader.GetName(i), reader.GetDataTypeName(i)));
+            }
 
             while (await reader.ReadAsync(ct))
             {
@@ -174,12 +189,19 @@ public static class AuthoringSupportEndpoints
             // The validator passed it and the database still refused. Say which,
             // and say that it got past validation - that distinction is what
             // tells an engineer whether to change the SQL or report a defect.
+            //
+            // T-036 HOTFIX. This used to append the database's own text, which
+            // is the same raw-exception leak T-035 closed on the dry-run path.
+            // The sentence comes from the mechanism T-035 already established -
+            // reused, not re-implemented, because a second sanitiser is a second
+            // place for the rule to drift.
             return Results.Ok(new RunSqlResponse(
                 Status: "failed",
                 RowCount: 0,
                 Columns: Array.Empty<string>(),
                 Rows: Array.Empty<IReadOnlyList<object?>>(),
-                Message: "The statement passed validation and then failed on execution: " + ex.MessageText,
+                Message: "The statement passed validation and then failed when it ran. "
+                    + VisualMapperEndpoints.SafeDatabaseMessage(ex),
                 ErrorCode: ex.SqlState,
                 Sql: normalized,
                 AppliedRowLimit: appliedLimit));
@@ -193,7 +215,8 @@ public static class AuthoringSupportEndpoints
             Message: message,
             ErrorCode: null,
             Sql: normalized,
-            AppliedRowLimit: appliedLimit));
+            AppliedRowLimit: appliedLimit,
+            ColumnDetails: columnDetails));
     }
 
     // ================================================================== M1-19

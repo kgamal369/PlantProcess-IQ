@@ -32,7 +32,16 @@ export type MapperGraph = {
   name: string; targetEntity: string; tables: string[]; joins: JoinSpec[];
   filters?: FilterSpec[]; derived?: DerivedSpec[]; selects?: SelectSpec[];
 };
-export type DryRunResult = { dryRunId: string; status: string; rowCount: number; columns: string[]; rows: unknown[][]; message?: string; sql?: string };
+export type DryRunResult = {
+  dryRunId: string; status: string; rowCount: number;
+  columns: string[]; rows: unknown[][]; message?: string; sql?: string;
+  // T-035. All optional: a client built before the estimate landed is still a
+  // valid client, and the log states only what it was actually given.
+  // previewTruncated means the preview STOPPED at its limit, so rowCount is a
+  // cap and not a total. plannerCost and estimatedRows come from EXPLAIN and
+  // are ESTIMATES - not a runtime, not a price.
+  previewTruncated?: boolean; plannerCost?: number | null; estimatedRows?: number | null;
+};
 
 const BASE = "/api/prep/visual-mapper";
 
@@ -44,9 +53,15 @@ export const runDryRun = (sessionId: string) => apiClient.post<DryRunResult>(`${
 // M1-19. SQL authoring. Both calls go through public.ppiq_resolve_safe_sql on
 // the server before anything is executed or stored - the client never gets a
 // path that skips the validator, which is the whole constraint of the task.
+export type AuthoredColumn = { name: string; databaseType: string };
 export type RunSqlResult = {
   status: string; rowCount: number; columns: string[]; rows: unknown[][];
   message: string; errorCode: string | null; sql: string | null; appliedRowLimit: number;
+  // T-036. The database's own type per column, from the reader's metadata.
+  // Optional: the refusal and failure paths have no columns to describe, and a
+  // client built before this landed is still a valid client. The browser NEVER
+  // infers a type from a sample value.
+  columnDetails?: AuthoredColumn[] | null;
 };
 export type SaveSqlVersionResult = {
   saved: boolean; versionNumber: number; id: string | null; message: string; errorCode: string | null;

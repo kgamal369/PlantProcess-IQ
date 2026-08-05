@@ -362,7 +362,9 @@ FROM public.ppiq_visual_mapper_sessions WHERE id = $1 RETURNING id;");
     // to do about it. The SQLSTATE decides which sentence; the database's own
     // wording is never passed through, because it describes the generated
     // statement rather than the board that produced it.
-    private static string SafeDatabaseMessage(Exception ex)
+    // T-036 reuses this on the authored-SQL execution path. Internal rather than
+    // private for that reason and no other: one sanitiser, one set of sentences.
+    internal static string SafeDatabaseMessage(Exception ex)
     {
         var state = (ex as PostgresException)?.SqlState ?? "";
         return state switch

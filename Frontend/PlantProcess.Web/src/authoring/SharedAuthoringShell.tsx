@@ -48,6 +48,12 @@ import {
   SCHEMA_DRAG_MIME, datasetForDrop, decodeSchemaDrag, toggleColumn,
   type ColumnSelection,
 } from "./schemaTreeModel";
+import { describePreview, describeThrownAction, describeThrownPreview } from "./previewReport";
+import {
+  completionPrefix, completionsFor, describeDiscardWarning, describeReturnedColumns,
+  reconstructVerdict, type ReconstructVerdict,
+} from "./sqlModeModel";
+import { SqlHighlighted } from "./SqlHighlighted";
 import { AuthoringSchemaTree } from "./AuthoringSchemaTree";
 import { AuthoringToolbox } from "./AuthoringToolbox";
 import { purposeDefinition, type AuthoringMode, type AuthoringPurpose } from "./authoringPurposes";
@@ -114,6 +120,14 @@ export function SharedAuthoringShell({ purpose }: SharedAuthoringShellProps) {
   const [forkAsked, setForkAsked] = useState(false);
   const [forkedGraph, setForkedGraph] = useState<MapperGraph | null>(null);
   const [sqlResult, setSqlResult] = useState<RunSqlResult | null>(null);
+
+  // T-036. PROVENANCE FOR THE RECONSTRUCTABILITY RULE. forkedGraph already
+  // records WHICH graph the SQL came from; this records what that graph
+  // compiled to, which is the only thing a strict comparison can be made
+  // against. One field, on the existing mechanism - no second provenance.
+  const [forkedSql, setForkedSql] = useState<string | null>(null);
+  const [pendingBlockSwitch, setPendingBlockSwitch] = useState<ReconstructVerdict | null>(null);
+  const [sqlCaret, setSqlCaret] = useState(0);
 
   const [openSchemas, setOpenSchemas] = useState<Record<string, boolean>>({});
   const [openTables, setOpenTables] = useState<Record<string, boolean>>({});
@@ -389,20 +403,25 @@ export function SharedAuthoringShell({ purpose }: SharedAuthoringShellProps) {
       await saveGraph(sid, graph);
       const r = await runDryRun(sid);
       setPreview(r);
-      const elapsed = Math.round(performance.now() - startedAt);
-      if (r.status === "succeeded") {
-        // Section 5.2.8 asks SUCCESS for rows, columns and a cost estimate. The
-        // dry-run contract returns rows and columns; it carries no cost field,
-        // so elapsed time is stated as measured and nothing is invented.
-        logSuccess(name, "Preview ran.",
-          r.rowCount + " sample rows | " + r.columns.length + " columns: " +
-          r.columns.join(", ") + " | elapsed " + elapsed + " ms");
+
+      // T-035. The severity and every word of the entry are decided by
+      // describePreview, which is tested headlessly. A preview that succeeds
+      // and returns nothing is a WARNING, not a Success with a zero in it.
+      const report = describePreview(r, Math.round(performance.now() - startedAt));
+      if (report.severity === "success") {
+        logSuccess(name, report.message, report.facts);
+      } else if (report.severity === "warning") {
+        logWarning(name, report.message);
       } else {
-        logError(name,
-          "The preview was refused with status " + r.status + ". " +
-          (r.message && r.message.trim() ? r.message : "The server returned no reason with the refusal."));
+        logError(name, report.message);
       }
-    } catch (e) { logError(name, String(e)); }
+    } catch (e) {
+      // T-035. THE THROWN VALUE NEVER REACHES THE LOG. This handler used to
+      // pass the thrown value straight through, which puts a fetch failure, a
+      // JSON parse error or a whole stack trace in front of a plant engineer.
+      // describeThrownPreview reads nothing from it and says what to do.
+      logError(name, describeThrownPreview(e));
+    }
   };
 
   const doPublish = async () => {
@@ -417,7 +436,7 @@ export function SharedAuthoringShell({ purpose }: SharedAuthoringShellProps) {
       const v = await publishVersion(sid);
       logSuccess(name, "Published version " + v.versionNumber + ".",
         "immutable, with a rollback pointer");
-    } catch (e) { logError(name, String(e)); }
+    } catch (e) { logError(name, describeThrownAction(e)); }
   };
 
   // The fork. Two steps on purpose: asking is not doing. The warning names what
@@ -430,6 +449,7 @@ export function SharedAuthoringShell({ purpose }: SharedAuthoringShellProps) {
       return;
     }
     setForkedGraph(snapshot);
+    setForkedSql(preview?.sql ?? "");
     setSqlText(preview?.sql ?? "");
     setSqlState("authoring");
     setForkAsked(false);
@@ -438,6 +458,58 @@ export function SharedAuthoringShell({ purpose }: SharedAuthoringShellProps) {
       snapshot.tables.length + " table(s), " + snapshot.joins.length + " join(s). " +
       "It travels inside every version you save from here, so it can be read back.");
   }, [graph, preview, name, logWarning]);
+
+  // T-036. SWITCHING BACK TO BLOCK MODE - the one action in this shell that
+  // can destroy an author's work.
+  //
+  // It is offered without a prompt ONLY when reconstructability is PROVEN, and
+  // reconstructVerdict proves exactly one case: the SQL is still the statement
+  // this graph compiled to. Everything else asks first. Cancel keeps the SQL
+  // and stays in SQL mode; confirming discards it and returns to the blocks.
+  // Nothing is ever silently approximated as blocks.
+  const requestBlockMode = useCallback(() => {
+    if (mode === "block") { return; }
+    if (sqlState !== "authoring") { setMode("block"); return; }
+    const verdict = reconstructVerdict(sqlText, forkedSql);
+    if (verdict === "reconstructable") {
+      setMode("block");
+      setSqlState("view");
+      logSuccess(name,
+        "Back to blocks. The SQL was still the statement these blocks compile to, so nothing was discarded.");
+      return;
+    }
+    setPendingBlockSwitch(verdict);
+  }, [mode, sqlState, sqlText, forkedSql, name, logSuccess]);
+
+  const confirmBlockMode = useCallback(() => {
+    setPendingBlockSwitch(null);
+    setSqlText("");
+    setSqlResult(null);
+    setSqlState("view");
+    setMode("block");
+    logWarning(name,
+      "The authored SQL was discarded and the board is showing the block representation again."
+      + " Any version already saved from that SQL is untouched.");
+  }, [name, logWarning]);
+
+  const cancelBlockMode = useCallback(() => {
+    setPendingBlockSwitch(null);
+    logSuccess(name, "Stayed in SQL mode. Nothing was discarded.");
+  }, [name, logSuccess]);
+
+  // T-036. Completions from the LIVE CATALOGUE the schema tree reads. No word
+  // list, no second catalogue, no plant vocabulary.
+  const sqlCompletions = useMemo(
+    () => (sqlState === "authoring" ? completionsFor(catalogue, sqlText, sqlCaret, 8) : []),
+    [sqlState, catalogue, sqlText, sqlCaret]);
+
+  const applyCompletion = useCallback((label: string) => {
+    const { prefix } = completionPrefix(sqlText, sqlCaret);
+    const head = sqlText.slice(0, Math.max(0, sqlCaret - prefix.length));
+    const tail = sqlText.slice(sqlCaret);
+    setSqlText(head + label + tail);
+    setSqlCaret(head.length + label.length);
+  }, [sqlText, sqlCaret]);
 
   const doRunSql = useCallback(async () => {
     try {
@@ -454,7 +526,7 @@ export function SharedAuthoringShell({ purpose }: SharedAuthoringShellProps) {
         // untouched. A described error in the log, never a toast.
         logError(name, "Refused (" + (r.errorCode ?? r.status) + "). " + r.message);
       }
-    } catch (e) { logError(name, String(e)); }
+    } catch (e) { logError(name, describeThrownAction(e)); }
   }, [sqlText, name, logError, logSuccess]);
 
   const doSaveSql = useCallback(async () => {
@@ -468,7 +540,7 @@ export function SharedAuthoringShell({ purpose }: SharedAuthoringShellProps) {
       });
       if (r.saved) { logSuccess(name, r.message, "version " + r.versionNumber); }
       else { logError(name, r.message); }
-    } catch (e) { logError(name, String(e)); }
+    } catch (e) { logError(name, describeThrownAction(e)); }
   }, [name, sqlText, forkedGraph, logError, logSuccess]);
 
   const emptyTreeMessage = definition.showsStagingCatalogue
@@ -482,7 +554,7 @@ export function SharedAuthoringShell({ purpose }: SharedAuthoringShellProps) {
         <span className="canvas-modebar__label">{definition.label}</span>
         <StandardP2Button
           variant={mode === "block" ? "primary" : "ghost"}
-          onClick={() => setMode("block")}
+          onClick={requestBlockMode}
         >
           Block wiring
         </StandardP2Button>
@@ -574,6 +646,20 @@ export function SharedAuthoringShell({ purpose }: SharedAuthoringShellProps) {
           />
         ) : (
           <section className="canvas-sqlpane" data-testid="canvas-sql-pane">
+            {pendingBlockSwitch && (
+              <div className="canvas-sqlpane__discard" data-testid="canvas-discard-warning" role="alert">
+                <strong>Switching to Block mode will discard this SQL</strong>
+                <p>{describeDiscardWarning(pendingBlockSwitch)}</p>
+                <div className="canvas-sqledit__row">
+                  <StandardP2Button variant="ghost" className="cbtn" onClick={cancelBlockMode}>
+                    Cancel, keep the SQL
+                  </StandardP2Button>
+                  <StandardP2Button variant="secondary" className="cbtn" onClick={confirmBlockMode}>
+                    Discard the SQL and show blocks
+                  </StandardP2Button>
+                </div>
+              </div>
+            )}
             <header className="canvas-sqlpane__head">
               <span className="canvas-sqlpane__title">Compiled query</span>
               <span className="canvas-sqlpane__badge">read only</span>
@@ -582,7 +668,7 @@ export function SharedAuthoringShell({ purpose }: SharedAuthoringShellProps) {
               </span>
             </header>
             {sqlState === "view" && preview?.sql && (
-              <pre className="canvas-sqlpane__body">{preview.sql}</pre>
+              <SqlHighlighted sql={preview.sql} className="canvas-sqlpane__body" testId="canvas-sql-view" />
             )}
 
             {sqlState === "view" && !preview?.sql && (
@@ -624,13 +710,42 @@ export function SharedAuthoringShell({ purpose }: SharedAuthoringShellProps) {
 
             {sqlState === "authoring" && (
               <div className="canvas-sqledit" data-testid="canvas-sql-editor">
-                <StandardP2TextArea
-                  className="canvas-sqledit__area"
-                  aria-label="SQL editor"
-                  spellCheck={false}
-                  value={sqlText}
-                  onChange={(e) => setSqlText(e.target.value)}
-                />
+                {/* T-036. SYNTAX HIGHLIGHTING WITHOUT AN EDITOR PLATFORM.
+                    A highlighted copy sits UNDER a transparent textarea, both
+                    sharing one metrics class so the glyphs line up. The
+                    textarea remains the only thing holding the text, so what
+                    the author typed is what is sent - the highlighter never
+                    touches the value, and SafeSqlValidator on the server
+                    remains the only authority on whether it may run. */}
+                <div className="canvas-sqledit__stack">
+                  <SqlHighlighted sql={sqlText} className="canvas-sqledit__ghost" ariaHidden />
+                  <StandardP2TextArea
+                    className="canvas-sqledit__area"
+                    aria-label="SQL editor"
+                    spellCheck={false}
+                    value={sqlText}
+                    onChange={(e) => {
+                      setSqlText(e.target.value);
+                      setSqlCaret(e.target.selectionStart ?? e.target.value.length);
+                    }}
+                    onSelect={(e) => setSqlCaret((e.target as HTMLTextAreaElement).selectionStart ?? 0)}
+                  />
+                </div>
+                {sqlCompletions.length > 0 && (
+                  <div className="canvas-sqledit__complete" data-testid="canvas-sql-completions">
+                    {sqlCompletions.map((c) => (
+                      <StandardP2Button
+                        key={c.kind + ":" + c.detail + ":" + c.label}
+                        type="button"
+                        variant="ghost"
+                        className="canvas-sqledit__completion"
+                        onClick={() => applyCompletion(c.label)}
+                      >
+                        {c.label} <span className="t">{c.kind} in {c.detail}</span>
+                      </StandardP2Button>
+                    ))}
+                  </div>
+                )}
                 <div className="canvas-sqledit__row">
                   <StandardP2Button variant="primary" className="cbtn" onClick={doRunSql}>
                     Run
@@ -658,6 +773,22 @@ export function SharedAuthoringShell({ purpose }: SharedAuthoringShellProps) {
                         {j.leftTable}.{j.leftColumn} = {j.rightTable}.{j.rightColumn}
                       </p>
                     ))}
+                  </div>
+                )}
+
+                {/* T-036. The returned columns with the type the SERVER measured.
+                    A type is never inferred here from a sample value. */}
+                {sqlResult && sqlResult.status === "succeeded" && sqlResult.columns.length > 0 && (
+                  <div className="canvas-sqledit__cols" data-testid="canvas-sql-columns">
+                    <strong>Returned columns</strong>
+                    <StandardP2Table className="preview-table">
+                      <thead><tr><th>column</th><th>type</th><th>sample</th></tr></thead>
+                      <tbody>{describeReturnedColumns(sqlResult).map((c) => (
+                        <tr key={c.name}>
+                          <td>{c.name}</td><td>{c.databaseType}</td><td>{c.sample}</td>
+                        </tr>
+                      ))}</tbody>
+                    </StandardP2Table>
                   </div>
                 )}
 

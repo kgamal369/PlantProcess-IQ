@@ -70,3 +70,23 @@
 .schema-tree__col--chosen { background: rgba(0, 212, 255, 0.12); }
 .ds-node__chosen { background: rgba(0, 212, 255, 0.16); border-radius: 3px; color: #7fdcff; font-size: 10px; margin-inline-start: 6px; padding: 1px 5px; }
 .ds-node__col--chosen { background: rgba(0, 212, 255, 0.08); }
+
+/* PPIQ T-036. The SQL pane gains a completion list, a returned-column table
+   and the discard warning that stands between an author and losing their SQL. */
+.canvas-sqlpane__discard { border: 1px solid #ff4d5e; border-radius: 4px; margin-bottom: 10px; padding: 10px; }
+.canvas-sqlpane__discard p { color: #ffb3ba; font-size: 12px; line-height: 1.4; margin: 6px 0 8px; }
+.canvas-sqledit__complete { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.canvas-sqledit__completion { font-size: 11px; padding: 2px 8px; }
+.canvas-sqledit__cols { margin-top: 10px; }
+
+/* PPIQ T-036. Syntax highlighting. The ghost copy and the textarea share every
+   metric that decides where a glyph lands, or the two would drift apart. */
+.sql-hl { font-family: "Cascadia Mono", Consolas, monospace; font-size: 12px; line-height: 1.5; margin: 0; white-space: pre-wrap; word-break: break-word; }
+.sql-hl__keyword { color: #7fdcff; }
+.sql-hl__string { color: #2ce6a2; }
+.sql-hl__quoted { color: #ffd479; }
+.sql-hl__number { color: #ffb3ba; }
+.sql-hl__comment { color: #6b7f92; font-style: italic; }
+.canvas-sqledit__stack { position: relative; }
+.canvas-sqledit__ghost { inset: 0; overflow: hidden; padding: 8px; pointer-events: none; position: absolute; }
+.canvas-sqledit__stack .canvas-sqledit__area { background: transparent; caret-color: #e6f2ff; color: transparent; font-family: "Cascadia Mono", Consolas, monospace; font-size: 12px; line-height: 1.5; padding: 8px; position: relative; white-space: pre-wrap; word-break: break-word; }
