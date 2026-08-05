@@ -176,15 +176,19 @@ Owner: T216 rigorous statistics. See T216_capability_gap_numeric_x_categorical.m
   docs/m1/evidence/T-025_corrective_v2_20260805_112352.txt
   docs/m1/evidence/T-025_exclusion_reasons_20260805_113814.txt
 
-  tools/packs/apply-T-025a-risk-matrix-entry.ps1
-  tools/packs/apply-T-025b-outcome-producer-correction-v2.ps1
-  tools/packs/apply-T-025c-insert-time-lineage.ps1
+  Backend/database/scripts/760_t025_lineage_and_outcome_producer.sql
+  Backend/PlantProcess.Api/Security/PlantAccessControl.cs
+  tools/run/Invoke-PpiqT025LineageMigration.ps1
   tools/run/Invoke-PpiqT025Engines.ps1
   tools/run/Invoke-PpiqT025Readiness.ps1
   tools/run/Invoke-PpiqT025ReadinessB.ps1
   tools/run/Invoke-PpiqT025Corrective-v2.ps1
   tools/run/Invoke-PpiqT025ExclusionReasons.ps1
 
+
+  NOTE: tools/packs/* were EXECUTION VEHICLES, not durable evidence. They are
+  gitignored, as are the _backup_* directories. The permanent record of every
+  T-025 database change is 760_t025_lineage_and_outcome_producer.sql.
 --------------------------------------------------------------------------------
 8. STATUS
 --------------------------------------------------------------------------------

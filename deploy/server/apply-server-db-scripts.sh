@@ -12,6 +12,7 @@ scripts=(
   "201_phase02_ml_feature_store_v6_completion.sql"
   "202_phase02_ml_compute_basic_correlations_hotfix.sql"
   "203_phase02_ml_compute_v6_wrapper_hotfix.sql"
+  "760_t025_lineage_and_outcome_producer.sql"
 )
 
 for script in "${scripts[@]}"; do

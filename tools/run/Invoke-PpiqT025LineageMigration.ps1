@@ -286,49 +286,18 @@ WHERE n.nspname='public' AND p.proname='ppiq_ml_refresh_feature_store_v6' AND p.
                             $v6Stamp.Substring($v6Stamp.IndexOf("-- T-025")))
 
     Rule "THE MIGRATION"
-    $ddl = @'
-BEGIN;
-
--- lineage columns. NULLABLE for now: the 346,973 stale rows are about to be
--- cleared and must NOT be given manufactured lineage. NOT NULL is enforced only
--- after the real engine path has produced a traceable population.
-ALTER TABLE public.ml_feature_values
-  ADD COLUMN IF NOT EXISTS refresh_run_id uuid NULL;
-ALTER TABLE public.ml_outcome_values
-  ADD COLUMN IF NOT EXISTS refresh_run_id uuid NULL;
-
--- engine identity on the AUTHORITATIVE run record. No second run concept.
-ALTER TABLE public.ml_feature_store_refresh_runs
-  ADD COLUMN IF NOT EXISTS engine_key text NULL;
-ALTER TABLE public.ml_feature_store_refresh_runs
-  ADD COLUMN IF NOT EXISTS engine_version text NULL;
-
-DO $ppiq$
-BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_constraint
-                  WHERE conname = 'fk_ml_feature_values_refresh_run') THEN
-    ALTER TABLE public.ml_feature_values
-      ADD CONSTRAINT fk_ml_feature_values_refresh_run
-      FOREIGN KEY (refresh_run_id)
-      REFERENCES public.ml_feature_store_refresh_runs(id);
-  END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_constraint
-                  WHERE conname = 'fk_ml_outcome_values_refresh_run') THEN
-    ALTER TABLE public.ml_outcome_values
-      ADD CONSTRAINT fk_ml_outcome_values_refresh_run
-      FOREIGN KEY (refresh_run_id)
-      REFERENCES public.ml_feature_store_refresh_runs(id);
-  END IF;
-END
-$ppiq$;
-
-CREATE INDEX IF NOT EXISTS ix_ml_feature_values_refresh_run_id
-  ON public.ml_feature_values (refresh_run_id);
-CREATE INDEX IF NOT EXISTS ix_ml_outcome_values_refresh_run_id
-  ON public.ml_outcome_values (refresh_run_id);
-
-'@
-    $full = $ddl + $newBase + ";`n`n" + $newV6 + ";`n`nCOMMIT;`n"
+    # T-025d: THE AUTHORITY IS THE TRACKED SQL, NOT THIS SCRIPT.
+    # This runner used to carry its own copy of the lineage DDL and derive the
+    # function bodies by transforming the live ones. Two independent definitions
+    # of the same contract drift. The numbered replay chain is the real rebuild
+    # mechanism, so Backend\database\scripts\760_t025_lineage_and_outcome_producer.sql is now the single
+    # source of truth and this runner is an execution vehicle for it.
+    $authoritative = Join-Path $repoRoot ("Backend\database\scripts\760_t025_lineage_and_outcome_producer.sql")
+    if (-not (Test-Path -LiteralPath $authoritative)) {
+        Say ("[FAIL] the authoritative script is missing: " + $authoritative)
+        exit 1
+    }
+    $full = [System.IO.File]::ReadAllText($authoritative)
     $migFile = Join-Path $script:tmp "migration.sql"
     [System.IO.File]::WriteAllText($migFile, $full, (New-Object System.Text.UTF8Encoding($false)))
     Say ("migration written : " + $migFile)

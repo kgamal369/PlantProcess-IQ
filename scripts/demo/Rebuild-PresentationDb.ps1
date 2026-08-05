@@ -140,7 +140,7 @@ W ""
 
 # ---- 1b. engine migrations (heat lineage + coil projection + defect outcomes)
 W "[1b/7] engine migrations 741+742 (or the engine re-blinds on every rebuild)"
-foreach ($mig in @('741_feature_store_coil_grain_projection.sql','742_feature_regrain_generic.sql','750_forensics_audit_subsystem.sql')) {
+foreach ($mig in @('741_feature_store_coil_grain_projection.sql','742_feature_regrain_generic.sql','750_forensics_audit_subsystem.sql','760_t025_lineage_and_outcome_producer.sql')) {
     $migPath = Join-Path $PSScriptRoot ('..\..\Backend\database\scripts\' + $mig)
     if (Test-Path -LiteralPath $migPath) {
         $mo = & $Psql -h 127.0.0.1 -p 5432 -U ppiq_dev -d $TargetDb -w -v ON_ERROR_STOP=1 -X -q -1 -f $migPath 2>&1
