@@ -45,3 +45,28 @@
 .authoring-toolbox__blocklabel { font-size: 13px; color: #cfe0f0; }
 .authoring-toolbox__blockports { font-size: 10px; color: #6f88a3; }
 .authoring-toolbox__block[aria-disabled="true"] { opacity: .55; cursor: not-allowed; }
+/* PPIQ T-033. The relational board blocks. Section 5.2.6 puts the status badge
+   ON THE NODE, so it is styled here rather than left to a problems list. */
+.blk-node--ok { border-color: rgba(0, 212, 255, 0.35); }
+.blk-node--error { border-color: #ff4d5e; }
+.blk-node__field { display: block; width: 100%; margin-top: 6px; }
+.blk-node__status { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
+.blk-node__badge { align-self: flex-start; border-radius: 3px; font-size: 10px; letter-spacing: 0.06em; padding: 1px 6px; text-transform: uppercase; }
+.blk-node__badge--ok { background: rgba(44, 230, 162, 0.16); color: #2ce6a2; }
+.blk-node__badge--error { background: rgba(255, 77, 94, 0.16); color: #ff4d5e; }
+.blk-node__problem { color: #ffb3ba; font-size: 11px; line-height: 1.35; max-width: 240px; }
+.blk-node__checklist { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; }
+.blk-node__chip { justify-content: flex-start; text-align: start; }
+.blk-node__empty { color: #8ea7c1; font-size: 11px; line-height: 1.35; max-width: 240px; }
+/* PPIQ T-033. Board-editing controls live in the canvas toolbar (section
+   5.2.6), so they are sized to sit beside zoom and zoom-fit rather than to
+   look like lifecycle actions. */
+.ppiq-canvas__action { font-size: 11px; letter-spacing: 0.04em; padding: 2px 8px; white-space: nowrap; }
+/* PPIQ T-034. The schema tree gains a search box, a selection note, and two
+   more facts per row. Sized to stay inside the INLINE-START region rather than
+   to compete with it. */
+.schema-tree__search { display: block; margin: 0 0 8px; width: 100%; }
+.schema-tree__selection { color: #8ea7c1; font-size: 11px; line-height: 1.35; margin: 0 0 6px; }
+.schema-tree__col--chosen { background: rgba(0, 212, 255, 0.12); }
+.ds-node__chosen { background: rgba(0, 212, 255, 0.16); border-radius: 3px; color: #7fdcff; font-size: 10px; margin-inline-start: 6px; padding: 1px 5px; }
+.ds-node__col--chosen { background: rgba(0, 212, 255, 0.08); }

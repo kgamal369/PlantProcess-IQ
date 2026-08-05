@@ -25,11 +25,10 @@
 // workflow that T-033 immediately deletes, which the Visible Contract law
 // forbids. The API types they used remain in the client contract untouched.
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { addEdge, useEdgesState, useNodesState, type Connection, type Edge, type Node } from "@xyflow/react";
+import { useCallback, useEffect, useMemo, useState, type DragEvent } from "react";
+import { addEdge, useEdgesState, useNodesState, type Connection, type Edge, type EdgeChange, type Node, type NodeChange } from "@xyflow/react";
 import { StandardP2Button, StandardP2Input, StandardP2Table, StandardP2TextArea } from "@/components/standard/StandardP2Controls";
 import { CanvasShell } from "@/canvas/CanvasShell";
-import { inferPortType, portsCompatible, type PortType } from "@/canvas/ports";
 import { DatasetNode, type DatasetNodeData } from "@/canvas/nodes/DatasetNode";
 import {
   listStagedDatasets, createSession, saveGraph, runDryRun, publishVersion,
@@ -39,6 +38,16 @@ import {
   type StagedDataset, type DryRunResult, type MapperGraph, type RunSqlResult,
 } from "@/api/canvasApi";
 import { CanvasDebugLog, useDebugLog } from "@/pages/Prep/CanvasDebugLog";
+import { AUTHORING_NODE_TYPES } from "./BlockNodes";
+import {
+  FLOW_OUT, arrangeBoard, blockProblem, boardProblems, fieldsVisibleAt,
+  serialiseGraph, wiringRefusal,
+  type BoardEdge, type BoardNode, type BoardNodeKind, type ProposedWire,
+} from "./graphSemantics";
+import {
+  SCHEMA_DRAG_MIME, datasetForDrop, decodeSchemaDrag, toggleColumn,
+  type ColumnSelection,
+} from "./schemaTreeModel";
 import { AuthoringSchemaTree } from "./AuthoringSchemaTree";
 import { AuthoringToolbox } from "./AuthoringToolbox";
 import { purposeDefinition, type AuthoringMode, type AuthoringPurpose } from "./authoringPurposes";
@@ -46,7 +55,24 @@ import "@/pages/Prep/CanvasModeBar.css";
 import "@/pages/Prep/CanvasSchemaTree.css";
 import "./authoring-shell.css";
 
-const nodeTypes = { dataset: DatasetNode };
+const nodeTypes = { dataset: DatasetNode, ...AUTHORING_NODE_TYPES };
+
+// T-033. The three block ids THIS surface can put on its board. Every other
+// block stays declared and unavailable in the registry, which is the toolbox
+// telling the truth about what the design has rather than hiding it.
+const ADDABLE_BLOCK_IDS = ["filter", "select-columns", "derived-column"];
+
+const BLOCK_KIND_OF: Record<string, BoardNodeKind> = {
+  "filter": "filter",
+  "select-columns": "select",
+  "derived-column": "derived",
+};
+
+const BLOCK_TITLE_OF: Record<string, string> = {
+  filter: "Filter",
+  select: "Select columns",
+  derived: "Derived column",
+};
 
 export interface SharedAuthoringShellProps {
   purpose: AuthoringPurpose;
@@ -66,6 +92,11 @@ export function SharedAuthoringShell({ purpose }: SharedAuthoringShellProps) {
   const log = useDebugLog();
 
   const [name, setName] = useState(definition.outputArtifact);
+
+  // T-034. The tree's own state. The query narrows what is listed; the
+  // selection is what a drag will carry. Neither reaches the definition.
+  const [treeQuery, setTreeQuery] = useState("");
+  const [treeSelection, setTreeSelection] = useState<ColumnSelection>({});
 
   // Section 5.2.2: always present, always exactly two modes.
   const [mode, setMode] = useState<AuthoringMode>("block");
@@ -107,134 +138,229 @@ export function SharedAuthoringShell({ purpose }: SharedAuthoringShellProps) {
         "The dataset catalogue did not answer. Check that /prep/visual-mapper/datasets is reachable, then reopen this page."));
   }, [definition.showsStagingCatalogue, logError]);
 
-  const addDataset = useCallback((ds: StagedDataset) => {
+  const addDataset = useCallback((ds: StagedDataset, selectedColumns?: string[]) => {
     setNodes((ns) => {
       if (ns.some((n) => n.id === ds.table)) { return ns; }
       return ns.concat({
         id: ds.table, type: "dataset",
+        // The same deterministic placement the double-click has always used, so
+        // repeated drops step across the board instead of stacking on one spot.
         position: { x: 80 + ns.length * 300, y: 90 + (ns.length % 2) * 160 },
-        data: { table: ds.table, source: ds.source, columns: ds.columns } satisfies DatasetNodeData,
+        data: {
+          table: ds.table, source: ds.source, columns: ds.columns,
+          selectedColumns: selectedColumns && selectedColumns.length > 0 ? selectedColumns : undefined,
+        } satisfies DatasetNodeData,
       });
     });
   }, [setNodes]);
 
-  // Section 5.2.7. An illegal wire is refused at drag time WITH A STATED
-  // REASON. A bare red outline with no sentence is a failure of the
-  // specification, so every refusal below speaks.
+  // T-034. THE BOARD ACCEPTS A SCHEMA DRAG, and refuses everything else.
   //
-  // isValidConnection is deliberately not used: React Flow never calls
-  // onConnect for a connection it already refused, so the sentence would be
-  // lost.
-  const portTypeOf = useCallback((table: string, column: string): PortType | null => {
-    const col = catalogue.find((d) => d.table === table)?.columns.find((c) => c.name === column);
-    if (!col) { return null; }
-    return col.isKeyCandidate ? "key" : inferPortType(col.sqlType);
-  }, [catalogue]);
-
-  // Returns the sentence explaining the refusal, or null when the wire is legal.
-  const refusalFor = useCallback((c: Connection, current: Edge[]): string | null => {
-    const leftColumn = c.sourceHandle?.replace(/^out:/, "") ?? "";
-    const rightColumn = c.targetHandle?.replace(/^in:/, "") ?? "";
-
-    if (!c.source || !c.target || !leftColumn || !rightColumn) {
-      return "Both ends of a join must land on a column, not on the body of a table.";
-    }
-
-    if (c.source === c.target) {
-      return "A table cannot be joined to itself. Drag a second table onto the board first.";
-    }
-
-    const already = current.some((e) =>
-      (e.source === c.source && e.target === c.target &&
-       e.sourceHandle === c.sourceHandle && e.targetHandle === c.targetHandle) ||
-      (e.source === c.target && e.target === c.source &&
-       e.sourceHandle === "out:" + rightColumn && e.targetHandle === "in:" + leftColumn));
-    if (already) {
-      return c.source + "." + leftColumn + " is already joined to " + c.target + "." + rightColumn + ".";
-    }
-
-    const leftType = portTypeOf(c.source, leftColumn);
-    const rightType = portTypeOf(c.target, rightColumn);
-    if (leftType && rightType && !portsCompatible(leftType, rightType)) {
-      return "A " + leftType + " column cannot be joined to a " + rightType + " column. " +
-        c.source + "." + leftColumn + " is " + leftType + " and " +
-        c.target + "." + rightColumn + " is " + rightType + ".";
-    }
-
-    // A cycle means two tables would be reachable from each other by more than
-    // one join path, so the joined result has no single meaning.
-    const reaches = (from: string, to: string): boolean => {
-      const seen = new Set<string>();
-      const stack = [from];
-      while (stack.length > 0) {
-        const at = stack.pop() as string;
-        if (at === to) { return true; }
-        if (seen.has(at)) { continue; }
-        seen.add(at);
-        for (const e of current) {
-          if (e.source === at) { stack.push(e.target); }
-        }
-      }
-      return false;
-    };
-    if (reaches(c.target, c.source)) {
-      return "That join would close a loop between " + c.source + " and " + c.target +
-        ". A join path has to stay a tree so the result has one meaning.";
-    }
-
-    return null;
-  }, [portTypeOf]);
-
-  const onConnect = useCallback((c: Connection) => {
-    const l = c.sourceHandle?.replace(/^out:/, "");
-    const r = c.targetHandle?.replace(/^in:/, "");
-    // The wire, named, so the log says WHICH wire was refused.
-    const wire = c.source + "." + l + " -> " + c.target + "." + r;
-
-    // THE LOG ENTRY IS WRITTEN OUTSIDE THE STATE UPDATER, and that placement
-    // is the whole point of this function. A setState updater must be PURE;
-    // React invokes it twice in development to surface impurity, so a log
-    // call inside it wrote TWO Job Log lines for ONE wire. Section 5.2.8
-    // asks for one entry per event, and a log that reports two events when
-    // one happened cannot be trusted about the refusal it exists to carry.
-    const refusal = refusalFor(c, edges);
-    if (refusal) {
-      logError(wire, refusal);
+  // A browser hands over whatever the drag source put on the clipboard,
+  // including a drag that started in another application entirely. decode
+  // returns null for anything this product did not write, and the refusal is a
+  // sentence in the Job Log - never a silent no-op that leaves the author
+  // wondering whether the drop was even seen.
+  const onBoardDrop = useCallback((event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    const payload = decodeSchemaDrag(event.dataTransfer.getData(SCHEMA_DRAG_MIME));
+    if (payload === null) {
+      logError("drop", "That is not something this board can take. Drag a table or a column from the schema list on the left.");
       return;
     }
-    logSuccess(wire, "joined " + c.source + "." + l + " to " + c.target + "." + r);
+    const dataset = datasetForDrop(catalogue, payload);
+    if (dataset === null) {
+      logError("drop", payload.table + " is not in the schema list any more. Reopen the page to refresh it.");
+      return;
+    }
+    if (nodes.some((n) => n.id === dataset.table)) {
+      logWarning(dataset.table, "That table is already on the board.");
+      return;
+    }
+    const picked = payload.kind === "columns" ? payload.columns : [];
+    addDataset(dataset, picked);
+    if (picked.length > 0) {
+      logSuccess(dataset.table,
+        "Added " + picked.length + " selected column(s) from " + dataset.source + "." + dataset.table + ".",
+        "Marked on the source node. Add a Select block to project them.");
+    } else {
+      logSuccess(dataset.table, "Added " + dataset.source + "." + dataset.table + " to the board.");
+    }
+  }, [catalogue, nodes, addDataset, logError, logWarning, logSuccess]);
 
-    // The updater now does exactly one thing, and doing it twice is harmless.
+  const onBoardDragOver = useCallback((event: DragEvent<HTMLDivElement>) => {
+    // Without this the browser refuses the drop before onDrop is ever called.
+    event.preventDefault();
+  }, []);
+
+  // T-033 items 5 and 6. THE BOARD, VIEWED STRUCTURALLY.
+  //
+  // graphSemantics owns lineage, validity, refusal, arrangement and
+  // serialisation, and it knows nothing about React Flow. These two memos are
+  // the entire adapter between the two, so the board's shape is described in
+  // exactly one place and interpreted in exactly one place.
+  const boardNodes = useMemo((): BoardNode[] => nodes.map((n) => ({
+    id: n.id,
+    kind: (n.type ?? "dataset") as BoardNodeKind,
+    data: n.data as Record<string, unknown>,
+  })), [nodes]);
+
+  const boardEdges = useMemo((): BoardEdge[] => edges.map((e) => ({
+    source: e.source,
+    target: e.target,
+    sourceHandle: e.sourceHandle ?? null,
+    targetHandle: e.targetHandle ?? null,
+  })), [edges]);
+
+  // Section 5.2.7. An illegal wire is refused at drag time WITH A STATED
+  // REASON. A bare red outline with no sentence is a failure of the
+  // specification.
+  //
+  // The rules themselves are in graphSemantics.wiringRefusal, where the whole
+  // enumerated set is tested without a browser and where ONE function decides
+  // what is legal. isValidConnection is still deliberately not used: React Flow
+  // never calls onConnect for a connection it already refused, so the sentence
+  // would be lost.
+
+  const onConnect = useCallback((c: Connection) => {
+    const wire: ProposedWire = {
+      source: c.source ?? "",
+      target: c.target ?? "",
+      sourceHandle: c.sourceHandle ?? null,
+      targetHandle: c.targetHandle ?? null,
+    };
+    const label = (c.source ?? "?") + " -> " + (c.target ?? "?");
+
+    // THE LOG ENTRY IS WRITTEN OUTSIDE THE STATE UPDATER, and that placement is
+    // the whole point. A setState updater must be PURE; React invokes it twice
+    // in development to surface impurity, so a log call inside it wrote TWO Job
+    // Log lines for ONE wire.
+    const refusal = wiringRefusal(wire, boardNodes, boardEdges);
+    if (refusal) {
+      logError(label, refusal);
+      return;
+    }
+
+    if (c.sourceHandle === FLOW_OUT) {
+      logSuccess(label, "Dataset wired into " + (c.target ?? "") + ".");
+      setEdges((es) => addEdge({ ...c, label: "dataset", className: "ppiq-flow-edge" }, es));
+      return;
+    }
+
+    const l = String(c.sourceHandle ?? "").replace(/^out:/, "");
+    const r = String(c.targetHandle ?? "").replace(/^in:/, "");
+    logSuccess(label, "joined " + c.source + "." + l + " to " + c.target + "." + r);
     setEdges((es) => addEdge({ ...c, label: l + " = " + r, className: "ppiq-join-edge" }, es));
-  }, [edges, setEdges, refusalFor, logError, logSuccess]);
+  }, [boardNodes, boardEdges, setEdges, logError, logSuccess]);
 
-  const graph = useMemo((): MapperGraph => ({
-    name,
-    targetEntity: "MaterialUnit",
-    tables: nodes.map((n) => n.id),
-    joins: edges.map((e) => ({
-      leftTable: e.source, leftColumn: String(e.sourceHandle ?? "").replace(/^out:/, ""),
-      rightTable: e.target, rightColumn: String(e.targetHandle ?? "").replace(/^in:/, ""),
-    })),
-  }), [name, nodes, edges]);
+  // Ruling 5: the board is the source of authoring truth. Every block edit
+  // lands in the board's own state; the node components hold nothing.
+  const setNodeField = useCallback((nodeId: string, key: string, value: string) => {
+    setNodes((ns) => ns.map((n) => (n.id === nodeId ? { ...n, data: { ...n.data, [key]: value } } : n)));
+  }, [setNodes]);
+
+  const toggleSelectField = useCallback((nodeId: string, ref: string) => {
+    setNodes((ns) => ns.map((n) => {
+      if (n.id !== nodeId) { return n; }
+      const current = Array.isArray(n.data.chosen) ? (n.data.chosen as string[]) : [];
+      const next = current.indexOf(ref) >= 0
+        ? current.filter((x) => x !== ref)
+        : current.concat([ref]);
+      return { ...n, data: { ...n.data, chosen: next } };
+    }));
+  }, [setNodes]);
+
+  // T-033 item 5. THE LINEAGE REACHES THE NODES HERE AND NOWHERE ELSE. The
+  // stored nodes stay minimal; what a block can see, and why it is invalid, are
+  // DERIVED on every render, so neither can go stale against the board.
+  const renderNodes = useMemo(() => nodes.map((n) => {
+    if (!n.type || n.type === "dataset") { return n; }
+    const structural = boardNodes.filter((b) => b.id === n.id)[0];
+    return {
+      ...n,
+      data: {
+        ...n.data,
+        fields: fieldsVisibleAt(n.id, boardNodes, boardEdges),
+        problem: structural ? blockProblem(structural, boardNodes, boardEdges) : null,
+        onChange: setNodeField,
+        onToggle: toggleSelectField,
+      },
+    };
+  }), [nodes, boardNodes, boardEdges, setNodeField, toggleSelectField]);
+
+  const addBlock = useCallback((blockId: string) => {
+    const kind = BLOCK_KIND_OF[blockId];
+    if (!kind) { return; }
+    setNodes((ns) => {
+      // The number is the first free one, so deleting a block and adding
+      // another cannot produce two nodes with the same id.
+      let next = 1;
+      while (ns.some((x) => x.id === kind + "-" + next)) { next = next + 1; }
+      const seed = kind === "filter"
+        ? { fieldRef: "", op: "", value: "" }
+        : kind === "derived"
+          ? { alias: "", leftRef: "", op: "", rightRef: "", constant: "" }
+          : { chosen: [] as string[] };
+      return ns.concat({
+        id: kind + "-" + next,
+        type: kind,
+        position: { x: 460 + ns.length * 30, y: 320 + (ns.length % 3) * 70 },
+        data: { title: BLOCK_TITLE_OF[kind] + " " + next, fields: [], problem: null, ...seed },
+      });
+    });
+    logSuccess(blockId, "Block added. Wire a dataset into its left port to give it columns.");
+  }, [setNodes, logSuccess]);
+
+  // T-033 item 7, ruling 6. CanvasShell already deletes with Backspace and
+  // Delete. This is the VISIBLE AFFORDANCE FOR THAT SAME MECHANISM: the
+  // removals are dispatched as the very change events the key produces, so
+  // there is one deletion path and not two.
+  const deleteSelected = useCallback(() => {
+    const goneNodes: NodeChange[] = nodes.filter((n) => n.selected).map((n) => ({ id: n.id, type: "remove" as const }));
+    const goneEdges: EdgeChange[] = edges.filter((e) => e.selected).map((e) => ({ id: e.id, type: "remove" as const }));
+    if (goneNodes.length === 0 && goneEdges.length === 0) {
+      logWarning(name, "Nothing is selected. Click a block or a wire on the board first.");
+      return;
+    }
+    if (goneEdges.length > 0) { onEdgesChange(goneEdges); }
+    if (goneNodes.length > 0) { onNodesChange(goneNodes); }
+    logSuccess(name, "Removed " + goneNodes.length + " block(s) and " + goneEdges.length + " wire(s).");
+  }, [nodes, edges, onNodesChange, onEdgesChange, name, logWarning, logSuccess]);
+
+  // T-033 item 8, ruling 7. The smallest deterministic arrangement. The
+  // placements come from graphSemantics so pressing this twice cannot produce
+  // two different boards.
+  const doArrange = useCallback(() => {
+    const places = arrangeBoard(boardNodes, boardEdges);
+    setNodes((ns) => ns.map((n) => {
+      const p = places.filter((x) => x.id === n.id)[0];
+      return p ? { ...n, position: { x: p.x, y: p.y } } : n;
+    }));
+    logSuccess(name, "Board arranged.", places.length + " block(s) placed");
+  }, [boardNodes, boardEdges, setNodes, name, logSuccess]);
+
+  // T-033 item 6. GRAPH-OWNED SERIALISATION. The board is the only source of
+  // the definition - no side form, and no second place a filter can come from.
+  // serialiseGraph REFUSES rather than emitting a partial definition, so this
+  // is null exactly when the board cannot run, which is the same condition the
+  // validity chip reports.
+  const graph = useMemo((): MapperGraph | null => {
+    try {
+      return serialiseGraph(name, "MaterialUnit", boardNodes, boardEdges);
+    } catch {
+      return null;
+    }
+  }, [name, boardNodes, boardEdges]);
 
   // Section 5.2.6: a GLOBAL VALIDITY INDICATOR sits beside Run, always visible,
   // so the author never has to hunt for whether the graph can run. Section
   // 5.2.9: Run is disabled while it reads Invalid. The reason is stated, never
   // left as a greyed-out control with no explanation.
-  const invalidReason = useMemo((): string | null => {
-    if (nodes.length === 0) {
-      return "Nothing on the board yet. Add a source from the schema tree.";
-    }
-    const joined = new Set<string>();
-    for (const e of edges) { joined.add(e.source); joined.add(e.target); }
-    const stranded = nodes.filter((n) => !joined.has(n.id)).map((n) => n.id);
-    if (nodes.length > 1 && stranded.length > 0) {
-      return stranded.join(", ") + (stranded.length === 1 ? " has" : " have") +
-        " no join to the rest of the board.";
-    }
-    return null;
-  }, [nodes, edges]);
+  //
+  // Every rule behind it is in graphSemantics.boardProblems, which reports the
+  // stranded tables AND every invalid block, each with its own sentence.
+  const problems = useMemo(() => boardProblems(boardNodes, boardEdges), [boardNodes, boardEdges]);
+  const invalidReason = problems.length > 0 ? problems[0] : null;
 
   const ensureSession = async () => {
     if (sessionId) { return sessionId; }
@@ -254,6 +380,11 @@ export function SharedAuthoringShell({ purpose }: SharedAuthoringShellProps) {
       }
 
       const startedAt = performance.now();
+      if (!graph) {
+        logError(name, "The board cannot be turned into a definition yet. "
+          + (invalidReason ?? "Check the blocks that are marked with an error."));
+        return;
+      }
       const sid = await ensureSession();
       await saveGraph(sid, graph);
       const r = await runDryRun(sid);
@@ -276,6 +407,11 @@ export function SharedAuthoringShell({ purpose }: SharedAuthoringShellProps) {
 
   const doPublish = async () => {
     try {
+      if (!graph) {
+        logError(name, "There is nothing publishable on the board yet. "
+          + (invalidReason ?? "Check the blocks that are marked with an error."));
+        return;
+      }
       const sid = await ensureSession();
       await saveGraph(sid, graph);
       const v = await publishVersion(sid);
@@ -289,6 +425,10 @@ export function SharedAuthoringShell({ purpose }: SharedAuthoringShellProps) {
   // nothing he can act on.
   const doFork = useCallback(() => {
     const snapshot = graph;
+    if (!snapshot) {
+      logError(name, "There is no compiled definition to fork from yet. Run the board first.");
+      return;
+    }
     setForkedGraph(snapshot);
     setSqlText(preview?.sql ?? "");
     setSqlState("authoring");
@@ -384,7 +524,7 @@ export function SharedAuthoringShell({ purpose }: SharedAuthoringShellProps) {
         <span className="canvas-modebar__spacer" />
         <span className="canvas-modebar__hint">
           {mode === "block"
-            ? "Double-click a table on the left to put it on the board, then wire key to key."
+            ? "Double-click a table on the left to put it on the board, wire key to key, then add Filter, Select columns or Derived column from the toolbox."
             : sqlState === "view"
               ? "The query the server compiled from this graph."
               : "Forked. This definition is now authored as SQL; the graph is read-only history."}
@@ -403,14 +543,34 @@ export function SharedAuthoringShell({ purpose }: SharedAuthoringShellProps) {
             onToggleTable={(t) => setOpenTables((m) => ({ ...m, [t]: m[t] !== true }))}
             onAddTable={addDataset}
             emptyMessage={emptyTreeMessage}
+            query={treeQuery}
+            onQueryChange={setTreeQuery}
+            selection={treeSelection}
+            onToggleColumn={(t, c) => setTreeSelection((s) => toggleColumn(s, t, c))}
           />
         </aside>
 
         {/* CENTRE - the board, or the SQL editor in SQL mode. */}
         {mode === "block" ? (
           <CanvasShell
-            nodes={nodes} edges={edges} nodeTypes={nodeTypes}
+            nodes={renderNodes} edges={edges} nodeTypes={nodeTypes}
             onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} onConnect={onConnect}
+            onBoardDragOver={onBoardDragOver} onBoardDrop={onBoardDrop}
+            /* T-033 items 7 and 8. Section 5.2.6 puts Arrange on the CANVAS
+               TOOLBAR, beside zoom and fit, not in the lifecycle action bar.
+               They are passed in rather than built into CanvasShell so no other
+               surface is forced to carry board-editing controls it has no use
+               for. */
+            boardActions={
+              <>
+                <StandardP2Button variant="ghost" className="ppiq-canvas__action" onClick={doArrange}>
+                  Arrange
+                </StandardP2Button>
+                <StandardP2Button variant="ghost" className="ppiq-canvas__action" onClick={deleteSelected}>
+                  Delete selected
+                </StandardP2Button>
+              </>
+            }
           />
         ) : (
           <section className="canvas-sqlpane" data-testid="canvas-sql-pane">
@@ -522,7 +682,11 @@ export function SharedAuthoringShell({ purpose }: SharedAuthoringShellProps) {
             <h4>Toolbox</h4>
             <AuthoringToolbox
               paletteGroups={definition.paletteGroups}
-              unavailableReason={"Blocks are declared here and become available on the board with the relational block grammar."}
+              unavailableReason={definition.showsStagingCatalogue
+                ? "Filter, Select columns and Derived column are on the board. The rest are declared here and arrive with the later grammar."
+                : "Blocks are declared here and become available with this purpose's own board grammar."}
+              addableBlockIds={definition.showsStagingCatalogue ? ADDABLE_BLOCK_IDS : []}
+              onAddBlock={addBlock}
             />
             {preview && preview.rows?.length > 0 && (
               <div className="preview-scroll" data-testid="authoring-preview">

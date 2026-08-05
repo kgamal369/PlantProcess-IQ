@@ -1,0 +1,1 @@
+src/authoring/authoringSchemaTree.test.tsx(43,54): error TS2698: Spread types may only be created from object types.

@@ -56,8 +56,8 @@ export const BLOCK_REGISTRY: readonly BlockDefinition[] = [
 
   // Group 2 - relational
   { id: "join", label: "Join", group: "relational", placement: "board", inputs: "two datasets", outputs: "dataset", available: false },
-  { id: "filter", label: "Filter", group: "relational", placement: "board", inputs: "dataset", outputs: "dataset", available: false },
-  { id: "select-columns", label: "Select columns", group: "relational", placement: "board", inputs: "dataset", outputs: "dataset", available: false },
+  { id: "filter", label: "Filter", group: "relational", placement: "board", inputs: "dataset", outputs: "dataset", available: true },
+  { id: "select-columns", label: "Select columns", group: "relational", placement: "board", inputs: "dataset", outputs: "dataset", available: true },
   { id: "rename", label: "Rename / alias", group: "relational", placement: "board", inputs: "dataset", outputs: "dataset", available: false },
   { id: "group-by", label: "Group by", group: "relational", placement: "board", inputs: "dataset", outputs: "dataset", available: false },
   { id: "sort", label: "Sort", group: "relational", placement: "board", inputs: "dataset", outputs: "dataset", available: false },
@@ -65,7 +65,7 @@ export const BLOCK_REGISTRY: readonly BlockDefinition[] = [
   { id: "distinct", label: "Distinct", group: "relational", placement: "board", inputs: "dataset", outputs: "dataset", available: false },
   { id: "limit", label: "Limit", group: "relational", placement: "board", inputs: "dataset", outputs: "dataset", available: false },
   { id: "pivot", label: "Pivot / unpivot", group: "relational", placement: "board", inputs: "dataset", outputs: "dataset", available: false },
-  { id: "derived-column", label: "Derived column", group: "relational", placement: "board", inputs: "dataset", outputs: "dataset", available: false },
+  { id: "derived-column", label: "Derived column", group: "relational", placement: "board", inputs: "dataset", outputs: "dataset", available: true },
   { id: "cast", label: "Cast", group: "relational", placement: "board", inputs: "dataset", outputs: "dataset", available: false },
   { id: "lookup", label: "Lookup", group: "relational", placement: "board", inputs: "dataset + dataset", outputs: "dataset", available: false },
 

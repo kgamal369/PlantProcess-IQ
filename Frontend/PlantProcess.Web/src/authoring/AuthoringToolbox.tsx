@@ -19,9 +19,20 @@ export interface AuthoringToolboxProps {
   paletteGroups: readonly string[];
   /** Stated once, at the head of the region, for blocks not yet wired. */
   unavailableReason: string;
+  /**
+   * T-033. Which block ids THIS surface can actually put on its board. A block
+   * is clickable only when it is available in the registry AND its id is here,
+   * so a surface can never present a control that does nothing. Absent means
+   * none, which is exactly the T-032 behaviour.
+   */
+  addableBlockIds?: readonly string[];
+  onAddBlock?: (blockId: string) => void;
 }
 
-export function AuthoringToolbox({ paletteGroups, unavailableReason }: AuthoringToolboxProps) {
+export function AuthoringToolbox({
+  paletteGroups, unavailableReason, addableBlockIds = [], onAddBlock,
+}: AuthoringToolboxProps) {
+  const canAdd = (b: BlockDefinition) => b.available && addableBlockIds.indexOf(b.id) >= 0;
   const [search, setSearch] = useState("");
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
 
@@ -66,9 +77,10 @@ export function AuthoringToolbox({ paletteGroups, unavailableReason }: Authoring
                 variant="ghost"
                 type="button"
                 className="authoring-toolbox__block"
-                disabled={!b.available}
-                aria-disabled={!b.available}
+                disabled={!canAdd(b)}
+                aria-disabled={!canAdd(b)}
                 title={b.inputs + " -> " + b.outputs}
+                onClick={() => onAddBlock?.(b.id)}
               >
                 <span className="authoring-toolbox__blocklabel">{b.label}</span>
                 <span className="authoring-toolbox__blockports">{b.inputs} to {b.outputs}</span>

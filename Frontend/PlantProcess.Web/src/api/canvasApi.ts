@@ -1,6 +1,18 @@
 import { apiClient } from "./http";
 
-export type StagedDataset = { table: string; source: string; columns: { name: string; sqlType: string; isKeyCandidate: boolean }[] };
+export type StagedColumn = {
+  name: string; sqlType: string; isKeyCandidate: boolean;
+  // T-034. Optional because a client built against the pre-T-034 response is
+  // still a valid client; the tree states "unknown" rather than inventing a
+  // value when either is absent.
+  isNullable?: boolean;
+};
+export type StagedDataset = {
+  table: string; source: string; columns: StagedColumn[];
+  // null means the table has never been analysed, which is NOT the same claim
+  // as zero rows. The tree says so in those words.
+  approxRowCount?: number | null;
+};
 export type JoinSpec = { leftTable: string; leftColumn: string; rightTable: string; rightColumn: string };
 // M1-16. Mirrors FilterSpec / DerivedSpec on the server. Op values must stay in
 // step with the whitelists in BuildSafeSelect - the interface never offers an
@@ -10,9 +22,15 @@ export type DerivedSpec = {
   alias: string; leftTable: string; leftColumn: string; op: string;
   rightTable: string | null; rightColumn: string | null; constant: string | null;
 };
+// T-033 item 1. The projection contract, mirroring SelectSpec on the server.
+// There is no alias: naming an output column is a Rename and belongs to a later
+// grammar expansion. Absent (undefined) means NO Select block and keeps
+// SELECT *; an EMPTY array means a Select block with nothing chosen, which the
+// server refuses by name rather than defaulting.
+export type SelectSpec = { table: string; column: string };
 export type MapperGraph = {
   name: string; targetEntity: string; tables: string[]; joins: JoinSpec[];
-  filters?: FilterSpec[]; derived?: DerivedSpec[];
+  filters?: FilterSpec[]; derived?: DerivedSpec[]; selects?: SelectSpec[];
 };
 export type DryRunResult = { dryRunId: string; status: string; rowCount: number; columns: string[]; rows: unknown[][]; message?: string; sql?: string };
 

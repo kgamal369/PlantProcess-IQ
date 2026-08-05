@@ -1,0 +1,14 @@
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  PlantProcess.Domain -> C:\Workspace\PlantProcess-IQ\Backend\PlantProcess.Domain\bin\Debug\net9.0\PlantProcess.Domain.dll
+  PlantProcess.Analytics.Core -> C:\Workspace\PlantProcess-IQ\Backend\PlantProcess.Analytics.Core\bin\Debug\net9.0\PlantProcess.Analytics.Core.dll
+  PlantProcess.Application -> C:\Workspace\PlantProcess-IQ\Backend\PlantProcess.Application\bin\Debug\net9.0\PlantProcess.Application.dll
+  PlantProcess.Infrastructure -> C:\Workspace\PlantProcess-IQ\Backend\PlantProcess.Infrastructure\bin\Debug\net9.0\PlantProcess.Infrastructure.dll
+  PlantProcess.Analytics.Engine -> C:\Workspace\PlantProcess-IQ\Backend\PlantProcess.Analytics.Engine\bin\Debug\net9.0\PlantProcess.Analytics.Engine.dll
+  PlantProcess.Workers -> C:\Workspace\PlantProcess-IQ\Backend\PlantProcess.Workers\bin\Debug\net9.0\PlantProcess.Workers.dll
+  PlantProcess.Api -> C:\Workspace\PlantProcess-IQ\Backend\PlantProcess.Api\bin\Debug\net9.0\PlantProcess.Api.dll
+  PlantProcess.Architecture.Tests -> C:\Workspace\PlantProcess-IQ\Backend\tests\PlantProcess.Architecture.Tests\bin\Debug\net9.0\PlantProcess.Architecture.Tests.dll
+Test run for C:\Workspace\PlantProcess-IQ\Backend\tests\PlantProcess.Architecture.Tests\bin\Debug\net9.0\PlantProcess.Architecture.Tests.dll (.NETCoreApp,Version=v9.0)
+A total of 1 test files matched the specified pattern.
+
+Passed!  - Failed:     0, Passed:     3, Skipped:     0, Total:     3, Duration: 70 ms - PlantProcess.Architecture.Tests.dll (net9.0)

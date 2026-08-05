@@ -25,6 +25,188 @@ public sealed class VisualMapperSessionLifecycleTests : AuthenticatedApiTestBase
 {
     public VisualMapperSessionLifecycleTests(WebApplicationFactory<Program> factory) : base(factory) { }
 
+    // T-034. THE CATALOGUE CONTRACT, asserted against the live schema.
+    //
+    // The static guard proves the endpoint names no plant column. This proves the
+    // response actually carries what the tree needs, because a guard on the source
+    // cannot tell whether the query returns the fields it reads.
+    [SkippableFact]
+    public async Task The_staged_catalogue_reports_nullability_keys_and_an_approximate_row_count()
+    {
+        Skip.IfNot(IsIntegrationDbReachable(), "Integration Postgres not reachable on this machine; runs in CI.");
+        var http = await CreateAuthenticatedClientAsync();
+
+        var res = await http.GetAsync("/api/prep/visual-mapper/datasets");
+        Assert.True(res.IsSuccessStatusCode, "datasets failed: " + await res.Content.ReadAsStringAsync());
+        var catalogue = JsonDocument.Parse(await res.Content.ReadAsStringAsync()).RootElement;
+        Skip.If(catalogue.GetArrayLength() == 0, "no staged datasets on this machine");
+
+        foreach (var dataset in catalogue.EnumerateArray())
+        {
+            var table = dataset.GetProperty("table").GetString();
+
+            // Present on every table. Null is a legal value and means the table
+            // has never been analysed - it is NOT reported as zero rows.
+            Assert.True(dataset.TryGetProperty("approxRowCount", out var rows),
+                table + " carries no approxRowCount");
+            Assert.True(rows.ValueKind == JsonValueKind.Null || rows.ValueKind == JsonValueKind.Number,
+                table + " reports approxRowCount as " + rows.ValueKind);
+
+            var columns = dataset.GetProperty("columns");
+            Assert.True(columns.GetArrayLength() > 0, table + " reports no columns");
+            foreach (var column in columns.EnumerateArray())
+            {
+                var name = column.GetProperty("name").GetString();
+                Assert.False(string.IsNullOrWhiteSpace(column.GetProperty("sqlType").GetString()),
+                    table + "." + name + " reports no sqlType");
+                Assert.True(column.TryGetProperty("isNullable", out var nullable),
+                    table + "." + name + " carries no isNullable");
+                Assert.True(nullable.ValueKind == JsonValueKind.True || nullable.ValueKind == JsonValueKind.False,
+                    table + "." + name + " reports isNullable as " + nullable.ValueKind);
+                Assert.True(column.GetProperty("isKeyCandidate").ValueKind is JsonValueKind.True or JsonValueKind.False,
+                    table + "." + name + " reports isKeyCandidate as a non-boolean");
+            }
+        }
+    }
+
+    // T-033 item 1. THE SELECT BLOCK PROJECTS EXACTLY WHAT WAS CHOSEN.
+    //
+    // Before T-033 the projection was always SELECT *, so a Select block on
+    // the board had nowhere to land. The assertion here is the EXECUTED
+    // statement and its returned column list, not the shape of the SQL
+    // string - a generated statement that looks plausible and returns the
+    // wrong columns is exactly the defect this exists to prevent.
+    [SkippableFact]
+    public async Task Select_block_projects_exactly_the_chosen_columns()
+    {
+        Skip.IfNot(IsIntegrationDbReachable(), "Integration Postgres not reachable on this machine; runs in CI.");
+        var http = await CreateAuthenticatedClientAsync();
+
+        var catalogRes = await http.GetAsync("/api/prep/visual-mapper/datasets");
+        Assert.True(catalogRes.IsSuccessStatusCode,
+            "datasets failed: " + await catalogRes.Content.ReadAsStringAsync());
+        var catalog = JsonDocument.Parse(await catalogRes.Content.ReadAsStringAsync()).RootElement;
+
+        // Discovered from the live catalogue. No plant table or column name
+        // is written into this file.
+        string? chosenTable = null;
+        string? firstCol = null;
+        string? secondCol = null;
+        foreach (var entry in catalog.EnumerateArray())
+        {
+            var columns = entry.GetProperty("columns");
+            if (columns.GetArrayLength() < 2) { continue; }
+            chosenTable = entry.GetProperty("table").GetString();
+            firstCol = columns[0].GetProperty("name").GetString();
+            secondCol = columns[1].GetProperty("name").GetString();
+            break;
+        }
+        Skip.If(chosenTable is null, "no staged table with two columns on this machine");
+
+        var madeRes = await http.PostAsJsonAsync(
+            "/api/prep/visual-mapper/sessions", new { name = "T-033 select projection" });
+        Assert.True(madeRes.IsSuccessStatusCode,
+            "create session failed: " + await madeRes.Content.ReadAsStringAsync());
+        var made = JsonDocument.Parse(await madeRes.Content.ReadAsStringAsync())
+            .RootElement.GetProperty("sessionId").GetGuid();
+
+        var definition = new
+        {
+            name = "T-033 select projection",
+            targetEntity = "MaterialUnit",
+            tables = new[] { chosenTable },
+            joins = Array.Empty<object>(),
+            selects = new object[]
+            {
+                new { table = chosenTable, column = firstCol },
+                new { table = chosenTable, column = secondCol }
+            }
+        };
+        var storedRes = await http.PostAsJsonAsync(
+            "/api/prep/visual-mapper/sessions/" + made + "/graph", definition);
+        Assert.True(storedRes.IsSuccessStatusCode,
+            "save graph failed: " + await storedRes.Content.ReadAsStringAsync());
+
+        var runRes = await http.PostAsJsonAsync(
+            "/api/prep/visual-mapper/sessions/" + made + "/dry-run", new { });
+        Assert.True(runRes.IsSuccessStatusCode,
+            "dry run failed: " + await runRes.Content.ReadAsStringAsync());
+        var run = JsonDocument.Parse(await runRes.Content.ReadAsStringAsync()).RootElement;
+        var why = run.TryGetProperty("message", out var reason) ? reason.GetString() : null;
+        Assert.True(run.GetProperty("status").GetString() == "succeeded",
+            "the select projection did not execute: " + (why ?? "no message"));
+
+        var returned = new List<string>();
+        foreach (var name in run.GetProperty("columns").EnumerateArray())
+        {
+            returned.Add(name.GetString() ?? "");
+        }
+        Assert.True(returned.Count == 2,
+            "expected exactly the two chosen columns, got " + returned.Count);
+        Assert.True(string.Equals(firstCol, returned[0], StringComparison.OrdinalIgnoreCase),
+            "first projected column was " + returned[0]);
+        Assert.True(string.Equals(secondCol, returned[1], StringComparison.OrdinalIgnoreCase),
+            "second projected column was " + returned[1]);
+
+        var statement = run.TryGetProperty("sql", out var text) ? text.GetString() ?? "" : "";
+        Assert.False(statement.Contains("SELECT *"),
+            "the projection fell back to SELECT *: " + statement);
+    }
+
+    // T-033 item 1. AN EMPTY SELECT BLOCK IS REFUSED, NOT SILENTLY IGNORED.
+    //
+    // A null Selects means no Select block and keeps SELECT *. An EMPTY
+    // array means the block is on the board with nothing chosen, and
+    // returning every column in that state would be the opposite of what
+    // the author asked for - a fake product answer wearing the clothes of a
+    // default. The refusal must NAME the cause.
+    [SkippableFact]
+    public async Task A_select_block_with_no_columns_chosen_is_refused_with_a_sentence()
+    {
+        Skip.IfNot(IsIntegrationDbReachable(), "Integration Postgres not reachable on this machine; runs in CI.");
+        var http = await CreateAuthenticatedClientAsync();
+
+        var catalogRes = await http.GetAsync("/api/prep/visual-mapper/datasets");
+        Assert.True(catalogRes.IsSuccessStatusCode,
+            "datasets failed: " + await catalogRes.Content.ReadAsStringAsync());
+        var catalog = JsonDocument.Parse(await catalogRes.Content.ReadAsStringAsync()).RootElement;
+        Skip.If(catalog.GetArrayLength() == 0, "no staged datasets on this machine");
+        var onlyTable = catalog[0].GetProperty("table").GetString();
+
+        var madeRes = await http.PostAsJsonAsync(
+            "/api/prep/visual-mapper/sessions", new { name = "T-033 empty select" });
+        Assert.True(madeRes.IsSuccessStatusCode,
+            "create session failed: " + await madeRes.Content.ReadAsStringAsync());
+        var made = JsonDocument.Parse(await madeRes.Content.ReadAsStringAsync())
+            .RootElement.GetProperty("sessionId").GetGuid();
+
+        var definition = new
+        {
+            name = "T-033 empty select",
+            targetEntity = "MaterialUnit",
+            tables = new[] { onlyTable },
+            joins = Array.Empty<object>(),
+            selects = Array.Empty<object>()
+        };
+        var storedRes = await http.PostAsJsonAsync(
+            "/api/prep/visual-mapper/sessions/" + made + "/graph", definition);
+        Assert.True(storedRes.IsSuccessStatusCode,
+            "save graph failed: " + await storedRes.Content.ReadAsStringAsync());
+
+        var runRes = await http.PostAsJsonAsync(
+            "/api/prep/visual-mapper/sessions/" + made + "/dry-run", new { });
+        Assert.True(runRes.IsSuccessStatusCode,
+            "dry run failed: " + await runRes.Content.ReadAsStringAsync());
+        var run = JsonDocument.Parse(await runRes.Content.ReadAsStringAsync()).RootElement;
+
+        Assert.True(run.GetProperty("status").GetString() == "rejected_by_safe_sql",
+            "an empty Select block was not refused; status was "
+            + run.GetProperty("status").GetString());
+        var sentence = run.GetProperty("message").GetString() ?? "";
+        Assert.True(sentence.Contains("no columns chosen"),
+            "the refusal did not name the cause: " + sentence);
+    }
+
     [SkippableFact]
     public async Task Create_save_dryrun_and_publish_complete_the_session_lifecycle()
     {

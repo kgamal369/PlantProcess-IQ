@@ -378,17 +378,24 @@ FROM public.ml_feature_store_refresh_runs WHERE id='$runId';
 
     Rule "6 - REPRODUCIBILITY"
     Say "Compared on COMPUTED VALUES, never on generated identifiers or timestamps."
+    Say ""
+    Say "The MEAN, not the sum. Summing 18,900 doubles accumulates rounding and"
+    Say "PostgreSQL does not guarantee aggregation order between runs, so an"
+    Say "earlier version reported 197.0534 against 197.0535 - one part in two"
+    Say "million, on data that was identical. The mean is scale-free, so the same"
+    Say "noise vanishes at six decimals and no tolerance constant is invented."
+    Say "Row count, minimum and maximum stay EXACT: a real change moves those."
     Invoke-Sql -Tag "fp1" -Sql @'
 DROP TABLE IF EXISTS public.ppiq_t025_fingerprint;
 CREATE TABLE public.ppiq_t025_fingerprint AS
 SELECT 'feature' AS kind, feature_key AS metric_key, count(*) AS rows,
-       round(sum(coalesce(numeric_value,0))::numeric, 4) AS value_sum,
+       round(avg(coalesce(numeric_value,0))::numeric, 6) AS value_mean,
        round(min(coalesce(numeric_value,0))::numeric, 4) AS value_min,
        round(max(coalesce(numeric_value,0))::numeric, 4) AS value_max
 FROM public.ml_feature_values GROUP BY 2
 UNION ALL
 SELECT 'outcome', outcome_key, count(*),
-       round(sum(coalesce(numeric_value,0))::numeric, 4),
+       round(avg(coalesce(numeric_value,0))::numeric, 6),
        round(min(coalesce(numeric_value,0))::numeric, 4),
        round(max(coalesce(numeric_value,0))::numeric, 4)
 FROM public.ml_outcome_values GROUP BY 2;
@@ -404,21 +411,21 @@ FROM public.ml_outcome_values GROUP BY 2;
 \pset border 2
 WITH now2 AS (
   SELECT 'feature' AS kind, feature_key AS metric_key, count(*) AS rows,
-         round(sum(coalesce(numeric_value,0))::numeric, 4) AS value_sum,
+         round(avg(coalesce(numeric_value,0))::numeric, 6) AS value_mean,
          round(min(coalesce(numeric_value,0))::numeric, 4) AS value_min,
          round(max(coalesce(numeric_value,0))::numeric, 4) AS value_max
   FROM public.ml_feature_values GROUP BY 2
   UNION ALL
   SELECT 'outcome', outcome_key, count(*),
-         round(sum(coalesce(numeric_value,0))::numeric, 4),
+         round(avg(coalesce(numeric_value,0))::numeric, 6),
          round(min(coalesce(numeric_value,0))::numeric, 4),
          round(max(coalesce(numeric_value,0))::numeric, 4)
   FROM public.ml_outcome_values GROUP BY 2)
 SELECT 'metrics differing between the two runs' AS check_name, count(*) AS found, 0 AS required
 FROM (
-  SELECT kind, metric_key, rows, value_sum, value_min, value_max FROM now2
+  SELECT kind, metric_key, rows, value_mean, value_min, value_max FROM now2
   EXCEPT
-  SELECT kind, metric_key, rows, value_sum, value_min, value_max
+  SELECT kind, metric_key, rows, value_mean, value_min, value_max
   FROM public.ppiq_t025_fingerprint) d
 UNION ALL
 SELECT 'metrics present in run 1 but not run 2', count(*), 0

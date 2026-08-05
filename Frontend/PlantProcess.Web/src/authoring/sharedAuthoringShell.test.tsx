@@ -20,7 +20,13 @@ import { AUTHORING_PURPOSES } from "./authoringPurposes";
 // The board is mocked: ReactFlow needs a layout engine jsdom does not have,
 // and what this file is proving is the REGION CONTRACT, not the canvas.
 vi.mock("@/canvas/CanvasShell", () => ({
-  CanvasShell: () => <div data-testid="authoring-board" />,
+  // The board itself is mocked because ReactFlow needs a layout engine jsdom
+  // does not have. The BOARD ACTIONS it is handed are rendered, because those
+  // are ordinary controls and the point of the assertion is that the canvas
+  // toolbar receives them.
+  CanvasShell: (props: { boardActions?: unknown }) => (
+    <div data-testid="authoring-board">{props.boardActions as never}</div>
+  ),
 }));
 
 vi.mock("@/api/canvasApi", () => ({
@@ -122,6 +128,7 @@ describe("T-032 part A: one authoring shell, no second authoring page", () => {
       "src/authoring/AuthoringSchemaTree.tsx",
       "src/authoring/AuthoringToolbox.tsx",
       "src/authoring/blockRegistry.ts",
+      "src/authoring/BlockNodes.tsx",
       "src/authoring/authoringPurposes.ts",
     ].map((p) => readFileSync(join(process.cwd(), p), "utf8")).join("\n");
     // The needles are ASSEMBLED FROM FRAGMENTS on purpose. A guard that spells
@@ -171,6 +178,24 @@ describe("T-032 part B: the four regions render in every mode", () => {
     expect(screen.getByTestId("canvas-sql-pane")).toBeInTheDocument();
     expect(screen.getByTestId("canvas-schema-tree")).toBeInTheDocument();
     expect(screen.queryByTestId("authoring-toolbox")).toBeNull();
+  });
+
+  it("S1 enables exactly the three relational blocks the board implements", async () => {
+    render(<SharedAuthoringShell purpose="S1" />);
+    await screen.findByText("staging_one");
+    expect(screen.getByRole("button", { name: /^Filter/ })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /^Select columns/ })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /^Derived column/ })).toBeEnabled();
+    // Ruling 4 keeps Rename out of T-033, and the toolbox says so rather than
+    // pretending the block does not exist.
+    expect(screen.getByRole("button", { name: /^Rename/ })).toBeDisabled();
+  });
+
+  it("the board actions are visible affordances, not key bindings only", async () => {
+    render(<SharedAuthoringShell purpose="S1" />);
+    await screen.findByText("staging_one");
+    expect(screen.getByRole("button", { name: "Delete selected" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Arrange" })).toBeInTheDocument();
   });
 
   it("Run is refused while the validity indicator reads Invalid", async () => {

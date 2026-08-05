@@ -228,6 +228,19 @@ public sealed class AccessControlMiddleware
         // authenticated user. analysis.execute matches the sibling
         // /api/prep/visual-mapper, which is the same act on the same surface.
         ("/api/prep/sql", All(), "analysis.execute", false),
+        // T-025: the risk-scoring group. The middleware is deny-by-default, so
+        // without this line POST /risk-scores/calculate-all is refused 403
+        // ("not mapped in the P01/P02 permission matrix") even for an
+        // authenticated user, and the risk engine cannot be invoked at all.
+        // The route is RiskScoreEndpoints.MapGroup("/risk-scores"), mapped at
+        // Program.cs app.MapRiskScoreEndpoints(). It is NOT /api/analytics/risk-scores:
+        // that group is declared in RiskEvidenceEndpoints.cs but never mapped.
+        // Second effect, stated deliberately: the GET routes in this group
+        // currently fall through the ("/", GET, anonymous) entry and are served
+        // without a token. This line closes that anonymous read.
+        // analysis.execute matches the sibling engine routes /analytics/ml and
+        // /api/ml/foundation.
+        ("/risk-scores", All(), "analysis.execute", false),
         ("/analytics/dashboard/definitions", All(), "page.design", false),
         ("/analytics/dashboard", new[] { "GET", "POST" }, "assistant.use", false),
         ("/page-definitions", All(), "page.design", false),

@@ -26,10 +26,17 @@ public static class VisualMapperEndpoints
     public record DerivedSpec(string Alias, string LeftTable, string LeftColumn, string Op,
                               string? RightTable, string? RightColumn, string? Constant);
 
-    // Filters and Derived default to null so every graph saved before M1-16
+    // T-033 item 1. A SELECT block projects qualified fields and nothing
+    // more. There is deliberately NO alias on this record: naming an output
+    // column is a Rename, and ruling 1 of T-033 is "Select, NOT Rename".
+    // An alias is a later grammar expansion, not a change to this shape.
+    public record SelectSpec(string Table, string Column);
+
+    // Filters, Derived and Selects default to null so every earlier graph
     // deserialises unchanged and compiles to byte-identical SQL.
     public record MapperGraph(string Name, string TargetEntity, string[] Tables, JoinSpec[] Joins,
-                              FilterSpec[]? Filters = null, DerivedSpec[]? Derived = null);
+                              FilterSpec[]? Filters = null, DerivedSpec[]? Derived = null,
+                              SelectSpec[]? Selects = null);
 
     public static IEndpointRouteBuilder MapVisualMapperEndpoints(this IEndpointRouteBuilder app)
     {
@@ -42,23 +49,90 @@ public static class VisualMapperEndpoints
             // The physical schema name is configuration, not a literal, because
             // Amendment 6 (Part III.16) renames it to ppiq_staging in M2.
             var stagingSchema = cfg["Prep:StagingSchema"] ?? "dump_store";
-            const string sql = @"
-SELECT table_name, column_name, data_type
-FROM information_schema.columns
-WHERE table_schema = $1
-ORDER BY table_name, ordinal_position;";
-            var byTable = new Dictionary<string, List<object>>();
-            await using var cmd = ds.CreateCommand(sql);
-            cmd.Parameters.AddWithValue(stagingSchema);
-            await using var r = await cmd.ExecuteReaderAsync();
-            while (await r.ReadAsync())
+
+            // T-034. THE KEY MARKER NOW COMES FROM DECLARED CONSTRAINTS.
+            //
+            // It used to come from a name list holding four column names of the
+            // emulated plant, written into the product. T-034 says nothing in this
+            // tree may be a hardcoded table or column name, so the primary-key and
+            // unique constraints are read instead of guessed at.
+            //
+            // Staged CSV loads often carry no constraints at all. For a table that
+            // declares NONE, the fallback is a STRUCTURAL pattern - see
+            // LooksLikeKey - which describes a shape and names no customer's
+            // column. It is applied PER TABLE, so a table that does declare its
+            // keys is never second-guessed by a pattern.
+            const string columnSql = @"
+SELECT c.table_name, c.column_name, c.data_type, c.is_nullable,
+       (k.column_name IS NOT NULL) AS is_declared_key
+FROM information_schema.columns c
+LEFT JOIN (
+    SELECT tc.table_schema, tc.table_name, kcu.column_name
+    FROM information_schema.table_constraints tc
+    JOIN information_schema.key_column_usage kcu
+      ON kcu.constraint_name = tc.constraint_name
+     AND kcu.table_schema = tc.table_schema
+    WHERE tc.table_schema = $1 AND tc.constraint_type IN ('PRIMARY KEY', 'UNIQUE')
+) k ON k.table_schema = c.table_schema
+   AND k.table_name = c.table_name
+   AND k.column_name = c.column_name
+WHERE c.table_schema = $1
+ORDER BY c.table_name, c.ordinal_position;";
+
+            // reltuples is the planner's estimate, and it is -1 on a table that has
+            // never been analysed. That is reported as UNKNOWN, not as zero rows:
+            // "0 rows" is a claim about the customer's data, "not analysed yet" is
+            // a claim about the catalogue, and they are not the same sentence.
+            const string rowCountSql = @"
+SELECT c.relname, c.reltuples::bigint
+FROM pg_class c
+JOIN pg_namespace n ON n.oid = c.relnamespace
+WHERE n.nspname = $1 AND c.relkind IN ('r', 'p', 'm', 'v');";
+
+            var approxRows = new Dictionary<string, long?>();
+            await using (var rc = ds.CreateCommand(rowCountSql))
             {
-                var t = r.GetString(0); var c = r.GetString(1); var ty = r.GetString(2);
-                var isKey = c.EndsWith("_id") || c.EndsWith("_no") || c is "id" or "piece_id" or "material_id" or "heat_id" or "coil_id";
-                if (!byTable.TryGetValue(t, out var list)) byTable[t] = list = new();
-                list.Add(new { name = c, sqlType = ty, isKeyCandidate = isKey });
+                rc.Parameters.AddWithValue(stagingSchema);
+                await using var rr = await rc.ExecuteReaderAsync();
+                while (await rr.ReadAsync())
+                {
+                    var estimate = rr.GetInt64(1);
+                    approxRows[rr.GetString(0)] = estimate < 0 ? null : estimate;
+                }
             }
-            return Results.Ok(byTable.Select(kv => new { table = kv.Key, source = stagingSchema, columns = kv.Value }));
+
+            var byTable = new Dictionary<string, List<ColumnFacts>>();
+            var declaresKeys = new HashSet<string>();
+            await using (var cmd = ds.CreateCommand(columnSql))
+            {
+                cmd.Parameters.AddWithValue(stagingSchema);
+                await using var r = await cmd.ExecuteReaderAsync();
+                while (await r.ReadAsync())
+                {
+                    var t = r.GetString(0);
+                    var col = r.GetString(1);
+                    var ty = r.GetString(2);
+                    var nullable = string.Equals(r.GetString(3), "YES", StringComparison.OrdinalIgnoreCase);
+                    var declared = r.GetBoolean(4);
+                    if (declared) { declaresKeys.Add(t); }
+                    if (!byTable.TryGetValue(t, out var list)) byTable[t] = list = new();
+                    list.Add(new ColumnFacts(col, ty, nullable, declared));
+                }
+            }
+
+            return Results.Ok(byTable.Select(kv => new
+            {
+                table = kv.Key,
+                source = stagingSchema,
+                approxRowCount = approxRows.TryGetValue(kv.Key, out var n) ? n : null,
+                columns = kv.Value.Select(c => new
+                {
+                    name = c.Name,
+                    sqlType = c.SqlType,
+                    isNullable = c.IsNullable,
+                    isKeyCandidate = declaresKeys.Contains(kv.Key) ? c.DeclaredKey : LooksLikeKey(c.Name),
+                }),
+            }));
         });
 
         g.MapPost("/sessions", async (NpgsqlDataSource ds, HttpContext ctx, JsonElement body) =>
@@ -216,6 +290,19 @@ FROM public.ppiq_visual_mapper_sessions WHERE id = $1 RETURNING id;");
         return (Guid)(await cmd.ExecuteScalarAsync())!;
     }
 
+    // T-034. What the catalogue knows about one column, before the response
+    // shape is built. Kept as a record so the key decision below reads as one
+    // expression instead of four parallel dictionaries.
+    private sealed record ColumnFacts(string Name, string SqlType, bool IsNullable, bool DeclaredKey);
+
+    // T-034. A SHAPE, NOT A NAME. Used only for a table that declares no key of
+    // its own. No customer column name appears here, and none may be added:
+    // T034CatalogueHasNoPlantLiteralsTests fails the build if one is.
+    private static bool LooksLikeKey(string column) =>
+        column.Equals("id", StringComparison.OrdinalIgnoreCase)
+        || column.EndsWith("_id", StringComparison.OrdinalIgnoreCase)
+        || column.EndsWith("_no", StringComparison.OrdinalIgnoreCase);
+
     private static bool Ident(string? s)
         => s is not null && System.Text.RegularExpressions.Regex.IsMatch(s, "^[a-zA-Z0-9_]+$");
 
@@ -246,8 +333,42 @@ FROM public.ppiq_visual_mapper_sessions WHERE id = $1 RETURNING id;");
 
         var prms = new List<object>();
 
-        // ---- SELECT list: everything, plus one column per derived expression
-        var select = new StringBuilder("SELECT *");
+        // ---- SELECT list: the projection, plus one column per derived expression
+        // T-033 item 1. THREE STATES, AND THE MIDDLE ONE IS THE POINT.
+        //
+        //   Selects is null       no Select block is on the board. The
+        //                         projection stays SELECT *, so every graph
+        //                         saved before T-033 compiles to the same
+        //                         statement it compiled to before.
+        //   Selects is empty      a Select block IS on the board with
+        //                         nothing chosen. Emitting SELECT * here
+        //                         would return the opposite of what the
+        //                         author asked for, so it is refused with a
+        //                         sentence rather than defaulted.
+        //   Selects has entries   project exactly those qualified fields.
+        //
+        // Ruling 2: a field whose table is not on the board is refused. The
+        // table is NEVER inferred from anything else in the graph.
+        var select = new StringBuilder();
+        if (g.Selects is null)
+        {
+            select.Append("SELECT *");
+        }
+        else if (g.Selects.Length == 0)
+        {
+            return (null, "the Select block has no columns chosen. Choose at least one column, or remove the block.", null);
+        }
+        else
+        {
+            var projected = new List<string>();
+            foreach (var sel in g.Selects)
+            {
+                if (!alias.ContainsKey(sel.Table)) return (null, $"selected column references table '{sel.Table}' which is not on the board", null);
+                if (!Ident(sel.Column)) return (null, $"illegal column identifier '{sel.Column}'", null);
+                projected.Add($"{alias[sel.Table]}.\"{sel.Column}\"");
+            }
+            select.Append("SELECT ").Append(string.Join(", ", projected));
+        }
         foreach (var d in g.Derived ?? Array.Empty<DerivedSpec>())
         {
             if (!Ident(d.Alias)) return (null, $"illegal derived alias '{d.Alias}'", null);
