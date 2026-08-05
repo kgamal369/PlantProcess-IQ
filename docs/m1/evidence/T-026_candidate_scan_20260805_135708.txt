@@ -1,0 +1,115 @@
+
+==============================================================================
+PPIQ T-026 CANDIDATE SCAN - READ ONLY
+==============================================================================
+Database : ppiq_presentation
+No write, no engine call. Spearman over average ranks, as the harness computes it.
+
+==============================================================================
+1 - PARAMETER vs DEFECT COUNT PER COIL
+==============================================================================
+One row per coil: the mean of each parameter against the number of
+CATALOGUED defects on that coil. Events with no defect_catalog_id are
+excluded, so Disposition does not inflate the count.
++-----------------+-------+--------------+
+| parameter_code  |   n   | spearman_rho |
++-----------------+-------+--------------+
+| CT_C            | 17010 |      -0.1035 |
+| FDT_C           | 17010 |       0.0861 |
+| WIDTH_MM        | 17010 |      -0.0189 |
+| ROLL_FORCE_KN   | 17010 |      -0.0144 |
+| BATH_TEMP_C     | 15295 |       0.0096 |
+| ROLL_GAP_MM     | 17010 |       0.0072 |
+| QA_WIDTH_MM     | 15295 |      -0.0070 |
+| ACID_CONC_PCT   | 15295 |       0.0066 |
+| QA_THK_MM       | 15295 |       0.0053 |
+| LINE_SPEED_MPM  | 15295 |       0.0031 |
+| ROLL_TEMP_C     | 17010 |       0.0025 |
+| ROLL_SPEED_MPS  | 17010 |      -0.0018 |
+| QA_ROUGHNESS_UM | 15295 |       0.0014 |
+| THICKNESS_MM    | 17010 |      -0.0011 |
++-----------------+-------+--------------+
+(14 rows)
+
+
+
+==============================================================================
+2 - THE DOWNTIME PAIR
+==============================================================================
+stopped_minutes against production_impact_minutes. A plant engineer would
+predeclare that a longer stoppage costs proportionally more production.
+Whether this fleet agrees is exactly what a harness is for.
++-----+--------------+
+|  n  | spearman_rho |
++-----+--------------+
+| 630 |      -0.0257 |
++-----+--------------+
+(1 row)
+
++------+-------------+-------------+-------------+------------+------------+------------+----------------+
+| rows | stopped_min | stopped_max | stopped_avg | impact_min | impact_max | impact_avg | identical_rows |
++------+-------------+-------------+-------------+------------+------------+------------+----------------+
+|  630 |        3.70 |       89.38 |       48.12 |       0.00 |     294.80 |      34.44 |              0 |
++------+-------------+-------------+-------------+------------+------------+------------+----------------+
+(1 row)
+
+
+
+==============================================================================
+3 - DEFECT CODE POPULATIONS
+==============================================================================
+For choosing a phenomenon whose population genuinely cannot support a
+claim, so the harness reports INSUFFICIENT rather than judging it.
++-----------------+--------+-------+
+|   defect_code   | events | coils |
++-----------------+--------+-------+
+| SENSOR_ARTEFACT |    119 |   117 |
+| LAMINATION      |    119 |   119 |
+| ROLL_MARK       |    149 |   140 |
+| OIL_SPOT        |    179 |   175 |
+| EDGE_WAVE       |    179 |   175 |
+| CENTRE_BUCKLE   |    209 |   204 |
+| WAVINESS        |    238 |   229 |
+| SCRATCH         |    298 |   288 |
+| PINHOLE         |    358 |   349 |
+| INCLUSION       |    417 |   391 |
+| SLIVER          |    537 |   505 |
+| ROLLED_IN_SCALE |    715 |   661 |
+| EDGE_CRACK      |    894 |   809 |
+| SCALE           |   1550 |  1293 |
++-----------------+--------+-------+
+(14 rows)
+
+
+
+==============================================================================
+4 - WHAT A CONDITIONING VARIABLE COULD BE
+==============================================================================
+conditioning_variable must be a column the population_query returns.
+These are the categorical columns with enough levels to stratify on.
++--------------------------------+--------+-------+
+|           candidate            | levels | rows  |
++--------------------------------+--------+-------+
+| downtime_events.downtime_type  |      4 |   630 |
+| downtime_events.reason_code    |      5 |   630 |
+| material_units.grade_or_recipe |      6 | 35910 |
+| material_units.product_family  |      1 | 35910 |
+| quality_events.severity        |      3 |  5961 |
++--------------------------------+--------+-------+
+(5 rows)
+
+
+
+==============================================================================
+HOW THIS IS USED
+==============================================================================
+Three seed phenomena get authored from these numbers, not from expectation:
+  a PASS  - a relationship the fleet genuinely carries, with a band set
+            around the measured value rather than fitted to it
+  a FAIL  - a natural predeclared expectation the data refutes
+  a REFUSAL - a population that genuinely cannot support its claim, so the
+            harness reports INSUFFICIENT instead of judging
+
+A band written around a measured value is still an expectation: the harness
+re-measures it after every fleet change, and a band that stops holding is
+the signal. What must not happen is a band invented to guarantee a PASS.

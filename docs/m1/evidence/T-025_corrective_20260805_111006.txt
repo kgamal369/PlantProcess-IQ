@@ -1,0 +1,221 @@
+
+==============================================================================
+PPIQ T-025 CORRECTIVE EXECUTION
+==============================================================================
+API      : http://localhost:5063
+Database : ppiq_presentation
+Started  : 2026-08-05 08:10:06 UTC - results at or after this are CURRENT
+
+==============================================================================
+0 - ASSERT THE BUILD BEFORE DOING ANYTHING
+==============================================================================
+  functions carrying the T-025b marker : 1 (required 1)
+
+==============================================================================
+0b - AUTHENTICATE
+==============================================================================
+[OK] token length 827
+
+==============================================================================
+A - CORRECTED REFRESH A
+==============================================================================
+The producer self-clears both value tables, so this is idempotent.
+  POST /api/ml/foundation/feature-store/refresh  windowDays=3650
+  -> 500 in 7.3s
+     {"type":"urn:ppiq:error:internal","title":"An unexpected error occurred","status":500,"detail":"23502: null value in column \"refresh_run_id\" of relation \"ml_feature_values\" violates not-null constraint\r\n\r\nDETAIL: Detail redacted as it may contain sensi
+[FAIL] refresh A did not return 200. Stopping rather than starting a
+       third cycle. The function may still have committed - the
+       populations below will show what actually landed.
+
+==============================================================================
+B - THE THREE OUTCOME POPULATIONS, MEASURED
+==============================================================================
+    outcome_key     | grain | rows | numeric_not_null | category_not_null | severity_not_null | independent_heats 
+--------------------+-------+------+------------------+-------------------+-------------------+-------------------
+ defect.class       | coil  | 7844 |                0 |              7844 |                 0 |              1666
+ defect.rate_per_m2 | coil  | 7844 |             7844 |              7844 |              5961 |              1666
+ defect.severity    | coil  | 5961 |                0 |                 0 |              5961 |              1341
+(3 rows)
+
+
+
+B1 - defect.severity must now be loader-visible
+  severity rows                 : 5961 (required above 0)
+  category_value populated      : 0 (required above 0)
+  real category count           : 0 (required at least 2)
+ category | rows |   pct   
+----------+------+---------
+ (null)   | 5961 | 100.000
+(1 row)
+
+
+B2 - defect.class must be free of the event_type fallback
+  Disposition rows in defect.class : 1883 (required 0)
+    category     | rows |  pct   
+-----------------+------+--------
+ SENSOR_ARTEFACT |  119 |  1.517
+ LAMINATION      |  119 |  1.517
+ ROLL_MARK       |  149 |  1.900
+ OIL_SPOT        |  179 |  2.282
+ EDGE_WAVE       |  179 |  2.282
+ CENTRE_BUCKLE   |  209 |  2.664
+ WAVINESS        |  238 |  3.034
+ SCRATCH         |  298 |  3.799
+ PINHOLE         |  358 |  4.564
+ INCLUSION       |  417 |  5.316
+ SLIVER          |  537 |  6.846
+ ROLLED_IN_SCALE |  715 |  9.115
+ EDGE_CRACK      |  894 | 11.397
+ SCALE           | 1550 | 19.760
+ Disposition     | 1883 | 24.006
+(15 rows)
+
+
+  Minority fraction recomputed the way MinorityFraction computes it
+  (a single class returns 0.0 via its g.Count < 2 branch):
+  outcome_key           classes   min share    predicted gate
+  defect.class          15        0.01517      BLOCKED
+  defect.severity       1         0.00000      BLOCKED
+  This is a PREDICTION of the gate. Section C is the engine's actual verdict.
+B3 - defect.rate_per_m2 must no longer be materialised
+  rate_per_m2 rows : 7844 (required 0)
+  No authoritative m2 denominator exists in the canonical inputs, so the
+  false constant is no longer written. The definition row remains and the
+  outcome reports as NOT MATERIALISED, like the other five.
+
+==============================================================================
+C - CURRENT CORRELATION, ONE CALL PER ACTIVE DEFINITION
+==============================================================================
+  defect.class                coil      -> 200  Blocked    results 0
+      Blocked by the data-readiness gate; analysis refused (honest abstain).
+  defect.position             coil      -> 200  Blocked    results 0
+      Blocked by the data-readiness gate; analysis refused (honest abstain).
+  defect.rate_per_m2          coil      -> 200  NoData     results 0
+      Computed 0 finding(s); 26 excluded.
+  defect.severity             coil      -> 200  Blocked    results 0
+      Blocked by the data-readiness gate; analysis refused (honest abstain).
+  downtime.cascade_minutes    location  -> 200  Blocked    results 0
+      Blocked by the data-readiness gate; analysis refused (honest abstain).
+  kpi.energy_per_ton          generic   -> 200  Blocked    results 0
+      Blocked by the data-readiness gate; analysis refused (honest abstain).
+  kpi.prime_yield             generic   -> 200  Blocked    results 0
+      Blocked by the data-readiness gate; analysis refused (honest abstain).
+  kpi.throughput              generic   -> 200  Blocked    results 0
+      Blocked by the data-readiness gate; analysis refused (honest abstain).
+
+  outcomes producing results : 0
+
+==============================================================================
+D - CURRENT VERSUS HISTORICAL RESULT POPULATION
+==============================================================================
+The 26 July results do not count toward T-025. Current means a compute run
+completed at or after 2026-08-05 08:10:06 UTC.
+    era     |  status   | runs | results 
+------------+-----------+------+---------
+ historical | Blocked   |   89 |       0
+ historical | Completed |   20 |       0
+ historical | Failed    |  347 |       0
+ historical | NoData    |    2 |      26
+ CURRENT    | Blocked   |    7 |       0
+ CURRENT    | NoData    |    1 |      26
+(6 rows)
+
+
+
+  CURRENT Fleet v2 result population : 26 (required above 0)
+  historical result population       : 26
+
+  NOT QUARANTINED. Removing analysis history was not authorised, so this
+  script reports the split and leaves the rows in place. Re-run with
+  -QuarantineStaleResults if the historical rows must be removed before
+  closure rather than filtered by compute run on the reading surfaces.
+
+==============================================================================
+E - RISK AND LEARNING, REPORTED NOT RE-RUN
+==============================================================================
+  risk scores evaluated              : 500
+  eligible / current population      : 35910
+  THIS IS A BOUNDED ENGINE-EXECUTION PROOF, NOT FULL RISK COVERAGE.
+  No customer-visible surface may claim full-population risk coverage on
+  the strength of this number.
+ is_enabled | jobs 
+------------+------
+ f          |    4
+(1 row)
+
+
+  The catalogue exists and no job is enabled. That is a configuration
+  state. No job was enabled by this script.
+
+==============================================================================
+F - SNAPSHOT A FOR THE REPRODUCIBILITY PROOF
+==============================================================================
+Row identity + categorical value + ROUND(numeric_value, 6). An aggregate
+can hide offsetting row changes; EXCEPT in both directions cannot.
+DROP TABLE
+SELECT 527329
+ snapshot_a_rows 
+-----------------
+          527329
+(1 row)
+
+
+
+==============================================================================
+F2 - VACUUM THE TWO VALUE TABLES
+==============================================================================
+Several DELETE/INSERT cycles leave these tables bloated. This is cheap
+maintenance before the second refresh. It is NOT claimed as the cause of
+any earlier timing drift - that was never proven.
+  [OK] vacuumed
+
+==============================================================================
+G - REFRESH B AND THE ROW-LEVEL REPRODUCIBILITY PROOF
+==============================================================================
+  POST /api/ml/foundation/feature-store/refresh  windowDays=3650
+  -> 500 in 6.6s
+     {"type":"urn:ppiq:error:internal","title":"An unexpected error occurred","status":500,"detail":"23502: null value in column \"refresh_run_id\" of relation \"ml_feature_values\" violates not-null constraint\r\n\r\nDETAIL: Detail redacted as it may contain sensi
+[FAIL] refresh B did not return 200. The reproducibility proof cannot be
+       completed and this is NOT retried - that would be a third cycle.
+
+==============================================================================
+H - THE FROZEN INVARIANTS STILL HOLD
+==============================================================================
+                check_name                 | found | required 
+-------------------------------------------+-------+----------
+ feature values without a run              |     0 |        0
+ outcome values without a run              |     0 |        0
+ correlation results without a compute run |     0 |        0
+ refresh_run_id nullable on feature values |     0 |        0
+ refresh_run_id nullable on outcome values |     0 |        0
+(5 rows)
+
+
+  parsed invariant rows : 5 (required 5)
+
+==============================================================================
+I - THE GENUINE REFUSAL, ON CORRECTED DATA
+==============================================================================
+  8 engine refusal(s) on the corrected population:
+    defect.class -> Blocked : Blocked by the data-readiness gate; analysis refused (honest abstain).
+    defect.position -> Blocked : Blocked by the data-readiness gate; analysis refused (honest abstain).
+    defect.rate_per_m2 -> NoData : Computed 0 finding(s); 26 excluded.
+    defect.severity -> Blocked : Blocked by the data-readiness gate; analysis refused (honest abstain).
+    downtime.cascade_minutes -> Blocked : Blocked by the data-readiness gate; analysis refused (honest abstain).
+    kpi.energy_per_ton -> Blocked : Blocked by the data-readiness gate; analysis refused (honest abstain).
+    kpi.prime_yield -> Blocked : Blocked by the data-readiness gate; analysis refused (honest abstain).
+    kpi.throughput -> Blocked : Blocked by the data-readiness gate; analysis refused (honest abstain).
+
+==============================================================================
+T-025 CORRECTIVE GATE
+==============================================================================
+  Authenticated product path      PASS
+  Outcome populations             FAIL
+  Current correlation population  PASS - 26 current
+  Risk                            BOUNDED PROOF - 500 of 35910
+  Learning                        NOT CONFIGURED - catalogue present, 0 enabled
+  Reproducibility                 FAIL - refresh B HTTP 500
+  Frozen invariants               PASS
+  Genuine refusal                 PASS - 8 on corrected data
+
+TWO REFRESHES RAN. NO THIRD CYCLE. The outcome producer is frozen again.

@@ -1,0 +1,48 @@
+[
+  {
+    "phenomenon_id": "PPIQ-COIL-COILING-TEMP-DEFECTS",
+    "population": 17010,
+    "minimum_population": 5000,
+    "effect": -0.10347647591991664,
+    "direction": "negative",
+    "conditioned_effect": 0.00035966156050258206,
+    "strata_used": 6,
+    "strata_skipped": 0,
+    "negative_control": false,
+    "verdict": "PASS",
+    "reasons": [
+      "population, direction, effect band and conditioned band all met"
+    ]
+  },
+  {
+    "phenomenon_id": "PPIQ-DOWNTIME-IMPACT-SCALES-WITH-STOPPAGE",
+    "population": 630,
+    "minimum_population": 300,
+    "effect": -0.02565308265628618,
+    "direction": "negative",
+    "conditioned_effect": null,
+    "strata_used": 0,
+    "strata_skipped": 0,
+    "negative_control": false,
+    "verdict": "FAIL",
+    "reasons": [
+      "direction is negative, expected positive",
+      "effect -0.0257 is outside the expected band 0.4000..1.0000"
+    ]
+  },
+  {
+    "phenomenon_id": "PPIQ-SENSOR-ARTEFACT-COILING-TEMP",
+    "population": 117,
+    "minimum_population": 780,
+    "effect": null,
+    "direction": null,
+    "conditioned_effect": null,
+    "strata_used": 0,
+    "strata_skipped": 0,
+    "negative_control": false,
+    "verdict": "INSUFFICIENT",
+    "reasons": [
+      "population 117 is below the declared minimum 780; refusing to judge rather than passing quietly"
+    ]
+  }
+]

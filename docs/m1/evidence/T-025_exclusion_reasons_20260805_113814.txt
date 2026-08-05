@@ -1,0 +1,57 @@
+
+==============================================================================
+PPIQ T-025 EXCLUSION REASONS - READ ONLY
+==============================================================================
+Database : ppiq_presentation
+No engine call, no write, no refresh.
+
+==============================================================================
+1 - WHY EVERY PARAMETER WAS EXCLUDED, BY OUTCOME
+==============================================================================
+     outcome     | status |    method     |                        reason                         | features 
+-----------------+--------+---------------+-------------------------------------------------------+----------
+ defect.severity | NoData | NotApplicable | Undefined statistic (constant / zero-variance input). |       26
+(1 row)
+
+
+
+==============================================================================
+2 - THE SHAPE THAT DECIDES THE METHOD
+==============================================================================
+MethodSelector covers Numeric/Numeric, Binary/Numeric and
+Categorical/Categorical. Everything else returns NotApplicable.
+MapOutcome sends 'multinomial' AND 'ordinal' to Categorical.
+       outcome_key        | outcome_type | engine_outcome_type | materialised_rows 
+--------------------------+--------------+---------------------+-------------------
+ defect.class             | multinomial  | Categorical         |              5961
+ defect.position          | multinomial  | Categorical         |                 0
+ defect.rate_per_m2       | rate         | Numeric             |                 0
+ defect.severity          | ordinal      | Categorical         |              5961
+ downtime.cascade_minutes | duration     | Numeric             |                 0
+ kpi.energy_per_ton       | continuous   | Numeric             |                 0
+ kpi.prime_yield          | rate         | Numeric             |                 0
+ kpi.throughput           | continuous   | Numeric             |                 0
+(8 rows)
+
+
+Feature value types at grain coil - the left side of every pairing:
+ value_type | feature_keys 
+------------+--------------
+ numeric    |           26
+(1 row)
+
+
+
+==============================================================================
+3 - THE VERDICT
+==============================================================================
+If section 1 shows NotApplicable with an undefined-statistic or
+unsupported-shape reason across every feature, the cause is the method
+matrix and NOT the data: a numeric parameter against a categorical
+outcome has no selectable test. Every materialised outcome is
+categorical and every feature is numeric, so no pairing available in
+the current canonical population can produce a finding.
+
+If instead the reasons say insufficient paired samples, zero variance or
+collinearity, the method-matrix reading is WRONG and the cause is
+elsewhere. Report what is printed, not what was expected.

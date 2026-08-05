@@ -1,0 +1,39 @@
+
+==============================================================================
+PPIQ T-025 CLOSURE
+==============================================================================
+API      : http://localhost:5063
+Database : ppiq_presentation
+
+==============================================================================
+AUTHENTICATE
+==============================================================================
+[OK] token length 827
+
+==============================================================================
+A - ROW-LEVEL REPRODUCIBILITY
+==============================================================================
+Row identity + categorical value + ROUND(numeric_value, 6), compared with
+EXCEPT in BOTH directions. An aggregate can hide offsetting row changes;
+this cannot.
+snapshot A : 527329 rows
+second authenticated refresh...
+  -> 500 in 308.9s
+[FAIL] second refresh failed.
+[ERROR] rerun
+
+==============================================================================
+T-025 CLOSURE GATE
+==============================================================================
+  Feature/outcome                   NOT REACHED
+  Authenticated product path        PASS
+  Full lineage                      NOT REACHED
+  Reproducibility                   NOT REACHED
+  NOT NULL lineage invariant        NOT REACHED
+  Correlation                       NOT REACHED
+  Readiness                         NOT REACHED
+  Risk                              NOT REACHED
+  Learning                          NOT REACHED
+  Compute-run coverage              NOT REACHED
+  Genuine refusal                   NOT REACHED
+  No stale pre-T024 masquerade      NOT REACHED

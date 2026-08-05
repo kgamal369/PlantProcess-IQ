@@ -1,0 +1,172 @@
+
+==============================================================================
+PPIQ T-025 READINESS DIAGNOSIS - READ ONLY
+==============================================================================
+Database : ppiq_presentation
+Nothing is written. No engine is called.
+
+==============================================================================
+A - IS THE ANALYSIS LAYER STALE
+==============================================================================
+T-024 replaced the canonical operational population on 04-Aug. Any analysis
+row computed before that describes material units that no longer exist.
+  status   | runs | results | first_day  |  last_day  
+-----------+------+---------+------------+------------
+ Blocked   |   89 |       0 | 2026-06-28 | 2026-08-05
+ Completed |   20 |       0 | 2026-07-05 | 2026-07-13
+ Failed    |  347 |       0 | 2026-07-05 | 2026-07-05
+ NoData    |    2 |      26 | 2026-06-28 | 2026-08-05
+(4 rows)
+
+
+Any row above whose last_day precedes 2026-08-04 was computed against the
+pre-T-024 population. It is stale opinion, not a current result.
+
+==============================================================================
+B - OUTCOME MATERIALISATION PER DECLARED DEFINITION
+==============================================================================
+The loader filters on (outcome_key, grain). A definition with no rows at its
+own grain cannot be analysed, and its abstain is a pipeline gap.
+       outcome_key        |  grain   | outcome_type | outcome_rows | independent_heats | sample_keys 
+--------------------------+----------+--------------+--------------+-------------------+-------------
+ defect.class             | coil     | multinomial  |         7844 |              1666 |        4528
+ defect.position          | coil     | multinomial  |            0 |                 0 |           0
+ defect.rate_per_m2       | coil     | rate         |         7844 |              1666 |        4528
+ defect.severity          | coil     | ordinal      |         5961 |              1341 |        3000
+ downtime.cascade_minutes | location | duration     |            0 |                 0 |           0
+ kpi.energy_per_ton       | generic  | continuous   |            0 |                 0 |           0
+ kpi.prime_yield          | generic  | rate         |            0 |                 0 |           0
+ kpi.throughput           | generic  | continuous   |            0 |                 0 |           0
+(8 rows)
+
+
+
+GATE VERDICT PER OUTCOME, recomputed against ReadinessGate thresholds:
+  outcome_key                 grain     rows     heats   verdict
+  defect.class                coil      7844     1666    SHOULD HAVE RUN - look at alignment in section D
+  defect.position             coil      0        0       NOT MATERIALISED - the abstain is a pipeline gap
+  defect.rate_per_m2          coil      7844     1666    SHOULD HAVE RUN - look at alignment in section D
+  defect.severity             coil      5961     1341    SHOULD HAVE RUN - look at alignment in section D
+  downtime.cascade_minutes    location  0        0       NOT MATERIALISED - the abstain is a pipeline gap
+  kpi.energy_per_ton          generic   0        0       NOT MATERIALISED - the abstain is a pipeline gap
+  kpi.prime_yield             generic   0        0       NOT MATERIALISED - the abstain is a pipeline gap
+  kpi.throughput              generic   0        0       NOT MATERIALISED - the abstain is a pipeline gap
+
+  NOT MATERIALISED : 5
+  GENUINELY THIN   : 0
+  SHOULD HAVE RUN  : 3
+
+==============================================================================
+C - FEATURE MATERIALISATION PER GRAIN
+==============================================================================
+The loader takes features by grain alone, filtered on missingness_flag=false.
+ grain | missingness_flag | feature_rows | feature_keys | sample_keys 
+-------+------------------+--------------+--------------+-------------
+ coil  | f                |       431970 |           26 |       17010
+ heat  | f                |        22680 |           12 |        1890
+ slab  | f                |        51030 |            3 |       17010
+(3 rows)
+
+
+A grain present in the outcome table but absent here has no parameters to
+correlate against, whatever the outcome volume.
+
+==============================================================================
+D - SAMPLE-KEY ALIGNMENT, THE THING THAT EXCLUDED 26 OF 26
+==============================================================================
+defect.rate_per_m2 cleared the gate and still returned 0 findings with 26
+parameters excluded. Alignment is on effective_sample_key. If the outcome
+keys and the feature keys do not intersect, every parameter is excluded no
+matter how many rows each side holds.
+             side             | keys  
+------------------------------+-------
+ outcome sample keys          |  4528
+ feature sample keys          | 17010
+ keys present in BOTH         |  4528
+ outcome keys with no feature |     0
+ feature keys with no outcome | 12482
+(5 rows)
+
+
+
+Sample-key SHAPE on each side - a format mismatch shows here immediately:
+  side   | example  
+---------+----------
+ outcome | C0000253
+ outcome | C0000619
+ outcome | C0000687
+(3 rows)
+
+
+  side   | example  
+---------+----------
+ feature | C0000001
+ feature | C0000001
+ feature | C0000001
+(3 rows)
+
+
+
+PER-PARAMETER OVERLAP - how many usable pairs each feature actually offers.
+MethodSelector needs at least 4 aligned non-null pairs or the parameter is
+skipped, and a zero-variance parameter is dropped after that.
+      feature_key      | aligned_pairs | numeric_pairs | distinct_values 
+-----------------------+---------------+---------------+-----------------
+ param.aluminium_pct   |          7844 |          7844 |            1343
+ param.carbon_pct      |          7844 |          7844 |            1521
+ param.ct_c            |          7844 |          7844 |            3824
+ param.fdt_c           |          7844 |          7844 |            3562
+ param.lf_argon_nm3    |          7844 |          7844 |            1654
+ param.lf_calcium_m    |          7844 |          7844 |            1648
+ param.lf_final_temp_c |          7844 |          7844 |            1457
+ param.manganese_pct   |          7844 |          7844 |            1648
+ param.oxygen_nm3      |          7844 |          7844 |            1665
+ param.phosphorus_pct  |          7844 |          7844 |            1134
+ param.power_kwh       |          7844 |          7844 |            1665
+ param.roll_force_kn   |          7844 |          7844 |            4528
+ param.roll_gap_mm     |          7844 |          7844 |            4521
+ param.roll_speed_mps  |          7844 |          7844 |            4526
+ param.roll_temp_c     |          7844 |          7844 |            4154
+ param.silicon_pct     |          7844 |          7844 |            1561
+ param.sulphur_pct     |          7844 |          7844 |            1096
+ param.tap_temp_c      |          7844 |          7844 |            1515
+ param.thickness_mm    |          7844 |          7844 |            3453
+ param.width_mm        |          7844 |          7844 |            3550
+ param.acid_conc_pct   |          7247 |          7247 |            3715
+ param.bath_temp_c     |          7247 |          7247 |            1687
+ param.line_speed_mpm  |          7247 |          7247 |            3734
+ param.qa_roughness_um |          7247 |          7247 |            4234
+ param.qa_thk_mm       |          7247 |          7247 |            4234
+ param.qa_width_mm     |          7247 |          7247 |            4234
+(26 rows)
+
+
+distinct_values of 1 is a zero-variance parameter and is dropped by design.
+aligned_pairs under 4 is dropped before any method is chosen.
+
+==============================================================================
+E - WHERE THE OUTCOME VALUES CAME FROM
+==============================================================================
+If the feature-store refresh only materialises one outcome family, the other
+seven definitions are DECLARED BUT NEVER PRODUCED - a T-025 finding about
+the refresh function, not about the plant.
+    outcome_key     | grain | rows | first_day  |  last_day  
+--------------------+-------+------+------------+------------
+ defect.class       | coil  | 7844 | 2026-04-01 | 2026-07-05
+ defect.rate_per_m2 | coil  | 7844 | 2026-04-01 | 2026-07-05
+ defect.severity    | coil  | 5961 | 2026-04-01 | 2026-07-03
+(3 rows)
+
+
+
+==============================================================================
+WHAT TO DO WITH THIS
+==============================================================================
+NOT MATERIALISED outcomes  -> the refresh function is the defect. The abstain
+                              must NOT be presented as an analytical refusal.
+GENUINELY THIN outcomes    -> the abstain is real and satisfies T-025's refusal
+                              requirement. Record and keep.
+SHOULD HAVE RUN outcomes   -> section D decides it: no key overlap is an
+                              identity defect between the two value tables.
+
+No fix is proposed here. This script measures and stops.
