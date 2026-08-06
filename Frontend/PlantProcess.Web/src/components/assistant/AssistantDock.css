@@ -1,0 +1,58 @@
+/* PPIQ-T071 assistant dock.
+   Reuses the application palette and radii - no new visual language. The
+   collapsed state is a single control in the corner so it covers nothing, and
+   the expanded panel is bounded by the viewport rather than floating over it
+   like a modal: the workspace behind it stays usable. */
+.piq-dock { position: fixed; right: 20px; bottom: 20px; z-index: 60; }
+.piq-dock-toggle,
+.piq-dock-close {
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: #eaf6ff;
+  background: #102a43;
+  border: 1px solid #1d3a63;
+  border-radius: 10px;
+  padding: 9px 14px;
+  cursor: pointer;
+}
+.piq-dock-toggle:hover,
+.piq-dock-close:hover { border-color: #00d4ff; }
+.piq-dock-toggle:focus-visible,
+.piq-dock-close:focus-visible { outline: 2px solid #00d4ff; outline-offset: 2px; }
+.piq-dock-count {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: #00d4ff;
+  color: #050b18;
+  font-size: 11px;
+}
+.piq-dock-panel {
+  display: flex;
+  flex-direction: column;
+  width: min(420px, calc(100vw - 40px));
+  max-height: min(560px, calc(100vh - 120px));
+  background: #0b1730;
+  border: 1px solid #1d3a63;
+  border-radius: 14px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, .5);
+  overflow: hidden;
+}
+.piq-dock-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-bottom: 1px solid #16294a;
+}
+.piq-dock-title { font-size: 13px; font-weight: 700; color: #eaf6ff; letter-spacing: .04em; }
+.piq-dock-body { flex: 1 1 auto; overflow: auto; padding: 12px 14px; }
+.piq-dock-status { margin: 0; padding: 10px 14px; border-top: 1px solid #16294a; color: #8ea7c1; font-size: 12px; }
+
+@media (max-width: 680px) {
+  .piq-dock { right: 12px; bottom: 12px; left: 12px; }
+  .piq-dock-panel { width: 100%; max-height: calc(100vh - 90px); }
+}

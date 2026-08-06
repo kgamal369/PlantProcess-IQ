@@ -5,6 +5,10 @@ import { useEffect, useState } from "react";
 // ============================================================
 
 import { NavLink, Outlet, useLocation } from "react-router-dom";
+/* PPIQ-T071: the dock is mounted by the LAYOUT, not by a route, so the
+   conversation outlives every child-route change. Chapter 4 5.7.1. */
+import { AssistantDockProvider } from "./assistant/AssistantDockContext";
+import { AssistantDock } from "./assistant/AssistantDock";
 import {
   AlertTriangle,
   BarChart3,
@@ -369,9 +373,12 @@ export function AppLayout() {
         </div>
 
         {/* Page content */}
-        <div className="piq-workspace">
-          <Outlet />
-        </div>
+        <AssistantDockProvider>
+          <div className="piq-workspace">
+            <Outlet />
+          </div>
+          <AssistantDock />
+        </AssistantDockProvider>
 
         <LogPanel />
       </main>

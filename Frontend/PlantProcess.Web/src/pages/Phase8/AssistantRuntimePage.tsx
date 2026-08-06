@@ -2,72 +2,28 @@
 // FILE: src/pages/Phase8/AssistantRuntimePage.tsx
 // M1-11: THE assistant page. Routed at /assistant.
 //
-// Holds the conversation, renders <AssistantChat/>, and wires its onAsk to
-// assistantApi.askAssistant(), which is the ONLY place the ask endpoint is
-// called. (The endpoint path is deliberately not written here: the M1-11 gate
+// Renders <AssistantChat/> against the shared dock conversation. Since T-071 it
+// holds no state of its own: AssistantDockContext owns the turns and the single
+// ask call. (The endpoint path is deliberately not written here: the M1-11 gate
 // greps src/ for it to prove nothing bypasses the api client.)
 //
 // If no LLM provider is configured, the backend abstains and the abstention is
 // shown as an abstention. Nothing is fabricated to fill the silence.
 // ============================================================
-import { useEffect, useState } from "react";
-import { assistantModeLabel, assistantApi, type AssistantCitation, type AssistantConfiguration } from "@/api/assistantApi";
-import { AssistantChat, type Turn } from "@/components/assistant/AssistantChat";
+import { assistantModeLabel, type AssistantCitation } from "@/api/assistantApi";
+import { AssistantChat } from "@/components/assistant/AssistantChat";
+import { ASSISTANT_CONTEXT_CHIPS, useAssistantDock } from "@/components/assistant/AssistantDockContext";
 import { StandardStatGrid } from "@/components/standard";
 import "./phase8-ai.css";
 
-const CONTEXT_CHIPS = ["grounded", "approved findings"];
+const CONTEXT_CHIPS = ASSISTANT_CONTEXT_CHIPS;
 
+/* PPIQ-T071: this page is now a CONSUMER. The conversation, the configuration
+   and the single assistantApi.askAssistant call live in AssistantDockContext,
+   above the router outlet, so they survive navigation. /assistant and the dock
+   are therefore one conversation rather than two. */
 export function AssistantRuntimePage() {
-  const [config, setConfig] = useState<AssistantConfiguration | null>(null);
-  const [turns, setTurns] = useState<Turn[]>([]);
-  const [busy, setBusy] = useState(false);
-  const [status, setStatus] = useState("Loading assistant runtime configuration...");
-
-  useEffect(() => {
-    let active = true;
-    assistantApi
-      .getAssistantConfig()
-      .then((next) => {
-        if (!active) return;
-        setConfig(next);
-        setStatus("Assistant runtime is configured.");
-      })
-      .catch((error: Error) => {
-        if (!active) return;
-        setStatus("Assistant configuration not reachable: " + error.message);
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  async function ask(question: string) {
-    setBusy(true);
-    setStatus("Asking grounded assistant...");
-    setTurns((prev) => [...prev, { role: "user", text: question }]);
-
-    try {
-      const result = await assistantApi.askAssistant(question, CONTEXT_CHIPS, config?.allowedTools ?? []);
-      setTurns((prev) => [...prev, { role: "assistant", answer: result }]);
-      setStatus(
-        result.isRefusal
-          ? "Assistant abstained because evidence was insufficient."
-          : "Grounded answer returned with evidence.",
-      );
-    } catch (error) {
-      setTurns((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          error: error instanceof Error ? error.message : String(error),
-        },
-      ]);
-      setStatus("Assistant request failed.");
-    } finally {
-      setBusy(false);
-    }
-  }
+  const { config, turns, busy, status, ask, setStatus } = useAssistantDock();
 
   function openEvidence(handle: AssistantCitation) {
     // No evidence-row route exists yet; AssistantChat expands the handle inline.

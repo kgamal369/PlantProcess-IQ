@@ -31,7 +31,18 @@ describe("M1-11: one assistant, wired through the api client", () => {
     const page = read("src/pages/Phase8/AssistantRuntimePage.tsx");
     expect(page.length).toBeGreaterThan(0);
     expect(page).toContain("<AssistantChat");
-    expect(page).toContain("assistantApi.askAssistant(");
+  });
+
+  /* PPIQ-T071: the single askAssistant call MOVED from the page to the dock
+     provider, because the conversation now lives above the router outlet so it
+     survives navigation. The assertion moves with the responsibility - the rule
+     it protects is unchanged: every assistant request goes through the existing
+     api client, from exactly one place. */
+  it("the dock provider owns the single askAssistant call", () => {
+    const ctx = read("src/components/assistant/AssistantDockContext.tsx");
+    expect(ctx).toContain("assistantApi.askAssistant(");
+    const page = read("src/pages/Phase8/AssistantRuntimePage.tsx");
+    expect(page).not.toContain("assistantApi.askAssistant(");
   });
 
   it("AssistantChat does not redeclare the wire types", () => {
