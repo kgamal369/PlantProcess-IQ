@@ -1,5 +1,5 @@
 /* PPIQ T-038 pack 02b. The S2 face carries its own class namespace so that
-   retiring WidgetAuthoringPanel in pack 03 takes its stylesheet with it. */
+   retiring the old widget authoring surface takes its stylesheet with it. */
 
 .ppiq-s2 { min-width: 0; }
 

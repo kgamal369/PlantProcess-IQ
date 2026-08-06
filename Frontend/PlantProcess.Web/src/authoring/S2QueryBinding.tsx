@@ -17,8 +17,9 @@
 // without a second copy of anything.
 //
 // THE DEFECT THIS CLOSES, measured in the shipped code before it was written.
-// WidgetAuthoringPanel offered the returned columns' LABELS as the role choices
-// and stored a label. SavedDashboardWidget resolves the saved binding against
+// The surface T-038 retires offered the returned columns' LABELS as the role
+// choices and stored a label. SavedDashboardWidget resolves the saved binding
+// against
 // the columns' CODES. Unless the two are identical for every column, every
 // query-bound widget reads as stale at render time and the chart silently falls
 // back to inference, which is the exact failure the role binding was written to
@@ -80,6 +81,13 @@ export interface S2QueryBindingProps {
   onChange: (next: S2AuthoringState) => void;
   /** Section 5.2.8: the Job Log is the authoritative surface. Never a toast. */
   onLog: (severity: S2LogSeverity, message: string, facts?: string) => void;
+  /**
+   * T-038 pack 03a. The shell compiles the save payload and needs the same
+   * catalogue this face reads - the chart type's category, and which fields
+   * declare that they require a parameter. Reported upward from the ONE fetch
+   * rather than requested a second time.
+   */
+  onCatalogue?: (catalogue: S2Metadata) => void;
 }
 
 function itemCode(i: RefItem) { return String(i.code ?? i.id ?? ""); }
@@ -93,7 +101,7 @@ function sampleOf(rows: readonly Record<string, unknown>[], code: string): strin
   return "no rows to sample";
 }
 
-export function S2QueryBinding({ state, onChange, onLog }: S2QueryBindingProps) {
+export function S2QueryBinding({ state, onChange, onLog, onCatalogue }: S2QueryBindingProps) {
   const [meta, setMeta] = useState<S2Metadata | null>(null);
   const [refData, setRefData] = useState<RefData | null>(null);
   const [result, setResult] = useState<RunResult | null>(null);
@@ -108,6 +116,7 @@ export function S2QueryBinding({ state, onChange, onLog }: S2QueryBindingProps) 
       if (!alive) { return; }
       setMeta(m);
       setRefData(r);
+      if (onCatalogue) { onCatalogue(m); }
     }).catch(() => {
       if (!alive) { return; }
       onLog("error",

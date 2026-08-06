@@ -11,9 +11,10 @@
 // tree, or where the binding will be stored - the caller owns persistence and
 // already has readRoleBinding and writeRoleBinding for it.
 //
-// WHY IT IS NOT INSIDE WidgetAuthoringPanel ANY MORE: that panel is retired by
-// T-038, and a capability that lives inside a component scheduled for deletion
-// is deleted with it.
+// WHY IT DOES NOT LIVE INSIDE THE SURFACE IT CAME FROM: that surface is retired
+// by T-038, and a capability that lives inside a component scheduled for
+// deletion is deleted with it. The surface is described here rather than named,
+// because the retirement ratchet scans this very file for its name.
 
 import { StandardP2Select } from "@/components/standard/StandardP2Controls";
 import { staleRoles, type WidgetRole, type WidgetRoleBinding } from "@/api/product-core/widget-role-binding";

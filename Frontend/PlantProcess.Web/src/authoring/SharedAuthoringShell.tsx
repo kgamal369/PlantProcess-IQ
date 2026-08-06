@@ -56,8 +56,12 @@ import {
 import { SqlHighlighted } from "./SqlHighlighted";
 import { AuthoringSchemaTree } from "./AuthoringSchemaTree";
 import { AuthoringToolbox } from "./AuthoringToolbox";
-import { S2QueryBinding } from "./S2QueryBinding";
-import { loadS2State, type S2AuthoringState } from "./widgetDefinitionModel";
+import { S2QueryBinding, type S2Metadata } from "./S2QueryBinding";
+import {
+  chartCapabilities, loadS2State, saveRefusal, saveTarget, toWidgetPayload,
+  type S2AuthoringState, type WidgetDefinitionRecord,
+} from "./widgetDefinitionModel";
+import { dashboardingApi } from "@/api/dashboarding/dashboarding.api";
 import { purposeDefinition, type AuthoringMode, type AuthoringPurpose } from "./authoringPurposes";
 import "@/pages/Prep/CanvasModeBar.css";
 import "@/pages/Prep/CanvasSchemaTree.css";
@@ -84,16 +88,38 @@ const BLOCK_TITLE_OF: Record<string, string> = {
 
 export interface SharedAuthoringShellProps {
   purpose: AuthoringPurpose;
+  /**
+   * T-038 pack 03a. Everything below is OPTIONAL, and that is the whole design:
+   * a purpose that authors nothing storable is opened with a purpose alone and
+   * behaves exactly as it did before these existed. S2 is opened from the page
+   * the widget lives on, which is Constitution v3 II.6.7, so the caller passes
+   * the dashboard, the widget being edited if there is one, and what to do when
+   * the work is saved or abandoned.
+   */
+  dashboardDefinitionId?: string;
+  /** Null or absent means Add. A record means Edit, loaded as it was saved. */
+  existingWidget?: WidgetDefinitionRecord | null;
+  onSaved?: () => void | Promise<void>;
+  onClose?: () => void;
 }
 
-export function SharedAuthoringShell({ purpose }: SharedAuthoringShellProps) {
+export function SharedAuthoringShell({
+  purpose, dashboardDefinitionId, existingWidget, onSaved, onClose,
+}: SharedAuthoringShellProps) {
   const definition = purposeDefinition(purpose);
 
   // T-038. THE REGISTRY DECIDES, NOT A PURPOSE NAME. A purpose that declares a
   // query contract authors through the S2 face; every other purpose keeps the
   // board and the preparation modes exactly as they were.
   const isQueryPurpose = definition.queryContract === "widget-query-expression";
-  const [s2State, setS2State] = useState<S2AuthoringState>(() => loadS2State(null));
+  const [s2State, setS2State] = useState<S2AuthoringState>(() => loadS2State(existingWidget));
+  // The catalogue the face fetched, kept here because the SAVE is compiled here.
+  const [s2Catalogue, setS2Catalogue] = useState<S2Metadata | null>(null);
+  const [savingWidget, setSavingWidget] = useState(false);
+  // A pure function may not own randomness, so the code suffix for a NEW widget
+  // is drawn once per opening and handed to the model. Editing never uses it,
+  // because an existing widget keeps the code it was saved under.
+  const [newWidgetSuffix] = useState(() => Math.random().toString(36).slice(2, 7));
 
   const [catalogue, setCatalogue] = useState<StagedDataset[]>([]);
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
@@ -551,6 +577,52 @@ export function SharedAuthoringShell({ purpose }: SharedAuthoringShellProps) {
     } catch (e) { logError(name, describeThrownAction(e)); }
   }, [name, sqlText, forkedGraph, logError, logSuccess]);
 
+  // T-038 pack 03a. THE SAVE. It compiles through the model rather than
+  // building a payload here, so what this shell stores is byte-comparable with
+  // what the retiring panel stored - that equivalence is pack 01's invariant
+  // and it is the reason Edit can be trusted at all.
+  const s2Subject = s2State.title || definition.outputArtifact;
+  const widgetRefusal = isQueryPurpose
+    ? saveRefusal(s2State, chartCapabilities(s2Catalogue?.chartTypes ?? [], s2State.chartType).usesMeasure)
+    : null;
+
+  const doSaveWidget = async () => {
+    if (widgetRefusal) { logError(s2Subject, widgetRefusal); return; }
+    if (!dashboardDefinitionId) {
+      // Never a silent no-op, and never a claim about the server: this one is
+      // about how the surface was opened.
+      logError(s2Subject,
+        "This authoring surface was opened without a dashboard to save into."
+        + " Open it from the page the widget belongs to.");
+      return;
+    }
+    setSavingWidget(true);
+    try {
+      const target = saveTarget(existingWidget, dashboardDefinitionId);
+      const payload = toWidgetPayload(s2State, existingWidget, {
+        chartTypes: s2Catalogue?.chartTypes ?? [],
+        dimensions: s2Catalogue?.dimensions ?? [],
+        measures: s2Catalogue?.measures ?? [],
+      }, newWidgetSuffix);
+      if (target.mode === "update" && target.widgetId) {
+        await dashboardingApi.updateDashboardWidgetDefinition(
+          target.dashboardDefinitionId, target.widgetId, payload);
+      } else {
+        await dashboardingApi.createDashboardWidgetDefinition(
+          target.dashboardDefinitionId, payload);
+      }
+      logSuccess(s2Subject,
+        target.mode === "update" ? "Widget saved." : "Widget created.",
+        payload.widgetCode);
+      if (onSaved) { await onSaved(); }
+      if (onClose) { onClose(); }
+    } catch (e) {
+      logError(s2Subject, describeThrownAction(e));
+    } finally {
+      setSavingWidget(false);
+    }
+  };
+
   const emptyTreeMessage = definition.showsStagingCatalogue
     ? "No staged datasets. Register a source and run Stage-1 from the Importing Data area, then reopen this page."
     : "This purpose reads the canonical model. Its catalogue is bound when this purpose gains its entry point.";
@@ -589,12 +661,46 @@ export function SharedAuthoringShell({ purpose }: SharedAuthoringShellProps) {
           </>
         )}
 
+        {/* T-038. One name control, one source of truth per purpose. A widget
+            definition's name IS its title, so a second field holding a second
+            name would be two answers to one question. */}
         <StandardP2Input
           className="canvas-modebar__name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
+          value={isQueryPurpose ? s2State.title : name}
+          onChange={(e) => {
+            if (isQueryPurpose) {
+              setS2State({ ...s2State, title: e.target.value });
+            } else {
+              setName(e.target.value);
+            }
+          }}
           aria-label="Definition name"
         />
+
+        {isQueryPurpose && (
+          <>
+            <span
+              className={"canvas-modebar__validity" + (widgetRefusal ? " canvas-modebar__validity--bad" : " canvas-modebar__validity--ok")}
+              data-testid="authoring-validity"
+              title={widgetRefusal ?? "This definition has everything it needs to be saved."}
+            >
+              {widgetRefusal ? "Invalid" : "Ready to save"}
+            </span>
+            <StandardP2Button
+              variant="primary"
+              onClick={() => { void doSaveWidget(); }}
+              disabled={Boolean(widgetRefusal) || savingWidget}
+            >
+              {savingWidget ? "Saving..." : "Save widget"}
+            </StandardP2Button>
+            {onClose && (
+              <StandardP2Button variant="ghost" onClick={onClose}>
+                Close
+              </StandardP2Button>
+            )}
+            <span className="canvas-modebar__spacer" />
+          </>
+        )}
 
         {!isQueryPurpose && (
           <>
@@ -650,6 +756,7 @@ export function SharedAuthoringShell({ purpose }: SharedAuthoringShellProps) {
             <S2QueryBinding
               state={s2State}
               onChange={setS2State}
+              onCatalogue={setS2Catalogue}
               onLog={(severity, message, facts) => {
                 // Section 5.2.8: the Job Log is the authoritative surface, and
                 // it is the SHELL's log. The face reports; it never owns one.

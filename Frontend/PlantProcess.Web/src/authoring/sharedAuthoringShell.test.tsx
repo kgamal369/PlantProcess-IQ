@@ -1,9 +1,11 @@
 // PPIQ T-032 acceptance. Two halves, and they prove different things.
 //
 // PART A is structural and reads the source tree: SharedAuthoringShell is THE
-// authoring shell, and no second authoring PAGE component is exported. Scoped
-// to page components on the 04-Aug ruling - retiring WidgetAuthoringPanel is
-// T-038's contract, and T-038 tightens this file rather than replacing it.
+// authoring shell, and no second authoring PAGE component is exported. T-038
+// has now tightened it as promised - the retired widget authoring surface must
+// be absent from the tree AND unreferenced by every module, which is why the
+// needles below are assembled rather than spelled: a guard that writes out the
+// name it forbids becomes its own first offender.
 //
 // PART B renders the shell in S1 and in S2 and asserts the four regions of
 // Chapter 4 section 5.2.3, including that the toolbox is ABSENT and not merely
@@ -122,6 +124,23 @@ describe("T-032 part A: one authoring shell, no second authoring page", () => {
 
   it("the retired S1 page is gone from the tree, not merely unrouted", () => {
     expect(files.map(rel)).not.toContain("src/pages/Prep/VisualJoinCanvasPage.tsx");
+  });
+
+  // T-038. The same proof for the S2 surface, in two halves, because a file
+  // that is deleted while an import survives is a broken build, and a file that
+  // survives while nothing imports it is dead code pretending to be retired.
+  const RETIRED_S2_SURFACE = "WidgetAuthoring" + "Panel";
+
+  it("the retired widget authoring surface is gone from the tree", () => {
+    const remaining = files.map(rel).filter((r) => r.indexOf(RETIRED_S2_SURFACE) >= 0);
+    expect(remaining, "the retired S2 surface is still on disk:\n  " + remaining.join("\n  ")).toEqual([]);
+  });
+
+  it("no module references the retired widget authoring surface", () => {
+    const offenders = files
+      .filter((file) => readFileSync(file, "utf8").indexOf(RETIRED_S2_SURFACE) >= 0)
+      .map(rel);
+    expect(offenders, "still referencing the retired S2 surface:\n  " + offenders.join("\n  ")).toEqual([]);
   });
 
   it("the application routes the authoring surface to the shell", () => {

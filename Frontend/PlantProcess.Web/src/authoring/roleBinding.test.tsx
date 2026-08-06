@@ -9,8 +9,8 @@
 //
 // The harness below is the persistence seam and nothing more. It holds the
 // displayOptionsJson blob that a widget definition already carries, which is
-// exactly what WidgetAuthoringPanel holds today and exactly what the S2 shell
-// will hold when T-038 wires it. No fixture here is a plant name: these are the
+// exactly what the surface T-038 retires holds today, and exactly what the S2
+// shell will hold once T-038 has wired it. No fixture here is a plant name: these are the
 // shapes any returned-column set has.
 
 import { useState } from "react";

@@ -9,18 +9,22 @@ import { SelectionBreadcrumb } from "@/components/dashboard/SelectionBreadcrumb"
 import { useDashboardLayoutPersistence } from "@/hooks/useDashboardLayoutPersistence";
 import { dashboardingApi } from "@/api/dashboarding/dashboarding.api";
 import { StandardButton } from "@/components/standard";
+import type { WidgetDefinitionRecord } from "@/authoring/widgetDefinitionModel";
 
 type WidgetRecord = ComponentProps<typeof SavedDashboardWidget>["widget"];
 
-// Deferred on purpose: the wizard stays out of this page's chunk until it is
-// opened. This was never the cause of the earlier failures, but it is still the
-// right way to reference a large optional subtree.
-const WidgetAuthoringPanel = lazy(
-  () => import("@/components/dashboard/widget-authoring/WidgetAuthoringPanel"),
-);
+// Deferred on purpose: the authoring surface stays out of this page's chunk
+// until it is opened. This was never the cause of the earlier failures, but it
+// is still the right way to reference a large optional subtree.
+//
+// T-038. Chapter 4 section 5.1.10 rules that Add Widget reaches THE SHARED
+// SHELL IN S2 MODE, and 5.1.12 that Edit opens the same shell with the
+// definition already loaded. So this page references one component, and the
+// surface it used to open is retired rather than kept beside it.
+const SharedAuthoringShell = lazy(() => import("@/authoring/SharedAuthoringShell"));
 
 // Imports nothing, so it cannot itself be the thing that fails.
-class WizardBoundary extends Component<
+class AuthoringBoundary extends Component<
   { children: ReactNode; onClose: () => void },
   { message: string | null }
 > {
@@ -32,14 +36,14 @@ class WizardBoundary extends Component<
     return { message: error instanceof Error ? error.message : String(error) };
   }
   componentDidCatch(error: unknown, info: ErrorInfo) {
-    console.error("Widget builder failed", error, info);
+    console.error("Authoring surface failed", error, info);
   }
   render() {
     if (this.state.message === null) { return this.props.children; }
     return (
       <div role="alert" className="ppiq-std-card">
-        <h3>The widget builder did not open</h3>
-        <p>The fault is inside the builder itself. This workspace is unaffected.</p>
+        <h3>The authoring surface did not open</h3>
+        <p>The fault is inside the authoring surface itself. This workspace is unaffected.</p>
         <code>{this.state.message}</code>
         <StandardButton variant="ghost" onClick={this.props.onClose}>Close</StandardButton>
       </div>
@@ -105,7 +109,7 @@ export function InteractiveWorkspacePage({ dashboardCode }: { dashboardCode: str
   // it a conditional hook call. React threw at runtime and the top-level
   // boundary said the application could not start. Hooks belong together, at
   // the top, before any guard.
-  const [wizardOpen, setWizardOpen] = useState(false);
+  const [authoringOpen, setAuthoringOpen] = useState(false);
   // Null means add; a record means edit. Declared here with the other hooks,
   // above every guard clause, for the reason recorded in the add-widget pack.
   const [editing, setEditing] = useState<WidgetRecord | null>(null);
@@ -186,7 +190,7 @@ export function InteractiveWorkspacePage({ dashboardCode }: { dashboardCode: str
           <StandardButton
             variant="primary"
             data-testid="workspace-add-widget"
-            onClick={() => { setEditing(null); setWizardOpen(true); }}
+            onClick={() => { setEditing(null); setAuthoringOpen(true); }}
           >
             Add widget
           </StandardButton>
@@ -195,18 +199,23 @@ export function InteractiveWorkspacePage({ dashboardCode }: { dashboardCode: str
 
       {/* Constitution v3 II.6.7: widget authoring opens from the page the
           widget lives on. */}
-      {wizardOpen && (
-        <WizardBoundary onClose={() => setWizardOpen(false)}>
-          <Suspense fallback={<div className="ppiq-std-card">Opening the authoring panel...</div>}>
-            <WidgetAuthoringPanel
-              isOpen={wizardOpen}
+      {authoringOpen && (
+        <AuthoringBoundary onClose={() => setAuthoringOpen(false)}>
+          <Suspense fallback={<div className="ppiq-std-card">Opening the authoring surface...</div>}>
+            {/* ONE COMPONENT, TWO ENTRY POINTS. Add passes no widget and Edit
+                passes the record the grid already holds; nothing else differs,
+                because a second door is how two surfaces start. The cast goes
+                through unknown deliberately: the grid's record type and the
+                definition type describe the same row from two directions. */}
+            <SharedAuthoringShell
+              purpose="S2"
               dashboardDefinitionId={dashboard.id}
-              existing={editing as never}
-              onClose={() => { setWizardOpen(false); setEditing(null); }}
+              existingWidget={editing as unknown as WidgetDefinitionRecord | null}
+              onClose={() => { setAuthoringOpen(false); setEditing(null); }}
               onSaved={async () => { await refresh(); }}
             />
           </Suspense>
-        </WizardBoundary>
+        </AuthoringBoundary>
       )}
       <DashboardFilterBar />
       <AssociativePanel />
@@ -218,7 +227,7 @@ export function InteractiveWorkspacePage({ dashboardCode }: { dashboardCode: str
             <SavedDashboardWidget
               dashboardDefinitionId={dashboard.id}
               widget={widget}
-              onEdit={() => { setEditing(widget); setWizardOpen(true); }}
+              onEdit={() => { setEditing(widget); setAuthoringOpen(true); }}
               onRemoved={refresh}
               onCloned={refresh}
               onHidden={refresh}
