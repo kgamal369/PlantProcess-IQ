@@ -118,3 +118,47 @@
 .new-landing-wrapper .inds { display:flex; flex-wrap:wrap; gap:12px; margin-top:36px; }
 .new-landing-wrapper .ind { font-family:var(--disp); font-size:13px; font-weight:600; color:var(--sou-text); border:1px solid var(--line); border-radius:8px; padding:11px 20px; background:var(--sou-panel); transition:border-color .2s,color .2s; }
 .new-landing-wrapper .ind:hover { border-color:var(--sou-cyan); color:var(--sou-cyan); }
+
+/* ===========================================================================
+ * PPIQ-T069-05 the /products portfolio.
+ * Layout and spacing only. Every colour, font, radius, border and hover comes
+ * from the tokens above, and the stack graphic reuses the hero's own SVG
+ * classes, so this page extends the design system rather than bypassing it.
+ * =========================================================================== */
+.new-landing-wrapper .pf-top { padding-top: 54px; }
+.new-landing-wrapper .pf-hero { display: grid; grid-template-columns: 1.02fr 1fr; gap: 44px; align-items: center; }
+.new-landing-wrapper .pf-title { margin: 10px 0 16px; }
+.new-landing-wrapper .pf-lead { color: var(--sou-muted); max-width: 62ch; }
+.new-landing-wrapper .pf-graphic { position: relative; }
+.new-landing-wrapper .pf-stack { display: block; width: 100%; max-width: 640px; height: auto; margin-left: auto; filter: drop-shadow(0 24px 60px rgba(0, 0, 0, .5)); }
+.new-landing-wrapper .pf-band { fill: rgba(11, 23, 48, .55); stroke: var(--line); }
+.new-landing-wrapper .pf-band-label { letter-spacing: .18em; }
+.new-landing-wrapper .pf-spine { stroke: rgba(0, 212, 255, .3); }
+.new-landing-wrapper .pf-node { stroke: #1d3a63; }
+.new-landing-wrapper .pf-node--flag { stroke: var(--sou-cyan); }
+
+.new-landing-wrapper .pf-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin-top: 30px; }
+.new-landing-wrapper .pf-card { border: 1px solid var(--line); border-radius: 16px; background: linear-gradient(180deg, rgba(16, 42, 67, .5), rgba(11, 23, 48, .3)); padding: 26px; transition: border-color .2s, transform .2s; }
+.new-landing-wrapper .pf-card:hover { border-color: var(--sou-cyan); transform: translateY(-2px); }
+.new-landing-wrapper .pf-card--flag { border-color: rgba(0, 212, 255, .4); box-shadow: 0 24px 60px rgba(0, 0, 0, .45); }
+.new-landing-wrapper .pf-card h3 { font-family: var(--disp); font-size: 1.3rem; color: var(--sou-text); margin: 10px 0 4px; }
+.new-landing-wrapper .pf-value { font-family: var(--disp); font-size: .72rem; letter-spacing: .2em; text-transform: uppercase; color: var(--sou-cyan); font-weight: 600; margin: 0; }
+.new-landing-wrapper .pf-flag { display: inline-block; margin-top: 10px; padding: 3px 10px; border: 1px solid rgba(0, 212, 255, .35); border-radius: 999px; font-family: var(--disp); font-size: .66rem; letter-spacing: .18em; color: var(--sou-cyan); }
+.new-landing-wrapper .pf-tag { color: var(--sou-green); font-family: var(--disp); font-size: .9rem; margin: 0 0 14px; }
+.new-landing-wrapper .pf-row { margin: 10px 0 0; font-size: .93rem; line-height: 1.6; color: var(--sou-muted); }
+.new-landing-wrapper .pf-row b { color: var(--sou-text); font-weight: 600; }
+.new-landing-wrapper .pf-benefits { list-style: none; padding: 0; margin: 16px 0 0; display: grid; gap: 9px; }
+.new-landing-wrapper .pf-benefits li { position: relative; padding-left: 20px; font-size: .9rem; line-height: 1.55; color: var(--sou-muted); }
+.new-landing-wrapper .pf-benefits li::before { content: ""; position: absolute; left: 0; top: 8px; width: 7px; height: 7px; border-radius: 2px; background: var(--sou-green); }
+.new-landing-wrapper .pf-independent { padding-top: 14px; border-top: 1px solid var(--line); margin-top: 16px; }
+.new-landing-wrapper .pf-more { display: inline-flex; align-items: center; gap: 8px; margin-top: 18px; font-family: var(--disp); font-size: .88rem; font-weight: 700; color: var(--sou-cyan); }
+.new-landing-wrapper .pf-more:hover { color: var(--sou-text); }
+
+@media (max-width: 980px) {
+  .new-landing-wrapper .pf-hero { grid-template-columns: 1fr; }
+  .new-landing-wrapper .pf-grid { grid-template-columns: 1fr; }
+  .new-landing-wrapper .pf-stack { margin-left: 0; }
+}
+@media (max-width: 680px) {
+  .new-landing-wrapper .pf-card { padding: 20px; }
+}

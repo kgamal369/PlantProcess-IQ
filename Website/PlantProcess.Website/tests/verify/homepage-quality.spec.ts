@@ -160,3 +160,46 @@ test.describe("responsive", () => {
     });
   }
 });
+
+/* PPIQ-T069-05: the /products surface is held to the same bar as the homepage. */
+test.describe("products portfolio", () => {
+  test("renders five products from the registry", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await page.goto("/products");
+    await expect(page.locator(".pf-card")).toHaveCount(5);
+    await expect(page.locator(".pf-card--flag")).toHaveCount(1);
+    const stack = page.locator("svg.pf-stack");
+    await expect(stack).toHaveCount(1);
+    const box = await stack.boundingBox();
+    expect(box).not.toBeNull();
+    expect(box!.width).toBeLessThanOrEqual(641);
+  });
+
+  test("no HTML entity and no empty card", async ({ page }) => {
+    await page.goto("/products");
+    const body = await page.locator("body").evaluate((el) => el.textContent || "");
+    expect(body).not.toContain("&middot;");
+    expect(body).not.toContain("&mdash;");
+    const shortest = await page.locator(".pf-card").evaluateAll((els) =>
+      Math.min(...els.map((el) => (el.textContent || "").trim().length))
+    );
+    expect(shortest).toBeGreaterThan(200);
+  });
+
+  for (const v of [
+    { w: 1440, h: 1000, name: "desktop" },
+    { w: 834, h: 1112, name: "tablet" },
+    { w: 390, h: 844, name: "mobile" },
+  ]) {
+    test(`products page has no horizontal overflow at ${v.name}`, async ({ page }) => {
+      await page.setViewportSize({ width: v.w, height: v.h });
+      await page.goto("/products");
+      await page.waitForTimeout(300);
+      const over = await page.evaluate(
+        () => document.documentElement.scrollWidth - document.documentElement.clientWidth
+      );
+      expect(over).toBeLessThanOrEqual(1);
+      await page.screenshot({ path: `test-results/verify/products-${v.name}.png`, fullPage: true });
+    });
+  }
+});
