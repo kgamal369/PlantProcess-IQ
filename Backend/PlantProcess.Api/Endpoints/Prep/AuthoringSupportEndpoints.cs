@@ -223,12 +223,18 @@ public static class AuthoringSupportEndpoints
     // Saving an authored statement as an immutable version.
     //
     // WHY THIS EXISTS. The dual-mode contract says both modes produce the same
-    // artifact class: a named, versioned, saved definition. The graph path
-    // already has one - ppiq_mapping_versions, with version_number, a jsonb
-    // definition and a status, which the 21-Jul matrix found matches the
-    // specification's immutability rule verbatim. A SQL definition is the same
-    // artifact with a different body, so it goes in the same table rather than
-    // acquiring a parallel one.
+    // artifact class: a named, versioned, saved definition. This path writes
+    // ppiq_mapping_versions - version_number, a jsonb definition and a status -
+    // which the 21-Jul matrix found matches the specification's immutability
+    // rule verbatim.
+    //
+    // CORRECTED BY T-039. An earlier version of this comment said the GRAPH
+    // path already used this table. It does not: the board publish path writes
+    // ppiq_visual_mapper_versions, keyed by session_id, while this table is
+    // keyed by mapping_code. The code here was always right; the sentence was
+    // stale. The two stores therefore carry DIFFERENT identity semantics, which
+    // is why T-039 refused to adapt the Transformation kind behind
+    // IDefinitionService and left that convergence to M2a.
     //
     // THE FORKED GRAPH TRAVELS WITH IT. When a user forks a visual definition
     // into SQL authoring, the graph is detached - but detached is not deleted.

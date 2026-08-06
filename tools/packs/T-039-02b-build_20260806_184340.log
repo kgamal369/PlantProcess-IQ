@@ -1,0 +1,18 @@
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  PlantProcess.Analytics.Core -> C:\Workspace\PlantProcess-IQ\Backend\PlantProcess.Analytics.Core\bin\Debug\net9.0\PlantProcess.Analytics.Core.dll
+  PlantProcess.Domain -> C:\Workspace\PlantProcess-IQ\Backend\PlantProcess.Domain\bin\Debug\net9.0\PlantProcess.Domain.dll
+C:\Workspace\PlantProcess-IQ\Backend\PlantProcess.Application\DependencyInjection.cs(112,49): warning CS0618: 'CorrelationService' is obsolete: 'PPIQ-T012: superseded by the canonical Analytics.Core engine; not for inferential claims.' [C:\Workspace\PlantProcess-IQ\Backend\PlantProcess.Application\PlantProcess.Application.csproj]
+  PlantProcess.Application -> C:\Workspace\PlantProcess-IQ\Backend\PlantProcess.Application\bin\Debug\net9.0\PlantProcess.Application.dll
+C:\Workspace\PlantProcess-IQ\Backend\PlantProcess.Infrastructure\Persistence\PlantProcessDbContext.cs(84,18): error CS0246: The type or namespace name 'DefinitionVersion' could not be found (are you missing a using directive or an assembly reference?) [C:\Workspace\PlantProcess-IQ\Backend\PlantProcess.Infrastructure\PlantProcess.Infrastructure.csproj]
+C:\Workspace\PlantProcess-IQ\Backend\PlantProcess.Infrastructure\Persistence\PlantProcessDbContext.cs(18,49): error CS0738: 'PlantProcessDbContext' does not implement interface member 'IPlantProcessDbContext.DefinitionVersions'. 'PlantProcessDbContext.DefinitionVersions' cannot implement 'IPlantProcessDbContext.DefinitionVersions' because it does not have the matching return type of 'DbSet<DefinitionVersion>'. [C:\Workspace\PlantProcess-IQ\Backend\PlantProcess.Infrastructure\PlantProcess.Infrastructure.csproj]
+
+Build FAILED.
+
+C:\Workspace\PlantProcess-IQ\Backend\PlantProcess.Application\DependencyInjection.cs(112,49): warning CS0618: 'CorrelationService' is obsolete: 'PPIQ-T012: superseded by the canonical Analytics.Core engine; not for inferential claims.' [C:\Workspace\PlantProcess-IQ\Backend\PlantProcess.Application\PlantProcess.Application.csproj]
+C:\Workspace\PlantProcess-IQ\Backend\PlantProcess.Infrastructure\Persistence\PlantProcessDbContext.cs(84,18): error CS0246: The type or namespace name 'DefinitionVersion' could not be found (are you missing a using directive or an assembly reference?) [C:\Workspace\PlantProcess-IQ\Backend\PlantProcess.Infrastructure\PlantProcess.Infrastructure.csproj]
+C:\Workspace\PlantProcess-IQ\Backend\PlantProcess.Infrastructure\Persistence\PlantProcessDbContext.cs(18,49): error CS0738: 'PlantProcessDbContext' does not implement interface member 'IPlantProcessDbContext.DefinitionVersions'. 'PlantProcessDbContext.DefinitionVersions' cannot implement 'IPlantProcessDbContext.DefinitionVersions' because it does not have the matching return type of 'DbSet<DefinitionVersion>'. [C:\Workspace\PlantProcess-IQ\Backend\PlantProcess.Infrastructure\PlantProcess.Infrastructure.csproj]
+    1 Warning(s)
+    2 Error(s)
+
+Time Elapsed 00:00:18.74

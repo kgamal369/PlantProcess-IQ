@@ -1,0 +1,13 @@
+psql:C:/Workspace/PlantProcess-IQ/Backend/database/scripts/770_t039_definition_version_store.sql:42: NOTICE:  relation "ppiq_definition_versions" already exists, skipping
+CREATE TABLE
+psql:C:/Workspace/PlantProcess-IQ/Backend/database/scripts/770_t039_definition_version_store.sql:50: NOTICE:  relation "ux_ppiq_definition_versions_kind_id_version" already exists, skipping
+CREATE INDEX
+psql:C:/Workspace/PlantProcess-IQ/Backend/database/scripts/770_t039_definition_version_store.sql:54: NOTICE:  relation "ix_ppiq_definition_versions_kind_id_desc" already exists, skipping
+CREATE INDEX
+COMMENT
+DO
+                 status                 
+----------------------------------------
+ T-039 definition version store applied
+(1 row)
+

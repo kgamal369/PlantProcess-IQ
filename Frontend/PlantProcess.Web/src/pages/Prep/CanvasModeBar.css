@@ -16,7 +16,7 @@
 }
 
 .canvas-modebar__label {
-  margin-right: 6px;
+  margin-inline-end: 6px;
   color: var(--ppiq-color-text-muted, #8ba9c4);
   font-size: 11px;
   letter-spacing: 0.12em;
@@ -67,7 +67,7 @@
 }
 
 .canvas-sqlpane__note {
-  margin-left: auto;
+  margin-inline-start: auto;
   color: var(--ppiq-color-text-muted, #8ba9c4);
   font-size: 11px;
 }

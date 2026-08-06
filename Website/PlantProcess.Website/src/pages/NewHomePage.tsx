@@ -189,7 +189,7 @@ export function NewHomePage() {
                 <path className="ncwire" d="M150 96 C 200 96 200 150 250 150"/>
                 <path className="ncwire" d="M150 216 C 200 216 200 162 250 156"/>
                 <path className="ncwire" d="M360 150 C 400 150 400 150 430 150"/>
-                <g><rect className="ncnode" x="30" y="66" width="120" height="58" rx="8"/><text className="nct" x="90" y="90" textAnchor="middle">SOURCE TABLE</text><text className="ncs" x="90" y="106" textAnchor="middle">l2_caster_heats</text></g>
+                <g><rect className="ncnode" x="30" y="66" width="120" height="58" rx="8"/><text className="nct" x="90" y="90" textAnchor="middle">SOURCE TABLE</text><text className="ncs" x="90" y="106" textAnchor="middle">line2_process_batches</text></g>
                 <g><rect className="ncnode" x="30" y="188" width="120" height="58" rx="8"/><text className="nct" x="90" y="212" textAnchor="middle">SOURCE TABLE</text><text className="ncs" x="90" y="228" textAnchor="middle">inspection_events</text></g>
                 <g><rect className="ncnode" x="250" y="120" width="110" height="62" rx="8"/><text className="nct" x="305" y="146" textAnchor="middle">MAP &amp; JOIN</text><text className="ncs" x="305" y="162" textAnchor="middle">visual &middot; validated</text></g>
                 <g><rect className="ncnode" x="430" y="118" width="80" height="66" rx="8" style={{ stroke: '#2ce6a2' }}/><text className="nct" x="470" y="146" textAnchor="middle" fill="#2ce6a2">PLANT</text><text className="nct" x="470" y="162" textAnchor="middle" fill="#2ce6a2">MODEL</text></g>
@@ -197,7 +197,7 @@ export function NewHomePage() {
             </div>
           </div>
           <div className="inds rv">
-            <span className="ind">Steel &amp; Metals</span><span className="ind">Aluminium</span><span className="ind">Chemicals</span>
+            <span className="ind">Oil &amp; Gas</span><span className="ind">Water &amp; Utilities</span><span className="ind">Food &amp; Beverage</span><span className="ind">Chemicals</span><span className="ind">Steel &amp; Metals</span><span className="ind">Aluminium</span>
             <span className="ind">Cement</span><span className="ind">Paper &amp; Pulp</span><span className="ind">Glass</span>
             <span className="ind">Automotive</span><span className="ind">Food &amp; Beverage</span><span className="ind">Your industry</span>
           </div>

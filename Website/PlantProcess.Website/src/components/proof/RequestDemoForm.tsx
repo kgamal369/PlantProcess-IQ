@@ -273,7 +273,7 @@ export function RequestDemoForm() {
 
           <label>
             Plant / industry type
-            <input value={form.plantType} onChange={(event) => patch("plantType", event.target.value)} required placeholder="Steel, paper, pharma, food, aluminum..." />
+            <input value={form.plantType} onChange={(event) => patch("plantType", event.target.value)} required placeholder="Oil and gas, water, food, chemicals, steel, pharma..." />
             {errors.plantType ? <span className="form-error">{errors.plantType}</span> : null}
           </label>
 

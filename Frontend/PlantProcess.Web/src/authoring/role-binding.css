@@ -37,7 +37,7 @@
   margin: 12px 0 0;
   padding: 10px 12px;
   border: 1px solid rgba(255, 77, 109, 0.34);
-  border-left-width: 3px;
+  border-inline-start-width: 3px;
   border-radius: 8px;
   font-size: 13px;
   color: var(--ppiq-color-text-primary, #eaf6ff);

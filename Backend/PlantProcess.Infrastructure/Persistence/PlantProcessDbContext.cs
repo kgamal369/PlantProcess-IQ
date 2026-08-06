@@ -12,6 +12,7 @@ using PlantProcess.Domain.Entities.Process;
 using PlantProcess.Domain.Entities.Quality;
 using PlantProcess.Application.Common.Persistence;
 using PlantProcess.Domain.Entities.Dashboarding;
+using PlantProcess.Domain.Entities.Definitions;
 
 namespace PlantProcess.Infrastructure.Persistence;
 
@@ -81,6 +82,7 @@ public class PlantProcessDbContext : DbContext, IPlantProcessDbContext
     public DbSet<ModelRegistry> ModelRegistries => Set<ModelRegistry>();
     public DbSet<DashboardDefinition> DashboardDefinitions => Set<DashboardDefinition>();
     public DbSet<DashboardWidgetDefinition> DashboardWidgetDefinitions => Set<DashboardWidgetDefinition>();
+    public DbSet<DefinitionVersion> DefinitionVersions => Set<DefinitionVersion>();
     
     
     public PlantProcessDbContext(DbContextOptions<PlantProcessDbContext> options)

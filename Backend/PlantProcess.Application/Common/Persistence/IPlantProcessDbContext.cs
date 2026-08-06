@@ -1,7 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using PlantProcess.Domain.Entities.Analytics;
 using PlantProcess.Domain.Entities.Configuration;
 using PlantProcess.Domain.Entities.Dashboarding;
+using PlantProcess.Domain.Entities.Definitions;
 using PlantProcess.Domain.Entities.Integration;
 using PlantProcess.Domain.Entities.Materials;
 using PlantProcess.Domain.Entities.PlantLayout;
@@ -57,6 +58,10 @@ public interface IPlantProcessDbContext
 
     DbSet<DashboardDefinition> DashboardDefinitions { get; }
     DbSet<DashboardWidgetDefinition> DashboardWidgetDefinitions { get; }
+
+    // T-039. The M1 compatibility snapshot store behind IDefinitionService.
+    // Immutable version rows only; the operational definitions stay above.
+    DbSet<DefinitionVersion> DefinitionVersions { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

@@ -77,8 +77,8 @@ test.describe("no dead links on the presentation routes", () => {
 });
 
 test.describe("the Chapter 6 keep-list still renders", () => {
-  test("home keeps its named components", async ({ page }) => {
-    await page.goto("/");
+  test("the PlantProcess IQ page keeps its named components", async ({ page }) => {
+    await page.goto("/products/plantprocess-iq");
     /* Identified by the markup each component owns rather than by its React
      * name, because the built bundle carries no component names. */
     await expect(page.locator("svg.ppiq-archflow")).toHaveCount(1);
@@ -181,4 +181,162 @@ test.describe("responsive", () => {
       });
     }
   }
+});
+
+/* PPIQ-T070-04: CLIPPING IS NOT OVERFLOW.
+ * scrollWidth === clientWidth reports zero when content is CUT OFF rather than
+ * scrolling, so the overflow tests above passed while three homepage sections
+ * had their left edge clipped at wide viewports. These assert the visible
+ * bounds of each section instead. */
+test.describe("page grid", () => {
+  const SECTIONS = [
+    { sel: "svg.ppiq-goldenthread", name: "genealogy thread" },
+    { sel: ".ppiq-ecosystem", name: "integration ecosystem" },
+    { sel: ".ppiq-roi", name: "roi calculator" },
+    { sel: "svg.ppiq-archflow", name: "architecture graphic" },
+  ];
+  for (const v of [
+    { w: 1440, h: 1000, name: "desktop" },
+    { w: 834, h: 1112, name: "tablet" },
+    { w: 390, h: 844, name: "mobile" },
+  ]) {
+    test(`no PPIQ section is clipped at ${v.name}`, async ({ page }) => {
+      await page.setViewportSize({ width: v.w, height: v.h });
+      await page.goto("/products/plantprocess-iq");
+      await page.waitForTimeout(300);
+      const clipped: string[] = [];
+      for (const s of SECTIONS) {
+        const box = await page.locator(s.sel).first().boundingBox();
+        if (!box) { clipped.push(`${s.name} not found`); continue; }
+        if (box.x < -1) clipped.push(`${s.name} left edge at ${Math.round(box.x)}`);
+        if (box.x + box.width > v.w + 1) {
+          clipped.push(`${s.name} right edge at ${Math.round(box.x + box.width)} of ${v.w}`);
+        }
+      }
+      expect(clipped).toEqual([]);
+    });
+
+    test(`PPIQ sections share one grid at ${v.name}`, async ({ page }) => {
+      await page.setViewportSize({ width: v.w, height: v.h });
+      await page.goto("/products/plantprocess-iq");
+      await page.waitForTimeout(300);
+      /* The strongest section is the authority. Every constrained section must
+       * start within a few pixels of it rather than running its own width. */
+      const reference = await page.locator(".new-landing-wrapper .wrap").first().boundingBox();
+      expect(reference).not.toBeNull();
+      const drift: string[] = [];
+      for (const s of SECTIONS) {
+        const box = await page.locator(s.sel).first().boundingBox();
+        if (!box) continue;
+        if (Math.abs(box.x - reference!.x) > 40) {
+          drift.push(`${s.name} starts at ${Math.round(box.x)}, the page grid starts at ${Math.round(reference!.x)}`);
+        }
+      }
+      expect(drift).toEqual([]);
+    });
+  }
+});
+
+/* PPIQ-T070-05: the company home must not read as a product page. */
+test.describe("company versus product identity", () => {
+  test("/ presents the portfolio, not one product", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await page.goto("/");
+    await expect(page.locator(".sou-teaser")).toHaveCount(5);
+    await expect(page.locator("svg.sou-graphic")).toHaveCount(1);
+    /* The PPIQ-only surfaces must NOT be here any more. */
+    await expect(page.locator("svg.ppiq-archflow")).toHaveCount(0);
+    await expect(page.locator(".ppiq-roi")).toHaveCount(0);
+    const text = await page.locator("body").innerText();
+    expect(text).toContain("SOU INDUSTRIAL SOFTWARE");
+  });
+
+  test("the PPIQ narrative arrived at its product route", async ({ page }) => {
+    await page.goto("/products/plantprocess-iq");
+    await expect(page.locator("svg.ppiq-archflow")).toHaveCount(1);
+    await expect(page.locator(".ppiq-roi")).toHaveCount(1);
+    await expect(page.locator(".ppiq-goldenthread")).toHaveCount(1);
+    const text = await page.locator("body").innerText();
+    /* Industry-generic, on its new route as much as on the old one. */
+    expect(text).not.toContain("HEAT");
+    expect(text).not.toContain("SLAB");
+    expect(text).not.toContain("COIL");
+  });
+
+  test("all five product routes resolve and the header hierarchy holds", async ({ page }) => {
+    const slugs = [
+      "plantprocess-iq",
+      "mes",
+      "qes",
+      "yard-warehouse-management",
+      "energy-management",
+    ];
+    for (const slug of slugs) {
+      await page.goto(`/products/${slug}`);
+      let landed = new URL(page.url()).pathname;
+      for (let i = 0; i < 20 && landed !== `/products/${slug}`; i++) {
+        await page.waitForTimeout(50);
+        landed = new URL(page.url()).pathname;
+      }
+      expect(landed).toBe(`/products/${slug}`);
+      await expect(page.locator('[data-testid="website-products-menu"]')).toHaveCount(1);
+      const body = await page.locator("body").innerText();
+      expect(body.length).toBeGreaterThan(300);
+      expect(body.toLowerCase()).not.toContain("coming soon");
+    }
+  });
+});
+
+/* PPIQ-T070-06: PRESENCE IS NOT VISIBILITY.
+ * toHaveCount() and boundingBox() both succeed on an opacity:0 element, so 59
+ * assertions passed against a home page nobody could see. These measure what
+ * the visitor actually gets. */
+test.describe("the home is actually visible", () => {
+  test("the hero and the product cards are painted, not just present", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await page.goto("/");
+    await page.waitForTimeout(900);
+
+    await expect(page.locator(".sou-title")).toBeVisible();
+    await expect(page.locator("svg.sou-graphic")).toBeVisible();
+    await expect(page.locator(".sou-teaser").first()).toBeVisible();
+
+    const faded = await page.evaluate(() => {
+      const out: string[] = [];
+      document.querySelectorAll(".new-landing-wrapper .rv").forEach((el) => {
+        const style = getComputedStyle(el as Element);
+        const rect = (el as Element).getBoundingClientRect();
+        const onScreen = rect.top < window.innerHeight && rect.bottom > 0;
+        if (onScreen && parseFloat(style.opacity) < 0.9) {
+          out.push(`${(el as Element).className} at opacity ${style.opacity}`);
+        }
+      });
+      return out;
+    });
+    expect(faded).toEqual([]);
+  });
+});
+
+/* PPIQ-T070-06: the menu has to survive the trip from the trigger to the panel. */
+test.describe("the products menu is usable with a mouse", () => {
+  test("it stays open while the pointer travels to it", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await page.goto("/");
+    const menu = page.locator('[data-testid="website-products-menu"]');
+    const trigger = menu.locator("button").first();
+    await trigger.hover();
+    const panel = page.locator("#products-mega-panel");
+    await expect(panel).toBeVisible();
+
+    const first = panel.locator("a").first();
+    await first.hover();
+    await expect(panel).toBeVisible();
+    await first.click();
+    let landed = new URL(page.url()).pathname;
+    for (let i = 0; i < 20 && !landed.startsWith("/products/"); i++) {
+      await page.waitForTimeout(50);
+      landed = new URL(page.url()).pathname;
+    }
+    expect(landed.startsWith("/products/")).toBe(true);
+  });
 });

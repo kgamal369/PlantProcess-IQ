@@ -30,7 +30,7 @@
 .cbtn:hover { border-color: #00d4ff; color: #00d4ff; }
 .cbtn.primary { background: linear-gradient(90deg, #00d4ff, #4de3ff); color: #03222c; border: none; }
 .preview-table { width: 100%; border-collapse: collapse; font-size: 11px; font-family: "IBM Plex Mono", monospace; margin-top: 10px; }
-.preview-table th, .preview-table td { border: 1px solid #16294a; padding: 4px 7px; color: #c7d1df; text-align: left; }
+.preview-table th, .preview-table td { border: 1px solid #16294a; padding: 4px 7px; color: #c7d1df; text-align: start; }
 .preview-table th { color: #00d4ff; background: #102a43; position: sticky; top: 0; }
 .status-line { font-family: "IBM Plex Mono", monospace; font-size: 11.5px; margin-top: 10px; color: #8ea7c1; word-break: break-all; }
 .status-line.ok { color: #2ce6a2; } .status-line.err { color: #ff6a6a; }
@@ -47,9 +47,9 @@
 .ppiq-join-edge .react-flow__edge-text { fill: #8ea7c1; font-size: 10px; }
 .ppiq-flow-edge .react-flow__edge-path { stroke: #2ce6a2; }
 .canvas-page--toolbox { grid-template-columns: 1fr 340px; }
-.canvas-side__name { width: 100%; text-align: left; }
+.canvas-side__name { width: 100%; text-align: start; }
 .canvas-side__h4--mt { margin-top: 18px; }
 .preview-scroll { max-height: 320px; overflow: auto; }
-.palette-item { display: block; width: 100%; text-align: left; }
+.palette-item { display: block; width: 100%; text-align: start; }
 .palette-item__meta { display: block; color: #5c7391; font-size: 10px; }
 .blk-node__field { width: 100%; margin-top: 8px; }

@@ -5,7 +5,7 @@
    No inline style objects anywhere in the shell: the UI conformance ratchet
    gives a new file a baseline of zero and this file is why it can stay zero. */
 
-.canvas-modebar__name { min-width: 220px; max-width: 320px; text-align: left; }
+.canvas-modebar__name { min-width: 220px; max-width: 320px; text-align: start; }
 
 .canvas-modebar__validity {
   font-family: "Chakra Petch", sans-serif;
@@ -24,7 +24,7 @@
 .canvas-page--sqlmode { grid-template-columns: 250px 1fr; }
 
 .authoring-toolbox { display: flex; flex-direction: column; gap: 8px; }
-.authoring-toolbox__search { width: 100%; text-align: left; }
+.authoring-toolbox__search { width: 100%; text-align: start; }
 .authoring-toolbox__note { font-size: 11px; line-height: 1.5; color: #6f88a3; }
 .authoring-toolbox__group { display: flex; flex-direction: column; gap: 4px; }
 

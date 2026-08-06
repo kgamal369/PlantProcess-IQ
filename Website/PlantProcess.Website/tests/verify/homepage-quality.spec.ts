@@ -1,5 +1,10 @@
 import { test, expect } from "@playwright/test";
 
+/* PPIQ-T070-05: the PPIQ narrative moved off "/" to its own product route.
+ * These assertions follow the CONTENT. Leaving them on "/" would have made them
+ * pass against a page that no longer holds what they were written to guard. */
+const PPIQ = "/products/plantprocess-iq";
+
 /* PPIQ-T069-W3 homepage quality gate.
  *
  * Everything here is machine-checkable: computed style, geometry, text content.
@@ -10,14 +15,14 @@ import { test, expect } from "@playwright/test";
 const SHOTS = "test-results/verify";
 
 test.describe("architecture graphic", () => {
-  test("computed max-width is 1060px and the winning rule is new-landing.css", async ({ page }) => {
+  test("computed max-width is 1236px and the winning rule is new-landing.css", async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 1000 });
-    await page.goto("/");
+    await page.goto(PPIQ);
     const svg = page.locator("svg.ppiq-archflow");
     await expect(svg).toHaveCount(1);
 
     const maxWidth = await svg.evaluate((el) => getComputedStyle(el).maxWidth);
-    expect(maxWidth).toBe("1060px");
+    expect(maxWidth).toBe("1236px");
 
     // In dev, Vite injects each stylesheet with its source path on the tag.
     // In a preview build the rule arrives in the bundled sheet instead, so both
@@ -43,10 +48,10 @@ test.describe("architecture graphic", () => {
 
   test("the diagram is constrained and does not overflow", async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 1000 });
-    await page.goto("/");
+    await page.goto(PPIQ);
     const box = await page.locator("svg.ppiq-archflow").boundingBox();
     expect(box).not.toBeNull();
-    expect(box!.width).toBeLessThanOrEqual(1061);
+    expect(box!.width).toBeLessThanOrEqual(1237);
     expect(box!.width).toBeLessThan(1440);
 
     const overflow = await page.evaluate(() => {
@@ -59,7 +64,7 @@ test.describe("architecture graphic", () => {
 
   test("no label escapes its own node", async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 1000 });
-    await page.goto("/");
+    await page.goto(PPIQ);
     const escapes = await page.evaluate(() => {
       const svg = document.querySelector("svg.ppiq-archflow");
       if (!svg) return ["no svg"];
@@ -81,7 +86,7 @@ test.describe("architecture graphic", () => {
   });
 
   test("the separator renders and no HTML entity is visible", async ({ page }) => {
-    await page.goto("/");
+    await page.goto(PPIQ);
     const text = await page.locator("svg.ppiq-archflow").innerText().catch(async () => {
       return await page.locator("svg.ppiq-archflow").evaluate((el) => el.textContent || "");
     });
@@ -95,7 +100,7 @@ test.describe("architecture graphic", () => {
 
   test("every connector endpoint lands on a drawn port", async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 1000 });
-    await page.goto("/");
+    await page.goto(PPIQ);
     const orphans = await page.evaluate(() => {
       const svg = document.querySelector("svg.ppiq-archflow");
       if (!svg) return ["no svg"];
@@ -129,7 +134,7 @@ test.describe("the three restored sections", () => {
   for (const s of sections) {
     test(`${s.name} is present and painted`, async ({ page }) => {
       await page.setViewportSize({ width: 1440, height: 1000 });
-      await page.goto("/");
+      await page.goto(PPIQ);
       const el = page.locator(s.sel).first();
       await expect(el).toHaveCount(1);
       const box = await el.boundingBox();
@@ -149,7 +154,7 @@ test.describe("responsive", () => {
   for (const v of widths) {
     test(`no horizontal overflow at ${v.name}`, async ({ page }) => {
       await page.setViewportSize({ width: v.w, height: v.h });
-      await page.goto("/");
+      await page.goto(PPIQ);
       await page.waitForTimeout(300);
       const over = await page.evaluate(
         () => document.documentElement.scrollWidth - document.documentElement.clientWidth

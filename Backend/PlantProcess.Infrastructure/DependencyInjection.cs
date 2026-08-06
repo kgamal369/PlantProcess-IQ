@@ -122,6 +122,10 @@ public static class DependencyInjection
          // Factory resolves connector by provider type string
         services.AddScoped<IDataSourceConnectorFactory, DataSourceConnectorFactory>();
 
+        // T-039. The widget version adapter behind the final definition contract.
+        services.AddScoped<PlantProcess.Application.Definitions.Interfaces.IDefinitionService,
+            PlantProcess.Infrastructure.Definitions.DefinitionService>();
+
         //Oracle 
         services.AddScoped<IDataSourceConnector, OracleConnector>();
         services.AddScoped<ISchemaReader, OracleConnector>();

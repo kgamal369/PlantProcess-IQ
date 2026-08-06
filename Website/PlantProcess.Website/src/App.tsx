@@ -2,6 +2,7 @@ import { NewHomePage } from "./pages/NewHomePage";
 /* PPIQ-T069-PORTFOLIO: the Products menu reads the registry, never a local list. */
 import { souProducts, productPath, productAliasRedirects } from "./content/portfolio/souProducts";
 import { ProductsPortfolioPage } from "./pages/products/ProductsPortfolioPage";
+import { SouHomePage } from "./pages/SouHomePage";
 import { PortfolioProductPage } from "./pages/products/PortfolioProductPage";
 import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
 import { NavLink, Navigate, Route, Routes, useLocation, useParams } from "react-router-dom";
@@ -110,7 +111,7 @@ const roleCopy: Record<RoleCode, { title: string; headline: string; text: string
     title: "For Quality",
     headline: "Move from a failed coil to the upstream evidence in one governed thread.",
     text: "Trace final inspection events through coil, slab and heat while preserving the population, method and source lineage behind every finding.",
-    points: ["Defect taxonomy from plant sources", "Heat-to-product genealogy", "Signal-versus-null comparison", "Evidence-ranked suspected contributors"],
+    points: ["Defect taxonomy from plant sources", "Input-to-product genealogy", "Signal-versus-null comparison", "Evidence-ranked suspected contributors"],
     icon: ScanLine,
   },
   engineering: {
@@ -440,7 +441,7 @@ export function App() {
   return (
     <Layout>
       <Routes>
-        <Route path="/" element={<NewHomePage />} />
+        <Route path="/" element={<SouHomePage />} />
         <Route path="/product" element={<Navigate to="/products/plantprocess-iq" replace />} />
         <Route path="/services" element={<Navigate to="/product" replace />} />
         <Route path="/proof" element={<ProofPage />} />
@@ -455,7 +456,7 @@ export function App() {
           <Route
             key={product.slug}
             path={productPath(product)}
-            element={product.isFlagship ? <PlatformPage /> : <PortfolioProductPage slug={product.slug} />}
+            element={product.isFlagship ? <NewHomePage /> : <PortfolioProductPage slug={product.slug} />}
           />
         ))}
         {Object.keys(productAliasRedirects).map((alias) => (

@@ -1,0 +1,52 @@
+/* PPIQ T-040. The seven states. Palette roles only - Amber for blocked and
+   refused, Hot Red for failed, Muted Steel for empty and filtered-empty - and
+   no physical direction anywhere, because this file is certified by the G09
+   ratchet from the moment it lands. */
+
+.ppiq-state {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  border-inline-start-width: 3px;
+  min-width: 0;
+}
+
+.ppiq-state__heading {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--ppiq-color-text-secondary, #c9dcec);
+}
+
+.ppiq-state__sentence,
+.ppiq-state__action {
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--ppiq-color-text-primary, #eaf6ff);
+}
+
+.ppiq-state__action {
+  color: var(--ppiq-color-text-muted, #8ba9c4);
+}
+
+.ppiq-state--muted {
+  border-color: rgba(139, 169, 196, 0.34);
+  background: rgba(139, 169, 196, 0.06);
+}
+
+.ppiq-state--amber {
+  border-color: rgba(255, 176, 32, 0.42);
+  background: rgba(255, 176, 32, 0.08);
+}
+
+.ppiq-state--danger {
+  border-color: rgba(255, 77, 109, 0.42);
+  background: rgba(255, 77, 109, 0.08);
+}
+
+.ppiq-state--none {
+  border-color: rgba(139, 169, 196, 0.2);
+}

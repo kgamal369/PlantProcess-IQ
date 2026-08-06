@@ -60,7 +60,7 @@
    actually imports. The identical rules previously sat in motion-roi.css, which
    nothing imported, so the diagram rendered with no width cap and with browser
    default SVG text sizing - which is why its labels burst out of their boxes. */
-.new-landing-wrapper .ppiq-archflow { display:block; width:100%; max-width:1060px; height:auto; margin:26px auto 0; filter:drop-shadow(0 24px 60px rgba(0,0,0,.5)); }
+.new-landing-wrapper .ppiq-archflow { display:block; width:100%; max-width:1236px; height:auto; margin:26px auto 0; padding-left:28px; padding-right:28px; box-sizing:border-box; filter:drop-shadow(0 24px 60px rgba(0,0,0,.5)); }
 .new-landing-wrapper .ppiq-archflow .af-gate { fill:var(--sou-panel); stroke:var(--sou-cyan); stroke-width:1.2; }
 .new-landing-wrapper .ppiq-archflow .af-out { fill:var(--sou-panel); stroke:rgba(44,230,162,.55); stroke-width:1.2; }
 .new-landing-wrapper .ppiq-archflow .af-port { fill:var(--sou-panel-2); stroke:var(--sou-cyan); stroke-width:1.2; }
@@ -162,3 +162,45 @@
 @media (max-width: 680px) {
   .new-landing-wrapper .pf-card { padding: 20px; }
 }
+
+/* ===========================================================================
+ * PPIQ-T070-04 ONE PAGE GRID.
+ * .wrap above is the authority: max-width 1180 plus 28 of gutter. These three
+ * render as siblings of it with no container, so they ran the full viewport and
+ * clipped on the left. Constrained here rather than by moving markup, because
+ * restructuring NewHomePage the night before a presentation is the larger risk.
+ * Horizontal padding only - each section keeps its own vertical rhythm.
+ * Their backgrounds are transparent, so nothing loses a full-bleed background.
+ * =========================================================================== */
+.new-landing-wrapper .ppiq-goldenthread { display: block; width: 100%; max-width: 1236px; height: auto; margin-left: auto; margin-right: auto; padding-left: 28px; padding-right: 28px; box-sizing: border-box; }
+.new-landing-wrapper .ppiq-ecosystem,
+.new-landing-wrapper .ppiq-roi { max-width: 1236px; margin-left: auto; margin-right: auto; padding-left: 28px; padding-right: 28px; box-sizing: border-box; }
+
+@media (max-width: 680px) {
+  .new-landing-wrapper .ppiq-goldenthread,
+  .new-landing-wrapper .ppiq-ecosystem,
+  .new-landing-wrapper .ppiq-roi { padding-left: 18px; padding-right: 18px; }
+}
+
+/* ===========================================================================
+ * PPIQ-T070-05 the SOU company home.
+ * Layout only. The type scale, band, buttons, card treatment and SVG classes
+ * all come from the system above - nothing new is invented here.
+ * =========================================================================== */
+.new-landing-wrapper .sou-top { padding-top: 58px; }
+.new-landing-wrapper .sou-title { margin: 10px 0 18px; }
+.new-landing-wrapper .sou-lead { max-width: 74ch; }
+.new-landing-wrapper .sou-cta { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 26px; }
+.new-landing-wrapper .sou-graphic-wrap { margin-top: 44px; }
+.new-landing-wrapper .sou-graphic { display: block; width: 100%; max-width: 1120px; height: auto; margin: 0 auto; filter: drop-shadow(0 26px 64px rgba(0, 0, 0, .5)); }
+.new-landing-wrapper .sou-col { letter-spacing: .2em; fill: var(--sou-cyan); }
+.new-landing-wrapper .sou-prod { stroke: var(--sou-cyan); }
+.new-landing-wrapper .sou-out { stroke: rgba(44, 230, 162, .5); }
+
+.new-landing-wrapper .sou-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin-top: 30px; }
+.new-landing-wrapper .sou-teaser { display: flex; flex-direction: column; }
+.new-landing-wrapper .sou-teaser-icon { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; margin-bottom: 12px; border: 1px solid rgba(0, 212, 255, .3); border-radius: 11px; background: rgba(0, 212, 255, .07); color: var(--sou-cyan); }
+.new-landing-wrapper .sou-teaser .pf-more { margin-top: auto; padding-top: 16px; }
+
+@media (max-width: 1180px) { .new-landing-wrapper .sou-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 760px) { .new-landing-wrapper .sou-grid { grid-template-columns: 1fr; } }

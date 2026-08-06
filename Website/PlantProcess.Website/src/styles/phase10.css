@@ -357,3 +357,10 @@
 @media (max-width: 680px) {
   .products-mega-panel { width: 100%; }
 }
+
+/* PPIQ-T070-06 hover bridge.
+ * The panel sits 14px below the trigger, so moving the pointer toward it
+ * crossed dead space, fired onMouseLeave and closed the menu before it could be
+ * clicked. This transparent strip spans the gap so the pointer never leaves.
+ * Pointer-events only - it draws nothing and changes no keyboard behaviour. */
+.products-mega-panel::before { content: ""; position: absolute; left: 0; right: 0; top: -16px; height: 16px; }
