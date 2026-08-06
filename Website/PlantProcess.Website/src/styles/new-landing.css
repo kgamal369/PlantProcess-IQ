@@ -1,4 +1,4 @@
-﻿.new-landing-wrapper {
+.new-landing-wrapper {
   --sou-bg:#050b18; --sou-panel:#0b1730; --sou-panel-2:#102a43;
   --sou-cyan:#00d4ff; --sou-blue:#0a84ff; --sou-green:#2ce6a2;
   --sou-text:#eaf6ff; --sou-muted:#8ea7c1; --line:#16294a;
@@ -54,6 +54,19 @@
 .new-landing-wrapper .srct { font-family:var(--disp); font-size:11.5px; fill:var(--sou-text); font-weight:600; letter-spacing:.03em; }
 .new-landing-wrapper .srcs { font-family:var(--body); font-size:9.5px; fill:var(--sou-muted); }
 .new-landing-wrapper .outt { font-family:var(--disp); font-size:11.5px; fill:var(--sou-green); font-weight:600; }
+
+/* PPIQ-T069-W2 architecture graphic. It lives HERE, beside the hero node and
+   text classes it extends, because new-landing.css is the stylesheet this page
+   actually imports. The identical rules previously sat in motion-roi.css, which
+   nothing imported, so the diagram rendered with no width cap and with browser
+   default SVG text sizing - which is why its labels burst out of their boxes. */
+.new-landing-wrapper .ppiq-archflow { display:block; width:100%; max-width:1060px; height:auto; margin:26px auto 0; filter:drop-shadow(0 24px 60px rgba(0,0,0,.5)); }
+.new-landing-wrapper .ppiq-archflow .af-gate { fill:var(--sou-panel); stroke:var(--sou-cyan); stroke-width:1.2; }
+.new-landing-wrapper .ppiq-archflow .af-out { fill:var(--sou-panel); stroke:rgba(44,230,162,.55); stroke-width:1.2; }
+.new-landing-wrapper .ppiq-archflow .af-port { fill:var(--sou-panel-2); stroke:var(--sou-cyan); stroke-width:1.2; }
+.new-landing-wrapper .ppiq-archflow .af-port.out { stroke:var(--sou-green); }
+.new-landing-wrapper .ppiq-archflow .af-hub { font-family:var(--disp); font-size:14px; font-weight:700; letter-spacing:.06em; fill:#fff; }
+.new-landing-wrapper .ppiq-archflow-section { padding-top:18px; }
 .new-landing-wrapper .ring { fill:none; stroke:rgba(0,212,255,.25); }
 .new-landing-wrapper .ring2 { fill:none; stroke:rgba(10,132,255,.18); stroke-dasharray:3 6; animation:spin 24s linear infinite; transform-origin:center; }
 @keyframes spin{ to{transform:rotate(360deg)} }

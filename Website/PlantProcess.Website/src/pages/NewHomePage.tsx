@@ -1,5 +1,9 @@
 import React, { useEffect } from "react";
 import "../styles/new-landing.css";
+/* PPIQ-T069-W2: motion-roi.css was imported by nothing, so GoldenThread, the
+   integration ecosystem and the ROI calculator all rendered unstyled on this
+   page. Importing it here restores their intended styling. */
+import "../styles/motion-roi.css";
 import RequestDemoForm from "../components/proof/RequestDemoForm";
 import { ArchitectureFlowScroll } from "../components/graphics/ArchitectureFlowScroll";
 import { GoldenThreadScroll } from "../components/graphics/GoldenThreadScroll";

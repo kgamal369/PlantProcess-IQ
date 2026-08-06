@@ -22,7 +22,8 @@
                     "test:phase10":  "playwright test --config playwright.commercial.config.ts",
                     "validate:phase10":  "npm run certify:commercial:v2",
                     "validate":  "npm run certify:commercial:v2",
-                    "validate:phase7":  "node scripts/validate-phase7-content.mjs"
+                    "validate:phase7":  "node scripts/validate-phase7-content.mjs",
+                    "verify:website":  "playwright test --config playwright.verify.config.ts"
                 },
     "dependencies":  {
                          "lucide-react":  "^1.14.0",

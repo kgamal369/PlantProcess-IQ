@@ -33,6 +33,12 @@ const form = read("src/components/proof/RequestDemoForm.tsx");
 const content = read("src/content/phase1WebsiteProof.ts");
 const renderedSource = `${app}\n${graphics}\n${content}`;
 
+/* PPIQ-T069-04: the portfolio surfaces, so the architecture can be asserted
+   rather than assumed. */
+const registry = read("src/content/portfolio/souProducts.ts");
+const portfolioPage = read("src/pages/products/ProductsPortfolioPage.tsx");
+const tagline = read("src/brand/tagline.ts");
+
 for (const marker of [
   "PPIQ-WEBSITE-COMMERCIAL-V2:BEGIN",
   "website-premium-header",
@@ -49,7 +55,7 @@ for (const marker of [
 for (const route of [
   'path="/"', 'path="/product"', 'path="/proof"', 'path="/security"',
   'path="/pricing"', 'path="/about"', 'path="/contact"',
-  'path="/packs/:code"', 'path="/solutions/:code"', 'path="/products/:code"',
+  'path="/packs/:code"', 'path="/solutions/:code"', 'path="/products"',
 ]) check(`route ${route}`, app.includes(route));
 
 for (const story of [
@@ -102,9 +108,51 @@ const forbidden = [
 ];
 for (const pattern of forbidden) check(`forbidden claim absent ${pattern}`, !pattern.test(renderedSource));
 
-check("legacy top-level sibling product navigation removed", !app.includes("SOU MES") && !app.includes("SOU QES"));
+/* PPIQ-T069-04 THE FIVE-SIBLING PRODUCT ARCHITECTURE.
+   These replace an assertion that the sibling products must NOT appear, which
+   pinned exactly the architecture Chapter 6 6.2.1 forbids. The rule is not to
+   make the validator weaker - it is to make it strict about the right thing. */
+
+check("portfolio registry holds exactly five products", (registry.match(/^  slug: "/gm) || []).length === 5);
+check("exactly one flagship", (registry.match(/isFlagship: true/g) || []).length === 1);
+check("four products are explicitly not the flagship", (registry.match(/isFlagship: false/g) || []).length === 4);
+
+for (const slug of ["plantprocess-iq", "mes", "qes", "yard-warehouse-management", "energy-management"])
+  check(`canonical product ${slug}`, registry.includes(`slug: "${slug}"`));
+
+check("the portfolio route exists", app.includes('path="/products" element={<ProductsPortfolioPage />}'));
+check("the five canonical routes are generated from the registry",
+  app.includes("souProducts.map((product)") && app.includes("path={productPath(product)}"));
+check("PlantProcess IQ keeps its own richer page", app.includes("product.isFlagship ? <PlatformPage />"));
+check("/product redirects to the canonical PPIQ route",
+  app.includes('path="/product" element={<Navigate to="/products/plantprocess-iq"'));
+check("compatibility aliases are generated from the registry",
+  app.includes("Object.keys(productAliasRedirects).map"));
+
+check("the generic /products/:code route is gone", !app.includes('path="/products/:code"'));
+check("LegacyProductRoute is gone", !app.includes("function LegacyProductRoute"));
+for (const legacy of ["/packs/reliability", "/packs/quality", "/packs/yard", "/packs/energy"])
+  check(`no product redirects into the capability pack ${legacy}`, !app.includes(`"${legacy}"`));
+
+check("PPIQ is a sibling, not a parent of four packs",
+  !/capability pack|module of PlantProcess IQ|part of PlantProcess IQ/i.test(registry));
+
+check("the menu reads the portfolio registry",
+  app.includes('from "./content/portfolio/souProducts"') && app.includes("souProducts.map((product)"));
+check("the portfolio page reads the same registry",
+  portfolioPage.includes("content/portfolio/souProducts") && portfolioPage.includes("souProducts.map"));
+check("no product path is hand-written in the header",
+  !app.includes('"/products/mes"') && !app.includes('"/products/qes"'));
+
+check("the four non-flagship products use target-design wording",
+  (registry.match(/claimBasis: "target-design"/g) || []).length === 4);
+check("no invented result figure in the portfolio",
+  !/\d+(\.\d+)?\s*(percent|%)/i.test(registry) && !/\bcertified\b/i.test(registry));
 check("legacy direct Home nav absent", !app.includes('<NavLink to="/">Home</NavLink>'));
-check("canonical tagline present", app.includes("Connect Your Plant. Understand Your Process."));
+/* PPIQ-T069-04: this asserted the tagline was inside App.tsx. It never was - it
+   lives in src/brand/tagline.ts - so this check had been failing before T-069
+   began. Pointed at the file that actually holds the string. */
+check("canonical tagline present", tagline.includes("Connect Your Plant Data. Understand Your Process."));
 check("premium CSS is substantial", css.split(/\r?\n/).length > 350);
 check("four graphical components are substantial", graphics.split(/\r?\n/).length > 180);
 check("no browser lead persistence", !/localStorage\.(setItem|getItem|removeItem)\([^)]*(lead|demoLead|demoLeads)/i.test(form));

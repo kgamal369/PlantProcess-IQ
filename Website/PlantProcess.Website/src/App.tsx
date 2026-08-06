@@ -1,5 +1,9 @@
-﻿import { NewHomePage } from "./pages/NewHomePage";
-import { useEffect, useState, type ReactNode } from "react";
+import { NewHomePage } from "./pages/NewHomePage";
+/* PPIQ-T069-PORTFOLIO: the Products menu reads the registry, never a local list. */
+import { souProducts, productPath, productAliasRedirects } from "./content/portfolio/souProducts";
+import { ProductsPortfolioPage } from "./pages/products/ProductsPortfolioPage";
+import { PortfolioProductPage } from "./pages/products/PortfolioProductPage";
+import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
 import { NavLink, Navigate, Route, Routes, useLocation, useParams } from "react-router-dom";
 import {
   ArrowRight,
@@ -138,6 +142,99 @@ function ScrollToTop() {
   return null;
 }
 
+/* PPIQ-T069-PORTFOLIO-MENU
+ * The Products mega-menu of Chapter 6 6.2.2.
+ *
+ * It is stateful rather than CSS-hover because 6.2.2 requires Escape to close,
+ * and a :hover rule reopens the panel the moment Escape releases it while the
+ * pointer is still inside. Opens on pointer, focus and click; closes on
+ * pointer-leave, blur and Escape, returning focus to the trigger.
+ *
+ * Every entry comes from souProducts. No product name, slug, value line or icon
+ * is written here.
+ */
+const PRODUCT_ICONS: Record<string, typeof Factory> = {
+  BrainCircuit,
+  Factory,
+  ScanLine,
+  Layers3,
+  Gauge,
+};
+
+function ProductsMegaMenu() {
+  const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const location = useLocation();
+
+  useEffect(() => { setOpen(false); }, [location.pathname]);
+
+  function onKeyDown(event: ReactKeyboardEvent<HTMLDivElement>) {
+    if (event.key === "Escape" && open) {
+      event.stopPropagation();
+      setOpen(false);
+      triggerRef.current?.focus();
+    }
+  }
+
+  return (
+    <div
+      className={`products-mega ${open ? "products-mega--open" : ""}`}
+      data-testid="website-products-menu"
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+      onFocus={() => setOpen(true)}
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setOpen(false);
+      }}
+      onKeyDown={onKeyDown}
+    >
+      <button
+        ref={triggerRef}
+        className="site-nav-trigger products-mega-trigger"
+        type="button"
+        aria-haspopup="true"
+        aria-expanded={open}
+        aria-controls="products-mega-panel"
+        onClick={() => setOpen((value) => !value)}
+      >
+        Products <ChevronDown size={15} />
+      </button>
+
+      <div
+        id="products-mega-panel"
+        className="products-mega-panel"
+        role="menu"
+        aria-label="SOU Industrial Software products"
+        hidden={!open}
+      >
+        <div className="nav-popover-heading">Products</div>
+        <div className="products-mega-grid">
+          {souProducts.map((product) => {
+            const Icon = PRODUCT_ICONS[product.icon] ?? Factory;
+            return (
+              <NavLink
+                key={product.slug}
+                to={productPath(product)}
+                role="menuitem"
+                className="products-mega-item"
+              >
+                <Icon size={18} />
+                <span>
+                  <strong>{product.menuLabel}</strong>
+                  <small>{product.valueLine}</small>
+                </span>
+              </NavLink>
+            );
+          })}
+        </div>
+        <NavLink to="/products" role="menuitem" className="products-mega-all">
+          View all products <ArrowRight size={15} />
+        </NavLink>
+      </div>
+    </div>
+  );
+}
+
 function Layout({ children }: { children: ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
@@ -170,6 +267,7 @@ function Layout({ children }: { children: ReactNode }) {
         <nav className={`website-main-nav ${mobileOpen ? "website-main-nav--open" : ""}`} aria-label="Main website navigation">
           <NavLink to="/product">Platform</NavLink>
           <a href="/#how-it-works">How it works</a>
+          <ProductsMegaMenu />
           <div className="site-nav-menu" data-testid="website-solutions-menu">
             <button className="site-nav-trigger" type="button" aria-haspopup="true">
               Solutions <ChevronDown size={15} />
@@ -333,18 +431,17 @@ function RolePage() {
   return <><section className="subpage-hero"><div className="section-shell subpage-hero__layout"><div><div className="section-kicker">{role.title}</div><h1>{role.headline}</h1><p>{role.text}</p><a className="website-button website-button--primary" href="#request-demo">Define your first outcome</a></div><div className="role-page-visual"><Icon size={48} /><strong>{role.title}</strong><span>One governed truth through your decision lens</span></div></div></section><section className="commercial-section"><div className="section-shell"><div className="role-page-points">{role.points.map((item, index) => <article key={item}><span>0{index + 1}</span><Check size={21} /><h2>{item}</h2></article>)}</div></div></section><ProofOfValueJourney /><RequestDemoForm /></>;
 }
 
-function LegacyProductRoute() {
-  const { code } = useParams<{ code?: string }>();
-  const map: Record<string, string> = { mes: "/packs/reliability", qes: "/packs/quality", yard: "/packs/yard", energy: "/packs/energy", "plantprocess-iq": "/product" };
-  return <Navigate to={map[code ?? ""] ?? "/product"} replace />;
-}
+/* PPIQ-T069-03: LegacyProductRoute is gone. It mapped every sibling product to a
+   PPIQ capability pack, which is the architecture Chapter 6 6.2.1 forbids. The
+   five canonical routes and every compatibility alias are now generated from the
+   portfolio registry in App below, so no product path is hand-written. */
 
 export function App() {
   return (
     <Layout>
       <Routes>
         <Route path="/" element={<NewHomePage />} />
-        <Route path="/product" element={<PlatformPage />} />
+        <Route path="/product" element={<Navigate to="/products/plantprocess-iq" replace />} />
         <Route path="/services" element={<Navigate to="/product" replace />} />
         <Route path="/proof" element={<ProofPage />} />
         <Route path="/security" element={<SecurityPage />} />
@@ -353,7 +450,21 @@ export function App() {
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/packs/:code" element={<PackPage />} />
         <Route path="/solutions/:code" element={<RolePage />} />
-        <Route path="/products/:code" element={<LegacyProductRoute />} />
+        <Route path="/products" element={<ProductsPortfolioPage />} />
+        {souProducts.map((product) => (
+          <Route
+            key={product.slug}
+            path={productPath(product)}
+            element={product.isFlagship ? <PlatformPage /> : <PortfolioProductPage slug={product.slug} />}
+          />
+        ))}
+        {Object.keys(productAliasRedirects).map((alias) => (
+          <Route
+            key={alias}
+            path={"/products/" + alias}
+            element={<Navigate to={productAliasRedirects[alias]} replace />}
+          />
+        ))}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Layout>

@@ -1,12 +1,7 @@
-/* ===== PPIQ enhancement pack: scroll-draw, ecosystem, ROI ===== */
-/* Uses existing SOU brand tokens; falls back to their literal values. */
-
 /* golden thread / architecture text */
-.ppiq-goldenthread .gt-label,
-.ppiq-archflow .af-t { font-family: "Chakra Petch", var(--disp, sans-serif); font-size: 12px; letter-spacing: .08em; fill: var(--sou-text, #eaf6ff); font-weight: 600; }
+.ppiq-goldenthread .gt-label { font-family: "Chakra Petch", var(--disp, sans-serif); font-size: 12px; letter-spacing: .08em; fill: var(--sou-text, #eaf6ff); font-weight: 600; }
 .ppiq-goldenthread .gt-id { font-family: var(--body, "Inter", sans-serif); font-size: 11px; fill: var(--sou-muted, #8ea7c1); }
 .ppiq-goldenthread .gt-ev { font-family: var(--body, "Inter", sans-serif); font-size: 11px; fill: var(--sou-muted, #8ea7c1); }
-.ppiq-archflow .af-s { font-family: var(--body, "Inter", sans-serif); font-size: 10.5px; fill: var(--sou-muted, #8ea7c1); }
 
 /* ---------- ecosystem ---------- */
 .ppiq-ecosystem { padding: 96px 0; }

@@ -326,3 +326,34 @@
 
 /* PPIQ-WEBSITE-PREMIUM-HEADER-V1:END */
 /* PPIQ-WEBSITE-COMMERCIAL-V2:END */
+
+/* ===========================================================================
+ * PPIQ-T069-PORTFOLIO-MENU - the Products mega-menu of Chapter 6 6.2.2.
+ * Its own classes rather than .site-nav-menu, because that one opens on CSS
+ * :hover and therefore cannot honour Escape.
+ * =========================================================================== */
+.products-mega { position: relative; }
+.products-mega--open .products-mega-trigger,
+.products-mega-trigger:hover { color: var(--ppiq-text); background: rgba(0, 212, 255, 0.08); }
+.products-mega-panel { position: absolute; top: calc(100% + 14px); left: 50%; width: min(640px, 88vw); padding: 14px; transform: translate(-50%, 0); border: 1px solid rgba(0, 212, 255, 0.22); border-radius: 20px; background: rgba(5, 11, 24, 0.97); box-shadow: var(--ppiq-shadow); backdrop-filter: blur(24px); z-index: 40; }
+.products-mega-panel[hidden] { display: none; }
+.products-mega-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; }
+.products-mega-item { display: flex; gap: 12px; align-items: flex-start; padding: 11px; border-radius: 13px; color: var(--ppiq-muted); text-decoration: none; }
+.products-mega-item:hover, .products-mega-item:focus-visible { color: var(--ppiq-text); background: rgba(0, 212, 255, 0.08); }
+.products-mega-item svg { flex: 0 0 auto; color: var(--ppiq-cyan); }
+.products-mega-item span { display: grid; gap: 4px; min-width: 0; }
+.products-mega-item strong { color: inherit; font-size: 0.9rem; }
+.products-mega-item small { font-size: 0.75rem; }
+.products-mega-all { display: inline-flex; align-items: center; gap: 8px; margin-top: 6px; padding: 11px; border-top: 1px solid rgba(0, 212, 255, 0.16); border-radius: 0 0 13px 13px; color: var(--ppiq-cyan); text-decoration: none; font-size: 0.82rem; font-weight: 760; }
+.products-mega-all:hover, .products-mega-all:focus-visible { color: var(--ppiq-text); }
+
+@media (max-width: 980px) {
+  /* Accordion inside the mobile drawer, per 6.2.2. */
+  .products-mega { width: 100%; }
+  .products-mega-panel { position: static; width: 100%; margin-top: 8px; padding: 8px; transform: none; box-shadow: none; backdrop-filter: none; }
+  .products-mega-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 680px) {
+  .products-mega-panel { width: 100%; }
+}
