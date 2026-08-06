@@ -1,0 +1,82 @@
+PRESENTATION STAGING RESET - 2026-08-06 10:04:51
+Target   : ppiq_presentation   (ppiq_app guarded)
+Mode     : EXECUTE
+Stage 2  : NEVER RUN BY THIS SCRIPT. Canonical is not touched.
+==============================================================================
+
+PREFLIGHT (fail closed - any FAIL and nothing is changed)
+  OK   database reachable
+  OK   dump_store schema exists   found=1
+  OK   active registry entries resolved   count=10
+  OK   registry rows parsed   parsed=10
+  OK   every active entry targets dump_store   offenders=0
+  OK   every active entry sources a src_ donor schema   offenders=0
+  OK   no live import lease held   held=0
+  OK   every registered donor table exists   missing=0
+  OK   every registered dump table exists   missing=0
+  OK   every donor table carries rows (donor is the source of truth here)   empty=0
+
+CURRENT STATE - donor versus staging, per registered table
+  donor table                                             donor    staging   watermark
+  src_caster_oracle_shape.cast_pieces                      5670       5670   2026-05-01 20:20:00+03
+  src_caster_oracle_shape.cast_sequence                     630        630   2026-05-01 20:09:00+03
+  src_hsm_oracle_shape.hsm_coils                           5670       5670   2026-05-03 02:51:00+03
+  src_hsm_oracle_shape.hsm_pass_measurements              39690      39690   2026-05-03 02:44:00+03
+  src_inspection_mysql_shape.downtime_events                210        210   2026-05-01 10:40:00+03
+  src_inspection_mysql_shape.parsytec_surface_defects      1987       1987   2026-05-02 16:21:00+03
+  src_meltshop_pg.heats                                     630        630   2026-05-01 17:45:00+03
+  src_meltshop_pg.lf_treatment                              630        630   2026-05-01 18:44:00+03
+  src_pkl_mssql_shape.pickle_orders                        5670       5670   2026-05-05 16:07:00+03
+  src_pkl_mssql_shape.qa_lab_results                      17010      17010   2026-05-05 16:13:00+03
+  TOTAL                                                   77797      77797
+
+  staging coils absent from the current donor : 0
+
+[1/6] backup
+      OK   C:\Workspace\PlantProcess-IQ\deploy\.ppiq-snapshots\ppiq_presentation_staging_preT030_20260806_100451.dump   0.01 MB
+
+[2/6] clear staging population and reset stage-1 watermarks (single transaction)
+      OK   truncate + watermark reset
+
+[3/6] verify staging is empty before the load
+      OK   every registered dump table is empty
+
+[4/6] full load via public.ppiq_run_stage1_delta_import_all (null watermark => full copy)
+      d9574038-c296-400b-8f43-9a56fbe1e97c|Ok|5670|Stage-1 delta import completed. Inserted 5670 new rows into dump_store.src_caster_oracle_shape_cast_pieces. Dump now has 5670 rows.
+      9885f54f-8af9-4f98-9217-94618cd473cd|Ok|630|Stage-1 delta import completed. Inserted 630 new rows into dump_store.src_caster_oracle_shape_cast_sequence. Dump now has 630 rows.
+      8674373d-3ced-4e66-9ff0-b6a385c71ba6|Ok|5670|Stage-1 delta import completed. Inserted 5670 new rows into dump_store.src_hsm_oracle_shape_hsm_coils. Dump now has 5670 rows.
+      6538f9ba-0839-42ef-8620-313e92ba2380|Ok|39690|Stage-1 delta import completed. Inserted 39690 new rows into dump_store.src_hsm_oracle_shape_hsm_pass_measurements. Dump now has 39690 rows.
+      7a9c9e65-d6cd-4efd-ae24-4e416083c846|Ok|210|Stage-1 delta import completed. Inserted 210 new rows into dump_store.src_inspection_mysql_shape_downtime_events. Dump now has 210 rows.
+      3b8fa258-0607-4c9b-9c14-d3ff19b1253f|Ok|1987|Stage-1 delta import completed. Inserted 1987 new rows into dump_store.src_inspection_mysql_shape_parsytec_surface_defects. Dump now has 1987 rows.
+      57c4d176-c106-438a-b22c-5b55d3a199f2|Ok|630|Stage-1 delta import completed. Inserted 630 new rows into dump_store.src_meltshop_pg_heats. Dump now has 630 rows.
+      7e1db255-de7e-437a-8cf1-e794343c3a40|Ok|630|Stage-1 delta import completed. Inserted 630 new rows into dump_store.src_meltshop_pg_lf_treatment. Dump now has 630 rows.
+      6756a60a-9dae-469e-9b70-74ab458601c6|Ok|5670|Stage-1 delta import completed. Inserted 5670 new rows into dump_store.src_pkl_mssql_shape_pickle_orders. Dump now has 5670 rows.
+      7149140b-79d7-49ef-9ed6-0bbc656b1243|Ok|17010|Stage-1 delta import completed. Inserted 17010 new rows into dump_store.src_pkl_mssql_shape_qa_lab_results. Dump now has 17010 rows.
+
+[5/6] verify staging equals the donor, table by table
+  table                                                   donor    staging   verdict
+  src_caster_oracle_shape.cast_pieces                      5670       5670   MATCH
+  src_caster_oracle_shape.cast_sequence                     630        630   MATCH
+  src_hsm_oracle_shape.hsm_coils                           5670       5670   MATCH
+  src_hsm_oracle_shape.hsm_pass_measurements              39690      39690   MATCH
+  src_inspection_mysql_shape.downtime_events                210        210   MATCH
+  src_inspection_mysql_shape.parsytec_surface_defects      1987       1987   MATCH
+  src_meltshop_pg.heats                                     630        630   MATCH
+  src_meltshop_pg.lf_treatment                              630        630   MATCH
+  src_pkl_mssql_shape.pickle_orders                        5670       5670   MATCH
+  src_pkl_mssql_shape.qa_lab_results                      17010      17010   MATCH
+
+      identity checks (the T-030 acceptance is identity, never row-count equality across layers)
+      staging coils absent from the donor        : 0
+      staging coils absent from canonical        : 0
+      canonical coils absent from staging        : 11340
+
+[6/6] gate
+      OK   every registered table matches the donor exactly
+      OK   zero stale staging identities
+      OK   every staging coil resolves in canonical
+
+[GATE GREEN] dump_store now carries the current Fleet v2 donor population.
+             Stage 2 was NOT run. Canonical and the analytical population are untouched.
+             Backup: C:\Workspace\PlantProcess-IQ\deploy\.ppiq-snapshots\ppiq_presentation_staging_preT030_20260806_100451.dump
+             Report: C:\Workspace\PlantProcess-IQ\docs\m1\evidence\T-030_staging_reset_20260806_100451.txt

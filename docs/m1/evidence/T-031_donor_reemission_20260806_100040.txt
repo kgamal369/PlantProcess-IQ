@@ -1,0 +1,291 @@
+FLEET V2 DONOR RE-EMISSION - 2026-08-06 10:00:40
+Target   : ppiq_presentation   (ppiq_app guarded)
+Mode     : REPORT ONLY - nothing is changed
+Emission : --mode fleet-v2 --emit donor --scale 3 --seed 20260803
+Stage 2  : NEVER RUN. Canonical and the analytical population are untouched.
+==========================================================================================
+
+[1/7] re-prove the frozen capture baseline (retirement gate condition 1)
+      capture sha256 : 11EDF4B275A106C86D75EA3147D47B56F7763AD9EE2D258487953B7155939AD7
+      OK   the captured baseline still reproduces from the generator, so the live
+           src_* rows are not the only copy and overwriting them is safe
+
+[2/7] preflight (fail closed)
+      OK   database reachable   
+      OK   canonical is the fleet-v2 emission we are aligning to   ROLLED_IN_SCALE present=1
+      OK   active registry entries resolved   count=10
+      OK   every active entry targets dump_store   
+      OK   every active entry sources a src_ donor schema   
+      OK   no live import lease held   held=0
+
+      current donor, before
+        src_caster_oracle_shape.cast_pieces                 5670
+        src_caster_oracle_shape.cast_sequence               630
+        src_hsm_oracle_shape.hsm_coils                      5670
+        src_hsm_oracle_shape.hsm_pass_measurements          39690
+        src_inspection_mysql_shape.downtime_events          210
+        src_inspection_mysql_shape.parsytec_surface_defects 1987
+        src_meltshop_pg.heats                               630
+        src_meltshop_pg.lf_treatment                        630
+        src_pkl_mssql_shape.pickle_orders                   5670
+        src_pkl_mssql_shape.qa_lab_results                  17010
+      donor defect codes: EDGE_CRACK, PINHOLE, ROLLED_IN, SCALE, SCRATCH, WAVINESS
+
+[3/7] emit the fleet-v2 donor
+      generator : generate_fleet_v2_donor.py
+      source sha256 : CB4C097D70D49B0F8875F76D8D81BBA28C651BC332D1DCA50E23FD1558F12DE1
+      seed      : 20260803
+      scale     : 3x the captured baseline
+      mode: fleet-v2
+      row counts, internally consistent
+        [OK] src_meltshop_pg.heats                                  1890
+        [OK] src_meltshop_pg.lf_treatment                           1890
+        [OK] src_caster_oracle_shape.cast_sequence                  1890
+        [OK] src_caster_oracle_shape.cast_pieces                   17010
+        [OK] src_hsm_oracle_shape.hsm_coils                        17010
+        [OK] src_hsm_oracle_shape.hsm_pass_measurements           119070
+        [OK] src_pkl_mssql_shape.pickle_orders                     15295
+        [OK] src_pkl_mssql_shape.qa_lab_results                    45885
+        [OK] src_inspection_mysql_shape.parsytec_surface_defects    5961
+        [OK] src_inspection_mysql_shape.downtime_events              630
+      
+      T-018 downtime, the two quantities. production_impact_seconds is
+      drawn from the equipment line and the random stream ONLY - never
+      from duration_seconds, the timestamps, or the other quantity.
+        posture           ABSORBED 230  CONTAINED 315  CASCADE 85
+        buffer absorbed   230 events, stopped above zero with impact zero
+        cascade           87 events with impact above twice stopped
+          example absorbed  stopped  89.4 min  impact   0.0 min  -> absorbed 89.4, cascade 0.0
+          example cascade   stopped   4.8 min  impact 287.9 min  -> absorbed 0.0, cascade 283.2
+        NEITHER derived metric is stored. Canonical keeps exactly two columns.
+      
+      T-019 shift and crew operating-practice regimes
+        The analysis unit is the HEAT'S shift - the crew that made the
+        steel - because a coil rolls 5 to 34 hours later and its rolling
+        shift is all but independent of its tap shift.
+      
+        THE CONFOUND, hard-grade share scheduled per shift
+          shift A   35.4 percent hard grades
+          shift B   50.9 percent hard grades
+          shift C   63.8 percent hard grades
+      
+        NAIVE defect rate per coil
+          shift A  0.2504
+          shift B  0.3449
+          shift C  0.4569
+          night minus day  +0.2064  (+82.4 percent)
+      
+        GRADE-CONDITIONED, stratified with equal grade weights
+          shift A  0.2778
+          shift B  0.3482
+          shift C  0.4069
+          night minus day  +0.1291  (+46.5 percent)
+          SHRINKAGE  37.5 percent of the naive difference was the grade mix
+      
+        VARIANCE OF TAP DEVIATION - this must SURVIVE conditioning
+          shift A  naive sd 11.490   within-grade sd 11.210
+          shift B  naive sd 13.258   within-grade sd 13.139
+          shift C  naive sd 15.810   within-grade sd 15.527
+          night/day ratio  naive 1.376   within-grade 1.385
+      
+        Both required outcomes hold: the mean difference shrinks materially
+        under conditioning and the variance difference survives it.
+      
+      T-020 post-maintenance recovery and campaign ageing
+      
+        RECOVERY - the two meltshop shapes differ in WHICH METRIC MOVES
+          type           offset    n   energy/t   power-on |tempdev|
+          EAF_WARMUP          1   12      574.2       3880     19.31
+          EAF_WARMUP          2   12      523.7       3350     22.14
+          EAF_WARMUP          3   12      502.3       3009     21.01
+          EAF_WARMUP          4   12      504.6       3206     20.50
+          EAF_WARMUP          5   12      482.2       2920     18.27
+          LADLE_RELINE        1   22      468.4       2951     24.57
+          LADLE_RELINE        2   23      474.2       3034     23.88
+          LADLE_RELINE        3   22      468.9       3000     22.03
+          LADLE_RELINE        4   23      473.4       3083     19.09
+          LADLE_RELINE        5   23      483.1       3031     22.67
+          STEADY              - 1717      483.7       3020     18.49
+      
+          LADLE_RELINE ladle final temperature, steady 1609.92 C
+            offset 1  n=22  1596.97 C  (-12.95 C)
+            offset 2  n=23  1600.99 C  (-8.93 C)
+            offset 3  n=22  1607.34 C  (-2.59 C)
+            offset 4  n=23  1604.12 C  (-5.80 C)
+            offset 5  n=23  1605.51 C  (-4.41 C)
+      
+          EAF_WARMUP   energy/t excess by offset  +18.7%  +8.3%  +3.8%  +4.3%  -0.3%
+          LADLE_RELINE cold-ladle shortfall by offset +0.80%  +0.55%  +0.16%  +0.36%  +0.27%
+      
+        CAMPAIGN AGEING - defect rate by campaign-age decile
+          0.208  0.250  0.300  0.332  0.340  0.368  0.405  0.419  0.438  0.445
+          linear fit across deciles  slope +0.0260 per decile, total fitted rise +0.234, R2 0.962
+          coil-level correlation of defect count with campaign age  r +0.0900
+          GRADUAL, NOT A STEP: R2 above 0.55 means the rise is carried by
+          the trend rather than by one boundary.
+      
+        ROLL_MARK plus EDGE_WAVE share by campaign-age third
+          early 2.5%   middle 4.9%   late 7.9%
+          (three bands, not ten: about 90 events cannot fill ten deciles)
+          decay slope per offset      EAF -0.042   LADLE -0.001
+          offset at which the excess halves   EAF 2   LADLE 3
+      
+          POWER NOTE, stated rather than hidden: there are 4 furnace and
+          8 ladle events at this scale, so each offset cell holds 4 to 8
+          heats. The opening effect and the decay direction are carried by
+          that sample; the individual offset-5 cell is NOT independently
+          significant and is not asserted as such. T-023 triples the plant
+          to 1,890 heats, which triples the events and halves these
+          standard errors.
+      
+        All three hold: a decaying recovery, two materially different
+        repair shapes, and a gradual campaign trend rather than a step.
+      
+      T-021 equipment personality and temporal regime change
+      
+        EQUIPMENT PERSONALITY - the two casters, same parameter set
+          unit          n  casting speed mould level sd      superheat
+          CCM-01     8575         1.2815         3.3645          26.49
+          CCM-02     8435         1.3992         1.8651          21.62
+          casting-speed separation 0.839 pooled sd, mould-level sd ratio 1.804
+          defect rate per coil   CCM-01 0.3886   CCM-02 0.3117   ratio 1.247
+      
+        EQUIPMENT PERSONALITY - the two pickling lines
+          unit          n   line speed    bath temp   acid conc sd
+          PKL-01     7584       141.42        80.54         2.0136
+          PKL-02     7711       177.61        83.40         1.4073
+          line-speed separation 0.756 pooled sd
+      
+        TEMPORAL REGIME CHANGE - coiling temperature practice
+          boundary  2026-05-17T23:03:54+02:00
+          explained by maintenance_id 51, ROLL_CHANGE on HSM-01
+          before  n= 8540  mean 607.58 C  sd 37.78
+          after   n= 8470  mean 588.33 C  sd 31.52
+          step at the boundary 19.24 C, largest within-period drift 1.55 C
+          A BOUNDARY, NOT DRIFT: the step must dominate the drift inside
+          either period, or the trend chart is showing a slope and not
+          a regime change.
+      
+        Both hold: filtering by equipment changes the shape of the caster
+        and pickling-line charts materially, and the regime boundary is
+        explainable by a recorded maintenance row rather than decorative.
+      
+      T-022 the one controlled merge
+      
+        CONFLICT DECISIONS - captured baseline against the older generation
+      
+          PLANT SCALE
+            captured : 630 heats, 5,670 coils, 31 days
+            older    : 2,431 heats, 17,817 coils
+            DECISION : NEITHER - the T-015 derived target of 1,890 heats and 17,010 coils
+            why      : both generations are historical accidents. The target was
+                       DERIVED from the chart population requirement - 18 strata at 85
+                       defect-positive coils each - and a number derived from a
+                       requirement beats one inherited from either generation. Applied
+                       by T-023, not here.
+      
+          PIECES PER HEAT
+            captured : exactly 9 without one exception - captured FAULT-5
+            older    : 18,070 pieces over 2,431 heats, so it varied
+            DECISION : ADOPT THE OLDER GENERATION'S VARIATION, 7 to 11 with mean exactly 9
+            why      : fixed cardinality is a captured fault, and the older generation
+                       is the evidence that the plant it modelled did vary. The
+                       per-heat counts sum to exactly 5,670, so no downstream total
+                       moves - a structural fix, not a scale change.
+      
+          PICKLING COVERAGE
+            captured : 5,670 of 5,670 coils, 100 percent
+            older    : 15,669 of 17,817 coils, 88 percent
+            DECISION : ADOPT THE OLDER GENERATION'S PARTIAL COVERAGE, about 90 percent
+            why      : a plant that pickles every single coil has exactly one route.
+                       The older generation is evidence of route variation, and
+                       route_code was a T-013 VARY target with no other home. The
+                       uncovered coils are what MAKES it vary.
+      
+          DEFECT INCIDENCE
+            captured : 1,987 defects over 5,670 coils = 0.35 per coil
+            older    : 51,987 over 17,817 = 2.92 per coil
+            DECISION : KEEP THE CAPTURED RATE, REJECT THE OLDER GENERATION'S
+            why      : 2.92 defects per coil means almost every coil carries three.
+                       That is not a plant, it is an inspection system with its
+                       threshold set wrong. Rejected on physical grounds, not
+                       preference.
+      
+          DEFECT CATALOGUE
+            captured : 6 codes inside a three-point spread
+            older    : 5 different codes, sharing only two with the captured set
+            DECISION : NEITHER - the T-015 fourteen-code Pareto with two negative controls
+            why      : both catalogues are flat and neither carries a code that exists
+                       to be REJECTED. Applied by T-016.
+      
+          CHEMISTRY ELEMENTS
+            captured : carbon, manganese, silicon
+            older    : the same three
+            DECISION : EXTEND TO SIX, adding sulphur, phosphorus and aluminium
+            why      : no conflict between the generations - both fall short of what
+                       C12 needs. Applied by T-016 and T-017.
+      
+          LADLE FURNACE, PASS MEASUREMENTS, QA ROW COUNTS
+            captured : 630 / 39,690 / 17,010
+            older    : identical on all three
+            DECISION : KEEP - no conflict exists
+            why      : where the two generations agree there is nothing to merge, and
+                       saying so is part of the record.
+      
+          DOWNTIME VOCABULARY
+            captured : 5 reason codes across 4 categories, 210 events
+            older    : 248 events
+            DECISION : KEEP THE CAPTURED VOCABULARY AND RATE
+            why      : the 18 percent count difference is horizon, not semantics, and
+                       the captured vocabulary is the richer of the two.
+      
+          QA MEASUREMENT VALUES
+            captured : one distribution 1.07 to 1599.88 across three different tests
+            older    : identical - the same fault
+            DECISION : REJECT BOTH, repair per test code
+            why      : the generations agree, and they are both wrong. AGREEMENT
+                       BETWEEN TWO SOURCES IS NOT EVIDENCE WHEN BOTH INHERIT THE SAME
+                       DEFECT.
+      
+        RECONCILIATION COVERAGE - all 13 T-013 structures
+          present 13 of 13
+      
+        VARY TARGETS FROM THE SOURCE RECONCILIATION
+          these had no task of their own; T-022 is where they survive or
+          carry a reason for being dropped
+          heats.route_code                   3 distinct
+          heats.target_temp_c                5 distinct
+          hsm_coils.target_fdt_c             5 distinct
+          hsm_coils.target_ct_c              5 distinct
+          cast_sequence.sequence_status      4 distinct
+          parsytec.inspection_device         2 distinct
+          planned grade differs from actual  82 of 1890 sequences (4.3 percent)
+      
+        SCALE LESSONS ADOPTED FROM THE OLDER GENERATION
+          pieces per heat  [7, 8, 9, 10, 11]   mean 9.00, total 17010
+          pickling coverage 89.9 percent of coils, from route_code
+      
+        One reconciled definition, nine recorded conflict decisions, all 13
+        structures present, and no row copied between layers to get here.
+      
+      written: C:\Users\elka01\AppData\Local\Temp\ppiq_t031_donor_20260806_100040\donor_fleetv2.sql
+      ALTER     7
+      BEGIN     1
+      COMMIT    1
+      DELETE    13
+      DROP      0
+      TRUNCATE  0
+      size       30.03 MB
+      OK   one transaction, delete-then-insert, no DROP, no TRUNCATE
+
+REPORT ONLY. Nothing in the database was changed.
+
+With -Execute this runner would, in order:
+  4  pg_dump -Fc the five donor schemas into deploy\.ppiq-snapshots
+  5  apply the emitted donor SQL (one transaction, delete then insert, plus FLEET_ALTERS)
+  6  DROP and RE-REGISTER the dump_store tables through ppiq_register_dump_source,
+     because fleet-v2 widens the donor schema and CREATE TABLE IF NOT EXISTS will not
+  7  verify the donor now matches canonical on vocabulary and genealogy
+
+Emitted SQL kept for inspection: C:\Users\elka01\AppData\Local\Temp\ppiq_t031_donor_20260806_100040\donor_fleetv2.sql
+Report: C:\Workspace\PlantProcess-IQ\docs\m1\evidence\T-031_donor_reemission_20260806_100040.txt

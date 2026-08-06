@@ -1,0 +1,51 @@
+/* PPIQ T-037. The shared role-binding capability carries its own class
+   namespace so that the shared authoring shell can render it in T-038 without
+   importing the stylesheet of a panel that T-038 retires. The visual rules are
+   the ones the panel already used, so nothing the author sees changes shape. */
+
+.ppiq-rolebind { min-width: 0; }
+
+.ppiq-rolebind__title {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ppiq-color-text-secondary, #c9dcec);
+}
+
+.ppiq-rolebind__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.ppiq-rolebind__role {
+  flex: 0 0 76px;
+  font-size: 11px;
+  font-family: "IBM Plex Mono", monospace;
+  letter-spacing: 0.06em;
+  color: var(--ppiq-color-text-muted, #8ba9c4);
+}
+
+.ppiq-rolebind__stale {
+  font-size: 11px;
+  color: var(--ppiq-color-danger, #ff4d6d);
+}
+
+.ppiq-rolebind__problem {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 77, 109, 0.34);
+  border-left-width: 3px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--ppiq-color-text-primary, #eaf6ff);
+}
+
+.ppiq-rolebind__hint {
+  margin: 6px 0 0;
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--ppiq-color-text-muted, #8ba9c4);
+}

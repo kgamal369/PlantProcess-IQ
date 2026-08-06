@@ -1,0 +1,54 @@
+PRESENTATION STAGING RESET v2 - 2026-08-06 10:17:56
+Target   : ppiq_presentation   (ppiq_app guarded)
+Mode     : REPORT ONLY - nothing is changed
+Stage 2  : NEVER RUN BY THIS SCRIPT. Canonical is not touched.
+==========================================================================================
+
+PREFLIGHT (fail closed - any FAIL and nothing is changed)
+  OK   database reachable   
+  OK   dump_store staging schema exists   
+  OK   active registry entries resolved   count=10
+  OK   registry rows parsed   parsed=10
+  OK   every active entry targets dump_store   
+  OK   every active entry sources a src_ donor schema   
+  OK   no live import lease held   
+  OK   every registered donor table exists   missing=0
+  OK   every donor table carries rows   empty=0
+
+SHAPE - does each dump table still match its donor table
+  OK      src_caster_oracle_shape.cast_pieces                 shape matches
+  OK      src_caster_oracle_shape.cast_sequence               shape matches
+  STALE   src_hsm_oracle_shape.hsm_coils                      donor columns absent from the dump table: 2
+  OK      src_hsm_oracle_shape.hsm_pass_measurements          shape matches
+  STALE   src_inspection_mysql_shape.downtime_events          donor columns absent from the dump table: 1
+  OK      src_inspection_mysql_shape.parsytec_surface_defects shape matches
+  STALE   src_meltshop_pg.heats                               donor columns absent from the dump table: 4
+  OK      src_meltshop_pg.lf_treatment                        shape matches
+  OK      src_pkl_mssql_shape.pickle_orders                   shape matches
+  OK      src_pkl_mssql_shape.qa_lab_results                  shape matches
+  3 of 10 dump tables need rebuilding
+
+CURRENT STATE - donor versus staging, per registered table
+  donor table                                             donor    staging   watermark
+  src_caster_oracle_shape.cast_pieces                     17010       5670   2026-05-01 20:20:00+03
+  src_caster_oracle_shape.cast_sequence                    1890        630   2026-05-01 20:09:00+03
+  src_hsm_oracle_shape.hsm_coils                          17010       5670   2026-05-03 02:51:00+03
+  src_hsm_oracle_shape.hsm_pass_measurements             119070      39690   2026-05-03 02:44:00+03
+  src_inspection_mysql_shape.downtime_events                630        210   2026-05-01 10:40:00+03
+  src_inspection_mysql_shape.parsytec_surface_defects      5961       1987   2026-05-02 16:21:00+03
+  src_meltshop_pg.heats                                    1890        630   2026-05-01 17:45:00+03
+  src_meltshop_pg.lf_treatment                             1890        630   2026-05-01 18:44:00+03
+  src_pkl_mssql_shape.pickle_orders                       15295       5670   2026-05-05 16:07:00+03
+  src_pkl_mssql_shape.qa_lab_results                      45885      17010   2026-05-05 16:13:00+03
+
+REPORT ONLY. Nothing was changed.
+
+With -Execute this script would, in order:
+  1  TWO pg_dump files into deploy\.ppiq-snapshots - the dump_store schema, and the registry - each size-checked
+  2  drop and re-register the 3 stale dump table(s) through ppiq_register_dump_source
+  3  clear the population and null every stage-1 watermark, in one transaction
+  4  run public.ppiq_run_stage1_delta_import_all - a FULL load, because a null watermark makes the predicate TRUE
+  5  verify staging equals the donor per table, and the identity checks
+
+Stage 2 is not run. Canonical is not touched.
+Report: C:\Workspace\PlantProcess-IQ\docs\m1\evidence\T-030_staging_reset_20260806_101756.txt

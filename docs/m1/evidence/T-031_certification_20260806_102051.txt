@@ -1,0 +1,56 @@
+T-031 CROSS-LAYER CONSISTENCY CERTIFICATION v2 - 2026-08-06 10:20:51
+Database : ppiq_presentation
+Subject  : dump_store STAGING versus canonical PLANT. src_* is the donor and is not a side of this.
+Direction: gated STAGING -> CANONICAL. The reverse is reported, never gated.
+Counts   : NEVER compared. 4.5.2a rules that the layers are shaped differently by design.
+Mode     : CERTIFY + INJECTED DIVERGENCE PROOF (transaction, always rolled back)
+================================================================================================
+
+PRECONDITIONS (a certification that passes on empty layers is worse than none)
+  OK   database reachable   
+  OK   dump_store staging schema is present   tables=10
+  OK   staging carries coils   coils=17010
+  OK   canonical carries material units   material_units=35910
+  OK   canonical carries a defect catalogue   defect_catalogs=17
+  OK   canonical carries parameter definitions   parameter_definitions=48
+  OK   canonical carries equipment   equipment=18
+
+DIMENSIONS (Chapter 3 section 4.5.2a). Offending is counted STAGING -> CANONICAL.
+  dimension               verdict         offending           note
+  ----------------------------------------------------------------------------------------------
+  grades                  PASS            offending=0         staging grades with no canonical grade_or_recipe
+  equipment identities    PASS            offending=0         staging equipment identities absent from canonical equipment
+  defect vocabulary       PASS            offending=0         staging defect codes absent from the canonical catalogue
+  downtime semantics      PASS            offending=0         staging downtime reason codes absent from canonical downtime
+  chemistry vocabulary    PASS            offending=0         staging chemistry columns with no canonical parameter definition
+  QA definition set       PASS            offending=0         staging QA test count differing from the canonical Quality parameter count
+  QA units                PASS            offending=0         staging QA units no canonical Quality parameter declares
+  genealogy               PASS            offending=0         staging coils whose declared parent edge is missing in canonical
+  time horizon            PASS            offending=0         staging time window not contained in the canonical window (1 day tolerance)
+  planted phenomena       PASS            offending=0         top-five defect Pareto ordering differing between the layers
+
+REPORTED, NEVER GATED (expected shape differences, recorded so they are not mistaken for defects)
+  canonical grades not present in staging       : 0
+  canonical defect codes not present in staging : 3
+  canonical coils not present in staging        : 0   (the recorded 3:1 population ratio, not a defect)
+
+INJECTED DIVERGENCE PROOF
+  A defect code absent from canonical is written into staging, the defect
+  vocabulary dimension is re-measured, and the transaction is ALWAYS rolled back.
+  v1 read the last stdout line, which was the ROLLBACK command tag. The result is
+  now emitted as PPIQ_INJECT=<n> and matched by regex.
+  baseline offending        : 0
+  offending under injection : not emitted   (must exceed the baseline)
+  verdict                   : DID NOT FIRE
+  rollback residue check    : 0   (must be 0)
+
+CERTIFICATION GATE
+  dimensions measured : 10
+  dimensions passing  : 10
+  dimensions red      : 0
+  injected divergence : DID NOT FIRE
+
+
+[CERTIFICATION RED] every dimension passed but the injected divergence did not turn it red.
+                    A gate that cannot fail is not a gate.
+Report: C:\Workspace\PlantProcess-IQ\docs\m1\evidence\T-031_certification_20260806_102051.txt

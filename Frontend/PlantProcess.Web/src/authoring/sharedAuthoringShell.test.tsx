@@ -41,6 +41,18 @@ vi.mock("@/api/canvasApi", () => ({
   saveSqlVersion: () => Promise.resolve({ saved: true, versionNumber: 1, id: "1", message: "saved", errorCode: null }),
 }));
 
+// T-038. The S2 face reaches the canonical widget catalogue, so this file has
+// to answer for it. Empty lists are the right fixture here: what this file
+// proves is the REGION CONTRACT, and the face's own behaviour is proved
+// exhaustively in s2QueryBinding.test.tsx.
+vi.mock("@/api/dashboarding/dashboarding.api", () => ({
+  dashboardingApi: {
+    getDashboardMetadata: () => Promise.resolve({ chartTypes: [], dimensions: [], measures: [], filters: [] }),
+    getDashboardReferenceData: () => Promise.resolve({}),
+    executeWidgetQueryExpression: () => Promise.resolve({ columns: [], rows: [], warnings: [] }),
+  },
+}));
+
 const SRC = join(process.cwd(), "src");
 
 function walk(dir: string, acc: string[] = []): string[] {
@@ -130,6 +142,12 @@ describe("T-032 part A: one authoring shell, no second authoring page", () => {
       "src/authoring/blockRegistry.ts",
       "src/authoring/BlockNodes.tsx",
       "src/authoring/authoringPurposes.ts",
+      // T-037. The shared role-binding capability is authoring UI, so it is
+      // held to the same control discipline as the shell that adopts it in
+      // T-038. Added here rather than guarded a second time in its own file.
+      "src/authoring/RoleBindingFields.tsx",
+      // T-038 pack 02b3. The S2 face is authoring UI on the same terms.
+      "src/authoring/S2QueryBinding.tsx",
     ].map((p) => readFileSync(join(process.cwd(), p), "utf8")).join("\n");
     // The needles are ASSEMBLED FROM FRAGMENTS on purpose. A guard that spells
     // out the string it forbids becomes a hit in the next repository scan, and
@@ -163,13 +181,33 @@ describe("T-032 part B: the four regions render in every mode", () => {
     await waitFor(() => expect(screen.getByText("staging_one")).toBeInTheDocument());
   });
 
-  it("S2 renders the same four regions with its own palette", () => {
+  it("S2 renders the four regions with the query-binding face in the centre", async () => {
     render(<SharedAuthoringShell purpose="S2" />);
     expect(screen.getByTestId("authoring-shell")).toHaveAttribute("data-purpose", "S2");
     expect(screen.getByTestId("authoring-mode-bar")).toBeInTheDocument();
     expect(screen.getByTestId("canvas-schema-tree")).toBeInTheDocument();
-    expect(screen.getByTestId("authoring-board")).toBeInTheDocument();
     expect(screen.getByTestId("toolbox-group-relational")).toBeInTheDocument();
+    expect(await screen.findByTestId("s2-query-binding")).toBeInTheDocument();
+    // T-038: the centre is the face, not a board. A board here would mean two
+    // authoring surfaces for one purpose.
+    expect(screen.queryByTestId("authoring-board")).toBeNull();
+  });
+
+  it("S2 offers no control named after the preparation language", async () => {
+    render(<SharedAuthoringShell purpose="S2" />);
+    await screen.findByTestId("s2-query-binding");
+    // The word means the safe statement over the STAGED catalogue. S2 authors
+    // the widget query expression over the canonical model, and one word may
+    // not stand for both.
+    expect(screen.queryByRole("button", { name: "SQL" })).toBeNull();
+  });
+
+  it("S1 still offers both of its own modes", async () => {
+    render(<SharedAuthoringShell purpose="S1" />);
+    await screen.findByText("staging_one");
+    expect(screen.getByRole("button", { name: "Block wiring" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "SQL" })).toBeInTheDocument();
+    expect(screen.getByTestId("authoring-board")).toBeInTheDocument();
   });
 
   it("SQL mode hides the toolbox entirely rather than disabling it", async () => {

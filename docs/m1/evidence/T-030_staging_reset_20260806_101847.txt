@@ -1,0 +1,94 @@
+PRESENTATION STAGING RESET v2 - 2026-08-06 10:18:47
+Target   : ppiq_presentation   (ppiq_app guarded)
+Mode     : EXECUTE
+Stage 2  : NEVER RUN BY THIS SCRIPT. Canonical is not touched.
+==========================================================================================
+
+PREFLIGHT (fail closed - any FAIL and nothing is changed)
+  OK   database reachable   
+  OK   dump_store staging schema exists   
+  OK   active registry entries resolved   count=10
+  OK   registry rows parsed   parsed=10
+  OK   every active entry targets dump_store   
+  OK   every active entry sources a src_ donor schema   
+  OK   no live import lease held   
+  OK   every registered donor table exists   missing=0
+  OK   every donor table carries rows   empty=0
+
+SHAPE - does each dump table still match its donor table
+  OK      src_caster_oracle_shape.cast_pieces                 shape matches
+  OK      src_caster_oracle_shape.cast_sequence               shape matches
+  STALE   src_hsm_oracle_shape.hsm_coils                      donor columns absent from the dump table: 2
+  OK      src_hsm_oracle_shape.hsm_pass_measurements          shape matches
+  STALE   src_inspection_mysql_shape.downtime_events          donor columns absent from the dump table: 1
+  OK      src_inspection_mysql_shape.parsytec_surface_defects shape matches
+  STALE   src_meltshop_pg.heats                               donor columns absent from the dump table: 4
+  OK      src_meltshop_pg.lf_treatment                        shape matches
+  OK      src_pkl_mssql_shape.pickle_orders                   shape matches
+  OK      src_pkl_mssql_shape.qa_lab_results                  shape matches
+  3 of 10 dump tables need rebuilding
+
+CURRENT STATE - donor versus staging, per registered table
+  donor table                                             donor    staging   watermark
+  src_caster_oracle_shape.cast_pieces                     17010       5670   2026-05-01 20:20:00+03
+  src_caster_oracle_shape.cast_sequence                    1890        630   2026-05-01 20:09:00+03
+  src_hsm_oracle_shape.hsm_coils                          17010       5670   2026-05-03 02:51:00+03
+  src_hsm_oracle_shape.hsm_pass_measurements             119070      39690   2026-05-03 02:44:00+03
+  src_inspection_mysql_shape.downtime_events                630        210   2026-05-01 10:40:00+03
+  src_inspection_mysql_shape.parsytec_surface_defects      5961       1987   2026-05-02 16:21:00+03
+  src_meltshop_pg.heats                                    1890        630   2026-05-01 17:45:00+03
+  src_meltshop_pg.lf_treatment                             1890        630   2026-05-01 18:44:00+03
+  src_pkl_mssql_shape.pickle_orders                       15295       5670   2026-05-05 16:07:00+03
+  src_pkl_mssql_shape.qa_lab_results                      45885      17010   2026-05-05 16:13:00+03
+
+[1/5] backup, in two dumps
+      staging rows to preserve : 77797   (size floor 200000 bytes)
+      OK   dump_store schema   C:\Workspace\PlantProcess-IQ\deploy\.ppiq-snapshots\ppiq_presentation_dumpstore_20260806_101847.dump   2.103 MB
+      OK   dump registry   C:\Workspace\PlantProcess-IQ\deploy\.ppiq-snapshots\ppiq_presentation_registry_20260806_101847.dump   0.008 MB
+
+[2/5] rebuild stale dump tables through the existing ppiq_register_dump_source
+      OK   rebuild 3 dump table(s)
+
+[3/5] clear the population and reset stage-1 watermarks (single transaction)
+      OK   truncate + watermark reset
+      OK   every registered dump table is empty
+
+[4/5] full load via public.ppiq_run_stage1_delta_import_all (null watermark => full copy)
+      d9574038-c296-400b-8f43-9a56fbe1e97c|Ok|17010|Stage-1 delta import completed. Inserted 17010 new rows into dump_store.src_caster_oracle_shape_cast_pieces. Dump now has 17010 rows.
+      9885f54f-8af9-4f98-9217-94618cd473cd|Ok|1890|Stage-1 delta import completed. Inserted 1890 new rows into dump_store.src_caster_oracle_shape_cast_sequence. Dump now has 1890 rows.
+      8674373d-3ced-4e66-9ff0-b6a385c71ba6|Ok|17010|Stage-1 delta import completed. Inserted 17010 new rows into dump_store.src_hsm_oracle_shape_hsm_coils. Dump now has 17010 rows.
+      6538f9ba-0839-42ef-8620-313e92ba2380|Ok|119070|Stage-1 delta import completed. Inserted 119070 new rows into dump_store.src_hsm_oracle_shape_hsm_pass_measurements. Dump now has 119070 rows.
+      7a9c9e65-d6cd-4efd-ae24-4e416083c846|Ok|630|Stage-1 delta import completed. Inserted 630 new rows into dump_store.src_inspection_mysql_shape_downtime_events. Dump now has 630 rows.
+      3b8fa258-0607-4c9b-9c14-d3ff19b1253f|Ok|5961|Stage-1 delta import completed. Inserted 5961 new rows into dump_store.src_inspection_mysql_shape_parsytec_surface_defects. Dump now has 5961 rows.
+      57c4d176-c106-438a-b22c-5b55d3a199f2|Ok|1890|Stage-1 delta import completed. Inserted 1890 new rows into dump_store.src_meltshop_pg_heats. Dump now has 1890 rows.
+      7e1db255-de7e-437a-8cf1-e794343c3a40|Ok|1890|Stage-1 delta import completed. Inserted 1890 new rows into dump_store.src_meltshop_pg_lf_treatment. Dump now has 1890 rows.
+      6756a60a-9dae-469e-9b70-74ab458601c6|Ok|15295|Stage-1 delta import completed. Inserted 15295 new rows into dump_store.src_pkl_mssql_shape_pickle_orders. Dump now has 15295 rows.
+      7149140b-79d7-49ef-9ed6-0bbc656b1243|Ok|45885|Stage-1 delta import completed. Inserted 45885 new rows into dump_store.src_pkl_mssql_shape_qa_lab_results. Dump now has 45885 rows.
+
+[5/5] verify and gate
+  table                                                   donor    staging   verdict
+  src_caster_oracle_shape.cast_pieces                     17010      17010   MATCH
+  src_caster_oracle_shape.cast_sequence                    1890       1890   MATCH
+  src_hsm_oracle_shape.hsm_coils                          17010      17010   MATCH
+  src_hsm_oracle_shape.hsm_pass_measurements             119070     119070   MATCH
+  src_inspection_mysql_shape.downtime_events                630        630   MATCH
+  src_inspection_mysql_shape.parsytec_surface_defects      5961       5961   MATCH
+  src_meltshop_pg.heats                                    1890       1890   MATCH
+  src_meltshop_pg.lf_treatment                             1890       1890   MATCH
+  src_pkl_mssql_shape.pickle_orders                       15295      15295   MATCH
+  src_pkl_mssql_shape.qa_lab_results                      45885      45885   MATCH
+
+      staging coils absent from the donor        : 0
+      staging coils absent from canonical        : 0
+      canonical coils absent from staging        : 0
+
+      OK   every registered table matches the donor exactly
+      OK   zero stale staging identities
+      OK   every staging coil resolves in canonical
+      OK   every canonical coil is present in staging
+
+[GATE GREEN] dump_store carries the current donor population.
+             Stage 2 was NOT run. Canonical and the analytical population are untouched.
+             Backups: C:\Workspace\PlantProcess-IQ\deploy\.ppiq-snapshots\ppiq_presentation_dumpstore_20260806_101847.dump
+                      C:\Workspace\PlantProcess-IQ\deploy\.ppiq-snapshots\ppiq_presentation_registry_20260806_101847.dump
+             Report:  C:\Workspace\PlantProcess-IQ\docs\m1\evidence\T-030_staging_reset_20260806_101847.txt

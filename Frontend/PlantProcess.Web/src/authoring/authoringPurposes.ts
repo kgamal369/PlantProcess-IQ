@@ -13,6 +13,16 @@ export type AuthoringPurpose = "S1" | "S2" | "S3" | "S4" | "S5";
 // modes. Neither mode is a lesser citizen.
 export type AuthoringMode = "block" | "sql";
 
+/**
+ * T-038. The query contract a purpose authors, where it authors one. Exactly
+ * one value exists because exactly one such contract exists: the widget query
+ * expression over the canonical model, parsed and compiled by
+ * IWidgetQueryExpressionService and reached through
+ * executeWidgetQueryExpression. It is NOT preparation SQL, it does not touch
+ * the staged catalogue, and it carries its own safety contract.
+ */
+export type WidgetQueryContract = "widget-query-expression";
+
 export interface AuthoringPurposeDefinition {
   purpose: AuthoringPurpose;
   /** The name the author sees in the mode bar. */
@@ -29,6 +39,14 @@ export interface AuthoringPurposeDefinition {
    * show the canonical model only.
    */
   showsStagingCatalogue: boolean;
+  /**
+   * T-038, and it is deliberately OPTIONAL. Only S2 declares a query contract,
+   * because only S2 has one today. A purpose that declares none behaves exactly
+   * as it did before this field existed, which is why every other row in the
+   * registry is untouched: converging S2 is not an occasion to reclassify the
+   * purposes whose own tasks own them.
+   */
+  queryContract?: WidgetQueryContract;
 }
 
 export const AUTHORING_PURPOSES: readonly AuthoringPurposeDefinition[] = [
@@ -47,6 +65,7 @@ export const AUTHORING_PURPOSES: readonly AuthoringPurposeDefinition[] = [
     outputArtifact: "Widget definition",
     paletteGroups: ["source-output", "relational"],
     showsStagingCatalogue: false,
+    queryContract: "widget-query-expression",
   },
   {
     purpose: "S3",

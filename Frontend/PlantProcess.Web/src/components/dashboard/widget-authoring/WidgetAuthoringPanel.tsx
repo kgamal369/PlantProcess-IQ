@@ -11,9 +11,10 @@ import { StandardButton } from "@/components/standard";
 import { StandardP2Input, StandardP2Select, StandardP2Table, StandardP2TextArea } from "@/components/standard/StandardP2Controls";
 import { dashboardingApi } from "@/api/dashboarding/dashboarding.api";
 import {
-  readRoleBinding, writeRoleBinding, staleRoles, describeStale,
-  EMPTY_ROLE_BINDING, type WidgetRoleBinding, type WidgetRole,
+  readRoleBinding, writeRoleBinding,
+  EMPTY_ROLE_BINDING, type WidgetRoleBinding,
 } from "@/api/product-core/widget-role-binding";
+import { RoleBindingFields } from "@/authoring/RoleBindingFields";
 import "./WidgetAuthoringPanel.css";
 
 type Meta = {
@@ -466,56 +467,24 @@ export function WidgetAuthoringPanel({
                     </div>
                   )}
 
-                  {/* M1-16. THE BIND STEP. Specification 16.3: the query's
-                      returned columns become the choices for the widget's
-                      roles, and nothing else is offered. Before this, the card
-                      inferred its category column and guessed. */}
+                  {/* T-037. THE BIND STEP, now the SHARED capability.
+                      Specification 16.3 and Chapter 4 section 5.1.11 are
+                      unchanged: the query's returned columns are the only
+                      choices offered, and the mapping is stored by column name.
+                      What changed is WHERE the capability lives. This panel is
+                      retired by T-038, and a capability that lives inside a
+                      component scheduled for deletion is deleted with it, so
+                      the rows, the doctrine labels and the stale sentence now
+                      live in src/authoring/RoleBindingFields.tsx. The shared
+                      shell adopts exactly this component when T-038 wires the
+                      S2 query door. */}
                   {queryResult && queryResult.columns.length > 0 && (
                     <div className="wauth-field" data-testid="wauth-bind">
-                      <span className="wauth-label">Bind columns to roles</span>
-
-                      {(["category", "value", "secondary"] as WidgetRole[]).map((role) => {
-                        const bound = roleBinding[role];
-                        const isStale = Boolean(bound) && queryResult.columns.indexOf(String(bound)) < 0;
-                        return (
-                          <div className="wauth-bindrow" key={"bind-" + role}>
-                            <span className="wauth-bindrow__role">{role}</span>
-                            <StandardP2Select
-                              aria-label={"Bind " + role}
-                              value={isStale ? "" : (bound ?? "")}
-                              onChange={(e) => setRoleBinding((b) => ({
-                                ...b, [role]: e.target.value ? e.target.value : null,
-                              }))}
-                            >
-                              <option value="">{role === "category" || role === "value" ? "choose a column..." : "none"}</option>
-                              {queryResult.columns.map((c) => (
-                                <option key={"bo-" + role + "-" + c} value={c}>{c}</option>
-                              ))}
-                            </StandardP2Select>
-                            {isStale && (
-                              <span className="wauth-bindrow__stale">
-                                {String(bound)} is not in this result
-                              </span>
-                            )}
-                          </div>
-                        );
-                      })}
-
-                      {staleRoles(roleBinding, queryResult.columns).length > 0 ? (
-                        <p className="wauth-problem" role="alert">
-                          The saved mapping points at columns this query no longer
-                          returns: {describeStale(roleBinding, staleRoles(roleBinding, queryResult.columns))}.
-                          Choose again. Nothing has been repointed for you, because a
-                          chart that silently moves to another column is the failure
-                          this step exists to prevent.
-                        </p>
-                      ) : (
-                        <p className="wauth-hint">
-                          Roles are stored by column name, so reordering the query
-                          keeps them. A column that disappears is reported here by
-                          name rather than replaced.
-                        </p>
-                      )}
+                      <RoleBindingFields
+                        columns={queryResult.columns}
+                        binding={roleBinding}
+                        onChange={setRoleBinding}
+                      />
                     </div>
                   )}
                 </div>

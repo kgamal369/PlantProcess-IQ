@@ -1,0 +1,56 @@
+/* PPIQ T-038 pack 02b. The S2 face carries its own class namespace so that
+   retiring WidgetAuthoringPanel in pack 03 takes its stylesheet with it. */
+
+.ppiq-s2 { min-width: 0; }
+
+.ppiq-s2__modes { display: flex; gap: 8px; margin-bottom: 12px; }
+
+.ppiq-s2__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+
+.ppiq-s2__field { margin-bottom: 16px; min-width: 0; }
+
+.ppiq-s2__label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ppiq-color-text-secondary, #c9dcec);
+}
+
+.ppiq-s2__rowhead { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.ppiq-s2__spacer { flex: 1 1 auto; }
+.ppiq-s2__count { font-size: 11px; color: var(--ppiq-color-text-muted, #8ba9c4); }
+
+.ppiq-s2__filterrow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.ppiq-s2__expression {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12.5px;
+  line-height: 1.55;
+  width: 100%;
+}
+
+.ppiq-s2__hint {
+  margin: 6px 0 0;
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--ppiq-color-text-muted, #8ba9c4);
+}
+
+.ppiq-s2__result { margin-top: 12px; }
+.ppiq-s2__table { width: 100%; font-size: 12px; }
+
+/* T-038 pack 02c. The centre region while the shell serves a query-binding
+   purpose. Same scroll behaviour the board region has, so a long returned
+   column list does not push the debug log off the bottom. */
+.canvas-s2pane {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  padding: 12px 16px;
+}

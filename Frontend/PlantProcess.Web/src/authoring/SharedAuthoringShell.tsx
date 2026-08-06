@@ -56,6 +56,8 @@ import {
 import { SqlHighlighted } from "./SqlHighlighted";
 import { AuthoringSchemaTree } from "./AuthoringSchemaTree";
 import { AuthoringToolbox } from "./AuthoringToolbox";
+import { S2QueryBinding } from "./S2QueryBinding";
+import { loadS2State, type S2AuthoringState } from "./widgetDefinitionModel";
 import { purposeDefinition, type AuthoringMode, type AuthoringPurpose } from "./authoringPurposes";
 import "@/pages/Prep/CanvasModeBar.css";
 import "@/pages/Prep/CanvasSchemaTree.css";
@@ -86,6 +88,12 @@ export interface SharedAuthoringShellProps {
 
 export function SharedAuthoringShell({ purpose }: SharedAuthoringShellProps) {
   const definition = purposeDefinition(purpose);
+
+  // T-038. THE REGISTRY DECIDES, NOT A PURPOSE NAME. A purpose that declares a
+  // query contract authors through the S2 face; every other purpose keeps the
+  // board and the preparation modes exactly as they were.
+  const isQueryPurpose = definition.queryContract === "widget-query-expression";
+  const [s2State, setS2State] = useState<S2AuthoringState>(() => loadS2State(null));
 
   const [catalogue, setCatalogue] = useState<StagedDataset[]>([]);
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
@@ -552,24 +560,34 @@ export function SharedAuthoringShell({ purpose }: SharedAuthoringShellProps) {
       {/* BLOCK-START - section 5.2.3 region 1. */}
       <div className="canvas-modebar" data-testid="authoring-mode-bar">
         <span className="canvas-modebar__label">{definition.label}</span>
-        <StandardP2Button
-          variant={mode === "block" ? "primary" : "ghost"}
-          onClick={requestBlockMode}
-        >
-          Block wiring
-        </StandardP2Button>
-        <StandardP2Button
-          variant={mode === "sql" ? "primary" : "ghost"}
-          onClick={() => {
-            // Entering SQL mode lands in the read-only view, always. Nothing is
-            // forked by looking.
-            setMode("sql");
-            setSqlState((s) => (s === "authoring" ? s : "view"));
-            if (!invalidReason && !preview?.sql) { void doPreview(); }
-          }}
-        >
-          SQL
-        </StandardP2Button>
+        {/* T-038. A purpose that authors a query contract does not get this
+            toggle. The two modes of section 5.2.2 are Block and SQL, and SQL
+            means the safe preparation statement over the staged catalogue.
+            Offering that word on a purpose whose language is the widget query
+            expression would give one word two meanings, two catalogues and two
+            safety contracts. The face carries its own binding toggle. */}
+        {!isQueryPurpose && (
+          <>
+          <StandardP2Button
+            variant={mode === "block" ? "primary" : "ghost"}
+            onClick={requestBlockMode}
+          >
+            Block wiring
+          </StandardP2Button>
+          <StandardP2Button
+            variant={mode === "sql" ? "primary" : "ghost"}
+            onClick={() => {
+              // Entering SQL mode lands in the read-only view, always. Nothing is
+              // forked by looking.
+              setMode("sql");
+              setSqlState((s) => (s === "authoring" ? s : "view"));
+              if (!invalidReason && !preview?.sql) { void doPreview(); }
+            }}
+          >
+            SQL
+          </StandardP2Button>
+          </>
+        )}
 
         <StandardP2Input
           className="canvas-modebar__name"
@@ -578,29 +596,33 @@ export function SharedAuthoringShell({ purpose }: SharedAuthoringShellProps) {
           aria-label="Definition name"
         />
 
-        <span
-          className={"canvas-modebar__validity" + (invalidReason ? " canvas-modebar__validity--bad" : " canvas-modebar__validity--ok")}
-          data-testid="authoring-validity"
-          title={invalidReason ?? "Every block has what it needs to run."}
-        >
-          {invalidReason ? "Invalid" : "Valid flow"}
-        </span>
+        {!isQueryPurpose && (
+          <>
+          <span
+            className={"canvas-modebar__validity" + (invalidReason ? " canvas-modebar__validity--bad" : " canvas-modebar__validity--ok")}
+            data-testid="authoring-validity"
+            title={invalidReason ?? "Every block has what it needs to run."}
+          >
+            {invalidReason ? "Invalid" : "Valid flow"}
+          </span>
 
-        <StandardP2Button variant="primary" onClick={doPreview} disabled={Boolean(invalidReason)}>
-          Run
-        </StandardP2Button>
-        <StandardP2Button variant="secondary" onClick={doPublish} disabled={Boolean(invalidReason)}>
-          Publish version
-        </StandardP2Button>
+          <StandardP2Button variant="primary" onClick={doPreview} disabled={Boolean(invalidReason)}>
+            Run
+          </StandardP2Button>
+          <StandardP2Button variant="secondary" onClick={doPublish} disabled={Boolean(invalidReason)}>
+            Publish version
+          </StandardP2Button>
 
-        <span className="canvas-modebar__spacer" />
-        <span className="canvas-modebar__hint">
-          {mode === "block"
-            ? "Double-click a table on the left to put it on the board, wire key to key, then add Filter, Select columns or Derived column from the toolbox."
-            : sqlState === "view"
-              ? "The query the server compiled from this graph."
-              : "Forked. This definition is now authored as SQL; the graph is read-only history."}
-        </span>
+          <span className="canvas-modebar__spacer" />
+          <span className="canvas-modebar__hint">
+            {mode === "block"
+              ? "Double-click a table on the left to put it on the board, wire key to key, then add Filter, Select columns or Derived column from the toolbox."
+              : sqlState === "view"
+                ? "The query the server compiled from this graph."
+                : "Forked. This definition is now authored as SQL; the graph is read-only history."}
+          </span>
+          </>
+        )}
       </div>
 
       <div className={"canvas-page" + (mode === "sql" ? " canvas-page--sqlmode" : "")}>
@@ -623,7 +645,25 @@ export function SharedAuthoringShell({ purpose }: SharedAuthoringShellProps) {
         </aside>
 
         {/* CENTRE - the board, or the SQL editor in SQL mode. */}
-        {mode === "block" ? (
+        {isQueryPurpose ? (
+          <section className="canvas-s2pane" data-testid="authoring-s2-centre">
+            <S2QueryBinding
+              state={s2State}
+              onChange={setS2State}
+              onLog={(severity, message, facts) => {
+                // Section 5.2.8: the Job Log is the authoritative surface, and
+                // it is the SHELL's log. The face reports; it never owns one.
+                if (severity === "success") {
+                  logSuccess(name, message, facts);
+                } else if (severity === "warning") {
+                  logWarning(name, facts ? message + " (" + facts + ")" : message);
+                } else {
+                  logError(name, message);
+                }
+              }}
+            />
+          </section>
+        ) : mode === "block" ? (
           <CanvasShell
             nodes={renderNodes} edges={edges} nodeTypes={nodeTypes}
             onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} onConnect={onConnect}
