@@ -88,6 +88,17 @@ export interface S2QueryBindingProps {
    * rather than requested a second time.
    */
   onCatalogue?: (catalogue: S2Metadata) => void;
+  /**
+   * T-040 03a2. THE SHELL OWNS THE EXECUTION STATE, so this face reads whether
+   * a run is in flight rather than keeping its own answer. Two flags that
+   * agree today drift tomorrow; one flag cannot.
+   */
+  running: boolean;
+  /**
+   * Reported at both ends of a run. On "end", failure is the NORMALISED
+   * sentence or null, and rowCount is the rows a successful run returned.
+   */
+  onRunLifecycle: (phase: "start" | "end", failure: string | null, rowCount: number | null) => void;
 }
 
 function itemCode(i: RefItem) { return String(i.code ?? i.id ?? ""); }
@@ -101,11 +112,13 @@ function sampleOf(rows: readonly Record<string, unknown>[], code: string): strin
   return "no rows to sample";
 }
 
-export function S2QueryBinding({ state, onChange, onLog, onCatalogue }: S2QueryBindingProps) {
+export function S2QueryBinding({
+  state, onChange, onLog, onCatalogue, running, onRunLifecycle,
+}: S2QueryBindingProps) {
   const [meta, setMeta] = useState<S2Metadata | null>(null);
   const [refData, setRefData] = useState<RefData | null>(null);
   const [result, setResult] = useState<RunResult | null>(null);
-  const [running, setRunning] = useState(false);
+  // No local running flag: the shell owns it and hands it down as a prop.
 
   useEffect(() => {
     let alive = true;
@@ -158,7 +171,7 @@ export function S2QueryBinding({ state, onChange, onLog, onCatalogue }: S2QueryB
       onLog("error", "Write a query expression first, then run the test.");
       return;
     }
-    setRunning(true);
+    onRunLifecycle("start", null, null);
     try {
       const r = await dashboardingApi.executeWidgetQueryExpression({
         expression: state.expression, filters: null, options: null,
@@ -205,11 +218,15 @@ export function S2QueryBinding({ state, onChange, onLog, onCatalogue }: S2QueryB
       if (staleRoles(norm.binding, codes).length > 0) {
         onLog("warning", describeStaleBinding(norm.binding, codes));
       }
+      // RUN END, success. The row count goes to the shell because the shell is
+      // what turns it into a state; this face does not decide states.
+      onRunLifecycle("end", null, run.rows.length);
     } catch (e) {
-      // The thrown value is never read and never shown.
-      onLog("error", describeThrownAction(e));
-    } finally {
-      setRunning(false);
+      // The thrown value is never read and never shown - not in the log, and
+      // not in the failure sentence handed upward.
+      const sentence = describeThrownAction(e);
+      onLog("error", sentence);
+      onRunLifecycle("end", sentence, null);
     }
   }, [state, set, onLog]);
 

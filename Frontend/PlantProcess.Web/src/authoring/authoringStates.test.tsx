@@ -9,7 +9,8 @@ import { describe, expect, it } from "vitest";
 import { AuthoringStateBanner } from "./AuthoringStateBanner";
 import {
   ALL_AUTHORING_STATES, describeAuthoringState, resolveAuthoringState,
-  type AuthoringState, type AuthoringStateFacts,
+  toAuthoringStateFacts,
+  type AuthoringState, type AuthoringStateFacts, type ShellRunInput,
 } from "./authoringStates";
 
 const QUIET: AuthoringStateFacts = {
@@ -143,5 +144,65 @@ describe("T-040 colour never carries the meaning", () => {
       expect(banner.textContent?.trim().length, String(banner.getAttribute("data-state"))).toBeGreaterThan(0);
       view.unmount();
     }
+  });
+});
+
+describe("T-040 03a2 the shell's own values become the seven states", () => {
+  const shell = (over: Partial<ShellRunInput>): ShellRunInput => ({
+    running: false, failure: null, refusal: null, blocker: null,
+    rowCount: null, filtered: false, ...over,
+  });
+  const stateOf = (over: Partial<ShellRunInput>) =>
+    resolveAuthoringState(toAuthoringStateFacts(shell(over)));
+
+  it("a started run is Loading", () => {
+    expect(stateOf({ running: true })).toBe("loading");
+  });
+
+  it("a stale previous result does not mask Loading", () => {
+    // The row count from the last run is still in state while the next one
+    // flies. Reporting Populated here would show the old answer as the new one.
+    expect(stateOf({ running: true, rowCount: 42 })).toBe("loading");
+    expect(toAuthoringStateFacts(shell({ running: true, rowCount: 42 })).rowCount).toBeNull();
+  });
+
+  it("rows returned are Populated", () => {
+    expect(stateOf({ rowCount: 42 })).toBe("populated");
+  });
+
+  it("zero rows with no filters is Empty", () => {
+    expect(stateOf({ rowCount: 0, filtered: false })).toBe("empty");
+  });
+
+  it("zero rows with filters is Filtered-empty", () => {
+    expect(stateOf({ rowCount: 0, filtered: true })).toBe("filtered-empty");
+  });
+
+  it("an unmet prerequisite is Blocked", () => {
+    expect(stateOf({ blocker: "Nothing on the board yet." })).toBe("blocked");
+  });
+
+  it("a server refusal is Refused, never Failed", () => {
+    expect(stateOf({ refusal: "Refused (42703). column does not exist" })).toBe("refused");
+  });
+
+  it("a transport failure is Failed, never Refused", () => {
+    expect(stateOf({ failure: "That action did not complete." })).toBe("failed");
+  });
+
+  it("a successful retry clears the previous Failed", () => {
+    // The shell clears lastRunFailure at RUN START, so the next success cannot
+    // carry the old failure with it.
+    expect(stateOf({ failure: "That action did not complete." })).toBe("failed");
+    expect(stateOf({ failure: null, rowCount: 7 })).toBe("populated");
+  });
+
+  it("keeps Refused separate from Failed even when both are somehow present", () => {
+    // Failure wins on precedence, but the two are never conflated into one
+    // wording: the descriptor still carries the transport sentence.
+    const described = describeAuthoringState(
+      toAuthoringStateFacts(shell({ failure: "did not complete", refusal: "refused sentence" })));
+    expect(described.state).toBe("failed");
+    expect(described.sentence).toBe("did not complete");
   });
 });

@@ -93,8 +93,14 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
             _ => Array.Empty<DashboardAggregateRow>()
         };
 
+        // PRESENTATION CORRECTION. Equipment and Area are dimensioned BY ID, and
+        // that is correct: an id is stable and a name is not, so selections,
+        // drill-through and filters all travel on the key. What is wrong is
+        // showing that key to a plant engineer. Only the LABEL changes here.
+        var dimensionLabels = await LoadDimensionLabelsAsync(resolved.DimensionCode, cancellationToken);
+
         return ApplicationResult<DashboardWidgetQueryResultDto>.Success(
-            BuildResult(resolved, rows, warnings));
+            BuildResult(resolved, rows, warnings, dimensionLabels));
     }
 
     private async Task<IReadOnlyList<DashboardAggregateRow>> ExecuteMaterialCountAsync(
@@ -808,7 +814,8 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
     private static DashboardWidgetQueryResultDto BuildResult(
         DashboardWidgetResolvedDto resolved,
         IReadOnlyList<DashboardAggregateRow> aggregateRows,
-        IReadOnlyList<string> warnings)
+        IReadOnlyList<string> warnings,
+        IReadOnlyDictionary<string, string> dimensionLabels)
     {
         var dimensionCode = resolved.DimensionCode ?? "kpi";
 
@@ -825,7 +832,7 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
             .Select(row => new Dictionary<string, object?>
             {
                 [dimensionCode] = row.DimensionKey,
-                ["dimensionLabel"] = row.DimensionLabel,
+                ["dimensionLabel"] = LabelFor(dimensionLabels, row.DimensionKey, row.DimensionLabel),
                 ["value"] = row.Value,
                 ["observationCount"] = row.ObservationCount,
                 ["secondaryCount"] = row.SecondaryCount
@@ -838,6 +845,59 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
             columns,
             rows,
             warnings);
+    }
+
+    /// <summary>
+    /// Names for the dimension actually being drawn, and nothing else. Two
+    /// dimensions are keyed by an id whose name lives in another table, so
+    /// without this a bar chart reads as a column of GUIDs. Loaded once per
+    /// query rather than joined into every fact projection, which would have
+    /// meant touching ten of them.
+    /// </summary>
+    private async Task<IReadOnlyDictionary<string, string>> LoadDimensionLabelsAsync(
+        string? dimensionCode,
+        CancellationToken cancellationToken)
+    {
+        if (IsDimensionCode(dimensionCode, DashboardMetadataCodes.Dimensions.Equipment))
+        {
+            return await _dbContext.Equipment
+                .AsNoTracking()
+                .Where(x => !x.IsDeleted)
+                .ToDictionaryAsync(x => x.Id.ToString(), x => x.EquipmentName, cancellationToken);
+        }
+
+        if (IsDimensionCode(dimensionCode, DashboardMetadataCodes.Dimensions.Area))
+        {
+            return await _dbContext.Areas
+                .AsNoTracking()
+                .Where(x => !x.IsDeleted)
+                .ToDictionaryAsync(x => x.Id.ToString(), x => x.AreaName, cancellationToken);
+        }
+
+        return new Dictionary<string, string>();
+    }
+
+    private static bool IsDimensionCode(string? dimensionCode, string expected)
+    {
+        return string.Equals(dimensionCode, expected, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// The name where one exists, the label already computed where it does not.
+    /// A missing name is never invented and never blanked - a row whose id has
+    /// no matching record keeps reading as that id, which is the truth.
+    /// </summary>
+    private static string LabelFor(
+        IReadOnlyDictionary<string, string> labels,
+        string key,
+        string fallback)
+    {
+        if (labels.TryGetValue(key, out var name) && !string.IsNullOrWhiteSpace(name))
+        {
+            return name;
+        }
+
+        return fallback;
     }
 
     private static bool IsDimension(DashboardWidgetResolvedDto resolved, string dimensionCode)

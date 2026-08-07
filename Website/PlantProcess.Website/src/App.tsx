@@ -3,6 +3,9 @@ import { NewHomePage } from "./pages/NewHomePage";
 import { souProducts, productPath, productAliasRedirects } from "./content/portfolio/souProducts";
 import { ProductsPortfolioPage } from "./pages/products/ProductsPortfolioPage";
 import { SouHomePage } from "./pages/SouHomePage";
+/* DECK: an unpublished presentation route. Deliberately absent from every menu
+   and from the sitemap - reachable only by typing /deck. */
+import { DeckPage } from "./pages/DeckPage";
 import { PortfolioProductPage } from "./pages/products/PortfolioProductPage";
 import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
 import { NavLink, Navigate, Route, Routes, useLocation, useParams } from "react-router-dom";
@@ -285,6 +288,7 @@ function Layout({ children }: { children: ReactNode }) {
           <NavLink to="/proof">Proof</NavLink>
           <NavLink to="/security">Security</NavLink>
           <NavLink to="/pricing">Pricing</NavLink>
+          <NavLink to="/deck">Presentation</NavLink>
           <NavLink to="/about">About</NavLink>
         </nav>
 
@@ -451,6 +455,7 @@ export function App() {
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/packs/:code" element={<PackPage />} />
         <Route path="/solutions/:code" element={<RolePage />} />
+        <Route path="/deck" element={<DeckPage />} />
         <Route path="/products" element={<ProductsPortfolioPage />} />
         {souProducts.map((product) => (
           <Route

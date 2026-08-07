@@ -13,7 +13,13 @@ public class DefinitionVersionConfiguration : IEntityTypeConfiguration<Definitio
 {
     public void Configure(EntityTypeBuilder<DefinitionVersion> builder)
     {
-        builder.ToTable("ppiq_definition_versions");
+        // T-039 CORRECTION. The numbered replay chain owns this table's DDL -
+        // script 770 creates it - so EF must MAP it without believing it should
+        // create it. Without this, adding the entity leaves the model with
+        // "pending changes" and Migrate() refuses to start the API at all.
+        // ExcludeFromMigrations is the EF feature for a table managed outside
+        // migrations; it does not affect querying or saving.
+        builder.ToTable("ppiq_definition_versions", t => t.ExcludeFromMigrations());
 
         builder.HasKey(x => x.Id);
 

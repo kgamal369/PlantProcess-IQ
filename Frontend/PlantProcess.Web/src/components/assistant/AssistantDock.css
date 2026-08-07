@@ -3,7 +3,7 @@
    collapsed state is a single control in the corner so it covers nothing, and
    the expanded panel is bounded by the viewport rather than floating over it
    like a modal: the workspace behind it stays usable. */
-.piq-dock { position: fixed; right: 20px; bottom: 20px; z-index: 60; }
+.piq-dock { position: fixed; right: 20px; bottom: 150px; z-index: 2000; }
 .piq-dock-toggle,
 .piq-dock-close {
   font-family: inherit;

@@ -204,3 +204,177 @@
 
 @media (max-width: 1180px) { .new-landing-wrapper .sou-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 760px) { .new-landing-wrapper .sou-grid { grid-template-columns: 1fr; } }
+
+/* ===========================================================================
+ * DECK-01 the presentation route. Layout only - type scale, cards, band and
+ * SVG classes all come from the system above.
+ * =========================================================================== */
+.new-landing-wrapper.deck .deck-top { padding-top: 62px; }
+.new-landing-wrapper .deck-title { margin: 10px 0 18px; }
+.new-landing-wrapper .deck-career { display: grid; gap: 14px; margin-top: 30px; max-width: 900px; }
+.new-landing-wrapper .deck-career-row { display: grid; grid-template-columns: 150px 1fr; gap: 18px; padding: 16px 0; border-top: 1px solid var(--line); }
+.new-landing-wrapper .deck-years { font-family: var(--disp); font-size: .82rem; color: var(--sou-cyan); letter-spacing: .06em; }
+.new-landing-wrapper .deck-career-row strong { color: var(--sou-text); font-family: var(--disp); font-size: 1.02rem; }
+.new-landing-wrapper .deck-role { margin: 4px 0 0; color: var(--sou-green); font-size: .88rem; }
+.new-landing-wrapper .deck-detail { margin: 6px 0 0; color: var(--sou-muted); font-size: .92rem; line-height: 1.6; }
+.new-landing-wrapper .deck-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin-top: 28px; }
+.new-landing-wrapper .deck-aside { margin-top: 22px; max-width: 74ch; color: var(--sou-muted); font-size: .95rem; line-height: 1.7; border-left: 2px solid var(--sou-cyan); padding-left: 16px; }
+.new-landing-wrapper .deck-thread { display: block; width: 100%; max-width: 1200px; height: auto; margin: 32px auto 0; filter: drop-shadow(0 24px 60px rgba(0, 0, 0, .5)); }
+.new-landing-wrapper .deck-thread-cap { letter-spacing: .2em; fill: var(--sou-cyan); }
+.new-landing-wrapper .deck-node { fill: rgba(16, 42, 67, .9); stroke: var(--sou-cyan); stroke-width: 1.4; }
+.new-landing-wrapper .deck-node--cause { stroke: var(--sou-green); stroke-width: 2; }
+.new-landing-wrapper .deck-code { font-family: var(--disp); font-size: 15px; font-weight: 700; fill: #fff; }
+.new-landing-wrapper .deck-trace { stroke: var(--sou-green); stroke-width: 1.6; stroke-dasharray: 5 5; }
+.new-landing-wrapper .deck-trace-label { font-family: var(--body); font-size: 12px; fill: var(--sou-green); }
+
+@media (max-width: 1180px) { .new-landing-wrapper .deck-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 760px) {
+  .new-landing-wrapper .deck-grid { grid-template-columns: 1fr; }
+  .new-landing-wrapper .deck-career-row { grid-template-columns: 1fr; gap: 6px; }
+}
+
+/* ===========================================================================
+ * DECK-02 the presentation route, four tabs. Layout only.
+ * =========================================================================== */
+.new-landing-wrapper.deck .deck-top { padding-top: 46px; }
+.new-landing-wrapper .deck-tabs { display: flex; flex-wrap: wrap; gap: 8px; padding-bottom: 22px; border-bottom: 1px solid var(--line); margin-bottom: 34px; }
+.new-landing-wrapper .deck-tab { font-family: var(--disp); font-size: .86rem; font-weight: 700; letter-spacing: .04em; color: var(--sou-muted); background: transparent; border: 1px solid var(--line); border-radius: 999px; padding: 9px 18px; cursor: pointer; }
+.new-landing-wrapper .deck-tab:hover { color: var(--sou-text); border-color: var(--sou-cyan); }
+.new-landing-wrapper .deck-tab--on { color: #050b18; background: var(--sou-cyan); border-color: var(--sou-cyan); }
+.new-landing-wrapper .deck-panel { animation: deckin .45s ease both; }
+@keyframes deckin { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+.new-landing-wrapper .deck-title { margin: 10px 0 18px; }
+.new-landing-wrapper .deck-spaced { margin-top: 54px; }
+.new-landing-wrapper .deck-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin-top: 24px; }
+.new-landing-wrapper .deck-grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.new-landing-wrapper .deck-aside { margin-top: 24px; max-width: 76ch; color: var(--sou-muted); font-size: .95rem; line-height: 1.7; border-left: 2px solid var(--sou-cyan); padding-left: 16px; }
+
+.new-landing-wrapper .deck-map { display: block; width: 100%; max-width: 900px; height: auto; margin: 30px auto; }
+.new-landing-wrapper .deck-map-grid line { stroke: rgba(0, 212, 255, .09); stroke-width: 1; }
+.new-landing-wrapper .deck-map-cap { fill: var(--sou-muted); }
+.new-landing-wrapper .deck-dot { fill: var(--sou-cyan); }
+.new-landing-wrapper .deck-dot--alt { fill: var(--sou-green); }
+.new-landing-wrapper .deck-site-year { font-family: var(--disp); font-size: 10px; fill: var(--sou-muted); }
+
+.new-landing-wrapper .deck-career { display: grid; gap: 0; margin-top: 26px; max-width: 940px; }
+.new-landing-wrapper .deck-career-row { display: grid; grid-template-columns: 150px 1fr; gap: 18px; padding: 18px 0; border-top: 1px solid var(--line); }
+.new-landing-wrapper .deck-years { font-family: var(--disp); font-size: .82rem; color: var(--sou-cyan); letter-spacing: .06em; }
+.new-landing-wrapper .deck-career-row strong { color: var(--sou-text); font-family: var(--disp); font-size: 1.02rem; }
+.new-landing-wrapper .deck-role { margin: 4px 0 0; color: var(--sou-green); font-size: .88rem; }
+.new-landing-wrapper .deck-detail { margin: 6px 0 0; color: var(--sou-muted); font-size: .92rem; line-height: 1.6; }
+.new-landing-wrapper .deck-sites { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 24px; margin-top: 30px; }
+.new-landing-wrapper .deck-site-row { display: grid; grid-template-columns: 70px 1fr; gap: 12px; padding: 7px 0; border-bottom: 1px solid rgba(22, 41, 74, .6); color: var(--sou-muted); font-size: .9rem; }
+.new-landing-wrapper .deck-site-row strong { color: var(--sou-text); font-weight: 600; }
+.new-landing-wrapper .deck-site-row em { font-style: normal; color: var(--sou-muted); }
+
+.new-landing-wrapper .deck-pipe { display: block; width: 100%; max-width: 1060px; height: auto; margin: 30px auto 0; filter: drop-shadow(0 24px 60px rgba(0, 0, 0, .5)); }
+.new-landing-wrapper .deck-col { letter-spacing: .2em; fill: var(--sou-cyan); }
+.new-landing-wrapper .deck-stage { fill: var(--sou-panel); stroke: var(--sou-cyan); stroke-width: 1.3; }
+.new-landing-wrapper .deck-canon { fill: rgba(10, 63, 122, .85); stroke: var(--sou-cyan); stroke-width: 1.8; }
+.new-landing-wrapper .deck-out { fill: var(--sou-panel); stroke: rgba(44, 230, 162, .5); stroke-width: 1.2; }
+.new-landing-wrapper .deck-code { font-family: var(--disp); font-size: 13px; font-weight: 700; fill: #fff; }
+
+.new-landing-wrapper .deck-calc { display: grid; grid-template-columns: 1.15fr 1fr; gap: 22px; margin-top: 30px; }
+.new-landing-wrapper .deck-calc-inputs,
+.new-landing-wrapper .deck-calc-out { border: 1px solid var(--line); border-radius: 16px; background: linear-gradient(180deg, rgba(16, 42, 67, .5), rgba(11, 23, 48, .3)); padding: 24px; }
+.new-landing-wrapper .deck-calc-head { margin: 0 0 18px; font-family: var(--disp); font-size: .74rem; letter-spacing: .18em; text-transform: uppercase; color: var(--sou-cyan); }
+.new-landing-wrapper .deck-factor { display: block; margin-bottom: 18px; }
+.new-landing-wrapper .deck-factor-top { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 7px; color: var(--sou-muted); font-size: .9rem; }
+.new-landing-wrapper .deck-factor-top strong { color: var(--sou-text); font-family: var(--disp); }
+.new-landing-wrapper .deck-factor input[type="range"] { width: 100%; accent-color: #00d4ff; }
+.new-landing-wrapper .deck-units { margin: 0; font-family: var(--disp); font-size: 3.4rem; line-height: 1; color: var(--sou-cyan); }
+.new-landing-wrapper .deck-units-cap { margin: 4px 0 18px; color: var(--sou-muted); font-size: .82rem; letter-spacing: .14em; text-transform: uppercase; }
+.new-landing-wrapper .deck-tier { margin: 0; font-family: var(--disp); font-size: 1.25rem; color: var(--sou-green); }
+.new-landing-wrapper .deck-server { margin: 8px 0 0; color: var(--sou-muted); font-size: .92rem; line-height: 1.6; }
+.new-landing-wrapper .deck-note { margin: 18px 0 0; padding-top: 16px; border-top: 1px solid var(--line); color: var(--sou-muted); font-size: .86rem; line-height: 1.65; }
+
+@media (max-width: 1180px) { .new-landing-wrapper .deck-grid, .new-landing-wrapper .deck-grid--3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 900px) {
+  .new-landing-wrapper .deck-calc { grid-template-columns: 1fr; }
+  .new-landing-wrapper .deck-sites { grid-template-columns: 1fr; }
+}
+@media (max-width: 760px) {
+  .new-landing-wrapper .deck-grid, .new-landing-wrapper .deck-grid--3 { grid-template-columns: 1fr; }
+  .new-landing-wrapper .deck-career-row { grid-template-columns: 1fr; gap: 6px; }
+}
+
+/* DECK-03 additions */
+.new-landing-wrapper .deck-region { fill: rgba(11, 23, 48, .45); stroke: rgba(0, 212, 255, .18); }
+.new-landing-wrapper .deck-journey { display: block; width: 100%; max-width: 1060px; height: auto; margin: 26px auto 0; }
+.new-landing-wrapper .deck-step { font-family: var(--disp); font-size: 15px; font-weight: 700; fill: #fff; }
+.new-landing-wrapper .deck-engine { fill: rgba(16, 42, 67, .9); stroke: var(--sou-green); stroke-width: 1.6; }
+.new-landing-wrapper .deck-bypass { stroke: rgba(0, 212, 255, .35); stroke-width: 1.2; stroke-dasharray: 4 6; }
+.new-landing-wrapper .deck-bypass-label { font-family: var(--body); font-size: 11px; fill: rgba(0, 212, 255, .7); }
+
+/* DECK-04 the real map and the expert graphic */
+.new-landing-wrapper .deck-mapwrap { position: relative; margin: 30px 0 10px; }
+.new-landing-wrapper .deck-map { display: block; width: 100%; max-width: 1000px; height: auto; margin: 0 auto; }
+.new-landing-wrapper .deck-land path { fill: rgba(16, 42, 67, .55); stroke: rgba(0, 212, 255, .22); stroke-width: 1; }
+.new-landing-wrapper .deck-pin { cursor: pointer; }
+.new-landing-wrapper .deck-pin-halo { fill: rgba(0, 212, 255, .12); stroke: rgba(0, 212, 255, .35); stroke-width: 1; transition: r .2s; }
+.new-landing-wrapper .deck-pin-dot { fill: var(--sou-cyan); }
+.new-landing-wrapper .deck-pin--on .deck-pin-halo { fill: rgba(44, 230, 162, .2); stroke: var(--sou-green); }
+.new-landing-wrapper .deck-pin--on .deck-pin-dot { fill: var(--sou-green); }
+.new-landing-wrapper .deck-pincard { min-height: 58px; margin: 6px auto 0; max-width: 640px; padding: 14px 18px; border: 1px solid var(--line); border-radius: 12px; background: rgba(11, 23, 48, .6); text-align: center; }
+.new-landing-wrapper .deck-pincard--on { border-color: var(--sou-green); }
+.new-landing-wrapper .deck-pincard strong { display: block; font-family: var(--disp); font-size: 1.05rem; color: var(--sou-text); }
+.new-landing-wrapper .deck-pincard em { font-style: normal; color: var(--sou-muted); font-size: .9rem; margin-right: 10px; }
+.new-landing-wrapper .deck-pincard b { color: var(--sou-cyan); font-family: var(--disp); font-size: .9rem; }
+.new-landing-wrapper .deck-pincard-hint { color: var(--sou-muted); font-size: .9rem; }
+.new-landing-wrapper .deck-map-cap { text-align: center; color: var(--sou-muted); font-size: .86rem; margin-top: 12px; }
+
+.new-landing-wrapper .deck-expert { display: block; width: 100%; max-width: 1010px; height: auto; margin: 26px auto 0; }
+.new-landing-wrapper .deck-col--good { fill: var(--sou-green); }
+.new-landing-wrapper .deck-slow { fill: rgba(11, 23, 48, .6); stroke: rgba(142, 167, 193, .35); stroke-width: 1; }
+.new-landing-wrapper .deck-slow-t { fill: var(--sou-muted); }
+
+/* DECK-05 the five strength sections */
+.new-landing-wrapper .deck-section { padding: 54px 0; border-top: 1px solid var(--line); }
+.new-landing-wrapper .deck-section:first-of-type { border-top: none; }
+.new-landing-wrapper .deck-fig { display: block; width: 100%; max-width: 1020px; height: auto; margin: 26px auto; filter: drop-shadow(0 20px 50px rgba(0, 0, 0, .45)); }
+.new-landing-wrapper .deck-lonely { fill: rgba(11, 23, 48, .55); stroke: rgba(142, 167, 193, .3); stroke-width: 1; }
+.new-landing-wrapper .deck-node--bad { stroke: #ff8a7a; stroke-width: 2; }
+.new-landing-wrapper .deck-bad { fill: rgba(48, 18, 22, .6); stroke: rgba(255, 138, 122, .55); stroke-width: 1.2; }
+.new-landing-wrapper .deck-bad-t { fill: #ff8a7a; }
+
+/* DECK-06 real map */
+.new-landing-wrapper .deck-land path { fill: rgba(16, 42, 67, .5); stroke: rgba(0, 212, 255, .16); stroke-width: .4; vector-effect: non-scaling-stroke; }
+.new-landing-wrapper .deck-pin-halo { animation: deckpulse 2.6s ease-in-out infinite; }
+@keyframes deckpulse { 0%, 100% { opacity: .5; } 50% { opacity: 1; } }
+
+/* DECK-07 the tier derivation */
+.new-landing-wrapper .deck-calc-sub { margin: 22px 0 10px; font-family: var(--disp); font-size: .72rem; letter-spacing: .16em; text-transform: uppercase; color: var(--sou-muted); }
+.new-landing-wrapper .deck-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.new-landing-wrapper .deck-chip { font-family: var(--disp); font-size: .78rem; font-weight: 600; color: var(--sou-muted); background: transparent; border: 1px solid var(--line); border-radius: 999px; padding: 7px 14px; cursor: pointer; }
+.new-landing-wrapper .deck-chip:hover { color: var(--sou-text); border-color: var(--sou-cyan); }
+.new-landing-wrapper .deck-chip--on { color: #050b18; background: var(--sou-cyan); border-color: var(--sou-cyan); }
+.new-landing-wrapper .deck-tiername { margin: 0; font-family: var(--disp); font-size: 2.6rem; line-height: 1.1; color: var(--sou-cyan); }
+.new-landing-wrapper .deck-promote { margin: 6px 0 18px; color: var(--sou-green); font-size: .86rem; }
+.new-landing-wrapper .deck-env { width: 100%; border-collapse: collapse; font-size: .88rem; }
+.new-landing-wrapper .deck-env td { padding: 7px 0; border-bottom: 1px solid rgba(22, 41, 74, .7); color: var(--sou-muted); }
+.new-landing-wrapper .deck-env td:last-child { text-align: right; color: var(--sou-text); font-family: var(--disp); }
+.new-landing-wrapper .deck-hw .pf-value { margin-bottom: 6px; }
+
+/* DECK-08 tier bands under each slider */
+.new-landing-wrapper .deck-bands { display: flex; gap: 2px; margin-top: 8px; }
+.new-landing-wrapper .deck-band { position: relative; height: 6px; border-radius: 3px; opacity: .35; transition: opacity .2s; }
+.new-landing-wrapper .deck-band b { position: absolute; right: 0; top: 9px; font-family: var(--disp); font-size: .62rem; font-weight: 600; color: var(--sou-muted); }
+.new-landing-wrapper .deck-band--on { opacity: 1; }
+.new-landing-wrapper .deck-band--t0 { background: #5c7391; }
+.new-landing-wrapper .deck-band--t1 { background: var(--sou-cyan); }
+.new-landing-wrapper .deck-band--t2 { background: var(--sou-green); }
+.new-landing-wrapper .deck-band--t3 { background: #b48ef6; }
+.new-landing-wrapper .deck-factor { padding-bottom: 20px; }
+.new-landing-wrapper .deck-factor--binding { border-left: 2px solid var(--sou-green); padding-left: 12px; margin-left: -14px; }
+.new-landing-wrapper .deck-factor-band { display: flex; align-items: center; gap: 7px; margin-top: 16px; font-size: .78rem; color: var(--sou-muted); }
+.new-landing-wrapper .deck-factor-band em { font-style: normal; margin-left: auto; color: var(--sou-green); font-family: var(--disp); font-size: .72rem; letter-spacing: .06em; }
+.new-landing-wrapper .deck-dotb { display: inline-block; width: 8px; height: 8px; border-radius: 2px; flex: 0 0 auto; }
+.new-landing-wrapper .deck-dotb--t0 { background: #5c7391; }
+.new-landing-wrapper .deck-dotb--t1 { background: var(--sou-cyan); }
+.new-landing-wrapper .deck-dotb--t2 { background: var(--sou-green); }
+.new-landing-wrapper .deck-dotb--t3 { background: #b48ef6; }
+.new-landing-wrapper .deck-chip i { margin-left: 8px; vertical-align: middle; }
+.new-landing-wrapper .deck-legend { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--line); font-size: .76rem; color: var(--sou-muted); }
+.new-landing-wrapper .deck-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.new-landing-wrapper .deck-rule { margin: 0 0 18px; padding-bottom: 16px; border-bottom: 1px solid var(--line); color: var(--sou-muted); font-size: .84rem; line-height: 1.6; }

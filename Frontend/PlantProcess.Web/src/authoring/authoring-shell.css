@@ -19,6 +19,29 @@
 .canvas-modebar__validity--ok { color: #2ce6a2; border-color: #1d5a45; }
 .canvas-modebar__validity--bad { color: #ff5470; border-color: #5a1d2b; }
 
+/* PPIQ T-040. THE CENTRE REGION'S LOCAL CONTAINER.
+   It takes the grid position the active authoring face used to occupy - the
+   1fr track of .canvas-page - and nothing else moves. The banner sits at its
+   natural height; the body takes what is left and passes it to whichever face
+   is active, which is why .ppiq-canvas can keep height: 100% and the SQL pane
+   can keep having no block rule of its own.
+   min-height: 0 on both is load-bearing: without it a flex item refuses to
+   shrink below its content and the board would push the shell taller than the
+   viewport. No new scrolling surface is introduced - .preview-scroll remains
+   the only overflow in the centre. */
+.canvas-centre {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.canvas-centre__body {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+}
+
 /* Section 5.2.3: in SQL mode the toolbox is not rendered at all, so the grid
    loses its inline-end track rather than leaving an empty column behind. */
 .canvas-page--sqlmode { grid-template-columns: 250px 1fr; }

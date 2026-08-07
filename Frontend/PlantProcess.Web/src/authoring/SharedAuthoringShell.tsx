@@ -57,6 +57,8 @@ import { SqlHighlighted } from "./SqlHighlighted";
 import { AuthoringSchemaTree } from "./AuthoringSchemaTree";
 import { AuthoringToolbox } from "./AuthoringToolbox";
 import { S2QueryBinding, type S2Metadata } from "./S2QueryBinding";
+import { AuthoringStateBanner } from "./AuthoringStateBanner";
+import { toAuthoringStateFacts, type ShellRunInput } from "./authoringStates";
 import {
   chartCapabilities, loadS2State, saveRefusal, saveTarget, toWidgetPayload,
   type S2AuthoringState, type WidgetDefinitionRecord,
@@ -126,6 +128,19 @@ export function SharedAuthoringShell({
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [preview, setPreview] = useState<DryRunResult | null>(null);
+
+  // T-040 03a2. THE TWO FACTS THE SHELL WAS THROWING AWAY.
+  //
+  // It genuinely experiences both - a run is in flight, and a run did not
+  // complete - and held neither, which is why Loading and Failed could not be
+  // represented honestly. This is authoring EXECUTION state, deliberately not a
+  // shell-wide busy concept: it names which operation is running so that S2's
+  // face and the preparation modes can never disagree about it.
+  const [activeRun, setActiveRun] = useState<"none" | "preview" | "sql" | "expression">("none");
+  const [lastRunFailure, setLastRunFailure] = useState<string | null>(null);
+  // The rows the S2 face's last successful run returned. The preparation modes
+  // read this from preview and sqlResult; the face reports it upward.
+  const [s2RowCount, setS2RowCount] = useState<number | null>(null);
 
   // The debug log is the authoritative surface for every refusal, every
   // preview and every publish - section 5.2.8. Never a toast.
@@ -433,6 +448,9 @@ export function SharedAuthoringShell({
           + (invalidReason ?? "Check the blocks that are marked with an error."));
         return;
       }
+      // RUN START: clear the stale failure, then mark the real operation.
+      setLastRunFailure(null);
+      setActiveRun("preview");
       const sid = await ensureSession();
       await saveGraph(sid, graph);
       const r = await runDryRun(sid);
@@ -454,7 +472,14 @@ export function SharedAuthoringShell({
       // pass the thrown value straight through, which puts a fetch failure, a
       // JSON parse error or a whole stack trace in front of a plant engineer.
       // describeThrownPreview reads nothing from it and says what to do.
-      logError(name, describeThrownPreview(e));
+      // TRANSPORT FAILURE: the normalised sentence is stored as well as logged.
+      // describeThrownPreview reads nothing from the thrown value, so no raw
+      // error text can reach the banner through this path.
+      const sentence = describeThrownPreview(e);
+      setLastRunFailure(sentence);
+      logError(name, sentence);
+    } finally {
+      setActiveRun("none");
     }
   };
 
@@ -547,6 +572,8 @@ export function SharedAuthoringShell({
 
   const doRunSql = useCallback(async () => {
     try {
+      setLastRunFailure(null);
+      setActiveRun("sql");
       const started = performance.now();
       const r = await runAuthoredSql(sqlText, 100);
       setSqlResult(r);
@@ -560,7 +587,13 @@ export function SharedAuthoringShell({
         // untouched. A described error in the log, never a toast.
         logError(name, "Refused (" + (r.errorCode ?? r.status) + "). " + r.message);
       }
-    } catch (e) { logError(name, describeThrownAction(e)); }
+    } catch (e) {
+      const sentence = describeThrownAction(e);
+      setLastRunFailure(sentence);
+      logError(name, sentence);
+    } finally {
+      setActiveRun("none");
+    }
   }, [sqlText, name, logError, logSuccess]);
 
   const doSaveSql = useCallback(async () => {
@@ -622,6 +655,44 @@ export function SharedAuthoringShell({
       setSavingWidget(false);
     }
   };
+
+  // T-040 03a2. THE SIX FACTS, FROM STATE THAT ALREADY EXISTS.
+  //
+  // filtered is measured, not guessed: on the board it is whether a filter
+  // block is present, and in S2 it is whether the definition carries filter
+  // rows. A refusal is the server's own sentence - describePreview for the
+  // board, the validator's message for SQL - and never a thrown value.
+  const boardFiltered = boardNodes.some((n) => n.kind === "filter");
+  const runInput: ShellRunInput = isQueryPurpose
+    ? {
+        running: activeRun === "expression",
+        failure: lastRunFailure,
+        refusal: null,
+        blocker: null,
+        rowCount: s2RowCount,
+        filtered: s2State.filters.length > 0,
+      }
+    : mode === "sql"
+      ? {
+          running: activeRun === "sql",
+          failure: lastRunFailure,
+          refusal: sqlResult && sqlResult.status !== "succeeded"
+            ? "Refused (" + (sqlResult.errorCode ?? sqlResult.status) + "). " + sqlResult.message
+            : null,
+          blocker: null,
+          rowCount: sqlResult && sqlResult.status === "succeeded" ? sqlResult.rowCount : null,
+          filtered: boardFiltered,
+        }
+      : {
+          running: activeRun === "preview",
+          failure: lastRunFailure,
+          refusal: preview && preview.status !== "succeeded"
+            ? describePreview(preview, 0).message
+            : null,
+          blocker: invalidReason,
+          rowCount: preview && preview.status === "succeeded" ? preview.rowCount : null,
+          filtered: boardFiltered,
+        };
 
   const emptyTreeMessage = definition.showsStagingCatalogue
     ? "No staged datasets. Register a source and run Stage-1 from the Importing Data area, then reopen this page."
@@ -750,13 +821,37 @@ export function SharedAuthoringShell({
           />
         </aside>
 
-        {/* CENTRE - the board, or the SQL editor in SQL mode. */}
+        {/* CENTRE - section 5.2.3's centre region, unchanged in count and in
+            grid position. T-040 gives it a local container so the seven-state
+            banner has ONE legitimate mount point across all three faces
+            instead of a copy inside each. This is not a fifth region: the
+            wrapper takes the 1fr cell the active face used to occupy, and the
+            face keeps the remaining height. */}
+        <div className="canvas-centre" data-testid="authoring-centre-region">
+          <div className="canvas-centre__banner" data-testid="authoring-centre-banner">
+            <AuthoringStateBanner facts={toAuthoringStateFacts(runInput)} />
+          </div>
+          <div className="canvas-centre__body" data-testid="authoring-centre-body">
         {isQueryPurpose ? (
           <section className="canvas-s2pane" data-testid="authoring-s2-centre">
             <S2QueryBinding
               state={s2State}
               onChange={setS2State}
               onCatalogue={setS2Catalogue}
+              running={activeRun === "expression"}
+              onRunLifecycle={(phase, failure, rowCount) => {
+                // ONE OWNER. The face no longer keeps its own flag, so the
+                // shell and the face cannot disagree about whether a run is in
+                // flight - there is only one place that knows.
+                if (phase === "start") {
+                  setLastRunFailure(null);
+                  setActiveRun("expression");
+                  return;
+                }
+                setActiveRun("none");
+                setLastRunFailure(failure);
+                if (failure === null) { setS2RowCount(rowCount); }
+              }}
               onLog={(severity, message, facts) => {
                 // Section 5.2.8: the Job Log is the authoritative surface, and
                 // it is the SHELL's log. The face reports; it never owns one.
@@ -952,6 +1047,8 @@ export function SharedAuthoringShell({
             )}
           </section>
         )}
+          </div>
+        </div>
 
         {/* INLINE-END - section 5.2.3: the toolbox is HIDDEN ENTIRELY in SQL
             mode, not disabled. A disabled palette invites clicking. */}

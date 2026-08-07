@@ -175,3 +175,45 @@ export function describeAuthoringState(
 export const ALL_AUTHORING_STATES: readonly AuthoringState[] = [
   "empty", "loading", "populated", "filtered-empty", "blocked", "refused", "failed",
 ];
+
+// ---------------------------------------------------------------------------
+// PPIQ T-040 03a2. FROM THE SHELL'S OWN VALUES TO THE SEVEN STATES.
+//
+// The shell holds results, refusals and an execution flag. This turns those
+// into the facts above WITHOUT the shell branching on states itself, which is
+// what keeps the presentation honest: there is one place where a result
+// becomes a state, and it is tested exhaustively rather than reached through a
+// component.
+//
+// Everything here is a fact the shell already has after 03a2 adds the two it
+// was throwing away. Nothing is invented so that a branch can be reached.
+// ---------------------------------------------------------------------------
+
+export interface ShellRunInput {
+  /** True while THIS surface's run is the one in flight. */
+  running: boolean;
+  /** The normalised transport sentence, never a thrown value. */
+  failure: string | null;
+  /** The server's own refusal sentence, where it answered and said no. */
+  refusal: string | null;
+  /** The unmet precondition, named. */
+  blocker: string | null;
+  /** Rows returned by the last SUCCESSFUL run. Null means no such run. */
+  rowCount: number | null;
+  /** Whether the definition currently narrows what it returns. */
+  filtered: boolean;
+}
+
+export function toAuthoringStateFacts(input: ShellRunInput): AuthoringStateFacts {
+  return {
+    running: input.running,
+    failure: input.failure,
+    refusal: input.refusal,
+    blocker: input.blocker,
+    // A run in flight must never be described by the PREVIOUS run's row count.
+    // Loading outranks a stale result in resolveAuthoringState, and clearing
+    // the count here means a slow run cannot flash the old answer either.
+    rowCount: input.running ? null : input.rowCount,
+    filtered: input.filtered,
+  };
+}

@@ -66,6 +66,9 @@ const RUN_MISSING_ONE = {
 };
 
 const logged: { severity: string; message: string; facts?: string }[] = [];
+// T-040 03a2. The face reports both ends of a run to its owner and keeps no
+// flag of its own, so the shell and the face cannot disagree about a run.
+const lifecycle: { phase: string; failure: string | null; rowCount: number | null }[] = [];
 
 function Harness({ initial }: { initial: S2AuthoringState }) {
   const [state, setState] = useState<S2AuthoringState>(initial);
@@ -75,6 +78,10 @@ function Harness({ initial }: { initial: S2AuthoringState }) {
         state={state}
         onChange={setState}
         onLog={(severity, message, facts) => { logged.push({ severity, message, facts }); }}
+        running={false}
+        onRunLifecycle={(phase, failure, rowCount) => {
+          lifecycle.push({ phase, failure, rowCount });
+        }}
       />
       <p data-testid="definition">{JSON.stringify(state)}</p>
     </div>
@@ -98,6 +105,7 @@ const catalogueLoaded = () => screen.findByRole("option", { name: "Bars" });
 
 beforeEach(() => {
   logged.length = 0;
+  lifecycle.length = 0;
   getDashboardMetadata.mockResolvedValue(META);
   getDashboardReferenceData.mockResolvedValue(REF);
   executeWidgetQueryExpression.mockReset();
@@ -264,6 +272,38 @@ describe("T-038 a widget bound under the old surface reopens correctly", () => {
     await waitFor(() => expect(logged.some((l) => l.message.indexOf("NOT been resolved") >= 0)).toBe(true));
     expect(definition().roleBinding.category).toBe("Total");
     expect(await screen.findByTestId("role-binding-stale")).toBeInTheDocument();
+  });
+});
+
+describe("T-040 the face reports its run and owns no flag", () => {
+  it("tells its owner when a run starts and when it ends, with the row count", async () => {
+    executeWidgetQueryExpression.mockResolvedValue(RUN_BOTH);
+    render(<Harness initial={queryState()} />);
+    await screen.findByLabelText("Query expression");
+    await userEvent.click(screen.getByRole("button", { name: "Run test" }));
+
+    await waitFor(() => expect(lifecycle.length).toBe(2));
+    expect(lifecycle[0]).toEqual({ phase: "start", failure: null, rowCount: null });
+    expect(lifecycle[1]).toEqual({ phase: "end", failure: null, rowCount: 1 });
+  });
+
+  it("hands up a normalised sentence on failure, never the thrown value", async () => {
+    executeWidgetQueryExpression.mockRejectedValue(new Error("42P01 relation does not exist"));
+    render(<Harness initial={queryState()} />);
+    await screen.findByLabelText("Query expression");
+    await userEvent.click(screen.getByRole("button", { name: "Run test" }));
+
+    await waitFor(() => expect(lifecycle.length).toBe(2));
+    expect(lifecycle[1].phase).toBe("end");
+    expect(lifecycle[1].failure).toContain("did not complete");
+    expect(lifecycle[1].failure).not.toContain("42P01");
+    expect(lifecycle[1].rowCount).toBeNull();
+  });
+
+  it("keeps no running flag of its own, so it cannot disagree with the shell", () => {
+    const source = readFileSync(join(process.cwd(), "src/authoring/S2QueryBinding.tsx"), "utf8");
+    expect(source.indexOf("setRunning")).toBe(-1);
+    expect(source.indexOf("useState(false)")).toBe(-1);
   });
 });
 
