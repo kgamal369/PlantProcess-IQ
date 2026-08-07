@@ -1,6 +1,0 @@
-T-003 presentation profile probe
-Timestamp : 2026-08-02 14:35:39
-Endpoint  : http://localhost:5063/api/ml/foundation/readiness
-Expected on presentation: outcome_values ~195,221 / correlation_results ~320
-
-REQUEST FAILED: The remote server returned an error: (401) Unauthorized.

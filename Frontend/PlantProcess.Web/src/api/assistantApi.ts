@@ -5,13 +5,27 @@
 // intentionally unchanged; renaming them is separate backend debt.
 // ============================================================
 
+import { getAccessToken } from "@/api/http/apiClient";
+
 const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? "http://localhost:5063";
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
+  /* PPIQ-T071 closure. This module had its own fetch helper that sent cookies
+     only. The access token lives in memory in the shared client and is attached
+     by that module alone, while both assistant endpoint groups require an
+     authenticated principal and the host registers bearer validation with no
+     cookie bridge. Every call from here was therefore refused. Attach the same
+     token the shared client attaches; caller-supplied headers still win. */
+  const accessToken = getAccessToken();
+  const authHeaders: Record<string, string> = accessToken
+    ? { Authorization: "Bearer " + accessToken }
+    : {};
+
   const response = await fetch(apiBaseUrl + path, {
     credentials: "include",
     headers: {
       "Content-Type": "application/json",
+      ...authHeaders,
       ...(init?.headers ?? {}),
     },
     ...init,
