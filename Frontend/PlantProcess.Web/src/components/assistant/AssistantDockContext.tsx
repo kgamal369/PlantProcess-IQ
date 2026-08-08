@@ -1,5 +1,5 @@
 /* PPIQ-T071 */
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   assistantApi,
   type AssistantConfiguration,
@@ -45,23 +45,43 @@ export function AssistantDockProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState("Loading assistant runtime configuration...");
   const [expanded, setExpanded] = useState(false);
 
-  useEffect(() => {
-    let active = true;
-    assistantApi
-      .getAssistantConfig()
-      .then((next) => {
-        if (!active) return;
-        setConfig(next);
-        setStatus("Assistant runtime is configured.");
-      })
-      .catch((error: Error) => {
-        if (!active) return;
-        setStatus("Assistant configuration not reachable: " + error.message);
-      });
-    return () => {
-      active = false;
-    };
+  /* PPIQ-T071 closure. The provider mounts with the layout, which on a hard
+     refresh can happen before the session token has been restored, so ONE
+     attempt at mount is not enough: a refused first attempt was never retried
+     and the panel kept the failure text for the rest of the session. Ask for
+     the configuration when it is needed and remember that it arrived - at
+     mount, again the first time the dock is expanded, and again before the
+     first question. A refused attempt leaves the flag clear, so the next need
+     retries. No storage, no polling, no auth plumbing is read here. */
+  const configLoaded = useRef(false);
+  const configInFlight = useRef(false);
+
+  const ensureConfig = useCallback(async () => {
+    if (configLoaded.current || configInFlight.current) return;
+    configInFlight.current = true;
+    setStatus("Loading assistant runtime configuration...");
+    try {
+      const next = await assistantApi.getAssistantConfig();
+      configLoaded.current = true;
+      setConfig(next);
+      setStatus("Assistant runtime is configured.");
+    } catch (error) {
+      setStatus(
+        "Assistant configuration not reachable: " +
+          (error instanceof Error ? error.message : String(error)),
+      );
+    } finally {
+      configInFlight.current = false;
+    }
   }, []);
+
+  useEffect(() => {
+    void ensureConfig();
+  }, [ensureConfig]);
+
+  useEffect(() => {
+    if (expanded) void ensureConfig();
+  }, [expanded, ensureConfig]);
 
   const ask = useCallback(
     async (question: string) => {
@@ -70,6 +90,7 @@ export function AssistantDockProvider({ children }: { children: ReactNode }) {
       setTurns((prev) => [...prev, { role: "user", text: question }]);
 
       try {
+        await ensureConfig();
         const result = await assistantApi.askAssistant(question, ASSISTANT_CONTEXT_CHIPS, config?.allowedTools ?? []);
         setTurns((prev) => [...prev, { role: "assistant", answer: result }]);
         setStatus(
@@ -90,7 +111,7 @@ export function AssistantDockProvider({ children }: { children: ReactNode }) {
         setBusy(false);
       }
     },
-    [config],
+    [config, ensureConfig],
   );
 
   const value = useMemo<AssistantDockValue>(
