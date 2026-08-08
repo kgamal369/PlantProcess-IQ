@@ -1,0 +1,101 @@
+
+------------------------------------------------------------------------------
+PPIQ ASSISTANT CERTIFICATION v2 - T-071, T-072, T-073
+------------------------------------------------------------------------------
+Started       : 2026-08-08 19:56:24
+API           : http://localhost:5063
+Mode          : APPLY (the negative proof disables one widget's chunks, then restores them)
+      Credentials   : e2eadmin (from the presentation profile)
+      Database      : ppiq_presentation
+
+------------------------------------------------------------------------------
+SESSION
+------------------------------------------------------------------------------
+PASS  authenticated against the running API
+
+------------------------------------------------------------------------------
+T-073  reindex, and determinism per widget
+------------------------------------------------------------------------------
+      chunks by source: DATASET = 17
+      chunks by source: DOC = 8
+      chunks by source: widgetresult = 38
+PASS  the widget-result family produced 38 chunks
+      widget/page pairs with evidence: 38
+      stable across a repeated reindex   : 34
+      changed across a repeated reindex  : 4
+PASS  at least three widget/page pairs kept the same evidence identity across a repeated reindex
+
+UPSTREAM DEFECT - NOT a T-073 failure. Hand to Worker 2 with these facts:
+      EO_OBS on EQUIPMENT_OPERATIONS - repeated execution changes the real result; population_count = 5
+      PA_BYP on PARAMETER_DEEP_ANALYSIS - repeated execution changes the real result; population_count = 5
+      PA_TABLE on PARAMETER_DEEP_ANALYSIS - repeated execution changes the real result; population_count = 5
+      PO_KPI_OBS on PRODUCTION_OVERVIEW - repeated execution changes the real result; population_count = 5
+      The WidgetResult fingerprint therefore creates a NEW evidence identity
+      rather than silently overwriting changed evidence. That is correct.
+      No root cause is claimed here; the query path is Worker 2's to measure.
+
+
+------------------------------------------------------------------------------
+T-073  three stable widgets on three pages, with citations that resolve
+------------------------------------------------------------------------------
+PASS  chosen: CORR_PARAMETER_AVG_BY_EQUIPMENT on CORRELATION_EXPLORER; CF_RATE on CORRELATION_FINDINGS_BOARD; DQ_BY_SOURCE on DATA_QUALITY
+PASS  CORR_PARAMETER_AVG_BY_EQUIPMENT on CORRELATION_EXPLORER: answered with 6 WidgetResult citation(s)
+      answer: Based on widgetresult evidence, On page CORRELATION_EXPLORER, widget CORR_PARAMETER_AVG_BY_EQUIPMENT shows avgParameterValue by equipment, rendered as
+PASS  CORR_PARAMETER_AVG_BY_EQUIPMENT: a citation resolved to this widget's own snapshot
+      snapshot sentence: On page CORRELATION_EXPLORER, widget CORR_PARAMETER_AVG_BY_EQUIPMENT shows avgParameterValue by equipment, rendered as bar, and returned no rows.
+PASS  CF_RATE on CORRELATION_FINDINGS_BOARD: answered with 6 WidgetResult citation(s)
+      answer: Based on widgetresult evidence, On page CORRELATION_FINDINGS_BOARD, widget CF_TOP shows defectCount by equipment, rendered as bar: No equipment 7844. 
+PASS  CF_RATE: a citation resolved to this widget's own snapshot
+      snapshot sentence: On page CORRELATION_FINDINGS_BOARD, widget CF_RATE shows defectRate by day, rendered as line: 2026-07-02 30.7087; 2026-07-03 25; 2026-04-05 17.0984; 2
+PASS  DQ_BY_SOURCE on DATA_QUALITY: answered with 5 WidgetResult citation(s)
+      answer: Based on widgetresult evidence, On page DATA_QUALITY, widget DQ_BY_SOURCE shows dataQualityIssueCount by sourceSystem, rendered as bar: ADVANCED_DEMO_
+PASS  DQ_BY_SOURCE: a citation resolved to this widget's own snapshot
+      snapshot sentence: On page DATA_QUALITY, widget DQ_BY_SOURCE shows dataQualityIssueCount by sourceSystem, rendered as bar: ADVANCED_DEMO_SEED 7. That is 1 result row. Th
+PASS  evidence outside this tenant's scope is reported unavailable, not returned
+
+------------------------------------------------------------------------------
+T-072  context narrows retrieval, and is never echoed
+------------------------------------------------------------------------------
+PASS  the same question on two pages retrieved different evidence
+      CORRELATION_EXPLORER cited: 9e3e7f37-cde4-4f80-a89b-7db05af985e1,77bb8e47-ba03-4289-b595-7e992a4e0401,c9d28972-2eaf-493a-ae4d-f2931aa87578,90456212-18fe-4858-9287-56b6a8495d0a,91638bb7-b50d-4d24-a182-48ff3b3c902c,f4cba7a6-c64d-411a-b898-7c41f7f91309
+      CORRELATION_FINDINGS_BOARD cited: 77bb8e47-ba03-4289-b595-7e992a4e0401,bda784b2-f14e-4e14-ab55-daac70f6cb9d,96a7aa22-da59-404a-a20a-3b473d8a0860,004ad484-24bf-44fc-bbc7-39f522e5d517,2894f48f-14b4-44a7-a6fb-7bdc66088de5,90456212-18fe-4858-9287-56b6a8495d0a
+PASS  a fabricated context value never appeared in the answer
+
+------------------------------------------------------------------------------
+T-073  honest refusal when the focused widget has no live evidence
+------------------------------------------------------------------------------
+      disabled chunks for CORR_PARAMETER_AVG_BY_EQUIPMENT: 1
+      snapshot rows for CORR_PARAMETER_AVG_BY_EQUIPMENT left untouched: 1
+      The rows still exist. Only the chunks are unavailable, which is what
+      proves the anchor requires a LIVE chunk and not a surviving row.
+PASS  with no live evidence for the focused widget, the assistant refused honestly
+      reason: I don't have approved evidence for this widget to answer that.
+PASS  the chunks were restored
+PASS  answering works again after the restore
+
+------------------------------------------------------------------------------
+T-071  BROWSER CHECKLIST - this runner cannot prove any of these
+------------------------------------------------------------------------------
+Fresh browser session, network tab open, filtered on assistant-config:
+
+  [ ] 1. Log in. The dock's first open produces NO 401 on assistant-config.
+  [ ] 2. Hard reload. Still no 401, and the dock reaches its ready state
+         without a manual retry.
+  [ ] 3. Ask one question, then navigate across five different pages.
+         The conversation is still there on the fifth.
+  [ ] 4. Collapse the dock on each page. It obscures no control.
+  [ ] 5. Narrow the window to about 390px. The collapsed launcher does not
+         sit on the language pill, the theme pill or the JOB LOG bar.
+
+Item 5 is the one I expect to fail: AssistantDock.css resets bottom to 12px
+inside @media (max-width: 680px), back into the occupied corner.
+
+------------------------------------------------------------------------------
+RESULT
+------------------------------------------------------------------------------
+Automated checks passed : 16
+Automated checks failed : 0
+Browser checklist       : 5 items, unanswered above
+
+The API half of T-071, T-072 and T-073 is certified.
+T-073 closes when the browser checklist above is answered.
