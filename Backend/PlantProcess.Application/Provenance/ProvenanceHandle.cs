@@ -7,7 +7,20 @@ public enum ProvenanceKind
     JobRun,
     Dataset,
     SourceTable,
-    DocumentSection
+    DocumentSection,
+
+    /// <summary>
+    /// T-073. One exact widget execution: which widget returned which values,
+    /// under which filter, over which population, at which moment.
+    ///
+    /// It exists because Dataset cannot do this job. A Dataset handle proves a
+    /// table or view exists; it says nothing about whether a particular widget
+    /// returned a particular number. A citation that resolves green while
+    /// proving the wrong thing is worse than no citation.
+    ///
+    /// APPENDED, never inserted: moving it would renumber the members above.
+    /// </summary>
+    WidgetResult
 }
 
 /// <summary>A typed, resolvable pointer from a claim to the artifact that backs it.</summary>
@@ -20,6 +33,7 @@ public sealed record ProvenanceHandle(ProvenanceKind Kind, string Id, string? De
     public static ProvenanceHandle Dataset(string id, string? detail = null) => new(ProvenanceKind.Dataset, id, detail);
     public static ProvenanceHandle SourceTable(string id, string? detail = null) => new(ProvenanceKind.SourceTable, id, detail);
     public static ProvenanceHandle DocumentSection(string id, string? detail = null) => new(ProvenanceKind.DocumentSection, id, detail);
+    public static ProvenanceHandle WidgetResult(string id, string? detail = null) => new(ProvenanceKind.WidgetResult, id, detail);
 }
 
 /// <summary>The outcome of resolving a handle against the live store.</summary>

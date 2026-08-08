@@ -26,6 +26,7 @@ public sealed class NpgsqlProvenanceResolver : IProvenanceResolver
                 ProvenanceKind.SourceTable                      => await ResolveSourceTableAsync(handle, cancellationToken),
                 ProvenanceKind.Dataset                          => await ResolveDatasetAsync(handle, cancellationToken),
                 ProvenanceKind.DocumentSection                  => await ResolveDocumentAsync(handle, cancellationToken),
+                ProvenanceKind.WidgetResult                     => await ResolveWidgetResultAsync(handle, cancellationToken),
                 _                                               => ProvenanceResolution.Missing(handle, "Unknown provenance kind.")
             };
         }
@@ -107,5 +108,36 @@ public sealed class NpgsqlProvenanceResolver : IProvenanceResolver
         return await cmd.ExecuteScalarAsync(ct) is not null
             ? ProvenanceResolution.Live(handle, $"document_sections:{handle.Id}")
             : ProvenanceResolution.Missing(handle, "Document section was not found.");
+    }
+
+    /// <summary>
+    /// T-073. Resolves one exact widget execution snapshot.
+    ///
+    /// Existence only, and that is deliberate: this method returns an artifact
+    /// reference, never the snapshot's rows. Content is reachable solely through
+    /// the tenant-filtered read paths, because this interface carries no tenant
+    /// for any kind. Fails CLOSED like every other branch.
+    /// </summary>
+    private async Task<ProvenanceResolution> ResolveWidgetResultAsync(ProvenanceHandle handle, CancellationToken ct)
+    {
+        if (!Guid.TryParse(handle.Id, out var id))
+            return ProvenanceResolution.Missing(handle, "Widget result id is not a GUID.");
+
+        await using (var existsCmd = _dataSource.CreateCommand("SELECT to_regclass('canon.assistant_widget_result') IS NOT NULL"))
+        {
+            var available = await existsCmd.ExecuteScalarAsync(ct) as bool? ?? false;
+            if (!available)
+                return ProvenanceResolution.Missing(handle, "Widget result evidence store is not installed.");
+        }
+
+        await using var cmd = _dataSource.CreateCommand(
+            "SELECT result_fingerprint FROM canon.assistant_widget_result WHERE id = @id");
+        cmd.Parameters.AddWithValue("id", id);
+
+        var fingerprint = await cmd.ExecuteScalarAsync(ct) as string;
+
+        return string.IsNullOrWhiteSpace(fingerprint)
+            ? ProvenanceResolution.Missing(handle, "No widget result snapshot matched the handle.")
+            : ProvenanceResolution.Live(handle, $"assistant_widget_result:{id}");
     }
 }
