@@ -47,7 +47,7 @@ VITE_PORT=$env:VITE_PORT
 VITE_PREVIEW_PORT=$env:VITE_PREVIEW_PORT
 VITE_API_BASE_URL=$env:VITE_API_BASE_URL
 VITE_SMOKE_USERNAME=$env:VITE_SMOKE_USERNAME
-VITE_SMOKE_PASSWORD=change-me-before-production
+VITE_SMOKE_PASSWORD=$env:VITE_SMOKE_PASSWORD
 "@ | Set-Content (Join-Path $FrontendRoot ".env.local") -Encoding utf8
         Write-Host "[S1A] Wrote Frontend .env.local" -ForegroundColor Green
     }
