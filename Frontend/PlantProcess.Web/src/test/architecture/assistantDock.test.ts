@@ -70,4 +70,45 @@ describe("T-071 assistant dock architecture", () => {
     expect(ctx).not.toContain("setTurns:");
     expect(ctx).not.toContain("__test");
   });
+
+  /* PPIQ-T071 audit hardening, v2.9.2. A fresh login must produce no
+     assistant-configuration refusal in the network log, before and after a
+     hard reload. Three source properties make that true together, and each
+     one is asserted here so a later refactor cannot quietly undo it. */
+
+  it("the authenticated layout is not rendered while the session is bootstrapping", () => {
+    const app = read("src/App.tsx");
+    const gate = app.indexOf("if (isBootstrapping || bootstrapError)");
+    const layout = app.indexOf("element={<AppLayout />}");
+    expect(gate).toBeGreaterThan(-1);
+    expect(layout).toBeGreaterThan(-1);
+    /* The gate returns before the layout route exists, so the provider that
+       AppLayout mounts cannot run before the session has been restored. */
+    expect(gate).toBeLessThan(layout);
+  });
+
+  it("the configuration is requested from the on-need path, not an unconditional mount effect", () => {
+    const ctx = read("src/components/assistant/AssistantDockContext.tsx");
+    expect(ctx).toContain("const ensureConfig = useCallback");
+    const guard = ctx.indexOf("configLoaded.current");
+    const call = ctx.indexOf(".getAssistantConfig()");
+    expect(guard).toBeGreaterThan(-1);
+    expect(call).toBeGreaterThan(-1);
+    /* The arrival guard is read before the request is made, and the request
+       exists in exactly one place. */
+    expect(guard).toBeLessThan(call);
+    expect(ctx.split(".getAssistantConfig()").length - 1).toBe(1);
+  });
+
+  it("the assistant api client sends the credential the protected groups require", () => {
+    const client = read("src/api/assistantApi.ts");
+    expect(client).toContain('from "@/api/http/apiClient"');
+    expect(client).toContain("getAccessToken()");
+    const attached = client.indexOf("authHeaders");
+    const caller = client.indexOf("...(init?.headers ?? {}),");
+    expect(attached).toBeGreaterThan(-1);
+    expect(caller).toBeGreaterThan(-1);
+    /* Caller-supplied headers are still spread last, so they win. */
+    expect(attached).toBeLessThan(caller);
+  });
 });
