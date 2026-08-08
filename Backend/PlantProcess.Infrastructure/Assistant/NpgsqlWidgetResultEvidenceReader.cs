@@ -146,4 +146,40 @@ public sealed class NpgsqlWidgetResultEvidenceReader : IWidgetResultEvidenceRead
 
         return WidgetResultEvidenceJson.ReadSnapshot(reader, evidenceId);
     }
+
+    /// <summary>
+    /// T-073 contextual evidence anchor.
+    ///
+    /// The join is the whole point: a snapshot row is not enough, because a row
+    /// can survive while its chunk is unavailable. Anchoring requires a chunk
+    /// that retrieval would actually consider - same tenant, not stale, not
+    /// synthetic - pointing at a snapshot for the focused widget.
+    ///
+    /// Matching runs on the persisted identity columns, never on chunk prose.
+    /// </summary>
+    public async Task<Guid?> FindActiveAnchorAsync(Guid tenantId, string widgetCode, string? pageCode, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(widgetCode)) return null;
+
+        await using var cmd = _dataSource.CreateCommand(
+            "SELECT e.id " +
+            "FROM canon.assistant_widget_result e " +
+            "JOIN canon.assistant_chunk c " +
+            "  ON c.tenant_id = e.tenant_id AND c.source_ref = e.id::text " +
+            "WHERE e.tenant_id = @tenant " +
+            "  AND e.widget_code = @widget " +
+            "  AND (@page IS NULL OR e.page_code = @page) " +
+            "  AND c.source_kind = @kind " +
+            "  AND c.is_stale = false " +
+            "  AND c.is_synthetic = false " +
+            "ORDER BY e.generated_at_utc DESC " +
+            "LIMIT 1");
+
+        cmd.Parameters.AddWithValue("tenant", tenantId);
+        cmd.Parameters.AddWithValue("widget", widgetCode.Trim());
+        cmd.Parameters.AddWithValue("page", string.IsNullOrWhiteSpace(pageCode) ? DBNull.Value : pageCode.Trim());
+        cmd.Parameters.AddWithValue("kind", WidgetResultChunkProducer.SourceKind);
+
+        return await cmd.ExecuteScalarAsync(cancellationToken) is Guid anchorId ? anchorId : null;
+    }
 }

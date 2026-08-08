@@ -45,6 +45,15 @@ public class T072ContextEnvelopeTests
         }
     }
 
+    private sealed class AlwaysAnchoredEvidence : IWidgetResultEvidenceReader
+    {
+        public Task<WidgetResultEvidenceSnapshot?> ReadAsync(Guid tenantId, Guid evidenceId, CancellationToken ct)
+            => Task.FromResult<WidgetResultEvidenceSnapshot?>(null);
+
+        public Task<Guid?> FindActiveAnchorAsync(Guid tenantId, string widgetCode, string? pageCode, CancellationToken ct)
+            => Task.FromResult<Guid?>(Guid.Empty);
+    }
+
     private static (AssistantService Service, CapturingIndex Index, CapturingModel Model) Build()
     {
         var index = new CapturingIndex();
@@ -54,7 +63,12 @@ public class T072ContextEnvelopeTests
             ProvenanceHandle.Finding("f-1"), 1.0));
 
         var model = new CapturingModel();
-        var service = new AssistantService(index, new ToolRegistry(Array.Empty<ITool>()), model);
+
+        /* T-073 added the contextual evidence anchor to the service. These tests do
+           not exercise a focused widget, so the anchor is never consulted - but the
+           dependency is real and is passed rather than defaulted away, so nobody can
+           delete the rule and still see these tests pass. */
+        var service = new AssistantService(index, new ToolRegistry(Array.Empty<ITool>()), model, new AlwaysAnchoredEvidence());
         return (service, index, model);
     }
 

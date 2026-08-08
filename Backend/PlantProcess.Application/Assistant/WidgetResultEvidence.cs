@@ -55,6 +55,19 @@ public sealed record WidgetResultEvidenceSnapshot(
 public interface IWidgetResultEvidenceReader
 {
     Task<WidgetResultEvidenceSnapshot?> ReadAsync(Guid tenantId, Guid evidenceId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// T-073 contextual evidence anchor. Finds one ACTIVE, tenant-scoped widget
+    /// result for the focused widget - active meaning a retrievable chunk still
+    /// points at it, not merely that a snapshot row survives somewhere.
+    ///
+    /// Page code narrows when the caller supplies it and is ignored when it does
+    /// not, because the same widget code can appear on more than one page and a
+    /// caller that knows only the widget should still be anchored.
+    ///
+    /// Returns null when nothing matches. Null means refuse.
+    /// </summary>
+    Task<Guid?> FindActiveAnchorAsync(Guid tenantId, string widgetCode, string? pageCode, CancellationToken cancellationToken);
 }
 
 public static class WidgetResultEvidence
