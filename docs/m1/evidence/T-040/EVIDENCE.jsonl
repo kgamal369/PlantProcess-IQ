@@ -1,13 +1,17 @@
-{"gate":"G00","evidence":"G00-clean-profile-authenticates.png","claim":"A browser with no cookies reached the authoring shell, so the compiled smoke credential is accepted.","at":"2026-08-08T13:31:11.517Z"}
-{"gate":"G09/G11","evidence":"G11-ltr-s1-block-mode.png","claim":"S1 block mode under dir=ltr, with the schema tree measured on the inline-start edge.","at":"2026-08-08T13:31:13.562Z"}
-{"gate":"G09/G11","evidence":"G11-ltr-s1-sql-mode.png","claim":"S1 SQL mode under dir=ltr, toolbox absent rather than disabled.","at":"2026-08-08T13:31:15.571Z"}
-{"gate":"G09/G11","evidence":"G11-rtl-s1-block-mode.png","claim":"S1 block mode under dir=rtl, with the schema tree measured on the inline-start edge.","at":"2026-08-08T13:31:17.617Z"}
-{"gate":"G09/G11","evidence":"G11-rtl-s1-sql-mode.png","claim":"S1 SQL mode under dir=rtl, toolbox absent rather than disabled.","at":"2026-08-08T13:31:19.639Z"}
-{"gate":"G10","evidence":"G10-focus-order.txt","claim":"Consecutive Tab presses on /prep/canvas, in order, with the region each landed in.","at":"2026-08-08T13:31:22.704Z"}
-{"gate":"G10","evidence":"G10-keyboard-only-scenario.png","claim":"Keyboard only: Tab reached all four regions, Enter ran the definition and the refusal was written to the debug log.","at":"2026-08-08T13:31:22.937Z"}
-{"gate":"G12-G18","evidence":"G14-state-blocked.png","claim":"An empty board reports Blocked and names the precondition, with an action line under it.","at":"2026-08-08T13:31:24.820Z"}
-{"gate":"G12-G18","evidence":"G13-state-loading.png","claim":"A run in flight holds Loading on the shared banner, with the row count suppressed rather than stale.","at":"2026-08-08T13:31:27.823Z"}
-{"gate":"G12-G18","evidence":"G18-state-failed.png","claim":"A transport failure reads as Failed with a written sentence; no thrown value reaches the surface.","at":"2026-08-08T13:31:32.052Z"}
-{"gate":"G19","evidence":"G19-s2-add-entry.png","claim":"Add widget opens the shared authoring shell in S2 with nothing loaded.","at":"2026-08-08T13:31:34.837Z"}
-{"gate":"G19","evidence":"G19-focus-on-open.txt","claim":"Where focus sits the instant the S2 surface opens, measured in the browser.","at":"2026-08-08T13:31:35.278Z"}
-{"gate":"G19","evidence":"G19-s2-edit-entry.png","claim":"Edit widget opens the SAME surface with the existing definition loaded: Material Units","at":"2026-08-08T13:31:36.370Z"}
+{"gate":"G00","evidence":"G00-clean-profile-authenticates.png","claim":"A browser with no cookies reached the authoring shell, so the compiled smoke credential is accepted.","at":"2026-08-08T17:21:08.004Z"}
+{"gate":"G09/G11","evidence":"G11-ltr-s1-block-mode.png","claim":"S1 block mode under dir=ltr, with the schema tree measured on the inline-start edge.","at":"2026-08-08T17:21:13.294Z"}
+{"gate":"G09/G11","evidence":"G11-ltr-s1-sql-mode.png","claim":"S1 SQL mode under dir=ltr, toolbox absent rather than disabled.","at":"2026-08-08T17:21:15.371Z"}
+{"gate":"G09/G11","evidence":"G11-rtl-s1-block-mode.png","claim":"S1 block mode under dir=rtl, with the schema tree measured on the inline-start edge.","at":"2026-08-08T17:21:17.309Z"}
+{"gate":"G09/G11","evidence":"G11-rtl-s1-sql-mode.png","claim":"S1 SQL mode under dir=rtl, toolbox absent rather than disabled.","at":"2026-08-08T17:21:19.226Z"}
+{"gate":"G10","evidence":"G10-focus-order.txt","claim":"Consecutive Tab presses on /prep/canvas, in order, with the region each landed in.","at":"2026-08-08T17:21:21.886Z"}
+{"gate":"G10","evidence":"G10-keyboard-only-scenario.png","claim":"Keyboard only: Tab reached all four regions, Enter ran the definition and the refusal was written to the debug log.","at":"2026-08-08T17:21:22.108Z"}
+{"gate":"G12-G18","evidence":"G14-state-blocked.png","claim":"An empty board reports Blocked and names the precondition, with an action line under it.","at":"2026-08-08T17:21:23.865Z"}
+{"gate":"G12-G18","evidence":"G13-state-loading.png","claim":"A run in flight holds Loading on the shared banner, with the row count suppressed rather than stale.","at":"2026-08-08T17:21:27.578Z"}
+{"gate":"G12-G18","evidence":"G18-state-failed.png","claim":"A transport failure reads as Failed with a written sentence; no thrown value reaches the surface.","at":"2026-08-08T17:21:31.487Z"}
+{"gate":"G19","evidence":"G19-s2-add-entry.png","claim":"Add widget opens the shared authoring shell in S2 with nothing loaded.","at":"2026-08-08T17:21:34.200Z"}
+{"gate":"G19","evidence":"G19-focus-on-open.txt","claim":"Where focus sits the instant the S2 surface opens, measured in the browser.","at":"2026-08-08T17:21:34.388Z"}
+{"gate":"G19","evidence":"G19-s2-edit-entry.png","claim":"Edit widget opens the SAME surface with the existing definition loaded: Material Units","at":"2026-08-08T17:21:35.876Z"}
+{"gate":"T-041 C","evidence":"T041-C-empty-page.png","claim":"A new page starts with no title, no code, no audience and no widgets, and states that it has none.","at":"2026-08-08T17:21:38.507Z"}
+{"gate":"T-041 C","evidence":"T041-C-audience-required.png","claim":"Name and code alone leave the kinds disabled; choosing an audience role enables them.","at":"2026-08-08T17:21:41.911Z"}
+{"gate":"T-041 D","evidence":"T041-D-seven-kinds.png","claim":"The picker offers exactly Chart, Table, KPI, Calculated label, Filter, Container and Text, and none of the retired demo widgets.","at":"2026-08-08T17:21:44.397Z"}
+{"gate":"T-041 E/F","evidence":"T041-EF-shell-opens-s2.png","claim":"A structural kind and a name open the existing SharedAuthoringShell in S2, with no demo binding anywhere on the path.","at":"2026-08-08T17:21:49.363Z"}
