@@ -64,6 +64,27 @@ public sealed class AssistantService
             }
         }
 
+        // T-074 QUESTION-LEVEL QUANTITY AUTHORITY, before any retrieval happens.
+        //
+        // Three outcomes, and the middle one stops the turn here. If the question
+        // names a quantity the registry KNOWS but cannot vouch for - the matching
+        // definitions are synthetic only, or tied, or disagree - then no answer to
+        // that quantity can be authoritative, and continuing to generic retrieval
+        // produces the failure this rule exists to prevent: an unrelated document
+        // answering a quantity question, which is not a value, not a band and not
+        // a refusal.
+        //
+        // Resolved continues to the typed guard. NoMatch continues untouched. No
+        // parameter code or vocabulary is named anywhere in this rule.
+        var registry = await _quantities.GetActiveAsync(ct);
+        var resolution = QuantityResolver.Resolve(request.Question, registry);
+
+        if (resolution.Outcome == QuantityResolutionOutcome.KnownButUntrustedOrAmbiguous)
+        {
+            return GroundedAnswer.Refusal(
+                "I don't have an approved definition for that quantity, so I can't answer it.");
+        }
+
         // T-072: the envelope narrows the search and nothing else. Tenant and role
         // still come from the caller's claims, so context can never widen scope.
         var contextTerms = request.Context?.RetrievalTerms() ?? Array.Empty<string>();
@@ -147,8 +168,8 @@ public sealed class AssistantService
         // This owns quantity SEMANTICS only. Uncited numbers, provenance, synthetic
         // claims and causation wording stay with GroundingService, which runs next
         // on the sentences that survive.
-        var registry = await _quantities.GetActiveAsync(ct);
-        var resolution = QuantityResolver.Resolve(request.Question, registry);
+        // The resolution was made at the top of the turn, before retrieval. Only
+        // NoMatch and Resolved can reach this point.
         var guarded = TypedQuantityGuard.Apply(draft.Text, resolution);
 
         var answer = GroundingService.Enforce(guarded.DraftText, draft.Claims);
