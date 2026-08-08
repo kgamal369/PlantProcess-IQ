@@ -1,4 +1,7 @@
-import { useMemo, useReducer, useState } from "react";
+import { useEffect, useMemo, useReducer, useState } from "react";
+
+import { dashboardingApi } from "@/api/dashboarding/dashboarding.api";
+import { SharedAuthoringShell } from "@/authoring/SharedAuthoringShell";
 
 import { pageBuilderApi, type PageDefinitionDto } from "@/api/pageBuilder";
 import { ApiError } from "@/api/http/apiClient";
@@ -14,6 +17,7 @@ import {
   createInitialPageBuilderState,
   createPageBuilderPayload,
   normalizePageVisibility,
+  pageBuilderGrid,
   pageBuilderReducer,
   type BuilderWidget,
   type PageBuilderState,
@@ -30,13 +34,46 @@ const visibilityOptions = [
   { value: "Public", label: "Public" },
 ] as const;
 
-const library: Array<{ kind: WidgetKind; title: string; source: string }> = [
-  { kind: "kpi", title: "Risk KPI", source: "schema_view:risk_summary" },
-  { kind: "bar", title: "Defect breakdown", source: "schema_view:defect_breakdown" },
-  { kind: "line", title: "Defect trend", source: "schema_view:quality_daily" },
-  { kind: "filter-date", title: "Date range filter", source: "filter:date-range" },
-  { kind: "filter-list", title: "List-of-values filter", source: "filter:list-of-values" },
-];
+// PPIQ T-041. THE SECOND COPY OF THE DEMO LIBRARY IS DELETED, NOT REPLACED.
+//
+// Two of its five entries were never widget kinds - a date filter and a
+// list-of-values filter are variants under the Filter kind - and three bound a
+// new widget to a schema_view of one reference plant before the author had
+// chosen anything. The structural kinds now come from the endpoint, and there
+// is deliberately NO local fallback: a product that cannot reach its own
+// grammar says so, rather than offering a guess that may disagree with it.
+
+type StructuralKind = {
+  code: string;
+  label: string;
+  usesChartType: boolean;
+  usesQuery: boolean;
+  description: string;
+};
+
+// The four roles the API authorises against. The page states its audience in
+// the same vocabulary the server validates, so a rejection can never be a
+// surprise about spelling.
+const audienceRoleOptions = ["Admin", "DataManager", "Engineer", "Viewer"] as const;
+
+function readStructuralKinds(payload: unknown): StructuralKind[] {
+  const kinds = (payload as { widgetKinds?: unknown })?.widgetKinds;
+
+  if (!Array.isArray(kinds)) {
+    return [];
+  }
+
+  return kinds
+    .map((entry) => entry as Record<string, unknown>)
+    .filter((entry) => typeof entry.code === "string" && typeof entry.label === "string")
+    .map((entry) => ({
+      code: String(entry.code),
+      label: String(entry.label),
+      usesChartType: entry.usesChartType === true,
+      usesQuery: entry.usesQuery === true,
+      description: typeof entry.description === "string" ? entry.description : "",
+    }));
+}
 
 type SaveStatusKind = "idle" | "saving" | "saved" | "loading" | "loaded" | "deleted" | "error";
 
@@ -63,6 +100,40 @@ export function PageBuilderPage() {
     currentVersion: number;
     updatedAtUtc?: string;
   } | null>(null);
+
+  // PPIQ T-041. The structural grammar is fetched, never compiled. Three states,
+  // because "we could not reach the endpoint" and "the endpoint published
+  // nothing" are different sentences and an author deserves the right one.
+  const [kinds, setKinds] = useState<StructuralKind[]>([]);
+  const [kindsStatus, setKindsStatus] = useState<"loading" | "ready" | "failed">("loading");
+  const [chosenKind, setChosenKind] = useState<StructuralKind | null>(null);
+  const [newWidgetName, setNewWidgetName] = useState("");
+  const [authoring, setAuthoring] = useState<{ kind: string; title: string } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    dashboardingApi
+      .getDashboardMetadata()
+      .then((payload: unknown) => {
+        if (cancelled) { return; }
+        const published = readStructuralKinds(payload);
+        setKinds(published);
+        setKindsStatus(published.length > 0 ? "ready" : "failed");
+      })
+      .catch(() => {
+        if (cancelled) { return; }
+        setKinds([]);
+        setKindsStatus("failed");
+      });
+
+    return () => { cancelled = true; };
+  }, []);
+
+  const canCreatePage =
+    state.title.trim().length > 0
+    && state.slug.trim().length > 0
+    && state.audienceRoles.length > 0;
 
   const payload = useMemo(() => createPageBuilderPayload(state), [state]);
 
@@ -246,6 +317,40 @@ export function PageBuilderPage() {
             }
           />
 
+          <fieldset className="page-builder-page__audience" data-testid="page-audience">
+            <legend>Audience roles</legend>
+            <p className="page-builder-page__hint">
+              Who this page is authored for. Visibility above answers a different
+              question: who may open it.
+            </p>
+
+            {audienceRoleOptions.map((role) => (
+              <label key={role} className="page-builder-page__audience-role">
+                <input
+                  type="checkbox"
+                  checked={state.audienceRoles.includes(role)}
+                  onChange={(event) =>
+                    dispatch({
+                      type: "updateMeta",
+                      patch: {
+                        audienceRoles: event.target.checked
+                          ? [...state.audienceRoles, role]
+                          : state.audienceRoles.filter((chosen) => chosen !== role),
+                      },
+                    })
+                  }
+                />
+                {role}
+              </label>
+            ))}
+
+            {state.audienceRoles.length === 0 ? (
+              <p role="status" data-testid="page-audience-required">
+                Choose at least one audience role before adding widgets.
+              </p>
+            ) : null}
+          </fieldset>
+
           <StandardTextArea
             label="Generated PageDefinition payload"
             value={JSON.stringify(payload, null, 2)}
@@ -254,34 +359,90 @@ export function PageBuilderPage() {
           />
         </StandardCard>
 
-        <StandardCard className="page-builder-page__panel" title="Widget library">
-          <div className="page-builder-page__library">
-            {library.map((item) => (
+        <StandardCard className="page-builder-page__panel" title="Add widget">
+          {kindsStatus === "loading" ? (
+            <p role="status" data-testid="widget-kinds-loading">
+              Reading the widget grammar from the server.
+            </p>
+          ) : null}
+
+          {kindsStatus === "failed" ? (
+            <p role="alert" data-testid="widget-kinds-failed">
+              The widget grammar could not be read from the server, so no kind can be
+              offered. Check that the API is running, then reload this page.
+            </p>
+          ) : null}
+
+          {kindsStatus === "ready" ? (
+            <div className="page-builder-page__library" data-testid="widget-kind-picker">
+              {kinds.map((kind) => (
+                <StandardButton
+                  key={kind.code}
+                  variant={chosenKind?.code === kind.code ? "primary" : "secondary"}
+                  data-testid={"widget-kind-" + kind.code}
+                  disabled={!canCreatePage}
+                  onClick={() => {
+                    setChosenKind(kind);
+                    setNewWidgetName("");
+                  }}
+                >
+                  {kind.label}
+                </StandardButton>
+              ))}
+            </div>
+          ) : null}
+
+          {chosenKind ? (
+            <div className="page-builder-page__name-widget" data-testid="widget-name-step">
+              <p>{chosenKind.description}</p>
+
+              <StandardInput
+                label="Widget name"
+                value={newWidgetName}
+                onChange={(value) => setNewWidgetName(value)}
+              />
+
               <StandardButton
-                key={item.kind}
-                variant="secondary"
-                onClick={() =>
+                variant="primary"
+                data-testid="ctl-open-authoring"
+                disabled={newWidgetName.trim().length === 0}
+                onClick={() => {
+                  const title = newWidgetName.trim();
+
+                  // The widget is placed on the page and then authored. NOTHING
+                  // is bound here: a source invented to make the shell open would
+                  // be a demo binding by another name.
                   dispatch({
                     type: "addWidget",
-                    kind: item.kind,
-                    title: item.title,
-                    source: item.source,
+                    kind: chosenKind.code,
+                    title,
+                    source: "",
                     idSeed: Date.now(),
-                  })
-                }
+                  });
+
+                  setAuthoring({ kind: chosenKind.code, title });
+                  setChosenKind(null);
+                  setNewWidgetName("");
+                }}
               >
-                Add {item.title}
+                Author this widget
               </StandardButton>
-            ))}
-          </div>
+            </div>
+          ) : null}
         </StandardCard>
       </section>
 
       <StandardCard className="page-builder-page__canvas" title="Canvas">
         <div className="page-builder-page__canvas-header">
-          <span>Metadata-driven canvas</span>
+          <span>{pageBuilderGrid.columns}-column grid</span>
           <span>{state.widgets.length} widgets</span>
         </div>
+
+        {state.widgets.length === 0 ? (
+          <p className="page-builder-page__empty" data-testid="page-empty">
+            This page has no widgets yet
+          </p>
+        ) : null}
 
         <div className="page-builder-page__widgets">
           {state.widgets.map((widget) => (
@@ -346,6 +507,14 @@ export function PageBuilderPage() {
         </div>
       </StandardCard>
 
+      {authoring ? (
+        <SharedAuthoringShell
+          purpose="S2"
+          onClose={() => setAuthoring(null)}
+          onSaved={() => setAuthoring(null)}
+        />
+      ) : null}
+
       <ConflictDialog
         open={conflict !== null}
         editor={conflict?.editor ?? "another editor"}
@@ -383,7 +552,13 @@ function toPageBuilderState(page: PageDefinitionDto): PageBuilderState {
     title: page.title,
     slug: page.slug,
     visibility: normalizePageVisibility(page.visibility),
-    widgets: widgets.length > 0 ? widgets : createInitialPageBuilderState().widgets,
+    // Carried through the round trip. Dropping it here would let a load
+    // followed by a save erase an audience somebody authored - the same defect
+    // the server-side omission semantics exist to prevent.
+    audienceRoles: Array.isArray(page.audienceRoles) ? [...page.audienceRoles] : [],
+    // A loaded page shows what it actually holds. The fallback that stood here
+    // put three demo widgets on an empty page and called it a load.
+    widgets,
   };
 }
 

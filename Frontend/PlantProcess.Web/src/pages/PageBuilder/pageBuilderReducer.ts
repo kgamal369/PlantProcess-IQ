@@ -1,6 +1,11 @@
 export type PageVisibility = "Private" | "Shared" | "Public";
 
-export type WidgetKind = "kpi" | "bar" | "line" | "filter-date" | "filter-list";
+// PPIQ T-041. A structural kind is a CODE, and the codes come from
+// /analytics/dashboard/metadata. The union that used to sit here mixed two
+// levels of the grammar: bar and line are chart types under the Chart kind, and
+// filter-date and filter-list are variants under the Filter kind. Compiling any
+// list here would also mean the picker could disagree with the endpoint.
+export type WidgetKind = string;
 
 export type BuilderWidget = {
   id: string;
@@ -17,6 +22,10 @@ export type PageBuilderState = {
   title: string;
   slug: string;
   visibility: PageVisibility;
+  // PPIQ T-041. Audience is not visibility. Visibility answers who MAY open the
+  // page; audience answers which roles it was authored FOR, which is what T-042
+  // reads when Publish puts it into navigation.
+  audienceRoles: string[];
   widgets: BuilderWidget[];
 };
 
@@ -24,6 +33,7 @@ export type PageBuilderPayload = {
   slug: string;
   title: string;
   visibility: PageVisibility;
+  audienceRoles: string[];
   layoutJson: {
     grid: {
       columns: number;
@@ -42,7 +52,7 @@ export type PageBuilderPayload = {
 export type PageBuilderAction =
   | {
       type: "updateMeta";
-      patch: Partial<Pick<PageBuilderState, "title" | "slug" | "visibility">>;
+      patch: Partial<Pick<PageBuilderState, "title" | "slug" | "visibility" | "audienceRoles">>;
     }
   | {
       type: "addWidget";
@@ -80,38 +90,10 @@ export const pageBuilderGrid = {
   maxWidgetHeight: 12,
 } as const;
 
-export const defaultPageBuilderWidgets: BuilderWidget[] = [
-  {
-    id: "w-risk",
-    kind: "kpi",
-    title: "Risk KPI",
-    x: 0,
-    y: 0,
-    w: 3,
-    h: 2,
-    source: "schema_view:risk_summary",
-  },
-  {
-    id: "w-defects",
-    kind: "bar",
-    title: "Defect breakdown",
-    x: 3,
-    y: 0,
-    w: 5,
-    h: 3,
-    source: "schema_view:defect_breakdown",
-  },
-  {
-    id: "w-trend",
-    kind: "line",
-    title: "Defect trend",
-    x: 8,
-    y: 0,
-    w: 4,
-    h: 3,
-    source: "schema_view:quality_daily",
-  },
-];
+// PPIQ T-041. The demo library that stood here - Risk KPI, Defect breakdown and
+// Defect trend, each bound to a schema_view of one reference plant - is deleted
+// rather than replaced. A new page starts genuinely empty: Rule 2 is not a
+// slogan about installation, it is what the author sees on the first screen.
 
 export function normalizePageVisibility(value: string | string[]): PageVisibility {
   const raw = Array.isArray(value) ? value[0] : value;
@@ -125,10 +107,11 @@ export function normalizePageVisibility(value: string | string[]): PageVisibilit
 
 export function createInitialPageBuilderState(): PageBuilderState {
   return {
-    title: "Quality Investigation",
-    slug: "quality-investigation",
+    title: "",
+    slug: "",
     visibility: "Shared",
-    widgets: cloneWidgets(defaultPageBuilderWidgets),
+    audienceRoles: [],
+    widgets: [],
   };
 }
 
@@ -231,6 +214,7 @@ export function createPageBuilderPayload(state: PageBuilderState): PageBuilderPa
     slug: state.slug,
     title: state.title,
     visibility: state.visibility,
+    audienceRoles: [...state.audienceRoles],
     layoutJson: {
       grid: {
         columns: pageBuilderGrid.columns,
@@ -276,21 +260,14 @@ function createNextWidgetId(widgets: BuilderWidget[], seed?: number | string): s
   return candidate;
 }
 
+// PPIQ T-041. The switch that stood here named five kinds, three of which were
+// not kinds at all. A fallback title is not the place to keep a second copy of
+// the grammar: the caller passes the code the endpoint gave it, and an unnamed
+// widget is described by that code until the author names it.
 function defaultWidgetTitle(kind: WidgetKind): string {
-  switch (kind) {
-    case "kpi":
-      return "KPI widget";
-    case "bar":
-      return "Bar chart widget";
-    case "line":
-      return "Line chart widget";
-    case "filter-date":
-      return "Date filter";
-    case "filter-list":
-      return "List filter";
-    default:
-      return "Widget";
-  }
+  const code = kind.trim();
+
+  return code.length > 0 ? code : "Widget";
 }
 
 function clamp(value: number, min: number, max: number): number {
