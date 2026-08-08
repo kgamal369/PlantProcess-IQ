@@ -30,7 +30,7 @@ describe("T-072 the envelope describes the surface", () => {
       ],
     });
 
-    expect(context.selections).toEqual(["siteId:SITE_ALPHA", "equipmentId:EQUIP_BETA"]);
+    expect(context.selections).toEqual(["siteId=SITE_ALPHA", "equipmentId=EQUIP_BETA"]);
     expect(context.widgetCode).toBe("WIDGET_BETA");
   });
 
@@ -40,7 +40,7 @@ describe("T-072 the envelope describes the surface", () => {
       filters: { siteId: "SITE_ALPHA", page: 2, pageSize: 50, sortBy: "createdAt", areaId: "" },
     });
 
-    expect(context.filters).toEqual(["siteId:SITE_ALPHA"]);
+    expect(context.filters).toEqual(["siteId=SITE_ALPHA"]);
   });
 
   it("never invents a result summary or an evidence handle", () => {

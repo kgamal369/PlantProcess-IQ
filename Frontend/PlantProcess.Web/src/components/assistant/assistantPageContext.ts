@@ -56,7 +56,9 @@ export function buildAssistantContext(input: AssistantContextInput): AssistantCo
 
   const selectionTerms = selections
     .filter((selection) => selection.value !== undefined && selection.value !== null)
-    .map((selection) => String(selection.field) + ":" + String(selection.value));
+    /* field=value, joined here because this is the side where the two are still
+       separate and typed. The server adds the "selection:" kind prefix. */
+    .map((selection) => String(selection.field) + "=" + String(selection.value));
 
   const focused = [...selections].reverse().find((selection) => Boolean(selection.sourceWidget));
 
@@ -66,7 +68,8 @@ export function buildAssistantContext(input: AssistantContextInput): AssistantCo
       value !== undefined &&
       value !== null &&
       String(value).length > 0)
-    .map(([key, value]) => key + ":" + String(value));
+    /* Same shape as a selection; the server adds the "filter:" kind prefix. */
+    .map(([key, value]) => key + "=" + String(value));
 
   return {
     route: input.pathname && input.pathname.length > 0 ? input.pathname : null,

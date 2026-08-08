@@ -62,20 +62,24 @@ public sealed record AssistantContextEnvelope(
     {
         var terms = new List<string>();
 
-        void Add(string? value)
+        // Every term is PREFIXED with the kind of hint it is, so ranking can tell
+        // a page from a widget and a selection from a filter on the same field.
+        // The client sends selections and filters already joined as field=value,
+        // because that is the side where the two are still separate and typed.
+        void Add(string kind, string? value)
         {
             if (string.IsNullOrWhiteSpace(value)) return;
             if (terms.Count >= MaxTerms) return;
             var trimmed = value.Trim();
             if (trimmed.Length > MaxTermLength) trimmed = trimmed.Substring(0, MaxTermLength);
-            terms.Add(trimmed);
+            terms.Add(kind + ":" + trimmed);
         }
 
-        Add(Route);
-        Add(PageCode);
-        Add(WidgetCode);
-        foreach (var selection in Selections ?? Array.Empty<string>()) Add(selection);
-        foreach (var filter in Filters ?? Array.Empty<string>()) Add(filter);
+        Add("route", Route);
+        Add("page", PageCode);
+        Add("widget", WidgetCode);
+        foreach (var selection in Selections ?? Array.Empty<string>()) Add("selection", selection);
+        foreach (var filter in Filters ?? Array.Empty<string>()) Add("filter", filter);
 
         return terms;
     }

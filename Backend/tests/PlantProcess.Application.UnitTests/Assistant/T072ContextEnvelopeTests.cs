@@ -76,11 +76,11 @@ public class T072ContextEnvelopeTests
             null, CancellationToken.None);
 
         var terms = index.LastQuery!.ContextTerms!;
-        Assert.Contains("/dashboard/quality", terms);
-        Assert.Contains("PAGE_ALPHA", terms);
-        Assert.Contains("WIDGET_ALPHA", terms);
-        Assert.Contains("SELECTION_ALPHA", terms);
-        Assert.Contains("FILTER_ALPHA", terms);
+        Assert.Contains("route:/dashboard/quality", terms);
+        Assert.Contains("page:PAGE_ALPHA", terms);
+        Assert.Contains("widget:WIDGET_ALPHA", terms);
+        Assert.Contains("selection:SELECTION_ALPHA", terms);
+        Assert.Contains("filter:FILTER_ALPHA", terms);
         Assert.Equal("what does this chart show", index.LastQuery.Text);
     }
 
@@ -100,8 +100,8 @@ public class T072ContextEnvelopeTests
         var second = index.LastQuery!.ContextTerms!.ToArray();
 
         Assert.NotEqual(first, second);
-        Assert.Contains("PAGE_ALPHA", first);
-        Assert.DoesNotContain("PAGE_ALPHA", second);
+        Assert.Contains("page:PAGE_ALPHA", first);
+        Assert.DoesNotContain("page:PAGE_ALPHA", second);
     }
 
     [Fact]
@@ -154,6 +154,28 @@ public class T072ContextEnvelopeTests
         var terms = new AssistantContextEnvelope(PageCode: "PAGE_ALPHA", Selections: selections).RetrievalTerms();
 
         Assert.True(terms.Count <= 24);
-        Assert.All(terms, t => Assert.True(t.Length <= 120));
+        /* The cap applies to the VALUE; the kind prefix is added after it, so the
+           term is the value cap plus a short prefix and never unbounded. */
+        Assert.All(terms, t => Assert.True(t.Substring(t.IndexOf(':') + 1).Length <= 120));
+        Assert.All(terms, t => Assert.Contains(':', t));
+    }
+
+    [Fact]
+    public async Task A_selection_and_a_filter_on_the_same_field_are_distinguishable()
+    {
+        var (service, index, _) = Build();
+
+        await service.AskAsync(
+            Ask("what does this chart show", new AssistantContextEnvelope(
+                Selections: new[] { "grade=DX51D" },
+                Filters: new[] { "grade=DX51D" })),
+            null, CancellationToken.None);
+
+        var terms = index.LastQuery!.ContextTerms!;
+        Assert.Contains("selection:grade=DX51D", terms);
+        Assert.Contains("filter:grade=DX51D", terms);
+        /* Two hints of different kinds on the same field, and the ranking layer
+           can tell them apart. Before this correction both were "grade:DX51D". */
+        Assert.Equal(2, terms.Count);
     }
 }
