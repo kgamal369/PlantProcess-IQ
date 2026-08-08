@@ -42,7 +42,14 @@ public sealed class NpgsqlRetrievalIndex : IRetrievalIndex
             }
         }
 
-        var q = _embedder.Embed(query.Text).ToArray();
+        // T-072: this index ranks by cosine over the embedded question, so the
+        // honest narrowing point here is the embedded text. The caller has already
+        // decided which context terms are allowed to reach it.
+        var embedText = query.ContextTerms is { Count: > 0 }
+            ? query.Text + " " + string.Join(" ", query.ContextTerms)
+            : query.Text;
+
+        var q = _embedder.Embed(embedText).ToArray();
         return candidates
             .Select(c => new RetrievedChunk(c.Id, c.Kind, c.Ref, c.Content, HandleFor(c.Kind, c.Ref), Cosine(q, c.Emb)))
             .OrderByDescending(c => c.Score)

@@ -19,7 +19,12 @@ public sealed class AssistantService
 
     public async Task<GroundedAnswer> AskAsync(AssistantRequest request, IReadOnlyList<(string Tool, IReadOnlyDictionary<string, string> Args)>? toolCalls, CancellationToken ct)
     {
-        var chunks = await _retrieval.SearchAsync(new RetrievalQuery(request.TenantId, request.Role, request.Question), ct);
+        // T-072: the envelope narrows the search and nothing else. Tenant and role
+        // still come from the caller's claims, so context can never widen scope.
+        var contextTerms = request.Context?.RetrievalTerms() ?? Array.Empty<string>();
+
+        var chunks = await _retrieval.SearchAsync(
+            new RetrievalQuery(request.TenantId, request.Role, request.Question, 6, contextTerms), ct);
 
         var toolResults = new List<ToolResult>();
         if (toolCalls is not null)
@@ -32,7 +37,11 @@ public sealed class AssistantService
         if (chunks.Count == 0 && toolResults.All(t => !t.Ok))
             return GroundedAnswer.Refusal("I don't have approved evidence in your scope to answer that.");
 
-        var draft = _model.Draft(request, chunks, toolResults);
+        // T-072: the model is handed the request WITHOUT the envelope. Echoing a
+        // context value into an answer is then structurally impossible rather than
+        // forbidden by a string check, for this model and for any model swapped in
+        // later. Retrieval has already used it by this point.
+        var draft = _model.Draft(request with { Context = null }, chunks, toolResults);
         return GroundingService.Enforce(draft.Text, draft.Claims);
     }
 }

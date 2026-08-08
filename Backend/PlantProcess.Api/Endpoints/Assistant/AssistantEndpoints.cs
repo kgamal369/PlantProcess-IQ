@@ -12,7 +12,21 @@ namespace PlantProcess.Api.Endpoints.Assistant;
 /// <summary>T-053/T-054 backend: grounded ask + admin reindex. Tenant/role/license come from the caller's claims.</summary>
 public static class AssistantEndpoints
 {
-    public sealed record AskRequest(string Question, IReadOnlyList<string>? ContextChips, IReadOnlyList<ToolCallDto>? Tools);
+    public sealed record AskRequest(
+        string Question,
+        IReadOnlyList<string>? ContextChips,
+        IReadOnlyList<ToolCallDto>? Tools,
+        ContextEnvelopeDto? Context = null);
+
+    /// <summary>T-072 wire shape of the page and widget context envelope.</summary>
+    public sealed record ContextEnvelopeDto(
+        string? Route = null,
+        string? PageCode = null,
+        string? WidgetCode = null,
+        IReadOnlyList<string>? Selections = null,
+        IReadOnlyList<string>? Filters = null,
+        string? LastResultSummary = null,
+        IReadOnlyList<string>? EvidenceHandles = null);
     public sealed record ToolCallDto(string Tool, Dictionary<string, string>? Args);
 
     public static IEndpointRouteBuilder MapAssistantEndpoints(this IEndpointRouteBuilder app)
@@ -23,9 +37,18 @@ public static class AssistantEndpoints
         {
             if (!TryTenant(user, out var tenantId)) return ApplicationProblems.Validation("no_tenant");
 
+            var envelope = req.Context is null ? null : new AssistantContextEnvelope(
+                req.Context.Route,
+                req.Context.PageCode,
+                req.Context.WidgetCode,
+                req.Context.Selections,
+                req.Context.Filters,
+                req.Context.LastResultSummary,
+                req.Context.EvidenceHandles);
+
             var request = new AssistantRequest(
                 tenantId, Role(user), License(user), req.Question ?? string.Empty,
-                req.ContextChips ?? Array.Empty<string>());
+                req.ContextChips ?? Array.Empty<string>(), envelope);
 
             var toolCalls = req.Tools?
                 .Select(t => (t.Tool, (IReadOnlyDictionary<string, string>)(t.Args ?? new Dictionary<string, string>())))
