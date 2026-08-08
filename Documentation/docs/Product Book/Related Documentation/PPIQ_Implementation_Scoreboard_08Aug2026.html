@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>PPIQ Implementation Scoreboard — 08 Aug 2026</title>
+<style>
+:root{
+  --bg:#050b18;--panel:#0b1730;--panel2:#0e203d;--line:#183659;--text:#eaf6ff;--muted:#8ea7c1;
+  --cyan:#00d4ff;--blue:#0a84ff;--green:#2ce6a2;--amber:#ffb020;--red:#ff4d6d;--violet:#a98bff;
+  --shadow:0 22px 60px rgba(0,0,0,.36);--radius:18px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:
+ radial-gradient(circle at 15% -10%,rgba(0,212,255,.14),transparent 34%),
+ radial-gradient(circle at 90% 4%,rgba(169,139,255,.12),transparent 30%),
+ linear-gradient(180deg,#050b18 0%,#071127 52%,#050b18 100%);
+ color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Arial,sans-serif;line-height:1.5}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;background-image:
+ linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);
+ background-size:38px 38px;mask-image:linear-gradient(to bottom,rgba(0,0,0,.45),transparent 88%);z-index:-1}
+a{color:inherit}
+.shell{max-width:1500px;margin:auto;padding:0 26px 70px}
+.topbar{position:sticky;top:0;z-index:20;background:rgba(5,11,24,.78);backdrop-filter:blur(18px);border-bottom:1px solid rgba(142,167,193,.16)}
+.topinner{max-width:1500px;margin:auto;padding:13px 26px;display:flex;align-items:center;gap:18px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.05em}
+.brandmark{width:28px;height:28px;border:1px solid var(--cyan);border-radius:8px;position:relative;box-shadow:0 0 22px rgba(0,212,255,.22)}
+.brandmark:before,.brandmark:after{content:"";position:absolute;background:var(--cyan);border-radius:50%;width:5px;height:5px;box-shadow:13px 8px 0 var(--green),5px 17px 0 var(--blue)}
+.brandmark:before{left:4px;top:4px}.brandmark:after{right:4px;bottom:4px}
+.nav{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+.nav a{text-decoration:none;color:var(--muted);font-size:12px;padding:7px 10px;border-radius:9px}
+.nav a:hover{color:var(--text);background:rgba(255,255,255,.05)}
+.hero{padding:72px 0 26px;display:grid;grid-template-columns:1.25fr .75fr;gap:26px;align-items:end}
+.eyebrow{color:var(--cyan);font-size:12px;letter-spacing:.16em;text-transform:uppercase;font-weight:800}
+h1{font-size:clamp(38px,5vw,72px);line-height:.98;margin:12px 0 18px;letter-spacing:-.045em;max-width:1000px}
+.lead{color:#bfd1e4;font-size:18px;max-width:900px;margin:0}
+.hero-note{border:1px solid rgba(0,212,255,.24);background:linear-gradient(135deg,rgba(0,212,255,.08),rgba(10,132,255,.04));border-radius:var(--radius);padding:20px;box-shadow:var(--shadow)}
+.hero-note strong{display:block;font-size:30px;color:var(--green)}
+.hero-note span{color:var(--muted);font-size:13px}
+.grid{display:grid;gap:16px}
+.kpis{grid-template-columns:repeat(5,1fr);margin:26px 0 44px}
+.card{background:linear-gradient(180deg,rgba(11,23,48,.96),rgba(9,20,42,.92));border:1px solid rgba(142,167,193,.15);border-radius:var(--radius);box-shadow:var(--shadow)}
+.kpi{padding:18px;position:relative;overflow:hidden;min-height:150px}
+.kpi:after{content:"";position:absolute;right:-35px;bottom:-60px;width:130px;height:130px;border:1px solid rgba(0,212,255,.12);border-radius:50%}
+.kpi .label{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.08em;min-height:37px}
+.kpi .value{font-size:42px;font-weight:850;letter-spacing:-.04em;margin-top:8px}
+.kpi .delta{font-size:12px;color:var(--green)}
+.kpi .mini{height:4px;background:#132746;border-radius:99px;margin-top:14px;overflow:hidden}
+.kpi .mini i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--cyan),var(--green));border-radius:99px;transition:width 1.3s cubic-bezier(.2,.8,.2,1)}
+.section{margin:44px 0}
+.section-head{display:flex;justify-content:space-between;gap:20px;align-items:end;margin-bottom:14px}
+.section h2{font-size:29px;margin:0;letter-spacing:-.025em}
+.section p.sub{margin:4px 0 0;color:var(--muted);max-width:900px}
+.chartcard{padding:20px;overflow:hidden}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:16px;font-size:12px;color:var(--muted)}
+.legend span{display:flex;align-items:center;gap:6px}.dot{width:8px;height:8px;border-radius:50%}
+.chart-scroll{overflow-x:auto;padding-bottom:8px}
+.bar-chart{min-width:920px;display:grid;gap:10px}
+.bar-row{display:grid;grid-template-columns:225px 1fr 54px;gap:12px;align-items:center}
+.bar-label{font-size:12px;color:#c8d8e8;text-align:right}
+.bar-stack{display:grid;gap:4px}
+.track{height:7px;background:#122744;border-radius:99px;overflow:hidden;position:relative}
+.fill{height:100%;width:0;border-radius:99px;transition:width 1.1s cubic-bezier(.2,.8,.2,1)}
+.base{background:#35516d}.current{background:var(--cyan)}.m1{background:var(--blue)}.m2{background:var(--green)}
+.rowval{font-size:12px;color:var(--text);font-variant-numeric:tabular-nums}
+.delta-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.callout{padding:20px}
+.callout h3{margin:0 0 8px;font-size:17px}.callout p{margin:0;color:var(--muted);font-size:13px}
+.callout .big{font-size:34px;font-weight:850;color:var(--cyan);margin:7px 0}
+.persona-cards{grid-template-columns:repeat(3,1fr)}
+.persona{padding:18px;position:relative}
+.persona .score{font-size:34px;font-weight:850}.persona .id{font-size:11px;color:var(--cyan);letter-spacing:.1em;font-weight:800}
+.persona h3{margin:2px 0 7px;font-size:16px}.persona p{color:var(--muted);font-size:12px;margin:0}
+.band{display:inline-flex;padding:4px 8px;border-radius:99px;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;border:1px solid}
+.band.strong{color:var(--green);border-color:rgba(44,230,162,.35);background:rgba(44,230,162,.08)}
+.band.solid{color:var(--cyan);border-color:rgba(0,212,255,.35);background:rgba(0,212,255,.08)}
+.band.needs{color:var(--amber);border-color:rgba(255,176,32,.35);background:rgba(255,176,32,.08)}
+.band.critical{color:var(--red);border-color:rgba(255,77,109,.35);background:rgba(255,77,109,.08)}
+.radar-wrap{display:grid;grid-template-columns:1fr 360px;gap:16px}
+#radar{width:100%;min-height:480px}
+.radar-note{padding:20px}.radar-note h3{margin-top:0}.radar-note ul{padding-left:18px;color:var(--muted);font-size:13px}
+.list-grid{grid-template-columns:1fr 1fr}
+.listbox{padding:20px}
+.listbox h3{margin:0 0 14px;font-size:18px}
+.item{padding:13px 0;border-top:1px solid rgba(142,167,193,.12)}
+.item:first-of-type{border-top:0}.item-title{display:flex;justify-content:space-between;gap:14px;font-weight:750;font-size:13px}
+.item-score{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--green)}
+.item p{margin:6px 0 0;color:var(--muted);font-size:12px}
+.progress-table{width:100%;border-collapse:collapse;font-size:12px}
+.progress-table th,.progress-table td{padding:10px 8px;border-bottom:1px solid rgba(142,167,193,.12);text-align:right}
+.progress-table th:first-child,.progress-table td:first-child{text-align:left}.progress-table th{color:var(--muted);font-weight:600}
+.heat{border-radius:8px;padding:5px 8px;display:inline-block;min-width:42px;text-align:center;font-weight:800}
+.footer{margin-top:52px;border-top:1px solid rgba(142,167,193,.14);padding-top:22px;color:var(--muted);font-size:12px}
+.pulse{animation:pulse 2.4s ease-in-out infinite}@keyframes pulse{50%{box-shadow:0 0 0 8px rgba(0,212,255,0)}}
+.fade{opacity:0;transform:translateY(14px);transition:.7s ease}.fade.in{opacity:1;transform:none}
+@media(max-width:1100px){.kpis{grid-template-columns:repeat(2,1fr)}.persona-cards{grid-template-columns:repeat(2,1fr)}.radar-wrap{grid-template-columns:1fr}.hero{grid-template-columns:1fr}.list-grid{grid-template-columns:1fr}}
+@media(max-width:700px){.shell,.topinner{padding-left:14px;padding-right:14px}.nav{display:none}.kpis,.persona-cards,.delta-grid{grid-template-columns:1fr}.hero{padding-top:42px}.bar-row{grid-template-columns:160px 1fr 45px}.list-grid{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}.fade{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<div class="topbar"><div class="topinner">
+  <div class="brand"><span class="brandmark pulse"></span><span>PLANTPROCESS IQ</span></div>
+  <div class="nav">
+    <a href="#overall">Overall</a><a href="#personas">Personas</a><a href="#aspects">Aspects</a>
+    <a href="#progress">Progress</a><a href="#strengths">Strengths</a><a href="#gaps">Gaps</a>
+  </div>
+</div></div>
+
+<main class="shell">
+<section class="hero fade">
+  <div>
+    <div class="eyebrow">Deep implementation review · evidence cut 07 Aug 2026</div>
+    <h1>From a large codebase to a coherent industrial product.</h1>
+    <p class="lead">A visual scoreboard against Constitution v3, Chapters 1–6, Backlog v2.9.1, Roadmap v2 and the latest audit/handovers. Scores are maturity estimates against the final contract—not task counts and not test-pass percentages.</p>
+  </div>
+  <div class="hero-note">
+    <span>Current assessment</span>
+    <strong>Advanced demonstration product</strong>
+    <span>Strong data/evidence + authoring foundations. Still below deployable-enterprise readiness because infrastructure, security, permanent model authority, production intelligence and value realization are not yet final.</span>
+  </div>
+</section>
+
+<section id="overall" class="grid kpis"></section>
+
+<section class="section fade">
+ <div class="section-head"><div><h2>Four scoreboards, four different denominators</h2><p class="sub">The project only makes sense when presentation readiness, shipping headline, final-design conformance and capability coverage are kept separate.</p></div></div>
+ <div class="grid delta-grid" id="overallCards"></div>
+</section>
+
+<section id="personas" class="section fade">
+ <div class="section-head"><div><h2>Persona trajectory</h2><p class="sub">Before T-001 → current evidence estimate → end-M1 roadmap target → end-M2b roadmap target. The lowest persona controls shipping.</p></div></div>
+ <div class="card chartcard">
+   <div class="legend"><span><i class="dot" style="background:#35516d"></i>Before T-001</span><span><i class="dot" style="background:var(--cyan)"></i>Current</span><span><i class="dot" style="background:var(--blue)"></i>End M1</span><span><i class="dot" style="background:var(--green)"></i>End M2</span></div>
+   <div class="chart-scroll"><div id="personaBars" class="bar-chart"></div></div>
+ </div>
+</section>
+
+<section class="section fade">
+ <div class="section-head"><div><h2>Persona review cards</h2><p class="sub">The most useful reading is not “what is the average?” but “who would still veto the product, and why?”</p></div></div>
+ <div id="personaCards" class="grid persona-cards"></div>
+</section>
+
+<section id="aspects" class="section fade">
+ <div class="section-head"><div><h2>Aspect maturity</h2><p class="sub">Eleven product areas show where M1 has really moved the implementation and where M2 still carries the heavy architecture.</p></div></div>
+ <div class="card chartcard">
+  <div class="legend"><span><i class="dot" style="background:#35516d"></i>Before T-001</span><span><i class="dot" style="background:var(--cyan)"></i>Current</span><span><i class="dot" style="background:var(--blue)"></i>End M1</span><span><i class="dot" style="background:var(--green)"></i>End M2</span></div>
+  <div class="chart-scroll"><div id="aspectBars" class="bar-chart"></div></div>
+ </div>
+</section>
+
+<section class="section fade">
+ <div class="section-head"><div><h2>Current vs future shape</h2><p class="sub">Radar view makes the roadmap's intent obvious: M1 pushes customer-visible BI/Assistant/data/brand; M2 pushes deployability, security and production intelligence.</p></div></div>
+ <div class="radar-wrap">
+  <div class="card chartcard"><svg id="radar" viewBox="0 0 900 520" role="img" aria-label="Aspect radar chart"></svg></div>
+  <div class="card radar-note">
+   <h3>Interpretation</h3>
+   <ul>
+    <li><b>Largest current gain:</b> Dataset / demo / reproducibility.</li>
+    <li><b>Largest M1 remaining visible gain:</b> BI + Assistant + showcase journey.</li>
+    <li><b>Largest M2 structural gain:</b> Security, infrastructure, plant-model authority, AI/ML.</li>
+    <li><b>Shipping constraint today:</b> A13 Infrastructure.</li>
+    <li><b>Expected constraint after M2:</b> A5 Executive/value proof.</li>
+   </ul>
+  </div>
+ </div>
+</section>
+
+<section id="progress" class="section fade">
+ <div class="section-head"><div><h2>Enhancement since before T-001</h2><p class="sub">Score-point movement. A flat A13 line during M1 is intentional; M1 is a presentation-contract milestone, not the customer-install milestone.</p></div></div>
+ <div class="card chartcard"><div class="chart-scroll"><table class="progress-table" id="deltaTable"></table></div></div>
+</section>
+
+<section id="strengths" class="section fade">
+ <div class="section-head"><div><h2>Strongest implementation evidence</h2><p class="sub">Five >90% bounded sub-areas, plus five places where the engineering/proof discipline exceeds the minimum mechanism.</p></div></div>
+ <div class="grid list-grid">
+   <div class="card listbox"><h3>Top 5 >90% design-conformant sub-areas</h3><div id="topDone"></div></div>
+   <div class="card listbox"><h3>Top 5 implementation advantages</h3><div id="better"></div></div>
+ </div>
+</section>
+
+<section id="gaps" class="section fade">
+ <div class="section-head"><div><h2>Where the product still has real debt</h2><p class="sub">Missing capability is visible; implemented-but-dirty capability is more dangerous because it can create false confidence.</p></div></div>
+ <div class="grid list-grid">
+   <div class="card listbox"><h3>Worst 5 huge gaps</h3><div id="gapList"></div></div>
+   <div class="card listbox"><h3>Worst 5 implemented-but-dirty areas</h3><div id="reworkList"></div></div>
+ </div>
+</section>
+
+<section class="section fade">
+ <div class="card callout">
+  <div class="eyebrow">Bottom line</div>
+  <div class="big">M1 makes the product believable. M2 makes it deployable.</div>
+  <p>The strongest thing to protect is the honesty architecture: no fake denominator, no exclusion row called a finding, no Assistant arithmetic, no data regeneration to rescue a weak chart, and no “Done” without the specified proof. That discipline is now a real differentiator.</p>
+ </div>
+</section>
+
+<footer class="footer">
+ <b>Evidence basis:</b> PPIQ Constitution v3; latest Chapters 1–6; Backlog v2.9.1; Roadmap v2 Amendment 1; Rev D; UltimateAudit 07-Aug-2026; worker handovers through 07-Aug; A11–A13 review amendment. Current checkpoint scores are evidence-weighted review estimates. Roadmap endpoints are milestone targets. Browser/server items documented as deferred are not silently counted as PASS.
+</footer>
+</main>
+
+<script>
+const D = {"personas": [{"id": "A1", "name": "Developer / Maintainer", "baseline": 62, "current": 65, "m1": 66, "m2": 84, "confidence": 88, "verdict": "The codebase now has strong seams, explicit contracts, a growing architecture-test layer and serious evidence discipline. The remaining drag is repository/CI truth, legacy parallel patterns and incomplete convergence rather than lack of engineering substance."}, {"id": "A2", "name": "Security / IT / Procurement", "baseline": 38, "current": 40, "m1": 42, "m2": 80, "confidence": 80, "verdict": "Read-only source access, safe-SQL ideas, endpoint access control and auditability are credible foundations. Customer-grade tenant isolation, secrets, production identity, licensing enforcement and deployment evidence are intentionally M2-heavy, so this persona should remain low during M1."}, {"id": "A3", "name": "Process / Quality Engineer", "baseline": 55, "current": 72, "m1": 86, "m2": 89, "confidence": 84, "verdict": "The data truth, genealogy, feature lineage, authoring foundation and honest readiness/refusal behavior are materially stronger than at T-001. The engineer still cannot yet experience the final seven analytical pages as one polished evidence-led workflow, and the current correlation population produces no genuine finding."}, {"id": "A4", "name": "Reliability / Operations", "baseline": 32, "current": 35, "m1": 36, "m2": 76, "confidence": 76, "verdict": "Import/job foundations exist and the product can diagnose several failure classes, but production operations are not yet the product's strongest reality. Delta execution at scale, monitoring, backup/restore, schema drift, clean deployment and recovery proof remain mostly M2 work."}, {"id": "A5", "name": "Executive Sponsor", "baseline": 48, "current": 53, "m1": 58, "m2": 64, "confidence": 78, "verdict": "The story, product identity, evidence posture and presentation architecture are much stronger than before M1. The score is capped because the final value engine, measured value realization and production-grade predictive/remediation proof are not yet the thing a CEO can audit end-to-end."}, {"id": "A6", "name": "Brand / Website", "baseline": 72, "current": 83, "m1": 88, "m2": 90, "confidence": 86, "verdict": "The five-product website architecture, product registry, route cleanup and visual-quality doctrine are among the strongest visible achievements. T-070 is not formally closed and there are still visible polish/hygiene defects such as mojibake and uneven sections, so this is not yet a clean 90+ persona."}, {"id": "A11", "name": "UI / UX Auditor", "baseline": 60, "current": 80, "m1": 90, "m2": 91, "confidence": 82, "verdict": "The jump is real: the shared S1/S2 shell, schema tree, drag/drop, block semantics, server-owned SQL preview and consistent shell anatomy are a substantial advance. Browser certification, keyboard/RTL closure and the semantic quality of the showcase dashboards still prevent a 90+ score today."}, {"id": "A12", "name": "AI & Engine Auditor", "baseline": 42, "current": 62, "m1": 70, "m2": 86, "confidence": 90, "verdict": "This is now a serious evidence-oriented engine foundation: run identity, feature lineage, reproducibility, readiness, refusal and contaminated-outcome corrections are all real. The missing numeric×categorical method, zero current findings, disabled learning jobs and incomplete model/prediction/remediation chain are still decisive limits."}, {"id": "A13", "name": "Infrastructure Engineer", "baseline": 28, "current": 30, "m1": 34, "m2": 74, "confidence": 78, "verdict": "There is useful deployment scar tissue, compose topology, health/rollback logic and environment separation, but recent sessions did not re-prove the live server or pipeline. Capacity certification, backup/restore, HA/DR, secrets, source/customer separation and CI truth remain the binding shipping constraint."}], "aspects": [{"name": "Platform & backend architecture", "baseline": 62, "current": 67, "m1": 68, "m2": 85, "confidence": 88, "note": "Strong service seams, contracts and domain depth; still carries M1 adapters and legacy physical authority that M2 must replace."}, {"name": "Connect & import (DF1–DF3)", "baseline": 66, "current": 76, "m1": 78, "m2": 88, "confidence": 85, "note": "Read-only acquisition, import lineage and source-emulation foundations are credible; final heterogeneous-source, incremental and customer-install proof is still ahead."}, {"name": "Model the plant (DF4–DF6)", "baseline": 45, "current": 61, "m1": 64, "m2": 86, "confidence": 86, "note": "Canonical population, genealogy and cross-layer Fleet-v2 truth improved sharply, but the permanent relationship model remains one of the biggest architectural gaps."}, {"name": "BI workspace & authoring (DF7)", "baseline": 64, "current": 79, "m1": 91, "m2": 93, "confidence": 86, "note": "Shared authoring shell is strong; the Page Builder and seven showcase dashboards still require P3 convergence, semantic chart grammar and browser certification."}, {"name": "Engine / statistics / readiness (DF8–DF9)", "baseline": 58, "current": 72, "m1": 82, "m2": 90, "confidence": 92, "note": "Lineage, readiness and honest refusal are strong; method coverage and current usable findings remain incomplete."}, {"name": "AI / ML / prediction / remediation (DF10–DF14)", "baseline": 18, "current": 24, "m1": 46, "m2": 78, "confidence": 90, "note": "Risk and feature-store foundations exist, but Practice Learning, governed model lifecycle, prediction_current, remediation and effectiveness feedback are not yet end-to-end."}, {"name": "Assistant (DF15)", "baseline": 50, "current": 61, "m1": 86, "m2": 90, "confidence": 84, "note": "Grounding backend and persistent dock are promising; page/widget context, dynamic evidence chunks, quantity guard, citation UX and certified question pack are still pending."}, {"name": "Administration / licence / security", "baseline": 32, "current": 34, "m1": 40, "m2": 82, "confidence": 80, "note": "Useful primitives exist, but customer-grade RBAC/RLS, real signing keys, entitlements, no-egress enforcement and secrets posture are primarily M2."}, {"name": "Infrastructure / CI-CD / testing", "baseline": 30, "current": 32, "m1": 46, "m2": 78, "confidence": 82, "note": "Automated-test breadth is good, but the CI truth chain is weakened by an orphan visual gate and scripts that can still inject --list enumeration instead of execution."}, {"name": "Website & commercial", "baseline": 70, "current": 84, "m1": 86, "m2": 88, "confidence": 88, "note": "Five-product information architecture and route truth are materially improved; final visual consistency and closure evidence still remain."}, {"name": "Dataset / demo / reproducibility", "baseline": 55, "current": 88, "m1": 90, "m2": 86, "confidence": 95, "note": "This is the biggest M1 gain: Fleet-v2, cross-layer comparison, lineage and negative divergence proof are strong. The M2 target is intentionally lower because synthetic presentation truth is replaced by messier real-customer input."}], "overall": [{"name": "Shipping headline (lowest persona)", "baseline": 28, "current": 30, "m1": 34, "m2": 64, "note": "Lowest persona, not an average. Today it is A13; by M2 the roadmap expects A5 to become the binding constraint."}, {"name": "Diagnostic persona mean", "baseline": 49, "current": 58, "m1": 63, "m2": 82, "note": "Useful diagnostic only; never use it as the shipping headline."}, {"name": "Weighted final-design conformance", "baseline": 31, "current": 38, "m1": 41, "m2": 80, "note": "Current is this review's evidence-based estimate. M1/M2 are roadmap targets; M1 intentionally uses some hidden compatibility adapters."}, {"name": "Six-beat presentation readiness", "baseline": 62, "current": 81, "m1": 93, "m2": 96, "note": "Current is this review's estimate from completed M1-P1/P1b, nearly-complete M1-P2, website T-069 and early T-071; P3/P4/P5 remain."}, {"name": "Product surface coverage", "baseline": 62, "current": 69, "m1": 74, "m2": 90, "note": "How much meaningful capability exists in some form; not a statement that the implementation is final-design conformant."}], "topDone": [{"name": "Feature-store lineage and deterministic refresh reproducibility", "score": 97, "desc": "Two corrective refreshes converged to the same 517,602-row feature/outcome population with zero A-EXCEPT-B and B-EXCEPT-A differences, and insert-time run ownership is enforced by NOT NULL lineage. This is effectively design-complete for the M1 evidence contract; later M2 work changes storage/topology, not the visible meaning."}, {"name": "Fleet-v2 cross-layer presentation truth", "score": 96, "desc": "The presentation population is now internally consistent across donor/staging/canonical layers, and the certification can deliberately inject divergence, turn red, then roll back cleanly. I am scoring the core data-truth contract rather than the entire T-031 task, because four operational closure items—CI truth gate, backup/restore, final dependency check and src_* retirement—remain explicitly deferred."}, {"name": "Shared authoring shell core semantics (S1/S2)", "score": 94, "desc": "The implementation now has one measured shell anatomy, a live schema tree, typed ports, drag-time refusal, block semantics, server-owned compiled SQL, SQL mode and S2 convergence instead of separate customer-visible editors. The remaining gap is mainly Golden-Gate/browser certification and future S3/S4/S5 convergence, not a missing foundation."}, {"name": "Final definition-service external contract and version round-trip", "score": 94, "desc": "IDefinitionService now exposes the final create/update/current/version/list/publish seam while M1 still uses a compatibility adapter underneath, and the kind contract includes the future shell purposes rather than only today's persistence. That is exactly the M1 architectural strategy: freeze the customer-visible/service contract now so M2 can replace storage without moving the product."}, {"name": "Five-product website information architecture and canonical routing", "score": 95, "desc": "The public site now treats PPIQ, MES, QES, Yard/Warehouse and Energy as sibling products, with a products mega-menu, portfolio page and registry-driven canonical routes instead of legacy route duplication. This is a major correction to product identity and is already stronger than the earlier website topology; T-070 visual polish is a separate closure item."}], "better": [{"name": "Fail-closed statistical honesty and anti-fabrication discipline", "desc": "The implementation did more than merely 'return a result or refuse': it removed the fake `rate_per_m2` outcome when no defensible m² denominator existed, removed Disposition contamination from defect taxonomy, and preserved genuine rarity even though it causes readiness refusal. That is senior-grade behavior because it chooses a weaker demo over an indefensible number; the latest Constitution now reflects this philosophy because the implementation experience forced the design to become stricter."}, {"name": "Negative-control and 'test the test' certification", "desc": "The Fleet-v2 certification does not only compare two states and print PASS; it can plant a controlled divergence, prove the gate turns red, and prove rollback leaves no residue. That falsification pattern is stronger than a normal acceptance script and should become the template for security, RLS, CI and deployment gates in M2."}, {"name": "Conservative SQL reconstruction instead of optimistic parsing", "desc": "The authoring implementation keeps compiled SQL server-owned and treats SQL-to-block reconstruction as something that must be proven, not guessed with loose regexes. When reconstruction cannot be proven, the product explicitly asks before discarding the block representation, which is safer and more professional than a feature-rich but lossy pseudo-parser."}, {"name": "Contract-first M1 adapter that already anticipates M2", "desc": "The definition-service adapter is not a throwaway façade with today's enum; its interface carries all shell purposes and version semantics so the physical store can be replaced later without a customer-visible contract change. This is better engineering than the minimum 'make M1 work' interpretation because it makes the temporary backend intentionally disposable."}, {"name": "Website visual-quality doctrine as an engineering gate", "desc": "The website work established a system rule that functional correctness alone is not done: typography, hierarchy, motion, responsiveness, visual wiring and reduced-motion behavior are acceptance concerns, and the strongest existing section is the minimum bar. The idea 'fix the system, not the screenshot' is more mature than page-by-page cosmetic patching and should be applied to the app's P3 dashboards as well."}], "gaps": [{"name": "Production AI/ML → Practice Learning → prediction → remediation → measured outcome", "score": 24, "desc": "This is still the largest capability gap relative to the product thesis. The feature store and bounded risk proof are useful foundations, but the current system has no complete production model lifecycle, no enabled Practice Learning path, no mature prediction_current pipeline, no historically supported remediation loop and no measured effectiveness feedback."}, {"name": "Permanent customer-authored relationship model and final definition authority", "score": 30, "desc": "M1 now has useful canonical/genealogy truth and a good service seam, but the final relationship model and unified definition_store are not yet the physical authority described by Chapters 2–4. Until M2 moves the product to the final relationship/definition architecture, important intelligence and authoring behaviors still sit on compatibility structure."}, {"name": "Infrastructure, capacity, deployment certification and recovery", "score": 32, "desc": "The repository has real deployment assets, but recent handovers explicitly say the live server/pipeline was not exercised and T-031 still lacks backup/restore proof. Sizing, PgBouncer/LB/replica topology, workload-pool headroom, restore drills, clean-machine customer install and production exposure remain far from the A13 evidence standard."}, {"name": "Customer-grade security, tenancy, identity, licence and secrets", "score": 34, "desc": "Read-only design and access-control primitives are a good base, but local/presentation profiles still carry bootstrap-admin/test assumptions and hardcoded deployment details, while full RLS/RBAC, production signing keys, six-dimensional entitlements and no-egress enforcement are not final. This is acceptable for the M1 presentation milestone but is not acceptable as a claim of deployable enterprise readiness."}, {"name": "Economic Value Engine and auditable ROI realization", "score": 30, "desc": "The product can tell a strong value story and older implementation has useful value-ledger components, but the latest roadmap correctly caps the executive score until a bounded euro impact is computed from traceable inputs and later reconciled with realized outcomes. Without that, the CEO can understand the technical value but cannot yet audit a commercial payback claim from evidence to ledger."}], "rework": [{"name": "Page Builder still contains demo-shaped structural assumptions before T-041", "desc": "The frozen backlog itself calls out a hardcoded widget library—Risk KPI, Defect breakdown, Defect trend, Date range and List filter—and hardcoded source notions such as `schema_view:risk_summary`. That code is implemented and useful, but it violates the final generic D2 contract; T-041/T-042 must replace the demo library with the fixed product grammar plus registry/customer-driven dimensions, measures, filters and data."}, {"name": "Showcase dashboards render data but some chart semantics are analytically weak", "desc": "Recent presentation data checks found dimensions with one value, absent shift data, 52.9% missing equipment area and defect facts that can fall to 'unknown'; earlier screenshots also exposed patterns such as Pie-by-Date, Date heatmaps and one-category donuts. That is a classic 'technically renders, professionally wrong' state—P3 must fix the generic binding/compatibility grammar rather than screenshot-patch Fleet-v2."}, {"name": "CI has a sophisticated test estate but still contains false-green pathways", "desc": "The repository has hundreds of real tests and strong self-policing ideas, yet the visual/a11y truth gate is orphaned and a Phase-5/6 migration script can inject `--list` commands that enumerate tests instead of executing them. This is exactly the kind of dirty implementation that looks mature from file count while weakening assurance; M2 must make one canonical blocking pipeline and delete/rewrite every contradictory injector."}, {"name": "Demo/local configuration is mixed too closely with customer-delivery configuration", "desc": "Hardcoded server-IP references, bootstrap-admin flags and historical VITE smoke credentials are legitimate development/presentation conveniences, but they live in paths that future maintainers can mistake for deployable defaults. The fix is not to remove testability; it is to make demo/test profiles physically and mechanically impossible to activate in a customer Production profile."}, {"name": "Transitional schema/legacy residue remains after the data truth was corrected", "desc": "The current data meaning is much better, but `dump_store`, donor `src_*` state, older route/page naming, mojibake and some dead/orphan code still coexist with the final concepts. This creates cognitive and operational debt: M2 should retire the old authority decisively, move to `ppiq_staging` / `ppiq_plant` / `ppiq_meta`, and remove legacy artifacts rather than preserve multiple historical truths."}]};
+const colors = {base:"#35516d",current:"#00d4ff",m1:"#0a84ff",m2:"#2ce6a2"};
+
+function band(v){return v>=85?"Strong":v>=70?"Solid":v>=55?"Needs work":"Critical"}
+function bandClass(v){return v>=85?"strong":v>=70?"solid":v>=55?"needs":"critical"}
+function el(tag,cls,txt){const x=document.createElement(tag); if(cls)x.className=cls;if(txt!==undefined)x.textContent=txt;return x}
+function animateBars(root){
+  requestAnimationFrame(()=>root.querySelectorAll(".fill").forEach((e,i)=>setTimeout(()=>e.style.width=e.dataset.w+"%",25*i)));
+}
+function buildBars(target, rows){
+  const root=document.getElementById(target);
+  rows.forEach(r=>{
+    const row=el("div","bar-row");
+    row.appendChild(el("div","bar-label", (r.id? r.id+" · ":"")+r.name));
+    const stack=el("div","bar-stack");
+    [["baseline","base"],["current","current"],["m1","m1"],["m2","m2"]].forEach(([k,c])=>{
+      const tr=el("div","track"),f=el("div","fill "+c); f.dataset.w=r[k]; f.title=k+": "+r[k]; tr.appendChild(f);stack.appendChild(tr)
+    });
+    row.appendChild(stack);row.appendChild(el("div","rowval",r.current+"%"));root.appendChild(row)
+  });
+  animateBars(root)
+}
+function heat(v){
+  let bg=v>=85?"rgba(44,230,162,.18)":v>=70?"rgba(0,212,255,.16)":v>=55?"rgba(255,176,32,.17)":"rgba(255,77,109,.17)";
+  let c=v>=85?"#2ce6a2":v>=70?"#00d4ff":v>=55?"#ffb020":"#ff4d6d";
+  return `<span class="heat" style="background:${bg};color:${c}">${v}</span>`
+}
+
+// KPI cards
+const kpis=[
+ ["Shipping headline",30,"A13 · +2 pts since T-001"],
+ ["Presentation readiness",81,"+19 pts · target 93 at M1"],
+ ["Weighted conformance",38,"baseline 31 · M2 target 80"],
+ ["Best current persona",83,"A6 Brand / Website"],
+ ["Biggest persona gain",20,"A11 & A12 · +20 pts"]
+];
+const kroot=document.getElementById("overall");
+kpis.forEach(([label,value,delta])=>{
+ const c=el("div","card kpi fade"); c.innerHTML=`<div class="label">${label}</div><div class="value count" data-v="${value}">0</div><div class="delta">${delta}</div><div class="mini"><i data-w="${Math.min(value,100)}"></i></div>`;kroot.appendChild(c)
+});
+
+const oc=document.getElementById("overallCards");
+D.overall.slice(0,4).forEach(x=>{
+ const c=el("div","card callout");c.innerHTML=`<h3>${x.name}</h3><div class="big">${x.baseline} → ${x.current} → ${x.m1} → ${x.m2}</div><p>${x.note}</p>`;oc.appendChild(c)
+});
+
+buildBars("personaBars",D.personas);
+buildBars("aspectBars",D.aspects);
+
+// Persona cards
+const pc=document.getElementById("personaCards");
+D.personas.forEach(p=>{
+ const c=el("article","card persona fade");
+ c.innerHTML=`<div class="id">${p.id}</div><div class="score">${p.current}</div><span class="band ${bandClass(p.current)}">${band(p.current)}</span><h3>${p.name}</h3><p>${p.verdict}</p>`;
+ pc.appendChild(c)
+});
+
+// Delta table
+const table=document.getElementById("deltaTable");
+table.innerHTML=`<thead><tr><th>Persona</th><th>Before T-001</th><th>Current</th><th>Gain now</th><th>End M1</th><th>End M2</th><th>M2 gain vs baseline</th></tr></thead><tbody>`+
+ D.personas.map(p=>`<tr><td><b>${p.id}</b> ${p.name}</td><td>${heat(p.baseline)}</td><td>${heat(p.current)}</td><td style="color:${p.current-p.baseline>=10?"#2ce6a2":"#8ea7c1"}"><b>+${p.current-p.baseline}</b></td><td>${heat(p.m1)}</td><td>${heat(p.m2)}</td><td><b>+${p.m2-p.baseline}</b></td></tr>`).join("")+`</tbody>`;
+
+// Lists
+function list(target,arr,type){
+ const root=document.getElementById(target);
+ arr.forEach((x,i)=>{
+  const item=el("div","item");
+  const score=x.score!==undefined?`<span class="item-score">${x.score}%</span>`:"";
+  item.innerHTML=`<div class="item-title"><span>${i+1}. ${x.name}</span>${score}</div><p>${x.desc}</p>`;
+  root.appendChild(item)
+ })
+}
+list("topDone",D.topDone);
+list("better",D.better);
+list("gapList",D.gaps);
+list("reworkList",D.rework);
+
+// Radar
+function radar(){
+ const svg=document.getElementById("radar"),W=900,H=520,cx=450,cy=260,R=205;
+ const rows=D.aspects, n=rows.length;
+ const angle=i=>-Math.PI/2+i*2*Math.PI/n;
+ function point(v,i){const r=R*v/100,a=angle(i);return [cx+r*Math.cos(a),cy+r*Math.sin(a)]}
+ function poly(key,stroke,fill,opacity){
+  const pts=rows.map((r,i)=>point(r[key],i).join(",")).join(" ");
+  const p=document.createElementNS("http://www.w3.org/2000/svg","polygon");
+  p.setAttribute("points",pts);p.setAttribute("fill",fill);p.setAttribute("fill-opacity",opacity);p.setAttribute("stroke",stroke);p.setAttribute("stroke-width","2");svg.appendChild(p)
+ }
+ [20,40,60,80,100].forEach(v=>{
+  const pts=rows.map((r,i)=>point(v,i).join(",")).join(" ");
+  const p=document.createElementNS("http://www.w3.org/2000/svg","polygon");
+  p.setAttribute("points",pts);p.setAttribute("fill","none");p.setAttribute("stroke","#183659");p.setAttribute("stroke-width","1");svg.appendChild(p)
+ });
+ rows.forEach((r,i)=>{
+  const [x,y]=point(100,i); const line=document.createElementNS("http://www.w3.org/2000/svg","line");
+  line.setAttribute("x1",cx);line.setAttribute("y1",cy);line.setAttribute("x2",x);line.setAttribute("y2",y);line.setAttribute("stroke","#183659");svg.appendChild(line);
+  const [lx,ly]=point(113,i);const t=document.createElementNS("http://www.w3.org/2000/svg","text");
+  t.setAttribute("x",lx);t.setAttribute("y",ly);t.setAttribute("fill","#8ea7c1");t.setAttribute("font-size","10");
+  t.setAttribute("text-anchor",lx<cx-20?"end":lx>cx+20?"start":"middle");
+  t.textContent=r.name.replace(" / ","/").replace(" (DF1–DF3)","").replace(" (DF4–DF6)","").replace(" (DF7)","").replace(" (DF8–DF9)","").replace(" (DF10–DF14)","").replace(" (DF15)","");
+  svg.appendChild(t)
+ });
+ poly("m2","#2ce6a2","#2ce6a2",".055");poly("m1","#0a84ff","#0a84ff",".075");poly("current","#00d4ff","#00d4ff",".10");
+ const legend=document.createElementNS("http://www.w3.org/2000/svg","text");legend.setAttribute("x","20");legend.setAttribute("y","30");legend.setAttribute("fill","#bfd1e4");legend.setAttribute("font-size","12");legend.textContent="Current / End M1 / End M2";svg.appendChild(legend)
+}
+radar();
+
+// Countups and reveal
+const io=new IntersectionObserver(entries=>entries.forEach(e=>{
+ if(e.isIntersecting){e.target.classList.add("in");e.target.querySelectorAll?.(".mini i").forEach(i=>i.style.width=i.dataset.w+"%");
+ e.target.querySelectorAll?.(".count").forEach(c=>{const to=+c.dataset.v;let n=0;const step=()=>{n+=Math.max(1,Math.ceil(to/32));c.textContent=Math.min(n,to);if(n<to)requestAnimationFrame(step)};step()});}
+}),{threshold:.1});
+document.querySelectorAll(".fade").forEach(e=>io.observe(e));
+</script>
+</body>
+</html>

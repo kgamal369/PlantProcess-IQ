@@ -1,0 +1,2 @@
+focus on open: authoring-shell | div
+inside the shell: true

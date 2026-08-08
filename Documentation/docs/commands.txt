@@ -126,7 +126,7 @@ cd C:\Workspace\PlantProcess-IQ
 Terminal 2 — frontend web 
 cd C:\Workspace\PlantProcess-IQ
 .\scripts\run\start-web.ps1 -Profile local
-
+.\scripts\run\start-web.ps1 -Profile presentation
 
 
 test e2e 

@@ -1,0 +1,55 @@
+001  outside | a | Skip to main content
+002  outside | button | Data Integration▸
+003  outside | button | Analytics▾
+004  outside | a | Join CanvasWire staged tables into a pub
+005  outside | a | Analysis ToolboxCompose a governed analy
+006  outside | a | Command DashboardInteractive intelligenc
+007  outside | a | Widget DriftSchema contract + heatmap fi
+008  outside | a | Material InvestigationGenealogy, quality
+009  outside | a | Risk IntelligenceQuality risk score and 
+010  outside | a | Data QualityReadiness and validation fin
+011  outside | a | CorrelationsProcess-to-quality analytics
+012  outside | button | Workspaces▸
+013  outside | button | Intelligence▸
+014  outside | button | System▸
+015  outside | button | Dark mode
+016  outside | a | Plant data log
+017  outside | a | Next: Project
+018  outside | div | Journey steps; scroll horizontally on small screens
+019  outside | a | Install
+020  outside | a | Licence
+021  outside | a | Users
+022  outside | a | Connect
+023  outside | a | Register
+024  outside | a | Import
+025  outside | a | 7Transform
+026  outside | a | 8Project
+027  outside | a | 9Genealogy
+028  outside | a | 10Build
+029  outside | a | 11Explore
+030  outside | a | 12Analyse
+031  outside | a | 13Findings
+032  outside | a | 14Act
+033  outside | a | 15Operate
+034  outside | button | Logout
+035  authoring-mode-bar | button | Block wiring
+036  authoring-mode-bar | button | SQL
+037  authoring-mode-bar | input | Definition name
+038  canvas-schema-tree | input | Search schema, table or column
+039  canvas-schema-tree | button | dump_store10 tables
+040  rf__controls | button | Zoom In
+041  rf__controls | button | Zoom Out
+042  rf__controls | button | Fit View
+043  rf__controls | button | Toggle Interactivity
+044  rf__controls | button | Arrange
+045  rf__controls | button | Delete selected
+046  rf__wrapper | a | React Flow attribution
+047  authoring-toolbox | input | Search the toolbox
+
+mode bar at press 35, schema tree at press 38, toolbox at press 47
+Application chrome consumed the first 34 presses.
+
+FINDING, recorded not ruled: every stop in the natural tab order is a control that owns
+Enter for itself, so the shell root handler answers Enter only when focus rests on a
+non-interactive element. The visible Run control remains reachable by Tab and is activated
+by Enter natively, so the Enter-to-Run contract has two honest paths, not one.

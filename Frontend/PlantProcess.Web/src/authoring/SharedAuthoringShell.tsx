@@ -25,7 +25,7 @@
 // workflow that T-033 immediately deletes, which the Visible Contract law
 // forbids. The API types they used remain in the client contract untouched.
 
-import { useCallback, useEffect, useMemo, useState, type DragEvent, type KeyboardEvent as ReactKeyboardEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { addEdge, useEdgesState, useNodesState, type Connection, type Edge, type EdgeChange, type Node, type NodeChange } from "@xyflow/react";
 import { StandardP2Button, StandardP2Input, StandardP2Table, StandardP2TextArea } from "@/components/standard/StandardP2Controls";
 import { CanvasShell } from "@/canvas/CanvasShell";
@@ -694,6 +694,27 @@ export function SharedAuthoringShell({
           filtered: boardFiltered,
         };
 
+  // PPIQ T-040 FOCUS-01. A SURFACE OPENED AS A DIALOG TAKES FOCUS.
+  //
+  // Measured in the browser on 08-Aug: Add widget opened S2 and focus stayed on
+  // the document body, so Escape did nothing until the author clicked into the
+  // surface. The keyboard handler is not at fault - a React handler on the shell
+  // root can only answer keys that bubble through it, and a key pressed on the
+  // body never does. The missing piece was focus, not handling.
+  //
+  // ONLY when opened as a dialog. A purpose rendered as a page has nowhere to
+  // close to and must not steal focus from whatever the reader was doing, which
+  // is why onClose is the condition rather than the purpose name.
+  //
+  // The root is made programmatically focusable with a negative tab index and
+  // is never inserted into the tab sequence. A positive value would reorder one
+  // control and strand every later one.
+  const shellRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!onClose) { return; }
+    if (shellRef.current) { shellRef.current.focus(); }
+  }, [onClose]);
+
   // PPIQ T-040 03b3. THE KEYBOARD PATH (Golden Gate G10).
   //
   // A React handler on the shell root, never a global listener. A window or
@@ -743,7 +764,7 @@ export function SharedAuthoringShell({
     : "This purpose reads the canonical model. Its catalogue is bound when this purpose gains its entry point.";
 
   return (
-    <div className="canvas-modeshell" data-testid="authoring-shell" data-purpose={purpose} onKeyDown={onShellKeyDown}>
+    <div className="canvas-modeshell" data-testid="authoring-shell" data-purpose={purpose} onKeyDown={onShellKeyDown} ref={shellRef} tabIndex={-1}>
       {/* BLOCK-START - section 5.2.3 region 1. */}
       <div className="canvas-modebar" data-testid="authoring-mode-bar">
         <span className="canvas-modebar__label">{definition.label}</span>
