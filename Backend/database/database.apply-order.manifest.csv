@@ -85,3 +85,4 @@
 "780","30_schema","APP_SCHEMA_CANDIDATE","AUTO_APPLY_CANDIDATE","ApplicationDbDeploy","GenericProductSchema","LOW","Script","Backend\database\scripts\780_t073_widget_result_evidence.sql","0","0","T-073 widget result evidence snapshot; idempotent, tenant scoped"
 "771","90_review","REVIEW_MANUAL","DO_NOT_AUTO_APPLY","Developer","Unknown","MEDIUM","Script","Backend\\database\\scripts\\771_t041_page_audience_roles.sql","0","0","Review before restructuring"
 "772","90_review","REVIEW_MANUAL","DO_NOT_AUTO_APPLY","Developer","Unknown","MEDIUM","Script","Backend\\database\\scripts\\772_t042_page_backing_dashboard_and_publication.sql","0","0","Review before restructuring"
+"773","90_review","REVIEW_MANUAL","DO_NOT_AUTO_APPLY","Developer","Unknown","MEDIUM","Script","Backend\\database\\scripts\\773_t042_one_live_page_per_backing_dashboard.sql","0","0","Review before restructuring"

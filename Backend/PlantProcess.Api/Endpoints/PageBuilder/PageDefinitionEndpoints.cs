@@ -36,9 +36,18 @@ public static class PageDefinitionEndpoints
         return app;
     }
 
+    /// PPIQ T-042 S6. THE WORKSPACE PROJECTION NEEDS TO SEE DELETED PAGES.
+    ///
+    /// Not to show them - to tell a dashboard that NEVER had a page from one
+    /// whose page was deleted. Without that distinction a soft-deleted page
+    /// stops being returned, its backing dashboard loses its join, the
+    /// projection reads it as a seeded workspace and it RESURRECTS in
+    /// navigation. The Page Builder listing keeps the default and never sees
+    /// them.
     private static async Task<IResult> ListPagesAsync(
         ClaimsPrincipal user,
         PlantProcessDbContext db,
+        bool? includeDeleted,
         CancellationToken cancellationToken)
     {
         await EnsureSchemaAsync(db, cancellationToken);
@@ -53,10 +62,10 @@ public static class PageDefinitionEndpoints
             """
             SELECT id, tenant_id, slug, title, owner_user_name, visibility, version,
                    layout_json::text, widget_bindings_json::text, updated_at_utc,
-                   audience_roles::text, backing_dashboard_definition_id, published_at_utc
+                   audience_roles::text, backing_dashboard_definition_id, published_at_utc, is_deleted
             FROM page_definitions
             WHERE tenant_id = @tenant
-              AND is_deleted = false
+              AND (@include_deleted OR is_deleted = false)
               AND (owner_user_name = @owner OR visibility IN ('Shared', 'Public'))
             ORDER BY updated_at_utc DESC, title ASC;
             """,
@@ -64,6 +73,7 @@ public static class PageDefinitionEndpoints
 
         command.Parameters.AddWithValue("tenant", tenant);
         command.Parameters.AddWithValue("owner", owner);
+        command.Parameters.AddWithValue("include_deleted", includeDeleted == true);
 
         var pages = new List<PageDefinitionDto>();
 
@@ -94,7 +104,7 @@ public static class PageDefinitionEndpoints
             """
             SELECT id, tenant_id, slug, title, owner_user_name, visibility, version,
                    layout_json::text, widget_bindings_json::text, updated_at_utc,
-                   audience_roles::text, backing_dashboard_definition_id, published_at_utc
+                   audience_roles::text, backing_dashboard_definition_id, published_at_utc, is_deleted
             FROM page_definitions
             WHERE tenant_id = @tenant
               AND slug = @slug
@@ -157,7 +167,7 @@ public static class PageDefinitionEndpoints
                 updated_at_utc = now()
             RETURNING id, tenant_id, slug, title, owner_user_name, visibility, version,
                       layout_json::text, widget_bindings_json::text, updated_at_utc,
-                      audience_roles::text, backing_dashboard_definition_id, published_at_utc;
+                      audience_roles::text, backing_dashboard_definition_id, published_at_utc, is_deleted;
             """,
             connection);
 
@@ -238,7 +248,7 @@ public static class PageDefinitionEndpoints
               AND (@expected_version IS NULL OR version = @expected_version)
             RETURNING id, tenant_id, slug, title, owner_user_name, visibility, version,
                       layout_json::text, widget_bindings_json::text, updated_at_utc,
-                      audience_roles::text, backing_dashboard_definition_id, published_at_utc;
+                      audience_roles::text, backing_dashboard_definition_id, published_at_utc, is_deleted;
             """,
             connection);
 
@@ -329,7 +339,7 @@ public static class PageDefinitionEndpoints
               AND is_deleted = false
             RETURNING id, tenant_id, slug, title, owner_user_name, visibility, version,
                       layout_json::text, widget_bindings_json::text, updated_at_utc,
-                      audience_roles::text, backing_dashboard_definition_id, published_at_utc;
+                      audience_roles::text, backing_dashboard_definition_id, published_at_utc, is_deleted;
             """,
             connection);
 
@@ -369,6 +379,10 @@ public static class PageDefinitionEndpoints
             """
             UPDATE page_definitions
             SET is_deleted = true,
+                -- A deleted page is not a published one. The BACKING RELATION is
+                -- deliberately kept: it is the only thing that stops the orphaned
+                -- dashboard from later passing as a seeded workspace.
+                published_at_utc = NULL,
                 updated_at_utc = now()
             WHERE tenant_id = @tenant
               AND slug = @slug
@@ -675,6 +689,7 @@ public static class PageDefinitionEndpoints
             ReadDateTimeOffset(reader, 9),
             ReadAudienceRoles(reader, 10),
             reader.IsDBNull(11) ? null : reader.GetGuid(11),
+            reader.GetBoolean(13),
             reader.IsDBNull(12) ? null : ReadDateTimeOffset(reader, 12));
     }
 }
@@ -692,6 +707,9 @@ public sealed record PageDefinitionDto(
     DateTimeOffset UpdatedAtUtc,
     IReadOnlyList<string> AudienceRoles,
     Guid? BackingDashboardDefinitionId,
+    /// True only in the projection that asked for deleted rows. The Page
+    /// Builder listing never sees one.
+    bool IsDeleted,
     // PPIQ T-042. Null is a draft. Publication is not visibility and not
     // audience: it answers whether this authored page is eligible to appear as
     // a Workspace at all. It is deliberately NOT the backing dashboard's
