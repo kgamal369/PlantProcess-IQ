@@ -2,6 +2,7 @@
 import { useLocation } from "react-router-dom";
 import { AssistantChat } from "@/components/assistant/AssistantChat";
 import { ASSISTANT_CONTEXT_CHIPS, useAssistantDock } from "@/components/assistant/AssistantDockContext";
+import { useAssistantPageContext } from "@/components/assistant/assistantPageContext";
 import { StandardButton } from "@/components/standard";
 import "./AssistantDock.css";
 
@@ -18,6 +19,7 @@ import "./AssistantDock.css";
 export function AssistantDock() {
   const { turns, busy, status, ask, setStatus, expanded, setExpanded } = useAssistantDock();
   const location = useLocation();
+  const pageContext = useAssistantPageContext();
 
   /* The full-page assistant owns the screen on its own route. */
   if (location.pathname.startsWith("/assistant")) return null;
@@ -74,7 +76,7 @@ export function AssistantDock() {
             turns={turns}
             chips={ASSISTANT_CONTEXT_CHIPS}
             isBusy={busy}
-            onAsk={(question) => void ask(question)}
+            onAsk={(question) => void ask(question, pageContext)}
             onOpenEvidence={(handle) => setStatus("Evidence handle: " + handle.kind + " " + handle.id)}
           />
         </div>

@@ -39,6 +39,23 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
   return (await response.json()) as T;
 }
 
+/**
+ * T-072 wire shape of the page and widget context envelope.
+ *
+ * The server narrows retrieval with the identifiers and never lets any of this
+ * become answer evidence, so nothing here is a claim - it is a description of
+ * what the user is looking at.
+ */
+export type AssistantContextPayload = {
+  route: string | null;
+  pageCode: string | null;
+  widgetCode: string | null;
+  selections: string[];
+  filters: string[];
+  lastResultSummary: string | null;
+  evidenceHandles: string[] | null;
+};
+
 export type AssistantConfiguration = {
   mode: string;
   groundingPolicy: string;
@@ -128,13 +145,19 @@ export const assistantApi = {
       },
     ),
 
-  askAssistant: (question: string, contextChips: string[], tools: string[]) =>
+  askAssistant: (
+    question: string,
+    contextChips: string[],
+    tools: string[],
+    context?: AssistantContextPayload | null,
+  ) =>
     api<AssistantAnswer>("/api/assistant/ask", {
       method: "POST",
       body: JSON.stringify({
         question,
         contextChips,
         tools: tools.map((tool) => ({ tool, args: {} })),
+        context: context ?? null,
       }),
     }),
 

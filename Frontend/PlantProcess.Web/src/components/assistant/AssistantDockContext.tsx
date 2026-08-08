@@ -3,6 +3,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import {
   assistantApi,
   type AssistantConfiguration,
+  type AssistantContextPayload,
 } from "@/api/assistantApi";
 import type { Turn } from "@/components/assistant/AssistantChat";
 
@@ -30,7 +31,7 @@ export interface AssistantDockValue {
   turns: Turn[];
   busy: boolean;
   status: string;
-  ask: (question: string) => Promise<void>;
+  ask: (question: string, context?: AssistantContextPayload | null) => Promise<void>;
   setStatus: (next: string) => void;
   expanded: boolean;
   setExpanded: (next: boolean) => void;
@@ -83,15 +84,24 @@ export function AssistantDockProvider({ children }: { children: ReactNode }) {
     if (expanded) void ensureConfig();
   }, [expanded, ensureConfig]);
 
+  /* T-072: the envelope is passed IN rather than assembled here. The provider
+     stays free of dashboard hooks, so it still mounts anywhere - which is what
+     the T-071 persistence test relies on - and the dock, which always renders
+     inside the dashboard providers, is the one that knows the surface. */
   const ask = useCallback(
-    async (question: string) => {
+    async (question: string, context?: AssistantContextPayload | null) => {
       setBusy(true);
       setStatus("Asking grounded assistant...");
       setTurns((prev) => [...prev, { role: "user", text: question }]);
 
       try {
         await ensureConfig();
-        const result = await assistantApi.askAssistant(question, ASSISTANT_CONTEXT_CHIPS, config?.allowedTools ?? []);
+        const result = await assistantApi.askAssistant(
+          question,
+          ASSISTANT_CONTEXT_CHIPS,
+          config?.allowedTools ?? [],
+          context ?? null,
+        );
         setTurns((prev) => [...prev, { role: "assistant", answer: result }]);
         setStatus(
           result.isRefusal
