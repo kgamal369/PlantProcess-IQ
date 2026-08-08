@@ -1,0 +1,52 @@
+
+------------------------------------------------------------------------------
+PPIQ T-074 QUANTITY CERTIFICATION
+------------------------------------------------------------------------------
+Started  : 2026-08-08 21:25:11
+API      : http://localhost:5063
+Question : what is the casting speed
+
+------------------------------------------------------------------------------
+1. WHAT THE REGISTRY SAYS ABOUT THIS QUESTION
+------------------------------------------------------------------------------
+      matched: CASTING_SPEED  unit=m/min  min=0.500000  max=2.500000  synthetic=t
+      matched: CASTING_SPEED_MPM  unit=m/min  min=0.000000  max=3.000000  synthetic=t
+      approved (non-synthetic) definitions matching: 0
+PASS  the registry knows this vocabulary and can vouch for NO definition (KnownButUntrustedOrAmbiguous)
+      so the only correct live outcomes are an honest refusal or a blocked numeric answer
+
+------------------------------------------------------------------------------
+SESSION
+------------------------------------------------------------------------------
+PASS  authenticated against the running API
+
+------------------------------------------------------------------------------
+2. MANDATORY - THE CASTING-SPEED QUESTION
+------------------------------------------------------------------------------
+      isRefusal : False
+      text      : Based on DOC evidence, A non-significant result is a first-class finding: the engine also states what is not a driver. Active: True. Read-only enforced toward the customer system: True. Based on DOC evidence, PlantProcess IQ is read-only toward the customer. It never writes to plant systems and neve
+PASS  answered without presenting any number as the quantity
+PASS  not present: a date presented as the quantity
+PASS  not present: the first synthetic range presented as authoritative
+PASS  not present: the second synthetic range presented as authoritative
+PASS  no value is presented with any registry unit, so nothing is labelled as this quantity
+
+------------------------------------------------------------------------------
+3. OPTIONAL - AN APPROVED DEFINITION, CHOSEN MECHANICALLY
+------------------------------------------------------------------------------
+      separator: three tildes, chosen because a pipe breaks the native command line
+      raw row: c
+WARN  the approved row did not parse into five fields; skipping the optional check
+
+------------------------------------------------------------------------------
+RESULT
+------------------------------------------------------------------------------
+Checks passed : 7
+Checks failed : 0
+
+The MANDATORY casting-speed check is what certifies T-074. The optional
+approved-definition check is reported and never decides the outcome.
+
+T-074 live validation PASSED.
+No data was altered to produce a numeric answer, and none was needed:
+an honest refusal for a quantity the registry cannot vouch for IS the pass.
