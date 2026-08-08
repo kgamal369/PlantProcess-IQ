@@ -144,7 +144,7 @@ W ""
 # style choice to work around - it is the reason a script has to be added here
 # as well as to the scripts directory.
 W "[1b/7] replayed migrations (without these the rebuilt database is missing product semantics)"
-foreach ($mig in @('741_feature_store_coil_grain_projection.sql','742_feature_regrain_generic.sql','750_forensics_audit_subsystem.sql','760_t025_lineage_and_outcome_producer.sql','780_t073_widget_result_evidence.sql')) {
+foreach ($mig in @('741_feature_store_coil_grain_projection.sql','742_feature_regrain_generic.sql','750_forensics_audit_subsystem.sql','760_t025_lineage_and_outcome_producer.sql','771_t041_page_audience_roles.sql','780_t073_widget_result_evidence.sql')) {
     $migPath = Join-Path $PSScriptRoot ('..\..\Backend\database\scripts\' + $mig)
     if (Test-Path -LiteralPath $migPath) {
         $mo = & $Psql -h 127.0.0.1 -p 5432 -U ppiq_dev -d $TargetDb -w -v ON_ERROR_STOP=1 -X -q -1 -f $migPath 2>&1
@@ -152,6 +152,13 @@ foreach ($mig in @('741_feature_store_coil_grain_projection.sql','742_feature_re
     } else { W ("      MISSING " + $migPath) }
 }
 W ("      lineage view rows: " + (Q1 "SELECT COUNT(*) FROM ppiq_ml_unit_heat_lineage;"))
+
+# PPIQ T-041. The page audience column is schema, and the schema authority is
+# this replay list - not EnsureSchemaAsync, which is a runtime repair for an
+# installation that predates the column. A rebuild that silently produced a page
+# store without it would look healthy until Publish tried to read an audience.
+$audienceCol = Q1 "SELECT COUNT(*) FROM information_schema.columns WHERE table_name = 'page_definitions' AND column_name = 'audience_roles';"
+if ($audienceCol -eq '1') { W "      page_definitions.audience_roles: present" } else { W "      page_definitions.audience_roles: MISSING - 771 did not apply" }
 
 # T-073 Global Law 7. The assistant's widget-result evidence table must survive a
 # rebuild, or a citation resolves to nothing and the assistant refuses every

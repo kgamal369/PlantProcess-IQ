@@ -45,7 +45,8 @@ public static class PageDefinitionEndpoints
         await using var command = new NpgsqlCommand(
             """
             SELECT id, tenant_id, slug, title, owner_user_name, visibility, version,
-                   layout_json::text, widget_bindings_json::text, updated_at_utc
+                   layout_json::text, widget_bindings_json::text, updated_at_utc,
+                   audience_roles::text
             FROM page_definitions
             WHERE tenant_id = @tenant
               AND is_deleted = false
@@ -85,7 +86,8 @@ public static class PageDefinitionEndpoints
         await using var command = new NpgsqlCommand(
             """
             SELECT id, tenant_id, slug, title, owner_user_name, visibility, version,
-                   layout_json::text, widget_bindings_json::text, updated_at_utc
+                   layout_json::text, widget_bindings_json::text, updated_at_utc,
+                   audience_roles::text
             FROM page_definitions
             WHERE tenant_id = @tenant
               AND slug = @slug
@@ -131,21 +133,23 @@ public static class PageDefinitionEndpoints
         await using var command = new NpgsqlCommand(
             """
             INSERT INTO page_definitions
-                (tenant_id, slug, title, owner_user_name, visibility, layout_json, widget_bindings_json, updated_at_utc)
+                (tenant_id, slug, title, owner_user_name, visibility, audience_roles, layout_json, widget_bindings_json, updated_at_utc)
             VALUES
-                (@tenant, @slug, @title, @owner, @visibility, @layout_json, @widget_bindings_json, now())
+                (@tenant, @slug, @title, @owner, @visibility, COALESCE(@audience_roles, '[]'::jsonb), @layout_json, @widget_bindings_json, now())
             ON CONFLICT (tenant_id, slug)
             WHERE is_deleted = false
             DO UPDATE SET
                 title = EXCLUDED.title,
                 owner_user_name = EXCLUDED.owner_user_name,
                 visibility = EXCLUDED.visibility,
+                audience_roles = COALESCE(@audience_roles, page_definitions.audience_roles, '[]'::jsonb),
                 layout_json = EXCLUDED.layout_json,
                 widget_bindings_json = EXCLUDED.widget_bindings_json,
                 version = page_definitions.version + 1,
                 updated_at_utc = now()
             RETURNING id, tenant_id, slug, title, owner_user_name, visibility, version,
-                      layout_json::text, widget_bindings_json::text, updated_at_utc;
+                      layout_json::text, widget_bindings_json::text, updated_at_utc,
+                      audience_roles::text;
             """,
             connection);
 
@@ -213,6 +217,7 @@ public static class PageDefinitionEndpoints
             UPDATE page_definitions
             SET title = @title,
                 visibility = @visibility,
+                audience_roles = COALESCE(@audience_roles, audience_roles),
                 layout_json = @layout_json,
                 widget_bindings_json = @widget_bindings_json,
                 version = version + 1,
@@ -223,7 +228,8 @@ public static class PageDefinitionEndpoints
               AND is_deleted = false
               AND (@expected_version IS NULL OR version = @expected_version)
             RETURNING id, tenant_id, slug, title, owner_user_name, visibility, version,
-                      layout_json::text, widget_bindings_json::text, updated_at_utc;
+                      layout_json::text, widget_bindings_json::text, updated_at_utc,
+                      audience_roles::text;
             """,
             connection);
 
@@ -297,6 +303,7 @@ public static class PageDefinitionEndpoints
             "    title text NOT NULL,",
             "    owner_user_name text NOT NULL,",
             "    visibility text NOT NULL DEFAULT 'Private',",
+            "    audience_roles jsonb NOT NULL DEFAULT '[]'::jsonb,",
             "    version integer NOT NULL DEFAULT 1,",
             "    layout_json jsonb NOT NULL DEFAULT '{}'::jsonb,",
             "    widget_bindings_json jsonb NOT NULL DEFAULT '{}'::jsonb,",
@@ -313,7 +320,12 @@ public static class PageDefinitionEndpoints
             "",
             "CREATE INDEX IF NOT EXISTS ix_page_definitions_owner_visible",
             "ON page_definitions (tenant_id, owner_user_name, visibility)",
-            "WHERE is_deleted = false;"
+            "WHERE is_deleted = false;",
+            "",
+            // An installation created before T-041 already has the table, so
+            // CREATE TABLE IF NOT EXISTS reaches none of it. This is the line
+            // that carries an existing page store forward.
+            "ALTER TABLE page_definitions ADD COLUMN IF NOT EXISTS audience_roles jsonb NOT NULL DEFAULT '[]'::jsonb;"
         });
 
         await using var command = new NpgsqlCommand(sql, connection);
@@ -342,6 +354,24 @@ public static class PageDefinitionEndpoints
         command.Parameters.AddWithValue("owner", owner);
         command.Parameters.AddWithValue("visibility", request.Visibility.Trim());
 
+        // PPIQ T-041. AUDIENCE IS NOT VISIBILITY, and neither replaces the other.
+        // Visibility answers who may open the page. Audience answers which roles
+        // the page was authored FOR, which is what T-042 reads when Publish puts
+        // it into navigation. A legacy row that never declared one reads as an
+        // empty list rather than as every role.
+        // PPIQ T-041 S2c. OMISSION AND AN EMPTY ARRAY ARE DIFFERENT ANSWERS.
+        // An old caller that never heard of this field sends nothing, and must
+        // not thereby erase an audience someone authored. So omission travels
+        // as SQL NULL and the statements decide what NULL means: an empty list
+        // on insert, the value already stored on update.
+        command.Parameters.Add(
+            new NpgsqlParameter("audience_roles", NpgsqlDbType.Jsonb)
+            {
+                Value = request.AudienceRoles is null
+                    ? DBNull.Value
+                    : JsonSerializer.Serialize(NormaliseAudienceRoles(request.AudienceRoles))
+            });
+
         command.Parameters.Add(
             new NpgsqlParameter("layout_json", NpgsqlDbType.Jsonb)
             {
@@ -353,6 +383,60 @@ public static class PageDefinitionEndpoints
             {
                 Value = JsonSerializer.Serialize(request.WidgetBindingsJson)
             });
+    }
+
+    /// PPIQ T-041. The four roles the API already authorises against, in
+    /// Program.cs. The audience contract reuses that authority rather than
+    /// inventing a parallel role list that could drift from it.
+    private static readonly string[] AudienceRoleAuthority =
+    {
+        "Admin", "DataManager", "Engineer", "Viewer"
+    };
+
+    /// Trimmed, de-duplicated case-insensitively, ordered by the authority above
+    /// so the stored list is stable, and unknown values dropped - the validator
+    /// reports them, this only stores what survived.
+    private static IReadOnlyList<string> NormaliseAudienceRoles(IReadOnlyList<string>? roles)
+    {
+        if (roles is null)
+        {
+            return Array.Empty<string>();
+        }
+
+        var chosen = roles
+            .Where(role => !string.IsNullOrWhiteSpace(role))
+            .Select(role => role.Trim())
+            .ToArray();
+
+        return AudienceRoleAuthority
+            .Where(known => chosen.Contains(known, StringComparer.OrdinalIgnoreCase))
+            .ToArray();
+    }
+
+    private static IReadOnlyList<string> ReadAudienceRoles(NpgsqlDataReader reader, int ordinal)
+    {
+        if (reader.IsDBNull(ordinal))
+        {
+            return Array.Empty<string>();
+        }
+
+        var text = reader.GetString(ordinal);
+
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return Array.Empty<string>();
+        }
+
+        try
+        {
+            return JsonSerializer.Deserialize<string[]>(text) ?? Array.Empty<string>();
+        }
+        catch (JsonException)
+        {
+            // A row whose audience cannot be read is reported as having none.
+            // Inventing one would be worse than saying nothing.
+            return Array.Empty<string>();
+        }
     }
 
     private static Dictionary<string, string[]> Validate(UpsertPageDefinitionRequest request)
@@ -375,6 +459,43 @@ public static class PageDefinitionEndpoints
         if (request.Visibility is not ("Private" or "Shared" or "Public"))
         {
             errors["visibility"] = new[] { "Visibility must be Private, Shared or Public." };
+        }
+
+        // PPIQ T-041. A caller that OMITS the field is a caller written before
+        // this contract existed, and it keeps working with an empty audience.
+        // A caller that SENDS the field is declaring an audience, so an empty
+        // one is a mistake rather than a legacy shape - and the Page Builder
+        // always sends it, which is where "at least one role" is enforced for a
+        // new page.
+        if (request.AudienceRoles is not null)
+        {
+            var audience = NormaliseAudienceRoles(request.AudienceRoles);
+
+            if (audience.Count == 0)
+            {
+                errors["audienceRoles"] = new[]
+                {
+                    "Choose at least one audience role: " + string.Join(", ", AudienceRoleAuthority) + "."
+                };
+            }
+            else
+            {
+                var unknown = request.AudienceRoles
+                    .Where(role => !string.IsNullOrWhiteSpace(role))
+                    .Select(role => role.Trim())
+                    .Where(role => !AudienceRoleAuthority.Contains(role, StringComparer.OrdinalIgnoreCase))
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToArray();
+
+                if (unknown.Length > 0)
+                {
+                    errors["audienceRoles"] = new[]
+                    {
+                        "Unknown audience role(s): " + string.Join(", ", unknown)
+                        + ". Allowed roles are " + string.Join(", ", AudienceRoleAuthority) + "."
+                    };
+                }
+            }
         }
 
         if (request.LayoutJson.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null)
@@ -433,7 +554,8 @@ public static class PageDefinitionEndpoints
             reader.GetInt32(6),
             JsonSerializer.Deserialize<JsonElement>(reader.GetString(7)),
             JsonSerializer.Deserialize<JsonElement>(reader.GetString(8)),
-            ReadDateTimeOffset(reader, 9));
+            ReadDateTimeOffset(reader, 9),
+            ReadAudienceRoles(reader, 10));
     }
 }
 
@@ -447,7 +569,8 @@ public sealed record PageDefinitionDto(
     int Version,
     JsonElement LayoutJson,
     JsonElement WidgetBindingsJson,
-    DateTimeOffset UpdatedAtUtc);
+    DateTimeOffset UpdatedAtUtc,
+    IReadOnlyList<string> AudienceRoles);
 
 public sealed record UpsertPageDefinitionRequest(
     string Slug,
@@ -455,7 +578,8 @@ public sealed record UpsertPageDefinitionRequest(
     string Visibility,
     JsonElement LayoutJson,
     JsonElement WidgetBindingsJson,
-    int? ExpectedVersion = null);
+    int? ExpectedVersion = null,
+    IReadOnlyList<string>? AudienceRoles = null);
 
 public sealed record PageDeleteResponse(bool Deleted);
 

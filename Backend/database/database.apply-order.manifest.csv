@@ -83,3 +83,4 @@
 "204","91_high_risk_review","HIGH_RISK_REVIEW","DO_NOT_AUTO_APPLY","SeniorReview","HighRiskUnclassified","HIGH","Script","Backend\database\scripts\204_phase04_phase05_ml_learning_core.sql","816","29.93","Needs manual senior review"
 "205","91_high_risk_review","HIGH_RISK_REVIEW","DO_NOT_AUTO_APPLY","SeniorReview","HighRiskUnclassified","HIGH","Script","Backend\database\scripts\205_phase04_phase05_completion_governance_jobs_tests.sql","1239","41.33","Needs manual senior review"
 "780","30_schema","APP_SCHEMA_CANDIDATE","AUTO_APPLY_CANDIDATE","ApplicationDbDeploy","GenericProductSchema","LOW","Script","Backend\database\scripts\780_t073_widget_result_evidence.sql","0","0","T-073 widget result evidence snapshot; idempotent, tenant scoped"
+"771","90_review","REVIEW_MANUAL","DO_NOT_AUTO_APPLY","Developer","Unknown","MEDIUM","Script","Backend\\database\\scripts\\771_t041_page_audience_roles.sql","0","0","Review before restructuring"
