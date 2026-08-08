@@ -144,7 +144,7 @@ W ""
 # style choice to work around - it is the reason a script has to be added here
 # as well as to the scripts directory.
 W "[1b/7] replayed migrations (without these the rebuilt database is missing product semantics)"
-foreach ($mig in @('741_feature_store_coil_grain_projection.sql','742_feature_regrain_generic.sql','750_forensics_audit_subsystem.sql','760_t025_lineage_and_outcome_producer.sql','771_t041_page_audience_roles.sql','780_t073_widget_result_evidence.sql')) {
+foreach ($mig in @('741_feature_store_coil_grain_projection.sql','742_feature_regrain_generic.sql','750_forensics_audit_subsystem.sql','760_t025_lineage_and_outcome_producer.sql','771_t041_page_audience_roles.sql','772_t042_page_backing_dashboard_and_publication.sql','780_t073_widget_result_evidence.sql')) {
     $migPath = Join-Path $PSScriptRoot ('..\..\Backend\database\scripts\' + $mig)
     if (Test-Path -LiteralPath $migPath) {
         $mo = & $Psql -h 127.0.0.1 -p 5432 -U ppiq_dev -d $TargetDb -w -v ON_ERROR_STOP=1 -X -q -1 -f $migPath 2>&1

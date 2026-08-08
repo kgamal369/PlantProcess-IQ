@@ -26,6 +26,13 @@ public static class PageDefinitionEndpoints
         group.MapPut("/{slug}", UpdatePageAsync);
         group.MapDelete("/{slug}", DeletePageAsync);
 
+        // PPIQ T-042. Publication is its own action, not a field on the upsert.
+        // Sent through the upsert it would be indistinguishable from omission,
+        // and a page could never be un-published without a second meaning for
+        // null. Two verbs, one column, no ambiguity.
+        group.MapPost("/{slug}/publish", PublishPageAsync);
+        group.MapPost("/{slug}/unpublish", UnpublishPageAsync);
+
         return app;
     }
 
@@ -46,7 +53,7 @@ public static class PageDefinitionEndpoints
             """
             SELECT id, tenant_id, slug, title, owner_user_name, visibility, version,
                    layout_json::text, widget_bindings_json::text, updated_at_utc,
-                   audience_roles::text
+                   audience_roles::text, backing_dashboard_definition_id, published_at_utc
             FROM page_definitions
             WHERE tenant_id = @tenant
               AND is_deleted = false
@@ -87,7 +94,7 @@ public static class PageDefinitionEndpoints
             """
             SELECT id, tenant_id, slug, title, owner_user_name, visibility, version,
                    layout_json::text, widget_bindings_json::text, updated_at_utc,
-                   audience_roles::text
+                   audience_roles::text, backing_dashboard_definition_id, published_at_utc
             FROM page_definitions
             WHERE tenant_id = @tenant
               AND slug = @slug
@@ -133,9 +140,9 @@ public static class PageDefinitionEndpoints
         await using var command = new NpgsqlCommand(
             """
             INSERT INTO page_definitions
-                (tenant_id, slug, title, owner_user_name, visibility, audience_roles, layout_json, widget_bindings_json, updated_at_utc)
+                (tenant_id, slug, title, owner_user_name, visibility, audience_roles, backing_dashboard_definition_id, layout_json, widget_bindings_json, updated_at_utc)
             VALUES
-                (@tenant, @slug, @title, @owner, @visibility, COALESCE(@audience_roles, '[]'::jsonb), @layout_json, @widget_bindings_json, now())
+                (@tenant, @slug, @title, @owner, @visibility, COALESCE(@audience_roles, '[]'::jsonb), @backing_dashboard, @layout_json, @widget_bindings_json, now())
             ON CONFLICT (tenant_id, slug)
             WHERE is_deleted = false
             DO UPDATE SET
@@ -143,13 +150,14 @@ public static class PageDefinitionEndpoints
                 owner_user_name = EXCLUDED.owner_user_name,
                 visibility = EXCLUDED.visibility,
                 audience_roles = COALESCE(@audience_roles, page_definitions.audience_roles, '[]'::jsonb),
+                backing_dashboard_definition_id = COALESCE(@backing_dashboard, page_definitions.backing_dashboard_definition_id),
                 layout_json = EXCLUDED.layout_json,
                 widget_bindings_json = EXCLUDED.widget_bindings_json,
                 version = page_definitions.version + 1,
                 updated_at_utc = now()
             RETURNING id, tenant_id, slug, title, owner_user_name, visibility, version,
                       layout_json::text, widget_bindings_json::text, updated_at_utc,
-                      audience_roles::text;
+                      audience_roles::text, backing_dashboard_definition_id, published_at_utc;
             """,
             connection);
 
@@ -218,6 +226,7 @@ public static class PageDefinitionEndpoints
             SET title = @title,
                 visibility = @visibility,
                 audience_roles = COALESCE(@audience_roles, audience_roles),
+                backing_dashboard_definition_id = COALESCE(@backing_dashboard, backing_dashboard_definition_id),
                 layout_json = @layout_json,
                 widget_bindings_json = @widget_bindings_json,
                 version = version + 1,
@@ -229,7 +238,7 @@ public static class PageDefinitionEndpoints
               AND (@expected_version IS NULL OR version = @expected_version)
             RETURNING id, tenant_id, slug, title, owner_user_name, visibility, version,
                       layout_json::text, widget_bindings_json::text, updated_at_utc,
-                      audience_roles::text;
+                      audience_roles::text, backing_dashboard_definition_id, published_at_utc;
             """,
             connection);
 
@@ -245,6 +254,98 @@ public static class PageDefinitionEndpoints
         if (!await reader.ReadAsync(cancellationToken))
         {
             return ApplicationProblems.NotFound("Page '" + slug + "' was not found or is not owned by '" + owner + "'.");
+        }
+
+        return Results.Ok(ReadDto(reader));
+    }
+
+    private static Task<IResult> PublishPageAsync(
+        string slug,
+        ClaimsPrincipal user,
+        PlantProcessDbContext db,
+        CancellationToken cancellationToken)
+    {
+        return SetPublicationAsync(slug, user, db, publish: true, cancellationToken);
+    }
+
+    private static Task<IResult> UnpublishPageAsync(
+        string slug,
+        ClaimsPrincipal user,
+        PlantProcessDbContext db,
+        CancellationToken cancellationToken)
+    {
+        return SetPublicationAsync(slug, user, db, publish: false, cancellationToken);
+    }
+
+    /// PPIQ T-042. A page may not be published without a backing dashboard,
+    /// because Workspaces routes to that dashboard's code. Publishing a page
+    /// that points at nothing would put a dead entry in a customer's navigation.
+    private static async Task<IResult> SetPublicationAsync(
+        string slug,
+        ClaimsPrincipal user,
+        PlantProcessDbContext db,
+        bool publish,
+        CancellationToken cancellationToken)
+    {
+        var tenant = ResolveTenant(user);
+        var owner = ResolveUserName(user);
+
+        await using var connection = (NpgsqlConnection)db.Database.GetDbConnection();
+        await EnsureOpenAsync(connection, cancellationToken);
+
+        if (publish)
+        {
+            await using var guard = new NpgsqlCommand(
+                "SELECT backing_dashboard_definition_id FROM page_definitions "
+                + "WHERE tenant_id = @tenant AND slug = @slug AND is_deleted = false LIMIT 1;",
+                connection);
+            guard.Parameters.AddWithValue("tenant", tenant);
+            guard.Parameters.AddWithValue("slug", slug);
+
+            var backing = await guard.ExecuteScalarAsync(cancellationToken);
+
+            if (backing is null || backing is DBNull)
+            {
+                return Results.ValidationProblem(new Dictionary<string, string[]>
+                {
+                    ["backingDashboardDefinitionId"] = new[]
+                    {
+                        "This page has no backing workspace yet, so publishing it would put an entry "
+                        + "in navigation that opens nothing. Add a widget first, then publish."
+                    }
+                });
+            }
+        }
+
+        await using var command = new NpgsqlCommand(
+            """
+            UPDATE page_definitions
+            SET published_at_utc = @published,
+                version = version + 1,
+                updated_at_utc = now()
+            WHERE tenant_id = @tenant
+              AND slug = @slug
+              AND owner_user_name = @owner
+              AND is_deleted = false
+            RETURNING id, tenant_id, slug, title, owner_user_name, visibility, version,
+                      layout_json::text, widget_bindings_json::text, updated_at_utc,
+                      audience_roles::text, backing_dashboard_definition_id, published_at_utc;
+            """,
+            connection);
+
+        command.Parameters.AddWithValue("tenant", tenant);
+        command.Parameters.AddWithValue("slug", slug);
+        command.Parameters.AddWithValue("owner", owner);
+        command.Parameters.Add(new NpgsqlParameter("published", NpgsqlDbType.TimestampTz)
+        {
+            Value = publish ? DateTimeOffset.UtcNow : (object)DBNull.Value
+        });
+
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+
+        if (!await reader.ReadAsync(cancellationToken))
+        {
+            return Results.NotFound();
         }
 
         return Results.Ok(ReadDto(reader));
@@ -304,6 +405,8 @@ public static class PageDefinitionEndpoints
             "    owner_user_name text NOT NULL,",
             "    visibility text NOT NULL DEFAULT 'Private',",
             "    audience_roles jsonb NOT NULL DEFAULT '[]'::jsonb,",
+            "    backing_dashboard_definition_id uuid NULL,",
+            "    published_at_utc timestamptz NULL,",
             "    version integer NOT NULL DEFAULT 1,",
             "    layout_json jsonb NOT NULL DEFAULT '{}'::jsonb,",
             "    widget_bindings_json jsonb NOT NULL DEFAULT '{}'::jsonb,",
@@ -325,7 +428,9 @@ public static class PageDefinitionEndpoints
             // An installation created before T-041 already has the table, so
             // CREATE TABLE IF NOT EXISTS reaches none of it. This is the line
             // that carries an existing page store forward.
-            "ALTER TABLE page_definitions ADD COLUMN IF NOT EXISTS audience_roles jsonb NOT NULL DEFAULT '[]'::jsonb;"
+            "ALTER TABLE page_definitions ADD COLUMN IF NOT EXISTS audience_roles jsonb NOT NULL DEFAULT '[]'::jsonb;",
+            "ALTER TABLE page_definitions ADD COLUMN IF NOT EXISTS backing_dashboard_definition_id uuid NULL;",
+            "ALTER TABLE page_definitions ADD COLUMN IF NOT EXISTS published_at_utc timestamptz NULL;"
         });
 
         await using var command = new NpgsqlCommand(sql, connection);
@@ -370,6 +475,19 @@ public static class PageDefinitionEndpoints
                 Value = request.AudienceRoles is null
                     ? DBNull.Value
                     : JsonSerializer.Serialize(NormaliseAudienceRoles(request.AudienceRoles))
+            });
+
+        // PPIQ T-042. The typed link to the operational dashboard this page is
+        // backed by. It is an id, not a naming convention: a code can be renamed
+        // and a convention can be broken, and the page would then point at
+        // nothing while still looking correct. Omission preserves, exactly as
+        // the audience does - an old caller must not unlink a page.
+        command.Parameters.Add(
+            new NpgsqlParameter("backing_dashboard", NpgsqlDbType.Uuid)
+            {
+                Value = request.BackingDashboardDefinitionId.HasValue
+                    ? request.BackingDashboardDefinitionId.Value
+                    : (object)DBNull.Value
             });
 
         command.Parameters.Add(
@@ -555,7 +673,9 @@ public static class PageDefinitionEndpoints
             JsonSerializer.Deserialize<JsonElement>(reader.GetString(7)),
             JsonSerializer.Deserialize<JsonElement>(reader.GetString(8)),
             ReadDateTimeOffset(reader, 9),
-            ReadAudienceRoles(reader, 10));
+            ReadAudienceRoles(reader, 10),
+            reader.IsDBNull(11) ? null : reader.GetGuid(11),
+            reader.IsDBNull(12) ? null : ReadDateTimeOffset(reader, 12));
     }
 }
 
@@ -570,7 +690,14 @@ public sealed record PageDefinitionDto(
     JsonElement LayoutJson,
     JsonElement WidgetBindingsJson,
     DateTimeOffset UpdatedAtUtc,
-    IReadOnlyList<string> AudienceRoles);
+    IReadOnlyList<string> AudienceRoles,
+    Guid? BackingDashboardDefinitionId,
+    // PPIQ T-042. Null is a draft. Publication is not visibility and not
+    // audience: it answers whether this authored page is eligible to appear as
+    // a Workspace at all. It is deliberately NOT the backing dashboard's
+    // IsActive flag, because that dashboard must be active for widgets to be
+    // saved into it long before the page is ready to be seen.
+    DateTimeOffset? PublishedAtUtc);
 
 public sealed record UpsertPageDefinitionRequest(
     string Slug,
@@ -579,7 +706,8 @@ public sealed record UpsertPageDefinitionRequest(
     JsonElement LayoutJson,
     JsonElement WidgetBindingsJson,
     int? ExpectedVersion = null,
-    IReadOnlyList<string>? AudienceRoles = null);
+    IReadOnlyList<string>? AudienceRoles = null,
+    Guid? BackingDashboardDefinitionId = null);
 
 public sealed record PageDeleteResponse(bool Deleted);
 
