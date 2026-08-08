@@ -138,9 +138,13 @@ foreach ($t in @('material_units', 'parameter_observations', 'quality_events', '
 }
 W ""
 
-# ---- 1b. engine migrations (heat lineage + coil projection + defect outcomes)
-W "[1b/7] engine migrations 741+742 (or the engine re-blinds on every rebuild)"
-foreach ($mig in @('741_feature_store_coil_grain_projection.sql','742_feature_regrain_generic.sql','750_forensics_audit_subsystem.sql','760_t025_lineage_and_outcome_producer.sql')) {
+# ---- 1b. numbered migrations that step 1 rewinds and nothing else replays.
+# This list is EXPLICIT, not a glob of Backend/database/scripts, so a numbered
+# script that is not named here does not exist after a rebuild. That is not a
+# style choice to work around - it is the reason a script has to be added here
+# as well as to the scripts directory.
+W "[1b/7] replayed migrations (without these the rebuilt database is missing product semantics)"
+foreach ($mig in @('741_feature_store_coil_grain_projection.sql','742_feature_regrain_generic.sql','750_forensics_audit_subsystem.sql','760_t025_lineage_and_outcome_producer.sql','780_t073_widget_result_evidence.sql')) {
     $migPath = Join-Path $PSScriptRoot ('..\..\Backend\database\scripts\' + $mig)
     if (Test-Path -LiteralPath $migPath) {
         $mo = & $Psql -h 127.0.0.1 -p 5432 -U ppiq_dev -d $TargetDb -w -v ON_ERROR_STOP=1 -X -q -1 -f $migPath 2>&1
@@ -148,6 +152,18 @@ foreach ($mig in @('741_feature_store_coil_grain_projection.sql','742_feature_re
     } else { W ("      MISSING " + $migPath) }
 }
 W ("      lineage view rows: " + (Q1 "SELECT COUNT(*) FROM ppiq_ml_unit_heat_lineage;"))
+
+# T-073 Global Law 7. The assistant's widget-result evidence table must survive a
+# rebuild, or a citation resolves to nothing and the assistant refuses every
+# chart question with no visible cause. Reported here, at the step that creates
+# it, rather than discovered during a demonstration.
+$widgetEvidencePresent = Q1 "SELECT CASE WHEN to_regclass('canon.assistant_widget_result') IS NULL THEN '0' ELSE '1' END;"
+if ($widgetEvidencePresent -eq '1') {
+    W "      widget-result evidence table: present"
+} else {
+    W "      FAIL widget-result evidence table MISSING after replay (T-073 citations cannot resolve)"
+    $Script:PpiqFailCount = $Script:PpiqFailCount + 1
+}
 
 # T-006: 741 and 742 DEFINE ppiq_ml_refresh_feature_store and never CALL it.
 # Live holds 195,221 ml_outcome_values; a rebuild without this line produces
