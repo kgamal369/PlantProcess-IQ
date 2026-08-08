@@ -56,6 +56,33 @@ export type AssistantContextPayload = {
   evidenceHandles: string[] | null;
 };
 
+/**
+ * T-075 wire shape of one persisted widget-result evidence snapshot, as returned
+ * by the tenant-scoped endpoint T-073 built. The strip renders THIS, never the
+ * answer prose.
+ */
+export type AssistantWidgetResultEvidence = {
+  evidenceId: string;
+  available: boolean;
+  pageCode: string;
+  widgetCode: string;
+  widgetDefinitionId?: string | null;
+  widgetType?: string | null;
+  chartType?: string | null;
+  dimensionCode?: string | null;
+  measureCode?: string | null;
+  parameterCode?: string | null;
+  queryFingerprint?: string | null;
+  resultFingerprint?: string | null;
+  filterContext?: string | null;
+  generatedAtUtc?: string | null;
+  columns: string[];
+  rows: string[][];
+  hasObservationCount: boolean;
+  observationCountTotal: number;
+  sentence: string;
+};
+
 export type AssistantConfiguration = {
   mode: string;
   groundingPolicy: string;
@@ -160,6 +187,29 @@ export const assistantApi = {
         context: context ?? null,
       }),
     }),
+
+  /**
+   * T-075. Resolves ONE citation's evidence, on demand. Nothing calls this when
+   * an answer renders; it is called when a chip is opened.
+   *
+   * A 404 from this endpoint means the evidence is not available to this tenant,
+   * which is a different thing from the request failing, so it is surfaced as a
+   * value rather than thrown.
+   */
+  getWidgetResultEvidence: async (evidenceId: string): Promise<AssistantWidgetResultEvidence | null> => {
+    const token = getAccessToken();
+    const authHeaders: Record<string, string> = token ? { Authorization: "Bearer " + token } : {};
+
+    const response = await fetch(
+      apiBaseUrl + "/api/assistant/evidence/widget-result/" + encodeURIComponent(evidenceId),
+      { credentials: "include", headers: { "Content-Type": "application/json", ...authHeaders } },
+    );
+
+    if (response.status === 404) return null;
+    if (!response.ok) throw new Error("evidence request failed: " + response.status);
+
+    return (await response.json()) as AssistantWidgetResultEvidence;
+  },
 
   getAssistantConfig: () =>
     api<AssistantConfiguration>("/api/phase8/assistant-config"),
