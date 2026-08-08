@@ -123,6 +123,15 @@ public sealed class NpgsqlRetrievalIndex : IRetrievalIndex
         "finding" => ProvenanceHandle.Finding(sourceRef),
         "report"  => ProvenanceHandle.DocumentSection(sourceRef),
         "doc"     => ProvenanceHandle.DocumentSection(sourceRef),
+
+        // T-073. Without this arm a widget-result chunk would arrive at the
+        // assistant carrying a DATASET citation, because this method rebuilds the
+        // handle at search time and ignores the one the producer created. A
+        // Dataset handle proves a table exists; it cannot prove a widget returned
+        // a number. The source_ref of this kind IS the snapshot id, so the
+        // rebuilt handle resolves against canon.assistant_widget_result.
+        "widgetresult" => ProvenanceHandle.WidgetResult(sourceRef),
+
         _         => ProvenanceHandle.Dataset(sourceRef)
     };
 

@@ -29,7 +29,13 @@ public static class AssistantInfrastructureExtensions
                 ? new Top15RealAssistantModel(phase34ModelConfig, sp.GetRequiredService<ITop15AssistantModelClient>())
                 : new ExtractiveAssistantModel();
         });
-        services.AddScoped<IAssistantChunkProducer, CanonicalChunkProducer>();
+        // T-073. The registered producer is a COMPOSITE. CanonicalChunkProducer is
+        // untouched and keeps its five families; the widget-result family is a
+        // separate class, so the type that reads the canonical substrate does not
+        // acquire a dependency on dashboard execution.
+        services.AddScoped<CanonicalChunkProducer>();
+        services.AddScoped<WidgetResultChunkProducer>();
+        services.AddScoped<IAssistantChunkProducer, CompositeChunkProducer>();
         services.AddScoped<AssistantService>();
         return services;
     }
