@@ -1,4 +1,4 @@
-﻿# PlantProcess IQ - Database Apply-Order Manifest
+# PlantProcess IQ - Database Apply-Order Manifest
 
 Generated at: 2026-06-04 12:22:25
 
@@ -114,3 +114,5 @@ This manifest is documentation only. It does not execute SQL and does not move f
 | 91_high_risk_review | 201 | HIGH_RISK_REVIEW | DO_NOT_AUTO_APPLY | SeniorReview | HIGH | Backend\database\scripts\201_phase02_ml_feature_store_v6_completion.sql | Needs manual senior review |
 | 91_high_risk_review | 204 | HIGH_RISK_REVIEW | DO_NOT_AUTO_APPLY | SeniorReview | HIGH | Backend\database\scripts\204_phase04_phase05_ml_learning_core.sql | Needs manual senior review |
 | 91_high_risk_review | 205 | HIGH_RISK_REVIEW | DO_NOT_AUTO_APPLY | SeniorReview | HIGH | Backend\database\scripts\205_phase04_phase05_completion_governance_jobs_tests.sql | Needs manual senior review |
+
+- 780 / 30_schema / APP_SCHEMA_CANDIDATE - Backend\database\scripts\780_t073_widget_result_evidence.sql - T-073 widget result evidence snapshot; idempotent, tenant scoped.

@@ -1,4 +1,4 @@
-﻿"ApplyOrder","OrderGroup","Track","ApplyMode","ExecutionOwner","Scope","RiskLevel","DbCategory","RelativePath","LineCount","SizeKB","Decision"
+"ApplyOrder","OrderGroup","Track","ApplyMode","ExecutionOwner","Scope","RiskLevel","DbCategory","RelativePath","LineCount","SizeKB","Decision"
 "95","10_security_admin","SECURITY_ADMIN","ADMIN_ONLY","DBAOrOperator","SecurityOrTenantIsolation","HIGH","Script","Backend\database\scripts\095_create_runtime_app_role_admin_only.sql","64","1.74","Never run in normal app migration flow"
 "300","10_security_admin","SECURITY_ADMIN","ADMIN_ONLY","DBAOrOperator","SecurityOrTenantIsolation","MEDIUM","Script","Backend\database\scripts\300_p01_p02_security_access_control_spine.sql","365","12.36","Never run in normal app migration flow"
 "510","10_security_admin","SECURITY_ADMIN","ADMIN_ONLY","DBAOrOperator","SecurityOrTenantIsolation","HIGH","Script","Backend\database\scripts\510_v5_p02_rls_tenant_isolation_and_secret_vault.sql","320","12.92","Never run in normal app migration flow"
@@ -82,3 +82,4 @@
 "201","91_high_risk_review","HIGH_RISK_REVIEW","DO_NOT_AUTO_APPLY","SeniorReview","HighRiskUnclassified","HIGH","Script","Backend\database\scripts\201_phase02_ml_feature_store_v6_completion.sql","186","11.52","Needs manual senior review"
 "204","91_high_risk_review","HIGH_RISK_REVIEW","DO_NOT_AUTO_APPLY","SeniorReview","HighRiskUnclassified","HIGH","Script","Backend\database\scripts\204_phase04_phase05_ml_learning_core.sql","816","29.93","Needs manual senior review"
 "205","91_high_risk_review","HIGH_RISK_REVIEW","DO_NOT_AUTO_APPLY","SeniorReview","HighRiskUnclassified","HIGH","Script","Backend\database\scripts\205_phase04_phase05_completion_governance_jobs_tests.sql","1239","41.33","Needs manual senior review"
+"780","30_schema","APP_SCHEMA_CANDIDATE","AUTO_APPLY_CANDIDATE","ApplicationDbDeploy","GenericProductSchema","LOW","Script","Backend\database\scripts\780_t073_widget_result_evidence.sql","0","0","T-073 widget result evidence snapshot; idempotent, tenant scoped"
