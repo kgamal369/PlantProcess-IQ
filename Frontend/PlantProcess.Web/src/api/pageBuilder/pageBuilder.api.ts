@@ -12,6 +12,11 @@ export interface PageDefinitionDto {
   // PPIQ T-041. The server always returns this now. It is optional here only so
   // a response cached from before the column existed still parses.
   audienceRoles?: string[];
+  // PPIQ T-042. The typed link to the operational workspace that carries this
+  // page's widgets, and the publication state. Null backing means the page has
+  // no workspace yet; null published means it is still a draft.
+  backingDashboardDefinitionId?: string | null;
+  publishedAtUtc?: string | null;
   version: number;
   layoutJson: unknown;
   widgetBindingsJson: unknown;
@@ -27,6 +32,9 @@ export interface UpsertPageDefinitionRequest {
   // rejects the second. So a caller that has an audience sends it, and a caller
   // that has none leaves it out rather than sending [].
   audienceRoles?: string[];
+  // PPIQ T-042. Optional for the same reason the audience is: omitting it
+  // PRESERVES the stored link, and only sending it changes one.
+  backingDashboardDefinitionId?: string | null;
   layoutJson: unknown;
   widgetBindingsJson: unknown;
   expectedVersion?: number | null;

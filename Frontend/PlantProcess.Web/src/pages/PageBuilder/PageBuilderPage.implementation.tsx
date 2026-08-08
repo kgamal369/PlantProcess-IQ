@@ -108,7 +108,7 @@ export function PageBuilderPage() {
   const [kindsStatus, setKindsStatus] = useState<"loading" | "ready" | "failed">("loading");
   const [chosenKind, setChosenKind] = useState<StructuralKind | null>(null);
   const [newWidgetName, setNewWidgetName] = useState("");
-  const [authoring, setAuthoring] = useState<{ kind: string; title: string } | null>(null);
+  const [authoring, setAuthoring] = useState<{ kind: string; title: string; dashboardId: string } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -134,6 +134,145 @@ export function PageBuilderPage() {
     state.title.trim().length > 0
     && state.slug.trim().length > 0
     && state.audienceRoles.length > 0;
+
+  // PPIQ T-042 S2. Bounded, and single-flight. While the bridge is being
+  // ensured nothing may be activated twice: two clicks would be two attempts to
+  // create the same backing workspace.
+  const [bridge, setBridge] = useState<"idle" | "preparing" | "failed">("idle");
+  const [bridgeMessage, setBridgeMessage] = useState("");
+
+  // The recovery key, derived from the page's IMMUTABLE id - never its title and
+  // never its slug, both of which an author may change afterwards.
+  function backingCodeFor(pageId: string): string {
+    return "PAGE_" + pageId.replace(/-/g, "").slice(0, 12).toUpperCase();
+  }
+
+  function asList(body: unknown): Array<Record<string, unknown>> {
+    const container = body as Record<string, unknown> | unknown[] | null;
+    const list = Array.isArray(container)
+      ? container
+      : ((container?.["items"] ?? container?.["definitions"] ?? container?.["dashboards"] ?? []) as unknown[]);
+
+    return list as Array<Record<string, unknown>>;
+  }
+
+  async function findDashboardIdByCode(code: string): Promise<string | null> {
+    const match = asList(await dashboardingApi.getDashboardDefinitions())
+      .find((entry) => String(entry.dashboardCode ?? entry.code ?? "") === code);
+    const id = match?.id ?? match?.dashboardDefinitionId;
+
+    return typeof id === "string" ? id : null;
+  }
+
+  // PPIQ T-042 S2. IDEMPOTENT ACROSS PARTIAL FAILURE.
+  //
+  // The sequence that must never produce two workspaces: the dashboard is
+  // created, the page patch that stores its id fails, and a retry sees a null
+  // link. So a retry LOOKS FOR the deterministic code before it creates
+  // anything, and the stored id is confirmed by re-reading the page before the
+  // shell is opened. Once the link exists the ID is the authority; the code is
+  // only ever a recovery key.
+  async function ensureBackingDashboard(): Promise<string> {
+    const request = {
+      slug: state.slug.trim(),
+      title: state.title.trim(),
+      visibility: state.visibility,
+      audienceRoles: [...state.audienceRoles],
+      layoutJson: payload.layoutJson,
+      widgetBindingsJson: payload.widgetBindingsJson,
+    };
+
+    const saved = loadedPage
+      ? await pageBuilderApi.update(request.slug, request)
+      : await pageBuilderApi.create(request);
+    setLoadedPage(saved);
+
+    if (saved.backingDashboardDefinitionId) {
+      return saved.backingDashboardDefinitionId;
+    }
+
+    const code = backingCodeFor(saved.id);
+    let dashboardId = await findDashboardIdByCode(code);
+
+    if (!dashboardId) {
+      const created = (await dashboardingApi.createDashboardDefinition({
+        dashboardCode: code,
+        name: saved.title,
+        description: "Backing workspace for the authored page " + saved.slug + ".",
+        isDefault: false,
+        isSystemTemplate: false,
+        isSynthetic: false,
+      })) as { id?: unknown } | null;
+
+      dashboardId = typeof created?.id === "string" ? created.id : await findDashboardIdByCode(code);
+    }
+
+    if (!dashboardId) {
+      throw new Error("The backing workspace could not be created or found.");
+    }
+
+    await pageBuilderApi.update(saved.slug, { ...request, backingDashboardDefinitionId: dashboardId });
+
+    // Re-read and CONFIRM. A patch that reported success but stored nothing must
+    // not reach the shell wearing a real-looking id.
+    const confirmed = await pageBuilderApi.getBySlug(saved.slug);
+    setLoadedPage(confirmed);
+
+    if (confirmed.backingDashboardDefinitionId !== dashboardId) {
+      throw new Error("The page did not keep its link to the backing workspace.");
+    }
+
+    return dashboardId;
+  }
+
+  // PPIQ T-042 S2. THE SERVER'S WIDGET LIST IS THE AUTHORITY.
+  //
+  // NO persisted DashboardWidgetDefinition, NO grid widget. A widget the server
+  // did not keep cannot appear on the page, however successfully the shell
+  // closed. Geometry already authored for a known widget is preserved; a
+  // genuinely new one takes the next deterministic free slot; the page is never
+  // repacked merely because the list was refreshed.
+  async function reconcileFromServer(dashboardId: string) {
+    const record = (await dashboardingApi.getDashboardDefinition(dashboardId)) as Record<string, unknown>;
+    const persisted = asList(
+      record?.["widgets"] ?? record?.["widgetDefinitions"] ?? record?.["dashboardWidgetDefinitions"] ?? [],
+    );
+
+    const known = new Map(state.widgets.map((widget) => [widget.id, widget]));
+    let placed = state.widgets.length;
+
+    const rebuilt = persisted
+      .map((entry) => {
+        const id = String(entry.id ?? entry.widgetDefinitionId ?? "");
+
+        if (id.length === 0) {
+          return null;
+        }
+
+        const existing = known.get(id);
+
+        if (existing) {
+          return existing;
+        }
+
+        const index = placed;
+        placed += 1;
+
+        return {
+          id,
+          kind: String(entry.widgetKind ?? entry.kind ?? "chart"),
+          title: String(entry.widgetTitle ?? entry.title ?? entry.name ?? id),
+          x: (index * 4) % pageBuilderGrid.columns,
+          y: Math.floor(index / 3) * 3,
+          w: 4,
+          h: 3,
+          source: String(entry.widgetCode ?? entry.code ?? ""),
+        } as BuilderWidget;
+      })
+      .filter((widget): widget is BuilderWidget => widget !== null);
+
+    dispatch({ type: "reset", state: { ...state, widgets: rebuilt } });
+  }
 
   const payload = useMemo(() => createPageBuilderPayload(state), [state]);
 
@@ -380,7 +519,7 @@ export function PageBuilderPage() {
                   key={kind.code}
                   variant={chosenKind?.code === kind.code ? "primary" : "secondary"}
                   data-testid={"widget-kind-" + kind.code}
-                  disabled={!canCreatePage}
+                  disabled={!canCreatePage || bridge === "preparing"}
                   onClick={() => {
                     setChosenKind(kind);
                     setNewWidgetName("");
@@ -402,27 +541,48 @@ export function PageBuilderPage() {
                 onChange={(value) => setNewWidgetName(value)}
               />
 
+              {bridge === "preparing" ? (
+                <p role="status" data-testid="bridge-preparing">{bridgeMessage}</p>
+              ) : null}
+
+              {bridge === "failed" ? (
+                <p role="alert" data-testid="bridge-failed">{bridgeMessage}</p>
+              ) : null}
+
               <StandardButton
                 variant="primary"
                 data-testid="ctl-open-authoring"
-                disabled={newWidgetName.trim().length === 0}
-                onClick={() => {
+                disabled={newWidgetName.trim().length === 0 || bridge === "preparing"}
+                onClick={async () => {
+                  if (bridge === "preparing") {
+                    return;
+                  }
+
                   const title = newWidgetName.trim();
+                  const kind = chosenKind.code;
 
-                  // The widget is placed on the page and then authored. NOTHING
-                  // is bound here: a source invented to make the shell open would
-                  // be a demo binding by another name.
-                  dispatch({
-                    type: "addWidget",
-                    kind: chosenKind.code,
-                    title,
-                    source: "",
-                    idSeed: Date.now(),
-                  });
+                  setBridge("preparing");
+                  setBridgeMessage("Preparing the page and its backing workspace.");
 
-                  setAuthoring({ kind: chosenKind.code, title });
-                  setChosenKind(null);
-                  setNewWidgetName("");
+                  try {
+                    // NO widget is placed here. The grid only ever shows what the
+                    // server persisted, and nothing is persisted until the author
+                    // saves inside the shell.
+                    const dashboardId = await ensureBackingDashboard();
+
+                    setBridge("idle");
+                    setBridgeMessage("");
+                    setAuthoring({ kind, title, dashboardId });
+                    setChosenKind(null);
+                    setNewWidgetName("");
+                  } catch (error) {
+                    setBridge("failed");
+                    setBridgeMessage(
+                      error instanceof ApiError
+                        ? "The page could not be prepared: " + error.message
+                        : "The page could not be prepared, so the authoring surface was not opened.",
+                    );
+                  }
                 }}
               >
                 Author this widget
@@ -510,8 +670,13 @@ export function PageBuilderPage() {
       {authoring ? (
         <SharedAuthoringShell
           purpose="S2"
+          dashboardDefinitionId={authoring.dashboardId}
           onClose={() => setAuthoring(null)}
-          onSaved={() => setAuthoring(null)}
+          onSaved={async () => {
+            const dashboardId = authoring.dashboardId;
+            setAuthoring(null);
+            await reconcileFromServer(dashboardId);
+          }}
         />
       ) : null}
 
