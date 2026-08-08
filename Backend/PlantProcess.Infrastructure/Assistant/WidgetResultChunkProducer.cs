@@ -21,8 +21,11 @@ namespace PlantProcess.Infrastructure.Assistant;
 /// </summary>
 public sealed class WidgetResultChunkProducer
 {
-    /// <summary>Matched by NpgsqlRetrievalIndex.HandleFor, lower case.</summary>
-    public const string SourceKind = "widgetresult";
+    /// <summary>
+    /// Matched by NpgsqlRetrievalIndex.HandleFor and by the focused-widget
+    /// composition rule. One definition, in the Application layer.
+    /// </summary>
+    public const string SourceKind = WidgetResultEvidence.ChunkSourceKind;
 
     private readonly NpgsqlDataSource _dataSource;
     private readonly IDashboardWidgetQueryService _queryService;

@@ -46,8 +46,29 @@ public class T073EvidenceAnchorTests
         public string? LastPageCode;
         public int Lookups;
 
+        /// <summary>
+        /// T-073-05: composition now READS the snapshot behind the anchor and
+        /// refuses when it cannot. A stub that always returned null therefore made
+        /// every anchored turn refuse - the rule was right and this stub was stale.
+        /// It returns the snapshot for the anchor it just handed out, and null for
+        /// anything else, which is what a tenant-scoped reader does.
+        /// </summary>
         public Task<WidgetResultEvidenceSnapshot?> ReadAsync(Guid tenantId, Guid evidenceId, CancellationToken ct)
-            => Task.FromResult<WidgetResultEvidenceSnapshot?>(null);
+        {
+            if (Anchor is null || evidenceId != Anchor.Value)
+            {
+                return Task.FromResult<WidgetResultEvidenceSnapshot?>(null);
+            }
+
+            var identity = new WidgetEvidenceIdentity(
+                "PAGE_ALPHA", "WIDGET_ALPHA", Guid.Empty, "chart", "bar", "DIM_ALPHA", "MEASURE_ALPHA", null);
+
+            var result = new NormalisedWidgetResult(
+                Array.Empty<string>(), Array.Empty<IReadOnlyList<string>>(), false, 0);
+
+            return Task.FromResult<WidgetResultEvidenceSnapshot?>(new WidgetResultEvidenceSnapshot(
+                evidenceId, identity, result, "queryfp", "resultfp", "{}", DateTime.UtcNow));
+        }
 
         public Task<Guid?> FindActiveAnchorAsync(Guid tenantId, string widgetCode, string? pageCode, CancellationToken ct)
         {

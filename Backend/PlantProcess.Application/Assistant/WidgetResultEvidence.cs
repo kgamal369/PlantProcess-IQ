@@ -75,6 +75,14 @@ public static class WidgetResultEvidence
     /// <summary>Rows carried into a sentence. The snapshot retains all of them.</summary>
     public const int MaxRowsInSentence = 6;
 
+    /// <summary>
+    /// The chunk source kind for widget-result evidence. Declared HERE, in the
+    /// layer that owns the meaning, because three places need the same string:
+    /// the producer that writes the chunks, the index that rebuilds the handle,
+    /// and the composition rule that has to tell a rival widget from a friend.
+    /// </summary>
+    public const string ChunkSourceKind = "widgetresult";
+
     public const string ObservationCountColumn = "observationCount";
 
     private const string LabelColumn = "dimensionLabel";

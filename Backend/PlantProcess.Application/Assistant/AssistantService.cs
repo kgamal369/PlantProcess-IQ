@@ -1,3 +1,8 @@
+// T-073: the focused-widget composition rule materialises the anchor as a real
+// grounded chunk, which means naming its provenance handle. This file carried no
+// using directives at all until then.
+using PlantProcess.Application.Provenance;
+
 namespace PlantProcess.Application.Assistant;
 
 /// <summary>
@@ -42,12 +47,14 @@ public sealed class AssistantService
         // general question asked from a page must not be forced to have widget
         // evidence behind it.
         var focusedWidget = request.Context?.WidgetCode;
+        Guid? focusedAnchor = null;
+
         if (!string.IsNullOrWhiteSpace(focusedWidget))
         {
-            var anchor = await _widgetEvidence.FindActiveAnchorAsync(
+            focusedAnchor = await _widgetEvidence.FindActiveAnchorAsync(
                 request.TenantId, focusedWidget!, request.Context?.PageCode, ct);
 
-            if (anchor is null)
+            if (focusedAnchor is null)
             {
                 return GroundedAnswer.Refusal(
                     "I don't have approved evidence for this widget to answer that.");
@@ -58,7 +65,7 @@ public sealed class AssistantService
         // still come from the caller's claims, so context can never widen scope.
         var contextTerms = request.Context?.RetrievalTerms() ?? Array.Empty<string>();
 
-        var chunks = await _retrieval.SearchAsync(
+        IReadOnlyList<RetrievedChunk> chunks = await _retrieval.SearchAsync(
             new RetrievalQuery(request.TenantId, request.Role, request.Question, 6, contextTerms), ct);
 
         var toolResults = new List<ToolResult>();
@@ -67,6 +74,53 @@ public sealed class AssistantService
             var ctx = new ToolContext(request.TenantId, request.Role, request.License);
             foreach (var call in toolCalls)
                 toolResults.Add(await _tools.ExecuteAsync(call.Tool, ctx, call.Args, ct));
+        }
+
+        // T-073 FOCUSED-WIDGET COMPOSITION.
+        //
+        // The anchor alone was not enough. The extractive model turns EVERY
+        // retrieved chunk into prose, so a turn focused on one widget could be
+        // answered describing a neighbouring widget on the same page that happened
+        // to rank higher. A user looking at one chart was told about another.
+        //
+        // So for a focused turn: drop competing widget-result evidence, and put the
+        // focused widget's PERSISTED snapshot in first as a real grounded chunk with
+        // its own WidgetResult handle. It enters as evidence, never as text glued on
+        // after composition, so numeric grounding and citations stay intact.
+        //
+        // Evidence of other families is kept. A finding or a document is not a rival
+        // for the question "what does this chart show"; another widget is.
+        if (focusedAnchor is not null)
+        {
+            var snapshot = await _widgetEvidence.ReadAsync(request.TenantId, focusedAnchor.Value, ct);
+
+            if (snapshot is null)
+            {
+                // The anchor existed a moment ago and its snapshot is not readable in
+                // this tenant now. Refuse rather than answer from the neighbours.
+                return GroundedAnswer.Refusal(
+                    "I don't have approved evidence for this widget to answer that.");
+            }
+
+            var anchorRef = focusedAnchor.Value.ToString();
+
+            var kept = chunks
+                .Where(c => !string.Equals(c.SourceKind, WidgetResultEvidence.ChunkSourceKind, StringComparison.OrdinalIgnoreCase)
+                            || string.Equals(c.SourceRef, anchorRef, StringComparison.Ordinal))
+                .Where(c => !string.Equals(c.SourceRef, anchorRef, StringComparison.Ordinal))
+                .ToList();
+
+            var anchorChunk = new RetrievedChunk(
+                Guid.NewGuid(),
+                WidgetResultEvidence.ChunkSourceKind,
+                anchorRef,
+                WidgetResultEvidence.Sentence(snapshot.Identity, snapshot.Result),
+                ProvenanceHandle.WidgetResult(anchorRef),
+                1d);
+
+            var composed = new List<RetrievedChunk> { anchorChunk };
+            composed.AddRange(kept);
+            chunks = composed;
         }
 
         if (chunks.Count == 0 && toolResults.All(t => !t.Ok))
