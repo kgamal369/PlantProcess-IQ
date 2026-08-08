@@ -21,12 +21,6 @@ describe("T-071 assistant dock architecture", () => {
     expect(ctx).toContain("useAssistantDock");
   });
 
-  it("the page no longer calls the assistant api directly", () => {
-    const page = read("src/pages/Phase8/AssistantRuntimePage.tsx");
-    expect(page).not.toContain("assistantApi.askAssistant(");
-    expect(page).toContain("useAssistantDock(");
-    expect(page).toContain("<AssistantChat");
-  });
 
   it("the dock does not call the assistant api directly", () => {
     const dock = read("src/components/assistant/AssistantDock.tsx");
@@ -45,11 +39,31 @@ describe("T-071 assistant dock architecture", () => {
     const app = existsSync(resolve(webRoot, "src/App.tsx")) ? read("src/App.tsx") : "";
     expect(app).not.toContain("element={<AssistantDock");
   });
+  /* PPIQ-T071 G1 visible contract, ruled after the tech-lead review. The old
+     assertion here proved the dock stepped aside for a full-page assistant.
+     That page is retired, so the assertion is replaced by the three facts that
+     make "global shell component, no route" true and keep it true. */
 
-  it("the full-page assistant suppresses the global dock", () => {
+  it("no standalone assistant runtime page exists", () => {
+    expect(existsSync(resolve(webRoot, "src/pages/Phase8/AssistantRuntimePage.tsx"))).toBe(false);
+  });
+
+  it("the assistant path is a hidden redirect and never renders a page", () => {
+    const app = read("src/App.tsx");
+    expect(app).not.toContain("AssistantRuntimePage");
+    /* The path survives only as a compatibility redirect. */
+    expect(app).toContain('<Route path="/assistant" element={<Navigate to=');
+  });
+
+  it("nothing in the navigation points at a standalone assistant", () => {
+    const layout = read("src/components/AppLayout.tsx");
+    expect(layout).not.toContain('to: "/assistant"');
+  });
+
+  it("the dock never steps aside for a route", () => {
     const dock = read("src/components/assistant/AssistantDock.tsx");
-    expect(dock).toContain('location.pathname.startsWith("/assistant")');
-    expect(dock).toContain("return null;");
+    expect(dock).not.toContain('location.pathname.startsWith("/assistant")');
+    expect(dock).not.toContain("useLocation");
   });
 
   it("no browser storage is used for the conversation", () => {
@@ -57,7 +71,6 @@ describe("T-071 assistant dock architecture", () => {
       "src/components/assistant/AssistantDockContext.tsx",
       "src/components/assistant/AssistantDock.tsx",
       "src/components/assistant/AssistantChat.tsx",
-      "src/pages/Phase8/AssistantRuntimePage.tsx",
     ]) {
       const source = read(rel);
       expect(source, rel).not.toContain("localStorage");

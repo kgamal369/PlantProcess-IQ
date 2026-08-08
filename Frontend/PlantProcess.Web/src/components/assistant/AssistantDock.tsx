@@ -1,5 +1,4 @@
 /* PPIQ-T071 */
-import { useLocation } from "react-router-dom";
 import { AssistantChat } from "@/components/assistant/AssistantChat";
 import { ASSISTANT_CONTEXT_CHIPS, useAssistantDock } from "@/components/assistant/AssistantDockContext";
 import { useAssistantPageContext } from "@/components/assistant/assistantPageContext";
@@ -12,17 +11,15 @@ import "./AssistantDock.css";
  * the single call site, and an architecture test asserts this file contains no
  * askAssistant call of its own.
  *
- * It suppresses itself on /assistant so the user is never looking at two
- * expanded assistant surfaces at once. Both read the same context, so it is one
- * conversation either way.
+ * G1 visible contract: the assistant is a GLOBAL SHELL COMPONENT and not a
+ * route. There is no standalone assistant page left for it to suppress itself
+ * against - /assistant is a hidden compatibility redirect that nothing
+ * navigates to - so the dock is present on every authenticated surface without
+ * exception.
  */
 export function AssistantDock() {
   const { turns, busy, status, ask, setStatus, expanded, setExpanded } = useAssistantDock();
-  const location = useLocation();
   const pageContext = useAssistantPageContext();
-
-  /* The full-page assistant owns the screen on its own route. */
-  if (location.pathname.startsWith("/assistant")) return null;
 
   if (!expanded) {
     return (

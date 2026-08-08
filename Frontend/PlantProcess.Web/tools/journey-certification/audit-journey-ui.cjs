@@ -23,7 +23,7 @@ const pages = [
   { tag: "J12", name: "ML jobs", files: ["src/pages/Admin/AdminJobsMonitorTab.tsx", "src/pages/DataIntegration/DataIntegrationLayout.tsx", "src/pages/DataIntegration/DataIntegrationRoutes.tsx"] },
   { tag: "J13", name: "Suggestions", files: ["src/pages/Phase8/SuggestionRecommendationPage.tsx"] },
   { tag: "J14", name: "Supervisor", files: ["src/pages/DataIntegration/SupervisorReportPage.tsx"] },
-  { tag: "J15", name: "Assistant", files: ["src/pages/Phase8/AssistantRuntimePage.tsx", "src/components/assistant/AssistantChat.tsx"] },
+  { tag: "J15", name: "Assistant", files: ["src/components/assistant/AssistantDock.tsx", "src/components/assistant/AssistantChat.tsx"] },
   { tag: "UI4", name: "Plant Data Log", files: ["src/pages/DataIntegration/AlertingPage.tsx"] },
 ];
 

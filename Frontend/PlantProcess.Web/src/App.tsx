@@ -235,11 +235,8 @@ const ValueRealizationPage = lazy(() =>
     default: m.SuggestionRecommendationPage,
   }))
 );
-const AssistantRuntimePage = lazy(() =>
-  import("./pages/Phase8/AssistantRuntimePage").then((m) => ({
-    default: m.AssistantRuntimePage,
-  }))
-);
+/* PPIQ-T071: the standalone assistant runtime page is retired. The assistant is
+   a global shell component mounted by AppLayout, not a destination. */
 const AssistantConfigurationPage = lazy(() =>
   import("./pages/Phase8/AssistantConfigurationPage").then((m) => ({
     default: m.AssistantConfigurationPage,
@@ -687,14 +684,11 @@ function AppRoutes() {
                       )}
                     />
                     <Route path="/phase8/suggestions" element={<Navigate to="/suggestions" replace />} />
-                    <Route
-                      path="/assistant"
-                      element={withPageBoundary(
-                        "/assistant",
-                        "Assistant is refreshing",
-                        <AssistantRuntimePage />
-                      )}
-                    />
+                    {/* PPIQ-T071 G1 visible contract: the assistant is a dock on
+                        every authenticated page and NOT a route. This path is a
+                        hidden compatibility redirect only - nothing in the
+                        navigation points at it, and the journey rail forbids it. */}
+                    <Route path="/assistant" element={<Navigate to="/dashboard" replace />} />
                     <Route path="/phase8/assistant" element={<Navigate to="/assistant" replace />} />
                     <Route
                       path="/assistant/configuration"

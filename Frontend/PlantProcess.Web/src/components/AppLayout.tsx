@@ -79,7 +79,6 @@ const NAV_INTELLIGENCE = [
 
 const NAV_ASSISTANT = [
   { to: "/suggestions", label: "Suggestions", desc: "Guarded recommendations", icon: BrainCircuit },
-  { to: "/assistant", label: "Assistant", desc: "Grounded chat runtime", icon: Sparkles },
   { to: "/assistant/configuration", label: "Assistant Configuration", desc: "HMI grounding controls", icon: Settings2 },
 ];
 

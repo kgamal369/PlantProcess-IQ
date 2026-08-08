@@ -27,10 +27,16 @@ describe("M1-11: one assistant, wired through the api client", () => {
     expect(existsSync(resolve(webRoot, "src/pages/Assistant/GroundedAssistantPage.tsx"))).toBe(false);
   });
 
-  it("the live assistant page mounts AssistantChat", () => {
-    const page = read("src/pages/Phase8/AssistantRuntimePage.tsx");
-    expect(page.length).toBeGreaterThan(0);
-    expect(page).toContain("<AssistantChat");
+  /* PPIQ-T071 G1: the assistant is a shell component, not a page. The rule this
+     assertion protects is unchanged - there is exactly ONE surface mounting the
+     chat - but that surface is now the dock, and the standalone runtime page it
+     used to name has been retired. A test that pins a retired architecture is
+     worse than no test. */
+  it("the dock mounts AssistantChat and no standalone runtime page remains", () => {
+    const dock = read("src/components/assistant/AssistantDock.tsx");
+    expect(dock.length).toBeGreaterThan(0);
+    expect(dock).toContain("<AssistantChat");
+    expect(existsSync(resolve(webRoot, "src/pages/Phase8/AssistantRuntimePage.tsx"))).toBe(false);
   });
 
   /* PPIQ-T071: the single askAssistant call MOVED from the page to the dock
@@ -41,8 +47,8 @@ describe("M1-11: one assistant, wired through the api client", () => {
   it("the dock provider owns the single askAssistant call", () => {
     const ctx = read("src/components/assistant/AssistantDockContext.tsx");
     expect(ctx).toContain("assistantApi.askAssistant(");
-    const page = read("src/pages/Phase8/AssistantRuntimePage.tsx");
-    expect(page).not.toContain("assistantApi.askAssistant(");
+    const dock = read("src/components/assistant/AssistantDock.tsx");
+    expect(dock).not.toContain("assistantApi.askAssistant(");
   });
 
   it("AssistantChat does not redeclare the wire types", () => {
