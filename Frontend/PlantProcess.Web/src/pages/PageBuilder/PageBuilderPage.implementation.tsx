@@ -21,7 +21,6 @@ import {
   pageBuilderReducer,
   type BuilderWidget,
   type PageBuilderState,
-  type WidgetKind,
 } from "./pageBuilderReducer";
 
 import "./page-builder.css";
@@ -327,6 +326,23 @@ export function PageBuilderPage() {
       setStatus({ kind: "loading", message: "Loading PageDefinition..." });
 
       const loaded = await pageBuilderApi.getBySlug(state.slug);
+
+      // PPIQ T-042 S4. A page whose layout will not parse is NOT loaded. The
+      // author keeps what is on screen and is told which widget failed; the
+      // alternative is showing them a rearranged page and calling it theirs.
+      try {
+        toPageBuilderState(loaded);
+      } catch (parseError) {
+        setStatus({
+          kind: "error",
+          message:
+            parseError instanceof LayoutParseError
+              ? parseError.message
+              : "The saved layout could not be read, so the page was not loaded.",
+        });
+
+        return;
+      }
       setLoadedPage(loaded);
       setConflict(null);
 
@@ -727,33 +743,54 @@ function toPageBuilderState(page: PageDefinitionDto): PageBuilderState {
   };
 }
 
+/// PPIQ T-042 S4. A LAYOUT THAT CANNOT BE READ IS A FAILED STATE.
+///
+/// The reader below used to invent whatever it could not parse: a position from
+/// the widget's index, a source of schema_view:unknown, a kind coerced into a
+/// five-value union that no longer exists. Each of those SILENTLY MOVES OR
+/// RENAMES a page the customer arranged, and it looks like a successful load.
+/// Refusing is the honest answer, and it names the widget that could not be
+/// read so the author knows which one.
+class LayoutParseError extends Error {}
+
 function toBuilderWidget(value: unknown, index: number): BuilderWidget {
   const raw = readObject(value);
+  const where = "widget " + (index + 1);
 
   return {
-    id: readString(raw.id, "w-loaded-" + index),
-    kind: toWidgetKind(raw.kind),
-    title: readString(raw.title, "Loaded widget"),
-    x: readNumber(raw.x, (index * 3) % 12),
-    y: readNumber(raw.y, Math.floor(index / 3) * 3),
-    w: readNumber(raw.w, 4),
-    h: readNumber(raw.h, 3),
-    source: readString(raw.source, "schema_view:unknown"),
+    id: requireString(raw.id, where, "id"),
+    kind: requireString(raw.kind, where, "kind"),
+    title: readString(raw.title, requireString(raw.id, where, "id")),
+    x: requireNumber(raw.x, where, "x"),
+    y: requireNumber(raw.y, where, "y"),
+    w: requireNumber(raw.w, where, "w"),
+    h: requireNumber(raw.h, where, "h"),
+    // A binding the author never made is an empty string, not a fabricated
+    // schema view. Empty is a fact; schema_view:unknown is a claim.
+    source: typeof raw.source === "string" ? raw.source : "",
   };
 }
 
-function toWidgetKind(value: unknown): WidgetKind {
-  if (
-    value === "kpi" ||
-    value === "bar" ||
-    value === "line" ||
-    value === "filter-date" ||
-    value === "filter-list"
-  ) {
+function requireString(value: unknown, where: string, field: string): string {
+  if (typeof value === "string" && value.trim().length > 0) {
     return value;
   }
 
-  return "kpi";
+  throw new LayoutParseError(
+    "The saved layout could not be read: " + where + " has no usable " + field
+    + ". The page was left exactly as it was saved rather than rearranged.",
+  );
+}
+
+function requireNumber(value: unknown, where: string, field: string): number {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+
+  throw new LayoutParseError(
+    "The saved layout could not be read: " + where + " has no usable " + field
+    + ". The page was left exactly as it was saved rather than rearranged.",
+  );
 }
 
 function readObject(value: unknown): Record<string, unknown> {
@@ -768,8 +805,5 @@ function readString(value: unknown, fallback: string): string {
   return typeof value === "string" && value.trim() ? value : fallback;
 }
 
-function readNumber(value: unknown, fallback: number): number {
-  return typeof value === "number" && Number.isFinite(value) ? value : fallback;
-}
 
 export default PageBuilderPage;
