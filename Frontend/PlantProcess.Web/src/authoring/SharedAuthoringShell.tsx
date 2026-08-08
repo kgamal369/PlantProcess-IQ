@@ -25,7 +25,7 @@
 // workflow that T-033 immediately deletes, which the Visible Contract law
 // forbids. The API types they used remain in the client contract untouched.
 
-import { useCallback, useEffect, useMemo, useState, type DragEvent } from "react";
+import { useCallback, useEffect, useMemo, useState, type DragEvent, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { addEdge, useEdgesState, useNodesState, type Connection, type Edge, type EdgeChange, type Node, type NodeChange } from "@xyflow/react";
 import { StandardP2Button, StandardP2Input, StandardP2Table, StandardP2TextArea } from "@/components/standard/StandardP2Controls";
 import { CanvasShell } from "@/canvas/CanvasShell";
@@ -694,12 +694,56 @@ export function SharedAuthoringShell({
           filtered: boardFiltered,
         };
 
+  // PPIQ T-040 03b3. THE KEYBOARD PATH (Golden Gate G10).
+  //
+  // A React handler on the shell root, never a global listener. A window or
+  // document listener would answer the key while the author is typing anywhere
+  // else in the product, and would keep answering after this shell closed.
+  //
+  // ENTER is the visible Run, and only where nothing else already owns the key.
+  // Editing controls own it. So do native buttons and links: a focused button
+  // already fires its own onClick on Enter, so answering the same press here
+  // would run the definition twice. On the board the press goes through
+  // doPreview, which is the same path the Run control uses and states the same
+  // refusal sentence - there is no second rule about when a definition may run.
+  //
+  // ESCAPE dismisses the innermost surface first and closes the shell only when
+  // there is nothing left to dismiss AND onClose was supplied, which is what
+  // being opened as a dialog means. A purpose opened as a page has nowhere to
+  // close to, so the key does nothing rather than something surprising.
+  //
+  // This is a plain function, not a memoised one. Everything it reads is shell
+  // state, it is handed to a DOM element rather than to a memoised child, and a
+  // plain function cannot be placed wrongly the way a hook can.
+  const onShellKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    const target = event.target as HTMLElement | null;
+    const tag = target && target.tagName ? target.tagName.toLowerCase() : "";
+    const editing = target ? target.isContentEditable === true : false;
+
+    if (event.key === "Escape") {
+      if (pendingBlockSwitch) { event.preventDefault(); cancelBlockMode(); return; }
+      if (forkAsked) { event.preventDefault(); setForkAsked(false); return; }
+      if (onClose) { event.preventDefault(); onClose(); }
+      return;
+    }
+
+    if (event.key !== "Enter") { return; }
+    if (tag === "textarea" || tag === "input" || tag === "select" || editing) { return; }
+    if (tag === "button" || tag === "a" || (target !== null && target.getAttribute("role") === "button")) { return; }
+    if (activeRun !== "none") { return; }
+    if (isQueryPurpose) { return; }
+
+    event.preventDefault();
+    if (mode === "sql" && sqlState === "authoring") { void doRunSql(); return; }
+    void doPreview();
+  };
+
   const emptyTreeMessage = definition.showsStagingCatalogue
     ? "No staged datasets. Register a source and run Stage-1 from the Importing Data area, then reopen this page."
     : "This purpose reads the canonical model. Its catalogue is bound when this purpose gains its entry point.";
 
   return (
-    <div className="canvas-modeshell" data-testid="authoring-shell" data-purpose={purpose}>
+    <div className="canvas-modeshell" data-testid="authoring-shell" data-purpose={purpose} onKeyDown={onShellKeyDown}>
       {/* BLOCK-START - section 5.2.3 region 1. */}
       <div className="canvas-modebar" data-testid="authoring-mode-bar">
         <span className="canvas-modebar__label">{definition.label}</span>
