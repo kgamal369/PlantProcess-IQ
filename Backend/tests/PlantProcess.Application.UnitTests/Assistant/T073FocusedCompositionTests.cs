@@ -117,7 +117,9 @@ public class T073FocusedCompositionTests
 
         var model = new CapturingModel();
         var evidence = new StubEvidence { Snapshot = FocusedSnapshot() };
-        var service = new AssistantService(index, new ToolRegistry(Array.Empty<ITool>()), model, evidence);
+        var service = new AssistantService(
+            index, new ToolRegistry(Array.Empty<ITool>()), model,
+            evidence, new EmptyParameterQuantityRegistry());
         return (service, index, model, evidence);
     }
 

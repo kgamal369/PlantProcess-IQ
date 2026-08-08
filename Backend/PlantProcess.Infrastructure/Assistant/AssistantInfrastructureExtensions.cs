@@ -41,6 +41,9 @@ public static class AssistantInfrastructureExtensions
         // resolver proves a handle exists and carries no tenant, this returns
         // content and therefore must carry one.
         services.AddScoped<IWidgetResultEvidenceReader, NpgsqlWidgetResultEvidenceReader>();
+
+        // T-074: the parameter registry, sole authority for quantity semantics.
+        services.AddScoped<IParameterQuantityRegistry, NpgsqlParameterQuantityRegistry>();
         // T-073: AssistantService now requires it for the contextual evidence anchor,
         // so a missing registration is a startup failure rather than a silent
         // disabling of the rule.

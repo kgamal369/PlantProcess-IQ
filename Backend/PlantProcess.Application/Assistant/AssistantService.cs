@@ -15,17 +15,20 @@ public sealed class AssistantService
     private readonly ToolRegistry _tools;
     private readonly IAssistantModel _model;
     private readonly IWidgetResultEvidenceReader _widgetEvidence;
+    private readonly IParameterQuantityRegistry _quantities;
 
     public AssistantService(
         IRetrievalIndex retrieval,
         ToolRegistry tools,
         IAssistantModel model,
-        IWidgetResultEvidenceReader widgetEvidence)
+        IWidgetResultEvidenceReader widgetEvidence,
+        IParameterQuantityRegistry quantities)
     {
         _retrieval = retrieval;
         _tools = tools;
         _model = model;
         _widgetEvidence = widgetEvidence;
+        _quantities = quantities;
     }
 
     public async Task<GroundedAnswer> AskAsync(AssistantRequest request, IReadOnlyList<(string Tool, IReadOnlyDictionary<string, string> Args)>? toolCalls, CancellationToken ct)
@@ -131,6 +134,32 @@ public sealed class AssistantService
         // forbidden by a string check, for this model and for any model swapped in
         // later. Retrieval has already used it by this point.
         var draft = _model.Draft(request with { Context = null }, chunks, toolResults);
-        return GroundingService.Enforce(draft.Text, draft.Claims);
+
+        // T-074 TYPED QUANTITY GUARD, between the draft and the grounding contract.
+        //
+        // The registry is the only authority for a quantity's unit, sign and range,
+        // and there is no second dictionary anywhere in assistant code. Three
+        // outcomes, not two: no registry vocabulary in the question leaves this
+        // path exactly as it was; one approved definition arms the guard; and
+        // vocabulary that matches with no unique approved authority - synthetic
+        // only, or tied - refuses a numeric answer rather than picking a winner.
+        //
+        // This owns quantity SEMANTICS only. Uncited numbers, provenance, synthetic
+        // claims and causation wording stay with GroundingService, which runs next
+        // on the sentences that survive.
+        var registry = await _quantities.GetActiveAsync(ct);
+        var resolution = QuantityResolver.Resolve(request.Question, registry);
+        var guarded = TypedQuantityGuard.Apply(draft.Text, resolution);
+
+        var answer = GroundingService.Enforce(guarded.DraftText, draft.Claims);
+
+        if (guarded.Blocked.Count == 0) return answer;
+
+        // The audit keeps both sets: what the quantity guard refused, and what the
+        // grounding contract refused. Losing either would hide a refusal.
+        return answer with
+        {
+            BlockedSentences = answer.BlockedSentences.Concat(guarded.Blocked).ToList()
+        };
     }
 }

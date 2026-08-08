@@ -88,7 +88,9 @@ public class T073EvidenceAnchorTests
             ProvenanceHandle.Dataset("connection:CP-05"), 1.0));
 
         var evidence = new StubEvidence();
-        var service = new AssistantService(index, new ToolRegistry(Array.Empty<ITool>()), new StubModel(), evidence);
+        var service = new AssistantService(
+            index, new ToolRegistry(Array.Empty<ITool>()), new StubModel(),
+            evidence, new EmptyParameterQuantityRegistry());
         return (service, index, evidence);
     }
 

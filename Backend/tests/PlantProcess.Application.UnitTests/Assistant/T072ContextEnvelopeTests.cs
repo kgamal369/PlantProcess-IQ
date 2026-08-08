@@ -68,7 +68,9 @@ public class T072ContextEnvelopeTests
            not exercise a focused widget, so the anchor is never consulted - but the
            dependency is real and is passed rather than defaulted away, so nobody can
            delete the rule and still see these tests pass. */
-        var service = new AssistantService(index, new ToolRegistry(Array.Empty<ITool>()), model, new AlwaysAnchoredEvidence());
+        var service = new AssistantService(
+            index, new ToolRegistry(Array.Empty<ITool>()), model,
+            new AlwaysAnchoredEvidence(), new EmptyParameterQuantityRegistry());
         return (service, index, model);
     }
 
