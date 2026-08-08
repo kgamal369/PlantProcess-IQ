@@ -12,7 +12,9 @@ const baseURL = process.env.PPIQ_T040_BASE_URL || "http://localhost:5173";
 
 export default defineConfig({
   testDir: "./e2e",
-  testMatch: /t040-golden-gate\.spec\.ts$/,
+  // PPIQ T-041. The same configuration, one more spec. A second config would
+  // be a second topology to keep true.
+  testMatch: /t04[01]-.*\.spec\.ts$/,
   timeout: 120_000,
   expect: { timeout: 20_000 },
   fullyParallel: false,
