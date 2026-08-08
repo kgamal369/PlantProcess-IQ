@@ -86,6 +86,54 @@ public static class AssistantEndpoints
             });
         });
 
+        group.MapGet("/evidence/widget-result/{evidenceId:guid}", async (
+            Guid evidenceId,
+            ClaimsPrincipal user,
+            [FromServices] IWidgetResultEvidenceReader reader,
+            CancellationToken ct) =>
+        {
+            if (!TryTenant(user, out var tenantId)) return ApplicationProblems.Validation("no_tenant");
+
+            var snapshot = await reader.ReadAsync(tenantId, evidenceId, ct);
+
+            // T-073 validation point 4, and the tenant boundary in one place. The
+            // predicate carries tenant identity AND evidence identity, so a handle
+            // belonging to another tenant is UNAVAILABLE here - never content, and
+            // never a different tenant's numbers.
+            if (snapshot is null)
+            {
+                return Results.NotFound(new
+                {
+                    evidenceId,
+                    available = false,
+                    reason = "No widget result evidence with that identity is available to this tenant."
+                });
+            }
+
+            return Results.Ok(new
+            {
+                evidenceId = snapshot.EvidenceId,
+                available = true,
+                pageCode = snapshot.Identity.PageCode,
+                widgetCode = snapshot.Identity.WidgetCode,
+                widgetDefinitionId = snapshot.Identity.WidgetDefinitionId,
+                widgetType = snapshot.Identity.WidgetType,
+                chartType = snapshot.Identity.ChartType,
+                dimensionCode = snapshot.Identity.DimensionCode,
+                measureCode = snapshot.Identity.MeasureCode,
+                parameterCode = snapshot.Identity.ParameterCode,
+                queryFingerprint = snapshot.QueryFingerprint,
+                resultFingerprint = snapshot.ResultFingerprint,
+                filterContext = snapshot.FilterContextJson,
+                generatedAtUtc = snapshot.GeneratedAtUtc,
+                columns = snapshot.Result.Columns,
+                rows = snapshot.Result.Rows,
+                hasObservationCount = snapshot.Result.HasObservationCount,
+                observationCountTotal = snapshot.Result.ObservationCountTotal,
+                sentence = WidgetResultEvidence.Sentence(snapshot.Identity, snapshot.Result)
+            });
+        });
+
         return app;
     }
 

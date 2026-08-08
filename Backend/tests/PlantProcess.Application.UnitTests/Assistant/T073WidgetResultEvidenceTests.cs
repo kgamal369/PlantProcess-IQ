@@ -4,15 +4,25 @@ using Xunit;
 namespace PlantProcess.Application.UnitTests.Assistant;
 
 /// <summary>
-/// T-073. The pure evidence logic: it must be deterministic, it must never
-/// invent a number, and it must carry no vocabulary.
+/// T-073. The pure evidence logic: deterministic, never inventing a number,
+/// carrying no vocabulary, and binding every semantic the sentence states.
 /// </summary>
 public class T073WidgetResultEvidenceTests
 {
     private static WidgetEvidenceIdentity Identity() => new(
         "PAGE_ALPHA", "WIDGET_ALPHA", Guid.Empty, "chart", "bar", "DIM_ALPHA", "MEASURE_ALPHA", null);
 
-    private static IReadOnlyList<IDictionary<string, object?>> Rows() => new List<IDictionary<string, object?>>
+    private static IReadOnlyList<string> Columns() => new List<string>
+    {
+        "DIM_ALPHA", "dimensionLabel", "value", "observationCount", "secondaryCount"
+    };
+
+    private static IReadOnlyList<string> ColumnsWithoutObservationCount() => new List<string>
+    {
+        "DIM_ALPHA", "dimensionLabel", "value"
+    };
+
+    private static List<IDictionary<string, object?>> Rows() => new()
     {
         new Dictionary<string, object?>
         {
@@ -32,20 +42,33 @@ public class T073WidgetResultEvidenceTests
         }
     };
 
-    private static IReadOnlyList<string> Columns() => new List<string>
-    {
-        "DIM_ALPHA", "dimensionLabel", "value", "observationCount", "secondaryCount"
-    };
-
     [Fact]
-    public void Normalisation_keeps_every_value_and_sums_the_population()
+    public void Normalisation_keeps_every_value_and_totals_the_observation_count_column()
     {
         var result = WidgetResultEvidence.Normalise(Columns(), Rows());
 
         Assert.Equal(2, result.Rows.Count);
-        Assert.Equal(1924, result.PopulationCount);
+        Assert.True(result.HasObservationCount);
+        Assert.Equal(1924, result.ObservationCountTotal);
         Assert.Contains("3.4", result.Rows[0]);
         Assert.Contains("1.9", result.Rows[1]);
+    }
+
+    [Fact]
+    public void Without_that_column_nothing_is_counted_and_nothing_is_inferred()
+    {
+        var rows = Rows();
+        foreach (var row in rows) row.Remove("observationCount");
+
+        var result = WidgetResultEvidence.Normalise(ColumnsWithoutObservationCount(), rows);
+
+        Assert.False(result.HasObservationCount);
+        Assert.Equal(0, result.ObservationCountTotal);
+
+        /* Two rows must never become a count of two of anything. */
+        var sentence = WidgetResultEvidence.Sentence(Identity(), result);
+        Assert.DoesNotContain("observationCount", sentence);
+        Assert.Contains("2 result rows", sentence);
     }
 
     [Fact]
@@ -53,11 +76,8 @@ public class T073WidgetResultEvidenceTests
     {
         var first = WidgetResultEvidence.Normalise(Columns(), Rows());
         var second = WidgetResultEvidence.Normalise(Columns(), Rows());
-
         var queryFingerprint = WidgetResultEvidence.QueryFingerprint(Identity(), "{}");
 
-        /* This is validation point 6. If these differed, every reindex would mint
-           a new evidence identity and old citations would rot. */
         Assert.Equal(
             WidgetResultEvidence.ResultFingerprint(queryFingerprint, first),
             WidgetResultEvidence.ResultFingerprint(queryFingerprint, second));
@@ -79,14 +99,20 @@ public class T073WidgetResultEvidenceTests
     }
 
     [Fact]
-    public void A_different_widget_fingerprints_differently()
+    public void Every_semantic_the_sentence_states_is_bound_to_the_evidence_identity()
     {
         var identity = Identity();
-        var other = identity with { WidgetCode = "WIDGET_BETA" };
+        var baseline = WidgetResultEvidence.QueryFingerprint(identity, "{}");
 
-        Assert.NotEqual(
-            WidgetResultEvidence.QueryFingerprint(identity, "{}"),
-            WidgetResultEvidence.QueryFingerprint(other, "{}"));
+        /* The invariant: an old citation must never resolve to semantically
+           different evidence after a widget definition changes. Each of these is
+           a semantic the sentence states, so each must move the fingerprint. */
+        Assert.NotEqual(baseline, WidgetResultEvidence.QueryFingerprint(identity with { WidgetCode = "WIDGET_BETA" }, "{}"));
+        Assert.NotEqual(baseline, WidgetResultEvidence.QueryFingerprint(identity with { PageCode = "PAGE_BETA" }, "{}"));
+        Assert.NotEqual(baseline, WidgetResultEvidence.QueryFingerprint(identity with { MeasureCode = "MEASURE_BETA" }, "{}"));
+        Assert.NotEqual(baseline, WidgetResultEvidence.QueryFingerprint(identity with { ChartType = "line" }, "{}"));
+        Assert.NotEqual(baseline, WidgetResultEvidence.QueryFingerprint(identity with { DimensionCode = "DIM_BETA" }, "{}"));
+        Assert.NotEqual(baseline, WidgetResultEvidence.QueryFingerprint(identity, "{\"siteId\":\"SITE_ALPHA\"}"));
     }
 
     [Fact]
@@ -98,9 +124,19 @@ public class T073WidgetResultEvidenceTests
         Assert.Contains("LABEL_ONE 3.4", sentence);
         Assert.Contains("LABEL_TWO 1.9", sentence);
         Assert.Contains("2 result rows", sentence);
-        Assert.Contains("1924 observations", sentence);
+        Assert.Contains("observationCount column totals 1924", sentence);
+    }
+
+    [Fact]
+    public void The_sentence_states_the_semantics_it_was_fingerprinted_against()
+    {
+        var sentence = WidgetResultEvidence.Sentence(Identity(), WidgetResultEvidence.Normalise(Columns(), Rows()));
+
         Assert.Contains("PAGE_ALPHA", sentence);
         Assert.Contains("WIDGET_ALPHA", sentence);
+        Assert.Contains("MEASURE_ALPHA", sentence);
+        Assert.Contains("DIM_ALPHA", sentence);
+        Assert.Contains("bar", sentence);
     }
 
     [Fact]
@@ -110,7 +146,29 @@ public class T073WidgetResultEvidenceTests
         var sentence = WidgetResultEvidence.Sentence(Identity(), empty);
 
         Assert.Contains("returned no rows", sentence);
-        Assert.DoesNotContain("population", sentence);
+        Assert.DoesNotContain("observationCount column totals", sentence);
+    }
+
+    [Fact]
+    public void A_long_result_says_how_many_of_its_rows_are_listed()
+    {
+        var rows = new List<IDictionary<string, object?>>();
+        for (var i = 0; i < 20; i++)
+        {
+            rows.Add(new Dictionary<string, object?>
+            {
+                ["DIM_ALPHA"] = "KEY_" + i,
+                ["dimensionLabel"] = "LABEL_" + i,
+                ["value"] = i,
+                ["observationCount"] = 1,
+                ["secondaryCount"] = 0
+            });
+        }
+
+        var sentence = WidgetResultEvidence.Sentence(Identity(), WidgetResultEvidence.Normalise(Columns(), rows));
+
+        Assert.Contains("20 result rows", sentence);
+        Assert.Contains("the first 6 are listed here", sentence);
     }
 
     [Fact]

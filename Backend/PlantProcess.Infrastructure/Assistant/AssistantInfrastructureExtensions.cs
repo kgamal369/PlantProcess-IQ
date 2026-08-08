@@ -35,6 +35,12 @@ public static class AssistantInfrastructureExtensions
         // acquire a dependency on dashboard execution.
         services.AddScoped<CanonicalChunkProducer>();
         services.AddScoped<WidgetResultChunkProducer>();
+
+        // T-073 validation point 4. The tenant-scoped snapshot read, which is a
+        // different contract from the provenance resolver on purpose: the
+        // resolver proves a handle exists and carries no tenant, this returns
+        // content and therefore must carry one.
+        services.AddScoped<IWidgetResultEvidenceReader, NpgsqlWidgetResultEvidenceReader>();
         services.AddScoped<IAssistantChunkProducer, CompositeChunkProducer>();
         services.AddScoped<AssistantService>();
         return services;

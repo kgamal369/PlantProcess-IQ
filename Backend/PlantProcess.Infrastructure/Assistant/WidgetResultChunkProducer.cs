@@ -13,12 +13,11 @@ namespace PlantProcess.Infrastructure.Assistant;
 ///
 /// The order is the point. The snapshot is written first and read back, and the
 /// sentence is composed from what came back. A sentence composed from an
-/// in-memory result and an evidence row written separately afterwards would
-/// look identical and prove nothing, because nothing would tie the words to the
-/// row. Here the citation resolves to the exact snapshot the words came from.
+/// in-memory result with an evidence row written beside it afterwards would look
+/// identical and prove nothing, because nothing would tie the words to the row.
 ///
 /// Widget discovery is READ-ONLY over the definition tables. This producer never
-/// writes a definition, never invents a widget, and never names one.
+/// writes a definition, never invents a widget and never names one.
 /// </summary>
 public sealed class WidgetResultChunkProducer
 {
@@ -57,9 +56,8 @@ public sealed class WidgetResultChunkProducer
 
             var execution = await _queryService.ExecuteAsync(query, ct);
 
-            // A widget this engine cannot execute contributes NOTHING. It does not
-            // contribute a guess, and it does not contribute an empty sentence
-            // that would read as a real answer.
+            // A widget this engine cannot execute contributes NOTHING. Not a
+            // guess, and not an empty sentence that would read as an answer.
             if (!execution.IsSuccess || execution.Value is null) continue;
 
             var result = execution.Value;
@@ -81,16 +79,11 @@ public sealed class WidgetResultChunkProducer
             var queryFingerprint = WidgetResultEvidence.QueryFingerprint(identity, filterContextJson);
             var resultFingerprint = WidgetResultEvidence.ResultFingerprint(queryFingerprint, normalised);
 
-            var resultJson = JsonSerializer.Serialize(new
-            {
-                columns = normalised.Columns,
-                rows = normalised.Rows,
-                populationCount = normalised.PopulationCount
-            });
+            var resultJson = WidgetResultEvidenceJson.Serialize(identity, normalised);
 
             var evidenceId = await PersistAsync(
                 conn, tenantId, identity, queryFingerprint, resultFingerprint,
-                filterContextJson, normalised.PopulationCount, resultJson, result.GeneratedAtUtc, ct);
+                filterContextJson, normalised.ObservationCountTotal, resultJson, result.GeneratedAtUtc, ct);
 
             if (evidenceId is null) continue;
 
@@ -103,7 +96,7 @@ public sealed class WidgetResultChunkProducer
                 Guid.NewGuid(),
                 SourceKind,
                 evidenceId.Value.ToString(),
-                persisted,
+                WidgetResultEvidence.Sentence(persisted.Identity, persisted.Result),
                 ProvenanceHandle.WidgetResult(evidenceId.Value.ToString()),
                 0d,
                 false,
@@ -157,7 +150,14 @@ public sealed class WidgetResultChunkProducer
     /// <summary>
     /// Writes the snapshot, or finds the one an earlier identical run already
     /// wrote. The unique constraint on (tenant_id, result_fingerprint) is what
-    /// keeps a repeated reindex from changing the evidence identity.
+    /// keeps a repeated reindex from changing the evidence identity, and the
+    /// fingerprint binds the widget's semantics, so a definition change writes a
+    /// new row rather than silently reusing the old one.
+    ///
+    /// NOTE ON THE COLUMN NAME: population_count stores the total of the result's
+    /// own observationCount column, or zero when the result does not supply one.
+    /// The column name predates that correction and is recorded debt, not a
+    /// claim: nothing reads it as a population.
     /// </summary>
     private static async Task<Guid?> PersistAsync(
         NpgsqlConnection conn,
@@ -166,7 +166,7 @@ public sealed class WidgetResultChunkProducer
         string queryFingerprint,
         string resultFingerprint,
         string filterContextJson,
-        int populationCount,
+        int observationCountTotal,
         string resultJson,
         DateTime generatedAtUtc,
         CancellationToken ct)
@@ -178,7 +178,7 @@ public sealed class WidgetResultChunkProducer
                 "(tenant_id, page_code, widget_code, widget_definition_id, query_fingerprint, " +
                 " generated_at_utc, filter_context_json, population_count, result_json, result_fingerprint) " +
                 "VALUES (@tenant, @page, @widget, @definition, @queryFingerprint, " +
-                "        @generated, @filters::jsonb, @population, @result::jsonb, @resultFingerprint) " +
+                "        @generated, @filters::jsonb, @observations, @result::jsonb, @resultFingerprint) " +
                 "ON CONFLICT (tenant_id, result_fingerprint) DO NOTHING " +
                 "RETURNING id";
 
@@ -189,7 +189,7 @@ public sealed class WidgetResultChunkProducer
             insert.Parameters.AddWithValue("queryFingerprint", queryFingerprint);
             insert.Parameters.AddWithValue("generated", generatedAtUtc);
             insert.Parameters.AddWithValue("filters", filterContextJson);
-            insert.Parameters.AddWithValue("population", populationCount);
+            insert.Parameters.AddWithValue("observations", observationCountTotal);
             insert.Parameters.AddWithValue("result", resultJson);
             insert.Parameters.AddWithValue("resultFingerprint", resultFingerprint);
 
@@ -207,57 +207,17 @@ public sealed class WidgetResultChunkProducer
         return await existing.ExecuteScalarAsync(ct) is Guid existingId ? existingId : null;
     }
 
-    /// <summary>Composes the sentence from the PERSISTED row and nothing else.</summary>
-    private static async Task<string?> ReadBackAsync(NpgsqlConnection conn, Guid tenantId, Guid evidenceId, CancellationToken ct)
+    private static async Task<WidgetResultEvidenceSnapshot?> ReadBackAsync(
+        NpgsqlConnection conn, Guid tenantId, Guid evidenceId, CancellationToken ct)
     {
         await using var cmd = conn.CreateCommand();
-        cmd.CommandText =
-            "SELECT page_code, widget_code, result_json, population_count " +
-            "FROM canon.assistant_widget_result " +
-            "WHERE tenant_id = @tenant AND id = @id";
+        cmd.CommandText = WidgetResultEvidenceJson.SelectSnapshotSql;
         cmd.Parameters.AddWithValue("tenant", tenantId);
         cmd.Parameters.AddWithValue("id", evidenceId);
 
         await using var reader = await cmd.ExecuteReaderAsync(ct);
         if (!await reader.ReadAsync(ct)) return null;
 
-        var pageCode = reader.GetString(0);
-        var widgetCode = reader.GetString(1);
-        var resultJson = reader.GetString(2);
-        var population = reader.GetInt32(3);
-
-        using var document = JsonDocument.Parse(resultJson);
-        var root = document.RootElement;
-
-        var columns = new List<string>();
-        if (root.TryGetProperty("columns", out var columnsElement))
-        {
-            foreach (var column in columnsElement.EnumerateArray())
-            {
-                columns.Add(column.GetString() ?? string.Empty);
-            }
-        }
-
-        var rows = new List<IReadOnlyList<string>>();
-        if (root.TryGetProperty("rows", out var rowsElement))
-        {
-            foreach (var row in rowsElement.EnumerateArray())
-            {
-                var cells = new List<string>();
-                foreach (var cell in row.EnumerateArray())
-                {
-                    cells.Add(cell.GetString() ?? string.Empty);
-                }
-
-                rows.Add(cells);
-            }
-        }
-
-        var restored = new NormalisedWidgetResult(columns, rows, population);
-
-        var identity = new WidgetEvidenceIdentity(
-            pageCode, widgetCode, null, string.Empty, string.Empty, null, string.Empty, null);
-
-        return WidgetResultEvidence.Sentence(identity, restored);
+        return WidgetResultEvidenceJson.ReadSnapshot(reader, evidenceId);
     }
 }
