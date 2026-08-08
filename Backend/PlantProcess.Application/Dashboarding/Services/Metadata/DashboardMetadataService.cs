@@ -1,4 +1,4 @@
-﻿using PlantProcess.Application.Dashboarding.Contracts;
+using PlantProcess.Application.Dashboarding.Contracts;
 using PlantProcess.Application.Common.Persistence;
 using PlantProcess.Application.Common.Results;
 using PlantProcess.Application.Dashboarding.Interfaces;
@@ -24,6 +24,7 @@ public sealed class DashboardMetadataService : IDashboardMetadataService
         var filters = BuildFilters();
         var purposes = BuildPurposes();
         var compatibilityRules = BuildCompatibilityRules(dimensions, measures);
+        var widgetKinds = BuildWidgetKinds();
 
         var metadata = new DashboardMetadataDto(
             GeneratedAtUtc: DateTime.UtcNow,
@@ -33,9 +34,67 @@ public sealed class DashboardMetadataService : IDashboardMetadataService
             Filters: filters,
             Purposes: purposes,
             CompatibilityRules: compatibilityRules,
+            WidgetKinds: widgetKinds,
             SafetyLimits: DashboardWidgetQuerySafetyRegistry.BuildLimitsDto());
 
         return Task.FromResult(ApplicationResult<DashboardMetadataDto>.Success(metadata));
+    }
+
+    /// PPIQ T-041. Served from the ONE metadata endpoint the client already
+    /// calls, so the Page Builder stops compiling its own allowed list.
+    private static IReadOnlyList<DashboardWidgetKindMetadataDto> BuildWidgetKinds()
+    {
+        return new[]
+        {
+            new DashboardWidgetKindMetadataDto(
+                DashboardMetadataCodes.WidgetKinds.Chart,
+                "Chart",
+                UsesChartType: true,
+                UsesQuery: true,
+                "Plots a query against a chart type chosen from the chart catalogue."),
+
+            new DashboardWidgetKindMetadataDto(
+                DashboardMetadataCodes.WidgetKinds.Table,
+                "Table",
+                UsesChartType: false,
+                UsesQuery: true,
+                "Shows the returned rows as rows, when the reader needs the values rather than the shape."),
+
+            new DashboardWidgetKindMetadataDto(
+                DashboardMetadataCodes.WidgetKinds.Kpi,
+                "KPI",
+                UsesChartType: false,
+                UsesQuery: true,
+                "One measured number, with the population it was measured over."),
+
+            new DashboardWidgetKindMetadataDto(
+                DashboardMetadataCodes.WidgetKinds.CalculatedLabel,
+                "Calculated label",
+                UsesChartType: false,
+                UsesQuery: true,
+                "A sentence whose values come from a query, so a caption cannot drift from the data."),
+
+            new DashboardWidgetKindMetadataDto(
+                DashboardMetadataCodes.WidgetKinds.Filter,
+                "Filter",
+                UsesChartType: false,
+                UsesQuery: true,
+                "Narrows the page. Its variant - list, dropdown, date range, numeric range, search or button group - is chosen inside the kind."),
+
+            new DashboardWidgetKindMetadataDto(
+                DashboardMetadataCodes.WidgetKinds.Container,
+                "Container",
+                UsesChartType: false,
+                UsesQuery: false,
+                "Groups other widgets so a page can be read in sections rather than as a wall."),
+
+            new DashboardWidgetKindMetadataDto(
+                DashboardMetadataCodes.WidgetKinds.Text,
+                "Text",
+                UsesChartType: false,
+                UsesQuery: false,
+                "Written context authored by a person. It states no measured value, so it can never disagree with one."),
+        };
     }
 
     private static IReadOnlyList<DashboardChartTypeMetadataDto> BuildChartTypes()

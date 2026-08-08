@@ -8,7 +8,27 @@ public sealed record DashboardMetadataDto(
     IReadOnlyList<DashboardFilterMetadataDto> Filters,
     IReadOnlyList<DashboardPurposeMetadataDto> Purposes,
     IReadOnlyList<DashboardCompatibilityRuleDto> CompatibilityRules,
+    IReadOnlyList<DashboardWidgetKindMetadataDto> WidgetKinds,
     DashboardQuerySafetyLimitsDto SafetyLimits);
+
+/// PPIQ T-041. THE STRUCTURAL WIDGET-KIND GRAMMAR.
+///
+/// Chapter 4 closes this list at seven. A kind is what a widget IS on the page.
+/// It is NOT the chart type - Bar and Line are chart types under the Chart kind -
+/// and it is NOT the filter variant - List and Date Range are variants under the
+/// Filter kind. Mixing the two levels is what the retiring Page Builder union
+/// did, and it is why a picker could offer "line" beside "filter-date" as if
+/// they were the same sort of choice.
+///
+/// FIXED PRODUCT GRAMMAR. There is no registry, no plugin seam and no extension
+/// path: a customer supplies dimensions, measures, filters and data, never a
+/// structural kind.
+public sealed record DashboardWidgetKindMetadataDto(
+    string Code,
+    string Label,
+    bool UsesChartType,
+    bool UsesQuery,
+    string Description);
 
 public sealed record DashboardDimensionMetadataDto(
     string Code,
@@ -138,6 +158,24 @@ public static class DashboardMetadataCodes
         public const string Kpi = "kpi";
         public const string Chart = "chart";
         public const string Table = "table";
+    }
+
+    /// PPIQ T-041. The seven structural kinds, closed.
+    ///
+    /// Kpi, Chart and Table REUSE the codes WidgetTypes already shipped, because
+    /// a shipped code is renamed by a migration and not by a new feature. They
+    /// sit in their own namespace because ChartTypes also declares "kpi" and
+    /// "table": the same token means a chart type there and a structural kind
+    /// here, and reading one list as the other would be a silent category error.
+    public static class WidgetKinds
+    {
+        public const string Chart = "chart";
+        public const string Table = "table";
+        public const string Kpi = "kpi";
+        public const string CalculatedLabel = "calculated-label";
+        public const string Filter = "filter";
+        public const string Container = "container";
+        public const string Text = "text";
     }
 
     public static class Purposes
