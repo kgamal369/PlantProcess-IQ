@@ -31,6 +31,10 @@ const { pageApi, dashApi, shell } = vi.hoisted(() => ({
 }));
 
 vi.mock("@/api/pageBuilder", () => ({ pageBuilderApi: pageApi }));
+// The page reads the current role to decide what Publish can truthfully say, so
+// a bare render now needs the auth contract. Engineer, because that is the
+// audience these pages are authored for.
+vi.mock("@/state/AuthContext", () => ({ useAuth: () => ({ user: { role: "Engineer" } }) }));
 vi.mock("@/api/dashboarding/dashboarding.api", () => ({ dashboardingApi: dashApi }));
 vi.mock("@/authoring/SharedAuthoringShell", () => ({
   SharedAuthoringShell: (props: { dashboardDefinitionId?: string; onSaved?: () => void }) => {

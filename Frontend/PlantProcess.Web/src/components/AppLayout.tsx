@@ -32,6 +32,8 @@ import {
 import { productApi } from "../api/productApiClient";
 import { apiClient } from "../api/http";
 import { useAuth } from "../state/AuthContext";
+import { pageBuilderApi, type PageDefinitionDto } from "../api/pageBuilder";
+import { subscribeToWorkspaceLinksChanged } from "../state/workspaceLinksSignal";
 import { usePlantProcessTheme } from "../state/ThemeContext";
 import { AppToaster } from "../notifications/Toaster";
 import { LogPanel } from "./logging/LogPanel";
@@ -151,42 +153,112 @@ function NavItem({
  *  reported once to the console instead of vanishing. */
 function useWorkspaceLinks(): NavEntry[] {
   const [links, setLinks] = useState<NavEntry[]>([]);
+  const { user } = useAuth();
+  const role = user?.role ?? "";
+
   useEffect(() => {
     let ignore = false;
-    apiClient
-      .get<unknown>("/analytics/dashboard/definitions")
-      .then((body) => {
-        if (ignore) return;
-        const container = body as Record<string, unknown> | unknown[] | null;
-        const arr = Array.isArray(container)
-          ? container
-          : ((container?.["items"] ??
-              container?.["definitions"] ??
-              container?.["dashboards"] ??
-              container?.["results"] ??
-              []) as unknown[]);
-        const mapped = (arr as Array<Record<string, unknown>>)
-          .map((d) => ({
-            code: String(d["dashboardCode"] ?? d["dashboard_code"] ?? d["code"] ?? ""),
-            name: String(d["name"] ?? d["dashboardCode"] ?? d["code"] ?? "Workspace"),
-          }))
-          .filter((d) => d.code)
-          .sort((a, b) => a.name.localeCompare(b.name))
-          .map((d) => ({
-            to: "/workspace/" + d.code,
-            label: d.name,
-            desc: "Interactive analytics workspace",
-            icon: LayoutDashboard,
-          }));
-        setLinks(mapped);
-      })
-      .catch((err) => {
-        if (ignore) return;
-        console.warn("[nav] workspace list unavailable:", err);
-        setLinks([]);
-      });
-    return () => { ignore = true; };
-  }, []);
+
+    async function load() {
+      // PPIQ T-042 S6. TWO AUTHORITIES, AND THE PROJECTION FAILS CLOSED.
+      //
+      // Navigation now depends on the dashboards AND on page lifecycle. If the
+      // page list cannot be read, "there are no PageBuilder pages" is NOT a
+      // safe assumption - it would classify every backed dashboard as seeded
+      // and expose unpublished drafts. So a failed page fetch keeps whatever
+      // was last known good and changes nothing.
+      const dashboards = await apiClient.get<unknown>("/analytics/dashboard/definitions");
+      const pages = await pageBuilderApi.listMine(true);
+
+      if (ignore) {
+        return;
+      }
+
+      const container = dashboards as Record<string, unknown> | unknown[] | null;
+      const arr = Array.isArray(container)
+        ? container
+        : ((container?.["items"] ??
+            container?.["definitions"] ??
+            container?.["dashboards"] ??
+            container?.["results"] ??
+            []) as unknown[]);
+
+      const byDashboard = new Map<string, PageDefinitionDto>();
+
+      for (const page of pages) {
+        if (page.backingDashboardDefinitionId) {
+          byDashboard.set(String(page.backingDashboardDefinitionId).toLowerCase(), page);
+        }
+      }
+
+      const mapped = (arr as Array<Record<string, unknown>>)
+        .map((d) => ({
+          id: String(d["id"] ?? d["dashboardDefinitionId"] ?? "").toLowerCase(),
+          code: String(d["dashboardCode"] ?? d["dashboard_code"] ?? d["code"] ?? ""),
+          name: String(d["name"] ?? d["dashboardCode"] ?? d["code"] ?? "Workspace"),
+        }))
+        .filter((d) => d.code)
+        .map((d) => {
+          const owner = byDashboard.get(d.id);
+
+          // No page ever claimed this dashboard: a seeded or system workspace,
+          // preserved exactly as it was, labelled by the dashboard.
+          if (!owner) {
+            return d;
+          }
+
+          // A page claimed it and was deleted. This is the resurrection case:
+          // the dashboard is orphaned, NOT seeded, and must stay hidden.
+          if (owner.isDeleted === true) {
+            return null;
+          }
+
+          // A draft is not a workspace.
+          if (!owner.publishedAtUtc) {
+            return null;
+          }
+
+          // Published to an audience this role is not in. One role string is
+          // all the auth contract carries, so it is compared exactly - there is
+          // deliberately no Admin bypass invented here.
+          const audience = Array.isArray(owner.audienceRoles) ? owner.audienceRoles : [];
+
+          if (!audience.includes(role)) {
+            return null;
+          }
+
+          // Shown once, under the name the AUTHOR gave the page.
+          return { id: d.id, code: d.code, name: owner.title };
+        })
+        .filter((d): d is { id: string; code: string; name: string } => d !== null)
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map((d) => ({
+          to: "/workspace/" + d.code,
+          label: d.name,
+          desc: "Interactive analytics workspace",
+          icon: LayoutDashboard,
+        }));
+
+      setLinks(mapped);
+    }
+
+    load().catch((err) => {
+      if (ignore) return;
+      // Fail closed: the previous links stand. Replacing them with every
+      // dashboard would publish drafts by accident.
+      console.warn("[nav] workspace projection unavailable, keeping the last known list:", err);
+    });
+
+    const unsubscribe = subscribeToWorkspaceLinksChanged(() => {
+      load().catch(() => undefined);
+    });
+
+    return () => {
+      ignore = true;
+      unsubscribe();
+    };
+  }, [role]);
+
   return links;
 }
 /** PPIQ-NAVFIX: one shape for every nav entry, so the Workspaces group can use

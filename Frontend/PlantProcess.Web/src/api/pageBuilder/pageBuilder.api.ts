@@ -17,6 +17,8 @@ export interface PageDefinitionDto {
   // no workspace yet; null published means it is still a draft.
   backingDashboardDefinitionId?: string | null;
   publishedAtUtc?: string | null;
+  // Present only in the projection that asked for deleted rows.
+  isDeleted?: boolean;
   version: number;
   layoutJson: unknown;
   widgetBindingsJson: unknown;
@@ -41,7 +43,13 @@ export interface UpsertPageDefinitionRequest {
 }
 
 export const pageBuilderApi = {
-  listMine: () => apiClient.get<PageDefinitionDto[]>("/pages"),
+  // PPIQ T-042 S6. includeDeleted is for the WORKSPACE PROJECTION only, which
+  // must tell a dashboard that never had a page from one whose page was
+  // deleted. The Page Builder listing keeps the default and never sees them.
+  listMine: (includeDeleted = false) =>
+    apiClient.get<PageDefinitionDto[]>("/pages" + (includeDeleted ? "?includeDeleted=true" : "")),
+  publish: (slug: string) => apiClient.post<PageDefinitionDto>(`/pages/${slug}/publish`, {}),
+  unpublish: (slug: string) => apiClient.post<PageDefinitionDto>(`/pages/${slug}/unpublish`, {}),
   getBySlug: (slug: string) => apiClient.get<PageDefinitionDto>(`/pages/${slug}`),
   create: (request: UpsertPageDefinitionRequest) => apiClient.post<PageDefinitionDto>("/pages", request),
   update: (slug: string, request: UpsertPageDefinitionRequest) => apiClient.put<PageDefinitionDto>(`/pages/${slug}`, request),

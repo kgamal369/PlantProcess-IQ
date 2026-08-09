@@ -2,9 +2,11 @@ import { useEffect, useMemo, useReducer, useState } from "react";
 
 import { dashboardingApi } from "@/api/dashboarding/dashboarding.api";
 import { SharedAuthoringShell } from "@/authoring/SharedAuthoringShell";
+import { notifyWorkspaceLinksChanged } from "@/state/workspaceLinksSignal";
 
 import { pageBuilderApi, type PageDefinitionDto } from "@/api/pageBuilder";
 import { ApiError } from "@/api/http/apiClient";
+import { useAuth } from "@/state/AuthContext";
 import { ConflictDialog } from "@/components/conflict/ConflictDialog";
 import {
   StandardInput,
@@ -87,6 +89,7 @@ const initialStatus: SaveStatus = {
 };
 
 export function PageBuilderPage() {
+  const { user } = useAuth();
   const [state, dispatch] = useReducer(
     pageBuilderReducer,
     createInitialPageBuilderState(),
@@ -368,11 +371,55 @@ export function PageBuilderPage() {
     }
   }
 
+  // PPIQ T-042 S6. PUBLICATION IS ITS OWN ACTION, AND ITS OWN SENTENCE.
+  //
+  // The signal fires only AFTER the server has confirmed, never on intent: a
+  // navigation entry for a publication the server refused would be a lie the
+  // author could click on.
+  //
+  // And when a page is published to an audience the author's own role is not
+  // in, it is said out loud rather than papered over with a nav entry created
+  // just for them.
+  async function setPublication(publish: boolean) {
+    try {
+      setStatus({ kind: "saving", message: publish ? "Publishing..." : "Unpublishing..." });
+
+      const result = publish
+        ? await pageBuilderApi.publish(state.slug)
+        : await pageBuilderApi.unpublish(state.slug);
+
+      setLoadedPage(result);
+      notifyWorkspaceLinksChanged();
+
+      const visibleToAuthor = state.audienceRoles.includes(user?.role ?? "");
+
+      setStatus({
+        kind: "saved",
+        message: publish
+          ? visibleToAuthor
+            ? "Published. It is now in Workspaces for " + state.audienceRoles.join(", ") + "."
+            : "Published. This page is not visible to your current role."
+          : "Unpublished. It is a draft again and has left Workspaces.",
+      });
+    } catch (error) {
+      setStatus({
+        kind: "error",
+        message: error instanceof ApiError ? error.message : "The publication state was not changed.",
+      });
+    }
+  }
+
   async function deletePageDefinition() {
     try {
       setStatus({ kind: "saving", message: "Deleting PageDefinition..." });
 
       const deleted = await pageBuilderApi.delete(state.slug);
+
+      if (deleted.deleted) {
+        // A deleted page must leave navigation in the same session, not at the
+        // next reload.
+        notifyWorkspaceLinksChanged();
+      }
 
       setStatus({
         kind: deleted.deleted ? "deleted" : "loaded",
@@ -420,6 +467,24 @@ export function PageBuilderPage() {
 
           <StandardButton variant="secondary" onClick={loadPageDefinition}>
             Load by slug
+          </StandardButton>
+
+          <StandardButton
+            variant="secondary"
+            data-testid="ctl-publish-page"
+            disabled={!loadedPage?.backingDashboardDefinitionId}
+            onClick={() => setPublication(true)}
+          >
+            Publish
+          </StandardButton>
+
+          <StandardButton
+            variant="ghost"
+            data-testid="ctl-unpublish-page"
+            disabled={!loadedPage?.publishedAtUtc}
+            onClick={() => setPublication(false)}
+          >
+            Unpublish
           </StandardButton>
 
           <StandardButton variant="ghost" onClick={deletePageDefinition}>
