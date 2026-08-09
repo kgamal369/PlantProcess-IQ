@@ -1,0 +1,9 @@
+/* PPIQ-T075: the short-lived evidence highlight applied to a real widget when a
+   citation is opened in its page. Design-system tokens only; no page-local
+   colour scheme. */
+.ppiq-evidence-focus {
+  outline: 2px solid var(--ppiq-color-accent);
+  outline-offset: 4px;
+  border-radius: 6px;
+  transition: outline-color 200ms ease-in-out;
+}

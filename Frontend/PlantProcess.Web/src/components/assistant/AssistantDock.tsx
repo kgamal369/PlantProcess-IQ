@@ -2,6 +2,7 @@
 import { AssistantChat } from "@/components/assistant/AssistantChat";
 import { ASSISTANT_CONTEXT_CHIPS, useAssistantDock } from "@/components/assistant/AssistantDockContext";
 import { useAssistantPageContext } from "@/components/assistant/assistantPageContext";
+import { starterQuestions } from "@/components/assistant/assistantEvidence";
 import { StandardButton } from "@/components/standard";
 import "./AssistantDock.css";
 
@@ -74,6 +75,11 @@ export function AssistantDock() {
             chips={ASSISTANT_CONTEXT_CHIPS}
             isBusy={busy}
             onAsk={(question) => void ask(question, pageContext)}
+            starters={starterQuestions({
+              pageCode: pageContext.pageCode,
+              widgetCode: pageContext.widgetCode,
+              selections: pageContext.selections,
+            })}
             onOpenEvidence={(handle) => setStatus("Evidence handle: " + handle.kind + " " + handle.id)}
           />
         </div>

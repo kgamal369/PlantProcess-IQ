@@ -1,6 +1,8 @@
 import { DrilldownDrawer } from "@/components/dashboard/DrilldownDrawer";
 import { Component, lazy, Suspense, useCallback, useEffect, useState, type ComponentProps, type ErrorInfo, type ReactNode } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
+import { applyEvidenceFocus, findWidgetElement } from "./evidenceFocus";
+import "./evidenceFocus.css";
 import { DashboardFilterBar } from "@/components/DashboardFilterBar";
 import { DashboardGridLayout } from "@/components/dashboard/DashboardGridLayout";
 import { SavedDashboardWidget } from "@/components/dashboard/SavedDashboardWidget";
@@ -223,7 +225,13 @@ export function InteractiveWorkspacePage({ dashboardCode }: { dashboardCode: str
         <SelectionBreadcrumb />
       <DashboardGridLayout>
         {dashboard.widgets.map((widget) => (
-          <div key={String((widget as { id?: unknown }).id ?? Math.random())}>
+          <div
+            key={String((widget as { id?: unknown }).id ?? Math.random())}
+            /* T-075: the DOM hook an evidence citation uses to find this exact
+               widget after Open in page. It is the persisted widget code and
+               nothing else. */
+            data-widget-code={String((widget as { widgetCode?: unknown }).widgetCode ?? "")}
+          >
             <SavedDashboardWidget
               dashboardDefinitionId={dashboard.id}
               widget={widget}
@@ -239,9 +247,63 @@ export function InteractiveWorkspacePage({ dashboardCode }: { dashboardCode: str
   );
 }
 
+/**
+ * T-075. Focuses the widget an evidence citation came from.
+ *
+ * The parameter rides the CANONICAL workspace route rather than a new one, the
+ * widget is found by its real persisted code, and the effect is limited to
+ * bringing it into view and marking it briefly.
+ *
+ * The widget renders asynchronously, so this polls briefly rather than assuming
+ * the element is already there. If it never appears, the page says so: a
+ * historical citation pointing at a widget that no longer exists is a real
+ * situation, and landing silently on a page with nothing highlighted would
+ * leave someone hunting for something that is not there.
+ */
+function useEvidenceWidgetFocus(): string | null {
+  const [searchParams] = useSearchParams();
+  const focusWidget = searchParams.get("focusWidget");
+  const [missing, setMissing] = useState<string | null>(null);
+
+  useEffect(() => {
+    setMissing(null);
+    if (!focusWidget) return;
+
+    const started = Date.now();
+
+    const timer = window.setInterval(() => {
+      const target = findWidgetElement(document, focusWidget);
+
+      if (target) {
+        window.clearInterval(timer);
+        applyEvidenceFocus(target, window);
+        return;
+      }
+
+      if (Date.now() - started > 6000) {
+        window.clearInterval(timer);
+        setMissing(focusWidget);
+      }
+    }, 200);
+
+    return () => window.clearInterval(timer);
+  }, [focusWidget]);
+
+  return missing;
+}
+
 export function RoutedInteractiveWorkspacePage() {
   const params = useParams<{ dashboardCode: string }>();
+  const missingWidget = useEvidenceWidgetFocus();
+
   return (
-    <InteractiveWorkspacePage dashboardCode={params.dashboardCode ?? "PRODUCTION_OVERVIEW"} />
+    <>
+      {missingWidget ? (
+        <p data-testid="evidence-widget-missing" className="ppiq-evidence-missing">
+          The widget this evidence refers to ({missingWidget}) is no longer on this page.
+        </p>
+      ) : null}
+      <InteractiveWorkspacePage dashboardCode={params.dashboardCode ?? "PRODUCTION_OVERVIEW"} />
+    </>
   );
 }
