@@ -1,0 +1,87 @@
+
+------------------------------------------------------------------------------
+PPIQ ASSISTANT CERTIFICATION - T-071, T-072, T-073
+------------------------------------------------------------------------------
+Started       : 2026-08-08 16:46:11
+API           : http://localhost:5063
+Mode          : REPORT ONLY (the refusal proof will be SKIPPED)
+      Credentials   : e2eadmin (from the presentation profile, never typed here)
+      Database      : ppiq_presentation
+
+------------------------------------------------------------------------------
+SESSION
+------------------------------------------------------------------------------
+PASS  authenticated against the running API
+
+------------------------------------------------------------------------------
+T-073  reindex, snapshots and determinism
+------------------------------------------------------------------------------
+      chunks by source: DATASET = 17
+      chunks by source: DOC = 8
+      chunks by source: widgetresult = 38
+      total chunks: 63
+PASS  the widget-result family produced 38 chunks
+      evidence snapshots: 3
+PASS  evidence snapshots were persisted
+PASS  every snapshot carries a result payload
+FAIL  a repeated reindex changed the evidence identity: 3 -> 4
+
+------------------------------------------------------------------------------
+T-073  three pages, real numbers, citations that resolve
+------------------------------------------------------------------------------
+PASS  three pages carry evidence: CORRELATION_EXPLORER, CORRELATION_FINDINGS_BOARD, DATA_QUALITY
+PASS  CORRELATION_EXPLORER: answered with 5 WidgetResult citation(s)
+            answer: Based on widgetresult evidence, On page CORRELATION_EXPLORER, widget CORR_PARAMETER_AVG_BY_EQUIPMENT shows avgParameterValue by equipment, rendered as bar, and 
+PASS  CORRELATION_EXPLORER: the citation resolved to its snapshot (widget CORR_PARAMETER_AVG_BY_EQUIPMENT)
+PASS  CORRELATION_EXPLORER: the answer carries the snapshot's own sentence
+PASS  CORRELATION_FINDINGS_BOARD: answered with 5 WidgetResult citation(s)
+            answer: Based on widgetresult evidence, On page CORRELATION_FINDINGS_BOARD, widget CF_TOP shows defectCount by equipment, rendered as bar: No equipment 7844. That is 1 
+PASS  CORRELATION_FINDINGS_BOARD: the citation resolved to its snapshot (widget CF_TOP)
+PASS  CORRELATION_FINDINGS_BOARD: the answer carries the snapshot's own sentence
+PASS  DATA_QUALITY: answered with 4 WidgetResult citation(s)
+            answer: Based on widgetresult evidence, On page DATA_QUALITY, widget DQ_BY_SOURCE shows dataQualityIssueCount by sourceSystem, rendered as bar: ADVANCED_DEMO_SEED 7. Th
+PASS  DATA_QUALITY: the citation resolved to its snapshot (widget DQ_BY_SOURCE)
+PASS  DATA_QUALITY: the answer carries the snapshot's own sentence
+PASS  evidence outside this tenant's scope is reported unavailable, not returned
+
+------------------------------------------------------------------------------
+T-072  context narrows retrieval, and is never echoed
+------------------------------------------------------------------------------
+PASS  the same question on two pages retrieved different evidence
+            CORRELATION_EXPLORER cited: 9e3e7f37-cde4-4f80-a89b-7db05af985e1,77bb8e47-ba03-4289-b595-7e992a4e0401,788f5092-6ab1-4523-9d9c-c13bfc000124,connection:CP-05,5a86c764-5dbf-42f0-8c77-0835f811bc78,96a7aa22-da59-404a-a20a-3b473d8a0860
+            CORRELATION_FINDINGS_BOARD cited: 77bb8e47-ba03-4289-b595-7e992a4e0401,96a7aa22-da59-404a-a20a-3b473d8a0860,2894f48f-14b4-44a7-a6fb-7bdc66088de5,c1ba0e6f-823b-47c9-a118-f74a382474fe,8daf8cca-3015-4996-8748-3281ed456b44,mapping:Intentional unknown target mapping
+PASS  a fabricated context value never appeared in the answer
+
+------------------------------------------------------------------------------
+T-073  honest refusal when the widget-result chunks are gone
+------------------------------------------------------------------------------
+SKIPPED - re-run with -Apply. This step disables chunks and restores them.
+
+------------------------------------------------------------------------------
+T-071  BROWSER CHECKLIST - this runner cannot prove any of these
+------------------------------------------------------------------------------
+Fresh browser session, network tab open, filtered on assistant-config:
+
+  [ ] 1. Log in. The dock's first open produces NO 401 on assistant-config.
+  [ ] 2. Hard reload. Still no 401, and the dock reaches its ready state
+         without a manual retry.
+  [ ] 3. Ask one question, then navigate across five different pages.
+         The conversation is still there on the fifth.
+  [ ] 4. Collapse the dock on each page. It obscures no control.
+  [ ] 5. Narrow the window to about 390px. The collapsed launcher does not
+         sit on the language pill, the theme pill or the JOB LOG bar.
+
+Item 5 is the one I expect to fail: AssistantDock.css resets bottom to 12px
+inside @media (max-width: 680px), back into the occupied corner. If it does
+fail, the fix is that one line.
+
+------------------------------------------------------------------------------
+RESULT
+------------------------------------------------------------------------------
+Automated checks passed : 17
+Automated checks failed : 1
+
+Refusal proof          : SKIPPED (report-only run)
+Browser checklist      : 5 items, unanswered above
+
+NOT CERTIFIED. 1 automated check(s) failed above.

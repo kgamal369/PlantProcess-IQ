@@ -1,0 +1,60 @@
+
+------------------------------------------------------------------------------
+PPIQ T-074 QUANTITY CERTIFICATION
+------------------------------------------------------------------------------
+Started  : 2026-08-08 21:19:36
+API      : http://localhost:5063
+Question : what is the casting speed
+
+------------------------------------------------------------------------------
+1. WHAT THE REGISTRY SAYS ABOUT THIS QUESTION
+------------------------------------------------------------------------------
+      matched: CASTING_SPEED  unit=m/min  min=0.500000  max=2.500000  synthetic=t
+      matched: CASTING_SPEED_MPM  unit=m/min  min=0.000000  max=3.000000  synthetic=t
+      approved (non-synthetic) definitions matching: 0
+PASS  the registry knows this vocabulary and can vouch for NO definition (KnownButUntrustedOrAmbiguous)
+      so the only correct live outcomes are an honest refusal or a blocked numeric answer
+
+------------------------------------------------------------------------------
+SESSION
+------------------------------------------------------------------------------
+PASS  authenticated against the running API
+
+------------------------------------------------------------------------------
+2. MANDATORY - THE CASTING-SPEED QUESTION
+------------------------------------------------------------------------------
+      isRefusal : False
+      text      : Based on DOC evidence, A non-significant result is a first-class finding: the engine also states what is not a driver. Active: True. Read-only enforced toward the customer system: True. Based on DOC evidence, PlantProcess IQ is read-only toward the customer. It never writes to plant systems and neve
+PASS  answered without presenting any number as the quantity
+PASS  not present: a date presented as the quantity
+PASS  not present: the first synthetic range presented as authoritative
+PASS  not present: the second synthetic range presented as authoritative
+PASS  no value is presented with any registry unit, so nothing is labelled as this quantity
+
+------------------------------------------------------------------------------
+3. OPTIONAL - AN APPROVED DEFINITION, CHOSEN MECHANICALLY
+------------------------------------------------------------------------------
+      chosen: c ()  unit=  min=  max=
+      question built from the row's own name: 
+      isRefusal : False
+      text      : Based on DOC evidence, The assistant does not forecast or predict individual outcomes; it explains discovered associations from historical data. Based on DATASET evidence, Source connection 'Meltshop Level 2 (PostgreSQL)' (code CP-01) uses 
+FAIL  a value outside the registry range survived: 2 
+FAIL  a value outside the registry range survived: -01 
+FAIL  a value outside the registry range survived: 2 
+FAIL  a value outside the registry range survived: 2 
+FAIL  a value outside the registry range survived: 7 
+FAIL  a value outside the registry range survived: 1 
+FAIL  a value outside the registry range survived: 7 
+FAIL  a value outside the registry range survived: 17012 
+FAIL  a value outside the registry range survived: 17011 
+FAIL  a value outside the registry range survived: 1892 
+FAIL  a value outside the registry range survived: 3 
+FAIL  a value outside the registry range survived: 35915 
+
+------------------------------------------------------------------------------
+RESULT
+------------------------------------------------------------------------------
+Checks passed : 7
+Checks failed : 12
+
+NOT CERTIFIED. 12 check(s) failed above.

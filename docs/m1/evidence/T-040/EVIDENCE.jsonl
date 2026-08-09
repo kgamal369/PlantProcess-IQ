@@ -1,17 +1,44 @@
-{"gate":"G00","evidence":"G00-clean-profile-authenticates.png","claim":"A browser with no cookies reached the authoring shell, so the compiled smoke credential is accepted.","at":"2026-08-08T17:21:08.004Z"}
-{"gate":"G09/G11","evidence":"G11-ltr-s1-block-mode.png","claim":"S1 block mode under dir=ltr, with the schema tree measured on the inline-start edge.","at":"2026-08-08T17:21:13.294Z"}
-{"gate":"G09/G11","evidence":"G11-ltr-s1-sql-mode.png","claim":"S1 SQL mode under dir=ltr, toolbox absent rather than disabled.","at":"2026-08-08T17:21:15.371Z"}
-{"gate":"G09/G11","evidence":"G11-rtl-s1-block-mode.png","claim":"S1 block mode under dir=rtl, with the schema tree measured on the inline-start edge.","at":"2026-08-08T17:21:17.309Z"}
-{"gate":"G09/G11","evidence":"G11-rtl-s1-sql-mode.png","claim":"S1 SQL mode under dir=rtl, toolbox absent rather than disabled.","at":"2026-08-08T17:21:19.226Z"}
-{"gate":"G10","evidence":"G10-focus-order.txt","claim":"Consecutive Tab presses on /prep/canvas, in order, with the region each landed in.","at":"2026-08-08T17:21:21.886Z"}
-{"gate":"G10","evidence":"G10-keyboard-only-scenario.png","claim":"Keyboard only: Tab reached all four regions, Enter ran the definition and the refusal was written to the debug log.","at":"2026-08-08T17:21:22.108Z"}
-{"gate":"G12-G18","evidence":"G14-state-blocked.png","claim":"An empty board reports Blocked and names the precondition, with an action line under it.","at":"2026-08-08T17:21:23.865Z"}
-{"gate":"G12-G18","evidence":"G13-state-loading.png","claim":"A run in flight holds Loading on the shared banner, with the row count suppressed rather than stale.","at":"2026-08-08T17:21:27.578Z"}
-{"gate":"G12-G18","evidence":"G18-state-failed.png","claim":"A transport failure reads as Failed with a written sentence; no thrown value reaches the surface.","at":"2026-08-08T17:21:31.487Z"}
-{"gate":"G19","evidence":"G19-s2-add-entry.png","claim":"Add widget opens the shared authoring shell in S2 with nothing loaded.","at":"2026-08-08T17:21:34.200Z"}
-{"gate":"G19","evidence":"G19-focus-on-open.txt","claim":"Where focus sits the instant the S2 surface opens, measured in the browser.","at":"2026-08-08T17:21:34.388Z"}
-{"gate":"G19","evidence":"G19-s2-edit-entry.png","claim":"Edit widget opens the SAME surface with the existing definition loaded: Material Units","at":"2026-08-08T17:21:35.876Z"}
-{"gate":"T-041 C","evidence":"T041-C-empty-page.png","claim":"A new page starts with no title, no code, no audience and no widgets, and states that it has none.","at":"2026-08-08T17:21:38.507Z"}
-{"gate":"T-041 C","evidence":"T041-C-audience-required.png","claim":"Name and code alone leave the kinds disabled; choosing an audience role enables them.","at":"2026-08-08T17:21:41.911Z"}
-{"gate":"T-041 D","evidence":"T041-D-seven-kinds.png","claim":"The picker offers exactly Chart, Table, KPI, Calculated label, Filter, Container and Text, and none of the retired demo widgets.","at":"2026-08-08T17:21:44.397Z"}
-{"gate":"T-041 E/F","evidence":"T041-EF-shell-opens-s2.png","claim":"A structural kind and a name open the existing SharedAuthoringShell in S2, with no demo binding anywhere on the path.","at":"2026-08-08T17:21:49.363Z"}
+{"gate":"G00","evidence":"G00-clean-profile-authenticates.png","claim":"A browser with no cookies reached the authoring shell, so the compiled smoke credential is accepted.","at":"2026-08-09T06:27:41.418Z"}
+{"gate":"G09/G11","evidence":"G11-ltr-s1-block-mode.png","claim":"S1 block mode under dir=ltr, with the schema tree measured on the inline-start edge.","at":"2026-08-09T06:27:43.667Z"}
+{"gate":"G09/G11","evidence":"G11-ltr-s1-sql-mode.png","claim":"S1 SQL mode under dir=ltr, toolbox absent rather than disabled.","at":"2026-08-09T06:27:46.283Z"}
+{"gate":"G09/G11","evidence":"G11-rtl-s1-block-mode.png","claim":"S1 block mode under dir=rtl, with the schema tree measured on the inline-start edge.","at":"2026-08-09T06:27:48.766Z"}
+{"gate":"G09/G11","evidence":"G11-rtl-s1-sql-mode.png","claim":"S1 SQL mode under dir=rtl, toolbox absent rather than disabled.","at":"2026-08-09T06:27:50.965Z"}
+{"gate":"G10","evidence":"G10-focus-order.txt","claim":"Consecutive Tab presses on /prep/canvas, in order, with the region each landed in.","at":"2026-08-09T06:27:54.317Z"}
+{"gate":"G10","evidence":"G10-keyboard-only-scenario.png","claim":"Keyboard only: Tab reached all four regions, Enter ran the definition and the refusal was written to the debug log.","at":"2026-08-09T06:27:54.622Z"}
+{"gate":"G12-G18","evidence":"G14-state-blocked.png","claim":"An empty board reports Blocked and names the precondition, with an action line under it.","at":"2026-08-09T06:27:56.645Z"}
+{"gate":"G12-G18","evidence":"G13-state-loading.png","claim":"A run in flight holds Loading on the shared banner, with the row count suppressed rather than stale.","at":"2026-08-09T06:28:00.791Z"}
+{"gate":"G12-G18","evidence":"G18-state-failed.png","claim":"A transport failure reads as Failed with a written sentence; no thrown value reaches the surface.","at":"2026-08-09T06:28:04.723Z"}
+{"gate":"G19","evidence":"G19-s2-add-entry.png","claim":"Add widget opens the shared authoring shell in S2 with nothing loaded.","at":"2026-08-09T06:28:08.094Z"}
+{"gate":"G19","evidence":"G19-focus-on-open.txt","claim":"Where focus sits the instant the S2 surface opens, measured in the browser.","at":"2026-08-09T06:28:08.159Z"}
+{"gate":"G19","evidence":"G19-s2-edit-entry.png","claim":"Edit widget opens the SAME surface with the existing definition loaded: Material Units","at":"2026-08-09T06:28:09.432Z"}
+{"gate":"T-041 C","evidence":"T041-C-empty-page.png","claim":"A new page starts with no title, no code, no audience and no widgets, and states that it has none.","at":"2026-08-09T06:30:02.232Z"}
+{"gate":"T-041 C","evidence":"T041-C-audience-required.png","claim":"Name and code alone leave the kinds disabled; choosing an audience role enables them.","at":"2026-08-09T06:30:05.372Z"}
+{"gate":"T-041 D","evidence":"T041-D-seven-kinds.png","claim":"The picker offers exactly Chart, Table, KPI, Calculated label, Filter, Container and Text, and none of the retired demo widgets.","at":"2026-08-09T06:30:07.330Z"}
+{"gate":"T-041 E/F","evidence":"T041-EF-shell-opens-s2.png","claim":"A structural kind and a name open the existing SharedAuthoringShell in S2, with no demo binding anywhere on the path.","at":"2026-08-09T07:04:34.824Z"}
+{"gate":"T-041 E/F","evidence":"T041-EF-shell-opens-s2.png","claim":"A structural kind and a name open the existing SharedAuthoringShell in S2, with no demo binding anywhere on the path.","at":"2026-08-09T08:00:24.988Z"}
+{"gate":"T-041 E/F","evidence":"T041-EF-shell-opens-s2.png","claim":"A structural kind and a name open the existing SharedAuthoringShell in S2, with no demo binding anywhere on the path.","at":"2026-08-09T08:58:08.093Z"}
+{"gate":"T-042","evidence":"T042-two-real-widgets.png","claim":"Two widgets authored through the shared shell, on the grid under their server-persisted identities.","at":"2026-08-09T09:45:36.103Z"}
+{"gate":"T-042","evidence":"T042-layout-survives-reload.png","claim":"After a hard reload the same two persisted identities return with identical normalised geometry.","at":"2026-08-09T09:45:38.174Z"}
+{"gate":"T-042","evidence":"T042-two-real-widgets.png","claim":"Two widgets authored through the shared shell, on the grid under their server-persisted identities.","at":"2026-08-09T09:47:55.675Z"}
+{"gate":"T-042","evidence":"T042-layout-survives-reload.png","claim":"After a hard reload the same two persisted identities return with identical normalised geometry.","at":"2026-08-09T09:47:57.534Z"}
+{"gate":"T-042","evidence":"T042-draft-deleted-no-orphan.png","claim":"A draft never appeared in Workspaces, and after deletion it is gone from the Page Builder with no orphan entry left behind.","at":"2026-08-09T09:48:43.261Z"}
+{"gate":"T-042","evidence":"T042-two-real-widgets.png","claim":"Two widgets authored through the shared shell, on the grid under their server-persisted identities.","at":"2026-08-09T09:52:16.031Z"}
+{"gate":"T-042","evidence":"T042-layout-survives-reload.png","claim":"After a hard reload the same two persisted identities return with identical normalised geometry.","at":"2026-08-09T09:52:18.060Z"}
+{"gate":"T-042","evidence":"T042-draft-deleted-no-orphan.png","claim":"A draft never appeared in Workspaces, and after deletion it is gone from the Page Builder with no orphan entry left behind.","at":"2026-08-09T09:53:05.886Z"}
+{"gate":"T-042","evidence":"T042-two-real-widgets.png","claim":"Two widgets authored through the shared shell, on the grid under their server-persisted identities.","at":"2026-08-09T10:02:36.675Z"}
+{"gate":"T-042","evidence":"T042-layout-survives-reload.png","claim":"After a hard reload the same two persisted identities return with identical normalised geometry.","at":"2026-08-09T10:02:38.604Z"}
+{"gate":"T-042","evidence":"T042-draft-deleted-no-orphan.png","claim":"A draft never appeared in Workspaces, and after deletion it is gone from the Page Builder with no orphan entry left behind.","at":"2026-08-09T10:03:25.604Z"}
+{"gate":"T-042","evidence":"T042-two-real-widgets.png","claim":"Two widgets authored through the shared shell, on the grid under their server-persisted identities.","at":"2026-08-09T10:16:47.655Z"}
+{"gate":"T-042","evidence":"T042-layout-survives-reload.png","claim":"After a hard reload the same two persisted identities return with identical normalised geometry.","at":"2026-08-09T10:16:50.038Z"}
+{"gate":"T-042","evidence":"T042-draft-deleted-no-orphan.png","claim":"A draft never appeared in Workspaces, and after deletion it is gone from the Page Builder with no orphan entry left behind.","at":"2026-08-09T10:17:48.246Z"}
+{"gate":"T-042","evidence":"T042-two-real-widgets.png","claim":"Two widgets authored through the shared shell, on the grid under their server-persisted identities.","at":"2026-08-09T10:27:34.967Z"}
+{"gate":"T-042","evidence":"T042-draft-deleted-no-orphan.png","claim":"A draft never appeared in Workspaces, and after deletion it is gone from the Page Builder with no orphan entry left behind.","at":"2026-08-09T10:28:01.774Z"}
+{"gate":"T-042","evidence":"T042-two-real-widgets.png","claim":"Two widgets authored through the shared shell, on the grid under their server-persisted identities.","at":"2026-08-09T10:36:40.077Z"}
+{"gate":"T-042","evidence":"T042-layout-survives-reload.png","claim":"After a hard reload the same two persisted identities return with identical normalised geometry.","at":"2026-08-09T10:36:42.535Z"}
+{"gate":"T-042","evidence":"T042-published-appears-once.png","claim":"Publish put the page into Workspaces during the same session, once, under its authored title.","at":"2026-08-09T10:36:43.182Z"}
+{"gate":"T-042","evidence":"T042-draft-deleted-no-orphan.png","claim":"A draft never appeared in Workspaces, and after deletion it is gone from the Page Builder with no orphan entry left behind.","at":"2026-08-09T10:37:10.866Z"}
+{"gate":"T-042","evidence":"T042-two-real-widgets.png","claim":"Two widgets authored through the shared shell, on the grid under their server-persisted identities.","at":"2026-08-09T10:38:48.003Z"}
+{"gate":"T-042","evidence":"T042-layout-survives-reload.png","claim":"After a hard reload the same two persisted identities return with identical normalised geometry.","at":"2026-08-09T10:38:51.065Z"}
+{"gate":"T-042","evidence":"T042-published-appears-once.png","claim":"Publish put the page into Workspaces during the same session, once, under its authored title.","at":"2026-08-09T10:38:51.904Z"}
+{"gate":"T-042","evidence":"T042-workspace-opens.png","claim":"The authored page opens its real backing workspace with the authored widgets on it.","at":"2026-08-09T10:38:52.480Z"}
+{"gate":"T-042","evidence":"T042-draft-deleted-no-orphan.png","claim":"A draft never appeared in Workspaces, and after deletion it is gone from the Page Builder with no orphan entry left behind.","at":"2026-08-09T10:39:04.488Z"}

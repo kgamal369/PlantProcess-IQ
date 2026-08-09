@@ -537,35 +537,39 @@ export function PageBuilderPage() {
             }
           />
 
-          <fieldset className="page-builder-page__audience" data-testid="page-audience">
+          <fieldset
+            className="page-builder-page__audience"
+            data-testid="page-audience"
+          >
             <legend>Audience roles</legend>
+
             <p className="page-builder-page__hint">
-              Who this page is authored for. Visibility above answers a different
-              question: who may open it.
+              Who this page is authored for. Visibility above answers a different question:
+              who may open it.
             </p>
 
-            {audienceRoleOptions.map((role) => (
-              <label key={role} className="page-builder-page__audience-role">
-                <input
-                  type="checkbox"
-                  checked={state.audienceRoles.includes(role)}
-                  onChange={(event) =>
-                    dispatch({
-                      type: "updateMeta",
-                      patch: {
-                        audienceRoles: event.target.checked
-                          ? [...state.audienceRoles, role]
-                          : state.audienceRoles.filter((chosen) => chosen !== role),
-                      },
-                    })
-                  }
-                />
-                {role}
-              </label>
-            ))}
+            <StandardSelect
+              label="Roles"
+              multiple
+              value={state.audienceRoles}
+              options={[
+                { value: "Admin", label: "Admin" },
+                { value: "DataManager", label: "DataManager" },
+                { value: "Engineer", label: "Engineer" },
+                { value: "Viewer", label: "Viewer" },
+              ]}
+              onChange={(value) =>
+                dispatch({
+                  type: "updateMeta",
+                  patch: {
+                    audienceRoles: Array.isArray(value) ? value : [value],
+                  },
+                })
+              }
+            />
 
             {state.audienceRoles.length === 0 ? (
-              <p role="status" data-testid="page-audience-required">
+              <p data-testid="page-audience-required" role="status">
                 Choose at least one audience role before adding widgets.
               </p>
             ) : null}

@@ -131,8 +131,19 @@ describe("T-038 the catalogue decides, not the surface", () => {
   });
 
   it("files a new widget under the chart type's own category", () => {
-    expect(widgetTypeFor(CHART_TYPES, "kpi")).toBe("tile");
+    expect(widgetTypeFor(CHART_TYPES, "kpi")).toBe("kpi");
+    expect(widgetTypeFor(CHART_TYPES, "table")).toBe("table");
+    expect(widgetTypeFor(CHART_TYPES, "bar")).toBe("chart");
     expect(widgetTypeFor(CHART_TYPES, "unknown_type")).toBe("chart");
+
+    // The exact production failure: a metadata category must never become the
+    // persisted widget type.
+    expect(
+      widgetTypeFor(
+        [{ code: "bar", category: "Comparison", supportsDimension: true, supportsMeasure: true }],
+        "bar",
+      ),
+    ).toBe("chart");
   });
 });
 

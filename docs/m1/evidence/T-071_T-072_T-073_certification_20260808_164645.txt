@@ -1,0 +1,92 @@
+
+------------------------------------------------------------------------------
+PPIQ ASSISTANT CERTIFICATION - T-071, T-072, T-073
+------------------------------------------------------------------------------
+Started       : 2026-08-08 16:46:45
+API           : http://localhost:5063
+Mode          : APPLY (the refusal proof will disable chunks, then restore them)
+      Credentials   : e2eadmin (from the presentation profile, never typed here)
+      Database      : ppiq_presentation
+
+------------------------------------------------------------------------------
+SESSION
+------------------------------------------------------------------------------
+PASS  authenticated against the running API
+
+------------------------------------------------------------------------------
+T-073  reindex, snapshots and determinism
+------------------------------------------------------------------------------
+      chunks by source: DATASET = 17
+      chunks by source: DOC = 8
+      chunks by source: widgetresult = 38
+      total chunks: 63
+PASS  the widget-result family produced 38 chunks
+      evidence snapshots: 4
+PASS  evidence snapshots were persisted
+PASS  every snapshot carries a result payload
+FAIL  a repeated reindex changed the evidence identity: 4 -> 5
+
+------------------------------------------------------------------------------
+T-073  three pages, real numbers, citations that resolve
+------------------------------------------------------------------------------
+PASS  three pages carry evidence: CORRELATION_EXPLORER, CORRELATION_FINDINGS_BOARD, DATA_QUALITY
+PASS  CORRELATION_EXPLORER: answered with 5 WidgetResult citation(s)
+            answer: Based on widgetresult evidence, On page CORRELATION_EXPLORER, widget CORR_PARAMETER_AVG_BY_EQUIPMENT shows avgParameterValue by equipment, rendered as bar, and 
+PASS  CORRELATION_EXPLORER: the citation resolved to its snapshot (widget CORR_PARAMETER_AVG_BY_EQUIPMENT)
+PASS  CORRELATION_EXPLORER: the answer carries the snapshot's own sentence
+PASS  CORRELATION_FINDINGS_BOARD: answered with 6 WidgetResult citation(s)
+            answer: Based on widgetresult evidence, On page CORRELATION_FINDINGS_BOARD, widget CF_TOP shows defectCount by equipment, rendered as bar: No equipment 7844. That is 1 
+PASS  CORRELATION_FINDINGS_BOARD: the citation resolved to its snapshot (widget CF_TOP)
+PASS  CORRELATION_FINDINGS_BOARD: the answer carries the snapshot's own sentence
+PASS  DATA_QUALITY: answered with 4 WidgetResult citation(s)
+            answer: Based on widgetresult evidence, On page DATA_QUALITY, widget DQ_BY_SOURCE shows dataQualityIssueCount by sourceSystem, rendered as bar: ADVANCED_DEMO_SEED 7. Th
+PASS  DATA_QUALITY: the citation resolved to its snapshot (widget DQ_BY_SOURCE)
+PASS  DATA_QUALITY: the answer carries the snapshot's own sentence
+PASS  evidence outside this tenant's scope is reported unavailable, not returned
+
+------------------------------------------------------------------------------
+T-072  context narrows retrieval, and is never echoed
+------------------------------------------------------------------------------
+PASS  the same question on two pages retrieved different evidence
+            CORRELATION_EXPLORER cited: 9e3e7f37-cde4-4f80-a89b-7db05af985e1,77bb8e47-ba03-4289-b595-7e992a4e0401,788f5092-6ab1-4523-9d9c-c13bfc000124,connection:CP-05,5a86c764-5dbf-42f0-8c77-0835f811bc78,96a7aa22-da59-404a-a20a-3b473d8a0860
+            CORRELATION_FINDINGS_BOARD cited: 77bb8e47-ba03-4289-b595-7e992a4e0401,96a7aa22-da59-404a-a20a-3b473d8a0860,38ca125a-ea78-46dd-ba6c-57598b633700,2894f48f-14b4-44a7-a6fb-7bdc66088de5,f166cf80-009f-43e4-9449-88ec89629d8f,e21d2917-6d87-4ae1-95c4-528dfda367b0
+PASS  a fabricated context value never appeared in the answer
+
+------------------------------------------------------------------------------
+T-073  honest refusal when the widget-result chunks are gone
+------------------------------------------------------------------------------
+      disabled widget-result chunks: 3
+      NOT a delete: a delete cannot be proved by reindexing, because the reindex
+      would recreate them immediately. Stale is exactly what retrieval excludes.
+FAIL  the assistant answered without widget evidence instead of refusing
+            answer: Based on DATASET evidence, Source connection 'Pickling Line (SQL Server)' (code CP-05) uses provider sqlserver in Snapshot mode. Active: True. Read-only enforce
+PASS  the widget-result chunks were restored
+PASS  answering works again after the restore
+
+------------------------------------------------------------------------------
+T-071  BROWSER CHECKLIST - this runner cannot prove any of these
+------------------------------------------------------------------------------
+Fresh browser session, network tab open, filtered on assistant-config:
+
+  [ ] 1. Log in. The dock's first open produces NO 401 on assistant-config.
+  [ ] 2. Hard reload. Still no 401, and the dock reaches its ready state
+         without a manual retry.
+  [ ] 3. Ask one question, then navigate across five different pages.
+         The conversation is still there on the fifth.
+  [ ] 4. Collapse the dock on each page. It obscures no control.
+  [ ] 5. Narrow the window to about 390px. The collapsed launcher does not
+         sit on the language pill, the theme pill or the JOB LOG bar.
+
+Item 5 is the one I expect to fail: AssistantDock.css resets bottom to 12px
+inside @media (max-width: 680px), back into the occupied corner. If it does
+fail, the fix is that one line.
+
+------------------------------------------------------------------------------
+RESULT
+------------------------------------------------------------------------------
+Automated checks passed : 19
+Automated checks failed : 2
+
+Browser checklist      : 5 items, unanswered above
+
+NOT CERTIFIED. 2 automated check(s) failed above.

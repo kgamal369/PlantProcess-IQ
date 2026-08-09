@@ -47,7 +47,7 @@ vi.mock("@/authoring/SharedAuthoringShell", () => ({
   },
 }));
 
-import { PageBuilderPage } from "../PageBuilderPage.implementation";
+import { PageBuilderPage } from "../PageBuilderPage"
 
 const DASHBOARD_ID = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
 
@@ -81,7 +81,8 @@ async function pageWithTwoWidgets() {
 
   fireEvent.change(screen.getByLabelText("Title"), { target: { value: "Shift production" } });
   fireEvent.change(screen.getByLabelText("Slug"), { target: { value: "shift-production" } });
-  fireEvent.click(screen.getByLabelText("Engineer"));
+  fireEvent.click(screen.getByLabelText("Roles"));
+  fireEvent.click(screen.getByRole("option", { name: "Engineer" }));
 
   fireEvent.click(screen.getByTestId("widget-kind-chart"));
   fireEvent.change(screen.getByLabelText("Widget name"), { target: { value: "Yield by grade" } });

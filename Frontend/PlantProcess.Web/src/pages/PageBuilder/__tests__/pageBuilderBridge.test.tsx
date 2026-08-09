@@ -51,7 +51,7 @@ vi.mock("@/authoring/SharedAuthoringShell", () => ({
   },
 }));
 
-import { PageBuilderPage } from "../PageBuilderPage.implementation";
+import { PageBuilderPage } from "../PageBuilderPage";
 
 const PAGE_ID = "11111111-2222-3333-4444-555555555555";
 const RECOVERY_CODE = "PAGE_111111112222";
@@ -82,7 +82,8 @@ async function authorAWidget() {
 
   fireEvent.change(screen.getByLabelText("Title"), { target: { value: "Shift production" } });
   fireEvent.change(screen.getByLabelText("Slug"), { target: { value: "shift-production" } });
-  fireEvent.click(screen.getByLabelText("Engineer"));
+  fireEvent.click(screen.getByLabelText("Roles"));
+  fireEvent.click(screen.getByRole("option", { name: "Engineer" }));
 
   fireEvent.click(screen.getByTestId("widget-kind-chart"));
   fireEvent.change(screen.getByLabelText("Widget name"), { target: { value: "Yield by grade" } });

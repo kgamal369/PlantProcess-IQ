@@ -163,9 +163,23 @@ export function requiresParameter(
 
 /** The chart category the widget is filed under when it is new. */
 export function widgetTypeFor(
-  chartTypes: readonly ChartTypeSpec[], chartType: string,
+  _chartTypes: readonly ChartTypeSpec[], chartType: string,
 ): string {
-  return chartTypes.find((c) => c.code === chartType)?.category ?? "chart";
+  // PPIQ T-042. WidgetType is the PERSISTENCE PROTOCOL KIND, not the chart's
+  // analytical category. Reading `category` off the metadata sent "Comparison"
+  // to a server whose contract is kpi | chart | table, and every Bar widget was
+  // refused with 400 Unsupported widget type. The chart type decides the kind.
+  const normalized = chartType.trim().toLowerCase();
+
+  if (normalized === "kpi") {
+    return "kpi";
+  }
+
+  if (normalized === "table") {
+    return "table";
+  }
+
+  return "chart";
 }
 
 /**
