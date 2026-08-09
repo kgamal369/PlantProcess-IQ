@@ -243,6 +243,17 @@ public sealed class AccessControlMiddleware
         ("/risk-scores", All(), "analysis.execute", false),
         ("/analytics/dashboard/definitions", All(), "page.design", false),
         ("/analytics/dashboard", new[] { "GET", "POST" }, "assistant.use", false),
+        // PPIQ T-042. THE LIVE PAGE BUILDER ENDPOINT IS /pages, and it was never
+        // mapped. Deny-by-default therefore refused POST /pages with 403 while
+        // GET /pages was quietly served through the ("/", GET, anonymous)
+        // fallback - so the same route family was half-open for reads and shut
+        // for writes, which is the worst of both.
+        //
+        // One All() entry covers the family: prefix matching takes /pages,
+        // /pages/{slug}, and the publish and unpublish subroutes with it.
+        // /page-definitions is left in place; proving it dead is someone else's
+        // task and removing it on a hunch would be a second defect.
+        ("/pages", All(), "page.design", false),
         ("/page-definitions", All(), "page.design", false),
         ("/materials", new[] { "GET", "POST" }, "analysis.execute", false),
         ("/process", new[] { "GET", "POST" }, "analysis.execute", false),
