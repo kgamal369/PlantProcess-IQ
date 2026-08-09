@@ -151,7 +151,11 @@ function NavItem({
  *  It now goes through apiClient like every other call in the product, which
  *  carries the configured base URL and the auth interceptor. A failure is
  *  reported once to the console instead of vanishing. */
-function useWorkspaceLinks(): NavEntry[] {
+/// PPIQ T-042 S6. Exported for its proofs. Navigation classification decides
+/// what a customer can see, its most important rule is a NEGATIVE one, and the
+/// case that matters most - a published page deleted, its dashboard still
+/// present - cannot be reached by clicking. It has to be reachable to be proved.
+export function useWorkspaceLinks(): NavEntry[] {
   const [links, setLinks] = useState<NavEntry[]>([]);
   const { user } = useAuth();
   const role = user?.role ?? "";
