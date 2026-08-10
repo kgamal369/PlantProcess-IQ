@@ -549,7 +549,15 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
                 from equipment in equipmentJoin.DefaultIfEmpty()
                 where
                     !downtime.IsDeleted &&
-                    (downtime.MaterialUnitId == null || materialIds.Contains(downtime.MaterialUnitId.GetValueOrDefault()))                select new WidgetFact(
+                    // T-044. Npgsql cannot translate Guid?.GetValueOrDefault(), so this
+                    // predicate threw on EVERY call to downtimeMinutes. The measure was
+                    // registered, published, offered in authoring and listed as executable,
+                    // and no widget bound it, so it was never once run. The semantics are
+                    // unchanged and deliberately so: an event with NO material is still
+                    // included, because equipment downtime is not always tied to a piece.
+                    (!downtime.MaterialUnitId.HasValue ||
+                     materialIds.Contains(downtime.MaterialUnitId.Value))
+                select new WidgetFact(
                     downtime.MaterialUnitId,
                     material != null ? material.SiteId : null,
                     equipment != null ? equipment.AreaId : null,
@@ -564,11 +572,15 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
                     null,
                     null,
                     downtime.StartedAtUtc,
-                    downtime.EndedAtUtc == null
-                    ? 0m
-                    : (decimal)Math.Max(
-                        0,
-                        (downtime.EndedAtUtc.GetValueOrDefault() - downtime.StartedAtUtc).TotalMinutes)))
+                    // T-044, ruled 10-Aug: downtimeMinutes MEANS the recorded
+                    // StoppedMinutes. It previously computed EndedAtUtc minus
+                    // StartedAtUtc, a wall-clock quantity the plant never recorded,
+                    // discarding BOTH governed decimal columns and returning 0 for any
+                    // event with no end timestamp. ProductionImpactMinutes is a
+                    // different question and needs its own named measure: a three
+                    // minute trip can cost six hours of production, which is why the
+                    // entity refuses to constrain one by the other.
+                    downtime.StoppedMinutes))
                             .Take(resolved.RawRowLimit + 1)
             .ToListAsync(cancellationToken);
 
