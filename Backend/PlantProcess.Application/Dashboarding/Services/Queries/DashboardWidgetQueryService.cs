@@ -55,7 +55,11 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
                     }));
         }
 
-        var rows = resolved.MeasureCode switch
+        IReadOnlyList<DashboardAggregateRow> rows;
+
+        try
+        {
+        rows = resolved.MeasureCode switch
         {
             DashboardMetadataCodes.Measures.MaterialCount =>
                 await ExecuteMaterialCountAsync(resolved, query.Filters, cancellationToken),
@@ -92,6 +96,20 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
 
             _ => Array.Empty<DashboardAggregateRow>()
         };
+        }
+        catch (AggregatePopulationTruncatedException truncated)
+        {
+            // The refusal replaces the result. No partial value travels beside
+            // it: a number presented next to a warning is still read as the
+            // answer, and this one would be wrong by up to 83 percent.
+            return ApplicationResult<DashboardWidgetQueryResultDto>.Failure(
+                ApplicationError.BusinessRule(
+                    "aggregate_population_limit_exceeded: this aggregate was not computed because " +
+                    "completeness could not be guaranteed. Measure or population: " + truncated.Subject +
+                    ". Applicable limit: " + truncated.Limit + " rows. The engine caps the raw fact " +
+                    "population before aggregating, so a result over this limit would be a lower " +
+                    "bound presented as a total. No partial value is returned."));
+        }
 
         // PRESENTATION CORRECTION. Equipment and Area are dimensioned BY ID, and
         // that is correct: an id is stable and a name is not, so selections,
@@ -137,8 +155,10 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
                         null,
                         step.StartedAtUtc,
                         1m))
-                .Take(resolved.RawRowLimit)
+                .Take(resolved.RawRowLimit + 1)
                 .ToListAsync(cancellationToken);
+
+            RequireCompletePopulation(stepFacts, resolved);
 
             var uniqueMaterialPerDimension = stepFacts
                 .GroupBy(x => new
@@ -171,9 +191,10 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
                 null,
                 x.ProductionStartUtc,
                 1m))
-            .Take(resolved.RawRowLimit)
+            .Take(resolved.RawRowLimit + 1)
             .ToListAsync(cancellationToken);
 
+        RequireCompletePopulation(facts, resolved);
         return AggregateCount(facts, resolved);
     }
 
@@ -211,9 +232,10 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
                     null,
                     qualityEvent.EventAtUtc,
                     1m))
-            .Take(resolved.RawRowLimit)
+            .Take(resolved.RawRowLimit + 1)
             .ToListAsync(cancellationToken);
 
+        RequireCompletePopulation(facts, resolved);
         return AggregateCount(facts, resolved);
     }
 
@@ -243,8 +265,10 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
                 null,
                 x.ProductionStartUtc,
                 1m))
-            .Take(resolved.RawRowLimit)
+            .Take(resolved.RawRowLimit + 1)
             .ToListAsync(cancellationToken);
+
+        RequireCompletePopulation(materialFacts, resolved);
 
         var defectiveMaterialIds = await _dbContext.QualityEvents
             .AsNoTracking()
@@ -341,9 +365,10 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
                     null,
                     observation.ObservedAtUtc,
                     1m))
-            .Take(resolved.RawRowLimit)
+            .Take(resolved.RawRowLimit + 1)
             .ToListAsync(cancellationToken);
 
+        RequireCompletePopulation(facts, resolved);
         facts = ApplyFactDateFilter(facts, filters).ToList();
 
         var grouped = facts
@@ -363,6 +388,64 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
     /// refused by name rather than answered with an empty result. Adding an arm
     /// to the switch without adding it here is caught on the first request.
     /// </summary>
+    // ================================================================
+    // T-044 CONTAINMENT. FAIL CLOSED ON A TRUNCATED POPULATION.
+    //
+    // Measured 10-Aug against ppiq_presentation: observationCount returned
+    // 50,000 against a trusted population of 301,560. The number the widget
+    // displayed WAS THE SAFETY LIMIT, because counting a capped 50,000-row
+    // sample yields exactly 50,000 every time. 83.4 percent of the plant's
+    // observations were absent and nothing said so. See
+    // docs/m1/evidence/T-044/A1_aggregate_truth.md.
+    //
+    // This is the barrier, NOT the correction. The engine still aggregates
+    // after the cap. What changes is that it may no longer present the result
+    // of a truncated population as truth.
+    //
+    // HOW THE TRIGGER IS EXACT. Every raw fetch now asks for RawRowLimit + 1
+    // rows. If the extra row comes back, the population exceeded the limit and
+    // the aggregate would be a lower bound. One comparison, no counting query,
+    // no second round trip, and it cannot pass by accident.
+    //
+    // WHY A RETURNED-ROW COUNT WOULD NOT HAVE DONE. ApplyFactDateFilter runs in
+    // memory AFTER the cap, so a narrow window can leave few rows on screen
+    // while the fetch behind it was truncated. Only "did the fetch reach the
+    // ceiling" detects that.
+    //
+    // The guard is reached twice on one path. A repeated call on the same list
+    // is a no-op, and a safety barrier is the wrong place to trade certainty
+    // for tidiness.
+    // ================================================================
+    private sealed class AggregatePopulationTruncatedException : Exception
+    {
+        public AggregatePopulationTruncatedException(string subject, int limit)
+            : base("aggregate_population_limit_exceeded")
+        {
+            Subject = subject;
+            Limit = limit;
+        }
+
+        public string Subject { get; }
+
+        public int Limit { get; }
+    }
+
+    private static void RequireCompletePopulation<T>(
+        IReadOnlyCollection<T> fetched,
+        DashboardWidgetResolvedDto resolved)
+    {
+        if (fetched.Count > resolved.RawRowLimit)
+            throw new AggregatePopulationTruncatedException(resolved.MeasureCode, resolved.RawRowLimit);
+    }
+
+    private static void RequireCompleteMaterialPopulation<T>(IReadOnlyCollection<T> fetched)
+    {
+        if (fetched.Count > DashboardWidgetQuerySafetyRegistry.AbsoluteRawRowLimit)
+            throw new AggregatePopulationTruncatedException(
+                "the filtered material population every measure reads",
+                DashboardWidgetQuerySafetyRegistry.AbsoluteRawRowLimit);
+    }
+
     private static readonly HashSet<string> ExecutableMeasures = new(StringComparer.Ordinal)
     {
         DashboardMetadataCodes.Measures.MaterialCount,
@@ -421,9 +504,10 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
                     null,
                     observation.ObservedAtUtc,
                     observation.NumericValue!.Value))
-            .Take(resolved.RawRowLimit)
+            .Take(resolved.RawRowLimit + 1)
             .ToListAsync(cancellationToken);
 
+        RequireCompletePopulation(facts, resolved);
         facts = ApplyFactDateFilter(facts, filters).ToList();
 
         var grouped = facts
@@ -485,9 +569,10 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
                     : (decimal)Math.Max(
                         0,
                         (downtime.EndedAtUtc.GetValueOrDefault() - downtime.StartedAtUtc).TotalMinutes)))
-                            .Take(resolved.RawRowLimit)
+                            .Take(resolved.RawRowLimit + 1)
             .ToListAsync(cancellationToken);
 
+        RequireCompletePopulation(facts, resolved);
         facts = ApplyFactDateFilter(facts, filters).ToList();
 
         return AggregateSum(facts, resolved);
@@ -524,9 +609,10 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
                     risk.RiskClass,
                     risk.ScoredAtUtc,
                     risk.Score))
-            .Take(resolved.RawRowLimit)
+            .Take(resolved.RawRowLimit + 1)
             .ToListAsync(cancellationToken);
 
+        RequireCompletePopulation(facts, resolved);
         facts = ApplyFactDateFilter(facts, filters).ToList();
 
         var grouped = facts
@@ -575,9 +661,10 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
                     null,
                     step.StartedAtUtc,
                     (decimal)Math.Max(0, (step.EndedAtUtc!.Value - step.StartedAtUtc).TotalMinutes)))
-            .Take(resolved.RawRowLimit)
+            .Take(resolved.RawRowLimit + 1)
             .ToListAsync(cancellationToken);
 
+        RequireCompletePopulation(facts, resolved);
         facts = ApplyFactDateFilter(facts, filters).ToList();
 
         var grouped = facts
@@ -620,11 +707,13 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
                 null,
                 x.CreatedAtUtc,
                 1m))
-            .Take(resolved.RawRowLimit)
+            .Take(resolved.RawRowLimit + 1)
             .ToListAsync(cancellationToken);
 
+        RequireCompletePopulation(facts, resolved);
         facts = ApplyFactDateFilter(facts, filters).ToList();
 
+        RequireCompletePopulation(facts, resolved);
         return AggregateCount(facts, resolved);
     }
 
@@ -665,8 +754,10 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
 
         var materialIds = await query
             .Select(x => x.Id)
-            .Take(DashboardWidgetQuerySafetyRegistry.AbsoluteRawRowLimit)
+            .Take(DashboardWidgetQuerySafetyRegistry.AbsoluteRawRowLimit + 1)
             .ToListAsync(cancellationToken);
+
+        RequireCompleteMaterialPopulation(materialIds);
 
         var result = materialIds.ToHashSet();
 
