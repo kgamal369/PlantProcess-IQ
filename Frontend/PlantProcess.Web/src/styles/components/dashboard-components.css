@@ -190,6 +190,45 @@
   font-weight: 700;
 }
 
+/* T-043 slice 1: the per-chip remove control. Chapter 4 5.1.13 requires one
+   selection to be removable on its own, so the chip carries its own control
+   rather than relying on Undo, which reaches only the last selection. */
+.visual-selection-chip__remove {
+  min-width: 0;
+  padding: 0 2px;
+  line-height: 1;
+  border: none;
+  background: transparent;
+  color: inherit;
+}
+
+.visual-selection-chip__remove:hover:not(:disabled) {
+  color: var(--ppiq-color-accent-cyan);
+}
+
+/* T-043 slice 2: the page header of Chapter 4 5.1.2. The sheet selector, the
+   as-of and the layout controls share one wrapping row so a narrow viewport
+   folds them rather than clipping the as-of, which is the one value on the
+   header that must never be half-visible. */
+.workspace-header__controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.workspace-header__sheets {
+  min-width: 170px;
+}
+
+.workspace-header__asof {
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--ppiq-color-text-muted, #8ba9c4);
+  white-space: nowrap;
+}
+
 /* Active filter chips */
 .active-filter-chips {
   display: flex;

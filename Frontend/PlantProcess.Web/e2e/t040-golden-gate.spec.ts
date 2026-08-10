@@ -213,6 +213,7 @@ test.describe("T-040 Golden Gate convergence, part 1", () => {
       await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ columns: [], rows: [], warnings: [] }) });
     });
     await page.goto("/workspace/" + DASHBOARD);
+    await page.getByTestId("workspace-edit-toggle").click();
     await page.getByTestId("workspace-add-widget").click();
     const shell = page.getByTestId("authoring-shell");
     await expect(shell).toBeVisible({ timeout: 45_000 });
@@ -227,6 +228,7 @@ test.describe("T-040 Golden Gate convergence, part 1", () => {
   test("G12-G18 Failed carries a sentence and never a raw transport error", async ({ page }) => {
     await page.route((url) => url.pathname.endsWith("/widgets/execute"), (route) => route.abort("failed"));
     await page.goto("/workspace/" + DASHBOARD);
+    await page.getByTestId("workspace-edit-toggle").click();
     await page.getByTestId("workspace-add-widget").click();
     await expect(page.getByTestId("authoring-shell")).toBeVisible({ timeout: 45_000 });
     await activate(page, "Query Expression");
@@ -242,6 +244,10 @@ test.describe("T-040 Golden Gate convergence, part 1", () => {
 
   test("G19 Add and Edit reach one surface, and Escape closes it", async ({ page }) => {
     await page.goto("/workspace/" + DASHBOARD);
+
+    // T-043 S2c: 5.1.7 reveals the add-widget control with edit mode, so
+    // this row enters edit mode before reaching for it.
+    await page.getByTestId("workspace-edit-toggle").click();
 
     await activate(page, "Add widget");
     const shell = page.getByTestId("authoring-shell");

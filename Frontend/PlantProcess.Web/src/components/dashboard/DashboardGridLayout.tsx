@@ -14,7 +14,16 @@ import { recordFrontendDiagnostic } from "@/utils/frontendDiagnostics";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const ResponsiveGridLayout = Responsive as any;
 
-export function DashboardGridLayout({ children }: { children: ReactNode }) {
+export function DashboardGridLayout({
+  children,
+  isEditing = false,
+}: {
+  children: ReactNode;
+  // T-043 S2. Chapter 4 5.1.7: "Edit mode is explicit. A view-mode user
+  // cannot accidentally drag a widget." The default is view mode, so a
+  // surface that passes nothing cannot drag by accident either.
+  isEditing?: boolean;
+}) {
   const { layouts, setLayouts, beginDrag, endDrag } = useDashboardGridLayout();
 
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -75,7 +84,7 @@ export function DashboardGridLayout({ children }: { children: ReactNode }) {
   }, [endDrag]);
 
   return (
-    <div ref={containerRef} className="dashboard-grid-layout-shell">
+    <div ref={containerRef} className="dashboard-grid-layout-shell" data-edit-mode={isEditing ? "on" : "off"}>
       <ResponsiveGridLayout
         className="dashboard-grid-layout"
         layouts={layouts}
@@ -87,8 +96,8 @@ export function DashboardGridLayout({ children }: { children: ReactNode }) {
         containerPadding={[0, 0]}
         compactType="vertical"
         preventCollision={false}
-        isDraggable
-        isResizable
+        isDraggable={isEditing}
+        isResizable={isEditing}
         draggableHandle=".dashboard-widget__drag-handle"
         onDragStart={handleDragStart}
         onDragStop={handleDragStop}

@@ -12,6 +12,16 @@
 // It lives beside the authoring track rather than beside the page because the
 // pack gate runs src/authoring, and a test the gate does not run is a test that
 // silently stops being true.
+//
+// T-043 S2c. Two things changed under this file and both are handled here
+// rather than by weakening an assertion:
+//   1. The workspace page now reads the selection and grid-layout contexts for
+//      its Reset layout control, so this file mocks them. It renders the page
+//      directly, with no provider tree, and both hooks throw without one.
+//   2. Chapter 4 5.1.7 rules that edit mode REVEALS the add-widget control, so
+//      every Add path here turns edit mode on first. That is the product's
+//      behaviour now, and a test that could still reach Add widget in view mode
+//      would be asserting the opposite of the specification.
 
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -54,6 +64,13 @@ vi.mock("@/hooks/useDashboardLayoutPersistence", () => ({
   }),
 }));
 
+vi.mock("@/state/DashboardSelectionContext", () => ({
+  useDashboardSelections: () => ({ resetLayout: () => undefined }),
+}));
+vi.mock("@/state/DashboardGridLayoutContext", () => ({
+  useDashboardGridLayout: () => ({ resetGridLayout: () => undefined }),
+}));
+
 vi.mock("@/components/dashboard/DashboardGridLayout", () => ({
   DashboardGridLayout: (props: { children?: unknown }) => <div>{props.children as never}</div>,
 }));
@@ -69,10 +86,20 @@ vi.mock("@/components/dashboard/SelectionBreadcrumb", () => ({ SelectionBreadcru
 
 const PAGE = "src/pages/Dashboard/InteractiveWorkspacePage.tsx";
 
+/** Edit mode reveals the add-widget control, so reaching it means entering it. */
+async function enterEditMode(): Promise<void> {
+  await userEvent.click(await screen.findByTestId("workspace-edit-toggle"));
+}
+
+async function openAddWidget(): Promise<void> {
+  await enterEditMode();
+  await userEvent.click(await screen.findByTestId("workspace-add-widget"));
+}
+
 describe("T-038 Add and Edit reach the one authoring surface", () => {
   it("Add Widget opens the shared shell in S2 with no widget loaded", async () => {
     render(<InteractiveWorkspacePage dashboardCode="TEST_BOARD" />);
-    await userEvent.click(await screen.findByTestId("workspace-add-widget"));
+    await openAddWidget();
 
     expect(await screen.findByTestId("authoring-surface")).toBeInTheDocument();
     expect(screen.getByTestId("surface-purpose")).toHaveTextContent("S2");
@@ -91,7 +118,7 @@ describe("T-038 Add and Edit reach the one authoring surface", () => {
   it("hands the shell the dashboard to save into, and something to do when it closes", async () => {
     shellProps.mockClear();
     render(<InteractiveWorkspacePage dashboardCode="TEST_BOARD" />);
-    await userEvent.click(await screen.findByTestId("workspace-add-widget"));
+    await openAddWidget();
     await waitFor(() => expect(shellProps).toHaveBeenCalled());
 
     const props = shellProps.mock.calls[shellProps.mock.calls.length - 1][0] as Record<string, unknown>;
@@ -102,14 +129,23 @@ describe("T-038 Add and Edit reach the one authoring surface", () => {
 
   it("opens exactly one authoring surface, never two", async () => {
     render(<InteractiveWorkspacePage dashboardCode="TEST_BOARD" />);
-    await userEvent.click(await screen.findByTestId("workspace-add-widget"));
+    await openAddWidget();
     await screen.findByTestId("authoring-surface");
     expect(screen.getAllByTestId("authoring-surface").length).toBe(1);
   });
 
   it("shows no authoring surface until an entry point is used", async () => {
     render(<InteractiveWorkspacePage dashboardCode="TEST_BOARD" />);
+    await enterEditMode();
     await screen.findByTestId("workspace-add-widget");
+    expect(screen.queryByTestId("authoring-surface")).toBeNull();
+  });
+
+  it("T-043: the workspace offers no add-widget entry point in view mode", async () => {
+    render(<InteractiveWorkspacePage dashboardCode="TEST_BOARD" />);
+    await screen.findByTestId("workspace-edit-toggle");
+
+    expect(screen.queryByTestId("workspace-add-widget")).toBeNull();
     expect(screen.queryByTestId("authoring-surface")).toBeNull();
   });
 });

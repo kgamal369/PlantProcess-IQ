@@ -87,6 +87,7 @@ interface DashboardSelectionContextValue {
     selection: Omit<DashboardSelection, "id" | "createdAtUtc">
   ) => void;
   undoSelection: () => void;
+  removeSelection: (selectionId: string) => void;
   clearSelections: () => void;
 
   openDrilldown: (state: Omit<DrilldownState, "isOpen">) => void;
@@ -208,6 +209,38 @@ export function DashboardSelectionProvider({
     });
   }, [clearFilter, mergeFilters]);
 
+  // T-043. Chapter 4 5.1.13: "Chip x in the selections bar removes that one
+  // selection." undoSelection reaches only the LAST selection, so with three
+  // chips applied the first two could not be removed at all.
+  //
+  // Written outside the state updater, following clearSelections in this file,
+  // because an updater that also calls mergeFilters is not a pure updater and
+  // runs twice under StrictMode. undoSelection still carries that shape; it is
+  // recorded for its owner rather than rewritten inside this task.
+  const removeSelection = useCallback(
+    (selectionId: string) => {
+      const target = selections.find((item) => item.id === selectionId);
+      if (!target) return;
+
+      const remaining = selections.filter((item) => item.id !== selectionId);
+      const previousForSameField = [...remaining]
+        .reverse()
+        .find((item) => item.field === target.field);
+
+      if (previousForSameField) {
+        mergeFilters({
+          [target.field]: previousForSameField.value,
+          page: 1,
+        } as Partial<DashboardFilters>);
+      } else {
+        clearFilter(target.field);
+      }
+
+      setSelections(remaining);
+    },
+    [clearFilter, mergeFilters, selections]
+  );
+
   const clearSelections = useCallback(() => {
     selections.forEach((selection) => clearFilter(selection.field));
     setSelections([]);
@@ -291,6 +324,7 @@ export function DashboardSelectionProvider({
       layout,
       applySelection,
       undoSelection,
+      removeSelection,
       clearSelections,
       openDrilldown,
       closeDrilldown,
@@ -304,7 +338,7 @@ export function DashboardSelectionProvider({
     }),
     [
       selections, drilldown, layout,
-      applySelection, undoSelection, clearSelections,
+      applySelection, undoSelection, removeSelection, clearSelections,
       openDrilldown, closeDrilldown,
       getWidgetState, setWidgetChartType,
       toggleWidgetCollapsed, toggleWidgetFullscreen, toggleWidgetHidden,

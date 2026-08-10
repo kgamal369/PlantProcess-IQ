@@ -1,21 +1,50 @@
-import { RotateCcw, Trash2, Undo2 } from "lucide-react";
+// ============================================================
+// T-043. THE PERMANENT SELECTIONS BAR.
+//
+// Chapter 4 section 5.1.2: "The selections bar is never hidden. It reads
+// 'No selections applied' when empty."
+// Chapter 4 section 5.1.13: "Chip x in the selections bar removes that one
+// selection."
+//
+// Slice 1 established the contract: the bar is always present, carries the
+// exact empty sentence of 5.1.2, and gives every selection its own remove
+// control. Undo reaches the LAST selection only, so with three chips applied
+// the first two could not be removed at all.
+//
+// Slice 2 removed the layout reset control from this bar. 5.1.2 puts save and
+// reset layout in the PAGE HEADER, and a layout control inside the selections
+// bar contradicts the anatomy. It now lives in WorkspaceHeader and still runs
+// both resets behind one labelled control, which is the PPIQ-SCENE5678 rule:
+// two near-identically labelled buttons could not be told apart.
+//
+// RECORDED, NOT MOVED: "Show widgets" restores hidden widgets and is also not
+// a selection control. It has no home in the 5.1.2 anatomy yet, and inventing
+// one inside this task would be scope this task was explicitly denied.
+// ============================================================
+import { Trash2, Undo2, X } from "lucide-react";
 import { useDashboardSelections } from "../../state/DashboardSelectionContext";
-import { useDashboardGridLayout } from "../../state/DashboardGridLayoutContext";
 import { StandardButton } from "@/components/standard";
 
+export const SELECTIONS_BAR_EMPTY_TEXT = "No selections applied";
+
 export function SelectionBreadcrumb() {
-  const { selections, undoSelection, clearSelections, showAllWidgets, resetLayout } =
+  const { selections, undoSelection, clearSelections, removeSelection, showAllWidgets } =
     useDashboardSelections();
-    const { resetGridLayout } = useDashboardGridLayout();
-  
-    return (
-    <section className="selection-breadcrumb">
+
+  const hasSelections = selections.length > 0;
+
+  return (
+    <section
+      className="selection-breadcrumb"
+      aria-label="Selections"
+      data-testid="selections-bar"
+    >
       <div>
-        <strong>Visual selections</strong>
-        <span>
-          {selections.length === 0
-            ? "Click any chart, card, or table row to filter the workspace."
-            : `${selections.length} active visual selection(s).`}
+        <strong>Selections</strong>
+        <span data-testid="selections-bar-state">
+          {hasSelections
+            ? selections.length + " applied"
+            : SELECTIONS_BAR_EMPTY_TEXT}
         </span>
       </div>
 
@@ -23,7 +52,7 @@ export function SelectionBreadcrumb() {
         <StandardButton
           className="secondary-button"
           onClick={undoSelection}
-          isDisabled={selections.length === 0}
+          isDisabled={!hasSelections}
           type="button"
         >
           <Undo2 size={15} />
@@ -33,39 +62,39 @@ export function SelectionBreadcrumb() {
         <StandardButton
           className="secondary-button"
           onClick={clearSelections}
-          isDisabled={selections.length === 0}
+          isDisabled={!hasSelections}
           type="button"
         >
           <Trash2 size={15} />
-          Clear visual selections
+          Clear all
         </StandardButton>
 
         <StandardButton className="secondary-button" onClick={showAllWidgets} type="button">
           Show widgets
         </StandardButton>
-
-        {/* PPIQ-SCENE5678: one control. Two near-identically labelled reset
-            buttons used to sit side by side doing different things, and no
-            customer could tell them apart - one even had an icon and the other
-            did not. Both resets now run behind a single labelled button. */}
-        <StandardButton
-          className="secondary-button"
-          onClick={() => {
-            resetLayout();
-            resetGridLayout();
-          }}
-          type="button"
-        >
-          <RotateCcw size={15} />
-          Reset layout
-        </StandardButton>
       </div>
 
-      {selections.length > 0 ? (
-        <div className="visual-selection-row">
+      {hasSelections ? (
+        <div className="visual-selection-row" data-testid="selection-chips">
           {selections.map((selection) => (
-            <span key={selection.id} className="visual-selection-chip">
+            <span
+              key={selection.id}
+              className="visual-selection-chip"
+              data-testid="selection-chip"
+            >
               <strong>{selection.sourceWidget}:</strong> {selection.label}
+              <StandardButton
+                className="visual-selection-chip__remove"
+                variant="ghost"
+                iconOnly
+                type="button"
+                ariaLabel={
+                  "Remove selection " + selection.sourceWidget + ": " + selection.label
+                }
+                onClick={() => removeSelection(selection.id)}
+              >
+                <X size={13} />
+              </StandardButton>
             </span>
           ))}
         </div>

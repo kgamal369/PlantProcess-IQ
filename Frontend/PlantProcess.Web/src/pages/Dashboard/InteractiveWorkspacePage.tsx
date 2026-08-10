@@ -11,6 +11,18 @@ import { SelectionBreadcrumb } from "@/components/dashboard/SelectionBreadcrumb"
 import { useDashboardLayoutPersistence } from "@/hooks/useDashboardLayoutPersistence";
 import { dashboardingApi } from "@/api/dashboarding/dashboarding.api";
 import { StandardButton } from "@/components/standard";
+import { WorkspaceHeader } from "./WorkspaceHeader";
+import {
+  DEFAULT_SHEET_ID,
+  buildSheetDocument,
+  nextSheet,
+  readSheets,
+  readWidgetSheetIds,
+  sheetIdForWidget,
+} from "./workspaceSheets";
+import type { WorkspaceSheet } from "./workspaceSheets";
+import { useDashboardSelections } from "@/state/DashboardSelectionContext";
+import { useDashboardGridLayout } from "@/state/DashboardGridLayoutContext";
 import type { WidgetDefinitionRecord } from "@/authoring/widgetDefinitionModel";
 
 type WidgetRecord = ComponentProps<typeof SavedDashboardWidget>["widget"];
@@ -58,6 +70,9 @@ type LoadedDashboard = {
   name: string;
   description: string;
   widgets: WidgetRecord[];
+  // T-043 S3c. The sheet document travels with the definition that carries
+  // the widgets, so the two can never be one render apart.
+  layoutJson: string;
 };
 
 function asRecord(value: unknown): Record<string, unknown> {
@@ -99,6 +114,7 @@ async function loadDashboardByCode(code: string): Promise<LoadedDashboard | null
     name: String(full["name"] ?? container["name"] ?? match["name"] ?? code),
     description: String(full["description"] ?? container["description"] ?? match["description"] ?? ""),
     widgets: widgetsRaw as WidgetRecord[],
+    layoutJson: String(full["layoutJson"] ?? container["layoutJson"] ?? ""),
   };
 }
 
@@ -116,7 +132,49 @@ export function InteractiveWorkspacePage({ dashboardCode }: { dashboardCode: str
   // above every guard clause, for the reason recorded in the add-widget pack.
   const [editing, setEditing] = useState<WidgetRecord | null>(null);
 
-  const persistence = useDashboardLayoutPersistence(dashboard?.id);
+  // T-043 S2. Layout edit mode, Chapter 4 5.1.7. Named isLayoutEditing and
+  // not isEditing because `editing` already means the widget record open in
+  // the authoring shell, and two things called editing is how a wrong
+  // handler gets wired.
+  const [isLayoutEditing, setIsLayoutEditing] = useState(false);
+
+  // The as-of: the instant this page last read its definition and widgets.
+  // It is NOT a snapshot identity and is not described as one anywhere.
+  const [loadedAtUtc, setLoadedAtUtc] = useState<string | null>(null);
+
+  // T-043 S3. Sheets and their widget assignments come out of the persisted
+  // layout_json on the T-039 path and go back the same way. Option A: no
+  // table, no migration, no sheets endpoint. Until a layout arrives the page
+  // has one sheet, which is what it actually has.
+  const [sheets, setSheets] = useState<WorkspaceSheet[]>(() => readSheets(null));
+  const [widgetSheets, setWidgetSheets] = useState<Record<string, string>>({});
+  const [activeSheetId, setActiveSheetId] = useState(DEFAULT_SHEET_ID);
+
+  const { resetLayout } = useDashboardSelections();
+  const { resetGridLayout } = useDashboardGridLayout();
+
+  const persistence = useDashboardLayoutPersistence(dashboard?.id, {
+    onLayoutJsonLoaded: (layoutJson) => {
+      setSheets(readSheets(layoutJson));
+      setWidgetSheets(readWidgetSheetIds(layoutJson));
+    },
+    buildExtraDocument: () => buildSheetDocument(sheets, widgetSheets),
+  });
+
+  // The active sheet can vanish from under its id when a document is
+  // reloaded, so the navigator is clamped to a sheet that exists rather than
+  // leaving the page rendering nothing and calling it an empty sheet.
+  useEffect(() => {
+    if (sheets.length > 0 && !sheets.some((sheet) => sheet.id === activeSheetId)) {
+      setActiveSheetId(sheets[0].id);
+    }
+  }, [sheets, activeSheetId]);
+
+  const createSheet = useCallback(() => {
+    const created = nextSheet(sheets);
+    setSheets([...sheets, created]);
+    setActiveSheetId(created.id);
+  }, [sheets]);
 
   const refresh = useCallback(() => {
     setReloadNonce((n) => n + 1);
@@ -133,6 +191,13 @@ export function InteractiveWorkspacePage({ dashboardCode }: { dashboardCode: str
           return;
         }
         setDashboard(loaded);
+        setLoadedAtUtc(new Date().toISOString());
+        // The sheet document is read here rather than waited for, so the
+        // widgets and the assignments that decide which of them belong to
+        // this sheet land in one state update. Read from a second async path
+        // they were one render apart, and that render showed every sheet.
+        setSheets(readSheets(loaded.layoutJson));
+        setWidgetSheets(readWidgetSheetIds(loaded.layoutJson));
       })
       .catch(() => {
         if (!alive) return;
@@ -171,33 +236,36 @@ export function InteractiveWorkspacePage({ dashboardCode }: { dashboardCode: str
     );
   }
 
+  // Only the active sheet renders. A widget with no assignment belongs to the
+  // first sheet, so a board authored before sheets existed is unchanged and
+  // nothing has to be migrated for it to keep working.
+  const visibleWidgets = dashboard.widgets.filter(
+    (widget) =>
+      sheetIdForWidget(
+        widgetSheets,
+        sheets,
+        String((widget as { id?: unknown }).id ?? "")
+      ) === activeSheetId
+  );
+
   return (
     <section aria-label={dashboard.name}>
-      <header className="ppiq-std-card__header">
-        <div>
-          <h2>{dashboard.name}</h2>
-          <p>{dashboard.description}</p>
-        </div>
-        <div className="ppiq-journey-actions">
-          <StandardButton
-            variant="ghost"
-            onClick={() => void persistence.saveLayout()}
-            disabled={persistence.isSavingLayout}
-          >
-            {persistence.isSavingLayout ? "Saving layout..." : "Save layout"}
-          </StandardButton>
-          <StandardButton variant="ghost" onClick={refresh}>
-            Refresh widgets
-          </StandardButton>
-          <StandardButton
-            variant="primary"
-            data-testid="workspace-add-widget"
-            onClick={() => { setEditing(null); setAuthoringOpen(true); }}
-          >
-            Add widget
-          </StandardButton>
-        </div>
-      </header>
+      <WorkspaceHeader
+        title={dashboard.name}
+        description={dashboard.description}
+        sheets={sheets}
+        activeSheetId={activeSheetId}
+        onSheetChange={setActiveSheetId}
+        asOfUtc={loadedAtUtc}
+        isEditing={isLayoutEditing}
+        onToggleEdit={() => setIsLayoutEditing((on) => !on)}
+        onSaveLayout={() => void persistence.saveLayout()}
+        isSavingLayout={persistence.isSavingLayout}
+        onResetLayout={() => { resetLayout(); resetGridLayout(); }}
+        onRefresh={refresh}
+        onAddWidget={() => { setEditing(null); setAuthoringOpen(true); }}
+        onCreateSheet={createSheet}
+      />
 
       {/* Constitution v3 II.6.7: widget authoring opens from the page the
           widget lives on. */}
@@ -219,12 +287,16 @@ export function InteractiveWorkspacePage({ dashboardCode }: { dashboardCode: str
           </Suspense>
         </AuthoringBoundary>
       )}
-      <DashboardFilterBar />
+      {/* T-043. Chapter 4 5.1.2 region order: page header, then the
+          always-present selections bar, then the associative strip, then the
+          global filter bar above the grid. The drill drawer is an overlay that
+          was rendering between two regions, which put a dialog inside the page
+          anatomy; it now renders after the grid. */}
+      <SelectionBreadcrumb />
       <AssociativePanel />
-        <DrilldownDrawer />
-        <SelectionBreadcrumb />
-      <DashboardGridLayout>
-        {dashboard.widgets.map((widget) => (
+      <DashboardFilterBar />
+      <DashboardGridLayout isEditing={isLayoutEditing}>
+        {visibleWidgets.map((widget) => (
           <div
             key={String((widget as { id?: unknown }).id ?? Math.random())}
             /* T-075: the DOM hook an evidence citation uses to find this exact
@@ -243,6 +315,7 @@ export function InteractiveWorkspacePage({ dashboardCode }: { dashboardCode: str
           </div>
         ))}
       </DashboardGridLayout>
+      <DrilldownDrawer />
     </section>
   );
 }
