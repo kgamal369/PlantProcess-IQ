@@ -37,7 +37,7 @@ if ($need.Count -gt 0) {
 # ---- 2. relocate the tools -------------------------------------------------
 $demo = @('Rebuild-PresentationDb.ps1', 'Build-PresentationEnvironment.ps1', 'Restore-PresentationDataset.ps1',
     'Enable-PresentationProfile.ps1', 'Insert-Widgets-v4.ps1', 'Seed-PresentationDashboards.v2.ps1',
-    'Seed-PresentationDashboards.ps1', 'Finish-PresentationWorkspace.ps1', 'Add-InteractiveWorkspace.ps1',
+    'Finish-PresentationWorkspace.ps1', 'Add-InteractiveWorkspace.ps1',
     'Fix-CommandDashboard-LiveCharts.ps1')
 $verify = @('Certify-Journey.ps1', 'Verify-ImportChain.ps1', 'Verify-OracleDiscovery.ps1',
     'Trap-PresentationWipe.ps1', 'Protect-And-Merge.ps1', 'Commit-Remaining-Units.ps1', 'Finalize-Tree.ps1')
