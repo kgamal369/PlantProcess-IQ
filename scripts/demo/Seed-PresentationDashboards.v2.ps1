@@ -103,7 +103,7 @@ $poFk = T "SELECT column_name FROM information_schema.columns WHERE table_schema
 W ("[PARAM] parameter_definitions code column: '" + $pdCode + "'   observations FK: '" + $poFk + "'")
 $TopParam = ''
 if ($pdCode -and $poFk) {
-    $TopParam = T ("SELECT pd." + $pdCode + " FROM parameter_definitions pd JOIN parameter_observations po ON po." + $poFk + " = pd.id GROUP BY pd." + $pdCode + " ORDER BY COUNT(*) DESC LIMIT 1;")
+    $TopParam = T ("SELECT pd." + $pdCode + " FROM parameter_definitions pd JOIN parameter_observations po ON po." + $poFk + " = pd.id GROUP BY pd." + $pdCode + " ORDER BY COUNT(*) DESC, pd.parameter_code ASC LIMIT 1;")
 }
 if (-not $TopParam -and $pdCode) { $TopParam = T ("SELECT " + $pdCode + " FROM parameter_definitions LIMIT 1;") }
 $ParamSql = 'NULL'
@@ -154,7 +154,7 @@ $rows = @(
     (WRow '21000000-0000-0000-0000-000000000502' $D5 'PA_KOBS' 'Observations' 'kpi' '' 'observationCount' $ParamSql $L.K2 2),
     (WRow '21000000-0000-0000-0000-000000000503' $D5 'PA_TREND' 'Parameter Trend' 'line' 'day' 'avgParameterValue' $ParamSql $L.MAIN 3),
     (WRow '21000000-0000-0000-0000-000000000504' $D5 'PA_BYP' 'Observation Volume by Parameter' 'bar' 'parameterCode' 'observationCount' 'NULL' $L.SIDE 4),
-    (WRow '21000000-0000-0000-0000-000000000505' $D5 'PA_TABLE' 'Parameters Overview' 'table' 'parameterCode' 'avgParameterValue' 'NULL' $L.BL 5),
+    (WRow '21000000-0000-0000-0000-000000000505' $D5 'PA_TABLE' 'Average FDT by Grade' 'table' 'gradeOrRecipe' 'avgParameterValue' $ParamSql $L.BL 5),
 
     (WRow '21000000-0000-0000-0000-000000000601' $D6 'RI_KPI' 'Average Risk Score' 'kpi' '' 'riskScore' 'NULL' $L.K1 1),
     (WRow '21000000-0000-0000-0000-000000000602' $D6 'RI_TREND' 'Risk Score Trend' 'line' 'day' 'riskScore' 'NULL' $L.MAIN 2),
