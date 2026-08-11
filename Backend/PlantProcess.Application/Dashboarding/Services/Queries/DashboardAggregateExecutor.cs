@@ -39,22 +39,74 @@ namespace PlantProcess.Application.Dashboarding.Services.Queries;
 /// are mapped into it by the measure's own source projection, and the executor
 /// below never learns a customer's schema.
 /// </summary>
-internal sealed record WidgetFact(
-    Guid? MaterialUnitId,
-    Guid? SiteId,
-    Guid? AreaId,
-    Guid? EquipmentId,
-    string? MaterialCode,
-    string? MaterialUnitType,
-    string? ProductFamily,
-    string? GradeOrRecipe,
-    string? SourceSystem,
-    string? ShiftCode,
-    string? DefectType,
-    string? ParameterCode,
-    string? RiskClass,
-    DateTime? EventTimeUtc,
-    decimal Value);
+internal sealed record WidgetFact
+{
+    // OBJECT-INITIALISER SHAPE, AND THE REASON MATTERS.
+    //
+    // As a positional record, a projection reads
+    //     select new WidgetFact(a, b, c, ...)
+    // and EF must translate "new WidgetFact(...).EquipmentId" when that fact is
+    // grouped. It cannot see through a constructor call to the underlying
+    // column, so the whole GroupBy failed to translate. With init-only members
+    // EF simplifies "new WidgetFact { EquipmentId = col }.EquipmentId" to col,
+    // and the grouping compiles to a plain GROUP BY on real columns.
+    //
+    // The fifteen-argument constructor is kept so the measures that have not yet
+    // migrated compile untouched.
+    public Guid? MaterialUnitId { get; init; }
+    public Guid? SiteId { get; init; }
+    public Guid? AreaId { get; init; }
+    public Guid? EquipmentId { get; init; }
+    public string? MaterialCode { get; init; }
+    public string? MaterialUnitType { get; init; }
+    public string? ProductFamily { get; init; }
+    public string? GradeOrRecipe { get; init; }
+    public string? SourceSystem { get; init; }
+    public string? ShiftCode { get; init; }
+    public string? DefectType { get; init; }
+    public string? ParameterCode { get; init; }
+    public string? RiskClass { get; init; }
+    public DateTime? EventTimeUtc { get; init; }
+    public decimal Value { get; init; }
+
+    public WidgetFact()
+    {
+    }
+
+    public WidgetFact(
+        Guid? materialUnitId,
+        Guid? siteId,
+        Guid? areaId,
+        Guid? equipmentId,
+        string? materialCode,
+        string? materialUnitType,
+        string? productFamily,
+        string? gradeOrRecipe,
+        string? sourceSystem,
+        string? shiftCode,
+        string? defectType,
+        string? parameterCode,
+        string? riskClass,
+        DateTime? eventTimeUtc,
+        decimal value)
+    {
+        MaterialUnitId = materialUnitId;
+        SiteId = siteId;
+        AreaId = areaId;
+        EquipmentId = equipmentId;
+        MaterialCode = materialCode;
+        MaterialUnitType = materialUnitType;
+        ProductFamily = productFamily;
+        GradeOrRecipe = gradeOrRecipe;
+        SourceSystem = sourceSystem;
+        ShiftCode = shiftCode;
+        DefectType = defectType;
+        ParameterCode = parameterCode;
+        RiskClass = riskClass;
+        EventTimeUtc = eventTimeUtc;
+        Value = value;
+    }
+}
 
 internal sealed record DashboardAggregateRow(
     string DimensionKey,

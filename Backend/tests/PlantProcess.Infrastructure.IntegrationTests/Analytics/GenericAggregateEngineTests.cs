@@ -168,13 +168,15 @@ public sealed class GenericAggregateEngineTests
             // three. The correct answer is one.
             for (var i = 0; i < 3; i++)
             {
+                // (materialUnitId, operationType, startedAtUtc, endedAtUtc,
+                // isSynthetic, equipmentId), read from the entity.
                 db.ProcessStepExecutions.Add(new ProcessStepExecution(
                     unit.Id,
                     probe + "-STEP" + i,
                     new DateTime(2026, 5, 1, 6 + i, 0, 0, DateTimeKind.Utc),
+                    new DateTime(2026, 5, 1, 6 + i, 30, 0, DateTimeKind.Utc),
                     true,
-                    line.Id,
-                    new DateTime(2026, 5, 1, 6 + i, 30, 0, DateTimeKind.Utc)));
+                    line.Id));
             }
 
             await db.SaveChangesAsync();

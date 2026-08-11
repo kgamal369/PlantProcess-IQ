@@ -110,6 +110,36 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
                     "population before aggregating, so a result over this limit would be a lower " +
                     "bound presented as a total. No partial value is returned."));
         }
+        catch (DashboardDimensionNotRegisteredException notRegistered)
+        {
+            // A dimension with no execution projection is refused by name. The
+            // old code returned DimensionValue("unknown", "Unknown") for an
+            // unregistered code, which grouped an entire population under one
+            // meaningless bucket and looked like data.
+            return ApplicationResult<DashboardWidgetQueryResultDto>.Failure(
+                ApplicationError.Validation(
+                    "The widget dimension has no registered execution projection.",
+                    new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
+                    {
+                        [nameof(resolved.DimensionCode)] = new[]
+                        {
+                            "dimension_not_registered: '" + notRegistered.DimensionCode +
+                            "' cannot be grouped by this engine. A dimension must be registered in " +
+                            "the single dimension projection authority before a widget can bind it."
+                        }
+                    }));
+        }
+        catch (DashboardNonMergeableFoldException nonMergeable)
+        {
+            // Refusing beats a plausible number. This fires only if a
+            // non-mergeable family were grouped at a finer grain than requested,
+            // which would double count silently.
+            return ApplicationResult<DashboardWidgetQueryResultDto>.Failure(
+                ApplicationError.BusinessRule(
+                    "aggregation_family_not_mergeable_at_requested_grain: measure '" +
+                    nonMergeable.MeasureCode + "' cannot be folded to dimension '" +
+                    nonMergeable.DimensionCode + "' without double counting. No value is returned."));
+        }
 
         // PRESENTATION CORRECTION. Equipment and Area are dimensioned BY ID, and
         // that is correct: an id is stable and a name is not, so selections,
@@ -128,74 +158,66 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
     {
         var materialIds = await GetFilteredMaterialIdsAsync(filters, cancellationToken);
 
+        // D1 LAYER A. Two populations, two ALGEBRAS, one executor.
+        //
+        // A material reaching a piece of equipment twice is ONE material there,
+        // so on a relational dimension this measure is a DISTINCT COUNT, not a
+        // count. That distinction is declared as a family rather than hand
+        // written per method, and the executor refuses to fold a distinct count
+        // across grains because summing daily distinct counts double counts an
+        // entity that spans midnight.
         if (IsDimension(resolved, DashboardMetadataCodes.Dimensions.Equipment) ||
             IsDimension(resolved, DashboardMetadataCodes.Dimensions.ShiftCode) ||
             IsDimension(resolved, DashboardMetadataCodes.Dimensions.Area))
         {
-            var stepFacts = await (
-                    from step in _dbContext.ProcessStepExecutions.AsNoTracking()
-                    join equipment in _dbContext.Equipment.AsNoTracking()
-                        on step.EquipmentId equals equipment.Id
-                    where
-                        !step.IsDeleted &&
-                        materialIds.Contains(step.MaterialUnitId)
-                    select new WidgetFact(
-                        step.MaterialUnitId,
-                        null,
-                        equipment.AreaId,
-                        step.EquipmentId,
-                        null,
-                        null,
-                        null,
-                        null,
-                        step.SourceSystem,
-                        step.CrewCode,
-                        null,
-                        null,
-                        null,
-                        step.StartedAtUtc,
-                        1m))
-                .Take(resolved.RawRowLimit + 1)
-                .ToListAsync(cancellationToken);
-
-            RequireCompletePopulation(stepFacts, resolved);
-
-            var uniqueMaterialPerDimension = stepFacts
-                .GroupBy(x => new
+            var stepFacts =
+                from step in _dbContext.ProcessStepExecutions.AsNoTracking()
+                join equipment in _dbContext.Equipment.AsNoTracking()
+                    on step.EquipmentId equals equipment.Id
+                where
+                    !step.IsDeleted &&
+                    materialIds.Contains(step.MaterialUnitId)
+                select new WidgetFact
                 {
-                    Dimension = ResolveDimension(resolved.DimensionCode, x).Key,
-                    x.MaterialUnitId
-                })
-                .Select(g => g.First())
-                .ToList();
+                    MaterialUnitId = step.MaterialUnitId,
+                    AreaId = equipment.AreaId,
+                    EquipmentId = step.EquipmentId,
+                    SourceSystem = step.SourceSystem,
+                    ShiftCode = step.CrewCode,
+                    EventTimeUtc = step.StartedAtUtc,
+                    Value = 1m
+                };
 
-            return AggregateCount(uniqueMaterialPerDimension, resolved);
+            return await DashboardAggregateExecutor.ExecuteAsync(
+                stepFacts,
+                resolved,
+                filters,
+                DashboardAggregationFamily.DistinctMaterial,
+                cancellationToken);
         }
 
-        var facts = await _dbContext.MaterialUnits
+        var facts = _dbContext.MaterialUnits
             .AsNoTracking()
             .Where(x => !x.IsDeleted && materialIds.Contains(x.Id))
-            .Select(x => new WidgetFact(
-                x.Id,
-                x.SiteId,
-                null,
-                null,
-                x.MaterialCode,
-                x.MaterialUnitType,
-                x.ProductFamily,
-                x.GradeOrRecipe,
-                x.SourceSystem,
-                null,
-                null,
-                null,
-                null,
-                x.ProductionStartUtc,
-                1m))
-            .Take(resolved.RawRowLimit + 1)
-            .ToListAsync(cancellationToken);
+            .Select(x => new WidgetFact
+            {
+                MaterialUnitId = x.Id,
+                SiteId = x.SiteId,
+                MaterialCode = x.MaterialCode,
+                MaterialUnitType = x.MaterialUnitType,
+                ProductFamily = x.ProductFamily,
+                GradeOrRecipe = x.GradeOrRecipe,
+                SourceSystem = x.SourceSystem,
+                EventTimeUtc = x.ProductionStartUtc,
+                Value = 1m
+            });
 
-        RequireCompletePopulation(facts, resolved);
-        return AggregateCount(facts, resolved);
+        return await DashboardAggregateExecutor.ExecuteAsync(
+            facts,
+            resolved,
+            filters,
+            DashboardAggregationFamily.Additive,
+            cancellationToken);
     }
 
     private async Task<IReadOnlyList<DashboardAggregateRow>> ExecuteDefectCountAsync(
@@ -335,52 +357,45 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
         var parameterCode = resolved.ParameterCode ?? filters?.ParameterCode;
         var materialIds = await GetFilteredMaterialIdsAsync(filters, cancellationToken);
 
-        var facts = await (
-                from observation in _dbContext.ParameterObservations.AsNoTracking()
-                join material in _dbContext.MaterialUnits.AsNoTracking()
-                    on observation.MaterialUnitId equals material.Id
-                join parameter in _dbContext.ParameterDefinitions.AsNoTracking()
-                    on observation.ParameterDefinitionId equals parameter.Id
-                join equipment in _dbContext.Equipment.AsNoTracking()
-                    on observation.EquipmentId equals equipment.Id into equipmentJoin
-                from equipment in equipmentJoin.DefaultIfEmpty()
-                where
-                    !observation.IsDeleted &&
-                    !material.IsDeleted &&
-                    materialIds.Contains(observation.MaterialUnitId) &&
-                    (parameterCode == null || parameter.ParameterCode == parameterCode)
-                select new WidgetFact(
-                    observation.MaterialUnitId,
-                    material.SiteId,
-                    equipment != null ? equipment.AreaId : null,
-                    observation.EquipmentId,
-                    material.MaterialCode,
-                    material.MaterialUnitType,
-                    material.ProductFamily,
-                    material.GradeOrRecipe,
-                    material.SourceSystem,
-                    null,
-                    null,
-                    parameter.ParameterCode,
-                    null,
-                    observation.ObservedAtUtc,
-                    1m))
-            .Take(resolved.RawRowLimit + 1)
-            .ToListAsync(cancellationToken);
+        // D1 LAYER A. The population stays an IQueryable. No Take, no
+        // materialisation, no C# GroupBy. What this method decides is what an
+        // observation IS; how the aggregation executes is the executor's job.
+        var facts =
+            from observation in _dbContext.ParameterObservations.AsNoTracking()
+            join material in _dbContext.MaterialUnits.AsNoTracking()
+                on observation.MaterialUnitId equals material.Id
+            join parameter in _dbContext.ParameterDefinitions.AsNoTracking()
+                on observation.ParameterDefinitionId equals parameter.Id
+            join equipment in _dbContext.Equipment.AsNoTracking()
+                on observation.EquipmentId equals equipment.Id into equipmentJoin
+            from equipment in equipmentJoin.DefaultIfEmpty()
+            where
+                !observation.IsDeleted &&
+                !material.IsDeleted &&
+                materialIds.Contains(observation.MaterialUnitId) &&
+                (parameterCode == null || parameter.ParameterCode == parameterCode)
+            select new WidgetFact
+            {
+                MaterialUnitId = observation.MaterialUnitId,
+                SiteId = material.SiteId,
+                AreaId = equipment != null ? equipment.AreaId : null,
+                EquipmentId = observation.EquipmentId,
+                MaterialCode = material.MaterialCode,
+                MaterialUnitType = material.MaterialUnitType,
+                ProductFamily = material.ProductFamily,
+                GradeOrRecipe = material.GradeOrRecipe,
+                SourceSystem = material.SourceSystem,
+                ParameterCode = parameter.ParameterCode,
+                EventTimeUtc = observation.ObservedAtUtc,
+                Value = 1m
+            };
 
-        RequireCompletePopulation(facts, resolved);
-        facts = ApplyFactDateFilter(facts, filters).ToList();
-
-        var grouped = facts
-            .GroupBy(x => ResolveDimension(resolved.DimensionCode, x))
-            .Select(g => new DashboardAggregateRow(
-                g.Key.Key,
-                g.Key.Label,
-                g.Count(),
-                g.Count(),
-                0));
-
-        return SortAndTake(grouped, resolved);
+        return await DashboardAggregateExecutor.ExecuteAsync(
+            facts,
+            resolved,
+            filters,
+            DashboardAggregationFamily.Additive,
+            cancellationToken);
     }
     /// <summary>
     /// Every measure this engine can actually execute. It exists so that a code
@@ -1097,31 +1112,11 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
         return new DimensionValue(key, key);
     }
 
-    private sealed record WidgetFact(
-        Guid? MaterialUnitId,
-        Guid? SiteId,
-        Guid? AreaId,
-        Guid? EquipmentId,
-        string? MaterialCode,
-        string? MaterialUnitType,
-        string? ProductFamily,
-        string? GradeOrRecipe,
-        string? SourceSystem,
-        string? ShiftCode,
-        string? DefectType,
-        string? ParameterCode,
-        string? RiskClass,
-        DateTime? EventTimeUtc,
-        decimal Value);
-
-    private sealed record DashboardAggregateRow(
-        string DimensionKey,
-        string DimensionLabel,
-        decimal Value,
-        int ObservationCount,
-        int SecondaryCount);
-
-    private sealed record DimensionValue(string Key, string Label);
+    // D1 LAYER A. WidgetFact, DashboardAggregateRow and DimensionValue moved to
+    // DashboardAggregateExecutor.cs as internal contracts. They were private
+    // nested types, which is exactly why a generic executor could not exist:
+    // nothing outside this class could name the shape every measure already
+    // projects into. Same namespace, so no using and no call site changes.
 
     private enum ParameterAggregationMode
     {
