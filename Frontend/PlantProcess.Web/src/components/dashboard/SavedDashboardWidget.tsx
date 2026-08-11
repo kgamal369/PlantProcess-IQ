@@ -157,6 +157,24 @@ interface SavedDashboardWidgetProps {
     result?.columns.find((column) => column.code !== "value")?.code ??
     widget.dimensionCode;
 
+  // T-044 D7. IDENTITY AND DISPLAY ARE TWO DIFFERENT THINGS.
+  //
+  // categoryKey above is the CANONICAL dimension column. It is what the
+  // backend groups by, what selection state filters on, and what a saved
+  // selection must carry. For a relational dimension it is a UUID.
+  //
+  // displayKey is what a person reads. BuildResult returns dimensionLabel
+  // beside every category, resolved from the database, and until now nothing
+  // rendered it: the axis was bound to the identity column, so a bar chart on
+  // equipment plotted UUIDs.
+  //
+  // The two must never be swapped. Passing displayKey where identity is
+  // expected would fix the picture and silently break filtering, because a
+  // label matches no row in the canonical column.
+  const displayKey =
+    result?.columns.find((column) => column.code === "dimensionLabel")?.code ??
+    categoryKey;
+
   const valueKey =
     (roleBinding?.value ?? null) ??
     result?.columns.find((column) => column.code === "value")?.code ??
@@ -217,11 +235,11 @@ interface SavedDashboardWidgetProps {
             subtitle={widget.measureCode}
           />
         ) : isExtraChartType(activeChartType) ? (
-          <ExtraChart type={String(activeChartType)} rows={rows as Record<string, unknown>[]} categoryKey={categoryKey} valueKey={valueKey} field={dimensionToFilterField(widget.dimensionCode)} timeDimension={isTemporalDimension(widget.dimensionCode) ? widget.dimensionCode : null} />
+          <ExtraChart type={String(activeChartType)} rows={rows as Record<string, unknown>[]} categoryKey={categoryKey} labelKey={displayKey} valueKey={valueKey} field={dimensionToFilterField(widget.dimensionCode)} timeDimension={isTemporalDimension(widget.dimensionCode) ? widget.dimensionCode : null} />
         ) : activeChartType === "line" || activeChartType === "area" ? (
           <InteractiveLineChart
             data={rows}
-            categoryKey={categoryKey}
+            categoryKey={displayKey}
             valueKey={valueKey}
             area={activeChartType === "area"}
             selection={{
@@ -236,7 +254,7 @@ interface SavedDashboardWidgetProps {
         ) : activeChartType === "pie" || activeChartType === "donut" ? (
           <InteractivePieChart
             data={rows}
-            categoryKey={categoryKey}
+            categoryKey={displayKey}
             valueKey={valueKey}
             donut={activeChartType === "donut"}
             selection={{
@@ -253,7 +271,7 @@ interface SavedDashboardWidgetProps {
         ) : (
           <InteractiveBarChart
             data={rows}
-            categoryKey={categoryKey}
+            categoryKey={displayKey}
             valueKey={valueKey}
             selection={{
               type: "generic",

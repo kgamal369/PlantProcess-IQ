@@ -32,13 +32,21 @@ const CYAN = "#00d4ff";
 const BLUE = "#0a84ff";
 const GREEN = "#2ce6a2";
 
-type P = { type: string; rows: ExtraRow[]; categoryKey: string; valueKey: string; field?: string | null; timeDimension?: string | null };
+// T-044 D7. labelKey is OPTIONAL and defaults to categoryKey, so every
+// existing caller keeps its current behaviour. cat stays the canonical
+// identity that reaches setFilter; label is only ever displayed.
+type P = { type: string; rows: ExtraRow[]; categoryKey: string; labelKey?: string | null; valueKey: string; field?: string | null; timeDimension?: string | null };
 
-export function ExtraChart({ type, rows, categoryKey, valueKey, field = null, timeDimension = null }: P) {
+export function ExtraChart({ type, rows, categoryKey, labelKey = null, valueKey, field = null, timeDimension = null }: P) {
   const { filters, setFilter, mergeFilters } = useDashboardFilters();
   const data = useMemo(
-    () => rows.map((r) => ({ cat: String(r[categoryKey] ?? ""), val: Number(r[valueKey] ?? 0) })),
-    [rows, categoryKey, valueKey]
+    () =>
+      rows.map((r) => ({
+        cat: String(r[categoryKey] ?? ""),
+        label: String(r[labelKey ?? categoryKey] ?? ""),
+        val: Number(r[valueKey] ?? 0),
+      })),
+    [rows, categoryKey, labelKey, valueKey]
   );
   const toggle = (cat: string) => {
     // PPIQ-WIDGETFIX: a temporal category narrows the workspace time range.
@@ -67,7 +75,7 @@ export function ExtraChart({ type, rows, categoryKey, valueKey, field = null, ti
       <ResponsiveContainer width="100%" height="100%">
         <ComposedChart data={pd} margin={{ top: 8, right: 10, left: -14, bottom: 4 }}>
           <CartesianGrid stroke={GRID} vertical={false} />
-          <XAxis dataKey="cat" tick={AXIS} interval={0} angle={-28} textAnchor="end" height={54} />
+          <XAxis dataKey="label" tick={AXIS} interval={0} angle={-28} textAnchor="end" height={54} />
           <YAxis yAxisId="l" tick={AXIS} />
           <YAxis yAxisId="r" orientation="right" tick={AXIS} domain={[0, 100]} unit="%" />
           <Tooltip contentStyle={TOOLTIP_BG} labelStyle={{ color: "#eaf6ff" }} />
@@ -90,8 +98,8 @@ export function ExtraChart({ type, rows, categoryKey, valueKey, field = null, ti
             <StandardP2Button key={d.cat} variant="ghost"
               className={"ppiq-heat ppiq-heat--" + bucket}
               onClick={() => toggle(d.cat)}
-              title={d.cat + ": " + d.val.toLocaleString()}>
-              {d.cat}
+              title={d.label + ": " + d.val.toLocaleString()}>
+              {d.label}
             </StandardP2Button>
           );
         })}
@@ -99,17 +107,17 @@ export function ExtraChart({ type, rows, categoryKey, valueKey, field = null, ti
     );
   }
 
-  const sd = data.map((d, i) => ({ x: i + 1, y: d.val, cat: d.cat }));
+  const sd = data.map((d, i) => ({ x: i + 1, y: d.val, cat: d.cat, label: d.label }));
   return (
     <ResponsiveContainer width="100%" height="100%">
       <ScatterChart margin={{ top: 10, right: 12, left: -14, bottom: 4 }}>
         <CartesianGrid stroke={GRID} />
-        <XAxis dataKey="x" tick={AXIS} tickFormatter={(v: number) => sd[v - 1]?.cat ?? ""} interval={0} angle={-28} textAnchor="end" height={54} />
+        <XAxis dataKey="x" tick={AXIS} tickFormatter={(v: number) => sd[v - 1]?.label ?? ""} interval={0} angle={-28} textAnchor="end" height={54} />
         <YAxis dataKey="y" tick={AXIS} />
         <ZAxis range={[70, 70]} />
         <Tooltip contentStyle={TOOLTIP_BG}
                  formatter={(v) => [Number(v).toLocaleString(), "value"]}
-                 labelFormatter={(v) => sd[Number(v) - 1]?.cat ?? ""} />
+                 labelFormatter={(v) => sd[Number(v) - 1]?.label ?? ""} />
         <Scatter data={sd} fill={BLUE} stroke={CYAN} cursor="pointer"
                  onClick={(d) => { const c = catOf(d); if (c) { toggle(c); } }} />
       </ScatterChart>
