@@ -1,0 +1,23 @@
+# Python build and cache artifacts. These are generated, never committed.
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+
+# Job scratch. The runtime writes manifests and checkpoints into caller-supplied
+# directories; nothing it produces belongs in the repository.
+out/
+checkpoints/
+
+# The repository root .gitignore carries a broad hygiene rule, 'runtime/', intended
+# for generated output directories. It is unanchored, so it also matches this
+# package's source directory at ML/src/ppiq_ml/runtime. That directory is source,
+# not output, so it is re-included here.
+#
+# A lower .gitignore overrides a higher one for paths beneath it, and the excluded
+# thing is the directory itself rather than a file inside an already-excluded
+# parent, so this negation is effective. Verified against git before shipping.
+!/src/ppiq_ml/runtime/

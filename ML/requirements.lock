@@ -1,0 +1,17 @@
+# T-168 protocol layer: no third-party dependency.
+#
+# This file is intentionally empty of packages. The versioned C# to Python job
+# protocol is implemented against the standard library only, so it can be executed
+# and tested in an environment with no ML stack installed.
+#
+# Model-family dependencies are declared as optional extras in pyproject.toml and
+# are locked by the task that introduces them:
+#
+#   T-175  mf04_supervised   lightgbm, scikit-learn, numpy, shap
+#   T-173  mf02_similarity   faiss-cpu, numpy
+#   T-174  mf03_novelty      scikit-learn, numpy
+#   T-172  mf01_process_encoder  torch
+#   T-169  artifacts         pyarrow
+#
+# A guard test asserts the protocol layer imports nothing outside the standard
+# library, so this file cannot silently drift.

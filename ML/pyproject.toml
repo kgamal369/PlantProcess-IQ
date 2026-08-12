@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ppiq-ml"
+version = "0.1.0"
+description = "PlantProcess IQ Python ML runtime. Numerical computation behind the versioned C# job protocol."
+requires-python = ">=3.11"
+license = { text = "Proprietary" }
+
+# The protocol layer is deliberately standard library only. It executes in any
+# environment with no install step, which keeps the C#-to-Python contract testable
+# on a machine that has no ML stack.
+dependencies = []
+
+[project.optional-dependencies]
+# Model families are added by their own tasks. Nothing here is installed by T-168.
+mf01_process_encoder = ["torch"]
+mf02_similarity = ["faiss-cpu", "numpy"]
+mf03_novelty = ["scikit-learn", "numpy"]
+mf04_supervised = ["lightgbm", "scikit-learn", "numpy", "shap"]
+artifacts = ["pyarrow"]
+dev = ["pytest"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

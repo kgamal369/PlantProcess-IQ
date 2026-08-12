@@ -59,8 +59,6 @@ public class DashboardWidgetDefinition : BaseEntity
             throw new ArgumentException("Widget type is required.", nameof(widgetType));
         if (string.IsNullOrWhiteSpace(chartType))
             throw new ArgumentException("Chart type is required.", nameof(chartType));
-        if (string.IsNullOrWhiteSpace(dimensionCode))
-            throw new ArgumentException("Dimension code is required.", nameof(dimensionCode));
         if (string.IsNullOrWhiteSpace(measureCode))
             throw new ArgumentException("Measure code is required.", nameof(measureCode));
 
@@ -69,7 +67,7 @@ public class DashboardWidgetDefinition : BaseEntity
         WidgetTitle = widgetTitle.Trim();
         WidgetType = widgetType.Trim();
         ChartType = chartType.Trim();
-        DimensionCode = dimensionCode.Trim();
+        DimensionCode = NormalizeBinding(dimensionCode);
         MeasureCode = measureCode.Trim();
         ParameterCode = NormalizeNullable(parameterCode);
         FilterJson = NormalizeJson(filterJson);
@@ -104,15 +102,13 @@ public class DashboardWidgetDefinition : BaseEntity
             throw new ArgumentException("Widget type is required.", nameof(widgetType));
         if (string.IsNullOrWhiteSpace(chartType))
             throw new ArgumentException("Chart type is required.", nameof(chartType));
-        if (string.IsNullOrWhiteSpace(dimensionCode))
-            throw new ArgumentException("Dimension code is required.", nameof(dimensionCode));
         if (string.IsNullOrWhiteSpace(measureCode))
             throw new ArgumentException("Measure code is required.", nameof(measureCode));
 
         WidgetTitle = widgetTitle.Trim();
         WidgetType = widgetType.Trim();
         ChartType = chartType.Trim();
-        DimensionCode = dimensionCode.Trim();
+        DimensionCode = NormalizeBinding(dimensionCode);
         MeasureCode = measureCode.Trim();
         ParameterCode = NormalizeNullable(parameterCode);
         FilterJson = NormalizeJson(filterJson);
@@ -214,5 +210,27 @@ public class DashboardWidgetDefinition : BaseEntity
     private static string? NormalizeNullable(string? value)
     {
         return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+    }
+
+    /// <summary>
+    /// T-046 Pack 4B1. A binding the widget does not use.
+    ///
+    /// The entity required a dimension on every widget. That predates the chart
+    /// grammar and contradicts it: a KPI declares SupportsDimension = false, and
+    /// the five dimensionless widgets already live in the presentation database
+    /// could not be recreated through the API meant to author them.
+    ///
+    /// It returns the EMPTY STRING, not null, because that is how every existing
+    /// row already stores a blank binding. Changing that would need a migration,
+    /// and this pack changes one invariant and nothing else.
+    ///
+    /// WHETHER A CHART NEEDS A DIMENSION IS NOT ASKED HERE. The entity accepts a
+    /// shape; DashboardWidgetValidationService judges its meaning. A chart-type
+    /// test in this file would be a second grammar, and an architecture guard
+    /// fails the build if one appears.
+    /// </summary>
+    private static string NormalizeBinding(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
     }
 }

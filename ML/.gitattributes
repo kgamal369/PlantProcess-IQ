@@ -1,0 +1,5 @@
+# Python sources are LF by convention. Without this, a Windows working tree with
+# core.autocrlf enabled rewrites them to CRLF on checkout, which produces noise in
+# every later diff and warnings on every add.
+* text=auto eol=lf
+*.py text eol=lf
