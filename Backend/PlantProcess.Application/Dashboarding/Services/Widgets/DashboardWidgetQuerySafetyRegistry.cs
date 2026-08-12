@@ -34,23 +34,10 @@ public static class DashboardWidgetQuerySafetyRegistry
         DashboardMetadataCodes.ChartTypes.Table
     };
 
-    private static readonly HashSet<string> SupportedDimensions = new(StringComparer.OrdinalIgnoreCase)
-    {
-        DashboardMetadataCodes.Dimensions.Site,
-        DashboardMetadataCodes.Dimensions.Area,
-        DashboardMetadataCodes.Dimensions.Equipment,
-        DashboardMetadataCodes.Dimensions.SourceSystem,
-        DashboardMetadataCodes.Dimensions.MaterialUnitType,
-        DashboardMetadataCodes.Dimensions.ProductFamily,
-        DashboardMetadataCodes.Dimensions.GradeOrRecipe,
-        DashboardMetadataCodes.Dimensions.ShiftCode,
-        DashboardMetadataCodes.Dimensions.DefectType,
-        DashboardMetadataCodes.Dimensions.ParameterCode,
-        DashboardMetadataCodes.Dimensions.Day,
-        DashboardMetadataCodes.Dimensions.Week,
-        DashboardMetadataCodes.Dimensions.Month,
-        DashboardMetadataCodes.Dimensions.RiskClass
-    };
+    // T-046 Pack 3A. The second dimension catalogue lived here: the same
+    // fourteen codes the metadata service already described, with none of their
+    // meaning. The service that decided whether a dimension EXISTED could not
+    // say what it MEANT. DashboardDimensionRegistry is the single authority now.
 
     private static readonly HashSet<string> SupportedMeasures = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -107,8 +94,7 @@ public static class DashboardWidgetQuerySafetyRegistry
 
     public static bool IsSupportedDimension(string? dimensionCode)
     {
-        return !string.IsNullOrWhiteSpace(dimensionCode) &&
-               SupportedDimensions.Contains(dimensionCode.Trim());
+        return DashboardDimensionRegistry.IsRegistered(dimensionCode);
     }
 
     public static bool IsSupportedMeasure(string? measureCode)

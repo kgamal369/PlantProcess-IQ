@@ -128,155 +128,28 @@ public sealed class DashboardMetadataService : IDashboardMetadataService
     private const string AvailabilityImplemented = "implemented";
     private const string AvailabilityNotYetAvailable = "not-yet-available";
 
+    /// <summary>
+    /// T-046 Pack 3A. The catalogue is READ FROM THE SHARED REGISTRY. It was
+    /// written out here while a second list of the same fourteen codes lived in
+    /// DashboardWidgetQuerySafetyRegistry, so the service that decided whether a
+    /// dimension existed could not say what it meant. One authority now.
+    ///
+    /// The payload is unchanged, field for field, including the legacy
+    /// per-dimension chart array: Pack 3A collapses ownership and must not alter
+    /// what a client receives.
+    /// </summary>
     private static IReadOnlyList<DashboardDimensionMetadataDto> BuildDimensions()
     {
-        return new[]
-        {
-            Dimension(
-                DashboardMetadataCodes.Dimensions.Site,
-                "Site",
-                "Plant",
-                "string",
-                false,
-                new[] { "bar", "pie", "donut", "table" },
-                "Manufacturing site or plant."),
-
-            Dimension(
-                DashboardMetadataCodes.Dimensions.Area,
-                "Area",
-                "Plant",
-                "string",
-                false,
-                new[] { "bar", "pie", "donut", "heatmap", "table" },
-                "Flexible plant area or location layer."),
-
-            Dimension(
-                DashboardMetadataCodes.Dimensions.Equipment,
-                "Equipment",
-                "Plant",
-                "string",
-                false,
-                new[] { "bar", "pie", "donut", "scatter", "heatmap", "table" },
-                "Machine, line, station, asset or tool."),
-
-            Dimension(
-                DashboardMetadataCodes.Dimensions.SourceSystem,
-                "Source System",
-                "Integration",
-                "string",
-                false,
-                new[] { "bar", "pie", "donut", "table" },
-                "MES, Level 2, lab, inspection, ERP, file or API source."),
-
-            Dimension(
-                DashboardMetadataCodes.Dimensions.MaterialUnitType,
-                "Material Unit Type",
-                "Material",
-                "string",
-                false,
-                new[] { "bar", "pie", "donut", "table" },
-                "Generic material type such as batch, slab, coil, lot, tire, roll or component."),
-
-            Dimension(
-                DashboardMetadataCodes.Dimensions.ProductFamily,
-                "Product Family",
-                "Material",
-                "string",
-                false,
-                new[] { "bar", "pie", "donut", "table" },
-                "Product family, product group or manufacturing family."),
-
-            Dimension(
-                DashboardMetadataCodes.Dimensions.GradeOrRecipe,
-                "Grade / Recipe",
-                "Material",
-                "string",
-                false,
-                new[] { "bar", "pie", "donut", "table" },
-                "Grade, recipe, product code or process recipe."),
-
-            Dimension(
-                DashboardMetadataCodes.Dimensions.ShiftCode,
-                "Shift / Crew",
-                "Operations",
-                "string",
-                false,
-                new[] { "bar", "pie", "donut", "heatmap", "table" },
-                "Operational shift or crew code."),
-
-            Dimension(
-                DashboardMetadataCodes.Dimensions.DefectType,
-                "Defect Type",
-                "Quality",
-                "string",
-                false,
-                new[] { "bar", "pie", "donut", "heatmap", "table" },
-                "Standardized defect or quality event type."),
-
-            Dimension(
-                DashboardMetadataCodes.Dimensions.ParameterCode,
-                "Parameter",
-                "Process",
-                "string",
-                true,
-                new[] { "bar", "line", "scatter", "heatmap", "table" },
-                "Process parameter code."),
-
-            Dimension(
-                DashboardMetadataCodes.Dimensions.Day,
-                "Day",
-                "Time",
-                "date",
-                false,
-                new[] { "bar", "line", "area", "table" },
-                "Calendar day bucket."),
-
-            Dimension(
-                DashboardMetadataCodes.Dimensions.Week,
-                "Week",
-                "Time",
-                "date",
-                false,
-                new[] { "bar", "line", "area", "table" },
-                "Calendar week bucket."),
-
-            Dimension(
-                DashboardMetadataCodes.Dimensions.Month,
-                "Month",
-                "Time",
-                "date",
-                false,
-                new[] { "bar", "line", "area", "table" },
-                "Calendar month bucket."),
-
-            Dimension(
-                DashboardMetadataCodes.Dimensions.RiskClass,
-                "Risk Class",
-                "Risk",
-                "string",
-                false,
-                new[] { "bar", "pie", "donut", "table" },
-                "Low, medium, high or critical risk classification.")
-        };
-
-        static DashboardDimensionMetadataDto Dimension(
-            string code,
-            string label,
-            string category,
-            string dataType,
-            bool requiresParameterCode,
-            IReadOnlyList<string> compatibleCharts,
-            string description)
-        {
-            return new DashboardDimensionMetadataDto(
-                code,
-                label,
-                category,
-                dataType,
-                requiresParameterCode,
-                compatibleCharts,
-                description);
-        }
+        return DashboardDimensionRegistry.All
+            .Select(descriptor => new DashboardDimensionMetadataDto(
+                descriptor.Code,
+                descriptor.Label,
+                descriptor.Category,
+                descriptor.DataType,
+                descriptor.RequiresParameterCode,
+                descriptor.LegacyCompatibleChartTypes,
+                descriptor.Description))
+            .ToList();
     }
 
     private static IReadOnlyList<DashboardMeasureMetadataDto> BuildMeasures()
@@ -606,13 +479,9 @@ public sealed class DashboardMetadataService : IDashboardMetadataService
     /// </summary>
     private static AxisRole AxisRoleOf(DashboardDimensionMetadataDto dimension)
     {
-        if (string.Equals(dimension.DataType, "date", StringComparison.OrdinalIgnoreCase))
-            return AxisRole.Temporal;
-
-        if (string.Equals(dimension.DataType, "number", StringComparison.OrdinalIgnoreCase))
-            return AxisRole.Numeric;
-
-        return AxisRole.Categorical;
+        // T-046 Pack 3A. Delegated, not duplicated. Two implementations of one
+        // rule agree until the day one of them is edited.
+        return DashboardDimensionRegistry.AxisRoleOf(dimension.Code);
     }
 }
 

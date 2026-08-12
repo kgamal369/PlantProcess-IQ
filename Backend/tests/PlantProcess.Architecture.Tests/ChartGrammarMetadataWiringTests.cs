@@ -96,19 +96,50 @@ public sealed class ChartGrammarMetadataWiringTests
     /// from a code that happens to look like a date. A customer names their own
     /// dimensions.
     /// </summary>
+    private static string DimensionRegistryCode()
+    {
+        var path = Path.Combine(
+            RepositoryRoot(),
+            "Backend", "PlantProcess.Application", "Dashboarding", "Services", "Widgets",
+            "DashboardDimensionRegistry.cs");
+
+        Assert.True(File.Exists(path), "the dimension registry is missing: " + path);
+
+        var raw = File.ReadAllText(path);
+        var withoutBlocks = Regex.Replace(raw, @"/\*[\s\S]*?\*/", string.Empty);
+        return Regex.Replace(withoutBlocks, @"(?m)^\s*//.*$", string.Empty);
+    }
+
+    /// <summary>
+    /// REWRITTEN BY PACK 3A, AND THE HISTORY MATTERS. This guard originally
+    /// asserted that "dimension.DataType" appears in the metadata service - it
+    /// pinned WHERE the rule lived rather than WHAT the rule is. Moving the
+    /// implementation into the shared registry, which is the whole point of
+    /// 3A, failed it. A guard that breaks when the code is improved is testing
+    /// the wrong thing.
+    ///
+    /// It now asserts the rule in whichever file owns it: the metadata surface
+    /// ASKS rather than decides, the one implementation reads a registered data
+    /// type, and NEITHER file resolves a role from a dimension code name.
+    /// </summary>
     [Fact]
     public void The_axis_role_is_read_from_the_registry_not_from_a_code_name()
     {
-        var code = MetadataServiceCode();
+        var metadata = MetadataServiceCode();
+        var registry = DimensionRegistryCode();
 
-        Assert.Contains("AxisRoleOf", code, StringComparison.Ordinal);
-        Assert.Contains("dimension.DataType", code, StringComparison.Ordinal);
+        Assert.Contains("DashboardDimensionRegistry.AxisRoleOf", metadata, StringComparison.Ordinal);
+        Assert.Contains("DataType", registry, StringComparison.Ordinal);
+        Assert.Contains("AxisRole.Temporal", registry, StringComparison.Ordinal);
 
         foreach (var literal in new[] { "\"day\"", "\"week\"", "\"month\"", "\"riskClass\"", "\"defectType\"" })
         {
-            Assert.False(
-                Regex.IsMatch(code, @"AxisRoleOf[\s\S]{0,600}" + Regex.Escape(literal)),
-                "the axis role is being decided by the dimension code " + literal + " rather than by its registered data type");
+            foreach (var code in new[] { metadata, registry })
+            {
+                Assert.False(
+                    Regex.IsMatch(code, @"AxisRole(Of|OrNone)[\s\S]{0,600}" + Regex.Escape(literal)),
+                    "the axis role is being decided by the dimension code " + literal + " rather than by its registered data type");
+            }
         }
     }
 }
