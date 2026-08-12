@@ -103,7 +103,7 @@ $poFk = T "SELECT column_name FROM information_schema.columns WHERE table_schema
 W ("[PARAM] parameter_definitions code column: '" + $pdCode + "'   observations FK: '" + $poFk + "'")
 $TopParam = ''
 if ($pdCode -and $poFk) {
-    $TopParam = T ("SELECT pd." + $pdCode + " FROM parameter_definitions pd JOIN parameter_observations po ON po." + $poFk + " = pd.id GROUP BY pd." + $pdCode + " ORDER BY COUNT(*) DESC, pd.parameter_code ASC LIMIT 1;")
+    $TopParam = T ("SELECT pd." + $pdCode + " FROM parameter_definitions pd JOIN parameter_observations po ON po." + $poFk + " = pd.id GROUP BY pd." + $pdCode + " ORDER BY (pd.parameter_code = 'FDT_C') DESC, COUNT(*) DESC, pd.parameter_code ASC LIMIT 1;")
 }
 if (-not $TopParam -and $pdCode) { $TopParam = T ("SELECT " + $pdCode + " FROM parameter_definitions LIMIT 1;") }
 $ParamSql = 'NULL'

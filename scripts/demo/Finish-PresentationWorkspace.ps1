@@ -67,7 +67,7 @@ function T([string]$q) {
     return $l.ToString().Trim()
 }
 
-$TopParam = T "SELECT pd.parameter_code FROM parameter_definitions pd JOIN parameter_observations po ON po.parameter_definition_id = pd.id GROUP BY pd.parameter_code ORDER BY COUNT(*) DESC, pd.parameter_code ASC LIMIT 1;"
+$TopParam = T "SELECT pd.parameter_code FROM parameter_definitions pd JOIN parameter_observations po ON po.parameter_definition_id = pd.id GROUP BY pd.parameter_code ORDER BY (pd.parameter_code = 'FDT_C') DESC, COUNT(*) DESC, pd.parameter_code ASC LIMIT 1;"
 if (-not $TopParam) { $TopParam = $(throw 'PPIQ T-045: no registered parameter has observations. The presentation parameter is REFUSED rather than invented.') }
 $ParamSql = "'" + $TopParam.Replace("'", "''") + "'"
 Write-Host ("[A] parameter widgets bind to: " + $TopParam)

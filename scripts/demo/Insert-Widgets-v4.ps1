@@ -25,7 +25,7 @@ if ($cmd) { $Psql = $cmd.Source } else {
 if (-not $Psql) { Write-Host "[FAIL] psql not found." -ForegroundColor Red; exit 1 }
 $env:PGPASSWORD = 'ppiq_dev_local_only'
 
-$TopParam = & $Psql -h 127.0.0.1 -p 5432 -U ppiq_dev -d $TargetDb -w -X -A -t -c "SELECT pd.parameter_code FROM parameter_definitions pd JOIN parameter_observations po ON po.parameter_definition_id = pd.id GROUP BY pd.parameter_code ORDER BY COUNT(*) DESC, pd.parameter_code ASC LIMIT 1;" 2>&1
+$TopParam = & $Psql -h 127.0.0.1 -p 5432 -U ppiq_dev -d $TargetDb -w -X -A -t -c "SELECT pd.parameter_code FROM parameter_definitions pd JOIN parameter_observations po ON po.parameter_definition_id = pd.id GROUP BY pd.parameter_code ORDER BY (pd.parameter_code = 'FDT_C') DESC, COUNT(*) DESC, pd.parameter_code ASC LIMIT 1;" 2>&1
 $TopParam = @($TopParam | Where-Object { $_ -and ($_.ToString().Trim() -ne '') } | Select-Object -First 1)
 if (-not $TopParam) { $TopParam = $(throw 'PPIQ T-045: no registered parameter has observations. The presentation parameter is REFUSED rather than invented.') } else { $TopParam = $TopParam[0].ToString().Trim() }
 $ParamSql = "'" + $TopParam.Replace("'", "''") + "'"

@@ -301,10 +301,11 @@ W ""
 
 # ---- 5 + 6. dashboards THEN widgets (the 17-Jul lesson) --------------------
 W "[5/7] dashboards (7) - parents FIRST, or the widget FK fails"
-$TopParam = Q1 "SELECT pd.parameter_code FROM parameter_definitions pd JOIN parameter_observations po ON po.parameter_definition_id=pd.id GROUP BY pd.parameter_code ORDER BY COUNT(*) DESC, pd.parameter_code ASC LIMIT 1;"
-$PreferredParam = 'FDT_C'
-$PreferredOk = Q1 ("SELECT pd.parameter_code FROM parameter_definitions pd JOIN parameter_observations po ON po.parameter_definition_id=pd.id WHERE pd.parameter_code='" + $PreferredParam + "' GROUP BY pd.parameter_code HAVING COUNT(*) > 0 LIMIT 1;")
-if ($PreferredOk -eq $PreferredParam) { $TopParam = $PreferredParam }
+$TopParam = Q1 "SELECT pd.parameter_code FROM parameter_definitions pd JOIN parameter_observations po ON po.parameter_definition_id=pd.id GROUP BY pd.parameter_code ORDER BY (pd.parameter_code = 'FDT_C') DESC, COUNT(*) DESC, pd.parameter_code ASC LIMIT 1;"
+# The FDT_C preference now lives inside the single ORDER BY above, which every
+# authoritative writer shares. A second query that applied the same preference
+# separately was two rules that happened to agree, and only this file had it -
+# the other three resolved to a different parameter on a tied population.
 if (-not $TopParam -or $TopParam -eq 'n/a' -or $TopParam -eq '0') { throw 'PPIQ T-045: no registered parameter has observations. The presentation parameter is REFUSED rather than invented.' }
 W ("      analysis widgets bind to: " + $TopParam)
 $ParamSql = "'" + $TopParam.Replace("'", "''") + "'"
