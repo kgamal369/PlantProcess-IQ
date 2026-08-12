@@ -200,6 +200,19 @@ public static class DashboardMetadataCodes
         public const string Heatmap = "heatmap";
         public const string Table = "table";
         public const string Pareto = "pareto";
+
+        // T-046. Chapter 4 5.1.5 defines the product grammar as SEVENTEEN chart
+        // types. Declaring only the ten with renderers showed a customer a
+        // smaller product than the one they receive. Availability is carried in
+        // DashboardChartGrammar, not here: a code is what the product HAS, and
+        // whether it can be drawn today is a separate fact.
+        public const string StackedColumn = "stackedColumn";
+        public const string Combo = "combo";
+        public const string BoxPlot = "boxPlot";
+        public const string Histogram = "histogram";
+        public const string Gauge = "gauge";
+        public const string Waterfall = "waterfall";
+        public const string PivotTable = "pivotTable";
     }
 
     public static class Dimensions
