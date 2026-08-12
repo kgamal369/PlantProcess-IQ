@@ -86,10 +86,14 @@ class RuntimeIsolation(unittest.TestCase):
                     third_party += [a.name.split(".")[0] for a in node.names]
                 elif isinstance(node, ast.ImportFrom) and node.module and node.level == 0:
                     third_party.append(node.module.split(".")[0])
+        # Every name here is Python standard library or this package. The point of
+        # the check is that no THIRD-PARTY package creeps into the protocol layer,
+        # so a new stdlib module is added deliberately rather than by relaxing the
+        # assertion.
         stdlib_or_own = {
             "__future__", "json", "os", "sys", "hashlib", "enum", "dataclasses",
             "typing", "datetime", "traceback", "ast", "unittest", "tempfile",
-            "shutil", "ppiq_ml",
+            "shutil", "argparse", "importlib", "time", "ppiq_ml",
         }
         unexpected = sorted(set(third_party) - stdlib_or_own)
         self.assertEqual([], unexpected,
