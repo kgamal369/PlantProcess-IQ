@@ -196,13 +196,12 @@ A  Backend/tests/PlantProcess.Analytics.Core.Tests/T177_StatisticalKernelTests.c
 
 ## 13. Commit hash
 
-**Pending.** Produced by:
+| Pack | Contents | Commit |
+|---|---|---|
+| Pack 1 | Kernel, special functions, contracts, 13 known-answer tests | 502f8ca3faa669a1211b24c20953ac153883aec8 |
+| Pack 2 | 9 parity regression tests, source trace, parity matrix, fixture pack, verification instruments | 502e0da9f380a1b2d5948287905edd7425d0897e |
 
-```
-git commit -m "T-177: statistical-method kernel with Numeric x Categorical ANOVA/Kruskal-Wallis"
-```
-
----
+Both commits contain additions only. No existing file was modified in either.
 
 ## 14. Remaining findings and dependencies
 
