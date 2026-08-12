@@ -68,12 +68,30 @@ public sealed record ChartDataShape(
     bool MeasureIsDistribution,
     int? EffectiveCategoryCount);
 
-/// <summary>The verdict, with the sentence a human is shown for a refusal.</summary>
-public sealed record ChartCompatibility(bool IsCompatible, string? Reason)
+/// <summary>
+/// The verdict, with the sentence a human is shown for a refusal.
+///
+/// DependsOnQueryState separates two kinds of refusal that must never wear the
+/// same explanation. A STRUCTURAL refusal is a property of the binding - a
+/// heatmap has one axis, a KPI has a grouping dimension - and no filter change
+/// will ever fix it. A QUERY-STATE refusal is a property of the data THIS
+/// selection produced, and a different window may well be valid.
+///
+/// Telling an author their filters caused a structural refusal sends them to
+/// adjust the one thing that cannot help.
+/// </summary>
+public sealed record ChartCompatibility(bool IsCompatible, string? Reason, bool DependsOnQueryState = false)
 {
     public static readonly ChartCompatibility Yes = new(true, null);
 
+    /// <summary>A refusal that holds regardless of the data.</summary>
     public static ChartCompatibility No(string reason) => new(false, reason);
+
+    /// <summary>
+    /// A refusal caused by what THIS query returned under THIS selection. Only
+    /// these may be described as a consequence of the current filters.
+    /// </summary>
+    public static ChartCompatibility NoForThisQuery(string reason) => new(false, reason, true);
 }
 
 public sealed record ChartTypeDefinition(
@@ -235,9 +253,9 @@ public static class DashboardChartGrammar
                 if (shape.PrimaryAxis != AxisRole.Categorical)
                     return ChartCompatibility.No("A share chart needs a categorical axis to divide.");
                 if (shape.EffectiveCategoryCount.HasValue && shape.EffectiveCategoryCount.Value < 2)
-                    return ChartCompatibility.No("This grouping produces one category, so the chart would be a single slice at one hundred percent. Choose a dimension with more than one value.");
+                    return ChartCompatibility.NoForThisQuery("This grouping produces one category, so the chart would be a single slice at one hundred percent. Choose a dimension with more than one value.");
                 if (shape.EffectiveCategoryCount.HasValue && shape.EffectiveCategoryCount.Value > MaxCategoriesForShareChart)
-                    return ChartCompatibility.No("This grouping produces more categories than a share chart can be read at. Use a ranked bar or a Pareto.");
+                    return ChartCompatibility.NoForThisQuery("This grouping produces more categories than a share chart can be read at. Use a ranked bar or a Pareto.");
                 return ChartCompatibility.Yes;
 
             case DashboardMetadataCodes.ChartTypes.Scatter:

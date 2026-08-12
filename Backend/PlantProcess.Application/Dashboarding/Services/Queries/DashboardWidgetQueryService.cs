@@ -205,10 +205,20 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
         var renderedVerdict = DashboardChartGrammar.Evaluate(resolved.ChartType, renderedShape);
         if (!renderedVerdict.IsCompatible)
         {
+            // MEASURED DEFECT, 12-Aug: this suffix was appended to EVERY refusal.
+            // The heatmap refusal then read "a heatmap needs two meaningful axes
+            // ... this is the result of the current selection and filters",
+            // which sends an author to adjust the one thing that cannot help. A
+            // structural refusal is a property of the BINDING and no filter
+            // change will fix it; only a refusal the DATA caused may be
+            // described as a consequence of the current selection.
+            var scope = renderedVerdict.DependsOnQueryState
+                ? " This is the result of the current selection and filters, not a statement about the dataset."
+                : string.Empty;
+
             return ApplicationResult<DashboardWidgetQueryResultDto>.Failure(
                 ApplicationError.BusinessRule(
-                    "chart_not_supported_for_this_result: " + renderedVerdict.Reason +
-                    " This is the result of the current selection and filters, not a statement about the dataset."));
+                    "chart_not_supported_for_this_result: " + renderedVerdict.Reason + scope));
         }
 
         // PRESENTATION CORRECTION. Equipment and Area are dimensioned BY ID, and
