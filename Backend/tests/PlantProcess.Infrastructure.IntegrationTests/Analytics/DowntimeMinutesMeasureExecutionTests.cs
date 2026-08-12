@@ -141,7 +141,11 @@ public sealed class DowntimeMinutesMeasureExecutionTests
             db.DowntimeEvents.Add(stillOpen);
             await db.SaveChangesAsync();
 
-            var service = new DashboardWidgetQueryService(db, new DashboardWidgetValidationService());
+            var service = new DashboardWidgetQueryService(
+            db,
+            new DashboardWidgetValidationService(),
+            ClassOneOnly.Readiness,
+            ClassOneOnly.TargetResolver);
 
             var result = await service.ExecuteAsync(
                 new DashboardWidgetQueryDto(

@@ -55,7 +55,11 @@ public sealed class GenericAggregateEngineTests
     public async Task ObservationCount_returns_the_whole_population_not_the_old_cap()
     {
         await using var db = NewContext();
-        var service = new DashboardWidgetQueryService(db, new DashboardWidgetValidationService());
+        var service = new DashboardWidgetQueryService(
+            db,
+            new DashboardWidgetValidationService(),
+            ClassOneOnly.Readiness,
+            ClassOneOnly.TargetResolver);
 
         // Trusted reference, computed by PostgreSQL over the whole population.
         var trusted = await db.ParameterObservations
@@ -92,7 +96,11 @@ public sealed class GenericAggregateEngineTests
     public async Task A_non_seeded_widget_on_a_different_dimension_runs_through_the_same_path()
     {
         await using var db = NewContext();
-        var service = new DashboardWidgetQueryService(db, new DashboardWidgetValidationService());
+        var service = new DashboardWidgetQueryService(
+            db,
+            new DashboardWidgetValidationService(),
+            ClassOneOnly.Readiness,
+            ClassOneOnly.TargetResolver);
 
         // NOT a seeded presentation widget. This combination exists in no
         // dashboard, no seeder and no database row. It is composed here, at
@@ -110,7 +118,11 @@ public sealed class GenericAggregateEngineTests
     public async Task An_unregistered_dimension_is_refused_by_name_not_grouped_under_unknown()
     {
         await using var db = NewContext();
-        var service = new DashboardWidgetQueryService(db, new DashboardWidgetValidationService());
+        var service = new DashboardWidgetQueryService(
+            db,
+            new DashboardWidgetValidationService(),
+            ClassOneOnly.Readiness,
+            ClassOneOnly.TargetResolver);
 
         var result = await service.ExecuteAsync(
             Query("bottleFormat", DashboardMetadataCodes.Measures.ObservationCount),
@@ -123,7 +135,11 @@ public sealed class GenericAggregateEngineTests
     public async Task Repeated_identical_requests_return_identical_results()
     {
         await using var db = NewContext();
-        var service = new DashboardWidgetQueryService(db, new DashboardWidgetValidationService());
+        var service = new DashboardWidgetQueryService(
+            db,
+            new DashboardWidgetValidationService(),
+            ClassOneOnly.Readiness,
+            ClassOneOnly.TargetResolver);
 
         var fingerprints = new List<string>();
 
@@ -181,7 +197,11 @@ public sealed class GenericAggregateEngineTests
 
             await db.SaveChangesAsync();
 
-            var service = new DashboardWidgetQueryService(db, new DashboardWidgetValidationService());
+            var service = new DashboardWidgetQueryService(
+            db,
+            new DashboardWidgetValidationService(),
+            ClassOneOnly.Readiness,
+            ClassOneOnly.TargetResolver);
 
             var result = await service.ExecuteAsync(
                 Query(DashboardMetadataCodes.Dimensions.Equipment, DashboardMetadataCodes.Measures.MaterialCount),
