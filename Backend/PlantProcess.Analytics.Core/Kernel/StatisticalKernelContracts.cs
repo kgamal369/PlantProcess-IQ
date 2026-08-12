@@ -1,32 +1,24 @@
 namespace PlantProcess.Analytics.Core.Kernel;
 
-/// <summary>Terminal state of a kernel evaluation. Refusal is a valid result.</summary>
-public enum KernelTerminalState
-{
-    Finding,
-    InsufficientData,
-    NotApplicable
-}
+// TerminalState, ExclusionAttribution and MeasuredFact are cross-engine and live in
+// Kernel/Common/KernelCommonContracts.cs. They are shared, not duplicated here.
 
 /// <summary>
-/// Why a kernel evaluation produced no finding. These are deliberately distinct and are
-/// never collapsed. A method gap must never be reported as a property of customer data.
+/// Why a statistical evaluation produced no finding. These are STATISTICAL-METHOD
+/// reasons only. Capability-profiler shortfalls live in their own code set, so that
+/// neither enum grows into a God-enum spanning unrelated engines.
+/// <para>
+/// The three below are deliberately distinct and are never collapsed. A method gap
+/// must never be reported as a property of customer data.
+/// </para>
 /// </summary>
-public enum KernelExclusionReason
+public enum StatisticalExclusionReason
 {
     None,
     ConstantZeroVariance,
     UnsupportedMethodPairing,
     InsufficientGroups,
     InsufficientSample
-}
-
-/// <summary>Whether an exclusion is a property of the data or a limitation of the product.</summary>
-public enum ExclusionAttribution
-{
-    None,
-    Data,
-    Method
 }
 
 /// <summary>Statistical method chosen by the kernel for a variable pair.</summary>
@@ -61,9 +53,9 @@ public sealed record AssumptionEvidence(
 /// population, group sizes, effect size, p-value and an explicit terminal reason.
 /// </summary>
 public sealed record GroupComparisonResult(
-    KernelTerminalState TerminalState,
+    TerminalState TerminalState,
     KernelMethod Method,
-    KernelExclusionReason ExclusionReason,
+    StatisticalExclusionReason ExclusionReason,
     ExclusionAttribution Attribution,
     string Reason,
     int AlignedPopulation,
@@ -79,8 +71,8 @@ public sealed record GroupComparisonResult(
     AssumptionEvidence? Assumptions)
 {
     public static GroupComparisonResult Refuse(
-        KernelTerminalState state,
-        KernelExclusionReason reason,
+        TerminalState state,
+        StatisticalExclusionReason reason,
         ExclusionAttribution attribution,
         string message,
         int alignedPopulation,

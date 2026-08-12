@@ -20,7 +20,7 @@ public enum KernelPairing
 public sealed record KernelPairingChoice(
     KernelPairing Pairing,
     bool IsSupported,
-    KernelExclusionReason ExclusionReason,
+    StatisticalExclusionReason ExclusionReason,
     ExclusionAttribution Attribution,
     string Rationale);
 
@@ -51,12 +51,12 @@ public static class KernelMethodSelector
 
         return new KernelPairingChoice(
             KernelPairing.Unsupported, false,
-            KernelExclusionReason.UnsupportedMethodPairing,
+            StatisticalExclusionReason.UnsupportedMethodPairing,
             ExclusionAttribution.Method,
             $"No enabled statistical method exists for the variable-type pair ({a},{b}). "
             + "This is a limitation of the available method set, not a property of the data.");
     }
 
     private static KernelPairingChoice Supported(KernelPairing pairing, string rationale) =>
-        new(pairing, true, KernelExclusionReason.None, ExclusionAttribution.None, rationale);
+        new(pairing, true, StatisticalExclusionReason.None, ExclusionAttribution.None, rationale);
 }

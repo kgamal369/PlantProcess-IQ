@@ -37,7 +37,7 @@ public sealed class T177_StatisticalKernelTests
             ("B", new[] { 12.2, 12.5, 11.9, 12.1, 12.4, 12.0, 12.3, 12.6 }),
             ("C", new[] { 14.0, 14.3, 13.8, 14.1, 14.4, 13.9, 14.2, 14.5 })));
 
-        Assert.Equal(KernelTerminalState.Finding, r.TerminalState);
+        Assert.Equal(TerminalState.Finding, r.TerminalState);
         Assert.Equal(KernelMethod.Anova, r.Method);
         Assert.Equal(24, r.AlignedPopulation);
         Assert.Equal(new[] { 8, 8, 8 }, r.GroupSizes);
@@ -62,7 +62,7 @@ public sealed class T177_StatisticalKernelTests
 
         Assert.NotEqual(KernelMethod.Anova, r.Method);
         Assert.Equal(KernelMethod.KruskalWallis, r.Method);
-        Assert.Equal(KernelTerminalState.Finding, r.TerminalState);
+        Assert.Equal(TerminalState.Finding, r.TerminalState);
         Close(15.393464052287582, r.Statistic);
         Assert.Equal(2, r.DegreesOfFreedom1);
         Close(4.5430943093664556e-4, r.PValue);
@@ -121,8 +121,8 @@ public sealed class T177_StatisticalKernelTests
             ("B", new[] { 7.0, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0 }),
             ("C", new[] { 7.0, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0, 7.0 })));
 
-        Assert.Equal(KernelTerminalState.NotApplicable, r.TerminalState);
-        Assert.Equal(KernelExclusionReason.ConstantZeroVariance, r.ExclusionReason);
+        Assert.Equal(TerminalState.NotApplicable, r.TerminalState);
+        Assert.Equal(StatisticalExclusionReason.ConstantZeroVariance, r.ExclusionReason);
         Assert.Equal(ExclusionAttribution.Data, r.Attribution);
         Assert.Contains("constant", r.Reason, System.StringComparison.OrdinalIgnoreCase);
     }
@@ -133,7 +133,7 @@ public sealed class T177_StatisticalKernelTests
         var c = KernelMethodSelector.Classify((VariableType)99, (VariableType)98);
 
         Assert.False(c.IsSupported);
-        Assert.Equal(KernelExclusionReason.UnsupportedMethodPairing, c.ExclusionReason);
+        Assert.Equal(StatisticalExclusionReason.UnsupportedMethodPairing, c.ExclusionReason);
         Assert.Equal(ExclusionAttribution.Method, c.Attribution);
 
         // The reason must name the method limitation and must never blame the data.
@@ -149,8 +149,8 @@ public sealed class T177_StatisticalKernelTests
         var r = GroupComparisonKernel.Evaluate(Input(
             ("A", new[] { 1.0, 2.0, 3.0, 4.0 })));
 
-        Assert.Equal(KernelTerminalState.InsufficientData, r.TerminalState);
-        Assert.Equal(KernelExclusionReason.InsufficientGroups, r.ExclusionReason);
+        Assert.Equal(TerminalState.InsufficientData, r.TerminalState);
+        Assert.Equal(StatisticalExclusionReason.InsufficientGroups, r.ExclusionReason);
         Assert.Equal(ExclusionAttribution.Data, r.Attribution);
         Assert.Contains("1", r.Reason);
     }
@@ -162,8 +162,8 @@ public sealed class T177_StatisticalKernelTests
             ("A", new[] { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0 }),
             ("B", new[] { 9.0 })));
 
-        Assert.Equal(KernelTerminalState.InsufficientData, r.TerminalState);
-        Assert.Equal(KernelExclusionReason.InsufficientSample, r.ExclusionReason);
+        Assert.Equal(TerminalState.InsufficientData, r.TerminalState);
+        Assert.Equal(StatisticalExclusionReason.InsufficientSample, r.ExclusionReason);
         Assert.Equal(ExclusionAttribution.Data, r.Attribution);
     }
 
@@ -178,7 +178,7 @@ public sealed class T177_StatisticalKernelTests
             ("A", new[] { 1.0, 2.0, 3.0 }), ("B", new[] { 9.0 })));
         var unsupported = KernelMethodSelector.Classify((VariableType)99, (VariableType)98);
 
-        var reasons = new HashSet<KernelExclusionReason>
+        var reasons = new HashSet<StatisticalExclusionReason>
         {
             zeroVariance.ExclusionReason,
             fewGroups.ExclusionReason,

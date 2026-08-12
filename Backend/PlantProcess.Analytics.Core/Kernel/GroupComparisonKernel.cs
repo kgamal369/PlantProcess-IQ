@@ -35,8 +35,8 @@ public static class GroupComparisonKernel
 
         if (groups.Count < MinimumGroups)
             return GroupComparisonResult.Refuse(
-                KernelTerminalState.InsufficientData,
-                KernelExclusionReason.InsufficientGroups,
+                TerminalState.InsufficientData,
+                StatisticalExclusionReason.InsufficientGroups,
                 ExclusionAttribution.Data,
                 $"Group comparison requires at least {MinimumGroups} groups; the aligned population contains {groups.Count}.",
                 population, sizes, keys);
@@ -44,8 +44,8 @@ public static class GroupComparisonKernel
         int smallest = sizes.Min();
         if (smallest < MinimumGroupSize)
             return GroupComparisonResult.Refuse(
-                KernelTerminalState.InsufficientData,
-                KernelExclusionReason.InsufficientSample,
+                TerminalState.InsufficientData,
+                StatisticalExclusionReason.InsufficientSample,
                 ExclusionAttribution.Data,
                 $"Every group requires at least {MinimumGroupSize} observations; the smallest group contains {smallest}.",
                 population, sizes, keys);
@@ -54,8 +54,8 @@ public static class GroupComparisonKernel
         double pooledVariance = Stats.SampleVariance(all);
         if (pooledVariance <= 0.0)
             return GroupComparisonResult.Refuse(
-                KernelTerminalState.NotApplicable,
-                KernelExclusionReason.ConstantZeroVariance,
+                TerminalState.NotApplicable,
+                StatisticalExclusionReason.ConstantZeroVariance,
                 ExclusionAttribution.Data,
                 "The numeric variable is constant across the aligned population; pooled variance is zero, so no group difference can exist.",
                 population, sizes, keys);
@@ -112,8 +112,8 @@ public static class GroupComparisonKernel
 
         if (df2 <= 0 || ssWithin <= 0.0)
             return GroupComparisonResult.Refuse(
-                KernelTerminalState.NotApplicable,
-                KernelExclusionReason.ConstantZeroVariance,
+                TerminalState.NotApplicable,
+                StatisticalExclusionReason.ConstantZeroVariance,
                 ExclusionAttribution.Data,
                 "Within-group variance is zero; the F ratio is undefined.",
                 population, sizes, keys);
@@ -123,8 +123,8 @@ public static class GroupComparisonKernel
         double etaSquared = ssTotal <= 0.0 ? double.NaN : ssBetween / ssTotal;
 
         return new GroupComparisonResult(
-            KernelTerminalState.Finding, KernelMethod.Anova,
-            KernelExclusionReason.None, ExclusionAttribution.None,
+            TerminalState.Finding, KernelMethod.Anova,
+            StatisticalExclusionReason.None, ExclusionAttribution.None,
             "One-way ANOVA: parametric assumptions supported.",
             population, sizes, keys,
             f, df1, df2, p, "EtaSquared", etaSquared, false, evidence);
@@ -161,8 +161,8 @@ public static class GroupComparisonKernel
         double epsilonSquared = (n - k) <= 0 ? double.NaN : (h - k + 1.0) / (n - k);
 
         return new GroupComparisonResult(
-            KernelTerminalState.Finding, KernelMethod.KruskalWallis,
-            KernelExclusionReason.None, ExclusionAttribution.None,
+            TerminalState.Finding, KernelMethod.KruskalWallis,
+            StatisticalExclusionReason.None, ExclusionAttribution.None,
             "Kruskal-Wallis: " + evidence.Rationale,
             population, sizes, keys,
             h, df, 0, p, "EpsilonSquared", epsilonSquared, tiesPresent, evidence);
