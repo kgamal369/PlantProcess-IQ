@@ -171,6 +171,46 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
                     nonMergeable.DimensionCode + "' without double counting. No value is returned."));
         }
 
+        // ====================================================================
+        // T-046 PACK 3B. THE SEMANTIC REFUSAL HAPPENS HERE, BEFORE RENDERING.
+        //
+        // The authoring surface knows the DIMENSION; only this point knows the
+        // DATA. A share chart over a grouping that yields one effective category
+        // is a single slice at one hundred percent, and no amount of rendering
+        // makes that a reading. T-045 retired one such widget by hand; this is
+        // the rule that stops the next one being authored.
+        //
+        // EFFECTIVE CARDINALITY IS NOT rows.Count. A row whose dimension value
+        // is the unavailable sentinel is a row, not a category: counting it
+        // would let "one real value plus Unknown" pass as two categories, which
+        // is exactly the meaningless donut this refuses.
+        //
+        // THE REFUSAL IS ABOUT THIS QUERY UNDER THIS SELECTION, never about the
+        // dataset. The same widget with a wider window may be perfectly valid,
+        // and telling an author their data is unusable when their FILTER is the
+        // cause sends them to fix the wrong thing.
+        //
+        // NO SILENT FALLBACK. A chart that quietly becomes a bar is a product
+        // deciding what the author meant.
+        // ====================================================================
+        var effectiveCategoryCount = CountEffectiveCategories(rows);
+
+        var renderedShape = new ChartDataShape(
+            PrimaryAxis: DashboardDimensionRegistry.AxisRoleOrNone(resolved.DimensionCode),
+            HasSecondCategoricalAxis: false,
+            HasMeasure: true,
+            MeasureIsDistribution: false,
+            EffectiveCategoryCount: effectiveCategoryCount);
+
+        var renderedVerdict = DashboardChartGrammar.Evaluate(resolved.ChartType, renderedShape);
+        if (!renderedVerdict.IsCompatible)
+        {
+            return ApplicationResult<DashboardWidgetQueryResultDto>.Failure(
+                ApplicationError.BusinessRule(
+                    "chart_not_supported_for_this_result: " + renderedVerdict.Reason +
+                    " This is the result of the current selection and filters, not a statement about the dataset."));
+        }
+
         // PRESENTATION CORRECTION. Equipment and Area are dimensioned BY ID, and
         // that is correct: an id is stable and a name is not, so selections,
         // drill-through and filters all travel on the key. What is wrong is
@@ -180,6 +220,34 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
         return ApplicationResult<DashboardWidgetQueryResultDto>.Success(
             BuildResult(resolved, rows, warnings, dimensionLabels));
     }
+
+    /// <summary>
+    /// The distinct MEANINGFUL dimension values in the final grouped result.
+    ///
+    /// The unavailable sentinel is the existing contract's way of saying "this
+    /// row has no value for this dimension". It is excluded here because it is
+    /// not a category a customer chose to look at, and including it would let a
+    /// one-category grouping masquerade as two.
+    /// </summary>
+    private static int CountEffectiveCategories(IReadOnlyList<DashboardAggregateRow> rows)
+    {
+        var meaningful = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var row in rows)
+        {
+            if (string.IsNullOrWhiteSpace(row.DimensionKey))
+                continue;
+
+            if (string.Equals(row.DimensionKey.Trim(), UnavailableDimensionKey, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            meaningful.Add(row.DimensionKey.Trim());
+        }
+
+        return meaningful.Count;
+    }
+
+    private const string UnavailableDimensionKey = "unknown";
 
     private async Task<IReadOnlyList<DashboardAggregateRow>> ExecuteMaterialCountAsync(
         DashboardWidgetResolvedDto resolved,
