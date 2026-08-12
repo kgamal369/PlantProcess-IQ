@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using PlantProcess.Application.Analytics.Advanced;
 using PlantProcess.Application.Dashboarding.Contracts;
 using PlantProcess.Application.Common.Persistence;
 using PlantProcess.Application.Common.Results;
@@ -13,12 +14,29 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
     private readonly IPlantProcessDbContext _dbContext;
     private readonly IDashboardWidgetValidationService _validationService;
 
+    // T-045 Pack B. Class-2 sources, keyed by measure code. Built here rather
+    // than injected as a collection because the seam is internal to this
+    // assembly, and because the key set must equal the registry declaration -
+    // an architecture test asserts exactly that.
+    private readonly IReadOnlyDictionary<string, IWidgetResultSource> _nativeSources;
+
     public DashboardWidgetQueryService(
         IPlantProcessDbContext dbContext,
-        IDashboardWidgetValidationService validationService)
+        IDashboardWidgetValidationService validationService,
+        IAnalysisReadinessService analysisReadinessService,
+        IAnalysisOutcomeTargetResolver analysisOutcomeTargetResolver)
     {
         _dbContext = dbContext;
         _validationService = validationService;
+
+        var sources = new IWidgetResultSource[]
+        {
+            new FindingStatusWidgetResultSource(dbContext),
+            new ScoringCoverageWidgetResultSource(dbContext),
+            new AnalysisReadinessWidgetResultSource(analysisReadinessService, analysisOutcomeTargetResolver)
+        };
+
+        _nativeSources = sources.ToDictionary(x => x.MeasureCode, x => x, StringComparer.Ordinal);
     }
 
     public async Task<ApplicationResult<DashboardWidgetQueryResultDto>> ExecuteAsync(
@@ -53,6 +71,18 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
                             ". Codes are case-sensitive."
                         }
                     }));
+        }
+
+        // CLASS 2. A native-rich source answers in full and hands back the same
+        // public envelope. It bypasses WidgetFact and BuildResult deliberately:
+        // flattening a readiness dimension or a coverage denominator into one
+        // decimal Value would destroy the only thing the answer carries. The
+        // routing key is the measure code alone - no widget, page or dashboard
+        // branch reaches this line.
+        if (_nativeSources.TryGetValue(resolved.MeasureCode, out var nativeSource))
+        {
+            return ApplicationResult<DashboardWidgetQueryResultDto>.Success(
+                await nativeSource.ExecuteAsync(resolved, query, warnings, cancellationToken));
         }
 
         IReadOnlyList<DashboardAggregateRow> rows;
@@ -474,6 +504,9 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
         DashboardMetadataCodes.Measures.RiskScore,
         DashboardMetadataCodes.Measures.ProcessStepDuration,
         DashboardMetadataCodes.Measures.DataQualityIssueCount,
+        DashboardMetadataCodes.Measures.FindingStatus,
+        DashboardMetadataCodes.Measures.ScoringCoverage,
+        DashboardMetadataCodes.Measures.AnalysisReadiness,
     };
     private async Task<IReadOnlyList<DashboardAggregateRow>> ExecuteParameterAggregateAsync(
         DashboardWidgetResolvedDto resolved,

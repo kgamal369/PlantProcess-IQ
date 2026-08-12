@@ -64,14 +64,33 @@ public static class DashboardWidgetQuerySafetyRegistry
         DashboardMetadataCodes.Measures.DowntimeMinutes,
         DashboardMetadataCodes.Measures.RiskScore,
         DashboardMetadataCodes.Measures.ProcessStepDuration,
-        DashboardMetadataCodes.Measures.DataQualityIssueCount
+        DashboardMetadataCodes.Measures.DataQualityIssueCount,
+        DashboardMetadataCodes.Measures.FindingStatus,
+        DashboardMetadataCodes.Measures.ScoringCoverage,
+        DashboardMetadataCodes.Measures.AnalysisReadiness
     };
 
     private static readonly HashSet<string> MeasuresRequiringParameter = new(StringComparer.OrdinalIgnoreCase)
     {
         DashboardMetadataCodes.Measures.AvgParameterValue,
         DashboardMetadataCodes.Measures.MaxParameterValue,
-        DashboardMetadataCodes.Measures.MinParameterValue
+        DashboardMetadataCodes.Measures.MinParameterValue,
+
+        // T-045 Pack B. The analysis target travels on the existing parameter
+        // carrier: a readiness widget names the outcome it reports on, and the
+        // grain comes from that outcome's governed definition rather than from
+        // the widget.
+        DashboardMetadataCodes.Measures.AnalysisReadiness
+    };
+
+    // T-045 Pack B. Measures whose source declares its own columns and rows.
+    // The validator asks this general question instead of naming a measure, so
+    // a future native source is a registry entry and not a validator edit.
+    private static readonly HashSet<string> MeasuresProvidingOwnColumns = new(StringComparer.OrdinalIgnoreCase)
+    {
+        DashboardMetadataCodes.Measures.FindingStatus,
+        DashboardMetadataCodes.Measures.ScoringCoverage,
+        DashboardMetadataCodes.Measures.AnalysisReadiness
     };
 
     public static bool IsSupportedWidgetType(string? widgetType)
@@ -102,6 +121,18 @@ public static class DashboardWidgetQuerySafetyRegistry
     {
         return !string.IsNullOrWhiteSpace(measureCode) &&
                MeasuresRequiringParameter.Contains(measureCode.Trim());
+    }
+
+    /// <summary>
+    /// True when the measure's result source supplies its own column set. Such
+    /// a measure is not grouped by a BI dimension, so requiring one would
+    /// reject a valid widget; and it never reaches the aggregate executor, so
+    /// no merge rule can be applied to it.
+    /// </summary>
+    public static bool MeasureProvidesOwnColumns(string? measureCode)
+    {
+        return !string.IsNullOrWhiteSpace(measureCode) &&
+               MeasuresProvidingOwnColumns.Contains(measureCode.Trim());
     }
 
     public static bool ChartRequiresDimension(string? chartType)

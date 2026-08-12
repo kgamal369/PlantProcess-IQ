@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PlantProcess.Application.Analytics.Advanced;
 
@@ -18,6 +18,11 @@ public static class AdvancedAnalysisExtensions
         services.AddScoped<IAdvancedResultWriter, NpgsqlAdvancedResultWriter>();
         services.AddScoped<IAdvancedCorrelationService, AdvancedCorrelationComputeService>();
         services.AddScoped<IAnalysisReadinessService, AnalysisReadinessService>();
+
+        // T-045 Pack B. Resolves an analysis target and its governed grain from
+        // ml_outcome_definitions. Registered beside the loader because it reads
+        // the same feature store through the same data source.
+        services.AddScoped<IAnalysisOutcomeTargetResolver, NpgsqlAnalysisOutcomeTargetResolver>();
         return services;
     }
 }

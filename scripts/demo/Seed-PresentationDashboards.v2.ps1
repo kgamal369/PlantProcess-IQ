@@ -162,7 +162,7 @@ $rows = @(
     (WRow '21000000-0000-0000-0000-000000000604' $D6 'RI_TABLE' 'Risk by Material Type' 'table' 'materialUnitType' 'riskScore' 'NULL' $L.BL 4),
 
     (WRow '21000000-0000-0000-0000-000000000701' $D7 'MI_RATE' 'Model-Tracked Defect Rate' 'line' 'day' 'defectRate' 'NULL' $L.BL 3),
-    (WRow '21000000-0000-0000-0000-000000000702' $D7 'MI_SEV' 'Predicted Severity Mix' 'donut' 'severity' 'defectCount' 'NULL' $L.BR 4)
+    (WRow '21000000-0000-0000-0000-000000000702' $D7 'MI_SEV' 'Predicted Severity Mix' 'donut' 'materialUnitType' 'defectCount' 'NULL' $L.BR 4)
 )
 
 $dashSql = @"

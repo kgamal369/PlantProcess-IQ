@@ -521,10 +521,16 @@ public sealed class ApplicationReadinessService : IApplicationReadinessService
             $"Last model registration: {e.LastModelRegisteredAtUtc?.ToString("O", CultureInfo.InvariantCulture) ?? "None"}"
         };
 
+        // A ROW COUNT PROVES EXISTENCE, NEVER ORIGIN. This previously read a
+        // cardinality and asserted that the rows were rule-based, which is the
+        // same inference the product exists to refuse. risk_scores carries
+        // source_system, model_version and is_synthetic; what those columns
+        // hold is the only thing that can classify the scoring source, and the
+        // scoringCoverage widget reports it from the rows themselves.
         if (e.RiskScoreCount > 0)
         {
             score += 50;
-            reasons.Add("Rule-based risk scoring output exists.");
+            reasons.Add("Risk scoring output exists. Its origin is not asserted here: see scoring source provenance.");
         }
         else
         {

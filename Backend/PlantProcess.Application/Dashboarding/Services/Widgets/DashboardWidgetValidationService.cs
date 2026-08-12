@@ -1,4 +1,4 @@
-﻿using PlantProcess.Application.Dashboarding.Contracts;
+using PlantProcess.Application.Dashboarding.Contracts;
 using PlantProcess.Application.Common.Results;
 using PlantProcess.Application.Dashboarding.Interfaces;
 
@@ -33,7 +33,12 @@ public sealed class DashboardWidgetValidationService : IDashboardWidgetValidatio
             AddError(errors, nameof(query.MeasureCode), $"Unsupported measure code '{query.MeasureCode}'.");
         }
 
-        if (DashboardWidgetQuerySafetyRegistry.ChartRequiresDimension(chartType))
+        // ChartRequiresDimension keeps its signature and its meaning. The
+        // second clause is a GENERAL registry question - never a comparison
+        // against a measure literal - so a source that brings its own columns
+        // is not asked for a grouping dimension it does not use.
+        if (DashboardWidgetQuerySafetyRegistry.ChartRequiresDimension(chartType) &&
+            !DashboardWidgetQuerySafetyRegistry.MeasureProvidesOwnColumns(measureCode))
         {
             if (string.IsNullOrWhiteSpace(dimensionCode))
             {

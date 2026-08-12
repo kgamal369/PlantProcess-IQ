@@ -233,6 +233,13 @@ public static class DashboardMetadataCodes
         public const string RiskScore = "riskScore";
         public const string ProcessStepDuration = "processStepDuration";
         public const string DataQualityIssueCount = "dataQualityIssueCount";
+
+        // T-045 Pack B. Class-2 native-rich measures. They declare their own
+        // columns and rows and never project into WidgetFact. The measure code
+        // is the only discriminator the engine uses.
+        public const string FindingStatus = "findingStatus";
+        public const string ScoringCoverage = "scoringCoverage";
+        public const string AnalysisReadiness = "analysisReadiness";
     }
 }
 
