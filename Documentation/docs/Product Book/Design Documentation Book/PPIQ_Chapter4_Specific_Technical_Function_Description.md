@@ -1072,7 +1072,40 @@ report                2         report generation, export       bursty, low prio
 interactive        reserved     never batch                     the read path is never starved
 ```
 
-**Weights.** Each job definition carries a `compute_weight` (default 1). A pool admits while `sum(weight of running) + weight(candidate) <= parallelism`. A model-training job weighted 4 occupies its pool alone. **This is why the weight is edited behind a confirmation** that states the resulting utilisation.
+**Weights and admission (C4-1).** Each job definition carries a `compute_weight` (default 1). **Admission requires two predicates, not one:**
+
+```
+admit  iff  running_count < max_concurrency
+       AND  sum(compute_weight of running) + compute_weight(candidate) <= resource_capacity
+```
+
+| Quantity | Meaning | Unit |
+|---|---|---|
+| `max_concurrency` | How many runs may be in flight in this lane | count |
+| `resource_capacity` | How much of the lane's scarce resource exists | abstract units |
+| `compute_weight` | How much of that resource one run consumes | abstract units |
+
+**One number never expresses two quantities.** The previous single-predicate form made a weight-4 training job unadmittable into a capacity of 1, because `4 <= 1` is false at every moment. **This is why the weight is edited behind a confirmation** that states the resulting utilisation, and why a configuration in which a declared job could never be admitted fails validation.
+
+Values per lane: **B-01**.
+
+### 5.3.2a The `ml` class resolves to three lanes (C4-2)
+
+**The six logical job classes are unchanged.** `ml` resolves to three physical lanes:
+
+| Lane | `max_concurrency` | `resource_capacity` | Pre-emptible | Admits |
+|---|---|---|---|---|
+| `ml.training` | B-01 | B-01 | **Yes** | Encoder and supervised training, calibration, SHAP batch, index build and rebuild |
+| `ml.batch_scoring` | B-01 | B-01 | Yes | Scheduled scoring, backfill, rescore after activation. **Batch-class capacity** |
+| **`ml.online_scoring`** | B-01 | **hard-reserved, B-02** | **No** | **`event` and `micro_batch` scoring and its required serving functions only** |
+
+- **The online reservation is never available to `ml.training` or `ml.batch_scoring` admission**, on the same principle as the `interactive` reservation.
+- **Warm models.** Artifacts for every active serving identity `(tenant_id, model_code, outcome_code, grain_code, model_version)` are resident and reference-counted, with a declared eviction policy. A newly activated model is warmed before it serves, and first-score-after-activation latency is bounded and measured.
+- **`latest-only` is unchanged** and now operates inside a lane that training cannot block.
+
+> **Reason.** `predictions.actionable_deadline_utc` and `delivery_latency_seconds NOT NULL` exist, and 5.8.8 makes actionable latency Core. A design in which a nightly training run can delay an event-triggered score **defeats a Core requirement using the product's own scheduler**.
+
+**Pre-emption (C4-3).** `ml.training` runs are checkpointed per stage. A training run **yields at its next checkpoint** when a reserved lane needs capacity, and resumes from it. Nothing is lost except elapsed time, the correct trade against an expiring prediction. Where the runtime cannot pre-empt, the lane falls back to admission-time reservation only, **and this is recorded rather than assumed**.
 
 **The interactive reservation is the most important line in the table.** A fixed share of the connection pool and of CPU is reserved for user-facing queries. A plant where the dashboard becomes unusable whenever the engine is busy has failed, however correct the engine is.
 
@@ -2054,6 +2087,49 @@ An exploratory or evidence-only candidate may be **inspected**, **compared** aga
 | Determinism | Scoring is deterministic. The same input and the same model version produce the same score |
 | **No language model in the compute path** | Recorded as data on every result |
 
+## 5.6.5a Promotion is a three-dimensional gate (C4-4, C4-5)
+
+A candidate is promoted only when it passes **all three groups** on the **same governed recent holdout** as the incumbent.
+
+**QUALITY** - discrimination or error above the incumbent or within a declared non-inferiority margin; **calibration** at or below the declared error ceiling; out-of-time performance on a window after the training window; subgroup and regime stability with no variant below its floor; missingness robustness; **explanation stability**, contributor rank correlation across bootstrap resamples above a floor.
+
+**SERVING** - p50, p95 and p99 inference latency; throughput; artifact size; RAM and VRAM; warm-up time.
+
+**TRAINING** - training duration against the weekly window; peak memory against lane capacity; snapshot read throughput.
+
+> **A better-discriminating, worse-calibrated model is not an improvement** for a product whose output is a risk band a human acts on.
+>
+> **An unstable explanation is worse than none**, because the product presents contributors as evidence.
+
+**Encoder promotion inequality (C4-5):**
+
+```
+promote_encoder  iff  metric_lift            >= declared_min_lift
+                 AND  p95_latency_delta      <= declared_latency_budget
+                 AND  artifact_size          <= declared_size_class
+                 AND  explanation_stability  >= floor
+```
+
+**If engineered features match the encoder within the lift threshold, the engineered features ship.** Deep learning being available is not a reason to deploy it.
+
+`model_registry.metrics` and `acceptance_floor` are `jsonb` and carry these dimensions. **No schema change is required.** Values: **B-05**.
+
+## 5.6.5b Family taxonomy (C4-8)
+
+**MF-01 to MF-07 are seven intelligence and engine families, not seven ML models.** Three of the seven are not models, and the sub-type determines lane, refresh policy and whether a champion/challenger gate applies at all.
+
+| ID | Family | Sub-type | Lane | Champion/challenger |
+|---|---|---|---|---|
+| MF-01 | Process encoder | Learned model | `ml.training` | Yes, plus the inequality above |
+| MF-02 | Similarity index | **Retrieval and index** | `ml.training` to build | No. Gated on measured recall@k |
+| MF-03 | Normal and novelty | Learned model | `ml.training` | Yes |
+| MF-04 | Supervised outcome | Learned model | `ml.training` | Yes, three-dimensional |
+| MF-05 | Effect and envelope | **Statistical engine** | `analysis` | No. Recomputed, not trained |
+| MF-06 | Statistical intelligence | **Statistical engine** | `analysis` | No. Recomputed, not trained |
+| MF-07 | Practice learning | **Practice engine** | `analysis` | No. Governed signature version |
+
+Plus **orchestration and governance**: the capability profiler, the model-count governor and the supervisor.
+
 ## 5.6.6 Validating the ML block diagram
 
 | Rule | Refusal |
@@ -2224,6 +2300,85 @@ Compute. Rank. Originate a figure. Write anything except its audit log. Answer o
 
 ---
 
+## 5.7.9 The Assistant runtime (C4-7)
+
+Sections 5.7.1 to 5.7.8 are unchanged. This specifies the runtime **between the question and the model**, which is where groundedness is won or lost.
+
+### 5.7.9.1 The pipeline
+
+```
+  user question + page context envelope
+  [1] PERMISSION AND TENANT CONTEXT     resolved once, carried throughout
+  [2] INTENT AND ENTITY RESOLUTION      glossary, synonyms, registry codes
+  [3] DETERMINISTIC TOOL PLANNER        question shape -> declared tool set
+        +-- [4a] STRUCTURED TOOLS       Layer A exact, Layer B intelligence
+        +-- [4b] EVIDENCE RETRIEVAL     hybrid, permission filter BEFORE ranking
+  [5] EVIDENCE PACKING                  dedup, rank, token budget, handles retained
+  [6] MODEL GATEWAY                     serving mode, egress plan, minimum payload
+  [7] LLM (ModelServingRuntime)         phrasing only
+  [8] ANSWER VERIFICATION               deterministic, does not call the LLM
+  answer + citations   |   refusal with its reason
+```
+
+### 5.7.9.2 The deterministic tool planner
+
+**The LLM does not choose tools.** A planner maps resolved intent plus entity types to a declared tool set from a registry. Tool-selection accuracy is measured against a labelled question set (Q-01). A model choosing tools freely produces a different plan on a rephrasing and cannot be gated. Where intent is ambiguous the planner **asks** rather than guessing, and the ambiguity is recorded.
+
+### 5.7.9.3 Hybrid retrieval, and the order that matters
+
+| Stage | Rule |
+|---|---|
+| **Permission filter** | **Applied before ranking, not after.** Filtering after ranking lets a high-scoring forbidden chunk displace a permitted one, so the answer silently loses evidence the user was entitled to. `assistant_chunks.role_scope` is the mechanism |
+| Lexical retrieval | Full-text, for exact codes, identifiers and rare terms where embeddings underperform |
+| Semantic retrieval | Embedding search over permitted chunks |
+| Fusion | Reciprocal rank fusion over both lists |
+| Re-ranking | **Optional, ships only if B-08 shows citation correctness improves enough to pay for its latency** |
+
+**Structured tools take precedence over retrieval for facts and analytical results.** A number never comes from a retrieved chunk when a tool can compute it.
+
+### 5.7.9.4 Evidence packing under a token budget
+
+Deduplicate by content hash. Rank by tool-result priority, then fusion score; engine output outranks a document. **Hard token budget with a reserved answer allowance**, because context overflow silently drops evidence and produces a sentence the guard then rejects. Every packed item retains its evidence handle, or verification cannot resolve it. **Truncation is recorded and disclosed.** Budget: **B-07**.
+
+### 5.7.9.5 Gateway and egress
+
+The payload sent to an external provider is the **minimum scoped evidence** needed for the phrasing task, never a whole retrieval set and never raw canonical rows. **A provider or model change is a governed release event**, recorded with a reason, because it changes answer behaviour with no code change.
+
+### 5.7.9.6 `ModelServingRuntime`
+
+A replaceable abstraction: load, unload, generate, stream, health, capability reporting. Candidate runtimes are benchmarked as implementations (**B-09**). **No serving library is the product contract.**
+
+### 5.7.9.7 Answer verification
+
+The no-fabrication guard of 5.7.3, given an operational definition. **The verifier is deterministic and does not call the LLM**, because a model checking its own output is not a guard.
+
+| Check | On failure |
+|---|---|
+| Every numeric claim resolves to a handle in the supplied evidence | Reject before display |
+| No claim class upgraded by language: an association is not phrased as a cause | Reject before display |
+| No refusal replaced by a phrased answer | Reject before display |
+| Transport failure red, refusal amber | Never conflated |
+
+### 5.7.9.8 Assistant quality gates
+
+| ID | Gate |
+|---|---|
+| Q-01 | Tool-selection accuracy |
+| Q-02 | Groundedness: fraction of claims with a resolving handle |
+| Q-03 | Citation correctness: the handle supports the claim |
+| Q-04 | Unsupported-claim rate |
+| Q-05 | **Refusal correctness**, including unit-sanity probes |
+| Q-06 | **Causal-overreach rate**: association phrased as cause |
+| Q-07 | Multilingual fidelity |
+| Q-08 | Time to first token |
+| Q-09 | Total answer latency, p95, against the under-2-minute ceiling |
+| Q-10 | Serving throughput |
+| Q-11 | Memory and VRAM per concurrent session |
+
+**Q-05 and Q-06 decide credibility.** A speed question answered in a unit of mass, or an association phrased as a cause, destroys the intelligence claim in one sentence, and both are testable against a fixed probe set before any customer sees them.
+
+---
+
 ## 5.8 Additional designed capabilities
 
 Classified per Chapter 2 3.10. Every item here is designed across UI, API, persistence, validation and acceptance; none is deferred as an idea.
@@ -2320,7 +2475,10 @@ Operator comments, shift notes, maintenance descriptions, quality investigation 
 | Language handling | Per-document language; indexing configured per language; a document in an unsupported language is stored, marked, and excluded from retrieval rather than mis-indexed |
 | Extraction | Entity linking from a passage to a material, equipment or event through the registry and the relationship model, stored as `entity_links` with a confidence |
 | Evidence citation | A passage is citable by the assistant and appears in an evidence drawer, with its document and offset |
-| **The boundary rule** | **Text evidence may support a deterministic result and may never replace it.** No statistic, score or value is ever computed from text. A finding may cite a passage as corroboration; it may not be derived from one |
+| **The boundary rule (C4-6)** | **No free-form or model-generated output may become a feature, a score, a statistic or a value.** Text and images may enter a learned result **only** through an explicitly authored model definition carrying the full training contract: a versioned immutable snapshot, declared leakage controls, held-out validation, a `model_registry` entry, calibration and drift monitoring. Retrieval-derived and LLM-derived content is **evidence only**: it may corroborate a deterministic result and may never originate one |
+| **Path A, evidence modality** | Operator notes, shift logs, maintenance text, documents. Indexed, retrieved, cited. Never a feature, never a score, never a plant fact the model originated |
+| **Path B, governed multimodal ML** | The full training contract above. **This is how an inspection-image model produces an annotation with a confidence** under the same activation, retirement and drift rules as any model, which 5.8.7 requires and the previous absolute wording forbade |
+| **Why the wording changed** | The hazard was never the modality. It is **ungoverned output entering a score**. A free-form LLM summary has no training snapshot, no held-out validation, no calibration, no drift monitor and no leakage control. An authored vision model has all five. **No implementation scope is added**; both modalities remain interface-designed, future implementation |
 | First implementation | Scheduled, not assumed. The interfaces, persistence and permission model above are designed now so that adding it later is not a re-architecture |
 
 ### 5.8.7 Inspection images - **Future extension, interfaces designed**

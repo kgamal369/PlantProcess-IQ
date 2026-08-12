@@ -7,6 +7,26 @@
 
 ---
 
+> # CANONICAL CORRECTION NOTICE
+>
+> **Read before implementing anything from the body of this rule.**
+>
+> This rule is a **subsystem constitution and a subset instrument**. It is subordinate to Chapter 2, Chapter 3 and Chapter 4 in that order (Appendix A.1). **Appendix A.6 overrides the affected legacy clauses in the body below.**
+>
+> **The body of this rule uses `ModelBundle` wording in sections 6, 15, 16 and 17. That wording is HISTORICAL AND NON-IMPLEMENTABLE.** There is no ModelBundle object. The canonical authority is `ppiq_plant.model_registry`, governed per **serving identity** `(tenant_id, model_code, outcome_code, grain_code)` plus `model_version`, with `status` and `serving_role` as independent axes (Ch3 4.5.12).
+>
+> **An implementer must not treat `ModelBundle` as current architecture.**
+>
+> Other body clauses corrected by Appendix A.6: the staged-confidence L1 to L4 framing is replaced by the nine-check gate of Ch4 5.6.4d and the seven-condition `can_accept` authority of Ch3 4.5.12a; the terminal-state enum is replaced by the canonical error codes; section 29's modality clause is replaced by the Ch4 5.8.6 boundary rule that no statistic, score or value is computed from text; and the no-point-estimate rule is withdrawn.
+>
+> **Appendix B (11 August 2026) applies the accepted AI/ML/LLM target architecture and overrides Appendix A and the body where they differ.** In particular, Appendix A.6's absolute text boundary is withdrawn and replaced by a governance-based boundary; the `ml` pool resolves to three lanes with hard-reserved online scoring; and the seven families are intelligence and engine families, not ML models.
+>
+> **Order of authority: the chapters as amended, then Appendix B, then this notice, then Appendix A, then the body.**
+
+---
+
+---
+
 ## PURPOSE
 
 Layer B turns a customer's historical and continuously arriving plant data into:
@@ -773,3 +793,175 @@ Do not optimise the design for Fleet-v2. Do not optimise it for one neural netwo
 ---
 
 *Rule frozen 11 August 2026. Sections 1 to 29 are Karim's ruling. This document is design authority for Layer B; it does not authorise implementation.*
+
+---
+
+# APPENDIX A - AUTHORITY ORDER AND ADDITIONAL INTELLIGENCE CAPABILITIES
+
+**Added 11 August 2026 by ruling. Closes OD-13.**
+
+## A.1 Authority order
+
+This rule is a **subsystem constitution and subset instrument**. It does not govern scope. The authority order is:
+
+| Rank | Document | Governs |
+|---|---|---|
+| **1** | **Chapter 2** | Product naming, canonical journey, product structure, relationship-model positioning, capability scope |
+| **2** | **Chapter 3** | Target technical product contract, schemas, pages, flows, persistence |
+| **3** | **Chapter 4** | Detailed engine, authoring, execution and intelligence behaviour |
+| **4** | **This rule** | Layer B subsystem constitution, subset of the above |
+
+**Where this rule is narrower than the governing Master Design, the Master Design governs.**
+
+## A.2 Additional intelligence capabilities in scope for Layer B
+
+The body of this rule does not name the following. They are in scope, they are governed by the Master Design chapters, and their architecture is designed in `PPIQ_Layer_B_Architecture_Design_Pack.md` Part Two.
+
+| # | Capability | Pack section |
+|---|---|---|
+| 1 | Statistical and correlation engine, with method registry, assumption testing, effect size, FDR correction, stratification, stability and lag | 21 |
+| 2 | Practice learning engine: canonical signatures, tolerance binning, operation sequence, context matching, exact and relaxed matching with declared back-off, sensitivity state, practice drift, within-tenant benchmarking | 22 |
+| 3 | Operational prediction and early warning: current-state contract, actionable deadline, event and micro-batch and scheduled scoring modes, delivery latency, primary and fallback model state | 23 |
+| 4 | Complete remediation safety architecture: nine checks, per-prediction evaluation, the four terminal classifications, `can_accept` | 24 |
+| 5 | Decision, outcome, effectiveness and feedback loop: accept, reject, defer, action recording, actual outcome arrival, prediction correctness with intervened exclusion, remediation effectiveness, governed feedback | 25 |
+| 6 | Value engine: declared cost assumption contract, bounded range impact, value realisation ledger, attribution, abstention | 26 |
+| 7 | Scenario and what-if simulation, with no write path | 27 |
+| 8 | Full engine supervisor: observe, propose, shadow, compare on held-out history, human approval, atomic apply, with a prohibited set | 28 |
+| 9 | Modality extension contract for text evidence and inspection-image intelligence | 29 |
+| 10 | Canonical Plant Data as input boundary with sealed snapshots as the training contract | 34 |
+| 11 | The single relationship resolution authority, resolving through the canonical `plant_relationships` publication. **No independent Layer B relationship version object** | 35, 50 |
+| 12 | Intelligence blocks in the no-code analysis authoring surface | 36 |
+| 13 | JobDefinition and JobRun as execution identities, distinct from model instances | 37 |
+| 14 | Concurrency and resource governance through the canonical weighted job pools | 38 |
+
+## A.3 Corrections to the body of this rule
+
+| Rule section | Correction | Authority |
+|---|---|---|
+| **21** | Six output dataset families becomes **seven**, adding Model and Readiness Status. A new installation must render `MODEL_NOT_READY` and `INSUFFICIENT_DATA` truthfully rather than appearing broken | CT-07 ruling |
+| **21** | Intelligence outputs are ordinary governed analytical sources. **This does not mean every intelligence row physically becomes one fact row shape.** See A.4 | T-045 measurement |
+| **9** | The warning against training hundreds of models is given a mechanism: the model-count governor | Pack 6.7 |
+| **15** | Weekly index extension is reconciled with bundle immutability by generational, append-only index versions | Pack AD-06 |
+| **2** | The declaration contract gains an intervention flag on events, without which effect levels 3 and 4 have no input | Pack SM-07 |
+
+## A.4 Storage placement (closes OD-02)
+
+The existing three-schema law stands. No fourth application schema.
+
+| Content | Location |
+|---|---|
+| Customer-derived analytical and intelligence datasets | **Plant Data** |
+| Operational and control-plane metadata belonging in the application database | **Meta Data** |
+| Pre-semantic, source-shaped data | **Dump Store** |
+| Model binaries, checkpoints, large vector-index artifacts and equivalent binaries | **Object / artifact storage** |
+
+Analytical surfaces do not read operational artifact storage. Where operational metadata must become analytically visible, publish a governed Plant Data read model or projection.
+
+---
+
+*Appendix A added 11 August 2026. It removes the scope conflict between this rule and the Master Design chapters by subordinating this rule to them and naming the capabilities it omitted.*
+
+## A.5 Correction to Appendix A, 11 August 2026
+
+**Chapter 3 section 4.5.10 defines the canonical relationship authority.** It is `plant_relationships`, `plant_relationship_members` and `plant_relationship_paths`, versioned through `source_definition_id`, `source_definition_version` and an effective and retired lifecycle. Publishing the transformation emits the relationship model.
+
+Layer B **does not** define a relationship version object. It pins the canonical relationship-definition publication, version and hash. The hard law is unchanged: **no engine owns a private join**, and the RelationshipResolver remains the one implementation authority.
+
+**Chapter 4 section 5.2 and 5.6 define one authoring shell with multiple purposes.** S3 is analysis authoring and emits an Analysis Definition. S4 is model authoring and emits a **Model Definition**. Layer B does not create a canvas and does not collapse the S4 model palette into the S3 method selector.
+
+**Chapter 4 section 5.3.2 defines the canonical `ml` pool as training and scoring**, with scoring using the latest-only scheduling policy where applicable. There is no serving pool.
+
+**Chapter 3 DF7 defines the common widget execution contract** as columns, rows and warnings, with `sourceKind` of canonical or intelligence, plus bindable `intelligenceSource` and `columnRoles`. One envelope, source-declared row shapes, no ML-specific widget type.
+
+
+## A.6 Final binding, 11 August 2026 (Revision 6 of the Architecture Pack)
+
+Chapters 1 to 6 were read directly. The Architecture Pack is bound to them and is **IMPLEMENTATION DESIGN FROZEN**.
+
+**Corrections to this rule from the chapter text:**
+
+| Rule statement | Canonical | Effect |
+|---|---|---|
+| Section 6 to 11 model families as independent stacks | Ch4 5.5 Groups A to D and 5.6 Groups E to G are **registry block rows on the S3 and S4 authoring surfaces**. Models are `definition_kind` values in `ppiq_meta.definition_store` | The families are correct as engine concepts; they are authored, versioned and persisted through the unified definition store |
+| Section 15 and 17 ModelBundle as the only publishable unit | **`ppiq_plant.model_registry`** governs per-model activation. Serving identity is `(tenant_id, model_code, outcome_code, grain_code)` plus `model_version`, with `status` and `serving_role` as independent axes | **There is no ModelBundle object.** Activation is per serving identity |
+| Section 11 staged confidence L1 to L4 | Ch4 5.6.4d **nine checks** with four outcomes: actionable, evidence_only, exploratory, suppressed. Ch3 4.5.12a `can_accept` carries seven conditions | The nine-check gate governs. Accept, Reject and Defer exist only where `can_accept` is true |
+| Section 13 terminal states | Canonical error codes `RL01`, `RL02`, `RM01` to `RM10`, `SC01`, `SC02`, `WD07` and the gate states `Ready`, `Partial`, `Blocked` on `compute_runs` | Use the canonical codes, not a parallel enum |
+| Section 29 modality outputs feeding similarity and novelty | **Ch4 5.8.6 boundary rule: no statistic, score or value is ever computed from text.** A finding may cite a passage; it may not be derived from one | Modality output cites and links. It never contributes a feature or a score |
+| Value: no point estimate | `value_impacts` carries `point_estimate` beside mandatory `lower_bound` and `upper_bound` when `basis_status = 'Sufficient'` | Bounds are mandatory; a point estimate beside them is permitted |
+
+**The relationship authority is final:** Chapter 2 3.15 positions it, Chapter 3 4.5.10 implements it, one resolver serves all sixteen consumers through `GET /api/relationships/resolve?from=&to=&purpose=`, and `validation_state = unproven` permits `explore` while refusing `train`.
+
+---
+
+# APPENDIX B - TARGET ARCHITECTURE SYNCHRONISATION
+
+**Added 11 August 2026. Applies the accepted AI/ML/LLM target architecture. Appendix B overrides Appendix A and the body wherever they differ.**
+
+## B.1 The modality boundary, corrected
+
+**Appendix A.6 stated an absolute rule: no statistic, score or value is ever computed from text. That rule is withdrawn.** It was correct for free-form output and too broad as a permanent boundary, and it contradicted Chapter 4 5.8.7, which registers vision models in `model_registry` under full activation, retirement and drift rules. A registered model forbidden from producing any learned result is not a model.
+
+**The boundary is governance, not modality:**
+
+> **No free-form or model-generated output may become a feature, a score, a statistic or a value.** Text and images may enter a learned result **only** through an explicitly authored model definition carrying the full training contract: a versioned immutable snapshot, declared leakage controls, held-out validation, a `model_registry` entry, calibration and drift monitoring.
+>
+> Retrieval-derived and LLM-derived content is **evidence only**: it may corroborate a deterministic result and may never originate one.
+
+Two paths: **evidence modality** (retrieved and cited, never a feature) and **governed multimodal ML** (the full contract above). No implementation scope is added; both remain future capabilities with interfaces designed.
+
+## B.2 Execution lanes
+
+The six logical job classes are unchanged. **The `ml` class resolves to three physical lanes**: `ml.training` (pre-emptible, checkpointed), `ml.batch_scoring`, and **`ml.online_scoring` with hard-reserved capacity that training and batch admission can never consume**.
+
+**Admission requires two predicates, not one:**
+
+```
+admit  iff  running_count < max_concurrency
+       AND  sum(compute_weight of running) + compute_weight(candidate) <= resource_capacity
+```
+
+`max_concurrency` is how many runs may be in flight; `resource_capacity` is how much scarce resource exists; `compute_weight` is what one run consumes. **One number never expresses two quantities.** The previous single-number form made a weight-4 training job unadmittable into a capacity of 1.
+
+`ml.online_scoring` carries operational event and micro-batch scoring and its required serving functions only. Batch, backfill and rescore work runs on batch and training-class capacity. Where hardware is physically shared, online capacity remains hard-reserved and B-02 must prove the actionable-latency target while training and batch work are saturated.
+
+## B.3 The Semantic Contract Manifest
+
+**An immutable, content-addressed reproducibility pin over the canonical versions in force. Not a fourth authoring authority.** `ppiq_meta.semantic_manifests` with `manifest_id` as primary key, `tenant_id`, `manifest_hash`, and UNIQUE `(tenant_id, manifest_hash)`. No status column, no lifecycle, no update path.
+
+Run and artifact tables carry `semantic_manifest_id uuid NULL FK`. **Nullable for legacy records only. Every new governed AI/ML execution must resolve a manifest**, and a run that cannot is refused rather than recorded without one.
+
+## B.4 The training read path
+
+**PostgreSQL JSONB is not the training read path.** `ppiq_plant.feature_store` owns current governed state, lineage, row-level security and incremental refresh. **The sealed typed columnar artifact owns high-throughput training input.**
+
+No training or encoding component queries `feature_store`. **The snapshot materialiser is exempt by definition** and is the only component permitted to read it for sealing.
+
+The sequence product follows the same split: a manifest in PostgreSQL, immutable chunked typed arrays in object storage, consumed as bounded chunks.
+
+## B.5 Promotion
+
+Promotion is a **three-dimensional gate** on the same governed holdout: quality (discrimination, **calibration**, out-of-time, subgroup stability, missingness robustness, **explanation stability**), serving cost (p50/p95/p99 latency, throughput, artifact size, RAM and VRAM, warm-up), and training cost (duration, peak memory, snapshot read throughput).
+
+**A better-discriminating, worse-calibrated model is not an improvement. An unstable explanation is worse than none.**
+
+The encoder ships only when `metric_lift >= declared_min_lift AND p95_latency_delta <= declared_latency_budget AND artifact_size <= declared_size_class AND explanation_stability >= floor`.
+
+## B.6 Vector search
+
+`VectorSimilarityIndex` remains the contract. Index family is selected by measurement from population, dimension, RAM, required recall@k, latency target, build time and update pattern. **Exact Flat search is retained permanently on a representative sample as the recall baseline**, and a build below the declared recall floor does not become the served index.
+
+## B.7 Assistant runtime
+
+The Assistant gains an implementation-grade runtime, specified in Chapter 4 5.7.9: permission context, intent and entity resolution, **a deterministic tool planner**, structured tools and hybrid retrieval with **permission filtering before ranking**, token-budgeted evidence packing, the model gateway with a minimum-scoped-payload rule, a replaceable `ModelServingRuntime`, and **deterministic answer verification that does not call the LLM**. Quality gates Q-01 to Q-11.
+
+## B.8 Terminology
+
+**MF-01 to MF-07 are seven intelligence and engine families, not seven ML models.** Sub-types: learned model (MF-01, MF-03, MF-04), retrieval and index (MF-02), statistical engine (MF-05, MF-06), practice engine (MF-07), plus orchestration and governance.
+
+## B.9 Gates
+
+The inventory becomes **G-01 to G-55**, adding G-48 training reads no live feature state, G-49 lane isolation, G-50 admission predicate satisfiable, G-51 ANN recall floor, G-52 evidence budget integrity, G-53 claim-class integrity in language, G-54 governed-model-only learned output, G-55 manifest immutability and coverage.
+
+---
+
+*Appendix B, 11 August 2026. Overrides Appendix A and the body where they differ. Chapter amendments are specified in `PPIQ_Master_Design_Chapter_Amendment_Pack.md`.*

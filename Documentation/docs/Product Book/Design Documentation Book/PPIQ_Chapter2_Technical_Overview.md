@@ -6,6 +6,28 @@
 
 # CHAPTER 2 - TECHNICAL OVERVIEW
 
+**REVISION NEXT, 11 August 2026. Amendments C2-1 and C2-2 of the AI/ML/LLM target architecture are integrated into the active body below.**
+
+## 2.0 Target architecture amendments integrated in this revision
+
+### 2.0.1 Operational scoring latency (C2-1)
+
+The actionable-prediction-latency guarantee is delivered by **hard-reserved online scoring capacity**, not by pool ordering or job priority. **A lane whose capacity can be consumed by training work cannot carry a latency guarantee**, because the guarantee would then depend on what else happened to be running. The reservation is specified in Chapter 4 5.3.2 and deployed per Chapter 6.
+
+### 2.0.2 Glossary additions (C2-2)
+
+| Term | Definition |
+|---|---|
+| **Semantic Contract Manifest** | An immutable, content-addressed record of exactly which canonical versions were in force when an artifact was produced: the published `definition_versions`, the relationship publication, and the governed registry and configuration state. A reproducibility pin. **It is not an authoring authority and has no lifecycle** |
+| **Intelligence and engine families** | The seven analytical families MF-01 to MF-07, sub-typed as learned model (MF-01, MF-03, MF-04), retrieval and index (MF-02), statistical engine (MF-05, MF-06), practice engine (MF-07), plus orchestration and governance. **They are not seven ML models**; three of the seven are not models, and the sub-type determines lane, refresh policy and whether a champion/challenger gate applies |
+| **Lane** | A physical execution context within a logical job class, carrying its own `max_concurrency` and `resource_capacity` |
+| **Serving identity** | `(tenant_id, model_code, outcome_code, grain_code)`. The unit at which a model version is activated, retired and given a fallback. **There is no bundle object** |
+
+**Withdrawn terminology.** The collective phrase "seven ML models" for MF-01 to MF-07 is withdrawn, as is `ModelBundle`.
+
+**No product scope change. No capability is added or removed by this revision.**
+
+
 > **Target audience (3.7):** middle managers, operations engineers, quality engineers, process engineers. Technically literate, not developers.
 >
 > **Voice (3.8):** senior product owner.

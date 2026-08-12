@@ -1,0 +1,1446 @@
+أيوه — **كده فهمت هدفك الحقيقي، وهو أهم من فكرة الـsynchronization نفسها.**
+
+أنت **مش عايز Worker 3 يطابق الـChapters غصبًا**. أنت عايز:
+
+> **أفضل Target Architecture ممكنة لـPPIQ AI + ML + LLM.**
+>
+> الـChapters وWorker 3 Design هما inputs للمقارنة، وليس واحد منهم مقدس.
+>
+> لو Worker 3 أحسن → نعدل Chapters.
+> لو Chapters أحسن → نعدل Worker 3.
+> لو الأفضل Hybrid → نأخذ أفضل ما في الاثنين ونعدل الاثنين.
+>
+> والأهم: **لا نضيف features لمجرد زيادة عدد الـfeatures. كل عنصر لازم يبرر نفسه بتحسين measurable في accuracy أو calibration أو latency أو throughput أو robustness أو explainability أو operability.**
+
+وده بالفعل غيّر حكمي على النسخة الأخيرة.
+
+# الحكم على Revision 6.3
+
+النسخة الحالية **قوية جدًا كـgoverned industrial intelligence architecture**، لكن أنا **لا أريد بدء تنفيذ Layer-B ML الكامل عليها بالشكل الحالي**.
+
+مش لأنها ناقصة features.
+
+العكس تقريبًا: الـfunctional coverage ممتاز.
+
+المشكلة إن فيه كام قرار تحتها لو تنفذ كما هو ممكن يعملوا بالضبط اللي أنت خايف منه:
+
+> model ممتاز على الورق، لكن slow / resource hungry / operational scoring يتأخر / training pipeline ثقيلة / data movement عالي / LLM quality غير مستقرة.
+
+لذلك أسحب مؤقتًا:
+
+> `IMPLEMENTATION DESIGN FROZEN`
+
+وأعتبرها:
+
+> **FUNCTIONALLY CONVERGED — PERFORMANCE/QUALITY ARCHITECTURE OPTIMIZATION REQUIRED**
+
+---
+
+# أولًا: أجزاء لا أريد تغييرها
+
+دي foundations ممتازة ونحافظ عليها.
+
+### 1. Semantic Wall
+
+Worker 3 صح جدًا في فصل customer physical schemas عن engine vocabulary. Layer B لا يعرف `Coil`, `Heat`, `Oil`, `Bottle`. 
+
+دي واحدة من أقوى أجزاء التصميم.
+
+### 2. Serving Wall
+
+Training لا يدخل في daytime request path، والـserving لا يستدعي trainer. دي صحيحة جدًا.
+
+### 3. Exact BI ≠ Learned Intelligence
+
+الأرقام الدقيقة من Layer A؛ الـML لا يخمن count أو KPI يمكن حسابه deterministically.
+
+### 4. Statistical Engine قبل ML
+
+قرار ممتاز.
+
+مصنع لا يملك ML-ready history لازم يظل يحصل على:
+
+* governed correlation;
+* effect sizes;
+* q-values;
+* stability;
+* refusals.
+
+### 5. LightGBM كـinitial supervised default وليس product lock-in
+
+قرار سليم جدًا للـindustrial tabular prediction. LightGBM نفسه يعتمد histogram-based learning لتقليل training cost والذاكرة، لذلك هو baseline منطقي جدًا، مع إبقاء abstraction لاختبار XGBoost/CatBoost وغيرهما. ([LightGBM][1])
+
+### 6. Deep encoder optional
+
+دي من أحسن قرارات Worker 3.
+
+لا نضع Transformer لأن كلمة Transformer تبدو high-tech.
+
+يجب أن يكون:
+
+```text
+engineered features baseline
+        vs
+TCN/1D CNN representation
+        vs
+Transformer representation
+```
+
+ويكسب فقط لو **measured downstream improvement** يبرر الـcompute والlatency والcomplexity.
+
+### 7. SHAP ≠ causality
+
+يبقى كما هو.
+
+### 8. model_registry per serving identity
+
+أفضل بوضوح من global `ModelBundle`.
+
+### 9. Evidence + claim classes + refusal-as-data
+
+دي من أهم IP في PPIQ في رأيي.
+
+### 10. LLM does not calculate plant truth
+
+الـDoctrine الحالية عندها architecture ممتازة هنا:
+
+> deterministic tools calculate → evidence handles → LLM explains/cites.
+
+وكمان عندك already:
+
+* self-hosted;
+* private provider;
+* BYOM;
+* minimal egress;
+* Golden Q&A;
+* tool-selection evaluation;
+* faithfulness evaluation;
+* causal-overreach lint;
+* version pinning. 
+
+**دي لا أرغب في إضعافها إطلاقًا.**
+
+---
+
+# لكن وجدت 6 Areas لازم نعيد تصميمها قبل Layer-B implementation
+
+## 🔴 1. ML training + scoring resource architecture
+
+دي أهم مشكلة وجدتها.
+
+الـChapter والـWorker3 كلاهما يقول:
+
+```text
+ml pool parallelism = 1
+```
+
+ويضع داخله:
+
+```text
+training
+scoring
+encoder training
+encoding
+index build
+novelty
+supervised training
+calibration
+SHAP
+champion evaluation
+all scoring runs
+```
+
+ثم يقول admission:
+
+```text
+sum(running weights) + candidate weight <= parallelism
+```
+
+ثم:
+
+```text
+training job weight = 4
+```
+
+
+
+رياضياً:
+
+```text
+0 + 4 <= 1
+```
+
+= false.
+
+يعني الـtraining job بالمعادلة نفسها **لا يُقبل أصلًا**.
+
+وده مش أسوأ جزء.
+
+الأسوأ:
+
+```text
+6-hour training job
+        |
+        v
+     ml pool
+        |
+event scoring waits here
+        |
+        v
+prediction reaches plant late
+```
+
+وفي نفس التصميم نقول:
+
+> Prediction delivered after actionable deadline has no operational value.
+
+دي architecture contradiction.
+
+Chapter 4 نفسه يضع training + scoring في نفس `ml` pool. 
+
+### الأفضل عندي
+
+نفصل:
+
+**logical job class** عن **physical execution capacity**.
+
+يبقى عندنا مثلًا:
+
+```text
+JOB CLASS
+---------
+ml
+
+        |
+        +---------------------------+
+        |                           |
+        v                           v
+
+ML TRAINING LANE             PREDICTION SERVING LANE
+----------------             -----------------------
+batch / scheduled            warm models
+checkpointable               event/micro-batch
+low priority                 latency priority
+CPU/GPU allowed              reserved CPU/GPU
+hours                        ms/seconds
+preemptible                  never waits for training
+```
+
+لا نحتاج بالضرورة user-visible pool جديد.
+
+ممكن job يبقى:
+
+```text
+pool_class = ml
+
+workload_kind =
+    training
+    batch_scoring
+    online_scoring
+```
+
+لكن الـphysical resources تختلف.
+
+### وكمان نفصل:
+
+```text
+max_concurrency
+```
+
+عن:
+
+```text
+capacity_units / compute_weight
+```
+
+مش نسمي الاثنين `parallelism`.
+
+دي عندي **P0 architecture redesign**.
+
+ويجب تعديل:
+
+* Chapter 4
+* Chapter 6
+* Layer B Pack
+
+مش Worker 3 لوحده.
+
+---
+
+# 🔴 2. SemanticModelVersion — Worker 3 عنده فكرة أفضل من Chapters، لكن implementation الحالي زيادة
+
+هنا رأيي اتغير عن حكمي السابق.
+
+Worker 3 عنده:
+
+```text
+SemanticModelVersion
+semantic_model_version_id
+content_hash
+published immutable
+```
+
+ويستخدمه كـroot pin لكل شيء. 
+
+Chapters عندها:
+
+```text
+definition_versions
+source_definition_version
+feature_set_version
+training_snapshot_id
+model_registry_id
+...
+```
+
+لكن مفيش atomic identity تقول:
+
+> **بالضبط أي combination من semantic definitions كان هو plant meaning في لحظة التدريب؟**
+
+Worker 3 شاف مشكلة حقيقية.
+
+لكن الحل مش نعمل **authority رابعة**.
+
+## أفضل Hybrid
+
+نسميه مثلًا:
+
+> **Semantic Contract Manifest**
+
+مش `SemanticModelVersion` صاحب lifecycle مستقل.
+
+Conceptually:
+
+```text
+SEMANTIC CONTRACT MANIFEST
+--------------------------
+
+manifest_id
+tenant/site
+content_hash
+
+pins:
+  definition_version_ids[]
+  relationship_source_definition_id
+  relationship_source_definition_version
+  registry/version references
+  unit/semantic registry versions
+
+created_at
+```
+
+يبقى مثل:
+
+> Git commit للـsemantic contract.
+
+ولا يملك:
+
+```text
+draft
+validated
+published
+rolled_back
+```
+
+كـlifecycle منفصلة.
+
+الـdefinitions الأصلية هي authority.
+
+الـmanifest مجرد **immutable content-addressed reproducibility pin**.
+
+### ده أحسن من الاتنين
+
+Chapters الحالية ناقصة atomic semantic snapshot.
+
+Worker 3 الحالي over-modelled الـsnapshot كauthority كاملة.
+
+إذن:
+
+> **نعدل Chapters + Worker 3.**
+
+---
+
+# 🔴 3. Feature/Sequence physical path محتاج optimisation
+
+الـFeature design الحالي اتحسن جدًا:
+
+```text
+ppiq_plant.feature_store
+features jsonb
+incremental watermarks
+immutable feature snapshots
+```
+
+والـPack بالفعل يضع snapshot Parquet content في object/artifact storage. 
+
+ده كويس للـgovernance.
+
+لكن يجب أن نكتب صراحة:
+
+> **JSONB feature_store is NOT the training hot path.**
+
+يعني Python training لا يعمل:
+
+```text
+Postgres
+ -> read JSONB
+ -> deserialize millions of rows
+ -> train
+```
+
+كل أسبوع.
+
+يبقى:
+
+```text
+Postgres feature_store
+       |
+       | seal snapshot
+       v
+Typed immutable training snapshot
+Parquet / Arrow
+       |
+       v
+Python DataLoader
+       |
+       v
+LightGBM / PyTorch
+```
+
+Postgres:
+
+* lifecycle;
+* metadata;
+* latest feature state;
+* lineage;
+* watermarks.
+
+Columnar snapshot:
+
+* high-throughput training.
+
+---
+
+# 🔴 4. Sequence Store أخطر من Feature Store على performance
+
+Current DP-3 يتعامل مع sequence data على شكل arrays per sequence.
+
+وفي نفس التصميم يعترف إن Sequence Store غالبًا أكبر storage product.
+
+أنا لا أفضل إن ملايين/مليارات time-series samples تكون hot payloads في PostgreSQL array rows.
+
+الأفضل:
+
+```text
+POSTGRES
+--------
+sequence_manifest
+subject
+channel_set_version
+time range
+sample count
+completeness
+content hash
+storage_uri
+snapshot id
+
+            |
+            v
+
+OBJECT STORAGE / LOCAL CACHE
+----------------------------
+chunked immutable sequence data
+typed numeric columns/tensors
+compressed
+partitioned
+```
+
+ثم:
+
+```text
+PyTorch DataLoader
+       ↓
+stream / mmap / chunk read
+```
+
+بدل giant database reads.
+
+دي ليست feature جديدة.
+
+دي **performance architecture**.
+
+وأنا شايفها مهمة جدًا قبل implementation.
+
+---
+
+# 🟠 5. Vector Similarity architecture جيدة، لكن index policy محتاجة تكون measurable
+
+Worker 3 صح في:
+
+> `VectorSimilarityIndex` abstraction، وFAISS implementation لا يكون product contract.
+
+ده ممتاز.
+
+لكن لا يوجد “أفضل FAISS index” ثابت.
+
+المشروع نفسه لازم يعمل benchmark selector:
+
+```text
+Exact Flat
+    |
+    +-- correctness baseline
+
+HNSW
+    |
+    +-- RAM available + strong latency/recall
+
+IVF / PQ / OPQ
+    |
+    +-- larger populations / memory constraints
+
+GPU
+    |
+    +-- only when benchmark proves benefit
+```
+
+FAISS نفسه يوصي باختيار index بحسب عدد vectors، RAM، exactness، recall/speed tradeoff؛ Flat هو exact baseline بينما HNSW/IVF/PQ لها مقايضات مختلفة. ([GitHub][2])
+
+إذن لا نقول:
+
+> FAISS HNSW forever.
+
+نقول:
+
+> **ANN policy chosen from benchmark profile.**
+
+---
+
+# 🔴 6. الـLLM architecture محتاجة Design Pack بمستوى Layer B نفسه
+
+ودي نقطة مهمة جدًا بالنسبة لهدفك.
+
+Worker 3 الحالي يعتبر جزء كبير من Assistant:
+
+> external subsystem owned by DF15.
+
+وده organizationally صحيح. 
+
+لكن بالنسبة لمنتجك:
+
+> **LLM مش side feature.**
+
+هو جزء أساسي من تجربة “in-house expert”.
+
+فالـLayer-B pack وحده لا يكفي لنقول:
+
+> AI architecture frozen.
+
+نحتاج **Assistant / LLM Runtime Architecture** بنفس عمق ML.
+
+---
+
+# الشكل اللي أنا أوصي به للـLLM
+
+```text
+USER QUESTION
+     |
+     v
+PERMISSION + TENANT CONTEXT
+     |
+     v
+INTENT / TOOL PLANNER
+     |
+     +----------------------------+
+     |                            |
+     v                            v
+STRUCTURED TOOLS             EVIDENCE RETRIEVAL
+Layer A facts               definitions/docs/findings
+Layer B intelligence        FTS + embeddings
+     |                            |
+     +-------------+--------------+
+                   |
+                   v
+             EVIDENCE PACKER
+             token budget
+             provenance
+             deduplication
+                   |
+                   v
+                LLM
+         explanation/synthesis only
+                   |
+                   v
+          ANSWER VERIFICATION
+       numeric provenance check
+       unsupported claim check
+       causal-overreach lint
+                   |
+                   v
+             FINAL ANSWER
+              + citations
+```
+
+### أهم قاعدة
+
+LLM **ليس fallback engine**.
+
+لو tool قال:
+
+```text
+MODEL_NOT_READY
+```
+
+LLM لا يقول:
+
+> “Based on my general knowledge, probably...”
+
+يرجع refusal.
+
+وده متوافق أصلًا مع الـDoctrine. 
+
+---
+
+# LLM performance
+
+للـself-hosted backend أنا لا أريد اسم vendor يبقى architecture contract.
+
+نبقى:
+
+```text
+ModelServingRuntime
+```
+
+والimplementation قد يكون:
+
+> vLLM أو equivalent validated runtime.
+
+vLLM حاليًا يدعم mechanisms مفيدة جدًا للـserving مثل continuous batching، chunked prefill، prefix caching، quantization، parallel serving وأساليب optimized execution. ([vLLM][3])
+
+وده مناسب جدًا لـPPIQ لأن:
+
+```text
+system prompt
+tool schemas
+guardrail instructions
+```
+
+جزء كبير منهم مشترك بين requests.
+
+Prefix caching يمكنه إعادة استخدام shared prefix computation بدل إعادة حسابه لكل request. ([vLLM][4])
+
+لكن:
+
+> **vLLM يبقى implementation candidate، مش PPIQ contract.**
+
+---
+
+# والـLLM quality gates أهم من اختيار الـmodel نفسه
+
+لا أريد architecture تقول:
+
+> “نستخدم model X لأنه smartest”.
+
+عايز:
+
+```text
+LLM CANDIDATE
+      |
+      v
+Golden Plant Q&A
+Tool selection accuracy
+Groundedness
+Citation correctness
+Refusal correctness
+Causal-overreach rate
+Arabic/English/German fidelity
+Latency
+TTFT
+total answer latency
+VRAM
+throughput
+      |
+      v
+PROMOTE / REJECT
+```
+
+الـDoctrine عندك already فيها جزء كبير من ده. 
+
+نطوره ونخليه implementation-grade.
+
+---
+
+# وفيه نقطة أنا كمان عايز نعدلها في Chapters: Text/Image
+
+Current rule يقول:
+
+> No statistic, score or value is ever computed from text. 
+
+الفكرة ممتازة لحماية الـAssistant:
+
+```text
+operator writes:
+"machine sounded strange"
+```
+
+ماينفعش LLM يحولها لوحده إلى:
+
+```text
+risk = 87%
+```
+
+تمام.
+
+لكن النص الحالي **absolute أكثر من اللازم** لمستقبل industrial ML.
+
+لأن ممكن بعدين يكون عندك:
+
+* maintenance logs;
+* fault descriptions;
+* operator notes;
+* inspection reports;
+
+وتعمل عليها **governed trained text model** validated مثل أي ML feature.
+
+أو inspection images تدخل vision model — والChapter نفسه بالفعل يصمم `image_annotations` وvision models في `model_registry`. 
+
+إذن الأفضل نفصل:
+
+### Path A — Evidence Text
+
+```text
+LLM/RAG text
+→ evidence/citation only
+→ NEVER creates plant score
+```
+
+### Path B — Governed Multimodal ML — future only
+
+```text
+text/image
+→ explicit authored model definition
+→ immutable training snapshot
+→ leakage gates
+→ validation
+→ model registry
+→ calibration
+→ learned output
+→ labelled as learned
+```
+
+مش ن implement ده دلوقتي.
+
+لكن architecture لا تقفله للأبد.
+
+ده future-proofing، مش feature inflation.
+
+---
+
+# Model quality نفسه محتاج promotion policy أقوى
+
+دلوقتي عندنا champion/challenger ممتاز.
+
+لكن ماينفعش model يكسب لأنه:
+
+```text
+AUC 0.91 > 0.90
+```
+
+بس.
+
+أنا عايز promotion scorecard يشمل على الأقل:
+
+```text
+Predictive quality
+Calibration
+Out-of-time stability
+Subgroup/regime stability
+Missingness robustness
+
++
+
+Inference p95/p99
+Model memory
+Training duration
+Scoring throughput
+Explanation stability
+```
+
+يعني لو:
+
+```text
+Transformer:
+AUC +0.3%
+latency +600%
+VRAM +400%
+```
+
+ما يتنشرش لمجرد إن AUC أعلى.
+
+وبالتالي:
+
+> **Performance is part of model quality.**
+
+دي فلسفة مهمة جدًا.
+
+---
+
+# النتيجة: أفضل architecture عندي مش Chapters ولا Worker 3 وحده
+
+هي Hybrid.
+
+| Area                          | أفضل اختيار                                        |
+| ----------------------------- | -------------------------------------------------- |
+| Semantic genericity           | **Worker 3 foundation**                            |
+| Semantic persistence          | **Chapters + Worker3 manifest idea**               |
+| Feature live store            | **Chapters**                                       |
+| Training snapshots            | **Worker3 direction + stronger columnar contract** |
+| Sequence storage              | **Redesign both**                                  |
+| Model registry                | **Chapters**                                       |
+| Model family strategy         | **Worker3 + Chapter gates**                        |
+| Operational ML serving        | **Redesign both**                                  |
+| Scheduler/resource governance | **Redesign both**                                  |
+| Statistical engine            | **Combined design is strong**                      |
+| Evidence/refusal              | **Combined design is excellent**                   |
+| Assistant safety              | **Doctrine/Chapters are stronger**                 |
+| LLM performance runtime       | **Needs dedicated new design**                     |
+| Multimodal future             | **Redesign boundary, don't implement now**         |
+| Vector search                 | **Worker3 abstraction + benchmark selector**       |
+
+---
+
+# الـTarget architecture اللي أنا مستعد أبني عليه المنتج
+
+High level:
+
+```text
+                 CUSTOMER SOURCES
+                       |
+                       v
+               SEMANTIC AUTHORING
+                       |
+                       v
+          CANONICAL DEFINITIONS
+                       |
+                       v
+        SEMANTIC CONTRACT MANIFEST
+          immutable reproducibility pin
+                       |
+                       v
+               CANONICAL PLANT DATA
+                       |
+            +----------+----------+
+            |                     |
+            v                     v
+     LIVE FEATURE STATE      DATA PRODUCT BUILDER
+       PostgreSQL               incremental
+                                  |
+                                  v
+                       IMMUTABLE SNAPSHOTS
+                    Parquet / Arrow / chunked
+                                  |
+                    +-------------+-------------+
+                    |                           |
+                    v                           v
+            STATISTICAL ENGINE          ML TRAINING PLANE
+                                        PyTorch / boosting
+                                                 |
+                                                 v
+                                         MODEL REGISTRY
+                                                 |
+                                    activation + validation
+                                                 |
+                   ==============================
+                        HARD SERVING WALL
+                   ==============================
+                                                 |
+                                      PREDICTION SERVING
+                                        warm model cache
+                                      reserved resources
+                                                 |
+                   +-----------------------------+------------------+
+                   |                             |                  |
+                   v                             v                  v
+              predictions                   evidence           ANN index
+                   |                             |                  |
+                   +-----------------------------+------------------+
+                                                 |
+                                          GOVERNED SOURCES
+                                                 |
+                                  +--------------+--------------+
+                                  |                             |
+                                  v                             v
+                              Page Builder               Assistant Tools
+                                                                |
+                                                         Evidence Retrieval
+                                                                |
+                                                           Model Gateway
+                                                                |
+                                                               LLM
+                                                                |
+                                                          Answer verifier
+```
+
+**دي architecture أقوى بوضوح من إن training + online scoring + LLM serving كلهم يتعاملوا كأنهم jobs متشابهة.**
+
+---
+
+# هل نزود features؟
+
+**لا.**
+
+أنا تحديدًا لا أطلب:
+
+* GNN;
+* reinforcement learning;
+* agent swarm;
+* 15 embedding models;
+* autonomous control;
+* vector DB لكل شيء;
+* online training;
+* continual learning every minute;
+* LLM deciding plant setpoints.
+
+دي كلها ممكن تخلي deck أجمل والمنتج أسوأ.
+
+معيار الإضافة:
+
+> Does this mechanism improve a measurable product property enough to justify its complexity?
+
+لو لا:
+
+> **لا ندخله.**
+
+---
+
+# Worker 2 دلوقتي يعمل إيه؟
+
+**ما نوقفوش.**
+
+T-045 Pack B لا يبني الـfuture ML training architecture.
+
+هو بيبني:
+
+* generic Class-2 analytical result seam;
+* honest readiness;
+* truthful current scoring coverage;
+* correlation status;
+* Model Insights state.
+
+ودي foundations هنحتاجها مهما كان الـML backend النهائي.
+
+فـWorker 2 يكمل.
+
+لكن:
+
+> **ممنوع يبدأ future M2b ML scheduler/training/serving architecture لحد Architecture Optimization Pass يقفل.**
+
+---
+
+# وWorker 3 — أغير له المهمة نفسها
+
+مش هقوله:
+
+> “make Revision 6.3 match Chapters.”
+
+هقوله:
+
+> **Challenge both. Produce the best target.**
+
+ودي الرسالة اللي أنصح تبعتها له:
+
+The objective is changed and clarified.
+
+Do NOT optimise the Layer-B Architecture Pack for textual conformity with the current Master Design.
+
+The objective is:
+
+**DESIGN THE BEST POSSIBLE PPIQ AI + ML + LLM ARCHITECTURE.**
+
+The current Chapters and your Revision 6.3 are both design inputs.
+
+Neither is automatically correct.
+
+If your design is materially better, propose amendments to the Chapters.
+
+If the Chapters are better, amend the Layer-B Pack.
+
+If the best architecture is a hybrid, modify both.
+
+Do NOT add capabilities merely to increase feature count.
+
+Every architecture mechanism must justify itself through one or more measurable properties:
+
+* model quality;
+* calibration;
+* correctness;
+* evidence quality;
+* robustness;
+* latency;
+* throughput;
+* memory;
+* training cost;
+* serving cost;
+* reproducibility;
+* scalability;
+* maintainability;
+* operational safety.
+
+This is now:
+
+# PPIQ AI / ML / LLM ARCHITECTURE OPTIMISATION PASS
+
+Implementation remains prohibited.
+
+---
+
+# 1. CHALLENGE THE CURRENT RESOURCE ARCHITECTURE
+
+The current Chapter-4 and Pack contract says:
+
+`ml parallelism = 1`
+
+while admission is:
+
+`sum(running compute_weight) + candidate_weight <= parallelism`
+
+and model training may carry:
+
+`compute_weight = 4`.
+
+That is internally inconsistent: a weight-4 candidate cannot be admitted into capacity 1.
+
+More importantly, the same `ml` lane currently carries both:
+
+* long-running training / encoder / index / SHAP work;
+* operational event and micro-batch scoring.
+
+That can allow training work to delay a prediction whose usefulness depends on an actionable deadline.
+
+Do not preserve this merely because it exists in Chapter 4.
+
+Design a better model.
+
+Preferred direction to evaluate:
+
+Logical job class may remain `ml`, but separate physical workload/resource lanes:
+
+* training;
+* batch scoring;
+* operational / online scoring.
+
+Operational scoring must have reserved serving resources, warm models and a latency budget independent of training occupancy.
+
+Training must be checkpointable, low-priority and pre-emptible where the runtime supports it.
+
+Separate:
+
+`max_concurrency`
+
+from:
+
+`resource_capacity / compute_weight`.
+
+Do not use one number to mean both concurrency and resource cost.
+
+Reconcile Chapter 4, Chapter 6 and the Layer-B Pack around the chosen design.
+
+---
+
+# 2. SEMANTIC VERSIONING — TAKE THE BEST OF BOTH DESIGNS
+
+Your `SemanticModelVersion` solves a genuine reproducibility problem, but it currently behaves like an additional lifecycle authority.
+
+The Chapters already own version authority through:
+
+* definition_versions;
+* relationship source_definition_id/version;
+* feature-set versions;
+* snapshot identities;
+* model registry versions.
+
+Design a hybrid:
+
+**Semantic Contract Manifest / Semantic Publication Manifest**
+
+It should be an immutable, content-addressed reproducibility pin over the canonical versions in force.
+
+It may contain:
+
+* manifest id;
+* content hash;
+* exact definition-version references;
+* relationship publication id/version;
+* relevant registry/configuration versions;
+* creation/publication timestamp.
+
+It must NOT create a competing draft/validated/published/rolled-back lifecycle.
+
+Think of it as a Git commit over the semantic contract, not a fourth authoring authority.
+
+If this is judged superior, update Chapters 2/3/4 as well as the Pack.
+
+---
+
+# 3. FEATURE DATA PATH — OPTIMISE FOR BOTH GOVERNANCE AND TRAINING
+
+Retain:
+
+`ppiq_plant.feature_store`
+with incremental refresh and canonical lineage.
+
+But state explicitly:
+
+**PostgreSQL JSONB is not the hot training tensor path.**
+
+The training contract should be:
+
+live governed feature state
+-> seal immutable snapshot
+-> typed columnar snapshot
+-> Python data loader.
+
+Evaluate Parquet / Arrow or an equivalent replaceable columnar snapshot format.
+
+Training must not repeatedly deserialize millions of JSONB feature objects from PostgreSQL.
+
+PostgreSQL owns governance and current state.
+
+The immutable columnar snapshot owns high-throughput training input.
+
+---
+
+# 4. SEQUENCE STORE — REDESIGN THE PHYSICAL PAYLOAD
+
+The current sequence product is potentially the largest data product.
+
+Do not default to storing massive numeric sequence payloads as PostgreSQL arrays.
+
+Evaluate a split contract:
+
+PostgreSQL:
+
+* manifest;
+* subject/grain identity;
+* channel-set version;
+* time range;
+* sample count;
+* completeness;
+* content hash;
+* storage URI;
+* snapshot identity.
+
+Object/artifact storage:
+
+* immutable chunked typed numeric sequences;
+* compressed;
+* partitioned;
+* streamable / memory-mappable where appropriate.
+
+The PyTorch loader should consume bounded chunks rather than giant database rows.
+
+Keep the logical sequence contract generic.
+
+Choose physical layout by measured read throughput and storage amplification.
+
+---
+
+# 5. MODEL SELECTION MUST OPTIMISE QUALITY AND SERVING COST TOGETHER
+
+Keep:
+
+* simple baseline first;
+* LightGBM as an initial tabular candidate;
+* TCN / 1D CNN versus Transformer measured;
+* encoder optional;
+* SHAP as predictive contribution, never causality.
+
+Strengthen promotion.
+
+A model must not win on AUC / accuracy alone.
+
+Champion/challenger evaluation must include:
+
+QUALITY
+
+* discrimination/error;
+* calibration;
+* out-of-time performance;
+* subgroup/regime stability;
+* missingness robustness;
+* explanation stability.
+
+SERVING
+
+* p50/p95/p99 inference latency;
+* throughput;
+* artifact size;
+* RAM / VRAM;
+* warm-up time.
+
+TRAINING
+
+* training duration;
+* peak memory;
+* snapshot-read throughput.
+
+A complex encoder is promoted only when measured downstream lift is worth its operational cost.
+
+If engineered features perform as well, do not deploy the encoder merely because deep learning is available.
+
+---
+
+# 6. VECTOR SEARCH MUST BE POLICY-DRIVEN
+
+Keep `VectorSimilarityIndex` as the product abstraction.
+
+Do not standardise on one FAISS index family.
+
+Define a benchmark selector using:
+
+* population size;
+* vector dimension;
+* RAM;
+* required recall@k;
+* p95 latency;
+* index-build time;
+* update pattern.
+
+Always retain exact Flat search on a representative sample as the correctness/recall baseline.
+
+Allow HNSW / IVF / PQ / quantised or GPU-backed variants only when measured appropriate.
+
+FAISS remains an implementation, not the architecture contract.
+
+---
+
+# 7. REDESIGN THE UNSTRUCTURED-MODALITY BOUNDARY
+
+The current absolute rule:
+
+`no statistic, score or value is ever computed from text`
+
+is correct for free-form Assistant/RAG evidence but is too broad as a permanent industrial-ML architecture boundary.
+
+Separate two paths.
+
+## Evidence modality
+
+Operator notes / maintenance documents used by retrieval and the LLM:
+
+* citation/evidence only;
+* may not manufacture plant facts;
+* may not create an operational score directly.
+
+## Governed multimodal ML — future capability, NOT current implementation
+
+If future customer value justifies it:
+
+text/image
+-> explicitly authored model definition
+-> versioned immutable training snapshot
+-> leakage controls
+-> held-out validation
+-> model registry
+-> calibration / drift
+-> learned output with explicit claim class and provenance.
+
+No free-form LLM output becomes a model feature.
+
+This pass should reserve the correct architecture without adding implementation scope now.
+
+Reconcile the image-model contract as well: an inspection-image model cannot simultaneously be registered as a vision model and be prohibited from producing any learned result.
+
+---
+
+# 8. LLM / ASSISTANT IS CORE — GIVE IT ITS OWN IMPLEMENTATION-GRADE ARCHITECTURE
+
+The Layer-B Pack currently delegates broader Assistant architecture to DF15.
+
+That separation is fine organisationally, but PPIQ cannot call the complete AI architecture frozen without an equally deep Assistant / LLM runtime design.
+
+Produce or update a dedicated Assistant / LLM Architecture section/pack covering:
+
+user
+-> permission/tenant context
+-> deterministic tool planner
+-> structured Layer A / Layer B tools
+-> permission-scoped evidence retrieval
+-> evidence packing / context budgeting
+-> model gateway
+-> LLM
+-> answer verification
+-> cited response.
+
+Preserve these hard rules:
+
+* the LLM does not calculate plant facts;
+* the LLM does not replace an engine refusal;
+* every numeric claim resolves to evidence;
+* claim classes cannot be upgraded by language;
+* external providers receive minimum scoped evidence only;
+* self-hosted, private-provider and BYOM modes remain available;
+* model/provider change is a governed release event.
+
+Design hybrid retrieval explicitly:
+
+* structured tools first for facts and analytical results;
+* full-text + embeddings for documents/evidence where appropriate;
+* optional re-ranking if benchmarks justify it;
+* permission filtering before context reaches the LLM;
+* deduplication and token-budgeted evidence packing.
+
+Define Assistant quality gates:
+
+* tool-selection accuracy;
+* groundedness;
+* citation correctness;
+* unsupported-claim rate;
+* refusal correctness;
+* causal-overreach rate;
+* multilingual fidelity;
+* time-to-first-token;
+* total p95 answer latency;
+* serving throughput;
+* memory/VRAM.
+
+For self-hosted serving, use a replaceable `ModelServingRuntime` abstraction.
+
+vLLM or equivalent may be benchmarked as an implementation; no serving library becomes the product contract.
+
+---
+
+# 9. TERMINOLOGY
+
+Do not describe MF-01 through MF-07 collectively as “seven ML models”.
+
+Use:
+
+`seven intelligence / engine families`
+
+and distinguish:
+
+* statistical engine;
+* practice engine;
+* learned model families;
+* retrieval/index;
+* orchestration/governance.
+
+This is both technically correct and commercially safer.
+
+---
+
+# 10. NO FEATURE INFLATION
+
+Do NOT introduce architecture merely because it sounds advanced.
+
+Do not add now unless benchmarked/justified:
+
+* GNN;
+* reinforcement learning;
+* autonomous agents controlling the plant;
+* online weight updates;
+* continuous retraining;
+* multiple embedding models by default;
+* multi-agent orchestration;
+* automatic plant write-back.
+
+Prefer the simplest mechanism that meets the evidence and performance contract.
+
+---
+
+# 11. PRODUCE A BEST-DESIGN DECISION MATRIX
+
+For every material architecture choice provide:
+
+CURRENT CHAPTER DESIGN
+vs
+CURRENT LAYER-B DESIGN
+vs
+PROPOSED BEST TARGET
+
+with:
+
+* correctness impact;
+* model-quality impact;
+* latency impact;
+* throughput impact;
+* memory/storage impact;
+* operational risk;
+* implementation complexity;
+* recommendation;
+* evidence/benchmark required.
+
+Do not choose a design merely because one document currently owns authority.
+
+---
+
+# 12. UPDATE BOTH SIDES WHERE REQUIRED
+
+Return explicit proposed modifications for:
+
+* Layer-B Architecture Pack;
+* Layer-B Rule;
+* Chapter 2 where product semantics change;
+* Chapter 3 where persistence/contracts change;
+* Chapter 4 where execution/model behaviour changes;
+* Chapter 6 where deployment/resource topology changes;
+* Assistant/LLM architecture.
+
+Do not modify product scope casually.
+
+Every change must have a concrete technical reason.
+
+---
+
+# 13. FREEZE CRITERION
+
+The next freeze is NOT:
+
+`documents match each other`.
+
+The next freeze is:
+
+`BEST TARGET ARCHITECTURE SELECTED AND ALL DOCUMENTS SYNCHRONISED TO IT`.
+
+Before freeze, there must be no high-impact unresolved question in:
+
+* semantic reproducibility;
+* training-data layout;
+* sequence-data layout;
+* model selection;
+* prediction serving;
+* resource isolation;
+* operational scoring latency;
+* ANN policy;
+* LLM grounding;
+* LLM serving;
+* model/LLM evaluation;
+* deployment ownership.
+
+For choices whose winner depends on hardware/data, define the benchmark and leave the measured parameter open rather than guessing.
+
+Final target status:
+
+`AI/ML/LLM TARGET ARCHITECTURE OPTIMISED — MASTER DESIGN SYNCHRONISED — READY FOR IMPLEMENTATION DECOMPOSITION`.
+
+Do not implement code.
+
+## وبالنسبة لـWorker 2
+
+أنا هسيبه يكمل **T-045 Pack B**؛ الـClass-2 result contract وhonest readiness مش هيتأثروا بالـtraining architecture دي.
+
+لكن أحط خط واضح:
+
+> **Worker 2 may finish M1/T-045/T-046.
+> Do not begin the future M2b ML runtime/training/scoring infrastructure until this optimization pass is frozen.**
+
+ودي في رأيي الحركة الصح جدًا دلوقتي.
+
+لأن تكلفة إننا نقضي يوم أو اتنين إضافيين في architecture optimization **قبل** بناء ML core، أقل بمراحل من إننا نكتشف بعد feature store + training + serving + prediction إننا بنينا الـlatency/resource model غلط ونضطر نفك core كامل.
+
+والأهم: إحنا مش بنعيد التصميم لأن “ممكن نزود AI أكتر”. إحنا بنعيد فقط الأجزاء اللي تؤثر مباشرة على **سرعة، دقة، stability، evidence quality، scalability وLLM answer quality**. ده الفرق بين high-tech architecture حقيقي وبين architecture مليانة buzzwords.
+
+[1]: https://lightgbm.readthedocs.io/en/stable/Features.html?utm_source=chatgpt.com "Features — LightGBM 4.6.0 documentation"
+[2]: https://github.com/facebookresearch/faiss/wiki/Guidelines-to-choose-an-index?utm_source=chatgpt.com "Guidelines to choose an index · facebookresearch/faiss Wiki · GitHub"
+[3]: https://docs.vllm.ai/en/stable/index.html?utm_source=chatgpt.com "vLLM"
+[4]: https://docs.vllm.ai/en/latest/examples/features/automatic_prefix_caching/?utm_source=chatgpt.com "Automatic Prefix Caching - vLLM"

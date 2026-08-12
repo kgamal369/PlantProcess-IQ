@@ -2528,6 +2528,58 @@ Indexes `(definition_id, status)`, partial `(status)` `WHERE status = 'published
 
 **Lifecycle, one path for every artifact.** `draft` -> `validated` -> `published` (immutable) -> optionally `paused_by_drift` or `rolled_back` -> `superseded`. Editing a published version forks the next draft. Ownership, folder, tags and permissions live on the parent; **permissions are evaluated on the parent and inherited by every version**, so a version can never be more visible than its definition.
 
+### 4.5.11a `semantic_manifests` - the reproducibility pin (C3-4)
+
+**`ppiq_meta.semantic_manifests`.** An immutable, content-addressed record of which canonical versions were in force. **It is not an authoring authority and has no lifecycle.**
+
+| Column | Type | Notes |
+|---|---|---|
+| `manifest_id` | uuid **PRIMARY KEY** | Surrogate identity; the handle artifacts reference |
+| `tenant_id` | uuid NOT NULL | |
+| `manifest_hash` | varchar(64) NOT NULL | Content hash over the referenced versions |
+| `definition_versions` | jsonb NOT NULL | Array of `{definition_id, version_number}` |
+| `relationship_source_definition_id` | uuid NOT NULL | |
+| `relationship_source_definition_version` | integer NOT NULL | |
+| `registry_snapshot_hash` | varchar(64) NOT NULL | Over `registry_dimensions`, `registry_measures`, `registry_intelligence_sources` in force |
+| `configuration_hash` | varchar(64) NULL | Governed configuration affecting semantics |
+| `created_at_utc` | timestamptz NOT NULL | |
+| `created_by_run_id` | uuid NULL | |
+
+**UNIQUE `(tenant_id, manifest_hash)`.** No status column. No update trigger, because nothing updates a manifest.
+
+> **Tenant-safe identity.** The primary key is the surrogate `manifest_id`; content addressing is expressed by the tenant-scoped unique constraint. Identical content in two tenants correctly produces two rows, because a manifest is tenant-owned evidence and a shared global row would be a cross-tenant object.
+
+**`definition_versions`, the relationship publication and `model_registry` retain their lifecycle authority unchanged.** The manifest records which versions were in force; it does not govern them.
+
+**Coverage rule (C3-5).** `model_registry`, `feature_snapshots`, `sequence_manifests`, `compute_runs`, `model_training_runs`, `prediction_runs`, `practice_learning_runs`, `scenario_runs` and the evidence-bearing result tables carry **`semantic_manifest_id uuid NULL FK -> semantic_manifests(manifest_id)`**. **The column is nullable for legacy records only. Every new governed AI/ML execution must resolve a manifest**; a run that cannot is refused rather than recorded without one.
+
+### 4.5.11b `sequence_manifests` - sequence payload split (C3-3)
+
+**`ppiq_plant.sequence_manifests`.** PostgreSQL holds the manifest; **object storage holds the numeric payload.**
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | uuid PK | |
+| `tenant_id` | uuid NOT NULL | |
+| `subject_kind` | varchar(32) NOT NULL | |
+| `subject_id` | uuid NOT NULL | |
+| `channel_set_version` | integer NOT NULL | Encoder compatibility anchor |
+| `time_from_utc`, `time_to_utc` | timestamptz NOT NULL | |
+| `sample_count` | integer NOT NULL | |
+| `channel_count` | smallint NOT NULL | |
+| `completeness` | numeric(9,6) NOT NULL | Observed fraction |
+| `content_hash` | varchar(64) NOT NULL | |
+| `storage_uri` | varchar(1000) NOT NULL | Chunk or chunk set |
+| `chunk_index` | integer NULL | Where a subject spans chunks |
+| `feature_snapshot_id` | uuid NULL FK | Participation in a sealed snapshot |
+| `semantic_manifest_id` | uuid NULL FK | |
+
+UNIQUE `(tenant_id, subject_kind, subject_id, channel_set_version, chunk_index)`.
+
+**No numeric sequence payload is stored in PostgreSQL.** Immutable chunked typed arrays, compressed and partitioned, live in object storage and are read as bounded chunks.
+
+> **Reason.** The sequence product is the largest data product in the system. Array columns carry per-row and per-array overhead, defeat compression, and put the largest byte volume through WAL, replication, backup and restore. Chunk size and compression: **B-04**.
+
 ### 4.5.12 The intelligence tables
 
 All in `ppiq_plant`, because they derive from customer data. All immutable and append-only unless stated. All carry the universal conventions, the tenant column and the synthetic flag. **Every row names the definition version and the run that produced it.**
@@ -2663,6 +2715,40 @@ Constraints: **CHECK `support_count >= 20`** - a template below support is never
 | `gate_evaluated_at_utc` | timestamptz NOT NULL | |
 
 Keys and constraints: **UNIQUE `(prediction_id, remediation_candidate_id)`**; **CHECK `eligibility_state <> 'actionable' OR failed_checks IS NULL OR jsonb_array_length(failed_checks) = 0`**; **CHECK `can_accept = false OR eligibility_state = 'actionable'`** - `can_accept` true on a non-actionable evaluation is impossible. Indexes partial `(prediction_id)` `WHERE can_accept`, `(prediction_id, eligibility_state)`, `(remediation_candidate_id)`. Retention: with the prediction it belongs to.
+
+### 4.5.12-A The training read path (C3-1, C3-2)
+
+**`feature_snapshots` gains:**
+
+| Column | Type | Notes |
+|---|---|---|
+| `artifact_format` | varchar(32) NOT NULL | The columnar format in force. Selected by **B-03**, replaceable without contract change |
+| `artifact_content_hash` | varchar(64) NOT NULL | Over the artifact bytes |
+| `artifact_byte_size` | bigint NOT NULL | Sizing and retention input |
+| `semantic_manifest_id` | uuid NULL FK | See 4.5.11a |
+
+`storage_uri` points at a **typed columnar artifact** carrying the snapshot population. **The artifact is the authoritative training input.**
+
+> **PostgreSQL JSONB is not the training read path.** `feature_store` owns current governed state, lineage, row-level security and incremental refresh by watermark. The sealed columnar artifact owns high-throughput training input. **Training reads the artifact and never queries `feature_store`.**
+>
+> **The snapshot materialiser is the sole exception and is exempt by definition**: reading `feature_store` is precisely how it seals the artifact. No other component in the training or encoding path may read live feature state.
+>
+> **Reason.** Deserialising millions of JSONB objects per epoch is bounded by round-trips and JSON parsing rather than by the model. Columnar reads give typed access, projection pushdown and page-cache residency. Format and ratio: **B-03**.
+
+**`feature_snapshot_rows` is demoted (C3-2).** It is an **optional audit sample** with a declared sampling rate, retained so a spot-check can run in SQL without reading object storage. **It is not the authoritative snapshot content**, and partitioning guidance predicated on full-population volume no longer applies.
+
+### 4.5.12-B Index generation record (C3-6)
+
+The vector index generation record gains:
+
+| Column | Type | Notes |
+|---|---|---|
+| `index_policy` | varchar(64) NOT NULL | The selected family and its parameters |
+| `recall_at_k` | numeric(9,6) NOT NULL | Measured against **exact Flat** on the representative sample |
+| `recall_probe_size` | integer NOT NULL | Sample size used |
+| `recall_floor` | numeric(9,6) NOT NULL | Declared floor for this installation |
+
+**A build whose measured `recall_at_k` falls below `recall_floor` does not become the served index.** Exact Flat search is retained permanently on a representative sample as the correctness baseline. Family per size class: **B-06**.
 
 ### 4.5.12a `can_accept` - the complete acceptance authority
 

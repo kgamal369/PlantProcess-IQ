@@ -6,6 +6,47 @@
 >
 > **Status: not frozen.** Freeze is withheld until the C1 to C4 certification of 6.1.5.8 has executed and the reference constants of 6.1.9.4a are replaced by measured values.
 
+
+## 6.0 Target architecture amendments integrated in this revision
+
+**REVISION NEXT, 11 August 2026. Amendments C6-1 to C6-5 are integrated into the active body.**
+
+### 6.0.1 Worker containers split by lane (C6-1)
+
+| Container | Admits | Scaling | Notes |
+|---|---|---|---|
+| `ppiq-worker` | `import`, `projection`, `analysis`, `report`, **`ml.batch_scoring`** | 1 to N | Batch, backfill and rescore work |
+| **`ppiq-ml-train`** | `ml.training` | 0 to N, GPU-capable | **Pre-emptible, checkpointed.** Yields at its next stage checkpoint when a reserved lane needs capacity |
+| **`ppiq-ml-online`** | **`ml.online_scoring` only** | 1 to N, hard-reserved | Warm model cache keyed by serving identity. **No training imports. No batch admission** |
+
+> **`ppiq-ml-online` runs operational event and micro-batch scoring and its required serving functions only.** Batch, backfill and rescore work runs on batch and training-class capacity.
+>
+> **Where a deployment physically shares hardware between lanes, online capacity is still hard-reserved**, and B-02 must prove the actionable-latency target holds while training and batch work are saturated. Sharing hardware is a sizing decision; it is never permission to consume the reservation.
+>
+> **`ppiq-ml-online` importing a trainer module is a build-time test failure.**
+
+### 6.0.2 Resource model (C6-2)
+
+The hard reservation for `ml.online_scoring` sits alongside the existing `interactive` reservation. **Both are subtracted from admissible capacity before any batch or training admission is considered.** Fraction: **B-02**.
+
+### 6.0.3 Backup set (C6-3)
+
+The **feature-snapshot artifact store** and the **sequence artifact store** are in the backup set, with retention driven by `feature_snapshots.retention_until_utc` and the sequence retention policy.
+
+**Reason.** These artifacts are the authoritative training input and the authoritative sequence payload. An authoritative artifact outside the backup set is a reproducibility claim that does not survive a restore.
+
+### 6.0.4 Model gateway (C6-4)
+
+The payload sent to an external provider is the **minimum scoped evidence** needed for the phrasing task, never a whole retrieval set and never raw canonical rows. **A provider or model change is a governed release event**, recorded with a reason, because it changes answer behaviour with no code change. The existing behaviour of refusing rather than falling back to an unapproved model is unchanged and reinforced.
+
+Self-hosted serving uses a replaceable **`ModelServingRuntime`** abstraction. Candidate runtimes are benchmarked as implementations (**B-09**); no serving library is the product contract.
+
+### 6.0.5 Capacity model (C6-5)
+
+Added sizing inputs: **snapshot read throughput** (B-03), **warm-model memory per active serving identity** (B-05), and **per-session VRAM for assistant serving** (B-09).
+
+**Serving resources are bounded and GPU use is optional and benchmark-driven.** Serving carries no training dependency.
+
 ---
 
 # CHAPTER 6 - INFRASTRUCTURE, HOSTING, WEBSITE, ADMINISTRATION AND SALES
@@ -35,7 +76,9 @@ Chapter 3 4.6.2 names the components. This section makes them executable. **The 
 | 1 | Reverse proxy | nginx or equivalent | 80, 443 external | web, API | database, workers |
 | 2 | Web frontend | static bundle served by the proxy | - | none (browser calls the API) | - |
 | 3 | API service | application runtime | 8080 internal | pooler, object storage, model gateway | customer sources |
-| 4 | Background workers | same image, worker role | none inbound | pooler, object storage, model gateway, collector queue | customer sources **directly** |
+| 4 | Background workers `ppiq-worker` | same image, worker role | none inbound | pooler, object storage, model gateway, collector queue | customer sources **directly** |
+| 4a | **`ppiq-ml-train`** | same image, ML training role, GPU-capable | none inbound | pooler, object storage | none |
+| 4b | **`ppiq-ml-online`** | same image, online scoring role | 8092 internal | pooler, object storage | none |
 | 5 | Connection pooler | pgbouncer or equivalent | 6432 internal | PostgreSQL | - |
 | 6 | PostgreSQL | database | 5432 internal | - | - |
 | 7 | Object storage | S3-compatible or filesystem | 9000 internal or managed | - | - |
