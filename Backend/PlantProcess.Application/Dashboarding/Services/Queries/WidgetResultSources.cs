@@ -315,7 +315,7 @@ internal sealed class ScoringCoverageWidgetResultSource : IWidgetResultSource
                     : Math.Round((decimal)x.Scored / referencePopulation, 6)),
                 ("syntheticPopulation", x.Synthetic),
                 ("scoringSource", ClassifySource(x.Rows, x.Synthetic, x.WithSourceSystem)),
-                ("modelState", x.WithModelVersion > 0 ? ModelVersionRecorded : ModelNotReady),
+                ("modelState", ModelStateOf(x.Rows, x.Synthetic, x.WithModelVersion)),
                 ("lastScoredAtUtc", x.LastScoredAtUtc.ToString("O"))))
             .ToList();
 
@@ -327,6 +327,25 @@ internal sealed class ScoringCoverageWidgetResultSource : IWidgetResultSource
     /// the scoring run recorded neither a synthetic flag nor a source system:
     /// the columns exist, so this states that nothing was written into them.
     /// </summary>
+    /// <summary>
+    /// MEASURED 12-Aug: every risk row in the presentation database carries a
+    /// model_version AND is_synthetic = true. Reading the version alone reported
+    /// MODEL_VERSION_RECORDED over a population that is entirely fabricated,
+    /// which is the same error as inferring provenance from a row count: an
+    /// attribute is present, so a claim was made about what produced the data.
+    ///
+    /// A version string on synthetic rows records how the FIXTURE was generated.
+    /// It is not evidence that a model is ready, so it can never raise the model
+    /// state above not-ready.
+    /// </summary>
+    private static string ModelStateOf(int rows, int synthetic, int withModelVersion)
+    {
+        if (rows == 0) return ModelNotReady;
+        if (synthetic == rows) return ModelNotReady;
+        if (withModelVersion > 0) return ModelVersionRecorded;
+        return ModelNotReady;
+    }
+
     private static string ClassifySource(int rows, int synthetic, int withSourceSystem)
     {
         if (rows == 0)

@@ -364,18 +364,17 @@ if (-not $dashOk) {
         (WRow '21000000-0000-0000-0000-000000000302' $D[2] 'EO_OBS' 'Observation Throughput' 'line' 'week' 'observationCount' 'NULL' $L.SIDE 2),
         (WRow '21000000-0000-0000-0000-000000000303' $D[2] 'EO_TABLE' 'Materials by Equipment' 'table' 'equipment' 'materialCount' 'NULL' $L.BL 3),
         (WRow '21000000-0000-0000-0000-000000000304' $D[2] 'EO_MONTH' 'Monthly Volume' 'bar' 'month' 'materialCount' 'NULL' $L.BR 4),
-        (WRow '21000000-0000-0000-0000-000000000401' $D[3] 'CF_RATE' 'Defect Rate Trend' 'line' 'day' 'defectRate' 'NULL' $L.BL 3),
-        (WRow '21000000-0000-0000-0000-000000000402' $D[3] 'CF_TOP' 'Defect Landscape' 'bar' 'defectType' 'defectCount' 'NULL' $L.BR 4),
+        (WRow '21000000-0000-0000-0000-000000000401' $D[3] 'CF_RATE' 'Published Statistical Findings' 'table' '' 'findingStatus' 'NULL' $L.BL 3),
+        (WRow '21000000-0000-0000-0000-000000000402' $D[3] 'CF_TOP' 'Findings Readiness (DF8)' 'table' '' 'analysisReadiness' "'defect.class'" $L.BR 4),
         (WRow '21000000-0000-0000-0000-000000000501' $D[4] 'PA_KAVG' 'Average Value' 'kpi' '' 'avgParameterValue' $ParamSql $L.K1 1),
         (WRow '21000000-0000-0000-0000-000000000502' $D[4] 'PA_KOBS' 'Observations' 'kpi' '' 'observationCount' $ParamSql $L.K2 2),
         (WRow '21000000-0000-0000-0000-000000000503' $D[4] 'PA_TREND' 'Parameter Trend' 'line' 'day' 'avgParameterValue' $ParamSql $L.MAIN 3),
         (WRow '21000000-0000-0000-0000-000000000504' $D[4] 'PA_BYP' 'Observation Volume by Parameter' 'bar' 'parameterCode' 'observationCount' 'NULL' $L.SIDE 4),
         (WRow '21000000-0000-0000-0000-000000000505' $D[4] 'PA_TABLE' 'Average FDT by Grade' 'table' 'gradeOrRecipe' 'avgParameterValue' $ParamSql $L.BL 5),
-        (WRow '21000000-0000-0000-0000-000000000601' $D[5] 'RI_KPI' 'Average Risk Score' 'kpi' '' 'riskScore' 'NULL' $L.K1 1),
-        (WRow '21000000-0000-0000-0000-000000000602' $D[5] 'RI_TREND' 'Risk Score Trend' 'line' 'day' 'riskScore' 'NULL' $L.MAIN 2),
-        (WRow '21000000-0000-0000-0000-000000000603' $D[5] 'RI_EQUIP' 'Risk by Equipment' 'bar' 'equipment' 'riskScore' 'NULL' $L.SIDE 3),
+        (WRow '21000000-0000-0000-0000-000000000601' $D[5] 'RI_KPI' 'Average Risk Score (Scored Population Only)' 'kpi' '' 'riskScore' 'NULL' $L.K1 1),
+        (WRow '21000000-0000-0000-0000-000000000602' $D[5] 'RI_TREND' 'Scoring Coverage and Provenance' 'table' '' 'scoringCoverage' 'NULL' $L.MAIN 2),
         (WRow '21000000-0000-0000-0000-000000000604' $D[5] 'RI_TABLE' 'Risk by Material Type' 'table' 'materialUnitType' 'riskScore' 'NULL' $L.BL 4),
-        (WRow '21000000-0000-0000-0000-000000000701' $D[6] 'MI_RATE' 'Model-Tracked Defect Rate' 'line' 'day' 'defectRate' 'NULL' $L.BL 3),
+        (WRow '21000000-0000-0000-0000-000000000701' $D[6] 'MI_RATE' 'Analysis Readiness (DF8)' 'table' '' 'analysisReadiness' "'defect.class'" $L.BL 3),
         (WRow '21000000-0000-0000-0000-000000000702' $D[6] 'MI_SEV' 'Defect Mix by Material Type' 'donut' 'materialUnitType' 'defectCount' 'NULL' $L.BR 4)
     )
     $wsql = "DELETE FROM dashboard_widget_definitions WHERE dashboard_definition_id IN ('" + ($D -join "','") + "');`n"
