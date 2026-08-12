@@ -141,9 +141,19 @@ export function loadS2State(existing?: WidgetDefinitionRecord | null): S2Authori
  * measure, so the face follows the catalogue instead of assuming both. Before
  * a chart type is chosen, both are open.
  */
+/**
+ * What a chart type does with its bindings, as the chart type itself declares
+ * them. T-046 Pack 4B2 gives the shape a name so `saveRefusal` can ask both
+ * questions instead of receiving one boolean and guessing the other.
+ */
+export interface ChartBindingCapabilities {
+  usesDimension: boolean;
+  usesMeasure: boolean;
+}
+
 export function chartCapabilities(
   chartTypes: readonly ChartTypeSpec[], chartType: string,
-): { usesDimension: boolean; usesMeasure: boolean } {
+): ChartBindingCapabilities {
   if (!chartType) { return { usesDimension: true, usesMeasure: true }; }
   const spec = chartTypes.find((c) => c.code === chartType) ?? null;
   return {
@@ -203,13 +213,33 @@ export function widgetCodeFor(
  * that nothing the author sees changes when the surface does.
  */
 export function saveRefusal(
-  state: S2AuthoringState, usesMeasure: boolean,
+  state: S2AuthoringState, capabilities: ChartBindingCapabilities,
 ): string | null {
   if (!state.title.trim()) { return "Give the widget a title."; }
   if (!state.chartType) { return "Choose a chart type."; }
-  if (usesMeasure && !state.measureCode && !state.dimensionCode) {
-    return "Pick a dimension or a measure so the widget has something to show.";
+
+  // T-046 Pack 4B2. THE CLIENT CONVERGES ON THE SERVER RULE.
+  //
+  // This read "usesMeasure && !measureCode && !dimensionCode": it refused only
+  // when BOTH were missing, so a widget with a dimension and no measure passed
+  // here and was then refused by the server, which requires a measure. A client
+  // that knowingly permits what the server deterministically refuses teaches an
+  // author that Save is a guess.
+  //
+  // The two questions are now asked separately, because they have different
+  // answers and an author fixing one should not be told about the other.
+  if (capabilities.usesMeasure && !state.measureCode) {
+    return "Choose a measure so the widget has something to show.";
   }
+
+  // AND THE CHART DECIDES WHETHER A DIMENSION IS NEEDED, not this function.
+  // capabilities comes from the chart type's own declaration, so a KPI - which
+  // declares supportsDimension = false - saves with a measure and no dimension,
+  // exactly as the seventeen-type grammar says it should.
+  if (capabilities.usesDimension && !state.dimensionCode) {
+    return "Choose a dimension for this chart type.";
+  }
+
   return null;
 }
 

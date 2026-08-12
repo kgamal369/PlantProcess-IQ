@@ -616,7 +616,7 @@ export function SharedAuthoringShell({
   // and it is the reason Edit can be trusted at all.
   const s2Subject = s2State.title || definition.outputArtifact;
   const widgetRefusal = isQueryPurpose
-    ? saveRefusal(s2State, chartCapabilities(s2Catalogue?.chartTypes ?? [], s2State.chartType).usesMeasure)
+    ? saveRefusal(s2State, chartCapabilities(s2Catalogue?.chartTypes ?? [], s2State.chartType))
     : null;
 
   const doSaveWidget = async () => {

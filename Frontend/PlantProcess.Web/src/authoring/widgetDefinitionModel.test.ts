@@ -171,24 +171,61 @@ describe("T-038 creating a widget that does not exist yet", () => {
   });
 });
 
-describe("T-038 the refusal speaks in the words the author already reads", () => {
+describe("T-046 the client refuses exactly what the server refuses", () => {
+  const bar = { usesDimension: true, usesMeasure: true };
+  const kpi = { usesDimension: false, usesMeasure: true };
+
   it("names the missing title first", () => {
-    expect(saveRefusal(EMPTY_S2_STATE, true)).toBe("Give the widget a title.");
+    expect(saveRefusal(EMPTY_S2_STATE, bar)).toBe("Give the widget a title.");
   });
 
   it("names the missing chart type next", () => {
-    expect(saveRefusal({ ...EMPTY_S2_STATE, title: "A widget" }, true))
+    expect(saveRefusal({ ...EMPTY_S2_STATE, title: "A widget" }, bar))
       .toBe("Choose a chart type.");
   });
 
-  it("asks for something to show when the chart type uses a measure", () => {
-    const state = { ...EMPTY_S2_STATE, title: "A widget", chartType: "bar" };
-    expect(saveRefusal(state, true))
-      .toBe("Pick a dimension or a measure so the widget has something to show.");
-    expect(saveRefusal({ ...state, dimensionCode: "dim_group" }, true)).toBeNull();
+  // THE DEFECT THIS PACK REMOVES. The old rule refused only when BOTH bindings
+  // were missing, so this state passed the client and was refused by the
+  // server, which requires a measure.
+  it("refuses a dimension with no measure, which the server would refuse", () => {
+    const state = { ...EMPTY_S2_STATE, title: "A widget", chartType: "bar", dimensionCode: "dim_group" };
+    expect(saveRefusal(state, bar)).toBe("Choose a measure so the widget has something to show.");
   });
 
+  it("asks for a dimension only when the chart type uses one", () => {
+    const state = { ...EMPTY_S2_STATE, title: "A widget", chartType: "bar", measureCode: "m_count" };
+    expect(saveRefusal(state, bar)).toBe("Choose a dimension for this chart type.");
+  });
+
+  // THE REGRESSION THAT MATTERS MOST. A KPI declares supportsDimension = false,
+  // the domain entity no longer demands one, and the shell must save it.
+  it("saves a KPI with a measure and no dimension", () => {
+    const state = { ...EMPTY_S2_STATE, title: "A single number", chartType: "kpi", measureCode: "m_count" };
+    expect(saveRefusal(state, kpi)).toBeNull();
+  });
+
+  it("saves a bar once both bindings the chart uses are chosen", () => {
+    const state = {
+      ...EMPTY_S2_STATE, title: "A widget", chartType: "bar",
+      dimensionCode: "dim_group", measureCode: "m_count",
+    };
+    expect(saveRefusal(state, bar)).toBeNull();
+  });
+
+  // Each reason stands alone. Collapsing them would put an author back where
+  // Pack 4A found them: told that something is wrong, not what.
+  it("gives each refusal its own sentence", () => {
+    const sentences = new Set([
+      saveRefusal(EMPTY_S2_STATE, bar),
+      saveRefusal({ ...EMPTY_S2_STATE, title: "A" }, bar),
+      saveRefusal({ ...EMPTY_S2_STATE, title: "A", chartType: "bar", dimensionCode: "d" }, bar),
+      saveRefusal({ ...EMPTY_S2_STATE, title: "A", chartType: "bar", measureCode: "m" }, bar),
+    ]);
+    expect(sentences.size).toBe(4);
+  });
+});
+
   it("does not refuse a saved definition that was already valid", () => {
-    expect(saveRefusal(loadS2State(SAVED), true)).toBeNull();
+    expect(saveRefusal(loadS2State(SAVED), { usesDimension: true, usesMeasure: true })).toBeNull();
   });
 });
