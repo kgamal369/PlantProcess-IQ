@@ -51,6 +51,11 @@ SET widget_title   = 'Defect Landscape',
     updated_at_utc = NOW() AT TIME ZONE 'UTC'
 WHERE widget_code = 'CF_TOP'
   AND is_deleted = FALSE
+  -- SUPERSEDED IN PART BY 812. This clause exists to undo a mutation to the
+  -- 'equipment' dimension, and it must not undo the LATER, deliberate rebinding
+  -- of CF_TOP onto a Class-2 finding measure. Without this guard the numbered
+  -- chain never settles: 800 reverses 812 and 812 reverses 800 on every replay.
+  AND measure_code IN ('defectCount', 'defectRate')
   AND (widget_title <> 'Defect Landscape'
     OR chart_type <> 'bar'
     OR COALESCE(dimension_code,'') <> 'defectType'
