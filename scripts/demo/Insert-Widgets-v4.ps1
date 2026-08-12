@@ -67,7 +67,7 @@ $rows = @(
     (WRow '21000000-0000-0000-0000-000000000603' $D6 'RI_EQUIP' 'Risk by Equipment' 'bar' 'equipment' 'riskScore' 'NULL' $L.SIDE 3),
     (WRow '21000000-0000-0000-0000-000000000604' $D6 'RI_TABLE' 'Risk by Material Type' 'table' 'materialUnitType' 'riskScore' 'NULL' $L.BL 4),
     (WRow '21000000-0000-0000-0000-000000000701' $D7 'MI_RATE' 'Model-Tracked Defect Rate' 'line' 'day' 'defectRate' 'NULL' $L.BL 3),
-    (WRow '21000000-0000-0000-0000-000000000702' $D7 'MI_SEV' 'Predicted Severity Mix' 'donut' 'materialUnitType' 'defectCount' 'NULL' $L.BR 4)
+    (WRow '21000000-0000-0000-0000-000000000702' $D7 'MI_SEV' 'Defect Mix by Material Type' 'donut' 'materialUnitType' 'defectCount' 'NULL' $L.BR 4)
 )
 
 $sql = "BEGIN;`nDELETE FROM dashboard_widget_definitions WHERE dashboard_definition_id IN ('$D1','$D2','$D3','$D4','$D5','$D6','$D7');`nINSERT INTO dashboard_widget_definitions`n(id,dashboard_definition_id,widget_code,widget_title,widget_type,chart_type,dimension_code,measure_code,parameter_code,filter_json,layout_json,display_options_json,sort_order,is_active,created_at_utc,updated_at_utc,is_synthetic,source_system,source_record_id,is_deleted,deleted_at_utc,deleted_reason)`nVALUES`n" + ($rows -join ",`n") + ";`n"
