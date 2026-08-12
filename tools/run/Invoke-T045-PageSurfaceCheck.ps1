@@ -113,9 +113,15 @@ $widgets = @(
     @{ Code = 'RI_KPI';   Type = 'kpi';   Chart = 'kpi';   Dim = $null;               Measure = 'riskScore';         Param = $null;          Class = 1; MinRows = 1 },
     @{ Code = 'RI_TREND'; Type = 'table'; Chart = 'table'; Dim = $null;               Measure = 'scoringCoverage';   Param = $null;          Class = 2; MinRows = 1 },
     @{ Code = 'RI_TABLE'; Type = 'table'; Chart = 'table'; Dim = 'materialUnitType';  Measure = 'riskScore';         Param = $null;          Class = 1; MinRows = 1 },
-    @{ Code = 'MI_RATE';  Type = 'table'; Chart = 'table'; Dim = $null;               Measure = 'analysisReadiness'; Param = 'defect.class'; Class = 2; MinRows = 5 },
-    @{ Code = 'MI_SEV';   Type = 'chart'; Chart = 'donut'; Dim = 'materialUnitType';  Measure = 'defectCount';       Param = $null;          Class = 1; MinRows = 2 }
+    @{ Code = 'MI_RATE';  Type = 'table'; Chart = 'table'; Dim = $null;               Measure = 'analysisReadiness'; Param = 'defect.class'; Class = 2; MinRows = 5 }
 )
+
+# MI_SEV is absent deliberately. It was defectCount by materialUnitType drawn as
+# a donut and this instrument measured it returning ONE row - a single slice at
+# 100 percent. RI_TABLE groups the same dimension and returns three, so the
+# dimension is sound and the measure genuinely has one category on it. Retired
+# by 817 rather than rebound, because the two dimensions with real variation for
+# defectCount are already answered by QM_SEV, QM_BREAK and QM_TABLE.
 
 $classOneColumns = @('dimensionLabel', 'value', 'observationCount', 'secondaryCount')
 

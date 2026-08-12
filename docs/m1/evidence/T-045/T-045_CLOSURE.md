@@ -160,7 +160,7 @@ a pass.
 | `RI_EQUIP` | **retired** - risk carries no equipment attribution |
 | `RI_TABLE` | Risk by Material Type |
 | `MI_RATE` | Analysis Readiness (DF8) - `analysisReadiness` |
-| `MI_SEV` | Defect Mix by Material Type |
+| `MI_SEV` | **retired** - one category on this dimension, so a donut with a single slice |
 
 Every Class-2 binding is `chartType = 'table'`: a Class-2 result carries 8 to 11
 columns and no `value`/`categoryKey`, so the chart paths cannot lay it out.

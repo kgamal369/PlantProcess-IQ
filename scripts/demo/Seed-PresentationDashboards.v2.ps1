@@ -160,8 +160,7 @@ $rows = @(
     (WRow '21000000-0000-0000-0000-000000000602' $D6 'RI_TREND' 'Scoring Coverage and Provenance' 'table' '' 'scoringCoverage' 'NULL' $L.MAIN 2),
     (WRow '21000000-0000-0000-0000-000000000604' $D6 'RI_TABLE' 'Risk by Material Type' 'table' 'materialUnitType' 'riskScore' 'NULL' $L.BL 4),
 
-    (WRow '21000000-0000-0000-0000-000000000701' $D7 'MI_RATE' 'Analysis Readiness (DF8)' 'table' '' 'analysisReadiness' "'defect.class'" $L.BL 3),
-    (WRow '21000000-0000-0000-0000-000000000702' $D7 'MI_SEV' 'Defect Mix by Material Type' 'donut' 'materialUnitType' 'defectCount' 'NULL' $L.BR 4)
+    (WRow '21000000-0000-0000-0000-000000000701' $D7 'MI_RATE' 'Analysis Readiness (DF8)' 'table' '' 'analysisReadiness' "'defect.class'" $L.BL 3)
 )
 
 $dashSql = @"

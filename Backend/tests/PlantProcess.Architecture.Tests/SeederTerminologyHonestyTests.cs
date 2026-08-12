@@ -76,23 +76,37 @@ public sealed class SeederTerminologyHonestyTests
     }
 
     /// <summary>
-    /// The positive half. Forbidding the false title proves nothing if the
-    /// seeders stopped writing the widget at all.
+    /// INVERTED BY 817, AND THE HISTORY MATTERS. This half originally asserted
+    /// that every seeder WRITES the converged MI_SEV definition, because
+    /// forbidding a false title proves nothing if the widget quietly vanishes.
+    /// It then did exactly its job: MI_SEV was measured returning ONE row -
+    /// defectCount by materialUnitType is a single category, so the donut drew
+    /// one slice at 100 percent - and the pack that retired it failed this test
+    /// rather than slipping past.
+    ///
+    /// The widget is now retired, so the rule is the opposite: no writer may
+    /// bring it back. The scanned count is still asserted, because a guard that
+    /// silently reads zero files reports a clean tree forever.
     /// </summary>
     [Fact]
-    public void Every_active_seeder_writes_the_honest_title_and_the_registered_dimension()
+    public void No_active_seeder_writes_the_retired_widget()
     {
         var root = RepositoryRoot();
-        var pattern = new Regex(
-            @"'MI_SEV'\s+'Defect Mix by Material Type'\s+'donut'\s+'materialUnitType'\s+'defectCount'",
-            RegexOptions.IgnoreCase);
+        var retired = "MI" + "_SEV";
+        var scanned = 0;
+        var offenders = new List<string>();
 
         foreach (var name in ActiveSeeders)
         {
             var text = File.ReadAllText(Path.Combine(root, "scripts", "demo", name));
-            Assert.True(
-                pattern.IsMatch(text),
-                name + " does not write the converged MI_SEV definition");
+            scanned++;
+            if (text.Contains("'" + retired + "'", StringComparison.Ordinal))
+                offenders.Add(name);
         }
+
+        Assert.Equal(ActiveSeeders.Length, scanned);
+        Assert.True(
+            offenders.Count == 0,
+            "a retired widget was reinstated by: " + string.Join(", ", offenders));
     }
 }
