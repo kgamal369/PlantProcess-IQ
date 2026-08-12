@@ -1,0 +1,523 @@
+{
+  "fixture_pack_version": 2,
+  "task": "T-177",
+  "reference_implementation": "scipy scipy.stats / numpy 2.4.4",
+  "note": "Expected values computed independently of any PPIQ implementation.",
+  "fixtures": [
+    {
+      "id": "F-01",
+      "name": "anova_known_answer",
+      "pairing": "Numeric x Categorical",
+      "intent": "Well-separated groups, similar variances. Parametric path must be chosen.",
+      "groups": {
+        "A": [
+          10.1,
+          10.4,
+          9.8,
+          10.2,
+          10.5,
+          9.9,
+          10.3,
+          10.0
+        ],
+        "B": [
+          12.2,
+          12.5,
+          11.9,
+          12.1,
+          12.4,
+          12.0,
+          12.3,
+          12.6
+        ],
+        "C": [
+          14.0,
+          14.3,
+          13.8,
+          14.1,
+          14.4,
+          13.9,
+          14.2,
+          14.5
+        ]
+      },
+      "expect": {
+        "method": "ANOVA",
+        "terminal_state": "FINDING",
+        "df_between": 2,
+        "df_within": 21,
+        "f_statistic": 533.7777777777756,
+        "p_value": 9.91679439981722e-19,
+        "eta_squared": 0.98070838,
+        "group_sizes": {
+          "A": 8,
+          "B": 8,
+          "C": 8
+        },
+        "aligned_population": 24
+      },
+      "assumption_evidence": {
+        "levene_p_median_center": 1.0
+      },
+      "tolerance": 1e-09
+    },
+    {
+      "id": "F-02",
+      "name": "variance_heterogeneity_fallback",
+      "pairing": "Numeric x Categorical",
+      "intent": "FALSIFICATION. Group variances differ by ~55x. The parametric assumption is not supported, so the kernel must not report an ANOVA result.",
+      "groups": {
+        "A": [
+          5.0,
+          5.1,
+          5.2,
+          4.9,
+          5.0,
+          5.1,
+          4.8,
+          5.0
+        ],
+        "B": [
+          9.0,
+          1.0,
+          17.0,
+          3.0,
+          14.0,
+          2.0,
+          16.0,
+          4.0
+        ],
+        "C": [
+          20.0,
+          21.0,
+          19.0,
+          20.5,
+          20.2,
+          19.8,
+          20.1,
+          20.3
+        ]
+      },
+      "expect": {
+        "method": "KruskalWallis",
+        "terminal_state": "FINDING",
+        "must_not_be_method": "ANOVA",
+        "h_statistic": 15.39346405228758,
+        "df": 2,
+        "p_value": 0.0004543094309366322,
+        "epsilon_squared": 0.637784002,
+        "aligned_population": 24,
+        "tie_correction_applied": true
+      },
+      "assumption_evidence": {
+        "levene_p_median_center": 2.931e-06,
+        "group_sd": [
+          0.124642,
+          6.627863,
+          0.576783
+        ],
+        "tied_values": {
+          "5.0": 3,
+          "5.1": 2
+        },
+        "tie_correction_factor": 0.997826087
+      },
+      "tolerance": 1e-09,
+      "policy_note": "This fixture asserts the METHOD SWITCHED, not which diagnostic caused the switch. The decision mechanism is not fixed by this fixture.",
+      "contract_note": "H is tie-corrected: H_corrected = H_raw / (1 - sum(t^3-t)/(N^3-N)). A kernel that omits the tie correction will FAIL this fixture. Caught by double-source verification: the first hand calculation omitted it and disagreed with the reference by 0.033."
+    },
+    {
+      "id": "F-03",
+      "name": "severe_skew_fallback",
+      "pairing": "Numeric x Categorical",
+      "intent": "FALSIFICATION. Extreme right skew from a single outlier per group.",
+      "groups": {
+        "A": [
+          1.0,
+          1.1,
+          1.2,
+          1.0,
+          1.1,
+          1.0,
+          1.2,
+          60.0
+        ],
+        "B": [
+          2.0,
+          2.1,
+          2.2,
+          2.0,
+          2.1,
+          2.0,
+          2.2,
+          80.0
+        ],
+        "C": [
+          3.0,
+          3.1,
+          3.2,
+          3.0,
+          3.1,
+          3.0,
+          3.2,
+          95.0
+        ]
+      },
+      "expect": {
+        "method": "KruskalWallis",
+        "must_not_be_method": "ANOVA",
+        "h_statistic": 12.598597721297107,
+        "p_value": 0.0018375927340352383,
+        "df": 2,
+        "tie_correction_applied": true
+      },
+      "assumption_evidence": {
+        "skewness": [
+          2.828337,
+          2.828375,
+          2.82839
+        ]
+      },
+      "tolerance": 1e-09,
+      "contract_note": "H is tie-corrected: H_corrected = H_raw / (1 - sum(t^3-t)/(N^3-N)). A kernel that omits the tie correction will FAIL this fixture. Caught by double-source verification: the first hand calculation omitted it and disagreed with the reference by 0.033."
+    },
+    {
+      "id": "F-04",
+      "name": "exclusion_constant_zero_variance",
+      "pairing": "Numeric x Categorical",
+      "intent": "A MEASURED PROPERTY OF THE DATA. Numeric side has zero variance.",
+      "groups": {
+        "A": [
+          7.0,
+          7.0,
+          7.0,
+          7.0,
+          7.0,
+          7.0,
+          7.0,
+          7.0
+        ],
+        "B": [
+          7.0,
+          7.0,
+          7.0,
+          7.0,
+          7.0,
+          7.0,
+          7.0,
+          7.0
+        ],
+        "C": [
+          7.0,
+          7.0,
+          7.0,
+          7.0,
+          7.0,
+          7.0,
+          7.0,
+          7.0
+        ]
+      },
+      "expect": {
+        "terminal_state": "NOT_APPLICABLE",
+        "exclusion_reason_code": "CONSTANT_ZERO_VARIANCE",
+        "measured_statistic": {
+          "pooled_variance": 0.0
+        },
+        "attribution": "data"
+      },
+      "taxonomy_rule": "Must NOT share a reason code with F-05 or F-06."
+    },
+    {
+      "id": "F-05",
+      "name": "exclusion_unsupported_pairing",
+      "pairing": "Text x Text",
+      "intent": "A LIMITATION OF THE PRODUCT. No enabled method for this type pair. The reason must name the missing method and the pair, and must NEVER be attributed to the customer's data.",
+      "groups": null,
+      "inputs": {
+        "x_type": "FreeText",
+        "y_type": "FreeText",
+        "n": 100
+      },
+      "expect": {
+        "terminal_state": "NOT_APPLICABLE",
+        "exclusion_reason_code": "UNSUPPORTED_METHOD_PAIRING",
+        "reason_must_name": [
+          "x_type",
+          "y_type"
+        ],
+        "attribution": "method",
+        "must_not_claim": [
+          "zero variance",
+          "constant",
+          "insufficient data"
+        ]
+      },
+      "taxonomy_rule": "This is the defect class already measured once in this product: a method gap reported as a property of the customer's data."
+    },
+    {
+      "id": "F-06",
+      "name": "exclusion_insufficient_groups",
+      "pairing": "Numeric x Categorical",
+      "intent": "A MEASURED POPULATION SHORTFALL, reported WITH the number.",
+      "groups": {
+        "A": [
+          1.0,
+          2.0,
+          3.0,
+          4.0
+        ]
+      },
+      "expect": {
+        "terminal_state": "INSUFFICIENT_DATA",
+        "exclusion_reason_code": "INSUFFICIENT_GROUPS",
+        "measured_statistic": {
+          "group_count": 1,
+          "required_minimum": 2
+        },
+        "attribution": "data"
+      },
+      "taxonomy_rule": "Must NOT share a reason code with F-04 or F-05."
+    },
+    {
+      "id": "F-07",
+      "name": "exclusion_insufficient_sample_in_group",
+      "pairing": "Numeric x Categorical",
+      "intent": "Two groups exist but one is a singleton: within-group variance undefined.",
+      "groups": {
+        "A": [
+          1.0,
+          2.0,
+          3.0,
+          4.0,
+          5.0,
+          6.0
+        ],
+        "B": [
+          9.0
+        ]
+      },
+      "expect": {
+        "terminal_state": "INSUFFICIENT_DATA",
+        "exclusion_reason_code": "INSUFFICIENT_SAMPLE",
+        "measured_statistic": {
+          "smallest_group_size": 1,
+          "required_minimum": 2
+        }
+      }
+    },
+    {
+      "id": "F-08",
+      "name": "benjamini_hochberg_known_vector",
+      "pairing": "n/a",
+      "intent": "Classic BH worked example. Preserves existing StatisticalDiscipline behaviour.",
+      "inputs": {
+        "p_values": [
+          0.001,
+          0.008,
+          0.039,
+          0.041,
+          0.042,
+          0.06,
+          0.074,
+          0.205,
+          0.212,
+          0.216
+        ],
+        "q_level": 0.05
+      },
+      "expect": {
+        "q_values": [
+          0.01,
+          0.04,
+          0.084,
+          0.084,
+          0.084,
+          0.1,
+          0.105714286,
+          0.216,
+          0.216,
+          0.216
+        ],
+        "significant_indices": [
+          0,
+          1
+        ]
+      },
+      "tolerance": 1e-09
+    },
+    {
+      "id": "F-09",
+      "name": "determinism_repeat",
+      "pairing": "Numeric x Categorical",
+      "intent": "Same input twice must yield the same method, same numerics within tolerance, same terminal reason, same ordering.",
+      "groups": {
+        "A": [
+          10.1,
+          10.4,
+          9.8,
+          10.2,
+          10.5,
+          9.9,
+          10.3,
+          10.0
+        ],
+        "B": [
+          12.2,
+          12.5,
+          11.9,
+          12.1,
+          12.4,
+          12.0,
+          12.3,
+          12.6
+        ],
+        "C": [
+          14.0,
+          14.3,
+          13.8,
+          14.1,
+          14.4,
+          13.9,
+          14.2,
+          14.5
+        ]
+      },
+      "expect": {
+        "repeat_count": 2,
+        "must_match": [
+          "method",
+          "terminal_state",
+          "exclusion_reason_code",
+          "statistic",
+          "p_value",
+          "effect_size",
+          "group_ordering"
+        ],
+        "numeric_tolerance": 1e-12
+      },
+      "policy_note": "Byte-identical serialization is NOT asserted; serialization is not yet a contract."
+    },
+    {
+      "id": "F-10",
+      "name": "parity_numeric_numeric_spearman",
+      "pairing": "Numeric x Numeric",
+      "intent": "PARITY. Existing proven path must not change.",
+      "inputs": {
+        "x": [
+          1.0,
+          2.0,
+          3.0,
+          4.0,
+          5.0,
+          6.0,
+          7.0,
+          8.0
+        ],
+        "y": [
+          2.0,
+          4.1,
+          5.9,
+          8.2,
+          9.8,
+          12.1,
+          14.0,
+          16.2
+        ]
+      },
+      "expect": {
+        "method": "Spearman",
+        "spearman_rho": 1.0
+      },
+      "parity_source": "MethodSelector.cs + P06_MethodSelectionTests.Numeric_numeric_monotonic_uses_spearman",
+      "tolerance": 1e-09
+    },
+    {
+      "id": "F-11",
+      "name": "parity_binary_numeric_point_biserial",
+      "pairing": "Binary x Numeric",
+      "intent": "PARITY. Both argument orders must select Point-Biserial.",
+      "inputs": {
+        "binary": [
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+          1,
+          1
+        ],
+        "y": [
+          1.0,
+          1.2,
+          0.9,
+          1.1,
+          5.0,
+          5.2,
+          4.8,
+          5.1
+        ]
+      },
+      "expect": {
+        "method": "PointBiserial",
+        "r": 0.997831527,
+        "order_independent": true
+      },
+      "parity_source": "MethodSelector.cs + P06_MethodSelectionTests.Binary_numeric_uses_point_biserial_either_order",
+      "tolerance": 1e-09
+    },
+    {
+      "id": "F-12",
+      "name": "parity_categorical_categorical_cramers_v",
+      "pairing": "Categorical x Categorical",
+      "intent": "PARITY. Cramer's V path preserved.",
+      "inputs": {
+        "x": [
+          "a",
+          "a",
+          "a",
+          "b",
+          "b",
+          "b",
+          "c",
+          "c",
+          "c"
+        ],
+        "y": [
+          "x",
+          "x",
+          "y",
+          "y",
+          "y",
+          "z",
+          "z",
+          "z",
+          "x"
+        ]
+      },
+      "expect": {
+        "method": "CramersV",
+        "cramers_v": 0.577350269
+      },
+      "parity_source": "CategoricalAssociation.cs + P06_MethodSelectionTests.Categorical_categorical_uses_cramers_v",
+      "tolerance": 1e-09
+    },
+    {
+      "id": "F-13",
+      "name": "parity_unsupported_still_refuses",
+      "pairing": "Unsupported x Unsupported",
+      "intent": "PARITY. A genuinely unsupported pair must still refuse truthfully. NOTE: Numeric x Categorical is NO LONGER in this class after T-177.",
+      "inputs": {
+        "x_type": "FreeText",
+        "y_type": "Blob"
+      },
+      "expect": {
+        "terminal_state": "NOT_APPLICABLE",
+        "exclusion_reason_code": "UNSUPPORTED_METHOD_PAIRING"
+      },
+      "parity_source": "MethodSelector.cs unsupported branch"
+    }
+  ],
+  "precision_note": "Expected numerics stored at full double precision. Rounding small p-values to fixed decimals loses significance and was corrected in v2."
+}
