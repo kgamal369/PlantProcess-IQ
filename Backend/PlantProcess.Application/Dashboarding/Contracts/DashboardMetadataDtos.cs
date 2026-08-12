@@ -49,6 +49,10 @@ public sealed record DashboardMeasureMetadataDto(
     IReadOnlyList<string> CompatibleChartTypes,
     string? Description);
 
+/// T-046. Availability is a PRODUCT fact carried beside the type, not a filter
+/// applied before the client sees it. The authoring surface shows what the
+/// product HAS and offers what it can draw, which are two different lists, and
+/// a client that only receives the second cannot explain the difference.
 public sealed record DashboardChartTypeMetadataDto(
     string Code,
     string Label,
@@ -57,6 +61,7 @@ public sealed record DashboardChartTypeMetadataDto(
     bool SupportsMeasure,
     bool SupportsMultipleSeries,
     bool SupportsParameterSelection,
+    string Availability,
     string? Description);
 
 public sealed record DashboardFilterMetadataDto(
@@ -77,10 +82,19 @@ public sealed record DashboardPurposeMetadataDto(
     IReadOnlyList<string> RecommendedMeasures,
     IReadOnlyList<string> RecommendedChartTypes);
 
+/// T-046. A refusal must be able to SAY WHY. The previous shape carried only the
+/// allowed list, so a type that did not appear was indistinguishable from a type
+/// that had never existed, and an author could not tell a modelling mistake from
+/// a missing renderer.
+public sealed record DashboardChartRefusalDto(
+    string ChartTypeCode,
+    string Reason);
+
 public sealed record DashboardCompatibilityRuleDto(
     string DimensionCode,
     string MeasureCode,
     IReadOnlyList<string> AllowedChartTypes,
+    IReadOnlyList<DashboardChartRefusalDto> RefusedChartTypes,
     bool RequiresParameterCode,
     string? WarningMessage);
 

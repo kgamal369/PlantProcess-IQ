@@ -97,101 +97,36 @@ public sealed class DashboardMetadataService : IDashboardMetadataService
         };
     }
 
+    /// <summary>
+    /// T-046. The chart catalogue is now READ FROM THE GRAMMAR, not written out
+    /// here. Ten types were listed by hand; the product grammar is seventeen,
+    /// and a hand-written list is how the tenth diverges from the eleventh.
+    ///
+    /// Availability travels with each type, so the authoring surface can show
+    /// what the product HAS while offering only what it can draw today.
+    /// Implementing a renderer later changes one field in the grammar and
+    /// nothing here.
+    /// </summary>
     private static IReadOnlyList<DashboardChartTypeMetadataDto> BuildChartTypes()
     {
-        return new[]
-        {
-            new DashboardChartTypeMetadataDto(
-                DashboardMetadataCodes.ChartTypes.Kpi,
-                "KPI",
-                "Summary",
-                SupportsDimension: false,
-                SupportsMeasure: true,
-                SupportsMultipleSeries: false,
-                SupportsParameterSelection: true,
-                "Single-number metric for quality, risk, productivity, downtime or data readiness."),
-
-            new DashboardChartTypeMetadataDto(
-                DashboardMetadataCodes.ChartTypes.Bar,
-                "Bar",
-                "Comparison",
-                SupportsDimension: true,
-                SupportsMeasure: true,
-                SupportsMultipleSeries: false,
-                SupportsParameterSelection: true,
-                "Compare categories such as equipment, defect type, shift, source system or product family."),
-
-            new DashboardChartTypeMetadataDto(
-                DashboardMetadataCodes.ChartTypes.Line,
-                "Line",
-                "Trend",
-                SupportsDimension: true,
-                SupportsMeasure: true,
-                SupportsMultipleSeries: true,
-                SupportsParameterSelection: true,
-                "Analyze performance or quality movement over day, week or month."),
-
-            new DashboardChartTypeMetadataDto(
-                DashboardMetadataCodes.ChartTypes.Area,
-                "Area",
-                "Trend",
-                SupportsDimension: true,
-                SupportsMeasure: true,
-                SupportsMultipleSeries: true,
-                SupportsParameterSelection: true,
-                "Show cumulative or volume-style movement over time."),
-
-            new DashboardChartTypeMetadataDto(
-                DashboardMetadataCodes.ChartTypes.Pie,
-                "Pie",
-                "Share",
-                SupportsDimension: true,
-                SupportsMeasure: true,
-                SupportsMultipleSeries: false,
-                SupportsParameterSelection: false,
-                "Show simple distribution across a small number of categories."),
-
-            new DashboardChartTypeMetadataDto(
-                DashboardMetadataCodes.ChartTypes.Donut,
-                "Donut",
-                "Share",
-                SupportsDimension: true,
-                SupportsMeasure: true,
-                SupportsMultipleSeries: false,
-                SupportsParameterSelection: false,
-                "Show distribution for risk class, decision, source system or defect family."),
-
-            new DashboardChartTypeMetadataDto(
-                DashboardMetadataCodes.ChartTypes.Scatter,
-                "Scatter",
-                "Correlation",
-                SupportsDimension: true,
-                SupportsMeasure: true,
-                SupportsMultipleSeries: false,
-                SupportsParameterSelection: true,
-                "Explore relationships between process parameters, risk and defect behavior."),
-
-            new DashboardChartTypeMetadataDto(
-                DashboardMetadataCodes.ChartTypes.Heatmap,
-                "Heatmap",
-                "Matrix",
-                SupportsDimension: true,
-                SupportsMeasure: true,
-                SupportsMultipleSeries: true,
-                SupportsParameterSelection: true,
-                "Analyze concentration patterns by equipment, shift, defect, source or time bucket."),
-
-            new DashboardChartTypeMetadataDto(
-                DashboardMetadataCodes.ChartTypes.Table,
-                "Table",
-                "Detail",
-                SupportsDimension: true,
-                SupportsMeasure: true,
-                SupportsMultipleSeries: true,
-                SupportsParameterSelection: true,
-                "Show sortable aggregated result rows.")
-        };
+        return DashboardChartGrammar.All
+            .Select(definition => new DashboardChartTypeMetadataDto(
+                definition.Code,
+                definition.Label,
+                definition.Category,
+                definition.SupportsDimension,
+                definition.SupportsMeasure,
+                definition.SupportsMultipleSeries,
+                definition.SupportsParameterSelection,
+                definition.Availability == ChartAvailability.Implemented
+                    ? AvailabilityImplemented
+                    : AvailabilityNotYetAvailable,
+                definition.Description))
+            .ToList();
     }
+
+    private const string AvailabilityImplemented = "implemented";
+    private const string AvailabilityNotYetAvailable = "not-yet-available";
 
     private static IReadOnlyList<DashboardDimensionMetadataDto> BuildDimensions()
     {
@@ -581,6 +516,28 @@ public sealed class DashboardMetadataService : IDashboardMetadataService
         }
     }
 
+    /// <summary>
+    /// T-046. COMPATIBILITY IS DERIVED, NOT CURATED.
+    ///
+    /// This previously intersected two hand-maintained arrays - one on each
+    /// dimension, one on each measure - to produce 154 pairs from 25 curated
+    /// lists. Curation is not a rule. Measured before this task, those lists
+    /// offered a heatmap on a SINGLE categorical axis and a share chart over a
+    /// dimension whose data holds one category, and they declared 'pareto'
+    /// while listing it in no array at all, so nothing could select it.
+    ///
+    /// Every pair is now evaluated against the semantic grammar, and every type
+    /// that is NOT offered carries the sentence saying why. An author who is
+    /// told only that something is unavailable tries it again.
+    ///
+    /// THE SHAPE THIS BUILDER CAN DESCRIBE IS LIMITED BY THE QUERY CONTRACT,
+    /// and that is reported rather than papered over. A widget query carries ONE
+    /// dimension and ONE measure, so it can never present two meaningful axes or
+    /// a numeric-by-numeric pair. Heatmap and Scatter therefore have renderers
+    /// and no compatible binding until the query contract can express their
+    /// shape. Inventing a second axis here to keep them selectable would be the
+    /// same defect this task exists to remove.
+    /// </summary>
     private static IReadOnlyList<DashboardCompatibilityRuleDto> BuildCompatibilityRules(
         IReadOnlyList<DashboardDimensionMetadataDto> dimensions,
         IReadOnlyList<DashboardMeasureMetadataDto> measures)
@@ -591,26 +548,71 @@ public sealed class DashboardMetadataService : IDashboardMetadataService
         {
             foreach (var measure in measures)
             {
-                var allowedCharts = dimension.CompatibleChartTypes
-                    .Intersect(measure.CompatibleChartTypes, StringComparer.OrdinalIgnoreCase)
-                    .Distinct(StringComparer.OrdinalIgnoreCase)
-                    .ToList();
+                var shape = new ChartDataShape(
+                    PrimaryAxis: AxisRoleOf(dimension),
+                    HasSecondCategoricalAxis: false,
+                    HasMeasure: true,
+                    MeasureIsDistribution: false,
+                    EffectiveCategoryCount: null);
 
-                if (allowedCharts.Count == 0)
-                    continue;
+                var allowed = new List<string>();
+                var refused = new List<DashboardChartRefusalDto>();
+
+                foreach (var definition in DashboardChartGrammar.All)
+                {
+                    var verdict = DashboardChartGrammar.Evaluate(definition.Code, shape);
+
+                    if (!verdict.IsCompatible)
+                    {
+                        refused.Add(new DashboardChartRefusalDto(definition.Code, verdict.Reason!));
+                        continue;
+                    }
+
+                    // Semantically right and not drawable yet. Reported as its
+                    // own reason, never merged with a modelling refusal: an
+                    // author sent looking for a data problem that is not there
+                    // loses more time than the missing renderer costs.
+                    if (definition.Availability != ChartAvailability.Implemented)
+                    {
+                        refused.Add(new DashboardChartRefusalDto(
+                            definition.Code,
+                            DashboardChartGrammar.NotYetAvailableReason(definition)));
+                        continue;
+                    }
+
+                    allowed.Add(definition.Code);
+                }
 
                 var requiresParameter = dimension.RequiresParameterCode || measure.RequiresParameterCode;
 
                 rules.Add(new DashboardCompatibilityRuleDto(
                     dimension.Code,
                     measure.Code,
-                    allowedCharts,
+                    allowed,
+                    refused,
                     requiresParameter,
                     requiresParameter ? "This combination requires a selected parameter code." : null));
             }
         }
 
         return rules;
+    }
+
+    /// <summary>
+    /// The axis role is read from the REGISTERED dimension, so it stays true for
+    /// a customer in any industry. A date bucket is temporal because the
+    /// registry says its data type is a date, not because its code looks like a
+    /// day.
+    /// </summary>
+    private static AxisRole AxisRoleOf(DashboardDimensionMetadataDto dimension)
+    {
+        if (string.Equals(dimension.DataType, "date", StringComparison.OrdinalIgnoreCase))
+            return AxisRole.Temporal;
+
+        if (string.Equals(dimension.DataType, "number", StringComparison.OrdinalIgnoreCase))
+            return AxisRole.Numeric;
+
+        return AxisRole.Categorical;
     }
 }
 
