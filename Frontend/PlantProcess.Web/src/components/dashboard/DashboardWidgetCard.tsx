@@ -36,6 +36,7 @@ import {
   type DashboardWidgetId,
 } from "../../state/DashboardSelectionContext";
 import { useDashboardGridLayout } from "../../state/DashboardGridLayoutContext";
+import type { ChartSwitcherOption } from "../../api/product-core/dashboard-widget-types";
 import { StandardButton } from "@/components/standard";
 
 import { StandardP2Select } from "@/components/standard/StandardP2Controls";
@@ -44,7 +45,7 @@ interface DashboardWidgetCardProps {
   title: string;
   subtitle?: string;
   icon?: ReactNode;
-  chartTypes?: DashboardChartType[];
+  chartOptions?: ChartSwitcherOption[];
   exportRows?: Record<string, unknown>[];
   children: ReactNode;
   onRename?: () => void | Promise<void>;
@@ -55,24 +56,25 @@ interface DashboardWidgetCardProps {
   disableActions?: boolean;
 }
 
-// Chart type → short display label
-const CHART_TYPE_LABELS: Record<string, string> = {
-  line: "Line",
-  area: "Area",
-  bar: "Bar",
-  pie: "Pie",
-  donut: "Donut",
-  scatter: "Scatter",
-  heatmap: "Heatmap",
-  table: "Table",
-};
+// T-046. The local label map is retired. It named eight of the seventeen
+// types in the product grammar, so a ninth rendered as its raw code and
+// nothing failed. Labels are published beside each type by the server.
+
+// Shown when the renderer does not exist. This is a build fact, so it is the
+// one sentence here the server does not supply - and it is deliberately
+// silent about the author's dimension and measure, which are not at fault.
+const RENDERER_UNAVAILABLE = "This chart type is not available in this build yet.";
+
+// Shown when the server refused the type for this binding but published no
+// sentence. The card never invents a cause.
+const REFUSAL_WITHOUT_REASON = "The server does not allow this chart type for this widget.";
 
 export function DashboardWidgetCard({
   widgetId,
   title,
   subtitle,
   icon,
-  chartTypes = ["bar", "line", "pie", "table"],
+  chartOptions = [],
   exportRows,
   children,
   onRename,
@@ -99,7 +101,10 @@ PPIQ-WIDGETFIX
 
   const menuRef = useRef<HTMLDivElement>(null);
   const state = getWidgetState(widgetId);
-  const activeChartType = state.chartType ?? chartTypes[0];
+  const activeChartType =
+    state.chartType ??
+    chartOptions.find((option) => option.state === "available")?.code ??
+    chartOptions[0]?.code;
 
   // Close action menu on outside click
   useEffect(() => {
@@ -180,19 +185,35 @@ PPIQ-WIDGETFIX
 
         <div className="dashboard-widget__actions">
           {/* Chart type switcher — pill buttons */}
-          {chartTypes.length > 1 ? (
+          {chartOptions.length > 1 ? (
             <div className="widget-chart-switcher" role="group" aria-label="Chart type">
-              {chartTypes.map((ct) => (
-                <StandardButton
-                  key={ct}
-                  type="button"
-                  className={`widget-chart-btn ${activeChartType === ct ? "widget-chart-btn--active" : ""}`}
-                  onClick={() => setWidgetChartType(widgetId, ct)}
-                  title={`Switch to ${ct} chart`}
-                >
-                  {CHART_TYPE_LABELS[ct] ?? ct}
-                </StandardButton>
-              ))}
+              {chartOptions.map((option) => {
+                const selectable = option.state === "available";
+                const title =
+                  option.state === "available"
+                    ? "Switch to " + option.label
+                    : option.state === "unavailable"
+                      ? RENDERER_UNAVAILABLE
+                      : (option.reason ?? REFUSAL_WITHOUT_REASON);
+
+                return (
+                  <StandardButton
+                    key={option.code}
+                    type="button"
+                    className={`widget-chart-btn ${activeChartType === option.code ? "widget-chart-btn--active" : ""}`}
+                    isDisabled={!selectable}
+                    data-chart-state={option.state}
+                    onClick={
+                      selectable
+                        ? () => setWidgetChartType(widgetId, option.code as DashboardChartType)
+                        : undefined
+                    }
+                    title={title}
+                  >
+                    {option.label}
+                  </StandardButton>
+                );
+              })}
             </div>
           ) : null}
 

@@ -18,12 +18,21 @@ export type ExtraRow = Record<string, unknown>;
 const EXTRA = ["scatter", "heatmap", "pareto"] as const;
 export const isExtraChartType = (t: unknown): boolean => EXTRA.includes(String(t) as never);
 
-const SCATTER_MEASURES = ["avgParameterValue", "riskScore", "defectRate"];
-export function extendChartTypes(measureCode: string | undefined): string[] {
-  const base = ["kpi", "bar", "line", "area", "pie", "donut", "table", "heatmap", "pareto"];
-  if (measureCode && SCATTER_MEASURES.includes(measureCode)) base.splice(6, 0, "scatter");
-  return base;
-}
+// T-046. extendChartTypes IS RETIRED AND MUST NOT RETURN.
+//
+// It answered "which chart types may this widget offer" from a literal array
+// of nine codes plus a branch keyed on three measure codes. That is a
+// compatibility authority, and it lived in the client, where it could not know
+// what the server would accept and drifted from the seventeen-type product
+// grammar without anything failing.
+//
+// The switcher now reads allowedChartTypes, refusedChartTypes and
+// chartType.availability. See resolveChartSwitcherOptions in
+// api/product-core/dashboard-widget-types.ts.
+//
+// isExtraChartType below stays. It answers a different question - which
+// RENDERER draws a given type - and holds no view on whether the type is
+// permitted.
 
 const AXIS = { fill: "#8ea7c1", fontSize: 10.5 };
 const TOOLTIP_BG = { background: "#0b1730", border: "1px solid #1d3a63", fontSize: 12 };

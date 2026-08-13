@@ -101,6 +101,91 @@ export interface DashboardMeasureMetadata {
  */
 export type DashboardChartAvailability = "implemented" | "not-yet-available";
 
+// T-046. THE SWITCHER'S THREE STATES.
+//
+//   available    - the server allows this type for this binding and the
+//                  renderer exists. Selectable.
+//   unavailable  - the product does not draw this type yet. A build fact.
+//                  Nothing about the author's dimension or measure is wrong.
+//   incompatible - the renderer exists, and the SERVER refused this type for
+//                  this binding. The sentence shown is the server's.
+//
+// The two refusals must never wear the same explanation. Telling an author
+// their binding is wrong when the truth is that we have not built the chart
+// sends them to change the one thing that cannot help.
+export type ChartOptionState = "available" | "unavailable" | "incompatible";
+
+export interface ChartSwitcherOption {
+  code: string;
+  label: string;
+  state: ChartOptionState;
+  reason: string | null;
+}
+
+// Typed against the published union, so a backend change to the availability
+// vocabulary fails the compiler here rather than silently marking every type
+// unavailable at runtime.
+const IMPLEMENTED: DashboardChartAvailability = "implemented";
+
+// T-046. THE ONLY PLACE SWITCHER OPTIONS ARE DECIDED, AND IT DECIDES NOTHING.
+//
+// This is a projection of the transport contract, not a compatibility rule.
+// It holds no chart code, no measure code and no dimension code: every verdict
+// is read from what the server published. Adding a chart type to the product
+// grammar changes one backend list and nothing here.
+//
+// PRECEDENCE. Availability outranks compatibility. If the renderer does not
+// exist the binding question is moot, and reporting a structural refusal for a
+// chart we simply have not built is a false statement about the author's work.
+//
+// FAIL CLOSED. With no metadata, or no rule for this binding, the answer is an
+// empty list and the card shows no switcher. A guessed switcher is worse than
+// no switcher, because it looks like it is working.
+export function resolveChartSwitcherOptions(
+  chartTypes: DashboardChartTypeMetadata[] | null | undefined,
+  rule: DashboardCompatibilityRule | null | undefined,
+  activeChartType: string | null | undefined
+): ChartSwitcherOption[] {
+  if (!chartTypes || chartTypes.length === 0) { return []; }
+  if (!rule) { return []; }
+
+  const allowed = new Set<string>(rule.allowedChartTypes ?? []);
+  const refused = new Map<string, string>();
+  for (const entry of rule.refusedChartTypes ?? []) {
+    refused.set(entry.chartTypeCode, entry.reason);
+  }
+
+  const options: ChartSwitcherOption[] = [];
+
+  for (const type of chartTypes) {
+    // A type the server named in neither list carries no verdict for this
+    // binding and is omitted. The type the widget is CURRENTLY drawn as is
+    // always listed, so a widget can never render as something its own
+    // switcher does not admit exists.
+    const named = allowed.has(type.code) || refused.has(type.code);
+    if (!named && type.code !== activeChartType) { continue; }
+
+    let state: ChartOptionState;
+    let reason: string | null = null;
+
+    if (type.availability !== IMPLEMENTED) {
+      state = "unavailable";
+    } else if (refused.has(type.code)) {
+      state = "incompatible";
+      reason = refused.get(type.code) ?? null;
+    } else if (allowed.has(type.code)) {
+      state = "available";
+    } else {
+      state = "incompatible";
+      reason = null;
+    }
+
+    options.push({ code: type.code, label: type.label, state: state, reason: reason });
+  }
+
+  return options;
+}
+
 export interface DashboardChartTypeMetadata {
   code: string;
   label: string;

@@ -1,4 +1,4 @@
-import { ExtraChart, isExtraChartType, extendChartTypes } from "./ChartExtras";
+import { ExtraChart, isExtraChartType } from "./ChartExtras";
 import { dimensionToFilterField, isTemporalDimension } from "@/state/widgetSelectionMap";
 import { MetricCard } from "@/components/MetricCard";
 import { BarChart3 } from "lucide-react";
@@ -13,6 +13,25 @@ import type {
   DashboardWidgetDefinitionRecord,
   DashboardWidgetQueryResult,
 } from "../../api/productApiClient";
+import {
+  resolveChartSwitcherOptions,
+  type DashboardMetadata,
+} from "../../api/product-core/dashboard-widget-types";
+
+// T-046. One in-flight metadata request per session, shared by every card.
+let dashboardMetadataPromise: Promise<DashboardMetadata> | null = null;
+
+function loadDashboardMetadata(): Promise<DashboardMetadata> {
+  if (!dashboardMetadataPromise) {
+    dashboardMetadataPromise = (
+      productApi.getDashboardMetadata() as Promise<DashboardMetadata>
+    ).catch((error) => {
+      dashboardMetadataPromise = null;
+      throw error;
+    });
+  }
+  return dashboardMetadataPromise;
+}
 
 import {
   InteractiveBarChart,
@@ -181,13 +200,50 @@ interface SavedDashboardWidgetProps {
     result?.columns.find((column) => column.dataType === "number")?.code ??
     "value";
 
+  // T-046. THE SWITCHER READS THE SERVER, AND A DASHBOARD ASKS ONCE.
+  //
+  // Every widget on a page needs the same catalogue, so the request is shared
+  // rather than repeated per card. A failure clears the cache so the next
+  // mount retries instead of pinning an empty catalogue for the session.
+  const [metadata, setMetadata] = useState<DashboardMetadata | null>(null);
+
+  useEffect(() => {
+    let ignore = false;
+    loadDashboardMetadata()
+      .then((loaded) => { if (!ignore) { setMetadata(loaded); } })
+      .catch(() => { if (!ignore) { setMetadata(null); } });
+    return () => { ignore = true; };
+  }, []);
+
+  // The rule is keyed on the binding this widget actually carries. No rule
+  // means no published verdict, and the projection returns nothing.
+  const compatibilityRule = useMemo(
+    () =>
+      (metadata?.compatibilityRules ?? []).find(
+        (rule) =>
+          rule.dimensionCode === widget.dimensionCode &&
+          rule.measureCode === widget.measureCode
+      ) ?? null,
+    [metadata, widget.dimensionCode, widget.measureCode]
+  );
+
+  const chartOptions = useMemo(
+    () =>
+      resolveChartSwitcherOptions(
+        metadata?.chartTypes ?? null,
+        compatibilityRule,
+        activeChartType
+      ),
+    [metadata, compatibilityRule, activeChartType]
+  );
+
   return (
     <DashboardWidgetCard
       widgetId={`saved-${widget.id}` as any}
       title={widget.widgetTitle}
       subtitle={`${widget.chartType} · ${widget.dimensionCode} · ${widget.measureCode}`}
       icon={<BarChart3 size={18} />}
-      chartTypes={extendChartTypes(widget.measureCode) as any}
+      chartOptions={chartOptions}
       exportRows={rows as Record<string, unknown>[]}
       onEdit={onEdit}
       onRename={onEdit ? onEdit : undefined}
