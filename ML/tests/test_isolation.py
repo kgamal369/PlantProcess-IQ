@@ -6,6 +6,16 @@ import unittest
 
 SRC = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "src")
 
+# Every name here is Python standard library or this package. The point is that no
+# THIRD-PARTY package creeps in unnoticed, so a new stdlib module is added
+# deliberately rather than by relaxing an assertion.
+STDLIB_OR_OWN = {
+    "__future__", "json", "os", "sys", "hashlib", "enum", "dataclasses",
+    "typing", "datetime", "traceback", "ast", "unittest", "tempfile",
+    "shutil", "argparse", "importlib", "time", "abc", "decimal", "gc",
+    "tracemalloc", "ppiq_ml",
+}
+
 FORBIDDEN_IMPORTS = {
     "psycopg", "psycopg2", "sqlalchemy", "asyncpg", "pyodbc", "pymysql",
     "sqlite3", "requests", "httpx", "urllib3", "boto3",
@@ -74,11 +84,19 @@ class RuntimeIsolation(unittest.TestCase):
                     offences.append(f"{os.path.basename(path)} contains '{word}'")
         self.assertEqual([], offences, "The runtime must remain industry-generic.")
 
-    def test_the_runtime_needs_no_third_party_package_to_execute_the_protocol(self):
-        """The protocol layer is standard library only, so it runs in any environment."""
+    def test_the_PROTOCOL_layer_needs_no_third_party_package(self):
+        """The C# to Python job protocol runs in any environment with no install step.
+
+        Scoped to ppiq_ml/runtime deliberately. The artifacts layer has its own,
+        stricter assertion below: exactly one third-party dependency.
+        """
         import ppiq_ml.runtime as runtime
+
+        runtime_dir = os.path.join(SRC, "ppiq_ml", "runtime")
         third_party = []
         for path in python_files():
+            if not path.startswith(runtime_dir):
+                continue
             with open(path, encoding="ascii") as handle:
                 tree = ast.parse(handle.read(), filename=path)
             for node in ast.walk(tree):
@@ -86,19 +104,45 @@ class RuntimeIsolation(unittest.TestCase):
                     third_party += [a.name.split(".")[0] for a in node.names]
                 elif isinstance(node, ast.ImportFrom) and node.module and node.level == 0:
                     third_party.append(node.module.split(".")[0])
-        # Every name here is Python standard library or this package. The point of
-        # the check is that no THIRD-PARTY package creeps into the protocol layer,
-        # so a new stdlib module is added deliberately rather than by relaxing the
-        # assertion.
-        stdlib_or_own = {
-            "__future__", "json", "os", "sys", "hashlib", "enum", "dataclasses",
-            "typing", "datetime", "traceback", "ast", "unittest", "tempfile",
-            "shutil", "argparse", "importlib", "time", "ppiq_ml",
-        }
-        unexpected = sorted(set(third_party) - stdlib_or_own)
+
+        unexpected = sorted(set(third_party) - STDLIB_OR_OWN)
         self.assertEqual([], unexpected,
                          f"The protocol layer gained a third-party dependency: {unexpected}")
         self.assertTrue(hasattr(runtime, "run"))
+
+    def test_the_ARTIFACTS_layer_has_exactly_one_third_party_dependency(self):
+        """One implementation dependency, pyarrow, which already owns the artifacts extra.
+
+        A second one would mean two ways to read the same bytes, and a B-03 comparison
+        that is no longer measuring the format.
+        """
+        artifacts_dir = os.path.join(SRC, "ppiq_ml", "artifacts")
+        third_party = []
+        for path in python_files():
+            if not path.startswith(artifacts_dir):
+                continue
+            with open(path, encoding="ascii") as handle:
+                tree = ast.parse(handle.read(), filename=path)
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Import):
+                    third_party += [a.name.split(".")[0] for a in node.names]
+                elif isinstance(node, ast.ImportFrom) and node.module and node.level == 0:
+                    third_party.append(node.module.split(".")[0])
+
+        external = sorted(set(third_party) - STDLIB_OR_OWN)
+        self.assertEqual(["pyarrow"], external,
+                         f"The artifacts layer must depend on pyarrow alone; found {external}")
+
+    def test_no_storage_format_is_named_in_the_shared_contract(self):
+        """The contract and schema must not know Parquet or Arrow exists."""
+        for name in ("contract.py", "schema.py", "hashing.py"):
+            path = os.path.join(SRC, "ppiq_ml", "artifacts", name)
+            with open(path, encoding="ascii") as handle:
+                body = handle.read().lower()
+            code = "\n".join(l for l in body.split("\n") if not l.strip().startswith("#"))
+            for fmt in ("pyarrow", "pq.", "parquet_adapter", "arrow_ipc_adapter"):
+                self.assertNotIn(fmt, code,
+                                 f"{name} names a storage format; the contract must stay format free")
 
 
 if __name__ == "__main__":

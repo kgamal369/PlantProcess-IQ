@@ -15,3 +15,5 @@
 #
 # A guard test asserts the protocol layer imports nothing outside the standard
 # library, so this file cannot silently drift.
+
+pyarrow==25.0.1
