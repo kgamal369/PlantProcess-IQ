@@ -86,7 +86,7 @@ pipeline {
             -e ConnectionStrings__PlantProcessDb="${PPIQ_TEST_CONNECTION_STRING}" \
             -e PPIQ_AUDIT_TRIGGER_TEST_CONNECTION="${PPIQ_TEST_CONNECTION_STRING}" \
             -e PPIQ_RLS_TEST_CONNECTION_STRING="${PPIQ_TEST_CONNECTION_STRING}" \
-            "${SDK_IMAGE}" bash -lc 'dotnet test Backend --nologo'
+            "${SDK_IMAGE}" bash -lc 'set -e; export DEBIAN_FRONTEND=noninteractive; apt-get update -qq > /dev/null 2>&1; apt-get install -y -qq --no-install-recommends python3 > /dev/null 2>&1; python3 --version; python3 -c "import sys; sys.exit(0 if sys.version_info >= (3, 11) else 1)" || { echo "PPIQ CI W3-016: python3 must be 3.11 or newer for the ML runtime tests"; exit 1; }; dotnet test Backend --nologo'
         '''
       }
     }
