@@ -90,6 +90,17 @@ export interface DashboardMeasureMetadata {
   description?: string;
 }
 
+/**
+ * T-046. `availability` is what the PRODUCT has; compatibility is what this
+ * DATA supports. They are separate facts and a surface that receives only the
+ * second cannot explain the difference to an author.
+ *
+ * "implemented" means the renderer exists today. "not-yet-available" means the
+ * type is part of the seventeen-type product grammar and cannot be drawn yet -
+ * which is a different sentence from "this chart makes no sense here".
+ */
+export type DashboardChartAvailability = "implemented" | "not-yet-available";
+
 export interface DashboardChartTypeMetadata {
   code: string;
   label: string;
@@ -98,6 +109,7 @@ export interface DashboardChartTypeMetadata {
   supportsMeasure: boolean;
   supportsMultipleSeries: boolean;
   supportsParameterSelection: boolean;
+  availability: DashboardChartAvailability;
   description?: string;
 }
 
@@ -121,10 +133,24 @@ export interface DashboardPurposeMetadata {
   recommendedChartTypes: string[];
 }
 
+/**
+ * T-046. A type that is NOT offered arrives with the sentence saying why.
+ *
+ * Before this the client received only `allowedChartTypes`, so a type that was
+ * absent was indistinguishable from a type that had never existed - which is
+ * how an unselectable Pareto survived for as long as it did. The switcher can
+ * now show an author what it will not offer and what would have to change.
+ */
+export interface DashboardChartRefusal {
+  chartTypeCode: string;
+  reason: string;
+}
+
 export interface DashboardCompatibilityRule {
   dimensionCode: string;
   measureCode: string;
   allowedChartTypes: string[];
+  refusedChartTypes: DashboardChartRefusal[];
   requiresParameterCode: boolean;
   warningMessage?: string | null;
 }
