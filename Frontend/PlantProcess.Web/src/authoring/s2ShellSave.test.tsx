@@ -148,6 +148,13 @@ describe("T-038 Add creates a widget the dashboard did not have", () => {
     await userEvent.type(screen.getByLabelText("Definition name"), "New widget");
     await userEvent.selectOptions(await screen.findByLabelText("Chart type"), "ct_bar");
     await userEvent.selectOptions(screen.getByLabelText("Measure"), "mea_total");
+
+    // T-046 Pack 4B2. A bar declares supportsDimension = true, and the server
+    // refuses a bar without one. This test used to save with the measure alone,
+    // which is precisely the client/server divergence 4B2 removed - the client
+    // permitted what the server would deterministically reject.
+    await userEvent.selectOptions(screen.getByLabelText("Dimension"), "dim_group");
+
     await userEvent.click(screen.getByRole("button", { name: "Save widget" }));
 
     await waitFor(() => expect(createWidget).toHaveBeenCalledTimes(1));

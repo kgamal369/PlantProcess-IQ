@@ -225,6 +225,7 @@ describe("T-046 the client refuses exactly what the server refuses", () => {
   });
 });
 
+describe("T-046 a definition that was already valid stays valid", () => {
   it("does not refuse a saved definition that was already valid", () => {
     expect(saveRefusal(loadS2State(SAVED), { usesDimension: true, usesMeasure: true })).toBeNull();
   });
