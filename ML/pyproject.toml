@@ -20,7 +20,7 @@ mf01_process_encoder = ["torch"]
 mf02_similarity = ["faiss-cpu", "numpy"]
 mf03_novelty = ["scikit-learn", "numpy"]
 mf04_supervised = ["lightgbm", "scikit-learn", "numpy", "shap"]
-artifacts = ["pyarrow"]  # T-169. The single implementation dependency for both formats.
+artifacts = ["pyarrow", "tzdata"]  # T-169. The single implementation dependency for both formats.
 dev = ["pytest"]
 
 [tool.setuptools.packages.find]

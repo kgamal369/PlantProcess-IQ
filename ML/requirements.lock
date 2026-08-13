@@ -17,3 +17,5 @@
 # library, so this file cannot silently drift.
 
 pyarrow==25.0.1
+
+tzdata==2026.3
