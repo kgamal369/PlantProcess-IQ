@@ -39,7 +39,8 @@ public static class DashboardWidgetQuerySafetyRegistry
         // Flipping availability alone would have produced a chart the product
         // claims to draw and the validator refuses to accept.
         DashboardMetadataCodes.ChartTypes.Histogram,
-        DashboardMetadataCodes.ChartTypes.BoxPlot
+        DashboardMetadataCodes.ChartTypes.BoxPlot,
+        DashboardMetadataCodes.ChartTypes.StackedColumn
     };
 
     // T-046 Pack 3A. The second dimension catalogue lived here: the same
@@ -51,6 +52,8 @@ public static class DashboardWidgetQuerySafetyRegistry
     {
         DashboardMetadataCodes.Measures.ParameterValueSpread,
         DashboardMetadataCodes.Measures.ParameterRelationship,
+        DashboardMetadataCodes.Measures.MaterialThroughputByShift,
+        DashboardMetadataCodes.Measures.DefectTypeMix,
         DashboardMetadataCodes.Measures.MaterialCount,
         DashboardMetadataCodes.Measures.DefectCount,
         DashboardMetadataCodes.Measures.ObservationCount,
@@ -98,6 +101,8 @@ public static class DashboardWidgetQuerySafetyRegistry
     {
         DashboardMetadataCodes.Measures.ParameterValueSpread,
         DashboardMetadataCodes.Measures.ParameterRelationship,
+        DashboardMetadataCodes.Measures.MaterialThroughputByShift,
+        DashboardMetadataCodes.Measures.DefectTypeMix,
         DashboardMetadataCodes.Measures.FindingStatus,
         DashboardMetadataCodes.Measures.ScoringCoverage,
         DashboardMetadataCodes.Measures.AnalysisReadiness,

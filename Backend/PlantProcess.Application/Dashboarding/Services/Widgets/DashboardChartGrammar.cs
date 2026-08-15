@@ -122,8 +122,11 @@ public static class DashboardChartGrammar
             ChartAvailability.Implemented, true, true, false, true,
             "Compares a measure across categories, or across time buckets when order carries meaning."),
 
+        // T-047 Pack D. Implemented alongside StackedSeriesChart and the two
+        // multi-series sources. Generic authoring still refuses it, because
+        // HasSecondCategoricalAxis is false on a one-dimension binding.
         new ChartTypeDefinition(DashboardMetadataCodes.ChartTypes.StackedColumn, "Stacked Column", "Comparison",
-            ChartAvailability.NotYetAvailable, true, true, true, true,
+            ChartAvailability.Implemented, true, true, true, true,
             "Compares a total across categories while showing its composition."),
 
         new ChartTypeDefinition(DashboardMetadataCodes.ChartTypes.Line, "Line", "Trend",
@@ -247,10 +250,23 @@ public static class DashboardChartGrammar
                     : ChartCompatibility.No("A trend needs an ordered time axis. Joining unordered categories with a line asserts a progression that does not exist.");
 
             case DashboardMetadataCodes.ChartTypes.Bar:
-            case DashboardMetadataCodes.ChartTypes.StackedColumn:
                 if (shape.PrimaryAxis == AxisRole.Temporal || shape.PrimaryAxis == AxisRole.Categorical)
                     return ChartCompatibility.Yes;
                 return ChartCompatibility.No("A bar needs a category or a time bucket on its axis.");
+
+            // T-047 Pack D. SEPARATED FROM BAR, DELIBERATELY.
+            //
+            // Sharing the bar rule made a stack compatible with any single
+            // grouping, and a stack of one series IS a bar - drawn with the
+            // legend and the reading of a composition that does not exist.
+            // The requirement mirrors Heatmap's: a second axis, or nothing to
+            // stack.
+            case DashboardMetadataCodes.ChartTypes.StackedColumn:
+                if (!shape.HasSecondCategoricalAxis)
+                    return ChartCompatibility.No("A stack needs a second grouping to divide each column by. With one grouping every column is a single block, which is a bar chart with a legend.");
+                if (shape.PrimaryAxis == AxisRole.Temporal || shape.PrimaryAxis == AxisRole.Categorical)
+                    return ChartCompatibility.Yes;
+                return ChartCompatibility.No("A stack needs a category or a time bucket on its axis.");
 
             case DashboardMetadataCodes.ChartTypes.Pareto:
             case DashboardMetadataCodes.ChartTypes.Waterfall:

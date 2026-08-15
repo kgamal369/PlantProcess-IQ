@@ -287,6 +287,12 @@ public static class DashboardMetadataCodes
         // variables over the materials where both were measured. A scatter is
         // one way to draw it; a hexbin or a regression band would be another.
         public const string ParameterRelationship = "parameterRelationship";
+
+        // T-047 Pack D. Two DIFFERENT questions that happen to share a shape.
+        // Both publish category / series / value, and one stacked renderer
+        // draws either - which is why neither is called a stack.
+        public const string MaterialThroughputByShift = "materialThroughputByShift";
+        public const string DefectTypeMix = "defectTypeMix";
     }
 }
 

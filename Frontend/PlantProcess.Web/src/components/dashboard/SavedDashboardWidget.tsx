@@ -43,6 +43,7 @@ import { DashboardWidgetCard } from "./DashboardWidgetCard";
 import { HistogramChart } from "../charts/HistogramChart";
 import { BoxPlotChart } from "../charts/BoxPlotChart";
 import { ScatterXYChart } from "../charts/ScatterXYChart";
+import { StackedSeriesChart } from "../charts/StackedSeriesChart";
 import { EmptyInsightState } from "./EmptyInsightState";
 
 import { StandardP2Table } from "@/components/standard/StandardP2Controls";
@@ -230,6 +231,15 @@ interface SavedDashboardWidgetProps {
     [metadata, widget.dimensionCode, widget.measureCode]
   );
 
+  // T-047 Pack D. A series role is a property of the RESULT too.
+  const hasSeriesRole = useMemo(
+    () =>
+      ["category", "series", "value"].every((role) =>
+        Boolean(result?.columns.some((column) => column.code === role))
+      ),
+    [result]
+  );
+
   // T-047 Pack C2. Two numeric axes are a property of the RESULT, established
   // by the roles the source published, never by the chart code.
   const hasTwoNumericAxes = useMemo(
@@ -302,6 +312,10 @@ interface SavedDashboardWidgetProps {
             value={kpiValue(rows, valueKey, widget.measureCode)}
             subtitle={widget.measureCode}
           />
+        ) : hasSeriesRole ? (
+          // T-047 Pack D. A result carrying category, series and value is a
+          // multi-series result whatever chart code names it.
+          <StackedSeriesChart rows={rows as Record<string, unknown>[]} />
         ) : hasTwoNumericAxes ? (
           // T-047 Pack C2. Routed on the ROLES PRESENT, not on the chart code.
           // "scatter" already reaches ExtraChart, which collapses a result into
