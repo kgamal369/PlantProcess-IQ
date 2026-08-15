@@ -27,3 +27,10 @@ tzdata==2026.3
 lightgbm==4.7.0
 
 numpy==2.4.4
+
+# T-172 mf01_process_encoder. The one framework the authoritative task requires.
+# Large, and mandatory: the encoder is optional to promote, not optional to
+# implement. The contract, the eligibility rules and the B-05 hooks import it
+# nowhere, so a machine without it still reads and validates everything but the
+# candidate itself.
+torch==2.13.0
