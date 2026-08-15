@@ -50,6 +50,7 @@ public static class DashboardWidgetQuerySafetyRegistry
 
     private static readonly HashSet<string> SupportedMeasures = new(StringComparer.OrdinalIgnoreCase)
     {
+        DashboardMetadataCodes.Measures.EquipmentStoppageAndImpact,
         DashboardMetadataCodes.Measures.ParameterValueSpread,
         DashboardMetadataCodes.Measures.ParameterRelationship,
         DashboardMetadataCodes.Measures.MaterialThroughputByShift,
@@ -99,6 +100,7 @@ public static class DashboardWidgetQuerySafetyRegistry
     // a future native source is a registry entry and not a validator edit.
     private static readonly HashSet<string> MeasuresProvidingOwnColumns = new(StringComparer.OrdinalIgnoreCase)
     {
+        DashboardMetadataCodes.Measures.EquipmentStoppageAndImpact,
         DashboardMetadataCodes.Measures.ParameterValueSpread,
         DashboardMetadataCodes.Measures.ParameterRelationship,
         DashboardMetadataCodes.Measures.MaterialThroughputByShift,

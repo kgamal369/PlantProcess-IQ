@@ -293,6 +293,11 @@ public static class DashboardMetadataCodes
         // draws either - which is why neither is called a stack.
         public const string MaterialThroughputByShift = "materialThroughputByShift";
         public const string DefectTypeMix = "defectTypeMix";
+
+        // T-045-R1-D. Two independent canonical quantities reported side by
+        // side. The question is what a stoppage COST, which is not the same as
+        // how long it lasted.
+        public const string EquipmentStoppageAndImpact = "equipmentStoppageAndImpact";
     }
 }
 

@@ -39,7 +39,8 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
             new ParameterValueSpreadWidgetResultSource(dbContext),
             new ParameterRelationshipWidgetResultSource(dbContext),
             new MaterialThroughputByShiftWidgetResultSource(dbContext),
-            new DefectTypeMixWidgetResultSource(dbContext)
+            new DefectTypeMixWidgetResultSource(dbContext),
+            new EquipmentStoppageAndImpactWidgetResultSource(dbContext)
         };
 
         _nativeSources = sources.ToDictionary(x => x.MeasureCode, x => x, StringComparer.Ordinal);
@@ -597,6 +598,7 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
         DashboardMetadataCodes.Measures.ParameterRelationship,
         DashboardMetadataCodes.Measures.MaterialThroughputByShift,
         DashboardMetadataCodes.Measures.DefectTypeMix,
+        DashboardMetadataCodes.Measures.EquipmentStoppageAndImpact,
     };
     private async Task<IReadOnlyList<DashboardAggregateRow>> ExecuteParameterAggregateAsync(
         DashboardWidgetResolvedDto resolved,
