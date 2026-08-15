@@ -50,6 +50,7 @@ public static class DashboardWidgetQuerySafetyRegistry
     private static readonly HashSet<string> SupportedMeasures = new(StringComparer.OrdinalIgnoreCase)
     {
         DashboardMetadataCodes.Measures.ParameterValueSpread,
+        DashboardMetadataCodes.Measures.ParameterRelationship,
         DashboardMetadataCodes.Measures.MaterialCount,
         DashboardMetadataCodes.Measures.DefectCount,
         DashboardMetadataCodes.Measures.ObservationCount,
@@ -73,6 +74,7 @@ public static class DashboardWidgetQuerySafetyRegistry
         // T-047 Pack B. Spreading "some parameter" across every parameter in
         // the plant mixes units, exactly as averaging them would.
         DashboardMetadataCodes.Measures.ParameterValueSpread,
+        DashboardMetadataCodes.Measures.ParameterRelationship,
         DashboardMetadataCodes.Measures.AvgParameterValue,
         DashboardMetadataCodes.Measures.MaxParameterValue,
         DashboardMetadataCodes.Measures.MinParameterValue,
@@ -95,6 +97,7 @@ public static class DashboardWidgetQuerySafetyRegistry
     private static readonly HashSet<string> MeasuresProvidingOwnColumns = new(StringComparer.OrdinalIgnoreCase)
     {
         DashboardMetadataCodes.Measures.ParameterValueSpread,
+        DashboardMetadataCodes.Measures.ParameterRelationship,
         DashboardMetadataCodes.Measures.FindingStatus,
         DashboardMetadataCodes.Measures.ScoringCoverage,
         DashboardMetadataCodes.Measures.AnalysisReadiness,
@@ -157,7 +160,11 @@ public static class DashboardWidgetQuerySafetyRegistry
         {
             return measureCode is DashboardMetadataCodes.Measures.AvgParameterValue
                 or DashboardMetadataCodes.Measures.RiskScore
-                or DashboardMetadataCodes.Measures.DefectRate;
+                or DashboardMetadataCodes.Measures.DefectRate
+                // T-047 Pack C2. The only measure that publishes two numeric
+                // axes for the same population. Without this the validator
+                // refuses the query before the source is reached.
+                or DashboardMetadataCodes.Measures.ParameterRelationship;
         }
 
         return true;

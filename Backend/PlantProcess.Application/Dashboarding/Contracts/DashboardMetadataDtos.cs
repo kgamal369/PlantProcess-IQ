@@ -282,6 +282,11 @@ public static class DashboardMetadataCodes
         // plot is one way to draw that answer and not the only one, so the
         // measure is not named after it.
         public const string ParameterValueSpread = "parameterValueSpread";
+
+        // T-047 Pack C2. The question is ASSOCIATION between two process
+        // variables over the materials where both were measured. A scatter is
+        // one way to draw it; a hexbin or a regression band would be another.
+        public const string ParameterRelationship = "parameterRelationship";
     }
 }
 

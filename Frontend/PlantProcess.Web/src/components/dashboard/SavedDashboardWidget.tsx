@@ -42,6 +42,7 @@ import type { ChartRow } from "../charts/InteractiveCharts";
 import { DashboardWidgetCard } from "./DashboardWidgetCard";
 import { HistogramChart } from "../charts/HistogramChart";
 import { BoxPlotChart } from "../charts/BoxPlotChart";
+import { ScatterXYChart } from "../charts/ScatterXYChart";
 import { EmptyInsightState } from "./EmptyInsightState";
 
 import { StandardP2Table } from "@/components/standard/StandardP2Controls";
@@ -229,6 +230,15 @@ interface SavedDashboardWidgetProps {
     [metadata, widget.dimensionCode, widget.measureCode]
   );
 
+  // T-047 Pack C2. Two numeric axes are a property of the RESULT, established
+  // by the roles the source published, never by the chart code.
+  const hasTwoNumericAxes = useMemo(
+    () =>
+      Boolean(result?.columns.some((column) => column.code === "xValue")) &&
+      Boolean(result?.columns.some((column) => column.code === "yValue")),
+    [result]
+  );
+
   const chartOptions = useMemo(
     () =>
       resolveChartSwitcherOptions(
@@ -292,6 +302,13 @@ interface SavedDashboardWidgetProps {
             value={kpiValue(rows, valueKey, widget.measureCode)}
             subtitle={widget.measureCode}
           />
+        ) : hasTwoNumericAxes ? (
+          // T-047 Pack C2. Routed on the ROLES PRESENT, not on the chart code.
+          // "scatter" already reaches ExtraChart, which collapses a result into
+          // one category and one value - it would silently plot xValue against
+          // itself. A result that publishes xValue and yValue is a two-axis
+          // result whatever it is called, and only that draws here.
+          <ScatterXYChart rows={rows as Record<string, unknown>[]} />
         ) : activeChartType === "boxPlot" ? (
           // Bound by name for the same reason as the histogram: a box plot row
           // carries six numeric columns, and an inferring renderer would pick
