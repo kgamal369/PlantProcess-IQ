@@ -10,6 +10,20 @@ namespace PlantProcess.Application.UnitTests.Analytics.Advanced;
 /// </summary>
 public sealed class Phase8_T045ReadinessGateSurfaceTests
 {
+    /// <summary>
+    /// T-045-R1-A. AdvancedReadinessGateProjector reads Name, State and Reason.
+    /// The measurement and its bounds are now part of the DTO, and nothing in
+    /// this file asserts them, so they are supplied as explicit NOT-UNDER-TEST
+    /// zeros rather than as numbers that would read like real thresholds.
+    ///
+    /// The record deliberately carries NO defaults for those fields. A default
+    /// would let a future mapping forget the evidence and silently reproduce
+    /// the three-field discard this task removed.
+    /// </summary>
+    private static ReadinessDimensionDto Dimension(string name, string state, string reason)
+        => new(name, state, reason,
+            MeasuredValue: 0d, ReadyThreshold: 0d, PartialThreshold: 0d, HigherIsBetter: true);
+
     [Fact]
     public void T045_Projects_AllReady_Dimensions_To_Ready_State()
     {
@@ -18,9 +32,9 @@ public sealed class Phase8_T045ReadinessGateSurfaceTests
             CanRun: true,
             Dimensions: new[]
             {
-                new ReadinessDimensionDto("Population", "Ready", "Enough independent heats."),
-                new ReadinessDimensionDto("Freshness", "Ready", "Data is fresh."),
-                new ReadinessDimensionDto("Completeness", "Ready", "Required fields are complete.")
+                Dimension("Population", "Ready", "Enough independent heats."),
+                Dimension("Freshness", "Ready", "Data is fresh."),
+                Dimension("Completeness", "Ready", "Required fields are complete.")
             },
             OutcomeKey: "defect.edge_crack_rate",
             Grain: "coil",
@@ -47,8 +61,8 @@ public sealed class Phase8_T045ReadinessGateSurfaceTests
             CanRun: true,
             Dimensions: new[]
             {
-                new ReadinessDimensionDto("Population", "Ready", "Enough independent heats."),
-                new ReadinessDimensionDto("Freshness", "Warning", "Data is usable but slightly stale.")
+                Dimension("Population", "Ready", "Enough independent heats."),
+                Dimension("Freshness", "Warning", "Data is usable but slightly stale.")
             },
             OutcomeKey: "defect.edge_crack_rate",
             Grain: "coil",
@@ -75,8 +89,8 @@ public sealed class Phase8_T045ReadinessGateSurfaceTests
             CanRun: false,
             Dimensions: new[]
             {
-                new ReadinessDimensionDto("Population", "Blocked", "Not enough independent heats."),
-                new ReadinessDimensionDto("Completeness", "Ready", "Fields are complete.")
+                Dimension("Population", "Blocked", "Not enough independent heats."),
+                Dimension("Completeness", "Ready", "Fields are complete.")
             },
             OutcomeKey: "defect.edge_crack_rate",
             Grain: "coil",

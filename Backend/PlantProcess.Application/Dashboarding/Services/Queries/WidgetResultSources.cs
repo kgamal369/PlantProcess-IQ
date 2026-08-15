@@ -410,7 +410,11 @@ internal sealed class AnalysisReadinessWidgetResultSource : IWidgetResultSource
     {
         var columns = new List<DashboardWidgetColumnDto>
         {
-            new("dimension", "Readiness Dimension", "string"),
+            new("dimension", "Readiness Dimension", "string"),
+            new("measuredValue", "Measured", "number"),
+            new("readyThreshold", "Ready At", "number"),
+            new("partialThreshold", "Partial At", "number"),
+            new("higherIsBetter", "Higher Is Better", "string"),
             new("state", "State", "string"),
             new("reason", "Reason", "string"),
             new("overall", "Overall", "string"),
@@ -466,7 +470,11 @@ internal sealed class AnalysisReadinessWidgetResultSource : IWidgetResultSource
 
         var rows = report.Dimensions
             .Select(d => NativeWidgetResult.Row(
-                ("dimension", d.Name),
+                ("dimension", d.Name),
+                ("measuredValue", d.MeasuredValue),
+                ("readyThreshold", d.ReadyThreshold),
+                ("partialThreshold", d.PartialThreshold),
+                ("higherIsBetter", d.HigherIsBetter ? bool.TrueString : bool.FalseString),
                 ("state", d.State),
                 ("reason", d.Reason),
                 ("overall", report.Overall),

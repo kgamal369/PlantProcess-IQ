@@ -1,11 +1,23 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace PlantProcess.Application.Analytics.Advanced;
 
-public sealed record ReadinessDimensionDto(string Name, string State, string Reason);
+/// <summary>
+/// T-045-R1-A. This record WAS the discard point: the gate produced the
+/// measurement and its bounds, and this three-field projection dropped them one
+/// hop before anything could show them.
+/// </summary>
+public sealed record ReadinessDimensionDto(
+    string Name,
+    string State,
+    string Reason,
+    double MeasuredValue,
+    double ReadyThreshold,
+    double PartialThreshold,
+    bool HigherIsBetter);
 
 public sealed record AnalysisReadinessDto(
     string Overall,
@@ -38,7 +50,10 @@ public sealed class AnalysisReadinessService : IAnalysisReadinessService
         return new AnalysisReadinessDto(
             report.Overall.ToString(),
             report.CanRun,
-            report.Dimensions.Select(d => new ReadinessDimensionDto(d.Name, d.State.ToString(), d.Reason)).ToList(),
+            report.Dimensions.Select(d => new ReadinessDimensionDto(
+                d.Name, d.State.ToString(), d.Reason,
+                d.MeasuredValue, d.ReadyThreshold, d.PartialThreshold,
+                d.HigherIsBetter)).ToList(),
             request.OutcomeKey,
             request.Grain,
             request.WindowDays,
