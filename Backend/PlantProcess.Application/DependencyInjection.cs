@@ -121,8 +121,15 @@ public static class DependencyInjection
         
         // Reporting / customer demo pack
         services.AddScoped<IInvestigationReportService, InvestigationReportService>();
-        services.AddScoped<PlantProcess.Application.Analytics.Engines.ICorrelationEngine, PlantProcess.Application.Analytics.Engines.CanonicalCorrelationEngine>(); // PPIQ-T010
-        services.AddScoped<PlantProcess.Application.Analytics.Engines.ICorrelationEngineRegistry, PlantProcess.Application.Analytics.Engines.CorrelationEngineRegistry>(); // PPIQ-T010
+        // T-045-R1-B. A DUPLICATE PAIR WAS REMOVED HERE.
+        //
+        // CanonicalCorrelationEngine was registered twice - once fully
+        // qualified here, once through the using directive four lines below.
+        // IEnumerable<ICorrelationEngine> then yielded it twice, both with
+        // Key "canonical", and CorrelationEngineRegistry's ToDictionary threw
+        // on construction. The canonical correlation path was unreachable
+        // through DI: not blocked by readiness, not short of data, simply
+        // unresolvable. The registration below is the intentional one.
         
         // PPIQ-T010: canonical analytics engine registry.
         services.AddScoped<ICorrelationEngine, CanonicalCorrelationEngine>();
