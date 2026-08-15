@@ -19,3 +19,11 @@
 pyarrow==25.0.1
 
 tzdata==2026.3
+
+# T-175 mf04_supervised. Two packages only. The mf04_supervised extra also names
+# scikit-learn and shap; neither is locked here because T-175 uses neither. The
+# metrics are implemented in the standard library so a known-answer fixture can
+# certify them, and explanation tooling belongs to T-176.
+lightgbm==4.7.0
+
+numpy==2.4.4
