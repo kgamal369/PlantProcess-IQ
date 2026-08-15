@@ -76,7 +76,16 @@ public sealed class ChartGrammarSemanticsTests
         // Not yet drawable, and still semantically right for a distribution.
         var boxPlot = DashboardChartGrammar.Find(DashboardMetadataCodes.ChartTypes.BoxPlot);
         Assert.NotNull(boxPlot);
-        Assert.Equal(ChartAvailability.NotYetAvailable, boxPlot!.Availability);
+        Assert.Equal(ChartAvailability.Implemented, boxPlot!.Availability);
+
+        // T-047 Pack B. BoxPlot is drawable as of this slice, so Waterfall now
+        // carries the not-yet-drawable half. Waterfall is in no planned T-047
+        // slice, which is why it was chosen over StackedColumn or Combo: this
+        // fixture should stop being rewritten every time a renderer ships.
+        var waterfall = DashboardChartGrammar.Find(DashboardMetadataCodes.ChartTypes.Waterfall);
+        Assert.NotNull(waterfall);
+        Assert.Equal(ChartAvailability.NotYetAvailable, waterfall!.Availability);
+        AssertCompatible(DashboardMetadataCodes.ChartTypes.Waterfall, Categorical());
         AssertCompatible(DashboardMetadataCodes.ChartTypes.BoxPlot, Distribution());
 
         // Drawable as of T-047, and STILL refused for a shape that is not a

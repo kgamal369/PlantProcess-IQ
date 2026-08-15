@@ -158,8 +158,12 @@ public static class DashboardChartGrammar
             ChartAvailability.Implemented, true, true, false, false,
             "Categories ranked by contribution with a cumulative line, to separate the few that matter."),
 
+        // T-047 Pack B. Implemented alongside BoxPlotChart and the
+        // parameterValueSpread source, never before. Evaluate still gates it on
+        // MeasureIsDistribution, so generic one-dimension authoring continues
+        // to refuse it with the existing sentence.
         new ChartTypeDefinition(DashboardMetadataCodes.ChartTypes.BoxPlot, "Box Plot", "Distribution",
-            ChartAvailability.NotYetAvailable, true, true, false, true,
+            ChartAvailability.Implemented, true, true, false, true,
             "The spread of a numeric quantity, and its outliers, across groups."),
 
         // T-047 Pack A. Implemented in the same pack as HistogramChart and the

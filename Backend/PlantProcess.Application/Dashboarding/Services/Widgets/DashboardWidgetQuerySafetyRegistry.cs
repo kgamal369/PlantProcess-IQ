@@ -38,7 +38,8 @@ public static class DashboardWidgetQuerySafetyRegistry
         // validator, before any grammar or availability question was reached.
         // Flipping availability alone would have produced a chart the product
         // claims to draw and the validator refuses to accept.
-        DashboardMetadataCodes.ChartTypes.Histogram
+        DashboardMetadataCodes.ChartTypes.Histogram,
+        DashboardMetadataCodes.ChartTypes.BoxPlot
     };
 
     // T-046 Pack 3A. The second dimension catalogue lived here: the same
@@ -48,6 +49,7 @@ public static class DashboardWidgetQuerySafetyRegistry
 
     private static readonly HashSet<string> SupportedMeasures = new(StringComparer.OrdinalIgnoreCase)
     {
+        DashboardMetadataCodes.Measures.ParameterValueSpread,
         DashboardMetadataCodes.Measures.MaterialCount,
         DashboardMetadataCodes.Measures.DefectCount,
         DashboardMetadataCodes.Measures.ObservationCount,
@@ -68,6 +70,9 @@ public static class DashboardWidgetQuerySafetyRegistry
 
     private static readonly HashSet<string> MeasuresRequiringParameter = new(StringComparer.OrdinalIgnoreCase)
     {
+        // T-047 Pack B. Spreading "some parameter" across every parameter in
+        // the plant mixes units, exactly as averaging them would.
+        DashboardMetadataCodes.Measures.ParameterValueSpread,
         DashboardMetadataCodes.Measures.AvgParameterValue,
         DashboardMetadataCodes.Measures.MaxParameterValue,
         DashboardMetadataCodes.Measures.MinParameterValue,
@@ -89,6 +94,7 @@ public static class DashboardWidgetQuerySafetyRegistry
     // a future native source is a registry entry and not a validator edit.
     private static readonly HashSet<string> MeasuresProvidingOwnColumns = new(StringComparer.OrdinalIgnoreCase)
     {
+        DashboardMetadataCodes.Measures.ParameterValueSpread,
         DashboardMetadataCodes.Measures.FindingStatus,
         DashboardMetadataCodes.Measures.ScoringCoverage,
         DashboardMetadataCodes.Measures.AnalysisReadiness,

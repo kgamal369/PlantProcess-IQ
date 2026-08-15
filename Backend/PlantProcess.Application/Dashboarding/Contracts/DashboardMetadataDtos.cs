@@ -276,6 +276,12 @@ public static class DashboardMetadataCodes
         // questions, and neither is named after the visual.
         public const string ParameterValueDistribution = "parameterValueDistribution";
         public const string RiskScoreDistribution = "riskScoreDistribution";
+
+        // T-047 Pack B. The question is DISPERSION: how does this parameter's
+        // value spread differ between the groups of a chosen dimension? A box
+        // plot is one way to draw that answer and not the only one, so the
+        // measure is not named after it.
+        public const string ParameterValueSpread = "parameterValueSpread";
     }
 }
 

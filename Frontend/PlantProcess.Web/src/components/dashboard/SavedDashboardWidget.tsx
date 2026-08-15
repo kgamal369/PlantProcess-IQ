@@ -41,6 +41,7 @@ import {
 import type { ChartRow } from "../charts/InteractiveCharts";
 import { DashboardWidgetCard } from "./DashboardWidgetCard";
 import { HistogramChart } from "../charts/HistogramChart";
+import { BoxPlotChart } from "../charts/BoxPlotChart";
 import { EmptyInsightState } from "./EmptyInsightState";
 
 import { StandardP2Table } from "@/components/standard/StandardP2Controls";
@@ -291,6 +292,11 @@ interface SavedDashboardWidgetProps {
             value={kpiValue(rows, valueKey, widget.measureCode)}
             subtitle={widget.measureCode}
           />
+        ) : activeChartType === "boxPlot" ? (
+          // Bound by name for the same reason as the histogram: a box plot row
+          // carries six numeric columns, and an inferring renderer would pick
+          // whichever came first.
+          <BoxPlotChart rows={rows as Record<string, unknown>[]} />
         ) : activeChartType === "histogram" ? (
           // T-047 Pack A. Routed AHEAD of the extra-chart branch on purpose.
           // ExtraChart resolves its value column by finding the first numeric
