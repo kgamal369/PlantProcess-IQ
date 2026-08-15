@@ -162,8 +162,16 @@ public static class DashboardChartGrammar
             ChartAvailability.NotYetAvailable, true, true, false, true,
             "The spread of a numeric quantity, and its outliers, across groups."),
 
+        // T-047 Pack A. Implemented in the same pack as HistogramChart and the
+        // two distribution sources that feed it, never before.
+        //
+        // THIS DOES NOT MAKE HISTOGRAM OFFERABLE IN GENERIC AUTHORING. Evaluate
+        // still gates it on MeasureIsDistribution, which a one-dimension
+        // fact-shaped binding does not satisfy, so the authoring switcher
+        // refuses it with the existing sentence. Availability and generic
+        // binding compatibility are separate contracts and stay separate.
         new ChartTypeDefinition(DashboardMetadataCodes.ChartTypes.Histogram, "Histogram", "Distribution",
-            ChartAvailability.NotYetAvailable, true, true, false, true,
+            ChartAvailability.Implemented, true, true, false, true,
             "How often a numeric quantity falls in each interval."),
 
         new ChartTypeDefinition(DashboardMetadataCodes.ChartTypes.Gauge, "Gauge", "Summary",

@@ -68,14 +68,27 @@ public sealed class ChartGrammarSemanticsTests
     [Fact]
     public void Availability_never_decides_compatibility()
     {
-        var histogram = DashboardChartGrammar.Find(DashboardMetadataCodes.ChartTypes.Histogram);
-        Assert.NotNull(histogram);
-        Assert.Equal(ChartAvailability.NotYetAvailable, histogram!.Availability);
+        // T-047 Pack A. Histogram carried the not-yet-drawable half of this
+        // proof until a renderer existed. It now carries the other half, and
+        // BoxPlot carries the first. The LAW is unchanged and no assertion is
+        // weakened; only the fixture moved, because the product moved.
 
         // Not yet drawable, and still semantically right for a distribution.
-        AssertCompatible(DashboardMetadataCodes.ChartTypes.Histogram, Distribution());
+        var boxPlot = DashboardChartGrammar.Find(DashboardMetadataCodes.ChartTypes.BoxPlot);
+        Assert.NotNull(boxPlot);
+        Assert.Equal(ChartAvailability.NotYetAvailable, boxPlot!.Availability);
+        AssertCompatible(DashboardMetadataCodes.ChartTypes.BoxPlot, Distribution());
 
-        // Drawable today, and still semantically wrong for a time axis.
+        // Drawable as of T-047, and STILL refused for a shape that is not a
+        // distribution. Becoming implemented bought it no compatibility.
+        var histogram = DashboardChartGrammar.Find(DashboardMetadataCodes.ChartTypes.Histogram);
+        Assert.NotNull(histogram);
+        Assert.Equal(ChartAvailability.Implemented, histogram!.Availability);
+        AssertCompatible(DashboardMetadataCodes.ChartTypes.Histogram, Distribution());
+        AssertRefused(DashboardMetadataCodes.ChartTypes.Histogram, Categorical());
+
+        // Drawable since before this task, and still semantically wrong for a
+        // time axis.
         Assert.True(DashboardChartGrammar.IsImplemented(DashboardMetadataCodes.ChartTypes.Pie));
         AssertRefused(DashboardMetadataCodes.ChartTypes.Pie, Temporal());
     }

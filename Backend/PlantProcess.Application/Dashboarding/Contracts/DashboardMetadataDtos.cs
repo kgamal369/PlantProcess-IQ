@@ -267,6 +267,15 @@ public static class DashboardMetadataCodes
         public const string FindingStatus = "findingStatus";
         public const string ScoringCoverage = "scoringCoverage";
         public const string AnalysisReadiness = "analysisReadiness";
+
+        // T-047 Pack A. Class-2 native distribution measures.
+        //
+        // A SOURCE IS A SEMANTIC QUESTION, NOT A CHART. These two publish the
+        // same renderer-facing column roles and are drawn by the same
+        // histogram, but they are different populations asked different
+        // questions, and neither is named after the visual.
+        public const string ParameterValueDistribution = "parameterValueDistribution";
+        public const string RiskScoreDistribution = "riskScoreDistribution";
     }
 }
 

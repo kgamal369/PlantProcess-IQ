@@ -40,6 +40,7 @@ import {
 } from "../charts/InteractiveCharts";
 import type { ChartRow } from "../charts/InteractiveCharts";
 import { DashboardWidgetCard } from "./DashboardWidgetCard";
+import { HistogramChart } from "../charts/HistogramChart";
 import { EmptyInsightState } from "./EmptyInsightState";
 
 import { StandardP2Table } from "@/components/standard/StandardP2Controls";
@@ -290,6 +291,12 @@ interface SavedDashboardWidgetProps {
             value={kpiValue(rows, valueKey, widget.measureCode)}
             subtitle={widget.measureCode}
           />
+        ) : activeChartType === "histogram" ? (
+          // T-047 Pack A. Routed AHEAD of the extra-chart branch on purpose.
+          // ExtraChart resolves its value column by finding the first numeric
+          // one, which here is binLower - it would plot the axis against
+          // itself and look plausible. HistogramChart binds every role by name.
+          <HistogramChart rows={rows as Record<string, unknown>[]} />
         ) : isExtraChartType(activeChartType) ? (
           <ExtraChart type={String(activeChartType)} rows={rows as Record<string, unknown>[]} categoryKey={categoryKey} labelKey={displayKey} valueKey={valueKey} field={dimensionToFilterField(widget.dimensionCode)} timeDimension={isTemporalDimension(widget.dimensionCode) ? widget.dimensionCode : null} />
         ) : activeChartType === "line" || activeChartType === "area" ? (

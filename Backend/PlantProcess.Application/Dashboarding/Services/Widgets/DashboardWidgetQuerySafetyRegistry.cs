@@ -31,7 +31,14 @@ public static class DashboardWidgetQuerySafetyRegistry
         DashboardMetadataCodes.ChartTypes.Scatter,
         DashboardMetadataCodes.ChartTypes.Heatmap,
         DashboardMetadataCodes.ChartTypes.Pareto,
-        DashboardMetadataCodes.ChartTypes.Table
+        DashboardMetadataCodes.ChartTypes.Table,
+
+        // T-047 Pack A. MEASURED GATE, 13-Aug: this set still held the
+        // pre-T-046 ten. A seeded histogram widget was rejected here, by the
+        // validator, before any grammar or availability question was reached.
+        // Flipping availability alone would have produced a chart the product
+        // claims to draw and the validator refuses to accept.
+        DashboardMetadataCodes.ChartTypes.Histogram
     };
 
     // T-046 Pack 3A. The second dimension catalogue lived here: the same
@@ -54,7 +61,9 @@ public static class DashboardWidgetQuerySafetyRegistry
         DashboardMetadataCodes.Measures.DataQualityIssueCount,
         DashboardMetadataCodes.Measures.FindingStatus,
         DashboardMetadataCodes.Measures.ScoringCoverage,
-        DashboardMetadataCodes.Measures.AnalysisReadiness
+        DashboardMetadataCodes.Measures.AnalysisReadiness,
+        DashboardMetadataCodes.Measures.ParameterValueDistribution,
+        DashboardMetadataCodes.Measures.RiskScoreDistribution
     };
 
     private static readonly HashSet<string> MeasuresRequiringParameter = new(StringComparer.OrdinalIgnoreCase)
@@ -67,7 +76,12 @@ public static class DashboardWidgetQuerySafetyRegistry
         // carrier: a readiness widget names the outcome it reports on, and the
         // grain comes from that outcome's governed definition rather than from
         // the widget.
-        DashboardMetadataCodes.Measures.AnalysisReadiness
+        DashboardMetadataCodes.Measures.AnalysisReadiness,
+
+        // T-047 Pack A. Distributing "some parameter" across every parameter in
+        // the plant mixes units and is not a question. The parameter travels on
+        // the existing carrier, exactly as the parameter aggregates do.
+        DashboardMetadataCodes.Measures.ParameterValueDistribution
     };
 
     // T-045 Pack B. Measures whose source declares its own columns and rows.
@@ -77,7 +91,9 @@ public static class DashboardWidgetQuerySafetyRegistry
     {
         DashboardMetadataCodes.Measures.FindingStatus,
         DashboardMetadataCodes.Measures.ScoringCoverage,
-        DashboardMetadataCodes.Measures.AnalysisReadiness
+        DashboardMetadataCodes.Measures.AnalysisReadiness,
+        DashboardMetadataCodes.Measures.ParameterValueDistribution,
+        DashboardMetadataCodes.Measures.RiskScoreDistribution
     };
 
     public static bool IsSupportedWidgetType(string? widgetType)
