@@ -225,20 +225,84 @@ class TheFrozenCombinationsProduceTheFrozenClasses(unittest.TestCase):
         self.assertEqual(EligibilityState.EVIDENCE_ONLY, result.state)
         self.assertEqual(("RM01", "RM03"), result.failed_codes)
 
-    def test_a_possibility_failure_outranks_a_strength_failure(self):
-        """Not being able to act is a stronger statement than weak evidence."""
+    def test_a_mixed_failure_is_exploratory_and_not_evidence_only(self):
+        """A finding that is not sound is not offered as evidence.
+
+        However impossible acting may be, an evidence check that also failed means
+        there is no sound finding left to present.
+        """
         result = evaluate_eligibility(
             baseline(parameter_is_controllable=False, uncertainty_width=9.0)
         )
-        self.assertEqual(EligibilityState.EVIDENCE_ONLY, result.state)
-        self.assertIn("derived row", result.reason)
+        self.assertEqual(EligibilityState.EXPLORATORY, result.state)
+        self.assertEqual(("RM01", "RM07"), result.failed_codes)
+        self.assertIn("is not sound is not offered as evidence", result.reason)
 
-    def test_a_strength_failure_the_frozen_table_does_not_name_is_exploratory(self):
-        """RM05 and RM09 match no frozen row, and no fifth state is invented."""
+    def test_any_evidence_check_failing_alone_is_exploratory(self):
         for code in ("RM05", "RM06", "RM09"):
             result = evaluate_eligibility(baseline(**SINGLE_CHECK_FAILURES[code]))
             self.assertEqual(EligibilityState.EXPLORATORY, result.state, code)
-            self.assertIn("derived row", result.reason, code)
+
+    def test_the_ruled_precedence_cases_exactly(self):
+        """The canonical rows, asserted one for one as ruled."""
+        expected = (
+            (("RM01",), EligibilityState.EVIDENCE_ONLY),
+            (("RM02",), EligibilityState.EVIDENCE_ONLY),
+            (("RM03",), EligibilityState.EVIDENCE_ONLY),
+            (("RM05",), EligibilityState.EXPLORATORY),
+            (("RM09",), EligibilityState.EXPLORATORY),
+            (("RM01", "RM05"), EligibilityState.EXPLORATORY),
+            (("RM03", "RM09"), EligibilityState.EXPLORATORY),
+            (("RM04", "RM07"), EligibilityState.SUPPRESSED),
+            ((), EligibilityState.ACTIONABLE),
+        )
+        for codes, state in expected:
+            override = {}
+            for code in codes:
+                override.update(SINGLE_CHECK_FAILURES[code])
+            self.assertEqual(
+                state, evaluate_eligibility(baseline(**override)).state, str(codes)
+            )
+
+    def test_every_combination_of_nine_checks_matches_the_canonical_precedence(self):
+        """All 512 combinations, each checked against the ruled rule directly.
+
+        The rule is restated here independently of the implementation, so the test
+        would fail if the implementation drifted toward any broader or narrower one.
+        """
+        import itertools
+
+        possibility = ("RM01", "RM02", "RM03")
+        strength = ("RM05", "RM06", "RM07", "RM08", "RM09")
+        seen = set()
+        for flips in itertools.product((False, True), repeat=9):
+            failing = [
+                code
+                for code, flip in zip(
+                    ("RM01", "RM02", "RM03", "RM04") + strength, flips
+                )
+                if flip
+            ]
+            override = {}
+            for code in failing:
+                override.update(SINGLE_CHECK_FAILURES[code])
+            state = evaluate_eligibility(baseline(**override)).state
+
+            if "RM04" in failing:
+                expected = EligibilityState.SUPPRESSED
+            elif not failing:
+                expected = EligibilityState.ACTIONABLE
+            elif not [c for c in failing if c in strength] and [
+                c for c in failing if c in possibility
+            ]:
+                expected = EligibilityState.EVIDENCE_ONLY
+            else:
+                expected = EligibilityState.EXPLORATORY
+
+            self.assertEqual(expected, state, str(failing))
+            seen.add(state)
+        self.assertEqual(512, 2 ** 9)
+        self.assertEqual(set(EligibilityState), seen)
 
     def test_every_combination_of_nine_checks_lands_in_one_of_the_four_states(self):
         """The classification is total. There is nowhere else for a case to go."""

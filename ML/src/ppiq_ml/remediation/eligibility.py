@@ -10,18 +10,15 @@ THE FROZEN RULES, IN PRECEDENCE ORDER.
 Safety suppression wins over any softer classification, and is therefore tested
 first and named by code rather than by position.
 
-WHAT THE FROZEN TABLE DOES NOT SAY, AND WHAT IS DONE ABOUT IT. Those four rules do
-not cover every combination of nine checks. RM09 failing on its own matches none of
-them, and neither does RM05 failing on its own. Since no fifth state may be invented,
-the rules are completed rather than extended, along the distinction the two groups
-already draw:
+THE FOURTH ROW IS THE CATCH-ALL, AND IT IS EXPLORATORY.
 
-    a failure in RM01..RM04 means acting is not possible   -> evidence_only
-    a failure only in RM05..RM09 means the evidence is weak -> exploratory
+evidence_only is the narrow case: safety holds, every evidence check RM05..RM09
+passes, and the only thing wrong is that acting is not possible. The finding is
+sound and cannot be acted on, which is exactly what evidence means.
 
-Every frozen row is reproduced exactly by this completion, and it is total over all
-combinations. The derived rows are marked as derived in the reason sentence, so a
-reader can tell which rule decided.
+The moment any evidence check also fails, the finding is no longer sound, so it
+cannot be offered as evidence however impossible acting may be. Every remaining
+non-safety combination is therefore exploratory. No fifth state exists.
 """
 
 from __future__ import annotations
@@ -60,34 +57,37 @@ def classify(checks: tuple[CheckOutcome, ...]) -> EligibilityResult:
             reason="All nine eligibility checks passed.",
         )
 
+    # RM04 has already passed, so a possibility failure here is RM01, RM02 or RM03.
     possibility_failures = [c for c in failed_codes if c in ACTION_POSSIBILITY_CODES]
     strength_failures = [c for c in failed_codes if c in EVIDENCE_STRENGTH_CODES]
 
-    if possibility_failures:
-        frozen = not strength_failures
+    if possibility_failures and not strength_failures:
         return EligibilityResult(
             state=EligibilityState.EVIDENCE_ONLY,
             checks=checks,
             reason=(
-                "Acting is not possible because "
+                "Every evidence check passed, so the finding is sound, and "
                 + ", ".join(possibility_failures)
-                + " failed, so the finding stands as evidence and not as an action"
-                + ("." if frozen else ", and the evidence is weak as well: "
-                   + ", ".join(strength_failures) + " also failed (derived row).")
+                + " failed, so it cannot be acted on. It stands as evidence and not "
+                "as an action."
             ),
         )
 
-    frozen = set(strength_failures) & {"RM07", "RM08"}
     return EligibilityResult(
         state=EligibilityState.EXPLORATORY,
         checks=checks,
         reason=(
-            "Acting is possible, and the evidence is not strong enough to recommend it: "
+            "The evidence is not strong enough to offer as a finding: "
             + ", ".join(strength_failures)
             + " failed"
-            + ("." if frozen else " (derived row: no frozen combination names this "
-               "failure on its own, and it is a weakness of the evidence rather than "
-               "a barrier to acting).")
+            + (
+                "."
+                if not possibility_failures
+                else ", and acting is not possible either because "
+                + ", ".join(possibility_failures)
+                + " failed. A finding that is not sound is not offered as evidence, "
+                "however impossible acting may be."
+            )
         ),
     )
 
