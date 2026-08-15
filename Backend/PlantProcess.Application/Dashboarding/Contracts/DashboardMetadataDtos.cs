@@ -298,6 +298,13 @@ public static class DashboardMetadataCodes
         // side. The question is what a stoppage COST, which is not the same as
         // how long it lasted.
         public const string EquipmentStoppageAndImpact = "equipmentStoppageAndImpact";
+
+        // T-045-R1-C. Three questions about the SAME persisted population.
+        // None of them scores anything; all three report what is already on
+        // the row and refuse where the row says nothing.
+        public const string RiskScoringProvenance = "riskScoringProvenance";
+        public const string RiskScoreContributions = "riskScoreContributions";
+        public const string RiskScoreHistory = "riskScoreHistory";
     }
 }
 

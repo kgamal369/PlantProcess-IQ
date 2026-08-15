@@ -1656,3 +1656,487 @@ internal sealed class EquipmentStoppageAndImpactWidgetResultSource : IWidgetResu
         return NativeWidgetResult.Build(resolved, columns, rows, warnings);
     }
 }
+
+// ============================================================================
+// T-045-R1-C - RISK EVIDENCE.
+//
+// Three sources over one persisted population. NONE of them scores anything.
+// Every value published below is already on the row, and where the row says
+// nothing these refuse rather than fill the gap.
+//
+// WHAT THE ROWS PROVE, AND WHAT THEY DO NOT. Measured 15-Aug: 500 rows, every
+// one IsSynthetic, one risk type, one scoring day. IsSynthetic is a persisted
+// fact, so "synthetic" is sayable. "Seeded", "demo-generated" and
+// "model-generated" are NOT persisted facts, and a non-null ModelVersion is a
+// label the row carries, not proof that a model produced it. Nothing here
+// upgrades one into the other.
+// ============================================================================
+
+/// <summary>
+/// A contributor exactly as persisted. Every field is nullable except the code,
+/// because a contributor with no identity cannot be attributed to anything and
+/// is treated as malformed rather than as an anonymous one.
+/// </summary>
+public sealed record RiskContributorEvidence(
+    string ContributorCode,
+    string? ContributorName,
+    string? ContributorType,
+    decimal? Weight,
+    string? Direction,
+    decimal? Contribution,
+    string? Explanation);
+
+/// <summary>
+/// T-045-R1-C. THE CONTRIBUTOR PARSER, AND WHY IT REFUSES LOUDLY.
+///
+/// Silently skipping an entry that does not match the expected shape would
+/// publish a SHORTER contributor list that still looks complete, and a reader
+/// would rank contributions that were missing one of their members. A parse
+/// that cannot be trusted end to end is reported as malformed for the whole
+/// row instead.
+///
+/// An EMPTY array is not malformed. It is the persisted statement that this
+/// score had no recorded contributors, and it stays exactly that.
+/// </summary>
+public static class RiskContributorParser
+{
+    public const string StateParsed = "CONTRIBUTORS_PARSED";
+    public const string StateEmpty = "NO_CONTRIBUTORS_RECORDED";
+    public const string StateMalformed = "CONTRIBUTOR_EVIDENCE_MALFORMED";
+
+    public static (string State, IReadOnlyList<RiskContributorEvidence> Contributors) Parse(string? json)
+    {
+        var none = (IReadOnlyList<RiskContributorEvidence>)Array.Empty<RiskContributorEvidence>();
+
+        if (string.IsNullOrWhiteSpace(json))
+            return (StateEmpty, none);
+
+        try
+        {
+            using var document = System.Text.Json.JsonDocument.Parse(json);
+
+            if (document.RootElement.ValueKind != System.Text.Json.JsonValueKind.Array)
+                return (StateMalformed, none);
+
+            var parsed = new List<RiskContributorEvidence>();
+
+            foreach (var element in document.RootElement.EnumerateArray())
+            {
+                if (element.ValueKind != System.Text.Json.JsonValueKind.Object)
+                    return (StateMalformed, none);
+
+                var code = ReadString(element, "contributorCode");
+                if (string.IsNullOrWhiteSpace(code))
+                    return (StateMalformed, none);
+
+                parsed.Add(new RiskContributorEvidence(
+                    code!,
+                    ReadString(element, "contributorName"),
+                    ReadString(element, "contributorType"),
+                    ReadDecimal(element, "weight"),
+                    ReadString(element, "direction"),
+                    ReadDecimal(element, "contribution"),
+                    ReadString(element, "explanation")));
+            }
+
+            return parsed.Count == 0 ? (StateEmpty, none) : (StateParsed, parsed);
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return (StateMalformed, none);
+        }
+    }
+
+    private static string? ReadString(System.Text.Json.JsonElement element, string name)
+    {
+        if (!element.TryGetProperty(name, out var value)) { return null; }
+        return value.ValueKind == System.Text.Json.JsonValueKind.String ? value.GetString() : null;
+    }
+
+    private static decimal? ReadDecimal(System.Text.Json.JsonElement element, string name)
+    {
+        if (!element.TryGetProperty(name, out var value)) { return null; }
+        if (value.ValueKind != System.Text.Json.JsonValueKind.Number) { return null; }
+        return value.TryGetDecimal(out var number) ? number : null;
+    }
+}
+
+public sealed record RiskHistoryPeriod(
+    DateTime PeriodStartUtc,
+    int ScoredCount,
+    decimal AverageScore,
+    decimal MinimumScore,
+    decimal MaximumScore);
+
+/// <summary>
+/// T-045-R1-C. A TREND NEEDS SOMETHING TO TREND OVER.
+///
+/// The current population was scored inside a 27-second window on a single
+/// day. Drawing that as a trend - one point, or the same batch spread across
+/// invented dates - would assert a history that was never recorded. Below the
+/// minimum this returns nothing and the caller refuses.
+///
+/// The threshold is a real analytical rule and not a convenience: two periods
+/// is the least that can show a direction at all.
+/// </summary>
+public static class RiskHistoryFold
+{
+    public const int MinimumPeriods = 2;
+
+    public static IReadOnlyList<RiskHistoryPeriod> Fold(
+        IEnumerable<(DateTime ScoredAtUtc, decimal Score)> scores)
+    {
+        var periods = scores
+            .GroupBy(x => x.ScoredAtUtc.Date)
+            .Select(g => new RiskHistoryPeriod(
+                g.Key,
+                g.Count(),
+                Math.Round(g.Average(x => x.Score), 4),
+                g.Min(x => x.Score),
+                g.Max(x => x.Score)))
+            .OrderBy(x => x.PeriodStartUtc)
+            .ToList();
+
+        return periods.Count < MinimumPeriods
+            ? Array.Empty<RiskHistoryPeriod>()
+            : periods;
+    }
+}
+
+/// <summary>
+/// THE QUESTION: what is actually known about where this scored population
+/// came from?
+/// </summary>
+internal sealed class RiskScoringProvenanceWidgetResultSource : IWidgetResultSource
+{
+    public const string StatePublished = "PROVENANCE_PUBLISHED";
+    public const string StateNoScores = "NO_SCORED_POPULATION";
+
+    // Persisted facts only. "Seeded" and "model-generated" are absent on
+    // purpose: neither is recorded anywhere on the row.
+    public const string ProvenanceSynthetic = "SYNTHETIC_POPULATION";
+    public const string ProvenanceMixed = "PARTIALLY_SYNTHETIC_POPULATION";
+    public const string ProvenanceNotMarkedSynthetic = "NOT_MARKED_SYNTHETIC";
+
+    private readonly IPlantProcessDbContext _dbContext;
+
+    public RiskScoringProvenanceWidgetResultSource(IPlantProcessDbContext dbContext)
+    {
+        _dbContext = dbContext;
+    }
+
+    public string MeasureCode => DashboardMetadataCodes.Measures.RiskScoringProvenance;
+
+    public async Task<DashboardWidgetQueryResultDto> ExecuteAsync(
+        DashboardWidgetResolvedDto resolved,
+        DashboardWidgetQueryDto query,
+        IReadOnlyList<string> warnings,
+        CancellationToken cancellationToken)
+    {
+        var columns = new List<DashboardWidgetColumnDto>
+        {
+            new("state", "State", "string"),
+            new("provenanceState", "Provenance", "string"),
+            new("riskType", "Risk Type", "string"),
+            new("modelVersion", "Model Version", "string"),
+            new("sourceSystem", "Source System", "string"),
+            new("populationCount", "Scored Rows", "number"),
+            new("syntheticCount", "Synthetic Rows", "number"),
+            new("syntheticFraction", "Synthetic Fraction", "number"),
+            new("sourceRecordCount", "With Source Record", "number"),
+            new("firstScoredAtUtc", "First Scored", "string"),
+            new("lastScoredAtUtc", "Last Scored", "string")
+        };
+
+        var scores = _dbContext.RiskScores.AsNoTracking().Where(x => !x.IsDeleted);
+
+        if (resolved.FromUtc.HasValue)
+        {
+            var from = resolved.FromUtc.Value;
+            scores = scores.Where(x => x.ScoredAtUtc >= from);
+        }
+
+        if (resolved.ToUtc.HasValue)
+        {
+            var to = resolved.ToUtc.Value;
+            scores = scores.Where(x => x.ScoredAtUtc <= to);
+        }
+
+        // GROUPED, NOT COLLAPSED. If two model versions or two source systems
+        // are present, both are published with their own counts. Choosing one
+        // would make the other invisible.
+        var groups = await scores
+            .GroupBy(x => new { x.RiskType, x.ModelVersion, x.SourceSystem })
+            .Select(g => new
+            {
+                g.Key.RiskType,
+                g.Key.ModelVersion,
+                g.Key.SourceSystem,
+                Total = g.Count(),
+                Synthetic = g.Count(x => x.IsSynthetic),
+                WithRecord = g.Count(x => x.SourceRecordId != null),
+                First = g.Min(x => x.ScoredAtUtc),
+                Last = g.Max(x => x.ScoredAtUtc)
+            })
+            .ToListAsync(cancellationToken);
+
+        if (groups.Count == 0)
+        {
+            return NativeWidgetResult.Build(resolved, columns, new List<IDictionary<string, object?>>
+            {
+                NativeWidgetResult.Row(
+                    ("state", StateNoScores), ("provenanceState", null), ("riskType", null),
+                    ("modelVersion", null), ("sourceSystem", null), ("populationCount", 0),
+                    ("syntheticCount", 0), ("syntheticFraction", null), ("sourceRecordCount", 0),
+                    ("firstScoredAtUtc", null), ("lastScoredAtUtc", null))
+            }, warnings);
+        }
+
+        var rows = groups
+            .OrderByDescending(x => x.Total)
+            .Select(x => NativeWidgetResult.Row(
+                ("state", StatePublished),
+                ("provenanceState",
+                    x.Synthetic == x.Total ? ProvenanceSynthetic :
+                    x.Synthetic == 0 ? ProvenanceNotMarkedSynthetic :
+                    ProvenanceMixed),
+                ("riskType", x.RiskType),
+                ("modelVersion", x.ModelVersion),
+                ("sourceSystem", x.SourceSystem),
+                ("populationCount", x.Total),
+                ("syntheticCount", x.Synthetic),
+                ("syntheticFraction", Math.Round((decimal)x.Synthetic / x.Total, 4)),
+                ("sourceRecordCount", x.WithRecord),
+                ("firstScoredAtUtc", x.First.ToString("O")),
+                ("lastScoredAtUtc", x.Last.ToString("O"))))
+            .ToList();
+
+        return NativeWidgetResult.Build(resolved, columns, rows, warnings);
+    }
+}
+
+/// <summary>
+/// THE QUESTION: which contributors were PERSISTED against each scored
+/// material?
+/// </summary>
+internal sealed class RiskScoreContributionsWidgetResultSource : IWidgetResultSource
+{
+    public const string StatePopulationTooLarge = "POPULATION_EXCEEDS_SAFE_LIMIT";
+    public const string StateNoScores = "NO_SCORED_POPULATION";
+
+    private readonly IPlantProcessDbContext _dbContext;
+
+    public RiskScoreContributionsWidgetResultSource(IPlantProcessDbContext dbContext)
+    {
+        _dbContext = dbContext;
+    }
+
+    public string MeasureCode => DashboardMetadataCodes.Measures.RiskScoreContributions;
+
+    public async Task<DashboardWidgetQueryResultDto> ExecuteAsync(
+        DashboardWidgetResolvedDto resolved,
+        DashboardWidgetQueryDto query,
+        IReadOnlyList<string> warnings,
+        CancellationToken cancellationToken)
+    {
+        var columns = new List<DashboardWidgetColumnDto>
+        {
+            new("state", "State", "string"),
+            new("materialUnitId", "Material Unit", "string"),
+            new("riskScore", "Risk Score", "number"),
+            new("riskClass", "Risk Class", "string"),
+            new("contributorCode", "Contributor", "string"),
+            new("contributorName", "Contributor Name", "string"),
+            new("contributorType", "Contributor Type", "string"),
+            new("weight", "Weight", "number"),
+            new("direction", "Direction", "string"),
+            new("contribution", "Contribution", "number"),
+            new("explanation", "Explanation", "string")
+        };
+
+        var scores = _dbContext.RiskScores.AsNoTracking().Where(x => !x.IsDeleted);
+
+        if (resolved.FromUtc.HasValue)
+        {
+            var from = resolved.FromUtc.Value;
+            scores = scores.Where(x => x.ScoredAtUtc >= from);
+        }
+
+        if (resolved.ToUtc.HasValue)
+        {
+            var to = resolved.ToUtc.Value;
+            scores = scores.Where(x => x.ScoredAtUtc <= to);
+        }
+
+        var fetched = await scores
+            .Select(x => new
+            {
+                x.MaterialUnitId,
+                x.Score,
+                x.RiskClass,
+                x.MainContributorsJson
+            })
+            .Take(resolved.RawRowLimit + 1)
+            .ToListAsync(cancellationToken);
+
+        if (fetched.Count > resolved.RawRowLimit)
+            return NativeWidgetResult.Build(resolved, columns, StateOnly(StatePopulationTooLarge), warnings);
+
+        if (fetched.Count == 0)
+            return NativeWidgetResult.Build(resolved, columns, StateOnly(StateNoScores), warnings);
+
+        var rows = new List<IDictionary<string, object?>>();
+
+        foreach (var score in fetched)
+        {
+            var (state, contributors) = RiskContributorParser.Parse(score.MainContributorsJson);
+
+            if (state != RiskContributorParser.StateParsed)
+            {
+                // Empty and malformed are BOTH reported per material, and they
+                // are different sentences. One says nothing was recorded; the
+                // other says something was recorded and cannot be trusted.
+                rows.Add(NativeWidgetResult.Row(
+                    ("state", state),
+                    ("materialUnitId", score.MaterialUnitId.ToString()),
+                    ("riskScore", score.Score),
+                    ("riskClass", score.RiskClass),
+                    ("contributorCode", null), ("contributorName", null),
+                    ("contributorType", null), ("weight", null),
+                    ("direction", null), ("contribution", null), ("explanation", null)));
+                continue;
+            }
+
+            // ORDERED BY A PERSISTED VALUE, NOT BY A RANK. No rank field is
+            // persisted, so none is published. Ordering by the recorded
+            // contribution is display order over real numbers, and a null
+            // contribution keeps its place rather than being scored as zero.
+            foreach (var contributor in contributors.OrderByDescending(c => c.Contribution ?? decimal.MinValue))
+            {
+                rows.Add(NativeWidgetResult.Row(
+                    ("state", RiskContributorParser.StateParsed),
+                    ("materialUnitId", score.MaterialUnitId.ToString()),
+                    ("riskScore", score.Score),
+                    ("riskClass", score.RiskClass),
+                    ("contributorCode", contributor.ContributorCode),
+                    ("contributorName", contributor.ContributorName),
+                    ("contributorType", contributor.ContributorType),
+                    ("weight", contributor.Weight),
+                    ("direction", contributor.Direction),
+                    ("contribution", contributor.Contribution),
+                    ("explanation", contributor.Explanation)));
+            }
+        }
+
+        return NativeWidgetResult.Build(resolved, columns, rows, warnings);
+    }
+
+    private static IReadOnlyList<IDictionary<string, object?>> StateOnly(string state)
+    {
+        return new List<IDictionary<string, object?>>
+        {
+            NativeWidgetResult.Row(
+                ("state", state), ("materialUnitId", null), ("riskScore", null),
+                ("riskClass", null), ("contributorCode", null), ("contributorName", null),
+                ("contributorType", null), ("weight", null), ("direction", null),
+                ("contribution", null), ("explanation", null))
+        };
+    }
+}
+
+/// <summary>
+/// THE QUESTION: how has risk moved over time, when there is a time to move
+/// over?
+/// </summary>
+internal sealed class RiskScoreHistoryWidgetResultSource : IWidgetResultSource
+{
+    public const string StatePublished = "RISK_HISTORY_PUBLISHED";
+    public const string StateInsufficientHistory = "INSUFFICIENT_TEMPORAL_RISK_HISTORY";
+    public const string StateNoScores = "NO_SCORED_POPULATION";
+    public const string StatePopulationTooLarge = "POPULATION_EXCEEDS_SAFE_LIMIT";
+
+    private readonly IPlantProcessDbContext _dbContext;
+
+    public RiskScoreHistoryWidgetResultSource(IPlantProcessDbContext dbContext)
+    {
+        _dbContext = dbContext;
+    }
+
+    public string MeasureCode => DashboardMetadataCodes.Measures.RiskScoreHistory;
+
+    public async Task<DashboardWidgetQueryResultDto> ExecuteAsync(
+        DashboardWidgetResolvedDto resolved,
+        DashboardWidgetQueryDto query,
+        IReadOnlyList<string> warnings,
+        CancellationToken cancellationToken)
+    {
+        var columns = new List<DashboardWidgetColumnDto>
+        {
+            new("state", "State", "string"),
+            new("period", "Period", "string"),
+            new("periodStartUtc", "Period Start", "string"),
+            new("scoredCount", "Scored", "number"),
+            new("averageScore", "Average Score", "number"),
+            new("minimumScore", "Minimum Score", "number"),
+            new("maximumScore", "Maximum Score", "number")
+        };
+
+        var scores = _dbContext.RiskScores.AsNoTracking().Where(x => !x.IsDeleted);
+
+        if (resolved.FromUtc.HasValue)
+        {
+            var from = resolved.FromUtc.Value;
+            scores = scores.Where(x => x.ScoredAtUtc >= from);
+        }
+
+        if (resolved.ToUtc.HasValue)
+        {
+            var to = resolved.ToUtc.Value;
+            scores = scores.Where(x => x.ScoredAtUtc <= to);
+        }
+
+        var fetched = await scores
+            .Select(x => new { x.ScoredAtUtc, x.Score })
+            .Take(resolved.RawRowLimit + 1)
+            .ToListAsync(cancellationToken);
+
+        if (fetched.Count > resolved.RawRowLimit)
+            return NativeWidgetResult.Build(resolved, columns, StateOnly(StatePopulationTooLarge), warnings);
+
+        if (fetched.Count == 0)
+            return NativeWidgetResult.Build(resolved, columns, StateOnly(StateNoScores), warnings);
+
+        var periods = RiskHistoryFold.Fold(fetched.Select(x => (x.ScoredAtUtc, x.Score)));
+
+        if (periods.Count == 0)
+        {
+            // Scores exist. History does not. Saying so is the whole point:
+            // one batch drawn as a trend would invent a direction.
+            return NativeWidgetResult.Build(resolved, columns, StateOnly(StateInsufficientHistory), warnings);
+        }
+
+        var rows = periods
+            .Select(x => NativeWidgetResult.Row(
+                ("state", StatePublished),
+                ("period", x.PeriodStartUtc.ToString("yyyy-MM-dd")),
+                ("periodStartUtc", x.PeriodStartUtc.ToString("O")),
+                ("scoredCount", x.ScoredCount),
+                ("averageScore", x.AverageScore),
+                ("minimumScore", x.MinimumScore),
+                ("maximumScore", x.MaximumScore)))
+            .ToList();
+
+        return NativeWidgetResult.Build(resolved, columns, rows, warnings);
+    }
+
+    private static IReadOnlyList<IDictionary<string, object?>> StateOnly(string state)
+    {
+        return new List<IDictionary<string, object?>>
+        {
+            NativeWidgetResult.Row(
+                ("state", state), ("period", null), ("periodStartUtc", null),
+                ("scoredCount", 0), ("averageScore", null),
+                ("minimumScore", null), ("maximumScore", null))
+        };
+    }
+}
