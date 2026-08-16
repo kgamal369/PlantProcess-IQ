@@ -1603,7 +1603,9 @@ CREATE TEMP TABLE stg_qe (id uuid, material_unit_id uuid, defect_code text,
   event_at_utc timestamptz, event_at_local timestamp, plant_time_zone_id text,
   plant_utc_offset_minutes int, event_type text, severity text, decision text,
   description text, created_at_utc timestamptz, is_synthetic boolean,
-  source_system text, source_record_id text, is_deleted boolean) ON COMMIT DROP;
+  source_system text, source_record_id text, is_deleted boolean,
+  position_start_m numeric, position_end_m numeric,
+  width_position_mm numeric) ON COMMIT DROP;
 CREATE TEMP TABLE stg_dt (id uuid, equipment_code text, started_at_utc timestamptz,
   ended_at_utc timestamptz, started_at_local timestamp, ended_at_local timestamp,
   plant_time_zone_id text, plant_utc_offset_minutes int, downtime_type text,
@@ -1648,11 +1650,15 @@ LEFT JOIN ref_equip e ON e.code = s.equipment_code;
 INSERT INTO public.quality_events (id, material_unit_id, defect_catalog_id,
   event_at_utc, event_at_local, plant_time_zone_id, plant_utc_offset_minutes,
   event_type, severity, decision, description, created_at_utc, is_synthetic,
-  source_system, source_record_id, is_deleted)
+  source_system, source_record_id, is_deleted,
+  position_start_m, position_end_m,
+  width_position_mm)
 SELECT s.id, s.material_unit_id, d.id, s.event_at_utc, s.event_at_local,
        s.plant_time_zone_id, s.plant_utc_offset_minutes, s.event_type, s.severity,
        s.decision, s.description, s.created_at_utc, s.is_synthetic,
-       s.source_system, s.source_record_id, s.is_deleted
+       s.source_system, s.source_record_id, s.is_deleted,
+       s.position_start_m, s.position_end_m,
+       s.width_position_mm
 FROM stg_qe s
 LEFT JOIN ref_defect d ON d.code = s.defect_code;
 
@@ -1959,12 +1965,29 @@ def emit_canonical_sql(fh, data, coils, heats, sc):
                     float(r[qc.index("measured_value")]))
     copy("stg_obs", stg_obs_cols, obs)
 
+    def _pos(row, cols, column):
+        """T-044-R1. A recorded position, or the COPY null marker.
+
+        The source column is nullable. Returning 0 for a missing value would
+        assert the defect sits at the origin, which is a measurement the
+        source never made.
+        """
+        if column not in cols:
+            return "\\N"
+        raw = row[cols.index(column)]
+        if raw is None:
+            return "\\N"
+        text = str(raw).strip().strip("'")
+        return "\\N" if text == "" or text.upper() in ("NULL", "\\N") else text
+
     # ------------------------------------------------------------ quality
     stg_qe_cols = ["id", "material_unit_id", "defect_code", "event_at_utc",
                    "event_at_local", "plant_time_zone_id",
                    "plant_utc_offset_minutes", "event_type", "severity",
                    "decision", "description", "created_at_utc", "is_synthetic",
-                   "source_system", "source_record_id", "is_deleted"]
+                   "source_system", "source_record_id", "is_deleted",
+                   "position_start_m",
+                   "position_end_m", "width_position_mm"]
     qes = []
     for r in dr:
         code = r[dc.index("coil_id")].strip("'")
@@ -1978,7 +2001,13 @@ def emit_canonical_sql(fh, data, coils, heats, sc):
                     CANON_TZ, str(_off(at)), "SurfaceDefect",
                     r[dc.index("defect_severity")].strip("'"), "\\N",
                     r[dc.index("defect_name")].strip("'"), now, "t",
-                    CANON_SOURCE, "FLEETV2-QE-DEFECT-" + rid, "f"])
+                    CANON_SOURCE, "FLEETV2-QE-DEFECT-" + rid, "f",
+                    # T-044-R1. Straight from the source row. _pos returns the
+                    # COPY null marker when the source recorded nothing, so an
+                    # unmeasured position never becomes a measured zero.
+                    _pos(r, dc, "position_start_m"),
+                    _pos(r, dc, "position_end_m"),
+                    _pos(r, dc, "width_position_mm")])
     for code, (en_t, ex_t, r) in pkl_of.items():
         dec = r[kc.index("qa_decision")].strip("'")
         if dec == "Accepted":
@@ -1986,7 +2015,10 @@ def emit_canonical_sql(fh, data, coils, heats, sc):
         qes.append([canon_id("qe", "disp|" + code), uid(code), "\\N",
                     _utc(ex_t), _loc(ex_t), CANON_TZ, str(_off(ex_t)),
                     "Disposition", "\\N", dec, "Pickling line disposition",
-                    now, "t", CANON_SOURCE, "FLEETV2-QE-DISP-" + code, "f"])
+                    now, "t", CANON_SOURCE, "FLEETV2-QE-DISP-" + code, "f",
+                    # A disposition is a decision about the whole unit, not a
+                    # located observation. Three nulls, never three zeros.
+                    "\\N", "\\N", "\\N"])
     copy("stg_qe", stg_qe_cols, qes)
 
     # ------------------------------------------------------------ downtime

@@ -1,4 +1,4 @@
-﻿using PlantProcess.Domain.Common;
+using PlantProcess.Domain.Common;
 
 namespace PlantProcess.Domain.Entities.Quality;
 
@@ -24,6 +24,28 @@ public class QualityEvent : BaseEntity
     public string? Decision { get; private set; }
 
     public string? Description { get; private set; }
+
+    /// <summary>
+    /// T-044-R1. WHERE ON THE MATERIAL, AS RECORDED.
+    ///
+    /// Three separate facts, not one. The longitudinal pair is an EXTENT - a
+    /// defect runs from one position to another - and reducing it to a midpoint
+    /// would discard the length permanently. A renderer may derive a midpoint;
+    /// this layer may not.
+    ///
+    /// Units are in the names because the source records them in different
+    /// ones: metres along the material, millimetres across it. A unitless
+    /// number here would be ambiguous the first time someone compared them.
+    ///
+    /// All three are nullable. An event with no recorded position - a
+    /// disposition, for instance - keeps NULL. Zero is a position, and would
+    /// place the defect at the very start of the material.
+    /// </summary>
+    public decimal? PositionStartM { get; private set; }
+
+    public decimal? PositionEndM { get; private set; }
+
+    public decimal? WidthPositionMm { get; private set; }
 
     private QualityEvent()
     {

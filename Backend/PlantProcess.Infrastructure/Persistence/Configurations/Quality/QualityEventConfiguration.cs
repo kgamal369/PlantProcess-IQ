@@ -17,6 +17,12 @@ public class QualityEventConfiguration : IEntityTypeConfiguration<QualityEvent>
         builder.Property(x => x.Severity).HasMaxLength(50);
         builder.Property(x => x.Decision).HasMaxLength(100);
         builder.Property(x => x.Description).HasMaxLength(1000);
+
+        // T-044-R1. Nullable by construction: a missing position must stay
+        // missing rather than default to the head of the material.
+        builder.Property(x => x.PositionStartM).HasColumnType("numeric");
+        builder.Property(x => x.PositionEndM).HasColumnType("numeric");
+        builder.Property(x => x.WidthPositionMm).HasColumnType("numeric");
         builder.Property(x => x.PlantTimeZoneId).IsRequired().HasMaxLength(100);
         builder.Property(x => x.SourceSystem).HasMaxLength(100);
         builder.Property(x => x.SourceRecordId).HasMaxLength(100);
