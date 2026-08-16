@@ -1,7 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { apiClient } from "../api/http";
 import { useDashboardFilters } from "./DashboardFilterContext";
-import { ASSOC_FIELDS, type AssocField } from "./associativeFields";
+import { productApi } from "../api/productApiClient";
+import { buildAssociativeFields, type AssocField } from "./associativeFields";
 
 /** M2-37 associative engine (Qlik spec S0), client-orchestrated:
  * possible-set per field = the existing, registry-validated widget query for
@@ -10,7 +11,14 @@ import { ASSOC_FIELDS, type AssocField } from "./associativeFields";
  * all-set = the same query, unfiltered, cached at mount.
  * excluded = all minus possible. selected = the field's current filter value. */
 
-export type ValueState = "selected" | "possible" | "excluded";
+/** T-048. The four states Chapter 4 5.1.3 requires.
+ *
+ * ALTERNATIVE is not a weaker "possible". It means: this field already has a
+ * selection, and this value is the road not taken - still reachable in one
+ * click, and excluded from nothing. Collapsing it into "possible" hides which
+ * field the reader is currently steering by.
+ */
+export type ValueState = "selected" | "possible" | "excluded" | "alternative";
 export type FieldAssoc = {
   field: AssocField;
   available: boolean;
@@ -64,6 +72,25 @@ async function dimensionValues(dimension: string, filters: Record<string, unknow
 export function AssociativeProvider({ children }: { children: ReactNode }) {
   const { filters, setFilter } = useDashboardFilters();
   const [enabled, setEnabled] = useState(true);
+  // T-048. Derived once from the published dimension catalogue. Until it
+  // arrives the set is empty and the panel shows nothing, which is honest: a
+  // placeholder list would be a guess about the plant.
+  const [assocFields, setAssocFields] = useState<AssocField[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const metadata = await productApi.getDashboardMetadata();
+        if (cancelled) { return; }
+        setAssocFields(buildAssociativeFields(metadata?.dimensions));
+      } catch {
+        if (!cancelled) { setAssocFields([]); }
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
   const [allSets, setAllSets] = useState<Record<string, string[] | null>>({});
   const [possibleSets, setPossibleSets] = useState<Record<string, string[] | null>>({});
   const [loading, setLoading] = useState<Record<string, boolean>>({});
@@ -76,7 +103,7 @@ export function AssociativeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let stop = false;
     Promise.all(
-      ASSOC_FIELDS.map(async (f) => {
+      assocFields.map(async (f) => {
         const vals = await dimensionValues(f.dimension, {});
         return { key: f.key, dimension: f.dimension, vals };
       })
@@ -90,12 +117,14 @@ export function AssociativeProvider({ children }: { children: ReactNode }) {
       setAllSets((s) => ({ ...s, ...next }));
     });
     return () => { stop = true; };
-  }, []);
+    // T-048. Depends on the registry-derived set: enumerating once at mount
+    // would run against an empty list and never recover.
+  }, [assocFields]);
 
   const refresh = useCallback(() => {
     const gen = ++generation.current;
     const g = (filters ?? {}) as Record<string, unknown>;
-    ASSOC_FIELDS.forEach(async (f) => {
+    assocFields.forEach(async (f) => {
       if (allSets[f.key] === null) return; // unavailable
       setLoading((l) => ({ ...l, [f.key]: true }));
       // PPIQ-SCENE5678: carry EVERY active workspace filter, minus this field's
@@ -114,7 +143,7 @@ export function AssociativeProvider({ children }: { children: ReactNode }) {
       setPossibleSets((s) => ({ ...s, [f.key]: vals }));
       setLoading((l) => ({ ...l, [f.key]: false }));
     });
-  }, [filters, allSets]);
+  }, [filters, allSets, assocFields]);
 
   useEffect(() => {
     if (!enabled) return;
@@ -125,7 +154,7 @@ export function AssociativeProvider({ children }: { children: ReactNode }) {
 
   const fields: FieldAssoc[] = useMemo(() => {
     const g = (filters ?? {}) as Record<string, unknown>;
-    return ASSOC_FIELDS.map((f) => {
+    return assocFields.map((f) => {
       const all = allSets[f.key];
       const possible = possibleSets[f.key];
       const selectedVal = g[f.key] !== undefined && g[f.key] !== null && g[f.key] !== "" ? String(g[f.key]) : null;
@@ -133,7 +162,16 @@ export function AssociativeProvider({ children }: { children: ReactNode }) {
       if (all) {
         const poss = new Set(possible ?? all);
         for (const v of all) {
-          states.set(v, v === selectedVal ? "selected" : poss.has(v) ? "possible" : "excluded");
+          // Order matters. Excluded is decided before alternative, because a
+          // value the current selections have ruled out is excluded whether or
+          // not this field happens to carry a selection.
+          states.set(
+            v,
+            v === selectedVal ? "selected"
+              : !poss.has(v) ? "excluded"
+                : selectedVal ? "alternative"
+                  : "possible"
+          );
         }
         if (selectedVal && !states.has(selectedVal)) states.set(selectedVal, "selected");
       }
@@ -149,7 +187,7 @@ export function AssociativeProvider({ children }: { children: ReactNode }) {
         possibleCount: (possible ?? all ?? []).length,
       };
     });
-  }, [filters, allSets, possibleSets, loading]);
+  }, [filters, allSets, possibleSets, loading, assocFields]);
 
   const toggleValue = useCallback((fieldKey: string, value: string) => {
     const g = (filters ?? {}) as Record<string, unknown>;

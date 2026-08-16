@@ -191,3 +191,28 @@
   border-color: #00d4ff;
   box-shadow: 0 0 0 2px rgba(0, 212, 255, .45);
 }
+
+/* T-048. THE FOURTH STATE.
+ *
+ * Alternative must be legible against BOTH of its neighbours. Selection is
+ * Electric Cyan and excluded is Muted Steel, so alternative sits between them:
+ * clearly still reachable, clearly not the current choice, and never mistaken
+ * for either. It is outlined rather than filled - the reader should see a road
+ * not taken, not a second selection.
+ */
+.assoc .standard-p2-button.assoc__chip--alternative {
+  background: transparent;
+  border: 1px dashed var(--ppiq-accent-cyan, #00d4ff);
+  color: var(--ppiq-accent-cyan, #00d4ff);
+  opacity: 0.78;
+}
+
+.assoc .standard-p2-button.assoc__chip--alternative:hover {
+  background: rgba(0, 212, 255, 0.12);
+  opacity: 1;
+}
+
+.assoc .lg--alt {
+  background: transparent;
+  border: 1px dashed var(--ppiq-accent-cyan, #00d4ff);
+}

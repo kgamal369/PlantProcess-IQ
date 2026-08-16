@@ -17,7 +17,8 @@ function PanelInner() {
           {open ? "\u25BE" : "\u25B8"} ASSOCIATIVE VIEW
         </StandardP2Button>
         <span className="assoc__legend">
-          <i className="lg lg--sel" /> selected <i className="lg lg--pos" /> possible <i className="lg lg--exc" /> excluded
+          <i className="lg lg--sel" /> selected <i className="lg lg--pos" /> possible{" "}
+          <i className="lg lg--alt" /> alternative <i className="lg lg--exc" /> excluded
         </span>
         <StandardP2Button variant="ghost" className="assoc__enable"
           aria-pressed={enabled} onClick={() => setEnabled(!enabled)}>
