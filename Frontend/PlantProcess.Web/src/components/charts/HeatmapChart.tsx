@@ -1,5 +1,7 @@
 import { useMemo } from "react";
 
+import "./heatmapChart.css";
+
 // T-046-R1. A TRUE TWO-AXIS HEATMAP.
 //
 // Three roles, bound by name: x, y, value. It knows nothing about what either

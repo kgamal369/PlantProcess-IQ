@@ -45,6 +45,7 @@ import { BoxPlotChart } from "../charts/BoxPlotChart";
 import { ScatterXYChart } from "../charts/ScatterXYChart";
 import { StackedSeriesChart } from "../charts/StackedSeriesChart";
 import { HeatmapChart } from "../charts/HeatmapChart";
+import { SpecificationTable } from "../charts/SpecificationTable";
 import { PairedSeriesChart } from "../charts/PairedSeriesChart";
 import { EmptyInsightState } from "./EmptyInsightState";
 
@@ -233,6 +234,16 @@ interface SavedDashboardWidgetProps {
     [metadata, widget.dimensionCode, widget.measureCode]
   );
 
+  // T-047. A specification row carries its own limits, so the table can state
+  // conformance without any threshold living in the frontend.
+  const hasSpecificationRoles = useMemo(
+    () =>
+      ["gradeOrRecipe", "parameterCode", "actualValue"].every((role) =>
+        Boolean(result?.columns.some((column) => column.code === role))
+      ),
+    [result]
+  );
+
   // T-046-R1. Two real axes and an intensity. Checked BEFORE the single-axis
   // series role, because a result carrying x and y is never the flat
   // category/series shape even if it also carries a value column.
@@ -334,6 +345,8 @@ interface SavedDashboardWidgetProps {
             value={kpiValue(rows, valueKey, widget.measureCode)}
             subtitle={widget.measureCode}
           />
+        ) : hasSpecificationRoles ? (
+          <SpecificationTable rows={rows as Record<string, unknown>[]} />
         ) : hasTwoAxisRoles ? (
           <HeatmapChart rows={rows as Record<string, unknown>[]} />
         ) : hasPairedRoles ? (

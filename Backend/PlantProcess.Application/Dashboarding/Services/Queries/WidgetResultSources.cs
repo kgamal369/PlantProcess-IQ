@@ -2345,7 +2345,14 @@ internal sealed class SpecificationLimitsWidgetResultSource : IWidgetResultSourc
             new("targetValue", "Target", "number"),
             new("maxValue", "Maximum", "number"),
             new("unitOfMeasure", "Unit", "string"),
-            new("provenance", "Source", "string")
+            new("provenance", "Source", "string"),
+
+            // T-047. A limit with nothing to compare against cannot be
+            // conditionally formatted. The observed mean for this scope and
+            // parameter is published beside its limits so the renderer can
+            // state conformance from the row itself.
+            new("actualValue", "Observed", "number"),
+            new("observationCount", "Observations", "number")
         };
 
         var specifications =
@@ -2369,6 +2376,32 @@ internal sealed class SpecificationLimitsWidgetResultSource : IWidgetResultSourc
             .Take(resolved.RawRowLimit + 1)
             .ToListAsync(cancellationToken);
 
+        // The observed mean per scope and parameter, from the same canonical
+        // observations every other surface reads. A scope with no observation
+        // yields NO ROW here and the specification keeps a null actual: an
+        // unmeasured parameter must never be drawn as conforming.
+        var observed = await (
+            from observation in _dbContext.ParameterObservations.AsNoTracking()
+            join material in _dbContext.MaterialUnits.AsNoTracking()
+                on observation.MaterialUnitId equals material.Id
+            join parameter in _dbContext.ParameterDefinitions.AsNoTracking()
+                on observation.ParameterDefinitionId equals parameter.Id
+            where !observation.IsDeleted && !material.IsDeleted
+               && observation.NumericValue != null
+               && material.GradeOrRecipe != null
+            group observation by new { Scope = material.GradeOrRecipe, parameter.ParameterCode } into g
+            select new
+            {
+                g.Key.Scope,
+                g.Key.ParameterCode,
+                Mean = g.Average(x => x.NumericValue!.Value),
+                Count = g.Count()
+            }).ToListAsync(cancellationToken);
+
+        var observedByKey = observed.ToDictionary(
+            x => (x.Scope ?? string.Empty) + "\u0000" + x.ParameterCode,
+            x => (Mean: Math.Round(x.Mean, 4), x.Count));
+
         if (fetched.Count == 0)
         {
             return NativeWidgetResult.Build(resolved, columns, new List<IDictionary<string, object?>>
@@ -2391,7 +2424,15 @@ internal sealed class SpecificationLimitsWidgetResultSource : IWidgetResultSourc
                 ("targetValue", x.TargetValue),
                 ("maxValue", x.MaxValue),
                 ("unitOfMeasure", x.UnitOfMeasure),
-                ("provenance", x.Provenance)))
+                ("provenance", x.Provenance),
+                ("actualValue",
+                    observedByKey.TryGetValue(x.GradeOrRecipe + "\u0000" + x.ParameterCode, out var seen)
+                        ? seen.Mean
+                        : (decimal?)null),
+                ("observationCount",
+                    observedByKey.TryGetValue(x.GradeOrRecipe + "\u0000" + x.ParameterCode, out var counted)
+                        ? counted.Count
+                        : 0)))
             .ToList();
 
         return NativeWidgetResult.Build(resolved, columns, rows, warnings);

@@ -1,0 +1,59 @@
+/* T-047. Heatmap intensity and the absent cell.
+ *
+ * FIVE BUCKETS, ONE ABSENT STATE. The absent cell is deliberately NOT the
+ * lowest bucket: b0 means "observed, and lowest of what was observed", while
+ * absent means "never observed at all". Painting the second as the first
+ * would show a plant's unmeasured regions as its cleanest.
+ */
+
+.heatmap-shell {
+  overflow: auto;
+}
+
+.heatmap-grid {
+  border-collapse: collapse;
+  font-size: 11px;
+  width: 100%;
+}
+
+.heatmap-grid th {
+  color: #8ea7c1;
+  font-weight: 500;
+  padding: 4px 6px;
+  white-space: nowrap;
+}
+
+.heatmap-axis-x {
+  text-align: center;
+}
+
+.heatmap-axis-y {
+  text-align: right;
+}
+
+.heatmap-cell {
+  border: 1px solid #0b1730;
+  color: #04121f;
+  min-width: 34px;
+  padding: 6px 4px;
+  text-align: center;
+}
+
+.heatmap-cell--b0 { background: #123a52; color: #9fc4dc; }
+.heatmap-cell--b1 { background: #12657f; color: #d6ecf6; }
+.heatmap-cell--b2 { background: #109ab0; }
+.heatmap-cell--b3 { background: #35c8d4; }
+.heatmap-cell--b4 { background: #6ef0e4; }
+
+/* Not observed. Hatched rather than coloured, so it can never be misread as a
+ * low reading. */
+.heatmap-cell--absent {
+  background: repeating-linear-gradient(
+    45deg,
+    #0b1730,
+    #0b1730 4px,
+    #16294a 4px,
+    #16294a 8px
+  );
+  border: 1px dashed #1d3a63;
+}

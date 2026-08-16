@@ -72,6 +72,31 @@ describe("T-046-R1 the heatmap binds two axes and an intensity by name", () => {
     expect(intensityBucket(100, 0, 100)).toBe(4);
   });
 
+  it("emits a distinct class for every intensity bucket it uses", () => {
+    render(
+      <HeatmapChart
+        rows={[cell("x1", "y1", 0), cell("x2", "y1", 25), cell("x3", "y1", 50),
+               cell("x4", "y1", 75), cell("x5", "y1", 100)]}
+      />
+    );
+
+    const classes = screen.getAllByTestId("heatmap-cell").map((c) => c.className);
+    for (const bucket of ["b0", "b4"]) {
+      expect(classes.some((c) => c.includes("heatmap-cell--" + bucket))).toBe(true);
+    }
+  });
+
+  it("styles an absent cell differently from the lowest bucket", () => {
+    // b0 means "observed, and lowest observed". Absent means "never observed".
+    // If these ever share a class, an unmeasured region reads as a clean one.
+    render(<HeatmapChart rows={[cell("x1", "y1", 5), cell("x2", "y2", 9)]} />);
+
+    const drawn = screen.getAllByTestId("heatmap-cell")[0].className;
+    const absent = screen.getAllByTestId("heatmap-cell-absent")[0].className;
+
+    expect(absent).toContain("heatmap-cell--absent");
+    expect(drawn).not.toContain("heatmap-cell--absent");
+  });
   it("says why rather than drawing an empty grid", () => {
     render(<HeatmapChart rows={[{ state: "NO_OBSERVATIONS_IN_SELECTION" }]} />);
     expect(screen.getByTestId("heatmap-state")).toBeInTheDocument();

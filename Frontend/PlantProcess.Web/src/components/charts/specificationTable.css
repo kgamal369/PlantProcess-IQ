@@ -1,0 +1,41 @@
+/* T-047. Conditional formatting for a specification row.
+ *
+ * The colours state a relationship between two persisted numbers. No limit is
+ * written here, and no state is assumed: a parameter that was never observed
+ * gets its own neutral treatment rather than the colour of a pass.
+ */
+
+.specification-table {
+  border-collapse: collapse;
+  font-size: 12px;
+  width: 100%;
+}
+
+.specification-table th {
+  border-bottom: 1px solid #1d3a63;
+  color: #8ea7c1;
+  font-weight: 500;
+  padding: 6px 8px;
+  text-align: left;
+}
+
+.specification-table td {
+  border-bottom: 1px solid #16294a;
+  padding: 6px 8px;
+}
+
+.specification-value {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.specification-state--within { background: rgba(74, 222, 128, 0.16); color: #b7f5cd; }
+.specification-state--below  { background: rgba(56, 189, 248, 0.16); color: #bfe6fb; }
+.specification-state--above  { background: rgba(244, 114, 182, 0.18); color: #ffd0e6; }
+
+/* Never observed. Not a pass, not a failure, and visually neither. */
+.specification-state--unobserved {
+  background: transparent;
+  color: #6d8299;
+  font-style: italic;
+}
