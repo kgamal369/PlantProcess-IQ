@@ -41,7 +41,7 @@ WHERE qe.source_record_id = 'FLEETV2-QE-DEFECT-' || p.defect_row_id::text
 
 -- ------------------------------------------------------------ B. schema
 CREATE TABLE IF NOT EXISTS public.product_specifications (
-    id                      uuid PRIMARY KEY,
+    id                      uuid NOT NULL,
     specification_code      varchar(100) NOT NULL,
     product_family          varchar(100),
     grade_or_recipe         varchar(100) NOT NULL,
@@ -55,13 +55,14 @@ CREATE TABLE IF NOT EXISTS public.product_specifications (
     provenance              varchar(200),
     created_at_utc          timestamp with time zone NOT NULL,
     updated_at_utc          timestamp with time zone,
-    is_synthetic            boolean NOT NULL DEFAULT FALSE,
+    is_synthetic            boolean NOT NULL,
     source_system           varchar(100),
     source_record_id        varchar(100),
-    is_deleted              boolean NOT NULL DEFAULT FALSE,
+    is_deleted              boolean NOT NULL,
     deleted_at_utc          timestamp with time zone,
     deleted_reason          varchar(500),
-    CONSTRAINT fk_product_specifications_parameter_definitions
+    CONSTRAINT pk_product_specifications PRIMARY KEY (id),
+    CONSTRAINT fk_product_specifications_parameter_definitions_parameter_defi
         FOREIGN KEY (parameter_definition_id)
         REFERENCES public.parameter_definitions (id) ON DELETE RESTRICT);
 
@@ -69,7 +70,9 @@ CREATE INDEX IF NOT EXISTS ix_product_specifications_parameter_definition_id
     ON public.product_specifications (parameter_definition_id);
 CREATE INDEX IF NOT EXISTS ix_product_specifications_grade_or_recipe
     ON public.product_specifications (grade_or_recipe);
-CREATE UNIQUE INDEX IF NOT EXISTS ux_product_specifications_grade_parameter_from
+CREATE INDEX IF NOT EXISTS ix_product_specifications_grade_or_recipe_parameter_definition
+    ON public.product_specifications (grade_or_recipe, parameter_definition_id);
+CREATE UNIQUE INDEX IF NOT EXISTS ix_product_specifications_grade_or_recipe_parameter_definition1
     ON public.product_specifications (grade_or_recipe, parameter_definition_id, effective_from_utc)
     WHERE is_deleted = FALSE;
 
