@@ -150,3 +150,98 @@ generic had more deep concept , it mean that this software product should match 
 9.4. license spliting :  deep detailed advanced proffesional deisgn how  and in techincal way how to split the visulation and control access authorization  per license level  which license level can see what and can't see what in  UI/UX and developing as well 
 9.5. logging 
 
+
+
+
+بص كده المفروض كده يكون عندي 
+2 tracks 
+
+1. 1st track Presentation ( Demo - Prototype) Milestone 1 
+
+Target for ready : in  20th August 
+Target :
+
+1. Database and Schema & Data flow  : 
+
+1.1.ppiq_presentation.SRC_XXX  schemas prefilled with data to Emulate customer data sources in DB_LINK create and configuration Page  
+1.2.ppiq_presentation.dump_store prefilled with data to emulate to dumpstore in  Canvas (UI/UX no code low code - Wiring Diagram / SQL Editor)
+1.3.PPiq_presentation.Meta_Data : prefilled with data  of configuration data of pages , Front end , jobs data , linking and wiring , User /Role ,logs ......
+1.4.PPiq_presentation.Plantdata (canonical data tables ) : prefilled with data to be displayed in charts and dashboard  and used in chatbot
+1.5.PPiq_presentation.Plantdata (analytics data tables ) : prefilled with data to be displayed in charts and dashboard  and used in chatbot
+
+2.  BI Layer  :
+2.1.  dashboard , Page Layout , Widget , Chart , Dynamic filter : 
+to be ready 95% based on  Enterprise level standard as QLIK , PowerBI and tableau only few configuration to be done in milestone 2 to for source of data 
+
+2.2. Canvas (UI/UX no code low code - Wiring Diagram / SQL Editor): 
+to be ready 85% only more testing with more dataset and more use cases and more complex query  to be really  on  Enterprise level standard 
+
+2.3. Wdiget chart Edit SQL , Add new  Widget to page , add new Page :
+to be ready 95% based on  Enterprise level standard as QLIK , PowerBI and tableau only few configuration to be done in milestone 2 to for source of data 
+
+
+2.4. Jobs Monitor and Configuration 
+- to be ready 95% based on  Enterprise level standard as QLIK , PowerBI and tableau only few configuration to be done in milestone 2 to for source of data 
+- able to create a job based on Canvas (UI/UX no code low code - Wiring Diagram / SQL Editor) and run it on schedule base and check the logs
+- able to create a import data job  , which import to incremental import data from   ppiq_presentation.SRC_XXX to ppiq_presentation.dump_store and montior successful the run 
+- able to create and configure and montior running successful job which import data from ppiq_presentation.dump_store  to PPiq_presentation.Plantdata (canonical data tables ) based on linking and wiring and data preparation mentioned in the save UI/UX canvas
+
+
+2.5. few pre prepared dashboards and analytics pages full of charts from cancocial tables and analytics tables to present the functionality : is  ready 100%
+2.6. all configuration pages and 100% in Advanced proffesional Enterprise level existing (jobs , DbLink , Logs ,canvas,  .........)
+2.7. all Admin pages are existing in 100% frontend , without backend or no functionality ( User , Role , Lincese Control , ......)
+
+
+3. AI/ML  engine :  had prouve of concept ready  I can run a job based on canonical data tables and data stored on analytics data tables and display this data on charts 
+3.1.the most basic ang ground   3 or 4 models running and connected to make just a prouve of concept that it can take data and prouve the workflow and data flow not important the result it self 
+3.2. the chatbot : need when I ask him a question it can reply based on PPiq_presentation.Plantdata (canonical data tables  + analytics data tables) which meaningful  answer in the same context not need an accurate data or precise answer 
+
+4. the over all journey in healthy for  presentation 
+
+
+
+
+2. First Release to be installed in customer side : Milestone 2 
+Target for ready : 30 Sep
+
+1. Database and Schema & Data flow  : 
+1.1. Emulation data source : tested based on seperated data bases 
+1.2. ppiq_app.dump_store : start empty and tested to be filled by the import jobs only generic databased where we don't what will be the data of source of customer
+1.3. ppiq_app.Meta_Data :  well define structure  and well defined generic schema, some empty tables as jobs and logs will be filled during runtime ,and some prefilled as some hmi strucuture , or admin user in user tables , (acquistion & canon) should be part of meta data schema
+1.4. ppiq_app.Plantdata (canonical data tables +analytics data tables ): well define structure  and well defined generic schema  start empty and tested to be filled by the  jobs only generic databased where we don't what will be the data of source of customer
+
+2.  BI Layer  : 100% with Advanced proffesional Enterprise level as QLik sense 
+3.  Jobs : 100% with Advanced proffesional Enterprise level as QLik sense  tested mutlithreading and load balancing and optimzation technique to make running smmoothe to be able to run hundreds of job on the same time with Mega of tables 
+4.  no premade or pre prepared dashboards and analytics pages will be done by each user 
+5. all configuration pages and 100% in Advanced proffesional Enterprise level existing (jobs , DbLink , Logs ,canvas,  .........)
+6. all Admin pages are existing in 100% frontend , without backend or no functionality ( User , Role , Lincese Control , ......) , 
+	6.1.user can define an dashboards and analytics pages only to be see for him or for specific role 
+	6.2.some role can't access configure widget or edit widget or see canvas page or edit jobs ...........
+	6.3. lincese is per month so I can control it by time or remotely 
+	6.4. each lincese tier is function of ( number of pages , number of users , number of jobs , number of important data , number of ML Models available , chatbot) so all that  should be controlled on/ off based on lincese tier which user can downgrade or upgrade anytime 
+7. the 18 ML Models are 100%  with Advanced proffesional Enterprise level working 
+| # | المكوّن | الطبقة | الدور | التاسك | الحالة |
+|---|---|---|---|---|---|
+| 1 | **MF-01** Process Encoder | Layer B | يحوّل process sequences لـembeddings تستهلكها باقي العائلات. PyTorch. optional — ما يشحنش غير لو أثبت إنه يستاهل تكلفته | T-172 + T-176 | isolated |
+| 2 | **MF-02** VectorSimilarityIndex | Layer B | "ده شبه إيه في التاريخ؟" — Exact Flat هو الـbenchmark الدائم، HNSW/IVF-PQ/FAISS مرشحين بس | T-173 | isolated |
+| 3 | **MF-03** Novelty / Anomaly | Layer B | يكتشف اللي مالوش نظير. simple baseline الأول، isolation/density بعده | T-174 | isolated |
+| 4 | **MF-04** Supervised Outcome | Layer B | التنبؤ بالنتيجة (binary/multiclass/ordinal/continuous). baseline بسيط إجباري ثم LightGBM | T-175 + T-176 | isolated |
+| 5 | **MF-05 / MF-06** Statistical engines | **Layer A** | ارتباط وإحصاء: Num×Num، Bin×Num، Cat×Cat، Num×Cat (ANOVA + Kruskal-Wallis) مع effect size و p/q-FDR | T-177 → T-146/T-147 | kernel جاهز، cutover بعد M1 freeze |
+| 6 | **MF-07** Practice Engine | Layer A | استخلاص الممارسة الفعلية من تاريخ المصنع نفسه (D10) | T-131..T-133 + T-136 | بعد M2a-P2 |
+| 7 | **Supervisor** | فوق الاتنين | job واحدة premade، ليلية/أسبوعية، تعدّل coefficients كل الـjobs من فهم الـdataset كله. كل تعديل بسببه + قابل للتراجع + before/after + يقدر يمتنع | Schema Contract v2 §E | مش مبني |
+| 8 | **Tool Planner** | Assistant | يقرر أي أداة تتنادى — **الـLLM لا يختار الأدوات** | T-179 | isolated |
+| 9 | **Retrieval + Evidence Packer** | Assistant | يجيب الأدلة بحدود صلاحيات المستخدم أولًا ويحزمها بميزانية tokens | T-180 | isolated |
+| 10 | **ModelServingRuntime + gateway** | Assistant | تشغيل الموديل: self-hosted/private/BYOM، أضيق payload، provider identity، no unapproved fallback | T-137 ✅ `56a2c37c` | isolated، runtime ما بدأش |
+| 11 | **Answer Verifier** | Assistant | بعد الـLLM: كل رقم مقابل evidence handle، يمنع correlation→causation، يمنع محو الـrefusal. **ده اللي يمنع "1000 kg"** | T-181 | isolated |
+| 12 | **Job Protocol** | machinery | `JobSpec.json → ResultManifest.json` بين C# وPython | T-168 | مبني |
+| 13 | **Columnar / Sequence artifacts** | machinery | Parquet/Arrow IPC + chunked loader محدود الذاكرة | T-169 / T-170 | مبني |
+| 14 | **Capability Profiler** | machinery | هل الداتا تكفي أصلًا؟ eligibility + refusal | T-171 | مبني |
+| 15 | **Snapshot Materialiser** | machinery | يختم الحالة في artifacts مغلقة — الطريق الوحيد لـPython | T-184 | مش مبني |
+| 16 | **Promotion kernel** | machinery | calibration + explanation stability + ترقية ثلاثية الأبعاد. **C# يقرر، Python يبلّغ بس** | T-176 | isolated |
+| 17 | **Benchmark harness B-01..B-09** | machinery | آلة القياس نفسها، مش القيم | T-182 ✅ `74470524` | isolated، 9/9 smoke |
+| 18 | **Cutover** | — | T-138 (Assistant runtime) + T-187 (snapshots → ML lanes → registry) | T-138 / T-187 | **مش مبدوء** |
+
+8. the chatbot can answer on any question , ask her to descript any chart , make suggestion , predecation , correlation , descript the process , be a really in House Expert how to know the plant  all that is based on that the engine become really powerful 
+
+9. the over all journey in healthy for first day on customer side 	
+	
