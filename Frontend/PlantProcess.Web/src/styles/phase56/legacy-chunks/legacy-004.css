@@ -281,7 +281,13 @@ button.risk-pill {
 
 /* PPIQ-SCENE5678: the drawer snapped into existence with no motion at all
    while the demo contract asks for a slide from the right. */
-@keyframes ppiq-drawer-in { from { transform: translateX(100%); } to { transform: translateX(0); } }
+/* T-050: the enter distance is a variable so a single keyframe serves both
+   writing directions. In RTL the drawer sits on the inline end - the left -
+   and must therefore slide in from the other side. */
+@keyframes ppiq-drawer-in {
+  from { transform: translateX(var(--ppiq-drawer-enter-from, 100%)); }
+  to { transform: translateX(0); }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .drilldown-drawer { animation: none !important; }
@@ -290,8 +296,8 @@ button.risk-pill {
 .drilldown-drawer {
   animation: ppiq-drawer-in 220ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
   position: fixed;
-  top: 0;
-  right: 0;
+  inset-block-start: 0;
+  inset-inline-end: 0;
   z-index: 100;
   width: min(480px, 92vw);
   height: 100vh;
@@ -299,10 +305,19 @@ button.risk-pill {
   grid-template-rows: auto 1fr;
   color: var(--pp-text);
   background:
-    radial-gradient(circle at top right, rgba(19, 216, 255, 0.13), transparent 18rem),
-    linear-gradient(180deg, #06111f, #030813);
-  border-left: 1px solid rgba(90, 194, 255, 0.22);
-  box-shadow: -28px 0 70px rgba(0, 0, 0, 0.34);
+    radial-gradient(circle at top var(--ppiq-drawer-glow-edge, right), color-mix(in srgb, var(--pp-cyan) 13%, transparent), transparent 18rem),
+    linear-gradient(180deg, var(--pp-bg-1), var(--pp-bg-0));
+  border-inline-start: 1px solid var(--pp-border);
+  box-shadow: var(--ppiq-drawer-shadow-x, -28px) 0 70px color-mix(in srgb, var(--pp-bg-0) 34%, transparent);
+}
+
+/* T-050: box-shadow and gradient position have no logical form, so the two
+   directional values are flipped here rather than left pointing the wrong way
+   in Arabic. */
+html[dir="rtl"] .drilldown-drawer {
+  --ppiq-drawer-enter-from: -100%;
+  --ppiq-drawer-glow-edge: left;
+  --ppiq-drawer-shadow-x: 28px;
 }
 
 .drilldown-drawer__header {
@@ -310,7 +325,7 @@ button.risk-pill {
   display: flex;
   justify-content: space-between;
   gap: 16px;
-  border-bottom: 1px solid rgba(90, 194, 255, 0.14);
+  border-block-end: 1px solid var(--pp-border-soft);
 }
 
 .drilldown-drawer__header span {
