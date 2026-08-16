@@ -44,6 +44,8 @@ import { HistogramChart } from "../charts/HistogramChart";
 import { BoxPlotChart } from "../charts/BoxPlotChart";
 import { ScatterXYChart } from "../charts/ScatterXYChart";
 import { StackedSeriesChart } from "../charts/StackedSeriesChart";
+import { HeatmapChart } from "../charts/HeatmapChart";
+import { PairedSeriesChart } from "../charts/PairedSeriesChart";
 import { EmptyInsightState } from "./EmptyInsightState";
 
 import { StandardP2Table } from "@/components/standard/StandardP2Controls";
@@ -231,6 +233,26 @@ interface SavedDashboardWidgetProps {
     [metadata, widget.dimensionCode, widget.measureCode]
   );
 
+  // T-046-R1. Two real axes and an intensity. Checked BEFORE the single-axis
+  // series role, because a result carrying x and y is never the flat
+  // category/series shape even if it also carries a value column.
+  const hasTwoAxisRoles = useMemo(
+    () =>
+      ["x", "y", "value"].every((role) =>
+        Boolean(result?.columns.some((column) => column.code === role))
+      ),
+    [result]
+  );
+
+  // T-046-R1. Two independent series against one category.
+  const hasPairedRoles = useMemo(
+    () =>
+      ["category", "seriesAValue", "seriesBValue"].every((role) =>
+        Boolean(result?.columns.some((column) => column.code === role))
+      ),
+    [result]
+  );
+
   // T-047 Pack D. A series role is a property of the RESULT too.
   const hasSeriesRole = useMemo(
     () =>
@@ -312,6 +334,10 @@ interface SavedDashboardWidgetProps {
             value={kpiValue(rows, valueKey, widget.measureCode)}
             subtitle={widget.measureCode}
           />
+        ) : hasTwoAxisRoles ? (
+          <HeatmapChart rows={rows as Record<string, unknown>[]} />
+        ) : hasPairedRoles ? (
+          <PairedSeriesChart rows={rows as Record<string, unknown>[]} />
         ) : hasSeriesRole ? (
           // T-047 Pack D. A result carrying category, series and value is a
           // multi-series result whatever chart code names it.

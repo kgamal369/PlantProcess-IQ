@@ -1546,7 +1546,18 @@ internal sealed class EquipmentStoppageAndImpactWidgetResultSource : IWidgetResu
             new("equipmentCode", "Equipment Code", "string"),
             new("equipmentLabel", "Equipment", "string"),
             new("stoppedMinutes", "Stopped Minutes", "number"),
-            new("productionImpactMinutes", "Production Impact Minutes", "number")
+            new("productionImpactMinutes", "Production Impact Minutes", "number"),
+
+            // T-046-R1. The SAME two quantities under generic paired roles, so
+            // a renderer can draw them without knowing what a stoppage is.
+            // Nothing is recomputed and neither series is derived from the
+            // other; these are the identical values addressed by role.
+            new("category", "Category", "string"),
+            new("categoryLabel", "Category Label", "string"),
+            new("seriesALabel", "Series A", "string"),
+            new("seriesAValue", "Series A Value", "number"),
+            new("seriesBLabel", "Series B", "string"),
+            new("seriesBValue", "Series B Value", "number")
         };
     }
 
@@ -1557,7 +1568,10 @@ internal sealed class EquipmentStoppageAndImpactWidgetResultSource : IWidgetResu
             NativeWidgetResult.Row(
                 ("state", state), ("equipmentId", null), ("equipmentCode", null),
                 ("equipmentLabel", null), ("stoppedMinutes", null),
-                ("productionImpactMinutes", null))
+                ("productionImpactMinutes", null),
+                ("category", null), ("categoryLabel", null),
+                ("seriesALabel", null), ("seriesAValue", null),
+                ("seriesBLabel", null), ("seriesBValue", null))
         };
     }
 
@@ -1650,7 +1664,13 @@ internal sealed class EquipmentStoppageAndImpactWidgetResultSource : IWidgetResu
                 ("equipmentCode", x.EquipmentCode),
                 ("equipmentLabel", x.EquipmentName),
                 ("stoppedMinutes", x.Stopped),
-                ("productionImpactMinutes", x.Impact)))
+                ("productionImpactMinutes", x.Impact),
+                ("category", x.EquipmentCode),
+                ("categoryLabel", x.EquipmentName),
+                ("seriesALabel", "Stopped Minutes"),
+                ("seriesAValue", x.Stopped),
+                ("seriesBLabel", "Production Impact Minutes"),
+                ("seriesBValue", x.Impact)))
             .ToList();
 
         return NativeWidgetResult.Build(resolved, columns, rows, warnings);

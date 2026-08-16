@@ -22,6 +22,10 @@ public static class DashboardWidgetQuerySafetyRegistry
 
     private static readonly HashSet<string> SupportedChartTypes = new(StringComparer.OrdinalIgnoreCase)
     {
+        // T-046-R1. Heatmap was already accepted here; Combo was not, so a
+        // seeded paired widget would have been rejected by the validator
+        // before any grammar question was reached.
+        DashboardMetadataCodes.ChartTypes.Combo,
         DashboardMetadataCodes.ChartTypes.Kpi,
         DashboardMetadataCodes.ChartTypes.Bar,
         DashboardMetadataCodes.ChartTypes.Line,

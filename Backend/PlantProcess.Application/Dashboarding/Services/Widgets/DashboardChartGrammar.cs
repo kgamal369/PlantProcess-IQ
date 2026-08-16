@@ -137,8 +137,14 @@ public static class DashboardChartGrammar
             ChartAvailability.Implemented, true, true, true, true,
             "A trend where the area under the line carries the cumulative reading."),
 
+        // T-046-R1. Implemented alongside PairedSeriesChart. The Evaluate arm
+        // is deliberately UNCHANGED: Combo still requires a temporal axis for
+        // generic authoring, because a single categorical binding cannot
+        // supply two independent series. The paired equipment comparison
+        // reaches the renderer through a native source, which returns before
+        // the shape gate - exactly as Histogram, BoxPlot and StackedColumn do.
         new ChartTypeDefinition(DashboardMetadataCodes.ChartTypes.Combo, "Combo", "Trend",
-            ChartAvailability.NotYetAvailable, true, true, true, true,
+            ChartAvailability.Implemented, true, true, true, true,
             "Two measures on one temporal axis with independent scales."),
 
         new ChartTypeDefinition(DashboardMetadataCodes.ChartTypes.Pie, "Pie", "Share",
