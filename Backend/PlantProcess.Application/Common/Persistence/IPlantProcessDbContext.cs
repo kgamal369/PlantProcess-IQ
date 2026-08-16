@@ -62,6 +62,7 @@ public interface IPlantProcessDbContext
     // T-039. The M1 compatibility snapshot store behind IDefinitionService.
     // Immutable version rows only; the operational definitions stay above.
     DbSet<DefinitionVersion> DefinitionVersions { get; }
+    DbSet<ProductSpecification> ProductSpecifications { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

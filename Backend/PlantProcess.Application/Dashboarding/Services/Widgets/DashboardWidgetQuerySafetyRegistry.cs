@@ -54,6 +54,8 @@ public static class DashboardWidgetQuerySafetyRegistry
 
     private static readonly HashSet<string> SupportedMeasures = new(StringComparer.OrdinalIgnoreCase)
     {
+        DashboardMetadataCodes.Measures.DefectPositionDensity,
+        DashboardMetadataCodes.Measures.SpecificationLimits,
         DashboardMetadataCodes.Measures.RiskScoringProvenance,
         DashboardMetadataCodes.Measures.RiskScoreContributions,
         DashboardMetadataCodes.Measures.RiskScoreHistory,
@@ -107,6 +109,8 @@ public static class DashboardWidgetQuerySafetyRegistry
     // a future native source is a registry entry and not a validator edit.
     private static readonly HashSet<string> MeasuresProvidingOwnColumns = new(StringComparer.OrdinalIgnoreCase)
     {
+        DashboardMetadataCodes.Measures.DefectPositionDensity,
+        DashboardMetadataCodes.Measures.SpecificationLimits,
         DashboardMetadataCodes.Measures.RiskScoringProvenance,
         DashboardMetadataCodes.Measures.RiskScoreContributions,
         DashboardMetadataCodes.Measures.RiskScoreHistory,

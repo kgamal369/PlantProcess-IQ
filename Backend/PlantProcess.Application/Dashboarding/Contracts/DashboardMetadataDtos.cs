@@ -305,6 +305,11 @@ public static class DashboardMetadataCodes
         public const string RiskScoringProvenance = "riskScoringProvenance";
         public const string RiskScoreContributions = "riskScoreContributions";
         public const string RiskScoreHistory = "riskScoreHistory";
+
+        // T-047 final. Two questions the pages could not ask until T-044-R1
+        // materialised the facts behind them.
+        public const string DefectPositionDensity = "defectPositionDensity";
+        public const string SpecificationLimits = "specificationLimits";
     }
 }
 

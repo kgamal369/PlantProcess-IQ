@@ -83,6 +83,7 @@ public class PlantProcessDbContext : DbContext, IPlantProcessDbContext
     public DbSet<DashboardDefinition> DashboardDefinitions => Set<DashboardDefinition>();
     public DbSet<DashboardWidgetDefinition> DashboardWidgetDefinitions => Set<DashboardWidgetDefinition>();
     public DbSet<DefinitionVersion> DefinitionVersions => Set<DefinitionVersion>();
+    public DbSet<ProductSpecification> ProductSpecifications => Set<ProductSpecification>();
     
     
     public PlantProcessDbContext(DbContextOptions<PlantProcessDbContext> options)

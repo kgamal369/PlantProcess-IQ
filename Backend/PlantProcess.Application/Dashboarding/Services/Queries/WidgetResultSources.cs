@@ -2160,3 +2160,240 @@ internal sealed class RiskScoreHistoryWidgetResultSource : IWidgetResultSource
         };
     }
 }
+
+// ============================================================================
+// T-047 FINAL - THE LAST TWO PAGE BINDINGS.
+// ============================================================================
+
+/// <summary>
+/// THE QUESTION: where on the material do defects cluster?
+///
+/// BINNING IS A PROJECTION, NOT A NEW FACT. The canonical event keeps the
+/// longitudinal EXTENT and the transverse position exactly as recorded; this
+/// source places each defect in a cell for display and stores nothing. Change
+/// the bin count and the answer redraws - which is the mark of a projection
+/// rather than a measurement.
+///
+/// A defect occupies a length, and a cell is a point, so the midpoint of the
+/// extent is what selects the longitudinal bin. That is a display choice and
+/// it is said out loud rather than hidden: the extent itself is never
+/// overwritten, and any future renderer can use both ends.
+/// </summary>
+internal sealed class DefectPositionDensityWidgetResultSource : IWidgetResultSource
+{
+    public const string StatePublished = "POSITION_DENSITY_PUBLISHED";
+    public const string StateNoObservations = "NO_OBSERVATIONS_IN_SELECTION";
+    public const string StateSingleLocation = "INSUFFICIENT_POSITIONAL_SPREAD";
+    public const string StatePopulationTooLarge = "POPULATION_EXCEEDS_SAFE_LIMIT";
+
+    private readonly IPlantProcessDbContext _dbContext;
+
+    public DefectPositionDensityWidgetResultSource(IPlantProcessDbContext dbContext)
+    {
+        _dbContext = dbContext;
+    }
+
+    public string MeasureCode => DashboardMetadataCodes.Measures.DefectPositionDensity;
+
+    private static IReadOnlyList<DashboardWidgetColumnDto> Columns()
+    {
+        return new List<DashboardWidgetColumnDto>
+        {
+            new("state", "State", "string"),
+            new("x", "Along the material", "string"),
+            new("y", "Across the material", "string"),
+            new("value", "Defects", "number")
+        };
+    }
+
+    private static IReadOnlyList<IDictionary<string, object?>> StateOnly(string state)
+    {
+        return new List<IDictionary<string, object?>>
+        {
+            NativeWidgetResult.Row(("state", state), ("x", null), ("y", null), ("value", null))
+        };
+    }
+
+    public async Task<DashboardWidgetQueryResultDto> ExecuteAsync(
+        DashboardWidgetResolvedDto resolved,
+        DashboardWidgetQueryDto query,
+        IReadOnlyList<string> warnings,
+        CancellationToken cancellationToken)
+    {
+        var columns = Columns();
+
+        var events = _dbContext.QualityEvents.AsNoTracking()
+            .Where(x => !x.IsDeleted
+                     && x.PositionStartM != null
+                     && x.PositionEndM != null
+                     && x.WidthPositionMm != null);
+
+        if (resolved.FromUtc.HasValue)
+        {
+            var from = resolved.FromUtc.Value;
+            events = events.Where(x => x.EventAtUtc >= from);
+        }
+
+        if (resolved.ToUtc.HasValue)
+        {
+            var to = resolved.ToUtc.Value;
+            events = events.Where(x => x.EventAtUtc <= to);
+        }
+
+        var fetched = await events
+            .Select(x => new
+            {
+                Start = x.PositionStartM!.Value,
+                End = x.PositionEndM!.Value,
+                Across = x.WidthPositionMm!.Value
+            })
+            .Take(resolved.RawRowLimit + 1)
+            .ToListAsync(cancellationToken);
+
+        if (fetched.Count > resolved.RawRowLimit)
+            return NativeWidgetResult.Build(resolved, columns, StateOnly(StatePopulationTooLarge), warnings);
+
+        if (fetched.Count == 0)
+            return NativeWidgetResult.Build(resolved, columns, StateOnly(StateNoObservations), warnings);
+
+        var along = fetched.Select(x => (x.Start + x.End) / 2m).ToList();
+        var across = fetched.Select(x => x.Across).ToList();
+
+        var alongMin = along.Min(); var alongMax = along.Max();
+        var acrossMin = across.Min(); var acrossMax = across.Max();
+
+        if (alongMin == alongMax || acrossMin == acrossMax)
+        {
+            // Every defect at one coordinate on an axis is a line, not a map.
+            return NativeWidgetResult.Build(resolved, columns, StateOnly(StateSingleLocation), warnings);
+        }
+
+        // The same bin rule the distribution surfaces already use. No new
+        // algorithm is introduced for this page.
+        var bins = DistributionBinning.SuggestBins(fetched.Count);
+        var alongWidth = (alongMax - alongMin) / bins;
+        var acrossWidth = (acrossMax - acrossMin) / bins;
+
+        var counts = new Dictionary<(int X, int Y), int>();
+
+        for (var i = 0; i < fetched.Count; i++)
+        {
+            var xi = DistributionBinning.ClampIndex((int)Math.Floor((along[i] - alongMin) / alongWidth), bins);
+            var yi = DistributionBinning.ClampIndex((int)Math.Floor((across[i] - acrossMin) / acrossWidth), bins);
+
+            counts.TryGetValue((xi, yi), out var running);
+            counts[(xi, yi)] = running + 1;
+        }
+
+        static string Label(decimal lower, decimal upper)
+        {
+            return Math.Round(lower, 2).ToString(System.Globalization.CultureInfo.InvariantCulture)
+                 + "-" + Math.Round(upper, 2).ToString(System.Globalization.CultureInfo.InvariantCulture);
+        }
+
+        // ONLY OBSERVED CELLS ARE PUBLISHED. A cell with no defects is not
+        // emitted as a zero: the renderer draws it absent, and absent is the
+        // truth. Filling the grid would paint unobserved regions as measured
+        // and make a sparse map look complete.
+        var rows = counts
+            .OrderBy(c => c.Key.Y).ThenBy(c => c.Key.X)
+            .Select(c => NativeWidgetResult.Row(
+                ("state", StatePublished),
+                ("x", Label(alongMin + (alongWidth * c.Key.X), alongMin + (alongWidth * (c.Key.X + 1)))),
+                ("y", Label(acrossMin + (acrossWidth * c.Key.Y), acrossMin + (acrossWidth * (c.Key.Y + 1)))),
+                ("value", c.Value)))
+            .ToList();
+
+        return NativeWidgetResult.Build(resolved, columns, rows, warnings);
+    }
+}
+
+/// <summary>
+/// THE QUESTION: what limits apply to which product, and where do they come
+/// from?
+///
+/// Every value is read from ProductSpecification. Nothing is defaulted and no
+/// limit is written in code - a threshold typed into a frontend is a limit no
+/// plant ever agreed to.
+/// </summary>
+internal sealed class SpecificationLimitsWidgetResultSource : IWidgetResultSource
+{
+    public const string StatePublished = "SPECIFICATIONS_PUBLISHED";
+    public const string StateNoSpecifications = "NO_SPECIFICATIONS_RECORDED";
+
+    private readonly IPlantProcessDbContext _dbContext;
+
+    public SpecificationLimitsWidgetResultSource(IPlantProcessDbContext dbContext)
+    {
+        _dbContext = dbContext;
+    }
+
+    public string MeasureCode => DashboardMetadataCodes.Measures.SpecificationLimits;
+
+    public async Task<DashboardWidgetQueryResultDto> ExecuteAsync(
+        DashboardWidgetResolvedDto resolved,
+        DashboardWidgetQueryDto query,
+        IReadOnlyList<string> warnings,
+        CancellationToken cancellationToken)
+    {
+        var columns = new List<DashboardWidgetColumnDto>
+        {
+            new("state", "State", "string"),
+            new("gradeOrRecipe", "Product Scope", "string"),
+            new("parameterCode", "Parameter", "string"),
+            new("minValue", "Minimum", "number"),
+            new("targetValue", "Target", "number"),
+            new("maxValue", "Maximum", "number"),
+            new("unitOfMeasure", "Unit", "string"),
+            new("provenance", "Source", "string")
+        };
+
+        var specifications =
+            from specification in _dbContext.ProductSpecifications.AsNoTracking()
+            join parameter in _dbContext.ParameterDefinitions.AsNoTracking()
+                on specification.ParameterDefinitionId equals parameter.Id
+            where !specification.IsDeleted && !parameter.IsDeleted
+            select new
+            {
+                specification.GradeOrRecipe,
+                parameter.ParameterCode,
+                specification.MinValue,
+                specification.TargetValue,
+                specification.MaxValue,
+                specification.UnitOfMeasure,
+                specification.Provenance
+            };
+
+        var fetched = await specifications
+            .OrderBy(x => x.GradeOrRecipe).ThenBy(x => x.ParameterCode)
+            .Take(resolved.RawRowLimit + 1)
+            .ToListAsync(cancellationToken);
+
+        if (fetched.Count == 0)
+        {
+            return NativeWidgetResult.Build(resolved, columns, new List<IDictionary<string, object?>>
+            {
+                NativeWidgetResult.Row(
+                    ("state", StateNoSpecifications), ("gradeOrRecipe", null), ("parameterCode", null),
+                    ("minValue", null), ("targetValue", null), ("maxValue", null),
+                    ("unitOfMeasure", null), ("provenance", null))
+            }, warnings);
+        }
+
+        // A one-sided specification keeps its null. A missing floor is not a
+        // floor of zero.
+        var rows = fetched
+            .Select(x => NativeWidgetResult.Row(
+                ("state", StatePublished),
+                ("gradeOrRecipe", x.GradeOrRecipe),
+                ("parameterCode", x.ParameterCode),
+                ("minValue", x.MinValue),
+                ("targetValue", x.TargetValue),
+                ("maxValue", x.MaxValue),
+                ("unitOfMeasure", x.UnitOfMeasure),
+                ("provenance", x.Provenance)))
+            .ToList();
+
+        return NativeWidgetResult.Build(resolved, columns, rows, warnings);
+    }
+}
