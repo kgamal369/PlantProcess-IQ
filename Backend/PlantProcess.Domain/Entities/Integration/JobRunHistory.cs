@@ -39,6 +39,25 @@ public class JobRunHistory : BaseEntity
 
     public string? ResultSummaryJson { get; private set; }
 
+    /// <summary>T-064. The governed definition this run executed, if any.</summary>
+    public Guid? TargetDefinitionId { get; private set; }
+
+    /// <summary>T-064. The kind of the definition this run executed.</summary>
+    public string? TargetDefinitionKind { get; private set; }
+
+    /// <summary>
+    /// T-064. THE VERSION THAT ACTUALLY RAN.
+    ///
+    /// Not the version the job was configured with - the one resolution returned.
+    /// Under the published-version policy those are different facts, and this is
+    /// the one that answers "what did it do" a month later.
+    /// </summary>
+    public int? TargetDefinitionVersion { get; private set; }
+
+    /// <summary>T-064. The policy that produced the resolved version.</summary>
+    public JobTargetVersionPolicy? TargetVersionPolicy { get; private set; }
+
+
     private JobRunHistory()
     {
     }
@@ -115,6 +134,35 @@ public class JobRunHistory : BaseEntity
             : failureReason.Trim();
         RunMessage = FailureReason;
         ResultSummaryJson = CleanJson(resultSummaryJson);
+        MarkAsUpdated();
+    }
+
+    /// <summary>
+    /// T-064. Records the target and the version resolution actually returned.
+    /// Called once, before the work runs, so a run that fails still says which
+    /// version it was attempting.
+    /// </summary>
+    public void RecordResolvedTarget(
+        string targetDefinitionKind,
+        Guid targetDefinitionId,
+        int resolvedVersion,
+        JobTargetVersionPolicy policyApplied)
+    {
+        if (string.IsNullOrWhiteSpace(targetDefinitionKind))
+            throw new ArgumentException("Target definition kind is required.", nameof(targetDefinitionKind));
+
+        if (targetDefinitionId == Guid.Empty)
+            throw new ArgumentException("Target definition ID is required.", nameof(targetDefinitionId));
+
+        if (resolvedVersion <= 0)
+            throw new ArgumentOutOfRangeException(
+                nameof(resolvedVersion), "A resolved version number must be greater than zero.");
+
+        TargetDefinitionKind = targetDefinitionKind.Trim();
+        TargetDefinitionId = targetDefinitionId;
+        TargetDefinitionVersion = resolvedVersion;
+        TargetVersionPolicy = policyApplied;
+
         MarkAsUpdated();
     }
 

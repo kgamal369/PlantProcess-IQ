@@ -74,6 +74,10 @@ public static class DependencyInjection
         services.AddScoped<IMappingDefinitionService, MappingDefinitionService>();
         services.AddScoped<IStagingRecordService, StagingRecordService>();
         services.AddScoped<IMappingExecutionService, MappingExecutionService>();
+        services.AddScoped<Jobs.Targeting.IJobTargetClassPolicy, Jobs.Targeting.DeclaredJobTargetClassPolicy>();
+        services.AddScoped<Jobs.Targeting.IJobTargetLookup, Jobs.Targeting.JobTargetLookup>();
+        services.AddScoped<Jobs.Targeting.IJobTargetResolver, Jobs.Targeting.JobTargetResolver>();
+
         services.AddScoped<IImportWorkflowService, ImportWorkflowService>();
         services.AddScoped<IImportBatchQueueProcessorService, ImportBatchQueueProcessorService>();
         services.AddScoped<IConnectorConfigurationService, ConnectorConfigurationService>();

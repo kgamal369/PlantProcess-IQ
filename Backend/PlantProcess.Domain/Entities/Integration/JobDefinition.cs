@@ -65,6 +65,38 @@ public class JobDefinition : BaseEntity
 
     public string? Description { get; private set; }
 
+    /// <summary>
+    /// T-064. WHICH GOVERNED DEFINITION THIS JOB EXECUTES.
+    ///
+    /// Distinct from TargetId above, which is an untyped business pointer with no
+    /// version, no governance and no refusal behaviour. That field stays for
+    /// backward compatibility and is not the target semantics; this one is.
+    ///
+    /// T-089/T-090 establish the canonical definition-store authority and T-106
+    /// owns the physical convergence - the foreign key to definition_store(id) and
+    /// its final constraints. Until then the identity is resolved through
+    /// IDefinitionService, and no foreign key points at storage that is scheduled
+    /// for replacement.
+    /// </summary>
+    public Guid? TargetDefinitionId { get; private set; }
+
+    /// <summary>
+    /// T-064. The kind of the targeted definition, held as text because the kind
+    /// vocabulary lives in the application layer and because a renumbered enum must
+    /// never silently reinterpret a job that was stored years earlier.
+    /// </summary>
+    public string? TargetDefinitionKind { get; private set; }
+
+    /// <summary>T-064. Whether the job follows the published version or one pinned number.</summary>
+    public JobTargetVersionPolicy? TargetVersionPolicy { get; private set; }
+
+    /// <summary>T-064. The pinned version number. Present under Pinned and absent otherwise.</summary>
+    public int? TargetDefinitionVersion { get; private set; }
+
+    /// <summary>True when this job can say what it executes.</summary>
+    public bool HasTargetDefinition => TargetDefinitionId.HasValue;
+
+
     private JobDefinition()
     {
     }
@@ -217,6 +249,63 @@ public class JobDefinition : BaseEntity
             return null;
 
         return (long)duration.TotalMilliseconds;
+    }
+
+    /// <summary>
+    /// T-064. Declares what this job executes.
+    ///
+    /// The guards here are structural, not policy: a pinned target without a
+    /// version, or a published-version target carrying one, are states in which
+    /// two fields disagree about what runs, and no caller downstream should have
+    /// to decide which to believe. Whether a job CLASS requires a target at all,
+    /// and which kinds it may run, are JB01 and JB02 - governed refusals that
+    /// belong to the application layer, not to this entity.
+    /// </summary>
+    public void AssignTargetDefinition(
+        string targetDefinitionKind,
+        Guid targetDefinitionId,
+        JobTargetVersionPolicy versionPolicy,
+        int? pinnedVersion = null)
+    {
+        if (string.IsNullOrWhiteSpace(targetDefinitionKind))
+            throw new ArgumentException("Target definition kind is required.", nameof(targetDefinitionKind));
+
+        if (targetDefinitionId == Guid.Empty)
+            throw new ArgumentException("Target definition ID is required.", nameof(targetDefinitionId));
+
+        if (versionPolicy == JobTargetVersionPolicy.Pinned)
+        {
+            if (!pinnedVersion.HasValue)
+                throw new ArgumentException(
+                    "A pinned target requires a version number.", nameof(pinnedVersion));
+
+            if (pinnedVersion.Value <= 0)
+                throw new ArgumentOutOfRangeException(
+                    nameof(pinnedVersion), "A pinned version number must be greater than zero.");
+        }
+        else if (pinnedVersion.HasValue)
+        {
+            throw new ArgumentException(
+                "A job that follows the published version cannot also pin one.", nameof(pinnedVersion));
+        }
+
+        TargetDefinitionKind = targetDefinitionKind.Trim();
+        TargetDefinitionId = targetDefinitionId;
+        TargetVersionPolicy = versionPolicy;
+        TargetDefinitionVersion = pinnedVersion;
+
+        MarkAsUpdated();
+    }
+
+    /// <summary>T-064. Removes the target. All four fields clear together or none do.</summary>
+    public void ClearTargetDefinition()
+    {
+        TargetDefinitionId = null;
+        TargetDefinitionKind = null;
+        TargetVersionPolicy = null;
+        TargetDefinitionVersion = null;
+
+        MarkAsUpdated();
     }
 
     private static string NormalizeCode(string value)
