@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using Npgsql;
 using PlantProcess.Application.Assistant;
 using PlantProcess.Application.Dashboarding.Contracts;
@@ -29,11 +29,16 @@ public sealed class WidgetResultChunkProducer
 
     private readonly NpgsqlDataSource _dataSource;
     private readonly IDashboardWidgetQueryService _queryService;
+    private readonly IWidgetResultEvidenceWriter _evidenceWriter;
 
-    public WidgetResultChunkProducer(NpgsqlDataSource dataSource, IDashboardWidgetQueryService queryService)
+    public WidgetResultChunkProducer(
+        NpgsqlDataSource dataSource,
+        IDashboardWidgetQueryService queryService,
+        IWidgetResultEvidenceWriter evidenceWriter)
     {
         _dataSource = dataSource;
         _queryService = queryService;
+        _evidenceWriter = evidenceWriter;
     }
 
     public async Task<IReadOnlyList<RetrievedChunk>> BuildAsync(Guid tenantId, CancellationToken ct)
@@ -78,15 +83,18 @@ public sealed class WidgetResultChunkProducer
             var columns = result.Columns.Select(column => column.Code).ToList();
             var normalised = WidgetResultEvidence.Normalise(columns, result.Rows);
 
-            const string filterContextJson = "{}";
-            var queryFingerprint = WidgetResultEvidence.QueryFingerprint(identity, filterContextJson);
-            var resultFingerprint = WidgetResultEvidence.ResultFingerprint(queryFingerprint, normalised);
-
-            var resultJson = WidgetResultEvidenceJson.Serialize(identity, normalised);
-
-            var evidenceId = await PersistAsync(
-                conn, tenantId, identity, queryFingerprint, resultFingerprint,
-                filterContextJson, normalised.ObservationCountTotal, resultJson, result.GeneratedAtUtc, ct);
+            // PR-050-01. The reindex path keeps its empty filter context: this
+            // producer genuinely executes each widget without dashboard filters,
+            // so "{}" is the true context here and the evidence identity of
+            // every already-written row is preserved.
+            var evidenceId = await _evidenceWriter.WriteAsync(
+                new WidgetResultEvidenceWriteRequest(
+                    tenantId,
+                    identity,
+                    normalised,
+                    "{}",
+                    result.GeneratedAtUtc),
+                ct);
 
             if (evidenceId is null) continue;
 
@@ -148,66 +156,6 @@ public sealed class WidgetResultChunkProducer
         }
 
         return rows;
-    }
-
-    /// <summary>
-    /// Writes the snapshot, or finds the one an earlier identical run already
-    /// wrote. The unique constraint on (tenant_id, result_fingerprint) is what
-    /// keeps a repeated reindex from changing the evidence identity, and the
-    /// fingerprint binds the widget's semantics, so a definition change writes a
-    /// new row rather than silently reusing the old one.
-    ///
-    /// NOTE ON THE COLUMN NAME: population_count stores the total of the result's
-    /// own observationCount column, or zero when the result does not supply one.
-    /// The column name predates that correction and is recorded debt, not a
-    /// claim: nothing reads it as a population.
-    /// </summary>
-    private static async Task<Guid?> PersistAsync(
-        NpgsqlConnection conn,
-        Guid tenantId,
-        WidgetEvidenceIdentity identity,
-        string queryFingerprint,
-        string resultFingerprint,
-        string filterContextJson,
-        int observationCountTotal,
-        string resultJson,
-        DateTime generatedAtUtc,
-        CancellationToken ct)
-    {
-        await using (var insert = conn.CreateCommand())
-        {
-            insert.CommandText =
-                "INSERT INTO canon.assistant_widget_result " +
-                "(tenant_id, page_code, widget_code, widget_definition_id, query_fingerprint, " +
-                " generated_at_utc, filter_context_json, population_count, result_json, result_fingerprint) " +
-                "VALUES (@tenant, @page, @widget, @definition, @queryFingerprint, " +
-                "        @generated, @filters::jsonb, @observations, @result::jsonb, @resultFingerprint) " +
-                "ON CONFLICT (tenant_id, result_fingerprint) DO NOTHING " +
-                "RETURNING id";
-
-            insert.Parameters.AddWithValue("tenant", tenantId);
-            insert.Parameters.AddWithValue("page", identity.PageCode);
-            insert.Parameters.AddWithValue("widget", identity.WidgetCode);
-            insert.Parameters.AddWithValue("definition", (object?)identity.WidgetDefinitionId ?? DBNull.Value);
-            insert.Parameters.AddWithValue("queryFingerprint", queryFingerprint);
-            insert.Parameters.AddWithValue("generated", generatedAtUtc);
-            insert.Parameters.AddWithValue("filters", filterContextJson);
-            insert.Parameters.AddWithValue("observations", observationCountTotal);
-            insert.Parameters.AddWithValue("result", resultJson);
-            insert.Parameters.AddWithValue("resultFingerprint", resultFingerprint);
-
-            var inserted = await insert.ExecuteScalarAsync(ct);
-            if (inserted is Guid insertedId) return insertedId;
-        }
-
-        await using var existing = conn.CreateCommand();
-        existing.CommandText =
-            "SELECT id FROM canon.assistant_widget_result " +
-            "WHERE tenant_id = @tenant AND result_fingerprint = @resultFingerprint";
-        existing.Parameters.AddWithValue("tenant", tenantId);
-        existing.Parameters.AddWithValue("resultFingerprint", resultFingerprint);
-
-        return await existing.ExecuteScalarAsync(ct) is Guid existingId ? existingId : null;
     }
 
     private static async Task<WidgetResultEvidenceSnapshot?> ReadBackAsync(

@@ -1,4 +1,4 @@
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using PlantProcess.Application.Assistant;
 using PlantProcess.Application.Top15.Phase34;
 
@@ -41,6 +41,11 @@ public static class AssistantInfrastructureExtensions
         // resolver proves a handle exists and carries no tenant, this returns
         // content and therefore must carry one.
         services.AddScoped<IWidgetResultEvidenceReader, NpgsqlWidgetResultEvidenceReader>();
+
+        // PR-050-01. The T-073 write, extracted from the reindex producer so the
+        // dashboard query path can reuse the SAME persistence authority. Two
+        // consumers, one writer, one determinism rule.
+        services.AddScoped<PlantProcess.Application.Provenance.IWidgetResultEvidenceWriter, NpgsqlWidgetResultEvidenceWriter>();
 
         // T-074: the parameter registry, sole authority for quantity semantics.
         services.AddScoped<IParameterQuantityRegistry, NpgsqlParameterQuantityRegistry>();

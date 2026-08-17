@@ -1,4 +1,4 @@
-namespace PlantProcess.Application.Dashboarding.Contracts;
+﻿namespace PlantProcess.Application.Dashboarding.Contracts;
 
 public sealed record DashboardMetadataDto(
     DateTime GeneratedAtUtc,
@@ -106,6 +106,20 @@ public sealed record DashboardQuerySafetyLimitsDto(
     int DefaultLookbackDays,
     int AbsoluteLookbackDays);
 
+/// <summary>
+/// PR-050-01. Who is asking, in the installation's own vocabulary.
+///
+/// T-073 hashes the page and widget codes into the evidence fingerprint and
+/// renders them into the evidence sentence, so an execution that wants evidence
+/// must be able to name itself. It is optional on the request because an
+/// ordinary render does not need evidence and must not be forced to invent an
+/// identity to get a chart back.
+/// </summary>
+public sealed record DashboardWidgetExecutionIdentityDto(
+    string? PageCode,
+    string? WidgetCode,
+    Guid? WidgetDefinitionId);
+
 public sealed record DashboardWidgetQueryDto(
     string? WidgetType,
     string? ChartType,
@@ -113,7 +127,8 @@ public sealed record DashboardWidgetQueryDto(
     string? MeasureCode,
     string? ParameterCode,
     DashboardWidgetFiltersDto? Filters,
-    DashboardWidgetQueryOptionsDto? Options);
+    DashboardWidgetQueryOptionsDto? Options,
+    DashboardWidgetExecutionIdentityDto? ExecutionIdentity = null);
 
 public sealed record DashboardWidgetFiltersDto(
     Guid? SiteId,
@@ -133,14 +148,64 @@ public sealed record DashboardWidgetQueryOptionsDto(
     int? MaxRows,
     int? RawRowLimit,
     string? SortDirection,
-    bool? IncludeWarnings);
+    bool? IncludeWarnings,
+    // PR-050-01. Evidence persistence is OPT-IN. An ordinary dashboard render
+    // is a read: it must not turn a refresh, a filter move or an auto-refresh
+    // into a row in the evidence store. Only a caller that actually wants
+    // evidence - a drill-down - asks for it.
+    bool? IncludeExecutionEvidence = null);
+
+/// <summary>
+/// PR-050-01. The wire shape of the EXISTING provenance handle.
+///
+/// This is not a second provenance system and not a dashboard-local evidence
+/// type. ProvenanceHandle carries its kind as an enum; every surface that
+/// already emits a handle emits Kind.ToString(), and the frontend type has
+/// always been { kind, id, detail? }. This record states that shape once
+/// instead of a ninth anonymous object.
+/// </summary>
+public sealed record ProvenanceHandleRefDto(
+    string Kind,
+    string Id,
+    string? Detail = null);
+
+/// <summary>
+/// PR-050-01. What ONE returned row represents - the population predicate
+/// behind the point, not the point's current number.
+///
+/// RowFingerprint is derived from semantic identity only: effective filter
+/// context, dimension bindings and values, measure and parameter. It
+/// deliberately excludes the aggregate value, the rendered label, the
+/// generation time and the row's position, so re-ordering the same result
+/// cannot invent new populations and a changed number cannot silently become a
+/// changed population.
+///
+/// PopulationCount is null when the executing source cannot truthfully supply
+/// one. It is NEVER the number of returned rows: five bars do not mean five of
+/// anything.
+/// </summary>
+public sealed record DashboardWidgetRowPopulationDto(
+    int RowIndex,
+    string? RowFingerprint,
+    IReadOnlyDictionary<string, string?> DimensionBindings,
+    string MeasureCode,
+    string? ParameterCode,
+    string FilterContextFingerprint,
+    int? PopulationCount);
 
 public sealed record DashboardWidgetQueryResultDto(
     DateTime GeneratedAtUtc,
     DashboardWidgetResolvedDto Widget,
     IReadOnlyList<DashboardWidgetColumnDto> Columns,
     IReadOnlyList<IDictionary<string, object?>> Rows,
-    IReadOnlyList<string> Warnings);
+    IReadOnlyList<string> Warnings,
+    // PR-050-01. Execution-level, never row-level. It identifies the exact
+    // widget execution that produced these values. It is NOT physical row
+    // lineage and no consumer may present it as such.
+    ProvenanceHandleRefDto? ExecutionEvidenceHandle = null,
+    // PR-050-01. One descriptor per returned row, same order as Rows. Additive
+    // metadata beside the rows, never inside them, so chart data stays clean.
+    IReadOnlyList<DashboardWidgetRowPopulationDto>? RowPopulations = null);
 
 public sealed record DashboardWidgetResolvedDto(
     string WidgetType,

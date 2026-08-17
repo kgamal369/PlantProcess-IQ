@@ -1,10 +1,13 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using PlantProcess.Application.Analytics.Advanced;
 using PlantProcess.Application.Dashboarding.Contracts;
 using PlantProcess.Application.Common.Persistence;
 using PlantProcess.Application.Common.Results;
 using PlantProcess.Application.Dashboarding.Interfaces;
 using PlantProcess.Application.Dashboarding.Services.Widgets;
+using PlantProcess.Application.Assistant;
+using PlantProcess.Application.Provenance;
+using PlantProcess.Application.Security.Tenancy;
 
 
 namespace PlantProcess.Application.Dashboarding.Services.Queries;
@@ -20,14 +23,25 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
     // an architecture test asserts exactly that.
     private readonly IReadOnlyDictionary<string, IWidgetResultSource> _nativeSources;
 
+    // PR-050-01. Evidence production is a CAPABILITY, not a precondition of
+    // answering a widget query. Both are optional so that a composition without
+    // a tenant or without an evidence store still executes queries and simply
+    // reports that evidence is unavailable, rather than failing to construct.
+    private readonly ITenantAccessor? _tenantAccessor;
+    private readonly IWidgetResultEvidenceWriter? _evidenceWriter;
+
     public DashboardWidgetQueryService(
         IPlantProcessDbContext dbContext,
         IDashboardWidgetValidationService validationService,
         IAnalysisReadinessService analysisReadinessService,
-        IAnalysisOutcomeTargetResolver analysisOutcomeTargetResolver)
+        IAnalysisOutcomeTargetResolver analysisOutcomeTargetResolver,
+        ITenantAccessor? tenantAccessor = null,
+        IWidgetResultEvidenceWriter? evidenceWriter = null)
     {
         _dbContext = dbContext;
         _validationService = validationService;
+        _tenantAccessor = tenantAccessor;
+        _evidenceWriter = evidenceWriter;
 
         var sources = new IWidgetResultSource[]
         {
@@ -93,8 +107,16 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
         // branch reaches this line.
         if (_nativeSources.TryGetValue(resolved.MeasureCode, out var nativeSource))
         {
+            // PR-050-01. The native source still answers in full and still owns
+            // its own envelope - nothing about its data semantics changes here.
+            // What changed is that its answer no longer leaves the method by a
+            // different door: both classes now converge on one post-processing
+            // step, so a Class-2 widget is not a widget whose points cannot be
+            // described.
+            var nativeResult = await nativeSource.ExecuteAsync(resolved, query, warnings, cancellationToken);
+
             return ApplicationResult<DashboardWidgetQueryResultDto>.Success(
-                await nativeSource.ExecuteAsync(resolved, query, warnings, cancellationToken));
+                await DecorateResultMetadataAsync(resolved, query, nativeResult, cancellationToken));
         }
 
         IReadOnlyList<DashboardAggregateRow> rows;
@@ -240,7 +262,116 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
         var dimensionLabels = await LoadDimensionLabelsAsync(resolved.DimensionCode, cancellationToken);
 
         return ApplicationResult<DashboardWidgetQueryResultDto>.Success(
-            BuildResult(resolved, rows, warnings, dimensionLabels));
+            await DecorateResultMetadataAsync(
+                resolved,
+                query,
+                BuildResult(resolved, rows, warnings, dimensionLabels),
+                cancellationToken));
+    }
+
+    /// <summary>
+    /// PR-050-01. The ONE post-processing step every executed widget passes
+    /// through, whichever engine produced it.
+    ///
+    /// It attaches two different facts and never blurs them. Row population
+    /// descriptors say what each point REPRESENTS and are always computed,
+    /// because describing a point costs nothing and writes nothing. The
+    /// execution evidence handle says which exact execution produced the
+    /// values, and is produced ONLY when the caller asked for it.
+    ///
+    /// Evidence is opt-in because an ordinary render is a read. A dashboard
+    /// that wrote an evidence row on every refresh, filter move and auto-
+    /// refresh would turn an evidence store into an event log within a day.
+    /// </summary>
+    private async Task<DashboardWidgetQueryResultDto> DecorateResultMetadataAsync(
+        DashboardWidgetResolvedDto resolved,
+        DashboardWidgetQueryDto query,
+        DashboardWidgetQueryResultDto result,
+        CancellationToken cancellationToken)
+    {
+        var canonicalFilterJson = DashboardPopulationDescriptor.CanonicaliseFilterContext(query.Filters);
+
+        var decorated = result with
+        {
+            RowPopulations = DashboardPopulationDescriptor.Describe(
+                resolved, result.Columns, result.Rows, canonicalFilterJson)
+        };
+
+        if (query.Options?.IncludeExecutionEvidence != true) return decorated;
+
+        var warnings = decorated.Warnings.ToList();
+
+        var pageCode = query.ExecutionIdentity?.PageCode;
+        var widgetCode = query.ExecutionIdentity?.WidgetCode;
+
+        // An execution that cannot name its page and widget has no truthful
+        // evidence identity: T-073 hashes both into the fingerprint and renders
+        // both into the evidence sentence. Writing blanks would produce a record
+        // reading "On page , widget  shows ..." and would poison the retrieval
+        // corpus. The values are still returned; only the handle is withheld.
+        if (string.IsNullOrWhiteSpace(pageCode) || string.IsNullOrWhiteSpace(widgetCode))
+        {
+            warnings.Add(
+                "execution_evidence_unavailable: execution evidence was requested but the " +
+                "execution identity is incomplete. A page code and a widget code are both " +
+                "required, because the evidence record is identified by them. The query values " +
+                "are returned; no evidence record was written and no handle is offered.");
+
+            return decorated with { Warnings = warnings };
+        }
+
+        if (_evidenceWriter is null || _tenantAccessor is null || !_tenantAccessor.TryGetTenantId(out var tenantId))
+        {
+            warnings.Add(
+                "execution_evidence_unavailable: execution evidence was requested but this " +
+                "composition has no evidence writer or no resolvable tenant. The query values " +
+                "are returned; no evidence record was written and no handle is offered.");
+
+            return decorated with { Warnings = warnings };
+        }
+
+        var identity = new WidgetEvidenceIdentity(
+            pageCode!,
+            widgetCode!,
+            query.ExecutionIdentity?.WidgetDefinitionId,
+            resolved.WidgetType,
+            resolved.ChartType,
+            resolved.DimensionCode,
+            resolved.MeasureCode,
+            resolved.ParameterCode);
+
+        // Normalisation and both fingerprints stay with T-073. This path supplies
+        // the REAL filter context where the reindex path supplies none, which is
+        // exactly the difference that makes a filtered execution resolvable.
+        var normalised = WidgetResultEvidence.Normalise(
+            decorated.Columns.Select(column => column.Code).ToList(),
+            decorated.Rows);
+
+        var evidenceId = await _evidenceWriter.WriteAsync(
+            new WidgetResultEvidenceWriteRequest(
+                tenantId,
+                identity,
+                normalised,
+                canonicalFilterJson,
+                decorated.GeneratedAtUtc),
+            cancellationToken);
+
+        if (evidenceId is null)
+        {
+            warnings.Add(
+                "execution_evidence_unavailable: the evidence store neither wrote nor returned " +
+                "a snapshot for this execution. The query values are returned; no handle is offered.");
+
+            return decorated with { Warnings = warnings };
+        }
+
+        return decorated with
+        {
+            Warnings = warnings,
+            ExecutionEvidenceHandle = new ProvenanceHandleRefDto(
+                ProvenanceKind.WidgetResult.ToString(),
+                evidenceId.Value.ToString())
+        };
     }
 
     /// <summary>
