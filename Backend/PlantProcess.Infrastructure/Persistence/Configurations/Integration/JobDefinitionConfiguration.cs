@@ -106,6 +106,13 @@ public sealed class JobDefinitionConfiguration : IEntityTypeConfiguration<JobDef
         builder.Property(x => x.TargetDefinitionVersion)
             .HasColumnName("target_definition_version");
 
+        // jsonb, not text. The payload is validated by the database as well as by
+        // the entity, so a row written by anything other than this application
+        // still cannot carry malformed parameters.
+        builder.Property(x => x.TargetParametersJson)
+            .HasColumnName("target_parameters")
+            .HasColumnType("jsonb");
+
         builder.HasIndex(x => new { x.TargetDefinitionKind, x.TargetDefinitionId });
 
         builder.HasIndex(x => x.JobType);

@@ -184,7 +184,8 @@ public sealed class JobTargetResolver : IJobTargetResolver
                     Kind = target.Kind,
                     DefinitionId = target.DefinitionId,
                     ResolvedVersion = pinned,
-                    PolicyApplied = JobTargetVersionPolicy.Pinned
+                    PolicyApplied = JobTargetVersionPolicy.Pinned,
+                    ParametersJson = target.ParametersJson
                 }));
         }
 
@@ -222,7 +223,8 @@ public sealed class JobTargetResolver : IJobTargetResolver
                 Kind = target.Kind,
                 DefinitionId = target.DefinitionId,
                 ResolvedVersion = published[0].VersionNumber,
-                PolicyApplied = JobTargetVersionPolicy.CurrentPublished
+                PolicyApplied = JobTargetVersionPolicy.CurrentPublished,
+                ParametersJson = target.ParametersJson
             }));
     }
 

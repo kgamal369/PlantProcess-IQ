@@ -94,6 +94,17 @@ public class JobDefinition : BaseEntity
     public int? TargetDefinitionVersion { get; private set; }
 
     /// <summary>True when this job can say what it executes.</summary>
+    /// <summary>
+    /// T-064. The parameters configured for FUTURE executions of this job.
+    ///
+    /// Not what any past run used. JobRunHistory snapshots that separately, so
+    /// editing this value cannot rewrite what a completed run did.
+    ///
+    /// null and "{}" are different statements and both survive persistence.
+    /// </summary>
+    public string? TargetParametersJson { get; private set; }
+
+    /// <summary>True when this job can say what it executes.</summary>
     public bool HasTargetDefinition => TargetDefinitionId.HasValue;
 
 
@@ -265,7 +276,8 @@ public class JobDefinition : BaseEntity
         string targetDefinitionKind,
         Guid targetDefinitionId,
         JobTargetVersionPolicy versionPolicy,
-        int? pinnedVersion = null)
+        int? pinnedVersion = null,
+        string? targetParametersJson = null)
     {
         if (string.IsNullOrWhiteSpace(targetDefinitionKind))
             throw new ArgumentException("Target definition kind is required.", nameof(targetDefinitionKind));
@@ -289,10 +301,20 @@ public class JobDefinition : BaseEntity
                 "A job that follows the published version cannot also pin one.", nameof(pinnedVersion));
         }
 
+        // Validated before ANY field is written.
+        //
+        // Anchored after the assignments, this refusal left the job carrying the
+        // kind, the identity and the policy it had just rejected. A refusal that
+        // half-applies is worse than no refusal, because the object looks
+        // configured. Assert.False(job.HasTargetDefinition) found it; review did not.
+        string? parameters = JobTargetParameters.Require(
+            targetParametersJson, nameof(targetParametersJson));
+
         TargetDefinitionKind = targetDefinitionKind.Trim();
         TargetDefinitionId = targetDefinitionId;
         TargetVersionPolicy = versionPolicy;
         TargetDefinitionVersion = pinnedVersion;
+        TargetParametersJson = parameters;
 
         MarkAsUpdated();
     }
@@ -304,6 +326,7 @@ public class JobDefinition : BaseEntity
         TargetDefinitionKind = null;
         TargetVersionPolicy = null;
         TargetDefinitionVersion = null;
+        TargetParametersJson = null;
 
         MarkAsUpdated();
     }

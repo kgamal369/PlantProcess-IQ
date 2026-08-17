@@ -491,7 +491,174 @@ public sealed class JobTargetResolverTests
             nameof(DefinitionKind.Analysis), TargetId, 0, JobTargetVersionPolicy.Pinned));
     }
 
+    // --- target parameters ----------------------------------------------------
+
+    [Fact]
+    public void Absent_parameters_stay_absent_and_are_never_an_empty_object()
+    {
+        Assert.Null(JobTargetParameters.Normalise(null));
+        Assert.Null(JobTargetParameters.Normalise(string.Empty));
+        Assert.Null(JobTargetParameters.Normalise("   "));
+
+        // The distinction the contract turns on.
+        Assert.Equal("{}", JobTargetParameters.Normalise("{}"));
+        Assert.NotEqual(JobTargetParameters.Normalise("{}"), JobTargetParameters.Normalise(null));
+    }
+
+    [Fact]
+    public void Malformed_parameters_are_refused_before_persistence()
+    {
+        Assert.False(JobTargetParameters.IsValid("{not json"));
+        Assert.True(JobTargetParameters.IsValid(null));
+        Assert.True(JobTargetParameters.IsValid("{\"window\":7}"));
+
+        JobDefinition job = NewJob();
+
+        Assert.Throws<ArgumentException>(() => job.AssignTargetDefinition(
+            nameof(DefinitionKind.Analysis), TargetId, JobTargetVersionPolicy.Pinned, 2, "{not json"));
+
+        // The refusal leaves no half-written target behind.
+        Assert.Null(job.TargetParametersJson);
+        Assert.False(job.HasTargetDefinition);
+    }
+
+    [Fact]
+    public void Valid_parameters_round_trip_exactly_as_supplied()
+    {
+        JobDefinition job = NewJob();
+        const string payload = "{\"window_days\":7,\"threshold\":0.82}";
+
+        job.AssignTargetDefinition(
+            nameof(DefinitionKind.Analysis), TargetId, JobTargetVersionPolicy.Pinned, 2, payload);
+
+        Assert.Equal(payload, job.TargetParametersJson);
+
+        job.ClearTargetDefinition();
+        Assert.Null(job.TargetParametersJson);
+    }
+
+    [Fact]
+    public async Task A_pinned_target_carries_its_parameters_into_the_resolution()
+    {
+        const string payload = "{\"window_days\":7}";
+
+        ApplicationResult<JobTargetResolution> result = await ResolverWith(
+            Version(1, published: false),
+            Version(2, published: true))
+            .ResolveAsync(
+                JobDefinitionType.Custom,
+                JobTargetReference.Pinned(DefinitionKind.Analysis, TargetId, 2, payload),
+                CancellationToken.None);
+
+        Assert.True(result.IsSuccess, result.Error?.Message);
+        Assert.Equal(payload, result.Value!.Target!.ParametersJson);
+    }
+
+    [Fact]
+    public async Task A_published_version_target_carries_its_parameters_into_the_resolution()
+    {
+        ApplicationResult<JobTargetResolution> result = await ResolverWith(
+            Version(1, published: true))
+            .ResolveAsync(
+                JobDefinitionType.Custom,
+                JobTargetReference.CurrentPublished(DefinitionKind.Analysis, TargetId, "{}"),
+                CancellationToken.None);
+
+        Assert.True(result.IsSuccess, result.Error?.Message);
+        Assert.Equal("{}", result.Value!.Target!.ParametersJson);
+    }
+
+    [Fact]
+    public async Task A_reference_carrying_malformed_parameters_is_refused()
+    {
+        JobTargetReference reference = new()
+        {
+            Kind = DefinitionKind.Analysis,
+            DefinitionId = TargetId,
+            VersionPolicy = JobTargetVersionPolicy.CurrentPublished,
+            ParametersJson = "{broken"
+        };
+
+        Assert.NotNull(reference.Validate());
+
+        ApplicationResult<JobTargetResolution> result = await ResolverWith(Version(1, published: true))
+            .ResolveAsync(JobDefinitionType.Custom, reference, CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+    }
+
+    [Fact]
+    public void The_run_history_records_the_parameters_actually_used()
+    {
+        JobRunHistory run = NewRun();
+        const string payload = "{\"window_days\":7}";
+
+        run.RecordResolvedTarget(
+            nameof(DefinitionKind.Analysis), TargetId, 2,
+            JobTargetVersionPolicy.CurrentPublished, payload);
+
+        Assert.Equal(payload, run.TargetParametersJson);
+        Assert.Equal(2, run.TargetDefinitionVersion);
+    }
+
+    [Fact]
+    public void Editing_the_definition_afterwards_cannot_rewrite_a_recorded_run()
+    {
+        // The reproducibility claim, stated as an experiment rather than a comment.
+        JobDefinition job = NewJob();
+        job.AssignTargetDefinition(
+            nameof(DefinitionKind.Analysis), TargetId, JobTargetVersionPolicy.Pinned, 2,
+            "{\"window_days\":7}");
+
+        JobRunHistory run = NewRun();
+        run.RecordResolvedTarget(
+            job.TargetDefinitionKind!, job.TargetDefinitionId!.Value,
+            job.TargetDefinitionVersion!.Value, job.TargetVersionPolicy!.Value,
+            job.TargetParametersJson);
+
+        job.AssignTargetDefinition(
+            nameof(DefinitionKind.Analysis), TargetId, JobTargetVersionPolicy.Pinned, 9,
+            "{\"window_days\":90}");
+
+        Assert.Equal("{\"window_days\":7}", run.TargetParametersJson);
+        Assert.Equal(2, run.TargetDefinitionVersion);
+        Assert.Equal("{\"window_days\":90}", job.TargetParametersJson);
+        Assert.Equal(9, job.TargetDefinitionVersion);
+    }
+
+    [Fact]
+    public void A_run_history_refuses_malformed_parameters()
+    {
+        JobRunHistory run = NewRun();
+
+        Assert.Throws<ArgumentException>(() => run.RecordResolvedTarget(
+            nameof(DefinitionKind.Analysis), TargetId, 1,
+            JobTargetVersionPolicy.Pinned, "{broken"));
+
+        // The refusal records nothing at all, not merely no parameters.
+        Assert.Null(run.TargetParametersJson);
+        Assert.Null(run.TargetDefinitionId);
+        Assert.Null(run.TargetDefinitionKind);
+        Assert.Null(run.TargetDefinitionVersion);
+        Assert.Null(run.TargetVersionPolicy);
+    }
+
     // --- helpers ---------------------------------------------------------------
+
+    private static JobDefinition NewJob()
+    {
+        return new JobDefinition(
+            "NIGHTLY_LEARNING", "Nightly learning", JobDefinitionType.MlWeeklyFull,
+            "Daily 02:00", isSynthetic: false);
+    }
+
+    private static JobRunHistory NewRun()
+    {
+        return new JobRunHistory(
+            Guid.NewGuid(), "NIGHTLY_LEARNING", "Nightly learning",
+            JobDefinitionType.MlWeeklyFull, "Scheduler", null, null,
+            isSynthetic: false, sourceSystem: null, sourceRecordId: null);
+    }
 
     private static DefinitionVersionSummary Version(int number, bool published)
     {

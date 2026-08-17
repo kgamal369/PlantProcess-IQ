@@ -26,6 +26,12 @@ public sealed record JobTargetReference
     public int? PinnedVersion { get; init; }
 
     /// <summary>
+    /// Parameters passed to the target. Absent is a valid answer and is not the
+    /// same statement as an empty object.
+    /// </summary>
+    public string? ParametersJson { get; init; }
+
+    /// <summary>
     /// Returns null when the reference is coherent, or a sentence naming the
     /// violation. Structural coherence only; whether the target exists is a
     /// question for the resolver, not for this record.
@@ -54,27 +60,36 @@ public sealed record JobTargetReference
             return "The current-published policy cannot carry a pinned version number.";
         }
 
+        if (!JobTargetParameters.IsValid(ParametersJson))
+        {
+            return "Target parameters must be valid JSON.";
+        }
+
         return null;
     }
 
-    public static JobTargetReference CurrentPublished(DefinitionKind kind, Guid definitionId)
+    public static JobTargetReference CurrentPublished(
+        DefinitionKind kind, Guid definitionId, string? parametersJson = null)
     {
         return new JobTargetReference
         {
             Kind = kind,
             DefinitionId = definitionId,
-            VersionPolicy = JobTargetVersionPolicy.CurrentPublished
+            VersionPolicy = JobTargetVersionPolicy.CurrentPublished,
+            ParametersJson = JobTargetParameters.Normalise(parametersJson)
         };
     }
 
-    public static JobTargetReference Pinned(DefinitionKind kind, Guid definitionId, int version)
+    public static JobTargetReference Pinned(
+        DefinitionKind kind, Guid definitionId, int version, string? parametersJson = null)
     {
         return new JobTargetReference
         {
             Kind = kind,
             DefinitionId = definitionId,
             VersionPolicy = JobTargetVersionPolicy.Pinned,
-            PinnedVersion = version
+            PinnedVersion = version,
+            ParametersJson = JobTargetParameters.Normalise(parametersJson)
         };
     }
 }
@@ -93,4 +108,7 @@ public sealed record ResolvedJobTarget
     public required Guid DefinitionId { get; init; }
     public required int ResolvedVersion { get; init; }
     public required JobTargetVersionPolicy PolicyApplied { get; init; }
+
+    /// <summary>The parameters this resolution carries into the run history.</summary>
+    public string? ParametersJson { get; init; }
 }

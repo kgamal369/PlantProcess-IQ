@@ -57,6 +57,16 @@ public class JobRunHistory : BaseEntity
     /// <summary>T-064. The policy that produced the resolved version.</summary>
     public JobTargetVersionPolicy? TargetVersionPolicy { get; private set; }
 
+    /// <summary>
+    /// T-064. THE PARAMETERS THIS RUN ACTUALLY USED.
+    ///
+    /// Snapshotted, not referenced. Editing the job definition afterwards changes
+    /// what the NEXT run will use and cannot touch this. A history that followed
+    /// the current configuration would answer "what did it do" with what the job
+    /// would do today, which is a different question and a false answer.
+    /// </summary>
+    public string? TargetParametersJson { get; private set; }
+
 
     private JobRunHistory()
     {
@@ -146,7 +156,8 @@ public class JobRunHistory : BaseEntity
         string targetDefinitionKind,
         Guid targetDefinitionId,
         int resolvedVersion,
-        JobTargetVersionPolicy policyApplied)
+        JobTargetVersionPolicy policyApplied,
+        string? targetParametersJson = null)
     {
         if (string.IsNullOrWhiteSpace(targetDefinitionKind))
             throw new ArgumentException("Target definition kind is required.", nameof(targetDefinitionKind));
@@ -158,10 +169,16 @@ public class JobRunHistory : BaseEntity
             throw new ArgumentOutOfRangeException(
                 nameof(resolvedVersion), "A resolved version number must be greater than zero.");
 
+        // Same rule as the definition: nothing is recorded until the payload is
+        // accepted, so a refused snapshot records no target at all.
+        string? parameters = JobTargetParameters.Require(
+            targetParametersJson, nameof(targetParametersJson));
+
         TargetDefinitionKind = targetDefinitionKind.Trim();
         TargetDefinitionId = targetDefinitionId;
         TargetDefinitionVersion = resolvedVersion;
         TargetVersionPolicy = policyApplied;
+        TargetParametersJson = parameters;
 
         MarkAsUpdated();
     }
