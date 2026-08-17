@@ -48,6 +48,9 @@ import { HeatmapChart } from "../charts/HeatmapChart";
 import { SpecificationTable } from "../charts/SpecificationTable";
 import { PairedSeriesChart } from "../charts/PairedSeriesChart";
 import { EmptyInsightState } from "./EmptyInsightState";
+import { WidgetStatePanel } from "@/components/dashboard/WidgetStatePanel";
+import { hasEffectiveFilter } from "@/components/dashboard/hasEffectiveFilter";
+import { resolveAuthoringState, type AuthoringStateFacts } from "@/authoring/authoringStates";
 
 import { StandardP2Table } from "@/components/standard/StandardP2Controls";
 import { useDashboardFilters } from "../../state/DashboardFilterContext";
@@ -70,6 +73,11 @@ interface SavedDashboardWidgetProps {
 }: SavedDashboardWidgetProps) {
   const [result, setResult] = useState<DashboardWidgetQueryResult | null>(null);
   const [error, setError] = useState<unknown>(null);
+  // T-051. The old loading test was "no error and no result", which is true only
+  // before the FIRST result. On a refetch the previous result stayed mounted and
+  // was presented as the current answer. This flag is set when a request starts
+  // and cleared only by the request that is still the latest one.
+  const [running, setRunning] = useState<boolean>(true);
   const { filters: globalFilters } = useDashboardFilters();
   const { getWidgetState } = useDashboardSelection();
   const widgetState = getWidgetState(("saved-" + widget.id) as never);
@@ -109,6 +117,7 @@ interface SavedDashboardWidgetProps {
 
     async function load() {
       setError(null);
+      setRunning(true);
 
       try {
         // sortDirection is pinned with "as const". Inline in the call below,
@@ -146,9 +155,11 @@ interface SavedDashboardWidgetProps {
               options,
             });
 
-        if (!ignore) setResult(response);
+        // "ignore" is set by this effect's own cleanup, so a response from a
+        // superseded request cannot land on newer state.
+        if (!ignore) { setResult(response); setRunning(false); }
       } catch (loadError) {
-        if (!ignore) setError(loadError);
+        if (!ignore) { setError(loadError); setRunning(false); }
       }
     }
 
@@ -292,6 +303,41 @@ interface SavedDashboardWidgetProps {
     [metadata, compatibilityRule, activeChartType]
   );
 
+  // T-051. WIDGET FACTS, RESOLVED BY THE T-040 AUTHORITY.
+  //
+  // Nothing here decides a state. resolveAuthoringState owns the precedence and
+  // describeAuthoringState owns the words; this only says what is true.
+  //
+  // failure  the exception text is NOT carried into the presentation. It stays
+  //          in diagnostics, and the viewer gets a sentence they can act on.
+  // refusal  a deliberate product refusal, never an inferred one. No HTTP status
+  //          is read as a refusal, because this product has published no such
+  //          convention; every thrown error is a failure.
+  // blocker  a stale binding is a blocker ONLY when it leaves the widget unable
+  //          to draw truthfully. While the value role still resolves, M1-16
+  //          stands: the advisory shows and the chart still renders, because
+  //          degrading honestly beats going blank.
+  const widgetFacts: AuthoringStateFacts = useMemo(() => {
+    const valueRoleLost = stale.length > 0 && Boolean(result) && !resultColumns.includes(valueKey);
+
+    return {
+      running,
+      failure: error ? "This widget's query did not complete." : null,
+      refusal: null,
+      blocker: valueRoleLost
+        ? "The value column this widget is bound to (" + valueKey + ") is not in what the query returns now."
+        : null,
+      rowCount: result ? rows.length : null,
+      filtered: hasEffectiveFilter(filters),
+    };
+  }, [running, error, stale, result, resultColumns, valueKey, rows.length, filters]);
+
+  // Named resolvedState, not widgetState: this component already has a
+  // widgetState from the layout context, and that one is a display-preference
+  // record - hidden, collapsed, fullscreen, chartType - not a seven-state
+  // model. Two different things must not share a name in one scope.
+  const resolvedState = resolveAuthoringState(widgetFacts);
+
   return (
     <DashboardWidgetCard
       widgetId={`saved-${widget.id}` as any}
@@ -323,22 +369,12 @@ interface SavedDashboardWidgetProps {
         </div>
       ) : null}
 
-      {error ? (
-        <div className="empty-insight">
-          <strong>Widget failed</strong>
-          <p>{String(error)}</p>
-        </div>
-      ) : null}
+      {/* T-051. One presenter, seven canonical states. The chart draws only
+          when the resolved state is populated, so a loading refetch cannot show
+          the previous answer as the current one. */}
+      {resolvedState !== "populated" ? <WidgetStatePanel facts={widgetFacts} /> : null}
 
-      {!error && !result ? (
-        <div className="empty-insight">
-          <strong>Loading widget...</strong>
-        </div>
-      ) : null}
-
-      {result && !rows.length ? <EmptyInsightState /> : null}
-
-      {result && rows.length ? (
+      {resolvedState === "populated" ? (
         activeChartType === "kpi" ? (
           <MetricCard
             title={widget.widgetTitle}

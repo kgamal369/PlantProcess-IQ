@@ -6,11 +6,12 @@ import "./evidenceFocus.css";
 import { DashboardFilterBar } from "@/components/DashboardFilterBar";
 import { DashboardGridLayout } from "@/components/dashboard/DashboardGridLayout";
 import { SavedDashboardWidget } from "@/components/dashboard/SavedDashboardWidget";
+import { WidgetStatePanel, WIDGET_RENDER_FAILURE_FACTS } from "@/components/dashboard/WidgetStatePanel";
 import { AssociativePanel } from "@/components/dashboard/AssociativePanel";
 import { SelectionBreadcrumb } from "@/components/dashboard/SelectionBreadcrumb";
 import { useDashboardLayoutPersistence } from "@/hooks/useDashboardLayoutPersistence";
 import { dashboardingApi } from "@/api/dashboarding/dashboarding.api";
-import { StandardButton } from "@/components/standard";
+import { StandardButton, ErrorBoundary } from "@/components/standard";
 import { WorkspaceHeader } from "./WorkspaceHeader";
 import {
   DEFAULT_SHEET_ID,
@@ -304,14 +305,21 @@ export function InteractiveWorkspacePage({ dashboardCode }: { dashboardCode: str
                nothing else. */
             data-widget-code={String((widget as { widgetCode?: unknown }).widgetCode ?? "")}
           >
-            <SavedDashboardWidget
-              dashboardDefinitionId={dashboard.id}
-              widget={widget}
-              onEdit={() => { setEditing(widget); setAuthoringOpen(true); }}
-              onRemoved={refresh}
-              onCloned={refresh}
-              onHidden={refresh}
-            />
+            {/* T-051. The grid cell stays OUTSIDE the boundary on purpose: when
+                a widget comes apart, react replaces only the subtree below,
+                so this div keeps its identity and its persisted geometry and
+                every sibling widget stays mounted. A crash inside one card
+                must never unwind to the route-level boundary. */}
+            <ErrorBoundary fallback={<WidgetStatePanel facts={WIDGET_RENDER_FAILURE_FACTS} />}>
+              <SavedDashboardWidget
+                dashboardDefinitionId={dashboard.id}
+                widget={widget}
+                onEdit={() => { setEditing(widget); setAuthoringOpen(true); }}
+                onRemoved={refresh}
+                onCloned={refresh}
+                onHidden={refresh}
+              />
+            </ErrorBoundary>
           </div>
         ))}
       </DashboardGridLayout>

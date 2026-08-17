@@ -35,6 +35,15 @@ interface ErrorBoundaryProps {
   fallbackTitle?: string;
   /** Route path used for diagnostics logging. Defaults to window.location.pathname. */
   routePath?: string;
+  /**
+   * T-051. Optional replacement for the default panel, so a caller that owns a
+   * small region - a dashboard grid cell - can show its own canonical failure
+   * presentation instead of a page-scale one. Purely additive: every existing
+   * caller omits it and gets exactly the behaviour it had before, including
+   * componentDidCatch, the diagnostics beacon and the default retry. The
+   * fallback is a node, so it never receives the Error or the stack.
+   */
+  fallback?: ReactNode;
 }
 
 interface ErrorBoundaryState {
@@ -110,6 +119,10 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   public render(): ReactNode {
     if (!this.state.hasError) {
       return this.props.children;
+    }
+
+    if (this.props.fallback) {
+      return this.props.fallback;
     }
 
     const title = this.props.fallbackTitle ?? "Something unexpected happened";

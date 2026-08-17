@@ -1,0 +1,33 @@
+/* T-051. Tone is supportive only. With this file removed every state is still
+   told apart by its heading and sentence, which is the T-040 rule. */
+
+.widget-state {
+  display: grid;
+  gap: 6px;
+  padding: 18px;
+  border-radius: 12px;
+  border: 1px solid var(--pp-border-soft);
+  color: var(--pp-text);
+  background: color-mix(in srgb, var(--pp-bg-1) 60%, transparent);
+}
+
+.widget-state__heading { font-size: 0.95rem; }
+
+.widget-state__sentence,
+.widget-state__next {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--pp-muted-2);
+}
+
+.widget-state--muted { border-color: var(--pp-border-soft); }
+
+.widget-state--amber {
+  border-color: color-mix(in srgb, var(--pp-amber) 42%, transparent);
+}
+.widget-state--amber .widget-state__heading { color: var(--pp-amber); }
+
+.widget-state--danger {
+  border-color: color-mix(in srgb, var(--pp-red) 42%, transparent);
+}
+.widget-state--danger .widget-state__heading { color: var(--pp-red); }
