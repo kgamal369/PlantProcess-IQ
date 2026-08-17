@@ -295,7 +295,17 @@ export const productApi = {
     getJson<GenealogyAwareCorrelationResult>(
       "/analytics/correlations/parameter-defect/genealogy-aware",
       {
-        parameterCode: filters.parameterCode || "CastingSpeed",
+        // T-052. No fallback. This read the steel literal "CastingSpeed" when
+        // no parameter was selected, so a plant that has never heard of casting
+        // speed was silently asked about it and got an answer about a parameter
+        // nobody chose - which is worse than an empty chart, because it looks
+        // like a result. buildQuery drops undefined, null and "", so an
+        // unselected parameter simply does not reach the wire and the widget
+        // shows whichever canonical state is actually true.
+        parameterCode: filters.parameterCode,
+        // W2-GENERIC-02, recorded not fixed: the same two literals below are
+        // the same class of violation and belong to whoever owns this endpoint's
+        // semantics. T-052 owns the parameter default only.
         defectType: filters.defectType || "SurfaceCrack",
         siteId: filters.siteId,
         fromUtc: filters.fromUtc,
