@@ -1,4 +1,4 @@
-using PlantProcess.Api.TestMode;
+﻿using PlantProcess.Api.TestMode;
 using PlantProcess.Api.Endpoints.Licensing;
 using PlantProcess.Api.Endpoints.Security;
 using PlantProcess.Application.Connectors.Certification;
@@ -723,6 +723,10 @@ builder.Services.AddScoped<PlantProcess.Application.Security.Tenancy.ITenantAcce
 
 builder.Services.AddV5AssistantGateway(builder.Configuration);
 builder.Services.AddAssistant();
+// T-057. The relationship vertical: store, service and publication seam.
+// Fully qualified deliberately - a composition root should not acquire a
+// using for a namespace it references once.
+PlantProcess.Infrastructure.Relationships.RelationshipInfrastructureExtensions.AddRelationshipInfrastructure(builder.Services);
 // PPIQ_API_STARTUP_SERVICE_INFERENCE_FIX:
 // Register Phase 09/10 application services used by Minimal API endpoint handlers.
 // Without this, ASP.NET cannot infer parameters named "service" and API startup fails.
@@ -987,6 +991,10 @@ app.MapMlProviderEndpoints();
 
 
     app.MapDashboardEndpoints();
+
+    // T-057. C6's read surface. There is no create endpoint: a relationship
+    // is emitted by publishing a definition, never authored over HTTP.
+    PlantProcess.Api.Endpoints.Relationships.RelationshipEndpoints.MapRelationshipEndpoints(app);
 
     app.MapReportingEndpoints();
 
