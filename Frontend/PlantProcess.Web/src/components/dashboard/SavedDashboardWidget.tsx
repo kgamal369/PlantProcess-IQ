@@ -48,6 +48,8 @@ import { HeatmapChart } from "../charts/HeatmapChart";
 import { SpecificationTable } from "../charts/SpecificationTable";
 import { PairedSeriesChart } from "../charts/PairedSeriesChart";
 import { EmptyInsightState } from "./EmptyInsightState";
+import { stampSourceRowIndices } from "@/state/drilldownRowIdentity";
+import { stampExecutionSnapshot, type WidgetExecutionSnapshot } from "@/state/drilldownExecutionSnapshot";
 import { WidgetStatePanel } from "@/components/dashboard/WidgetStatePanel";
 import { hasEffectiveFilter } from "@/components/dashboard/hasEffectiveFilter";
 import { resolveAuthoringState, type AuthoringStateFacts } from "@/authoring/authoringStates";
@@ -57,6 +59,9 @@ import { useDashboardFilters } from "../../state/DashboardFilterContext";
 import { useDashboardSelection } from "../../state/DashboardSelectionContext";
 interface SavedDashboardWidgetProps {
   dashboardDefinitionId: string;
+  /** T-050. Needed by the evidence execution identity: T-073 hashes the page
+   *  and widget codes into the evidence fingerprint. */
+  pageCode?: string | null;
   widget: DashboardWidgetDefinitionRecord;
   onEdit?: () => void | Promise<void>;
   onRemoved: () => void | Promise<void>;
@@ -65,6 +70,7 @@ interface SavedDashboardWidgetProps {
 }
 
 /** PPIQ-WIDGETFIX: widgets stored with chartType "kpi" previously fell through  *  every branch below into InteractiveBarChart, so a KPI tile rendered as a  *  50-bar chart of daily counts. MetricCard already existed and was unused  *  for this. Rate, score and avg measures are averaged; max/min take the  *  extreme; everything else sums. */ const AVERAGED_MEASURES = ["defectRate", "riskScore", "avgParameterValue", "processStepDuration"];  function kpiValue(rows: ChartRow[], valueKey: string, measureCode?: string | null): string {   const numbers = rows     .map((row) => Number(row[valueKey]))     .filter((n) => Number.isFinite(n));   if (!numbers.length) return "-";    let result: number;   if (measureCode === "maxParameterValue") {     result = Math.max(...numbers);   } else if (measureCode === "minParameterValue") {     result = Math.min(...numbers);   } else if (measureCode && AVERAGED_MEASURES.indexOf(measureCode) >= 0) {     result = numbers.reduce((a, b) => a + b, 0) / numbers.length;   } else {     result = numbers.reduce((a, b) => a + b, 0);   }    const decimals = Number.isInteger(result) ? 0 : 2;   return result.toLocaleString(undefined, {     minimumFractionDigits: decimals,     maximumFractionDigits: decimals,   }); }  export function SavedDashboardWidget({ dashboardDefinitionId,
+  pageCode,
   widget,
   onEdit,
   onRemoved,
@@ -78,6 +84,8 @@ interface SavedDashboardWidgetProps {
   // was presented as the current answer. This flag is set when a request starts
   // and cleared only by the request that is still the latest one.
   const [running, setRunning] = useState<boolean>(true);
+  // Captured with the result it describes, so the two can never disagree.
+  const [snapshot, setSnapshot] = useState<WidgetExecutionSnapshot | null>(null);
   const { filters: globalFilters } = useDashboardFilters();
   const { getWidgetState } = useDashboardSelection();
   const widgetState = getWidgetState(("saved-" + widget.id) as never);
@@ -157,7 +165,29 @@ interface SavedDashboardWidgetProps {
 
         // "ignore" is set by this effect's own cleanup, so a response from a
         // superseded request cannot land on newer state.
-        if (!ignore) { setResult(response); setRunning(false); }
+        if (!ignore) {
+          setResult(response);
+          // Captured HERE, from the request that just ran, and never rebuilt
+          // from filters that may move before the user clicks.
+          setSnapshot({
+            kind: useExpression ? "expression" : "catalogue",
+            expression: useExpression ? String(widget.queryExpression) : null,
+            widgetType: widget.widgetType,
+            chartType: widget.chartType,
+            dimensionCode: widget.dimensionCode,
+            measureCode: widget.measureCode,
+            parameterCode: widget.parameterCode,
+            filters,
+            options,
+            identity: {
+              pageCode: pageCode ?? null,
+              widgetCode: widget.widgetCode ?? null,
+              widgetDefinitionId: widget.id ?? null,
+            },
+            rowPopulations: response.rowPopulations ?? null,
+          });
+          setRunning(false);
+        }
       } catch (loadError) {
         if (!ignore) { setError(loadError); setRunning(false); }
       }
@@ -170,7 +200,16 @@ interface SavedDashboardWidgetProps {
     };
   }, [widget, filters, displayOptions]);
 
-  const rows = (result?.rows ?? []) as ChartRow[];
+  // T-050. Stamped BEFORE any chart sees them, so the backend row index
+  // travels with the datum through sorting, slicing and projection. Recharts
+  // hands the datum itself to onClick, so a clicked point can name its backend
+  // row without any chart having to cooperate.
+  const stampedRows = stampSourceRowIndices((result?.rows ?? []) as Record<string, unknown>[]);
+  // Both stamps travel with the datum: which backend row this is, and which
+  // execution drew it.
+  const rows = (snapshot
+    ? stampExecutionSnapshot(stampedRows, snapshot)
+    : stampedRows) as unknown as ChartRow[];
 
   // M1-16. An explicitly bound widget READS its mapping. Only a widget that
   // has never been bound falls back to inference, so every widget authored

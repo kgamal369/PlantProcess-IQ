@@ -313,6 +313,7 @@ export function InteractiveWorkspacePage({ dashboardCode }: { dashboardCode: str
             <ErrorBoundary fallback={<WidgetStatePanel facts={WIDGET_RENDER_FAILURE_FACTS} />}>
               <SavedDashboardWidget
                 dashboardDefinitionId={dashboard.id}
+                pageCode={dashboardCode}
                 widget={widget}
                 onEdit={() => { setEditing(widget); setAuthoringOpen(true); }}
                 onRemoved={refresh}

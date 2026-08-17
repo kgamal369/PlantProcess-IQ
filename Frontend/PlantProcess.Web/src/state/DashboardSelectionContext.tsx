@@ -59,12 +59,29 @@ export interface DashboardSelection {
   createdAtUtc: string;
 }
 
+import type { WidgetExecutionSnapshot } from "./drilldownExecutionSnapshot";
+
 export interface DrilldownState {
   isOpen: boolean;
   title: string;
   subtitle?: string;
   type: DashboardSelectionType;
   payload: unknown;
+  /**
+   * T-050. Which row of the BACKEND result this point came from, so the drawer
+   * can address PR-050-01's rowPopulations by rowIndex. Null when the datum
+   * carried no stamp - a point with no identity must yield no population rather
+   * than population zero.
+   */
+  sourceRowIndex?: number | null;
+  /**
+   * T-050 step 2b. The execution that DREW this point - filters, options and
+   * bindings as they were at render time, plus that render's rowPopulations.
+   * Carried rather than rebuilt, because by the time somebody clicks, the page
+   * filters may have moved on and rebuilding would fetch evidence for a
+   * different execution and present it as this point's provenance.
+   */
+  executionSnapshot?: WidgetExecutionSnapshot | null;
 }
 
 export interface DashboardWidgetState {

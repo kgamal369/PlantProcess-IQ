@@ -26,6 +26,8 @@ import {
 import { useDashboardFilters } from "../../state/DashboardFilterContext";
 import { timeDimensionRange } from "../../state/widgetSelectionMap";
 import { EmptyInsightState } from "../dashboard/EmptyInsightState";
+import { sourceRowIndex } from "@/state/drilldownRowIdentity";
+import { executionSnapshot } from "@/state/drilldownExecutionSnapshot";
 import { StandardButton } from "@/components/standard";
 
 import { P2T08_STANDARD_ROLLOUT_MARKER } from "@/components/standard/StandardP2Controls";
@@ -114,6 +116,10 @@ export function InteractiveBarChart({
       subtitle: selection.sourceWidget,
       type: selection.type,
       payload: row,
+      // T-050. Both read off the datum, never derived from the point's
+      // position and never rebuilt from current filter state.
+      sourceRowIndex: sourceRowIndex(row),
+      executionSnapshot: executionSnapshot(row),
     });
   }
 
@@ -177,6 +183,10 @@ export function InteractivePieChart({
       subtitle: selection.sourceWidget,
       type: selection.type,
       payload: row,
+      // T-050. Both read off the datum, never derived from the point's
+      // position and never rebuilt from current filter state.
+      sourceRowIndex: sourceRowIndex(row),
+      executionSnapshot: executionSnapshot(row),
     });
   }
 
@@ -247,6 +257,10 @@ export function InteractiveLineChart({
       subtitle: selection.sourceWidget,
       type: selection.type,
       payload: row,
+      // T-050. Both read off the datum, never derived from the point's
+      // position and never rebuilt from current filter state.
+      sourceRowIndex: sourceRowIndex(row),
+      executionSnapshot: executionSnapshot(row),
     });
   }
 
@@ -350,6 +364,10 @@ export function InteractiveScatterChart({
       subtitle: selection.sourceWidget,
       type: selection.type,
       payload: row,
+      // T-050. Both read off the datum, never derived from the point's
+      // position and never rebuilt from current filter state.
+      sourceRowIndex: sourceRowIndex(row),
+      executionSnapshot: executionSnapshot(row),
     });
   }
 
@@ -432,6 +450,10 @@ export function InteractiveHeatmap({
       subtitle: selection.sourceWidget,
       type: selection.type,
       payload: row,
+      // T-050. Both read off the datum, never derived from the point's
+      // position and never rebuilt from current filter state.
+      sourceRowIndex: sourceRowIndex(row),
+      executionSnapshot: executionSnapshot(row),
     });
   }
 

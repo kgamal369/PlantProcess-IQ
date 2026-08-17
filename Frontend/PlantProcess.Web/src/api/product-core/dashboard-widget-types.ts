@@ -280,6 +280,53 @@ export interface DashboardWidgetQueryOptions {
   rawRowLimit?: number;
   sortDirection?: SortDirection;
   includeWarnings?: boolean;
+  /**
+   * T-050 / PR-050-01. Evidence persistence is OPT-IN and this flag is the
+   * opt. An ordinary dashboard render is a READ: a refresh, a filter move or an
+   * auto-refresh must not write a row into the evidence store. Only a
+   * drill-down, which is a person asking where a number came from, asks.
+   */
+  includeExecutionEvidence?: boolean;
+}
+
+/**
+ * T-050 / PR-050-01. Who is asking, in the installation's own vocabulary.
+ * T-073 hashes the page and widget codes into the evidence fingerprint and
+ * renders them into the evidence sentence, so an execution that wants evidence
+ * must name itself. Optional, because an ordinary render must never be forced
+ * to invent an identity just to get a chart back.
+ */
+export interface DashboardWidgetExecutionIdentity {
+  pageCode?: string | null;
+  widgetCode?: string | null;
+  widgetDefinitionId?: string | null;
+}
+
+/** T-050 / PR-050-01. The wire shape of the EXISTING provenance handle. Not a
+ *  second provenance system: kind is ProvenanceKind.ToString() and id is the
+ *  evidence snapshot id the T-073 resolver already takes. */
+export interface ProvenanceHandleRef {
+  kind: string;
+  id: string;
+  detail?: string | null;
+}
+
+/**
+ * T-050 / PR-050-01. What ONE returned row REPRESENTS - the population behind
+ * the point, not the point's current number.
+ *
+ * populationCount may be null when the executing source cannot truthfully
+ * supply one, and it is NEVER the number of returned rows: five bars do not
+ * mean five of anything.
+ */
+export interface DashboardWidgetRowPopulation {
+  rowIndex: number;
+  rowFingerprint?: string | null;
+  dimensionBindings: Record<string, string | null>;
+  measureCode: string;
+  parameterCode?: string | null;
+  filterContextFingerprint: string;
+  populationCount?: number | null;
 }
 
 export interface DashboardWidgetQuery {
@@ -290,6 +337,9 @@ export interface DashboardWidgetQuery {
   parameterCode?: string | null;
   filters?: DashboardWidgetFilters | null;
   options?: DashboardWidgetQueryOptions | null;
+  /** T-050 / PR-050-01. Sent only by a drill-down, alongside
+   *  options.includeExecutionEvidence. An ordinary render omits both. */
+  executionIdentity?: DashboardWidgetExecutionIdentity | null;
 }
 
 export interface DashboardWidgetResolved {
@@ -317,6 +367,15 @@ export interface DashboardWidgetQueryResult {
   columns: DashboardWidgetColumn[];
   rows: Record<string, unknown>[];
   warnings: string[];
+  /** T-050 / PR-050-01. Execution-level, never row-level. It identifies the
+   *  exact widget execution that produced these values. It is NOT physical
+   *  source-row lineage and no consumer may present it as such. Present only
+   *  when the caller opted in. */
+  executionEvidenceHandle?: ProvenanceHandleRef | null;
+  /** T-050 / PR-050-01. One descriptor per returned row, same order as rows,
+   *  addressed by rowIndex. Always computed: describing a point costs nothing
+   *  and writes nothing. */
+  rowPopulations?: DashboardWidgetRowPopulation[] | null;
 }
 
 export interface DashboardDefinitionRecord {
