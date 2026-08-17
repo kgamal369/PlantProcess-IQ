@@ -666,7 +666,14 @@ export function MaterialAnalyticsDataQualityPage() {
 
 export function MaterialAnalyticsCorrelationPage() {
   const navigate = useNavigate();
-  const [parameterCode, setParameterCode] = useState("CastingSpeed");
+  // T-052. Starts EMPTY. This page routes from /correlations and feeds its
+  // parameter straight into getGenealogyAwareCorrelation, so seeding it with an
+  // industry-specific literal meant a plant that had never heard of that
+  // parameter was silently asked about it and shown an answer about something
+  // nobody selected. buildQuery drops "", so nothing is sent until the operator
+  // names a parameter. An empty chart that says so beats a confident answer to
+  // a question the customer did not ask.
+  const [parameterCode, setParameterCode] = useState("");
   const [defectType, setDefectType] = useState("SurfaceCrack");
   const [threshold, setThreshold] = useState(1.25);
 

@@ -46,4 +46,22 @@ describe("T-052 generic parameter selection", () => {
     expect(query).toContain("siteId=site-1");
     expect(query).toContain("bins=8");
   });
+
+  it("sends no parameter when the correlation page has not been given one", () => {
+    // T-052. MaterialAnalyticsCorrelationPage seeds its parameter state empty
+    // and feeds it straight into getGenealogyAwareCorrelation. Removing the
+    // client fallback alone was not enough: the page itself used to supply a
+    // steel parameter, so the customer still got an answer about a parameter
+    // they never chose - one layer further up.
+    const asPageMounts = buildQuery(correlationParams({ parameterCode: "" }));
+
+    expect(asPageMounts, "the page supplied a parameter nobody selected").not.toContain("parameterCode");
+    expect(asPageMounts, "an industry-specific parameter was sent on the user's behalf")
+      .not.toContain("CastingSpeed");
+  });
+
+  it("sends the parameter once the user types one", () => {
+    const afterTyping = buildQuery(correlationParams({ parameterCode: "ROLL_FORCE" }));
+    expect(afterTyping).toContain("parameterCode=ROLL_FORCE");
+  });
 });
