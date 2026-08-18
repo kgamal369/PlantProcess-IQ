@@ -19,8 +19,7 @@ export function IntegrationEcosystem() {
       <h2 id="eco-h2">Connects to what you already run</h2>
       <p className="eco-lead">
         Read-only connectors for the systems on your floor today - and a generic
-        connector layer for the ones we haven&rsquo;t met yet. If it has a database,
-        an export or an API, PlantProcess&nbsp;IQ can read it.
+        connector layer for the ones we haven&rsquo;t met yet. Connector availability is confirmed per source class during the technical review; an unproven connector is presented as planned rather than as supported.
       </p>
       <div className="eco-grid">
         {GROUPS.map((g) => (

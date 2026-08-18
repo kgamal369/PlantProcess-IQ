@@ -43,13 +43,13 @@ const CAREER = [
   },
   {
     years: "2020 - 2024",
-    place: "SMS Group, Digital department, Duesseldorf",
+    place: "SMS Group, Digital department, Düsseldorf",
     role: "MES and QES projects",
     detail: "Manufacturing and quality execution systems for SSAB in Sweden, NorthStar BlueScope, Nucor Steel and Big River Steel.",
   },
   {
     years: "2024 - 2026",
-    place: "SMS Group, Level 2 department, Duesseldorf",
+    place: "SMS Group, Level 2 department, Düsseldorf",
     role: "Level 2 process models",
     detail: "Sabic Hadeed in Saudi Arabia, JSW Piombino in Italy, and the rail system at Suez Steel.",
   },
@@ -66,7 +66,7 @@ const SITES = [
   { x: 275.4, y: 152.1, name: "Nucor Steel", country: "USA", year: "2020 - 2024" },
   { x: 512.8, y: 104.3, name: "Tata Steel IJmuiden", country: "Netherlands", year: "2018 - 2020" },
   { x: 512.1, y: 108.8, name: "PSI Metals Brussels", country: "Belgium", year: "2018 - 2020" },
-  { x: 518.8, y: 107.7, name: "SMS Group Duesseldorf", country: "Germany", year: "2020 - 2026" },
+  { x: 518.8, y: 107.7, name: "SMS Group Düsseldorf", country: "Germany", year: "2020 - 2026" },
   { x: 547.5, y: 87.0, name: "SSAB", country: "Sweden", year: "2020 - 2024" },
   { x: 529.2, y: 130.8, name: "JSW Piombino", country: "Italy", year: "2024 - 2026" },
   { x: 583.1, y: 163.3, name: "EZDK Alexandria", country: "Egypt", year: "2013 - 2018" },
@@ -131,8 +131,8 @@ function MeTab() {
     <div>
       <p className="eyebrow rv">WHO IS BEHIND THIS</p>
       <h2 className="rv deck-title">
-        Karim Gamal Elsayed<br />
-        <span className="g">thirteen years inside the plant.</span>
+        Karim Gamal<br />
+        <span className="g">fourteen years inside the plant.</span>
       </h2>
       <p className="lead rv">
         BSc and MSc in electrical and computer engineering. I have written the Level 2 models that run

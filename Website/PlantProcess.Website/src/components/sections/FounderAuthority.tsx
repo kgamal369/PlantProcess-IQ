@@ -18,7 +18,7 @@ export function FounderAuthority() {
             PlantProcess IQ is the product Karim Gamal wished he had while engineering Level 2 automation, MES and production models across global manufacturing projects.
           </p>
           <div className="founder-credentials">
-            <span><Award size={18} /> 13+ years industrial software</span>
+            <span><Award size={18} /> 14 years of industrial engineering experience</span>
             <span><BookOpenCheck size={18} /> MSc Electrical & Computer Engineering</span>
             <span><BookOpenCheck size={18} /> Two published ML research papers</span>
           </div>

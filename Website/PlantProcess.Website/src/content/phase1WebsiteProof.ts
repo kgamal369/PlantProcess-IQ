@@ -85,8 +85,8 @@ export const licensePlans: WebsiteLicensePlan[] = [
   {
     code: "standard",
     name: "Standard",
-    deposit: "$12k one-time deposit",
-    monthlyPrice: "$6k / month",
+    deposit: "Configured per deployment",
+    monthlyPrice: "By written quotation",
     recommended: false,
     idealFor: "Plants that want to connect their data and finally see it in one place.",
     users: "Core quality and process team",
@@ -105,8 +105,8 @@ export const licensePlans: WebsiteLicensePlan[] = [
   {
     code: "proPlus",
     name: "Pro Plus",
-    deposit: "$28k one-time deposit",
-    monthlyPrice: "$14k / month",
+    deposit: "Configured per deployment",
+    monthlyPrice: "By written quotation",
     recommended: true,
     idealFor: "Plants that want to move from seeing their data to reasoning about it.",
     users: "Multi-team site usage",
@@ -125,8 +125,8 @@ export const licensePlans: WebsiteLicensePlan[] = [
   {
     code: "enterprise",
     name: "Enterprise",
-    deposit: "$50k one-time deposit",
-    monthlyPrice: "$25k / month",
+    deposit: "Configured per deployment",
+    monthlyPrice: "By written quotation",
     recommended: false,
     idealFor: "Plant groups and sites that want the full intelligence layer, at scale.",
     users: "Custom, multi-site",
@@ -170,4 +170,4 @@ export const provenAtScale = [
   { value: "6", label: "Live source systems across 4 database engines" },
 ];
 
-export const requestDemoMail = "info@plantprocessiq.com";
+export const requestDemoMail = "info@souindustrial.com";

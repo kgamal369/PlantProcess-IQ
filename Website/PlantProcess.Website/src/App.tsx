@@ -44,6 +44,7 @@ import { GoldenThread } from "./components/graphics/GoldenThread";
 import { SignalVsNoise } from "./components/graphics/SignalVsNoise";
 import { TrustEngine } from "./components/graphics/TrustEngine";
 import { FounderAuthority } from "./components/sections/FounderAuthority";
+import { RouteMeta } from "./components/seo/RouteMeta";
 import { ProofOfValueJourney } from "./components/sections/ProofOfValueJourney";
 import { RolePaths } from "./components/sections/RolePaths";
 import RequestDemoForm from "./components/proof/RequestDemoForm";
@@ -312,9 +313,9 @@ function Layout({ children }: { children: ReactNode }) {
           <NavLink to="/contact">Contact</NavLink>
         </div>
         <div className="footer-contact">
-          <span><Mail size={15} /> info@plantprocessiq.com</span>
-          <span><MapPin size={15} /> DÃ¼sseldorf, Germany</span>
-          <span><Globe2 size={15} /> Europe Â· MENA Â· Global industrial projects</span>
+          <span><Mail size={15} /> info@souindustrial.com</span>
+          <span><MapPin size={15} /> Düsseldorf, Germany</span>
+          <span><Globe2 size={15} /> Europe · MENA · Global industrial projects</span>
         </div>
       </footer>
     </div>
@@ -386,7 +387,7 @@ function SecurityPage() {
           ["AI honesty", "Deterministic engines calculate. The assistant explains with citations and refuses when the evidence is insufficient.", BrainCircuit],
         ].map(([title, text, Icon]) => { const PillarIcon = Icon as typeof Factory; return <article key={String(title)}><PillarIcon size={27} /><h2>{String(title)}</h2><p>{String(text)}</p></article>; })}
       </div></div></section>
-      <section className="commercial-section deployment-section" id="deployment"><div className="section-shell"><div className="section-heading split-heading"><div><div className="section-kicker">One codebase Â· four topologies</div><h2>Deploy where the plantâ€™s security posture requires.</h2></div><p>The deployment model changes the isolation boundaryâ€”not the product logic or evidence contract.</p></div><div className="deployment-grid">{[["SOU-hosted SaaS", "Fastest onboarding", "Logical tenant isolation"], ["Customer cloud", "Cloud mandate", "Logical or dedicated"], ["On-premises", "Data stays inside", "Physical single tenant"], ["Air-gapped", "High-security site", "Offline activation"]].map(([title, fit, isolation]) => <article key={title}><Building2 size={24} /><h3>{title}</h3><span>{fit}</span><strong>{isolation}</strong></article>)}</div></div></section>
+      <section className="commercial-section deployment-section" id="deployment"><div className="section-shell"><div className="section-heading split-heading"><div><div className="section-kicker">One codebase · four topologies</div><h2>Deploy where the plantâ€™s security posture requires.</h2></div><p>The deployment model changes the isolation boundaryâ€”not the product logic or evidence contract.</p></div><div className="deployment-grid">{[["SOU-hosted SaaS", "Fastest onboarding", "Logical tenant isolation"], ["Customer cloud", "Cloud mandate", "Logical or dedicated"], ["On-premises", "Data stays inside", "Physical single tenant"], ["Air-gapped", "High-security site", "Offline activation"]].map(([title, fit, isolation]) => <article key={title}><Building2 size={24} /><h3>{title}</h3><span>{fit}</span><strong>{isolation}</strong></article>)}</div></div></section>
       <section className="commercial-section trust-engine-section"><div className="section-shell trust-engine-layout"><div className="trust-engine-copy"><div className="section-kicker">Model governance</div><h2>Grounded explanation stays downstream of approved evidence.</h2><p>The assistant has no independent route to plant truth and no authority to calculate or rank findings.</p></div><TrustEngine /></div></section>
       <RequestDemoForm />
     </>
@@ -396,7 +397,7 @@ function SecurityPage() {
 function PricingPage() {
   return (
     <>
-      <section className="subpage-hero subpage-hero--pricing"><div className="section-shell subpage-hero__layout"><div><div className="section-kicker">Commercial model</div><h1>Transparent investment. Scale after the value is proven.</h1><p>A one-time installation deposit reflects source complexity, mapping and required pages. The subscription reflects feature depth, users, computational demand, capability packs and deployment model.</p></div><div className="pricing-range-visual" aria-label="Commercial range"><div><span>Installation</span><strong>$12kâ€“$50k</strong><small>One-time deposit</small></div><div><span>Subscription</span><strong>$6kâ€“$25k</strong><small>Per month</small></div></div></div></section>
+      <section className="subpage-hero subpage-hero--pricing"><div className="section-shell subpage-hero__layout"><div><div className="section-kicker">Commercial model</div><h1>Transparent investment. Scale after the value is proven.</h1><p>A one-time installation deposit reflects source complexity, mapping and required pages. The subscription reflects feature depth, users, computational demand, capability packs and deployment model.</p></div><div className="pricing-range-visual" aria-label="Commercial range"><div><span>Installation</span><strong>Configured per deployment</strong><small>One-time deposit</small></div><div><span>Subscription</span><strong>Issued by written quotation</strong><small>Per month</small></div></div></div></section>
       <section className="commercial-section pricing-commercial-section"><div className="section-shell"><div className="pricing-grid">{licensePlans.map((plan) => <article className={`pricing-card pricing-card--${plan.code}`} key={plan.code}><div className="pricing-card__top"><span>{plan.name}</span>{plan.recommended && <b>Recommended</b>}</div><strong className="pricing-card__price">{plan.monthlyPrice}</strong><p>{plan.idealFor}</p><dl><div><dt>Installation</dt><dd>{plan.deposit}</dd></div><div><dt>Sources</dt><dd>{plan.sources}</dd></div><div><dt>Users</dt><dd>{plan.users}</dd></div></dl><ul>{plan.features.map((item) => <li key={item}><Check size={15} /> {item}</li>)}</ul><a className="website-button website-button--secondary" href="#request-demo">{plan.cta}</a></article>)}</div><p className="pricing-disclaimer">Final scope depends on source complexity, data volume, required pages, capability packs, support level and deployment model. Annual terms may be structured separately.</p></div></section>
       <section className="commercial-section roi-logic-section"><div className="section-shell roi-logic-layout"><div><div className="section-kicker">Why the economics work</div><h2>The software does not need to eliminate every loss. It needs to prevent one expensive recurrence faster.</h2><p>One severe downgrade batch, recurring quality claim or hour of constrained production can materially outweigh the annual software investment. The Proof of Value makes that comparison explicit on customer data.</p></div><div className="roi-equation" aria-label="ROI logic"><span>Avoided loss</span><b>+</b><span>Engineering time returned</span><b>+</b><span>Faster containment</span><b>âˆ’</b><span>Platform investment</span><strong>= Verified value case</strong></div></div></section>
       <ProofOfValueJourney />
@@ -408,7 +409,7 @@ function PricingPage() {
 function AboutPage() {
   return (
     <>
-      <section className="subpage-hero subpage-hero--about"><div className="section-shell subpage-hero__layout"><div><div className="section-kicker">SOU Industrial Software</div><h1>Industrial software built by people who have lived inside the data path.</h1><p>PlantProcess IQ grew from more than a decade of engineering Level 2 automation, MES, production models and industrial digitalization across international plants.</p></div><div className="about-orbit" aria-hidden="true"><span>Level 1</span><span>Level 2</span><span>MES</span><span>Quality</span><span>Analytics</span><div>13+ YEARS</div></div></div></section>
+      <section className="subpage-hero subpage-hero--about"><div className="section-shell subpage-hero__layout"><div><div className="section-kicker">SOU Industrial Software</div><h1>Industrial software built by people who have lived inside the data path.</h1><p>PlantProcess IQ grew from fourteen years of engineering Level 2 automation, MES, production models and industrial digitalization across international plants.</p></div><div className="about-orbit" aria-hidden="true"><span>Level 1</span><span>Level 2</span><span>MES</span><span>Quality</span><span>Analytics</span><div>14 YEARS</div></div></div></section>
       <FounderAuthority />
       <section className="commercial-section principles-section"><div className="section-shell"><div className="section-heading"><div><div className="section-kicker">The operating principles</div><h2>Ambitious commercially. Restrained technically.</h2></div></div><div className="principles-grid">{["Configure from the HMIâ€”do not hardcode the plant.", "Deterministic engines compute; the assistant explains.", "Every surfaced claim carries a resolvable evidence handle.", "Suspected contributorâ€”never guaranteed root cause.", "Read-only is absolute toward control systems.", "The pilot proves the signal on the customerâ€™s data."].map((item, index) => <article key={item}><span>0{index + 1}</span><p>{item}</p></article>)}</div></div></section>
       <RequestDemoForm />
@@ -418,7 +419,7 @@ function AboutPage() {
 
 function ContactPage() {
   return (
-    <><section className="subpage-hero subpage-hero--contact"><div className="section-shell subpage-hero__layout"><div><div className="section-kicker">Start with one expensive question</div><h1>Bring the defect, downtime mode or recurring loss your team cannot explain fast enough.</h1><p>We will define the minimum source scope, success metric, evidence standard and Proof-of-Value decision before asking you to scale.</p></div><div className="contact-brief"><Mail size={28} /><strong>20-minute fit check</strong><span>Problem Â· sources Â· success metric Â· security boundary Â· next step</span></div></div></section><RequestDemoForm /></>
+    <><section className="subpage-hero subpage-hero--contact"><div className="section-shell subpage-hero__layout"><div><div className="section-kicker">Start with one expensive question</div><h1>Bring the defect, downtime mode or recurring loss your team cannot explain fast enough.</h1><p>We will define the minimum source scope, success metric, evidence standard and Proof-of-Value decision before asking you to scale.</p></div><div className="contact-brief"><Mail size={28} /><strong>20-minute fit check</strong><span>Problem · sources · success metric · security boundary · next step</span></div></div></section><RequestDemoForm /></>
   );
 }
 
@@ -444,6 +445,10 @@ function RolePage() {
 export function App() {
   return (
     <Layout>
+      {/* Route-level metadata. The root is corporate; the flagship keeps its
+          own identity on its own route. Without this, one static index.html
+          title described every path. */}
+      <RouteMeta />
       <Routes>
         <Route path="/" element={<SouHomePage />} />
         <Route path="/product" element={<Navigate to="/products/plantprocess-iq" replace />} />

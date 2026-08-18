@@ -364,3 +364,39 @@
  * clicked. This transparent strip spans the gap so the pointer never leaves.
  * Pointer-events only - it draws nothing and changes no keyboard behaviour. */
 .products-mega-panel::before { content: ""; position: absolute; left: 0; right: 0; top: -16px; height: 16px; }
+
+/* ---------------------------------------------------------------------------
+   SOU-ALIGN: /about hero type scale.
+
+   The subpage hero sets h1 to clamp(3.5rem, 7vw, 7.4rem) with line-height .91
+   and -0.07em tracking. On /about that headline runs to seven words over five
+   lines and crowds the orbit graphic beside it, which is why the page reads
+   as louder and looser than /presentation.
+
+   The presentation surface uses the display face at a controlled size with
+   normal tracking and open leading. This block brings /about to that scale
+   without touching any other hero and without changing the layout grid.
+   --------------------------------------------------------------------------- */
+.subpage-hero--about .subpage-hero__layout { gap: 54px; align-items: center; }
+
+.subpage-hero--about h1 {
+  font-family: var(--disp);
+  font-size: clamp(2.4rem, 3.6vw, 3.5rem);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  max-width: 15ch;
+}
+
+.subpage-hero--about .section-kicker { letter-spacing: .16em; }
+
+.subpage-hero--about p {
+  margin-top: 22px;
+  max-width: 56ch;
+  font-size: 1.02rem;
+  line-height: 1.7;
+}
+
+@media (max-width: 900px) {
+  .subpage-hero--about h1 { font-size: clamp(2.1rem, 8vw, 2.9rem); max-width: 100%; }
+  .subpage-hero--about p { max-width: 100%; }
+}

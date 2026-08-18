@@ -1,6 +1,6 @@
 export const plantProcessBrand = {
   productName: "PlantProcess IQ",
-  companyName: "SOU Industrial Intelligence",
+  companyName: "SOU Industrial Software",
   founderLocation: "Düsseldorf, Germany",
   marketFocus: "EU / MENA industrial plants",
   tagline: "Connect Your Plant Data. Understand Your Process.",
