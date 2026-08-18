@@ -3,6 +3,7 @@ import { defineConfig, devices } from "@playwright/test";
 const evidenceDir = process.env.PPIQ_COMMERCIAL_EVIDENCE_DIR || "test-results/commercial-v2";
 const executablePath = process.env.PPIQ_CHROMIUM_EXECUTABLE || undefined;
 const port = Number(process.env.PPIQ_COMMERCIAL_PORT || "4173");
+const externalServer = process.env.PPIQ_COMMERCIAL_EXTERNAL_SERVER === "1";
 const baseURL = `http://127.0.0.1:${port}`;
 
 export default defineConfig({
@@ -29,7 +30,7 @@ export default defineConfig({
   projects: [
     { name: "chromium", use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 1000 } } },
   ],
-  webServer: {
+  webServer: externalServer ? undefined : {
     command: `npm run preview -- --host 127.0.0.1 --port ${port}`,
     url: baseURL,
     timeout: 120_000,

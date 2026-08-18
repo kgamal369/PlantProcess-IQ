@@ -400,3 +400,12 @@
   .subpage-hero--about h1 { font-size: clamp(2.1rem, 8vw, 2.9rem); max-width: 100%; }
   .subpage-hero--about p { max-width: 100%; }
 }
+
+/* SOU-CERT-H1-SEMANTICS: preserve former h2 hero type scale.
+   / and /products now use the semantically correct H1 without changing the
+   customer-visible typography they had as H2 elements. */
+.new-landing-wrapper h1.sou-title,
+.new-landing-wrapper h1.pf-title {
+  font-size: clamp(26px, 3.6vw, 40px);
+  font-weight: 600;
+}

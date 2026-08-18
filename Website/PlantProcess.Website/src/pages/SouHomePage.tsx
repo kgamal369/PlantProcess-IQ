@@ -145,10 +145,10 @@ export function SouHomePage() {
       <section className="section sou-top">
         <div className="wrap">
           <p className="eyebrow rv">SOU INDUSTRIAL SOFTWARE</p>
-          <h2 className="rv sou-title">
+          <h1 className="rv sou-title">
             Industrial software for<br />
             <span className="g">smarter plants.</span>
-          </h2>
+          </h1>
           <p className="lead rv sou-lead">
             Five standalone products for process manufacturing - plant intelligence, execution,
             quality, material flow and energy. Machine learning, prediction and conversational

@@ -119,10 +119,10 @@ export function ProductsPortfolioPage() {
           <div className="pf-hero">
             <div>
               <p className="eyebrow rv">SOU INDUSTRIAL SOFTWARE</p>
-              <h2 className="rv pf-title">
+              <h1 className="rv pf-title">
                 Five products.<br />
                 <span className="g">One plant.</span>
-              </h2>
+              </h1>
               <p className="pf-lead rv">
                 PlantProcess IQ is our flagship. It is not a container around the other four -
                 each of these is bought, deployed and run in its own right, and each owns a
