@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // FILE: Backend/PlantProcess.Application/DependencyInjection.cs
 // FIX: Removed duplicate using directives for
 //      PlantProcess.Application.Analytics.Interfaces
@@ -75,7 +75,12 @@ public static class DependencyInjection
         services.AddScoped<IStagingRecordService, StagingRecordService>();
         services.AddScoped<IMappingExecutionService, MappingExecutionService>();
         services.AddScoped<Jobs.Targeting.IJobTargetClassPolicy, Jobs.Targeting.DeclaredJobTargetClassPolicy>();
-        services.AddScoped<Jobs.Targeting.IJobTargetLookup, Jobs.Targeting.JobTargetLookup>();
+        // T-065 bridge. The IJobTargetLookup registration moved to Infrastructure,
+        // where the composite that also reads the analysis-job compatibility store
+        // lives. Application must not name an Infrastructure type, and a second
+        // registration here would make the runtime authority depend on which line
+        // ran last. The concrete JobTargetLookup is still registered - in
+        // Infrastructure - and is still the job_definitions authority.
         services.AddScoped<Jobs.Targeting.IJobTargetResolver, Jobs.Targeting.JobTargetResolver>();
 
         services.AddScoped<IImportWorkflowService, ImportWorkflowService>();

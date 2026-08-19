@@ -4,24 +4,30 @@ using PlantProcess.Domain.Entities.Integration;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PlantProcess.Domain.Enums.Integration;
 
+using PlantProcess.Application.Jobs.Targeting;
 using PlantProcess.Infrastructure.Persistence.Configurations.Common;
 
 namespace PlantProcess.Infrastructure.Persistence.Configurations.Integration;
 
 public sealed class JobDefinitionConfiguration : IEntityTypeConfiguration<JobDefinition>
 {
-    // T-064. Chapter 3 4.5.5a names the stored vocabulary: current_published and
-    // pinned. The converter is declared over the NON-nullable enum on purpose, so
-    // EF handles null itself. A converter written over the nullable type would be
-    // handed null and would answer current_published for a job that has no target
-    // at all - a policy written beside an absent identity, which the coherence
-    // constraint in script 824 rejects and which nobody would see until it did.
+    // T-064. Chapter 3 4.5.5a names the stored vocabulary. The converter is
+    // declared over the NON-nullable enum on purpose, so EF handles null itself.
+    // A converter written over the nullable type would be handed null and would
+    // answer with a policy for a job that has no target at all - a policy written
+    // beside an absent identity, which the coherence constraint in script 824
+    // rejects and which nobody would see until it did.
+    //
+    // T-065 authority convergence. Both directions now delegate to the shared
+    // codec instead of holding a private mapping. The read direction previously
+    // answered with the current-published member for ANY value that was not the
+    // pinned literal, which turned an unrecognised row into a policy nobody
+    // stated. The codec refuses it instead, and the compatibility store added by
+    // script 828 translates through exactly the same rule.
     private static readonly ValueConverter<JobTargetVersionPolicy, string> VersionPolicyConverter =
         new(
-            value => value == JobTargetVersionPolicy.Pinned ? "pinned" : "current_published",
-            value => value == "pinned"
-                ? JobTargetVersionPolicy.Pinned
-                : JobTargetVersionPolicy.CurrentPublished);
+            value => JobTargetVersionPolicyCodec.ToStorage(value),
+            value => JobTargetVersionPolicyCodec.FromStorage(value));
 
     public void Configure(EntityTypeBuilder<JobDefinition> builder)
     {

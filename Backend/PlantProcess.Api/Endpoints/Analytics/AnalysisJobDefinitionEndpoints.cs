@@ -7,7 +7,10 @@ using PlantProcess.Api.ErrorHandling;
 using PlantProcess.Api.Extensions;
 using PlantProcess.Application.Analytics.Contracts;
 using PlantProcess.Application.Analytics.Interfaces;
+using PlantProcess.Application.Definitions;
+using PlantProcess.Application.Jobs.Targeting;
 using PlantProcess.Application.Licensing.Contracts;
+using PlantProcess.Domain.Enums.Integration;
 using PlantProcess.Infrastructure.Persistence;
 
 namespace PlantProcess.Api.Endpoints.Analytics;
@@ -244,6 +247,20 @@ public static class AnalysisJobDefinitionEndpoints
         if (exists)
             return ApplicationProblems.Conflict($"An active definition with code '{code}' already exists.");
 
+        // T-065. The target is validated before anything is written, so the three
+        // CHECK constraints in script 828 are never the first thing to notice an
+        // incoherent target. Absent is a valid answer and is not an empty target.
+        var targetRefusal = TargetFromApi(
+            request.TargetDefinitionKind,
+            request.TargetDefinitionId,
+            request.TargetDefinitionVersion,
+            request.TargetVersionPolicy,
+            request.TargetParameters,
+            out var target);
+
+        if (targetRefusal is not null)
+            return ApplicationProblems.Validation(targetRefusal);
+
         var id = Guid.NewGuid();
         var ruleJson = BuildRuleJson(windowDays, request.PopulationFilters, request.EngineOutcomeKey, request.EngineJobCode, request.Grain);
 
@@ -256,7 +273,9 @@ public static class AnalysisJobDefinitionEndpoints
                 source_correlation_run_id, parameter_code, defect_type,
                 site_id, equipment_id, rule_json, schedule_expression,
                 is_enabled, honest_state, description, is_synthetic,
-                source_system, source_record_id, created_at_utc
+                source_system, source_record_id, created_at_utc,
+                target_definition_kind, target_definition_id,
+                target_definition_version, target_version_policy, target_parameters
             )
             VALUES
             (
@@ -264,7 +283,9 @@ public static class AnalysisJobDefinitionEndpoints
                 NULL, @parameter_code, @defect_type,
                 NULL, NULL, CAST(@rule_json AS jsonb), @schedule,
                 @is_enabled, 'RuleBasedMonitoring', @description, false,
-                'PlantProcessIQ.Surface3.AnalysisJobDefinition', NULL, now()
+                'PlantProcessIQ.Surface3.AnalysisJobDefinition', NULL, now(),
+                @target_kind, @target_id,
+                @target_version, @target_policy, CAST(@target_parameters AS jsonb)
             )
             """,
             cancellationToken,
@@ -276,7 +297,12 @@ public static class AnalysisJobDefinitionEndpoints
             ("rule_json", ruleJson),
             ("schedule", string.IsNullOrWhiteSpace(request.ScheduleExpression) ? "Manual" : request.ScheduleExpression.Trim()),
             ("is_enabled", request.IsEnabled ?? true),
-            ("description", NullableText(request.Description)));
+            ("description", NullableText(request.Description)),
+            ("target_kind", TargetKindColumn(target)),
+            ("target_id", TargetIdColumn(target)),
+            ("target_version", TargetVersionColumn(target)),
+            ("target_policy", TargetPolicyColumn(target)),
+            ("target_parameters", TargetParametersColumn(target)));
 
         var created = await LoadDefinitionAsync(dbContext, code, cancellationToken);
         return Results.Ok(created);
@@ -299,6 +325,20 @@ public static class AnalysisJobDefinitionEndpoints
         var windowDays = ClampWindow(request.WindowDays);
         var ruleJson = BuildRuleJson(windowDays, request.PopulationFilters, request.EngineOutcomeKey, request.EngineJobCode, request.Grain);
 
+        // T-065. The target is replaced wholesale by what this request states,
+        // including being cleared when it states none. A partial update would
+        // leave a kind beside an identity from an earlier edit.
+        var targetRefusal = TargetFromApi(
+            request.TargetDefinitionKind,
+            request.TargetDefinitionId,
+            request.TargetDefinitionVersion,
+            request.TargetVersionPolicy,
+            request.TargetParameters,
+            out var target);
+
+        if (targetRefusal is not null)
+            return ApplicationProblems.Validation(targetRefusal);
+
         var affected = await ExecuteAsync(
             dbContext,
             """
@@ -310,6 +350,11 @@ public static class AnalysisJobDefinitionEndpoints
                 schedule_expression = @schedule,
                 is_enabled = @is_enabled,
                 description = @description,
+                target_definition_kind = @target_kind,
+                target_definition_id = @target_id,
+                target_definition_version = @target_version,
+                target_version_policy = @target_policy,
+                target_parameters = CAST(@target_parameters AS jsonb),
                 updated_at_utc = now()
             WHERE lower(inspection_job_code) = lower(@code)
               AND is_deleted = false
@@ -322,6 +367,11 @@ public static class AnalysisJobDefinitionEndpoints
             ("schedule", string.IsNullOrWhiteSpace(request.ScheduleExpression) ? "Manual" : request.ScheduleExpression.Trim()),
             ("is_enabled", request.IsEnabled ?? true),
             ("description", NullableText(request.Description)),
+            ("target_kind", TargetKindColumn(target)),
+            ("target_id", TargetIdColumn(target)),
+            ("target_version", TargetVersionColumn(target)),
+            ("target_policy", TargetPolicyColumn(target)),
+            ("target_parameters", TargetParametersColumn(target)),
             ("code", code.Trim()));
 
         if (affected == 0)
@@ -339,50 +389,127 @@ public static class AnalysisJobDefinitionEndpoints
         [FromBody] RunAnalysisJobRequest request,
         PlantProcessDbContext dbContext,
         [FromServices] ICorrelationComputeEngine computeEngine,
+        [FromServices] IJobTargetResolver targetResolver,
         CancellationToken cancellationToken)
     {
         var definition = await LoadDefinitionAsync(dbContext, code, cancellationToken);
         if (definition is null)
             return ApplicationProblems.NotFound($"Analysis job definition '{code}' was not found.");
 
-        // Resolve run parameters from the saved rule_json (definition drives the job).
+        // T-065. The run declaration is READ, never manufactured.
+        //
+        // Three literals used to be assigned here as defaults and only then
+        // overwritten if the stored declaration happened to carry them. A
+        // definition that named no engine job code therefore ran as
+        // ML_PROCESS_VS_DEFECT, acquired that code's class from the catalogue, and
+        // executed against a target nobody declared. A declaration that could not
+        // be read did the same thing silently, because the parse failure was
+        // swallowed by a catch that said corruption never blocks a run.
+        //
+        // A missing declaration is a blocked run, not a defaulted one. This is
+        // decided BEFORE the class lookup, the resolver and either engine.
         var windowDays = ClampWindow(request.WindowDaysOverride);
-        var engineOutcomeKey = "defect.rate_per_m2";
-        var engineJobCode = "ML_PROCESS_VS_DEFECT";
-        var grain = "coil";
+
+        string? declaredOutcomeKey;
+        string? declaredJobCode;
+        string? declaredGrain;
 
         try
         {
-            using var doc = JsonDocument.Parse(string.IsNullOrWhiteSpace(definition.RuleJson) ? "{}" : definition.RuleJson);
+            using var doc = JsonDocument.Parse(
+                string.IsNullOrWhiteSpace(definition.RuleJson) ? "{}" : definition.RuleJson);
             var root = doc.RootElement;
+
+            if (root.ValueKind != JsonValueKind.Object)
+            {
+                return BlockedRunResult(
+                    definition, windowDays, null, null, "BlockedDefinition",
+                    "RunDeclarationMalformed",
+                    "The stored run declaration is not a JSON object, so nothing about this "
+                    + "run can be read from it.");
+            }
 
             if (request.WindowDaysOverride is null
                 && root.TryGetProperty("windowDays", out var w)
                 && w.ValueKind == JsonValueKind.Number)
                 windowDays = ClampWindow(w.GetInt32());
 
-            if (root.TryGetProperty("engineOutcomeKey", out var ok) && ok.ValueKind == JsonValueKind.String)
-            {
-                var v = ok.GetString();
-                if (!string.IsNullOrWhiteSpace(v)) engineOutcomeKey = v!;
-            }
-
-            if (root.TryGetProperty("engineJobCode", out var jc) && jc.ValueKind == JsonValueKind.String)
-            {
-                var v = jc.GetString();
-                if (!string.IsNullOrWhiteSpace(v)) engineJobCode = v!;
-            }
-
-            if (root.TryGetProperty("grain", out var g) && g.ValueKind == JsonValueKind.String)
-            {
-                var v = g.GetString();
-                if (!string.IsNullOrWhiteSpace(v)) grain = v!;
-            }
+            declaredOutcomeKey = ReadDeclaredString(root, "engineOutcomeKey");
+            declaredJobCode = ReadDeclaredString(root, "engineJobCode");
+            declaredGrain = ReadDeclaredString(root, "grain");
         }
-        catch (JsonException)
+        catch (JsonException ex)
         {
-            // Corrupt rule_json never blocks an honest run with defaults.
+            return BlockedRunResult(
+                definition, windowDays, null, null, "BlockedDefinition",
+                "RunDeclarationMalformed",
+                "The stored run declaration could not be read as JSON: " + ex.Message);
         }
+
+        var missingKeys = new List<string>();
+        if (declaredJobCode is null) { missingKeys.Add("engineJobCode"); }
+        if (declaredOutcomeKey is null) { missingKeys.Add("engineOutcomeKey"); }
+        if (declaredGrain is null) { missingKeys.Add("grain"); }
+
+        if (missingKeys.Count > 0)
+        {
+            return BlockedRunResult(
+                definition, windowDays, declaredJobCode, declaredOutcomeKey, "BlockedDefinition",
+                "RunDeclarationIncomplete",
+                "The stored run declaration does not state " + string.Join(", ", missingKeys)
+                + ". A run is not started on values this definition never declared.");
+        }
+
+        var engineOutcomeKey = declaredOutcomeKey!;
+        var engineJobCode = declaredJobCode!;
+        var grain = declaredGrain!;
+
+        // --- T-065: what this definition executes, resolved BEFORE any engine side effect ---
+        //
+        // The class is not the analysis definition's own. It is the committed
+        // catalogue's job_type for the engine job code this definition names, so
+        // the mapping is a reuse of a ratified table rather than a second
+        // authority. An unmappable class is refused, never defaulted to Custom:
+        // a defaulted class would inherit whatever target policy that class later
+        // carries, and nobody would go looking for it.
+        var catalogJobType = await ScalarStringAsync(
+            dbContext,
+            "SELECT job_type FROM public.ml_learning_job_catalog_v1 WHERE job_code = @jobCode LIMIT 1",
+            cancellationToken,
+            ("jobCode", engineJobCode));
+
+        var jobClass = AnalysisJobClass.FromCatalogJobType(catalogJobType);
+        if (jobClass is null)
+        {
+            return BlockedTargetResult(
+                definition, windowDays, engineJobCode, engineOutcomeKey,
+                "TargetClassUnmappable",
+                AnalysisJobClass.UnmappableMessage(engineJobCode, catalogJobType));
+        }
+
+        // The stored target is decoded through the one policy codec. A stored
+        // value outside the closed vocabulary is refused rather than read as
+        // current-published, which is what the EF converter used to do.
+        var storedRefusal = TargetFromStorage(definition, out var declaredTarget);
+        if (storedRefusal is not null)
+        {
+            return BlockedTargetResult(
+                definition, windowDays, engineJobCode, engineOutcomeKey,
+                "TargetStateIncoherent", storedRefusal);
+        }
+
+        var resolution = await targetResolver.ResolveAsync(jobClass.Value, declaredTarget, cancellationToken);
+        if (resolution.IsFailure)
+        {
+            return BlockedTargetResult(
+                definition, windowDays, engineJobCode, engineOutcomeKey,
+                resolution.Error!.Code, resolution.Error!.Message);
+        }
+
+        // Absent is a valid answer: a definition that declares no target and
+        // whose class does not require one runs exactly as it did before T-065.
+        ResolvedJobTarget? executedTarget = resolution.Value!.Target;
+        var targetStatus = resolution.Value!.Outcome.ToString();
 
         // --- Step 1: ReadinessGate-governed learning run (never bypassed, never forced) ---
         string readinessStatus = "Unavailable";
@@ -507,6 +634,12 @@ public static class AnalysisJobDefinitionEndpoints
             computeMessage,
             computeResultCount,
             engineOutcomeKey,
+            targetStatus,
+            targetRefusalCode = (string?)null,
+            targetRefusalReason = (string?)null,
+            executedTargetDefinitionKind = executedTarget?.Kind.ToString(),
+            executedTargetDefinitionId = executedTarget?.DefinitionId.ToString("D"),
+            executedTargetDefinitionVersion = executedTarget?.ResolvedVersion,
             populationFilterNote = PopulationFilterNote,
             honestPositioning = HonestPositioning
         });
@@ -602,7 +735,12 @@ public static class AnalysisJobDefinitionEndpoints
             last_run_status,
             description,
             created_at_utc,
-            updated_at_utc
+            updated_at_utc,
+            target_definition_kind,
+            target_definition_id,
+            target_definition_version,
+            target_version_policy,
+            target_parameters::text AS target_parameters
         FROM public.inspection_jobs
         """;
 
@@ -645,7 +783,12 @@ public static class AnalysisJobDefinitionEndpoints
             reader.IsDBNull(12) ? null : reader.GetString(12),
             reader.IsDBNull(13) ? null : reader.GetString(13),
             reader.GetDateTime(14),
-            reader.IsDBNull(15) ? null : reader.GetDateTime(15));
+            reader.IsDBNull(15) ? null : reader.GetDateTime(15),
+            reader.IsDBNull(16) ? null : reader.GetString(16),
+            reader.IsDBNull(17) ? null : reader.GetGuid(17),
+            reader.IsDBNull(18) ? null : reader.GetInt32(18),
+            reader.IsDBNull(19) ? null : reader.GetString(19),
+            reader.IsDBNull(20) ? null : reader.GetString(20));
     }
 
     private static string BuildRuleJson(
@@ -714,6 +857,243 @@ public static class AnalysisJobDefinitionEndpoints
             AddParameter(command, p.Name, p.Value);
 
         return await command.ExecuteNonQueryAsync(cancellationToken);
+    }
+
+    // ------------------------------------------------------------------
+    // T-065 target helpers. One coherence rule and one policy codec, used by
+    // create, update and run alike, so the three cannot disagree about what a
+    // target is.
+    // ------------------------------------------------------------------
+
+    /// <summary>
+    /// Builds the reference a request states, or returns the sentence naming why
+    /// it is not a target. A null reference with a null return means the request
+    /// states no target, which is a valid answer and not an empty one.
+    /// </summary>
+    private static string? TargetFromApi(
+        string? kindText,
+        Guid? definitionId,
+        int? version,
+        string? policyText,
+        string? parametersJson,
+        out JobTargetReference? target)
+    {
+        target = null;
+
+        JobTargetVersionPolicy? policy = null;
+        if (!string.IsNullOrWhiteSpace(policyText))
+        {
+            if (!JobTargetVersionPolicyCodec.TryFromApi(policyText, out var parsed))
+                return JobTargetVersionPolicyCodec.UnknownPolicyMessage(policyText);
+
+            policy = parsed;
+        }
+
+        return BuildTarget(kindText, definitionId, version, policy, parametersJson, out target);
+    }
+
+    /// <summary>
+    /// Builds the reference a stored definition carries. The persisted policy is
+    /// decoded through the same codec, so a value outside the closed vocabulary
+    /// is refused here rather than silently read as one of the two.
+    /// </summary>
+    private static string? TargetFromStorage(
+        AnalysisJobDefinitionRow definition,
+        out JobTargetReference? target)
+    {
+        target = null;
+
+        JobTargetVersionPolicy? policy = null;
+        if (!string.IsNullOrWhiteSpace(definition.TargetVersionPolicy))
+        {
+            if (!JobTargetVersionPolicyCodec.TryFromStorage(definition.TargetVersionPolicy, out var parsed))
+                return JobTargetVersionPolicyCodec.UnknownPolicyMessage(definition.TargetVersionPolicy);
+
+            policy = parsed;
+        }
+
+        return BuildTarget(
+            definition.TargetDefinitionKind,
+            definition.TargetDefinitionId,
+            definition.TargetDefinitionVersion,
+            policy,
+            definition.TargetParameters,
+            out target);
+    }
+
+    private static string? BuildTarget(
+        string? kindText,
+        Guid? definitionId,
+        int? version,
+        JobTargetVersionPolicy? policy,
+        string? parametersJson,
+        out JobTargetReference? target)
+    {
+        target = null;
+
+        var parameters = JobTargetParameters.Normalise(parametersJson);
+        var statesSomething =
+            !string.IsNullOrWhiteSpace(kindText) || definitionId.HasValue || policy.HasValue;
+
+        if (!statesSomething)
+        {
+            // Half a target is not a target. A version or a parameter payload
+            // beside no identity is the shape script 826 already refuses on the
+            // canonical store, and it is refused here for the same reason.
+            if (version.HasValue)
+                return "A target version cannot be stated without a target definition.";
+
+            if (parameters is not null)
+                return "Target parameters cannot be stated without a target definition.";
+
+            return null;
+        }
+
+        if (string.IsNullOrWhiteSpace(kindText) || !definitionId.HasValue || !policy.HasValue)
+            return "A target is a kind, an identity and a version policy together, or it is absent.";
+
+        if (!TryParseDefinitionKind(kindText, out var kind))
+            return "'" + kindText.Trim() + "' is not a declared definition kind.";
+
+        var candidate = new JobTargetReference
+        {
+            Kind = kind,
+            DefinitionId = definitionId.Value,
+            VersionPolicy = policy.Value,
+            PinnedVersion = version,
+            ParametersJson = parameters
+        };
+
+        var structural = candidate.Validate();
+        if (structural is not null)
+            return structural;
+
+        target = candidate;
+        return null;
+    }
+
+    /// <summary>
+    /// Exact, case-sensitive, and never numeric. Enum.TryParse alone would accept
+    /// "4" as a kind, which is a definition surface nobody typed.
+    /// </summary>
+    private static bool TryParseDefinitionKind(string? value, out DefinitionKind kind)
+    {
+        kind = default;
+        if (string.IsNullOrWhiteSpace(value))
+            return false;
+
+        var trimmed = value.Trim();
+        if (!Enum.TryParse(trimmed, false, out kind))
+            return false;
+
+        return string.Equals(Enum.GetName(kind), trimmed, StringComparison.Ordinal);
+    }
+
+    private static object? TargetKindColumn(JobTargetReference? target) => target?.Kind.ToString();
+
+    private static object? TargetIdColumn(JobTargetReference? target) => target?.DefinitionId;
+
+    private static object? TargetVersionColumn(JobTargetReference? target) => target?.PinnedVersion;
+
+    private static object? TargetPolicyColumn(JobTargetReference? target) =>
+        target is null ? null : JobTargetVersionPolicyCodec.ToStorage(target.VersionPolicy);
+
+    /// <summary>Absent stays SQL NULL and "{}" stays "{}". The two are different statements.</summary>
+    private static object? TargetParametersColumn(JobTargetReference? target) => target?.ParametersJson;
+
+    /// <summary>
+    /// Exact string or nothing. A blank value and a non-string value are both
+    /// absence: a declaration that says the empty string is not a declaration.
+    /// </summary>
+    private static string? ReadDeclaredString(JsonElement root, string propertyName)
+    {
+        if (!root.TryGetProperty(propertyName, out var element))
+        {
+            return null;
+        }
+
+        if (element.ValueKind != JsonValueKind.String)
+        {
+            return null;
+        }
+
+        var value = element.GetString();
+        return string.IsNullOrWhiteSpace(value) ? null : value!.Trim();
+    }
+
+    private static IResult BlockedTargetResult(
+        AnalysisJobDefinitionRow definition,
+        int windowDays,
+        string engineJobCode,
+        string engineOutcomeKey,
+        string refusalCode,
+        string refusalReason)
+    {
+        return BlockedRunResult(
+            definition, windowDays, engineJobCode, engineOutcomeKey,
+            "BlockedTarget", refusalCode, refusalReason);
+    }
+
+    /// <summary>
+    /// The honest refusal. Nothing is written and no engine runs, so the executed
+    /// identity is null rather than an echo of what was requested - a requested
+    /// selector is not proof that anything executed.
+    /// </summary>
+    private static IResult BlockedRunResult(
+        AnalysisJobDefinitionRow definition,
+        int windowDays,
+        string? engineJobCode,
+        string? engineOutcomeKey,
+        string definitionStatus,
+        string refusalCode,
+        string refusalReason)
+    {
+        return Results.Ok(new
+        {
+            generatedAtUtc = DateTimeOffset.UtcNow,
+            code = definition.Code,
+            definitionStatus,
+            windowDays,
+            readinessStatus = "NotEvaluated",
+            readinessReason = "The run was refused before any engine side effect, so readiness was not evaluated.",
+            learningJobCode = engineJobCode,
+            learningRunId = (string?)null,
+            learningStatus = "NotRun",
+            learningResultCount = 0,
+            computeEngineKey = (string?)null,
+            computeRunId = (string?)null,
+            computeStatus = "NotRun",
+            computeMessage = "",
+            computeResultCount = 0,
+            engineOutcomeKey,
+            targetStatus = "Refused",
+            targetRefusalCode = refusalCode,
+            targetRefusalReason = refusalReason,
+            executedTargetDefinitionKind = (string?)null,
+            executedTargetDefinitionId = (string?)null,
+            executedTargetDefinitionVersion = (int?)null,
+            populationFilterNote = PopulationFilterNote,
+            honestPositioning = HonestPositioning
+        });
+    }
+
+    private static async Task<string?> ScalarStringAsync(
+        PlantProcessDbContext dbContext,
+        string sql,
+        CancellationToken cancellationToken,
+        params (string Name, object? Value)[] parameters)
+    {
+        var connection = dbContext.Database.GetDbConnection();
+        if (connection.State != ConnectionState.Open)
+            await connection.OpenAsync(cancellationToken);
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        foreach (var p in parameters)
+            AddParameter(command, p.Name, p.Value);
+
+        var value = await command.ExecuteScalarAsync(cancellationToken);
+        return value is null || value is DBNull ? null : value.ToString();
     }
 
     private static async Task<bool> ScalarBoolAsync(
@@ -802,7 +1182,12 @@ public sealed record AnalysisJobDefinitionRow(
     string? LastRunStatus,
     string? Description,
     DateTime CreatedAtUtc,
-    DateTime? UpdatedAtUtc);
+    DateTime? UpdatedAtUtc,
+    string? TargetDefinitionKind = null,
+    Guid? TargetDefinitionId = null,
+    int? TargetDefinitionVersion = null,
+    string? TargetVersionPolicy = null,
+    string? TargetParameters = null);
 
 public sealed record AnalysisJobListResponse(
     DateTime GeneratedAtUtc,
@@ -820,7 +1205,12 @@ public sealed record CreateAnalysisJobDefinitionRequest(
     string? Grain,
     string? ScheduleExpression,
     bool? IsEnabled,
-    string? Description);
+    string? Description,
+    string? TargetDefinitionKind = null,
+    Guid? TargetDefinitionId = null,
+    int? TargetDefinitionVersion = null,
+    string? TargetVersionPolicy = null,
+    string? TargetParameters = null);
 
 public sealed record UpdateAnalysisJobDefinitionRequest(
     string Name,
@@ -833,7 +1223,12 @@ public sealed record UpdateAnalysisJobDefinitionRequest(
     string? Grain,
     string? ScheduleExpression,
     bool? IsEnabled,
-    string? Description);
+    string? Description,
+    string? TargetDefinitionKind = null,
+    Guid? TargetDefinitionId = null,
+    int? TargetDefinitionVersion = null,
+    string? TargetVersionPolicy = null,
+    string? TargetParameters = null);
 
 public sealed record RunAnalysisJobRequest(
     int? WindowDaysOverride);

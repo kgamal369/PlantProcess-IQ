@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // FILE: Backend/PlantProcess.Infrastructure/DependencyInjection.cs
 // CHANGES: Registered MsSqlConnector and MySqlConnector alongside
 //          the existing CSV, Excel and PostgreSQL connectors.
@@ -58,6 +58,17 @@ public static class DependencyInjection
             provider => provider.GetRequiredService<PlantProcessDbContext>());
 
         services.AddSingleton(_ => NpgsqlDataSource.Create(connectionString));
+
+        // T-065 bridge. ONE IJobTargetLookup authority, composed here because
+        // this project owns the Npgsql boundary and inspection_jobs has no EF
+        // entity. The original T-064 lookup stays the job_definitions authority
+        // and is injected as a concrete dependency; the composite adds the
+        // compatibility store beside it so the JB04 retirement guard cannot
+        // report zero dependents while an analysis job still points at one.
+        services.AddScoped<PlantProcess.Application.Jobs.Targeting.JobTargetLookup>();
+        services.AddScoped<PlantProcess.Infrastructure.Jobs.AnalysisAwareJobTargetLookup>();
+        services.AddScoped<PlantProcess.Application.Jobs.Targeting.IJobTargetLookup>(
+            sp => sp.GetRequiredService<PlantProcess.Infrastructure.Jobs.AnalysisAwareJobTargetLookup>());
 
         // Doctrine v5 P03: bounded telemetry ingestion queue with backpressure.
         services.AddSingleton<ITelemetryIngestionQueue, TelemetryIngestionQueue>();
