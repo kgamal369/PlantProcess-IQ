@@ -13,7 +13,7 @@ import { join } from "node:path";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { MlOutcomeDefinitionDto } from "../../../api/mlFoundation";
+import type { AnalysisOutcomeOption } from "../../../api/analysisOptions";
 import {
   canRunSelection,
   grainForOutcome,
@@ -21,17 +21,11 @@ import {
   toOutcomeOptions,
 } from "../analysisOutcomeRegistry";
 
-const row = (key: string, grain: string | null, group = "quality"): MlOutcomeDefinitionDto => ({
-  outcome_key: key,
-  display_name: key,
-  outcome_group: group,
-  grain,
-  outcome_type: "continuous",
-  unit: null,
-  normalization: null,
-  taxonomy_json: null,
-  version: 1,
-  status: "active",
+const row = (key: string, grain: string | null): AnalysisOutcomeOption => ({
+  outcomeKey: key,
+  displayName: key,
+  outcomeType: "continuous",
+  grain: grain ?? "",
 });
 
 // ---------------------------------------------------------------- data rules
@@ -96,12 +90,12 @@ vi.mock("@/components/standard/StandardP2Controls", () => ({
   }) => <button disabled={disabled} onClick={onClick}>{children}</button>,
 }));
 
-const getOutcomeDefinitions = vi.fn();
+const getAnalysisOutcomeOptions = vi.fn();
 const getAnalysisReadinessGates = vi.fn();
 const runCorrelation = vi.fn();
 
-vi.mock("../../../api/mlFoundation", () => ({
-  getOutcomeDefinitions: (...a: unknown[]) => getOutcomeDefinitions(...a),
+vi.mock("../../../api/analysisOptions", () => ({
+  getAnalysisOutcomeOptions: (...a: unknown[]) => getAnalysisOutcomeOptions(...a),
 }));
 vi.mock("../../../api/advancedAnalysis", () => ({
   getAnalysisReadinessGates: (...a: unknown[]) => getAnalysisReadinessGates(...a),
@@ -114,13 +108,13 @@ const boardText = () => screen.getByTestId("canvas-nodes").textContent ?? "";
 
 describe("T-068 Analysis Toolbox is registry-driven", () => {
   beforeEach(() => {
-    getOutcomeDefinitions.mockReset();
+    getAnalysisOutcomeOptions.mockReset();
     getAnalysisReadinessGates.mockReset().mockResolvedValue({});
     runCorrelation.mockReset().mockResolvedValue({});
   });
 
   it("shows the outcomes the registry returned and opens on the first one", async () => {
-    getOutcomeDefinitions.mockResolvedValue([
+    getAnalysisOutcomeOptions.mockResolvedValue([
       row("alpha.metric", "grain_alpha"),
       row("beta.metric", "grain_beta"),
     ]);
@@ -133,7 +127,7 @@ describe("T-068 Analysis Toolbox is registry-driven", () => {
   });
 
   it("makes a newly added registry row available with no source change", async () => {
-    getOutcomeDefinitions.mockResolvedValue([
+    getAnalysisOutcomeOptions.mockResolvedValue([
       row("alpha.metric", "grain_alpha"),
       row("beta.metric", "grain_beta"),
       row("gamma.invented.today", "grain_gamma"),
@@ -145,7 +139,7 @@ describe("T-068 Analysis Toolbox is registry-driven", () => {
   });
 
   it("takes the grain of whichever outcome is selected", async () => {
-    getOutcomeDefinitions.mockResolvedValue([
+    getAnalysisOutcomeOptions.mockResolvedValue([
       row("alpha.metric", "grain_alpha"),
       row("beta.metric", "grain_beta"),
     ]);
@@ -160,7 +154,7 @@ describe("T-068 Analysis Toolbox is registry-driven", () => {
   });
 
   it("disables the run when the registry is empty", async () => {
-    getOutcomeDefinitions.mockResolvedValue([]);
+    getAnalysisOutcomeOptions.mockResolvedValue([]);
 
     render(<AnalysisToolboxPage />);
 
@@ -171,7 +165,7 @@ describe("T-068 Analysis Toolbox is registry-driven", () => {
   });
 
   it("disables the run and states the failure when the registry cannot be read", async () => {
-    getOutcomeDefinitions.mockRejectedValue(new Error("network"));
+    getAnalysisOutcomeOptions.mockRejectedValue(new Error("network"));
 
     render(<AnalysisToolboxPage />);
 
@@ -182,7 +176,7 @@ describe("T-068 Analysis Toolbox is registry-driven", () => {
   });
 
   it("refuses to invent a grain for a row that declares none", async () => {
-    getOutcomeDefinitions.mockResolvedValue([row("no.grain.metric", null)]);
+    getAnalysisOutcomeOptions.mockResolvedValue([row("no.grain.metric", null)]);
 
     render(<AnalysisToolboxPage />);
 
@@ -199,6 +193,17 @@ describe("T-068 Analysis Toolbox is registry-driven", () => {
 describe("T-068 no hardcoded outcome or grain authority remains", () => {
   const read = (...parts: string[]) => readFileSync(join(__dirname, ...parts), "utf8");
 
+  // Comments removed before any negative assertion.
+  //
+  // The adapter documents the route it replaced, so a check that scans the raw
+  // file fires on the sentence describing the fix. What matters is whether the
+  // CODE names it - the same reason the pack's own scan strips comments.
+  const code = (...parts: string[]) =>
+    read(...parts)
+      .replace(/^\s*\/\/.*$/gm, "")
+      .replace(/^\s*\*.*$/gm, "")
+      .replace(/\/\*[\s\S]*?\*\//g, "");
+
   it("the Analysis Toolbox declares no outcome or grain catalogue", () => {
     const source = read("..", "AnalysisToolboxPage.tsx");
     expect(source).not.toMatch(/\bOUTCOMES\b/);
@@ -206,6 +211,32 @@ describe("T-068 no hardcoded outcome or grain authority remains", () => {
     expect(source).not.toMatch(/coil/i);
     expect(source).not.toMatch(/slab/i);
     expect(source).not.toMatch(/heat"/i);
+  });
+
+  it("the Analysis Toolbox consumer path knows no compatibility ML route", () => {
+    // The page, the selection rules and the adapter must none of them name the
+    // physical ml_foundation route. Only the adapter may name a route at all,
+    // and it names the stable one.
+    for (const file of [
+      ["..", "AnalysisToolboxPage.tsx"],
+      ["..", "analysisOutcomeRegistry.ts"],
+    ]) {
+      const source = code(...file);
+      expect(source).not.toMatch(/ml\/foundation/i);
+      expect(source).not.toMatch(/ml_outcome_definitions/i);
+    }
+
+    // The adapter is the one file allowed to name a route, and it names the
+    // stable one. Its comment may mention the retired route; its code may not.
+    expect(read("..", "..", "..", "api", "analysisOptions.ts"))
+      .toContain("/analysis-jobs/definition-options");
+    expect(code("..", "..", "..", "api", "analysisOptions.ts"))
+      .not.toMatch(/ml\/foundation/i);
+  });
+
+  it("no consumer of the retired compatibility client remains", () => {
+    expect(code("..", "AnalysisToolboxPage.tsx")).not.toMatch(/mlFoundation/);
+    expect(code("..", "analysisOutcomeRegistry.ts")).not.toMatch(/mlFoundation/);
   });
 
   it("the analysis api client defaults no grain", () => {

@@ -6,7 +6,7 @@ import { BlockNode, type BlockNodeData } from "../../canvas/nodes/BlockNode";
 import { runCorrelation, getAnalysisReadinessGates } from "../../api/advancedAnalysis";
 import type { AdvancedReadinessGateSummaryDto } from "../../api/advancedAnalysis";
 import { GateReadinessPanel } from "@/components/analysis/GateReadinessPanel";
-import { getOutcomeDefinitions, type MlOutcomeDefinitionDto } from "../../api/mlFoundation";
+import { getAnalysisOutcomeOptions, type AnalysisOutcomeOption } from "../../api/analysisOptions";
 import {
   canRunSelection,
   grainForOutcome,
@@ -39,17 +39,18 @@ type RegistryState = "loading" | "ready" | "empty" | "error";
  *
  * T-068 - the outcome catalogue and the grain catalogue used to be two literal
  * arrays declared here, with the opening state pinned to the first element of
- * one and a fixed member of the other. public.ml_outcome_definitions is the
- * authority and it carries the grain per outcome, so the page now reads both
- * from GET /ml/foundation/outcomes. Grain is no longer independently
- * selectable: it belongs to the chosen outcome's row and follows it.
+ * one and a fixed member of the other. Both are gone. The options adapter is
+ * the authority and it carries the grain per outcome, so the page reads both
+ * from it. Grain is no longer independently selectable: it belongs to the
+ * chosen outcome's row and follows it.
  *
- * The removed identifiers are deliberately not named here. A guard that scans
- * for them would fire on the prose describing their removal, which is the same
- * defect class as a check satisfiable by its own comment.
+ * Neither the removed identifiers nor any route or table is named here. This
+ * page should not know where the options come from, and a comment that names
+ * one both leaks that knowledge and goes stale the moment the route moves -
+ * which is precisely what happened to the sentence this replaced.
  */
 export default function AnalysisToolboxPage() {
-  const [outcomeRows, setOutcomeRows] = useState<MlOutcomeDefinitionDto[]>([]);
+  const [outcomeRows, setOutcomeRows] = useState<AnalysisOutcomeOption[]>([]);
   const [registryState, setRegistryState] = useState<RegistryState>("loading");
 
   // Nothing is selected until the registry says what exists. windowDays is not
@@ -63,7 +64,7 @@ export default function AnalysisToolboxPage() {
   useEffect(() => {
     let stale = false;
     setRegistryState("loading");
-    getOutcomeDefinitions()
+    getAnalysisOutcomeOptions()
       .then((rows) => {
         if (stale) return;
         setOutcomeRows(rows);

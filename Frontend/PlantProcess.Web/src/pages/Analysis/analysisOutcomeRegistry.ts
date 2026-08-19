@@ -3,12 +3,12 @@
 // Pure on purpose: every rule below is a data rule, and proving it should not
 // require standing up React Flow. The page wiring is proved separately.
 //
-// There is no is_default column on the live endpoint, so "initial selection" is
+// There is no default flag on the options contract, so "initial selection" is
 // the first row of the server's own deterministic ORDER BY outcome_group,
 // outcome_key. That is registry-driven. Picking a key here would be the same
 // Rule 1 defect the task exists to remove.
 
-import type { MlOutcomeDefinitionDto } from "../../api/mlFoundation";
+import type { AnalysisOutcomeOption } from "../../api/analysisOptions";
 
 export interface OutcomeSelection {
   outcomeKey: string;
@@ -16,19 +16,19 @@ export interface OutcomeSelection {
 }
 
 /** A row is usable only if it carries both an outcome key and its own grain. */
-export function isUsableOutcomeRow(row: MlOutcomeDefinitionDto | null | undefined): boolean {
+export function isUsableOutcomeRow(row: AnalysisOutcomeOption | null | undefined): boolean {
   if (!row) return false;
-  const key = (row.outcome_key ?? "").trim();
+  const key = (row.outcomeKey ?? "").trim();
   const grain = (row.grain ?? "").trim();
   return key.length > 0 && grain.length > 0;
 }
 
 /** Option keys, in the order the server returned them. No sorting, no filtering
  *  by any vocabulary this file knows about. */
-export function toOutcomeOptions(rows: readonly MlOutcomeDefinitionDto[]): string[] {
+export function toOutcomeOptions(rows: readonly AnalysisOutcomeOption[]): string[] {
   return rows
-    .filter((row) => (row.outcome_key ?? "").trim().length > 0)
-    .map((row) => (row.outcome_key ?? "").trim());
+    .filter((row) => (row.outcomeKey ?? "").trim().length > 0)
+    .map((row) => (row.outcomeKey ?? "").trim());
 }
 
 /**
@@ -39,10 +39,10 @@ export function toOutcomeOptions(rows: readonly MlOutcomeDefinitionDto[]): strin
  * disables the run rather than running against a guess.
  */
 export function grainForOutcome(
-  rows: readonly MlOutcomeDefinitionDto[],
+  rows: readonly AnalysisOutcomeOption[],
   outcomeKey: string
 ): string {
-  const match = rows.find((row) => (row.outcome_key ?? "").trim() === outcomeKey.trim());
+  const match = rows.find((row) => (row.outcomeKey ?? "").trim() === outcomeKey.trim());
   return (match?.grain ?? "").trim();
 }
 
@@ -53,12 +53,12 @@ export function grainForOutcome(
  * disabled.
  */
 export function selectInitialOutcome(
-  rows: readonly MlOutcomeDefinitionDto[]
+  rows: readonly AnalysisOutcomeOption[]
 ): OutcomeSelection | null {
   const first = rows.find(isUsableOutcomeRow);
   if (!first) return null;
   return {
-    outcomeKey: (first.outcome_key ?? "").trim(),
+    outcomeKey: (first.outcomeKey ?? "").trim(),
     grain: (first.grain ?? "").trim(),
   };
 }

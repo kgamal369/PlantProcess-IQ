@@ -51,10 +51,10 @@ export async function getAdvancedResults(outcomeKey: string, runId?: string): Pr
   const r = res as { results?: AdvancedFindingDto[]; findings?: AdvancedFindingDto[] };
   return r?.results ?? r?.findings ?? [];
 }
-export const getAnalysisReadiness = (outcomeKey: string, grain , windowDays = 3650) =>
+export const getAnalysisReadiness = (outcomeKey: string, grain: string, windowDays = 3650) =>
   apiClient.get<AnalysisReadinessDto>(`${BASE}/readiness?${qs({ outcomeKey, grain, windowDays })}`);
 
-export const getAnalysisReadinessGates = (outcomeKey: string, grain , windowDays = 3650) =>
+export const getAnalysisReadinessGates = (outcomeKey: string, grain: string, windowDays = 3650) =>
   apiClient.get<AdvancedReadinessGateSummaryDto>(`${BASE}/readiness/gates?${qs({ outcomeKey, grain, windowDays })}`);
-export const runCorrelation = (outcomeKey: string, grain , windowDays = 3650) =>
+export const runCorrelation = (outcomeKey: string, grain: string, windowDays = 3650) =>
   apiClient.post("/ml/foundation/compute/correlation", { outcomeKey, grain, windowDays });
