@@ -193,6 +193,33 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
                         }
                     }));
         }
+        catch (DashboardDimensionNotCarriedException notCarried)
+        {
+            // DEMO-BI-R1. The dimension is registered and correct; this SOURCE
+            // simply does not carry it. Measured on 19 Aug 2026: the associative
+            // strip enumerates every dimension against observationCount, and the
+            // parameter-observation source has no risk class, shift or defect
+            // type - which produced an unhandled 500 on the opening state of
+            // every workspace, and a "Something went wrong on our side" toast
+            // in front of the reader.
+            //
+            // It is a refusal, not a failure. Nothing is grouped under a
+            // sentinel and no value is invented: the caller is told, by name,
+            // which pairing cannot be answered.
+            return ApplicationResult<DashboardWidgetQueryResultDto>.Failure(
+                ApplicationError.Validation(
+                    "This measure cannot be broken down by this dimension.",
+                    new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
+                    {
+                        [nameof(resolved.DimensionCode)] = new[]
+                        {
+                            "dimension_not_carried_by_source: measure '" + notCarried.MeasureCode +
+                            "' reads a source that does not carry '" + notCarried.DimensionCode +
+                            "'. The pairing is refused rather than grouped under a placeholder, " +
+                            "because a single bucket of everything looks like data and is not."
+                        }
+                    }));
+        }
         catch (DashboardNonMergeableFoldException nonMergeable)
         {
             // Refusing beats a plausible number. This fires only if a
@@ -478,7 +505,7 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
     {
         var materialIds = await GetFilteredMaterialIdsAsync(filters, cancellationToken);
 
-        var facts = await (
+        var facts =
                 from qualityEvent in _dbContext.QualityEvents.AsNoTracking()
                 join material in _dbContext.MaterialUnits.AsNoTracking()
                     on qualityEvent.MaterialUnitId equals material.Id
@@ -489,27 +516,49 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
                     !qualityEvent.IsDeleted &&
                     !material.IsDeleted &&
                     materialIds.Contains(qualityEvent.MaterialUnitId)
-                select new WidgetFact(
-                    qualityEvent.MaterialUnitId,
-                    material.SiteId,
-                    null,
-                    null,
-                    material.MaterialCode,
-                    material.MaterialUnitType,
-                    material.ProductFamily,
-                    material.GradeOrRecipe,
-                    material.SourceSystem,
-                    null,
-                    defect != null ? defect.DefectCode : qualityEvent.EventType,
-                    null,
-                    null,
-                    qualityEvent.EventAtUtc,
-                    1m))
-            .Take(resolved.RawRowLimit + 1)
-            .ToListAsync(cancellationToken);
+                // DEMO-BI-R1. MEMBER INITIALISER, NOT A CONSTRUCTOR CALL.
+                //
+                // The canonical executor aggregates in PostgreSQL, and EF can
+                // only fold "new WidgetFact { Value = 1m }.Value" down to a
+                // column because the member is named. A positional
+                // "new WidgetFact(a, b, ..., 1m).Value" has nothing to bind, so
+                // the Sum could not be translated and the query threw. The
+                // three measures that already use this executor all project
+                // with an initialiser; this one now does too.
+                select new WidgetFact
+                {
+                    MaterialUnitId = qualityEvent.MaterialUnitId,
+                    SiteId = material.SiteId,
+                    MaterialCode = material.MaterialCode,
+                    MaterialUnitType = material.MaterialUnitType,
+                    ProductFamily = material.ProductFamily,
+                    GradeOrRecipe = material.GradeOrRecipe,
+                    SourceSystem = material.SourceSystem,
+                    DefectType = defect != null ? defect.DefectCode : qualityEvent.EventType,
+                    EventTimeUtc = qualityEvent.EventAtUtc,
+                    Value = 1m
+                };
 
-        RequireCompletePopulation(facts, resolved);
-        return AggregateCount(facts, resolved);
+        // DEMO-BI-R1. A PRESENTATION LIMIT MUST NOT REDEFINE THE POPULATION.
+        //
+        // This read used to be Take(RawRowLimit + 1) -> ToListAsync ->
+        // RequireCompletePopulation -> aggregate in memory. On a real plant
+        // population that is a refusal caused by the SIZE of the raw fact set
+        // and not by anything the reader asked for: Model Insights showed
+        // "aggregate_population_limit_exceeded ... Measure or population:
+        // defectCount. Applicable limit: 1000 rows" on the opening state.
+        //
+        // The canonical executor groups and aggregates in PostgreSQL over the
+        // FULL authorised population and materialises only the grouped rows, so
+        // MaxRows bounds the ANSWER rather than the input. The safety limit is
+        // not raised, disabled, or bypassed - it simply no longer governs a
+        // path where nothing is materialised before the aggregate.
+        return await DashboardAggregateExecutor.ExecuteAsync(
+            facts,
+            resolved,
+            filters,
+            DashboardAggregationFamily.Additive,
+            cancellationToken);
     }
 
     private async Task<IReadOnlyList<DashboardAggregateRow>> ExecuteDefectRateAsync(
@@ -519,62 +568,53 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
     {
         var materialIds = await GetFilteredMaterialIdsAsync(filters, cancellationToken);
 
-        var materialFacts = await _dbContext.MaterialUnits
-            .AsNoTracking()
-            .Where(x => !x.IsDeleted && materialIds.Contains(x.Id))
-            .Select(x => new WidgetFact(
-                x.Id,
-                x.SiteId,
-                null,
-                null,
-                x.MaterialCode,
-                x.MaterialUnitType,
-                x.ProductFamily,
-                x.GradeOrRecipe,
-                x.SourceSystem,
-                null,
-                null,
-                null,
-                null,
-                x.ProductionStartUtc,
-                1m))
-            .Take(resolved.RawRowLimit + 1)
-            .ToListAsync(cancellationToken);
-
-        RequireCompletePopulation(materialFacts, resolved);
-
-        var defectiveMaterialIds = await _dbContext.QualityEvents
-            .AsNoTracking()
-            .Where(x => !x.IsDeleted && materialIds.Contains(x.MaterialUnitId))
-            .Select(x => x.MaterialUnitId)
-            .Distinct()
-            .ToListAsync(cancellationToken);
-
-        var defectiveSet = defectiveMaterialIds.ToHashSet();
-
-        var grouped = materialFacts
-            .GroupBy(x => ResolveDimension(resolved.DimensionCode, x))
-            .Select(g =>
+        // DEMO-BI-R1. THE RATE IS COMPUTED IN POSTGRESQL, NOT IN MEMORY.
+        //
+        // This read used to fetch RawRowLimit material rows, materialise them,
+        // fetch every defective material id separately, and divide in memory.
+        // On a real plant population that refused outright rather than answer:
+        // Defect Rate showed "Did not complete" and raised
+        // aggregate_population_limit_exceeded on the opening state.
+        //
+        // THE ARITHMETIC IS UNCHANGED, ONLY WHERE IT RUNS. A rate is the mean of
+        // a per-material indicator: a material that carries at least one quality
+        // event scores 100, one that carries none scores 0, and the mean of
+        // those over a group IS the percentage defective for that group. So the
+        // existing Average family expresses it exactly, evaluated by the
+        // database over the whole authorised population.
+        //
+        // Each material appears once, so the executor's row count is the total
+        // material count for the group - the same denominator as before.
+        //
+        // A rate does not fold across grains, and Average is a non-folding
+        // family, so the existing non-mergeable refusal still guards it.
+        var facts =
+            from material in _dbContext.MaterialUnits.AsNoTracking()
+            where !material.IsDeleted && materialIds.Contains(material.Id)
+            select new WidgetFact
             {
-                var totalMaterials = g.Select(x => x.MaterialUnitId).Distinct().Count();
-                var defectiveMaterials = g
-                    .Select(x => x.MaterialUnitId)
-                    .Distinct()
-                    .Count(id => id.HasValue && defectiveSet.Contains(id.Value));
+                MaterialUnitId = material.Id,
+                SiteId = material.SiteId,
+                MaterialCode = material.MaterialCode,
+                MaterialUnitType = material.MaterialUnitType,
+                ProductFamily = material.ProductFamily,
+                GradeOrRecipe = material.GradeOrRecipe,
+                SourceSystem = material.SourceSystem,
+                EventTimeUtc = material.ProductionStartUtc,
+                Value = _dbContext.QualityEvents
+                    .Any(qualityEvent =>
+                        !qualityEvent.IsDeleted &&
+                        qualityEvent.MaterialUnitId == material.Id)
+                    ? 100m
+                    : 0m
+            };
 
-                var rate = totalMaterials == 0
-                    ? 0m
-                    : Math.Round(defectiveMaterials * 100m / totalMaterials, 4);
-
-                return new DashboardAggregateRow(
-                    g.Key.Key,
-                    g.Key.Label,
-                    rate,
-                    totalMaterials,
-                    defectiveMaterials);
-            });
-
-        return SortAndTake(grouped, resolved);
+        return await DashboardAggregateExecutor.ExecuteAsync(
+            facts,
+            resolved,
+            filters,
+            DashboardAggregationFamily.Average,
+            cancellationToken);
     }
 
     /// <summary>
@@ -754,7 +794,7 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
 
         var materialIds = await GetFilteredMaterialIdsAsync(filters, cancellationToken);
 
-        var facts = await (
+        var facts =
                 from observation in _dbContext.ParameterObservations.AsNoTracking()
                 join material in _dbContext.MaterialUnits.AsNoTracking()
                     on observation.MaterialUnitId equals material.Id
@@ -769,48 +809,49 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
                     materialIds.Contains(observation.MaterialUnitId) &&
                     observation.NumericValue != null &&
                     parameter.ParameterCode == parameterCode
-                select new WidgetFact(
-                    observation.MaterialUnitId,
-                    material.SiteId,
-                    equipment != null ? equipment.AreaId : null,
-                    observation.EquipmentId,
-                    material.MaterialCode,
-                    material.MaterialUnitType,
-                    material.ProductFamily,
-                    material.GradeOrRecipe,
-                    material.SourceSystem,
-                    null,
-                    null,
-                    parameter.ParameterCode,
-                    null,
-                    observation.ObservedAtUtc,
-                    observation.NumericValue!.Value))
-            .Take(resolved.RawRowLimit + 1)
-            .ToListAsync(cancellationToken);
-
-        RequireCompletePopulation(facts, resolved);
-        facts = ApplyFactDateFilter(facts, filters).ToList();
-
-        var grouped = facts
-            .GroupBy(x => ResolveDimension(resolved.DimensionCode, x))
-            .Select(g =>
-            {
-                var value = mode switch
+                // DEMO-BI-R1. Member initialiser, so EF can fold each member to
+                // a column. A positional constructor call has nothing to bind
+                // and the aggregate cannot be translated.
+                select new WidgetFact
                 {
-                    ParameterAggregationMode.Maximum => g.Max(x => x.Value),
-                    ParameterAggregationMode.Minimum => g.Min(x => x.Value),
-                    _ => g.Average(x => x.Value)
+                    MaterialUnitId = observation.MaterialUnitId,
+                    SiteId = material.SiteId,
+                    AreaId = equipment != null ? equipment.AreaId : null,
+                    EquipmentId = observation.EquipmentId,
+                    MaterialCode = material.MaterialCode,
+                    MaterialUnitType = material.MaterialUnitType,
+                    ProductFamily = material.ProductFamily,
+                    GradeOrRecipe = material.GradeOrRecipe,
+                    SourceSystem = material.SourceSystem,
+                    ParameterCode = parameter.ParameterCode,
+                    EventTimeUtc = observation.ObservedAtUtc,
+                    Value = observation.NumericValue!.Value
                 };
 
-                return new DashboardAggregateRow(
-                    g.Key.Key,
-                    g.Key.Label,
-                    Math.Round(value, 4),
-                    g.Count(),
-                    0);
-            });
+        // DEMO-BI-R1. AVG, MAX and MIN now execute in PostgreSQL over the whole
+        // authorised population. This read used to materialise RawRowLimit raw
+        // observations and average them in memory, so on a real plant
+        // population it refused outright: Parameter Deep Analysis and
+        // Correlation Explorer both showed "Did not complete" for
+        // avgParameterValue rather than an answer.
+        //
+        // The date filter is applied by the executor, relationally, instead of
+        // in memory after a cap - a narrower window used to produce a MORE
+        // wrong answer because it kept whichever of an arbitrary sample fell
+        // inside it.
+        var family = mode switch
+        {
+            ParameterAggregationMode.Maximum => DashboardAggregationFamily.Maximum,
+            ParameterAggregationMode.Minimum => DashboardAggregationFamily.Minimum,
+            _ => DashboardAggregationFamily.Average
+        };
 
-        return SortAndTake(grouped, resolved);
+        return await DashboardAggregateExecutor.ExecuteAsync(
+            facts,
+            resolved,
+            filters,
+            family,
+            cancellationToken);
     }
 
     private async Task<IReadOnlyList<DashboardAggregateRow>> ExecuteDowntimeMinutesAsync(

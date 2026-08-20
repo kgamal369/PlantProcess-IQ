@@ -3,6 +3,7 @@ import {
   Bar, CartesianGrid, ComposedChart, Line, ResponsiveContainer,
   Scatter, ScatterChart, Tooltip, XAxis, YAxis, ZAxis,
 } from "recharts";
+import { PPIQ_CHART_CURSOR, PPIQ_CHART_CURSOR_LINE } from "../charts/chartCursor";
 import { StandardP2Button } from "@/components/standard/StandardP2Controls";
 import { useDashboardFilters } from "../../state/DashboardFilterContext";
 import { timeDimensionRange } from "@/state/widgetSelectionMap";
@@ -87,7 +88,7 @@ export function ExtraChart({ type, rows, categoryKey, labelKey = null, valueKey,
           <XAxis dataKey="label" tick={AXIS} interval={0} angle={-28} textAnchor="end" height={54} />
           <YAxis yAxisId="l" tick={AXIS} />
           <YAxis yAxisId="r" orientation="right" tick={AXIS} domain={[0, 100]} unit="%" />
-          <Tooltip contentStyle={TOOLTIP_BG} labelStyle={{ color: "#eaf6ff" }} />
+          <Tooltip cursor={PPIQ_CHART_CURSOR_LINE} contentStyle={TOOLTIP_BG} labelStyle={{ color: "#eaf6ff" }} />
           <Bar yAxisId="l" dataKey="val" fill={CYAN} radius={[3, 3, 0, 0]} cursor="pointer"
                onClick={(d) => { const c = catOf(d); if (c) { toggle(c); } }} />
           <Line yAxisId="r" dataKey="cum" stroke={GREEN} strokeWidth={2} dot={{ r: 2.5, fill: GREEN }} />
@@ -124,7 +125,7 @@ export function ExtraChart({ type, rows, categoryKey, labelKey = null, valueKey,
         <XAxis dataKey="x" tick={AXIS} tickFormatter={(v: number) => sd[v - 1]?.label ?? ""} interval={0} angle={-28} textAnchor="end" height={54} />
         <YAxis dataKey="y" tick={AXIS} />
         <ZAxis range={[70, 70]} />
-        <Tooltip contentStyle={TOOLTIP_BG}
+        <Tooltip cursor={PPIQ_CHART_CURSOR} contentStyle={TOOLTIP_BG}
                  formatter={(v) => [Number(v).toLocaleString(), "value"]}
                  labelFormatter={(v) => sd[Number(v) - 1]?.label ?? ""} />
         <Scatter data={sd} fill={BLUE} stroke={CYAN} cursor="pointer"

@@ -48,17 +48,26 @@ export const useAssociative = () => {
 const PAGINATION_KEYS = ["page", "pageSize", "sortBy", "sortDirection"];
 
 type QueryRow = Record<string, unknown>;
-async function dimensionValues(dimension: string, filters: Record<string, unknown>): Promise<string[] | null> {
+async function dimensionValues(dimension: string, measureCode: string, filters: Record<string, unknown>): Promise<string[] | null> {
   try {
     const res = await apiClient.post<{ rows?: QueryRow[]; data?: QueryRow[] }>(
       "/analytics/dashboard/widgets/query",
       {
         widgetType: "chart", chartType: "bar",
-        dimensionCode: dimension, measureCode: "observationCount",
+        dimensionCode: dimension, measureCode,
         parameterCode: null, filters,
         options: { maxRows: 500, rawRowLimit: 500, sortDirection: "desc", includeWarnings: false },
       }
-    );
+    ,
+      // DEMO-BI-R1. THIS ENUMERATION MUST NOT SHOUT. The strip asks every
+      // dimension for its values, and a source legitimately does not carry
+      // every dimension. The backend refuses those pairings by name and the
+      // catch below already degrades the field to no values, which is why
+      // they render as N/A. The central toast fires BEFORE that catch, so a
+      // governed refusal read as "Something went wrong on our side" on every
+      // opening state. The error is still thrown and still caught - it just
+      // stops being announced as a fault.
+      { suppressToast: true });
     const rows = (res.rows ?? res.data ?? []) as QueryRow[];
     const vals = rows
       .map((r) => String(r["dimension"] ?? r["label"] ?? r["key"] ?? r[dimension] ?? ""))
@@ -71,7 +80,7 @@ async function dimensionValues(dimension: string, filters: Record<string, unknow
 
 export function AssociativeProvider({ children }: { children: ReactNode }) {
   const { filters, setFilter } = useDashboardFilters();
-  const [enabled, setEnabled] = useState(true);
+  const [enabled, setEnabled] = useState(false);
   // T-048. Derived once from the published dimension catalogue. Until it
   // arrives the set is empty and the panel shows nothing, which is honest: a
   // placeholder list would be a guess about the plant.
@@ -104,7 +113,7 @@ export function AssociativeProvider({ children }: { children: ReactNode }) {
     let stop = false;
     Promise.all(
       assocFields.map(async (f) => {
-        const vals = await dimensionValues(f.dimension, {});
+        const vals = await dimensionValues(f.dimension, f.measureCode, {});
         return { key: f.key, dimension: f.dimension, vals };
       })
     ).then((results) => {
@@ -138,7 +147,7 @@ export function AssociativeProvider({ children }: { children: ReactNode }) {
         const v = g[k];
         if (v !== undefined && v !== null && v !== "") minusOwn[k] = v;
       }
-      const vals = await dimensionValues(f.dimension, minusOwn);
+      const vals = await dimensionValues(f.dimension, f.measureCode, minusOwn);
       if (generation.current !== gen) return; // stale
       setPossibleSets((s) => ({ ...s, [f.key]: vals }));
       setLoading((l) => ({ ...l, [f.key]: false }));

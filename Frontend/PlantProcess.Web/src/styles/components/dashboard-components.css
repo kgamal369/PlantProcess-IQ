@@ -891,3 +891,33 @@ html[data-theme="light"] .metric-icon {
   border-color: rgba(0, 132, 255, 0.14);
   color: #0a84ff;
 }
+
+/* PPIQ-DEMO-CHART-SELECTION
+   Mouse/chart selection must not paint a browser-white rectangle around a bar.
+   Keyboard focus remains explicit through :focus-visible. */
+.recharts-wrapper .recharts-rectangle:focus,
+.recharts-wrapper .recharts-sector:focus,
+.recharts-wrapper .recharts-dot:focus,
+.recharts-wrapper svg [tabindex]:focus:not(:focus-visible) {
+  outline: none !important;
+}
+.recharts-wrapper svg [tabindex]:focus-visible {
+  outline: 2px solid rgba(19, 216, 255, 0.85) !important;
+  outline-offset: 2px !important;
+}
+.recharts-wrapper .recharts-active-bar,
+.recharts-wrapper .recharts-active-shape {
+  stroke: rgba(19, 216, 255, 0.95) !important;
+  stroke-width: 1px !important;
+  filter: none !important;
+}
+
+/* Emergency customer-mode density: keep global filters useful without allowing
+   them to consume a large empty viewport band. */
+.piq-filter-bar {
+  padding-block: 10px !important;
+}
+.piq-filter-row {
+  min-height: 34px !important;
+  row-gap: 6px !important;
+}

@@ -5,7 +5,7 @@
  * dimension strings here if your registry names differ. */
 import { dimensionToFilterField, isTemporalDimension } from "./widgetSelectionMap";
 
-export type AssocField = { key: string; dimension: string; label: string };
+export type AssocField = { key: string; dimension: string; label: string; measureCode: string };
 
 /** T-048. THE FIELD SET IS DERIVED FROM THE REGISTRY.
  *
@@ -46,6 +46,9 @@ export function buildAssociativeFields(
       // The registry's own label. A local override would be a second name for
       // the same thing, free to disagree with every other surface.
       label: dimension.label && dimension.label.trim() !== "" ? dimension.label : dimension.code,
+      // DEMO-BI-R1. The constant AssociativeContext already sends for every
+      // dimension. Making it explicit per field changes no request on the wire.
+      measureCode: "observationCount",
     });
   }
 

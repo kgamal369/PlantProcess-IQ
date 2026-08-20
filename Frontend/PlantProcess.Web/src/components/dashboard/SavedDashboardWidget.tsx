@@ -384,6 +384,7 @@ interface SavedDashboardWidgetProps {
       subtitle={`${widget.chartType} · ${widget.dimensionCode} · ${widget.measureCode}`}
       icon={<BarChart3 size={18} />}
       chartOptions={chartOptions}
+      savedChartType={widget.chartType}
       exportRows={rows as Record<string, unknown>[]}
       onEdit={onEdit}
       onRename={onEdit ? onEdit : undefined}
@@ -415,10 +416,12 @@ interface SavedDashboardWidgetProps {
 
       {resolvedState === "populated" ? (
         activeChartType === "kpi" ? (
+          // DEMO-BI-R1. The card header above already carries the widget name
+          // and its "kpi - dimension - measure" line, so the tile shows the
+          // figure and nothing else.
           <MetricCard
-            title={widget.widgetTitle}
+            variant="kpi"
             value={kpiValue(rows, valueKey, widget.measureCode)}
-            subtitle={widget.measureCode}
           />
         ) : hasSpecificationRoles ? (
           <SpecificationTable rows={rows as Record<string, unknown>[]} />

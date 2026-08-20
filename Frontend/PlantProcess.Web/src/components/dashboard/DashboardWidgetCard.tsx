@@ -46,6 +46,20 @@ interface DashboardWidgetCardProps {
   subtitle?: string;
   icon?: ReactNode;
   chartOptions?: ChartSwitcherOption[];
+  /**
+   * DEMO-BI-R1. The chart type the WIDGET WAS SAVED AS.
+   *
+   * Without it this card fell back to the first available switcher option when
+   * the reader had made no choice, so a widget saved as "kpi" - a single number
+   * - rendered as whatever happened to be first in the option list. Material
+   * Units and Quality Events drew one dot on an axis and Process Observations
+   * drew a full circle, none of which is a KPI tile.
+   *
+   * The reader's explicit choice still wins. This only decides what to show
+   * before any choice is made, and the honest answer to that is what the widget
+   * says it is.
+   */
+  savedChartType?: string | null;
   exportRows?: Record<string, unknown>[];
   children: ReactNode;
   onRename?: () => void | Promise<void>;
@@ -75,6 +89,7 @@ export function DashboardWidgetCard({
   subtitle,
   icon,
   chartOptions = [],
+  savedChartType,
   exportRows,
   children,
   onRename,
@@ -101,8 +116,13 @@ PPIQ-WIDGETFIX
 
   const menuRef = useRef<HTMLDivElement>(null);
   const state = getWidgetState(widgetId);
+  // DEMO-BI-R1. Precedence: what the reader chose, then what the widget was
+  // saved as, then the first option that is actually available. The saved type
+  // used to be missing from this chain entirely, which is how a kpi tile became
+  // a one-point chart.
   const activeChartType =
     state.chartType ??
+    (savedChartType ? savedChartType : undefined) ??
     chartOptions.find((option) => option.state === "available")?.code ??
     chartOptions[0]?.code;
 

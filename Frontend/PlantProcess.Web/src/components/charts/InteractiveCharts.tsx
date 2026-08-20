@@ -18,6 +18,7 @@ import {
   YAxis,
   ZAxis,
 } from "recharts";
+import { PPIQ_CHART_CURSOR, PPIQ_CHART_CURSOR_LINE } from "./chartCursor";
 import type { DashboardFilters } from "../../api/productApiClient";
 import {
   useDashboardSelections,
@@ -130,7 +131,7 @@ export function InteractiveBarChart({
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey={categoryKey} />
           <YAxis />
-          <Tooltip />
+          <Tooltip cursor={PPIQ_CHART_CURSOR} />
           <Bar dataKey={valueKey} isAnimationActive={false} onClick={(row: any) => selectRow(row)}>
             {data.map((_, index) => (
               <Cell
@@ -194,7 +195,7 @@ export function InteractivePieChart({
     <div className="chart-box">
       <ResponsiveContainer width="100%" height={height} initialDimension={{ width: 600, height: 300 }}>
         <PieChart>
-          <Tooltip />
+          <Tooltip cursor={PPIQ_CHART_CURSOR} />
           <Legend />
           <Pie
             data={data}
@@ -280,7 +281,7 @@ export function InteractiveLineChart({
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey={categoryKey} />
             <YAxis />
-            <Tooltip />
+            <Tooltip cursor={PPIQ_CHART_CURSOR} />
            <Area
             type="monotone"
             dataKey={valueKey}
@@ -302,7 +303,7 @@ export function InteractiveLineChart({
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey={categoryKey} />
           <YAxis />
-          <Tooltip />
+          <Tooltip cursor={PPIQ_CHART_CURSOR} />
           <Line
             type="monotone"
             dataKey={valueKey}
@@ -379,7 +380,7 @@ export function InteractiveScatterChart({
           <XAxis dataKey={xKey} name={xKey} />
           <YAxis dataKey={yKey} name={yKey} />
           {zKey ? <ZAxis dataKey={zKey} range={[60, 260]} /> : null}
-          <Tooltip cursor={{ strokeDasharray: "3 3" }} />
+          <Tooltip cursor={PPIQ_CHART_CURSOR_LINE} />
           <Scatter
             data={data}
             fill="#2563eb"

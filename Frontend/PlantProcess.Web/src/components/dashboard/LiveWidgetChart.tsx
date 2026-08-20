@@ -13,6 +13,7 @@ import {
   BarChart,
   Bar,
 } from "recharts";
+import { PPIQ_CHART_CURSOR, PPIQ_CHART_CURSOR_LINE } from "../charts/chartCursor";
 import { apiClient } from "@/api/http";
 
 const PALETTE = ["#38bdf8", "#34d399", "#f59e0b", "#f87171", "#a78bfa", "#22d3ee", "#facc15", "#fb7185"];
@@ -126,14 +127,14 @@ export function LiveWidgetChart({
                 <Cell key={entry.label + index} fill={PALETTE[index % PALETTE.length]} />
               ))}
             </Pie>
-            <Tooltip />
+            <Tooltip cursor={false} />
           </PieChart>
         ) : chartType === "bar" ? (
           <BarChart data={points}>
             <CartesianGrid strokeDasharray="3 3" stroke="#1e3a5f" />
             <XAxis dataKey="label" stroke="#7dd3fc" fontSize={11} />
             <YAxis stroke="#7dd3fc" fontSize={11} />
-            <Tooltip />
+            <Tooltip cursor={PPIQ_CHART_CURSOR} />
             <Bar dataKey="value" fill="#38bdf8" radius={[4, 4, 0, 0]} />
           </BarChart>
         ) : (
@@ -141,7 +142,7 @@ export function LiveWidgetChart({
             <CartesianGrid strokeDasharray="3 3" stroke="#1e3a5f" />
             <XAxis dataKey="label" stroke="#7dd3fc" fontSize={11} />
             <YAxis stroke="#7dd3fc" fontSize={11} />
-            <Tooltip />
+            <Tooltip cursor={PPIQ_CHART_CURSOR_LINE} />
             <Line type="monotone" dataKey="value" stroke="#38bdf8" strokeWidth={2} dot={false} />
           </LineChart>
         )}

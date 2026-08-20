@@ -113,32 +113,45 @@ export function WorkspaceHeader({
         </p>
 
         <div className="ppiq-journey-actions">
+          {/* DEMO-008. PRESENTATION MODE IS THE DEFAULT.
+              Save layout and Reset layout are authoring controls, and a reader
+              who is being shown the product should not be one mis-click away
+              from rewriting the page they are looking at. They appear with the
+              other authoring affordances once Edit layout is pressed, which is
+              the same rule 5.1.7 already applies to drag handles, resize
+              corners and add-widget. Nothing is removed: every control is one
+              click away and behaves exactly as before.
+              Refresh stays, because reading again is not authoring. */}
           <StandardButton
             variant={isEditing ? "primary" : "ghost"}
             aria-pressed={isEditing}
             data-testid="workspace-edit-toggle"
             onClick={onToggleEdit}
           >
-            {isEditing ? "Editing layout" : "Edit layout"}
+            {isEditing ? "Done editing" : "Edit layout"}
           </StandardButton>
 
-          <StandardButton
-            variant="ghost"
-            onClick={onSaveLayout}
-            isDisabled={isSavingLayout}
-            data-testid="workspace-save-layout"
-          >
-            {isSavingLayout ? "Saving layout..." : "Save layout"}
-          </StandardButton>
+          {isEditing ? (
+            <StandardButton
+              variant="ghost"
+              onClick={onSaveLayout}
+              isDisabled={isSavingLayout}
+              data-testid="workspace-save-layout"
+            >
+              {isSavingLayout ? "Saving layout..." : "Save layout"}
+            </StandardButton>
+          ) : null}
 
-          <StandardButton
-            variant="ghost"
-            onClick={onResetLayout}
-            data-testid="workspace-reset-layout"
-          >
-            <RotateCcw size={15} />
-            Reset layout
-          </StandardButton>
+          {isEditing ? (
+            <StandardButton
+              variant="ghost"
+              onClick={onResetLayout}
+              data-testid="workspace-reset-layout"
+            >
+              <RotateCcw size={15} />
+              Reset layout
+            </StandardButton>
+          ) : null}
 
           <StandardButton variant="ghost" onClick={onRefresh}>
             Refresh widgets

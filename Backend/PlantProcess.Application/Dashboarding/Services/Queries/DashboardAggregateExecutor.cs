@@ -154,6 +154,56 @@ internal sealed class DashboardGroupKey
 /// A dimension code that is not registered here is not executable, and says so
 /// rather than grouping everything under "unknown".
 /// </summary>
+/// <summary>
+/// DEMO-BI-R1. The source-capability rule, expressed without any internal type
+/// so it can be proved by the unit suite without opening the whole executor.
+/// One authority: DashboardDimensionProjection delegates to this and never
+/// keeps a second copy of the mapping.
+/// </summary>
+public static class DashboardSourceCapability
+{
+    /// <summary>
+    /// The single fact member a dimension groups on, by name, or null when the
+    /// dimension needs no member at all (the KPI grouping is a constant).
+    /// </summary>
+    public static string? RequiredMemberName(string? dimensionCode)
+    {
+        if (string.IsNullOrWhiteSpace(dimensionCode)) return null;
+
+        if (DashboardDimensionProjection.IsTemporal(dimensionCode)) return "EventTimeUtc";
+
+        return dimensionCode.Trim().ToLowerInvariant() switch
+        {
+            "site" => "SiteId",
+            "area" => "AreaId",
+            "equipment" => "EquipmentId",
+            "sourcesystem" => "SourceSystem",
+            "materialunittype" => "MaterialUnitType",
+            "productfamily" => "ProductFamily",
+            "gradeorrecipe" => "GradeOrRecipe",
+            "shiftcode" => "ShiftCode",
+            "defecttype" => "DefectType",
+            "parametercode" => "ParameterCode",
+            "riskclass" => "RiskClass",
+            _ => null
+        };
+    }
+
+    /// <summary>
+    /// Whether a source populating these member names can group by this
+    /// dimension. A null member set means the shape could not be read, and an
+    /// unreadable shape is never second-guessed - refusing a working widget is
+    /// worse than the defect this guard exists to stop.
+    /// </summary>
+    public static bool IsCarried(string? dimensionCode, IReadOnlyCollection<string>? carriedMemberNames)
+    {
+        if (carriedMemberNames is null) return true;
+
+        var required = RequiredMemberName(dimensionCode);
+        return required is null || carriedMemberNames.Contains(required);
+    }
+}
+
 internal static class DashboardDimensionProjection
 {
     /// <summary>
@@ -175,6 +225,72 @@ internal static class DashboardDimensionProjection
     {
         if (string.IsNullOrWhiteSpace(dimensionCode)) return true;
         return KeySelectorOrNull(dimensionCode) is not null;
+    }
+
+    /// <summary>
+    /// DEMO-BI-R1. The WidgetFact members a fact source actually populates.
+    ///
+    /// Returns null when the shape cannot be read - a source built by a
+    /// constructor call assigns all fifteen members, and a source this walker
+    /// does not recognise must not be second-guessed. Null means "no opinion",
+    /// and the executor then behaves exactly as it did before this guard.
+    /// </summary>
+    public static IReadOnlyCollection<string>? CarriedMembers(Expression expression)
+    {
+        var finder = new WidgetFactInitialiserFinder();
+        finder.Visit(expression);
+        return finder.Members;
+    }
+
+    /// <summary>
+    /// Whether a source carrying these members can group by this dimension.
+    /// The KPI dimension groups on a constant and needs no member at all.
+    /// </summary>
+    public static bool IsCarriedBySource(string? dimensionCode, IReadOnlyCollection<string>? carried)
+    {
+        return DashboardSourceCapability.IsCarried(dimensionCode, carried);
+    }
+
+    /// <summary>
+    /// Finds the LAST WidgetFact object-initialiser in a query expression and
+    /// records which members it assigns. A constructor projection carries every
+    /// member by definition, so the walker reports no opinion for it.
+    /// </summary>
+    private sealed class WidgetFactInitialiserFinder : ExpressionVisitor
+    {
+        public IReadOnlyCollection<string>? Members { get; private set; }
+
+        protected override Expression VisitMemberInit(MemberInitExpression node)
+        {
+            if (node.NewExpression.Type == typeof(WidgetFact))
+            {
+                var names = new HashSet<string>(StringComparer.Ordinal);
+
+                foreach (var binding in node.Bindings)
+                {
+                    if (binding.BindingType == MemberBindingType.Assignment)
+                    {
+                        names.Add(binding.Member.Name);
+                    }
+                }
+
+                Members = names;
+            }
+
+            return base.VisitMemberInit(node);
+        }
+
+        protected override Expression VisitNew(NewExpression node)
+        {
+            if (node.Type == typeof(WidgetFact) && node.Arguments.Count > 0)
+            {
+                // Positional projection: every member is assigned, so this
+                // walker has no opinion and the guard stands down.
+                Members = null;
+            }
+
+            return base.VisitNew(node);
+        }
     }
 
     public static Expression<Func<WidgetFact, DashboardGroupKey>> KeySelector(string? dimensionCode)
@@ -347,6 +463,27 @@ internal static class DashboardDimensionProjection
     }
 }
 
+/// <summary>
+/// DEMO-BI-R1. The dimension IS registered, but the fact source in front of the
+/// executor does not populate the member it groups on. Distinct from
+/// DashboardDimensionNotRegisteredException, which means no projection exists
+/// for the code at all: this one means the code is fine and the SOURCE is the
+/// limitation, which is a different sentence to show a reader.
+/// </summary>
+internal sealed class DashboardDimensionNotCarriedException : Exception
+{
+    public DashboardDimensionNotCarriedException(string dimensionCode, string measureCode)
+        : base("dimension_not_carried_by_source")
+    {
+        DimensionCode = dimensionCode;
+        MeasureCode = measureCode;
+    }
+
+    public string DimensionCode { get; }
+
+    public string MeasureCode { get; }
+}
+
 internal sealed class DashboardDimensionNotRegisteredException : Exception
 {
     public DashboardDimensionNotRegisteredException(string dimensionCode)
@@ -369,7 +506,24 @@ internal enum DashboardAggregationFamily
 
     /// <summary>distinct count of the material identity. Does NOT fold: an entity
     /// seen on Monday and Tuesday is one entity in the week, not two.</summary>
-    DistinctMaterial
+    DistinctMaterial,
+
+    /// <summary>
+    /// DEMO-BI-R1. Arithmetic mean of the fact value, computed in PostgreSQL.
+    ///
+    /// It does NOT fold. The mean of two day means is not the mean of the
+    /// underlying readings unless both days carry the same number of readings,
+    /// so a fold would silently answer a question nobody asked. Reaching the
+    /// fold with this family raises the same non-mergeable refusal that guards
+    /// DistinctMaterial.
+    /// </summary>
+    Average,
+
+    /// <summary>Largest fact value in the group. Does not fold across grains.</summary>
+    Maximum,
+
+    /// <summary>Smallest fact value in the group. Does not fold across grains.</summary>
+    Minimum
 }
 
 /// <summary>
@@ -412,6 +566,35 @@ internal static class DashboardAggregateExecutor
         var keySelector = DashboardDimensionProjection.KeySelector(resolved.DimensionCode);
         var temporal = DashboardDimensionProjection.IsTemporal(resolved.DimensionCode);
 
+        // DEMO-BI-R1. A REGISTERED DIMENSION THE SOURCE DOES NOT CARRY.
+        //
+        // Every fact source populates only the members its own tables hold. The
+        // parameter-observation source, for instance, has no risk class, no
+        // shift and no defect type, so its projection leaves those members
+        // unassigned. EF can fold "new WidgetFact { EquipmentId = col }
+        // .EquipmentId" to a column, but it cannot fold a member the initialiser
+        // never assigned - there is no column to fold to - so the GroupBy fails
+        // to translate and surfaces as an unhandled 500.
+        //
+        // Measured on 19 Aug 2026: the associative strip enumerates EVERY
+        // dimension against measure observationCount, so riskClass, shiftCode
+        // and defectType each produced a 500 on the opening state of every
+        // workspace. Those three are exactly the columns the strip shows as N/A.
+        //
+        // A dimension the source cannot carry is refused BY NAME, before the
+        // query is sent. It is not grouped under a sentinel and no value is
+        // invented - the same rule the unregistered-dimension refusal already
+        // applies one line above.
+        var carried = DashboardDimensionProjection.CarriedMembers(facts.Expression);
+
+        if (carried is not null &&
+            !DashboardDimensionProjection.IsCarriedBySource(resolved.DimensionCode, carried))
+        {
+            throw new DashboardDimensionNotCarriedException(
+                resolved.DimensionCode ?? "(null)",
+                resolved.MeasureCode);
+        }
+
         // GROUP AND AGGREGATE IN POSTGRESQL. Only grouped rows are materialised.
         // There is no Take on the fact query, so no cap defines the population.
         List<GroupedAggregate> grouped;
@@ -424,6 +607,46 @@ internal static class DashboardAggregateExecutor
                 {
                     Key = g.Key,
                     Value = g.Select(x => x.MaterialUnitId).Distinct().Count(),
+                    Rows = g.Count()
+                })
+                .ToListAsync(cancellationToken);
+        }
+        else if (family == DashboardAggregationFamily.Average)
+        {
+            // DEMO-BI-R1. AVG in PostgreSQL over the whole authorised
+            // population. This measure previously materialised RawRowLimit raw
+            // observations and averaged them in memory, which on a real plant
+            // population refused outright rather than answer.
+            grouped = await facts
+                .GroupBy(keySelector)
+                .Select(g => new GroupedAggregate
+                {
+                    Key = g.Key,
+                    Value = g.Average(x => x.Value),
+                    Rows = g.Count()
+                })
+                .ToListAsync(cancellationToken);
+        }
+        else if (family == DashboardAggregationFamily.Maximum)
+        {
+            grouped = await facts
+                .GroupBy(keySelector)
+                .Select(g => new GroupedAggregate
+                {
+                    Key = g.Key,
+                    Value = g.Max(x => x.Value),
+                    Rows = g.Count()
+                })
+                .ToListAsync(cancellationToken);
+        }
+        else if (family == DashboardAggregationFamily.Minimum)
+        {
+            grouped = await facts
+                .GroupBy(keySelector)
+                .Select(g => new GroupedAggregate
+                {
+                    Key = g.Key,
+                    Value = g.Min(x => x.Value),
                     Rows = g.Count()
                 })
                 .ToListAsync(cancellationToken);

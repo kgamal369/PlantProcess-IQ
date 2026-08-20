@@ -45,14 +45,38 @@ function renderHeader(overrides: Partial<WorkspaceHeaderProps> = {}): void {
 }
 
 describe("T-043 the page header of Chapter 4 5.1.2", () => {
-  it("carries the sheet selector, the as-of, the edit toggle and both layout controls", () => {
+  it("carries the sheet selector, the as-of and the edit toggle in presentation mode", () => {
     renderHeader();
 
     expect(screen.getByTestId("workspace-sheet-selector")).toBeInTheDocument();
     expect(screen.getByTestId("workspace-as-of")).toBeInTheDocument();
     expect(screen.getByTestId("workspace-edit-toggle")).toBeInTheDocument();
+  });
+
+  /**
+   * DEMO-008. The opening state a customer sees is a reader's state. Save and
+   * Reset rewrite the page being demonstrated, so they belong with the other
+   * authoring affordances that 5.1.7 already hides until Edit layout is
+   * pressed. Nothing is removed - the next test proves both return.
+   */
+  it("hides the layout authoring controls until edit mode is entered", () => {
+    renderHeader();
+
+    expect(screen.queryByTestId("workspace-save-layout")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("workspace-reset-layout")).not.toBeInTheDocument();
+  });
+
+  it("reveals both layout controls in edit mode", () => {
+    renderHeader({ isEditing: true });
+
     expect(screen.getByTestId("workspace-save-layout")).toBeInTheDocument();
     expect(screen.getByTestId("workspace-reset-layout")).toBeInTheDocument();
+  });
+
+  it("keeps Refresh available in presentation mode, because reading is not authoring", () => {
+    renderHeader();
+
+    expect(screen.getByText("Refresh widgets")).toBeInTheDocument();
   });
 
   it("states the as-of in UTC to the minute and never in the reader's timezone", () => {
@@ -149,7 +173,7 @@ describe("T-043 the page header of Chapter 4 5.1.2", () => {
     const user = userEvent.setup();
     const onSaveLayout = vi.fn();
     const onResetLayout = vi.fn();
-    renderHeader({ onSaveLayout, onResetLayout });
+    renderHeader({ onSaveLayout, onResetLayout, isEditing: true });
 
     await user.click(screen.getByTestId("workspace-save-layout"));
     await user.click(screen.getByTestId("workspace-reset-layout"));
