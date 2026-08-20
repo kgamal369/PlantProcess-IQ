@@ -163,7 +163,10 @@ const INDUSTRIES = ["Steel", "Oil and gas", "Water", "Food", "Paper", "Tyres", "
 
 /* 1 - the isolated screens problem, Chapter 1 section 1.1e */
 function IsolatedGraphic() {
-  const boxes = ["FURNACE HMI", "CASTER HMI", "MILL HMI", "GAUGE PC", "LAB SHEET", "YARD LIST"];
+  // Generic by rule: a plant is stages, machines, inspections and movements.
+  // No industry's equipment names ship in the product or on this page.
+  const boxes = ["PRODUCTION UNIT A", "PRODUCTION UNIT B", "PRODUCTION UNIT C",
+                 "INSPECTION DEVICE", "LABORATORY SHEET", "STORAGE LIST"];
   return (
     <svg viewBox="0 0 1020 300" className="deck-fig" role="img"
       aria-label="Six separate screens each showing only its own machine, versus one hub that sees the whole plant.">
@@ -326,6 +329,110 @@ function ExpertGraphic() {
   );
 }
 
+/* ---- 2 - the two layers: what you see, and what works underneath ------- */
+function LayersGraphic() {
+  return (
+    <svg viewBox="0 0 1020 300" className="deck-fig" role="img"
+      aria-label="A visible layer of dashboards and answers, sitting on an engine layer that learns from the plant's own history.">
+      <text className="srcs deck-col deck-col--good" x="510" y="26" textAnchor="middle">WHAT YOU SEE</text>
+
+      <g>
+        <rect className="deck-lonely deck-layer-top" x="150" y="44" width="720" height="86" rx="10" />
+        <text className="srct deck-slow-t" x="510" y="76" textAnchor="middle">DASHBOARDS, INVESTIGATIONS, ANSWERS</text>
+        <text className="srcs" x="510" y="100" textAnchor="middle">built and changed by your own engineers, without a release</text>
+      </g>
+
+      {[0, 1, 2].map((i) => (
+        <path key={i} data-draw className="outflow"
+          d={`M${330 + i * 180} 196 V 134`} fill="none" />
+      ))}
+
+      <text className="srcs deck-col" x="510" y="228" textAnchor="middle">WHAT WORKS UNDERNEATH</text>
+      <g>
+        <rect className="deck-lonely deck-layer-engine" x="150" y="196" width="720" height="86" rx="10" />
+        <text className="srct deck-slow-t" x="510" y="242" textAnchor="middle">THE ENGINE</text>
+        <text className="srcs" x="510" y="264" textAnchor="middle">learns your plant, finds the cause, sees it coming, prices the change</text>
+      </g>
+    </svg>
+  );
+}
+
+/* ---- 3 - the model families, in the language of the result ------------- */
+const CAPABILITIES = [
+  ["Learns the fingerprint of your plant",
+   "It reads your own production history and learns how this plant behaves on the days it runs well - the shape only your data has."],
+  ["Connects the cause to the result across the whole plant",
+   "It remembers every time something similar happened before, and follows the thread backwards through every stage to the condition that actually caused it."],
+  ["Knows when the plant has left its own normal",
+   "Normal is measured from your plant, not from a manual. When conditions drift away from it, that is visible while the material is still in production."],
+  ["Sees the problem coming before it happens",
+   "When a combination has ended badly before, the piece is flagged while there is still time to change something downstream and save it."],
+  ["Tells you which change will actually matter, and what it is worth",
+   "Not a list of everything that correlates. The effect of a change, as a range, with the money attached and every input open to inspection."],
+  ["Turns your best days into the standard",
+   "Your own best periods become the benchmark the rest of the plant is measured against - practice that was proven in your plant, not imported advice."],
+];
+
+/* One mark per capability. Drawn inline so they inherit the accent colour and
+   need no asset, and so the six read as a set rather than as clip art. */
+function CapIcon({ i }: { i: number }) {
+  const paths = [
+    // fingerprint
+    "M12 30c0-10 5-16 12-16s12 6 12 16M17 32c0-7 3-11 7-11s7 4 7 11M22 33c0-4 1-6 2-6s2 2 2 6",
+    // cause linked to result across stages
+    "M8 24h10m4 0h10m4 0h8M18 24a4 4 0 1 1 8 0 4 4 0 0 1-8 0M32 24a4 4 0 1 1 8 0 4 4 0 0 1-8 0",
+    // drift away from normal
+    "M6 30h12l4-10 5 18 4-12 3 6h8M6 18h34",
+    // sees it coming
+    "M8 28c6-9 12-13 18-13s12 4 18 13M24 21a5 5 0 1 1 0 10 5 5 0 0 1 0-10",
+    // which change is worth what
+    "M10 34V20m8 14V14m8 20V24m8 10V10M8 38h32",
+    // best days become the standard
+    "M12 34l6-8 6 4 8-14M10 38h32M34 12h6v6",
+  ];
+  return (
+    <svg className="deck-cap-icon" viewBox="0 0 48 48" aria-hidden="true">
+      <path d={paths[i]} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function CapabilityGrid() {
+  return (
+    <div className="deck-caps">
+      {CAPABILITIES.map((c, i) => (
+        <div className="deck-cap rv" key={c[0]} style={{ transitionDelay: `${0.04 * i}s` }}>
+          <div className="deck-cap-head">
+            <CapIcon i={i} />
+            <span className="deck-cap-n">{String(i + 1).padStart(2, "0")}</span>
+          </div>
+          <h4>{c[0]}</h4>
+          <p>{c[1]}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ---- 4 - a pair of screenshots with a short sales caption ------------- */
+function ShotSection({ eyebrow, head, lines, shots }:
+  { eyebrow: string; head: string; lines: string[]; shots: { src: string; alt: string }[] }) {
+  return (
+    <div className="deck-section rv">
+      <p className="eyebrow">{eyebrow}</p>
+      <h2>{head}</h2>
+      {lines.map((l) => <p className="lead" key={l}>{l}</p>)}
+      <div className="deck-shots">
+        {shots.map((s) => (
+          <figure className="deck-shot" key={s.src}>
+            <img src={s.src} alt={s.alt} loading="lazy" />
+          </figure>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 const SECTIONS = [
   {
     tag: "STRENGTH ONE",
@@ -368,24 +475,59 @@ function SectionFigure({ name }: { name: string }) {
   if (name === "isolated") return <IsolatedGraphic />;
   if (name === "configure") return <ConfigureGraphic />;
   if (name === "expert") return <ExpertGraphic />;
+  if (name === "layers") return <LayersGraphic />;
   if (name === "causality") return <CausalityGraphic />;
   return <PredictGraphic />;
 }
 
 function ApplicationTab() {
   return (
-    <div>
-      <p className="eyebrow rv">THE PROBLEM</p>
-      <h2 className="rv">Repeated defects. Repeated stops. Nobody can say why.</h2>
+    <div className="deck-app">
+      <p className="eyebrow rv">WHAT IT IS</p>
+      <h2 className="rv">An in-house expert who already knows your plant.</h2>
       <p className="lead rv">
-        The same quality defect keeps coming back and the source is never found. The line stops again
-        for a root cause nobody pins down. Equipment and operators repeat the same failures. Everyone
-        knows the KPIs should be better and nobody can say which change would move them - so the plant
-        loses days in troubleshooting, or pays for a short expensive consultation that ends when the
-        expert leaves.
+        Today the answer lives in one experienced person - somebody who can guess where to look and
+        then spend days proving it. That person is expensive, is not always there, and takes what
+        they know with them when they go.
+      </p>
+      <p className="lead rv">
+        This learns the fingerprint of your plant from your own history: which conditions travel
+        together, which come before a problem, and what your plant looks like on the days it runs
+        well. Then it stays.
+      </p>
+      <SectionFigure name="expert" />
+      <p className="deck-aside rv">
+        It is read-only. It reads the systems you already run and never writes back to any of them.
       </p>
 
-      {SECTIONS.map((s) => (
+      <p className="eyebrow rv deck-spaced">HOW IT IS BUILT</p>
+      <h2 className="rv">One layer you use. One layer that does the work.</h2>
+      <p className="lead rv">
+        On top, the part your people touch: dashboards, investigations and answers, built and
+        changed by your own engineers without waiting for a release. Underneath, the engine that
+        learns the plant and finds what matters.
+      </p>
+      <LayersGraphic />
+      <p className="deck-aside rv">
+        You are never locked into a screen somebody else designed. The layer on top is yours.
+      </p>
+
+      <p className="eyebrow rv deck-spaced">HOW YOUR DATA GETS THERE</p>
+      <h2 className="rv">From the systems you already run, to one plant.</h2>
+      <p className="lead rv">
+        Spreadsheets, log files, process signals and the databases behind your existing systems are
+        read as they are - a safe copy first, then one model of the plant that puts the same unit of
+        production at the centre of every question.
+      </p>
+      <PipelineGraphic />
+      <p className="deck-aside rv">
+        Nothing is ever written back. Remove it and your plant is exactly as it was.
+      </p>
+
+      {/* STRENGTH THREE is the opening of this tab now, so it is not repeated
+          in the loop. Filtering here rather than deleting it from SECTIONS
+          keeps that section available to any other surface that uses it. */}
+      {SECTIONS.filter((s) => s.fig !== "expert").map((s) => (
         <div className="deck-section rv" key={s.tag}>
           <p className="eyebrow">{s.tag}</p>
           <h2>{s.head}</h2>
@@ -394,6 +536,44 @@ function ApplicationTab() {
           <p className="deck-aside">{s.close}</p>
         </div>
       ))}
+
+      <ShotSection
+        eyebrow="BUILT BY YOUR OWN ENGINEERS"
+        head="Draw the join. Or write the SQL. Both are yours."
+        lines={[
+          "Your engineer puts the tables on a board and wires key to key - no ticket, no release, no developer. The same work can be written directly in SQL when that is faster.",
+          "What they build is published, versioned and owned by you, and every page and analysis above it reads from that one definition.",
+        ]}
+        shots={[
+          { src: "/shots/canvas1.png", alt: "The join canvas: staged tables wired key to key into a published mapping." },
+          { src: "/shots/canvas2.png", alt: "The same board with the SQL editor and the live job log." },
+        ]}
+      />
+
+      <ShotSection
+        eyebrow="WHAT YOUR PEOPLE SEE"
+        head="One workspace. Click anything, and everything follows."
+        lines={[
+          "Click a chart, a card or a row and the whole workspace filters with it, so a question becomes the next question without anybody exporting anything.",
+          "Widgets are dragged, resized and saved into a layout that belongs to the person using it - and every number on the screen can be traced back to the record it came from.",
+        ]}
+        shots={[
+          { src: "/shots/bi1.png", alt: "The workspace: global filters and linked charts across the whole plant." },
+          { src: "/shots/bi2.png", alt: "Heatmap, contributors, data quality and the material explorer, all filtering together." },
+        ]}
+      />
+
+      <p className="eyebrow rv deck-spaced">WHAT THE ENGINE DOES</p>
+      <h2 className="rv">Six capabilities that work on your plant's own history.</h2>
+      <p className="lead rv">
+        Not a general model trained on somebody else's factory. Each one learns from your plant, and
+        each one is measured before it is allowed to stay.
+      </p>
+      <CapabilityGrid />
+      <p className="deck-aside rv">
+        And when the data cannot support an answer, it says so and names the reason. It does not
+        invent a number.
+      </p>
 
       <p className="eyebrow rv deck-spaced">AND ON TOP OF ALL OF IT</p>
       <h2 className="rv">Ask the plant a question.</h2>
@@ -415,13 +595,18 @@ function ApplicationTab() {
 
 /* ----------------------------------------------------------- TUTORIAL ---- */
 
+// The systems a plant already runs, named by KIND rather than by one
+// industry's process stages. This is also the more honest diagram: it shows
+// what we connect to, not what somebody else's plant is called.
 const SOURCES = [
-  { code: "EAF", note: "melting" },
-  { code: "LF", note: "treatment" },
-  { code: "CCM", note: "casting" },
-  { code: "HSM", note: "rolling" },
-  { code: "QA", note: "inspection and gauges" },
-  { code: "YARD", note: "location and movement" },
+  { code: "Excel", note: "sheets and exports" },
+  { code: "Log files", note: "machine and line logs" },
+  { code: "OPC", note: "process signals" },
+  { code: "Oracle", note: "plant databases" },
+  { code: "SQL Server", note: "plant databases" },
+  { code: "PostgreSQL", note: "plant databases" },
+  { code: "MySQL", note: "plant databases" },
+  { code: "SAP", note: "business systems" },
 ];
 
 function PipelineGraphic() {

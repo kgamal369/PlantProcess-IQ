@@ -409,3 +409,146 @@
   font-size: clamp(26px, 3.6vw, 40px);
   font-weight: 600;
 }
+
+/* ---------------------------------------------------------------------------
+   SOU-ALIGN: Application tab - light surface, two layers, capability grid.
+
+   The Application tab is the one a CEO reads. It runs lighter than the rest of
+   the deck so the reader is not four scrolls into a dark technical page before
+   the value lands, and the engine is described by what it produces rather than
+   by what it is made of.
+   --------------------------------------------------------------------------- */
+.deck-app { --deck-ink: #0B2545; }
+
+.deck-app .lead { max-width: 62ch; }
+
+.deck-layer-top {
+  fill: rgba(47, 179, 201, .16);
+  stroke: rgba(126, 216, 232, .85);
+  stroke-width: 1.6;
+}
+
+.deck-layer-engine {
+  fill: rgba(23, 51, 77, .92);
+  stroke: rgba(111, 227, 245, .62);
+  stroke-width: 1.6;
+}
+
+/* The wiring between the layers was drawn at the same value as the background.
+   Scoped to this tab so no other figure on the deck changes. */
+.deck-app .outflow { stroke: #6FE3F5; stroke-width: 2.2; opacity: .95; }
+.deck-app .spoke { stroke: rgba(126, 216, 232, .38); stroke-width: 1.4; }
+.deck-app .deck-lonely { stroke: rgba(126, 216, 232, .55); stroke-width: 1.4; }
+.deck-app .srct { fill: #EAF6FF; }
+.deck-app .srcs { fill: #A8C4D6; }
+
+.deck-caps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 18px;
+  margin: 26px 0 10px;
+}
+
+.deck-cap {
+  padding: 22px 24px 24px;
+  border-radius: 14px;
+  /* The border and the fill were both within a few percent of the page
+     background, so the cards read as smudges rather than as cards. Lifted the
+     fill, doubled the border contrast and added a shadow so each block has an
+     edge you can actually see. */
+  border: 1px solid rgba(120, 205, 224, .42);
+  background: linear-gradient(180deg, rgba(23, 51, 77, .92), rgba(14, 33, 52, .92));
+  box-shadow: 0 10px 26px rgba(0, 0, 0, .38);
+}
+
+.deck-cap-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.deck-cap-icon {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  stroke: #6FE3F5;
+  stroke-width: 2.4;
+  filter: drop-shadow(0 0 8px rgba(111, 227, 245, .35));
+}
+
+.deck-cap-n {
+  font-size: .74rem;
+  font-weight: 700;
+  letter-spacing: .16em;
+  color: #7FD8E8;
+}
+
+.deck-cap h4 {
+  margin: 0 0 10px;
+  font-size: 1.04rem;
+  line-height: 1.35;
+  color: #F2F8FC;
+}
+
+/* .82 opacity on an already-dim body colour is what made this hard to read.
+   A real colour at full opacity is legible and still clearly secondary. */
+.deck-cap p {
+  margin: 0;
+  font-size: .92rem;
+  line-height: 1.62;
+  color: #BFD4E2;
+}
+
+.deck-shots {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
+  margin: 24px 0 0;
+}
+
+.deck-shot {
+  margin: 0;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(126, 216, 232, .45);
+  background: rgba(10, 26, 43, .8);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, .42);
+}
+
+.deck-shot img { display: block; width: 100%; height: auto; }
+
+@media (max-width: 720px) {
+  .deck-caps { grid-template-columns: 1fr; }
+}
+
+/* ---------------------------------------------------------------------------
+   SOU-ALIGN: world map legibility.
+
+   The land was rgba(16, 42, 67, .55) against a near-black page with a .22 cyan
+   stroke, so continents and coastlines both dissolved into the background - the
+   map read as a smudge with dots on it. The landmass now sits clearly above the
+   page and the coastline is a real line, while the pins stay the brightest
+   thing on the figure so the eye still goes to the plants first.
+   --------------------------------------------------------------------------- */
+.new-landing-wrapper .deck-land path {
+  fill: #16324F;
+  stroke: rgba(140, 214, 235, .70);
+  stroke-width: 1.1;
+  stroke-linejoin: round;
+}
+
+.new-landing-wrapper .deck-map-grid line { stroke: rgba(126, 200, 224, .16); }
+
+.new-landing-wrapper .deck-pin-halo {
+  fill: rgba(0, 212, 255, .20);
+  stroke: rgba(126, 227, 245, .75);
+  stroke-width: 1.4;
+}
+
+.new-landing-wrapper .deck-pin-dot {
+  fill: #7FE9FF;
+  filter: drop-shadow(0 0 6px rgba(0, 212, 255, .8));
+}
+
+.new-landing-wrapper .deck-map-cap { color: #A8C4D6; }
