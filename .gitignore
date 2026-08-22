@@ -143,3 +143,5 @@ Finish-M1-18_*.txt
 /wipetrap_state.json
 *.runner-binding-backup-*
 docs/m1/evidence/_gate_logs/
+
+node_modules/

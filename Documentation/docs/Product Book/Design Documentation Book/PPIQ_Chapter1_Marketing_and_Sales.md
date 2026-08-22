@@ -1,8 +1,14 @@
 # PlantProcess IQ - Master Design Document
 
-**Version 4.3 | Author: Karim, SOU Industrial Software, Dusseldorf**
+**Version 4.9 | Author: Karim, SOU Industrial Software, Dusseldorf**
+
+> **Change log — Operational-Regime, Multi-Objective Practice and Period-Driver Hardening (22 August 2026, v4.9).** v4.9 closes the two generic gaps exposed by the first oil-plant requirement review without introducing oil-specific vocabulary: process transitions/changeovers and stabilisation become first-class governed context so statistics cannot mix distinct operating regimes; practice learning gains customer-declared multi-objective objective sets with Pareto/non-dominance and explicit preference resolution rather than silently choosing one KPI; exact period-to-period operational driver decomposition is added so the Assistant can explain changes in cost/productivity drivers from Layer-A facts before the monetary Value Engine is available. The release also binds the September checkpoint/fallback to the single v2.13 execution workbook. The six chapters remain the only design authority.
+
 
 ---
+
+> **CURRENT AUTHORITY — Master Design v4.9.** PlantProcess IQ has exactly six current design-authority chapters and one current execution-authority backlog workbook. No other file may define, amend, override, supplement or reinterpret current product design or implementation scope. A design change edits the owning chapter directly; a scope change edits the backlog directly. Transitional reviews, amendment packs, ledgers, mandates and prior revisions are historical evidence only after their accepted content is integrated. Validation scripts are code/enforcement instruments, not design documentation.
+
 
 # CHAPTER 1 - MARKETING AND SALES
 
@@ -24,6 +30,18 @@ Some examples below name a material, a defect, a grade, a route or a piece of eq
 **Every such term is illustrative only.** The product ships with no defect vocabulary, no grade list, no route model, no equipment names and no parameter names. All of it arrives with the customer's own data through the import pipeline, or is authored by the customer in the product's own surfaces. This is Rule 1 of the Rules chapter, and a sales conversation implying otherwise misrepresents the product.
 
 ---
+
+
+
+### 1.0.1 The dataset-neutral product promise
+
+PlantProcess IQ never sells a prepared industry model disguised as a generic product. **The customer changes configuration; the customer does not change the product.** The same product binary, canonical schema, query engine, intelligence engine and Assistant must accept a discrete manufacturing fixture, a continuous-process fixture and a new customer structure without a customer-specific C#, React or product-SQL branch.
+
+Demonstration and validation datasets may contain domain vocabulary because they emulate plant inputs. That vocabulary is confined to fixtures, mappings and customer-authored definitions. It is forbidden from becoming a compiled dimension list, an implicit analytical grain, a mandatory `material_unit_id`, a model contract or an Assistant fact vocabulary.
+
+The bounded commercial statement is:
+
+> **PlantProcess IQ learns the customer's vocabulary and plant structure through governed configuration; it does not require a new software edition for a new industry.**
 
 ## 1.1 The problem
 
@@ -219,6 +237,25 @@ Competitors compute. The difference here is what happens when the data is not go
 
 ---
 
+
+
+### 1.3.e Performance references: the plant declares what "good" means
+
+Plants do not optimise every number in the same direction. Throughput may be higher-is-better; energy intensity lower-is-better; pressure may be correct only inside an engineering envelope. PlantProcess IQ therefore separates **Engineering Standard**, **Management Target** and **Operating Envelope** from learned historical baselines and learned best practice. Declared references are effective-dated and carry the declaring authority and reason. Learned references carry their population, window, support and confidence.
+
+The product can then state, for example, *actual versus the plant's declared reference*, the gap, the attainment score where mathematically meaningful, and whether operation is inside or outside the declared envelope. It never calls a learned estimate an engineering standard and never turns `actual / target` into a universal formula.
+
+### 1.3.f Operational Evidence Reconciliation: what was recorded versus what independent evidence supports
+
+A manually recorded downtime duration or cause is one evidence source, not automatically the truth and not automatically false. A PLC signal, historian value, MES production order, CMMS work order and laboratory result each have authority only for the fact they actually measure.
+
+PlantProcess IQ may therefore reconcile two or more independent records over the same time interval and return states such as **Aligned**, **Partially Aligned**, **Missing Evidence**, **Temporal Uncertain**, **Conflicting Evidence**, **Likely Misclassified** or **Unresolved**. It never labels a person a liar and never claims intent. When the evidence supports a technical explanation, the product presents the **strongest supported root-cause hypothesis** and the evidence level behind it.
+
+### 1.3.g The Assistant as an industrial investigation agent
+
+The Assistant is not sold as a free-form chatbot that invents SQL or charts. It orchestrates governed Layer-A facts, Layer-B intelligence, references and reconciliation evidence. It may explain a finding, ask for missing evidence, compare the current state to a declared reference, and later compose a governed Investigation Board whose charts and tables are executed by the same validated BI engine as a human-authored page.
+
+The Assistant cannot upgrade a discrepancy into causality, cannot erase a refusal, and cannot create a plant number itself. Below confirmed cause it says **"strongest supported root-cause hypothesis"**, with the causal-confidence level visible.
 ## 1.4 Target audience, and what each buyer needs to hear
 
 | Buyer | Pain | What the platform gives them | Proof they accept |
@@ -289,6 +326,40 @@ Persistence and abstention behaviour: Ch3 4.5.4. Presentation: Value Dashboard, 
 ### 1.6.2 The downtime distinction most tools get wrong
 
 **Equipment-stopped minutes and production-impact minutes are different quantities.** A stoppage upstream can be absorbed by buffered material and cost no production; a short stoppage at a constrained stage can force a sequence rebuild and cost hours. The platform stores both and uses the correct one per calculation (Ch3 4.5.4). Raising this unprompted with an operations buyer demonstrates the product was designed by someone who has stood in a plant.
+
+### 1.6.2a Transition and stabilisation losses — a generic plant value driver
+
+A plant does not operate as one uniform regime. Product, recipe, tool, grade, campaign, cleaning cycle, equipment configuration or another customer-declared context may change. That transition can consume setup time, preparation material, energy, capacity and quality while the process stabilises. PlantProcess IQ treats this as **operational context**, not as an industry-specific noun.
+
+The commercial consequence is important: the first units or minutes after a transition may be systematically different from steady-state operation. A monthly result that improved because the plant ran **fewer transitions, longer stable sequences, shorter stabilisation windows or lower ramp-up loss** is materially different from a result that improved because the steady-state process itself became better. The product must keep those explanations separate.
+
+The approved bounded statement is:
+
+> **PlantProcess IQ can separate stable operation from declared transition and stabilisation periods, so the plant can investigate whether performance changed because the process itself changed or because the operating mix contained more setup, changeover and ramp-up.**
+
+No transition is inferred from an industry word. The customer's own event/context definitions identify what constitutes a transition and what counts as stabilisation. Technical contract: Ch2 2.0.10a; Ch3 4.5.4/4.5.5b; Ch4 5.4.11.
+
+### 1.6.2b Best practice is a trade-off, not the winner of one KPI
+
+The plant's best-quality period can be commercially poor, and its highest-throughput period can carry excessive scrap, downtime, energy or cost. PlantProcess IQ therefore does not define “best practice” by silently choosing one KPI.
+
+The customer declares an **Objective Set**: the outcomes that matter together, their direction, any hard constraints, and — only where the customer wants one — the preference rule used to choose among trade-offs. Without a declared preference, the product returns the **non-dominated/Pareto set** of supported operating practices and refuses to manufacture a single winner.
+
+Examples of objectives are illustrative, not shipped vocabulary: productivity, yield, quality loss, production-impact time, energy intensity and cost. The same mechanism applies to any registered measure in any industry.
+
+> **The product learns operating combinations that are jointly strong under the customer's declared objectives; it never averages incomparable KPIs into a hidden score.**
+
+Technical contract: Ch2 2.0.10b; Ch3 4.5.5b/4.5.12-D; Ch4 5.6.4b.1.
+
+### 1.6.2c Why was this period better? — exact driver decomposition before euro attribution
+
+A plant manager may ask why one month, shift, campaign or operating period performed better than another. Before the product makes any learned or causal statement, Layer A can decompose the exact operational differences that are already in the model: transition count and duration, stabilisation exposure, average stable-run length, stopped and production-impact minutes, yield/scrap, energy and other registered exact measures.
+
+The Assistant may explain those measured differences with evidence handles, but it does not turn them into a confirmed cause. Monetary conversion remains the bounded, assumption-visible Value Engine of Chapter 3/4 and T-164.
+
+> **First show what changed exactly; then use governed intelligence to investigate why.**
+
+Technical contract: Ch2 2.0.10c; Ch4 5.4.12.
 
 ### 1.6.3 Price-to-value parity
 

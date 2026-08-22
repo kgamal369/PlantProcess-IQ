@@ -1,6 +1,9 @@
 # PlantProcess IQ - Master Design Document
 
-**Version 4.6 | Author: Karim, SOU Industrial Software, Dusseldorf**
+**Version 4.9 | Author: Karim, SOU Industrial Software, Dusseldorf**
+
+> **Change log — Operational-Regime, Multi-Objective Practice and Period-Driver Hardening (22 August 2026, v4.9).** v4.9 closes the two generic gaps exposed by the first oil-plant requirement review without introducing oil-specific vocabulary: process transitions/changeovers and stabilisation become first-class governed context so statistics cannot mix distinct operating regimes; practice learning gains customer-declared multi-objective objective sets with Pareto/non-dominance and explicit preference resolution rather than silently choosing one KPI; exact period-to-period operational driver decomposition is added so the Assistant can explain changes in cost/productivity drivers from Layer-A facts before the monetary Value Engine is available. The release also binds the September checkpoint/fallback to the single v2.13 execution workbook. The six chapters remain the only design authority.
+
 
 > **Change log - Capacity, Pricing and Large-Data Final Hardening Pass (v4.5 to v4.6).** No architecture was redesigned. Eleven numerical and consistency corrections: the three sizing worked examples are recalculated and every one now satisfies the worst-dimension classification rule it is judged by; a canonical internal unit system of bytes, rows and seconds is defined with conversion at the input boundary once; the database RAM formula is replaced by a **cache-target model** whose definition, formula and examples agree, with an explicit cache cap per class; every performance constant is labelled **REFERENCE_ASSUMPTION** or **CALIBRATION_REQUIRED** with its reference hardware; benchmark profiles **C1 to C4** are added so each tier's hardware promise is certified before it is quotable; Chapter 4 5.3.9 is verified and extended with chunking, bounded parallelism, idempotency, checkpoint and resume, scan budgets and deterministic merging; a **Scan Amplification Ratio** metric with acceptance bands and a regression gate is added; Chapter 1 now distinguishes commercial packaging limits from technical cost meters; the stale "not priced per object" traceability entry is corrected to the contracted-quota model; the licence price function now derives the tier from all six commercial dimensions; and the acceptance table of 6.5 has been re-run rather than carried forward.
 >
@@ -48,6 +51,9 @@ Added sizing inputs: **snapshot read throughput** (B-03), **warm-model memory pe
 **Serving resources are bounded and GPU use is optional and benchmark-driven.** Serving carries no training dependency.
 
 ---
+
+> **CURRENT AUTHORITY — Master Design v4.9.** PlantProcess IQ has exactly six current design-authority chapters and one current execution-authority backlog workbook. No other file may define, amend, override, supplement or reinterpret current product design or implementation scope. A design change edits the owning chapter directly; a scope change edits the backlog directly. Transitional reviews, amendment packs, ledgers, mandates and prior revisions are historical evidence only after their accepted content is integrated. Validation scripts are code/enforcement instruments, not design documentation.
+
 
 # CHAPTER 6 - INFRASTRUCTURE, HOSTING, WEBSITE, ADMINISTRATION AND SALES
 
@@ -139,6 +145,16 @@ Chapter 3 4.6.2 names the components. This section makes them executable. **The 
 **One codebase, four topologies.** No topology has its own build, its own branch or its own code path. The differences above are configuration, deployment manifests and operating responsibility. **A second product for on-premise is prohibited** (Chapter 1.7).
 
 ---
+
+
+
+### 6.1.1.4 Connector capability truth and production OPC boundary - v4.7
+
+Connector metadata is an executable claim. A connector sets `supportsTagBrowse`, `supportsBoundedRead`, `supportsSubscription` or equivalent only when that build has an implementation path and a contract test that executes it. Configuration validation or deterministic sample generation does not satisfy a data-read capability.
+
+Production OPC UA acquisition belongs in the customer-side collector/edge boundary. The target runtime covers endpoint/security negotiation, application certificate trust, sessions, browse, subscription/monitored items, quality codes, source/server timestamps, reconnect and sequence recovery, store-and-forward and canonical mapping. **The core still never opens a route toward plant OT.**
+
+Site/customer certification is a trial/commissioning acceptance event because security policy, trust lists, namespace and network boundaries are customer-environment facts. Until certified, product and sales material say so explicitly.
 
 ## 6.1.2 Container architecture
 
@@ -411,6 +427,22 @@ API against PostgreSQL for every domain; definition store lifecycle including im
 
 Run at desktop and mobile viewports. **Any segment failing blocks deployment.**
 
+
+
+### 6.1.5.4a Persisted-definition replay - product-contract truth
+
+Before route E2E, the pipeline enumerates every active customer-facing page/widget/measure/filter definition from the database and executes its real query contract against the release database. A declared valid definition must return 2xx and a documented terminal state; an invalid combination must return a typed refusal, never 500. This gate catches drift between persisted customer definitions and current backend capabilities.
+
+The first implementation replays what exists. After T-092 makes dimensions/measures registry rows, a generated compatibility matrix derives additional valid/invalid combinations from the registry and chart grammar.
+
+### 6.1.5.5a Customer-session semantic gate
+
+For every customer-reachable route the browser harness records network responses, console errors, widget states and selection propagation. Unexpected 4xx/5xx, unhandled exceptions, error toasts or failed required requests fail the route.
+
+The cross-filter battery captures widgets A/B/C, clicks value X in A, proves selection state contains X, proves B/C issue new requests containing X, proves returned populations and visible results change, clears X and proves restoration. "The page did not crash" is not interaction acceptance.
+
+**Regression law.** Any defect first discovered by manual browser walk is reproduced as a failing automated test at the lowest layer that can detect it before the fix is accepted.
+
 ### 6.1.5.6 Security and reliability tests
 
 **Security:** authentication and lockout; authorisation per role; **tenant isolation including a direct API attempt with another tenant's identifier**; RLS enforced with `FORCE` so the owner is subject to it; SQL safety against the forbidden-token set and comment hiding; XSS and CSRF; **secret leakage in logs, errors and responses**; privilege escalation by direct endpoint call to a hidden page; **tier bypass by client-supplied entitlement**; assistant egress restricted to the plan, and no-egress genuinely preventing external calls.
@@ -474,17 +506,21 @@ Measured on the reference Medium class of 6.1.9.6. **A threshold breach fails th
 
 | Environment | Data | Lifetime | Who |
 |---|---|---|---|
-| Developer local | Empty-start plus emulated sources | Developer | Developer |
-| CI | Ephemeral database per run | Minutes | Pipeline |
-| Integration | Emulated fleet, reset nightly | Nightly | Pipeline |
-| E2E | Emulated fleet, reset per run | Per run | Pipeline |
-| Performance | Synthetic at Medium-class volume | Weekly | Pipeline |
-| Staging / UAT | Restored copy of a production-shaped database, **anonymised** | Per release | Release manager |
+| Developer local | Empty-start plus controlled generic fixtures | Developer | Developer |
+| CI | Ephemeral database per run; tiny deterministic fixture | Minutes | Pipeline |
+| Integration | Controlled discrete + continuous-process fixtures, reset nightly | Nightly | Pipeline |
+| E2E | Controlled generic fixture plus customer-shaped synthetic fixture where available | Per run | Pipeline |
+| Performance | Synthetic workload at certified size classes, with declared signal/time semantics | Weekly | Pipeline |
+| Staging / UAT | Production-shaped **anonymised** customer sample plus a customer-shaped synthetic fallback | Per release | Release manager |
 | Production | Customer data | Permanent | Customer |
 
 > **The genericity rule, restated as an operational rule:** **test data validates PPIQ; test data must never become product logic.** Emulated sources are containers **outside** the product (Chapter 1.6). Fixtures live outside the product tree. No test dataset, defect name, parameter name or plant vocabulary enters the product image, the migration set or the metadata prefill. **The profile lint and the genericity lint enforce this at stage 5**, and a violation fails the build.
 
 ---
+
+
+
+**Required validation matrix.** Release certification does not rely on one demonstration dataset. The maintained set contains: A) tiny deterministic known-answer data; B) legacy discrete/Fleet regression fixture, isolated from product authority; C) controlled continuous-process fixture with irregular sampling, states and counters; D) foreign-schema/adversarial fixture; E) customer-shaped synthetic fixture; F) anonymised real customer sample when contractually available. The same binary and migrations execute across the matrix. Only mappings, definitions, relationships, registry rows, reference profiles and configuration may differ.
 
 ## 6.1.7 Quality gates and release definition of done
 
@@ -510,8 +546,13 @@ Measured on the reference Medium class of 6.1.9.6. **A threshold breach fails th
 | 16 | **Backup and restore verified** | A restore rehearsal passed within the window | yes |
 | 17 | Install and upgrade rehearsal | Both passed against a production-shaped copy | yes |
 | 18 | **Golden-journey E2E** | J1 to J15 green at desktop and mobile | yes |
-| 19 | Documentation | Chapter references and the Implementation Status Register updated | yes |
-| 20 | Deployment audit | Record written with version, digest, approvers | yes |
+| 19 | **Persisted-definition replay** | Every active page/widget/query definition executes or returns its documented refusal; zero unexplained 4xx/5xx | yes |
+| 20 | **Customer-session semantics** | Network/console invariant plus cross-filter re-query/data-change proof | yes |
+| 21 | **Aggregation known-answer** | Continuous/discrete controlled fixtures prove declared aggregation algebra and undeclared semantics refuse | yes |
+| 22 | **Connector capability truth** | Every advertised connector capability has an executed contract test | yes |
+| 23 | **Dataset-neutral same-binary gate** | Discrete, continuous and foreign/customer-shaped fixtures require zero product-code change | yes |
+| 24 | Documentation | Chapter references and the Implementation Status Register updated | yes |
+| 25 | Deployment audit | Record written with version, digest, approvers | yes |
 
 ---
 
@@ -2059,6 +2100,23 @@ These entries live in the audit family (Chapter 3 4.5.15), which is append-only 
 **Acceptance of the handover is a two-signature act**: the commercial owner and the engineering lead. **An unsigned handover blocks provisioning**, because provisioning against an untraceable promise is how a project fails in month four.
 
 ---
+
+## 6.3.11 Pilot data intake — transition, objectives and operational-cost-driver evidence
+
+The customer-data request for a pilot must collect enough structure to prevent regime and objective ambiguity before analysis begins. In addition to source schemas, timestamps, references and evidence sources already required, request where available:
+
+- the customer's definition of production/changeover/setup/cleaning/configuration/campaign transitions;
+- start/end evidence for those transitions and the related equipment/operation/subject scope;
+- the declared stabilisation rule: time, first-N subjects, or condition for steady-state;
+- sequence/run/campaign identifiers and boundaries;
+- setup/preparation duration and direct loss quantities if recorded;
+- scrap/yield/quality during ramp-up and stable operation;
+- registered objectives the customer wants optimised together, including hard constraints and preference policy if one exists;
+- direct cost facts where available; otherwise cost assumptions remain explicitly outside the source truth and are owned by the Value Engine.
+
+**Readiness rule.** Customer data is not admitted to steady-state statistical certification while transition/stabilisation semantics materially affect the process and remain undeclared. The Customer Data Capability Assessment marks this as a named gap rather than treating the rows as one homogeneous population.
+
+**30-September programme checkpoint.** `T-087` is a hard programme checkpoint on **5 September 2026**. If it is not green, the customer demonstration uses the declared compatibility-read fallback for the already-proven kernels and labels canonical references/surfaces as configured rather than executed. No presenter may blur that distinction. This fallback protects truth; it does not waive the canonical chain.
 
 # 6.4 CROSS-CHAPTER TRACEABILITY
 

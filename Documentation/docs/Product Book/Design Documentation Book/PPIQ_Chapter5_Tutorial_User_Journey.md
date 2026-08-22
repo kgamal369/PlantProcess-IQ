@@ -1,10 +1,16 @@
 # PlantProcess IQ - Master Design Document
 
-**Version 4.5 | Author: Karim, SOU Industrial Software, Dusseldorf**
+**Version 4.9 | Author: Karim, SOU Industrial Software, Dusseldorf**
+
+> **Change log — Operational-Regime, Multi-Objective Practice and Period-Driver Hardening (22 August 2026, v4.9).** v4.9 closes the two generic gaps exposed by the first oil-plant requirement review without introducing oil-specific vocabulary: process transitions/changeovers and stabilisation become first-class governed context so statistics cannot mix distinct operating regimes; practice learning gains customer-declared multi-objective objective sets with Pareto/non-dominance and explicit preference resolution rather than silently choosing one KPI; exact period-to-period operational driver decomposition is added so the Assistant can explain changes in cost/productivity drivers from Layer-A facts before the monetary Value Engine is available. The release also binds the September checkpoint/fallback to the single v2.13 execution workbook. The six chapters remain the only design authority.
+
 
 > **Change log - Chapter 5 Consistency Pass (v4.4 to v4.5).** No tutorial was redesigned and no capability was added. Journey mapping corrected so every tutorial states every J step it walks and J1 to J3 are declared commissioning prerequisites in 6.0.4a; T3 and T7 role prerequisites corrected to match Chapter 3 (Data Engineer authors, Administrator publishes; New definition on F4 is Administrator-only); the F4 **Target definition** selector and version policy are used, following the Chapter 3 4.5.5a gap this chapter exposed; T4 opens Genealogy Explorer at its `/materials` search landing state; the assistant is stated as Pro Plus and above and T5 step 25 is optional; **T8's remediation visibility corrected - a suppressed candidate is not shown at all**, and Reject and Defer are gated exactly as Accept; "analysis file" replaced throughout by **Analysis Definition**; the SQL contradiction, the once-per-source overstatement, the automatic-method overclaim, the q-value definition and the "every number" evidence claim are all corrected.
 
 ---
+
+> **CURRENT AUTHORITY — Master Design v4.9.** PlantProcess IQ has exactly six current design-authority chapters and one current execution-authority backlog workbook. No other file may define, amend, override, supplement or reinterpret current product design or implementation scope. A design change edits the owning chapter directly; a scope change edits the backlog directly. Transitional reviews, amendment packs, ledgers, mandates and prior revisions are historical evidence only after their accepted content is integrated. Validation scripts are code/enforcement instruments, not design documentation.
+
 
 # CHAPTER 5 - TUTORIAL: THE USER JOURNEY, STEP BY STEP
 
@@ -78,6 +84,19 @@ These three journey steps happen **before** this manual applies, and an administ
 **Careful.** Ask your database administrator for a **read-only** account. If the account can change data, the connection test in T1 will fail on purpose, with the message that read-only verification failed. That is the product protecting your plant, not a fault.
 
 ---
+
+
+
+### 6.0.4b v4.7 generic customer-data additions to the existing eight tutorials
+
+The canonical journey remains J1-J15 and the tutorial count remains eight. The following requirements are integrated into the existing steps rather than creating an oil-specific tutorial:
+
+- **T1/T2:** where a source carries historian/OT data, register its time authority, timestamp basis, quality semantics, sampling/deadband information and read-only capability truth. A connector cannot advertise browse/read/subscribe when the build does not execute it.
+- **T3/T4:** declare Analysis Grain and subject identity through definitions/registry. A material unit is optional; equipment/process-window and continuous-flow interval are valid subjects.
+- **T5:** a widget may bind Performance Reference measures such as gap and in-envelope state. New customer dimensions appear from registry rows without a code change.
+- **T6:** selecting a parameter/measure shows its aggregation semantics. If none is declared, Run is blocked with `AG01` rather than silently averaging.
+- **T8:** when overlapping independent history exists, Findings may include an Operational Evidence Reconciliation case with evidence handles and causal-confidence level. The tutorial never uses the phrase "lie detection" and never attributes intent to a person.
+- **Assistant:** the dock may explain a reconciliation/reference result only from governed evidence. Investigation-board composition is an Advanced capability and uses the same Page Builder/query contracts.
 
 ## 6.1 The screen, once, so the tutorials can be short
 
@@ -976,3 +995,14 @@ The most common situations, in the order beginners meet them.
 ---
 
 *End of Chapter 5. Every page code, route, control label, message and error code used here is specified in Chapter 3 4.4 and 4.5.21. Where this chapter and Chapter 3 disagree, Chapter 3 governs and this chapter is corrected.*
+
+## 6.9a Three rules you will see in real plant analysis — transition, trade-off and period comparison
+
+These are not extra journey steps; they are rules used by T3, T6 and T8.
+
+**Transition / stabilisation.** When your plant declares a product/recipe/tool/campaign/setup or other context transition, you also declare how steady-state resumes: after a time, after a subject count, after a condition, or immediately. When an analysis spans two regimes the product will partition them or show `RG01` rather than quietly mixing them. A result card shows whether its population was Stable, Transition, Stabilising or Mixed.
+
+**Multi-objective practice.** If you ask for “best practice” across more than one objective, choose an Objective Set. If you have not declared how conflicting objectives should be traded, the product shows the supported non-dominated practices and **does not force one winner**. This is expected behaviour, not an error.
+
+**Compare two periods.** In the Assistant or Analysis Toolbox, a period comparison first shows exact differences — transition count, stabilisation exposure, stable-run length, production-impact time, yield/scrap, energy and other registered facts — with evidence. Learned explanation comes after the exact comparison. Assumption-based money values appear only when the Value Engine has the required cost assumptions.
+

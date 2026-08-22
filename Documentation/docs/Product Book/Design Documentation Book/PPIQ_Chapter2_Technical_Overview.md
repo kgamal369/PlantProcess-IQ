@@ -1,8 +1,14 @@
 # PlantProcess IQ - Master Design Document
 
-**Version 4.3 | Author: Karim, SOU Industrial Software, Dusseldorf**
+**Version 4.9 | Author: Karim, SOU Industrial Software, Dusseldorf**
+
+> **Change log — Operational-Regime, Multi-Objective Practice and Period-Driver Hardening (22 August 2026, v4.9).** v4.9 closes the two generic gaps exposed by the first oil-plant requirement review without introducing oil-specific vocabulary: process transitions/changeovers and stabilisation become first-class governed context so statistics cannot mix distinct operating regimes; practice learning gains customer-declared multi-objective objective sets with Pareto/non-dominance and explicit preference resolution rather than silently choosing one KPI; exact period-to-period operational driver decomposition is added so the Assistant can explain changes in cost/productivity drivers from Layer-A facts before the monetary Value Engine is available. The release also binds the September checkpoint/fallback to the single v2.13 execution workbook. The six chapters remain the only design authority.
+
 
 ---
+
+> **CURRENT AUTHORITY — Master Design v4.9.** PlantProcess IQ has exactly six current design-authority chapters and one current execution-authority backlog workbook. No other file may define, amend, override, supplement or reinterpret current product design or implementation scope. A design change edits the owning chapter directly; a scope change edits the backlog directly. Transitional reviews, amendment packs, ledgers, mandates and prior revisions are historical evidence only after their accepted content is integrated. Validation scripts are code/enforcement instruments, not design documentation.
+
 
 # CHAPTER 2 - TECHNICAL OVERVIEW
 
@@ -27,6 +33,93 @@ The actionable-prediction-latency guarantee is delivered by **hard-reserved onli
 
 **No product scope change. No capability is added or removed by this revision.**
 
+
+
+
+### 2.0.3 Dataset-neutral product authority
+
+No validation dataset is a product authority. Fleet/steel is a legacy regression fixture; continuous-process fixtures and customer-shaped fixtures are additional falsification instruments. **No industry noun, customer field name or prepared demo dimension may be required by product runtime.** Customer-visible dimensions, measures, grains, relationships, references and evidence authority are canonical definitions/registry rows, not compiled arrays.
+
+The release-level genericity proof runs the same binary and migration set against at least one discrete fixture, one continuous-process fixture and one foreign/customer-shaped fixture. Any required product-code change for customer vocabulary fails the gate. A code change is allowed only when it adds a genuinely generic capability that remains applicable to future industries.
+
+### 2.0.4 Analysis Subject, Grain and continuous-process semantics
+
+The analytical subject is not universally a material unit. A result may concern a material unit, batch, lot, campaign, equipment, process window, flow interval or another customer-declared subject. A **Grain Definition** describes the identity and time semantics. An **Analysis Subject** is one resolved instance of that grain. Layer A and Layer B bind governed results to the Analysis Subject rather than assuming `coil`, `material` or another universal noun.
+
+No engine supplies an implicit grain. Missing grain authority is a governed refusal.
+
+### 2.0.5 Signal and aggregation semantics
+
+A storage type such as numeric or boolean does not state how a signal may be aggregated. Every analytical parameter therefore carries governed signal semantics: signal kind, permitted/default aggregation when declared, interpolation, weighting basis, maximum carry gap, quality handling and counter-reset policy. A KPI binding may override aggregation for that KPI.
+
+There is **no silent default `Average`**. When aggregation semantics are undeclared and the requested operation cannot be defended, the result is refused with `aggregation_semantics_undeclared`.
+
+Initial required execution semantics are `SampleMean`, `TimeWeightedMean`, `Integral`, `Delta`, `StateDuration`, `Count`, `Min`, `Max` and `Last`; additional methods remain registry/engine grammar, not customer vocabulary.
+
+### 2.0.6 Temporal authority
+
+Cross-source analysis records which clock a timestamp represents. Per source the product governs plant timezone, timestamp basis, DST policy, clock reference, observed skew and maximum tolerated skew. Where available, machine observations preserve source timestamp, server timestamp and ingest timestamp separately.
+
+A reconciliation whose clocks are not aligned inside the declared tolerance returns **Temporal Uncertain / clock alignment not established**. It never fabricates a conflict.
+
+### 2.0.7 Performance Reference authority
+
+**Performance Reference** is the umbrella term. The declared Layer-A kinds are `EngineeringStandard`, `ManagementTarget` and `OperatingEnvelope`; learned Layer-B kinds are `HistoricalBaseline`, `LearnedBestPractice` and `PeerReference`. Declared references are effective-dated, scoped and attributable to a declaring authority. Learned references carry window, population, support and confidence.
+
+Scoring semantics are explicit: `HigherIsBetter`, `LowerIsBetter`, `InsideRange`, `ClosestToTarget`, `BinaryCompliance` or a governed expression. Derived measures include reference gap, normalised deviation, envelope compliance and attainment where mathematically valid.
+
+### 2.0.8 Operational Evidence Reconciliation and causal confidence
+
+A **Fact Evidence Authority** rule identifies which source is primary or supporting for one semantic fact; authority is fact-specific and tenant-configured. A PLC is not globally superior to MES, CMMS, a laboratory or a human record.
+
+**Operational Evidence Reconciliation** compares independently sourced assertions over a temporally aligned interval. Its subject is the record/evidence case, never a person. Outcomes are `Aligned`, `PartiallyAligned`, `MissingEvidence`, `TemporalUncertain`, `ConflictingEvidence`, `LikelyMisclassified` or `Unresolved`.
+
+The causal-confidence ladder is: **L0 Observed Fact; L1 Discrepancy; L2 Statistical Association; L3 Temporally Supported Hypothesis; L4 Mechanistically Supported Hypothesis; L5 Confirmed Cause.** L5 requires external/human confirmation or equivalent governed evidence. The Assistant may never linguistically promote a lower level.
+
+### 2.0.9 OT acquisition capability truth
+
+The customer-side collector remains outbound-only and read-only. **A connector advertises only capabilities that are executable in that build.** Configuration validation is not tag browse; a deterministic simulator is not live acquisition. Real OPC UA support is an edge-runtime capability comprising endpoint/security negotiation, session lifecycle, browse, subscription/monitored items, quality and timestamp preservation, reconnect/recovery and site certification. Until present, the connector reports the missing capability honestly.
+
+### 2.0.10 Release Truth and governed investigation boards
+
+Release evidence is layered: architecture/static truth; unit/semantic truth; persisted-definition replay; real API/database integration; customer-session behaviour; visual/resilience. Customer-facing routes fail release on unexpected 4xx/5xx, unhandled exceptions, error states or broken cross-filter behaviour. A browser-found defect becomes a failing automated test at the lowest suitable layer before the fix is accepted.
+
+The future **Insight Board Plan** is a versioned, replayable governed artifact. It stores question, context, filters, planner version, definition versions, data-as-of, tool executions, widget specifications and evidence handles. The LLM may propose the plan; deterministic authorities validate it; the existing BI engine executes it. The LLM never emits raw SQL, React code or plant numbers as authority.
+
+
+### 2.0.10a Operational Transition and Stabilisation Context
+
+A production history is a sequence of **operating regimes**, not one homogeneous population. A customer-declared transition is a bounded event in which an operating context changes — product/recipe, tool, campaign, cleaning state, equipment configuration or another authored semantic. A **stabilisation window** is the declared period, subject-count or condition after that event during which operation is not yet steady-state.
+
+The platform classifies analytical intervals as `Stable`, `Transition`, `Stabilising`, `Mixed` or `Unknown`. Statistical, aggregation, practice, reconciliation and Assistant consumers receive this regime context as evidence. A steady-state analysis does not silently pool `Transition`/`Stabilising` observations with `Stable`; it either partitions them under the authored policy or refuses `mixed_process_regime`.
+
+This is generic context, not an oil feature. It covers any customer-declared process transition and has no shipped list of moulds, grades, recipes, products or cleaning cycles.
+
+### 2.0.10b Multi-Objective Operating Practice
+
+Practice learning is multi-objective when the customer declares more than one outcome that must be considered together. An **Objective Set** names registered measures/outcomes, their directionality and units, optional hard constraints, and an optional preference policy.
+
+Three resolution modes are governed:
+
+1. `ParetoOnly` — return the supported non-dominated practices; do not choose one.
+2. `DeclaredUtility` — resolve a single preference only from an explicit, versioned customer utility/weight policy after every objective has been normalised by its registered Performance Reference semantics.
+3. `LexicographicOrConstrained` — respect declared hard constraints/priority order before ranking remaining objectives.
+
+**There are no default weights and no hidden scalarisation.** If objectives conflict and no preference is declared, the correct result is the Pareto/non-dominated set plus a refusal to name one practice “best”. A multi-objective result carries its full objective vector, support, uncertainty, dominance relation and the preference version used.
+
+### 2.0.10c Operational Period Driver Decomposition
+
+Before learned explanation, Layer A may compare two governed periods and report **exact operational deltas** over registered measures and context: transition count/duration, stabilisation exposure, stable-run/sequence length, stopped minutes, production-impact minutes, yield/scrap, energy and further registered facts. The comparison is evidence-backed and makes no causal claim.
+
+This exact decomposition is the preferred Assistant tool for questions such as “what was operationally different in this month?” The Value Engine may later convert supported quantities into bounded monetary impact using explicit assumptions; the exact period comparison itself does not require the Value Engine and does not invent cost.
+
+## 2.0.11 Documentation and authority constitution
+
+The **six chapters are the complete current design authority**. Chapter 1 owns market/product promise; Chapter 2 owns product laws, naming and architecture; Chapter 3 owns exact technical contracts, persistence and APIs; Chapter 4 owns execution behaviour, algorithms and engine rules; Chapter 5 owns the customer operating journey; Chapter 6 owns deployment, infrastructure, administration and operational topology.
+
+The backlog workbook is the **only current execution authority**. It may reference chapter sections but may not redefine them. A worker message, implementation mandate, review, handover, architecture note, amendment pack, synchronisation ledger or design scan result is never a second authority.
+
+**Standing rule.** A new design document is not created for a new capability. The owning chapter is amended directly, its change log is updated, and enforcement instruments are updated to prove the amended contract. Temporary analysis/review artifacts are archived after their accepted content is integrated.
 
 > **Target audience (3.7):** middle managers, operations engineers, quality engineers, process engineers. Technically literate, not developers.
 >
@@ -426,6 +519,15 @@ Senior product owner. Explanatory, concrete, and honest about what a page will a
 | **Alert** | An entry raised by a customer-authored rule about **plant reality**, optionally routed to a person | entry | Rule evaluation (DF15) | `plant_data_log` |
 | **Assistant dock** | The global shell component G1 that answers questions with citations. Not a page, has no route, present on every authenticated page | shell component | - | Ch4 5.7 |
 
+| **Analysis Subject** | A resolved instance of one customer-declared analytical grain; may be an entity, campaign or time interval. The generic identity for feature, prediction and intelligence results | one declared grain instance | Canonical projection / subject resolver | `analysis_subjects` |
+| **Grain Definition** | The customer-authored/registry definition of analytical identity and time semantics. No implicit default exists | definition | Authoring / registry | `analysis_grain_definitions` |
+| **Signal Semantics** | The governed rules that state how a parameter can be aggregated/interpolated/weighted and when it becomes stale | parameter definition | Customer definition + product grammar | `parameter_definitions` |
+| **Performance Reference** | An effective-dated declared or learned reference against which an actual value is compared under explicit scoring semantics | scoped reference | Customer declaration or learned engine | `performance_references`, learned reference result |
+| **Fact Evidence Authority** | A tenant-scoped rule saying which source is primary/supporting for one semantic fact | fact/source rule | Customer configuration | `fact_authority_rules` |
+| **Reconciliation Case** | A governed comparison of independent evidence about the same fact/interval, with temporal state, discrepancy, evidence handles and confidence level | record/interval | Reconciliation engine | `reconciliation_cases` |
+| **Causal Confidence Level** | L0-L5 evidence ladder from observation to externally confirmed cause; language may never upgrade the level | claim | Engine/governance | stored on governed finding/reconciliation output |
+| **Insight Board Plan** | A versioned, reproducible plan for charts/tables/KPIs generated from a question and executed only through governed definitions/tools | investigation | Assistant planner + deterministic validator | definition/evidence store |
+
 **The three distinctions most easily confused, stated plainly.** A **finding** is about a population and looks backward; a **prediction** is about one unit and looks forward. A **suggestion** comes from a finding; a **remediation** comes from a prediction. A **log** records what the platform did; an **alert** records what the plant did.
 
 ---
@@ -464,6 +566,13 @@ Current classification of the capabilities most often questioned:
 | Remediation eligibility and safety gate | **Core** | Nine checks before any candidate is styled as a recommendation. Ch4 5.6.4d |
 | Unstructured text evidence | **Future extension** | Interfaces, lineage, permission and citation model designed; ingestion scheduled |
 | Inspection images | **Future extension** | Metadata, object-storage location, linkage and annotation model designed; first model scheduled |
+
+| Analysis Subject and Grain authority | **Core** | Required so continuous, batch and discrete plants use one binary without a universal material assumption |
+| Signal / aggregation semantics | **Core** | A product may not emit a plausible aggregate whose mathematical meaning is undeclared |
+| Performance Reference - declared half | **Core** | Customer standards/targets/envelopes are exact governed facts |
+| Operational Evidence Reconciliation | **Advanced** | Requires overlapping independent evidence and established temporal authority; full design is Core architecture, activation is data-maturity gated |
+| Production OPC UA edge acquisition | **Advanced** | Connector family capability; the read-only collector architecture is Core, live protocol support is certified per customer environment |
+| Insight Board Composer | **Advanced** | Governed investigation composition; grounded Assistant Q&A remains independently usable |
 | Any write path to a plant system | **Excluded** | Violates the read-only boundary; no design will be produced |
 | Autonomous application of a model or threshold change | **Excluded** | Violates governed review; human approval is structural |
 
@@ -831,3 +940,378 @@ Every capability specified in Chapters 3 and 4 carries its answers, and a capabi
 ---
 
 *End of Chapter 2. This chapter is the naming and structure authority: J1-J15, DF1-DF15, the 40 route pages and 6 shell components, the glossary of 3.9, the plant model of 3.14, the relationship model of 3.15 and the positioning rule of 3.19 govern every other chapter.*
+
+---
+
+# CHAPTER 2 — PART II: INTEGRATED LEARNED INDUSTRIAL INTELLIGENCE CONSTITUTION
+
+**Status: NORMATIVE TARGET DESIGN.** This Part II is the former Layer-B Rule Revision 8 absorbed into the official Chapter 2 so there is no separate design authority. The main Chapter 2 body governs naming and product architecture; this Part II gives the deep industrial-intelligence constitution. Chapter 3 remains the persistence/API authority, Chapter 4 the execution/algorithm authority, and Chapter 6 the deployment authority.
+
+### LB-1. PURPOSE
+
+Layer B turns a customer's historical and continuously arriving plant data into: plant fingerprint, anomaly and novelty knowledge, process-outcome relationships, attributable risk, practice learning, operating envelopes, early prediction, historical similarity, evidence-supported remediation suggestions, machine-readable intelligence datasets for dashboards, and evidence endpoints for the Assistant.
+
+**It must be generic across industries.** Fleet-v2 and steel are one test dataset. Oil, mineral water, pharma, paper, tyres, food and unknown future industries use the same engine architecture.
+
+---
+
+### LB-2. THE SEMANTIC WALL
+
+**Layer B contains no customer table name, no column name, no schema name and no industry term.**
+
+Forbidden in any Layer B code path:
+
+```
+read Coil table        read Heat table        read CastingSpeed
+if (customer == ...)   class OilModel         class BottleModel
+```
+
+Customer physical schemas are handled above the intelligence engine. The customer configures data through the PPIQ authoring surfaces: the no-code wiring canvas, relationship declarations, governed SQL where needed, the dataset registry, and parameter and outcome definitions.
+
+**Layer B consumes only published canonical contracts:**
+
+```
+CUSTOMER SOURCES
+  -> NO-CODE WIRING / GOVERNED SQL
+  -> PUBLISHED definition_versions
+     + PUBLISHED plant_relationships (emitted by publishing the transformation)
+     + GOVERNED registry and configuration state
+  -> pinned for reproducibility by a SEMANTIC CONTRACT MANIFEST
+  -> CANONICAL / SPINE / FEATURE REPRESENTATION
+  -> LEARNED INTELLIGENCE ENGINE
+```
+
+Enforced in three layers: the Layer B database role holds grants on Plant Data and the intelligence schema only; every source reference resolves through a published `definition_version` and every entity correspondence through `RelationshipResolver`; and an architecture test asserts no Layer B file contains a customer identifier or an industry noun, falsified once before it is trusted.
+
+---
+
+
+
+### 2.1 Generic Analysis Subject law
+
+Layer B receives `analysis_subject_id + grain_code`, not an industry identity. An Analysis Subject may resolve to a material unit, batch, campaign, equipment interval, process window, flow interval or customer extension. `material_unit_id` may exist in canonical discrete-manufacturing data but is **not** a mandatory key in Layer-B feature, prediction or evidence contracts.
+
+There is no default `coil`, `material`, `batch` or other universal grain. If the published contract does not resolve a grain/subject, the execution refuses.
+
+### 2.2 Signal aggregation law
+
+`data_type` is storage, not mathematics. SM-05 carries signal/aggregation semantics. The engine may aggregate only through an allowed published semantic. No component may silently use Average because nothing else was declared. `AG01 aggregation_semantics_undeclared` is a valid terminal result.
+
+Continuous-time semantics must account for irregular sampling, quality and maximum carry gaps when the declared method requires them. SampleMean remains legal for data whose governed semantics make it legal; time weighting is not applied blindly.
+
+### 2.3 Temporal and evidence authority law
+
+Cross-source claims first resolve source time authority and alignment tolerance. If clocks cannot be aligned, the output is TemporalUncertain, not conflict.
+
+Evidence authority is fact-specific and tenant-configured. PLC, historian, MES, CMMS, laboratory and manual records may each be primary for different facts. A global `PLC > everything` priority is forbidden.
+
+### 2.4 Reconciliation and causal-confidence law
+
+Operational Evidence Reconciliation may emit Aligned, PartiallyAligned, MissingEvidence, TemporalUncertain, ConflictingEvidence, LikelyMisclassified or Unresolved. The subject is a case/record, never a person; intent is never inferred.
+
+Every root-cause statement carries L0-L5 causal confidence. Below L5 the approved phrase is **strongest supported root-cause hypothesis**. L5 requires governed confirmation outside the model's own inference.
+
+### LB-3. THE SEMANTIC CONTRACT MANIFEST
+
+**`ppiq_meta.semantic_manifests` is an immutable, content-addressed reproducibility pin. It is not an authoring authority and has no lifecycle.**
+
+| Column | Type | Notes |
+|---|---|---|
+| `manifest_id` | uuid **PRIMARY KEY** | The handle artifacts reference |
+| `tenant_id` | uuid NOT NULL | |
+| `manifest_hash` | varchar(64) NOT NULL | Content hash over the referenced versions |
+| `definition_versions` | jsonb NOT NULL | `{definition_id, version_number}` array |
+| `relationship_source_definition_id` | uuid NOT NULL | |
+| `relationship_source_definition_version` | integer NOT NULL | |
+| `registry_snapshot_hash` | varchar(64) NOT NULL | Over the registry rows in force |
+| `configuration_hash` | varchar(64) NULL | Governed configuration affecting semantics |
+| `created_at_utc` | timestamptz NOT NULL | |
+
+**UNIQUE `(tenant_id, manifest_hash)`.** Identical content within a tenant never creates a second row. Identical content across two tenants correctly creates two rows, because a manifest is tenant-owned evidence.
+
+**No status column. No draft, validated, published or rolled-back state. Nothing updates a manifest.**
+
+`definition_versions`, the relationship publication and `model_registry` retain their lifecycle authority unchanged. The manifest records which versions were in force; it does not govern them.
+
+**Coverage.** Run, artifact and evidence tables carry `semantic_manifest_id uuid NULL FK`. **Nullable for legacy records only. Every new governed AI/ML execution must resolve a manifest**; a run that cannot is refused rather than recorded without one.
+
+---
+
+### LB-4. THE RELATIONSHIP MODEL
+
+**Chapter 2 3.15 positions it. Chapter 3 4.5.10 implements it: `plant_relationships`, `plant_relationship_members`, `plant_relationship_paths`, versioned by `source_definition_id` and `source_definition_version` with an effective and retired lifecycle. Publishing the transformation emits the model.**
+
+**No statistical, feature, ML, prediction, practice, remediation, value, Assistant or evidence engine owns a private join.** One resolver serves all sixteen consumers through `GET /api/relationships/resolve?from=&to=&purpose=`.
+
+Four behavioural rules: ambiguity refuses rather than guesses; `validation_state = unproven` permits `explore` and refuses `train`; grain conversion requires attribution weights summing to 1.0; and a relationship is deactivated, never deleted.
+
+---
+
+### LB-5. TRUTH CONTRACTS
+
+**Layer A** produces exact facts: count, sum, grouped KPI, historical totals, exact filtered population.
+
+**Layer B** produces learned estimates: risk, similarity, anomaly, attribution, prediction, operating envelope, learned effect, recommendation confidence.
+
+**Never use ML to approximate an exact BI fact because the dataset is large.** The Assistant may combine both, clearly labelled.
+
+Every output classifies itself as **ASSOCIATION**, **PREDICTIVE CONTRIBUTION**, **MATCHED EFFECT ESTIMATE** or **CAUSAL EVIDENCE**. **A claim class is never upgraded by language.**
+
+Terminal states: **FINDING, INSUFFICIENT DATA, NOT APPLICABLE, REFUSED BY GUARD, CONTRADICTED BY CONTROL, MODEL NOT READY**, expressed through the canonical error codes. **Never turn a method limitation into a false statement about customer data.**
+
+---
+
+### LB-6. DATA PRODUCTS AND THE TRAINING PATH
+
+Persistent governed products, not repeated scans of source tables: journey spine, feature store, sequence store, outcome store, evidence store, prediction store, embedding and index metadata.
+
+### 6.1 The training read path
+
+**PostgreSQL JSONB is not the training read path.**
+
+```
+live governed feature state     ppiq_plant.feature_store, jsonb, incremental, RLS
+      |  seal
+      v
+immutable snapshot manifest     feature_snapshots: storage_uri, artifact_format,
+      |                         artifact_content_hash, artifact_byte_size
+      |  materialise
+      v
+typed columnar artifact         object storage. Format selected by B-03
+      |  bounded read, projection pushdown
+      v
+Python data loader              PyTorch / LightGBM input
+```
+
+`feature_store` owns current governed state, lineage, row-level security and incremental refresh by watermark. **The sealed artifact owns high-throughput training input.**
+
+**No training or encoding component queries `feature_store`. The snapshot materialiser is exempt by definition** and is the only component permitted to read it for sealing.
+
+`feature_snapshot_rows` is an optional audit sample, not the authoritative copy.
+
+### 6.2 The sequence path
+
+**`ppiq_plant.sequence_manifests`** in PostgreSQL holds the manifest: subject identity, `channel_set_version`, time range, sample and channel counts, completeness, content hash, storage URI, chunk index.
+
+**Object storage holds the payload**: immutable chunked typed numeric arrays, compressed, partitioned, memory-mappable where the format allows. The loader consumes bounded chunks. **No numeric sequence payload is stored in PostgreSQL.**
+
+---
+
+### LB-7. THE SEVEN INTELLIGENCE AND ENGINE FAMILIES
+
+**Not seven ML models. Three of the seven are not models, and the sub-type determines lane, refresh policy and whether a champion/challenger gate applies.**
+
+| ID | Family | Sub-type | Lane | Champion/challenger |
+|---|---|---|---|---|
+| MF-01 | Process encoder | Learned model | `ml.training` | Yes, plus the promotion inequality |
+| MF-02 | Similarity index | **Retrieval and index** | `ml.training` to build | No. Gated on measured recall@k |
+| MF-03 | Normal and novelty | Learned model | `ml.training` | Yes |
+| MF-04 | Supervised outcome | Learned model | `ml.training` | Yes, three-dimensional |
+| MF-05 | Effect and envelope | **Statistical engine** | `analysis` | No. Recomputed, not trained |
+| MF-06 | Statistical intelligence | **Statistical engine** | `analysis` | No. Recomputed, not trained |
+| MF-07 | Practice learning | **Practice engine** | `analysis` | No. Governed signature version |
+
+Plus **orchestration and governance**: the capability profiler, the model-count governor and the supervisor.
+
+**Framework and implementation choices are replaceable and benchmark-driven.** PyTorch behind a `ProcessEncoder` abstraction; **`VectorSimilarityIndex` is the contract and FAISS is one implementation candidate**; `SupervisedOutcomeModel` with LightGBM as the initial tabular candidate; TreeSHAP as the initial explanation mechanism.
+
+**A mandatory simple baseline is trained first.** A complex model ships only when it beats the baseline on the three-dimensional gate.
+
+---
+
+### LB-8. MODEL REGISTRY, ACTIVATION AND ROLLBACK
+
+**`ppiq_plant.model_registry`, governed per serving identity. There is no bundle object.**
+
+```
+serving identity = ( tenant_id , model_code , outcome_code , grain_code )
+serving version  = serving identity + model_version
+```
+
+`outcome_code` and `grain_code` are model identity, not metadata.
+
+**Two independent axes:** `status` in `trained, rejected, active, review, retired`, and `serving_role` in `none, serving_fallback`.
+
+Constraints: at most one `active` per serving identity; at most one `serving_fallback` per serving identity; a retired, rejected or under-review model can never hold a fallback approval; **one version can never be both primary and fallback**, because a fallback that is already the primary masks the absence of a safety net. Every UNIQUE carries `tenant_id` first.
+
+**A fallback is never inferred from the last active version.** Use is recorded and surfaced through `prediction_current.fallback_in_use`; silently serving a fallback as primary is prohibited.
+
+`model_training_runs` carries **CHECK `overlap_rows = 0`**, making leakage a database-level impossibility rather than a test.
+
+### 8.1 Promotion is a three-dimensional gate
+
+On the same governed recent holdout as the incumbent:
+
+**QUALITY** - discrimination or error, **calibration**, out-of-time performance, subgroup and regime stability, missingness robustness, **explanation stability**.
+
+**SERVING** - p50, p95 and p99 inference latency, throughput, artifact size, RAM and VRAM, warm-up time.
+
+**TRAINING** - duration against the weekly window, peak memory against lane capacity, snapshot read throughput.
+
+**A better-discriminating, worse-calibrated model is not an improvement** for a product whose output is a risk band a human acts on. **An unstable explanation is worse than none**, because contributors are presented as evidence.
+
+**The encoder ships only when it earns its operational cost:**
+
+```
+promote_encoder  iff  metric_lift            >= declared_min_lift
+                 AND  p95_latency_delta      <= declared_latency_budget
+                 AND  artifact_size          <= declared_size_class
+                 AND  explanation_stability  >= floor
+```
+
+If engineered features match it within the lift threshold, **the engineered features ship**.
+
+---
+
+### LB-9. VECTOR SEARCH
+
+`VectorSimilarityIndex` with build, seal, extend, search and recall_probe is the product contract. **FAISS, HNSW, IVF, PQ, quantised and GPU-backed variants are implementations selected by measurement.** No library name appears in the contract.
+
+Index family is selected from population size, vector dimension, available RAM, required recall@k, p95 latency target, build time and update pattern.
+
+**Exact Flat search is retained permanently on a representative sample as the recall baseline.** Recall@k is measured on every build and stored. **A build below the declared recall floor does not become the served index.** An approximate index whose recall has never been measured is an unquantified error source presented as a plant fingerprint.
+
+---
+
+### LB-10. PREDICTION, REMEDIATION AND DECISION
+
+**Prediction cutoff is structural.** Features available after the cutoff are prohibited; a model with excellent metrics caused by future information is a failed model.
+
+**Operational delivery.** `prediction_current` carries the actionable deadline, remaining stage state, scoring mode, delivery latency and fallback state. A prediction that arrives after its last actionable stage is a record, not an intervention.
+
+**Remediation is a nine-check gate** with four outcomes: **actionable** (all nine pass), **evidence_only** (checks 5 to 9 pass, one or more of 1 to 4 fail for this unit), **exploratory** (checks 1 to 6 pass, 7 or 8 fails), **suppressed** (safety check 4 fails, not shown, audited).
+
+**`can_accept` is the complete seven-condition server-side acceptance authority and is not a synonym for actionable.** The client reads `can_accept` alone and must not re-derive any condition. Accept, Reject and Defer exist only where it is true.
+
+**Escalation is a record, never a decision.** It creates no action row, contributes to no effectiveness row and is excluded from feedback.
+
+**Prediction evaluation excludes intervened instances** from accuracy metrics and reports them separately, because a prevented event is not a false positive.
+
+**Value** carries mandatory bounds when the basis is sufficient, with a point estimate permitted beside them, per-tenant currency, and abstention when the basis is absent. Potential impacts are non-additive and are never summed into a total saving.
+
+---
+
+### LB-11. THE MODALITY BOUNDARY
+
+**The boundary is governance, not modality.**
+
+> **No free-form or model-generated output may become a feature, a score, a statistic or a value.** Text and images may enter a learned result **only** through an explicitly authored model definition carrying the full training contract: a versioned immutable snapshot, declared leakage controls, held-out validation, a `model_registry` entry, calibration and drift monitoring.
+>
+> Retrieval-derived and LLM-derived content is **evidence only**: it may corroborate a deterministic result and may never originate one.
+
+**Path A, evidence modality.** Operator notes, shift logs, maintenance text, documents. Indexed, retrieved, cited. Never a feature, never a score, never a plant fact the model originated.
+
+**Path B, governed multimodal ML.** The full contract above. This is how an inspection-image model produces an annotation with a confidence under the same activation, retirement and drift rules as any model.
+
+**No implementation scope is added by this boundary.** Both modalities remain interface-designed, future implementation.
+
+---
+
+### LB-12. EXECUTION LANES AND ADMISSION
+
+**Six logical job classes. The `ml` class resolves to three physical lanes.**
+
+| Lane | Reserved | Pre-emptible | Admits |
+|---|---|---|---|
+| `ml.training` | no | **yes** | Encoder and supervised training, calibration, SHAP batch, index build |
+| `ml.batch_scoring` | no | yes | Scheduled scoring, backfill, rescore after activation |
+| **`ml.online_scoring`** | **yes** | **no** | **Event and micro-batch scoring and its required serving functions only** |
+
+**Admission requires both predicates:**
+
+```
+admit  iff  running_count < max_concurrency
+       AND  sum(compute_weight of running) + compute_weight(candidate) <= resource_capacity
+```
+
+`max_concurrency` is how many runs may be in flight; `resource_capacity` is how much scarce resource exists; `compute_weight` is what one run consumes. **One number never expresses two quantities.**
+
+**The online reservation is never available to training or batch admission.** Batch, backfill and rescore work runs on batch and training-class capacity, never on the online container. Where hardware is physically shared, online capacity remains hard-reserved and **B-02 must prove the actionable-latency target while training and batch are saturated**.
+
+**Warm models** for every active serving identity are resident and reference-counted; a newly activated model is warmed before it serves. **Training yields at its next checkpoint** when a reserved lane needs capacity.
+
+**Daytime serving performs no training.** Tier 1 precomputed reads target seconds; tier 2 bounded computation on prepared stores targets under 30 seconds; tier 3 schedules or refuses. **The absolute synchronous ceiling is under 2 minutes.**
+
+---
+
+### LB-13. THE ASSISTANT RUNTIME
+
+**The Assistant is an orchestrator and communicator over governed tools. It never computes, never originates a figure and never replaces an engine refusal.**
+
+```
+[1] permission and tenant context      [2] intent and entity resolution
+[3] DETERMINISTIC TOOL PLANNER         [4a] structured tools  [4b] evidence retrieval
+[5] token-budgeted evidence packing    [6] model gateway      [7] LLM, phrasing only
+[8] deterministic answer verification  [9] cited answer or refusal
+```
+
+**The LLM does not choose tools.** A planner maps resolved intent to a declared tool set; tool-selection accuracy is gated. Where intent is ambiguous the planner asks rather than guessing.
+
+**Hybrid retrieval with the permission filter applied before ranking**, not after, so a forbidden chunk cannot displace a permitted one. **Structured tools take precedence over retrieval for facts and analytical results**; a number never comes from a retrieved chunk when a tool can compute it. Re-ranking is optional and ships only if it earns its latency.
+
+**Evidence packing** deduplicates, ranks engine output above documents, enforces a hard token budget with a reserved answer allowance, retains every evidence handle, and **records and discloses truncation**.
+
+**The gateway sends the minimum scoped evidence** to an external provider, never a whole retrieval set and never raw canonical rows. **A provider or model change is a governed release event.**
+
+**`ModelServingRuntime`** is a replaceable abstraction; no serving library is the product contract.
+
+**Answer verification is deterministic and does not call the LLM**, because a model checking its own output is not a guard. Every numeric claim must resolve to a supplied handle; no claim class is upgraded; no refusal is replaced by a phrased answer; a transport failure is never dressed as an abstention.
+
+Quality gates Q-01 to Q-11. **Q-05 refusal correctness and Q-06 causal-overreach rate decide credibility.**
+
+---
+
+### LB-14. OUTPUT DATASETS AND BINDING
+
+**Seven governed intelligence dataset families**: prediction, contributor, similarity, anomaly, envelope, finding and effect, and **model and readiness status**. The seventh is what a new installation binds to before any model is ready, so it renders truthfully rather than appearing broken.
+
+Intelligence sources are declared in `registry_intelligence_sources` with `sourceKind = 'intelligence'`, an entity link column and `columnRoles`. The widget execution contract is **columns, rows and warnings**.
+
+**Two source classes.** Fact-shaped aggregate sources may project through `WidgetFact` into the generic aggregate executor. **Native-grain rich sources keep their declared columns and are never flattened into a single value column.** Aggregation policy governs which native columns may be aggregated.
+
+**No ML-specific widget type. No branch on dataset origin.**
+
+---
+
+### LB-15. GOVERNANCE
+
+**Tenant isolation is absolute.** Models, embeddings, neighbours and evidence are tenant-scoped. No cross-tenant vector index, no cross-tenant training population, no cross-tenant benchmarking.
+
+**Reproducibility.** Given tenant, manifest, feature set version, training window and model version, the model is reproducible and a changed answer is explicable. Deterministic seeds where practical, immutable dataset manifests, code identity, environment manifest, artifact hashes.
+
+**The supervisor** observes, proposes a bounded adjustment, shadow-runs it against held-out history, compares, requires **human approval**, and applies atomically with provenance and a rollback pointer. It may **never** modify readiness thresholds, refusal rules, evidence requirements, leakage gates, tenant isolation, the semantic contract or the forbidden-combination set. **A component that can improve results by lowering the bar for what counts as a result will eventually do so.** It records abstention as well as action.
+
+**PPIQ writes only to its own governed stores.** Never to a customer source system, never to a control system, never to a setpoint. An accepted recommendation records that a human acted; it does not act.
+
+**Gate inventory: G-01 to G-55.** No model reaches production because training completed. Every gate is falsified once before it is trusted.
+
+---
+
+### LB-16. BENCHMARK PARAMETERS
+
+Nine values stay open until measured. **No number in this integrated constitution is guessed.**
+
+| ID | Question |
+|---|---|
+| B-01 | `max_concurrency`, `resource_capacity`, `compute_weight` per lane |
+| B-02 | Online scoring reservation fraction |
+| B-03 | Columnar snapshot format; whether the audit sample can be demoted |
+| B-04 | Sequence chunk size and compression |
+| B-05 | Encoder lift versus its serving cost |
+| B-06 | ANN family per size class |
+| B-07 | Token budget and evidence-set size |
+| B-08 | Whether re-ranking earns its latency |
+| B-09 | Serving runtime and concurrency |
+
+---
+
+### LB-17. ACCEPTANCE PRINCIPLE
+
+> A completely new industrial customer can map their own data through PPIQ's no-code semantic authoring, run commissioning, obtain only the intelligence their data genuinely supports, receive weekly governed model updates, ask questions during production hours in less than two minutes, and bind learned outputs to ordinary PPIQ widgets without a developer writing industry-specific ML code.
+
+**Build the generic learned intelligence contract. The algorithms sit behind it and can evolve.**
+
+---
+
+*This Layer-B constitution is part of Chapter 2 and is current design authority only in this integrated form. Prior standalone Layer-B rule documents are historical evidence and are not implementation authority.*
+

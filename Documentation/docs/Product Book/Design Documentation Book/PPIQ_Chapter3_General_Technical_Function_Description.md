@@ -1,6 +1,9 @@
 # PlantProcess IQ - Master Design Document
 
-**Version 4.6.1 | Author: Karim, SOU Industrial Software, Dusseldorf** | **MASTER DESIGN FREEZE CANDIDATE**
+**Version 4.9 | Author: Karim, SOU Industrial Software, Dusseldorf** | **MASTER DESIGN FREEZE CANDIDATE**
+
+> **Change log — Operational-Regime, Multi-Objective Practice and Period-Driver Hardening (22 August 2026, v4.9).** v4.9 closes the two generic gaps exposed by the first oil-plant requirement review without introducing oil-specific vocabulary: process transitions/changeovers and stabilisation become first-class governed context so statistics cannot mix distinct operating regimes; practice learning gains customer-declared multi-objective objective sets with Pareto/non-dominance and explicit preference resolution rather than silently choosing one KPI; exact period-to-period operational driver decomposition is added so the Assistant can explain changes in cost/productivity drivers from Layer-A facts before the monetary Value Engine is available. The release also binds the September checkpoint/fallback to the single v2.13 execution workbook. The six chapters remain the only design authority.
+
 
 > **Change log - Consistency correction (v4.6 to v4.6.1).** The data asset lifecycle row for the donor schemas said RETIRE after capture is proven while the gate three paragraphs below requires four conditions; the row now says RETIRE after the retirement gate passes. Rule 2 now states explicitly that the generator emits staging and canonical operational data while the analytical rows are computed by the real engines.
 >
@@ -9,6 +12,9 @@
 > **Change log - Second-Order Consistency Pass (v4.4 to v4.5). MASTER DESIGN FREEZE CANDIDATE.** No product capability added. Seven structural corrections: the global `remediation_candidates` template is separated from the per-prediction `prediction_remediation_evaluations`, because actionability is a property of one unit at one moment and not of a historical template; `can_accept` is defined in 4.5.12a as the **complete** seven-condition server authority for the whole decision boundary, so no client re-derives it; `prediction_current` becomes the complete operational read model with the deadline, latency, scoring mode, fallback state and `can_accept` projected onto it, and `prediction_runs` gains `scoring_mode` separate from `trigger_kind`; serving identity is fixed as `(tenant_id, model_code, outcome_code, grain_code)` with tenant-aware uniqueness stated as a general rule and a CHECK forbidding one version being both primary and fallback; Reject and Defer are gated by `can_accept` exactly as Accept is, and `RM10` protects the whole boundary; `backoff_rule`, `sensitivity_state` and `delivery_latency_seconds` become `NOT NULL` with `not_tested` and `deadline_basis` as explicit unavailability states; and `remediation_escalations` is promoted to DDL grade in 4.5.12b.
 
 ---
+
+> **CURRENT AUTHORITY — Master Design v4.9.** PlantProcess IQ has exactly six current design-authority chapters and one current execution-authority backlog workbook. No other file may define, amend, override, supplement or reinterpret current product design or implementation scope. A design change edits the owning chapter directly; a scope change edits the backlog directly. Transitional reviews, amendment packs, ledgers, mandates and prior revisions are historical evidence only after their accepted content is integrated. Validation scripts are code/enforcement instruments, not design documentation.
+
 
 # CHAPTER 3 - GENERAL SOFTWARE PRODUCT TECHNICAL FUNCTION DESCRIPTION
 
@@ -2277,6 +2283,12 @@ The entity catalogue of Chapter 2 3.14, realised. **Structural concepts are fixe
 
 **`maintenance_events`** - `equipment_id uuid NOT NULL FK`, `event_type varchar(100) NOT NULL` (imported), `is_planned boolean`, `started_at_utc`, `ended_at_utc`, `description varchar(1000)`, `work_order_ref varchar(100)`, provenance triple. Indexes `(equipment_id, started_at_utc)`, `(event_type)`.
 
+**`process_transition_definitions`** — customer-authored transition semantics, not shipped industry vocabulary. `transition_definition_id uuid PK`, `tenant_id uuid NOT NULL`, `transition_code varchar(100) NOT NULL`, `transition_name varchar(200)`, `scope_kind varchar(30) NOT NULL` CHECK IN (`Site`,`Area`,`Equipment`,`Operation`,`Route`,`AnalysisSubject`,`Custom`), `transition_kind varchar(40) NOT NULL` CHECK IN (`ContextChange`,`Setup`,`Cleaning`,`ToolChange`,`ConfigurationChange`,`CampaignBoundary`,`MaintenanceRecovery`,`Custom`), `from_context_definition jsonb`, `to_context_definition jsonb`, `stabilisation_basis varchar(20) NOT NULL` CHECK IN (`Time`,`SubjectCount`,`Condition`,`None`), `stabilisation_value numeric(18,6) NULL`, `stabilisation_unit varchar(40) NULL`, `stabilisation_condition_definition_id uuid NULL FK -> definition_store(id)`, `steady_state_required boolean NOT NULL DEFAULT true`, effective dates and provenance. UNIQUE `(tenant_id, transition_code, effective_from_utc)`. **The enum is structural; the customer's physical meaning lives in the authored definition.**
+
+**`process_transition_events`** — realised transition intervals. `transition_event_id uuid PK`, `tenant_id uuid NOT NULL`, `transition_definition_id uuid NOT NULL FK`, `site_id uuid NULL FK`, `area_id uuid NULL FK`, `equipment_id uuid NULL FK`, `operation_definition_id uuid NULL FK`, `analysis_subject_id uuid NULL FK`, `started_at_utc timestamptz NOT NULL`, `ended_at_utc timestamptz NULL`, `from_context jsonb`, `to_context jsonb`, `is_planned boolean NULL`, `stabilisation_started_at_utc timestamptz NULL`, `stabilisation_ended_at_utc timestamptz NULL`, `stabilisation_subject_count integer NULL`, `source_record_id varchar(200) NULL`, provenance. CHECK `ended_at_utc IS NULL OR ended_at_utc >= started_at_utc`; CHECK stabilisation end is not before stabilisation start. Indexes `(equipment_id, started_at_utc)`, `(analysis_subject_id, started_at_utc)`, `(transition_definition_id, started_at_utc)`.
+
+**Regime rule.** A transition event is context, not downtime by definition. It may overlap downtime, setup, maintenance or productive operation. Consumers classify an interval as `Stable`, `Transition`, `Stabilising`, `Mixed` or `Unknown`; they do not infer a transition merely because performance is poor.
+
 **`routes`**: `site_id uuid FK`, `route_code varchar(50) NOT NULL`, `route_name varchar(200)`. UNIQUE `(site_id, route_code)`.
 
 **`route_steps`**: `route_id uuid NOT NULL FK -> routes(id) ON DELETE CASCADE`, `operation_definition_id uuid FK`, `equipment_id uuid FK`, `step_order integer NOT NULL`. UNIQUE `(route_id, step_order)`; indexes `(route_id)`, `(equipment_id)`.
@@ -2324,9 +2336,9 @@ Constraints: CHECK `contribution_weight > 0 AND contribution_weight <= 1`; CHECK
 
 **`process_events`**: `equipment_id uuid FK`, `material_unit_id uuid NULL FK`, `event_type varchar(100) NOT NULL`, `event_at_utc`, `event_at_local`, `plant_time_zone_id NOT NULL`, `payload jsonb`, provenance triple. Indexes `(equipment_id, event_at_utc)`, `(material_unit_id)`, `(event_type)`. Partition monthly by `event_at_utc` above Medium.
 
-**`parameter_definitions`**: `parameter_code varchar(100) NOT NULL`, `parameter_name varchar(200)`, `unit_of_measure varchar(50)`, `data_type varchar(30)`, `equipment_id uuid NULL FK`, `operation_definition_id uuid NULL FK`, `min_expected numeric(18,6)`, `max_expected numeric(18,6)`, `direction_of_goodness varchar(10)` CHECK IN (`Higher`,`Lower`,`Target`,`None`), provenance triple. UNIQUE `(tenant_id, parameter_code)`; index `(equipment_id)`. **Imported vocabulary.**
+**`parameter_definitions`**: `parameter_code varchar(100) NOT NULL`, `parameter_name varchar(200)`, `unit_of_measure varchar(50)`, `data_type varchar(30)`, `equipment_id uuid NULL FK`, `operation_definition_id uuid NULL FK`, `min_expected numeric(18,6)`, `max_expected numeric(18,6)`, `direction_of_goodness varchar(20)` CHECK IN (`Higher`,`Lower`,`Target`,`InsideRange`,`None`), **`signal_kind varchar(24) NOT NULL`** CHECK IN (`Analog`,`State`,`Counter`,`Event`,`LabSample`,`Composition`,`Level`,`Derived`,`Unknown`), **`aggregation_kind varchar(32) NULL`** CHECK IN (`SampleMean`,`TimeWeightedMean`,`Integral`,`Delta`,`StateDuration`,`Count`,`Min`,`Max`,`Last`,`Percentile`,`MassWeightedMean`,`VolumeWeightedMean`), **`interpolation_kind varchar(20) NOT NULL DEFAULT 'None'`** CHECK IN (`None`,`Linear`,`StepForward`), **`weight_basis varchar(16) NOT NULL DEFAULT 'None'`** CHECK IN (`None`,`Time`,`Mass`,`Volume`), **`maximum_gap_seconds integer NULL`**, **`counter_reset_policy varchar(24) NULL`**, **`quality_policy varchar(32) NOT NULL DEFAULT 'RequireGood'`**, **`time_basis varchar(20) NOT NULL DEFAULT 'ObservedAt'`**, provenance triple. UNIQUE `(tenant_id, parameter_code)`; index `(equipment_id)`. **Imported vocabulary; aggregation grammar is product-owned, the parameter choice is customer data.**
 
-*`direction_of_goodness` is required by benchmarking (D12) and practice ranking (DF12), which refuse rather than guess which way is better.*
+*Storage type and aggregation semantics are deliberately separate. A Boolean state is not automatically averaged, a counter is not averaged, and an irregular analog is not assumed to be uniformly sampled. `aggregation_kind` has no default: if a query needs aggregation and neither the parameter nor its KPI binding declares a defensible method, the engine refuses with `aggregation_semantics_undeclared`.*
 
 **`parameter_observations`** - the volume table.
 
@@ -2336,7 +2348,10 @@ Constraints: CHECK `contribution_weight > 0 AND contribution_weight <= 1`; CHECK
 | `parameter_definition_id` | uuid NOT NULL FK |
 | `process_step_execution_id` | uuid NULL FK |
 | `equipment_id` | uuid NULL FK |
-| `observed_at_utc` | timestamptz NOT NULL |
+| `observed_at_utc` | timestamptz NOT NULL - canonical effective observation time selected under the source time authority |
+| `source_timestamp_utc` | timestamptz NULL - timestamp produced by the source/device when available |
+| `server_timestamp_utc` | timestamptz NULL - historian/server timestamp when distinct |
+| `ingested_at_utc` | timestamptz NOT NULL - when PPIQ received the value |
 | `observed_at_local` | **timestamp without time zone NOT NULL** |
 | `plant_time_zone_id` | varchar(100) NOT NULL |
 | `numeric_value` | **numeric(18,6)** |
@@ -2348,6 +2363,18 @@ Constraints: CHECK `contribution_weight > 0 AND contribution_weight <= 1`; CHECK
 Indexes: `(material_unit_id)`, `(parameter_definition_id)`, `(process_step_execution_id)`, `(equipment_id)`, `(observed_at_utc)`, `(observed_at_local)`, composite `(parameter_definition_id, observed_at_utc)`. **Partition: range by `observed_at_utc`, monthly, from Medium upward.** Retention and downsampling per Chapter 7. Idempotency: filtered unique on the provenance pair.
 
 *`raw_value` is retained deliberately: the original string survives, so a parsing dispute is resolvable rather than arguable.*
+
+
+
+#### Cluster 3a - generic analytical subject identity
+
+**`analysis_subjects`** is the canonical generic identity used by feature, prediction, similarity and other intelligence stores. It prevents the product from assuming every plant has a discrete material object.
+
+`subject_id uuid PRIMARY KEY`; `grain_definition_id uuid NOT NULL FK -> ppiq_meta.analysis_grain_definitions(id)`; `subject_kind varchar(32) NOT NULL`; `entity_kind varchar(64) NULL`; `entity_id uuid NULL`; `subject_key varchar(200) NULL`; `window_from_utc timestamptz NULL`; `window_to_utc timestamptz NULL`; `context jsonb NOT NULL DEFAULT '{}'`; `lineage_hash varchar(64) NOT NULL`; provenance triple.
+
+Constraints: at least one of `entity_id`, `subject_key`, or a complete `(window_from_utc, window_to_utc)` is present; interval end is not before start; UNIQUE includes tenant + grain + resolved identity. A discrete material may resolve to one subject, an equipment interval to another, and a campaign/process window to another. **No mandatory material FK exists on this identity.**
+
+The analytical spine may attach several process-position nodes to the same `analysis_subjects.subject_id`. A result names its `grain_code` and `analysis_subject_id`; an engine that cannot resolve them refuses rather than defaulting to a steel or generic material noun.
 
 #### Cluster 4 - quality and loss
 
@@ -2399,6 +2426,30 @@ Each table declares its install state. **Every prefilled row passes the generici
 | `translations` | UNIQUE `(label_key, language_code)` | **Prefilled**: shipped languages |
 | `system_settings` | `setting_key` UNIQUE | **Prefilled**: documented defaults |
 | `idempotency_keys` | UNIQUE `(tenant_id, endpoint, key)`, `response_hash`, `expires_at_utc` | Empty |
+
+
+
+#### 4.5.5b Generic grain, time, reference and evidence authorities - v4.7
+
+**`analysis_grain_definitions`** - customer-declared analytical identities. `grain_code varchar(80)`, `grain_kind` CHECK IN (`DiscreteEntity`,`Batch`,`Lot`,`Campaign`,`ProcessWindow`,`FlowInterval`,`Custom`), `time_semantics` CHECK IN (`Instant`,`Interval`), `identity_definition_id uuid FK -> definition_store`, `parent_grain_code`, `is_primary boolean`, `expected_cardinality_per_day bigint`, effective dates. UNIQUE `(tenant_id, grain_code, effective_from_utc)`. **No default grain row is shipped.**
+
+**`kpi_parameter_bindings`** - binds a KPI/measure definition to one parameter definition and may override aggregation semantics for that KPI. `kpi_definition_id`, `parameter_definition_id`, `aggregation_kind_override NULL`, `weight_basis_override NULL`, `window_definition jsonb`, effective dates. **There is no `DEFAULT 'Average'`.** Null means inherit a declared parameter aggregation; if neither side declares one, execution refuses.
+
+**`source_time_authorities`** - one effective-dated time contract per source/site: `source_system_definition_id`, `site_id`, `source_timezone_id`, `timestamp_basis` CHECK IN (`Source`,`Server`,`Ingested`,`Mixed`), `clock_reference`, `dst_policy`, `observed_skew_ms`, `max_alignment_skew_ms`, `source_timestamp_field`, `server_timestamp_field`, `effective_from_utc`, `effective_to_utc`, provenance. A reconciliation may not claim conflict when observed skew exceeds tolerance.
+
+**`performance_references`** - declared Layer-A references. `reference_code`, `reference_kind` CHECK IN (`EngineeringStandard`,`ManagementTarget`,`OperatingEnvelope`), `scope_kind` CHECK IN (`Global`,`Site`,`Area`,`Equipment`,`Operation`,`ProductRecipe`,`Kpi`,`Parameter`,`Custom`), `scope_id`, `parameter_definition_id NULL`, `kpi_definition_id NULL`, `lower_value`, `target_value`, `upper_value`, `unit_code`, `scoring_semantics` CHECK IN (`HigherIsBetter`,`LowerIsBetter`,`InsideRange`,`ClosestToTarget`,`BinaryCompliance`,`CustomExpression`), `custom_expression_definition_id NULL`, `declared_authority`, `reason`, `effective_from_utc`, `effective_to_utc`, provenance. Overlapping equally-specific active references for the same semantic target are rejected as `reference_ambiguous`.
+
+**`fact_authority_rules`** - customer-configured fact-specific evidence authority. `fact_code`, `source_system_definition_id`, `authority_role` CHECK IN (`Primary`,`Supporting`,`Corroborating`), `required_quality_state`, `priority_within_role`, effective dates, provenance. There is no global `PLC > everything` ranking.
+
+**`customer_data_assessments`** - versioned commissioning/intake assessment artifact: `assessment_id`, `assessment_version`, `source_inventory jsonb`, `entity_map jsonb`, `equipment_hierarchy jsonb`, `time_model jsonb`, `identity_strategy jsonb`, `parameter_catalogue jsonb`, `kpi_candidates jsonb`, `reference_candidates jsonb`, `aggregation_semantics_gaps jsonb`, `data_quality_gaps jsonb`, `historical_coverage jsonb`, `reconciliation_eligibility jsonb`, `ml_eligibility jsonb`, `ot_trial_requirements jsonb`, `missing_information jsonb`, `created_at_utc`, `created_by`. It is an assessment/report, not a second semantic authority; accepted mappings become normal definitions/registry rows.
+
+**`objective_sets`** — customer-declared multi-objective decision context. `objective_set_id uuid PK`, `tenant_id uuid NOT NULL`, `objective_set_code varchar(100) NOT NULL`, `name varchar(200)`, `scope_kind`, `scope_id`, `resolution_policy` CHECK IN (`ParetoOnly`,`DeclaredUtility`,`LexicographicOrConstrained`), `preference_version integer NOT NULL`, `effective_from_utc`, `effective_to_utc`, provenance. UNIQUE `(tenant_id, objective_set_code, preference_version)`.
+
+**`objective_set_members`** — one registered objective per set: `objective_set_id uuid FK`, `member_order integer`, exactly one of `outcome_definition_id`, `kpi_definition_id` or `measure_definition_id`, `directionality` resolved from the registered definition/reference, `unit_code`, `hard_constraint_kind` NULL CHECK IN (`Min`,`Max`,`InsideRange`,`RequiredState`), `constraint_low`, `constraint_high`, `declared_utility_weight numeric NULL`, `normalisation_reference_code NULL`. UNIQUE `(objective_set_id, member_order)`. **Weights are forbidden when the policy is `ParetoOnly`; no default weight exists.**
+
+**`objective_preference_versions`** — immutable explanation of how trade-offs are resolved: `objective_set_id`, `preference_version`, `policy_payload jsonb`, `declared_by`, `declared_reason`, `created_at_utc`. A change creates a new version; it never rewrites historical composite results.
+
+**Multi-objective authority rule.** Objective normalisation reuses the Performance Reference authority; no practice or Assistant consumer invents min-max scaling from the observed customer sample. Where conflicting objectives have no declared utility/priority policy, the product returns the non-dominated set and the typed refusal `objective_preference_undeclared` when a caller asks for one winner.
 
 ### 4.5.5a How a job knows what to execute
 
@@ -2594,15 +2645,17 @@ All in `ppiq_plant`, because they derive from customer data. All immutable and a
 
 *`framing_text` and `llm_participated` are stored as data, not rendered as interface copy, so the framing survives an export, a screenshot and a report.*
 
-**`feature_store`** - one entity at one feature-set version.
+**`feature_store`** - one **Analysis Subject** at one feature-set version.
 
-`material_unit_id uuid NOT NULL FK`; `feature_set_version_id uuid NOT NULL FK -> definition_versions(id) ON DELETE RESTRICT`; `features jsonb NOT NULL`; `label_value numeric(18,6)`; `label_class varchar(100)`; `assembled_at_utc NOT NULL`; `source_batch_high_watermark text`; `lineage_hash varchar(64) NOT NULL`; `is_dirty boolean NOT NULL DEFAULT false`. **UNIQUE `(material_unit_id, feature_set_version_id)`** - the idempotency rule. Indexes partial `(feature_set_version_id)` `WHERE is_dirty`, `(feature_set_version_id, assembled_at_utc)`. Partition: hash by `material_unit_id` above Large. Retention: while any active model or snapshot references the version.
+`analysis_subject_id uuid NOT NULL FK -> analysis_subjects(subject_id)`; `grain_code varchar(80) NOT NULL`; `feature_set_version_id uuid NOT NULL FK -> definition_versions(id) ON DELETE RESTRICT`; `features jsonb NOT NULL`; `label_value numeric(18,6)`; `label_class varchar(100)`; `assembled_at_utc NOT NULL`; `source_batch_high_watermark text`; `lineage_hash varchar(64) NOT NULL`; `is_dirty boolean NOT NULL DEFAULT false`. **UNIQUE `(tenant_id, analysis_subject_id, feature_set_version_id)`** - the idempotency rule. Indexes partial `(feature_set_version_id)` `WHERE is_dirty`, `(feature_set_version_id, assembled_at_utc)`, `(grain_code, analysis_subject_id)`. Partition: hash by `analysis_subject_id` above Large. Retention: while any active model or snapshot references the version.
+
+*The feature store never requires `material_unit_id`. A discrete material maps to an Analysis Subject; an equipment/process interval, batch, campaign or flow interval maps to the same generic contract.*
 
 **`feature_refresh_watermarks`** - `feature_set_version_id uuid NOT NULL UNIQUE FK`; `last_batch_watermark text NOT NULL`; `refreshed_at_utc NOT NULL`; `dirty_entity_count integer NOT NULL DEFAULT 0`; `is_invalidated boolean NOT NULL DEFAULT false`; `invalidation_reason varchar(500)`.
 
 **`feature_refresh_runs`** - `feature_set_version_id FK`; `entities_resolved`, `entities_recomputed`, `entities_dirty_remaining` integer; `watermark_from`, `watermark_to` text; `status`; `failure_code`, `failure_reason`; `started_at_utc`, `finished_at_utc`. Index `(feature_set_version_id, started_at_utc DESC)`.
 
-**`feature_snapshots`** - immutable, for reproducibility. `feature_set_version_id FK`; `entity_count integer NOT NULL`; `taken_at_utc NOT NULL`; `source_batch_range text`; `lineage_hash varchar(64) NOT NULL`; `storage_uri varchar(1000)`; `retention_until_utc`. **`feature_snapshot_rows`**: `snapshot_id FK ON DELETE CASCADE`, `material_unit_id`, `features jsonb`, `label_value`, `label_class`. UNIQUE `(snapshot_id, material_unit_id)`. Partition by `snapshot_id` above Large.
+**`feature_snapshots`** - immutable, for reproducibility. `feature_set_version_id FK`; `subject_count integer NOT NULL`; `taken_at_utc NOT NULL`; `source_batch_range text`; `lineage_hash varchar(64) NOT NULL`; `storage_uri varchar(1000)`; `retention_until_utc`. **`feature_snapshot_rows`** is an optional audit sample: `snapshot_id FK ON DELETE CASCADE`, `analysis_subject_id`, `grain_code`, `features jsonb`, `label_value`, `label_class`. UNIQUE `(snapshot_id, analysis_subject_id)`. Partition by `snapshot_id` above Large.
 
 **`model_registry`** - `model_code varchar(100) NOT NULL`; `model_version integer NOT NULL`; `definition_version_id FK`; `algorithm varchar(100) NOT NULL`; `feature_set_version_id FK`; `feature_list jsonb NOT NULL`; `training_snapshot_id FK`; `split_strategy varchar(20) NOT NULL` CHECK IN (`time`,`stratified_random`,`group`); `missing_value_policy jsonb NOT NULL`; `scaling_params jsonb`; `hyperparameters jsonb`; `metrics jsonb NOT NULL`; `acceptance_floor jsonb`; **`outcome_code varchar(100) NOT NULL`**; **`grain_code varchar(50) NOT NULL`**; `status varchar(20) NOT NULL` CHECK IN (`trained`,`rejected`,`active`,`review`,`retired`); `artifact_uri varchar(1000)`; `trained_at_utc`; `activated_at_utc`, `retired_at_utc`. `serving_role varchar(20) NOT NULL DEFAULT 'none'` CHECK IN (`none`,`serving_fallback`); `fallback_approved_by uuid`; `fallback_approved_at_utc timestamptz`; `validity_until_utc timestamptz`.
 
@@ -2632,15 +2685,15 @@ The six conditions a fallback must satisfy before it is used are specified in Ch
 
 **`predictions`** - immutable unit-level results.
 
-`prediction_run_id uuid NOT NULL FK ON DELETE CASCADE`; `material_unit_id uuid NOT NULL FK`; `outcome_code varchar(100) NOT NULL`; `risk_score numeric(9,6) NOT NULL` CHECK `risk_score >= 0 AND risk_score <= 1`; `risk_class varchar(30) NOT NULL`; `horizon_stage varchar(100) NOT NULL`; `horizon_expected_at_utc timestamptz`; `confidence_low`, `confidence_high` numeric(9,6); `calibration_note varchar(500)`; `model_registry_id FK`; `scored_at_utc NOT NULL`; **`actionable_deadline_utc timestamptz NULL`** - the moment after which no eligible remediation can still be applied, computed at scoring time from the unit's declared route and its eligible candidate set; **`deadline_basis varchar(20) NOT NULL`** CHECK IN (`route_derived`,`no_remediable_stage`,`route_unknown`); **`met_actionable_deadline boolean NULL`**; **`delivery_latency_seconds integer NOT NULL`** - measured from the source batch's arrival to the queue refresh.
+`prediction_run_id uuid NOT NULL FK ON DELETE CASCADE`; **`analysis_subject_id uuid NOT NULL FK -> analysis_subjects(subject_id)`**; **`grain_code varchar(80) NOT NULL`**; `outcome_code varchar(100) NOT NULL`; `risk_score numeric(9,6) NOT NULL` CHECK `risk_score >= 0 AND risk_score <= 1`; `risk_class varchar(30) NOT NULL`; `horizon_stage varchar(100) NOT NULL`; `horizon_expected_at_utc timestamptz`; `confidence_low`, `confidence_high` numeric(9,6); `calibration_note varchar(500)`; `model_registry_id FK`; `scored_at_utc NOT NULL`; **`actionable_deadline_utc timestamptz NULL`** - the moment after which no eligible remediation can still be applied, computed at scoring time from the unit's declared route and its eligible candidate set; **`deadline_basis varchar(20) NOT NULL`** CHECK IN (`route_derived`,`no_remediable_stage`,`route_unknown`); **`met_actionable_deadline boolean NULL`**; **`delivery_latency_seconds integer NOT NULL`** - measured from the source batch's arrival to the queue refresh.
 
-**Nullability, reconciled with the Core latency contract.** `delivery_latency_seconds` is **always measurable and is therefore `NOT NULL`**. `actionable_deadline_utc` and `met_actionable_deadline` are nullable for exactly two legitimate reasons, and `deadline_basis` names which: **`no_remediable_stage`**, where no eligible remediation exists for this outcome so there is no decision deadline to meet; and **`route_unknown`**, where the unit's route position could not be resolved. **Constraint: CHECK `deadline_basis <> 'route_derived' OR actionable_deadline_utc IS NOT NULL`** - a route-derived deadline can never be absent. `met_actionable_deadline` is set when the deadline elapses or the queue refresh occurs, whichever is first, and is null only while both are still ahead. **A null is therefore always explained by `deadline_basis` and never a missing measurement.** **UNIQUE `(prediction_run_id, material_unit_id, outcome_code)`**. Indexes `(material_unit_id, scored_at_utc DESC)`, `(risk_class, horizon_stage)`, `(outcome_code, scored_at_utc DESC)`. Additional index: partial `(outcome_code, met_actionable_deadline)` `WHERE met_actionable_deadline = false`, because the miss rate is a reported figure. Partition monthly by `scored_at_utc` above Medium. Retention: minimum twenty-four months, because prediction evaluation needs history.
+**Nullability, reconciled with the Core latency contract.** `delivery_latency_seconds` is **always measurable and is therefore `NOT NULL`**. `actionable_deadline_utc` and `met_actionable_deadline` are nullable for exactly two legitimate reasons, and `deadline_basis` names which: **`no_remediable_stage`**, where no eligible remediation exists for this outcome so there is no decision deadline to meet; and **`route_unknown`**, where the unit's route position could not be resolved. **Constraint: CHECK `deadline_basis <> 'route_derived' OR actionable_deadline_utc IS NOT NULL`** - a route-derived deadline can never be absent. `met_actionable_deadline` is set when the deadline elapses or the queue refresh occurs, whichever is first, and is null only while both are still ahead. **A null is therefore always explained by `deadline_basis` and never a missing measurement.** **UNIQUE `(tenant_id, prediction_run_id, analysis_subject_id, outcome_code)`**. Indexes `(analysis_subject_id, scored_at_utc DESC)`, `(grain_code, scored_at_utc DESC)`, `(risk_class, horizon_stage)`, `(outcome_code, scored_at_utc DESC)`. Additional index: partial `(outcome_code, met_actionable_deadline)` `WHERE met_actionable_deadline = false`, because the miss rate is a reported figure. Partition monthly by `scored_at_utc` above Medium. Retention: minimum twenty-four months, because prediction evaluation needs history.
 
 *The actionable-latency guarantee that these three columns exist to measure is a **Core** requirement (Chapter 2 3.10, Chapter 4 5.8.8): a prediction that arrives after its deadline has no operational value, so the deadline, the outcome against it and the measured latency are stored rather than inferred.*
 
 **`prediction_drivers`** - `prediction_id uuid NOT NULL FK ON DELETE CASCADE`; `feature_code varchar(200) NOT NULL`; `contribution numeric(9,6) NOT NULL`; `direction varchar(10) NOT NULL` CHECK IN (`raises`,`lowers`); `current_value numeric(18,6)`; `normal_range_low`, `normal_range_high` numeric(18,6); `historical_percentile numeric(9,6)`; `genealogy_stage varchar(100)`; `rank smallint NOT NULL`. UNIQUE `(prediction_id, rank)`; index `(prediction_id)`.
 
-**`prediction_comparables`** - `prediction_id FK ON DELETE CASCADE`; `comparable_material_unit_id FK`; `outcome_kind varchar(10) NOT NULL` CHECK IN (`success`,`failure`); `similarity numeric(9,6) NOT NULL`; `later_stage_difference jsonb`. Index `(prediction_id, outcome_kind, similarity DESC)`.
+**`prediction_comparables`** - `prediction_id FK ON DELETE CASCADE`; `comparable_analysis_subject_id uuid NOT NULL FK -> analysis_subjects(subject_id)`; `outcome_kind varchar(10) NOT NULL` CHECK IN (`success`,`failure`); `similarity numeric(9,6) NOT NULL`; `later_stage_difference jsonb`. Index `(prediction_id, outcome_kind, similarity DESC)`.
 
 **`prediction_current`** - **the complete operational read model.** The architecture is stated once and without ambiguity: **this table is the single source the Risk Dashboard and the Early Warning queue read, and it carries every field those surfaces need.** The queue endpoint does not join the immutable prediction, run and evaluation tables to reconstruct state; it reads this projection. Those tables remain the immutable record and are joined only for **drill-down** - drivers, comparables, evidence, the gate detail - never for the queue itself.
 
@@ -2648,7 +2701,8 @@ The six conditions a fallback must satisfy before it is used are specified in Ch
 
 | Column | Type | Source |
 |---|---|---|
-| `material_unit_id` | uuid NOT NULL | |
+| `analysis_subject_id` | uuid NOT NULL FK -> `analysis_subjects(subject_id)` | Generic prediction subject |
+| `grain_code` | varchar(80) NOT NULL | Declared analytical grain |
 | `outcome_code` | varchar(100) NOT NULL | |
 | `prediction_id` | uuid NOT NULL FK -> `predictions(id)` | The immutable row this projects |
 | `prediction_run_id` | uuid NOT NULL FK | |
@@ -2672,7 +2726,7 @@ The six conditions a fallback must satisfy before it is used are specified in Ch
 | `evaluation_state` | varchar(20) | from `prediction_evaluations` |
 | `refreshed_at_utc` | timestamptz NOT NULL | |
 
-**PRIMARY KEY `(tenant_id, material_unit_id, outcome_code)`**. Indexes partial `(risk_class, actionable_deadline_utc)` `WHERE is_open`, partial `(assignee_id)` `WHERE is_open`, partial `(can_accept)` `WHERE can_accept`, partial `(is_past_actionable_stage)` `WHERE is_open AND is_past_actionable_stage`.
+**PRIMARY KEY `(tenant_id, analysis_subject_id, outcome_code)`**. Indexes partial `(risk_class, actionable_deadline_utc)` `WHERE is_open`, partial `(assignee_id)` `WHERE is_open`, partial `(can_accept)` `WHERE can_accept`, partial `(is_past_actionable_stage)` `WHERE is_open AND is_past_actionable_stage`.
 
 **Refresh triggers.** At the end of every scoring run; on every DF14 action; on a stage advance for the unit, because `is_past_actionable_stage` and `can_accept` both depend on route position; and on a model transition to `review` or `retired`. **A failed scoring run leaves the prior projection intact**, and the queue then displays its `refreshed_at_utc` age rather than pretending to be current.
 
@@ -2823,6 +2877,18 @@ The record produced when a non-actionable candidate is escalated for engineering
 
 **What it explicitly does not do.** It creates no `prediction_actions` row, contributes to no `remediation_effectiveness` row, and is excluded from `feedback_records`. **An escalation says "an engineer should look at this", not "we decided something".**
 
+
+
+#### 4.5.12-C Performance reference and reconciliation result tables - v4.7
+
+**`learned_reference_results`** - Layer-B reference estimates only: `reference_result_id`, `reference_kind` CHECK IN (`HistoricalBaseline`,`LearnedBestPractice`,`PeerReference`), `target_code`, `scope jsonb`, `value_low`, `value_point`, `value_high`, `unit_code`, `window_from_utc`, `window_to_utc`, `population_count`, `support jsonb`, `confidence_state`, `method_code`, `compute_run_id`, `evidence_handle_id`, `semantic_manifest_id`. A learned reference never overwrites `performance_references`.
+
+**`reconciliation_cases`** - record/interval-level governed output: `case_id`, `case_code`, `fact_code`, `subject_kind`, `subject_ref`, `interval_from_utc`, `interval_to_utc`, `state` CHECK IN (`Aligned`,`PartiallyAligned`,`MissingEvidence`,`TemporalUncertain`,`ConflictingEvidence`,`LikelyMisclassified`,`Unresolved`), `declared_value jsonb`, `resolved_value jsonb`, `discrepancy jsonb`, `temporal_alignment_state`, `observed_clock_skew_ms`, `causal_confidence_level smallint` CHECK BETWEEN 0 AND 5, `strongest_hypothesis text`, `hypothesis_claim_class`, `supporting_population integer`, `compute_run_id`, `semantic_manifest_id`, `created_at_utc`. The subject is a record/evidence case, never a person.
+
+**`reconciliation_evidence`** - many evidence items per case: `case_id FK`, `fact_authority_rule_id`, `source_system_definition_id`, `evidence_role`, `evidence_handle_kind`, `evidence_handle_id`, `effective_timestamp_utc`, `quality_state`, `value_summary jsonb`, `supports_or_contradicts` CHECK IN (`Supports`,`Contradicts`,`Neutral`,`Unavailable`). UNIQUE on case + evidence handle.
+
+**Causal confidence.** L0 observed fact; L1 discrepancy; L2 statistical association; L3 temporally supported hypothesis; L4 mechanistically supported hypothesis; L5 confirmed cause. L5 requires governed external/human confirmation. The Assistant and UI render the stored level and may not upgrade it in prose.
+
 ### 4.5.13 Intelligence as a bindable source
 
 **Requirement from Chapter 2 3.18.** Intelligence must be as chartable, filterable and comparable as canonical data. That is a persistence and registry obligation, not a rendering one.
@@ -2855,6 +2921,35 @@ The record produced when a non-actionable candidate is escalated for engineering
 3. **Associative state reaches intelligence.** Because intelligence sources declare `entity_link_column` and `link_entity`, a selection on a canonical field propagates to intelligence widgets through the same path resolution. Selecting a defect class narrows the findings list, the prediction queue, the practice benchmarks and the value figures in one act.
 
 **Read-only rule.** Intelligence sources are bindable for reading and are never writable from a widget. An authored query against an intelligence source passes the same safe-SQL contract as any other.
+
+
+#### 4.5.12-D Multi-objective practice and period-comparison result contracts — v4.9
+
+**`composite_practice_results`** — one supported practice under one objective-set version: `composite_result_id uuid PK`, `tenant_id uuid NOT NULL`, `objective_set_id uuid NOT NULL FK`, `preference_version integer NOT NULL`, `practice_signature_id uuid NOT NULL FK`, `objective_vector jsonb NOT NULL` (one entry per objective with value, unit, direction, reference-normalised state and evidence handle), `support_count integer NOT NULL`, `uncertainty jsonb NOT NULL`, `dominance_state` CHECK IN (`NonDominated`,`Dominated`,`ConstraintFailed`,`Unresolved`), `dominates_count integer NOT NULL DEFAULT 0`, `dominated_by_count integer NOT NULL DEFAULT 0`, `resolved_rank integer NULL`, `resolution_policy`, `compute_run_id uuid NOT NULL FK`, `semantic_manifest_id uuid NOT NULL FK`, `evidence_handle_id uuid NOT NULL FK`. A `resolved_rank` is permitted only where the objective-set policy declares how to resolve trade-offs.
+
+**`operational_period_comparisons`** — evidence-backed Layer-A comparison artifact: `comparison_id uuid PK`, `tenant_id`, `period_a_from/to`, `period_b_from/to`, `scope jsonb`, `metric_deltas jsonb NOT NULL`, `transition_summary jsonb NOT NULL`, `stabilisation_summary jsonb NOT NULL`, `stable_run_summary jsonb NOT NULL`, `population_summary jsonb NOT NULL`, `evidence_handle_id uuid NOT NULL`, `computed_at_utc`. `metric_deltas` contains registered exact measures only; it carries no causal classification and no hidden monetary conversion.
+
+**Refusal contracts.** `MO01 objective_preference_undeclared` — a caller requested one best practice while the supported non-dominated set contains conflicting objectives and no preference policy exists. `MO02 objective_set_incomplete` — objective definition/unit/direction/reference cannot be resolved. `RG01 mixed_process_regime` — a steady-state analytical request spans transition/stabilisation regimes without an authored partition/inclusion policy.
+
+### 4.5.13a Interval aggregate result contract
+
+Every interval aggregate also returns the process-regime envelope that made the calculation lawful: `regime_state` CHECK IN (`Stable`,`Transition`,`Stabilising`,`Mixed`,`Unknown`), `transition_overlap_fraction numeric(9,6) NOT NULL`, `stabilisation_overlap_fraction numeric(9,6) NOT NULL`, and `transition_event_ids uuid[]` (or an equivalent bounded evidence-handle list). Fractions are in `[0,1]`. A steady-state request with `regime_state in ('Transition','Stabilising','Mixed')` follows the authored transition policy or refuses `RG01`; it never silently combines regimes.
+
+
+Every aggregate over a time interval returns an **interval-coverage contract** in addition to the value. This contract is consumed by Layer A, intelligence engines, widgets and the Assistant; no consumer may discard it.
+
+| Field | Type | Contract |
+|---|---|---|
+| `requested_from_utc` | timestamptz NOT NULL | Inclusive requested start |
+| `requested_to_utc` | timestamptz NOT NULL | Exclusive requested end |
+| `covered_seconds` | numeric(18,3) NOT NULL | Time for which the declared signal/interpolation semantics provide lawful coverage |
+| `requested_seconds` | numeric(18,3) NOT NULL | Requested interval duration; CHECK > 0 |
+| `coverage_fraction` | numeric(5,4) NOT NULL | `covered_seconds / requested_seconds`, CHECK 0..1 |
+| `gap_count` | integer NOT NULL | Number of uncovered intervals created by missing data, quality rejection or `maximum_gap_seconds` |
+| `aggregation_kind` | varchar(30) NOT NULL | The resolved semantics used |
+| `semantic_definition_version` | integer NOT NULL | The definition version that made the computation lawful |
+
+`coverage_fraction` is **not optional metadata**. An aggregate over 0.40 coverage is a different evidential claim from one over 0.99 coverage. Widgets, tables, Assistant tools and exported reports must expose low coverage according to the governed presentation threshold; they may not present materially different coverage identically. A method may additionally refuse below its declared minimum coverage, but it may never silently fill the gap simply to obtain a number.
 
 ### 4.5.14 Projection validation and the quarantine
 
@@ -2946,7 +3041,7 @@ Every analytical question resolves along one of six paths, and every path is res
 ```
 JP1 Factor to outcome, same grain
     parameter_observations -> material_units -> quality_events -> defect_catalogs
-    joined on material_unit_id. The base of every same-grain correlation.
+    resolved through `analysis_subject_id` and the published Grain Definition for analytical consumers. Material-specific genealogy paths may still join on `material_unit_id` where the subject is genuinely a material unit; **same-grain correlation itself is subject/grain based and never assumes material identity.**
 
 JP2 Factor to outcome, ACROSS GRAIN            <-- the product's reason to exist
     parameter_observations (parent grain)
@@ -3229,6 +3324,22 @@ flowchart LR
 **`ppiq_meta.error_catalogue`** holds `code` (PK), `domain`, `title`, `message_template`, `remediation_hint`, `http_status`, `is_retryable`, `severity`, `language_code`, and the surfaces that may raise it. The API returns `{ errorCode, title, detail, remediationHint, traceId, offendingFragment? }`; **G5 renders every one of them identically**; translation covers the templates; and an architecture test asserts that no refusal path returns a message without a code.
 
 ---
+
+
+
+**v4.7 generic-pilot error additions**
+
+| Code | Meaning |
+|---|---|
+| `GR01` | `analysis_grain_undeclared` - the requested analytical subject/grain has no published authority |
+| `AG01` | `aggregation_semantics_undeclared` - an aggregate was requested without a defensible declared aggregation |
+| `AG02` | `aggregation_not_supported_for_signal_kind` - the requested operation contradicts the signal semantics |
+| `TM01` | `clock_alignment_not_established` - source clocks exceed the governed tolerance or time basis is unknown |
+| `RF01` | `reference_ambiguous` - more than one equally authoritative active reference applies |
+| `RF02` | `reference_not_available` - no declared/eligible learned reference applies |
+| `RC01` | `insufficient_independent_evidence` - reconciliation cannot be classified defensibly |
+| `RC02` | `reconciliation_temporal_uncertain` - overlap cannot be trusted because temporal authority is inadequate |
+| `OT01` | `connector_capability_not_implemented` - a requested browse/read/subscribe action is not executable in this connector build |
 
 ## 4.6 Credentials, topology and platform governance
 
