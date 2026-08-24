@@ -143,6 +143,35 @@ public static class DashboardWidgetQuerySafetyRegistry
         return DashboardDimensionRegistry.IsRegistered(dimensionCode);
     }
 
+    /// <summary>
+    /// T-202. The registry's OWN spelling of a measure code.
+    ///
+    /// This set answers case-insensitively, but the execution dispatch, the
+    /// native-source map and the measure switch all match ORDINALLY. A
+    /// persisted definition holding "MaterialCount" therefore passed
+    /// validation and then failed execution with "published but not
+    /// executable" - measured on ppiq_app, 22 Aug 2026, five product-seeded
+    /// system-template widgets.
+    ///
+    /// Resolving to the canonical spelling ONCE, at the validation boundary,
+    /// means a single spelling reaches every case-sensitive lookup downstream.
+    /// The alternative - making the dispatch case-insensitive - would let a
+    /// non-canonical code past the guard and fall to the switch's default arm,
+    /// which returns an empty array with HTTP 200. That is the silent-empty
+    /// defect the guard exists to prevent, so it is not done here.
+    ///
+    /// An unknown code is returned unchanged so the caller still refuses it by
+    /// name. This method never invents a code and never widens the set.
+    /// </summary>
+    public static string? CanonicaliseMeasure(string? measureCode)
+    {
+        if (string.IsNullOrWhiteSpace(measureCode))
+            return measureCode;
+
+        var trimmed = measureCode.Trim();
+        return SupportedMeasures.TryGetValue(trimmed, out var canonical) ? canonical : trimmed;
+    }
+
     public static bool IsSupportedMeasure(string? measureCode)
     {
         return !string.IsNullOrWhiteSpace(measureCode) &&

@@ -15,7 +15,11 @@ public sealed class DashboardWidgetValidationService : IDashboardWidgetValidatio
         var widgetType = Normalize(query.WidgetType, DashboardMetadataCodes.WidgetTypes.Chart);
         var chartType = Normalize(query.ChartType, DashboardMetadataCodes.ChartTypes.Bar);
         var dimensionCode = NormalizeNullable(query.DimensionCode);
-        var measureCode = NormalizeNullable(query.MeasureCode);
+        // T-202. Resolve to the registry's canonical spelling here, at the one
+        // boundary every query crosses, because everything downstream matches
+        // ordinally. See DashboardWidgetQuerySafetyRegistry.CanonicaliseMeasure.
+        var measureCode = DashboardWidgetQuerySafetyRegistry.CanonicaliseMeasure(
+            NormalizeNullable(query.MeasureCode));
         var parameterCode = NormalizeNullable(query.ParameterCode ?? query.Filters?.ParameterCode);
 
         if (!DashboardWidgetQuerySafetyRegistry.IsSupportedWidgetType(widgetType))
