@@ -1,5 +1,4 @@
-using System.Globalization;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 
 namespace PlantProcess.Api.PlantConnectors;
 
@@ -47,18 +46,106 @@ public sealed record HistorianPointDto(
     string Unit,
     string Quality);
 
+/// <summary>
+/// One declared connector operation and whether the build actually executes it.
+/// </summary>
+public sealed record ConnectorCapability(string Name, bool Executable, string Evidence);
+
+/// <summary>
+/// T-207. The single truth source for what this connector can do. Every
+/// advertised flag on every route is bound to this registry; no route declares
+/// a capability as a literal. A capability may be flipped to Executable = true
+/// only together with an implementation that the contract test can prove.
+/// T-224..T-226 deliver the OPC-UA runtime that earns the currently-false ones.
+/// </summary>
+public static class HistorianConnectorCapabilities
+{
+    public const string NotExecutableCode = "OT01";
+
+    public const string NotExecutableMessage =
+        "This connector operation is declared but not executable in this build. " +
+        "It returns no value rather than a placeholder.";
+
+    public const string ConfigurationValidation = "configurationValidation";
+    public const string MappingHintsFromSuppliedTagPaths = "mappingHintsFromSuppliedTagPaths";
+    public const string TagBrowse = "tagBrowse";
+    public const string BoundedRead = "boundedRead";
+    public const string Subscription = "subscription";
+    public const string LiveVendorHandshake = "liveVendorHandshake";
+
+    public static readonly IReadOnlyList<ConnectorCapability> All = new[]
+    {
+        new ConnectorCapability(
+            ConfigurationValidation, true,
+            "The /test-connection route validates the supplied endpoint and read-only posture and returns no measurement."),
+        new ConnectorCapability(
+            MappingHintsFromSuppliedTagPaths, true,
+            "The /mapping-hints route classifies tag paths the caller supplied. It never supplies tag paths of its own."),
+        new ConnectorCapability(
+            TagBrowse, false,
+            "No OPC-UA address-space browse exists. Delivered by T-225."),
+        new ConnectorCapability(
+            BoundedRead, false,
+            "No OPC-UA value acquisition exists. Delivered by T-225 and T-226."),
+        new ConnectorCapability(
+            Subscription, false,
+            "No monitored items or subscriptions exist. Delivered by T-225."),
+        new ConnectorCapability(
+            LiveVendorHandshake, false,
+            "No endpoint session, certificate or trust handling exists. Delivered by T-224.")
+    };
+
+    public static bool IsExecutable(string name)
+    {
+        foreach (var capability in All)
+        {
+            if (string.Equals(capability.Name, name, StringComparison.Ordinal))
+            {
+                return capability.Executable;
+            }
+        }
+
+        return false;
+    }
+
+    public static ConnectorCapability Get(string name)
+    {
+        foreach (var capability in All)
+        {
+            if (string.Equals(capability.Name, name, StringComparison.Ordinal))
+            {
+                return capability;
+            }
+        }
+
+        throw new InvalidOperationException(
+            "PPIQ-T207: capability '" + name + "' is not registered. Register it before any route may advertise it.");
+    }
+
+    /// <summary>
+    /// The single failure shape for a declared-but-not-executable operation.
+    /// 501 Not Implemented, typed, and carrying no data field of any kind.
+    /// </summary>
+    public static IResult NotExecutable(string capabilityName)
+    {
+        var capability = Get(capabilityName);
+
+        return Results.Json(
+            new
+            {
+                errorCode = NotExecutableCode,
+                capability = capability.Name,
+                executable = capability.Executable,
+                message = NotExecutableMessage,
+                evidence = capability.Evidence,
+                providerType = "OpcUaHistorian"
+            },
+            statusCode: StatusCodes.Status501NotImplemented);
+    }
+}
+
 public static class V5GaHistorianConnectorEndpoints
 {
-    private static readonly string[] DefaultTags =
-    [
-        "plant.line1.furnace.temperature.actual",
-        "plant.line1.mill.force.actual",
-        "plant.line1.speed.actual",
-        "plant.line1.quality.surface_score",
-        "plant.line1.material.current_id",
-        "plant.line1.downtime.reason_code"
-    ];
-
     public static IEndpointRouteBuilder MapV5GaHistorianConnectorEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/v5/historian-connector")
@@ -70,24 +157,37 @@ public static class V5GaHistorianConnectorEndpoints
             component = "v5-ga-historian-connector",
             marker = "PPIQ_PACK_E2_GA_HISTORIAN_BACKEND",
             providerType = "OpcUaHistorian",
-            mode = "read-only-gateway",
-            supportsConnectionTest = true,
-            supportsTagBrowse = true,
-            supportsBoundedRead = true,
-            supportsMappingHints = true,
-            liveVendorHandshake = "environment-specific"
+            mode = "configuration-and-mapping-only",
+            supportsConnectionTest =
+                HistorianConnectorCapabilities.IsExecutable(HistorianConnectorCapabilities.ConfigurationValidation),
+            supportsTagBrowse =
+                HistorianConnectorCapabilities.IsExecutable(HistorianConnectorCapabilities.TagBrowse),
+            supportsBoundedRead =
+                HistorianConnectorCapabilities.IsExecutable(HistorianConnectorCapabilities.BoundedRead),
+            supportsSubscription =
+                HistorianConnectorCapabilities.IsExecutable(HistorianConnectorCapabilities.Subscription),
+            supportsMappingHints =
+                HistorianConnectorCapabilities.IsExecutable(HistorianConnectorCapabilities.MappingHintsFromSuppliedTagPaths),
+            liveVendorHandshake =
+                HistorianConnectorCapabilities.IsExecutable(HistorianConnectorCapabilities.LiveVendorHandshake),
+            capabilities = HistorianConnectorCapabilities.All
         }));
 
         group.MapGet("/provider", () => Results.Ok(new
         {
             providerType = "OpcUaHistorian",
             displayName = "OPC-UA / Historian Gateway",
-            availability = "ga-backend-gateway-mode",
+            availability = "configuration-and-mapping-only",
             readOnly = true,
             writeMethodsExposed = false,
-            description = "Backend supports honest read-only historian onboarding: configuration validation, tag browse metadata, bounded sample reads and mapping hints. Vendor-specific handshake remains customer-environment specific.",
+            description =
+                "Validates read-only historian gateway configuration and classifies tag paths the customer supplies. " +
+                "Address-space browse, value acquisition and subscriptions are not executable in this build and " +
+                "return " + HistorianConnectorCapabilities.NotExecutableCode + ".",
             aliases = new[] { "historian", "opcua", "opc-ua", "piwebapi", "pi web api" },
-            routes = new[] { "test-connection", "browse-tags", "read-window", "mapping-hints" }
+            executableRoutes = new[] { "test-connection", "mapping-hints" },
+            notExecutableRoutes = new[] { "browse-tags", "read-window" },
+            capabilities = HistorianConnectorCapabilities.All
         }));
 
         group.MapPost("/test-connection", ([FromBody] HistorianConnectionTestRequest request) =>
@@ -118,91 +218,47 @@ public static class V5GaHistorianConnectorEndpoints
 
             if (requireLiveHandshake)
             {
-                return Results.BadRequest(new
-                {
-                    isSuccess = false,
-                    message = "Live vendor handshake requires a customer historian gateway and cannot be faked in the demo/backend validation environment.",
-                    providerType = "OpcUaHistorian",
-                    liveHandshake = "environment-specific"
-                });
+                return HistorianConnectorCapabilities.NotExecutable(
+                    HistorianConnectorCapabilities.LiveVendorHandshake);
             }
 
             return Results.Ok(new
             {
                 isSuccess = true,
-                message = "Historian gateway configuration accepted for read-only onboarding.",
+                message = "Historian gateway configuration is well formed. No endpoint session was opened.",
+                mode = "configuration-validation-only",
                 providerType = NormalizeProvider(request.ProviderType),
                 endpointUrl,
                 namespaceUri = request.NamespaceUri,
                 securityMode = string.IsNullOrWhiteSpace(request.SecurityMode) ? "configured-by-gateway" : request.SecurityMode,
                 readOnly = true,
                 testedAtUtc = DateTimeOffset.UtcNow,
-                sampleTags = NormalizeTags(request.SeedTags),
-                liveHandshake = "environment-specific"
+                seedTagsEchoed = CallerSuppliedTags(request.SeedTags),
+                liveHandshakeExecuted = false
             });
         });
 
         group.MapPost("/browse-tags", ([FromBody] HistorianBrowseTagsRequest request) =>
-        {
-            var maxTags = Math.Clamp(request.MaxTags ?? 25, 1, 100);
-            var prefix = string.IsNullOrWhiteSpace(request.PathPrefix) ? "plant.line1" : request.PathPrefix!.Trim();
-
-            var tags = NormalizeTags(null)
-                .Select(tag => tag.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) ? tag : prefix + "." + tag.Split('.').Last())
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .Take(maxTags)
-                .Select(ToTagDto)
-                .ToArray();
-
-            return Results.Ok(new
-            {
-                providerType = "OpcUaHistorian",
-                endpointUrl = request.EndpointUrl,
-                namespaceUri = request.NamespaceUri,
-                mode = "metadata-browse",
-                tags
-            });
-        });
+            HistorianConnectorCapabilities.NotExecutable(HistorianConnectorCapabilities.TagBrowse));
 
         group.MapPost("/read-window", ([FromBody] HistorianReadWindowRequest request) =>
-        {
-            var tags = NormalizeTags(request.TagPaths);
-            var maxPoints = Math.Clamp(request.MaxPointsPerTag ?? 12, 1, 200);
-            var toUtc = request.ToUtc ?? DateTimeOffset.UtcNow;
-            var fromUtc = request.FromUtc ?? toUtc.AddMinutes(-maxPoints * 5);
-
-            if (fromUtc >= toUtc)
-                return Results.BadRequest(new { message = "FromUtc must be earlier than ToUtc." });
-
-            var totalMinutes = Math.Max(1.0, (toUtc - fromUtc).TotalMinutes);
-            var interval = totalMinutes / Math.Max(1, maxPoints - 1);
-
-            var points = tags
-                .SelectMany(tag => Enumerable.Range(0, maxPoints).Select(index =>
-                {
-                    var timestamp = fromUtc.AddMinutes(interval * index);
-                    var value = DeterministicValue(tag, index);
-                    return new HistorianPointDto(tag, timestamp, value, UnitFor(tag), "Good");
-                }))
-                .ToArray();
-
-            return Results.Ok(new
-            {
-                providerType = "OpcUaHistorian",
-                mode = "bounded-read-sample",
-                readOnly = true,
-                fromUtc,
-                toUtc,
-                maxPointsPerTag = maxPoints,
-                tagCount = tags.Length,
-                pointCount = points.Length,
-                points
-            });
-        });
+            HistorianConnectorCapabilities.NotExecutable(HistorianConnectorCapabilities.BoundedRead));
 
         group.MapPost("/mapping-hints", ([FromBody] HistorianMappingHintsRequest request) =>
         {
-            var tags = NormalizeTags(request.TagPaths);
+            var tags = CallerSuppliedTags(request.TagPaths);
+
+            if (tags.Length == 0)
+            {
+                return Results.BadRequest(new
+                {
+                    errorCode = HistorianConnectorCapabilities.NotExecutableCode,
+                    message =
+                        "TagPaths is required. This route classifies tag paths supplied by the caller and has no " +
+                        "tag paths of its own to fall back to.",
+                    providerType = "OpcUaHistorian"
+                });
+            }
 
             var hints = tags.Select(tag => new
             {
@@ -235,38 +291,23 @@ public static class V5GaHistorianConnectorEndpoints
         return string.IsNullOrWhiteSpace(providerType) ? "OpcUaHistorian" : providerType.Trim();
     }
 
-    private static string[] NormalizeTags(string[]? tagPaths)
+    /// <summary>
+    /// Returns only what the caller supplied. There is no fallback list: a route
+    /// that has nothing to work on must say so rather than invent an input.
+    /// </summary>
+    private static string[] CallerSuppliedTags(string[]? tagPaths)
     {
-        return (tagPaths is { Length: > 0 } ? tagPaths : DefaultTags)
+        if (tagPaths is null || tagPaths.Length == 0)
+        {
+            return Array.Empty<string>();
+        }
+
+        return tagPaths
             .Where(tag => !string.IsNullOrWhiteSpace(tag))
             .Select(tag => tag.Trim())
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .Take(50)
             .ToArray();
-    }
-
-    private static HistorianTagDto ToTagDto(string tag)
-    {
-        return new HistorianTagDto(
-            TagPath: tag,
-            DisplayName: tag.Split('.').Last().Replace('_', ' '),
-            Unit: UnitFor(tag),
-            DataType: DataTypeFor(tag),
-            SuggestedCanonicalGroup: CanonicalGroupFor(tag),
-            IsTimestampCandidate: tag.Contains("time", StringComparison.OrdinalIgnoreCase),
-            IsQualityCandidate: tag.Contains("quality", StringComparison.OrdinalIgnoreCase) || tag.Contains("surface", StringComparison.OrdinalIgnoreCase),
-            IsProcessMeasurementCandidate: true);
-    }
-
-    private static string UnitFor(string tag)
-    {
-        var lower = tag.ToLowerInvariant();
-        if (lower.Contains("temperature")) return "degC";
-        if (lower.Contains("force")) return "kN";
-        if (lower.Contains("speed")) return "m/s";
-        if (lower.Contains("score")) return "score";
-        if (lower.Contains("reason")) return "code";
-        return "engineering-unit";
     }
 
     private static string DataTypeFor(string tag)
@@ -288,12 +329,5 @@ public static class V5GaHistorianConnectorEndpoints
     private static string ToFieldName(string tag)
     {
         return string.Concat(tag.Split('.').Last().Select(ch => char.IsLetterOrDigit(ch) ? ch : '_')).ToLowerInvariant();
-    }
-
-    private static double DeterministicValue(string tag, int index)
-    {
-        var hash = Math.Abs(tag.GetHashCode());
-        var baseValue = 10 + (hash % 1000) / 10.0;
-        return Math.Round(baseValue + Math.Sin(index / 3.0) * 2.5 + index * 0.1, 3);
     }
 }

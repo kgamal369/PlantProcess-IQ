@@ -1,0 +1,355 @@
+{
+  "backlogTask": "T-206",
+  "release": "M2",
+  "schema": 2,
+  "generatedAtUtc": "2026-08-24T13:57:11Z",
+  "productGenericFileCount": 1015,
+  "grandfatheredCount": 49,
+  "note": "Fingerprints, not a count. Entries may only disappear. A fingerprint absent from this list is a blocking failure.",
+  "grandfathered": [
+    {
+      "fingerprint": "3c91b91cb5c9bccd95546f18bb029fc84fa719b8f7d687c457d0338365d47682",
+      "path": "Backend/PlantProcess.Analytics.Engine/Postgres/PostgresAnalysisFindingSink.cs",
+      "rule": "UA-03",
+      "construct": "isnullorwhitespace(request.grain) ? \u0022coil\u0022",
+      "lineWhenCaptured": 18
+    },
+    {
+      "fingerprint": "26f5f46482d843f5b6a5e53df0a68b8ac496b8b8bf11a2051556dd3fa1e869a6",
+      "path": "Backend/PlantProcess.Analytics.Engine/Postgres/PostgresCanonicalFeatureSource.cs",
+      "rule": "UA-02",
+      "construct": "heat_id",
+      "lineWhenCaptured": 47
+    },
+    {
+      "fingerprint": "5aa8a733c1ca95699eaa4fb7b4263a5fca3c410a701359a96dc6c96b3f03903b",
+      "path": "Backend/PlantProcess.Analytics.Engine/Postgres/PostgresCanonicalFeatureSource.cs",
+      "rule": "UA-03",
+      "construct": "isnullorwhitespace(request.grain) ? \u0022coil\u0022",
+      "lineWhenCaptured": 31
+    },
+    {
+      "fingerprint": "c942630143b68b8e6e9c879a56629ecb5974953c1f905b2918c6603cfafbf57d",
+      "path": "Backend/PlantProcess.Analytics.Engine/Postgres/PostgresCanonicalFeatureSource.cs",
+      "rule": "UA-06",
+      "construct": "heat_id",
+      "lineWhenCaptured": 47
+    },
+    {
+      "fingerprint": "7fa764fa8dbd498a87630fe9a7763dcd435a3b086115484f85d674b50d693035",
+      "path": "Backend/PlantProcess.Api/Endpoints/Admin/TwoStageImportEndpoints.cs",
+      "rule": "UA-02",
+      "construct": "coil_id",
+      "lineWhenCaptured": 423
+    },
+    {
+      "fingerprint": "675366b8aac710f08718786c5428bee90681986f4f36773c1ccb3697320a1e29",
+      "path": "Backend/PlantProcess.Api/Endpoints/Admin/TwoStageImportEndpoints.cs",
+      "rule": "UA-06",
+      "construct": "piece_id",
+      "lineWhenCaptured": 422
+    },
+    {
+      "fingerprint": "65dbfdd60ddf17a35591a652ec2c1ce01b77b11ab7675c7ba4c6eebdc151129a",
+      "path": "Backend/PlantProcess.Api/Endpoints/Admin/TwoStageImportEndpoints.cs",
+      "rule": "UA-06",
+      "construct": "coil_id",
+      "lineWhenCaptured": 423
+    },
+    {
+      "fingerprint": "0726c315db9303c5fbfdaa835e109a2180e3da659bd97154f03ffe386a07f033",
+      "path": "Backend/PlantProcess.Api/Endpoints/Analytics/AdvancedResultsEndpoints.cs",
+      "rule": "UA-03",
+      "construct": "isnullorwhitespace(grain) ? \u0022coil\u0022",
+      "lineWhenCaptured": 19
+    },
+    {
+      "fingerprint": "4ee3b031ba6a05a5a9231651be80b3dc4220c56390f7b1a708a871aa2257bb81",
+      "path": "Backend/PlantProcess.Api/Endpoints/Analytics/AnalysisJobDefinitionEndpoints.cs",
+      "rule": "UA-03",
+      "construct": "isnullorwhitespace(grain) ? \u0022coil\u0022",
+      "lineWhenCaptured": 789
+    },
+    {
+      "fingerprint": "52dbc2399255794f872160ca827a4ee9e43ae5d8f8d3be2249d85d6b45c16e34",
+      "path": "Backend/PlantProcess.Api/Endpoints/Analytics/ValueEndpoints.cs",
+      "rule": "UA-02",
+      "construct": "coilid",
+      "lineWhenCaptured": 18
+    },
+    {
+      "fingerprint": "a07ee1aec2068cbf698a86fc3ec65fc477e35ae69a9b3a629e3723a83564359a",
+      "path": "Backend/PlantProcess.Api/VisualMapper/V5VisualMapperEndpoints.cs",
+      "rule": "UA-07",
+      "construct": "contains(\u0022coil\u0022",
+      "lineWhenCaptured": 676
+    },
+    {
+      "fingerprint": "339af6116e4b214ab020c3e8586c99307e58bea90c3a6cf7cfd23a2b74a8723f",
+      "path": "Backend/PlantProcess.Api/VisualMapper/V5VisualMapperEndpoints.cs",
+      "rule": "UA-07",
+      "construct": "contains(\u0022heat\u0022",
+      "lineWhenCaptured": 679
+    },
+    {
+      "fingerprint": "73cfdd6a121d734e8f410a3b2bfff91a507022c5a3e4901cbb57693e40f05789",
+      "path": "Backend/PlantProcess.Application/Analytics/Advanced/AdvancedAnalysisContracts.cs",
+      "rule": "UA-02",
+      "construct": "heatid",
+      "lineWhenCaptured": 22
+    },
+    {
+      "fingerprint": "d431488a69805f2ef462cb14df8fd01e45d376741b3e233406a88be25dbbb705",
+      "path": "Backend/PlantProcess.Application/Analytics/Value/Demo/Phase7WorkedCaseFixtures.cs",
+      "rule": "UA-02",
+      "construct": "coilid",
+      "lineWhenCaptured": 14
+    },
+    {
+      "fingerprint": "221afee90cec47e19b504ec15641e4dacce78655e376409eeeee0ff4d13fc4a6",
+      "path": "Backend/PlantProcess.Application/Analytics/Value/ValueContracts.cs",
+      "rule": "UA-02",
+      "construct": "coilid",
+      "lineWhenCaptured": 43
+    },
+    {
+      "fingerprint": "0e14e14a23c820adc56bdbc60ad8b60ee70eacd2b84daae30378916db8b03601",
+      "path": "Backend/PlantProcess.Application/Analytics/Value/ValueImpactEngine.cs",
+      "rule": "UA-02",
+      "construct": "coilid",
+      "lineWhenCaptured": 34
+    },
+    {
+      "fingerprint": "417edd624219a2070faa41d460c2b1f2e480ecf73c3c217da73717514132e69f",
+      "path": "Backend/PlantProcess.Application/Analytics/Value/ValueImpactEngine.cs",
+      "rule": "UA-02",
+      "construct": "\u0022coil:\u0022",
+      "lineWhenCaptured": 34
+    },
+    {
+      "fingerprint": "5dfc849867ef41ce18dbe26814104a1ae4d6a390e310d99589bb02aa3ade5dec",
+      "path": "Backend/PlantProcess.Application/Analytics/Value/ValueImpactEngine.cs",
+      "rule": "UA-04",
+      "construct": "\u0022scrap_cost_per_ton\u0022",
+      "lineWhenCaptured": 48
+    },
+    {
+      "fingerprint": "83d8bef5cdac89d01dfbeae0a087372595b8e82356e6ebc15107bcbe1d357a14",
+      "path": "Backend/PlantProcess.Application/Analytics/Value/ValueImpactEngine.cs",
+      "rule": "UA-04",
+      "construct": "\u0022downgrade_delta_per_ton\u0022",
+      "lineWhenCaptured": 48
+    },
+    {
+      "fingerprint": "df115765f9dc28a05f72d5d9ea41d2d0b4831ddc0a12e31d2392a7252979289d",
+      "path": "Backend/PlantProcess.Application/Analytics/Value/ValueImpactEngine.cs",
+      "rule": "UA-04",
+      "construct": "\u0022grade_premium_per_ton\u0022",
+      "lineWhenCaptured": 74
+    },
+    {
+      "fingerprint": "c9b2d8a63e9caca67027ccc810530b5a09ee14b6871f50429c4ec04bb34cd14f",
+      "path": "Backend/PlantProcess.Application/Connectors/Certification/ConnectorBehaviourCertification.cs",
+      "rule": "UA-02",
+      "construct": "coil_id",
+      "lineWhenCaptured": 418
+    },
+    {
+      "fingerprint": "7e495ba70c97eba4ef1c897114540eb0b03a4bc3f6f76297b275cb3092888d48",
+      "path": "Backend/PlantProcess.Application/Connectors/Certification/ConnectorBehaviourCertification.cs",
+      "rule": "UA-06",
+      "construct": "coil_id",
+      "lineWhenCaptured": 418
+    },
+    {
+      "fingerprint": "28f21a59cb113271b52c05fbe916623ff3e3db66ebfabdbdaf0e1b39f2497f44",
+      "path": "Backend/PlantProcess.Infrastructure/Analytics/DotNetAdvancedCorrelationEngine.cs",
+      "rule": "UA-03",
+      "construct": "isnullorwhitespace(request.grain) ? \u0022coil\u0022",
+      "lineWhenCaptured": 34
+    },
+    {
+      "fingerprint": "bb074978c60839fafc363de06acf62184d2fe878f6d3613c253c378df3f92d8c",
+      "path": "Backend/PlantProcess.Infrastructure/Analytics/NpgsqlFeatureVectorLoader.cs",
+      "rule": "UA-02",
+      "construct": "heat_id",
+      "lineWhenCaptured": 39
+    },
+    {
+      "fingerprint": "09fe1887ea5b6eba5a9d787a7a8b3f8ad2d2abe82bcf4d735d4d40ce75da7176",
+      "path": "Backend/PlantProcess.Infrastructure/Analytics/NpgsqlFeatureVectorLoader.cs",
+      "rule": "UA-06",
+      "construct": "heat_id",
+      "lineWhenCaptured": 39
+    },
+    {
+      "fingerprint": "d1a9cf9f24f708429d324a16ebccc966c9164c1ccc7a3a653fb90e64aebd9f6e",
+      "path": "Backend/PlantProcess.Infrastructure/Analytics/NpgsqlFeatureVectorLoader.cs",
+      "rule": "UA-07",
+      "construct": "indexof(\u0022grade\u0022",
+      "lineWhenCaptured": 112
+    },
+    {
+      "fingerprint": "62385824b8f35070dcfced742f8715c42362677693a1535dde74fa4305790424",
+      "path": "Backend/PlantProcess.Infrastructure/Analytics/NpgsqlValueImpactRepository.cs",
+      "rule": "UA-02",
+      "construct": "coilid",
+      "lineWhenCaptured": 20
+    },
+    {
+      "fingerprint": "e13cd2ac90783176633b4403939db0f9a79b24cd0bc27e309415dee700941fa0",
+      "path": "Backend/PlantProcess.Infrastructure/Analytics/NpgsqlValueImpactRepository.cs",
+      "rule": "UA-02",
+      "construct": "coil_id",
+      "lineWhenCaptured": 59
+    },
+    {
+      "fingerprint": "cb9c9ad7a9c42ae17e7821b79907545602a268a13d44795ab0cf35d15e76d0a0",
+      "path": "Backend/PlantProcess.Infrastructure/Analytics/NpgsqlValueImpactRepository.cs",
+      "rule": "UA-06",
+      "construct": "coil_id",
+      "lineWhenCaptured": 59
+    },
+    {
+      "fingerprint": "f9dd01288ab8545997135b4c3723f124584b25730299a4c59dd4f85415a0197a",
+      "path": "Backend/PlantProcess.Infrastructure/Analytics/PostgresCorrelationComputeEngine.cs",
+      "rule": "UA-03",
+      "construct": "isnullorwhitespace(request.grain) ? \u0022coil\u0022",
+      "lineWhenCaptured": 25
+    },
+    {
+      "fingerprint": "4180754fa028f2eb3d8086556fad707df8169877e61cc34ba4a3821a4109e043",
+      "path": "Frontend/PlantProcess.Web/src/api/analysisOptions.ts",
+      "rule": "UA-03",
+      "construct": ".grain ?? \u0022\u0022",
+      "lineWhenCaptured": 39
+    },
+    {
+      "fingerprint": "b71af9baf727b26770cf70c970f62d30657853998775433bde430a3ffdf9bc5d",
+      "path": "Frontend/PlantProcess.Web/src/api/p3T14ValueExecutive.ts",
+      "rule": "UA-02",
+      "construct": "coilid",
+      "lineWhenCaptured": 24
+    },
+    {
+      "fingerprint": "bba6753b9d4d6014fa54265b109d9c34609b6015fda4403ee9fbd1ca46ebad5e",
+      "path": "Frontend/PlantProcess.Web/src/api/p3T15WidgetSchemaContract.ts",
+      "rule": "UA-01",
+      "construct": "\u0022caster 1\u0022",
+      "lineWhenCaptured": 337
+    },
+    {
+      "fingerprint": "afe67781f205b172d25061f765e8cfb36550cc7d45b03d890f9cceaa65874409",
+      "path": "Frontend/PlantProcess.Web/src/api/p3T15WidgetSchemaContract.ts",
+      "rule": "UA-01",
+      "construct": "\u0022caster 2\u0022",
+      "lineWhenCaptured": 339
+    },
+    {
+      "fingerprint": "2aaddad9b29b5d14ee57e8b2f56c3544bead1d6589f557396ff593869b280d60",
+      "path": "Frontend/PlantProcess.Web/src/api/p3T15WidgetSchemaContract.ts",
+      "rule": "UA-01",
+      "construct": "\u0022mill 1\u0022",
+      "lineWhenCaptured": 341
+    },
+    {
+      "fingerprint": "525e79f0b0d01cb966265d6ffb5d8a9f63caf9c8e821e6c37ef9a396dc212d7b",
+      "path": "Frontend/PlantProcess.Web/src/api/value/value.api.ts",
+      "rule": "UA-02",
+      "construct": "coilid",
+      "lineWhenCaptured": 22
+    },
+    {
+      "fingerprint": "6d9a7daad6957682b3656ff84e3cb4ec1e6e11ce9e16d4b572c4ffb70f80a7e4",
+      "path": "Frontend/PlantProcess.Web/src/pages/Admin/AdminSchemaConfigurationTab.implementation.generated.tsx",
+      "rule": "UA-02",
+      "construct": "heat_id",
+      "lineWhenCaptured": 691
+    },
+    {
+      "fingerprint": "02dc97429a29c87a0d9d78fc39c036a29300318a9dce8dadd9481c775527dc8d",
+      "path": "Frontend/PlantProcess.Web/src/pages/Admin/AdminSchemaConfigurationTab.implementation.generated.tsx",
+      "rule": "UA-06",
+      "construct": "heat_id",
+      "lineWhenCaptured": 691
+    },
+    {
+      "fingerprint": "7037759ea9a43237e1d6c7b1c7b2f3a1e25ea14dbbb7e017e88f803b84a6478a",
+      "path": "Frontend/PlantProcess.Web/src/pages/Admin/CanonicalSchemaMappingPanel.implementation.tsx",
+      "rule": "UA-02",
+      "construct": "coil_id",
+      "lineWhenCaptured": 43
+    },
+    {
+      "fingerprint": "50307addb9d990e0ea5fb07d9b35a9f5a5c80ae6cb5a288ba545d03e0c8fad37",
+      "path": "Frontend/PlantProcess.Web/src/pages/Admin/CanonicalSchemaMappingPanel.implementation.tsx",
+      "rule": "UA-02",
+      "construct": "slab_id",
+      "lineWhenCaptured": 48
+    },
+    {
+      "fingerprint": "9f9161edae31893f8a8933915e3e1d126fe902247a0987430a2d8125f223cc4f",
+      "path": "Frontend/PlantProcess.Web/src/pages/Admin/CanonicalSchemaMappingPanel.implementation.tsx",
+      "rule": "UA-06",
+      "construct": "coil_id",
+      "lineWhenCaptured": 43
+    },
+    {
+      "fingerprint": "9d5ada8607cb0c6771b1ee1cf6bbb2333f3f2f0c90b0d48aee8b106528272dfb",
+      "path": "Frontend/PlantProcess.Web/src/pages/Admin/CanonicalSchemaMappingPanel.implementation.tsx",
+      "rule": "UA-06",
+      "construct": "slab_id",
+      "lineWhenCaptured": 48
+    },
+    {
+      "fingerprint": "641d061d55f0b42222623767aa1bc3b3be1fb0634034a17af029365aa0ee0f87",
+      "path": "Frontend/PlantProcess.Web/src/pages/Analysis/AnalysisToolboxPage.tsx",
+      "rule": "UA-03",
+      "construct": "raw.grain ?? \u0022\u0022",
+      "lineWhenCaptured": 115
+    },
+    {
+      "fingerprint": "0af18a4f7d0eb41ec90139043220d4a1fa48040fd58f64fcacd1fc80dccd6fb9",
+      "path": "Frontend/PlantProcess.Web/src/pages/Analysis/analysisOutcomeRegistry.ts",
+      "rule": "UA-03",
+      "construct": "row.grain ?? \u0022\u0022",
+      "lineWhenCaptured": 22
+    },
+    {
+      "fingerprint": "be164e6074767f7dff56256a163d3d019c150ab6cd6363579941acbe52e358a8",
+      "path": "Frontend/PlantProcess.Web/src/pages/Analysis/analysisOutcomeRegistry.ts",
+      "rule": "UA-03",
+      "construct": ".grain ?? \u0022\u0022",
+      "lineWhenCaptured": 39
+    },
+    {
+      "fingerprint": "0803ef4428a708708194150335f0f937a3b1b36dc531eed68a0bab738ef38522",
+      "path": "Frontend/PlantProcess.Web/src/pages/Analysis/analysisOutcomeRegistry.ts",
+      "rule": "UA-03",
+      "construct": "first.grain ?? \u0022\u0022",
+      "lineWhenCaptured": 50
+    },
+    {
+      "fingerprint": "6b217992b0b3d7e00e364c668aee6358e3a46125f06f105c8b4a6aea1eb6251e",
+      "path": "Frontend/PlantProcess.Web/src/pages/Phase7ValueScenario/Phase7ValueScenarioPage.tsx",
+      "rule": "UA-02",
+      "construct": "coilid",
+      "lineWhenCaptured": 24
+    },
+    {
+      "fingerprint": "b93390fcfad35234ba03a15af6b257b1d14969763d50de90ef5ec7014416a372",
+      "path": "Frontend/PlantProcess.Web/src/types/analyticsContracts.ts",
+      "rule": "UA-05",
+      "construct": "\u0022coil\u0022 | \u0022heat\u0022",
+      "lineWhenCaptured": 37
+    },
+    {
+      "fingerprint": "a406e79afde31237bd5a3c613da1fd03cae0c54cc20b9d87c43e3aad403684c7",
+      "path": "Frontend/PlantProcess.Web/src/types/analyticsContracts.ts",
+      "rule": "UA-05",
+      "construct": "\u0022cast\u0022 | \u0022slab\u0022",
+      "lineWhenCaptured": 37
+    }
+  ],
+  "retired": []
+}
