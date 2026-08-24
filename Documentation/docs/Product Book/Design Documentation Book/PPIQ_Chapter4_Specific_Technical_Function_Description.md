@@ -1,6 +1,8 @@
 # PlantProcess IQ - Master Design Document
 
-**Version 4.9 | Author: Karim, SOU Industrial Software, Dusseldorf** | **MASTER DESIGN FREEZE CANDIDATE**
+**Version 4.10 | Author: Karim, SOU Industrial Software, Dusseldorf** | **MASTER DESIGN FREEZE CANDIDATE**
+
+> **Change log — Two-Release Production Roadmap and Day-1 Workbench Constitution (23 August 2026, v4.10).** v4.10 replaces retired internal programme codes with exactly two product releases: **M2 — Release 1, 30 September 2026**, for genuine early production and first-week customer work; and **M3 — Release 2, 30 October 2026**, for heavy production, higher data volume, more users and advanced intelligence. Each release uses only **P1, P2, P3, P4 and P5**. Release 1 makes DB Link/data onboarding, Canvas/data preparation, Jobs, enterprise BI reliability, read-only production OPC UA, governed References/Reconciliation/Assistant and minimum production hardening first-class release gates. Release 2 owns scale, advanced BI/authoring, deep enterprise administration, InsightBoard composition, multi-objective optimisation, customer-grade ROI convergence and heavy-production certification. Design and backlog are required to be one-to-one traceable: every designed product outcome has an execution owner and acceptance path, and every backlog task maps to an owning design contract.
 
 > **Change log — Operational-Regime, Multi-Objective Practice and Period-Driver Hardening (22 August 2026, v4.9).** v4.9 closes the two generic gaps exposed by the first oil-plant requirement review without introducing oil-specific vocabulary: process transitions/changeovers and stabilisation become first-class governed context so statistics cannot mix distinct operating regimes; practice learning gains customer-declared multi-objective objective sets with Pareto/non-dominance and explicit preference resolution rather than silently choosing one KPI; exact period-to-period operational driver decomposition is added so the Assistant can explain changes in cost/productivity drivers from Layer-A facts before the monetary Value Engine is available. The release also binds the September checkpoint/fallback to the single v2.13 execution workbook. The six chapters remain the only design authority.
 
@@ -9,10 +11,43 @@
 
 ---
 
-> **CURRENT AUTHORITY — Master Design v4.9.** PlantProcess IQ has exactly six current design-authority chapters and one current execution-authority backlog workbook. No other file may define, amend, override, supplement or reinterpret current product design or implementation scope. A design change edits the owning chapter directly; a scope change edits the backlog directly. Transitional reviews, amendment packs, ledgers, mandates and prior revisions are historical evidence only after their accepted content is integrated. Validation scripts are code/enforcement instruments, not design documentation.
+> **CURRENT AUTHORITY — Master Design v4.10.** PlantProcess IQ has exactly six current design-authority chapters and one current execution-authority backlog workbook. No other file may define, amend, override, supplement or reinterpret current product design or implementation scope. A design change edits the owning chapter directly; a scope change edits the backlog directly. Transitional reviews, amendment packs, ledgers, mandates and prior revisions are historical evidence only after their accepted content is integrated. Validation scripts are code/enforcement instruments, not design documentation.
 
 
 # CHAPTER 4 - SPECIFIC SOFTWARE PRODUCT TECHNICAL FUNCTION DESCRIPTION
+
+
+## 5.0.0 Enterprise BI, authoring and Day-1 workbench completeness contract (v4.10)
+
+The professional reference target is **Qlik Sense / Power BI / Tableau-class outcome quality**, not imitation of a competitor's proprietary syntax. Release acceptance is maintained as a traceability matrix covering the founder-approved families **F01–F15 (BI core), S01–S30 (visual/interaction behaviour), and E01–E30 (editor/data/jobs)**. Every row must be classified as either (a) implemented directly, or (b) implemented by an explicitly documented PPIQ-native equivalent that preserves the user outcome with equal or stronger governance. No row may remain `unowned` at M3 release exit.
+
+The following outcomes are explicit PPIQ product capabilities and may not be left implicit:
+
+- **Scoped Measure Context** — one measure may intentionally evaluate under a governed selection scope different from the page/global scope, providing the product outcome commonly served by set-analysis expressions without copying vendor syntax.
+- **Named Comparison State** — a page/object group may bind to an independently named selection context for side-by-side comparisons while preserving provenance of both states.
+- **Selection tools** — click and multi-select are core; lasso/range selection uses a pending selection state with explicit confirm/cancel where the renderer supports it.
+- **Bookmarks and stories** — bookmarks preserve selection and page state; narrative snapshots retain a link back to their live evidence source.
+- **Export contract** — governed exports cover current-state data and the release-owned image/document/tabular formats, and always carry the active selection/evidence context.
+- **Reusable authoring subflows** — shared, versioned subflows/definitions provide the product outcome of script include/reuse without importing another product's script semantics.
+
+### Safe Scratch-like Canvas control flow
+
+The Canvas toolbox includes arithmetic (`+`, `-`, `*`, `/`), comparisons, Boolean `AND/OR/NOT`, `IF/ELSE`, relational/data-shaping operators, governed aggregates, window operators, model/intelligence invocation and bounded control-flow blocks.
+
+To satisfy visual-programming use cases without creating non-terminating industrial jobs, loop semantics are **bounded by contract**:
+
+- `ForEach` — iterate a finite declared collection/partition set;
+- `RepeatN` — repeat a subflow a declared finite count;
+- `WhileBounded` — Scratch-like while semantics **with mandatory `max_iterations`, runtime budget and cancellation token**;
+- `Map/Window/Group` — preferred declarative data iteration for row/time-series work.
+
+An unbounded `while(true)` or equivalent cannot be published. Validation must prove a finite bound before a graph can become a Job. This is a product safety rule, not a removal of the user's control-flow capability.
+
+### M2 versus M3 authoring depth
+
+**M2 Release 1** owns the Day-1 workbench: source connection, schema discovery, preview, mapping, Canvas creation/edit/reopen, SQL mode, the production arithmetic/logic/control/data-preparation library, validation/dry-run, result preview, persistence/versioning, Job binding, run/monitor/log and enterprise BI core reliability.
+
+**M3 Release 2** owns advanced authoring depth and heavy-use parity: named comparison states at scale, scoped-measure authoring depth, advanced story/export/exploration behaviours, reusable subflow libraries across teams, InsightBoard composition, high-volume optimisation and the remaining enterprise parity matrix closure.
 
 *Maps to PPIQ.txt section 5. Audience (5.8): the customer's advanced IT and software staff, and our developers taking hand-over. Voice (5.9): senior product owner and technical lead.*
 

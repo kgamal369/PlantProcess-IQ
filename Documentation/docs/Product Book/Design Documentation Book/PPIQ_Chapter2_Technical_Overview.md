@@ -1,16 +1,44 @@
 # PlantProcess IQ - Master Design Document
 
-**Version 4.9 | Author: Karim, SOU Industrial Software, Dusseldorf**
+**Version 4.10 | Author: Karim, SOU Industrial Software, Dusseldorf**
+
+> **Change log — Two-Release Production Roadmap and Day-1 Workbench Constitution (23 August 2026, v4.10).** v4.10 replaces retired internal programme codes with exactly two product releases: **M2 — Release 1, 30 September 2026**, for genuine early production and first-week customer work; and **M3 — Release 2, 30 October 2026**, for heavy production, higher data volume, more users and advanced intelligence. Each release uses only **P1, P2, P3, P4 and P5**. Release 1 makes DB Link/data onboarding, Canvas/data preparation, Jobs, enterprise BI reliability, read-only production OPC UA, governed References/Reconciliation/Assistant and minimum production hardening first-class release gates. Release 2 owns scale, advanced BI/authoring, deep enterprise administration, InsightBoard composition, multi-objective optimisation, customer-grade ROI convergence and heavy-production certification. Design and backlog are required to be one-to-one traceable: every designed product outcome has an execution owner and acceptance path, and every backlog task maps to an owning design contract.
 
 > **Change log — Operational-Regime, Multi-Objective Practice and Period-Driver Hardening (22 August 2026, v4.9).** v4.9 closes the two generic gaps exposed by the first oil-plant requirement review without introducing oil-specific vocabulary: process transitions/changeovers and stabilisation become first-class governed context so statistics cannot mix distinct operating regimes; practice learning gains customer-declared multi-objective objective sets with Pareto/non-dominance and explicit preference resolution rather than silently choosing one KPI; exact period-to-period operational driver decomposition is added so the Assistant can explain changes in cost/productivity drivers from Layer-A facts before the monetary Value Engine is available. The release also binds the September checkpoint/fallback to the single v2.13 execution workbook. The six chapters remain the only design authority.
 
 
 ---
 
-> **CURRENT AUTHORITY — Master Design v4.9.** PlantProcess IQ has exactly six current design-authority chapters and one current execution-authority backlog workbook. No other file may define, amend, override, supplement or reinterpret current product design or implementation scope. A design change edits the owning chapter directly; a scope change edits the backlog directly. Transitional reviews, amendment packs, ledgers, mandates and prior revisions are historical evidence only after their accepted content is integrated. Validation scripts are code/enforcement instruments, not design documentation.
+> **CURRENT AUTHORITY — Master Design v4.10.** PlantProcess IQ has exactly six current design-authority chapters and one current execution-authority backlog workbook. No other file may define, amend, override, supplement or reinterpret current product design or implementation scope. A design change edits the owning chapter directly; a scope change edits the backlog directly. Transitional reviews, amendment packs, ledgers, mandates and prior revisions are historical evidence only after their accepted content is integrated. Validation scripts are code/enforcement instruments, not design documentation.
 
 
 # CHAPTER 2 - TECHNICAL OVERVIEW
+
+
+## 2.0.0 Release roadmap constitution — only M2 and M3
+
+PlantProcess IQ uses **two current product releases only**. Only `M2`, `M3` and phases `P1` through `P5` are current roadmap vocabulary. Earlier internal programme codes are historical evidence only and are not used by the current roadmap.
+
+| Release | Date | Product meaning | P1 | P2 | P3 | P4 | P5 |
+|---|---|---|---|---|---|---|---|
+| **M2 — Release 1** | **30 Sep 2026** | Genuine early production. A customer can start work in week 1 without developer intervention. | Product foundation & Release Truth | Day-1 Data Workbench: DB Link, Canvas, Jobs, OPC and onboarding | Enterprise BI & customer experience | Industrial intelligence: References, reconciliation, governed Assistant | Release hardening & week-1 production acceptance |
+| **M3 — Release 2** | **30 Oct 2026** | Heavy production: more users, larger volumes, sustained runtime and deeper product use. | Scale & OT resilience | Multi-user enterprise operations | Advanced BI, authoring & Insight Boards | Advanced ML/optimisation/value | Heavy-production certification |
+
+### Release-1 Day-1 law
+
+M2 does **not** mean a presentation build, pilot build or trial-only branch. It is the first production release. The same compiled product is used for the customer, and by the end of M2 the first-week journey must be executable through product surfaces:
+
+`connect source → inspect schema → preview → configure/mapping → prepare in Canvas → validate/dry-run → save/version → compile/bind to Job → schedule/run → monitor/log → canonical result → BI interaction → governed evidence/Assistant`.
+
+The journey fails release acceptance if customer-specific C#, TypeScript or product-SQL changes are needed.
+
+### Release-2 heavy-production law
+
+M3 deepens the same product rather than creating a different edition: larger data, higher concurrency, live-source endurance, advanced authoring, more users/roles, enterprise operations, model lifecycle, InsightBoard composition, multi-objective practice, customer-grade monetary value evidence and production capacity certification.
+
+### Design/backlog mirror law
+
+The six design chapters and the current backlog form one contract. **Design coverage and backlog coverage are not independent scores.** Every accepted design requirement must map to one or more backlog tasks with an owner, release, phase and executable acceptance; every current backlog task must map back to an owning design clause. A missing mapping in either direction is a governance defect.
 
 **REVISION NEXT, 11 August 2026. Amendments C2-1 and C2-2 of the AI/ML/LLM target architecture are integrated into the active body below.**
 
