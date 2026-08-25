@@ -1,4 +1,4 @@
-﻿using PlantProcess.Api.TestMode;
+using PlantProcess.Api.TestMode;
 using PlantProcess.Api.Endpoints.Licensing;
 using PlantProcess.Api.Endpoints.Security;
 using PlantProcess.Application.Connectors.Certification;
@@ -332,6 +332,7 @@ builder.Services.AddScoped<PlantProcess.Api.Analytics.KpiEvaluationService>();
 builder.Services.AddHostedService<PlantProcess.Api.Hosting.ReadModelRefreshHostedService>();
 builder.Services.AddHostedService<PlantProcess.Api.Security.FirstRunProvisioningHostedService>();
 builder.Services.AddHostedService<PlantProcess.Api.Hosting.ComputeRunReaperHostedService>();
+builder.Services.AddHostedService<PlantProcess.Api.Hosting.SystemTemplateProvisioningHostedService>();
 
     builder.Services.AddScoped<IAuditLogService, AuditLogService>();
     builder.Services.AddScoped<PlantProcess.Api.Observability.IJobLogService, PlantProcess.Api.Observability.JobLogService>();
