@@ -40,7 +40,11 @@ export interface AdvancedReadinessGateSummaryDto {
   gates: AdvancedReadinessGateDto[];
 }
 
-const BASE = "/analytics/advanced";
+// The current backend registers this group at /api/analytics/advanced. Calling
+// it without the prefix 404s on every readiness, gates, results and runs call -
+// measured by the customer route invariant gate on /analysis/toolbox. The
+// contract is called correctly here; no backend alias is added.
+const BASE = "/api/analytics/advanced";
 const qs = (o: Record<string, unknown>) =>
   Object.entries(o).filter(([, v]) => v !== undefined && v !== null && v !== "")
     .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`).join("&");

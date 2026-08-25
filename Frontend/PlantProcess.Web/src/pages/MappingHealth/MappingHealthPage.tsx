@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 
+import { apiClient } from "@/api/http";
 import { P2T08_STANDARD_ROLLOUT_MARKER, StandardP2Table } from "@/components/standard/StandardP2Controls";
 type MappingHealthSource = { sourceSystemCode: string; sourceKind: string; totalFieldCount: number; mappedFieldCount: number; unmappedRequiredCount: number; driftEventCount: number; hasBlockingDrift: boolean; healthStatus: string; lastSnapshotAtUtc?: string | null; };
 type MappingHealthSummary = { status: string; evidence: string; sources: MappingHealthSource[]; };
@@ -22,10 +23,11 @@ export function MappingHealthPage() {
     let cancelled = false;
     async function load() {
       try {
-        const apiBase = import.meta.env.VITE_API_BASE_URL ?? "";
-        const response = await fetch(`${apiBase}/mapping-health/summary`, { credentials: "include", headers: { Accept: "application/json" } });
-        if (!response.ok) throw new Error(`Mapping-health endpoint returned HTTP ${response.status}`);
-        const payload = (await response.json()) as MappingHealthSummary;
+        // Canonical authenticated transport. A raw fetch with credentials:"include"
+        // bypasses the product auth client, so it never carried the bearer token and
+        // the endpoint answered 401 - measured by the customer route invariant gate.
+        // The backend policy is not loosened; the caller is corrected.
+        const payload = await apiClient.get<MappingHealthSummary>("/mapping-health/summary");
         if (!cancelled) { setSummary({ status: payload.status ?? "Unknown", evidence: payload.evidence ?? "No backend evidence returned.", sources: Array.isArray(payload.sources) ? payload.sources : [] }); setError(null); }
       } catch (ex) {
         if (!cancelled) { setSummary({ status: "NotAvailable", evidence: "Mapping-health endpoint is not reachable yet. This page is intentionally honest and does not show fake metrics.", sources: [] }); setError(ex instanceof Error ? ex.message : String(ex)); }

@@ -34,7 +34,10 @@ export interface AnalysisOutcomeOption {
  */
 export async function getAnalysisOutcomeOptions(): Promise<AnalysisOutcomeOption[]> {
   const options = await apiClient.get<AnalysisJobDefinitionOptions>(
-    "/analysis-jobs/definition-options"
+    // Canonical contract. The /api prefix is part of it: without the prefix the
+    // request 404s, which the customer route invariant gate measured on
+    // /analysis/toolbox. Do not add a backend alias to keep the wrong path.
+    "/api/analysis-jobs/definition-options"
   );
 
   const rows = options?.engineOutcomes;

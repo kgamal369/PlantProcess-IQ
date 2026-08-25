@@ -674,32 +674,49 @@ export function MaterialAnalyticsCorrelationPage() {
   // names a parameter. An empty chart that says so beats a confident answer to
   // a question the customer did not ask.
   const [parameterCode, setParameterCode] = useState("");
-  const [defectType, setDefectType] = useState("SurfaceCrack");
+  // No declared defect type. Same rule as parameterCode above: an unselected
+  // dimension is not silently replaced by a plant-specific literal.
+  const [defectType, setDefectType] = useState("");
   const [threshold, setThreshold] = useState(1.25);
 
+  // The endpoint requires parameterCode and defectType. Once the plant-specific
+  // defaults were removed, an unconfigured page sent neither and earned a 400 on
+  // every load. Incomplete configuration is not an error: no request is made,
+  // and the surface says what is missing. The transport stays truthful; the page
+  // decides whether a valid request exists.
+  const hasRequiredSelection =
+    Boolean(parameterCode.trim()) && Boolean(defectType.trim());
+
+  const unconfiguredCorrelation: Awaited<
+    ReturnType<typeof productApi.getGenealogyAwareCorrelation>
+  > = {
+    generatedAtUtc: new Date().toISOString(),
+    parameterCode,
+    parameterName: parameterCode,
+    defectType,
+    linkMode: "DownstreamChildren",
+    genealogyDepth: 3,
+    baselineDefectRatePercent: 0,
+    totalObservationCount: 0,
+    totalMaterialCount: 0,
+    totalDefectLinkedObservationCount: 0,
+    bins: [],
+    message: "Select a parameter and a defect type to run the correlation.",
+  };
+
   const correlation = useResource(
-    () => productApi.getGenealogyAwareCorrelation({
-      parameterCode,
-      defectType,
-      minimumObservationsPerBin: 3,
-      bins: 8,
-      genealogyDepth: 3,
-      linkMode: "DownstreamChildren",
-    }),
-    {
-      generatedAtUtc: new Date().toISOString(),
-      parameterCode,
-      parameterName: parameterCode,
-      defectType,
-      linkMode: "DownstreamChildren",
-      genealogyDepth: 3,
-      baselineDefectRatePercent: 0,
-      totalObservationCount: 0,
-      totalMaterialCount: 0,
-      totalDefectLinkedObservationCount: 0,
-      bins: [],
-      message: "No correlation run yet.",
-    }
+    () =>
+      hasRequiredSelection
+        ? productApi.getGenealogyAwareCorrelation({
+            parameterCode,
+            defectType,
+            minimumObservationsPerBin: 3,
+            bins: 8,
+            genealogyDepth: 3,
+            linkMode: "DownstreamChildren",
+          })
+        : Promise.resolve(unconfiguredCorrelation),
+    unconfiguredCorrelation
   );
 
   const topBins = (correlation.data.bins ?? []).filter((row) => number(row.liftVsBaseline) >= threshold);

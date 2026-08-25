@@ -62,9 +62,7 @@ const SharedAuthoringShell = lazy(() =>
 const AnalysisToolboxPage = lazy(() =>
   import("./pages/Analysis/AnalysisToolboxPage").then((m) => ({ default: m.default }))
 );
-const AnalysisJobConfigPage = lazy(() =>
-  import("./pages/AnalysisJobConfigPage").then((m) => ({ default: m.default }))
-);
+
 const DashboardPage = lazy(() =>
   import("./pages/Dashboard/DashboardPage").then((m) => ({ default: m.DashboardPage }))
 
@@ -187,14 +185,10 @@ const MlReadinessPage = lazy(() =>
 
 // --- Boundary helper ---
 
-const AdvancedAnalysisPage = lazy(() =>
-  import("./pages/Analytics/AdvancedAnalysisPage").then((m) => ({ default: m.AdvancedAnalysisPage }))
-);
 
 
-const InspectionJobsPage = lazy(() =>
-  import("./pages/Analytics/InspectionJobsPage").then((m) => ({ default: m.InspectionJobsPage }))
-);
+
+
 
 
 const MappingHealthPage = lazy(() =>
@@ -514,19 +508,15 @@ function AppRoutes() {
                     /> {/* M1-05 Surface-3: analysis-job definition on live data */}
                     <Route
                       path="/investigate/analysis-jobs"
-                      element={withPageBoundary(
-                        "/investigate/analysis-jobs",
-                        "Analysis job configuration is refreshing",
-                        <AnalysisJobConfigPage />
-                      )}
+                      element={<Navigate to="/analysis/toolbox" replace />}
                     />                    {/* P4 §7.4 advanced analysis + inspection workflow */}
  <Route
    path="/investigate/advanced"
-   element={withPageBoundary("/investigate/advanced", "Advanced analysis is refreshing", <AdvancedAnalysisPage />)}
+   element={<Navigate to="/analysis/toolbox" replace />}
  />
  <Route
    path="/investigate/inspect"
-   element={withPageBoundary("/investigate/inspect", "Inspection jobs are refreshing", <InspectionJobsPage />)}
+   element={<Navigate to="/analysis/toolbox" replace />}
  />
  <Route
    index

@@ -300,10 +300,11 @@ export const productApi = {
         // buildQuery drops undefined, null and "", so nothing reaches the wire
         // and the surface shows whichever canonical state is actually true.
         parameterCode: filters.parameterCode,
-        // W2-GENERIC-02, recorded not fixed: the same two literals below are
-        // the same class of violation and belong to whoever owns this endpoint's
-        // semantics. T-052 owns the parameter default only.
-        defectType: filters.defectType || "SurfaceCrack",
+        // W2-GENERIC-02, now fixed. An undeclared defect type must not be
+        // replaced by a plant-specific literal the customer never chose.
+        // buildQuery drops undefined, null and "", so nothing reaches the wire
+        // until a selection is declared and the surface states that honestly.
+        defectType: filters.defectType,
         siteId: filters.siteId,
         fromUtc: filters.fromUtc,
         toUtc: filters.toUtc,
