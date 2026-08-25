@@ -1,4 +1,4 @@
-﻿-- ============================================================================
+-- ============================================================================
 -- System templates: one authority.
 --
 -- Retires legacy product-generated system-template rows so the runtime
