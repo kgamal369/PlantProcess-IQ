@@ -56,7 +56,7 @@ public sealed record ConnectorCapability(string Name, bool Executable, string Ev
 /// advertised flag on every route is bound to this registry; no route declares
 /// a capability as a literal. A capability may be flipped to Executable = true
 /// only together with an implementation that the contract test can prove.
-/// T-224..T-226 deliver the OPC-UA runtime that earns the currently-false ones.
+/// The real OPC UA acquisition work earns the currently-false ones.
 /// </summary>
 public static class HistorianConnectorCapabilities
 {
@@ -83,16 +83,16 @@ public static class HistorianConnectorCapabilities
             "The /mapping-hints route classifies tag paths the caller supplied. It never supplies tag paths of its own."),
         new ConnectorCapability(
             TagBrowse, false,
-            "No OPC-UA address-space browse exists. Delivered by T-225."),
+            "Real OPC UA namespace browse is not yet implemented."),
         new ConnectorCapability(
             BoundedRead, false,
-            "No OPC-UA value acquisition exists. Delivered by T-225 and T-226."),
+            "Real OPC UA value acquisition is not yet implemented."),
         new ConnectorCapability(
             Subscription, false,
-            "No monitored items or subscriptions exist. Delivered by T-225."),
+            "Real OPC UA monitored items and subscriptions are not yet implemented."),
         new ConnectorCapability(
             LiveVendorHandshake, false,
-            "No endpoint session, certificate or trust handling exists. Delivered by T-224.")
+            "Real OPC UA session security, certificate and trust handling is not yet implemented.")
     };
 
     public static bool IsExecutable(string name)
@@ -119,7 +119,7 @@ public static class HistorianConnectorCapabilities
         }
 
         throw new InvalidOperationException(
-            "PPIQ-T207: capability '" + name + "' is not registered. Register it before any route may advertise it.");
+            "Connector capability '" + name + "' is not registered. Register it before any route may advertise it.");
     }
 
     /// <summary>
@@ -331,3 +331,4 @@ public static class V5GaHistorianConnectorEndpoints
         return string.Concat(tag.Split('.').Last().Select(ch => char.IsLetterOrDigit(ch) ? ch : '_')).ToLowerInvariant();
     }
 }
+
