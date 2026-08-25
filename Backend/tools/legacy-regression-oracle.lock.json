@@ -1,0 +1,74 @@
+﻿{
+    "artifact":  "legacy-regression-oracle-freeze",
+    "purpose":  "Pins the legacy discrete-manufacturing regression oracle. This dataset is historical regression input only. It is not canonical product vocabulary, not the generic fixture authority and not a source of customer schema semantics.",
+    "frozenAtUtc":  "2026-08-25T14:33:56Z",
+    "baselineCommit":  "5920bf27ac9b411dca657ea0bd984f506a1b2857",
+    "assets":  [
+                   {
+                       "path":  "Backend/tools/generate_fleet_v2_donor.py",
+                       "role":  "oracle-generator",
+                       "sha256":  "90ED5E776EE117DF95A2CAE014A744BF324D0717F1F90A921C9403C814B7B6AE",
+                       "bytes":  153611,
+                       "present":  true
+                   },
+                   {
+                       "path":  "Backend/tools/phenomenon_harness.py",
+                       "role":  "phenomena-runner",
+                       "sha256":  "981F227E722115288FB954F7FFA3CB375184D0B26C3FB7428122A7E6AB94E6CE",
+                       "bytes":  20017,
+                       "present":  true
+                   },
+                   {
+                       "path":  "docs/m1/phenomena/manifest.csv",
+                       "role":  "declared-phenomena",
+                       "sha256":  "5D402A968E4CD6FD70EE89D9D594066B61A8EF3BCC6A56ED46606DDB8806759B",
+                       "bytes":  2052,
+                       "present":  true
+                   },
+                   {
+                       "path":  "docs/m1/phenomena/T-027_coverage_ledger.csv",
+                       "role":  "coverage-ledger",
+                       "sha256":  "B401B6E3C2461113171752B76D5EF1C936F190165AD0CD46A16C337EE0CDAADE",
+                       "bytes":  46991,
+                       "present":  true
+                   },
+                   {
+                       "path":  "scripts/demo/Reemit-Fleetv2Donor.ps1",
+                       "role":  "oracle-reemit-command",
+                       "sha256":  "33A3C33A4D7C8E1C27846E57E4CC6A4654FECAE968B487036BB6FC36522D2A34",
+                       "bytes":  16093,
+                       "present":  true
+                   }
+               ],
+    "declaredPhenomena":  [
+                              {
+                                  "id":  "PPIQ-COIL-COILING-TEMP-DEFECTS",
+                                  "expectedDirection":  "negative",
+                                  "minimumPopulation":  "5000",
+                                  "expectedEffectBand":  "-0.1600..-0.0500",
+                                  "conditioningVariable":  "grade_or_recipe",
+                                  "expectedAfterConditioning":  "-0.0500..0.0500",
+                                  "isNegativeControl":  "false"
+                              },
+                              {
+                                  "id":  "PPIQ-DOWNTIME-IMPACT-SCALES-WITH-STOPPAGE",
+                                  "expectedDirection":  "positive",
+                                  "minimumPopulation":  "300",
+                                  "expectedEffectBand":  "0.4000..1.0000",
+                                  "conditioningVariable":  "",
+                                  "expectedAfterConditioning":  "",
+                                  "isNegativeControl":  "false"
+                              },
+                              {
+                                  "id":  "PPIQ-SENSOR-ARTEFACT-COILING-TEMP",
+                                  "expectedDirection":  "negative",
+                                  "minimumPopulation":  "780",
+                                  "expectedEffectBand":  "-0.3000..0.3000",
+                                  "conditioningVariable":  "",
+                                  "expectedAfterConditioning":  "",
+                                  "isNegativeControl":  "false"
+                              }
+                          ],
+    "reproducibility":  "The generator and the phenomena runner are pinned by hash, so a rerun of the same generator against the frozen historical database reproduces the declared effects. Executing the runner is a separate step and is not asserted by this lock.",
+    "relockProcedure":  "Deliberate change to an oracle asset requires regenerating this lock in the same commit as the change, with a written reason. A silent asset edit fails the freeze gate."
+}

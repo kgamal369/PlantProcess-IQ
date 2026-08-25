@@ -1,0 +1,36 @@
+﻿# Legacy vocabulary present in generic product surfaces.
+#
+# Every line is OPEN work owned by the plant-vocabulary sweep. This file is a
+# ratchet, not permission: the freeze gate fails if any entry appears that is not
+# listed here, and fails if the total grows. Removing lines is the intended
+# direction and requires no approval.
+#
+# Measured at commit 5920bf27ac9b411dca657ea0bd984f506a1b2857
+# Entries: 26
+
+Backend/PlantProcess.Analytics.Core/Readiness/ReadinessGate.cs|49|heat
+Backend/PlantProcess.Application/Analytics/Value/Demo/Phase7WorkedCaseFixtures.cs|15|coil
+Backend/PlantProcess.Application/Analytics/Value/ValueImpactEngine.cs|35|coil
+Backend/PlantProcess.Application/Assistant/AssistantGroundingEvalGate.cs|121|caster
+Backend/PlantProcess.Application/Assistant/AssistantGroundingEvalGate.cs|131|caster
+Backend/PlantProcess.Application/AssistantRuntime/Phase8AssistantRuntimeContracts.cs|227|coil
+Backend/PlantProcess.Application/Dashboarding/Services/Widgets/DashboardDimensionRegistry.cs|86|coil
+Backend/PlantProcess.Application/Top15/Phase34/Top15Phase34Runtime.cs|254|coil
+Backend/PlantProcess.Application/Top15/Phase34/Top15Phase34Runtime.cs|255|coil
+Backend/PlantProcess.Application/Top15/Phase34/Top15Phase34Runtime.cs|256|coil
+Backend/PlantProcess.Application/Top15/Phase34/Top15Phase34Runtime.cs|257|coil
+Backend/PlantProcess.Application/Top15/Phase34/Top15Phase34Runtime.cs|258|coil
+Backend/PlantProcess.Application/Top15/Phase34/Top15Phase34Runtime.cs|259|coil
+Backend/PlantProcess.Application/Top15/Phase34/Top15Phase34Runtime.cs|259|heat
+Backend/PlantProcess.Application/Top15/Phase34/Top15Phase34Runtime.cs|333|coil
+Backend/PlantProcess.Application/Top15/Phase34/Top15Phase34Runtime.cs|344|coil
+Backend/PlantProcess.Application/Top15/Phase34/Top15Phase34Runtime.cs|400|coil
+Backend/PlantProcess.Infrastructure/Analytics/DotNetAdvancedCorrelationEngine.cs|35|coil
+Backend/PlantProcess.Infrastructure/Analytics/NpgsqlFeatureVectorLoader.cs|40|heat
+Backend/PlantProcess.Infrastructure/Analytics/NpgsqlFeatureVectorLoader.cs|58|heat
+Backend/PlantProcess.Infrastructure/Analytics/NpgsqlFeatureVectorLoader.cs|59|heat
+Backend/PlantProcess.Infrastructure/Analytics/NpgsqlFeatureVectorLoader.cs|60|heat
+Backend/PlantProcess.Infrastructure/Analytics/NpgsqlFeatureVectorLoader.cs|128|heat
+Backend/PlantProcess.Infrastructure/Analytics/NpgsqlValueImpactRepository.cs|62|coil
+Backend/PlantProcess.Infrastructure/Analytics/NpgsqlValueImpactRepository.cs|66|coil
+Backend/PlantProcess.Infrastructure/Analytics/PostgresCorrelationComputeEngine.cs|25|coil
