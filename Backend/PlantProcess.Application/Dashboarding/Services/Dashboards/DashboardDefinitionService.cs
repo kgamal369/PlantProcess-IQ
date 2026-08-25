@@ -583,7 +583,52 @@ private async Task<int> EnsureTemplateAsync(
         }
     }
 
+    RetireUndeclaredProductWidgets(dashboard, widgets, ref changed);
+
     return changed;
+}
+
+/// <summary>
+/// Convergence, not accumulation.
+///
+/// This authority created and repaired widgets but never retired one. Deleting a
+/// widget from the declarations therefore left the persisted row active and
+/// executing: two widgets removed at source kept failing the release replay
+/// afterwards, because nothing had told the database they were gone.
+///
+/// The persisted product-owned set now converges to the declared set. A widget
+/// the declarations no longer name is retired through the repository's existing
+/// convention - deactivated, then soft-deleted with a reason - so the history
+/// stays readable and the widget-code uniqueness index releases the code.
+///
+/// Bounded by provenance, not by code. Only rows this authority wrote are
+/// considered, compared ordinally against the product template marker. A
+/// customer-authored widget survives even when its code, dimension or measure
+/// matches a product one, and even when it sits on a canonical system dashboard.
+/// Product authority reconciles its own rows and nothing else.
+/// </summary>
+private static void RetireUndeclaredProductWidgets(
+    DashboardDefinition dashboard,
+    IEnumerable<TemplateWidgetSeed> widgets,
+    ref int changed)
+{
+    var declared = new HashSet<string>(
+        widgets.Select(seed => seed.Code),
+        StringComparer.OrdinalIgnoreCase);
+
+    var undeclared = dashboard.Widgets
+        .Where(widget =>
+            !widget.IsDeleted &&
+            string.Equals(widget.SourceSystem, "PlantProcessIQ.SystemTemplates", StringComparison.Ordinal) &&
+            !declared.Contains(widget.WidgetCode))
+        .ToList();
+
+    foreach (var widget in undeclared)
+    {
+        widget.Deactivate();
+        widget.SoftDelete("no longer declared by the canonical system-template authority");
+        changed++;
+    }
 }
 
 public async Task<ApplicationResult<int>> RepairSystemTemplatesAsync(

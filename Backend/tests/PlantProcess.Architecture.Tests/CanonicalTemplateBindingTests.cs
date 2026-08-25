@@ -77,6 +77,55 @@ public sealed class CanonicalTemplateBindingTests
             Environment.NewLine + string.Join(Environment.NewLine, offenders));
     }
 
+    [Fact]
+    public void The_authority_converges_the_persisted_set_to_the_declared_set()
+    {
+        var source = Source();
+
+        Assert.Contains("RetireUndeclaredProductWidgets", source, StringComparison.Ordinal);
+
+        Assert.True(
+            Regex.IsMatch(source, @"RetireUndeclaredProductWidgets\(\s*dashboard\s*,\s*widgets\s*,\s*ref\s+changed\s*\)\s*;"),
+            "Convergence must run for every seeded dashboard, or a widget deleted at source keeps executing.");
+    }
+
+    [Fact]
+    public void Retirement_is_bounded_by_product_provenance()
+    {
+        var source = Source();
+        var method = Regex.Match(
+            source,
+            @"private static void RetireUndeclaredProductWidgets[\s\S]*?\n\}",
+            RegexOptions.Singleline);
+
+        Assert.True(method.Success, "The convergence method is missing.");
+
+        Assert.Contains("PlantProcessIQ.SystemTemplates", method.Value, StringComparison.Ordinal);
+
+        Assert.True(
+            Regex.IsMatch(method.Value, @"SourceSystem[\s\S]{0,120}StringComparison\.Ordinal"),
+            "Provenance must be compared ordinally. A customer-authored widget must survive reconciliation " +
+            "even when its code, dimension or measure matches a product one.");
+    }
+
+    [Fact]
+    public void Retirement_uses_the_existing_soft_convention_and_never_deletes_rows()
+    {
+        var source = Source();
+        var method = Regex.Match(
+            source,
+            @"private static void RetireUndeclaredProductWidgets[\s\S]*?\n\}",
+            RegexOptions.Singleline);
+
+        Assert.True(method.Success, "The convergence method is missing.");
+        Assert.Contains("Deactivate()", method.Value, StringComparison.Ordinal);
+        Assert.Contains("SoftDelete(", method.Value, StringComparison.Ordinal);
+
+        Assert.False(
+            Regex.IsMatch(method.Value, @"\.Remove\(|RemoveRange\(|ExecuteDelete"),
+            "Retirement must not physically delete a definition row.");
+    }
+
     private static string Source()
     {
         var full = Path.Combine(FindRepositoryRoot(), AuthorityPath.Replace('/', Path.DirectorySeparatorChar));
