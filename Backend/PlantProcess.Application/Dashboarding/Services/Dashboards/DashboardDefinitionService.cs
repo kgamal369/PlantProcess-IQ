@@ -417,7 +417,7 @@ public async Task<ApplicationResult<int>> EnsureSystemTemplatesAsync(
             "Default risk dashboard showing risk score distribution, risk by equipment, and risk by material type.",
         widgets:
         [
-            TemplateWidget("RISK_BY_CLASS", "Risk by Class", "donut", DashboardMetadataCodes.Dimensions.RiskClass, DashboardMetadataCodes.Measures.RiskScore, 0),
+            TemplateWidget("RISK_BY_CLASS", "Risk by Class", "bar", DashboardMetadataCodes.Dimensions.RiskClass, DashboardMetadataCodes.Measures.RiskScore, 0),
             TemplateWidget("RISK_BY_EQUIPMENT", "Risk by Equipment", "bar", DashboardMetadataCodes.Dimensions.Equipment, DashboardMetadataCodes.Measures.RiskScore, 1),
             TemplateWidget("RISK_BY_MATERIAL_TYPE", "Risk by Material Type", "bar", DashboardMetadataCodes.Dimensions.MaterialUnitType, DashboardMetadataCodes.Measures.RiskScore, 2),
         ],
@@ -443,9 +443,7 @@ public async Task<ApplicationResult<int>> EnsureSystemTemplatesAsync(
             "Default correlation exploration dashboard for suspected contributors, defect rates, and equipment-level patterns.",
         widgets:
         [
-            TemplateWidget("CORR_DEFECT_RATE_BY_EQUIPMENT", "Defect Rate by Equipment", "bar", DashboardMetadataCodes.Dimensions.Equipment, DashboardMetadataCodes.Measures.DefectRate, 0),
-            TemplateWidget("CORR_DEFECT_RATE_BY_TYPE", "Defect Rate by Defect Type", "bar", DashboardMetadataCodes.Dimensions.DefectType, DashboardMetadataCodes.Measures.DefectRate, 1),
-            TemplateWidget("CORR_RISK_BY_DAY", "Risk Trend by Day", "line", DashboardMetadataCodes.Dimensions.Day, DashboardMetadataCodes.Measures.RiskScore, 2),
+            TemplateWidget("CORR_RISK_BY_DAY", "Risk Trend by Day", "line", DashboardMetadataCodes.Dimensions.Day, DashboardMetadataCodes.Measures.RiskScore, 0),
         ],
         cancellationToken);
 
