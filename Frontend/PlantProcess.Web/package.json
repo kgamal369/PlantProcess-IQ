@@ -89,6 +89,7 @@
     "lint:json": "eslint . -f json -o eslint-report.json",
     "lint:ci": "node scripts/lint-ratchet.mjs",
     "releasetruth:persisted-definitions": "powershell -NoProfile -ExecutionPolicy Bypass -File tests/release-truth/Invoke-PersistedDefinitionReplay.ps1",
+    "releasetruth:customer-routes": "playwright test --config=playwright.release-truth.config.ts",
     "releasetruth:persisted-definitions:falsify": "powershell -NoProfile -ExecutionPolicy Bypass -File tests/release-truth/Invoke-PersistedDefinitionReplay.ps1 -Falsify",
     "releasetruth:persisted-definitions:evidence": "powershell -NoProfile -ExecutionPolicy Bypass -File tests/release-truth/Export-ReplayFailureEvidence.ps1",
     "lint:ratchet:init": "node scripts/lint-ratchet.mjs --init",
