@@ -1,0 +1,1555 @@
+{
+    "artifact":  "canonical-migration-order",
+    "purpose":  "The single ordered path that builds a database from zero. A script outside this path is never replayed as part of a build.",
+    "generatedAtUtc":  "2026-08-25T21:26:19Z",
+    "baselineCommit":  "c1760d787bddf73caea071ddc6b9752501eb208c",
+    "dispositions":  [
+                         "Canonical",
+                         "HistoricalRepair",
+                         "Superseded",
+                         "FixtureOnly",
+                         "DeferredWithReason"
+                     ],
+    "rules":  [
+                  "The path is tiered: EF migrations, then Backend/database/scripts, then Backend/database/views.",
+                  "Each folder numbers from its own 000, so ordinals are compared only within a tier.",
+                  "Explicit adjudication beats filename heuristics. Every override records its reason.",
+                  "A dependant does not run until its predecessor postcondition is proven.",
+                  "Exactly one ordered path exists. This file is it.",
+                  "Every SQL file carries exactly one disposition. There is no unknown state.",
+                  "A new script joins this manifest in the same commit that creates it.",
+                  "A table is created once on the path; any later create must be guarded by IF NOT EXISTS.",
+                  "Demonstration, seed and test content is never on the path.",
+                  "Read-model views are a separate authority applied after every schema script, and every view they declare must exist in the built database.",
+                  "System templates are created by the runtime authority. SQL template scripts are migration history, not a second runtime authority."
+              ],
+    "summary":  {
+                    "totalFiles":  146,
+                    "canonicalPath":  97,
+                    "distinctTables":  173,
+                    "governedDuplicates":  7,
+                    "ungovernedDuplicates":  0,
+                    "efMigrations":  7,
+                    "freshBuild":  "EXECUTED",
+                    "canonicalViews":  1,
+                    "declaredViews":  4,
+                    "declaredViewsMissing":  0,
+                    "freshBuildTables":  210
+                },
+    "efMigrationBaseline":  {
+                                "note":  "The schema baseline. Applied by dotnet ef database update before any SQL script; several scripts fail by name without it.",
+                                "project":  "Backend/PlantProcess.Infrastructure",
+                                "startupProject":  "Backend/PlantProcess.Api",
+                                "migrations":  [
+                                                   {
+                                                       "name":  "20260617112819_InitialBaseline",
+                                                       "sha256":  "A098368C30CD77FAAC228B6F2DF88C5B84D44A4067158ED441FEF6C62F123E09"
+                                                   },
+                                                   {
+                                                       "name":  "20260617113126_AuditAppendOnlyTriggers",
+                                                       "sha256":  "4157061CC53C31D11F1A056767D3EB29EE442DC1F4386A844A29FCB213382CB1"
+                                                   },
+                                                   {
+                                                       "name":  "20260623120620_SourceSystemActiveDefault",
+                                                       "sha256":  "3A10CFF12A028363D86EAEDC14F11C7E3298E8CE10E23A6B8E567222CA4A7862"
+                                                   },
+                                                   {
+                                                       "name":  "20260802210601_AddDowntimeQuantities",
+                                                       "sha256":  "CE1AA6612B67C8CE81491B67252921A8AF43ADAA860ACD37C2A7B8E478E18EED"
+                                                   },
+                                                   {
+                                                       "name":  "20260816112200_T044R1MigrationParity",
+                                                       "sha256":  "D3160AB62E47CDDBBA2DA5C09BBFFD5CD160D9A7BD32943A2D76900577C8840A"
+                                                   },
+                                                   {
+                                                       "name":  "20260817082208_T064JobTargetDefinitionParity",
+                                                       "sha256":  "0233327254243B30EDF9A2B8C42163FC6F2EC3473992A0C9439AB2A7E212441B"
+                                                   },
+                                                   {
+                                                       "name":  "20260817154438_T064TargetParametersParity",
+                                                       "sha256":  "31799DE8348F4F1A1A89F66130732D9F167BDEDF58E45DBB7F1983DDDAE1FA60"
+                                                   }
+                                               ]
+                            },
+    "canonicalViews":  [
+                           {
+                               "path":  "Backend/database/views/006_dashboard_dataset_views.sql",
+                               "order":  97,
+                               "sha256":  "CE3C664F6749755A3F319FDC86B120289EA7E1E9D7A748A074F9FA2D12099C12",
+                               "note":  "Read-model view authority. Applied after every schema script, before the probe database is dropped."
+                           }
+                       ],
+    "declaredViews":  [
+                          "public.vw_dashboard_correlation_summary",
+                          "public.vw_dashboard_data_quality_summary",
+                          "public.vw_dashboard_latest_risk_by_material",
+                          "public.vw_dashboard_quality_overview"
+                      ],
+    "canonicalPath":  [
+                          {
+                              "position":  1,
+                              "ordinal":  0,
+                              "path":  "Backend/database/scripts/000_schema_migrations_watermark.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "F85FA6FB06D66C9C0F46E09FCD94D007A25B87308E375A843979748BA75D103C",
+                              "createsTables":  [
+                                                    "public.schema_migrations"
+                                                ]
+                          },
+                          {
+                              "position":  2,
+                              "ordinal":  0,
+                              "path":  "Backend/database/scripts/000_schemas.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "5DEEE2605ABA3F6D04FAA0CBF6BA1476E71738751755D452561BBCFD2F6B9B53",
+                              "createsTables":  [
+
+                                                ]
+                          },
+                          {
+                              "position":  3,
+                              "ordinal":  50,
+                              "path":  "Backend/database/scripts/050_dashboard_phase8_9_10_indexes.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "6B7A541F579A6E85BE55D82BEC1117E7A2AD9D26D2C54FB77F0ECE4B10EAF97D",
+                              "createsTables":  [
+
+                                                ]
+                          },
+                          {
+                              "position":  4,
+                              "ordinal":  60,
+                              "path":  "Backend/database/scripts/060_phase_8_9_dashboard_materialized_views.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "382A9D482DF3AE7F4275BA9FCAF72C807D22C3D817B373858A63988533AF5C60",
+                              "createsTables":  [
+
+                                                ]
+                          },
+                          {
+                              "position":  5,
+                              "ordinal":  95,
+                              "path":  "Backend/database/scripts/095_create_runtime_app_role_admin_only.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "B12184218C4EA21F9B25AA225177733C6A3A226A8A2C1C82FE663333FD8F9302",
+                              "createsTables":  [
+
+                                                ]
+                          },
+                          {
+                              "position":  6,
+                              "ordinal":  96,
+                              "path":  "Backend/database/scripts/096_harden_audit_log_immutability.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "40FBCE0D185926B1A676D24641466BC539FAA8228C4B9D6A8B53D2B6FA0D3DB4",
+                              "createsTables":  [
+
+                                                ]
+                          },
+                          {
+                              "position":  7,
+                              "ordinal":  113,
+                              "path":  "Backend/database/scripts/113_phase1_widget_script_layer.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "B20FE82065430BA52C910C188ACB88059B14673252EE1D2F585BCA3468258F8D",
+                              "createsTables":  [
+
+                                                ]
+                          },
+                          {
+                              "position":  8,
+                              "ordinal":  115,
+                              "path":  "Backend/database/scripts/115_phase2_integrity_audit.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "7228C77AD5EA086D290995A2CDFFE3B94E563ADA074E0727D18CABE70D3F1340",
+                              "createsTables":  [
+                                                    "public.phase2_integrity_findings"
+                                                ]
+                          },
+                          {
+                              "position":  9,
+                              "ordinal":  116,
+                              "path":  "Backend/database/scripts/116_phase2_operation_analytics_pilot_foundation.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "3D4B93051A7896E40228A69CD161F78D99D0F0F6D7F86A75EB2CDA91C4603812",
+                              "createsTables":  [
+                                                    "public.demo_language_truth_rules",
+                                                    "public.inspection_jobs",
+                                                    "public.kpi_parameter_bindings",
+                                                    "public.long_operation_progress",
+                                                    "public.ml_job_lifecycle_states",
+                                                    "public.tenant_isolation_decisions"
+                                                ]
+                          },
+                          {
+                              "position":  10,
+                              "ordinal":  117,
+                              "path":  "Backend/database/scripts/117_phase8_widget_script_layer_entity_mapping.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "7A34817836B28ECAE6E311809545BA08209C7F649D9222A6756431CEBE1DC4B3",
+                              "createsTables":  [
+                                                    "public.dashboard_widget_expression_audit"
+                                                ]
+                          },
+                          {
+                              "position":  11,
+                              "ordinal":  120,
+                              "path":  "Backend/database/scripts/120_phase02_canonical_schema_mapping_engine.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "FD44C360B5FF1271D331ADFF2FDE0170750AF16A77B2550DD06B36B945416A95",
+                              "createsTables":  [
+                                                    "public.canonical_schema_view_audit",
+                                                    "public.canonical_schema_views",
+                                                    "public.schema_mapping_executions"
+                                                ]
+                          },
+                          {
+                              "position":  12,
+                              "ordinal":  121,
+                              "path":  "Backend/database/scripts/121_phase01_bootstrap_token_sweep.sql",
+                              "disposition":  "HistoricalRepair",
+                              "sha256":  "487B42648AAB0C2EA39A758DA2915B716794BD9646195E44B409EE7F7946786F",
+                              "createsTables":  [
+
+                                                ]
+                          },
+                          {
+                              "position":  13,
+                              "ordinal":  141,
+                              "path":  "Backend/database/scripts/141_phase03_page_builder_foundation.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "DAB83821D4A36191EC9C591D35970A932EB069B77FADC4D94A2C645B81041606",
+                              "createsTables":  [
+                                                    "public.page_definition_audit",
+                                                    "public.page_definition_shares",
+                                                    "public.page_definitions"
+                                                ]
+                          },
+                          {
+                              "position":  14,
+                              "ordinal":  200,
+                              "path":  "Backend/database/scripts/200_phase02_ml_foundation_feature_store_pgvector.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "054C427EB9E53BAF553850F309EC800C56DC6E7A2F107A058A850FC0A61AC274",
+                              "createsTables":  [
+                                                    "public.ml_correlation_compute_runs",
+                                                    "public.ml_correlation_results_v2",
+                                                    "public.ml_feature_definitions",
+                                                    "public.ml_feature_store_refresh_runs",
+                                                    "public.ml_feature_values",
+                                                    "public.ml_knowledge_base_items",
+                                                    "public.ml_outcome_definitions",
+                                                    "public.ml_outcome_values"
+                                                ]
+                          },
+                          {
+                              "position":  15,
+                              "ordinal":  201,
+                              "path":  "Backend/database/scripts/201_phase02_ml_feature_store_v6_completion.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "65687A04BC4111FBA10DD61DC4E34AB1F5F2463F26624051B2D6AB7ED10EF5F1",
+                              "createsTables":  [
+
+                                                ]
+                          },
+                          {
+                              "position":  16,
+                              "ordinal":  202,
+                              "path":  "Backend/database/scripts/202_phase02_ml_compute_basic_correlations_hotfix.sql",
+                              "disposition":  "HistoricalRepair",
+                              "sha256":  "8EBF0A75A2C0741106B153DBE2E46E23EBEAE232AFB53AECC71D1C29A3EA272A",
+                              "createsTables":  [
+
+                                                ]
+                          },
+                          {
+                              "position":  17,
+                              "ordinal":  203,
+                              "path":  "Backend/database/scripts/203_phase02_ml_compute_v6_wrapper_hotfix.sql",
+                              "disposition":  "HistoricalRepair",
+                              "sha256":  "0CEA67E9469DFE5798046B270E1127F95142A652F7796186D7BDB64E319E1F66",
+                              "createsTables":  [
+
+                                                ]
+                          },
+                          {
+                              "position":  18,
+                              "ordinal":  204,
+                              "path":  "Backend/database/scripts/204_phase04_phase05_ml_learning_core.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "CF4851A64ACF90656DCE339863562BA78BD99C60ADCD3ED0DCF3EFB0CA8B2E57",
+                              "createsTables":  [
+                                                    "public.ml_learning_job_catalog_v1",
+                                                    "public.ml_learning_observations_v1",
+                                                    "public.ml_learning_results_v1",
+                                                    "public.ml_learning_runs_v1"
+                                                ]
+                          },
+                          {
+                              "position":  19,
+                              "ordinal":  205,
+                              "path":  "Backend/database/scripts/205_phase04_phase05_completion_governance_jobs_tests.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "77769811D44D333E0188D41CFA180842033DBE6B3EFEA09B2A76D02B0831A9CF",
+                              "createsTables":  [
+                                                    "public.ml_ai_provider_catalog_v1",
+                                                    "public.ml_learning_backoff_audit_v1",
+                                                    "public.ml_learning_golden_test_results_v1",
+                                                    "public.ml_narrative_safety_audit_v1"
+                                                ]
+                          },
+                          {
+                              "position":  20,
+                              "ordinal":  206,
+                              "path":  "Backend/database/scripts/206_fix_dashboard_widget_definition_schema_drift.sql",
+                              "disposition":  "HistoricalRepair",
+                              "sha256":  "1E49AE9FB80B26D58B6FA59DF4029EF08D47DFEAB000A639C03D2CCF9DC1F5F0",
+                              "createsTables":  [
+
+                                                ]
+                          },
+                          {
+                              "position":  21,
+                              "ordinal":  207,
+                              "path":  "Backend/database/scripts/207_fix_dashboard_widget_expression_smallint_schema_drift.sql",
+                              "disposition":  "HistoricalRepair",
+                              "sha256":  "27E18C3E6718D31F1B4ABC151231F9BF1F5CE8BCEEA3133A2ECB35342D62C685",
+                              "createsTables":  [
+
+                                                ]
+                          },
+                          {
+                              "position":  22,
+                              "ordinal":  250,
+                              "path":  "Backend/database/scripts/250_p3_advanced_analysis_tenant_scope.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "EB53A6B460E7C4A245851E56CFB4AD6C8C3026052FA6D38BC645618C201F950F",
+                              "createsTables":  [
+
+                                                ]
+                          },
+                          {
+                              "position":  23,
+                              "ordinal":  251,
+                              "path":  "Backend/database/scripts/251_p1_correlation_method_honesty.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "8C01B54905A37B906DFDC32E43366465C3E3C31CB7EE73E5B8DE7E7DE807BEB7",
+                              "createsTables":  [
+
+                                                ]
+                          },
+                          {
+                              "position":  24,
+                              "ordinal":  252,
+                              "path":  "Backend/database/scripts/252_job_event_log.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "BD388B79D9983DC5DF4010198087AFE72BDC249B3303F48D8DAC15EC20F02409",
+                              "createsTables":  [
+                                                    "public.job_log"
+                                                ]
+                          },
+                          {
+                              "position":  25,
+                              "ordinal":  300,
+                              "path":  "Backend/database/scripts/300_p01_p02_security_access_control_spine.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "8484EC4AA6247082859DC7EE38A0F40AAFF72D90C19697F7303F24523A81D64A",
+                              "createsTables":  [
+                                                    "public.ppiq_access_audit_log",
+                                                    "public.ppiq_auth_users",
+                                                    "public.ppiq_license_feature_defaults",
+                                                    "public.ppiq_refresh_tokens",
+                                                    "public.ppiq_role_permission_defaults",
+                                                    "public.ppiq_tenants"
+                                                ]
+                          },
+                          {
+                              "position":  26,
+                              "ordinal":  301,
+                              "path":  "Backend/database/scripts/301_p01_p02_authstore_compatibility_bridge.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "BE16B92D5920C9EC9F762F8AC00C103777A1831AD6A9A826F7B18FDF1C68D568",
+                              "createsTables":  [
+                                                    "public.app_users",
+                                                    "public.auth_refresh_tokens",
+                                                    "public.tenants"
+                                                ]
+                          },
+                          {
+                              "position":  27,
+                              "ordinal":  302,
+                              "path":  "Backend/database/scripts/302_p01_p02_authstore_lineage_lock.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "AE6944F62E4CDA898CDCD200863709E5061A757607979B2D698D4F2D48FACCD8",
+                              "createsTables":  [
+
+                                                ]
+                          },
+                          {
+                              "position":  28,
+                              "ordinal":  302,
+                              "path":  "Backend/database/scripts/302_p02_authstore_runtime_lineage_lock.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "8DE4702420F9B67A4FB5A4B726451EB0E5B7C50FB5ACFF73899473F0EAB1F1CF",
+                              "createsTables":  [
+
+                                                ]
+                          },
+                          {
+                              "position":  29,
+                              "ordinal":  310,
+                              "path":  "Backend/database/scripts/310_mapping_genealogy_foundation.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "E69902008B28A123A02FC8A46E06816FEF7881C52F4F66A87207A147A5B4F31D",
+                              "createsTables":  [
+                                                    "public.canonical_business_keys",
+                                                    "public.canonical_parameter_observations",
+                                                    "public.canonical_process_step_executions",
+                                                    "public.ppiq_business_key_definitions",
+                                                    "public.ppiq_business_key_members",
+                                                    "public.ppiq_mapping_versions"
+                                                ]
+                          },
+                          {
+                              "position":  30,
+                              "ordinal":  311,
+                              "path":  "Backend/database/scripts/311_p03_p04_fix_genealogy_walk_and_safe_sql.sql",
+                              "disposition":  "HistoricalRepair",
+                              "sha256":  "54620B0331F45DE4F3ADC7D61CC3F398D213AC4771747ACD7059FBE3FBB4818F",
+                              "createsTables":  [
+
+                                                ]
+                          },
+                          {
+                              "position":  31,
+                              "ordinal":  312,
+                              "path":  "Backend/database/scripts/312_p03_p04_completion_pack_a.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "EC2A10D592D0CA1069410B70AE83640FD6CF8088D3AA0FAAF2022E6968EE9D46",
+                              "createsTables":  [
+
+                                                ]
+                          },
+                          {
+                              "position":  32,
+                              "ordinal":  313,
+                              "path":  "Backend/database/scripts/313_p03_p04_completion_pack_a_hotfix.sql",
+                              "disposition":  "HistoricalRepair",
+                              "sha256":  "AE1FCDB0E4E2052EDC7B90C67AFB59B8BE41C11C3F6E719FCE98560811CF9DAE",
+                              "createsTables":  [
+
+                                                ]
+                          },
+                          {
+                              "position":  33,
+                              "ordinal":  320,
+                              "path":  "Backend/database/scripts/320_p3_business_key_reconciliation.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "F9E682D4A1D0EAD4BD6934DEF1D9A4DDDE9CDD4A8C44AFE0E77B3D0FD44C8EB3",
+                              "createsTables":  [
+                                                    "public.ppiq_business_key_rules"
+                                                ]
+                          },
+                          {
+                              "position":  34,
+                              "ordinal":  320,
+                              "path":  "Backend/database/scripts/320_phase2_canonical_completion.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "AC6CCD9D94D709C61FEF272F996F926517FD6D792DE43C8A7B6A5FA088A557FB",
+                              "createsTables":  [
+                                                    "canon.suggestion",
+                                                    "canon.value_impact"
+                                                ]
+                          },
+                          {
+                              "position":  35,
+                              "ordinal":  322,
+                              "path":  "Backend/database/scripts/322_p3_transition_attribution_detailed.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "6B6DD26A44B379A6F5398E32FD718685F381E2555B386857835AC0FFF6E0C512",
+                              "createsTables":  [
+
+                                                ]
+                          },
+                          {
+                              "position":  36,
+                              "ordinal":  360,
+                              "path":  "Backend/database/scripts/360_p05_read_model_refresh_infrastructure.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "38C245F130D9AC84A288BFFBAF8FA352359988DAA638FDB177A4D52BCFCDB0BD",
+                              "createsTables":  [
+                                                    "public.read_model_refresh_runs"
+                                                ]
+                          },
+                          {
+                              "position":  37,
+                              "ordinal":  361,
+                              "path":  "Backend/database/scripts/361_p05_dashboard_read_models.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "A69841D995AB30016F2A50DAA83214270E328F370B66D9DED08E8D76C5BB69F0",
+                              "createsTables":  [
+
+                                                ]
+                          },
+                          {
+                              "position":  38,
+                              "ordinal":  362,
+                              "path":  "Backend/database/scripts/362_p05_dashboard_read_models_extra.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "B17B36C50CBF727B7C1855B1A5EECF7F0906F7350073F579DC161097B8260F9E",
+                              "createsTables":  [
+
+                                                ]
+                          },
+                          {
+                              "position":  39,
+                              "ordinal":  363,
+                              "path":  "Backend/database/scripts/363_p05_kpi_targets_alerts.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "2CFD7EF8D7C6367200EC464A638A3296DA74A4B93DC5893B3D77CE9DED36457A",
+                              "createsTables":  [
+                                                    "public.kpi_evaluation_alerts",
+                                                    "public.kpi_targets"
+                                                ]
+                          },
+                          {
+                              "position":  40,
+                              "ordinal":  400,
+                              "path":  "Backend/database/scripts/400_phase4_value_engine.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "C36C81D4BFBED9806C3F2D6A4540F98DB9FD8DB4DC0D4A1FE75A2304F2990A84",
+                              "createsTables":  [
+                                                    "canon.cost_assumption",
+                                                    "canon.cost_assumption_audit"
+                                                ]
+                          },
+                          {
+                              "position":  41,
+                              "ordinal":  410,
+                              "path":  "Backend/database/scripts/410_phase5_suggestions.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "368C992C3BBD85F6DAC9A92D5DD0094BFC6E35FDB29232CE5525D49F6B13A55C",
+                              "createsTables":  [
+                                                    "canon.suggestion_audit",
+                                                    "canon.suggestion_comment"
+                                                ]
+                          },
+                          {
+                              "position":  42,
+                              "ordinal":  420,
+                              "path":  "Backend/database/scripts/420_p3_value_evidence_hmi.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "115521EFB5E67DE209F45207211110C072B9886802EADCCC769974AA06AD13A3",
+                              "createsTables":  [
+                                                    "canon.blended_material_provenance",
+                                                    "canon.cost_assumption",
+                                                    "canon.finding_coverage_evidence",
+                                                    "canon.value_impact_result",
+                                                    "public.ppiq_i18n_string_keys",
+                                                    "public.ppiq_i18n_translations"
+                                                ]
+                          },
+                          {
+                              "position":  43,
+                              "ordinal":  420,
+                              "path":  "Backend/database/scripts/420_phase6_assistant.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "04E211CE488A367304CB3CC3482F0C4049047A058537FA4FE5C740C4057B1B18",
+                              "createsTables":  [
+                                                    "canon.assistant_chunk",
+                                                    "canon.assistant_index_run"
+                                                ]
+                          },
+                          {
+                              "position":  44,
+                              "ordinal":  421,
+                              "path":  "Backend/database/scripts/421_phase7_value_realization_ledger.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "CF0F4F83FB5F87AB311EDD898810E8AF17280DA2EAA65C12D982A56582A2F1A3",
+                              "createsTables":  [
+                                                    "canon.value_realization_ledger"
+                                                ]
+                          },
+                          {
+                              "position":  45,
+                              "ordinal":  425,
+                              "path":  "Backend/database/scripts/425_p3_t17_cost_assumption_i18n_contract.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "C2EC9B9D2987AE8C4D503EE337E432C1ACC64A3FD383CA76157119C7A336B166",
+                              "createsTables":  [
+                                                    "public.ppiq_i18n_string_keys",
+                                                    "public.ppiq_i18n_translations"
+                                                ]
+                          },
+                          {
+                              "position":  46,
+                              "ordinal":  426,
+                              "path":  "Backend/database/scripts/426_p3_t18_readonly_query_preview_role.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "E32B382898030614CA027F0627D4C38A439B7B847DBA22819D72E4E47057ED83",
+                              "createsTables":  [
+
+                                                ]
+                          },
+                          {
+                              "position":  47,
+                              "ordinal":  430,
+                              "path":  "Backend/database/scripts/430_p4_production_assistant.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "DC6A0E45CB13D280AD0ECFE0C27154F57F96766627A5AE7DCB78552A8E97C22C",
+                              "createsTables":  [
+                                                    "canon.assistant_audit_log",
+                                                    "canon.assistant_chunk",
+                                                    "canon.assistant_embedding_provider_config",
+                                                    "canon.assistant_eval_case",
+                                                    "canon.assistant_retrieval_index_job"
+                                                ]
+                          },
+                          {
+                              "position":  48,
+                              "ordinal":  430,
+                              "path":  "Backend/database/scripts/430_phase3_phase4_certification_mapping_health.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "B2CDABF19ED66008EC78732BBBA09EC028EACA48823DFAC8A5D0554D4E2441FA",
+                              "createsTables":  [
+                                                    "public.ppiq_analysis_population_evidence",
+                                                    "public.ppiq_schema_drift_events",
+                                                    "public.ppiq_source_schema_snapshot_fields",
+                                                    "public.ppiq_source_schema_snapshots"
+                                                ]
+                          },
+                          {
+                              "position":  49,
+                              "ordinal":  440,
+                              "path":  "Backend/database/scripts/440_p5_ot_safe_acquisition.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "A7AF081F25504EAFFB2CC6555EBB26698862A78F5701F2699FAF2C35E22A63D0",
+                              "createsTables":  [
+                                                    "acquisition.edge_collector_batches",
+                                                    "acquisition.edge_collector_buffer_status",
+                                                    "acquisition.edge_collectors",
+                                                    "acquisition.historian_tag_mappings",
+                                                    "acquisition.schema_drift_events"
+                                                ]
+                          },
+                          {
+                              "position":  50,
+                              "ordinal":  500,
+                              "path":  "Backend/database/scripts/500_v5_p01_auth_argon2id_and_secret_hygiene.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "9F64E6B8EE815AC915187EC6BB74827E634D474E204CDD93FD985CFFA719657D",
+                              "createsTables":  [
+
+                                                ]
+                          },
+                          {
+                              "position":  51,
+                              "ordinal":  510,
+                              "path":  "Backend/database/scripts/510_v5_p02_rls_tenant_isolation_and_secret_vault.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "FAEB4B35777E5EE802B17336855BEDEC0913D5D1FB0899D5C8F2FBC3D53DCAE4",
+                              "createsTables":  [
+                                                    "public.ppiq_secret_store"
+                                                ]
+                          },
+                          {
+                              "position":  52,
+                              "ordinal":  520,
+                              "path":  "Backend/database/scripts/520_v5_p03_timeseries_foundation.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "F20F1FD7A498744C84D5997F92F4010F688A0FD169DE7AEF91C6A38AB458BD86",
+                              "createsTables":  [
+                                                    "public.ppiq_telemetry_ingestion_checkpoints",
+                                                    "public.ppiq_telemetry_ingestion_metrics",
+                                                    "public.ppiq_telemetry_rollup_daily",
+                                                    "public.ppiq_telemetry_rollup_hourly",
+                                                    "public.ppiq_time_series_capabilities",
+                                                    "public.ppiq_time_series_policy"
+                                                ]
+                          },
+                          {
+                              "position":  53,
+                              "ordinal":  530,
+                              "path":  "Backend/database/scripts/530_v5_p04_assistant_model_gateway_boundary.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "54B42C3BA8D34F9C5A9EAD7FC79CDEBDC9D8E70B0D72121CEE2199BA857805A2",
+                              "createsTables":  [
+                                                    "public.ppiq_assistant_audit_log",
+                                                    "public.ppiq_assistant_eval_cases",
+                                                    "public.ppiq_assistant_eval_runs",
+                                                    "public.ppiq_assistant_model_pins",
+                                                    "public.ppiq_assistant_provider_configs",
+                                                    "public.ppiq_assistant_redaction_policies"
+                                                ]
+                          },
+                          {
+                              "position":  54,
+                              "ordinal":  540,
+                              "path":  "Backend/database/scripts/540_v5_p05_visual_mapper_foundation.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "FA24DDD7D8AE583191AD3D37ADD00D88540E2E06A2263050258A65C6AF646384",
+                              "createsTables":  [
+                                                    "public.ppiq_defect_catalog_mappings",
+                                                    "public.ppiq_schema_drift_events",
+                                                    "public.ppiq_visual_mapper_business_keys",
+                                                    "public.ppiq_visual_mapper_canonical_suggestions",
+                                                    "public.ppiq_visual_mapper_columns",
+                                                    "public.ppiq_visual_mapper_dry_runs",
+                                                    "public.ppiq_visual_mapper_joins",
+                                                    "public.ppiq_visual_mapper_sessions",
+                                                    "public.ppiq_visual_mapper_tables",
+                                                    "public.ppiq_visual_mapper_templates",
+                                                    "public.ppiq_visual_mapper_versions"
+                                                ]
+                          },
+                          {
+                              "position":  55,
+                              "ordinal":  541,
+                              "path":  "Backend/database/scripts/541_v5_p05_visual_mapper_draft_definition.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "523D54749138C2ED0A3174F0DD57DE3D89229B404847160DB6371322D19B6D5A",
+                              "createsTables":  [
+
+                                                ]
+                          },
+                          {
+                              "position":  56,
+                              "ordinal":  550,
+                              "path":  "Backend/database/scripts/550_v5_p06_blended_provenance.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "2A3AFBEEDB01D5F638AEA0E7F2411307AC4088F6E207230928905A1D6D1010BE",
+                              "createsTables":  [
+
+                                                ]
+                          },
+                          {
+                              "position":  57,
+                              "ordinal":  560,
+                              "path":  "Backend/database/scripts/560_v5_p07_plant_connector_breadth.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "CD877FA7226C6B5DF7C63D066B6E58F71999ED2451EEACA44FBA83BD1380E710",
+                              "createsTables":  [
+                                                    "public.ppiq_connector_backfill_jobs",
+                                                    "public.ppiq_connector_schema_drift_events",
+                                                    "public.ppiq_connector_sync_checkpoints",
+                                                    "public.ppiq_connector_tag_catalog",
+                                                    "public.ppiq_connector_telemetry_samples",
+                                                    "public.ppiq_connector_truth_snapshots",
+                                                    "public.ppiq_plant_connectors"
+                                                ]
+                          },
+                          {
+                              "position":  58,
+                              "ordinal":  570,
+                              "path":  "Backend/database/scripts/570_v5_p08_enterprise_identity_mfa_sessions.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "84B1829CB2D2CF17DD76801B1F27842FDD99E7340F0F8C3A9F56C10FDDBE1372",
+                              "createsTables":  [
+                                                    "public.ppiq_account_protection_state",
+                                                    "public.ppiq_auth_audit_events",
+                                                    "public.ppiq_identity_policy",
+                                                    "public.ppiq_mfa_recovery_codes",
+                                                    "public.ppiq_mfa_totp_enrollments",
+                                                    "public.ppiq_refresh_token_reuse_events",
+                                                    "public.ppiq_user_sessions"
+                                                ]
+                          },
+                          {
+                              "position":  59,
+                              "ordinal":  580,
+                              "path":  "Backend/database/scripts/580_v5_p09_enterprise_identity_sso_scim.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "65848934F45EA3ECC323896F72ED60D04ECB5756D48E141D03FA8D3037EE2C52",
+                              "createsTables":  [
+                                                    "public.ppiq_identity_provisioning_audit",
+                                                    "public.ppiq_scim_bearer_tokens",
+                                                    "public.ppiq_scim_group_members",
+                                                    "public.ppiq_scim_groups",
+                                                    "public.ppiq_scim_users",
+                                                    "public.ppiq_sso_principals",
+                                                    "public.ppiq_sso_provider_configs",
+                                                    "public.ppiq_sso_role_mappings"
+                                                ]
+                          },
+                          {
+                              "position":  60,
+                              "ordinal":  590,
+                              "path":  "Backend/database/scripts/590_v5_p10_signed_license_anti_tamper.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "DD6C6322A0DB30C60437A101CF1CF9E95F96E6B27674255BDC2642D1B603E4DA",
+                              "createsTables":  [
+                                                    "public.ppiq_license_entitlement_projection",
+                                                    "public.ppiq_license_events",
+                                                    "public.ppiq_license_signing_keys",
+                                                    "public.ppiq_signed_license_artifacts"
+                                                ]
+                          },
+                          {
+                              "position":  61,
+                              "ordinal":  600,
+                              "path":  "Backend/database/scripts/600_v5_p11_outbound_notifications_leads.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "21F0EED347E04D71C58156884BE9118EF045BCB4D85D636AA32BFF519C2544B6",
+                              "createsTables":  [
+                                                    "public.ppiq_lead_captures",
+                                                    "public.ppiq_notification_channels",
+                                                    "public.ppiq_notification_deliveries",
+                                                    "public.ppiq_notification_preferences",
+                                                    "public.ppiq_suggestion_action_outcomes"
+                                                ]
+                          },
+                          {
+                              "position":  62,
+                              "ordinal":  610,
+                              "path":  "Backend/database/scripts/610_v5_p12_i18n_rtl_mobile.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "F20AF3528F78966516F70ECEA88800E66E46682236A6A1C417F8128790D73277",
+                              "createsTables":  [
+                                                    "public.ppiq_i18n_locales",
+                                                    "public.ppiq_i18n_string_keys",
+                                                    "public.ppiq_i18n_translations",
+                                                    "public.ppiq_mobile_readiness_checks"
+                                                ]
+                          },
+                          {
+                              "position":  63,
+                              "ordinal":  620,
+                              "path":  "Backend/database/scripts/620_v5_p13_deployment_dr_portability.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "AEBF7D0CBC82FCC2D9C3883586BE8BFC31E76E58278FB70DC4791CBA1E5F9FB1",
+                              "createsTables":  [
+                                                    "public.ppiq_deployment_airgap_bundles",
+                                                    "public.ppiq_deployment_dr_drills",
+                                                    "public.ppiq_open_format_export_bundles",
+                                                    "public.ppiq_source_code_escrow_records"
+                                                ]
+                          },
+                          {
+                              "position":  64,
+                              "ordinal":  630,
+                              "path":  "Backend/database/scripts/630_v5_p14_compliance_refactor_controls.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "1395C587871CD7155E6470D1A866A107232870C68FA5B1E866E9A9DDACFDAF52",
+                              "createsTables":  [
+                                                    "public.ppiq_audit_events",
+                                                    "public.ppiq_control_evidence_matrix",
+                                                    "public.ppiq_data_subject_requests",
+                                                    "public.ppiq_product_module_refactor_inventory",
+                                                    "public.ppiq_retention_policies",
+                                                    "public.ppiq_retention_run_logs"
+                                                ]
+                          },
+                          {
+                              "position":  65,
+                              "ordinal":  640,
+                              "path":  "Backend/database/scripts/640_remaining_sensitive_data_catalog.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "DA51A3A09269768212F37D09A0D132A39AB795DD2FBD661FFF9EC81A434CF5F5",
+                              "createsTables":  [
+                                                    "public.ppiq_sensitive_data_catalog"
+                                                ]
+                          },
+                          {
+                              "position":  66,
+                              "ordinal":  650,
+                              "path":  "Backend/database/scripts/650_remaining_p10_ed25519_verified_license.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "6603B02EA49707A6B7424C205BAC606DC320BCF568316CCA0217429889271789",
+                              "createsTables":  [
+                                                    "public.ppiq_ed25519_activated_licenses",
+                                                    "public.ppiq_ed25519_entitlement_audit",
+                                                    "public.ppiq_ed25519_license_public_keys"
+                                                ]
+                          },
+                          {
+                              "position":  67,
+                              "ordinal":  660,
+                              "path":  "Backend/database/scripts/660_remaining_p09_sso_scim_runtime_certification.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "9B5015F1702EA9EB23A5B3865385C1D1D6807B2DEB1C14ACDC1A8F1402249AFE",
+                              "createsTables":  [
+                                                    "public.ppiq_oidc_runtime_jwks_keys",
+                                                    "public.ppiq_scim_runtime_contract_events",
+                                                    "public.ppiq_sso_runtime_validation_events"
+                                                ]
+                          },
+                          {
+                              "position":  68,
+                              "ordinal":  665,
+                              "path":  "Backend/database/scripts/665_pack_b35_mostly_green_task_closure.sql",
+                              "disposition":  "HistoricalRepair",
+                              "sha256":  "F26170648FC2110753803F218983F70F18405DE4A0AFC415ADAF438895C3713D",
+                              "createsTables":  [
+                                                    "public.ppiq_closure_runtime_probe_results",
+                                                    "public.ppiq_mostly_green_task_closure"
+                                                ]
+                          },
+                          {
+                              "position":  69,
+                              "ordinal":  670,
+                              "path":  "Backend/database/scripts/670_pack_b4_connector_runtime_certification.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "C6BCA1CD503495739B0A9B857AB2ABAF217CE990B95799B035F1B285BF07374E",
+                              "createsTables":  [
+                                                    "public.ppiq_connector_backfill_checkpoints",
+                                                    "public.ppiq_connector_runtime_events",
+                                                    "public.ppiq_connector_runtime_readings",
+                                                    "public.ppiq_connector_runtime_sources"
+                                                ]
+                          },
+                          {
+                              "position":  70,
+                              "ordinal":  680,
+                              "path":  "Backend/database/scripts/680_pack_b5_private_model_gateway_ciso_controls.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "3179A279A505B7CD8AEC76A58F14D527733DD77506D2BD2F1F3B9F71D8DC876D",
+                              "createsTables":  [
+                                                    "public.ppiq_assistant_prompt_governance_events",
+                                                    "public.ppiq_model_eval_golden_cases",
+                                                    "public.ppiq_model_eval_runs",
+                                                    "public.ppiq_model_gateway_policy_results",
+                                                    "public.ppiq_private_model_endpoint_configs"
+                                                ]
+                          },
+                          {
+                              "position":  71,
+                              "ordinal":  690,
+                              "path":  "Backend/database/scripts/690_mapping_and_genealogy_function_completion.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "B647163EF193E9464B329E959C6D383D750D1E88F01C72A146B84FF78FC5F3DD",
+                              "createsTables":  [
+
+                                                ]
+                          },
+                          {
+                              "position":  72,
+                              "ordinal":  690,
+                              "path":  "Backend/database/scripts/690_phase01_genealogy_recursive_cycle_guard.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "9173ED634CF9B2E9B078ACF19763D4A46E7230ECBCB1C63D29BF8FC0F8D1811F",
+                              "createsTables":  [
+
+                                                ]
+                          },
+                          {
+                              "position":  73,
+                              "ordinal":  700,
+                              "path":  "Backend/database/scripts/700_canonical_default_tenant_repair.sql",
+                              "disposition":  "HistoricalRepair",
+                              "sha256":  "C21B0E153EF94D7FE53ADCEC2F6CC0E57C41E95F5C856BD56A100F86A605866A",
+                              "createsTables":  [
+
+                                                ]
+                          },
+                          {
+                              "position":  74,
+                              "ordinal":  700,
+                              "path":  "Backend/database/scripts/700_phase03_readonly_preview_role.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "8A37900921E74D63348B1DE3408CDF43A68421AECFFCBE28C77C5F4977F7C59B",
+                              "createsTables":  [
+
+                                                ]
+                          },
+                          {
+                              "position":  75,
+                              "ordinal":  705,
+                              "path":  "Backend/database/scripts/705_dashboard_widget_active_code_unique.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "EE5ADC98C0309BECEF5037EE84FB43594A13EC270585BBD85EF5FD06A8D2636F",
+                              "createsTables":  [
+
+                                                ]
+                          },
+                          {
+                              "position":  76,
+                              "ordinal":  715,
+                              "path":  "Backend/database/scripts/715_suggestion_population_method.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "16BBBE0EBAD674BF3A9F97E7ACAD4BE820150C3C4A2FD808492CEB42D7E306CE",
+                              "createsTables":  [
+
+                                                ]
+                          },
+                          {
+                              "position":  77,
+                              "ordinal":  725,
+                              "path":  "Backend/database/scripts/725_v1_correlation_run_timeout_and_result_proof.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "B2A70C9A3DA54CC6C07996488CA02ED3D765A2621F4AC5F8C8162456F97C9AC3",
+                              "createsTables":  [
+                                                    "public.ppiq_correlation_run_timeout_config"
+                                                ]
+                          },
+                          {
+                              "position":  78,
+                              "ordinal":  730,
+                              "path":  "Backend/database/scripts/730_alert_rules_and_plant_data_log.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "980F4A960CD4B38ADA14CFC43DDA0DC505F95628241C0C29B2ABC361A18FB0AD",
+                              "createsTables":  [
+                                                    "public.alert_rules",
+                                                    "public.plant_data_log"
+                                                ]
+                          },
+                          {
+                              "position":  79,
+                              "ordinal":  740,
+                              "path":  "Backend/database/scripts/740_feature_store_heat_lineage_and_defect_outcomes.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "70991E622E8B50D0DE49694AB7E1E8DD647AA0AB0D71B71DF2E6B7CAF5E37E95",
+                              "createsTables":  [
+
+                                                ]
+                          },
+                          {
+                              "position":  80,
+                              "ordinal":  741,
+                              "path":  "Backend/database/scripts/741_feature_store_coil_grain_projection.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "E5275251040B97489F331B74C24CEEE658D625BC246EEF033FEA30E726342034",
+                              "createsTables":  [
+
+                                                ]
+                          },
+                          {
+                              "position":  81,
+                              "ordinal":  742,
+                              "path":  "Backend/database/scripts/742_feature_regrain_generic.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "BD4E2D4053A6DBEA60438C8FCDBC122CC3739853E07B590D85840E9B664EE78E",
+                              "createsTables":  [
+
+                                                ]
+                          },
+                          {
+                              "position":  82,
+                              "ordinal":  750,
+                              "path":  "Backend/database/scripts/750_forensics_audit_subsystem.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "006A600807D80623837BB246884E77F3D717EDA1EACDAB27B41C10633EF76F48",
+                              "createsTables":  [
+                                                    "ppiq_forensics.wipe_audit",
+                                                    "public.ppiq_catalog_audit",
+                                                    "public.ppiq_purge_audit"
+                                                ]
+                          },
+                          {
+                              "position":  83,
+                              "ordinal":  760,
+                              "path":  "Backend/database/scripts/760_t025_lineage_and_outcome_producer.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "BFFC55A94A57158ADFC67E1B9C9A88BD72570332A6F239CF893F9AFC7DC036D1",
+                              "createsTables":  [
+
+                                                ]
+                          },
+                          {
+                              "position":  84,
+                              "ordinal":  770,
+                              "path":  "Backend/database/scripts/770_t039_definition_version_store.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "8399D81F75DE38521313AF3685D03393834A15E1ED33416A8D176FB889222088",
+                              "createsTables":  [
+                                                    "public.ppiq_definition_versions"
+                                                ]
+                          },
+                          {
+                              "position":  85,
+                              "ordinal":  771,
+                              "path":  "Backend/database/scripts/771_t041_page_audience_roles.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "51A858D9E0699A1AB3A829F0E0B9BE8CD93549230082871CDD4C4471AE3F95C1",
+                              "createsTables":  [
+
+                                                ]
+                          },
+                          {
+                              "position":  86,
+                              "ordinal":  772,
+                              "path":  "Backend/database/scripts/772_t042_page_backing_dashboard_and_publication.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "DE8335E8AEE3BF2CBE0F605EF4C20C388072C8F972E32A73F1639EBEC52F0D64",
+                              "createsTables":  [
+
+                                                ]
+                          },
+                          {
+                              "position":  87,
+                              "ordinal":  773,
+                              "path":  "Backend/database/scripts/773_t042_one_live_page_per_backing_dashboard.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "75380137B5F120C54CDC256699B68880F03D5251A2D414267C34C3210AA9BBD3",
+                              "createsTables":  [
+
+                                                ]
+                          },
+                          {
+                              "position":  88,
+                              "ordinal":  780,
+                              "path":  "Backend/database/scripts/780_t073_widget_result_evidence.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "6CEAF419CEE2772E81BCB823B28E45918A4D8AEC06349C47F224BB6A9E9F7AA0",
+                              "createsTables":  [
+                                                    "canon.assistant_widget_result"
+                                                ]
+                          },
+                          {
+                              "position":  89,
+                              "ordinal":  824,
+                              "path":  "Backend/database/scripts/824_t064_job_target_definition.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "AC21A277DF7DD25DB3D8A9FF12FA7A100DD7138CE5B02E7382D4D65065204A53",
+                              "createsTables":  [
+
+                                                ]
+                          },
+                          {
+                              "position":  90,
+                              "ordinal":  825,
+                              "path":  "Backend/database/scripts/825_t064_target_definition_kind_varchar64_convergence.sql",
+                              "disposition":  "HistoricalRepair",
+                              "sha256":  "811508B75F83C7A6DBB8BD680798C2FE886B3F30B87F6FB306B92F36DD018FBB",
+                              "createsTables":  [
+
+                                                ]
+                          },
+                          {
+                              "position":  91,
+                              "ordinal":  826,
+                              "path":  "Backend/database/scripts/826_t064_target_parameters.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "BBBC579C632B588D79629B836D677B6B0B8AB5132D01CC675ED58BFD0E9DAA3C",
+                              "createsTables":  [
+
+                                                ]
+                          },
+                          {
+                              "position":  92,
+                              "ordinal":  827,
+                              "path":  "Backend/database/scripts/827_t057_relationship_compatibility_persistence.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "2AC27E226652F10A89404C552C47AEC892B0ABDF884F5413640C7A729E320161",
+                              "createsTables":  [
+                                                    "public.ppiq_plant_relationship_members",
+                                                    "public.ppiq_plant_relationship_paths",
+                                                    "public.ppiq_plant_relationships"
+                                                ]
+                          },
+                          {
+                              "position":  93,
+                              "ordinal":  828,
+                              "path":  "Backend/database/scripts/828_t065_analysis_job_target_compatibility.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "58150A0A3280ED4EA76B0D344E5FE2B56ADC739B184824093A21D0574EA638AD",
+                              "createsTables":  [
+
+                                                ]
+                          },
+                          {
+                              "position":  94,
+                              "ordinal":  830,
+                              "path":  "Backend/database/scripts/830_system_template_single_authority.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "B46FB3FF379E4843311902946FBC833CC1C8A2DA8992DF88767CB1CADEA8056B",
+                              "createsTables":  [
+
+                                                ]
+                          },
+                          {
+                              "position":  95,
+                              "ordinal":  999,
+                              "path":  "Backend/database/scripts/999_grant_runtime_app_role_privileges.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "D6AC9B9221270CA85AC2BB7EF68441094A239B8A0616ADFC963809C3AA26E24A",
+                              "createsTables":  [
+
+                                                ]
+                          },
+                          {
+                              "position":  96,
+                              "ordinal":  null,
+                              "path":  "Backend/database/scripts/M2-28_results_v2_tenant_backfill.sql",
+                              "disposition":  "HistoricalRepair",
+                              "sha256":  "76792C12B18368414BBA1F19A98F6CD931A37DF80098766CC2D62F1EECFCF6CD",
+                              "createsTables":  [
+
+                                                ]
+                          },
+                          {
+                              "position":  97,
+                              "ordinal":  6,
+                              "path":  "Backend/database/views/006_dashboard_dataset_views.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "CE3C664F6749755A3F319FDC86B120289EA7E1E9D7A748A074F9FA2D12099C12",
+                              "createsTables":  [
+
+                                                ]
+                          }
+                      ],
+    "authoritativeOverrides":  [
+                                   {
+                                       "path":  "Backend/database/scripts/130_phase03_two_stage_delta_import_architecture.sql",
+                                       "disposition":  "DeferredWithReason",
+                                       "reason":  "Legacy two-stage import architecture coupled to the historical source-shaped demo schemas (src_meltshop_pg, src_inspection_mysql_shape, src_hsm_oracle_shape). Those shapes come from the Golden Demo Source Shapes script, which correctly does not belong to a generic current-release database. Generic DB Link and import replace the source-shape assumption through metadata and configuration. Satisfying this script would mean rebuilding the demo architecture the release is leaving behind."
+                                   },
+                                   {
+                                       "path":  "Backend/database/scripts/142_phase02_phase03_page_definition_and_demo_source_completion.sql",
+                                       "disposition":  "FixtureOnly",
+                                       "reason":  "Database audit authority classifies this mixed page-definition and demo-source completion script as optional demo content, explicitly outside the generic application schema flow. This is recorded classification, not a filename inference. The generic page schema is provided independently by 141_phase03_page_builder_foundation.sql, followed by 772 and 773."
+                                   },
+                                   {
+                                       "path":  "Backend/database/scripts/790_t044_canonical_widget_definitions.sql",
+                                       "disposition":  "Superseded",
+                                       "reason":  "Converges an existing database onto seed truth. The script states that a fresh rebuild does not need it and that it exists for databases never rebuilt."
+                                   },
+                                   {
+                                       "path":  "Backend/database/scripts/800_t045_canonical_widget_definitions.sql",
+                                       "disposition":  "Superseded",
+                                       "reason":  "Converges widget definitions carried by the historical presentation database onto seed truth. Existing-database convergence, not fresh-install authority."
+                                   },
+                                   {
+                                       "path":  "Backend/database/scripts/810_t045_packb_mi_sev_convergence.sql",
+                                       "disposition":  "Superseded",
+                                       "reason":  "Converges fixed presentation widget codes on a live database. Rebinding, not schema authority."
+                                   },
+                                   {
+                                       "path":  "Backend/database/scripts/811_t045_packc_mi_sev_title_convergence.sql",
+                                       "disposition":  "Superseded",
+                                       "reason":  "Title convergence over fixed presentation widget codes on a live database."
+                                   },
+                                   {
+                                       "path":  "Backend/database/scripts/812_t045_packd_analytical_page_bindings.sql",
+                                       "disposition":  "Superseded",
+                                       "reason":  "Page bindings derived from measurements taken against the historical presentation database."
+                                   },
+                                   {
+                                       "path":  "Backend/database/scripts/813_t045_packe_presentation_parameter_convergence.sql",
+                                       "disposition":  "Superseded",
+                                       "reason":  "Presentation parameter convergence over existing rows."
+                                   },
+                                   {
+                                       "path":  "Backend/database/scripts/814_t045_packf_residual_parameter_convergence.sql",
+                                       "disposition":  "Superseded",
+                                       "reason":  "Residual presentation parameter convergence over existing rows."
+                                   },
+                                   {
+                                       "path":  "Backend/database/scripts/815_t045_packg_operational_widget_convergence.sql",
+                                       "disposition":  "Superseded",
+                                       "reason":  "Operational widget convergence over fixed presentation widget codes."
+                                   },
+                                   {
+                                       "path":  "Backend/database/scripts/816_t045_closure_state.sql",
+                                       "disposition":  "Superseded",
+                                       "reason":  "Declares itself closure state and read only. Historical certification evidence, never a migration."
+                                   },
+                                   {
+                                       "path":  "Backend/database/scripts/817_t045_packi_mi_sev_retirement.sql",
+                                       "disposition":  "Superseded",
+                                       "reason":  "Retires fixed presentation widget codes on an existing database."
+                                   },
+                                   {
+                                       "path":  "Backend/database/scripts/818_t047_parameter_deep_analysis_grammar.sql",
+                                       "disposition":  "Superseded",
+                                       "reason":  "Rebinds fixed presentation widgets on the parameter deep analysis page."
+                                   },
+                                   {
+                                       "path":  "Backend/database/scripts/819_t047_parameter_deep_analysis_scatter.sql",
+                                       "disposition":  "Superseded",
+                                       "reason":  "Inserts a widget against a fixed presentation dashboard identity with plant-specific parameter codes the script states were chosen from data present on that installation. It cannot belong to a generic customer fresh install; its foreign-key failure was proof the presentation seed is deliberately absent."
+                                   },
+                                   {
+                                       "path":  "Backend/database/scripts/820_t047_production_quality_multiseries.sql",
+                                       "disposition":  "Superseded",
+                                       "reason":  "Rebinds fixed presentation widget slots by name inside a page composition."
+                                   },
+                                   {
+                                       "path":  "Backend/database/scripts/821_t047_packe_seven_page_composition.sql",
+                                       "disposition":  "Superseded",
+                                       "reason":  "Historical seven-page presentation composition with fixed dashboard and widget identities. Generic page authoring plus the runtime system-template authority own this responsibility now."
+                                   },
+                                   {
+                                       "path":  "Backend/database/scripts/822_t044r1_positional_and_specification_materialisation.sql",
+                                       "disposition":  "Superseded",
+                                       "reason":  "Two former responsibilities, both retired here. Schema parity is now owned by EF migration 20260816112200_T044R1MigrationParity. The remaining data materialisation reads source-shaped historical schemas and is not valid against an empty generic database."
+                                   },
+                                   {
+                                       "path":  "Backend/database/scripts/823_t047_final_page_bindings.sql",
+                                       "disposition":  "Superseded",
+                                       "reason":  "Seeds page and widget bindings using fixed presentation dashboard identities. The runtime system-template authority is the single authority for system templates; a second SQL page and widget authority is not preserved."
+                                   }
+                               ],
+    "postconditions":  [
+                           {
+                               "after":  "Backend/database/scripts/204_phase04_phase05_ml_learning_core.sql",
+                               "before":  "Backend/database/scripts/205_phase04_phase05_completion_governance_jobs_tests.sql",
+                               "requires":  "ml_learning_job_catalog_v1 exists"
+                           },
+                           {
+                               "after":  "Backend/database/scripts/141_phase03_page_builder_foundation.sql",
+                               "before":  "Backend/database/scripts/772_t042_page_backing_dashboard_and_publication.sql",
+                               "requires":  "page_definitions exists"
+                           },
+                           {
+                               "after":  "Backend/database/scripts/772_t042_page_backing_dashboard_and_publication.sql",
+                               "before":  "Backend/database/scripts/773_t042_one_live_page_per_backing_dashboard.sql",
+                               "requires":  "page_definitions carries both publication columns"
+                           }
+                       ],
+    "offPath":  [
+                    {
+                        "path":  "Backend/database/_review/audit_ddl_definition.sql",
+                        "disposition":  "FixtureOnly",
+                        "reason":  "Lives in a data, demonstration or test folder. Never replayed as part of a build."
+                    },
+                    {
+                        "path":  "Backend/database/_review/forensics_subsystem_capture.sql",
+                        "disposition":  "FixtureOnly",
+                        "reason":  "Lives in a data, demonstration or test folder. Never replayed as part of a build."
+                    },
+                    {
+                        "path":  "Backend/database/acceptance/rule2_proof.sql",
+                        "disposition":  "FixtureOnly",
+                        "reason":  "Lives in a data, demonstration or test folder. Never replayed as part of a build."
+                    },
+                    {
+                        "path":  "Backend/database/scripts/070_fix_system_template_widget_codes.sql",
+                        "disposition":  "Superseded",
+                        "reason":  "Retired to a notice only. Its responsibility moved to a named successor authority."
+                    },
+                    {
+                        "path":  "Backend/database/scripts/070_repair_system_template_widget_codes.sql",
+                        "disposition":  "Superseded",
+                        "reason":  "Retired to a notice only. Its responsibility moved to a named successor authority."
+                    },
+                    {
+                        "path":  "Backend/database/scripts/071_validate_dashboard_performance.sql",
+                        "disposition":  "Superseded",
+                        "reason":  "Retired to a notice only. Its responsibility moved to a named successor authority."
+                    },
+                    {
+                        "path":  "Backend/database/scripts/080_phase_3_4_connector_schema_foundation.sql",
+                        "disposition":  "Superseded",
+                        "reason":  "Retired to a notice only. Its responsibility moved to a named successor authority."
+                    },
+                    {
+                        "path":  "Backend/database/scripts/110_phase1_demo_source_shapes.sql",
+                        "disposition":  "FixtureOnly",
+                        "reason":  "Demonstration or seed content by name. A customer database must never replay it."
+                    },
+                    {
+                        "path":  "Backend/database/scripts/111_phase1_demo_mapping_views.sql",
+                        "disposition":  "FixtureOnly",
+                        "reason":  "Demonstration or seed content by name. A customer database must never replay it."
+                    },
+                    {
+                        "path":  "Backend/database/scripts/112_phase1_golden_demo_data.sql",
+                        "disposition":  "FixtureOnly",
+                        "reason":  "Demonstration or seed content by name. A customer database must never replay it."
+                    },
+                    {
+                        "path":  "Backend/database/scripts/130_phase03_two_stage_delta_import_architecture.sql",
+                        "disposition":  "DeferredWithReason",
+                        "reason":  "Legacy two-stage import architecture coupled to the historical source-shaped demo schemas (src_meltshop_pg, src_inspection_mysql_shape, src_hsm_oracle_shape). Those shapes come from the Golden Demo Source Shapes script, which correctly does not belong to a generic current-release database. Generic DB Link and import replace the source-shape assumption through metadata and configuration. Satisfying this script would mean rebuilding the demo architecture the release is leaving behind."
+                    },
+                    {
+                        "path":  "Backend/database/scripts/140_phase02_demo_sources_genealogy_spine.sql",
+                        "disposition":  "FixtureOnly",
+                        "reason":  "Demonstration or seed content by name. A customer database must never replay it."
+                    },
+                    {
+                        "path":  "Backend/database/scripts/142_phase02_phase03_page_definition_and_demo_source_completion.sql",
+                        "disposition":  "FixtureOnly",
+                        "reason":  "Database audit authority classifies this mixed page-definition and demo-source completion script as optional demo content, explicitly outside the generic application schema flow. This is recorded classification, not a filename inference. The generic page schema is provided independently by 141_phase03_page_builder_foundation.sql, followed by 772 and 773."
+                    },
+                    {
+                        "path":  "Backend/database/scripts/321_p3_golden_thread_and_missing_hop.sql",
+                        "disposition":  "FixtureOnly",
+                        "reason":  "Demonstration or seed content by name. A customer database must never replay it."
+                    },
+                    {
+                        "path":  "Backend/database/scripts/427_demo_cost_assumptions_DEMO_ONLY.sql",
+                        "disposition":  "FixtureOnly",
+                        "reason":  "Demonstration or seed content by name. A customer database must never replay it."
+                    },
+                    {
+                        "path":  "Backend/database/scripts/790_t044_canonical_widget_definitions.sql",
+                        "disposition":  "Superseded",
+                        "reason":  "Converges an existing database onto seed truth. The script states that a fresh rebuild does not need it and that it exists for databases never rebuilt."
+                    },
+                    {
+                        "path":  "Backend/database/scripts/800_t045_canonical_widget_definitions.sql",
+                        "disposition":  "Superseded",
+                        "reason":  "Converges widget definitions carried by the historical presentation database onto seed truth. Existing-database convergence, not fresh-install authority."
+                    },
+                    {
+                        "path":  "Backend/database/scripts/810_t045_packb_mi_sev_convergence.sql",
+                        "disposition":  "Superseded",
+                        "reason":  "Converges fixed presentation widget codes on a live database. Rebinding, not schema authority."
+                    },
+                    {
+                        "path":  "Backend/database/scripts/811_t045_packc_mi_sev_title_convergence.sql",
+                        "disposition":  "Superseded",
+                        "reason":  "Title convergence over fixed presentation widget codes on a live database."
+                    },
+                    {
+                        "path":  "Backend/database/scripts/812_t045_packd_analytical_page_bindings.sql",
+                        "disposition":  "Superseded",
+                        "reason":  "Page bindings derived from measurements taken against the historical presentation database."
+                    },
+                    {
+                        "path":  "Backend/database/scripts/813_t045_packe_presentation_parameter_convergence.sql",
+                        "disposition":  "Superseded",
+                        "reason":  "Presentation parameter convergence over existing rows."
+                    },
+                    {
+                        "path":  "Backend/database/scripts/814_t045_packf_residual_parameter_convergence.sql",
+                        "disposition":  "Superseded",
+                        "reason":  "Residual presentation parameter convergence over existing rows."
+                    },
+                    {
+                        "path":  "Backend/database/scripts/815_t045_packg_operational_widget_convergence.sql",
+                        "disposition":  "Superseded",
+                        "reason":  "Operational widget convergence over fixed presentation widget codes."
+                    },
+                    {
+                        "path":  "Backend/database/scripts/816_t045_closure_state.sql",
+                        "disposition":  "Superseded",
+                        "reason":  "Declares itself closure state and read only. Historical certification evidence, never a migration."
+                    },
+                    {
+                        "path":  "Backend/database/scripts/817_t045_packi_mi_sev_retirement.sql",
+                        "disposition":  "Superseded",
+                        "reason":  "Retires fixed presentation widget codes on an existing database."
+                    },
+                    {
+                        "path":  "Backend/database/scripts/818_t047_parameter_deep_analysis_grammar.sql",
+                        "disposition":  "Superseded",
+                        "reason":  "Rebinds fixed presentation widgets on the parameter deep analysis page."
+                    },
+                    {
+                        "path":  "Backend/database/scripts/819_t047_parameter_deep_analysis_scatter.sql",
+                        "disposition":  "Superseded",
+                        "reason":  "Inserts a widget against a fixed presentation dashboard identity with plant-specific parameter codes the script states were chosen from data present on that installation. It cannot belong to a generic customer fresh install; its foreign-key failure was proof the presentation seed is deliberately absent."
+                    },
+                    {
+                        "path":  "Backend/database/scripts/820_t047_production_quality_multiseries.sql",
+                        "disposition":  "Superseded",
+                        "reason":  "Rebinds fixed presentation widget slots by name inside a page composition."
+                    },
+                    {
+                        "path":  "Backend/database/scripts/821_t047_packe_seven_page_composition.sql",
+                        "disposition":  "Superseded",
+                        "reason":  "Historical seven-page presentation composition with fixed dashboard and widget identities. Generic page authoring plus the runtime system-template authority own this responsibility now."
+                    },
+                    {
+                        "path":  "Backend/database/scripts/822_t044r1_positional_and_specification_materialisation.sql",
+                        "disposition":  "Superseded",
+                        "reason":  "Two former responsibilities, both retired here. Schema parity is now owned by EF migration 20260816112200_T044R1MigrationParity. The remaining data materialisation reads source-shaped historical schemas and is not valid against an empty generic database."
+                    },
+                    {
+                        "path":  "Backend/database/scripts/823_t047_final_page_bindings.sql",
+                        "disposition":  "Superseded",
+                        "reason":  "Seeds page and widget bindings using fixed presentation dashboard identities. The runtime system-template authority is the single authority for system templates; a second SQL page and widget authority is not preserved."
+                    },
+                    {
+                        "path":  "Backend/database/seed/000_plantprocessiq_unified_advanced_realistic_demo_seed.sql",
+                        "disposition":  "FixtureOnly",
+                        "reason":  "Lives in a data, demonstration or test folder. Never replayed as part of a build."
+                    },
+                    {
+                        "path":  "Backend/database/seed/001_basic_genealogy_seed.sql",
+                        "disposition":  "FixtureOnly",
+                        "reason":  "Lives in a data, demonstration or test folder. Never replayed as part of a build."
+                    },
+                    {
+                        "path":  "Backend/database/seed/002_full_feature_demo_seed.sql",
+                        "disposition":  "FixtureOnly",
+                        "reason":  "Lives in a data, demonstration or test folder. Never replayed as part of a build."
+                    },
+                    {
+                        "path":  "Backend/database/seed/003_additional_demo_seed.sql",
+                        "disposition":  "FixtureOnly",
+                        "reason":  "Lives in a data, demonstration or test folder. Never replayed as part of a build."
+                    },
+                    {
+                        "path":  "Backend/database/seed/005_phase0_job_definitions.sql",
+                        "disposition":  "FixtureOnly",
+                        "reason":  "Lives in a data, demonstration or test folder. Never replayed as part of a build."
+                    },
+                    {
+                        "path":  "Backend/database/seed/010_p3_golden_thread_seed.sql",
+                        "disposition":  "FixtureOnly",
+                        "reason":  "Lives in a data, demonstration or test folder. Never replayed as part of a build."
+                    },
+                    {
+                        "path":  "Backend/database/seed/011_p4_demo_correctness_signal.sql",
+                        "disposition":  "FixtureOnly",
+                        "reason":  "Lives in a data, demonstration or test folder. Never replayed as part of a build."
+                    },
+                    {
+                        "path":  "Backend/database/seed/040_demo_readiness_fixtures_DEMO_ONLY.sql",
+                        "disposition":  "FixtureOnly",
+                        "reason":  "Lives in a data, demonstration or test folder. Never replayed as part of a build."
+                    },
+                    {
+                        "path":  "Backend/database/seed/090_phase1_dashboard_builder_indexes.sql",
+                        "disposition":  "FixtureOnly",
+                        "reason":  "Lives in a data, demonstration or test folder. Never replayed as part of a build."
+                    },
+                    {
+                        "path":  "Backend/database/seed/090_phase1_system_dashboard_templates.sql",
+                        "disposition":  "FixtureOnly",
+                        "reason":  "Lives in a data, demonstration or test folder. Never replayed as part of a build."
+                    },
+                    {
+                        "path":  "Backend/database/seed/091_phase1_dashboard_builder_explain_validate.sql",
+                        "disposition":  "FixtureOnly",
+                        "reason":  "Lives in a data, demonstration or test folder. Never replayed as part of a build."
+                    },
+                    {
+                        "path":  "Backend/database/seed/20260511_phase_c_staging_records.sql",
+                        "disposition":  "FixtureOnly",
+                        "reason":  "Lives in a data, demonstration or test folder. Never replayed as part of a build."
+                    },
+                    {
+                        "path":  "Backend/database/seed/dev_ed25519_public_key.sql",
+                        "disposition":  "FixtureOnly",
+                        "reason":  "Lives in a data, demonstration or test folder. Never replayed as part of a build."
+                    },
+                    {
+                        "path":  "Backend/database/seed/source-systems/synthetic_hsm_source_insert.sql",
+                        "disposition":  "FixtureOnly",
+                        "reason":  "Lives in a data, demonstration or test folder. Never replayed as part of a build."
+                    },
+                    {
+                        "path":  "Backend/database/seed/source-systems/synthetic_inspection_source_insert.sql",
+                        "disposition":  "FixtureOnly",
+                        "reason":  "Lives in a data, demonstration or test folder. Never replayed as part of a build."
+                    },
+                    {
+                        "path":  "Backend/database/seed/source-systems/synthetic_qms_source_insert.sql",
+                        "disposition":  "FixtureOnly",
+                        "reason":  "Lives in a data, demonstration or test folder. Never replayed as part of a build."
+                    },
+                    {
+                        "path":  "Backend/database/test-seeds/900_clean_test_auth_seed.sql",
+                        "disposition":  "FixtureOnly",
+                        "reason":  "Lives in a data, demonstration or test folder. Never replayed as part of a build."
+                    },
+                    {
+                        "path":  "Backend/database/validation/720_phase04_two_tenant_isolation_probe.sql",
+                        "disposition":  "FixtureOnly",
+                        "reason":  "Lives in a data, demonstration or test folder. Never replayed as part of a build."
+                    }
+                ],
+    "governedDuplicates":  [
+                               "canon.cost_assumption \u003c- Backend/database/scripts/420_p3_value_evidence_hmi.sql (guarded or recreated after an explicit drop)",
+                               "public.ppiq_i18n_string_keys \u003c- Backend/database/scripts/425_p3_t17_cost_assumption_i18n_contract.sql (guarded or recreated after an explicit drop)",
+                               "public.ppiq_i18n_translations \u003c- Backend/database/scripts/425_p3_t17_cost_assumption_i18n_contract.sql (guarded or recreated after an explicit drop)",
+                               "canon.assistant_chunk \u003c- Backend/database/scripts/430_p4_production_assistant.sql (guarded or recreated after an explicit drop)",
+                               "public.ppiq_schema_drift_events \u003c- Backend/database/scripts/540_v5_p05_visual_mapper_foundation.sql (guarded or recreated after an explicit drop)",
+                               "public.ppiq_i18n_string_keys \u003c- Backend/database/scripts/610_v5_p12_i18n_rtl_mobile.sql (guarded or recreated after an explicit drop)",
+                               "public.ppiq_i18n_translations \u003c- Backend/database/scripts/610_v5_p12_i18n_rtl_mobile.sql (guarded or recreated after an explicit drop)"
+                           ]
+}
