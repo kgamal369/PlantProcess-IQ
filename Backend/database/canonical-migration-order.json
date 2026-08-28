@@ -46,7 +46,7 @@
                                                 ],
                             "relocations":  224,
                             "terminalFile":  "Backend/database/topology/000_storage_topology_convergence.sql",
-                            "position":  97
+                            "position":  98
                         },
     "efMigrationBaseline":  {
                                 "note":  "The schema baseline. Applied by dotnet ef database update before any SQL script; several scripts fail by name without it.",
@@ -90,7 +90,7 @@
     "canonicalViews":  [
                            {
                                "path":  "Backend/database/views/006_dashboard_dataset_views.sql",
-                               "order":  98,
+                               "order":  99,
                                "sha256":  "729D127FA772E1E100A8AD1A6CEAF6B2BABBA5A3FED9991EB8EB62960D3D6865",
                                "note":  "Read-model view authority. Applied after every schema script and after topology convergence, before the probe database is dropped."
                            }
@@ -1194,6 +1194,18 @@
                           },
                           {
                               "position":  97,
+                              "ordinal":  831,
+                              "path":  "Backend/database/scripts/831_definition_store.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "EEB4E85AF2A67B995D56405EC278C6E9F87413832901B71DF3CF41D1D274214B",
+                              "createsTables":  [
+                                                    "ppiq_meta.definition_store",
+                                                    "ppiq_meta.definition_versions",
+                                                    "ppiq_meta.definition_dependencies"
+                                                ]
+                          },
+                          {
+                              "position":  98,
                               "ordinal":  0,
                               "path":  "Backend/database/topology/000_storage_topology_convergence.sql",
                               "disposition":  "Canonical",
@@ -1203,7 +1215,7 @@
                                                 ]
                           },
                           {
-                              "position":  98,
+                              "position":  99,
                               "ordinal":  6,
                               "path":  "Backend/database/views/006_dashboard_dataset_views.sql",
                               "disposition":  "Canonical",
