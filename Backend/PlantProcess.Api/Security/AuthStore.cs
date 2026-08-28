@@ -37,7 +37,7 @@ public sealed class AuthStore
         await EnsureOpenAsync(cancellationToken);
 
         await using var cmd = _db.Database.GetDbConnection().CreateCommand();
-        cmd.CommandText = "SELECT EXISTS (SELECT 1 FROM app_users WHERE is_enabled = true)";
+        cmd.CommandText = "SELECT EXISTS (SELECT 1 FROM ppiq_meta.app_users WHERE is_enabled = true)";
         var result = await cmd.ExecuteScalarAsync(cancellationToken);
         return result is bool b && b;
     }
@@ -66,8 +66,8 @@ SELECT
     u.compatibility_role,
     u.force_password_change,
     u.is_owner
-FROM app_users u
-JOIN tenants t ON t.id = u.tenant_id
+FROM ppiq_meta.app_users u
+JOIN ppiq_meta.tenants t ON t.id = u.tenant_id
 WHERE u.normalized_user_name = lower(@user_name)
   AND u.is_enabled = true
   AND t.is_active = true
@@ -151,7 +151,7 @@ LIMIT 1
 
         await using var cmd = _db.Database.GetDbConnection().CreateCommand();
         cmd.CommandText = """
-INSERT INTO app_users
+INSERT INTO ppiq_meta.app_users
 (
     tenant_id,
     user_name,
@@ -221,7 +221,7 @@ RETURNING id, tenant_id
 
         await using var cmd = _db.Database.GetDbConnection().CreateCommand();
         cmd.CommandText = """
-INSERT INTO auth_refresh_tokens
+INSERT INTO ppiq_meta.auth_refresh_tokens
 (tenant_id, user_id, token_hash, expires_at_utc, user_agent, client_ip)
 VALUES (@tenant_id, @user_id, @token_hash, @expires_at_utc, @user_agent, @client_ip)
 """;
@@ -253,9 +253,9 @@ SELECT
     u.compatibility_role,
     u.force_password_change,
     u.is_owner
-FROM auth_refresh_tokens rt
-JOIN app_users u ON u.id = rt.user_id
-JOIN tenants t ON t.id = u.tenant_id
+FROM ppiq_meta.auth_refresh_tokens rt
+JOIN ppiq_meta.app_users u ON u.id = rt.user_id
+JOIN ppiq_meta.tenants t ON t.id = u.tenant_id
 WHERE rt.token_hash = @token_hash
   AND rt.revoked_at_utc IS NULL
   AND rt.expires_at_utc > now()
@@ -279,7 +279,7 @@ LIMIT 1
 
         await using var cmd = _db.Database.GetDbConnection().CreateCommand();
         cmd.CommandText = """
-UPDATE auth_refresh_tokens
+UPDATE ppiq_meta.auth_refresh_tokens
 SET revoked_at_utc = now()
 WHERE token_hash = @token_hash
   AND revoked_at_utc IS NULL
@@ -299,7 +299,7 @@ WHERE token_hash = @token_hash
 
         await using var cmd = _db.Database.GetDbConnection().CreateCommand();
         cmd.CommandText = """
-UPDATE app_users
+UPDATE ppiq_meta.app_users
 SET
     password_hash = @hash,
     password_salt = @salt,
