@@ -313,7 +313,7 @@ public static class V5SignedLicensingEndpoints
         await using var cmd = connection.CreateCommand();
         cmd.CommandText =
             """
-            INSERT INTO public.ppiq_license_signing_keys
+            INSERT INTO ppiq_meta.ppiq_license_signing_keys
             (
                 key_id,
                 algorithm,
@@ -346,7 +346,7 @@ public static class V5SignedLicensingEndpoints
         cmd.CommandText =
             """
             SELECT key_id, algorithm, public_key_pem, COALESCE(private_key_pem_encrypted, '')
-            FROM public.ppiq_license_signing_keys
+            FROM ppiq_meta.ppiq_license_signing_keys
             WHERE key_id = @key_id
               AND is_active = true
             LIMIT 1
@@ -370,7 +370,7 @@ public static class V5SignedLicensingEndpoints
         cmd.CommandText =
             """
             SELECT key_id, algorithm, public_key_pem
-            FROM public.ppiq_license_signing_keys
+            FROM ppiq_meta.ppiq_license_signing_keys
             WHERE key_id = @key_id
               AND is_active = true
             LIMIT 1
@@ -435,7 +435,7 @@ public static class V5SignedLicensingEndpoints
         cmd.Transaction = tx;
         cmd.CommandText =
             """
-            INSERT INTO public.ppiq_signed_license_artifacts
+            INSERT INTO ppiq_meta.ppiq_signed_license_artifacts
             (
                 tenant_id,
                 license_key,
@@ -509,7 +509,7 @@ public static class V5SignedLicensingEndpoints
         cmd.Transaction = tx;
         cmd.CommandText =
             """
-            INSERT INTO public.ppiq_license_entitlement_projection
+            INSERT INTO ppiq_meta.ppiq_license_entitlement_projection
             (
                 tenant_id,
                 license_artifact_id,
@@ -592,7 +592,7 @@ public static class V5SignedLicensingEndpoints
         cmd.Transaction = tx;
         cmd.CommandText =
             """
-            INSERT INTO public.ppiq_license_events
+            INSERT INTO ppiq_meta.ppiq_license_events
             (
                 tenant_id,
                 license_artifact_id,

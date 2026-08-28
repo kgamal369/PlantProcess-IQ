@@ -75,7 +75,7 @@ public static class MlLearningEndpoints
                 last_finished_at_utc,
                 next_run_hint_utc,
                 last_error
-            FROM public.ml_learning_job_catalog_v1
+            FROM ppiq_meta.ml_learning_job_catalog_v1
             ORDER BY job_code
             """,
             cancellationToken);
@@ -198,7 +198,7 @@ public static class MlLearningEndpoints
                 finding_status,
                 evidence_json::text AS evidence_json,
                 created_at_utc
-            FROM public.ml_learning_results_v1
+            FROM ppiq_plant.ml_learning_results_v1
             {where}
             ORDER BY
                 effect_size DESC NULLS LAST,

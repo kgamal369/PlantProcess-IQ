@@ -108,7 +108,7 @@ private static async Task<Guid> UpsertCatalogAsync(
         await using var command = connection.CreateCommand();
         command.CommandText =
             """
-            INSERT INTO public.canonical_schema_views
+            INSERT INTO ppiq_meta.canonical_schema_views
             (
                 view_code,
                 view_name,

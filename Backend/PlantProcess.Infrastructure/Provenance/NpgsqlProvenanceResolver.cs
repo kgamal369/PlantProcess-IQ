@@ -41,7 +41,7 @@ public sealed class NpgsqlProvenanceResolver : IProvenanceResolver
         if (!Guid.TryParse(handle.Id, out var id))
             return ProvenanceResolution.Missing(handle, "Finding/JobRun id is not a GUID.");
 
-        await using (var runCmd = _dataSource.CreateCommand("SELECT 1 FROM public.ml_correlation_compute_runs WHERE id = @id"))
+        await using (var runCmd = _dataSource.CreateCommand("SELECT 1 FROM ppiq_meta.ml_correlation_compute_runs WHERE id = @id"))
         {
             runCmd.Parameters.AddWithValue("id", id);
             if (await runCmd.ExecuteScalarAsync(ct) is not null)
@@ -49,8 +49,8 @@ public sealed class NpgsqlProvenanceResolver : IProvenanceResolver
         }
 
         await using (var riskCmd = _dataSource.CreateCommand(
-            "SELECT COALESCE(mu.is_synthetic, false) FROM public.risk_scores rs " +
-            "JOIN public.material_units mu ON mu.id = rs.material_unit_id WHERE rs.id = @id"))
+            "SELECT COALESCE(mu.is_synthetic, false) FROM ppiq_plant.risk_scores rs " +
+            "JOIN ppiq_plant.material_units mu ON mu.id = rs.material_unit_id WHERE rs.id = @id"))
         {
             riskCmd.Parameters.AddWithValue("id", id);
             await using var reader = await riskCmd.ExecuteReaderAsync(ct);

@@ -67,7 +67,7 @@ public static class V5DeploymentPortabilityEndpoints
                     self_hosted_model_option,
                     sizing_tier,
                     status
-                FROM public.ppiq_deployment_airgap_bundles
+                FROM ppiq_meta.ppiq_deployment_airgap_bundles
                 WHERE tenant_id = @tenant_id
                 ORDER BY created_at_utc DESC
                 """;
@@ -111,7 +111,7 @@ public static class V5DeploymentPortabilityEndpoints
             await using var cmd = connection.CreateCommand();
             cmd.CommandText =
                 """
-                INSERT INTO public.ppiq_deployment_dr_drills
+                INSERT INTO ppiq_meta.ppiq_deployment_dr_drills
                 (
                     tenant_id,
                     drill_code,
@@ -183,7 +183,7 @@ public static class V5DeploymentPortabilityEndpoints
             await using var cmd = connection.CreateCommand();
             cmd.CommandText =
                 """
-                INSERT INTO public.ppiq_open_format_export_bundles
+                INSERT INTO ppiq_meta.ppiq_open_format_export_bundles
                 (
                     tenant_id,
                     export_code,

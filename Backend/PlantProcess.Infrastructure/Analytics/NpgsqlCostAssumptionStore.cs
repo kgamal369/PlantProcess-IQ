@@ -26,7 +26,7 @@ public sealed class NpgsqlCostAssumptionStore : ICostAssumptionStore
     public async Task<CostAssumptionSet?> GetActiveAsync(Guid tenantId, CancellationToken ct)
     {
         await using var cmd = _dataSource.CreateCommand(
-            $"SELECT {SelectColumns} FROM canon.cost_assumption WHERE tenant_id = @t ORDER BY version DESC LIMIT 1");
+            $"SELECT {SelectColumns} FROM ppiq_meta.cost_assumption WHERE tenant_id = @t ORDER BY version DESC LIMIT 1");
         cmd.Parameters.AddWithValue("t", tenantId);
         await using var reader = await cmd.ExecuteReaderAsync(ct);
         if (!await reader.ReadAsync(ct)) return null;
@@ -45,7 +45,7 @@ public sealed class NpgsqlCostAssumptionStore : ICostAssumptionStore
         {
             insert.Transaction = tx;
             insert.CommandText =
-                "INSERT INTO canon.cost_assumption (tenant_id, version, currency, " +
+                "INSERT INTO ppiq_meta.cost_assumption (tenant_id, version, currency, " +
                 "cost_per_ton_low, cost_per_ton_mid, cost_per_ton_high, " +
                 "downgrade_delta_low, downgrade_delta_mid, downgrade_delta_high, " +
                 "scrap_cost_low, scrap_cost_mid, scrap_cost_high, " +
@@ -72,7 +72,7 @@ public sealed class NpgsqlCostAssumptionStore : ICostAssumptionStore
         {
             audit.Transaction = tx;
             audit.CommandText =
-                "INSERT INTO canon.cost_assumption_audit (tenant_id, from_version, to_version, actor, before_json, after_json) " +
+                "INSERT INTO ppiq_meta.cost_assumption_audit (tenant_id, from_version, to_version, actor, before_json, after_json) " +
                 "VALUES (@t, @from, @to, @actor, @before::jsonb, @after::jsonb)";
             audit.Parameters.AddWithValue("t", tenantId);
             audit.Parameters.AddWithValue("from", (object?)before?.Version ?? DBNull.Value);

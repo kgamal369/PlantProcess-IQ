@@ -288,7 +288,7 @@ public static class V5Ed25519LicenseEndpoints
             await using var audit = connection.CreateCommand();
             audit.CommandText =
                 """
-                INSERT INTO public.ppiq_ed25519_entitlement_audit
+                INSERT INTO ppiq_meta.ppiq_ed25519_entitlement_audit
                 (
                     tenant_id,
                     license_key,
@@ -359,7 +359,7 @@ public static class V5Ed25519LicenseEndpoints
         cmd.CommandText =
             """
             SELECT public_key_b64
-            FROM public.ppiq_ed25519_license_public_keys
+            FROM ppiq_meta.ppiq_ed25519_license_public_keys
             WHERE tenant_id = @tenant_id
               AND key_id = @key_id
               AND algorithm = 'Ed25519'
@@ -411,7 +411,7 @@ public static class V5Ed25519LicenseEndpoints
             supersede.Transaction = tx;
             supersede.CommandText =
                 """
-                UPDATE public.ppiq_ed25519_activated_licenses
+                UPDATE ppiq_meta.ppiq_ed25519_activated_licenses
                 SET activation_status = 'superseded'
                 WHERE tenant_id = @tenant_id
                   AND activation_status = 'active'
@@ -427,7 +427,7 @@ public static class V5Ed25519LicenseEndpoints
             cmd.Transaction = tx;
             cmd.CommandText =
                 """
-                INSERT INTO public.ppiq_ed25519_activated_licenses
+                INSERT INTO ppiq_meta.ppiq_ed25519_activated_licenses
                 (
                     tenant_id,
                     license_key,

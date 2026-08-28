@@ -48,7 +48,7 @@ public static class TwoStageImportEndpoints
         var connection = dbContext.Database.GetDbConnection();
         await EnsureOpenAsync(connection, cancellationToken);
 
-        if (!await RelationExistsAsync(connection, "public.source_table_dump_registry", cancellationToken))
+        if (!await RelationExistsAsync(connection, "ppiq_staging.source_table_dump_registry", cancellationToken))
         {
             return Results.Ok(new
             {
@@ -87,7 +87,7 @@ public static class TwoStageImportEndpoints
                 import_cycle_minutes,
                 hmi_refresh_seconds,
                 is_active
-            FROM public.source_table_dump_registry
+            FROM ppiq_staging.source_table_dump_registry
             WHERE is_deleted = false
             ORDER BY source_schema_name, source_table_name;
             """,
@@ -114,7 +114,7 @@ public static class TwoStageImportEndpoints
                 last_index_after,
                 message,
                 failure_reason
-            FROM public.two_stage_import_runs
+            FROM ppiq_staging.two_stage_import_runs
             ORDER BY started_at_utc DESC
             LIMIT 20;
             """,
@@ -141,7 +141,7 @@ public static class TwoStageImportEndpoints
                 last_failed_row_count,
                 consecutive_failure_count,
                 last_timeout_seconds
-            FROM public.job_definitions
+            FROM ppiq_meta.job_definitions
             WHERE is_deleted = false
               AND (
                     job_category IS NOT NULL
@@ -166,23 +166,23 @@ public static class TwoStageImportEndpoints
             connection,
             """
             SELECT 'Registered source tables' AS metric, count(*)::text AS value
-            FROM public.source_table_dump_registry
+            FROM ppiq_staging.source_table_dump_registry
             WHERE is_deleted = false
             UNION ALL
             SELECT 'Active source tables', count(*)::text
-            FROM public.source_table_dump_registry
+            FROM ppiq_staging.source_table_dump_registry
             WHERE is_deleted = false AND is_active = true
             UNION ALL
             SELECT 'Dump tables', count(*)::text
             FROM information_schema.tables
-            WHERE table_schema = 'dump_store'
+            WHERE table_schema = 'ppiq_staging'
             UNION ALL
             SELECT 'Recent runs', count(*)::text
-            FROM public.two_stage_import_runs
+            FROM ppiq_staging.two_stage_import_runs
             WHERE started_at_utc >= now() - interval '24 hours'
             UNION ALL
             SELECT 'Failed recent runs', count(*)::text
-            FROM public.two_stage_import_runs
+            FROM ppiq_staging.two_stage_import_runs
             WHERE started_at_utc >= now() - interval '24 hours'
               AND run_status <> 'Ok';
             """,
@@ -207,14 +207,14 @@ public static class TwoStageImportEndpoints
         var connection = dbContext.Database.GetDbConnection();
         await EnsureOpenAsync(connection, cancellationToken);
 
-        if (!await RelationExistsAsync(connection, "public.source_table_dump_registry", cancellationToken))
+        if (!await RelationExistsAsync(connection, "ppiq_staging.source_table_dump_registry", cancellationToken))
             return ApplicationProblems.NotFound("Phase 03 registry table is not installed.");
 
         var rows = await ReadRowsAsync(
             connection,
             """
             SELECT *
-            FROM public.source_table_dump_registry
+            FROM ppiq_staging.source_table_dump_registry
             WHERE is_deleted = false
             ORDER BY source_schema_name, source_table_name;
             """,
@@ -258,7 +258,7 @@ public static class TwoStageImportEndpoints
                 message,
                 failure_reason,
                 result_json
-            FROM public.two_stage_import_runs
+            FROM ppiq_staging.two_stage_import_runs
             ORDER BY started_at_utc DESC
             LIMIT {maxRows};
             """,

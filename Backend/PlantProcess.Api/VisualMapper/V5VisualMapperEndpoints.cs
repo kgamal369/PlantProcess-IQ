@@ -76,7 +76,7 @@ public static class V5VisualMapperEndpoints
             cmd.CommandText =
                 """
                 SELECT template_code, display_name, source_archetype, template_definition
-                FROM public.ppiq_visual_mapper_templates
+                FROM ppiq_meta.ppiq_visual_mapper_templates
                 ORDER BY template_code
                 """;
 
@@ -111,7 +111,7 @@ public static class V5VisualMapperEndpoints
             await using var cmd = connection.CreateCommand();
             cmd.CommandText =
                 """
-                INSERT INTO public.ppiq_visual_mapper_sessions
+                INSERT INTO ppiq_meta.ppiq_visual_mapper_sessions
                 (
                     tenant_id,
                     source_code,
@@ -222,7 +222,7 @@ public static class V5VisualMapperEndpoints
             await using var cmd = connection.CreateCommand();
             cmd.CommandText =
                 """
-                INSERT INTO public.ppiq_visual_mapper_business_keys
+                INSERT INTO ppiq_meta.ppiq_visual_mapper_business_keys
                 (
                     tenant_id,
                     session_id,
@@ -291,7 +291,7 @@ public static class V5VisualMapperEndpoints
             await using var cmd = connection.CreateCommand();
             cmd.CommandText =
                 """
-                INSERT INTO public.ppiq_visual_mapper_joins
+                INSERT INTO ppiq_meta.ppiq_visual_mapper_joins
                 (
                     tenant_id,
                     session_id,
@@ -348,7 +348,7 @@ public static class V5VisualMapperEndpoints
             await using var cmd = connection.CreateCommand();
             cmd.CommandText =
                 """
-                INSERT INTO public.ppiq_visual_mapper_canonical_suggestions
+                INSERT INTO ppiq_meta.ppiq_visual_mapper_canonical_suggestions
                 (
                     tenant_id,
                     session_id,
@@ -416,7 +416,7 @@ public static class V5VisualMapperEndpoints
             await using var cmd = connection.CreateCommand();
             cmd.CommandText =
                 """
-                INSERT INTO public.ppiq_visual_mapper_dry_runs
+                INSERT INTO ppiq_meta.ppiq_visual_mapper_dry_runs
                 (
                     tenant_id,
                     session_id,
@@ -498,7 +498,7 @@ public static class V5VisualMapperEndpoints
             cmd.Transaction = tx;
             cmd.CommandText =
                 """
-                INSERT INTO public.ppiq_visual_mapper_versions
+                INSERT INTO ppiq_meta.ppiq_visual_mapper_versions
                 (
                     tenant_id,
                     session_id,
@@ -532,7 +532,7 @@ public static class V5VisualMapperEndpoints
             update.Transaction = tx;
             update.CommandText =
                 """
-                UPDATE public.ppiq_visual_mapper_sessions
+                UPDATE ppiq_meta.ppiq_visual_mapper_sessions
                 SET active_version_id = @version_id,
                     status = 'published',
                     updated_at_utc = now()
@@ -569,7 +569,7 @@ public static class V5VisualMapperEndpoints
         await using var cmd = connection.CreateCommand();
         cmd.CommandText =
             """
-            INSERT INTO public.ppiq_visual_mapper_tables
+            INSERT INTO ppiq_meta.ppiq_visual_mapper_tables
             (
                 tenant_id,
                 session_id,
@@ -612,7 +612,7 @@ public static class V5VisualMapperEndpoints
         await using var cmd = connection.CreateCommand();
         cmd.CommandText =
             """
-            INSERT INTO public.ppiq_visual_mapper_columns
+            INSERT INTO ppiq_meta.ppiq_visual_mapper_columns
             (
                 tenant_id,
                 table_id,
@@ -660,7 +660,7 @@ public static class V5VisualMapperEndpoints
         cmd.CommandText =
             """
             SELECT COALESCE(MAX(version_number), 0) + 1
-            FROM public.ppiq_visual_mapper_versions
+            FROM ppiq_meta.ppiq_visual_mapper_versions
             WHERE session_id = @session_id
             """;
         cmd.Parameters.AddWithValue("session_id", sessionId);

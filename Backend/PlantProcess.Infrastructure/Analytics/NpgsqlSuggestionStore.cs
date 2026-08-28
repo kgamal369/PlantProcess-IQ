@@ -31,7 +31,7 @@ public sealed class NpgsqlSuggestionStore : ISuggestionStore
             await using var cmd = conn.CreateCommand();
             cmd.Transaction = tx;
             cmd.CommandText =
-                "INSERT INTO canon.suggestion (id, tenant_id, suggestion_key, title, action_type, status, confidence, " +
+                "INSERT INTO ppiq_plant.suggestion (id, tenant_id, suggestion_key, title, action_type, status, confidence, " +
                 "impact_eur_low, impact_eur_high, evidence, honesty_text, source_findings) " +
                 "VALUES (@id,@t,@key,@title,@action,'open',@conf,@low,@high,@ev::jsonb,@honest,@find::jsonb) " +
                 "ON CONFLICT (tenant_id, suggestion_key) WHERE suggestion_key IS NOT NULL AND status NOT IN ('dismissed','closed','rejected') " +
@@ -59,7 +59,7 @@ public sealed class NpgsqlSuggestionStore : ISuggestionStore
         {
             stale.Transaction = tx;
             stale.CommandText =
-                "SELECT id, suggestion_key FROM canon.suggestion " +
+                "SELECT id, suggestion_key FROM ppiq_plant.suggestion " +
                 "WHERE tenant_id=@t AND suggestion_key IS NOT NULL AND status NOT IN ('dismissed','closed','rejected')";
             stale.Parameters.AddWithValue("t", tenantId);
             var toDismiss = new List<Guid>();
@@ -75,14 +75,14 @@ public sealed class NpgsqlSuggestionStore : ISuggestionStore
             {
                 await using var upd = conn.CreateCommand();
                 upd.Transaction = tx;
-                upd.CommandText = "UPDATE canon.suggestion SET status='dismissed', updated_at=now() WHERE id=@id AND tenant_id=@t";
+                upd.CommandText = "UPDATE ppiq_plant.suggestion SET status='dismissed', updated_at=now() WHERE id=@id AND tenant_id=@t";
                 upd.Parameters.AddWithValue("id", id);
                 upd.Parameters.AddWithValue("t", tenantId);
                 await upd.ExecuteNonQueryAsync(ct);
 
                 await using var aud = conn.CreateCommand();
                 aud.Transaction = tx;
-                aud.CommandText = "INSERT INTO canon.suggestion_audit (tenant_id, suggestion_id, actor, from_status, to_status, note) " +
+                aud.CommandText = "INSERT INTO ppiq_meta.suggestion_audit (tenant_id, suggestion_id, actor, from_status, to_status, note) " +
                                   "VALUES (@t,@id,'suggestion-job',NULL,'dismissed',@n)";
                 aud.Parameters.AddWithValue("t", tenantId);
                 aud.Parameters.AddWithValue("id", id);
@@ -101,7 +101,7 @@ public sealed class NpgsqlSuggestionStore : ISuggestionStore
         var cards = new List<SuggestionCard>();
         await using var cmd = _dataSource.CreateCommand(
             "SELECT id, COALESCE(suggestion_key,''), title, action_type, status, confidence, impact_eur_low, impact_eur_high, evidence, honesty_text, source_findings " +
-            "FROM canon.suggestion WHERE tenant_id=@t AND status NOT IN ('dismissed','closed','rejected') " +
+            "FROM ppiq_plant.suggestion WHERE tenant_id=@t AND status NOT IN ('dismissed','closed','rejected') " +
             "ORDER BY COALESCE(impact_eur_high,0) DESC, confidence DESC, suggestion_key ASC");
         cmd.Parameters.AddWithValue("t", tenantId);
         await using var reader = await cmd.ExecuteReaderAsync(ct);
@@ -131,7 +131,7 @@ public sealed class NpgsqlSuggestionStore : ISuggestionStore
         await using (var read = conn.CreateCommand())
         {
             read.Transaction = tx;
-            read.CommandText = "SELECT status FROM canon.suggestion WHERE id=@id AND tenant_id=@t FOR UPDATE";
+            read.CommandText = "SELECT status FROM ppiq_plant.suggestion WHERE id=@id AND tenant_id=@t FOR UPDATE";
             read.Parameters.AddWithValue("id", suggestionId);
             read.Parameters.AddWithValue("t", tenantId);
             var current = await read.ExecuteScalarAsync(ct) as string;
@@ -145,7 +145,7 @@ public sealed class NpgsqlSuggestionStore : ISuggestionStore
         await using (var upd = conn.CreateCommand())
         {
             upd.Transaction = tx;
-            upd.CommandText = "UPDATE canon.suggestion SET status=@s, updated_at=now() WHERE id=@id AND tenant_id=@t";
+            upd.CommandText = "UPDATE ppiq_plant.suggestion SET status=@s, updated_at=now() WHERE id=@id AND tenant_id=@t";
             upd.Parameters.AddWithValue("s", to.ToString().ToLowerInvariant());
             upd.Parameters.AddWithValue("id", suggestionId);
             upd.Parameters.AddWithValue("t", tenantId);
@@ -154,7 +154,7 @@ public sealed class NpgsqlSuggestionStore : ISuggestionStore
         await using (var aud = conn.CreateCommand())
         {
             aud.Transaction = tx;
-            aud.CommandText = "INSERT INTO canon.suggestion_audit (tenant_id, suggestion_id, actor, from_status, to_status, note) " +
+            aud.CommandText = "INSERT INTO ppiq_meta.suggestion_audit (tenant_id, suggestion_id, actor, from_status, to_status, note) " +
                               "VALUES (@t,@id,@a,@from,@to,@n)";
             aud.Parameters.AddWithValue("t", tenantId);
             aud.Parameters.AddWithValue("id", suggestionId);

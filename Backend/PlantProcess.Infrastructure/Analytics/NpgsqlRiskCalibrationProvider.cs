@@ -31,11 +31,11 @@ public sealed class NpgsqlRiskCalibrationProvider : IRiskCalibrationProvider
         {
             await using var cmd = _dataSource.CreateCommand(
                 "SELECT (rs.score / 100.0)::float8 AS predicted, " +
-                "       EXISTS (SELECT 1 FROM public.quality_events qe " +
+                "       EXISTS (SELECT 1 FROM ppiq_plant.quality_events qe " +
                 "               WHERE qe.material_unit_id = rs.material_unit_id " +
                 "                 AND qe.event_time_utc >= rs.scored_at_utc) AS outcome " +
-                "FROM public.risk_scores rs " +
-                "JOIN public.material_units mu ON mu.id = rs.material_unit_id " +
+                "FROM ppiq_plant.risk_scores rs " +
+                "JOIN ppiq_plant.material_units mu ON mu.id = rs.material_unit_id " +
                 "WHERE rs.risk_type = @rt AND COALESCE(mu.is_synthetic, false) = false");
             cmd.Parameters.AddWithValue("rt", riskType);
 

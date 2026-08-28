@@ -40,7 +40,7 @@ private static async Task<IResult> ExecuteMappingAsync(
                 physical_schema,
                 physical_view_name,
                 sql_text
-            FROM public.canonical_schema_views
+            FROM ppiq_meta.canonical_schema_views
             WHERE is_deleted = false
               AND is_active = true
               AND lower(view_code) = lower(@view_code)
@@ -72,7 +72,7 @@ private static async Task<IResult> ExecuteMappingAsync(
             await ExecuteNonQueryAsync(
                 db,
                 """
-                UPDATE public.canonical_schema_views
+                UPDATE ppiq_meta.canonical_schema_views
                 SET last_executed_at_utc = now(),
                     last_execution_status = @status,
                     last_execution_message = @message,
@@ -94,7 +94,7 @@ private static async Task<IResult> ExecuteMappingAsync(
             await ExecuteNonQueryAsync(
                 db,
                 """
-                UPDATE public.canonical_schema_views
+                UPDATE ppiq_meta.canonical_schema_views
                 SET last_executed_at_utc = now(),
                     last_execution_status = @status,
                     last_execution_message = @message,
@@ -113,7 +113,7 @@ private static async Task<IResult> ExecuteMappingAsync(
         await ExecuteNonQueryAsync(
             db,
             """
-            INSERT INTO public.schema_mapping_executions
+            INSERT INTO ppiq_meta.schema_mapping_executions
             (
                 canonical_schema_view_id,
                 view_code,
@@ -193,7 +193,7 @@ private static async Task<IResult> GetReadinessAsync(
                 COUNT(*) FILTER (WHERE is_deleted = false AND view_kind = 'JoinView') AS join_views,
                 COUNT(*) FILTER (WHERE is_deleted = false AND view_kind = 'KpiView') AS kpi_views,
                 COUNT(*) FILTER (WHERE is_deleted = false AND last_execution_status = 'Success') AS executed_successfully
-            FROM public.canonical_schema_views;
+            FROM ppiq_meta.canonical_schema_views;
             """,
             cancellationToken);
 

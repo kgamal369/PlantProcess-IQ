@@ -60,7 +60,7 @@ public static class V5EnterpriseIdentityEndpoints
                     password_requires_lower,
                     password_requires_digit,
                     password_requires_symbol
-                FROM public.ppiq_identity_policy
+                FROM ppiq_meta.ppiq_identity_policy
                 WHERE tenant_id = @tenant_id
                 LIMIT 1
                 """;
@@ -113,7 +113,7 @@ public static class V5EnterpriseIdentityEndpoints
             cmd.Transaction = tx;
             cmd.CommandText =
                 """
-                INSERT INTO public.ppiq_mfa_totp_enrollments
+                INSERT INTO ppiq_meta.ppiq_mfa_totp_enrollments
                 (
                     tenant_id,
                     user_id,
@@ -149,7 +149,7 @@ public static class V5EnterpriseIdentityEndpoints
             deleteCodes.Transaction = tx;
             deleteCodes.CommandText =
                 """
-                DELETE FROM public.ppiq_mfa_recovery_codes
+                DELETE FROM ppiq_meta.ppiq_mfa_recovery_codes
                 WHERE tenant_id = @tenant_id AND user_id = @user_id
                 """;
             deleteCodes.Parameters.AddWithValue("tenant_id", tenantId);
@@ -162,7 +162,7 @@ public static class V5EnterpriseIdentityEndpoints
                 codeCmd.Transaction = tx;
                 codeCmd.CommandText =
                     """
-                    INSERT INTO public.ppiq_mfa_recovery_codes
+                    INSERT INTO ppiq_meta.ppiq_mfa_recovery_codes
                     (
                         tenant_id,
                         user_id,
@@ -233,7 +233,7 @@ public static class V5EnterpriseIdentityEndpoints
                 await using var cmd = connection.CreateCommand();
                 cmd.CommandText =
                     """
-                    UPDATE public.ppiq_mfa_totp_enrollments
+                    UPDATE ppiq_meta.ppiq_mfa_totp_enrollments
                     SET is_verified = true,
                         enabled_at_utc = COALESCE(enabled_at_utc, now()),
                         last_verified_at_utc = now()
@@ -279,7 +279,7 @@ public static class V5EnterpriseIdentityEndpoints
             await using var cmd = connection.CreateCommand();
             cmd.CommandText =
                 """
-                INSERT INTO public.ppiq_user_sessions
+                INSERT INTO ppiq_meta.ppiq_user_sessions
                 (
                     tenant_id,
                     user_id,
@@ -354,7 +354,7 @@ public static class V5EnterpriseIdentityEndpoints
                     absolute_expires_at_utc,
                     revoked_at_utc,
                     revoke_reason
-                FROM public.ppiq_user_sessions
+                FROM ppiq_meta.ppiq_user_sessions
                 WHERE tenant_id = @tenant_id
                   AND user_id = @user_id
                 ORDER BY last_seen_at_utc DESC
@@ -402,7 +402,7 @@ public static class V5EnterpriseIdentityEndpoints
             await using var cmd = connection.CreateCommand();
             cmd.CommandText =
                 """
-                UPDATE public.ppiq_user_sessions
+                UPDATE ppiq_meta.ppiq_user_sessions
                 SET revoked_at_utc = now(),
                     revoke_reason = 'manual_revoke',
                     is_current = false
@@ -509,7 +509,7 @@ public static class V5EnterpriseIdentityEndpoints
                 password_requires_lower,
                 password_requires_digit,
                 password_requires_symbol
-            FROM public.ppiq_identity_policy
+            FROM ppiq_meta.ppiq_identity_policy
             WHERE tenant_id = @tenant_id
             LIMIT 1
             """;
@@ -566,7 +566,7 @@ public static class V5EnterpriseIdentityEndpoints
         await using var cmd = connection.CreateCommand();
         cmd.CommandText =
             """
-            INSERT INTO public.ppiq_identity_policy(tenant_id)
+            INSERT INTO ppiq_meta.ppiq_identity_policy(tenant_id)
             VALUES (@tenant_id)
             ON CONFLICT (tenant_id) DO NOTHING
             """;
@@ -585,7 +585,7 @@ public static class V5EnterpriseIdentityEndpoints
         await using var cmd = connection.CreateCommand();
         cmd.CommandText =
             """
-            INSERT INTO public.ppiq_account_protection_state
+            INSERT INTO ppiq_meta.ppiq_account_protection_state
             (
                 tenant_id,
                 normalized_user_name,
@@ -603,11 +603,11 @@ public static class V5EnterpriseIdentityEndpoints
             )
             ON CONFLICT (tenant_id, normalized_user_name)
             DO UPDATE SET
-                failed_attempts = public.ppiq_account_protection_state.failed_attempts + 1,
+                failed_attempts = ppiq_meta.ppiq_account_protection_state.failed_attempts + 1,
                 locked_until_utc = CASE
-                    WHEN public.ppiq_account_protection_state.failed_attempts + 1 >= @max_failed
+                    WHEN ppiq_meta.ppiq_account_protection_state.failed_attempts + 1 >= @max_failed
                     THEN now() + (@lockout_minutes || ' minutes')::interval
-                    ELSE public.ppiq_account_protection_state.locked_until_utc
+                    ELSE ppiq_meta.ppiq_account_protection_state.locked_until_utc
                 END,
                 updated_at_utc = now()
             RETURNING failed_attempts, locked_until_utc
@@ -635,7 +635,7 @@ public static class V5EnterpriseIdentityEndpoints
         await using var cmd = connection.CreateCommand();
         cmd.CommandText =
             """
-            INSERT INTO public.ppiq_account_protection_state
+            INSERT INTO ppiq_meta.ppiq_account_protection_state
             (
                 tenant_id,
                 normalized_user_name,
@@ -671,7 +671,7 @@ public static class V5EnterpriseIdentityEndpoints
         cmd.CommandText =
             """
             SELECT secret_ciphertext
-            FROM public.ppiq_mfa_totp_enrollments
+            FROM ppiq_meta.ppiq_mfa_totp_enrollments
             WHERE tenant_id = @tenant_id
               AND user_id = @user_id
               AND disabled_at_utc IS NULL
@@ -696,7 +696,7 @@ public static class V5EnterpriseIdentityEndpoints
         await using var cmd = connection.CreateCommand();
         cmd.CommandText =
             """
-            UPDATE public.ppiq_mfa_recovery_codes
+            UPDATE ppiq_meta.ppiq_mfa_recovery_codes
             SET used_at_utc = now()
             WHERE tenant_id = @tenant_id
               AND user_id = @user_id
@@ -729,7 +729,7 @@ public static class V5EnterpriseIdentityEndpoints
 
         cmd.CommandText =
             """
-            INSERT INTO public.ppiq_auth_audit_events
+            INSERT INTO ppiq_meta.ppiq_auth_audit_events
             (
                 tenant_id,
                 user_id,

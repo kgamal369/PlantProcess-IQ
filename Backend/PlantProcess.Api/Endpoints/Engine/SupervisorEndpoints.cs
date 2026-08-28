@@ -48,7 +48,7 @@ public static class SupervisorEndpoints
         await using (var cmd = conn.CreateCommand())
         {
             cmd.CommandText =
-                "SELECT id, window_days FROM public.ml_correlation_compute_runs " +
+                "SELECT id, window_days FROM ppiq_meta.ml_correlation_compute_runs " +
                 "WHERE lower(status) IN ('completed','succeeded','success') " +
                 "ORDER BY coalesce(completed_at_utc, started_at_utc) DESC LIMIT 1";
             await using var r = await cmd.ExecuteReaderAsync(ct);
@@ -66,7 +66,7 @@ public static class SupervisorEndpoints
         {
             await using var cmd = conn.CreateCommand();
             cmd.CommandText =
-                "SELECT feature_key, outcome_key, effect_size, q_value FROM public.ml_correlation_results_v2 " +
+                "SELECT feature_key, outcome_key, effect_size, q_value FROM ppiq_plant.ml_correlation_results_v2 " +
                 "WHERE compute_run_id = @run AND coalesce(method,'NotApplicable') <> 'NotApplicable' AND coalesce(sample_size,0) > 0 " +
                 "ORDER BY abs(coalesce(effect_size,0)) DESC";
             cmd.Parameters.AddWithValue("run", runId.Value);
@@ -139,7 +139,7 @@ public static class SupervisorEndpoints
         await using var conn = await ds.OpenConnectionAsync(ct);
         await using var cmd = conn.CreateCommand();
         cmd.CommandText =
-            "SELECT id, item_key, title, body, created_at_utc FROM public.ml_knowledge_base_items " +
+            "SELECT id, item_key, title, body, created_at_utc FROM ppiq_meta.ml_knowledge_base_items " +
             "WHERE item_type = 'SUPERVISOR_REPORT' AND is_deleted = false " +
             "ORDER BY created_at_utc DESC LIMIT 20";
         await using var r = await cmd.ExecuteReaderAsync(ct);

@@ -61,7 +61,7 @@ public static class Phase2InvestigationEndpoints
 
         await dbContext.Database.ExecuteSqlRawAsync(
             """
-            INSERT INTO public.inspection_jobs
+            INSERT INTO ppiq_meta.inspection_jobs
             (
                 id,
                 inspection_job_code,
@@ -166,7 +166,7 @@ public static class Phase2InvestigationEndpoints
                 last_run_at_utc,
                 last_run_status,
                 created_at_utc
-            FROM public.inspection_jobs
+            FROM ppiq_meta.inspection_jobs
             WHERE is_deleted = false
             ORDER BY created_at_utc DESC
             LIMIT 200
@@ -311,7 +311,7 @@ public static class Phase2InvestigationEndpoints
                 next_recommended_action,
                 no_production_prediction,
                 metadata_json::text
-            FROM public.ml_job_lifecycle_states
+            FROM ppiq_meta.ml_job_lifecycle_states
             WHERE is_deleted = false
               AND is_active = true
             ORDER BY ml_job_code
@@ -358,7 +358,7 @@ public static class Phase2InvestigationEndpoints
 
         await dbContext.Database.ExecuteSqlRawAsync(
             """
-            INSERT INTO public.ml_job_lifecycle_states
+            INSERT INTO ppiq_meta.ml_job_lifecycle_states
             (
                 id,
                 ml_job_code,

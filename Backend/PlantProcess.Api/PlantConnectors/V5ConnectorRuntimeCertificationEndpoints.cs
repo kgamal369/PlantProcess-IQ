@@ -132,7 +132,7 @@ public static class V5ConnectorRuntimeCertificationEndpoints
                     r.observed_at_utc,
                     r.numeric_value,
                     r.quality
-                FROM public.ppiq_connector_runtime_readings r
+                FROM ppiq_staging.ppiq_connector_runtime_readings r
                 WHERE r.tenant_id = @tenant_id
                   AND r.provider_code = @provider_code
                   AND r.observed_at_utc >= @from_utc
@@ -375,7 +375,7 @@ public static class V5ConnectorRuntimeCertificationEndpoints
             await using var cmd = connection.CreateCommand();
             cmd.CommandText =
                 """
-                UPDATE public.ppiq_connector_runtime_sources
+                UPDATE ppiq_meta.ppiq_connector_runtime_sources
                 SET
                     is_reachable = @is_reachable,
                     is_certified = @is_certified,
@@ -528,7 +528,7 @@ public static class V5ConnectorRuntimeCertificationEndpoints
         await using var cmd = connection.CreateCommand();
         cmd.CommandText =
             """
-            INSERT INTO public.ppiq_connector_runtime_sources
+            INSERT INTO ppiq_meta.ppiq_connector_runtime_sources
             (
                 tenant_id,
                 provider_code,
@@ -562,11 +562,11 @@ public static class V5ConnectorRuntimeCertificationEndpoints
             DO UPDATE SET
                 display_name = EXCLUDED.display_name,
                 is_read_only = true,
-                is_certified = public.ppiq_connector_runtime_sources.is_certified OR EXCLUDED.is_certified,
+                is_certified = ppiq_meta.ppiq_connector_runtime_sources.is_certified OR EXCLUDED.is_certified,
                 is_reachable = true,
                 lag_seconds = 0,
                 status = CASE
-                    WHEN public.ppiq_connector_runtime_sources.is_certified OR EXCLUDED.is_certified THEN 'certified-proof'
+                    WHEN ppiq_meta.ppiq_connector_runtime_sources.is_certified OR EXCLUDED.is_certified THEN 'certified-proof'
                     ELSE 'ready'
                 END,
                 last_successful_read_utc = now(),
@@ -615,7 +615,7 @@ public static class V5ConnectorRuntimeCertificationEndpoints
             WITH source_row AS
             (
                 SELECT id, tenant_id, provider_code
-                FROM public.ppiq_connector_runtime_sources
+                FROM ppiq_meta.ppiq_connector_runtime_sources
                 WHERE tenant_id = @tenant_id
                   AND provider_code = @provider_code
                 LIMIT 1
@@ -631,7 +631,7 @@ public static class V5ConnectorRuntimeCertificationEndpoints
             ),
             inserted AS
             (
-                INSERT INTO public.ppiq_connector_runtime_readings
+                INSERT INTO ppiq_staging.ppiq_connector_runtime_readings
                 (
                     tenant_id,
                     source_id,
@@ -695,7 +695,7 @@ public static class V5ConnectorRuntimeCertificationEndpoints
         await using var cmd = connection.CreateCommand();
         cmd.CommandText =
             """
-            INSERT INTO public.ppiq_connector_backfill_checkpoints
+            INSERT INTO ppiq_staging.ppiq_connector_backfill_checkpoints
             (
                 tenant_id,
                 provider_code,
@@ -758,7 +758,7 @@ public static class V5ConnectorRuntimeCertificationEndpoints
                 checkpoint_to_utc,
                 rows_ingested,
                 status
-            FROM public.ppiq_connector_backfill_checkpoints
+            FROM ppiq_staging.ppiq_connector_backfill_checkpoints
             WHERE tenant_id = @tenant_id
               AND run_id = @run_id
             LIMIT 1
@@ -789,7 +789,7 @@ public static class V5ConnectorRuntimeCertificationEndpoints
         await using var cmd = connection.CreateCommand();
         cmd.CommandText =
             """
-            UPDATE public.ppiq_connector_runtime_sources
+            UPDATE ppiq_meta.ppiq_connector_runtime_sources
             SET
                 is_reachable = true,
                 lag_seconds = @lag_seconds,
@@ -819,7 +819,7 @@ public static class V5ConnectorRuntimeCertificationEndpoints
         await using var cmd = connection.CreateCommand();
         cmd.CommandText =
             """
-            INSERT INTO public.ppiq_connector_runtime_events
+            INSERT INTO ppiq_meta.ppiq_connector_runtime_events
             (
                 tenant_id,
                 provider_code,

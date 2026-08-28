@@ -35,7 +35,7 @@ public sealed class NpgsqlAdvancedResultWriter : IAdvancedResultWriter
         var outType = result.OutcomeType.ToString().ToLowerInvariant();
 
         await using (var c = new NpgsqlCommand(
-            @"INSERT INTO public.ml_correlation_compute_runs
+            @"INSERT INTO ppiq_meta.ml_correlation_compute_runs
               (id, engine_key, target_outcome_key, grain, window_days, status, completed_at_utc, duration_ms, message, request_json, tenant_id)
               VALUES (@id, @ek, @ok, @g, @w, @st, now(), 0, @msg, @rj::jsonb, @tid)", conn, (NpgsqlTransaction)tx))
         {
@@ -67,7 +67,7 @@ public sealed class NpgsqlAdvancedResultWriter : IAdvancedResultWriter
             });
 
             await using var c = new NpgsqlCommand(
-                @"INSERT INTO public.ml_correlation_results_v2
+                @"INSERT INTO ppiq_plant.ml_correlation_results_v2
                   (id, compute_run_id, feature_key, feature_grain, outcome_key, outcome_type, method,
                    coefficient, effect_size, effect_size_type, p_value, q_value, ci_low, ci_high,
                    sample_size, effective_n, stratum, stability_score, is_stable, evidence_json, tenant_id)
@@ -100,7 +100,7 @@ public sealed class NpgsqlAdvancedResultWriter : IAdvancedResultWriter
         {
             var exEvidence = System.Text.Json.JsonSerializer.Serialize(new { excluded = true, reason = ex.Reason });
             await using var ce = new NpgsqlCommand(
-                @"INSERT INTO public.ml_correlation_results_v2
+                @"INSERT INTO ppiq_plant.ml_correlation_results_v2
                   (id, compute_run_id, feature_key, feature_grain, outcome_key, outcome_type, method, sample_size, effective_n, evidence_json, tenant_id)
                   VALUES (gen_random_uuid(), @run, @fk, @fg, @ok, @ot, 'NotApplicable', 0, 0, @ev::jsonb, @tid)", conn, (NpgsqlTransaction)tx);
             ce.Parameters.AddWithValue("run", result.RunId);

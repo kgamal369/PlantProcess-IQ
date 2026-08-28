@@ -41,7 +41,7 @@ public static class AdvancedResultsEndpoints
         group.MapGet("/runs", async (NpgsqlDataSource ds, CancellationToken ct) =>
             Results.Ok(await ReadAsync(ds,
                 "SELECT id, engine_key, target_outcome_key, grain, window_days, status, completed_at_utc, duration_ms, message " +
-                "FROM public.ml_correlation_compute_runs ORDER BY completed_at_utc DESC NULLS LAST LIMIT 50", null, ct)));
+                "FROM ppiq_meta.ml_correlation_compute_runs ORDER BY completed_at_utc DESC NULLS LAST LIMIT 50", null, ct)));
 
         group.MapGet("/results", async (Guid? runId, string? outcomeKey, NpgsqlDataSource ds, CancellationToken ct) =>
         {
@@ -49,7 +49,7 @@ public static class AdvancedResultsEndpoints
             if (resolvedRun is null)
             {
                 await using var rc = ds.CreateCommand(
-                    "SELECT id FROM public.ml_correlation_compute_runs WHERE engine_key IN ('dotnet-analytics-core-v1','managed-stat-v1','ppiql-deterministic-core-v1') " +
+                    "SELECT id FROM ppiq_meta.ml_correlation_compute_runs WHERE engine_key IN ('dotnet-analytics-core-v1','managed-stat-v1','ppiql-deterministic-core-v1') " +
                     (string.IsNullOrWhiteSpace(outcomeKey) ? "" : "AND target_outcome_key = @o ") +
                     "ORDER BY completed_at_utc DESC NULLS LAST LIMIT 1");
                 if (!string.IsNullOrWhiteSpace(outcomeKey)) rc.Parameters.AddWithValue("o", outcomeKey!);
@@ -62,8 +62,8 @@ public static class AdvancedResultsEndpoints
                 "SELECT r.feature_key, r.feature_grain, r.outcome_key, r.outcome_type, r.method, " +
                 "r.effect_size, r.q_value, r.sample_size, r.ci_low, r.ci_high, r.stability_score, r.is_stable, " +
                 "r.stratum, r.evidence_json, run.window_days " +
-                "FROM public.ml_correlation_results_v2 r " +
-                "JOIN public.ml_correlation_compute_runs run ON run.id = r.compute_run_id " +
+                "FROM ppiq_plant.ml_correlation_results_v2 r " +
+                "JOIN ppiq_meta.ml_correlation_compute_runs run ON run.id = r.compute_run_id " +
                 "WHERE r.compute_run_id = @run ORDER BY abs(coalesce(r.effect_size, 0)) DESC",
                 ("run", (object)resolvedRun.Value), ct);
 

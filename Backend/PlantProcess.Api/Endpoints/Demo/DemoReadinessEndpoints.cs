@@ -54,7 +54,7 @@ public static class DemoReadinessEndpoints
         await using var command = new NpgsqlCommand(
             """
             SELECT CASE
-              WHEN to_regclass('public.page_definitions') IS NULL THEN 0
+              WHEN to_regclass('ppiq_meta.page_definitions') IS NULL THEN 0
               ELSE (SELECT COUNT(*)::integer FROM page_definitions WHERE is_deleted = false)
             END;
             """, connection);

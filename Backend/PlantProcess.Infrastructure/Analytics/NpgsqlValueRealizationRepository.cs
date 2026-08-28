@@ -19,7 +19,7 @@ public sealed class NpgsqlValueRealizationRepository
         await using var cmd = _dataSource.CreateCommand("""
             CREATE SCHEMA IF NOT EXISTS canon;
 
-            CREATE TABLE IF NOT EXISTS canon.value_realization_ledger (
+            CREATE TABLE IF NOT EXISTS ppiq_plant.value_realization_ledger (
                 id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
                 tenant_id uuid NOT NULL,
                 tracking_code text NOT NULL,
@@ -49,10 +49,10 @@ public sealed class NpgsqlValueRealizationRepository
             );
 
             CREATE INDEX IF NOT EXISTS ix_value_realization_tenant_recorded
-            ON canon.value_realization_ledger(tenant_id, recorded_at_utc DESC);
+            ON ppiq_plant.value_realization_ledger(tenant_id, recorded_at_utc DESC);
 
             CREATE INDEX IF NOT EXISTS ix_value_realization_source_value_impact
-            ON canon.value_realization_ledger(source_value_impact_id);
+            ON ppiq_plant.value_realization_ledger(source_value_impact_id);
             """);
 
         await cmd.ExecuteNonQueryAsync(ct);
@@ -67,7 +67,7 @@ public sealed class NpgsqlValueRealizationRepository
         await EnsureSchemaAsync(ct);
 
         await using var cmd = _dataSource.CreateCommand("""
-            INSERT INTO canon.value_realization_ledger (
+            INSERT INTO ppiq_plant.value_realization_ledger (
                 tenant_id,
                 tracking_code,
                 source_recommendation_id,
@@ -163,7 +163,7 @@ public sealed class NpgsqlValueRealizationRepository
                 status,
                 attribution_caveat,
                 recorded_at_utc
-            FROM canon.value_realization_ledger
+            FROM ppiq_plant.value_realization_ledger
             WHERE tenant_id = @tenant_id
             ORDER BY recorded_at_utc DESC
             LIMIT @take;

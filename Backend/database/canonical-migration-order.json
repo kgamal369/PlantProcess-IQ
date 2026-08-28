@@ -1,8 +1,8 @@
 {
     "artifact":  "canonical-migration-order",
     "purpose":  "The single ordered path that builds a database from zero. A script outside this path is never replayed as part of a build.",
-    "generatedAtUtc":  "2026-08-25T21:26:19Z",
-    "baselineCommit":  "c1760d787bddf73caea071ddc6b9752501eb208c",
+    "generatedAtUtc":  "2026-08-28T08:32:38Z",
+    "baselineCommit":  "babb47a82460c751f9de05432e4817d0c0691079",
     "dispositions":  [
                          "Canonical",
                          "HistoricalRepair",
@@ -21,21 +21,33 @@
                   "A table is created once on the path; any later create must be guarded by IF NOT EXISTS.",
                   "Demonstration, seed and test content is never on the path.",
                   "Read-model views are a separate authority applied after every schema script, and every view they declare must exist in the built database.",
-                  "System templates are created by the runtime authority. SQL template scripts are migration history, not a second runtime authority."
+                  "System templates are created by the runtime authority. SQL template scripts are migration history, not a second runtime authority.",
+                  "Product tables live in ppiq_meta, ppiq_plant or ppiq_staging. A single terminal convergence file relocates them after every historical creator has run; no migration and no historical script moves a table."
               ],
     "summary":  {
-                    "totalFiles":  146,
-                    "canonicalPath":  97,
+                    "totalFiles":  147,
+                    "canonicalPath":  98,
                     "distinctTables":  173,
                     "governedDuplicates":  7,
                     "ungovernedDuplicates":  0,
-                    "efMigrations":  7,
+                    "efMigrations":  8,
                     "freshBuild":  "EXECUTED",
                     "canonicalViews":  1,
                     "declaredViews":  4,
                     "declaredViewsMissing":  0,
-                    "freshBuildTables":  210
+                    "freshBuildTables":  208
                 },
+    "storageTopology":  {
+                            "note":  "Physical placement of product tables. The model half is StorageTopologyMap; the physical half is the terminal convergence file. Both are generated from one frozen assignment.",
+                            "governedSchemas":  [
+                                                    "ppiq_meta",
+                                                    "ppiq_plant",
+                                                    "ppiq_staging"
+                                                ],
+                            "relocations":  224,
+                            "terminalFile":  "Backend/database/topology/000_storage_topology_convergence.sql",
+                            "position":  97
+                        },
     "efMigrationBaseline":  {
                                 "note":  "The schema baseline. Applied by dotnet ef database update before any SQL script; several scripts fail by name without it.",
                                 "project":  "Backend/PlantProcess.Infrastructure",
@@ -68,22 +80,26 @@
                                                    {
                                                        "name":  "20260817154438_T064TargetParametersParity",
                                                        "sha256":  "31799DE8348F4F1A1A89F66130732D9F167BDEDF58E45DBB7F1983DDDAE1FA60"
+                                                   },
+                                                   {
+                                                       "name":  "20260828083224_StorageTopologyCheckpoint",
+                                                       "sha256":  "E7940BE2BE27C2D7F28395C50D888C278AE9BD6A796C65492FE0A8E3E59238BA"
                                                    }
                                                ]
                             },
     "canonicalViews":  [
                            {
                                "path":  "Backend/database/views/006_dashboard_dataset_views.sql",
-                               "order":  97,
-                               "sha256":  "CE3C664F6749755A3F319FDC86B120289EA7E1E9D7A748A074F9FA2D12099C12",
-                               "note":  "Read-model view authority. Applied after every schema script, before the probe database is dropped."
+                               "order":  98,
+                               "sha256":  "729D127FA772E1E100A8AD1A6CEAF6B2BABBA5A3FED9991EB8EB62960D3D6865",
+                               "note":  "Read-model view authority. Applied after every schema script and after topology convergence, before the probe database is dropped."
                            }
                        ],
     "declaredViews":  [
-                          "public.vw_dashboard_correlation_summary",
-                          "public.vw_dashboard_data_quality_summary",
-                          "public.vw_dashboard_latest_risk_by_material",
-                          "public.vw_dashboard_quality_overview"
+                          "ppiq_plant.vw_dashboard_correlation_summary",
+                          "ppiq_plant.vw_dashboard_data_quality_summary",
+                          "ppiq_plant.vw_dashboard_latest_risk_by_material",
+                          "ppiq_plant.vw_dashboard_quality_overview"
                       ],
     "canonicalPath":  [
                           {
@@ -1178,124 +1194,25 @@
                           },
                           {
                               "position":  97,
+                              "ordinal":  0,
+                              "path":  "Backend/database/topology/000_storage_topology_convergence.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "264E2DD5EAC14C663E6318F2B3E40D861E5372921536F7F1F2A7E3CA6A1586B8",
+                              "createsTables":  [
+
+                                                ]
+                          },
+                          {
+                              "position":  98,
                               "ordinal":  6,
                               "path":  "Backend/database/views/006_dashboard_dataset_views.sql",
                               "disposition":  "Canonical",
-                              "sha256":  "CE3C664F6749755A3F319FDC86B120289EA7E1E9D7A748A074F9FA2D12099C12",
+                              "sha256":  "729D127FA772E1E100A8AD1A6CEAF6B2BABBA5A3FED9991EB8EB62960D3D6865",
                               "createsTables":  [
 
                                                 ]
                           }
                       ],
-    "authoritativeOverrides":  [
-                                   {
-                                       "path":  "Backend/database/scripts/130_phase03_two_stage_delta_import_architecture.sql",
-                                       "disposition":  "DeferredWithReason",
-                                       "reason":  "Legacy two-stage import architecture coupled to the historical source-shaped demo schemas (src_meltshop_pg, src_inspection_mysql_shape, src_hsm_oracle_shape). Those shapes come from the Golden Demo Source Shapes script, which correctly does not belong to a generic current-release database. Generic DB Link and import replace the source-shape assumption through metadata and configuration. Satisfying this script would mean rebuilding the demo architecture the release is leaving behind."
-                                   },
-                                   {
-                                       "path":  "Backend/database/scripts/142_phase02_phase03_page_definition_and_demo_source_completion.sql",
-                                       "disposition":  "FixtureOnly",
-                                       "reason":  "Database audit authority classifies this mixed page-definition and demo-source completion script as optional demo content, explicitly outside the generic application schema flow. This is recorded classification, not a filename inference. The generic page schema is provided independently by 141_phase03_page_builder_foundation.sql, followed by 772 and 773."
-                                   },
-                                   {
-                                       "path":  "Backend/database/scripts/790_t044_canonical_widget_definitions.sql",
-                                       "disposition":  "Superseded",
-                                       "reason":  "Converges an existing database onto seed truth. The script states that a fresh rebuild does not need it and that it exists for databases never rebuilt."
-                                   },
-                                   {
-                                       "path":  "Backend/database/scripts/800_t045_canonical_widget_definitions.sql",
-                                       "disposition":  "Superseded",
-                                       "reason":  "Converges widget definitions carried by the historical presentation database onto seed truth. Existing-database convergence, not fresh-install authority."
-                                   },
-                                   {
-                                       "path":  "Backend/database/scripts/810_t045_packb_mi_sev_convergence.sql",
-                                       "disposition":  "Superseded",
-                                       "reason":  "Converges fixed presentation widget codes on a live database. Rebinding, not schema authority."
-                                   },
-                                   {
-                                       "path":  "Backend/database/scripts/811_t045_packc_mi_sev_title_convergence.sql",
-                                       "disposition":  "Superseded",
-                                       "reason":  "Title convergence over fixed presentation widget codes on a live database."
-                                   },
-                                   {
-                                       "path":  "Backend/database/scripts/812_t045_packd_analytical_page_bindings.sql",
-                                       "disposition":  "Superseded",
-                                       "reason":  "Page bindings derived from measurements taken against the historical presentation database."
-                                   },
-                                   {
-                                       "path":  "Backend/database/scripts/813_t045_packe_presentation_parameter_convergence.sql",
-                                       "disposition":  "Superseded",
-                                       "reason":  "Presentation parameter convergence over existing rows."
-                                   },
-                                   {
-                                       "path":  "Backend/database/scripts/814_t045_packf_residual_parameter_convergence.sql",
-                                       "disposition":  "Superseded",
-                                       "reason":  "Residual presentation parameter convergence over existing rows."
-                                   },
-                                   {
-                                       "path":  "Backend/database/scripts/815_t045_packg_operational_widget_convergence.sql",
-                                       "disposition":  "Superseded",
-                                       "reason":  "Operational widget convergence over fixed presentation widget codes."
-                                   },
-                                   {
-                                       "path":  "Backend/database/scripts/816_t045_closure_state.sql",
-                                       "disposition":  "Superseded",
-                                       "reason":  "Declares itself closure state and read only. Historical certification evidence, never a migration."
-                                   },
-                                   {
-                                       "path":  "Backend/database/scripts/817_t045_packi_mi_sev_retirement.sql",
-                                       "disposition":  "Superseded",
-                                       "reason":  "Retires fixed presentation widget codes on an existing database."
-                                   },
-                                   {
-                                       "path":  "Backend/database/scripts/818_t047_parameter_deep_analysis_grammar.sql",
-                                       "disposition":  "Superseded",
-                                       "reason":  "Rebinds fixed presentation widgets on the parameter deep analysis page."
-                                   },
-                                   {
-                                       "path":  "Backend/database/scripts/819_t047_parameter_deep_analysis_scatter.sql",
-                                       "disposition":  "Superseded",
-                                       "reason":  "Inserts a widget against a fixed presentation dashboard identity with plant-specific parameter codes the script states were chosen from data present on that installation. It cannot belong to a generic customer fresh install; its foreign-key failure was proof the presentation seed is deliberately absent."
-                                   },
-                                   {
-                                       "path":  "Backend/database/scripts/820_t047_production_quality_multiseries.sql",
-                                       "disposition":  "Superseded",
-                                       "reason":  "Rebinds fixed presentation widget slots by name inside a page composition."
-                                   },
-                                   {
-                                       "path":  "Backend/database/scripts/821_t047_packe_seven_page_composition.sql",
-                                       "disposition":  "Superseded",
-                                       "reason":  "Historical seven-page presentation composition with fixed dashboard and widget identities. Generic page authoring plus the runtime system-template authority own this responsibility now."
-                                   },
-                                   {
-                                       "path":  "Backend/database/scripts/822_t044r1_positional_and_specification_materialisation.sql",
-                                       "disposition":  "Superseded",
-                                       "reason":  "Two former responsibilities, both retired here. Schema parity is now owned by EF migration 20260816112200_T044R1MigrationParity. The remaining data materialisation reads source-shaped historical schemas and is not valid against an empty generic database."
-                                   },
-                                   {
-                                       "path":  "Backend/database/scripts/823_t047_final_page_bindings.sql",
-                                       "disposition":  "Superseded",
-                                       "reason":  "Seeds page and widget bindings using fixed presentation dashboard identities. The runtime system-template authority is the single authority for system templates; a second SQL page and widget authority is not preserved."
-                                   }
-                               ],
-    "postconditions":  [
-                           {
-                               "after":  "Backend/database/scripts/204_phase04_phase05_ml_learning_core.sql",
-                               "before":  "Backend/database/scripts/205_phase04_phase05_completion_governance_jobs_tests.sql",
-                               "requires":  "ml_learning_job_catalog_v1 exists"
-                           },
-                           {
-                               "after":  "Backend/database/scripts/141_phase03_page_builder_foundation.sql",
-                               "before":  "Backend/database/scripts/772_t042_page_backing_dashboard_and_publication.sql",
-                               "requires":  "page_definitions exists"
-                           },
-                           {
-                               "after":  "Backend/database/scripts/772_t042_page_backing_dashboard_and_publication.sql",
-                               "before":  "Backend/database/scripts/773_t042_one_live_page_per_backing_dashboard.sql",
-                               "requires":  "page_definitions carries both publication columns"
-                           }
-                       ],
     "offPath":  [
                     {
                         "path":  "Backend/database/_review/audit_ddl_definition.sql",
@@ -1542,14 +1459,5 @@
                         "disposition":  "FixtureOnly",
                         "reason":  "Lives in a data, demonstration or test folder. Never replayed as part of a build."
                     }
-                ],
-    "governedDuplicates":  [
-                               "canon.cost_assumption \u003c- Backend/database/scripts/420_p3_value_evidence_hmi.sql (guarded or recreated after an explicit drop)",
-                               "public.ppiq_i18n_string_keys \u003c- Backend/database/scripts/425_p3_t17_cost_assumption_i18n_contract.sql (guarded or recreated after an explicit drop)",
-                               "public.ppiq_i18n_translations \u003c- Backend/database/scripts/425_p3_t17_cost_assumption_i18n_contract.sql (guarded or recreated after an explicit drop)",
-                               "canon.assistant_chunk \u003c- Backend/database/scripts/430_p4_production_assistant.sql (guarded or recreated after an explicit drop)",
-                               "public.ppiq_schema_drift_events \u003c- Backend/database/scripts/540_v5_p05_visual_mapper_foundation.sql (guarded or recreated after an explicit drop)",
-                               "public.ppiq_i18n_string_keys \u003c- Backend/database/scripts/610_v5_p12_i18n_rtl_mobile.sql (guarded or recreated after an explicit drop)",
-                               "public.ppiq_i18n_translations \u003c- Backend/database/scripts/610_v5_p12_i18n_rtl_mobile.sql (guarded or recreated after an explicit drop)"
-                           ]
+                ]
 }

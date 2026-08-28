@@ -67,7 +67,7 @@ public static class V5IdentityRuntimeCertificationEndpoints
             await using var cmd = connection.CreateCommand();
             cmd.CommandText =
                 """
-                INSERT INTO public.ppiq_oidc_runtime_jwks_keys
+                INSERT INTO ppiq_meta.ppiq_oidc_runtime_jwks_keys
                 (
                     tenant_id,
                     provider_code,
@@ -200,7 +200,7 @@ public static class V5IdentityRuntimeCertificationEndpoints
             cmd.CommandText =
                 """
                 SELECT id, user_name, email, active
-                FROM public.ppiq_scim_users
+                FROM ppiq_meta.ppiq_scim_users
                 WHERE tenant_id = @tenant_id
                   AND (
                     lower(user_name) = lower(@subject)
@@ -480,7 +480,7 @@ public static class V5IdentityRuntimeCertificationEndpoints
         cmd.CommandText =
             """
             SELECT issuer, audience, jwk_n_b64url, jwk_e_b64url
-            FROM public.ppiq_oidc_runtime_jwks_keys
+            FROM ppiq_meta.ppiq_oidc_runtime_jwks_keys
             WHERE tenant_id = @tenant_id
               AND provider_code = @provider_code
               AND key_id = @key_id
@@ -515,8 +515,8 @@ public static class V5IdentityRuntimeCertificationEndpoints
         cmd.CommandText =
             """
             SELECT m.app_role, m.plant_role
-            FROM public.ppiq_sso_role_mappings m
-            JOIN public.ppiq_sso_provider_configs p ON p.id = m.provider_id
+            FROM ppiq_meta.ppiq_sso_role_mappings m
+            JOIN ppiq_meta.ppiq_sso_provider_configs p ON p.id = m.provider_id
             WHERE m.tenant_id = @tenant_id
               AND p.tenant_id = @tenant_id
               AND p.provider_code = @provider_code
@@ -553,7 +553,7 @@ public static class V5IdentityRuntimeCertificationEndpoints
         await using var cmd = connection.CreateCommand();
         cmd.CommandText =
             """
-            INSERT INTO public.ppiq_sso_principals
+            INSERT INTO ppiq_meta.ppiq_sso_principals
             (
                 tenant_id,
                 provider_code,
@@ -617,7 +617,7 @@ public static class V5IdentityRuntimeCertificationEndpoints
         await using var cmd = connection.CreateCommand();
         cmd.CommandText =
             """
-            INSERT INTO public.ppiq_sso_runtime_validation_events
+            INSERT INTO ppiq_meta.ppiq_sso_runtime_validation_events
             (
                 tenant_id,
                 provider_code,
@@ -676,7 +676,7 @@ public static class V5IdentityRuntimeCertificationEndpoints
         await using var cmd = connection.CreateCommand();
         cmd.CommandText =
             """
-            INSERT INTO public.ppiq_scim_runtime_contract_events
+            INSERT INTO ppiq_meta.ppiq_scim_runtime_contract_events
             (
                 tenant_id,
                 event_code,

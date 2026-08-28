@@ -50,7 +50,7 @@ private static async Task<IResult> GetCatalogAsync(
             created_by,
             created_at_utc,
             updated_at_utc
-        FROM public.canonical_schema_views
+        FROM ppiq_meta.canonical_schema_views
         WHERE is_deleted = false
         ORDER BY
             CASE view_kind
@@ -75,7 +75,7 @@ private static async Task EnsureCatalogAsync(
             """
             CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
-            CREATE TABLE IF NOT EXISTS public.canonical_schema_views
+            CREATE TABLE IF NOT EXISTS ppiq_meta.canonical_schema_views
             (
                 id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
                 view_code text NOT NULL,
@@ -110,10 +110,10 @@ private static async Task EnsureCatalogAsync(
             );
 
             CREATE UNIQUE INDEX IF NOT EXISTS ux_canonical_schema_views_view_code_active
-            ON public.canonical_schema_views (lower(view_code))
+            ON ppiq_meta.canonical_schema_views (lower(view_code))
             WHERE is_deleted = false;
 
-            CREATE TABLE IF NOT EXISTS public.schema_mapping_executions
+            CREATE TABLE IF NOT EXISTS ppiq_meta.schema_mapping_executions
             (
                 id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
                 canonical_schema_view_id uuid NULL,
@@ -130,7 +130,7 @@ private static async Task EnsureCatalogAsync(
                 details_json jsonb NOT NULL DEFAULT '{}'::jsonb
             );
 
-            CREATE TABLE IF NOT EXISTS public.canonical_schema_view_audit
+            CREATE TABLE IF NOT EXISTS ppiq_meta.canonical_schema_view_audit
             (
                 id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
                 canonical_schema_view_id uuid NULL,
@@ -181,7 +181,7 @@ private static async Task<IReadOnlyDictionary<string, object?>> GetCatalogByIdAs
                 created_by,
                 created_at_utc,
                 updated_at_utc
-            FROM public.canonical_schema_views
+            FROM ppiq_meta.canonical_schema_views
             WHERE id = @id;
             """,
             cancellationToken,

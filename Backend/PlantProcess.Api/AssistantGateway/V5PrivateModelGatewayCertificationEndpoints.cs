@@ -203,7 +203,7 @@ public static class V5PrivateModelGatewayCertificationEndpoints
             await using var cmd = connection.CreateCommand();
             cmd.CommandText =
                 """
-                INSERT INTO public.ppiq_assistant_prompt_governance_events
+                INSERT INTO ppiq_meta.ppiq_assistant_prompt_governance_events
                 (
                     tenant_id,
                     endpoint_code,
@@ -306,7 +306,7 @@ public static class V5PrivateModelGatewayCertificationEndpoints
             await using var cmd = connection.CreateCommand();
             cmd.CommandText =
                 """
-                INSERT INTO public.ppiq_model_eval_runs
+                INSERT INTO ppiq_meta.ppiq_model_eval_runs
                 (
                     tenant_id,
                     run_code,
@@ -397,7 +397,7 @@ public static class V5PrivateModelGatewayCertificationEndpoints
                     threshold,
                     run_status,
                     created_at_utc
-                FROM public.ppiq_model_eval_runs
+                FROM ppiq_meta.ppiq_model_eval_runs
                 WHERE tenant_id = @tenant_id
                 ORDER BY created_at_utc DESC
                 LIMIT 1
@@ -553,7 +553,7 @@ public static class V5PrivateModelGatewayCertificationEndpoints
         await using var cmd = connection.CreateCommand();
         cmd.CommandText =
             """
-            INSERT INTO public.ppiq_private_model_endpoint_configs
+            INSERT INTO ppiq_meta.ppiq_private_model_endpoint_configs
             (
                 tenant_id,
                 endpoint_code,
@@ -637,7 +637,7 @@ public static class V5PrivateModelGatewayCertificationEndpoints
         await using var cmd = connection.CreateCommand();
         cmd.CommandText =
             """
-            INSERT INTO public.ppiq_model_gateway_policy_results
+            INSERT INTO ppiq_meta.ppiq_model_gateway_policy_results
             (
                 tenant_id,
                 endpoint_code,
@@ -676,7 +676,7 @@ public static class V5PrivateModelGatewayCertificationEndpoints
                 expected_status,
                 requires_citation,
                 forbids_uncited_numbers
-            FROM public.ppiq_model_eval_golden_cases
+            FROM ppiq_meta.ppiq_model_eval_golden_cases
             WHERE tenant_id = @tenant_id
               AND is_enabled = true
             ORDER BY case_code

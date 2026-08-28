@@ -85,7 +85,7 @@ private static async Task TryInsertKpiDefinitionAsync(
     {
         var exists = await QueryAsync(
             db,
-            "SELECT to_regclass('public.kpi_definitions') AS table_name;",
+            "SELECT to_regclass('ppiq_meta.kpi_definitions') AS table_name;",
             cancellationToken);
 
         if (exists.Count == 0 || exists[0]["table_name"] is null)
@@ -94,7 +94,7 @@ private static async Task TryInsertKpiDefinitionAsync(
         await ExecuteNonQueryAsync(
             db,
             """
-            INSERT INTO public.kpi_definitions
+            INSERT INTO ppiq_meta.kpi_definitions
             (
                 id,
                 schema_view_definition_id,

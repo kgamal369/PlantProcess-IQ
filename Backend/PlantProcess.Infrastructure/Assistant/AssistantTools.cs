@@ -20,8 +20,8 @@ public sealed class FetchFindingTool : ITool
             return ToolResult.Refused(Name, "bad_args");
 
         await using var cmd = _ds.CreateCommand(
-            "SELECT rs.id, rs.risk_type, rs.score, rs.risk_class FROM public.risk_scores rs " +
-            "JOIN public.material_units mu ON mu.id = rs.material_unit_id " +
+            "SELECT rs.id, rs.risk_type, rs.score, rs.risk_class FROM ppiq_plant.risk_scores rs " +
+            "JOIN ppiq_plant.material_units mu ON mu.id = rs.material_unit_id " +
             "WHERE rs.id = @id AND COALESCE(mu.is_synthetic,false) = false");
         cmd.Parameters.AddWithValue("id", id);
         await using var reader = await cmd.ExecuteReaderAsync(ct);
@@ -53,7 +53,7 @@ public sealed class OpenSuggestionTool : ITool
             return ToolResult.Refused(Name, "bad_args");
 
         await using var cmd = _ds.CreateCommand(
-            "SELECT id, title, status, confidence FROM canon.suggestion WHERE id=@id AND tenant_id=@t");
+            "SELECT id, title, status, confidence FROM ppiq_plant.suggestion WHERE id=@id AND tenant_id=@t");
         cmd.Parameters.AddWithValue("id", id);
         cmd.Parameters.AddWithValue("t", ctx.TenantId);
         await using var reader = await cmd.ExecuteReaderAsync(ct);

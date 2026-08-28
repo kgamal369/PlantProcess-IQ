@@ -39,12 +39,12 @@ public static class MlFoundationEndpoints
             db,
             """
             SELECT
-                (SELECT count(*) FROM public.ml_feature_definitions WHERE is_deleted = false) AS feature_definitions,
-                (SELECT count(*) FROM public.ml_feature_values) AS feature_values,
-                (SELECT count(*) FROM public.ml_outcome_definitions WHERE is_deleted = false) AS outcome_definitions,
-                (SELECT count(*) FROM public.ml_outcome_values) AS outcome_values,
-                (SELECT count(*) FROM public.ml_correlation_results_v2) AS correlation_results,
-                (SELECT count(*) FROM public.ml_knowledge_base_items WHERE is_deleted = false) AS kb_items,
+                (SELECT count(*) FROM ppiq_meta.ml_feature_definitions WHERE is_deleted = false) AS feature_definitions,
+                (SELECT count(*) FROM ppiq_plant.ml_feature_values) AS feature_values,
+                (SELECT count(*) FROM ppiq_meta.ml_outcome_definitions WHERE is_deleted = false) AS outcome_definitions,
+                (SELECT count(*) FROM ppiq_plant.ml_outcome_values) AS outcome_values,
+                (SELECT count(*) FROM ppiq_plant.ml_correlation_results_v2) AS correlation_results,
+                (SELECT count(*) FROM ppiq_meta.ml_knowledge_base_items WHERE is_deleted = false) AS kb_items,
                 EXISTS (SELECT 1 FROM pg_type WHERE typname = 'vector') AS pgvector_available;
             """,
             cancellationToken);
@@ -103,7 +103,7 @@ public static class MlFoundationEndpoints
                 version,
                 status,
                 metadata_json::text AS metadata_json
-            FROM public.ml_feature_definitions
+            FROM ppiq_meta.ml_feature_definitions
             WHERE is_deleted = false
             ORDER BY feature_group, feature_key;
             """,
@@ -132,7 +132,7 @@ public static class MlFoundationEndpoints
                 taxonomy_json::text AS taxonomy_json,
                 version,
                 status
-            FROM public.ml_outcome_definitions
+            FROM ppiq_meta.ml_outcome_definitions
             WHERE is_deleted = false
             ORDER BY outcome_group, outcome_key;
             """,

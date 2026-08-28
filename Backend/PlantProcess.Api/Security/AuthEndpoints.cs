@@ -199,7 +199,7 @@ public static class AuthEndpoints
             cmd.CommandText =
                 """
                 SELECT 1
-                FROM public.ppiq_auth_audit_events
+                FROM ppiq_meta.ppiq_auth_audit_events
                 WHERE user_id = @user_id
                   AND event_type = 'mfa_verify'
                   AND outcome = 'success'
@@ -219,7 +219,7 @@ public static class AuthEndpoints
             await using var cmd = connection.CreateCommand();
             cmd.CommandText =
                 """
-                SELECT 1 FROM public.ppiq_auth_audit_events
+                SELECT 1 FROM ppiq_meta.ppiq_auth_audit_events
                 WHERE user_id = @user_id AND event_type = 'mfa_verify' AND outcome = 'success'
                 LIMIT 1
                 """;

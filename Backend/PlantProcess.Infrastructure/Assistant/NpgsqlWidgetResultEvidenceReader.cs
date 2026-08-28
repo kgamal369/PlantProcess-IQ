@@ -164,7 +164,7 @@ public sealed class NpgsqlWidgetResultEvidenceReader : IWidgetResultEvidenceRead
         await using var cmd = _dataSource.CreateCommand(
             "SELECT e.id " +
             "FROM canon.assistant_widget_result e " +
-            "JOIN canon.assistant_chunk c " +
+            "JOIN ppiq_meta.assistant_chunk c " +
             "  ON c.tenant_id = e.tenant_id AND c.source_ref = e.id::text " +
             "WHERE e.tenant_id = @tenant " +
             "  AND e.widget_code = @widget " +

@@ -57,7 +57,7 @@ public sealed class NpgsqlValueImpactRepository
         });
 
         await using var cmd = _dataSource.CreateCommand(
-            "INSERT INTO canon.value_impact (tenant_id, finding_ref, coil_id, defect_code, currency, " +
+            "INSERT INTO ppiq_plant.value_impact (tenant_id, finding_ref, coil_id, defect_code, currency, " +
             "impact_eur_low, impact_eur_mid, impact_eur_high, assumption_version, is_abstained, evidence) " +
             "VALUES (@t,@f,@coil,@defect,@ccy,@low,@mid,@high,@ver,@abstain,@ev::jsonb) RETURNING id");
 

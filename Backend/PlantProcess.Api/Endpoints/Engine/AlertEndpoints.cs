@@ -47,7 +47,7 @@ public static class AlertEndpoints
             await using var conn = await ds.OpenConnectionAsync(ct);
             await using var cmd = conn.CreateCommand();
             cmd.CommandText =
-                "INSERT INTO public.alert_rules (rule_name, parameter_code, comparator, limit_value, severity, is_active) " +
+                "INSERT INTO ppiq_meta.alert_rules (rule_name, parameter_code, comparator, limit_value, severity, is_active) " +
                 "VALUES (@name, @code, @cmp, @limit, @sev, true) RETURNING id";
             cmd.Parameters.AddWithValue("name", req.RuleName.Trim());
             cmd.Parameters.AddWithValue("code", req.ParameterCode.Trim());
@@ -73,7 +73,7 @@ public static class AlertEndpoints
             await using var cmd = conn.CreateCommand();
             cmd.CommandText =
                 "SELECT id, rule_name, parameter_code, comparator, limit_value, severity, is_active, created_at_utc " +
-                "FROM public.alert_rules ORDER BY created_at_utc DESC";
+                "FROM ppiq_meta.alert_rules ORDER BY created_at_utc DESC";
             await using var r = await cmd.ExecuteReaderAsync(ct);
             while (await r.ReadAsync(ct))
             {
@@ -96,7 +96,7 @@ public static class AlertEndpoints
         {
             await using var conn = await ds.OpenConnectionAsync(ct);
             await using var cmd = conn.CreateCommand();
-            cmd.CommandText = "DELETE FROM public.alert_rules WHERE id = @id";
+            cmd.CommandText = "DELETE FROM ppiq_meta.alert_rules WHERE id = @id";
             cmd.Parameters.AddWithValue("id", id);
             var affected = await cmd.ExecuteNonQueryAsync(ct);
             return Results.Ok(new { deleted = affected });
@@ -121,8 +121,8 @@ public static class AlertEndpoints
             cmd.CommandText =
                 "SELECT l.id, r.rule_name, l.parameter_code, l.material_code, l.observed_value, " +
                 "       l.comparator, l.limit_value, l.severity, l.message, l.logged_at_utc " +
-                "FROM public.plant_data_log l " +
-                "JOIN public.alert_rules r ON r.id = l.alert_rule_id " +
+                "FROM ppiq_plant.plant_data_log l " +
+                "JOIN ppiq_meta.alert_rules r ON r.id = l.alert_rule_id " +
                 "ORDER BY l.logged_at_utc DESC LIMIT 200";
             await using var rr = await cmd.ExecuteReaderAsync(ct);
             while (await rr.ReadAsync(ct))

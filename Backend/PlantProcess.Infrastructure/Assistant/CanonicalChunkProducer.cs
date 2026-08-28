@@ -157,7 +157,7 @@ public sealed class CanonicalChunkProducer : IAssistantChunkProducer
         await using (var runCmd = conn.CreateCommand())
         {
             runCmd.CommandText =
-                "SELECT id FROM public.ml_correlation_compute_runs " +
+                "SELECT id FROM ppiq_meta.ml_correlation_compute_runs " +
                 "WHERE lower(coalesce(status,'')) IN ('completed','succeeded','success') " +
                 "ORDER BY coalesce(completed_at_utc, created_at_utc) DESC NULLS LAST LIMIT 1";
             var scalar = await runCmd.ExecuteScalarAsync(ct);
@@ -167,7 +167,7 @@ public sealed class CanonicalChunkProducer : IAssistantChunkProducer
         {
             // fall back to the most recent run referenced by any result row
             await using var anyCmd = conn.CreateCommand();
-            anyCmd.CommandText = "SELECT compute_run_id FROM public.ml_correlation_results_v2 ORDER BY compute_run_id DESC LIMIT 1";
+            anyCmd.CommandText = "SELECT compute_run_id FROM ppiq_plant.ml_correlation_results_v2 ORDER BY compute_run_id DESC LIMIT 1";
             var s = await anyCmd.ExecuteScalarAsync(ct);
             if (s is Guid g2) { runId = g2; }
         }
@@ -176,7 +176,7 @@ public sealed class CanonicalChunkProducer : IAssistantChunkProducer
         await using var cmd = conn.CreateCommand();
         cmd.CommandText =
             "SELECT feature_key, outcome_key, method, effect_size, q_value, sample_size " +
-            "FROM public.ml_correlation_results_v2 " +
+            "FROM ppiq_plant.ml_correlation_results_v2 " +
             "WHERE compute_run_id = @run AND coalesce(method,'NotApplicable') <> 'NotApplicable' AND coalesce(sample_size,0) > 0 " +
             "ORDER BY abs(coalesce(effect_size,0)) DESC LIMIT 50";
         cmd.Parameters.AddWithValue("run", runId.Value);

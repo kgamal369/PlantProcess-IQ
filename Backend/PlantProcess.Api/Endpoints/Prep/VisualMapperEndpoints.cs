@@ -48,7 +48,7 @@ public static class VisualMapperEndpoints
             // Constitution v3 II.6.3: the canvas lists the customer's staging layer.
             // The physical schema name is configuration, not a literal, because
             // Amendment 6 (Part III.16) renames it to ppiq_staging in M2.
-            var stagingSchema = cfg["Prep:StagingSchema"] ?? "dump_store";
+            var stagingSchema = cfg["Prep:StagingSchema"] ?? "ppiq_staging";
 
             // T-034. THE KEY MARKER NOW COMES FROM DECLARED CONSTRAINTS.
             //
@@ -151,7 +151,7 @@ WHERE n.nspname = $1 AND c.relkind IN ('r', 'p', 'm', 'v');";
             // default definition name every time. The code is generated.
             var sourceCode = NewSourceCode(name);
             await using var cmd = ds.CreateCommand(
-                "INSERT INTO public.ppiq_visual_mapper_sessions (tenant_id, source_code, display_name, source_kind, status) " +
+                "INSERT INTO ppiq_meta.ppiq_visual_mapper_sessions (tenant_id, source_code, display_name, source_kind, status) " +
                 "VALUES ($1,$2,$3,'generic_relational','draft') RETURNING id;");
             cmd.Parameters.AddWithValue(tenant);
             cmd.Parameters.AddWithValue(sourceCode);
@@ -164,7 +164,7 @@ WHERE n.nspname = $1 AND c.relkind IN ('r', 'p', 'm', 'v');";
         {
             // store the whole graph on the session as jsonb draft (versions snapshot it on publish)
             await using var cmd = ds.CreateCommand(
-                "UPDATE public.ppiq_visual_mapper_sessions SET draft_definition = $2::jsonb, updated_at_utc = now() WHERE id = $1;");
+                "UPDATE ppiq_meta.ppiq_visual_mapper_sessions SET draft_definition = $2::jsonb, updated_at_utc = now() WHERE id = $1;");
             cmd.Parameters.AddWithValue(id);
             cmd.Parameters.AddWithValue(JsonSerializer.Serialize(graph));
             var n = await cmd.ExecuteNonQueryAsync();
@@ -177,7 +177,7 @@ WHERE n.nspname = $1 AND c.relkind IN ('r', 'p', 'm', 'v');";
             if (graph is null) return Results.BadRequest(new { message = "no graph saved for session" });
             // Same configuration key the catalogue query uses, so the panel and
             // the generated query can never target different schemas again.
-            var (sql, err, prms) = BuildSafeSelect(graph, cfg["Prep:StagingSchema"] ?? "dump_store");
+            var (sql, err, prms) = BuildSafeSelect(graph, cfg["Prep:StagingSchema"] ?? "ppiq_staging");
             if (err is not null)
             {
                 await RecordDryRun(ds, id, "rejected_by_safe_sql", 0, err);
@@ -237,11 +237,11 @@ WHERE n.nspname = $1 AND c.relkind IN ('r', 'p', 'm', 'v');";
             var graphJson = await LoadGraphJson(ds, id);
             if (graphJson is null) return Results.BadRequest(new { message = "no graph saved" });
             await using var cmd = ds.CreateCommand(@"
-INSERT INTO public.ppiq_visual_mapper_versions (tenant_id, session_id, version_number, version_status, mapping_definition, published_by)
+INSERT INTO ppiq_meta.ppiq_visual_mapper_versions (tenant_id, session_id, version_number, version_status, mapping_definition, published_by)
 SELECT s.tenant_id, s.id,
-       COALESCE((SELECT MAX(version_number) FROM public.ppiq_visual_mapper_versions v WHERE v.session_id = s.id), 0) + 1,
+       COALESCE((SELECT MAX(version_number) FROM ppiq_meta.ppiq_visual_mapper_versions v WHERE v.session_id = s.id), 0) + 1,
        'published', $2::jsonb, $3
-FROM public.ppiq_visual_mapper_sessions s WHERE s.id = $1
+FROM ppiq_meta.ppiq_visual_mapper_sessions s WHERE s.id = $1
 RETURNING id, version_number;");
             cmd.Parameters.AddWithValue(id);
             cmd.Parameters.AddWithValue(graphJson);
@@ -259,7 +259,7 @@ RETURNING id, version_number;");
 
     private static async Task<string?> LoadGraphJson(NpgsqlDataSource ds, Guid id)
     {
-        await using var cmd = ds.CreateCommand("SELECT draft_definition::text FROM public.ppiq_visual_mapper_sessions WHERE id = $1;");
+        await using var cmd = ds.CreateCommand("SELECT draft_definition::text FROM ppiq_meta.ppiq_visual_mapper_sessions WHERE id = $1;");
         cmd.Parameters.AddWithValue(id);
         return await cmd.ExecuteScalarAsync() as string;
     }
@@ -300,10 +300,10 @@ RETURNING id, version_number;");
             _ => "failed"
         };
         await using var cmd = ds.CreateCommand(@"
-INSERT INTO public.ppiq_visual_mapper_dry_runs
+INSERT INTO ppiq_meta.ppiq_visual_mapper_dry_runs
        (tenant_id, session_id, status, safe_sql_passed, total_rows, mapped_rows, details)
 SELECT tenant_id, id, $2, $5, $3, $3, $4::jsonb
-FROM public.ppiq_visual_mapper_sessions WHERE id = $1 RETURNING id;");
+FROM ppiq_meta.ppiq_visual_mapper_sessions WHERE id = $1 RETURNING id;");
         cmd.Parameters.AddWithValue(sessionId);
         cmd.Parameters.AddWithValue(persisted);
         cmd.Parameters.AddWithValue((long)rows);

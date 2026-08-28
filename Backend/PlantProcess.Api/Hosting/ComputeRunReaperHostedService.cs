@@ -68,7 +68,7 @@ public sealed class ComputeRunReaperHostedService : BackgroundService
         var db = scope.ServiceProvider.GetRequiredService<PlantProcessDbContext>();
 
         var computeReaped = await db.Database.ExecuteSqlRawAsync(
-            "UPDATE public.ml_correlation_compute_runs " +
+            "UPDATE ppiq_meta.ml_correlation_compute_runs " +
             "SET status = 'Failed', completed_at_utc = now(), " +
             "    message = left(coalesce(message || ' | ', '') || 'Failed(timeout): exceeded max runtime of ' || {0} || ' minutes (reaper)', 500) " +
             "WHERE status = 'Running' AND started_at_utc < now() - make_interval(mins => {0})",
@@ -76,7 +76,7 @@ public sealed class ComputeRunReaperHostedService : BackgroundService
             ct);
 
         var learningReaped = await db.Database.ExecuteSqlRawAsync(
-            "UPDATE public.ml_learning_runs_v1 " +
+            "UPDATE ppiq_meta.ml_learning_runs_v1 " +
             "SET status = 'Failed', finished_at_utc = now(), " +
             "    error_message = 'Failed(timeout): exceeded max runtime of ' || {0} || ' minutes (reaper)' " +
             "WHERE status = 'Running' AND started_at_utc < now() - make_interval(mins => {0})",

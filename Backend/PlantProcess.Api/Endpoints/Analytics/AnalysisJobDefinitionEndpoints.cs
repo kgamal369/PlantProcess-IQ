@@ -17,7 +17,7 @@ namespace PlantProcess.Api.Endpoints.Analytics;
 
 /// <summary>
 /// M1-05 Surface-3: analysis-job DEFINITIONS over LIVE canonical data.
-/// A definition is tenant data in public.inspection_jobs (generic, no dataset-
+/// A definition is tenant data in ppiq_meta.inspection_jobs (generic, no dataset-
 /// specific identifiers). Running a definition:
 ///   1. evaluates the ReadinessGate via ppiq_ml_run_learning_job_governed_v1
 ///      (readiness_status / readiness_reason surfaced honestly, never hidden);
@@ -84,7 +84,7 @@ public static class AnalysisJobDefinitionEndpoints
             dbContext,
             """
             SELECT event_type, count(*)::bigint AS event_count
-            FROM public.quality_events
+            FROM ppiq_plant.quality_events
             WHERE is_deleted = false
             GROUP BY event_type
             ORDER BY count(*) DESC
@@ -99,8 +99,8 @@ public static class AnalysisJobDefinitionEndpoints
                 pd.parameter_code,
                 pd.parameter_name,
                 count(po.id)::bigint AS observation_count
-            FROM public.parameter_definitions pd
-            LEFT JOIN public.parameter_observations po
+            FROM ppiq_meta.parameter_definitions pd
+            LEFT JOIN ppiq_plant.parameter_observations po
                 ON po.parameter_definition_id = pd.id
                AND po.is_deleted = false
             WHERE pd.is_deleted = false
@@ -114,7 +114,7 @@ public static class AnalysisJobDefinitionEndpoints
             dbContext,
             """
             SELECT outcome_key, display_name, outcome_type, grain
-            FROM public.ml_outcome_definitions
+            FROM ppiq_meta.ml_outcome_definitions
             WHERE is_deleted = false
             ORDER BY outcome_group, outcome_key
             """,
@@ -124,7 +124,7 @@ public static class AnalysisJobDefinitionEndpoints
             dbContext,
             """
             SELECT job_code, job_name, outcome_family, is_enabled
-            FROM public.ml_learning_job_catalog_v1
+            FROM ppiq_meta.ml_learning_job_catalog_v1
             ORDER BY job_code
             """,
             cancellationToken);
@@ -136,7 +136,7 @@ public static class AnalysisJobDefinitionEndpoints
                 min(observed_at_utc) AS min_observed_at_utc,
                 max(observed_at_utc) AS max_observed_at_utc,
                 count(*)::bigint     AS observation_count
-            FROM public.parameter_observations
+            FROM ppiq_plant.parameter_observations
             WHERE is_deleted = false
             """,
             cancellationToken);
@@ -240,7 +240,7 @@ public static class AnalysisJobDefinitionEndpoints
 
         var exists = await ScalarBoolAsync(
             dbContext,
-            "SELECT EXISTS (SELECT 1 FROM public.inspection_jobs WHERE lower(inspection_job_code) = lower(@code) AND is_deleted = false)",
+            "SELECT EXISTS (SELECT 1 FROM ppiq_meta.inspection_jobs WHERE lower(inspection_job_code) = lower(@code) AND is_deleted = false)",
             cancellationToken,
             ("code", code));
 
@@ -267,7 +267,7 @@ public static class AnalysisJobDefinitionEndpoints
         await ExecuteAsync(
             dbContext,
             """
-            INSERT INTO public.inspection_jobs
+            INSERT INTO ppiq_meta.inspection_jobs
             (
                 id, inspection_job_code, inspection_job_name, inspection_type,
                 source_correlation_run_id, parameter_code, defect_type,
@@ -342,7 +342,7 @@ public static class AnalysisJobDefinitionEndpoints
         var affected = await ExecuteAsync(
             dbContext,
             """
-            UPDATE public.inspection_jobs
+            UPDATE ppiq_meta.inspection_jobs
             SET inspection_job_name = @name,
                 defect_type = @defect_type,
                 parameter_code = @parameter_code,
@@ -474,7 +474,7 @@ public static class AnalysisJobDefinitionEndpoints
         // carries, and nobody would go looking for it.
         var catalogJobType = await ScalarStringAsync(
             dbContext,
-            "SELECT job_type FROM public.ml_learning_job_catalog_v1 WHERE job_code = @jobCode LIMIT 1",
+            "SELECT job_type FROM ppiq_meta.ml_learning_job_catalog_v1 WHERE job_code = @jobCode LIMIT 1",
             cancellationToken,
             ("jobCode", engineJobCode));
 
@@ -602,7 +602,7 @@ public static class AnalysisJobDefinitionEndpoints
         await ExecuteAsync(
             dbContext,
             """
-            UPDATE public.inspection_jobs
+            UPDATE ppiq_meta.inspection_jobs
             SET last_run_at_utc = now(),
                 last_run_status = @status,
                 last_result_json = CAST(@result_json AS jsonb),
@@ -695,7 +695,7 @@ public static class AnalysisJobDefinitionEndpoints
                 stability_score,
                 is_stable,
                 created_at_utc
-            FROM public.ml_correlation_results_v2
+            FROM ppiq_plant.ml_correlation_results_v2
             WHERE compute_run_id = @run_id
             ORDER BY q_value ASC NULLS LAST, effect_size DESC NULLS LAST
             LIMIT 100
@@ -741,7 +741,7 @@ public static class AnalysisJobDefinitionEndpoints
             target_definition_version,
             target_version_policy,
             target_parameters::text AS target_parameters
-        FROM public.inspection_jobs
+        FROM ppiq_meta.inspection_jobs
         """;
 
     private static async Task<AnalysisJobDefinitionRow?> LoadDefinitionAsync(

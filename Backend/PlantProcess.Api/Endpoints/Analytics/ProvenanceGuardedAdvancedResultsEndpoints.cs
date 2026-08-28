@@ -26,7 +26,7 @@ public static class ProvenanceGuardedAdvancedResultsEndpoints
 
             await using (var cmd = ds.CreateCommand(
                 "SELECT id, engine_key, target_outcome_key, COALESCE(status,'Unknown'), COALESCE(duration_ms,0) " +
-                "FROM public.ml_correlation_compute_runs " +
+                "FROM ppiq_meta.ml_correlation_compute_runs " +
                 (string.IsNullOrWhiteSpace(outcomeKey) ? "" : "WHERE target_outcome_key = @o ") +
                 "ORDER BY completed_at_utc DESC NULLS LAST LIMIT 50"))
             {

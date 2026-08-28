@@ -174,7 +174,7 @@ public static class V5OutboundLeadSystemEndpoints
                     fit_score,
                     status,
                     created_at_utc
-                FROM public.ppiq_lead_captures
+                FROM ppiq_meta.ppiq_lead_captures
                 WHERE tenant_id = @tenant_id
                 ORDER BY created_at_utc DESC
                 LIMIT 100
@@ -217,7 +217,7 @@ public static class V5OutboundLeadSystemEndpoints
             await using var cmd = connection.CreateCommand();
             cmd.CommandText =
                 """
-                INSERT INTO public.ppiq_notification_channels
+                INSERT INTO ppiq_meta.ppiq_notification_channels
                 (
                     tenant_id,
                     channel_code,
@@ -303,7 +303,7 @@ public static class V5OutboundLeadSystemEndpoints
             await using var cmd = connection.CreateCommand();
             cmd.CommandText =
                 """
-                UPDATE public.ppiq_notification_deliveries
+                UPDATE ppiq_meta.ppiq_notification_deliveries
                 SET status = 'delivered',
                     attempt_count = attempt_count + 1,
                     last_attempt_at_utc = now(),
@@ -349,7 +349,7 @@ public static class V5OutboundLeadSystemEndpoints
             await using var cmd = connection.CreateCommand();
             cmd.CommandText =
                 """
-                INSERT INTO public.ppiq_suggestion_action_outcomes
+                INSERT INTO ppiq_meta.ppiq_suggestion_action_outcomes
                 (
                     tenant_id,
                     suggestion_id,
@@ -435,7 +435,7 @@ public static class V5OutboundLeadSystemEndpoints
                     confidence,
                     count(*) AS count,
                     avg(delta_value) AS avg_delta
-                FROM public.ppiq_suggestion_action_outcomes
+                FROM ppiq_meta.ppiq_suggestion_action_outcomes
                 WHERE tenant_id = @tenant_id
                 GROUP BY target_kpi, outcome_direction, confidence
                 ORDER BY target_kpi, outcome_direction, confidence
@@ -479,7 +479,7 @@ public static class V5OutboundLeadSystemEndpoints
         cmd.Transaction = tx;
         cmd.CommandText =
             """
-            INSERT INTO public.ppiq_lead_captures
+            INSERT INTO ppiq_meta.ppiq_lead_captures
             (
                 tenant_id,
                 source,
@@ -565,7 +565,7 @@ public static class V5OutboundLeadSystemEndpoints
         cmd.Transaction = tx;
         cmd.CommandText =
             """
-            INSERT INTO public.ppiq_notification_deliveries
+            INSERT INTO ppiq_meta.ppiq_notification_deliveries
             (
                 tenant_id,
                 channel_id,
@@ -585,13 +585,13 @@ public static class V5OutboundLeadSystemEndpoints
                 @payload_json::jsonb,
                 'queued',
                 now()
-            FROM public.ppiq_notification_channels c
+            FROM ppiq_meta.ppiq_notification_channels c
             WHERE c.tenant_id = @tenant_id
               AND c.is_enabled = true
               AND (
                   c.channel_code IN (
                       SELECT p.channel_code
-                      FROM public.ppiq_notification_preferences p
+                      FROM ppiq_meta.ppiq_notification_preferences p
                       WHERE p.tenant_id = @tenant_id
                         AND p.event_type = @event_type
                         AND p.is_enabled = true

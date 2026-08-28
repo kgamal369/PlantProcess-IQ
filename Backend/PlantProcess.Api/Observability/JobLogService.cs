@@ -43,7 +43,7 @@ public sealed class JobLogService : IJobLogService
         var contextJson = context is null ? "{}" : JsonSerializer.Serialize(context);
 
         await _dbContext.Database.ExecuteSqlRawAsync(
-            "INSERT INTO public.job_log (job_type, job_name, run_id, severity, message, context) " +
+            "INSERT INTO ppiq_meta.job_log (job_type, job_name, run_id, severity, message, context) " +
             "VALUES ({0}, {1}, {2}, {3}, {4}, {5}::jsonb)",
             new object?[] { jobType, jobName, runId, severity, message, contextJson },
             cancellationToken);

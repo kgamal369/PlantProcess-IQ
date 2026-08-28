@@ -6,7 +6,7 @@ using PlantProcess.Application.Provenance;
 namespace PlantProcess.Infrastructure.Assistant;
 
 /// <summary>
-/// T-051: tenant- and permission-scoped retrieval over canon.assistant_chunk. The tenant filter is a SQL
+/// T-051: tenant- and permission-scoped retrieval over ppiq_meta.assistant_chunk. The tenant filter is a SQL
 /// predicate (isolation cannot be overridden by similarity); synthetic and stale chunks are excluded;
 /// reindex marks old chunks stale, inserts fresh ones, and records per-tenant counts.
 /// </summary>
@@ -29,7 +29,7 @@ public sealed class NpgsqlRetrievalIndex : IRetrievalIndex
 
         await using (var cmd = _dataSource.CreateCommand(
             "SELECT id, source_kind, source_ref, content, embedding_json, scope_role " +
-            "FROM canon.assistant_chunk " +
+            "FROM ppiq_meta.assistant_chunk " +
             "WHERE tenant_id = @t AND is_synthetic = false AND is_stale = false"))
         {
             cmd.Parameters.AddWithValue("t", query.TenantId);
@@ -66,7 +66,7 @@ public sealed class NpgsqlRetrievalIndex : IRetrievalIndex
         await using (var stale = conn.CreateCommand())
         {
             stale.Transaction = tx;
-            stale.CommandText = "UPDATE canon.assistant_chunk SET is_stale = true WHERE tenant_id = @t";
+            stale.CommandText = "UPDATE ppiq_meta.assistant_chunk SET is_stale = true WHERE tenant_id = @t";
             stale.Parameters.AddWithValue("t", request.TenantId);
             replaced = await stale.ExecuteNonQueryAsync(ct);
         }
@@ -77,7 +77,7 @@ public sealed class NpgsqlRetrievalIndex : IRetrievalIndex
             await using var cmd = conn.CreateCommand();
             cmd.Transaction = tx;
             cmd.CommandText =
-                "INSERT INTO canon.assistant_chunk (tenant_id, scope_role, source_kind, source_ref, content, embedding_json, content_hash, is_synthetic, is_stale) " +
+                "INSERT INTO ppiq_meta.assistant_chunk (tenant_id, scope_role, source_kind, source_ref, content, embedding_json, content_hash, is_synthetic, is_stale) " +
                 "VALUES (@t,@scope,@kind,@ref,@content,@emb::jsonb,@hash,@syn,false) " +
                 "ON CONFLICT (tenant_id, source_kind, source_ref) DO UPDATE SET " +
                 "content=EXCLUDED.content, embedding_json=EXCLUDED.embedding_json, content_hash=EXCLUDED.content_hash, " +
@@ -97,7 +97,7 @@ public sealed class NpgsqlRetrievalIndex : IRetrievalIndex
         await using (var purge = conn.CreateCommand())
         {
             purge.Transaction = tx;
-            purge.CommandText = "DELETE FROM canon.assistant_chunk WHERE tenant_id = @t AND is_stale = true";
+            purge.CommandText = "DELETE FROM ppiq_meta.assistant_chunk WHERE tenant_id = @t AND is_stale = true";
             purge.Parameters.AddWithValue("t", request.TenantId);
             await purge.ExecuteNonQueryAsync(ct);
         }
@@ -105,7 +105,7 @@ public sealed class NpgsqlRetrievalIndex : IRetrievalIndex
         await using (var run = conn.CreateCommand())
         {
             run.Transaction = tx;
-            run.CommandText = "INSERT INTO canon.assistant_index_run (tenant_id, chunk_count, replaced_count, correlation_id, finished_at) " +
+            run.CommandText = "INSERT INTO ppiq_meta.assistant_index_run (tenant_id, chunk_count, replaced_count, correlation_id, finished_at) " +
                               "VALUES (@t,@c,@r,@corr,now())";
             run.Parameters.AddWithValue("t", request.TenantId);
             run.Parameters.AddWithValue("c", request.Chunks.Count);

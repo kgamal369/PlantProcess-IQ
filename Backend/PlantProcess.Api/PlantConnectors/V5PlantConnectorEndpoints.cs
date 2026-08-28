@@ -114,8 +114,8 @@ public static class V5PlantConnectorEndpoints
                     s.tag_count,
                     s.message,
                     s.captured_at_utc
-                FROM public.ppiq_plant_connectors c
-                LEFT JOIN public.ppiq_connector_truth_snapshots s ON s.connector_id = c.id
+                FROM ppiq_meta.ppiq_plant_connectors c
+                LEFT JOIN ppiq_meta.ppiq_connector_truth_snapshots s ON s.connector_id = c.id
                 WHERE c.tenant_id = @tenant_id
                 ORDER BY c.id, s.captured_at_utc DESC NULLS LAST
                 """;
@@ -292,7 +292,7 @@ public static class V5PlantConnectorEndpoints
         await using var cmd = connection.CreateCommand();
         cmd.CommandText =
             """
-            INSERT INTO public.ppiq_plant_connectors
+            INSERT INTO ppiq_meta.ppiq_plant_connectors
             (
                 tenant_id,
                 connector_code,
@@ -337,7 +337,7 @@ public static class V5PlantConnectorEndpoints
         cmd.CommandText =
             """
             SELECT id
-            FROM public.ppiq_plant_connectors
+            FROM ppiq_meta.ppiq_plant_connectors
             WHERE tenant_id = @tenant_id
               AND connector_code = @connector_code
               AND is_enabled = true
@@ -360,7 +360,7 @@ public static class V5PlantConnectorEndpoints
         await using var cmd = connection.CreateCommand();
         cmd.CommandText =
             """
-            INSERT INTO public.ppiq_connector_tag_catalog
+            INSERT INTO ppiq_meta.ppiq_connector_tag_catalog
             (
                 tenant_id,
                 connector_id,
@@ -409,7 +409,7 @@ public static class V5PlantConnectorEndpoints
         await using var cmd = connection.CreateCommand();
         cmd.CommandText =
             """
-            INSERT INTO public.ppiq_connector_truth_snapshots
+            INSERT INTO ppiq_meta.ppiq_connector_truth_snapshots
             (
                 tenant_id,
                 connector_id,
@@ -459,7 +459,7 @@ public static class V5PlantConnectorEndpoints
         await using var cmd = connection.CreateCommand();
         cmd.CommandText =
             """
-            INSERT INTO public.ppiq_connector_backfill_jobs
+            INSERT INTO ppiq_meta.ppiq_connector_backfill_jobs
             (
                 tenant_id,
                 connector_id,
@@ -501,7 +501,7 @@ public static class V5PlantConnectorEndpoints
         await using var cmd = connection.CreateCommand();
         cmd.CommandText =
             """
-            UPDATE public.ppiq_connector_backfill_jobs
+            UPDATE ppiq_meta.ppiq_connector_backfill_jobs
             SET status = 'completed',
                 rows_read = @rows,
                 rows_written = @rows,
@@ -532,7 +532,7 @@ public static class V5PlantConnectorEndpoints
         await using var cmd = connection.CreateCommand();
         cmd.CommandText =
             """
-            INSERT INTO public.ppiq_connector_telemetry_samples
+            INSERT INTO ppiq_staging.ppiq_connector_telemetry_samples
             (
                 tenant_id,
                 connector_id,
@@ -576,7 +576,7 @@ public static class V5PlantConnectorEndpoints
         await using var cmd = connection.CreateCommand();
         cmd.CommandText =
             """
-            INSERT INTO public.ppiq_connector_sync_checkpoints
+            INSERT INTO ppiq_staging.ppiq_connector_sync_checkpoints
             (
                 tenant_id,
                 connector_id,
@@ -596,9 +596,9 @@ public static class V5PlantConnectorEndpoints
             )
             ON CONFLICT (connector_id, tag_path)
             DO UPDATE SET
-                last_timestamp_utc = GREATEST(public.ppiq_connector_sync_checkpoints.last_timestamp_utc, EXCLUDED.last_timestamp_utc),
+                last_timestamp_utc = GREATEST(ppiq_staging.ppiq_connector_sync_checkpoints.last_timestamp_utc, EXCLUDED.last_timestamp_utc),
                 last_source_offset = EXCLUDED.last_source_offset,
-                rows_synced = public.ppiq_connector_sync_checkpoints.rows_synced + 1,
+                rows_synced = ppiq_staging.ppiq_connector_sync_checkpoints.rows_synced + 1,
                 updated_at_utc = now()
             """;
 

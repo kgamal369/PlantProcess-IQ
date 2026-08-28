@@ -16,11 +16,11 @@ public static class P03P04MappingGenealogyEndpoints
             CancellationToken cancellationToken) =>
         {
             var hasBusinessKeys = await dbContext.Database
-                .SqlQueryRaw<bool>("SELECT to_regclass('public.ppiq_business_key_definitions') IS NOT NULL")
+                .SqlQueryRaw<bool>("SELECT to_regclass('ppiq_meta.ppiq_business_key_definitions') IS NOT NULL")
                 .FirstAsync(cancellationToken);
 
             var hasMappingVersions = await dbContext.Database
-                .SqlQueryRaw<bool>("SELECT to_regclass('public.ppiq_mapping_versions') IS NOT NULL")
+                .SqlQueryRaw<bool>("SELECT to_regclass('ppiq_meta.ppiq_mapping_versions') IS NOT NULL")
                 .FirstAsync(cancellationToken);
 
             var hasCanonicalMaterials = await dbContext.Database

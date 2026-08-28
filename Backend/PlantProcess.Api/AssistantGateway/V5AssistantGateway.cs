@@ -359,7 +359,7 @@ public sealed class V5AssistantGatewayService
                 timeout_ms,
                 max_retries,
                 circuit_breaker_failures
-            FROM public.ppiq_assistant_provider_configs
+            FROM ppiq_meta.ppiq_assistant_provider_configs
             WHERE tenant_id = @tenant_id
               AND provider_code = @provider_code
               AND is_enabled = true
@@ -425,7 +425,7 @@ public sealed class V5AssistantGatewayService
         await using var cmd = connection.CreateCommand();
         cmd.CommandText =
             """
-            INSERT INTO public.ppiq_assistant_audit_log
+            INSERT INTO ppiq_meta.ppiq_assistant_audit_log
             (
                 tenant_id,
                 question_hash,
@@ -559,7 +559,7 @@ public static class V5AssistantGatewayRegistration
             await using var cmd = connection.CreateCommand();
             cmd.CommandText =
                 """
-                INSERT INTO public.ppiq_assistant_eval_runs
+                INSERT INTO ppiq_meta.ppiq_assistant_eval_runs
                 (
                     tenant_id,
                     provider_code,
@@ -629,7 +629,7 @@ public static class V5AssistantGatewayRegistration
                     model_version,
                     grounding_passed,
                     citations
-                FROM public.ppiq_assistant_audit_log
+                FROM ppiq_meta.ppiq_assistant_audit_log
                 WHERE tenant_id = @tenant_id
                 ORDER BY created_at_utc DESC
                 LIMIT 100

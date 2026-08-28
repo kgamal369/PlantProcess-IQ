@@ -153,7 +153,7 @@ public sealed class DefinitionService : IDefinitionService
     private async Task LockWidgetAsync(Guid widgetId, CancellationToken cancellationToken)
     {
         await _db.Database.ExecuteSqlInterpolatedAsync(
-            $"SELECT id FROM public.dashboard_widget_definitions WHERE id = {widgetId} FOR UPDATE",
+            $"SELECT id FROM ppiq_meta.dashboard_widget_definitions WHERE id = {widgetId} FOR UPDATE",
             cancellationToken);
     }
 

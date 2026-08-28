@@ -71,7 +71,7 @@ public sealed class AnalysisAwareJobTargetLookup : IJobTargetLookup
 
         command.CommandText =
             "SELECT inspection_job_code " +
-            "FROM public.inspection_jobs " +
+            "FROM ppiq_meta.inspection_jobs " +
             "WHERE is_deleted = false " +
             "  AND target_definition_id = @definitionId " +
             "  AND target_definition_kind = @kind " +

@@ -29,7 +29,7 @@ public sealed class NpgsqlAnalysisOutcomeTargetResolver : IAnalysisOutcomeTarget
 
         await using var cmd = new NpgsqlCommand(
             @"SELECT outcome_key, grain, display_name, outcome_type
-              FROM public.ml_outcome_definitions
+              FROM ppiq_meta.ml_outcome_definitions
               WHERE lower(outcome_key) = lower(@k) AND is_deleted = false
               ORDER BY version DESC
               LIMIT 1", conn);

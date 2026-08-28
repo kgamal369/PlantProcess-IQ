@@ -382,7 +382,7 @@ public static class ConnectorAdminEndpoints
             if (selected is not null || !string.IsNullOrWhiteSpace(request.RowFilter))
             {
                 await using var prep = connection.CreateCommand();
-                prep.CommandText = @"UPDATE public.source_table_dump_registry
+                prep.CommandText = @"UPDATE ppiq_staging.source_table_dump_registry
                     SET source_columns_json = COALESCE(@cols::jsonb, source_columns_json), updated_at_utc = now()
                     WHERE source_schema_name = @schema AND source_table_name = @table AND is_deleted = false;";
                 AddRegParam(prep, "schema", schemaName);

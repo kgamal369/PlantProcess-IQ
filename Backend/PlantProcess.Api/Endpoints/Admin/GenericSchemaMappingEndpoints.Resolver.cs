@@ -62,7 +62,7 @@ private static async Task<IResult> ResolveSchemaViewAsync(
             created_by,
             created_at_utc,
             updated_at_utc
-        FROM public.canonical_schema_views
+        FROM ppiq_meta.canonical_schema_views
         WHERE is_deleted = false
           AND is_active = true
           AND is_approved = true

@@ -71,7 +71,7 @@ public static class Phase2PilotReadinessEndpoints
                 valid_until_utc,
                 approved_by,
                 evidence_json::text
-            FROM public.tenant_isolation_decisions
+            FROM ppiq_meta.tenant_isolation_decisions
             WHERE is_deleted = false
             ORDER BY created_at_utc DESC
             """;
@@ -140,7 +140,7 @@ public static class Phase2PilotReadinessEndpoints
                 http_status_code,
                 metadata_json::text,
                 created_at_utc
-            FROM public.audit_log_entries
+            FROM ppiq_meta.audit_log_entries
             WHERE (@endpoint IS NULL OR endpoint ILIKE '%' || @endpoint || '%')
               AND (@user_name IS NULL OR user_name ILIKE '%' || @user_name || '%')
               AND (@action_category IS NULL OR action_category = @action_category)
@@ -224,7 +224,7 @@ public static class Phase2PilotReadinessEndpoints
                 severity,
                 rationale,
                 is_active
-            FROM public.demo_language_truth_rules
+            FROM ppiq_meta.demo_language_truth_rules
             WHERE is_active = true
             ORDER BY severity, rule_code
             """;
@@ -298,7 +298,7 @@ public static class Phase2PilotReadinessEndpoints
                 severity,
                 rationale,
                 is_active
-            FROM public.demo_language_truth_rules
+            FROM ppiq_meta.demo_language_truth_rules
             WHERE is_active = true
             """;
 

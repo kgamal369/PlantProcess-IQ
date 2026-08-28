@@ -105,7 +105,7 @@ public static class V5ComplianceControlsEndpoints
                     entity_id,
                     event_hash,
                     previous_hash
-                FROM public.ppiq_audit_events
+                FROM ppiq_meta.ppiq_audit_events
                 WHERE tenant_id = @tenant_id
                 ORDER BY event_time_utc DESC
                 LIMIT 100
@@ -161,7 +161,7 @@ public static class V5ComplianceControlsEndpoints
             await using var cmd = connection.CreateCommand();
             cmd.CommandText =
                 """
-                INSERT INTO public.ppiq_data_subject_requests
+                INSERT INTO ppiq_meta.ppiq_data_subject_requests
                 (
                     tenant_id,
                     request_code,
@@ -242,7 +242,7 @@ public static class V5ComplianceControlsEndpoints
             await using var cmd = connection.CreateCommand();
             cmd.CommandText =
                 """
-                INSERT INTO public.ppiq_retention_run_logs
+                INSERT INTO ppiq_meta.ppiq_retention_run_logs
                 (
                     tenant_id,
                     dataset_name,
@@ -311,7 +311,7 @@ public static class V5ComplianceControlsEndpoints
                     product_control,
                     evidence_location,
                     implementation_status
-                FROM public.ppiq_control_evidence_matrix
+                FROM ppiq_meta.ppiq_control_evidence_matrix
                 ORDER BY framework, control_code
                 """;
 
@@ -376,7 +376,7 @@ public static class V5ComplianceControlsEndpoints
         await using var cmd = connection.CreateCommand();
         cmd.CommandText =
             """
-            INSERT INTO public.ppiq_audit_events
+            INSERT INTO ppiq_meta.ppiq_audit_events
             (
                 tenant_id,
                 actor_id,
@@ -437,7 +437,7 @@ public static class V5ComplianceControlsEndpoints
         cmd.CommandText =
             """
             SELECT event_hash
-            FROM public.ppiq_audit_events
+            FROM ppiq_meta.ppiq_audit_events
             WHERE tenant_id = @tenant_id
             ORDER BY event_time_utc DESC, created_at_utc DESC
             LIMIT 1

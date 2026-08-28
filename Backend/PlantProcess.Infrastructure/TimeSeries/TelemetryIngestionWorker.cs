@@ -140,7 +140,7 @@ public sealed class TelemetryIngestionQueue : ITelemetryIngestionQueue, IAsyncDi
         {
             await using var writer = await connection.BeginBinaryImportAsync(
                 """
-                COPY public.parameter_observations
+                COPY ppiq_plant.parameter_observations
                 (tenant_id, parameter_definition_id, material_unit_id, observed_at_utc, numeric_value, source_system, source_record_id)
                 FROM STDIN (FORMAT BINARY)
                 """,
@@ -199,7 +199,7 @@ public sealed class TelemetryIngestionQueue : ITelemetryIngestionQueue, IAsyncDi
         await using var cmd = connection.CreateCommand();
         cmd.CommandText =
             """
-            INSERT INTO public.ppiq_telemetry_ingestion_metrics
+            INSERT INTO ppiq_meta.ppiq_telemetry_ingestion_metrics
             (
                 tenant_id,
                 source_code,

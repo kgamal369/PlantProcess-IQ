@@ -28,7 +28,7 @@ public sealed class NpgsqlParameterQuantityRegistry : IParameterQuantityRegistry
         await using var cmd = _dataSource.CreateCommand(
             "SELECT parameter_code, parameter_name, value_type, unit_of_measure, " +
             "       expected_min_value, expected_max_value, is_synthetic " +
-            "FROM public.parameter_definitions " +
+            "FROM ppiq_meta.parameter_definitions " +
             "WHERE is_deleted = false");
 
         await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);

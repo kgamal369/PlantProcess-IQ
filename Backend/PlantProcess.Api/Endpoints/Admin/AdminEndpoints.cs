@@ -81,7 +81,7 @@ public static class AdminEndpoints
 
         var sql =
             "SELECT id, occurred_at_utc, job_type, job_name, run_id, severity, message, context::text AS context, site_code " +
-            "FROM public.job_log WHERE 1 = 1";
+            "FROM ppiq_meta.job_log WHERE 1 = 1";
         var connection = dbContext.Database.GetDbConnection();
         if (connection.State != System.Data.ConnectionState.Open)
         {

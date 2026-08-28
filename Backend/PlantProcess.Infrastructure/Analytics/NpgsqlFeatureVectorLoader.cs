@@ -28,7 +28,7 @@ public sealed class NpgsqlFeatureVectorLoader : IFeatureVectorLoader
         // outcome type
         string? otype = null;
         await using (var c = new NpgsqlCommand(
-            "SELECT outcome_type FROM public.ml_outcome_definitions WHERE lower(outcome_key)=lower(@k) AND is_deleted=false ORDER BY version DESC LIMIT 1", conn))
+            "SELECT outcome_type FROM ppiq_meta.ml_outcome_definitions WHERE lower(outcome_key)=lower(@k) AND is_deleted=false ORDER BY version DESC LIMIT 1", conn))
         {
             c.Parameters.AddWithValue("k", req.OutcomeKey);
             otype = (await c.ExecuteScalarAsync(ct)) as string;
@@ -40,10 +40,10 @@ public sealed class NpgsqlFeatureVectorLoader : IFeatureVectorLoader
         var heats = new HashSet<string>();
         await using (var c = new NpgsqlCommand(
             @"SELECT effective_sample_key, numeric_value, category_value, heat_id
-              FROM public.ml_outcome_values
+              FROM ppiq_plant.ml_outcome_values
               WHERE lower(outcome_key)=lower(@k) AND grain=@g
                 AND (@w >= 3650 OR observed_at_utc >= COALESCE(
-                     (SELECT max(observed_at_utc) FROM public.ml_outcome_values WHERE lower(outcome_key)=lower(@k) AND grain=@g),
+                     (SELECT max(observed_at_utc) FROM ppiq_plant.ml_outcome_values WHERE lower(outcome_key)=lower(@k) AND grain=@g),
                      'epoch'::timestamptz) - make_interval(days => @w))", conn))
         {
             c.Parameters.AddWithValue("k", req.OutcomeKey);
@@ -64,7 +64,7 @@ public sealed class NpgsqlFeatureVectorLoader : IFeatureVectorLoader
         // feature definition types
         var ftype = new Dictionary<string, VariableType>(StringComparer.OrdinalIgnoreCase);
         await using (var c = new NpgsqlCommand(
-            "SELECT lower(feature_key), value_type FROM public.ml_feature_definitions WHERE is_deleted=false ORDER BY version DESC", conn))
+            "SELECT lower(feature_key), value_type FROM ppiq_meta.ml_feature_definitions WHERE is_deleted=false ORDER BY version DESC", conn))
         {
             await using var r = await c.ExecuteReaderAsync(ct);
             while (await r.ReadAsync(ct))
@@ -78,10 +78,10 @@ public sealed class NpgsqlFeatureVectorLoader : IFeatureVectorLoader
         var grouped = new Dictionary<string, List<FeatureSample>>(StringComparer.OrdinalIgnoreCase);
         await using (var c = new NpgsqlCommand(
             @"SELECT feature_key, numeric_value, category_value, boolean_value, effective_sample_key
-              FROM public.ml_feature_values
+              FROM ppiq_plant.ml_feature_values
               WHERE grain=@g AND missingness_flag=false
                 AND (@w >= 3650 OR observed_at_utc >= COALESCE(
-                     (SELECT max(observed_at_utc) FROM public.ml_feature_values WHERE grain=@g),
+                     (SELECT max(observed_at_utc) FROM ppiq_plant.ml_feature_values WHERE grain=@g),
                      'epoch'::timestamptz) - make_interval(days => @w))", conn))
         {
             c.Parameters.AddWithValue("g", req.Grain);

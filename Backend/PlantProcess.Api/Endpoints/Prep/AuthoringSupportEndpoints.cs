@@ -313,12 +313,12 @@ public static class AuthoringSupportEndpoints
             // Immutable: a new row per save, version_number derived from what is
             // already there. Nothing is ever updated in place.
             insert.CommandText = @"
-                INSERT INTO public.ppiq_mapping_versions
+                INSERT INTO ppiq_meta.ppiq_mapping_versions
                     (mapping_code, display_name, canonical_entity, environment,
                      version_number, definition, status)
                 SELECT @code, @name, @entity, 'authoring',
                        COALESCE(MAX(version_number), 0) + 1, @def::jsonb, 'Published'
-                FROM public.ppiq_mapping_versions WHERE mapping_code = @code
+                FROM ppiq_meta.ppiq_mapping_versions WHERE mapping_code = @code
                 RETURNING version_number, id::text;";
             insert.Parameters.Add(new NpgsqlParameter("code", code));
             insert.Parameters.Add(new NpgsqlParameter("name", (object?)request.DisplayName ?? DBNull.Value));

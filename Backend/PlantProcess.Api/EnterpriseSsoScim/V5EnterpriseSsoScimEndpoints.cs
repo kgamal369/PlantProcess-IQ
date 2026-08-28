@@ -157,8 +157,8 @@ public static class V5EnterpriseSsoScimEndpoints
                     m.plant_role,
                     m.priority,
                     m.is_enabled
-                FROM public.ppiq_sso_role_mappings m
-                JOIN public.ppiq_sso_provider_configs p ON p.id = m.provider_id
+                FROM ppiq_meta.ppiq_sso_role_mappings m
+                JOIN ppiq_meta.ppiq_sso_provider_configs p ON p.id = m.provider_id
                 WHERE m.tenant_id = @tenant_id
                   AND p.provider_code = @provider_code
                 ORDER BY m.priority, m.claim_type, m.claim_value
@@ -205,7 +205,7 @@ public static class V5EnterpriseSsoScimEndpoints
             await using var cmd = connection.CreateCommand();
             cmd.CommandText =
                 """
-                INSERT INTO public.ppiq_sso_role_mappings
+                INSERT INTO ppiq_meta.ppiq_sso_role_mappings
                 (
                     tenant_id,
                     provider_id,
@@ -315,7 +315,7 @@ public static class V5EnterpriseSsoScimEndpoints
             cmd.CommandText =
                 """
                 SELECT id, user_name, display_name, email, active
-                FROM public.ppiq_scim_users
+                FROM ppiq_meta.ppiq_scim_users
                 WHERE tenant_id = @tenant_id
                 ORDER BY user_name
                 LIMIT 200
@@ -363,7 +363,7 @@ public static class V5EnterpriseSsoScimEndpoints
             await using var cmd = connection.CreateCommand();
             cmd.CommandText =
                 """
-                UPDATE public.ppiq_scim_users
+                UPDATE ppiq_meta.ppiq_scim_users
                 SET display_name = @display_name,
                     given_name = @given_name,
                     family_name = @family_name,
@@ -409,7 +409,7 @@ public static class V5EnterpriseSsoScimEndpoints
             await using var cmd = connection.CreateCommand();
             cmd.CommandText =
                 """
-                UPDATE public.ppiq_scim_users
+                UPDATE ppiq_meta.ppiq_scim_users
                 SET active = false,
                     deactivated_at_utc = now(),
                     updated_at_utc = now()
@@ -467,7 +467,7 @@ public static class V5EnterpriseSsoScimEndpoints
         cmd.CommandText =
             """
             SELECT id, default_role, jit_provisioning_enabled
-            FROM public.ppiq_sso_provider_configs
+            FROM ppiq_meta.ppiq_sso_provider_configs
             WHERE tenant_id = @tenant_id
               AND provider_code = @provider_code
               AND is_enabled = true
@@ -496,7 +496,7 @@ public static class V5EnterpriseSsoScimEndpoints
         cmd.CommandText =
             """
             SELECT app_role, plant_role
-            FROM public.ppiq_sso_role_mappings
+            FROM ppiq_meta.ppiq_sso_role_mappings
             WHERE tenant_id = @tenant_id
               AND provider_id = @provider_id
               AND claim_type = 'groups'
@@ -528,7 +528,7 @@ public static class V5EnterpriseSsoScimEndpoints
         await using var cmd = connection.CreateCommand();
         cmd.CommandText =
             """
-            INSERT INTO public.ppiq_sso_principals
+            INSERT INTO ppiq_meta.ppiq_sso_principals
             (
                 tenant_id,
                 provider_id,
@@ -581,7 +581,7 @@ public static class V5EnterpriseSsoScimEndpoints
         await using var cmd = connection.CreateCommand();
         cmd.CommandText =
             """
-            INSERT INTO public.ppiq_scim_users
+            INSERT INTO ppiq_meta.ppiq_scim_users
             (
                 tenant_id,
                 external_id,
@@ -641,7 +641,7 @@ public static class V5EnterpriseSsoScimEndpoints
         await using var cmd = connection.CreateCommand();
         cmd.CommandText =
             """
-            INSERT INTO public.ppiq_scim_groups
+            INSERT INTO ppiq_meta.ppiq_scim_groups
             (
                 tenant_id,
                 external_id,
@@ -695,7 +695,7 @@ public static class V5EnterpriseSsoScimEndpoints
         cmd.CommandText =
             """
             SELECT tenant_id
-            FROM public.ppiq_scim_bearer_tokens
+            FROM ppiq_meta.ppiq_scim_bearer_tokens
             WHERE token_hash = @hash
               AND is_enabled = true
               AND (expires_at_utc IS NULL OR expires_at_utc > now())
@@ -773,7 +773,7 @@ public static class V5EnterpriseSsoScimEndpoints
         await using var cmd = connection.CreateCommand();
         cmd.CommandText =
             """
-            INSERT INTO public.ppiq_identity_provisioning_audit
+            INSERT INTO ppiq_meta.ppiq_identity_provisioning_audit
             (
                 tenant_id,
                 source,

@@ -135,8 +135,8 @@ public sealed class WidgetResultChunkProducer
         cmd.CommandText =
             "SELECT d.dashboard_code, w.widget_code, w.id, w.widget_type, w.chart_type, " +
             "       w.dimension_code, w.measure_code, w.parameter_code " +
-            "FROM public.dashboard_widget_definitions w " +
-            "JOIN public.dashboard_definitions d ON d.id = w.dashboard_definition_id " +
+            "FROM ppiq_meta.dashboard_widget_definitions w " +
+            "JOIN ppiq_meta.dashboard_definitions d ON d.id = w.dashboard_definition_id " +
             "WHERE w.is_deleted = false AND w.is_active = true " +
             "  AND d.is_deleted = false AND d.is_active = true " +
             "ORDER BY d.dashboard_code, w.sort_order, w.widget_code";

@@ -186,8 +186,8 @@ public static class Phase2OperationEndpoints
                 b.is_active,
                 b.created_at_utc,
                 b.updated_at_utc
-            FROM public.kpi_parameter_bindings b
-            JOIN public.parameter_definitions p
+            FROM ppiq_meta.kpi_parameter_bindings b
+            JOIN ppiq_meta.parameter_definitions p
                 ON p.id = b.parameter_definition_id
             WHERE b.is_deleted = false
             ORDER BY b.kpi_code
@@ -249,7 +249,7 @@ public static class Phase2OperationEndpoints
 
         await dbContext.Database.ExecuteSqlRawAsync(
             """
-            INSERT INTO public.kpi_parameter_bindings
+            INSERT INTO ppiq_meta.kpi_parameter_bindings
             (
                 id,
                 kpi_code,
@@ -423,7 +423,7 @@ public static class Phase2OperationEndpoints
                 correlation_id,
                 requested_by,
                 metadata_json::text
-            FROM public.long_operation_progress
+            FROM ppiq_meta.long_operation_progress
             ORDER BY started_at_utc DESC
             LIMIT 50
             """;
@@ -468,7 +468,7 @@ public static class Phase2OperationEndpoints
                 correlation_id,
                 requested_by,
                 metadata_json::text
-            FROM public.long_operation_progress
+            FROM ppiq_meta.long_operation_progress
             WHERE id = @id
             """;
 
@@ -492,7 +492,7 @@ public static class Phase2OperationEndpoints
 
         await dbContext.Database.ExecuteSqlRawAsync(
             """
-            INSERT INTO public.long_operation_progress
+            INSERT INTO ppiq_meta.long_operation_progress
             (
                 id,
                 operation_code,

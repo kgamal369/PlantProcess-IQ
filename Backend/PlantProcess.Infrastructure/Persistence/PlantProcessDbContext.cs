@@ -14,6 +14,8 @@ using PlantProcess.Application.Common.Persistence;
 using PlantProcess.Domain.Entities.Dashboarding;
 using PlantProcess.Domain.Entities.Definitions;
 
+using PlantProcess.Infrastructure.Persistence.Topology;
+
 namespace PlantProcess.Infrastructure.Persistence;
 
 public class PlantProcessDbContext : DbContext, IPlantProcessDbContext
@@ -103,6 +105,10 @@ public class PlantProcessDbContext : DbContext, IPlantProcessDbContext
         // Must run after configurations, so all mapped properties are already known.
         ApplyUtcDateTimeConverters(modelBuilder);
         ApplySoftDeleteQueryFilters(modelBuilder);
+
+        // Placement is topology, not vocabulary: the frozen assignment decides,
+        // and physical relocation is performed once by the terminal convergence SQL.
+        StorageTopologyConvention.Apply(modelBuilder);
     }
 
     private static void ApplyUtcDateTimeConverters(ModelBuilder modelBuilder)
