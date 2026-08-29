@@ -16,7 +16,7 @@ export default defineConfig({
   ...base,
   globalSetup: "./release-truth.globalSetup.ts",
   testDir: "./e2e/release-truth",
-  testMatch: /customer-route-invariant\.spec\.ts/,
+  testMatch: /(customer-route-invariant|associative-cross-filter)\.spec\.ts/,
   fullyParallel: false,
   workers: 1,
   retries: 0,
