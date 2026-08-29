@@ -63,7 +63,7 @@ public static class PageDefinitionEndpoints
             SELECT id, tenant_id, slug, title, owner_user_name, visibility, version,
                    layout_json::text, widget_bindings_json::text, updated_at_utc,
                    audience_roles::text, backing_dashboard_definition_id, published_at_utc, is_deleted
-            FROM page_definitions
+            FROM ppiq_meta.page_definitions
             WHERE tenant_id = @tenant
               AND (@include_deleted OR is_deleted = false)
               AND (owner_user_name = @owner OR visibility IN ('Shared', 'Public'))
@@ -105,7 +105,7 @@ public static class PageDefinitionEndpoints
             SELECT id, tenant_id, slug, title, owner_user_name, visibility, version,
                    layout_json::text, widget_bindings_json::text, updated_at_utc,
                    audience_roles::text, backing_dashboard_definition_id, published_at_utc, is_deleted
-            FROM page_definitions
+            FROM ppiq_meta.page_definitions
             WHERE tenant_id = @tenant
               AND slug = @slug
               AND is_deleted = false
@@ -149,7 +149,7 @@ public static class PageDefinitionEndpoints
 
         await using var command = new NpgsqlCommand(
             """
-            INSERT INTO page_definitions
+            INSERT INTO ppiq_meta.page_definitions
                 (tenant_id, slug, title, owner_user_name, visibility, audience_roles, backing_dashboard_definition_id, layout_json, widget_bindings_json, updated_at_utc)
             VALUES
                 (@tenant, @slug, @title, @owner, @visibility, COALESCE(@audience_roles, '[]'::jsonb), @backing_dashboard, @layout_json, @widget_bindings_json, now())
@@ -205,7 +205,7 @@ public static class PageDefinitionEndpoints
         if (normalized.ExpectedVersion is int expectedVersion)
         {
             await using var conflictCheck = new NpgsqlCommand(
-                "SELECT version, owner_user_name, updated_at_utc FROM page_definitions " +
+                "SELECT version, owner_user_name, updated_at_utc FROM ppiq_meta.page_definitions " +
                 "WHERE tenant_id = @tenant AND slug = @slug AND owner_user_name = @owner AND is_deleted = false",
                 connection);
             conflictCheck.Parameters.AddWithValue("tenant", tenant);
@@ -232,7 +232,7 @@ public static class PageDefinitionEndpoints
         }
         await using var command = new NpgsqlCommand(
             """
-            UPDATE page_definitions
+            UPDATE ppiq_meta.page_definitions
             SET title = @title,
                 visibility = @visibility,
                 audience_roles = COALESCE(@audience_roles, audience_roles),
@@ -306,7 +306,7 @@ public static class PageDefinitionEndpoints
         if (publish)
         {
             await using var guard = new NpgsqlCommand(
-                "SELECT backing_dashboard_definition_id FROM page_definitions "
+                "SELECT backing_dashboard_definition_id FROM ppiq_meta.page_definitions "
                 + "WHERE tenant_id = @tenant AND slug = @slug AND is_deleted = false LIMIT 1;",
                 connection);
             guard.Parameters.AddWithValue("tenant", tenant);
@@ -329,7 +329,7 @@ public static class PageDefinitionEndpoints
 
         await using var command = new NpgsqlCommand(
             """
-            UPDATE page_definitions
+            UPDATE ppiq_meta.page_definitions
             SET published_at_utc = @published,
                 version = version + 1,
                 updated_at_utc = now()
@@ -377,7 +377,7 @@ public static class PageDefinitionEndpoints
 
         await using var command = new NpgsqlCommand(
             """
-            UPDATE page_definitions
+            UPDATE ppiq_meta.page_definitions
             SET is_deleted = true,
                 -- A deleted page is not a published one. The BACKING RELATION is
                 -- deliberately kept: it is the only thing that stops the orphaned
@@ -407,48 +407,19 @@ public static class PageDefinitionEndpoints
         var connection = (NpgsqlConnection)db.Database.GetDbConnection();
         await EnsureOpenAsync(connection, cancellationToken);
 
-        var sql = string.Join(Environment.NewLine, new[]
-        {
-            "CREATE EXTENSION IF NOT EXISTS pgcrypto;",
-            "",
-            "CREATE TABLE IF NOT EXISTS page_definitions (",
-            "    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),",
-            "    tenant_id text NOT NULL DEFAULT 'demo',",
-            "    slug text NOT NULL,",
-            "    title text NOT NULL,",
-            "    owner_user_name text NOT NULL,",
-            "    visibility text NOT NULL DEFAULT 'Private',",
-            "    audience_roles jsonb NOT NULL DEFAULT '[]'::jsonb,",
-            "    backing_dashboard_definition_id uuid NULL,",
-            "    published_at_utc timestamptz NULL,",
-            "    version integer NOT NULL DEFAULT 1,",
-            "    layout_json jsonb NOT NULL DEFAULT '{}'::jsonb,",
-            "    widget_bindings_json jsonb NOT NULL DEFAULT '{}'::jsonb,",
-            "    is_deleted boolean NOT NULL DEFAULT false,",
-            "    created_at_utc timestamptz NOT NULL DEFAULT now(),",
-            "    updated_at_utc timestamptz NOT NULL DEFAULT now(),",
-            "    CONSTRAINT ck_page_definitions_slug CHECK (slug ~ '^[a-z0-9]+(?:-[a-z0-9]+)*$'),",
-            "    CONSTRAINT ck_page_definitions_visibility CHECK (visibility IN ('Private', 'Shared', 'Public'))",
-            ");",
-            "",
-            "CREATE UNIQUE INDEX IF NOT EXISTS ux_page_definitions_tenant_slug_active",
-            "ON page_definitions (tenant_id, slug)",
-            "WHERE is_deleted = false;",
-            "",
-            "CREATE INDEX IF NOT EXISTS ix_page_definitions_owner_visible",
-            "ON page_definitions (tenant_id, owner_user_name, visibility)",
-            "WHERE is_deleted = false;",
-            "",
-            // An installation created before T-041 already has the table, so
-            // CREATE TABLE IF NOT EXISTS reaches none of it. This is the line
-            // that carries an existing page store forward.
-            "ALTER TABLE page_definitions ADD COLUMN IF NOT EXISTS audience_roles jsonb NOT NULL DEFAULT '[]'::jsonb;",
-            "ALTER TABLE page_definitions ADD COLUMN IF NOT EXISTS backing_dashboard_definition_id uuid NULL;",
-            "ALTER TABLE page_definitions ADD COLUMN IF NOT EXISTS published_at_utc timestamptz NULL;"
-        });
+        // Schema creation/evolution belongs to canonical migration/topology
+        // authority. HTTP handlers only assert governed storage exists.
+        await using var command = new NpgsqlCommand(
+            "SELECT to_regclass('ppiq_meta.page_definitions') IS NOT NULL;",
+            connection);
 
-        await using var command = new NpgsqlCommand(sql, connection);
-        await command.ExecuteNonQueryAsync(cancellationToken);
+        var exists = await command.ExecuteScalarAsync(cancellationToken);
+        if (exists is not true)
+        {
+            throw new InvalidOperationException(
+                "Governed page storage ppiq_meta.page_definitions is missing. " +
+                "Apply canonical database migrations/topology convergence before serving /pages.");
+        }
     }
 
     private static async Task EnsureOpenAsync(

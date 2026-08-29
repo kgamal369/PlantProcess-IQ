@@ -39,7 +39,7 @@ const DashboardFilterContext =
 
 // All filter keys that map to URL search params.
 const filterKeys: (keyof DashboardFilters)[] = [
-  "siteId", "areaId", "equipmentId", "materialCode",
+  "siteId", "areaId", "equipmentId", "materialCode", "materialUnitType",
   "sourceSystem", "defectType", "parameterCode", "riskClass",
   "fromUtc", "toUtc", "shiftCode", "linkMode",
   "genealogyDepth", "bins", "minimumObservationsPerBin",

@@ -98,8 +98,8 @@ interface SavedDashboardWidgetProps {
         : {};
       const g = (globalFilters ?? {}) as Record<string, unknown>;
       for (const k of [
-        "siteId", "areaId", "equipmentId", "materialCode", "sourceSystem",
-        "defectType", "riskClass", "shiftCode", "fromUtc", "toUtc",
+        "siteId", "areaId", "equipmentId", "materialCode", "materialUnitType", "sourceSystem",
+        "defectType", "riskClass", "shiftCode", "parameterCode", "fromUtc", "toUtc",
       ]) {
         const v = g[k];
         if (v !== undefined && v !== null && v !== "") { base[k] = v; }

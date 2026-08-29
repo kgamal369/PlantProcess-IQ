@@ -211,7 +211,7 @@ public sealed class DashboardDefinitionService : IDashboardDefinitionService
             widgetTitle: NormalizeRequired(request.WidgetTitle),
             widgetType: NormalizeRequired(request.WidgetType),
             chartType: NormalizeRequired(request.ChartType),
-            dimensionCode: NormalizeRequired(request.DimensionCode),
+            dimensionCode: request.DimensionCode?.Trim() ?? string.Empty,
             measureCode: NormalizeRequired(request.MeasureCode),
             isSynthetic: request.IsSynthetic,
             parameterCode: NormalizeNullable(request.ParameterCode),
@@ -826,7 +826,6 @@ private static string BuildWidgetLayout(int index)
         AddRequired(errors, nameof(request.WidgetTitle), request.WidgetTitle);
         AddRequired(errors, nameof(request.WidgetType), request.WidgetType);
         AddRequired(errors, nameof(request.ChartType), request.ChartType);
-        AddRequired(errors, nameof(request.DimensionCode), request.DimensionCode);
         AddRequired(errors, nameof(request.MeasureCode), request.MeasureCode);
 
         AddJsonError(errors, nameof(request.FilterJson), request.FilterJson);
