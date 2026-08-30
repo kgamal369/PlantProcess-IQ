@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import "./MetricCard.css";
 
 type MetricCardProps = {
   /** Optional. Omit it when the surrounding card already shows the name. */
@@ -14,8 +15,8 @@ type MetricCardProps = {
    * a form rather than a figure. In this variant the number is the content:
    * large, centred in the space the tile owns, with nothing competing.
    *
-   * The sizing is stated here rather than left to a class because the number is
-   * the entire point of the tile and must not depend on which stylesheet wins.
+   * T-250/F4: the sizing lives in MetricCard.css. It was inline until the D2
+   * ratchet caught it, and the values were constants, so nothing was lost.
    */
   variant?: "default" | "kpi";
 };
@@ -24,38 +25,16 @@ export function MetricCard({ title, value, subtitle, icon, variant = "default" }
   if (variant === "kpi") {
     return (
       <div
-        className="metric-card metric-card--kpi"
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          height: "100%",
-          minHeight: 0,
-          padding: "8px 16px",
-          textAlign: "center",
-        }}
+        className="metric-card metric-card--kpi"
       >
         <strong
-          style={{
-            fontSize: "clamp(2rem, 7vh, 4.5rem)",
-            fontWeight: 700,
-            lineHeight: 1.05,
-            letterSpacing: "-0.02em",
-            fontVariantNumeric: "tabular-nums",
-          }}
+          className="metric-card__kpi-value"
         >
           {value}
         </strong>
         {subtitle ? (
           <p
-            style={{
-              margin: "10px 0 0",
-              fontSize: "0.75rem",
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
-              opacity: 0.65,
-            }}
+            className="metric-card__kpi-subtitle"
           >
             {subtitle}
           </p>

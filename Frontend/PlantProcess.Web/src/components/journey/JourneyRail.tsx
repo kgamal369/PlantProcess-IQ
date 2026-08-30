@@ -1,4 +1,4 @@
-import { NavLink, useLocation } from "react-router-dom";
+import { Link, NavLink, useLocation } from "react-router-dom";
 import { BellRing, Check, ChevronRight } from "lucide-react";
 import "./JourneyRail.css";
 
@@ -42,7 +42,7 @@ const STAGES: ReadonlyArray<Stage> = [
   { n: 12, label: "Author and run analysis through the gate", shortLabel: "Analyse", to: "/analysis/toolbox", match: ["/analysis/toolbox", "/investigate/inspect", "/investigate/advanced", "/ml-readiness"], group: "Intelligence" },
   { n: 13, label: "Read findings, risk, practices and value", shortLabel: "Findings", to: "/correlations", match: ["/correlations", "/correlation", "/risk", "/advisory/value-realization", "/advisory/roi-cfo-dashboard", "/value/executive"], group: "Intelligence" },
   { n: 14, label: "Decide, act and measure", shortLabel: "Act", to: "/suggestions", match: ["/suggestions", "/advisory/recommendations", "/advisory/scenario-simulation", "/value/scenario"], group: "Intelligence" },
-  { n: 15, label: "Operate, govern and retain", shortLabel: "Operate", to: "/data-integration/alerting", match: ["/data-integration/alerting", "/data-integration/supervisor", "/data-integration/connector-truth", "/advisory/honesty-certification", "/advisory/benchmarking", "/executive", "/edge-agent", "/edge-collector", "/assistant-config", "/widget-script-compiler"], group: "Governance" },
+  { n: 15, label: "Operate, govern and retain", shortLabel: "Operate", to: "/data-integration/alerting", match: ["/data-integration/alerting", "/data-integration/supervisor", "/data-integration/connector-truth", "/advisory/honesty-certification", "/advisory/benchmarking", "/executive", "/edge-agent", "/edge-collector", "/assistant/configuration", "/assistant-config", "/widget-script-compiler"], group: "Governance" },
 ];
 
 function activeIndex(pathname: string): number {
@@ -106,7 +106,23 @@ export function JourneyRail() {
                   : "upcoming";
             return (
               <li key={stage.n} className={`piq-journey-node piq-journey-node--${state}`} data-group={stage.group}>
-                <NavLink
+                {/*
+                  T-250/F2: Link, not NavLink, and the reason matters.
+
+                  NavLink does not forward aria-current. It recomputes it as
+                  isActive ? ariaCurrentProp : undefined, and isActive compares
+                  the URL to this link's own `to`. A stage reached through one
+                  of its alias prefixes - supervisor or the assistant route
+                  under J15, for instance - is therefore current on screen and
+                  silent to assistive technology, because its `to` points
+                  somewhere else.
+
+                  This component already knows which stage is current. Link
+                  renders the attribute it is given. JourneyRail.css styles the
+                  current node through .piq-journey-node--current on the li and
+                  carries no .active rule, so nothing depended on NavLink here.
+                */}
+                <Link
                   className="piq-journey-node__link"
                   to={stage.to || "/dashboard"}
                   title={`${stage.n}. ${stage.label}`}
@@ -116,7 +132,7 @@ export function JourneyRail() {
                     {state === "done" ? <Check size={12} strokeWidth={3} /> : stage.n}
                   </span>
                   <span className="piq-journey-node__label">{stage.shortLabel}</span>
-                </NavLink>
+                </Link>
               </li>
             );
           })}

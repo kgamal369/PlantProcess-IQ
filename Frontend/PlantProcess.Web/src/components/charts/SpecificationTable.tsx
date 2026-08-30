@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { StandardTable } from "../standard/StandardTable";
 
 import "./specificationTable.css";
 
@@ -89,43 +90,39 @@ export function SpecificationTable({ rows }: { rows: Record<string, unknown>[] }
 
   return (
     <div className="chart-shell" data-testid="specification-table">
-      <table className="specification-table">
-        <thead>
-          <tr>
-            <th scope="col">Scope</th>
-            <th scope="col">Parameter</th>
-            <th scope="col">Minimum</th>
-            <th scope="col">Target</th>
-            <th scope="col">Maximum</th>
-            <th scope="col">Observed</th>
-            <th scope="col">Unit</th>
-          </tr>
-        </thead>
-        <tbody>
-          {entries.map((entry) => (
-            <tr key={entry.scope + "/" + entry.parameter}>
-              <td>{entry.scope}</td>
-              <td>{entry.parameter}</td>
-              <td className="specification-value">{entry.minimum ?? "-"}</td>
-              <td className="specification-value">{entry.target ?? "-"}</td>
-              <td className="specification-value">{entry.maximum ?? "-"}</td>
-              <td
-                className={"specification-value specification-state--" + entry.state}
-                data-testid="specification-observed"
-                data-state={entry.state}
-                title={
-                  entry.state === "unobserved"
-                    ? "No observation recorded for this scope and parameter"
-                    : entry.observations + " observation(s)"
-                }
-              >
-                {entry.actual ?? "not observed"}
-              </td>
-              <td>{entry.unit}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <StandardTable
+          columns={[
+            { key: "scope", header: "Scope", accessor: "scope" },
+            { key: "parameter", header: "Parameter", accessor: "parameter" },
+            { key: "minimum", header: "Minimum", cell: (row) => row.minimum ?? "-" },
+            { key: "target", header: "Target", cell: (row) => row.target ?? "-" },
+            { key: "maximum", header: "Maximum", cell: (row) => row.maximum ?? "-" },
+            {
+              key: "actual",
+              header: "Observed",
+              // T-250/F6: StandardTable owns the cell shell; this renderer owns the
+              // observed-state semantics the existing tests assert on. Nothing in
+              // the StandardTable public contract changed to make this work.
+              cell: (row) => (
+                <span
+                  className={"specification-value specification-state--" + row.state}
+                  data-testid="specification-observed"
+                  data-state={row.state}
+                  title={
+                    row.state === "unobserved"
+                      ? "No observation recorded for this scope and parameter"
+                      : row.observations + " observation(s)"
+                  }
+                >
+                  {row.actual ?? "not observed"}
+                </span>
+              ),
+            },
+            { key: "unit", header: "Unit", accessor: "unit" },
+          ]}
+          data={entries}
+          getRowKey={(row) => row.scope + "/" + row.parameter}
+        />
     </div>
   );
 }

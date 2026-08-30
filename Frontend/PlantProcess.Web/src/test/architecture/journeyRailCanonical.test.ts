@@ -120,4 +120,73 @@ describe("PPIQ-T15 JourneyRail is the canonical journey", () => {
       .filter(Boolean);
     expect(commissioned).toEqual([1, 2, 3]);
   });
+
+  /**
+   * T-250/F3g - a redirect alias must land where its stage already lives.
+   *
+   * /assistant/configuration was a real route that no stage matched, while
+   * /assistant-config, a redirect-only legacy alias, matched J15. The journey
+   * lit up only for the redirect SOURCE, so the route people actually navigate
+   * to left the rail dark.
+   *
+   * The obvious law - every prefix must be a real route - is WRONG here. Eight
+   * legacy aliases are deliberately kept so old links still highlight the rail,
+   * and that law would fail all eight. The law that catches the real defect and
+   * nothing else is: an alias may resolve only to a redirect, provided the route
+   * it redirects to is itself a prefix of the SAME stage.
+   */
+  it("resolves every redirect-only alias into its own stage", () => {
+    const app = readFileSync(join(ROOT, "src", "App.tsx"), "utf8");
+
+    type RouteRow = { path: string; redirect: boolean; target: string };
+    const routes: RouteRow[] = [];
+    const pathRe = /path=\s*"([^"]+)"/g;
+    let m: RegExpExecArray | null;
+    while ((m = pathRe.exec(app)) !== null) {
+      let tail = app.slice(m.index, m.index + 700);
+      const nextRoute = tail.indexOf("<Route", 6);
+      if (nextRoute > 0) tail = tail.slice(0, nextRoute);
+      const redirect = tail.includes("<Navigate");
+      const t = redirect ? /<Navigate[^>]*\sto=\s*"([^"]+)"/.exec(tail) : null;
+      routes.push({
+        path: m[1].replace(/\*$/, "").replace(/\/$/, ""),
+        redirect,
+        target: t ? t[1] : "",
+      });
+    }
+    expect(routes.length, "no routes parsed from App.tsx").toBeGreaterThan(20);
+
+    const realRoute = (p: string) =>
+      routes.some(
+        (r) => !r.redirect && (r.path === p || r.path.startsWith(p + "/") || (p.startsWith(r.path + "/") && r.path.length > 1)),
+      );
+    const redirectTarget = (p: string) => {
+      const exact = routes.find((r) => r.redirect && r.path === p);
+      if (exact) return exact.target;
+      const child = routes.find((r) => r.redirect && r.path.startsWith(p + "/"));
+      return child ? child.target : "";
+    };
+
+    const offenders: string[] = [];
+    stageBlocks(railSource()).forEach((block, index) => {
+      const raw = block.match(/match:\s*\[([^\]]*)\]/)?.[1] ?? "";
+      const prefixes = Array.from(raw.matchAll(/"([^"]+)"/g)).map((x) => x[1]);
+      for (const prefix of prefixes) {
+        if (realRoute(prefix)) continue;
+        const target = redirectTarget(prefix);
+        if (target === "") {
+          offenders.push(`stage ${index + 1} ${prefix}: neither a real route nor a readable redirect`);
+          continue;
+        }
+        const lands = prefixes.some((q) => target === q || target.startsWith(q + "/"));
+        if (!lands) offenders.push(`stage ${index + 1} ${prefix} redirects to ${target}, which no prefix of that stage claims`);
+      }
+    });
+
+    expect(
+      offenders,
+      `A redirect-only alias whose destination belongs to no prefix of its own stage ` +
+        `leaves the real route unlit: ${offenders.join("; ")}`
+    ).toEqual([]);
+  });
 });
