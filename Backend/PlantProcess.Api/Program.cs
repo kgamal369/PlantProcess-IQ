@@ -1108,6 +1108,7 @@ app.MapV5VisualMapperEndpoints();
 // The access-matrix row for /api/prep/visual-mapper already exists.
 app.MapVisualMapperEndpoints();
 app.MapAuthoringSupportEndpoints();
+PlantProcess.Api.Endpoints.CustomerAssessmentEndpoints.MapCustomerAssessmentEndpoints(app);
 
 app.MapV5BlendedProvenanceEndpoints();
 

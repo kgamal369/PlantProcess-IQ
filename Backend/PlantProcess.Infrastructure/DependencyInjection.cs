@@ -1,4 +1,4 @@
-﻿// ============================================================
+// ============================================================
 // FILE: Backend/PlantProcess.Infrastructure/DependencyInjection.cs
 // CHANGES: Registered MsSqlConnector and MySqlConnector alongside
 //          the existing CSV, Excel and PostgreSQL connectors.
@@ -33,6 +33,17 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
+        // T-213 customer data intake and capability assessment. Scoped to the
+        // assessment lane: nothing here replaces or reorders an existing registration.
+        services.AddSingleton<PlantProcess.Application.CustomerAssessment.ICustomerAssessmentEngine,
+                              PlantProcess.Application.CustomerAssessment.CustomerAssessmentEngine>();
+        services.AddSingleton<PlantProcess.Application.CustomerAssessment.ICustomerAssessmentSemanticVersionProvider,
+                              PlantProcess.Application.CustomerAssessment.FrozenSemanticVersionProvider>();
+        services.AddSingleton<PlantProcess.Infrastructure.CustomerAssessment.ICustomerAssessmentConnectionFactory>(
+            provider => new PlantProcess.Infrastructure.CustomerAssessment.CustomerAssessmentConnectionFactory(
+                configuration.GetConnectionString("PlantProcessDb")));
+        services.AddScoped<PlantProcess.Application.CustomerAssessment.ICustomerAssessmentService,
+                           PlantProcess.Infrastructure.CustomerAssessment.CustomerAssessmentService>();
         var connectionString = configuration.GetConnectionString("PlantProcessDb")
             ?? throw new InvalidOperationException("Missing PlantProcessDb connection string.");
 
