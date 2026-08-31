@@ -5,6 +5,8 @@ using PlantProcess.Application.Common.Persistence;
 using PlantProcess.Application.Common.Results;
 using PlantProcess.Application.Dashboarding.Interfaces;
 using PlantProcess.Domain.Entities.Dashboarding;
+using System.Text.Json;
+using PlantProcess.Application.Definitions;
 
 namespace PlantProcess.Application.Dashboarding.Services.Dashboards;
 
@@ -14,14 +16,29 @@ public sealed class DashboardDefinitionService : IDashboardDefinitionService
     private readonly IDashboardWidgetValidationService _validator;
     private readonly IWidgetQueryExpressionService _expressions;
 
+    /// PPIQ T-090. Widget definitions are semantic definitions, so every writer
+    /// in this service ends at the canonical store. Before T-090 the ordinary
+    /// authoring path and the system-template path both wrote the operational
+    /// row directly and nothing recorded a version, which made this class a
+    /// second definition authority.
+    private readonly ICanonicalDefinitionWriter _canonical;
+
+    /// Identity is resolved through Infrastructure: the Application
+    /// project cannot open a database connection and should not.
+    private readonly ICanonicalIdentityResolver _identity;
+
     public DashboardDefinitionService(
         IPlantProcessDbContext dbContext,
         IDashboardWidgetValidationService validator,
-        IWidgetQueryExpressionService expressions)
+        IWidgetQueryExpressionService expressions,
+        ICanonicalDefinitionWriter canonical,
+        ICanonicalIdentityResolver identity)
     {
         _dbContext = dbContext;
         _validator = validator;
         _expressions = expressions;
+        _canonical = canonical;
+        _identity = identity;
     }
 
     public async Task<ApplicationResult<IReadOnlyList<DashboardDefinitionDto>>> GetDashboardsAsync(
@@ -224,6 +241,17 @@ public sealed class DashboardDefinitionService : IDashboardDefinitionService
 
         ApplyExpression(widget, request.QueryExpression);
 
+        // T-090. Canonical authority first, operational row second, one unit of
+        // work. A widget that exists operationally without a canonical version
+        // would be exactly the dual authority this task removes.
+        var refusal = await WidgetCanonicalConvergence.WriteForRequestAsync(
+            _canonical, _identity, _dbContext, dashboardDefinitionId, widget, cancellationToken);
+
+        if (refusal is not null)
+        {
+            return ApplicationResult<Guid>.Failure(ApplicationError.Validation(refusal));
+        }
+
         _dbContext.DashboardWidgetDefinitions.Add(widget);
         await _dbContext.SaveChangesAsync(cancellationToken);
 
@@ -281,6 +309,16 @@ public sealed class DashboardDefinitionService : IDashboardDefinitionService
             widget.Activate();
         else if (request.IsActive == false)
             widget.Deactivate();
+
+        // Semantic change forks a canonical version. Identical redeclaration
+        // does not, because the writer decides by semantic hash.
+        var refusal = await WidgetCanonicalConvergence.WriteForRequestAsync(
+            _canonical, _identity, _dbContext, dashboardDefinitionId, widget, cancellationToken);
+
+        if (refusal is not null)
+        {
+            return ApplicationResult.Failure(ApplicationError.Validation(refusal));
+        }
 
         await _dbContext.SaveChangesAsync(cancellationToken);
         return ApplicationResult.Success();
@@ -364,6 +402,16 @@ public sealed class DashboardDefinitionService : IDashboardDefinitionService
             sortOrder: request.SortOrder ?? source.SortOrder + 1,
             sourceSystem: source.SourceSystem,
             sourceRecordId: $"cloned-from:{source.Id}");
+
+        // A clone is a NEW definition with its own canonical V1, not a copy of
+        // another definition's history.
+        var refusal = await WidgetCanonicalConvergence.WriteForRequestAsync(
+            _canonical, _identity, _dbContext, dashboardDefinitionId, clone, cancellationToken);
+
+        if (refusal is not null)
+        {
+            return ApplicationResult<Guid>.Failure(ApplicationError.Validation(refusal));
+        }
 
         _dbContext.DashboardWidgetDefinitions.Add(clone);
         await _dbContext.SaveChangesAsync(cancellationToken);
@@ -584,6 +632,24 @@ private async Task<int> EnsureTemplateAsync(
     }
 
     RetireUndeclaredProductWidgets(dashboard, widgets, ref changed);
+
+    // T-090. Product-owned widgets are semantic definitions too. This runs on
+    // every application start, so it MUST be idempotent: the canonical writer
+    // decides by semantic hash and an unchanged declaration returns the existing
+    // version. Without that, thirteen product widgets would fork thirteen
+    // versions per boot and the immutable history would record restarts.
+    var templateRefusal = await WidgetCanonicalConvergence.ConvergeTemplateAsync(
+        _canonical, _identity, _dbContext, dashboard,
+        widgets.Select(w => (w.Code, w.Title, w.ChartType, w.DimensionCode, w.MeasureCode)),
+        cancellationToken);
+
+    // A declined canonical write fails the ensure operation, loudly. Silence
+    // here produced a 200 with zero canonical rows. (W1-T090-TEMPLATE-01)
+    if (templateRefusal is not null)
+    {
+        throw new InvalidOperationException(
+            "System template canonical convergence was refused: " + templateRefusal);
+    }
 
     return changed;
 }
@@ -1006,5 +1072,278 @@ private static string BuildWidgetLayout(int index)
     }
 }
 
+/// <summary>
+/// PPIQ T-090. Canonical convergence for every widget writer in this service.
+///
+/// FOUR WRITERS, ONE AUTHORITY. CreateWidgetAsync, UpdateWidgetAsync,
+/// CloneWidgetAsync and the system-template path all create or change semantic
+/// widget definitions. Converging only the first three would leave startup
+/// templates writing operational rows with no canonical version, which is the
+/// dual authority this task removes. Clone is included deliberately: a clone is
+/// a NEW definition, not a copy of an existing one's history.
+///
+/// RESTART IDEMPOTENCE. EnsureSystemTemplatesAsync runs on every application
+/// start. The canonical writer decides by semantic hash, so an unchanged
+/// declaration returns the existing version and thirteen product widgets do not
+/// fork thirteen versions per boot. Convergence, not accumulation - the same
+/// principle RetireUndeclaredProductWidgets applies to the operational row.
+/// </summary>
+internal static class WidgetCanonicalConvergence
+{
+    /// <summary>
+    /// The canonical definition code for a widget. Dashboard code and widget
+    /// code together, because a widget code is only unique within its dashboard
+    /// and the canonical store is unique per tenant.
+    /// </summary>
+    internal static string DefinitionCodeFor(string dashboardCode, string widgetCode) =>
+        dashboardCode.Trim() + ":" + widgetCode.Trim();
 
+    /// <summary>
+    /// The declared semantic payload of a widget definition. Layout and sort
+    /// order are deliberately excluded: they are serving presentation state,
+    /// and including them would fork a version every time someone dragged a
+    /// widget. Measure, dimension, parameter, chart type, filters and display
+    /// options are authored semantics and are included.
+    /// </summary>
+    internal static string PayloadFor(
+        string widgetCode,
+        string widgetTitle,
+        string widgetType,
+        string chartType,
+        string dimensionCode,
+        string measureCode,
+        string? parameterCode,
+        string? filterJson,
+        string? displayOptionsJson,
+        string? queryExpression) =>
+        JsonSerializer.Serialize(new
+        {
+            widgetCode,
+            widgetTitle,
+            widgetType,
+            chartType,
+            dimensionCode,
+            measureCode,
+            parameterCode,
+            filterJson,
+            displayOptionsJson,
+            queryExpression,
+        });
 
+    internal static Dictionary<string, object?> DetailFor(
+        string widgetType,
+        string chartType,
+        string dimensionCode,
+        string measureCode,
+        string? filterJson) =>
+        new(StringComparer.Ordinal)
+        {
+            ["widget_kind"] = widgetType,
+            ["chart_type"] = chartType,
+            ["dimension_code"] = dimensionCode,
+            ["measure_code"] = measureCode,
+            ["saved_filter_json"] = string.IsNullOrWhiteSpace(filterJson) ? "{}" : filterJson,
+        };
+
+    /// <summary>
+    /// Writes the canonical widget definition inside the caller's transaction.
+    /// Returns the refusal message when the canonical authority declines, so the
+    /// caller can fail the whole operation rather than proceed with an
+    /// operational row that has no canonical version behind it.
+    /// </summary>
+    internal static async Task<string?> WriteAsync(
+        ICanonicalDefinitionWriter canonical,
+        Guid tenantId,
+        Guid ownerId,
+        string definitionCode,
+        string widgetTitle,
+        string payloadJson,
+        Dictionary<string, object?> detail,
+        CancellationToken cancellationToken)
+    {
+        var written = await canonical.WriteVersionAsync(
+            new CanonicalDefinitionWrite(
+                DefinitionKind.Widget,
+                tenantId,
+                ownerId,
+                definitionCode,
+                widgetTitle,
+                payloadJson,
+                CanonicalVersionStatus.Published,
+                detail),
+            cancellationToken);
+
+        return written.IsSuccess ? null : written.Error?.Message ?? "canonical widget write refused";
+    }
+
+    /// <summary>
+    /// Writes the canonical definition for one widget inside a transaction the
+    /// caller may or may not already own. Returns null on success, a message on
+    /// refusal, so the caller fails the whole operation rather than leaving an
+    /// operational row with no canonical version behind it.
+    /// </summary>
+    internal static async Task<string?> WriteForRequestAsync(
+        ICanonicalDefinitionWriter canonical,
+        ICanonicalIdentityResolver identity,
+        IPlantProcessDbContext db,
+        Guid dashboardDefinitionId,
+        DashboardWidgetDefinition widget,
+        CancellationToken cancellationToken)
+    {
+        var dashboard = await db.DashboardDefinitions
+            .Where(d => d.Id == dashboardDefinitionId)
+            .Select(d => new { d.DashboardCode })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (dashboard is null)
+        {
+            return "the dashboard this widget belongs to no longer exists";
+        }
+
+        var tenantId = await identity.ResolveTenantAsync(null, cancellationToken);
+        var ownerId = await identity.ResolveOwnerAsync(null, cancellationToken);
+
+        if (tenantId is null || ownerId is null)
+        {
+            return "no tenant or owner identity could be resolved for a canonical widget definition";
+        }
+
+        return await InUnitOfWorkAsync(db, cancellationToken, async () =>
+            await WriteAsync(
+                canonical,
+                tenantId.Value,
+                ownerId.Value,
+                DefinitionCodeFor(dashboard.DashboardCode, widget.WidgetCode),
+                widget.WidgetTitle,
+                PayloadFor(widget.WidgetCode, widget.WidgetTitle, widget.WidgetType, widget.ChartType,
+                           widget.DimensionCode, widget.MeasureCode, widget.ParameterCode,
+                           widget.FilterJson, widget.DisplayOptionsJson, widget.QueryExpression),
+                DetailFor(widget.WidgetType, widget.ChartType, widget.DimensionCode,
+                          widget.MeasureCode, widget.FilterJson),
+                cancellationToken));
+    }
+
+    /// <summary>
+    /// Converges every declared product widget on a system dashboard, and
+    /// retires the canonical publication of any this authority previously wrote
+    /// but no longer declares.
+    ///
+    /// Runs on every application start. Idempotence comes from the semantic hash
+    /// inside the writer, not from a guard here.
+    /// </summary>
+    /// <param name="declared">
+    /// Code, title, chart type, dimension and measure for each declared widget.
+    /// Deliberately not the caller's seed record: that type is private to
+    /// DashboardDefinitionService, and widening it so a helper could name it
+    /// would export an internal shape for the helper's convenience.
+    /// </param>
+    internal static async Task<string?> ConvergeTemplateAsync(
+        ICanonicalDefinitionWriter canonical,
+        ICanonicalIdentityResolver identity,
+        IPlantProcessDbContext db,
+        DashboardDefinition dashboard,
+        IEnumerable<(string Code, string Title, string ChartType, string DimensionCode, string MeasureCode)> declared,
+        CancellationToken cancellationToken)
+    {
+        var tenantId = await identity.ResolveTenantAsync(null, cancellationToken);
+        var ownerId = await identity.ResolveOwnerAsync(null, cancellationToken);
+
+        if (tenantId is null || ownerId is null)
+        {
+            // Startup before provisioning has completed. Convergence runs again
+            // on the next boot rather than writing under an invented identity.
+            return null;
+        }
+
+        return await InUnitOfWorkAsync(db, cancellationToken, async () =>
+        {
+            foreach (var seed in declared)
+            {
+                var refusal = await WriteAsync(
+                    canonical, tenantId.Value, ownerId.Value,
+                    DefinitionCodeFor(dashboard.DashboardCode, seed.Code),
+                    seed.Title,
+                    PayloadFor(seed.Code, seed.Title, "chart", seed.ChartType,
+                               seed.DimensionCode, seed.MeasureCode, null, "{}", "{}", null),
+                    DetailFor("chart", seed.ChartType, seed.DimensionCode, seed.MeasureCode, "{}"),
+                    cancellationToken);
+
+                if (refusal is not null) { return refusal; }
+            }
+
+            var declaredCodes = new HashSet<string>(
+                declared.Select(s => s.Code), StringComparer.Ordinal);
+
+            foreach (var widget in dashboard.Widgets.Where(w =>
+                         w.IsDeleted &&
+                         string.Equals(w.SourceSystem, "PlantProcessIQ.SystemTemplates", StringComparison.Ordinal) &&
+                         !declaredCodes.Contains(w.WidgetCode)))
+            {
+                var refusal = await RetireAsync(
+                    canonical, tenantId.Value,
+                    DefinitionCodeFor(dashboard.DashboardCode, widget.WidgetCode),
+                    cancellationToken);
+
+                if (refusal is not null) { return refusal; }
+            }
+
+            return null;
+        });
+    }
+
+    /// <summary>
+    /// Opens a transaction only when the caller has none, so a write already
+    /// inside a unit of work stays in it.
+    /// </summary>
+    private static async Task<string?> InUnitOfWorkAsync(
+        IPlantProcessDbContext db,
+        CancellationToken cancellationToken,
+        Func<Task<string?>> work)
+    {
+        if (db.Database.CurrentTransaction is not null)
+        {
+            return await work();
+        }
+
+        await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
+        var refusal = await work();
+
+        if (refusal is not null)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            return refusal;
+        }
+
+        await transaction.CommitAsync(cancellationToken);
+        return null;
+    }
+
+    /// <summary>
+    /// A retired product widget must stop being advertised as current published
+    /// truth. The canonical version history stays - it is evidence of what ran -
+    /// but the published version is superseded so no runtime resolution returns
+    /// a widget the declarations no longer name.
+    /// </summary>
+    internal static async Task<string?> RetireAsync(
+        ICanonicalDefinitionWriter canonical,
+        Guid tenantId,
+        string definitionCode,
+        CancellationToken cancellationToken)
+    {
+        var found = await canonical.FindByCodeAsync(tenantId, definitionCode, cancellationToken);
+        if (found.IsFailure)
+        {
+            return found.Error?.Message ?? "canonical lookup refused";
+        }
+
+        // A widget that never reached the canonical store has nothing to retire.
+        // That is a success, not a silent skip: the desired end state holds.
+        if (found.Value is null)
+        {
+            return null;
+        }
+
+        var retired = await canonical.RetireAsync(found.Value.Value, cancellationToken);
+        return retired.IsSuccess ? null : retired.Error?.Message ?? "canonical retirement refused";
+    }
+}

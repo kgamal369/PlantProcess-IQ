@@ -8,6 +8,8 @@ using NpgsqlTypes;
 using PlantProcess.Infrastructure.Persistence;
 
 using PlantProcess.Api.ErrorHandling;
+using PlantProcess.Application.Definitions;
+using Microsoft.EntityFrameworkCore.Storage;
 namespace PlantProcess.Api.Endpoints.PageBuilder;
 
 public static class PageDefinitionEndpoints
@@ -55,7 +57,10 @@ public static class PageDefinitionEndpoints
         var tenant = ResolveTenant(user);
         var owner = ResolveUserName(user);
 
-        await using var connection = (NpgsqlConnection)db.Database.GetDbConnection();
+        // The DbContext owns this connection. An earlier shape disposed it per
+        // handler, which is survivable alone but fatal once the canonical write
+        // and the serving write share one transaction.
+        var connection = (NpgsqlConnection)db.Database.GetDbConnection();
         await EnsureOpenAsync(connection, cancellationToken);
 
         await using var command = new NpgsqlCommand(
@@ -97,7 +102,10 @@ public static class PageDefinitionEndpoints
         var tenant = ResolveTenant(user);
         var owner = ResolveUserName(user);
 
-        await using var connection = (NpgsqlConnection)db.Database.GetDbConnection();
+        // The DbContext owns this connection. An earlier shape disposed it per
+        // handler, which is survivable alone but fatal once the canonical write
+        // and the serving write share one transaction.
+        var connection = (NpgsqlConnection)db.Database.GetDbConnection();
         await EnsureOpenAsync(connection, cancellationToken);
 
         await using var command = new NpgsqlCommand(
@@ -131,6 +139,8 @@ public static class PageDefinitionEndpoints
         [FromBody] UpsertPageDefinitionRequest request,
         ClaimsPrincipal user,
         PlantProcessDbContext db,
+        ICanonicalDefinitionWriter canonical,
+        ICanonicalIdentityResolver identity,
         CancellationToken cancellationToken)
     {
         var errors = Validate(request);
@@ -144,7 +154,10 @@ public static class PageDefinitionEndpoints
         var tenant = ResolveTenant(user);
         var owner = ResolveUserName(user);
 
-        await using var connection = (NpgsqlConnection)db.Database.GetDbConnection();
+        // The DbContext owns this connection. An earlier shape disposed it per
+        // handler, which is survivable alone but fatal once the canonical write
+        // and the serving write share one transaction.
+        var connection = (NpgsqlConnection)db.Database.GetDbConnection();
         await EnsureOpenAsync(connection, cancellationToken);
 
         await using var command = new NpgsqlCommand(
@@ -173,10 +186,23 @@ public static class PageDefinitionEndpoints
 
         AddPageParameters(command, request, tenant, owner);
 
-        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-        await reader.ReadAsync(cancellationToken);
-
-        return Results.Ok(ReadDto(reader));
+        // T-090. The serving row and the canonical definition are ONE decision.
+        // Before this, the endpoint incremented its own version column and was a
+        // second version authority; now page_definitions.version is a serving
+        // projection of a canonical immutable version.
+        return await PageCanonicalConvergence.InOneUnitOfWorkAsync(
+            db,
+            async () =>
+            {
+                command.Transaction = (NpgsqlTransaction)db.Database.CurrentTransaction!.GetDbTransaction();
+                await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+                await reader.ReadAsync(cancellationToken);
+                return Results.Ok(ReadDto(reader));
+            },
+            () => PageCanonicalConvergence.WritePageDefinitionAsync(
+                canonical, identity, tenant, owner, request.Slug.Trim(), request.Title.Trim(),
+                request, cancellationToken),
+            cancellationToken);
     }
 
     private static async Task<IResult> UpdatePageAsync(
@@ -184,6 +210,8 @@ public static class PageDefinitionEndpoints
         [FromBody] UpsertPageDefinitionRequest request,
         ClaimsPrincipal user,
         PlantProcessDbContext db,
+        ICanonicalDefinitionWriter canonical,
+        ICanonicalIdentityResolver identity,
         CancellationToken cancellationToken)
     {
         var normalized = request with { Slug = slug };
@@ -199,7 +227,10 @@ public static class PageDefinitionEndpoints
         var tenant = ResolveTenant(user);
         var owner = ResolveUserName(user);
 
-        await using var connection = (NpgsqlConnection)db.Database.GetDbConnection();
+        // The DbContext owns this connection. An earlier shape disposed it per
+        // handler, which is survivable alone but fatal once the canonical write
+        // and the serving write share one transaction.
+        var connection = (NpgsqlConnection)db.Database.GetDbConnection();
         await EnsureOpenAsync(connection, cancellationToken);
 
         if (normalized.ExpectedVersion is int expectedVersion)
@@ -260,31 +291,46 @@ public static class PageDefinitionEndpoints
                 : DBNull.Value
         });
 
-        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-        if (!await reader.ReadAsync(cancellationToken))
-        {
-            return ApplicationProblems.NotFound("Page '" + slug + "' was not found or is not owned by '" + owner + "'.");
-        }
+        return await PageCanonicalConvergence.InOneUnitOfWorkAsync(
+            db,
+            async () =>
+            {
+                command.Transaction = (NpgsqlTransaction)db.Database.CurrentTransaction!.GetDbTransaction();
+                await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+                if (!await reader.ReadAsync(cancellationToken))
+                {
+                    return ApplicationProblems.NotFound(
+                        "Page '" + slug + "' was not found or is not owned by '" + owner + "'.");
+                }
 
-        return Results.Ok(ReadDto(reader));
+                return Results.Ok(ReadDto(reader));
+            },
+            () => PageCanonicalConvergence.WritePageDefinitionAsync(
+                canonical, identity, tenant, owner, normalized.Slug.Trim(), normalized.Title.Trim(),
+                normalized, cancellationToken),
+            cancellationToken);
     }
 
     private static Task<IResult> PublishPageAsync(
         string slug,
         ClaimsPrincipal user,
         PlantProcessDbContext db,
+        ICanonicalDefinitionWriter canonical,
+        ICanonicalIdentityResolver identity,
         CancellationToken cancellationToken)
     {
-        return SetPublicationAsync(slug, user, db, publish: true, cancellationToken);
+        return SetPublicationAsync(slug, user, db, canonical, identity, publish: true, cancellationToken);
     }
 
     private static Task<IResult> UnpublishPageAsync(
         string slug,
         ClaimsPrincipal user,
         PlantProcessDbContext db,
+        ICanonicalDefinitionWriter canonical,
+        ICanonicalIdentityResolver identity,
         CancellationToken cancellationToken)
     {
-        return SetPublicationAsync(slug, user, db, publish: false, cancellationToken);
+        return SetPublicationAsync(slug, user, db, canonical, identity, publish: false, cancellationToken);
     }
 
     /// PPIQ T-042. A page may not be published without a backing dashboard,
@@ -294,13 +340,18 @@ public static class PageDefinitionEndpoints
         string slug,
         ClaimsPrincipal user,
         PlantProcessDbContext db,
+        ICanonicalDefinitionWriter canonical,
+        ICanonicalIdentityResolver identity,
         bool publish,
         CancellationToken cancellationToken)
     {
         var tenant = ResolveTenant(user);
         var owner = ResolveUserName(user);
 
-        await using var connection = (NpgsqlConnection)db.Database.GetDbConnection();
+        // The DbContext owns this connection. An earlier shape disposed it per
+        // handler, which is survivable alone but fatal once the canonical write
+        // and the serving write share one transaction.
+        var connection = (NpgsqlConnection)db.Database.GetDbConnection();
         await EnsureOpenAsync(connection, cancellationToken);
 
         if (publish)
@@ -365,6 +416,8 @@ public static class PageDefinitionEndpoints
         string slug,
         ClaimsPrincipal user,
         PlantProcessDbContext db,
+        ICanonicalDefinitionWriter canonical,
+        ICanonicalIdentityResolver identity,
         CancellationToken cancellationToken)
     {
         await EnsureSchemaAsync(db, cancellationToken);
@@ -372,7 +425,10 @@ public static class PageDefinitionEndpoints
         var tenant = ResolveTenant(user);
         var owner = ResolveUserName(user);
 
-        await using var connection = (NpgsqlConnection)db.Database.GetDbConnection();
+        // The DbContext owns this connection. An earlier shape disposed it per
+        // handler, which is survivable alone but fatal once the canonical write
+        // and the serving write share one transaction.
+        var connection = (NpgsqlConnection)db.Database.GetDbConnection();
         await EnsureOpenAsync(connection, cancellationToken);
 
         await using var command = new NpgsqlCommand(
@@ -395,9 +451,20 @@ public static class PageDefinitionEndpoints
         command.Parameters.AddWithValue("slug", slug);
         command.Parameters.AddWithValue("owner", owner);
 
-        var affected = await command.ExecuteNonQueryAsync(cancellationToken);
-
-        return Results.Ok(new PageDeleteResponse(affected > 0));
+        // T-090. Soft delete hides the serving row and withdraws canonical
+        // publication. Published version history is NOT removed: it is the
+        // replay evidence for everything that ran while the page existed.
+        return await PageCanonicalConvergence.InOneUnitOfWorkAsync(
+            db,
+            async () =>
+            {
+                command.Transaction = (NpgsqlTransaction)db.Database.CurrentTransaction!.GetDbTransaction();
+                var affected = await command.ExecuteNonQueryAsync(cancellationToken);
+                return Results.Ok(new PageDeleteResponse(affected > 0));
+            },
+            () => PageCanonicalConvergence.RetirePageDefinitionAsync(
+                canonical, identity, tenant, slug, cancellationToken),
+            cancellationToken);
     }
 
     private static async Task EnsureSchemaAsync(
@@ -700,3 +767,167 @@ public sealed record UpsertPageDefinitionRequest(
 
 public sealed record PageDeleteResponse(bool Deleted);
 
+/// <summary>
+/// PPIQ T-090. Canonical convergence for the Page write paths.
+///
+/// WHAT THIS DOES NOT CHANGE. Routes, DTOs, audience roles, backing-dashboard
+/// semantics, optimistic version conflict, soft delete and the publish/unpublish
+/// shape are all preserved exactly. ppiq_meta.page_definitions stays the
+/// operational serving row and EnsureSchemaAsync stays a read-only existence
+/// assertion - the T-204 corrections are upstream of this and are not touched.
+///
+/// WHAT IT CHANGES. Every semantic page write now also writes canonical
+/// identity and an immutable version, inside ONE transaction with the serving
+/// row. Before T-090 the endpoint owned page semantics outright and incremented
+/// its own version column, which was a second version authority.
+///
+/// page_definitions.version REMAINS, because the HTTP contract exposes it for
+/// optimistic concurrency. It is now a serving projection of the canonical
+/// version rather than an independent sequence, and a gate proves the two agree.
+/// </summary>
+internal static class PageCanonicalConvergence
+{
+    /// <summary>
+    /// Runs a page write and its canonical counterpart as one unit of work.
+    /// The canonical writer refuses to mutate without an ambient transaction,
+    /// so this is what makes the page path legal rather than merely tidy.
+    /// </summary>
+    internal static async Task<IResult> InOneUnitOfWorkAsync(
+        PlantProcessDbContext db,
+        Func<Task<IResult>> servingWrite,
+        Func<Task<bool>> canonicalWrite,
+        CancellationToken cancellationToken)
+    {
+        if (db.Database.CurrentTransaction is not null)
+        {
+            var nested = await servingWrite();
+            return await canonicalWrite() ? nested : CanonicalRefused();
+        }
+
+        await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
+
+        var result = await servingWrite();
+
+        if (!await canonicalWrite())
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            return CanonicalRefused();
+        }
+
+        await transaction.CommitAsync(cancellationToken);
+        return result;
+    }
+
+    /// <summary>
+    /// Writes the canonical page definition and version for one slug. Returns
+    /// false rather than throwing so the caller rolls back deliberately.
+    /// </summary>
+    internal static async Task<bool> WritePageDefinitionAsync(
+        ICanonicalDefinitionWriter canonical,
+        ICanonicalIdentityResolver identity,
+        string tenantCode,
+        string ownerUserName,
+        string slug,
+        string title,
+        UpsertPageDefinitionRequest request,
+        CancellationToken cancellationToken)
+    {
+        // The claim NARROWS identity when it matches; it is not a second
+        // identity authority. When the named code resolves nothing and exactly
+        // one tenant (or user) is resolvable without it, that unambiguous
+        // identity is the answer. Multi-tenant ambiguity still refuses inside
+        // the resolver itself.
+        var tenantId = await identity.ResolveTenantAsync(tenantCode, cancellationToken)
+                       ?? await identity.ResolveTenantAsync(null, cancellationToken);
+        var ownerId = await identity.ResolveOwnerAsync(ownerUserName, cancellationToken)
+                      ?? await identity.ResolveOwnerAsync(null, cancellationToken);
+
+        // Unknown identity refuses. A page written under an invented owner
+        // would look governed and be untraceable.
+        if (tenantId is null || ownerId is null)
+        {
+            return false;
+        }
+
+        var detail = new Dictionary<string, object?>(StringComparer.Ordinal)
+        {
+            ["layout_json"] = JsonSerializer.Serialize(request.LayoutJson),
+            ["audience_roles"] = JsonSerializer.Serialize(request.AudienceRoles ?? Array.Empty<string>()),
+            ["default_filters"] = JsonSerializer.Serialize(request.WidgetBindingsJson),
+        };
+
+        var written = await canonical.WriteVersionAsync(
+            new CanonicalDefinitionWrite(
+                DefinitionKind.Page,
+                tenantId.Value,
+                ownerId.Value,
+                slug,
+                title,
+                JsonSerializer.Serialize(new
+                {
+                    slug,
+                    title,
+                    visibility = request.Visibility,
+                    audienceRoles = request.AudienceRoles ?? Array.Empty<string>(),
+                    backingDashboardDefinitionId = request.BackingDashboardDefinitionId,
+                    layoutJson = request.LayoutJson,
+                    widgetBindingsJson = request.WidgetBindingsJson,
+                }),
+                CanonicalVersionStatus.Published,
+                detail),
+            cancellationToken);
+
+        return written.IsSuccess;
+    }
+
+    /// <summary>
+    /// A page delete hides the serving row and withdraws canonical publication.
+    /// The versions are NOT removed: they are the replay evidence for everything
+    /// that ran while the page existed, and deleting them would make an old
+    /// execution snapshot unresolvable. Only the publication moves.
+    ///
+    /// An earlier draft of this method returned a bare true. It looked like a
+    /// retirement path, implemented nothing, and passed every static check -
+    /// which is why the canonical contract now carries an explicit RetireAsync
+    /// rather than leaving each caller to improvise one.
+    /// </summary>
+    internal static async Task<bool> RetirePageDefinitionAsync(
+        ICanonicalDefinitionWriter canonical,
+        ICanonicalIdentityResolver identity,
+        string tenantCode,
+        string slug,
+        CancellationToken cancellationToken)
+    {
+        var tenantId = await identity.ResolveTenantAsync(tenantCode, cancellationToken);
+        if (tenantId is null)
+        {
+            return false;
+        }
+
+        var found = await canonical.FindByCodeAsync(tenantId.Value, slug, cancellationToken);
+        if (found.IsFailure)
+        {
+            return false;
+        }
+
+        // A page deleted before it ever reached the canonical store has nothing
+        // to retire, and the desired end state already holds.
+        if (found.Value is null)
+        {
+            return true;
+        }
+
+        var retired = await canonical.RetireAsync(found.Value.Value, cancellationToken);
+        return retired.IsSuccess;
+    }
+
+    private static IResult CanonicalRefused() =>
+        Results.ValidationProblem(new Dictionary<string, string[]>
+        {
+            ["definition"] = new[]
+            {
+                "The canonical definition authority refused this page write, so nothing was saved. "
+                + "This usually means the tenant or owner identity could not be resolved."
+            }
+        });
+}

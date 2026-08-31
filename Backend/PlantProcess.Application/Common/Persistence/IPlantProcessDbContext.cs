@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using PlantProcess.Domain.Entities.Analytics;
 using PlantProcess.Domain.Entities.Configuration;
 using PlantProcess.Domain.Entities.Dashboarding;
@@ -59,10 +60,19 @@ public interface IPlantProcessDbContext
     DbSet<DashboardDefinition> DashboardDefinitions { get; }
     DbSet<DashboardWidgetDefinition> DashboardWidgetDefinitions { get; }
 
-    // T-039. The M1 compatibility snapshot store behind IDefinitionService.
-    // Immutable version rows only; the operational definitions stay above.
+    // T-090. Immutable versions in the canonical definition store. The type is
+    // unchanged and the DbSet name is unchanged - only the table moved, from the
+    // retired per-artifact table to ppiq_meta.definition_versions. Read and
+    // cleanup only: versions are created by ICanonicalDefinitionWriter, which
+    // holds the parent row lock and the caller's transaction.
     DbSet<DefinitionVersion> DefinitionVersions { get; }
     DbSet<ProductSpecification> ProductSpecifications { get; }
+
+    /// T-090. The canonical definition writer refuses to mutate without the
+    /// caller's transaction, so a caller holding only this contract must be able
+    /// to open one. Exposing EF's own facade is smaller and more honest than
+    /// inventing a unit-of-work abstraction that would wrap it.
+    DatabaseFacade Database { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

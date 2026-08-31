@@ -133,7 +133,14 @@ public static class DependencyInjection
          // Factory resolves connector by provider type string
         services.AddScoped<IDataSourceConnectorFactory, DataSourceConnectorFactory>();
 
-        // T-039. The widget version adapter behind the final definition contract.
+        // T-090. The canonical definition authority behind the final contract.
+        // The writer and the identity resolver are registered explicitly rather
+        // than constructed inside the service, so production resolution and the
+        // frozen new DefinitionService(db) form converge on identical behaviour.
+        services.AddScoped<PlantProcess.Application.Definitions.ICanonicalDefinitionWriter,
+            PlantProcess.Infrastructure.Definitions.CanonicalDefinitionWriter>();
+        services.AddScoped<PlantProcess.Application.Definitions.ICanonicalIdentityResolver,
+            PlantProcess.Infrastructure.Definitions.CanonicalIdentityResolver>();
         services.AddScoped<PlantProcess.Application.Definitions.Interfaces.IDefinitionService,
             PlantProcess.Infrastructure.Definitions.DefinitionService>();
 

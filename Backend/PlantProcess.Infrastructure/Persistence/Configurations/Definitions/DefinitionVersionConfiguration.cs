@@ -5,36 +5,43 @@ using PlantProcess.Domain.Entities.Definitions;
 namespace PlantProcess.Infrastructure.Persistence.Configurations.Definitions;
 
 /// <summary>
-/// PPIQ T-039. Maps the snapshot entity onto the table 770 creates. The DDL is
-/// owned by the numbered replay chain, not by EF - this file describes what is
-/// already there rather than asking EF to create it.
+/// PPIQ T-090. Maps DefinitionVersion onto the canonical store.
+///
+/// The table moved from ppiq_meta.ppiq_definition_versions to
+/// ppiq_meta.definition_versions. Script 831 owns the DDL, so this stays
+/// excluded from migrations - EF describing the table would be a second schema
+/// authority for one set of columns.
+///
+/// Every property is configured with no value generation and the entity has no
+/// public mutators, so EF can materialise a version but cannot originate one.
+/// Creation belongs to CanonicalDefinitionWriter, under the parent row lock and
+/// inside the caller's transaction.
 /// </summary>
-public class DefinitionVersionConfiguration : IEntityTypeConfiguration<DefinitionVersion>
+public sealed class DefinitionVersionConfiguration : IEntityTypeConfiguration<DefinitionVersion>
 {
     public void Configure(EntityTypeBuilder<DefinitionVersion> builder)
     {
-        // T-039 CORRECTION. The numbered replay chain owns this table's DDL -
-        // script 770 creates it - so EF must MAP it without believing it should
-        // create it. Without this, adding the entity leaves the model with
-        // "pending changes" and Migrate() refuses to start the API at all.
-        // ExcludeFromMigrations is the EF feature for a table managed outside
-        // migrations; it does not affect querying or saving.
-        builder.ToTable("ppiq_definition_versions", t => t.ExcludeFromMigrations());
+        builder.ToTable("definition_versions", "ppiq_meta", table => table.ExcludeFromMigrations());
 
-        builder.HasKey(x => x.Id);
+        builder.HasKey(x => x.Id).HasName("pk_definition_versions");
 
-        builder.Property(x => x.DefinitionKind).IsRequired().HasColumnName("definition_kind").HasMaxLength(64);
-        builder.Property(x => x.DefinitionId).IsRequired().HasColumnName("definition_id");
-        builder.Property(x => x.VersionNumber).IsRequired().HasColumnName("version_number");
-        builder.Property(x => x.PayloadJson).IsRequired().HasColumnName("payload_json").HasColumnType("jsonb");
-        builder.Property(x => x.CreatedAtUtc).IsRequired().HasColumnName("created_at_utc");
-        builder.Property(x => x.CreatedBy).HasColumnName("created_by").HasMaxLength(200);
-        builder.Property(x => x.IsPublished).IsRequired().HasColumnName("is_published");
         builder.Property(x => x.Id).HasColumnName("id");
+        builder.Property(x => x.TenantId).HasColumnName("tenant_id").IsRequired();
+        builder.Property(x => x.DefinitionId).HasColumnName("definition_id").IsRequired();
+        builder.Property(x => x.VersionNumber).HasColumnName("version_number").IsRequired();
+        builder.Property(x => x.Status).HasColumnName("status").HasMaxLength(20).IsRequired();
+        builder.Property(x => x.Mode).HasColumnName("mode").HasMaxLength(6).IsRequired();
+        builder.Property(x => x.GraphJson).HasColumnName("graph_json").HasColumnType("jsonb");
+        builder.Property(x => x.DefinitionHash).HasColumnName("definition_hash").HasMaxLength(64).IsRequired();
+        builder.Property(x => x.CreatedAtUtc).HasColumnName("created_at_utc").IsRequired();
+        builder.Property(x => x.CreatedBy).HasColumnName("created_by");
+        builder.Property(x => x.PublishedAtUtc).HasColumnName("published_at_utc");
+        builder.Property(x => x.IsDeleted).HasColumnName("is_deleted").IsRequired();
 
-        builder
-            .HasIndex(x => new { x.DefinitionKind, x.DefinitionId, x.VersionNumber })
+        builder.Ignore(x => x.IsPublished);
+
+        builder.HasIndex(x => new { x.DefinitionId, x.VersionNumber })
             .IsUnique()
-            .HasDatabaseName("ux_ppiq_definition_versions_kind_id_version");
+            .HasDatabaseName("uq_definition_versions_number");
     }
 }

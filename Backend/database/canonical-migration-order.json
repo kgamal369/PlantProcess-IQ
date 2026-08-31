@@ -26,7 +26,7 @@
               ],
     "summary":  {
                     "totalFiles":  147,
-                    "canonicalPath":  98,
+                    "canonicalPath":  100,
                     "distinctTables":  173,
                     "governedDuplicates":  7,
                     "ungovernedDuplicates":  0,
@@ -90,7 +90,7 @@
     "canonicalViews":  [
                            {
                                "path":  "Backend/database/views/006_dashboard_dataset_views.sql",
-                               "order":  99,
+                               "order":  100,
                                "sha256":  "729D127FA772E1E100A8AD1A6CEAF6B2BABBA5A3FED9991EB8EB62960D3D6865",
                                "note":  "Read-model view authority. Applied after every schema script and after topology convergence, before the probe database is dropped."
                            }
@@ -1215,7 +1215,14 @@
                                                 ]
                           },
                           {
+                              "path":  "Backend/database/scripts/832_definition_contract_convergence.sql",
                               "position":  99,
+                              "sha256":  "1063DD4C9ACD5A96E00042CD505D2B45FE31175ABFE3AA48A5D0FBD04397B850",
+                              "disposition":  "Canonical",
+                              "reason":  "Canonical detail contract for the definition store."
+                          },
+                          {
+                              "position":  100,
                               "ordinal":  6,
                               "path":  "Backend/database/views/006_dashboard_dataset_views.sql",
                               "disposition":  "Canonical",

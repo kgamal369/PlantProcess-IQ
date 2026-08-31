@@ -156,7 +156,7 @@ public sealed class WidgetDefinitionVersioningTests
     }
 
     [SkippableFact]
-    public async Task A_kind_with_no_version_adapter_is_refused_rather_than_answered()
+    public async Task Every_declared_kind_is_answered_by_the_canonical_store()
     {
         await using var db = NewContext();
         Skip.IfNot(
@@ -165,13 +165,31 @@ public sealed class WidgetDefinitionVersioningTests
 
         var service = new DefinitionService(db);
 
-        // M1 versions the widget kind only. Every other kind must refuse, because
-        // a synthesised version one would read as a fact and would not be one.
+        // T-090. This assertion is the INVERSE of the one it replaces, and that
+        // is the point. M1 versioned the widget kind only and refused every
+        // other kind with "no version adapter yet", because a synthesised
+        // version one would have read as a fact without being one. The canonical
+        // store gives all sixteen kinds a real version history, so the refusal
+        // has nothing left to protect.
+        //
+        // Deleting the test would have been weaker evidence than inverting it:
+        // an absent assertion proves nothing about whether the limitation was
+        // lifted or merely stopped being checked.
         var listed = await service.ListVersionsAsync(
             DefinitionKind.Transformation, Guid.NewGuid(), CancellationToken.None);
 
+        // A definition that was never written still has no versions - that is a
+        // NotFound, not the old kind-level refusal. The distinction is what
+        // proves the adapter limitation is gone rather than reworded.
         Assert.True(listed.IsFailure);
-        Assert.Contains("widget kind only", listed.Error!.Message);
+        Assert.DoesNotContain("widget kind only", listed.Error!.Message);
+
+        foreach (var kind in Enum.GetValues<DefinitionKind>())
+        {
+            var perKind = await service.ListVersionsAsync(kind, Guid.NewGuid(), CancellationToken.None);
+            Assert.True(perKind.IsFailure);
+            Assert.DoesNotContain("widget kind only", perKind.Error!.Message);
+        }
     }
 
     private static async Task CleanUpAsync(Guid widgetId, Guid dashboardId)

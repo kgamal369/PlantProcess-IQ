@@ -70,7 +70,11 @@ public sealed class T065AnalysisJobTargetApiTests : AuthenticatedApiTestBase
 
         await using (var cmd = conn.CreateCommand())
         {
-            cmd.CommandText = "DELETE FROM public.ppiq_definition_versions WHERE created_by = @m";
+            // T-090. The M1 compatibility version table is retired. Cleanup now
+            // goes through the canonical store, which is where versions live.
+            cmd.CommandText =
+                "DELETE FROM ppiq_meta.definition_store s " +
+                "WHERE s.definition_code LIKE @m || '%'";
             cmd.Parameters.AddWithValue("m", Marker);
             await cmd.ExecuteNonQueryAsync();
         }
@@ -81,10 +85,10 @@ public sealed class T065AnalysisJobTargetApiTests : AuthenticatedApiTestBase
     ///
     /// The kind is Widget and not Analysis on purpose, and the reason is measured
     /// rather than assumed: DefinitionService answers ListVersionsAsync for the
-    /// widget kind only and refuses every other kind with "no version adapter
-    /// yet". A resolution test written against the Analysis kind would pass while
-    /// proving the adapter is missing, which is not the same statement as proving
-    /// a version resolved.
+    /// widget kind only in M1. T-090 removed that limitation - every kind now
+    /// resolves through the canonical store - but the kind stays Widget here so
+    /// this test keeps proving what it always proved rather than quietly
+    /// changing subject.
     ///
     /// Exactly one version is published, because the resolver refuses a
     /// definition with two published versions rather than choosing between them.
@@ -94,10 +98,24 @@ public sealed class T065AnalysisJobTargetApiTests : AuthenticatedApiTestBase
     {
         await using var conn = await ds.OpenConnectionAsync();
         await using var cmd = conn.CreateCommand();
+        // T-090. Seeds canonical identity and an immutable version instead of a
+        // row in the retired compatibility table. The fixture now speaks in
+        // definition and version identity rather than a physical table name,
+        // which is what keeps it working when storage moves again.
         cmd.CommandText =
-            "INSERT INTO public.ppiq_definition_versions " +
-            "(id, definition_kind, definition_id, version_number, payload_json, created_by, is_published) " +
-            "VALUES (@id, 'Widget', @did, @vn, CAST('{}' AS jsonb), @m, @pub)";
+            "WITH parent AS (" +
+            "  INSERT INTO ppiq_meta.definition_store " +
+            "    (id, tenant_id, definition_code, surface, definition_kind, name, owner_id, current_version) " +
+            "  SELECT @did, t.id, @m || @did::text, 'S2', 'widget', 'T065 fixture widget', u.id, @vn " +
+            "    FROM ppiq_meta.tenants t CROSS JOIN ppiq_meta.app_users u " +
+            "   WHERE t.is_deleted = false AND u.is_deleted = false LIMIT 1 " +
+            "  ON CONFLICT (tenant_id, definition_code) DO UPDATE SET current_version = @vn " +
+            "  RETURNING id, tenant_id) " +
+            "INSERT INTO ppiq_meta.definition_versions " +
+            "  (id, tenant_id, definition_id, version_number, status, mode, graph_json, definition_hash) " +
+            "SELECT @id, parent.tenant_id, parent.id, @vn, " +
+            "       CASE WHEN @pub THEN 'published' ELSE 'superseded' END, 'block', " +
+            "       CAST('{}' AS jsonb), md5(@did::text || @vn::text) FROM parent";
         cmd.Parameters.AddWithValue("id", Guid.NewGuid());
         cmd.Parameters.AddWithValue("did", definitionId);
         cmd.Parameters.AddWithValue("vn", versionNumber);
