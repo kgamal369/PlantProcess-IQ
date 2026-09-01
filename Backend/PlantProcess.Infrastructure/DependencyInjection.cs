@@ -152,6 +152,17 @@ public static class DependencyInjection
             PlantProcess.Infrastructure.Definitions.CanonicalDefinitionWriter>();
         services.AddScoped<PlantProcess.Application.Definitions.ICanonicalIdentityResolver,
             PlantProcess.Infrastructure.Definitions.CanonicalIdentityResolver>();
+
+        // T-091. Impact preview and portable export/import. The graph is a read
+        // model over the T-089 dependency authority and the portability facade
+        // writes only through the T-090 canonical writer registered above; no
+        // second store, no second dependency registry.
+        services.AddScoped<PlantProcess.Application.Definitions.ICanonicalDefinitionGraph,
+            PlantProcess.Infrastructure.Definitions.CanonicalDefinitionGraph>();
+        services.AddScoped<PlantProcess.Infrastructure.Definitions.DefinitionExporter>();
+        services.AddScoped<PlantProcess.Infrastructure.Definitions.DefinitionImporter>();
+        services.AddScoped<PlantProcess.Application.Definitions.IDefinitionPortability,
+            PlantProcess.Infrastructure.Definitions.DefinitionPortability>();
         services.AddScoped<PlantProcess.Application.Definitions.Interfaces.IDefinitionService,
             PlantProcess.Infrastructure.Definitions.DefinitionService>();
 

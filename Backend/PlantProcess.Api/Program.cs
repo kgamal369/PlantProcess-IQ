@@ -993,6 +993,10 @@ app.MapMlProviderEndpoints();
 
     app.MapDashboardEndpoints();
 
+    // T-091. The canonical /api/definitions group: impact preview, portable
+    // export and import.
+    PlantProcess.Api.Endpoints.Definitions.DefinitionImpactEndpoints.MapDefinitionImpactEndpoints(app);
+
     // T-057. C6's read surface. There is no create endpoint: a relationship
     // is emitted by publishing a definition, never authored over HTTP.
     PlantProcess.Api.Endpoints.Relationships.RelationshipEndpoints.MapRelationshipEndpoints(app);
