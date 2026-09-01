@@ -90,7 +90,7 @@
     "canonicalViews":  [
                            {
                                "path":  "Backend/database/views/006_dashboard_dataset_views.sql",
-                               "order":  102,
+                               "order":  103,
                                "sha256":  "729D127FA772E1E100A8AD1A6CEAF6B2BABBA5A3FED9991EB8EB62960D3D6865",
                                "note":  "Read-model view authority. Applied after every schema script and after topology convergence, before the probe database is dropped."
                            }
@@ -1245,6 +1245,18 @@
                           },
                           {
                               "position":  102,
+                              "ordinal":  835,
+                              "path":  "Backend/database/scripts/835_analysis_subject_grain_authority.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "DA316E9EE8010D160A2B912004DD53EF10C48BBFB0A968D1AD41E1FB42B7FD99",
+                              "createsTables":  [
+                                                    "ppiq_meta.analysis_grain_definitions",
+                                                    "ppiq_plant.analysis_subjects"
+                                                ],
+                              "reason":  "T-231 durable Analysis Subject and Grain authority bound to canonical definition versions."
+                          },
+                          {
+                              "position":  103,
                               "ordinal":  6,
                               "path":  "Backend/database/views/006_dashboard_dataset_views.sql",
                               "disposition":  "Canonical",

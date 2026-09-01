@@ -1113,6 +1113,7 @@ app.MapV5VisualMapperEndpoints();
 app.MapVisualMapperEndpoints();
 app.MapAuthoringSupportEndpoints();
 PlantProcess.Api.Endpoints.CustomerAssessmentEndpoints.MapCustomerAssessmentEndpoints(app);
+PlantProcess.Api.Endpoints.AnalysisSubjects.AnalysisSubjectEndpoints.MapAnalysisSubjectEndpoints(app);
 
 app.MapV5BlendedProvenanceEndpoints();
 
