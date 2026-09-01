@@ -62,7 +62,12 @@ export interface BoardField extends FieldLineage {
  */
 export const DERIVED_FIELD_TYPE = "numeric";
 
-export type BoardNodeKind = "dataset" | "filter" | "derived" | "select";
+export const EXECUTABLE_BOARD_NODE_KINDS = ["dataset", "filter", "derived", "select"] as const;
+export type BoardNodeKind = (typeof EXECUTABLE_BOARD_NODE_KINDS)[number];
+
+export function isExecutableBoardNodeKind(kind: string): kind is BoardNodeKind {
+  return (EXECUTABLE_BOARD_NODE_KINDS as readonly string[]).indexOf(kind) >= 0;
+}
 
 /** A structural node. The shell maps React Flow nodes onto this shape. */
 export interface BoardNode {
@@ -332,6 +337,14 @@ function derivedRefusal(title: string, field: BoardField | null, remedy: string)
  * an Error must state which block, what rule was broken, and what would fix it.
  */
 export function blockProblem(node: BoardNode, nodes: BoardNode[], edges: BoardEdge[]): string | null {
+  const runtimeKind = String((node as { kind: unknown }).kind ?? "");
+  if (!isExecutableBoardNodeKind(runtimeKind)) {
+    const words = runtimeKind ? runtimeKind.replace(/-/g, " ") : "unknown";
+    const kindTitle = words.charAt(0).toUpperCase() + words.slice(1);
+    return kindTitle + " cannot run: this build has no behaviour for a "
+      + (runtimeKind || "unknown")
+      + " block. Remove it, or use a block the toolbox offers.";
+  }
   if (node.kind === "dataset") { return null; }
 
   const title = titleOf(node);

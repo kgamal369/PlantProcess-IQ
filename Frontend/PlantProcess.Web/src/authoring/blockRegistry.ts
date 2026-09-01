@@ -1,3 +1,5 @@
+import type { BoardNodeKind } from "./graphSemantics";
+
 // PPIQ T-032. Chapter 4 section 5.2.5 - the toolbox is grouped, searchable and
 // drag-and-drop onto the board, and "GROUPS ARE EXTENDED BY REGISTRY ENTRY,
 // NEVER BY A CODE BRANCH". This file is that registry. AuthoringToolbox reads
@@ -20,24 +22,30 @@ export interface BlockGroupDefinition {
   advanced: boolean;
 }
 
-export interface BlockDefinition {
+interface BlockDefinitionBase {
   id: string;
   label: string;
   group: string;
-  /**
-   * Section 5.2.5 group 3 - arithmetic, comparison and logic are EXPRESSION
-   * blocks, not board blocks. They live inside the block they configure and
-   * are opened by double-click, so the toolbox does not offer them as nodes.
-   */
-  placement: BlockPlacement;
   inputs: string;
   outputs: string;
-  /**
-   * False until the block has real board behaviour. The toolbox renders an
-   * unavailable block with the reason, never a control that does nothing.
-   */
-  available: boolean;
 }
+
+export type BlockDefinition =
+  | (BlockDefinitionBase & {
+      placement: "board";
+      available: true;
+      boardKind: BoardNodeKind;
+    })
+  | (BlockDefinitionBase & {
+      placement: "board";
+      available: false;
+      boardKind?: BoardNodeKind;
+    })
+  | (BlockDefinitionBase & {
+      placement: "expression";
+      available: boolean;
+      boardKind?: never;
+    });
 
 export const BLOCK_GROUPS: readonly BlockGroupDefinition[] = [
   { id: "source-output", label: "Source and output", advanced: false },
@@ -56,8 +64,8 @@ export const BLOCK_REGISTRY: readonly BlockDefinition[] = [
 
   // Group 2 - relational
   { id: "join", label: "Join", group: "relational", placement: "board", inputs: "two datasets", outputs: "dataset", available: false },
-  { id: "filter", label: "Filter", group: "relational", placement: "board", inputs: "dataset", outputs: "dataset", available: true },
-  { id: "select-columns", label: "Select columns", group: "relational", placement: "board", inputs: "dataset", outputs: "dataset", available: true },
+  { id: "filter", label: "Filter", group: "relational", placement: "board", inputs: "dataset", outputs: "dataset", boardKind: "filter", available: true },
+  { id: "select-columns", label: "Select columns", group: "relational", placement: "board", inputs: "dataset", outputs: "dataset", boardKind: "select", available: true },
   { id: "rename", label: "Rename / alias", group: "relational", placement: "board", inputs: "dataset", outputs: "dataset", available: false },
   { id: "group-by", label: "Group by", group: "relational", placement: "board", inputs: "dataset", outputs: "dataset", available: false },
   { id: "sort", label: "Sort", group: "relational", placement: "board", inputs: "dataset", outputs: "dataset", available: false },
@@ -65,7 +73,7 @@ export const BLOCK_REGISTRY: readonly BlockDefinition[] = [
   { id: "distinct", label: "Distinct", group: "relational", placement: "board", inputs: "dataset", outputs: "dataset", available: false },
   { id: "limit", label: "Limit", group: "relational", placement: "board", inputs: "dataset", outputs: "dataset", available: false },
   { id: "pivot", label: "Pivot / unpivot", group: "relational", placement: "board", inputs: "dataset", outputs: "dataset", available: false },
-  { id: "derived-column", label: "Derived column", group: "relational", placement: "board", inputs: "dataset", outputs: "dataset", available: true },
+  { id: "derived-column", label: "Derived column", group: "relational", placement: "board", inputs: "dataset", outputs: "dataset", boardKind: "derived", available: true },
   { id: "cast", label: "Cast", group: "relational", placement: "board", inputs: "dataset", outputs: "dataset", available: false },
   { id: "lookup", label: "Lookup", group: "relational", placement: "board", inputs: "dataset + dataset", outputs: "dataset", available: false },
 
