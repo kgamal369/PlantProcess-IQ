@@ -1,4 +1,5 @@
 import { apiClient } from "../http";
+import { mergeCanonicalRegistryMetadata } from "./registryMetadataMerge";
 export type * from "../productApiClient";
 import { productApi as legacyApi } from "../productApiClient";
 type LegacyFunction = (...args: any[]) => unknown;
@@ -34,7 +35,11 @@ export type WidgetQueryExpressionResult = {
 export const dashboardingApi = {
   getDashboardWorkspace: (...args: any[]) => call("getDashboardWorkspace", ...args),
   getDashboardReferenceData: (...args: any[]) => call("getDashboardReferenceData", ...args),
-  getDashboardMetadata: (...args: any[]) => call("getDashboardMetadata", ...args),
+  getDashboardMetadata: async (...args: any[]) => {
+    const legacyMetadata = await call<any>("getDashboardMetadata", ...args);
+    const registryMetadata = await apiClient.get<any>("/api/registry/metadata");
+    return mergeCanonicalRegistryMetadata(legacyMetadata, registryMetadata) as any;
+  },
   getDashboardDefinitions: (...args: any[]) => call("getDashboardDefinitions", ...args),
   getDashboardDefinition: (...args: any[]) => call("getDashboardDefinition", ...args),
   createDashboardDefinition: (...args: any[]) => call("createDashboardDefinition", ...args),
