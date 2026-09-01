@@ -163,6 +163,11 @@ public static class DependencyInjection
         services.AddScoped<PlantProcess.Infrastructure.Definitions.DefinitionImporter>();
         services.AddScoped<PlantProcess.Application.Definitions.IDefinitionPortability,
             PlantProcess.Infrastructure.Definitions.DefinitionPortability>();
+
+        // T-210. Signal and aggregation semantics: one resolver over the
+        // parameter and KPI-binding authorities. No second registry.
+        services.AddScoped<PlantProcess.Application.Definitions.Semantics.ISignalSemanticsResolver,
+            PlantProcess.Infrastructure.Definitions.Semantics.SignalSemanticsResolver>();
         services.AddScoped<PlantProcess.Application.Definitions.Interfaces.IDefinitionService,
             PlantProcess.Infrastructure.Definitions.DefinitionService>();
 

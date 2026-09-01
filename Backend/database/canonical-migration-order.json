@@ -26,7 +26,7 @@
               ],
     "summary":  {
                     "totalFiles":  148,
-                    "canonicalPath":  101,
+                    "canonicalPath":  102,
                     "distinctTables":  173,
                     "governedDuplicates":  7,
                     "ungovernedDuplicates":  0,
@@ -90,7 +90,7 @@
     "canonicalViews":  [
                            {
                                "path":  "Backend/database/views/006_dashboard_dataset_views.sql",
-                               "order":  100,
+                               "order":  102,
                                "sha256":  "729D127FA772E1E100A8AD1A6CEAF6B2BABBA5A3FED9991EB8EB62960D3D6865",
                                "note":  "Read-model view authority. Applied after every schema script and after topology convergence, before the probe database is dropped."
                            }
@@ -1226,7 +1226,7 @@
                               "ordinal":  833,
                               "path":  "Backend/database/scripts/833_customer_assessment_history.sql",
                               "disposition":  "Canonical",
-                              "sha256":  "5f7109404d51cc992553bb39684ebd58dd431b4007a2d8254668f57191ecd4dd",
+                              "sha256":  "5F7109404D51CC992553BB39684EBD58DD431B4007A2D8254668F57191ECD4DD",
                               "createsTables":  [
                                                     "ppiq_meta.customer_assessments",
                                                     "ppiq_meta.customer_assessment_versions"
@@ -1234,6 +1234,17 @@
                           },
                           {
                               "position":  101,
+                              "ordinal":  833,
+                              "path":  "Backend/database/scripts/834_signal_aggregation_semantics.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "0CAE0B3D53133B45BE3FC04F5E0DAAC19D21D6128DC852B859EAA9BF3ABB4088",
+                              "createsTables":  [
+                                                    "ppiq_meta.customer_assessments",
+                                                    "ppiq_meta.customer_assessment_versions"
+                                                ]
+                          },
+                          {
+                              "position":  102,
                               "ordinal":  6,
                               "path":  "Backend/database/views/006_dashboard_dataset_views.sql",
                               "disposition":  "Canonical",
