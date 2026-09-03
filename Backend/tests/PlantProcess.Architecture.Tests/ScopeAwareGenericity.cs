@@ -14,6 +14,13 @@
 //   UA-05 typed union that constrains the customer model
 //   UA-06 customer schema column treated as universally available
 //   UA-07 behaviour inferred from customer vocabulary
+//   UA-08 registered plant vocabulary compiled into product-generic semantics or behaviour
+//
+// T-093. UA-08 is the only data-driven rule. Its terms live in
+// plant_vocabulary_terms.json and are never written into this file. It is a semantic
+// rule, not a word census: it fires on a declaration, a default, a catalogue entry, a
+// branch or a semantic assignment, and stays silent on comments, log echoes, prose,
+// examples, transport typing and generated derivative files.
 //
 // Rule validity is proven against synthetic samples, never against real debt in the
 // tree. When the vocabulary sweep drives the tree to zero, every rule here still
@@ -28,6 +35,7 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 
 namespace PlantProcess.Architecture.Tests;
@@ -38,6 +46,11 @@ public enum GenericityScope
     CustomerAsset,
     TestOrFixture,
     Documentation,
+    // T-093. A file mechanically generated from a semantic authority elsewhere in the
+    // tree. Vocabulary it reproduces is that authority's debt, counted once, at the
+    // authority. Bounded on purpose: only EF Designer and model-snapshot files qualify.
+    // A handwritten migration is still product code and is still scanned.
+    GeneratedDerivative,
     Excluded
 }
 
@@ -108,12 +121,18 @@ public static class ScopeAwareGenericity
         "scopeawaregenericityruletests.cs",
         "genericitybaselinegatetests.cs",
         "genericity_violation_baseline.json",
-        "genericityviolationinventory.md"
+        "genericityviolationinventory.md",
+        "plant_vocabulary_terms.json"
     };
 
     private static readonly string[] ProductExtensions = { ".cs", ".ts", ".tsx", ".py" };
 
-    public static IReadOnlyList<GenericityRule> Rules { get; } = new List<GenericityRule>
+    public static IReadOnlyList<GenericityRule> Rules { get; } = BuildRules();
+
+    // T-093. The table is built rather than declared, because UA-08's alternatives come
+    // from DATA. UA-01 to UA-07 are unchanged and still compiled: they encode constructs,
+    // not vocabulary, and there is nothing about them for a customer to configure.
+    private static IReadOnlyList<GenericityRule> BuildRules() => new List<GenericityRule>
     {
         new GenericityRule(
             "UA-01",
@@ -153,8 +172,90 @@ public static class ScopeAwareGenericity
         new GenericityRule(
             "UA-07",
             "behaviour inferred from customer vocabulary rather than declared metadata",
-            "(indexof|contains|startswith|endswith)\\s*\\(\\s*\"(grade|coil|heat|slab|cast)\"")
+            "(indexof|contains|startswith|endswith)\\s*\\(\\s*\"(grade|coil|heat|slab|cast)\""),
+
+        BuildVocabularyRule(
+            PlantVocabularyAuthority.TermsFor(PlantVocabularyAuthority.GenericityGateConsumer))
     };
+
+    // UA-08. Registered plant vocabulary compiled into product-generic semantics or
+    // behaviour.
+    //
+    // The test the rule encodes: if this occurrence were removed or generalised, would
+    // the generic product believe, permit, default to, branch on, expose or catalogue
+    // something different? If yes, it is semantic authority and it fires. If the same
+    // word merely echoes a semantic property that is declared elsewhere - in a log
+    // template, a sentence of error prose, an example payload, a transport type, a file
+    // generated from the model - it does not fire, because the declaration is the debt
+    // and an echo is not a second assumption.
+    //
+    // Two lexical classes are used to tell those apart:
+    //   IDENTIFIER forms are matched CASE-SENSITIVELY in the registered PascalCase, so a
+    //   compiled symbol named for the term is caught while a camelCase parameter, local
+    //   or property READ is not.
+    //   LITERAL forms are matched only as the EXACT quoted term, never as a word inside
+    //   a longer string, and only in positions where a literal drives behaviour or
+    //   membership: comparison, case, default, fallback, assignment, element, argument.
+    //
+    // Constructs that fire:
+    //   1. compiled constant or field named for the term        const string ShiftCode
+    //   2. product-owned property or member declaration          public string ShiftCode {
+    //   3. typed positional/record parameter in PascalCase       string? RiskClass,
+    //   4. a line that is nothing but the term (enum/member)     RiskClass,
+    //   5. literal assigned to a symbol named for the term       ShiftCode = "shift"
+    //   6. behavioural comparison, case or discriminator         == "shiftCode"
+    //   7. default, fallback, object value or assignment         ?? "shiftCode"   : "shiftCode",
+    //   8. catalogue element or bare argument                    [ "shiftCode", ... ]   Resolve("shiftCode")
+    //
+    // A TypeScript type position (shiftCode: string) is transport typing of a governed
+    // contract and does not fire; a TypeScript VALUE position (code: "shiftCode",
+    // useState("shiftCode"), === "shiftCode") is product semantics and does.
+    public static GenericityRule BuildVocabularyRule(IReadOnlyList<string> terms)
+    {
+        if (terms is null || terms.Count == 0)
+        {
+            throw new InvalidOperationException(
+                "Genericity gate: UA-08 was built from an empty term list. A vocabulary rule with no " +
+                "vocabulary passes forever and proves nothing. Check " +
+                PlantVocabularyAuthority.RelativePath + ".");
+        }
+
+        var ident   = "(?:" + string.Join("|", terms.Select(Regex.Escape)) + ")";
+        var literal = "\"" + ident + "\"";
+
+        var alternatives = new[]
+        {
+            // 1. compiled constant or field named for the term
+            "(?-i:\\b(?:const|readonly|static)\\s+string\\s+" + ident + "\\b)",
+
+            // 2. product-owned property or member declaration
+            "(?-i:\\b(?:public|internal|protected)\\s+(?:[\\w.<>\\[\\],?]+\\s+)+" + ident + "\\s*(?:\\{|=>))",
+
+            // 3. typed positional or record parameter in PascalCase
+            "(?-i:^\\s*[\\w.<>\\[\\]?]+\\s+" + ident + "\\s*[,)])",
+
+            // 4. a line that is nothing but the term
+            "(?-i:^\\s*" + ident + "\\s*,?\\s*$)",
+
+            // 5. literal assigned to a symbol named for the term
+            "(?-i:\\b" + ident + "\\s*=\\s*\")",
+
+            // 6. behavioural comparison, case or discriminator
+            "(?:==|===|!=|!==|\\bcase\\s+|\\.Equals\\(|\\bis\\s+)\\s*" + literal,
+            literal + "\\s*(?:==|===|!=|!==)",
+
+            // 7. default, fallback, object value or assignment
+            "(?:\\?\\?|=|\\?|:)\\s*" + literal + "\\s*(?:;|,|\\)|\\}|$)",
+
+            // 8. catalogue element or bare argument
+            "[\\[{(,]\\s*" + literal + "\\s*[\\]}),]"
+        };
+
+        return new GenericityRule(
+            "UA-08",
+            "registered plant vocabulary compiled into product-generic semantics or behaviour",
+            string.Join("|", alternatives));
+    }
 
     public static string RepositoryRoot()
     {
@@ -196,6 +297,20 @@ public static class ScopeAwareGenericity
 
         if (p.StartsWith("website/")) return GenericityScope.Excluded;
         if (!ProductExtensions.Contains(Path.GetExtension(p))) return GenericityScope.Excluded;
+
+        // T-093. EF Designer and model-snapshot files are generated from the entity
+        // model; every term they carry is the model's debt, counted at the model. The
+        // migration's own handwritten .cs stays ProductGeneric.
+        if (p.Contains("/migrations/") && (name.EndsWith(".designer.cs") || name.EndsWith("modelsnapshot.cs")))
+        {
+            return GenericityScope.GeneratedDerivative;
+        }
+
+        // T-093. OpenAPI example material demonstrates a contract; it does not create one.
+        if (p.Contains("/swagger/") && name.Contains("example"))
+        {
+            return GenericityScope.Documentation;
+        }
 
         return GenericityScope.ProductGeneric;
     }
@@ -267,5 +382,117 @@ public static class ScopeAwareGenericity
         }
 
         return all;
+    }
+}
+// ============================================================================
+// THE PLANT-VOCABULARY DATA AUTHORITY.
+//
+// Backlog origin: T-093.
+//
+// One committed repository artifact. No table, no migration, no database mirror and
+// no parity mechanism: the build must not need PostgreSQL to know what a plant term
+// is. Consumers select terms by declared consumer id, so the genericity gate and the
+// system-template gate read the same file and neither keeps a private list.
+//
+// A missing, unparsable or empty authority is a HARD FAILURE. A vocabulary gate that
+// silently loses its vocabulary is green forever and guards nothing.
+// ============================================================================
+
+public sealed class PlantVocabularyTerm
+{
+    public PlantVocabularyTerm(string term, IReadOnlyList<string> consumers)
+    {
+        Term = term;
+        Consumers = consumers;
+    }
+
+    public string Term { get; }
+    public IReadOnlyList<string> Consumers { get; }
+}
+
+public static class PlantVocabularyAuthority
+{
+    public const string RelativePath =
+        "Backend/tests/PlantProcess.Architecture.Tests/plant_vocabulary_terms.json";
+
+    public const string GenericityGateConsumer = "genericityGate";
+    public const string SystemTemplateConsumer = "systemTemplateAuthority";
+
+    private static readonly Lazy<IReadOnlyList<PlantVocabularyTerm>> Cache = new(Load);
+
+    public static IReadOnlyList<PlantVocabularyTerm> All => Cache.Value;
+
+    public static IReadOnlyList<string> TermsFor(string consumerId)
+    {
+        return All
+            .Where(t => t.Consumers.Contains(consumerId, StringComparer.Ordinal))
+            .Select(t => t.Term)
+            .ToArray();
+    }
+
+    public static string AbsolutePath()
+    {
+        return Path.Combine(
+            ScopeAwareGenericity.RepositoryRoot(),
+            RelativePath.Replace('/', Path.DirectorySeparatorChar));
+    }
+
+    public static string DataSha256()
+    {
+        using var sha = SHA256.Create();
+        var bytes = sha.ComputeHash(File.ReadAllBytes(AbsolutePath()));
+
+        var sb = new StringBuilder(64);
+        foreach (var b in bytes) sb.Append(b.ToString("x2", CultureInfo.InvariantCulture));
+        return sb.ToString();
+    }
+
+    private static IReadOnlyList<PlantVocabularyTerm> Load()
+    {
+        var path = AbsolutePath();
+
+        if (!File.Exists(path))
+        {
+            throw new InvalidOperationException(
+                "Plant vocabulary authority: " + RelativePath + " is missing. Deleting the term " +
+                "list must fail the build, never silence the gate.");
+        }
+
+        var terms = new List<PlantVocabularyTerm>();
+
+        using (var doc = JsonDocument.Parse(File.ReadAllText(path)))
+        {
+            if (!doc.RootElement.TryGetProperty("terms", out var array))
+            {
+                throw new InvalidOperationException(
+                    "Plant vocabulary authority: " + RelativePath + " declares no 'terms' array.");
+            }
+
+            foreach (var entry in array.EnumerateArray())
+            {
+                var term = entry.GetProperty("term").GetString();
+                if (string.IsNullOrWhiteSpace(term)) continue;
+
+                var consumers = new List<string>();
+                if (entry.TryGetProperty("consumers", out var consumerArray))
+                {
+                    foreach (var c in consumerArray.EnumerateArray())
+                    {
+                        var id = c.GetString();
+                        if (!string.IsNullOrWhiteSpace(id)) consumers.Add(id!);
+                    }
+                }
+
+                terms.Add(new PlantVocabularyTerm(term!, consumers));
+            }
+        }
+
+        if (terms.Count == 0)
+        {
+            throw new InvalidOperationException(
+                "Plant vocabulary authority: " + RelativePath + " parsed to zero terms.");
+        }
+
+        return terms;
     }
 }

@@ -2,9 +2,9 @@
   "backlogTask": "T-206",
   "release": "M2",
   "schema": 2,
-  "generatedAtUtc": "2026-08-24T13:57:11Z",
-  "productGenericFileCount": 1015,
-  "grandfatheredCount": 49,
+  "generatedAtUtc": "2026-09-03T11:50:06Z",
+  "productGenericFileCount": 1055,
+  "grandfatheredCount": 132,
   "note": "Fingerprints, not a count. Entries may only disappear. A fingerprint absent from this list is a blocking failure.",
   "grandfathered": [
     {
@@ -34,6 +34,20 @@
       "rule": "UA-06",
       "construct": "heat_id",
       "lineWhenCaptured": 47
+    },
+    {
+      "fingerprint": "6ea9b41a9492ba08ecaaaff2dba8debd3cdfcbda0ad9212735e85852ac969b7b",
+      "path": "Backend/PlantProcess.Api/Endpoints/Admin/Phase1WorkflowTruthEndpoints.Helpers.017.BuildCanonicalTargets.cs",
+      "rule": "UA-08",
+      "construct": ", \u0022productfamily\u0022,",
+      "lineWhenCaptured": 23
+    },
+    {
+      "fingerprint": "641728e627d002e513ef6ef6109094f6cf59c39bfc566866323029c546aca0ae",
+      "path": "Backend/PlantProcess.Api/Endpoints/Admin/Phase1WorkflowTruthEndpoints.Helpers.017.BuildCanonicalTargets.cs",
+      "rule": "UA-08",
+      "construct": ", \u0022gradeorrecipe\u0022,",
+      "lineWhenCaptured": 24
     },
     {
       "fingerprint": "7fa764fa8dbd498a87630fe9a7763dcd435a3b086115484f85d674b50d693035",
@@ -71,11 +85,95 @@
       "lineWhenCaptured": 789
     },
     {
+      "fingerprint": "3746910236621d0af951dd07992b3918db59e1b482e05e7a75ef0c1365a5135a",
+      "path": "Backend/PlantProcess.Api/Endpoints/Analytics/AnalysisJobDefinitionEndpoints.cs",
+      "rule": "UA-08",
+      "construct": "string? defecttype,",
+      "lineWhenCaptured": 1150
+    },
+    {
+      "fingerprint": "dfb814fb32cbf0dd0b3d0ce07b7176962435666d808977bb5a2a853da664e083",
+      "path": "Backend/PlantProcess.Api/Endpoints/Analytics/AnalysisJobDefinitionEndpoints.cs",
+      "rule": "UA-08",
+      "construct": "string defecttype,",
+      "lineWhenCaptured": 1174
+    },
+    {
+      "fingerprint": "1960b40b2a6915bb8079d847d96d95c0a4f67ec2f34f5415c916b84119057c71",
+      "path": "Backend/PlantProcess.Api/Endpoints/Analytics/CorrelationEndpoints.cs",
+      "rule": "UA-08",
+      "construct": "string defecttype,",
+      "lineWhenCaptured": 722
+    },
+    {
+      "fingerprint": "bde8ac1a541472fec0f289ccf9c1faabdfb64c66a0ba20dea33c15b0a0971115",
+      "path": "Backend/PlantProcess.Api/Endpoints/Analytics/Phase2InvestigationEndpoints.cs",
+      "rule": "UA-08",
+      "construct": "string? defecttype,",
+      "lineWhenCaptured": 526
+    },
+    {
+      "fingerprint": "48da0a73894b767d8bf720a174d9e81933e6a942b679c32240e8165dffa08d2b",
+      "path": "Backend/PlantProcess.Api/Endpoints/Analytics/Phase2InvestigationEndpoints.cs",
+      "rule": "UA-08",
+      "construct": "string defecttype,",
+      "lineWhenCaptured": 555
+    },
+    {
+      "fingerprint": "e0d8acc4d4e4fa62014d2f401d383895eb60e0d05aae57df2ff5eae8e186b7bd",
+      "path": "Backend/PlantProcess.Api/Endpoints/Analytics/RiskScoreEndpoints.cs",
+      "rule": "UA-08",
+      "construct": "string? riskclass,",
+      "lineWhenCaptured": 238
+    },
+    {
       "fingerprint": "52dbc2399255794f872160ca827a4ee9e43ae5d8f8d3be2249d85d6b45c16e34",
       "path": "Backend/PlantProcess.Api/Endpoints/Analytics/ValueEndpoints.cs",
       "rule": "UA-02",
       "construct": "coilid",
       "lineWhenCaptured": 18
+    },
+    {
+      "fingerprint": "3f119e012dbd51727f84f6d1e3e5ef431552e0691254d13ee59a1562b8f6bcb0",
+      "path": "Backend/PlantProcess.Api/Endpoints/Configuration/ConfigurationEndpoints.cs",
+      "rule": "UA-08",
+      "construct": "string? productfamily,",
+      "lineWhenCaptured": 553
+    },
+    {
+      "fingerprint": "47459ee325c01192196933fbd265c854e747c575d4af080a9deab37559581647",
+      "path": "Backend/PlantProcess.Api/Endpoints/Materials/MaterialEndpoints.cs",
+      "rule": "UA-08",
+      "construct": "string? productfamily,",
+      "lineWhenCaptured": 267
+    },
+    {
+      "fingerprint": "ccd0fd3fe0c208cf7104f9c192d1dee75e697e2dab302e6d5c682961a86d484e",
+      "path": "Backend/PlantProcess.Api/Endpoints/Materials/MaterialEndpoints.cs",
+      "rule": "UA-08",
+      "construct": "string? gradeorrecipe,",
+      "lineWhenCaptured": 268
+    },
+    {
+      "fingerprint": "f74e399985bb8d586f5cb3a7a1f40883fcefc75eb136503cd89bccb3048a1625",
+      "path": "Backend/PlantProcess.Api/Endpoints/Workflow/WorkflowEndpoints.Contracts.001.cs",
+      "rule": "UA-08",
+      "construct": "string? productfamily,",
+      "lineWhenCaptured": 68
+    },
+    {
+      "fingerprint": "a7fad8798513553c6200b5a94c748f61cbdbaa634d7237df7cf4cbba72939675",
+      "path": "Backend/PlantProcess.Api/Endpoints/Workflow/WorkflowEndpoints.Contracts.001.cs",
+      "rule": "UA-08",
+      "construct": "string? gradeorrecipe,",
+      "lineWhenCaptured": 69
+    },
+    {
+      "fingerprint": "51a0a1356620c7095df136e6416d4a6f4b4e4d8bf9444d11ea7d953adf726b87",
+      "path": "Backend/PlantProcess.Api/Endpoints/Workflow/WorkflowEndpoints.Contracts.001.cs",
+      "rule": "UA-08",
+      "construct": "string? riskclass,",
+      "lineWhenCaptured": 215
     },
     {
       "fingerprint": "a07ee1aec2068cbf698a86fc3ec65fc477e35ae69a9b3a629e3723a83564359a",
@@ -97,6 +195,41 @@
       "rule": "UA-02",
       "construct": "heatid",
       "lineWhenCaptured": 22
+    },
+    {
+      "fingerprint": "92d98c507106a86876162d047a5af2786e64fa4c3ba80bbf5edec41c63cb25ce",
+      "path": "Backend/PlantProcess.Application/Analytics/Contracts/CorrelationDtos.cs",
+      "rule": "UA-08",
+      "construct": "string defecttype,",
+      "lineWhenCaptured": 5
+    },
+    {
+      "fingerprint": "bf30ab700f27ed6b35712dad39d7385b97fbab45b9d16a6016f9a3ca4a6b1b8e",
+      "path": "Backend/PlantProcess.Application/Analytics/Contracts/MaterialFeatureVector.cs",
+      "rule": "UA-08",
+      "construct": "string? productfamily,",
+      "lineWhenCaptured": 15
+    },
+    {
+      "fingerprint": "78ed6179ed164d01b4a0b2a35b71c8bc33563138ea751979b2b0eb57a8f65a27",
+      "path": "Backend/PlantProcess.Application/Analytics/Contracts/MaterialFeatureVector.cs",
+      "rule": "UA-08",
+      "construct": "string? gradeorrecipe,",
+      "lineWhenCaptured": 16
+    },
+    {
+      "fingerprint": "58d4d15e1d7a81b757782e14a85754ab05521d682e38a6ebc33f420ce3f3da08",
+      "path": "Backend/PlantProcess.Application/Analytics/Contracts/RiskPredictionDtos.cs",
+      "rule": "UA-08",
+      "construct": "string riskclass,",
+      "lineWhenCaptured": 18
+    },
+    {
+      "fingerprint": "0a0bcee7af229872b1032e5db7a5818c73392944cdc1f622318b3c364a5e7396",
+      "path": "Backend/PlantProcess.Application/Analytics/Contracts/StoreRiskScoreCommand.cs",
+      "rule": "UA-08",
+      "construct": "string? riskclass,",
+      "lineWhenCaptured": 9
     },
     {
       "fingerprint": "d431488a69805f2ef462cb14df8fd01e45d376741b3e233406a88be25dbbb705",
@@ -162,6 +295,356 @@
       "lineWhenCaptured": 418
     },
     {
+      "fingerprint": "4f1e7624b29ce3f4e280c3ac5e8f500bc544aa43ae8287d143bc31299fc1cb78",
+      "path": "Backend/PlantProcess.Application/Contracts/Materials/CreateMaterialCommand.cs",
+      "rule": "UA-08",
+      "construct": "string? productfamily,",
+      "lineWhenCaptured": 9
+    },
+    {
+      "fingerprint": "4c59ac0c2614112b02efb874b0d9234bb4c4baf3a55aec06fab18c0973c93a0c",
+      "path": "Backend/PlantProcess.Application/Contracts/Materials/CreateMaterialCommand.cs",
+      "rule": "UA-08",
+      "construct": "string? gradeorrecipe,",
+      "lineWhenCaptured": 10
+    },
+    {
+      "fingerprint": "e08fde251d284655c6361f0aa37950ef2bd20ec79678287a00f4903a3fa0fd1b",
+      "path": "Backend/PlantProcess.Application/Contracts/PlantLayout/PlantLayoutDtos.cs",
+      "rule": "UA-08",
+      "construct": "string? productfamily,",
+      "lineWhenCaptured": 63
+    },
+    {
+      "fingerprint": "373a9611194907d7a8dc1ef6215df78daac5e41b18886f6c7be638279562758b",
+      "path": "Backend/PlantProcess.Application/Contracts/PlantLayout/PlantLayoutDtos.cs",
+      "rule": "UA-08",
+      "construct": "string? gradeorrecipe,",
+      "lineWhenCaptured": 64
+    },
+    {
+      "fingerprint": "f4381654ed1d0b764fce0595f633972a7fb3077af15656bef04945930af5c112",
+      "path": "Backend/PlantProcess.Application/Dashboarding/Contracts/DashboardDtos.cs",
+      "rule": "UA-08",
+      "construct": "string? defecttype,",
+      "lineWhenCaptured": 12
+    },
+    {
+      "fingerprint": "7e2cf97cfd694af1f639ddd15f9a005fe4ab6e8c0bded27776c17491d1d977fb",
+      "path": "Backend/PlantProcess.Application/Dashboarding/Contracts/DashboardDtos.cs",
+      "rule": "UA-08",
+      "construct": "string? riskclass,",
+      "lineWhenCaptured": 13
+    },
+    {
+      "fingerprint": "65f934d5b21c27b87c34259ff7cf95ecfc2785e4bc011ba48d327e5984973c6a",
+      "path": "Backend/PlantProcess.Application/Dashboarding/Contracts/DashboardDtos.cs",
+      "rule": "UA-08",
+      "construct": "string? shiftcode,",
+      "lineWhenCaptured": 16
+    },
+    {
+      "fingerprint": "d735213d3e31bd2e9c7b4526f054295bed21b86ab348633ba61382788eeed87f",
+      "path": "Backend/PlantProcess.Application/Dashboarding/Contracts/DashboardDtos.cs",
+      "rule": "UA-08",
+      "construct": "string? productfamily,",
+      "lineWhenCaptured": 68
+    },
+    {
+      "fingerprint": "ecd44f854e2287e7cd3bc89db5d5e4c8d856589ec87fbb4752ce16c4ec4606c9",
+      "path": "Backend/PlantProcess.Application/Dashboarding/Contracts/DashboardDtos.cs",
+      "rule": "UA-08",
+      "construct": "string? gradeorrecipe,",
+      "lineWhenCaptured": 69
+    },
+    {
+      "fingerprint": "13e0ab5300f6b8202423aea05448974dfa0d330197d7b42085336f17a6fd3206",
+      "path": "Backend/PlantProcess.Application/Dashboarding/Contracts/DashboardMetadataDtos.cs",
+      "rule": "UA-08",
+      "construct": "string? defecttype,",
+      "lineWhenCaptured": 136
+    },
+    {
+      "fingerprint": "0b1dd4f57cb6f050da20bf5528cc2970d5db0f323c44ee7e7e24562cb711a328",
+      "path": "Backend/PlantProcess.Application/Dashboarding/Contracts/DashboardMetadataDtos.cs",
+      "rule": "UA-08",
+      "construct": "string? riskclass,",
+      "lineWhenCaptured": 137
+    },
+    {
+      "fingerprint": "11b3299a44fc617cb7097f6fd288d6fde1c7a01a4da0a7976ad5a09d888b0257",
+      "path": "Backend/PlantProcess.Application/Dashboarding/Contracts/DashboardMetadataDtos.cs",
+      "rule": "UA-08",
+      "construct": "string? shiftcode,",
+      "lineWhenCaptured": 138
+    },
+    {
+      "fingerprint": "86c86d42a2c725f48a0e834319b88d468ef01d006b884621e0f09a763b70303b",
+      "path": "Backend/PlantProcess.Application/Dashboarding/Contracts/DashboardMetadataDtos.cs",
+      "rule": "UA-08",
+      "construct": "const string productfamily",
+      "lineWhenCaptured": 296
+    },
+    {
+      "fingerprint": "1a2ab4aa31467f21f653d4db40f2dfba3be9063d993132fa625da8b096082d49",
+      "path": "Backend/PlantProcess.Application/Dashboarding/Contracts/DashboardMetadataDtos.cs",
+      "rule": "UA-08",
+      "construct": "= \u0022productfamily\u0022;",
+      "lineWhenCaptured": 296
+    },
+    {
+      "fingerprint": "fa7500e976e98bc9efc523d841967cbf7c4abf5c65ace788629a111175a0c3df",
+      "path": "Backend/PlantProcess.Application/Dashboarding/Contracts/DashboardMetadataDtos.cs",
+      "rule": "UA-08",
+      "construct": "const string gradeorrecipe",
+      "lineWhenCaptured": 297
+    },
+    {
+      "fingerprint": "738cf464115fe686de0667fc83e28dccf0f85ea2bbeb3bed275cc1d1b1e99fc7",
+      "path": "Backend/PlantProcess.Application/Dashboarding/Contracts/DashboardMetadataDtos.cs",
+      "rule": "UA-08",
+      "construct": "= \u0022gradeorrecipe\u0022;",
+      "lineWhenCaptured": 297
+    },
+    {
+      "fingerprint": "88bdbbd9c7d32e410a4b2738973dd892777dd793952fa4e7945bf2f62a6f404a",
+      "path": "Backend/PlantProcess.Application/Dashboarding/Contracts/DashboardMetadataDtos.cs",
+      "rule": "UA-08",
+      "construct": "const string shiftcode",
+      "lineWhenCaptured": 298
+    },
+    {
+      "fingerprint": "57e1c4c9d75ce370e1d5ef0cc76c96cd9558082ec292c7703b9de6bc7baef924",
+      "path": "Backend/PlantProcess.Application/Dashboarding/Contracts/DashboardMetadataDtos.cs",
+      "rule": "UA-08",
+      "construct": "= \u0022shiftcode\u0022;",
+      "lineWhenCaptured": 298
+    },
+    {
+      "fingerprint": "f35aa434021a6a9e9e9a2ceb02d31cf7cc944cc9da2f25c56eec0d67d05ff6ba",
+      "path": "Backend/PlantProcess.Application/Dashboarding/Contracts/DashboardMetadataDtos.cs",
+      "rule": "UA-08",
+      "construct": "const string defecttype",
+      "lineWhenCaptured": 299
+    },
+    {
+      "fingerprint": "0e7e33ed58ce9a52adde9797693ca8d68e75aecb0b4752afb41b7c182ba9ed73",
+      "path": "Backend/PlantProcess.Application/Dashboarding/Contracts/DashboardMetadataDtos.cs",
+      "rule": "UA-08",
+      "construct": "= \u0022defecttype\u0022;",
+      "lineWhenCaptured": 299
+    },
+    {
+      "fingerprint": "5690acdb6668331c80d92b13169788a5782cee088ead253d2af07417eb8c3dc2",
+      "path": "Backend/PlantProcess.Application/Dashboarding/Contracts/DashboardMetadataDtos.cs",
+      "rule": "UA-08",
+      "construct": "const string riskclass",
+      "lineWhenCaptured": 304
+    },
+    {
+      "fingerprint": "8d1a42afa540922d73803a112148fbde506875279cd12b93ca4f3238da0dfd36",
+      "path": "Backend/PlantProcess.Application/Dashboarding/Contracts/DashboardMetadataDtos.cs",
+      "rule": "UA-08",
+      "construct": "= \u0022riskclass\u0022;",
+      "lineWhenCaptured": 304
+    },
+    {
+      "fingerprint": "1161b99352833cdac5bb9e468a929010ee0d2820f39f30615f06bcb836aed703",
+      "path": "Backend/PlantProcess.Application/Dashboarding/Services/Metadata/DashboardMetadataService.cs",
+      "rule": "UA-08",
+      "construct": "(\u0022defecttype\u0022,",
+      "lineWhenCaptured": 288
+    },
+    {
+      "fingerprint": "f7fb4ac568368cd225bc96a25ae30f4f51353ba1757e61b93eb3a84305e19136",
+      "path": "Backend/PlantProcess.Application/Dashboarding/Services/Metadata/DashboardMetadataService.cs",
+      "rule": "UA-08",
+      "construct": "(\u0022riskclass\u0022,",
+      "lineWhenCaptured": 289
+    },
+    {
+      "fingerprint": "c1120f9447f6eb1e9998a73f4d7f3486eefa8d83acf5da706c8928ca9af7cf1b",
+      "path": "Backend/PlantProcess.Application/Dashboarding/Services/Metadata/DashboardMetadataService.cs",
+      "rule": "UA-08",
+      "construct": "(\u0022shiftcode\u0022,",
+      "lineWhenCaptured": 290
+    },
+    {
+      "fingerprint": "aeed9ebca81e3de0c4d5b8df32511ba3b6c066fda856745566c245a3a697d740",
+      "path": "Backend/PlantProcess.Application/Dashboarding/Services/Metadata/DashboardMetadataService.cs",
+      "rule": "UA-08",
+      "construct": ", \u0022defecttype\u0022,",
+      "lineWhenCaptured": 326
+    },
+    {
+      "fingerprint": "7b1c226aec27997708f0276b59b319c46ec57dfe767b15178227f76f5a626c32",
+      "path": "Backend/PlantProcess.Application/Dashboarding/Services/Metadata/DashboardMetadataService.cs",
+      "rule": "UA-08",
+      "construct": ", \u0022shiftcode\u0022 }",
+      "lineWhenCaptured": 326
+    },
+    {
+      "fingerprint": "e3cb478873a2fd491920701e4a6d4d3f8fe16e7c1fb49ff210e75e91ced731d9",
+      "path": "Backend/PlantProcess.Application/Dashboarding/Services/Metadata/DashboardMetadataService.cs",
+      "rule": "UA-08",
+      "construct": ", \u0022shiftcode\u0022,",
+      "lineWhenCaptured": 334
+    },
+    {
+      "fingerprint": "a003bba54dee5708d0e3e71118d220d17c5daf2dce643952f9d09cf5d3cb5671",
+      "path": "Backend/PlantProcess.Application/Dashboarding/Services/Metadata/DashboardMetadataService.cs",
+      "rule": "UA-08",
+      "construct": "{ \u0022riskclass\u0022,",
+      "lineWhenCaptured": 350
+    },
+    {
+      "fingerprint": "a7240f70a995f0664bdcaedf83074d92234305312fac0d487f00e91ee9be2828",
+      "path": "Backend/PlantProcess.Application/Dashboarding/Services/Metadata/DashboardMetadataService.cs",
+      "rule": "UA-08",
+      "construct": ", \u0022productfamily\u0022 }",
+      "lineWhenCaptured": 350
+    },
+    {
+      "fingerprint": "c993637f65324aa27b4a9bd52a51402176822a54ed748626fe3f92d52676535c",
+      "path": "Backend/PlantProcess.Application/Dashboarding/Services/Queries/DashboardAggregateExecutor.cs",
+      "rule": "UA-08",
+      "construct": "public string? productfamily {",
+      "lineWhenCaptured": 60
+    },
+    {
+      "fingerprint": "773bd6b7bf23e16ff86db3a193f3c07763a8945aab20e283c03131baf06fd1af",
+      "path": "Backend/PlantProcess.Application/Dashboarding/Services/Queries/DashboardAggregateExecutor.cs",
+      "rule": "UA-08",
+      "construct": "public string? gradeorrecipe {",
+      "lineWhenCaptured": 61
+    },
+    {
+      "fingerprint": "54c53de0b4eabad30207d0b0e70f8f8ce7c328dc606bd945b8acbf2348612c9a",
+      "path": "Backend/PlantProcess.Application/Dashboarding/Services/Queries/DashboardAggregateExecutor.cs",
+      "rule": "UA-08",
+      "construct": "public string? shiftcode {",
+      "lineWhenCaptured": 63
+    },
+    {
+      "fingerprint": "e2808b8a2c88747d3d1002da32aef925f95663957465b1f0b290f08d6cd363c0",
+      "path": "Backend/PlantProcess.Application/Dashboarding/Services/Queries/DashboardAggregateExecutor.cs",
+      "rule": "UA-08",
+      "construct": "public string? defecttype {",
+      "lineWhenCaptured": 64
+    },
+    {
+      "fingerprint": "111eb21365beca22df8f65e618e4e451bb05a3c16bbdcf3abab69893a0c3d58d",
+      "path": "Backend/PlantProcess.Application/Dashboarding/Services/Queries/DashboardAggregateExecutor.cs",
+      "rule": "UA-08",
+      "construct": "public string? riskclass {",
+      "lineWhenCaptured": 66
+    },
+    {
+      "fingerprint": "9bde0138c61056e466f6eee5415e0b2f6d8298ac5c92afd94a0394a54e8604dc",
+      "path": "Backend/PlantProcess.Application/Dashboarding/Services/Queries/WidgetResultSources.cs",
+      "rule": "UA-08",
+      "construct": "(\u0022riskclass\u0022,",
+      "lineWhenCaptured": 1924
+    },
+    {
+      "fingerprint": "5b5dcf06f0bdfa1ae62a6f5dabd8ad10d0b989fee948137c777838156a1b8e87",
+      "path": "Backend/PlantProcess.Application/Dashboarding/Services/Queries/WidgetResultSources.cs",
+      "rule": "UA-08",
+      "construct": "(\u0022gradeorrecipe\u0022,",
+      "lineWhenCaptured": 2292
+    },
+    {
+      "fingerprint": "37e34890a697cd3f80e7f15329a9ada7068e85917cfaca8bd2c9eb9ed93cb5d2",
+      "path": "Backend/PlantProcess.Application/Dashboarding/Services/Widgets/WidgetQueryExpressionService.cs",
+      "rule": "UA-08",
+      "construct": ", \u0022defecttype\u0022)",
+      "lineWhenCaptured": 339
+    },
+    {
+      "fingerprint": "ecf7bb06ea60e673c0da20b9313f964e0512c325908c8630465b43160d0f940c",
+      "path": "Backend/PlantProcess.Application/Dashboarding/Services/Widgets/WidgetQueryExpressionService.cs",
+      "rule": "UA-08",
+      "construct": ", \u0022riskclass\u0022)",
+      "lineWhenCaptured": 340
+    },
+    {
+      "fingerprint": "54d9c6788d04beecd04aeb9e573bf355329c876a298f0ea9d78397dba71542d6",
+      "path": "Backend/PlantProcess.Application/Dashboarding/Services/Widgets/WidgetQueryExpressionService.cs",
+      "rule": "UA-08",
+      "construct": ", \u0022shiftcode\u0022)",
+      "lineWhenCaptured": 341
+    },
+    {
+      "fingerprint": "fb771aea0c807e066e7bec284470aa5bbf65dcbb781df5e7d9d8d2dcf68546bb",
+      "path": "Backend/PlantProcess.Application/Integration/Services/Mapping/MappingExecutionService.cs",
+      "rule": "UA-08",
+      "construct": ", \u0022productfamily\u0022)",
+      "lineWhenCaptured": 247
+    },
+    {
+      "fingerprint": "f6fc166972140d2354ff9cf2da4bcdfa85ab3acc65f064452a81ee46fb8f44fa",
+      "path": "Backend/PlantProcess.Application/Integration/Services/Mapping/MappingExecutionService.cs",
+      "rule": "UA-08",
+      "construct": ", \u0022gradeorrecipe\u0022)",
+      "lineWhenCaptured": 248
+    },
+    {
+      "fingerprint": "eccc58bf280a690da728444724d78e216d0e4b5d9e5a4d0cfae02a9dc0c42d29",
+      "path": "Backend/PlantProcess.Application/Reporting/InvestigationReportDtos.cs",
+      "rule": "UA-08",
+      "construct": "string? productfamily,",
+      "lineWhenCaptured": 7
+    },
+    {
+      "fingerprint": "11d25309d67c5c610414f197a6d4412bf7a21f95390156712ad9fad171722acf",
+      "path": "Backend/PlantProcess.Application/Reporting/InvestigationReportDtos.cs",
+      "rule": "UA-08",
+      "construct": "string? gradeorrecipe,",
+      "lineWhenCaptured": 8
+    },
+    {
+      "fingerprint": "b49c7b955a7b4c5074cd243b673d3293cafe130e888e00382b7c485d6ec517ee",
+      "path": "Backend/PlantProcess.Domain/Entities/Analytics/RiskScore.cs",
+      "rule": "UA-08",
+      "construct": "public string? riskclass {",
+      "lineWhenCaptured": 13
+    },
+    {
+      "fingerprint": "2e3694cf010fc2e893c984a56d7b136a378c8f63c78254310d30ad1379ccd8f3",
+      "path": "Backend/PlantProcess.Domain/Entities/Configuration/Route.cs",
+      "rule": "UA-08",
+      "construct": "public string? productfamily {",
+      "lineWhenCaptured": 13
+    },
+    {
+      "fingerprint": "452b6c5a136a7aac22bc7353dbc9e20fa740810fbf6551d2ae2aa0fa5bad87b6",
+      "path": "Backend/PlantProcess.Domain/Entities/Materials/MaterialUnit.cs",
+      "rule": "UA-08",
+      "construct": "public string? productfamily {",
+      "lineWhenCaptured": 16
+    },
+    {
+      "fingerprint": "6106def6f42632f6a8242e261b5cdafb783b70092742690db9203ea85338faf2",
+      "path": "Backend/PlantProcess.Domain/Entities/Materials/MaterialUnit.cs",
+      "rule": "UA-08",
+      "construct": "public string? gradeorrecipe {",
+      "lineWhenCaptured": 18
+    },
+    {
+      "fingerprint": "15906d3ae619583d10ee4b9ffffd558cf3896b1fc4b3fb4b978a5318d5c5df1d",
+      "path": "Backend/PlantProcess.Domain/Entities/Process/ProductSpecification.cs",
+      "rule": "UA-08",
+      "construct": "public string? productfamily {",
+      "lineWhenCaptured": 21
+    },
+    {
+      "fingerprint": "6c990ed81d5bd50bcadec8561959d16dff6ec3b8e6dbc959593a9ecd78587b86",
+      "path": "Backend/PlantProcess.Domain/Entities/Process/ProductSpecification.cs",
+      "rule": "UA-08",
+      "construct": "public string gradeorrecipe {",
+      "lineWhenCaptured": 23
+    },
+    {
       "fingerprint": "28f21a59cb113271b52c05fbe916623ff3e3db66ebfabdbdaf0e1b39f2497f44",
       "path": "Backend/PlantProcess.Infrastructure/Analytics/DotNetAdvancedCorrelationEngine.cs",
       "rule": "UA-03",
@@ -222,7 +705,7 @@
       "path": "Frontend/PlantProcess.Web/src/api/analysisOptions.ts",
       "rule": "UA-03",
       "construct": ".grain ?? \u0022\u0022",
-      "lineWhenCaptured": 39
+      "lineWhenCaptured": 42
     },
     {
       "fingerprint": "b71af9baf727b26770cf70c970f62d30657853998775433bde430a3ffdf9bc5d",
@@ -260,6 +743,48 @@
       "lineWhenCaptured": 22
     },
     {
+      "fingerprint": "b220bab40a3b8e99b4f9a3d7e235f1611c82bc599f25b1b7a4dbf8c267bf04a2",
+      "path": "Frontend/PlantProcess.Web/src/components/DashboardFilterBar.tsx",
+      "rule": "UA-08",
+      "construct": "(\u0022defecttype\u0022,",
+      "lineWhenCaptured": 246
+    },
+    {
+      "fingerprint": "fa346b61b900ba355c00388978db532ada9d17ccbc366b0a4067e5b558ae57dc",
+      "path": "Frontend/PlantProcess.Web/src/components/DashboardFilterBar.tsx",
+      "rule": "UA-08",
+      "construct": "(\u0022riskclass\u0022,",
+      "lineWhenCaptured": 261
+    },
+    {
+      "fingerprint": "f99312d6a2f548143b8d53ce850cdabc6f462817e93046d3b7a4f372ac61e6d0",
+      "path": "Frontend/PlantProcess.Web/src/components/DashboardFilterBar.tsx",
+      "rule": "UA-08",
+      "construct": "(\u0022shiftcode\u0022,",
+      "lineWhenCaptured": 276
+    },
+    {
+      "fingerprint": "fc93573d62a7883661ae43d3afc078b1bec190f5a90aed7faf9071d4e8a14c8f",
+      "path": "Frontend/PlantProcess.Web/src/components/dashboard/SavedDashboardWidget.tsx",
+      "rule": "UA-08",
+      "construct": ", \u0022riskclass\u0022,",
+      "lineWhenCaptured": 100
+    },
+    {
+      "fingerprint": "b001c43f201a4c8a5db24062830509c5fe358c436f609892ad238b017d1cf304",
+      "path": "Frontend/PlantProcess.Web/src/components/dashboard/SavedDashboardWidget.tsx",
+      "rule": "UA-08",
+      "construct": "[\u0022gradeorrecipe\u0022,",
+      "lineWhenCaptured": 281
+    },
+    {
+      "fingerprint": "7afe7a11b2089c3612a73e94359b72e900a54dc62ade57c9322921df027d413f",
+      "path": "Frontend/PlantProcess.Web/src/components/materials/GenealogyThreadPanel.tsx",
+      "rule": "UA-08",
+      "construct": ", \u0022riskclass\u0022]",
+      "lineWhenCaptured": 97
+    },
+    {
       "fingerprint": "6d9a7daad6957682b3656ff84e3cb4ec1e6e11ce9e16d4b572c4ffb70f80a7e4",
       "path": "Frontend/PlantProcess.Web/src/pages/Admin/AdminSchemaConfigurationTab.implementation.generated.tsx",
       "rule": "UA-02",
@@ -272,6 +797,13 @@
       "rule": "UA-06",
       "construct": "heat_id",
       "lineWhenCaptured": 691
+    },
+    {
+      "fingerprint": "85f36925139b2fe8e1759bf6124b6f1f30bf49329b1698017b91ef27f5d84a9d",
+      "path": "Frontend/PlantProcess.Web/src/pages/Admin/AdminSchemaConfigurationTab.implementation.generated.tsx",
+      "rule": "UA-08",
+      "construct": ", \u0022productfamily\u0022,",
+      "lineWhenCaptured": 829
     },
     {
       "fingerprint": "7037759ea9a43237e1d6c7b1c7b2f3a1e25ea14dbbb7e017e88f803b84a6478a",
@@ -330,11 +862,60 @@
       "lineWhenCaptured": 50
     },
     {
+      "fingerprint": "8019f534d678297474b6872c1b268e736b23c5da94d1ecd2e8e8bd908935155b",
+      "path": "Frontend/PlantProcess.Web/src/pages/MaterialAnalytics/MaterialAnalyticsPages.tsx",
+      "rule": "UA-08",
+      "construct": ": \u0022productfamily\u0022,",
+      "lineWhenCaptured": 317
+    },
+    {
       "fingerprint": "6b217992b0b3d7e00e364c668aee6358e3a46125f06f105c8b4a6aea1eb6251e",
       "path": "Frontend/PlantProcess.Web/src/pages/Phase7ValueScenario/Phase7ValueScenarioPage.tsx",
       "rule": "UA-02",
       "construct": "coilid",
       "lineWhenCaptured": 24
+    },
+    {
+      "fingerprint": "755fce0804bc297f3924156298c4267df83b6fd990a5afb1a5903ffc4d5d7774",
+      "path": "Frontend/PlantProcess.Web/src/state/DashboardFilterContext.tsx",
+      "rule": "UA-08",
+      "construct": ", \u0022defecttype\u0022,",
+      "lineWhenCaptured": 42
+    },
+    {
+      "fingerprint": "06f94e791b7b5f9ce628a1c847f110728efc9032a401899fcb1cb6dcb92c8bb9",
+      "path": "Frontend/PlantProcess.Web/src/state/DashboardFilterContext.tsx",
+      "rule": "UA-08",
+      "construct": ", \u0022riskclass\u0022,",
+      "lineWhenCaptured": 42
+    },
+    {
+      "fingerprint": "9b84341fdca3adbf6265b01838b14f1c111f1f80c71d36ddd686ecd976c53d26",
+      "path": "Frontend/PlantProcess.Web/src/state/DashboardFilterContext.tsx",
+      "rule": "UA-08",
+      "construct": ", \u0022shiftcode\u0022,",
+      "lineWhenCaptured": 43
+    },
+    {
+      "fingerprint": "4ca16bbcceaa5469b279c409e410908b7d0dda4d65f0cc6c688877b9128c8050",
+      "path": "Frontend/PlantProcess.Web/src/state/widgetSelectionMap.ts",
+      "rule": "UA-08",
+      "construct": ": \u0022shiftcode\u0022,",
+      "lineWhenCaptured": 12
+    },
+    {
+      "fingerprint": "a0913040ad8c042dd58b1156cb6bbf397f84523d93de64caea970fe8a4ee3bf8",
+      "path": "Frontend/PlantProcess.Web/src/state/widgetSelectionMap.ts",
+      "rule": "UA-08",
+      "construct": ": \u0022defecttype\u0022,",
+      "lineWhenCaptured": 13
+    },
+    {
+      "fingerprint": "846c3156b16fd207b34e8825d3c56ce807b298b70465b9b022ee510361f61a77",
+      "path": "Frontend/PlantProcess.Web/src/state/widgetSelectionMap.ts",
+      "rule": "UA-08",
+      "construct": ": \u0022riskclass\u0022,",
+      "lineWhenCaptured": 15
     },
     {
       "fingerprint": "b93390fcfad35234ba03a15af6b257b1d14969763d50de90ef5ec7014416a372",

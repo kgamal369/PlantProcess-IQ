@@ -35,6 +35,18 @@ public sealed class GenericityBaselineGateTests
     private static string Abs(string relative) =>
         Path.Combine(ScopeAwareGenericity.RepositoryRoot(), relative.Replace('/', Path.DirectorySeparatorChar));
 
+    // T-093. The ONE generator, with a second sink. When PPIQ_GENERICITY_OUTPUT_DIR is
+    // set, the same scan writes its baseline and inventory under that directory instead
+    // of the committed paths, so a candidate can be measured with the authoritative
+    // scanner before anything in the repository moves. The scan, the fingerprints and
+    // the inventory format are identical; only the destination differs.
+    private static string OutputPath(string relative)
+    {
+        var dir = Environment.GetEnvironmentVariable("PPIQ_GENERICITY_OUTPUT_DIR");
+        if (string.IsNullOrWhiteSpace(dir)) return Abs(relative);
+        return Path.Combine(dir, Path.GetFileName(relative));
+    }
+
     private static JsonElement Baseline()
     {
         var path = Abs(BaselineRelative);
@@ -99,10 +111,14 @@ public sealed class GenericityBaselineGateTests
             retired = Array.Empty<string>()
         };
 
-        Directory.CreateDirectory(Path.GetDirectoryName(Abs(InventoryRelative))!);
+        var baselineOut  = OutputPath(BaselineRelative);
+        var inventoryOut = OutputPath(InventoryRelative);
+
+        Directory.CreateDirectory(Path.GetDirectoryName(baselineOut)!);
+        Directory.CreateDirectory(Path.GetDirectoryName(inventoryOut)!);
 
         File.WriteAllText(
-            Abs(BaselineRelative),
+            baselineOut,
             JsonSerializer.Serialize(payload, new JsonSerializerOptions { WriteIndented = true }));
 
         var md = new StringBuilder();
@@ -128,7 +144,7 @@ public sealed class GenericityBaselineGateTests
             md.AppendLine();
         }
 
-        File.WriteAllText(Abs(InventoryRelative), md.ToString());
+        File.WriteAllText(inventoryOut, md.ToString());
     }
 
     [Fact]

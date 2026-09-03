@@ -1,0 +1,28 @@
+{
+  "task": "T-093",
+  "release": "M2",
+  "schema": 1,
+  "note": "The authoritative plant-vocabulary list. These terms are DATA. They are not compiled into C# constants and not compiled into a regex alternative in any rule source. Adding or removing a term is an edit to this file and nothing else. Consumers select the terms that apply to them by declared consumer id, so there is one curated list in the repository and no consumer keeps a private copy.",
+  "consumers": [
+    {
+      "id": "genericityGate",
+      "description": "UA-08 in ScopeAwareGenericity: a registered plant term compiled into product-generic SEMANTICS or BEHAVIOUR - a compiled declaration, a hardcoded default or catalogue, a behavioural branch or discriminator, a semantic assignment. Not a textual echo."
+    },
+    {
+      "id": "systemTemplateAuthority",
+      "description": "SystemTemplateAuthorityTests: vocabulary that must never appear in the product system-template runtime authority."
+    }
+  ],
+  "terms": [
+    { "term": "ProductFamily", "consumers": ["genericityGate"], "note": "T-093 mandated seed. Backlog names DashboardWidgetQuerySafetyRegistry as the physical source; T-046 Pack 3A moved the catalogue, so the compiled declaration now lives in DashboardMetadataCodes.Dimensions and DashboardDimensionRegistry. Physical source corrected, intent unchanged." },
+    { "term": "GradeOrRecipe", "consumers": ["genericityGate"], "note": "T-093 mandated seed." },
+    { "term": "ShiftCode",     "consumers": ["genericityGate"], "note": "T-093 mandated seed." },
+    { "term": "DefectType",    "consumers": ["genericityGate"], "note": "T-093 mandated seed." },
+    { "term": "RiskClass",     "consumers": ["genericityGate"], "note": "T-093 mandated seed." },
+    { "term": "CastingSpeed",  "consumers": ["systemTemplateAuthority"], "note": "Migrated verbatim from the compiled array in SystemTemplateAuthorityTests." },
+    { "term": "coil",          "consumers": ["systemTemplateAuthority"], "note": "Migrated verbatim from the compiled array in SystemTemplateAuthorityTests." },
+    { "term": "heat",          "consumers": ["systemTemplateAuthority"], "note": "Migrated verbatim from the compiled array in SystemTemplateAuthorityTests." },
+    { "term": "caster",        "consumers": ["systemTemplateAuthority"], "note": "Migrated verbatim from the compiled array in SystemTemplateAuthorityTests." },
+    { "term": "tundish",       "consumers": ["systemTemplateAuthority"], "note": "Migrated verbatim from the compiled array in SystemTemplateAuthorityTests." }
+  ]
+}

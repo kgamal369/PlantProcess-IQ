@@ -1,4 +1,4 @@
-﻿using System.Text.RegularExpressions;
+using System.Text.RegularExpressions;
 using Xunit;
 
 namespace PlantProcess.Architecture.Tests;
@@ -13,8 +13,12 @@ namespace PlantProcess.Architecture.Tests;
 // This gate is self-contained on purpose. It resolves the repository root itself and
 // declares no shared type, so it compiles whether or not any other gate is present.
 //
-// Every searched token is assembled from fragments and every read strips comments, so
-// this file cannot satisfy its own rules and a comment cannot violate them.
+// Every read strips comments, so a comment cannot violate the rules.
+//
+// T-093. The plant-vocabulary list is no longer curated here. It comes from the single
+// DATA authority the genericity gate also reads, so the repository holds exactly one
+// curated vocabulary list. Fragment assembly is no longer needed: no term is written in
+// this file at all.
 // =====================================================================================
 
 [Trait("Gate", "SystemTemplateAuthority")]
@@ -39,14 +43,9 @@ public sealed class SystemTemplateAuthorityTests
     };
 
     // Plant-specific vocabulary that must never appear in a product template.
-    private static readonly string[] PlantVocabulary =
-    {
-        "Casting" + "Speed",
-        "co" + "il",
-        "he" + "at",
-        "cas" + "ter",
-        "tun" + "dish"
-    };
+    // T-093: DATA, from the one authority. The specialised invariant below is unchanged.
+    private static IReadOnlyList<string> PlantVocabulary =>
+        PlantVocabularyAuthority.TermsFor(PlantVocabularyAuthority.SystemTemplateConsumer);
 
     [Fact]
     public void No_sql_file_creates_product_system_templates()
@@ -97,6 +96,10 @@ public sealed class SystemTemplateAuthorityTests
     public void Runtime_authority_contains_no_plant_specific_vocabulary()
     {
         var source = ReadRuntimeAuthority();
+
+        // T-093. An empty list would make this invariant vacuous rather than green.
+        Assert.NotEmpty(PlantVocabulary);
+
         var offenders = PlantVocabulary
             .Where(term => Regex.IsMatch(source, @"\b" + term + @"s?\b", RegexOptions.IgnoreCase))
             .ToList();
