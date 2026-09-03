@@ -259,84 +259,69 @@ public static class AuthoringSupportEndpoints
 
     private static async Task<IResult> SaveSqlVersionAsync(
         [FromBody] SaveSqlVersionRequest request,
-        [FromServices] PlantProcessDbContext db,
+        System.Security.Claims.ClaimsPrincipal user,
+        [FromServices] PlantProcess.Application.Definitions.ICanonicalIdentityResolver identity,
+        [FromServices] PlantProcess.Application.Definitions.Canvas.ICanvasDefinitionLifecycle lifecycle,
         CancellationToken ct)
     {
+        // T-244. CONVERGED ONTO THE CANONICAL DEFINITION LIFECYCLE.
+        //
+        // The route, request and response shapes are unchanged so an existing
+        // client is still a valid client. What changed is the authority: the
+        // save creates a canonical Transformation draft and the publish moves
+        // it through the writer's publish semantics, with the legacy
+        // ppiq_mapping_versions row written as a compatibility projection
+        // inside the same transaction as the canonical publish. The deferral
+        // recorded above - "left that convergence to M2a" - is closed here.
+        //
+        // Nothing unvalidated is stored: the lifecycle service puts the
+        // statement through the same ppiq_resolve_safe_sql before any write.
         var code = string.IsNullOrWhiteSpace(request.Code) ? "sql_definition" : request.Code!.Trim();
-        var statement = request.Sql ?? string.Empty;
 
-        var conn = db.Database.GetDbConnection();
-        if (conn.State != ConnectionState.Open) { await conn.OpenAsync(ct); }
-
-        // Validate before storing. Same function, same rules, no second copy.
-        var isValid = false;
-        var errorCode = "Unknown";
-        var message = "The validator returned no verdict.";
-        var normalized = statement;
-
-        await using (var check = conn.CreateCommand())
+        var resolved = await CanvasDefinitionEndpoints.ResolveIdentityAsync(user, identity, ct);
+        if (resolved is null)
         {
-            check.CommandText =
-                "SELECT is_valid, error_code, message, normalized_sql " +
-                "FROM public.ppiq_resolve_safe_sql(@sql, 100, 3000);";
-            check.Parameters.Add(new NpgsqlParameter("sql", statement));
-            await using var r = await check.ExecuteReaderAsync(ct);
-            if (await r.ReadAsync(ct))
-            {
-                isValid = !r.IsDBNull(0) && r.GetBoolean(0);
-                errorCode = r.IsDBNull(1) ? "Unknown" : r.GetString(1);
-                message = r.IsDBNull(2) ? message : r.GetString(2);
-                normalized = r.IsDBNull(3) ? statement : r.GetString(3);
-            }
+            return Results.Forbid();
         }
 
-        if (!isValid)
+        var saved = await lifecycle.SaveSqlAsync(
+            new PlantProcess.Application.Definitions.Canvas.CanvasSqlSave(
+                resolved.Value.TenantId,
+                resolved.Value.OwnerId,
+                code,
+                request.DisplayName ?? code,
+                request.CanonicalEntity,
+                request.Sql ?? string.Empty,
+                request.ForkedFromGraph?.GetRawText()),
+            ct);
+
+        if (saved.IsFailure)
         {
-            return Results.Ok(new SaveSqlVersionResponse(
-                false, 0, null,
-                "Not saved. A definition that cannot run is not a definition. " + message,
-                errorCode));
+            var errorCode = saved.Error!.Details is { } details && details.TryGetValue("errorCode", out var codes) && codes.Length > 0
+                ? codes[0]
+                : saved.Error.Code;
+            return Results.Ok(new SaveSqlVersionResponse(false, 0, null, saved.Error.Message, errorCode));
         }
 
-        var definition = System.Text.Json.JsonSerializer.Serialize(new
-        {
-            body = "sql",
-            sql = normalized,
-            forkedFromGraph = request.ForkedFromGraph,
-            authoredAtUtc = DateTime.UtcNow,
-        });
+        var published = await lifecycle.PublishAsync(
+            resolved.Value.TenantId,
+            code,
+            saved.Value!.VersionNumber,
+            new PlantProcess.Application.Definitions.Canvas.CanvasProjectionHandles(
+                null, request.DisplayName, request.CanonicalEntity, user.Identity?.Name ?? "canvas"),
+            ct);
 
-        int version;
-        string? id;
-        await using (var insert = conn.CreateCommand())
+        if (published.IsFailure)
         {
-            // Immutable: a new row per save, version_number derived from what is
-            // already there. Nothing is ever updated in place.
-            insert.CommandText = @"
-                INSERT INTO ppiq_meta.ppiq_mapping_versions
-                    (mapping_code, display_name, canonical_entity, environment,
-                     version_number, definition, status)
-                SELECT @code, @name, @entity, 'authoring',
-                       COALESCE(MAX(version_number), 0) + 1, @def::jsonb, 'Published'
-                FROM ppiq_meta.ppiq_mapping_versions WHERE mapping_code = @code
-                RETURNING version_number, id::text;";
-            insert.Parameters.Add(new NpgsqlParameter("code", code));
-            insert.Parameters.Add(new NpgsqlParameter("name", (object?)request.DisplayName ?? DBNull.Value));
-            insert.Parameters.Add(new NpgsqlParameter("entity", (object?)request.CanonicalEntity ?? DBNull.Value));
-            insert.Parameters.Add(new NpgsqlParameter("def", definition));
-
-            await using var r = await insert.ExecuteReaderAsync(ct);
-            if (!await r.ReadAsync(ct))
-            {
-                return Results.Ok(new SaveSqlVersionResponse(false, 0, null, "The insert returned no row.", "NoRow"));
-            }
-            version = r.GetInt32(0);
-            id = r.GetString(1);
+            return Results.Ok(new SaveSqlVersionResponse(false, 0, null, published.Error!.Message, published.Error.Code));
         }
 
         return Results.Ok(new SaveSqlVersionResponse(
-            true, version, id,
-            "Published version " + version + " of " + code + ". Immutable; the forked graph travels inside it.",
+            true,
+            published.Value!.VersionNumber,
+            published.Value.VersionId.ToString(),
+            "Published version " + published.Value.VersionNumber + " of " + code
+            + ". Canonical definition " + published.Value.DefinitionId + "; immutable; the forked graph travels inside it.",
             null));
     }
 

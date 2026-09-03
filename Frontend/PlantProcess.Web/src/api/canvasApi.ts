@@ -72,4 +72,19 @@ export const saveSqlVersion = (body: {
   code: string; displayName: string; canonicalEntity?: string | null;
   sql: string; forkedFromGraph: unknown;
 }) => apiClient.post<SaveSqlVersionResult>("/api/prep/sql/versions", body);
-export const publishVersion = (sessionId: string) => apiClient.post<{ versionId: string; versionNumber: number }>(`${BASE}/sessions/${sessionId}/publish`, {});
+export const publishVersion = (sessionId: string) =>
+  apiClient.post<{ versionId: string; versionNumber: number; definitionId?: string; definitionCode?: string }>(`${BASE}/sessions/${sessionId}/publish`, {});
+
+// T-244. The canonical identity of a Canvas definition, read back by its
+// tenant-scoped code. Representation is what the server stored: a SQL
+// definition comes back as SQL, never as a graph the browser did not author.
+export type CanvasDefinitionResponse = {
+  definitionId: string; versionId: string; definitionCode: string; versionNumber: number;
+  status: string; definitionHash: string; representation: "graph" | "sql";
+  graph?: MapperGraph | null; sql?: string | null; forkedFromGraph?: MapperGraph | null;
+};
+export const reopenDefinition = (code: string, version?: number) =>
+  apiClient.get<CanvasDefinitionResponse>(
+    version === undefined
+      ? `/api/prep/definitions/${encodeURIComponent(code)}`
+      : `/api/prep/definitions/${encodeURIComponent(code)}/versions/${version}`);

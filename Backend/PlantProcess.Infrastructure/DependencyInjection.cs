@@ -164,6 +164,16 @@ public static class DependencyInjection
         services.AddScoped<PlantProcess.Application.Definitions.IDefinitionPortability,
             PlantProcess.Infrastructure.Definitions.DefinitionPortability>();
 
+        // T-244. Canvas authoring converged onto the canonical definition
+        // lifecycle. The lifecycle service owns the caller transaction the
+        // writer requires; the compatibility projection can only write on
+        // that same connection and transaction. No second store, no second
+        // kind, no second validator.
+        services.AddScoped<PlantProcess.Infrastructure.Definitions.Canvas.ICanvasCompatibilityProjection,
+            PlantProcess.Infrastructure.Definitions.Canvas.CanvasCompatibilityProjection>();
+        services.AddScoped<PlantProcess.Application.Definitions.Canvas.ICanvasDefinitionLifecycle,
+            PlantProcess.Infrastructure.Definitions.Canvas.CanvasDefinitionLifecycleService>();
+
         // T-210. Signal and aggregation semantics: one resolver over the
         // parameter and KPI-binding authorities. No second registry.
         services.AddScoped<PlantProcess.Application.Definitions.Semantics.ISignalSemanticsResolver,

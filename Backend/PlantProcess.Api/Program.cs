@@ -1112,6 +1112,7 @@ app.MapV5VisualMapperEndpoints();
 // The access-matrix row for /api/prep/visual-mapper already exists.
 app.MapVisualMapperEndpoints();
 app.MapAuthoringSupportEndpoints();
+app.MapCanvasDefinitionEndpoints();
 PlantProcess.Api.Endpoints.CustomerAssessmentEndpoints.MapCustomerAssessmentEndpoints(app);
 PlantProcess.Api.Endpoints.AnalysisSubjects.AnalysisSubjectEndpoints.MapAnalysisSubjectEndpoints(app);
 PlantProcess.Api.Endpoints.Registry.RegistryEndpoints.MapRegistryEndpoints(app);

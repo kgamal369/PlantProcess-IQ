@@ -232,23 +232,58 @@ WHERE n.nspname = $1 AND c.relkind IN ('r', 'p', 'm', 'v');";
             }
         });
 
-        g.MapPost("/sessions/{id:guid}/publish", async (Guid id, NpgsqlDataSource ds, HttpContext ctx) =>
+        g.MapPost("/sessions/{id:guid}/publish", async (
+            Guid id,
+            NpgsqlDataSource ds,
+            HttpContext ctx,
+            [Microsoft.AspNetCore.Mvc.FromServices] PlantProcess.Application.Definitions.ICanonicalIdentityResolver identity,
+            [Microsoft.AspNetCore.Mvc.FromServices] PlantProcess.Application.Definitions.Canvas.ICanvasDefinitionLifecycle lifecycle,
+            CancellationToken ct) =>
         {
+            // T-244. CONVERGED ONTO THE CANONICAL DEFINITION LIFECYCLE.
+            //
+            // The session's stable source_code is the tenant-scoped canonical
+            // definition code: it survives reload and is independent of any
+            // version number. The session id stays what it always was - the
+            // key of the execution projection - and is handed to the lifecycle
+            // as a projection handle, never as identity. The projection row is
+            // written in the same transaction as the canonical publish.
             var graphJson = await LoadGraphJson(ds, id);
             if (graphJson is null) return Results.BadRequest(new { message = "no graph saved" });
-            await using var cmd = ds.CreateCommand(@"
-INSERT INTO ppiq_meta.ppiq_visual_mapper_versions (tenant_id, session_id, version_number, version_status, mapping_definition, published_by)
-SELECT s.tenant_id, s.id,
-       COALESCE((SELECT MAX(version_number) FROM ppiq_meta.ppiq_visual_mapper_versions v WHERE v.session_id = s.id), 0) + 1,
-       'published', $2::jsonb, $3
-FROM ppiq_meta.ppiq_visual_mapper_sessions s WHERE s.id = $1
-RETURNING id, version_number;");
-            cmd.Parameters.AddWithValue(id);
-            cmd.Parameters.AddWithValue(graphJson);
-            cmd.Parameters.AddWithValue(ctx.User?.Identity?.Name ?? "canvas");
-            await using var r = await cmd.ExecuteReaderAsync();
-            if (!await r.ReadAsync()) return Results.NotFound();
-            return Results.Ok(new { versionId = r.GetGuid(0), versionNumber = r.GetInt32(1) });
+
+            string? sourceCode;
+            await using (var lookup = ds.CreateCommand("SELECT source_code FROM ppiq_meta.ppiq_visual_mapper_sessions WHERE id = $1;"))
+            {
+                lookup.Parameters.AddWithValue(id);
+                sourceCode = await lookup.ExecuteScalarAsync(ct) as string;
+            }
+            if (string.IsNullOrWhiteSpace(sourceCode)) return Results.NotFound();
+
+            var resolved = await CanvasDefinitionEndpoints.ResolveIdentityAsync(ctx.User, identity, ct);
+            if (resolved is null) return Results.Forbid();
+
+            var saved = await lifecycle.SaveGraphAsync(
+                new PlantProcess.Application.Definitions.Canvas.CanvasGraphSave(
+                    resolved.Value.TenantId, resolved.Value.OwnerId, sourceCode, sourceCode, graphJson),
+                ct);
+            if (saved.IsFailure) return CanvasDefinitionEndpoints.Refusal(saved.Error!);
+
+            var published = await lifecycle.PublishAsync(
+                resolved.Value.TenantId,
+                sourceCode,
+                saved.Value!.VersionNumber,
+                new PlantProcess.Application.Definitions.Canvas.CanvasProjectionHandles(
+                    id, null, null, ctx.User?.Identity?.Name ?? "canvas"),
+                ct);
+            if (published.IsFailure) return CanvasDefinitionEndpoints.Refusal(published.Error!);
+
+            return Results.Ok(new
+            {
+                versionId = published.Value!.VersionId,
+                versionNumber = published.Value.VersionNumber,
+                definitionId = published.Value.DefinitionId,
+                definitionCode = published.Value.DefinitionCode,
+            });
         });
 
         return app;
