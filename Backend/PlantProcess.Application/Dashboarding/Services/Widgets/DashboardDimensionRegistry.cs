@@ -86,42 +86,6 @@ public static class DashboardDimensionRegistry
             "Generic material type such as batch, slab, coil, lot, tire, roll or component."),
 
         new DashboardDimensionDescriptor(
-            DashboardMetadataCodes.Dimensions.ProductFamily,
-            "Product Family",
-            "Material",
-            "string",
-            false,
-            new[] { "bar", "pie", "donut", "table" },
-            "Product family, product group or manufacturing family."),
-
-        new DashboardDimensionDescriptor(
-            DashboardMetadataCodes.Dimensions.GradeOrRecipe,
-            "Grade / Recipe",
-            "Material",
-            "string",
-            false,
-            new[] { "bar", "pie", "donut", "table" },
-            "Grade, recipe, product code or process recipe."),
-
-        new DashboardDimensionDescriptor(
-            DashboardMetadataCodes.Dimensions.ShiftCode,
-            "Shift / Crew",
-            "Operations",
-            "string",
-            false,
-            new[] { "bar", "pie", "donut", "heatmap", "table" },
-            "Operational shift or crew code."),
-
-        new DashboardDimensionDescriptor(
-            DashboardMetadataCodes.Dimensions.DefectType,
-            "Defect Type",
-            "Quality",
-            "string",
-            false,
-            new[] { "bar", "pie", "donut", "heatmap", "table" },
-            "Standardized defect or quality event type."),
-
-        new DashboardDimensionDescriptor(
             DashboardMetadataCodes.Dimensions.ParameterCode,
             "Parameter",
             "Process",
@@ -155,16 +119,12 @@ public static class DashboardDimensionRegistry
             "date",
             false,
             new[] { "bar", "line", "area", "table" },
-            "Calendar month bucket."),
+            "Calendar month bucket.")
 
-        new DashboardDimensionDescriptor(
-            DashboardMetadataCodes.Dimensions.RiskClass,
-            "Risk Class",
-            "Risk",
-            "string",
-            false,
-            new[] { "bar", "pie", "donut", "table" },
-            "Low, medium, high or critical risk classification.")
+        // T-094. This registry describes the dimensions the product itself owns:
+        // identity, provenance and calendar. A customer's own dimensions are
+        // published declarations, not entries here, and reach execution through
+        // the declared binding contract.
     };
 
     public static DashboardDimensionDescriptor? Find(string? code)

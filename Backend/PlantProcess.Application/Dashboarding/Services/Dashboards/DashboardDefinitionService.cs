@@ -453,8 +453,7 @@ public async Task<ApplicationResult<int>> EnsureSystemTemplatesAsync(
         widgets:
         [
             TemplateWidget("DEFECT_TREND", "Defect Rate Trend", "line", DashboardMetadataCodes.Dimensions.Day, DashboardMetadataCodes.Measures.DefectRate, 0),
-            TemplateWidget("DEFECT_BREAKDOWN", "Defect Breakdown", "bar", DashboardMetadataCodes.Dimensions.DefectType, DashboardMetadataCodes.Measures.DefectCount, 1),
-            TemplateWidget("MATERIAL_BY_TYPE", "Material by Type", "bar", DashboardMetadataCodes.Dimensions.MaterialUnitType, DashboardMetadataCodes.Measures.MaterialCount, 2),
+TemplateWidget("MATERIAL_BY_TYPE", "Material by Type", "bar", DashboardMetadataCodes.Dimensions.MaterialUnitType, DashboardMetadataCodes.Measures.MaterialCount, 2),
         ],
         cancellationToken);
 
@@ -465,8 +464,7 @@ public async Task<ApplicationResult<int>> EnsureSystemTemplatesAsync(
             "Default risk dashboard showing risk score distribution, risk by equipment, and risk by material type.",
         widgets:
         [
-            TemplateWidget("RISK_BY_CLASS", "Risk by Class", "bar", DashboardMetadataCodes.Dimensions.RiskClass, DashboardMetadataCodes.Measures.RiskScore, 0),
-            TemplateWidget("RISK_BY_EQUIPMENT", "Risk by Equipment", "bar", DashboardMetadataCodes.Dimensions.Equipment, DashboardMetadataCodes.Measures.RiskScore, 1),
+TemplateWidget("RISK_BY_EQUIPMENT", "Risk by Equipment", "bar", DashboardMetadataCodes.Dimensions.Equipment, DashboardMetadataCodes.Measures.RiskScore, 1),
             TemplateWidget("RISK_BY_MATERIAL_TYPE", "Risk by Material Type", "bar", DashboardMetadataCodes.Dimensions.MaterialUnitType, DashboardMetadataCodes.Measures.RiskScore, 2),
         ],
         cancellationToken);
@@ -480,8 +478,7 @@ public async Task<ApplicationResult<int>> EnsureSystemTemplatesAsync(
         [
             TemplateWidget("DQ_BY_SOURCE", "Issues by Source", "bar", DashboardMetadataCodes.Dimensions.SourceSystem, DashboardMetadataCodes.Measures.DataQualityIssueCount, 0),
             TemplateWidget("DQ_BY_MATERIAL_TYPE", "Issues by Material Type", "bar", DashboardMetadataCodes.Dimensions.MaterialUnitType, DashboardMetadataCodes.Measures.DataQualityIssueCount, 1),
-            TemplateWidget("DQ_BY_RISK_CLASS", "Issues by Risk Class", "bar", DashboardMetadataCodes.Dimensions.RiskClass, DashboardMetadataCodes.Measures.DataQualityIssueCount, 2),
-        ],
+],
         cancellationToken);
 
     changed += await EnsureTemplateAsync(

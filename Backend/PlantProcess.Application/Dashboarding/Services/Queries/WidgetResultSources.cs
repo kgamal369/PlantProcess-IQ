@@ -1021,8 +1021,8 @@ internal sealed class ParameterValueSpreadWidgetResultSource : IWidgetResultSour
         var grouped = fetched
             .GroupBy(x => grouping switch
             {
-                DashboardMetadataCodes.Dimensions.GradeOrRecipe => x.GradeOrRecipe,
-                DashboardMetadataCodes.Dimensions.ProductFamily => x.ProductFamily,
+
+
                 DashboardMetadataCodes.Dimensions.MaterialUnitType => x.MaterialUnitType,
                 DashboardMetadataCodes.Dimensions.SourceSystem => x.SourceSystem,
                 _ => null
@@ -1434,8 +1434,8 @@ internal sealed class DefectTypeMixWidgetResultSource : IWidgetResultSource
             select new
             {
                 GroupKey =
-                    grouping == DashboardMetadataCodes.Dimensions.GradeOrRecipe ? material.GradeOrRecipe :
-                    grouping == DashboardMetadataCodes.Dimensions.ProductFamily ? material.ProductFamily :
+
+
                     grouping == DashboardMetadataCodes.Dimensions.MaterialUnitType ? material.MaterialUnitType :
                     null,
                 DefectCode = defect != null ? defect.DefectCode : null,

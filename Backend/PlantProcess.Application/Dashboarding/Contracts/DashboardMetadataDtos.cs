@@ -308,15 +308,17 @@ public static class DashboardMetadataCodes
         public const string Equipment = "equipment";
         public const string SourceSystem = "sourceSystem";
         public const string MaterialUnitType = "materialUnitType";
-        public const string ProductFamily = "productFamily";
-        public const string GradeOrRecipe = "gradeOrRecipe";
-        public const string ShiftCode = "shiftCode";
-        public const string DefectType = "defectType";
         public const string ParameterCode = "parameterCode";
         public const string Day = "day";
         public const string Week = "week";
         public const string Month = "month";
-        public const string RiskClass = "riskClass";
+
+        // T-094. What remains here is STRUCTURAL grammar: identity, provenance and
+        // calendar. Concepts that describe a particular plant's product, quality,
+        // risk or crew vocabulary are not product identity and are not compiled.
+        // They arrive as published declarations and execute through the declared
+        // binding contract, so a customer adds, renames or removes one without a
+        // build. On an install where none is declared, none exists.
     }
 
     public static class Measures

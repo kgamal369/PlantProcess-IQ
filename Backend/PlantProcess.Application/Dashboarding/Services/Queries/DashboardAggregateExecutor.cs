@@ -186,12 +186,7 @@ public static class DashboardSourceCapability
             "equipment" => "EquipmentId",
             "sourcesystem" => "SourceSystem",
             "materialunittype" => "MaterialUnitType",
-            "productfamily" => "ProductFamily",
-            "gradeorrecipe" => "GradeOrRecipe",
-            "shiftcode" => "ShiftCode",
-            "defecttype" => "DefectType",
             "parametercode" => "ParameterCode",
-            "riskclass" => "RiskClass",
             "$declared" => DeclaredDimensionProjection.SlotMember,
             _ => null
         };
@@ -333,23 +328,9 @@ internal static class DashboardDimensionProjection
         if (IsCode(dimensionCode, DashboardMetadataCodes.Dimensions.MaterialUnitType))
             return f => new DashboardGroupKey { Text = f.MaterialUnitType };
 
-        if (IsCode(dimensionCode, DashboardMetadataCodes.Dimensions.ProductFamily))
-            return f => new DashboardGroupKey { Text = f.ProductFamily };
-
-        if (IsCode(dimensionCode, DashboardMetadataCodes.Dimensions.GradeOrRecipe))
-            return f => new DashboardGroupKey { Text = f.GradeOrRecipe };
-
-        if (IsCode(dimensionCode, DashboardMetadataCodes.Dimensions.ShiftCode))
-            return f => new DashboardGroupKey { Text = f.ShiftCode };
-
-        if (IsCode(dimensionCode, DashboardMetadataCodes.Dimensions.DefectType))
-            return f => new DashboardGroupKey { Text = f.DefectType };
 
         if (IsCode(dimensionCode, DashboardMetadataCodes.Dimensions.ParameterCode))
             return f => new DashboardGroupKey { Text = f.ParameterCode };
-
-        if (IsCode(dimensionCode, DashboardMetadataCodes.Dimensions.RiskClass))
-            return f => new DashboardGroupKey { Text = f.RiskClass };
 
         if (DeclaredDimensionProjection.IsSlot(dimensionCode))
             return f => new DashboardGroupKey { Text = f.DimensionText };
@@ -395,23 +376,9 @@ internal static class DashboardDimensionProjection
         if (IsCode(dimensionCode, DashboardMetadataCodes.Dimensions.MaterialUnitType))
             return FromText(key.Text, "No material type");
 
-        if (IsCode(dimensionCode, DashboardMetadataCodes.Dimensions.ProductFamily))
-            return FromText(key.Text, "No product family");
-
-        if (IsCode(dimensionCode, DashboardMetadataCodes.Dimensions.GradeOrRecipe))
-            return FromText(key.Text, "No grade / recipe");
-
-        if (IsCode(dimensionCode, DashboardMetadataCodes.Dimensions.ShiftCode))
-            return FromText(key.Text, "No shift");
-
-        if (IsCode(dimensionCode, DashboardMetadataCodes.Dimensions.DefectType))
-            return FromText(key.Text, "No defect");
 
         if (IsCode(dimensionCode, DashboardMetadataCodes.Dimensions.ParameterCode))
             return FromText(key.Text, "No parameter");
-
-        if (IsCode(dimensionCode, DashboardMetadataCodes.Dimensions.RiskClass))
-            return FromText(key.Text, "No risk class");
 
         if (DeclaredDimensionProjection.IsSlot(dimensionCode))
             return FromText(key.Text, "No value");

@@ -45,7 +45,10 @@ public sealed class DimensionRegistrySingleAuthorityTests
     [Fact]
     public void The_registry_holds_every_dimension_exactly_once()
     {
-        Assert.Equal(14, DashboardDimensionRegistry.All.Count);
+        // T-094. Nine STRUCTURAL dimensions remain compiled. The plant-vocabulary
+        // ones are published declarations now, so this count is the product's own
+        // grammar and must not grow when a customer declares something.
+        Assert.Equal(9, DashboardDimensionRegistry.All.Count);
 
         var codes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var descriptor in DashboardDimensionRegistry.All)
@@ -109,7 +112,7 @@ public sealed class DimensionRegistrySingleAuthorityTests
         Assert.Equal(AxisRole.Temporal, DashboardDimensionRegistry.AxisRoleOf(DashboardMetadataCodes.Dimensions.Week));
         Assert.Equal(AxisRole.Temporal, DashboardDimensionRegistry.AxisRoleOf(DashboardMetadataCodes.Dimensions.Month));
         Assert.Equal(AxisRole.Categorical, DashboardDimensionRegistry.AxisRoleOf(DashboardMetadataCodes.Dimensions.Equipment));
-        Assert.Equal(AxisRole.Categorical, DashboardDimensionRegistry.AxisRoleOf(DashboardMetadataCodes.Dimensions.RiskClass));
+        Assert.Equal(AxisRole.Categorical, DashboardDimensionRegistry.AxisRoleOf(DashboardMetadataCodes.Dimensions.MaterialUnitType));
 
         // A widget with no dimension is a KPI, not an authoring error.
         Assert.Equal(AxisRole.None, DashboardDimensionRegistry.AxisRoleOrNone(null));

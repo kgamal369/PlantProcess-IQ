@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using PlantProcess.Application.Analytics.Advanced;
 using PlantProcess.Application.Dashboarding.Services.Dimensions;
 using PlantProcess.Domain.Entities.Materials;
+using PlantProcess.Domain.Entities.Process;
 using PlantProcess.Application.Dashboarding.Contracts;
 using PlantProcess.Application.Common.Persistence;
 using PlantProcess.Application.Common.Results;
@@ -484,27 +485,35 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
         // written per method, and the executor refuses to fold a distinct count
         // across grains because summing daily distinct counts double counts an
         // entity that spans midnight.
-        if (IsDimension(resolved, DashboardMetadataCodes.Dimensions.Equipment) ||
-            IsDimension(resolved, DashboardMetadataCodes.Dimensions.ShiftCode) ||
-            IsDimension(resolved, DashboardMetadataCodes.Dimensions.Area))
+        // T-094. The process-step population answers for anything carried by a
+        // step: its equipment, its area, and any dimension the customer declared
+        // against the step entity itself. Which population serves a declared
+        // dimension is decided by its binding, never by its name.
+        var declaredOnStep = declared is not null && declared.SourceEntityType == typeof(ProcessStepExecution);
+
+        if (declaredOnStep ||
+            (declared is null &&
+             (IsDimension(resolved, DashboardMetadataCodes.Dimensions.Equipment) ||
+              IsDimension(resolved, DashboardMetadataCodes.Dimensions.Area))))
         {
-            var stepFacts =
-                from step in _dbContext.ProcessStepExecutions.AsNoTracking()
-                join equipment in _dbContext.Equipment.AsNoTracking()
-                    on step.EquipmentId equals equipment.Id
-                where
-                    !step.IsDeleted &&
-                    materialIds.Contains(step.MaterialUnitId)
-                select new WidgetFact
-                {
-                    MaterialUnitId = step.MaterialUnitId,
-                    AreaId = equipment.AreaId,
-                    EquipmentId = step.EquipmentId,
-                    SourceSystem = step.SourceSystem,
-                    ShiftCode = step.CrewCode,
-                    EventTimeUtc = step.StartedAtUtc,
-                    Value = 1m
-                };
+            Expression<Func<ProcessStepExecution, WidgetFact>> stepProjection = step => new WidgetFact
+            {
+                MaterialUnitId = step.MaterialUnitId,
+                EquipmentId = step.EquipmentId,
+                SourceSystem = step.SourceSystem,
+                EventTimeUtc = step.StartedAtUtc,
+                Value = 1m
+            };
+
+            if (declared is not null)
+            {
+                stepProjection = DeclaredDimensionProjection.WithDeclaredDimension(stepProjection, declared);
+            }
+
+            var stepFacts = _dbContext.ProcessStepExecutions
+                .AsNoTracking()
+                .Where(step => !step.IsDeleted && materialIds.Contains(step.MaterialUnitId))
+                .Select(stepProjection);
 
             return await DashboardAggregateExecutor.ExecuteAsync(
                 stepFacts,
@@ -1459,23 +1468,8 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
             DashboardMetadataCodes.Dimensions.MaterialUnitType =>
                 BuildDimension(fact.MaterialUnitType, fact.MaterialUnitType, "No material type"),
 
-            DashboardMetadataCodes.Dimensions.ProductFamily =>
-                BuildDimension(fact.ProductFamily, fact.ProductFamily, "No product family"),
-
-            DashboardMetadataCodes.Dimensions.GradeOrRecipe =>
-                BuildDimension(fact.GradeOrRecipe, fact.GradeOrRecipe, "No grade / recipe"),
-
-            DashboardMetadataCodes.Dimensions.ShiftCode =>
-                BuildDimension(fact.ShiftCode, fact.ShiftCode, "No shift"),
-
-            DashboardMetadataCodes.Dimensions.DefectType =>
-                BuildDimension(fact.DefectType, fact.DefectType, "No defect"),
-
             DashboardMetadataCodes.Dimensions.ParameterCode =>
                 BuildDimension(fact.ParameterCode, fact.ParameterCode, "No parameter"),
-
-            DashboardMetadataCodes.Dimensions.RiskClass =>
-                BuildDimension(fact.RiskClass, fact.RiskClass, "No risk class"),
 
             DashboardMetadataCodes.Dimensions.Day =>
                 BuildDateDimension(fact.EventTimeUtc, "yyyy-MM-dd", "No day"),

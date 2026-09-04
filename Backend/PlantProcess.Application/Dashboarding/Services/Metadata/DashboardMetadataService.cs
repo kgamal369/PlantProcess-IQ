@@ -288,10 +288,7 @@ public sealed class DashboardMetadataService : IDashboardMetadataService
             Filter("equipmentId", "Equipment", "Plant", "guid", "single", false, "equipment", "Limit analysis to one equipment asset."),
             Filter("materialCode", "Material Code", "Material", "string", "contains", false, null, "Search by material or batch code."),
             Filter("sourceSystem", "Source System", "Integration", "string", "single", false, "sourceSystems", "Limit analysis to one source system."),
-            Filter("defectType", "Defect Type", "Quality", "string", "single", false, "defects", "Limit analysis to one defect type."),
-            Filter("riskClass", "Risk Class", "Risk", "string", "single", false, "riskClasses", "Limit analysis to one risk class."),
-            Filter("shiftCode", "Shift / Crew", "Operations", "string", "single", false, "shifts", "Limit analysis to one shift or crew."),
-            Filter("parameterCode", "Parameter", "Process", "string", "single", false, "parameters", "Select parameter for parameter-based widgets."),
+Filter("parameterCode", "Parameter", "Process", "string", "single", false, "parameters", "Select parameter for parameter-based widgets."),
             Filter("fromUtc", "From UTC", "Time", "datetime", "range-start", false, null, "Start of analysis window."),
             Filter("toUtc", "To UTC", "Time", "datetime", "range-end", false, null, "End of analysis window.")
         };
@@ -326,7 +323,7 @@ public sealed class DashboardMetadataService : IDashboardMetadataService
                 DashboardMetadataCodes.Purposes.Quality,
                 "Quality",
                 "Analyze defect count, defect rate and quality distribution.",
-                new[] { "day", "defectType", "equipment", "shiftCode" },
+                new[] { "day", "equipment" },
                 new[] { "defectCount", "defectRate", "materialCount" },
                 new[] { "kpi", "bar", "line", "donut", "heatmap", "table" }),
 
@@ -334,7 +331,7 @@ public sealed class DashboardMetadataService : IDashboardMetadataService
                 DashboardMetadataCodes.Purposes.Productivity,
                 "Productivity",
                 "Analyze material volume, process duration and production trends.",
-                new[] { "day", "equipment", "shiftCode", "materialUnitType" },
+                new[] { "day", "equipment", "materialUnitType" },
                 new[] { "materialCount", "processStepDuration" },
                 new[] { "kpi", "bar", "line", "area", "table" }),
 
@@ -342,7 +339,7 @@ public sealed class DashboardMetadataService : IDashboardMetadataService
                 DashboardMetadataCodes.Purposes.Downtime,
                 "Downtime",
                 "Analyze downtime duration by time, equipment, source or shift.",
-                new[] { "day", "equipment", "shiftCode", "sourceSystem" },
+                new[] { "day", "equipment", "sourceSystem" },
                 new[] { "downtimeMinutes" },
                 new[] { "kpi", "bar", "line", "heatmap", "table" }),
 
@@ -350,7 +347,7 @@ public sealed class DashboardMetadataService : IDashboardMetadataService
                 DashboardMetadataCodes.Purposes.Risk,
                 "Risk",
                 "Analyze risk score, risk class distribution and high-risk patterns.",
-                new[] { "riskClass", "day", "equipment", "productFamily" },
+                new[] { "day", "equipment" },
                 new[] { "riskScore", "materialCount" },
                 new[] { "kpi", "bar", "line", "donut", "scatter", "table" }),
 
@@ -358,7 +355,7 @@ public sealed class DashboardMetadataService : IDashboardMetadataService
                 DashboardMetadataCodes.Purposes.MaterialInvestigation,
                 "Material Investigation",
                 "Analyze one material or batch by process, risk, quality and source context.",
-                new[] { "equipment", "parameterCode", "defectType", "sourceSystem" },
+                new[] { "equipment", "parameterCode", "sourceSystem" },
                 new[] { "avgParameterValue", "defectCount", "riskScore" },
                 new[] { "bar", "line", "scatter", "table" }),
 
