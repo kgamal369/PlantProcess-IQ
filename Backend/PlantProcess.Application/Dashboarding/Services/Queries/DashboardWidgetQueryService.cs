@@ -1,5 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
+using Microsoft.EntityFrameworkCore;
 using PlantProcess.Application.Analytics.Advanced;
+using PlantProcess.Application.Dashboarding.Services.Dimensions;
+using PlantProcess.Domain.Entities.Materials;
 using PlantProcess.Application.Dashboarding.Contracts;
 using PlantProcess.Application.Common.Persistence;
 using PlantProcess.Application.Common.Results;
@@ -29,6 +32,7 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
     // reports that evidence is unavailable, rather than failing to construct.
     private readonly ITenantAccessor? _tenantAccessor;
     private readonly IWidgetResultEvidenceWriter? _evidenceWriter;
+    private readonly IDeclaredDimensionCatalog? _declaredDimensions;
 
     public DashboardWidgetQueryService(
         IPlantProcessDbContext dbContext,
@@ -36,12 +40,14 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
         IAnalysisReadinessService analysisReadinessService,
         IAnalysisOutcomeTargetResolver analysisOutcomeTargetResolver,
         ITenantAccessor? tenantAccessor = null,
-        IWidgetResultEvidenceWriter? evidenceWriter = null)
+        IWidgetResultEvidenceWriter? evidenceWriter = null,
+        IDeclaredDimensionCatalog? declaredDimensions = null)
     {
         _dbContext = dbContext;
         _validationService = validationService;
         _tenantAccessor = tenantAccessor;
         _evidenceWriter = evidenceWriter;
+        _declaredDimensions = declaredDimensions;
 
         var sources = new IWidgetResultSource[]
         {
@@ -76,6 +82,33 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
 
         var resolved = validation.Value!.ResolvedWidget!;
         var warnings = validation.Value!.Warnings.ToList();
+
+        // T-094. A dimension the compiled registry does not know is either a
+        // customer DECLARATION or nothing. The tenant's catalogue decides, and the
+        // answer is an executable binding or a typed refusal - never a fallback,
+        // never an empty result presented as success.
+        DeclaredDimension? declared = null;
+        try
+        {
+            declared = await ResolveDeclaredDimensionAsync(resolved.DimensionCode, cancellationToken);
+        }
+        catch (DimensionBindingRefusalException refusal)
+        {
+            return DeclaredRefusal(refusal);
+        }
+
+        if (declared is not null)
+        {
+            if (!string.Equals(resolved.MeasureCode, DashboardMetadataCodes.Measures.MaterialCount, StringComparison.Ordinal))
+            {
+                return DeclaredRefusal(new DimensionBindingRefusalException(
+                    DimensionBindingRefusalCodes.MeasureUnsupported,
+                    declared.Code,
+                    "Measure '" + resolved.MeasureCode + "' does not bind declared dimensions yet; the material population does."));
+            }
+
+            resolved = resolved with { DimensionCode = DeclaredDimensionProjection.SlotCode };
+        }
 
         // The validator compares measure codes case-insensitively; this switch
         // is case-sensitive, so a code the validator accepted could fall to the
@@ -126,7 +159,7 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
         rows = resolved.MeasureCode switch
         {
             DashboardMetadataCodes.Measures.MaterialCount =>
-                await ExecuteMaterialCountAsync(resolved, query.Filters, cancellationToken),
+                await ExecuteMaterialCountAsync(resolved, query.Filters, declared, cancellationToken),
 
             DashboardMetadataCodes.Measures.DefectCount =>
                 await ExecuteDefectCountAsync(resolved, query.Filters, cancellationToken),
@@ -173,6 +206,12 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
                     ". Applicable limit: " + truncated.Limit + " rows. The engine caps the raw fact " +
                     "population before aggregating, so a result over this limit would be a lower " +
                     "bound presented as a total. No partial value is returned."));
+        }
+        catch (DimensionBindingRefusalException refusal)
+        {
+            // Registry presence alone is not executable authority. A declared
+            // dimension the population cannot bind is refused by code.
+            return DeclaredRefusal(refusal);
         }
         catch (DashboardDimensionNotRegisteredException notRegistered)
         {
@@ -432,6 +471,7 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
     private async Task<IReadOnlyList<DashboardAggregateRow>> ExecuteMaterialCountAsync(
         DashboardWidgetResolvedDto resolved,
         DashboardWidgetFiltersDto? filters,
+        DeclaredDimension? declared,
         CancellationToken cancellationToken)
     {
         var materialIds = await GetFilteredMaterialIdsAsync(filters, cancellationToken);
@@ -474,21 +514,32 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
                 cancellationToken);
         }
 
+        // T-094. The projection is an ordinary object initialiser; when the widget
+        // asks for a declared dimension, the binding contract rewrites it so the
+        // generic DimensionText slot reads the declared field through EF.Property.
+        // PostgreSQL then groups on the real column. No name is spelled here.
+        Expression<Func<MaterialUnit, WidgetFact>> projection = x => new WidgetFact
+        {
+            MaterialUnitId = x.Id,
+            SiteId = x.SiteId,
+            MaterialCode = x.MaterialCode,
+            MaterialUnitType = x.MaterialUnitType,
+            ProductFamily = x.ProductFamily,
+            GradeOrRecipe = x.GradeOrRecipe,
+            SourceSystem = x.SourceSystem,
+            EventTimeUtc = x.ProductionStartUtc,
+            Value = 1m
+        };
+
+        if (declared is not null)
+        {
+            projection = DeclaredDimensionProjection.WithDeclaredDimension(projection, declared);
+        }
+
         var facts = _dbContext.MaterialUnits
             .AsNoTracking()
             .Where(x => !x.IsDeleted && materialIds.Contains(x.Id))
-            .Select(x => new WidgetFact
-            {
-                MaterialUnitId = x.Id,
-                SiteId = x.SiteId,
-                MaterialCode = x.MaterialCode,
-                MaterialUnitType = x.MaterialUnitType,
-                ProductFamily = x.ProductFamily,
-                GradeOrRecipe = x.GradeOrRecipe,
-                SourceSystem = x.SourceSystem,
-                EventTimeUtc = x.ProductionStartUtc,
-                Value = 1m
-            });
+            .Select(projection);
 
         return await DashboardAggregateExecutor.ExecuteAsync(
             facts,
@@ -1079,6 +1130,20 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
             var sourceSystem = filters.SourceSystem.Trim();
             query = query.Where(x => x.SourceSystem == sourceSystem);
         }
+
+        // T-094. Declared-dimension filters, keyed by published code. Each binds to
+        // the material population through the same contract the grouping uses; a
+        // declaration that does not bind here is a typed refusal, never a guess.
+        if (filters?.DimensionFilters is { Count: > 0 })
+        {
+            foreach (var dimensionFilter in filters.DimensionFilters)
+            {
+                if (dimensionFilter is null || string.IsNullOrWhiteSpace(dimensionFilter.Code)) continue;
+
+                var declaredFilter = await RequireDeclaredDimensionAsync(dimensionFilter.Code, cancellationToken);
+                query = DeclaredDimensionProjection.WhereDeclaredEquals(query, declaredFilter, dimensionFilter.Value ?? string.Empty);
+            }
+        }
         
         if (filters?.FromUtc.HasValue == true)
             query = query.Where(x => x.ProductionStartUtc == null || x.ProductionStartUtc >= filters.FromUtc.Value);
@@ -1300,6 +1365,48 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
         }
 
         return new Dictionary<string, string>();
+    }
+
+    // ------------------------------------------------------------------------
+    // T-094. Declared-dimension resolution. Structural codes never reach the
+    // catalogue; everything else is the tenant's declaration or a named refusal.
+    // ------------------------------------------------------------------------
+
+    private async Task<DeclaredDimension?> ResolveDeclaredDimensionAsync(string? dimensionCode, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(dimensionCode)) return null;
+        if (DashboardDimensionRegistry.IsRegistered(dimensionCode)) return null;
+
+        return await RequireDeclaredDimensionAsync(dimensionCode, cancellationToken);
+    }
+
+    private async Task<DeclaredDimension> RequireDeclaredDimensionAsync(string dimensionCode, CancellationToken cancellationToken)
+    {
+        if (_declaredDimensions is null || _tenantAccessor is null || !_tenantAccessor.TryGetTenantId(out var tenantId))
+        {
+            throw new DimensionBindingRefusalException(
+                DimensionBindingRefusalCodes.TenantUnresolved,
+                dimensionCode,
+                "Declared dimension '" + dimensionCode + "' cannot be resolved without a tenant-scoped declaration catalogue.");
+        }
+
+        var declared = await _declaredDimensions.FindAsync(tenantId, dimensionCode, cancellationToken);
+
+        if (declared is null)
+        {
+            throw new DimensionBindingRefusalException(
+                DimensionBindingRefusalCodes.Undeclared,
+                dimensionCode,
+                "Dimension '" + dimensionCode + "' is neither a structural dimension nor a published declaration for this tenant.");
+        }
+
+        return declared;
+    }
+
+    private static ApplicationResult<DashboardWidgetQueryResultDto> DeclaredRefusal(DimensionBindingRefusalException refusal)
+    {
+        return ApplicationResult<DashboardWidgetQueryResultDto>.Failure(
+            ApplicationError.BusinessRule(refusal.RefusalCode + ": " + refusal.Message));
     }
 
     private static bool IsDimensionCode(string? dimensionCode, string expected)

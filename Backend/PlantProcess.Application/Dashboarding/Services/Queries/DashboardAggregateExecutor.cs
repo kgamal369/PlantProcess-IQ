@@ -1,6 +1,7 @@
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using PlantProcess.Application.Dashboarding.Contracts;
+using PlantProcess.Application.Dashboarding.Services.Dimensions;
 
 namespace PlantProcess.Application.Dashboarding.Services.Queries;
 
@@ -68,6 +69,12 @@ internal sealed record WidgetFact
     public string? RiskClass { get; init; }
     public DateTime? EventTimeUtc { get; init; }
     public decimal Value { get; init; }
+
+    // T-094. The ONE generic slot a customer-declared dimension groups through. A
+    // measure's source projection binds it to the declared field (see
+    // DeclaredDimensionProjection); the executor groups on it under the "$declared"
+    // grammar code and never learns what the customer calls it.
+    public string? DimensionText { get; init; }
 
     public WidgetFact()
     {
@@ -185,6 +192,7 @@ public static class DashboardSourceCapability
             "defecttype" => "DefectType",
             "parametercode" => "ParameterCode",
             "riskclass" => "RiskClass",
+            "$declared" => DeclaredDimensionProjection.SlotMember,
             _ => null
         };
     }
@@ -343,6 +351,9 @@ internal static class DashboardDimensionProjection
         if (IsCode(dimensionCode, DashboardMetadataCodes.Dimensions.RiskClass))
             return f => new DashboardGroupKey { Text = f.RiskClass };
 
+        if (DeclaredDimensionProjection.IsSlot(dimensionCode))
+            return f => new DashboardGroupKey { Text = f.DimensionText };
+
         if (IsTemporal(dimensionCode))
         {
             return f => new DashboardGroupKey
@@ -401,6 +412,9 @@ internal static class DashboardDimensionProjection
 
         if (IsCode(dimensionCode, DashboardMetadataCodes.Dimensions.RiskClass))
             return FromText(key.Text, "No risk class");
+
+        if (DeclaredDimensionProjection.IsSlot(dimensionCode))
+            return FromText(key.Text, "No value");
 
         if (IsCode(dimensionCode, DashboardMetadataCodes.Dimensions.Day))
             return FromDate(key, "yyyy-MM-dd", "No day");

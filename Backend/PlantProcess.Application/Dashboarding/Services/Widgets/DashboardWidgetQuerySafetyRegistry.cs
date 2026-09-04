@@ -140,7 +140,22 @@ public static class DashboardWidgetQuerySafetyRegistry
 
     public static bool IsSupportedDimension(string? dimensionCode)
     {
-        return DashboardDimensionRegistry.IsRegistered(dimensionCode);
+        // T-094. Whether a code is REGISTERED (compiled, structural) is one question;
+        // whether it is DECLARED (published by the customer) is another, and only the
+        // tenant's catalogue can answer it, at execution. Validation therefore keeps
+        // rejecting malformed input and admits any well-formed code; an admitted code
+        // the catalogue does not know is a typed refusal downstream, never a fallback.
+        if (DashboardDimensionRegistry.IsRegistered(dimensionCode)) return true;
+
+        return IsWellFormedDeclaredCode(dimensionCode);
+    }
+
+    private static readonly System.Text.RegularExpressions.Regex DeclaredCodeShape =
+        new("^[A-Za-z][A-Za-z0-9_]{0,63}$", System.Text.RegularExpressions.RegexOptions.Compiled);
+
+    public static bool IsWellFormedDeclaredCode(string? dimensionCode)
+    {
+        return !string.IsNullOrWhiteSpace(dimensionCode) && DeclaredCodeShape.IsMatch(dimensionCode.Trim());
     }
 
     /// <summary>

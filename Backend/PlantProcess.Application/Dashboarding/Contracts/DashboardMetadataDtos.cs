@@ -1,4 +1,4 @@
-﻿namespace PlantProcess.Application.Dashboarding.Contracts;
+namespace PlantProcess.Application.Dashboarding.Contracts;
 
 public sealed record DashboardMetadataDto(
     DateTime GeneratedAtUtc,
@@ -142,8 +142,15 @@ public sealed record DashboardWidgetFiltersDto(
     string? ShiftCode,
     string? ParameterCode,
     DateTime? FromUtc,
-    DateTime? ToUtc);
-    
+    DateTime? ToUtc,
+    IReadOnlyList<DeclaredDimensionFilterDto>? DimensionFilters = null);
+
+/// <summary>
+/// T-094. A filter on a customer-declared dimension, keyed by its published code.
+/// Declaring a new dimension adds a row of data here, never a property.
+/// </summary>
+public sealed record DeclaredDimensionFilterDto(string Code, string Value);
+
 public sealed record DashboardWidgetQueryOptionsDto(
     int? MaxRows,
     int? RawRowLimit,

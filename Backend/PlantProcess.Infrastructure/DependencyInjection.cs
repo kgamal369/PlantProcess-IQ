@@ -181,6 +181,11 @@ public static class DependencyInjection
         services.AddScoped<PlantProcess.Application.Definitions.Interfaces.IDefinitionService,
             PlantProcess.Infrastructure.Definitions.DefinitionService>();
 
+        // T-094. Declared-dimension catalogue: published master_dimension definitions
+        // resolved against the EF model so the aggregate engine can bind them.
+        services.AddScoped<PlantProcess.Application.Dashboarding.Services.Dimensions.IDeclaredDimensionCatalog,
+            PlantProcess.Infrastructure.Dashboarding.Dimensions.DeclaredDimensionCatalog>();
+
         //Oracle 
         services.AddScoped<IDataSourceConnector, OracleConnector>();
         services.AddScoped<ISchemaReader, OracleConnector>();
