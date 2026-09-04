@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -36,6 +37,14 @@ public static class DeclaredDimensionProjection
     private static readonly MethodInfo EfPropertyOfString =
         typeof(EF).GetMethod(nameof(EF.Property), BindingFlags.Public | BindingFlags.Static)!
             .MakeGenericMethod(typeof(string));
+
+    private static readonly MethodInfo EfPropertyOfGuid =
+        typeof(EF).GetMethod(nameof(EF.Property), BindingFlags.Public | BindingFlags.Static)!
+            .MakeGenericMethod(typeof(Guid));
+
+    private static readonly MethodInfo EfPropertyOfNullableGuid =
+        typeof(EF).GetMethod(nameof(EF.Property), BindingFlags.Public | BindingFlags.Static)!
+            .MakeGenericMethod(typeof(Guid?));
 
     public static bool IsSlot(string? dimensionCode) =>
         string.Equals(dimensionCode?.Trim(), SlotCode, StringComparison.Ordinal);
@@ -96,6 +105,111 @@ public static class DeclaredDimensionProjection
         var body = Expression.Equal(member, Expression.Constant(value, typeof(string)));
 
         return source.Where(Expression.Lambda<Func<TSource, bool>>(body, parameter));
+    }
+
+    /// <summary>
+    /// True when the declaration binds to the subject entity itself and can therefore
+    /// restrict the subject population directly.
+    /// </summary>
+    public static bool BindsToSubject(DeclaredDimension declared, Type subjectEntityType) =>
+        declared is not null &&
+        declared.IsBindable &&
+        declared.SourceEntityType is not null &&
+        declared.SourceEntityType == subjectEntityType;
+
+    /// <summary>
+    /// Choose the single reference that links a source entity to the subject entity of
+    /// a population. The decision is arithmetic over what the model declares: one
+    /// candidate is the link, none is a refusal, several is a refusal. No name is
+    /// compared, so a customer concept published against any related entity resolves by
+    /// the same rule that resolves every other one.
+    ///
+    /// The candidates are supplied by the caller. Reading them is model knowledge and
+    /// belongs to the persistence layer; deciding what they mean is a contract and
+    /// belongs here, where it can be falsified without a database.
+    /// </summary>
+    public static string SelectSubjectLinkField(string dimensionCode, IReadOnlyList<string> candidateFields)
+    {
+        ArgumentNullException.ThrowIfNull(candidateFields);
+
+        if (candidateFields.Count == 0)
+        {
+            throw new DimensionBindingRefusalException(
+                DimensionBindingRefusalCodes.SubjectLinkAbsent,
+                dimensionCode,
+                "Declared dimension '" + dimensionCode + "' is published against an entity that carries no " +
+                "mapped reference to the subject of this population. No relationship is inferred.");
+        }
+
+        if (candidateFields.Count > 1)
+        {
+            throw new DimensionBindingRefusalException(
+                DimensionBindingRefusalCodes.SubjectLinkAmbiguous,
+                dimensionCode,
+                "Declared dimension '" + dimensionCode + "' is published against an entity that references the " +
+                "subject of this population through " + candidateFields.Count + " mapped references. " +
+                "The declaration must state which one it means.");
+        }
+
+        return candidateFields[0];
+    }
+
+    /// <summary>
+    /// The subject keys whose related row carries the declared value: restrict the
+    /// related population by the declared field, then project its reference to the
+    /// subject. This is the generic form of the shape the compiled slots used, and it
+    /// spells no entity, no column and no concept.
+    /// </summary>
+    public static IQueryable<Guid> SubjectKeys<TSource>(
+        IQueryable<TSource> source,
+        DeclaredDimension declared,
+        string linkField,
+        bool optionalLink,
+        string value)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(declared);
+        if (string.IsNullOrWhiteSpace(linkField)) { throw new ArgumentException("A link field is required.", nameof(linkField)); }
+
+        var restricted = WhereDeclaredEquals(source, declared, value ?? string.Empty);
+        var parameter = Expression.Parameter(typeof(TSource), "x");
+
+        if (!optionalLink)
+        {
+            var selector = Expression.Lambda<Func<TSource, Guid>>(
+                Expression.Call(EfPropertyOfGuid, parameter, Expression.Constant(linkField, typeof(string))),
+                parameter);
+
+            return restricted.Select(selector).Distinct();
+        }
+
+        var access = Expression.Call(EfPropertyOfNullableGuid, parameter, Expression.Constant(linkField, typeof(string)));
+
+        var present = Expression.Lambda<Func<TSource, bool>>(
+            Expression.Property(access, "HasValue"), parameter);
+
+        var carried = Expression.Lambda<Func<TSource, Guid>>(
+            Expression.Property(access, "Value"), parameter);
+
+        return restricted.Where(present).Select(carried).Distinct();
+    }
+
+    /// <summary>
+    /// The publication half of RequireBindable: is this declaration executable at all,
+    /// independently of which population is being restricted.
+    /// </summary>
+    public static void RequireBindableAnywhere(DeclaredDimension declared)
+    {
+        ArgumentNullException.ThrowIfNull(declared);
+
+        if (!declared.IsBindable || declared.SourceEntityType is null)
+        {
+            throw new DimensionBindingRefusalException(
+                declared.BindingRefusalCode ?? DimensionBindingRefusalCodes.Unbindable,
+                declared.Code,
+                "Declared dimension '" + declared.Code + "' is published but not executable: " +
+                (declared.BindingRefusalReason ?? "its source binding could not be resolved against the canonical model."));
+        }
     }
 
     public static void RequireBindable(DeclaredDimension declared, Type sourceEntityType)

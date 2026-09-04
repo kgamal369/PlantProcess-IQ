@@ -14,6 +14,26 @@ public static class DimensionBindingRefusalCodes
     public const string SourceMismatch = "DB03_source_grain_mismatch";
     public const string MeasureUnsupported = "DB04_measure_not_declared_capable";
     public const string TenantUnresolved = "DB05_tenant_unresolved";
+
+    /// <summary>
+    /// The declaration binds to a canonical entity that carries no mapped single-column
+    /// reference to the subject entity of this population. There is no path, so there is
+    /// no answer; inventing a join would invent a number.
+    /// </summary>
+    public const string SubjectLinkAbsent = "DB06_subject_link_absent";
+
+    /// <summary>
+    /// The declaration's entity references the subject entity through more than one
+    /// mapped reference. Choosing one would be a guess about meaning, so the engine
+    /// refuses and the declaration must state which relationship it means.
+    /// </summary>
+    public const string SubjectLinkAmbiguous = "DB07_subject_link_ambiguous";
+
+    /// <summary>
+    /// The declaration is executable but this composition carries no resolver able to
+    /// reach a related entity. A capability that is absent is reported as absent.
+    /// </summary>
+    public const string SubjectLinkUnavailable = "DB08_subject_link_unavailable";
 }
 
 public sealed class DimensionBindingRefusalException : Exception

@@ -186,6 +186,13 @@ public static class DependencyInjection
         services.AddScoped<PlantProcess.Application.Dashboarding.Services.Dimensions.IDeclaredDimensionCatalog,
             PlantProcess.Infrastructure.Dashboarding.Dimensions.DeclaredDimensionCatalog>();
 
+        // T-094. Subject-link resolver: a declaration published against a related
+        // canonical entity is reached through the single mapped reference that entity
+        // carries to the subject of the population. Composed here because this project
+        // owns model metadata; the decision itself stays in the Application contract.
+        services.AddScoped<PlantProcess.Application.Dashboarding.Services.Dimensions.IDeclaredDimensionSubjectLinkResolver,
+            PlantProcess.Infrastructure.Dashboarding.Dimensions.DeclaredDimensionSubjectLinkResolver>();
+
         //Oracle 
         services.AddScoped<IDataSourceConnector, OracleConnector>();
         services.AddScoped<ISchemaReader, OracleConnector>();

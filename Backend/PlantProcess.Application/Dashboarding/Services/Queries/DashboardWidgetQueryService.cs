@@ -34,6 +34,7 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
     private readonly ITenantAccessor? _tenantAccessor;
     private readonly IWidgetResultEvidenceWriter? _evidenceWriter;
     private readonly IDeclaredDimensionCatalog? _declaredDimensions;
+    private readonly IDeclaredDimensionSubjectLinkResolver? _subjectLinkResolver;
 
     public DashboardWidgetQueryService(
         IPlantProcessDbContext dbContext,
@@ -42,13 +43,15 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
         IAnalysisOutcomeTargetResolver analysisOutcomeTargetResolver,
         ITenantAccessor? tenantAccessor = null,
         IWidgetResultEvidenceWriter? evidenceWriter = null,
-        IDeclaredDimensionCatalog? declaredDimensions = null)
+        IDeclaredDimensionCatalog? declaredDimensions = null,
+        IDeclaredDimensionSubjectLinkResolver? subjectLinkResolver = null)
     {
         _dbContext = dbContext;
         _validationService = validationService;
         _tenantAccessor = tenantAccessor;
         _evidenceWriter = evidenceWriter;
         _declaredDimensions = declaredDimensions;
+        _subjectLinkResolver = subjectLinkResolver;
 
         var sources = new IWidgetResultSource[]
         {
@@ -1140,9 +1143,15 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
             query = query.Where(x => x.SourceSystem == sourceSystem);
         }
 
-        // T-094. Declared-dimension filters, keyed by published code. Each binds to
-        // the material population through the same contract the grouping uses; a
-        // declaration that does not bind here is a typed refusal, never a guess.
+        // T-094. Declared-dimension filters, keyed by published code. A declaration
+        // published against the subject entity restricts this population directly. One
+        // published against a related canonical entity is reached through the single
+        // mapped reference that entity carries to the subject, and intersected below -
+        // the same shape the compiled slots used, decided by the model rather than by a
+        // name. Absent or ambiguous references are typed refusals, never a guess.
+        var subjectEntityType = query.ElementType;
+        var relatedDeclaredFilters = new List<(DeclaredDimension Declared, string Value)>();
+
         if (filters?.DimensionFilters is { Count: > 0 })
         {
             foreach (var dimensionFilter in filters.DimensionFilters)
@@ -1150,7 +1159,16 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
                 if (dimensionFilter is null || string.IsNullOrWhiteSpace(dimensionFilter.Code)) continue;
 
                 var declaredFilter = await RequireDeclaredDimensionAsync(dimensionFilter.Code, cancellationToken);
-                query = DeclaredDimensionProjection.WhereDeclaredEquals(query, declaredFilter, dimensionFilter.Value ?? string.Empty);
+                var declaredValue = dimensionFilter.Value ?? string.Empty;
+
+                if (DeclaredDimensionProjection.BindsToSubject(declaredFilter, subjectEntityType))
+                {
+                    query = DeclaredDimensionProjection.WhereDeclaredEquals(query, declaredFilter, declaredValue);
+                }
+                else
+                {
+                    relatedDeclaredFilters.Add((declaredFilter, declaredValue));
+                }
             }
         }
         
@@ -1168,6 +1186,26 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
         RequireCompleteMaterialPopulation(materialIds);
 
         var result = materialIds.ToHashSet();
+
+        foreach (var relatedFilter in relatedDeclaredFilters)
+        {
+            if (_subjectLinkResolver is null)
+            {
+                throw new DimensionBindingRefusalException(
+                    DimensionBindingRefusalCodes.SubjectLinkUnavailable,
+                    relatedFilter.Declared.Code,
+                    "Declared dimension '" + relatedFilter.Declared.Code + "' is published against a related " +
+                    "entity, and this composition carries no subject-link resolver to reach it.");
+            }
+
+            var linkedKeys = await _subjectLinkResolver.SubjectKeysWhereDeclaredEqualsAsync(
+                relatedFilter.Declared,
+                subjectEntityType,
+                relatedFilter.Value,
+                cancellationToken);
+
+            result.IntersectWith(linkedKeys);
+        }
 
         if (filters?.AreaId.HasValue == true)
         {
