@@ -6,14 +6,18 @@ using PlantProcess.Application.Relationships;
 namespace PlantProcess.Infrastructure.Relationships;
 
 /// <summary>
-/// T-057. The ONLY code in the product that knows where relationships are
-/// physically kept in M1.
+/// The ONLY code in the product that knows where relationships are physically
+/// kept.
 ///
-/// These tables are compatibility persistence, not the final model. The
-/// canonical home is the three ppiq_meta relationship tables and T-095 owns the
-/// convergence. Nothing above IRelationshipStore names a table, which is what
-/// makes that convergence a change of one file rather than a change of a
-/// contract - and why no test in this task may contain a table name either.
+/// It now names the canonical model - the three ppiq_meta relationship tables -
+/// rather than the compatibility surface it was written against. Every line
+/// above this class is unchanged by that move: the service, the endpoints, the
+/// resolver, the planner and the whole consumer estate never knew a table name,
+/// which is exactly why replacing the storage was a change of one file.
+///
+/// source_definition_id is now a real foreign key. A relationship that names a
+/// definition nobody published is refused by the database, not discovered later
+/// as a result nobody can explain.
 /// </summary>
 public sealed class NpgsqlRelationshipStore : IRelationshipStore
 {
@@ -40,7 +44,7 @@ public sealed class NpgsqlRelationshipStore : IRelationshipStore
         {
             insert.Transaction = tx;
             insert.CommandText =
-                "INSERT INTO public.ppiq_plant_relationships " +
+                "INSERT INTO ppiq_meta.plant_relationships " +
                 "(tenant_id, relationship_code, left_entity, right_entity, join_type, cardinality, " +
                 " grain_left, grain_right, attribution_rule, attribution_expression, is_preferred_path, " +
                 " ambiguity_state, validation_state, source_definition_id, source_definition_version, " +
@@ -79,7 +83,7 @@ public sealed class NpgsqlRelationshipStore : IRelationshipStore
             await using var memberCmd = conn.CreateCommand();
             memberCmd.Transaction = tx;
             memberCmd.CommandText =
-                "INSERT INTO public.ppiq_plant_relationship_members " +
+                "INSERT INTO ppiq_meta.plant_relationship_members " +
                 "(relationship_id, left_column, right_column, member_order, comparison) " +
                 "VALUES (@rel, @left, @right, @order, @comparison)";
             memberCmd.Parameters.AddWithValue("rel", id);
@@ -151,7 +155,7 @@ public sealed class NpgsqlRelationshipStore : IRelationshipStore
         // Deactivated, never deleted: a finding computed under this relationship
         // must stay explainable after the model moves on.
         cmd.CommandText =
-            "UPDATE public.ppiq_plant_relationships SET retired_at_utc = @retired " +
+            "UPDATE ppiq_meta.plant_relationships SET retired_at_utc = @retired " +
             "WHERE tenant_id = @tenant AND source_definition_id = @defId AND retired_at_utc IS NULL";
         cmd.Parameters.AddWithValue("tenant", tenantId);
         cmd.Parameters.AddWithValue("defId", sourceDefinitionId);
@@ -165,7 +169,7 @@ public sealed class NpgsqlRelationshipStore : IRelationshipStore
         "       r.grain_left, r.grain_right, r.is_grain_converting, r.attribution_rule, r.attribution_expression, " +
         "       r.is_preferred_path, r.ambiguity_state, r.validation_state, r.source_definition_id, " +
         "       r.source_definition_version, r.effective_from_utc, r.retired_at_utc " +
-        "FROM public.ppiq_plant_relationships r ";
+        "FROM ppiq_meta.plant_relationships r ";
 
     private sealed record RelationshipRow(
         Guid Id, string Code, string Left, string Right, string Join, string Card,
@@ -193,7 +197,7 @@ public sealed class NpgsqlRelationshipStore : IRelationshipStore
         {
             cmd.CommandText =
                 "SELECT relationship_id, left_column, right_column, member_order, comparison " +
-                "FROM public.ppiq_plant_relationship_members " +
+                "FROM ppiq_meta.plant_relationship_members " +
                 "WHERE relationship_id = ANY(@ids) ORDER BY relationship_id, member_order";
             cmd.Parameters.AddWithValue("ids", rows.Select(r => r.Id).ToArray());
 

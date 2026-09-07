@@ -13,7 +13,7 @@ namespace PlantProcess.Application.UnitTests.Relationships;
 /// where the real one sits - and everything asserted below survives T-095
 /// unchanged.
 /// </summary>
-public sealed class T058RelationshipResolverTests
+public sealed class RelationshipResolverTests
 {
     /// <summary>A published model, standing in for the service the resolver actually reads.</summary>
     private sealed class PublishedModel : IRelationshipService

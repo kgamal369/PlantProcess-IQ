@@ -13,7 +13,7 @@ namespace PlantProcess.Application.UnitTests.Relationships;
 /// without being edited. A test that knows where the rows live is a test that
 /// has to be rewritten when they move.
 /// </summary>
-public sealed class T057RelationshipContractTests
+public sealed class RelationshipContractTests
 {
     private static readonly Guid Tenant = Guid.Parse("11111111-1111-1111-1111-111111111111");
 

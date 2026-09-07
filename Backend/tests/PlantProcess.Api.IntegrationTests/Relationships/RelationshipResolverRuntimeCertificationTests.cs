@@ -9,27 +9,29 @@ using Xunit;
 namespace PlantProcess.Api.IntegrationTests.Relationships;
 
 /// <summary>
-/// T-058 runtime certification.
+/// Resolution and planning, certified against the canonical model.
 ///
 /// The whole chain, against the real database:
 ///
 ///     planner -> resolver -> relationship service -> real store -> PostgreSQL
 ///
-/// Nothing here reaches past the service to read a relationship, and the only
-/// direct SQL is the cleanup that removes what this certification published.
+/// Nothing here reaches past the service to read a relationship. The only
+/// direct SQL is the cleanup that removes what this certification published,
+/// and the preference flip - which is direct on purpose, because the point of
+/// that proof is that preference is data rather than code.
 ///
 /// ONE THING WORTH KNOWING BEFORE READING THE PURPOSES USED BELOW.
-/// A newly published relationship is 'unproven', and M1 has no action that
-/// promotes it to 'validated' - that belongs to the C6 validate control, which
-/// is not built. So in M1 every published relationship is unproven, and RL02
+/// A newly published relationship is 'unproven', and there is as yet no action
+/// that promotes it to 'validated' - that belongs to the validate control,
+/// which is not built. So every published relationship is unproven, and RL02
 /// means only manual exploration may traverse one. That is the contract working
 /// as frozen, not a limitation being worked around: the positive proofs below
 /// therefore use the exploration purpose, and an automated purpose is used
 /// separately to prove the refusal is real rather than theoretical.
 /// </summary>
-public sealed class T058RelationshipResolverRuntimeCertificationTests : AuthenticatedApiTestBase
+public sealed class RelationshipResolverRuntimeCertificationTests : AuthenticatedApiTestBase
 {
-    public T058RelationshipResolverRuntimeCertificationTests(WebApplicationFactory<Program> factory) : base(factory) { }
+    public RelationshipResolverRuntimeCertificationTests(WebApplicationFactory<Program> factory) : base(factory) { }
 
     private static readonly Guid CertificationTenant = Guid.Parse("7e57c0de-0000-4000-8000-000000058001");
 
@@ -61,12 +63,12 @@ public sealed class T058RelationshipResolverRuntimeCertificationTests : Authenti
         {
             // Named before anything else. A run that cannot say which database
             // it proved something about has not proved anything.
-            Assert.Equal("ppiq_presentation", conn.Database);
+            Assert.Equal("ppiq_app", conn.Database);
 
             await using var cmd = conn.CreateCommand();
-            cmd.CommandText = "SELECT to_regclass('public.ppiq_plant_relationships') IS NOT NULL";
+            cmd.CommandText = "SELECT to_regclass('ppiq_meta.plant_relationships') IS NOT NULL";
             Assert.True((bool)(await cmd.ExecuteScalarAsync())!,
-                $"Script 827 has not been applied to database '{conn.Database}'.");
+                $"The canonical relationship model has not been applied to database '{conn.Database}'.");
         }
 
         var service = new RelationshipService(new NpgsqlRelationshipStore(dataSource), new FixedTenant(CertificationTenant));
@@ -74,7 +76,7 @@ public sealed class T058RelationshipResolverRuntimeCertificationTests : Authenti
         return new Vertical(service, resolver, new RelationshipJoinPlanner(resolver, service), dataSource);
     }
 
-    private static string Code(string suffix) => "T058_" + suffix + "_" + Guid.NewGuid().ToString("N").Substring(0, 8);
+    private static string Code(string suffix) => "RES_" + suffix + "_" + Guid.NewGuid().ToString("N").Substring(0, 8);
 
     private static RelationshipDeclaration Declaration(string code, string left, string right, bool preferred = false) => new(
         code, left, right,
@@ -88,12 +90,31 @@ public sealed class T058RelationshipResolverRuntimeCertificationTests : Authenti
 
     private static async Task CleanAsync(NpgsqlDataSource dataSource, params Guid[] definitionIds)
     {
+        // Relationships first, definitions second: the key restricts, and a
+        // cleanup that fights its own constraint leaves rows behind.
+        await using (var conn = await dataSource.OpenConnectionAsync())
+        {
+            await using var cmd = conn.CreateCommand();
+            cmd.CommandText =
+                "DELETE FROM ppiq_meta.plant_relationships WHERE tenant_id = @tenant AND source_definition_id = ANY(@defs)";
+            cmd.Parameters.AddWithValue("tenant", CertificationTenant);
+            cmd.Parameters.AddWithValue("defs", definitionIds);
+            await cmd.ExecuteNonQueryAsync();
+        }
+
+        await RelationshipCertificationDefinitions.RemoveAsync(dataSource, definitionIds);
+    }
+
+    private static async Task SetPreferenceAsync(NpgsqlDataSource dataSource, string code, bool preferred)
+    {
         await using var conn = await dataSource.OpenConnectionAsync();
         await using var cmd = conn.CreateCommand();
         cmd.CommandText =
-            "DELETE FROM public.ppiq_plant_relationships WHERE tenant_id = @tenant AND source_definition_id = ANY(@defs)";
+            "UPDATE ppiq_meta.plant_relationships SET is_preferred_path = @preferred " +
+            "WHERE tenant_id = @tenant AND relationship_code = @code AND retired_at_utc IS NULL";
+        cmd.Parameters.AddWithValue("preferred", preferred);
         cmd.Parameters.AddWithValue("tenant", CertificationTenant);
-        cmd.Parameters.AddWithValue("defs", definitionIds);
+        cmd.Parameters.AddWithValue("code", code);
         await cmd.ExecuteNonQueryAsync();
     }
 
@@ -107,11 +128,13 @@ public sealed class T058RelationshipResolverRuntimeCertificationTests : Authenti
         var v = await BuildAsync();
         var definitionId = Guid.NewGuid();
         var code = Code("CYCLE");
-        var left = "t058_cycle_left";
-        var right = "t058_cycle_right";
+        var left = "res_cycle_left";
+        var right = "res_cycle_right";
 
         try
         {
+            await RelationshipCertificationDefinitions.SeedAsync(v.DataSource, CertificationTenant, definitionId);
+
             // PUBLISHED. The consumer resolves and produces an executable plan.
             var published = await v.Service.PublishAsync(
                 new RelationshipPublicationRequest(definitionId, 1,
@@ -167,12 +190,14 @@ public sealed class T058RelationshipResolverRuntimeCertificationTests : Authenti
         var definitionId = Guid.NewGuid();
         var first = Code("HOP1");
         var second = Code("HOP2");
-        var a = "t058_hop_a";
-        var b = "t058_hop_b";
-        var c = "t058_hop_c";
+        var a = "res_hop_a";
+        var b = "res_hop_b";
+        var c = "res_hop_c";
 
         try
         {
+            await RelationshipCertificationDefinitions.SeedAsync(v.DataSource, CertificationTenant, definitionId);
+
             var published = await v.Service.PublishAsync(
                 new RelationshipPublicationRequest(definitionId, 1, new List<RelationshipDeclaration>
                 {
@@ -203,11 +228,13 @@ public sealed class T058RelationshipResolverRuntimeCertificationTests : Authenti
         var v = await BuildAsync();
         var definitionId = Guid.NewGuid();
         var code = Code("REV");
-        var left = "t058_rev_left";
-        var right = "t058_rev_right";
+        var left = "res_rev_left";
+        var right = "res_rev_right";
 
         try
         {
+            await RelationshipCertificationDefinitions.SeedAsync(v.DataSource, CertificationTenant, definitionId);
+
             await v.Service.PublishAsync(
                 new RelationshipPublicationRequest(definitionId, 1,
                     new List<RelationshipDeclaration> { Declaration(code, left, right) }),
@@ -244,8 +271,8 @@ public sealed class T058RelationshipResolverRuntimeCertificationTests : Authenti
         try
         {
             var plan = await v.Planner.PlanAsync(
-                "t058_absent_left_" + Guid.NewGuid().ToString("N").Substring(0, 6),
-                "t058_absent_right_" + Guid.NewGuid().ToString("N").Substring(0, 6),
+                "res_absent_left_" + Guid.NewGuid().ToString("N").Substring(0, 6),
+                "res_absent_right_" + Guid.NewGuid().ToString("N").Substring(0, 6),
                 Explore, CancellationToken.None);
 
             Assert.False(plan.Value!.Planned);
@@ -262,11 +289,13 @@ public sealed class T058RelationshipResolverRuntimeCertificationTests : Authenti
         var definitionId = Guid.NewGuid();
         var first = Code("AMB1");
         var second = Code("AMB2");
-        var left = "t058_amb_left";
-        var right = "t058_amb_right";
+        var left = "res_amb_left";
+        var right = "res_amb_right";
 
         try
         {
+            await RelationshipCertificationDefinitions.SeedAsync(v.DataSource, CertificationTenant, definitionId);
+
             await v.Service.PublishAsync(
                 new RelationshipPublicationRequest(definitionId, 1, new List<RelationshipDeclaration>
                 {
@@ -304,11 +333,13 @@ public sealed class T058RelationshipResolverRuntimeCertificationTests : Authenti
         var definitionId = Guid.NewGuid();
         var preferred = Code("PREF");
         var other = Code("OTHER");
-        var left = "t058_pref_left";
-        var right = "t058_pref_right";
+        var left = "res_pref_left";
+        var right = "res_pref_right";
 
         try
         {
+            await RelationshipCertificationDefinitions.SeedAsync(v.DataSource, CertificationTenant, definitionId);
+
             await v.Service.PublishAsync(
                 new RelationshipPublicationRequest(definitionId, 1, new List<RelationshipDeclaration>
                 {
@@ -331,16 +362,71 @@ public sealed class T058RelationshipResolverRuntimeCertificationTests : Authenti
     }
 
     [SkippableFact]
+    public async Task Preference_is_governed_data_and_flipping_it_changes_the_answer_with_no_code_change()
+    {
+        var v = await BuildAsync();
+        var definitionId = Guid.NewGuid();
+        var a = Code("FLIPA");
+        var b = Code("FLIPB");
+        var left = "res_flip_left";
+        var right = "res_flip_right";
+
+        try
+        {
+            await RelationshipCertificationDefinitions.SeedAsync(v.DataSource, CertificationTenant, definitionId);
+
+            await v.Service.PublishAsync(
+                new RelationshipPublicationRequest(definitionId, 1, new List<RelationshipDeclaration>
+                {
+                    Declaration(a, left, right),
+                    Declaration(b, left, right)
+                }),
+                CancellationToken.None);
+
+            // Two lawful paths, neither preferred: refused rather than guessed.
+            var ambiguous = await v.Planner.PlanAsync(left, right, Explore, CancellationToken.None);
+            Assert.False(ambiguous.Value!.Planned);
+            Assert.Equal(RelationshipRefusalCodes.AmbiguousPath, ambiguous.Value!.RefusalCode);
+
+            // Preference set on A. Nothing is recompiled, redeployed or edited.
+            await SetPreferenceAsync(v.DataSource, a, true);
+
+            var choosesA = await v.Planner.PlanAsync(left, right, Explore, CancellationToken.None);
+            Assert.True(choosesA.Value!.Planned);
+            Assert.Single(choosesA.Value!.Steps);
+            Assert.Equal(a, choosesA.Value!.Steps[0].RelationshipCode);
+
+            // Preference moved to B. Same binary, same query, different answer,
+            // because which path is intended is the plant's decision and not the
+            // product's. This is the whole reason preference is a column.
+            await SetPreferenceAsync(v.DataSource, a, false);
+            await SetPreferenceAsync(v.DataSource, b, true);
+
+            var choosesB = await v.Planner.PlanAsync(left, right, Explore, CancellationToken.None);
+            Assert.True(choosesB.Value!.Planned);
+            Assert.Single(choosesB.Value!.Steps);
+            Assert.Equal(b, choosesB.Value!.Steps[0].RelationshipCode);
+        }
+        finally
+        {
+            await CleanAsync(v.DataSource, definitionId);
+            await v.DataSource.DisposeAsync();
+        }
+    }
+
+    [SkippableFact]
     public async Task RL02_an_automated_consumer_is_refused_where_exploration_is_allowed()
     {
         var v = await BuildAsync();
         var definitionId = Guid.NewGuid();
         var code = Code("RL02");
-        var left = "t058_rl02_left";
-        var right = "t058_rl02_right";
+        var left = "res_rl02_left";
+        var right = "res_rl02_right";
 
         try
         {
+            await RelationshipCertificationDefinitions.SeedAsync(v.DataSource, CertificationTenant, definitionId);
+
             var published = await v.Service.PublishAsync(
                 new RelationshipPublicationRequest(definitionId, 1,
                     new List<RelationshipDeclaration> { Declaration(code, left, right) }),
@@ -373,11 +459,13 @@ public sealed class T058RelationshipResolverRuntimeCertificationTests : Authenti
         var v = await BuildAsync();
         var definitionId = Guid.NewGuid();
         var code = Code("TENANT");
-        var left = "t058_tenant_left";
-        var right = "t058_tenant_right";
+        var left = "res_tenant_left";
+        var right = "res_tenant_right";
 
         try
         {
+            await RelationshipCertificationDefinitions.SeedAsync(v.DataSource, CertificationTenant, definitionId);
+
             await v.Service.PublishAsync(
                 new RelationshipPublicationRequest(definitionId, 1,
                     new List<RelationshipDeclaration> { Declaration(code, left, right) }),
