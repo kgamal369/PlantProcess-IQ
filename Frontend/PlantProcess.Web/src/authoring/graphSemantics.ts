@@ -62,7 +62,151 @@ export interface BoardField extends FieldLineage {
  */
 export const DERIVED_FIELD_TYPE = "numeric";
 
-export const EXECUTABLE_BOARD_NODE_KINDS = ["dataset", "filter", "derived", "select"] as const;
+// ============================================================================
+// PPIQ T-242. THE EXECUTABLE VOCABULARY, EXTENDED AT BEHAVIOUR-FAMILY LEVEL.
+//
+// T-241 froze the SHAPE of this contract: one graph, one kind set, typed ports,
+// explicit availability, and no block that pretends to execute. T-242 is the
+// task whose product purpose is to extend the MEMBERSHIP of that set, and it
+// does so at BEHAVIOUR-FAMILY level only. Add, subtract, greater-than, AND, OR
+// and NOT are block IDENTITY and CONFIGURATION inside a family - they are not
+// eleven more top-level graph kinds. A family earns a kind when its PORT
+// SIGNATURE differs, because the port signature is the only thing the graph
+// itself has to reason about:
+//
+//   arithmetic     value, value          -> value
+//   comparison     value, value          -> boolean
+//   logic          boolean, boolean      -> boolean
+//   conditional    boolean, value, value -> value
+//   aggregate      dataset               -> value, under GOVERNED semantics
+//   window         dataset               -> dataset, under GOVERNED semantics
+//   for-each       dataset               -> bounded by the collection
+//   repeat-n       -                     -> bounded by a declared count
+//   while-bounded  boolean               -> bounded by a count AND a budget
+//
+// A JOIN IS NOT ON THIS LIST, and its absence is a ruling rather than an
+// omission. The board already states a join as a COLUMN WIRE between two
+// tables, and serialiseGraph already emits graph.joins from those edges. A
+// join block would be a second lawful way to say one thing, which is the one
+// outcome the single-vocabulary rule exists to prevent.
+//
+// ONE GRAPH, TWO REPRESENTATIONS. The transformation grammar the server
+// already executes - MapperGraph through BuildSafeSelect - carries the
+// relational family and nothing else. The compute and loop families are
+// authored on the SAME board, validated by the SAME rules and carried by the
+// SAME canonical definition lifecycle; they reach execution through the
+// governed job path, not through SELECT. serialiseGraph therefore REFUSES them
+// BY NAME. It never lets one fall into another block's branch.
+// ============================================================================
+
+export const RELATIONAL_BOARD_NODE_KINDS = ["dataset", "filter", "derived", "select"] as const;
+
+export const COMPUTE_BOARD_NODE_KINDS = [
+  "arithmetic", "comparison", "logic", "conditional", "aggregate", "window",
+] as const;
+
+/**
+ * THE LOOP LAW. Three families and no fourth. Every one of them terminates
+ * because of something DECLARED, never because of something observed at run
+ * time: a collection, a count, or a count AND a budget together.
+ */
+export const LOOP_BOARD_NODE_KINDS = ["for-each", "repeat-n", "while-bounded"] as const;
+
+export const EXECUTABLE_BOARD_NODE_KINDS = [
+  ...RELATIONAL_BOARD_NODE_KINDS,
+  ...COMPUTE_BOARD_NODE_KINDS,
+  ...LOOP_BOARD_NODE_KINDS,
+] as const;
+
+export type RelationalBoardNodeKind = (typeof RELATIONAL_BOARD_NODE_KINDS)[number];
+export type ComputeBoardNodeKind = (typeof COMPUTE_BOARD_NODE_KINDS)[number];
+export type LoopBoardNodeKind = (typeof LOOP_BOARD_NODE_KINDS)[number];
+
+export function isRelationalBoardNodeKind(kind: string): kind is RelationalBoardNodeKind {
+  return (RELATIONAL_BOARD_NODE_KINDS as readonly string[]).indexOf(kind) >= 0;
+}
+
+export function isComputeBoardNodeKind(kind: string): kind is ComputeBoardNodeKind {
+  return (COMPUTE_BOARD_NODE_KINDS as readonly string[]).indexOf(kind) >= 0;
+}
+
+export function isLoopBoardNodeKind(kind: string): kind is LoopBoardNodeKind {
+  return (LOOP_BOARD_NODE_KINDS as readonly string[]).indexOf(kind) >= 0;
+}
+
+/**
+ * Display names for the families T-242 adds, so a refusal can name a block
+ * that has not been given a title yet. Generic by construction.
+ */
+export const BOARD_KIND_TITLES: Partial<Record<BoardNodeKind, string>> = {
+  arithmetic: "Arithmetic",
+  comparison: "Comparison",
+  logic: "Logic",
+  conditional: "If / else",
+  aggregate: "Aggregate",
+  window: "Window",
+  "for-each": "For each",
+  "repeat-n": "Repeat",
+  "while-bounded": "Bounded while",
+};
+
+/**
+ * The refusal for a block the TRANSFORMATION representation cannot carry.
+ *
+ * Section 5.2.8 asks a refusal for three things and this states all three:
+ * which block, what rule was broken, what would fix it. It carries the id AND
+ * the kind so a persisted definition can be diagnosed without reopening the
+ * board. It is the same sentence-shaped refusal family the board already uses;
+ * no new code family is invented for it.
+ */
+export function unrepresentableInTransformation(node: BoardNode): string {
+  return titleOf(node) + " (" + node.id + ", kind " + node.kind + ")"
+    + " cannot be saved as a transformation: that representation carries"
+    + " relational steps only. Compile this definition through the job path,"
+    + " or remove the block.";
+}
+
+/**
+ * Compile-time exhaustiveness. A kind added to the vocabulary without a
+ * serialisation branch fails the BUILD here, rather than inheriting the
+ * behaviour of whichever branch happened to be last.
+ */
+function assertUnreachableKind(kind: never): never {
+  throw new Error("Unhandled board node kind: " + String(kind));
+}
+
+function numberFrom(node: BoardNode, key: string): number {
+  const raw = node.data[key];
+  if (typeof raw === "number") { return raw; }
+  if (typeof raw === "string" && raw.trim() !== "") { return Number(raw); }
+  return NaN;
+}
+
+/**
+ * THE BOUND IS DECLARED OR THE LOOP IS REFUSED. There is no default iteration
+ * count and no default budget, because a loop that stops for a reason nobody
+ * wrote down is not a governed loop. ForEach is bounded by the collection it
+ * walks and declares neither.
+ */
+export function loopBoundProblem(node: BoardNode): string | null {
+  const title = titleOf(node);
+  if (node.kind === "repeat-n" || node.kind === "while-bounded") {
+    const iterations = numberFrom(node, "maxIterations");
+    if (!Number.isInteger(iterations) || iterations <= 0) {
+      return title + " has no finite iteration bound. Declare a whole number of"
+        + " iterations greater than zero; an unbounded loop cannot be validated"
+        + " or published.";
+    }
+  }
+  if (node.kind === "while-bounded") {
+    const budget = numberFrom(node, "budgetMs");
+    if (!Number.isFinite(budget) || budget <= 0) {
+      return title + " has no runtime budget. Declare a positive budget in"
+        + " milliseconds so the loop can be cancelled rather than left running.";
+    }
+  }
+  return null;
+}
 export type BoardNodeKind = (typeof EXECUTABLE_BOARD_NODE_KINDS)[number];
 
 export function isExecutableBoardNodeKind(kind: string): kind is BoardNodeKind {
@@ -301,6 +445,8 @@ export function titleOf(node: BoardNode): string {
   if (node.kind === "filter") { return "Filter"; }
   if (node.kind === "derived") { return "Derived column"; }
   if (node.kind === "select") { return "Select columns"; }
+  const family = BOARD_KIND_TITLES[node.kind];
+  if (family) { return family; }
   return node.id;
 }
 
@@ -407,6 +553,19 @@ export function blockProblem(node: BoardNode, nodes: BoardNode[], edges: BoardEd
     return null;
   }
 
+  // T-242. The families the transformation grammar cannot carry are still
+  // VALID BLOCKS on the board. Validity asks whether a block CAN RUN, and
+  // their run path is the governed job path, not SELECT. What is refused here
+  // is only what is genuinely undeclared - the loop bound. The REPRESENTATION
+  // refusal belongs to serialiseGraph and names itself there.
+  if (isLoopBoardNodeKind(node.kind)) {
+    return loopBoundProblem(node);
+  }
+  if (isComputeBoardNodeKind(node.kind)) {
+    return null;
+  }
+
+
   // select
   const chosen = chosenOf(node);
   if (chosen.length === 0) {
@@ -508,40 +667,73 @@ export function serialiseGraph(
   let selects: SelectSpec[] | undefined;
 
   for (const b of orderedBlocks(nodes, edges)) {
-    if (b.kind === "filter") {
-      const f = parseFieldRef(str(b, "fieldRef"));
-      const op = str(b, "op");
-      filters.push({
-        table: f.table, column: f.column, op,
-        value: isUnaryFilterOperator(op) ? null : str(b, "value"),
-      });
-      continue;
+    // T-242. EXHAUSTIVE BY CONSTRUCTION.
+    //
+    // The pre-T-242 shape was filter, then derived, then ELSE select. The
+    // moment a new kind entered the vocabulary that else silently handed it
+    // Select's behaviour: chosenOf returned nothing, the graph carried
+    // selects: [], and the server refused the right board for the wrong reason
+    // while naming the wrong block. That fallthrough cannot exist here. Every
+    // kind has a branch, and assertUnreachableKind fails COMPILATION when one
+    // is added without a decision.
+    switch (b.kind) {
+      case "dataset": {
+        // orderedBlocks yields chain blocks only; a dataset is a chain root.
+        break;
+      }
+      case "filter": {
+        const f = parseFieldRef(str(b, "fieldRef"));
+        const op = str(b, "op");
+        filters.push({
+          table: f.table, column: f.column, op,
+          value: isUnaryFilterOperator(op) ? null : str(b, "value"),
+        });
+        break;
+      }
+      case "derived": {
+        const l = parseFieldRef(str(b, "leftRef"));
+        const rightRef = str(b, "rightRef");
+        const r = rightRef ? parseFieldRef(rightRef) : null;
+        derived.push({
+          alias: str(b, "alias").trim(),
+          leftTable: l.table, leftColumn: l.column,
+          op: str(b, "op"),
+          // Explicit on BOTH sides. The server would fall back to the left
+          // table when rightTable is blank; ruling 2 says the table is never
+          // inferred, so the board always states it and never relies on that.
+          rightTable: r ? r.table : null,
+          rightColumn: r ? r.column : null,
+          constant: r ? null : str(b, "constant").trim(),
+        });
+        break;
+      }
+      case "select": {
+        // The LAST Select in the chain is the projection: each Select can only
+        // choose fields its upstream still exposes, so a chain narrows and the
+        // final one is what reaches the output.
+        selects = chosenOf(b).map((ref) => {
+          const p = parseFieldRef(ref);
+          return { table: p.table, column: p.column };
+        });
+        break;
+      }
+      case "arithmetic":
+      case "comparison":
+      case "logic":
+      case "conditional":
+      case "aggregate":
+      case "window":
+      case "for-each":
+      case "repeat-n":
+      case "while-bounded": {
+        throw new Error(unrepresentableInTransformation(b));
+      }
+      default: {
+        assertUnreachableKind(b.kind);
+      }
     }
-    if (b.kind === "derived") {
-      const l = parseFieldRef(str(b, "leftRef"));
-      const rightRef = str(b, "rightRef");
-      const r = rightRef ? parseFieldRef(rightRef) : null;
-      derived.push({
-        alias: str(b, "alias").trim(),
-        leftTable: l.table, leftColumn: l.column,
-        op: str(b, "op"),
-        // Explicit on BOTH sides. The server would fall back to the left table
-        // when rightTable is blank; ruling 2 says the table is never inferred,
-        // so the board always states it and never relies on that fallback.
-        rightTable: r ? r.table : null,
-        rightColumn: r ? r.column : null,
-        constant: r ? null : str(b, "constant").trim(),
-      });
-      continue;
-    }
-    // select. The LAST Select in the chain is the projection: each Select can
-    // only choose fields its upstream still exposes, so a chain narrows and the
-    // final one is what reaches the output.
-    selects = chosenOf(b).map((ref) => {
-      const p = parseFieldRef(ref);
-      return { table: p.table, column: p.column };
-    });
   }
+
 
   const graph: MapperGraph = { name, targetEntity, tables, joins };
   if (filters.length > 0) { graph.filters = filters; }

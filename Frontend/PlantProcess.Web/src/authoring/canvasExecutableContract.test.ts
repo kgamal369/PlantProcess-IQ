@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  COMPUTE_BOARD_NODE_KINDS,
   EXECUTABLE_BOARD_NODE_KINDS,
+  LOOP_BOARD_NODE_KINDS,
+  RELATIONAL_BOARD_NODE_KINDS,
   FLOW_IN,
   FLOW_OUT,
   blockProblem,
@@ -47,6 +50,8 @@ describe("T-241 executable Canvas contract", () => {
   it("C241-01 exposes one runtime-checkable executable node vocabulary", () => {
     expect([...EXECUTABLE_BOARD_NODE_KINDS]).toEqual([
       "dataset", "filter", "derived", "select",
+      "arithmetic", "comparison", "logic", "conditional", "aggregate", "window",
+      "for-each", "repeat-n", "while-bounded",
     ]);
     expect(new Set(EXECUTABLE_BOARD_NODE_KINDS).size).toBe(EXECUTABLE_BOARD_NODE_KINDS.length);
   });
@@ -132,6 +137,179 @@ describe("T-241 executable Canvas contract", () => {
     expect(groupBy?.available).toBe(false);
     expect(groupBy?.boardKind).toBeUndefined();
   });
+
+  // ==========================================================================
+  // T-242 STAGE 1. THE VOCABULARY IS EXTENDED AND THE SERIALISER IS EXHAUSTIVE.
+  // ==========================================================================
+
+  it("C242-01 the three behaviour subsets partition the vocabulary exactly", () => {
+    const union = [
+      ...RELATIONAL_BOARD_NODE_KINDS,
+      ...COMPUTE_BOARD_NODE_KINDS,
+      ...LOOP_BOARD_NODE_KINDS,
+    ];
+    expect([...EXECUTABLE_BOARD_NODE_KINDS]).toEqual(union);
+    expect(new Set(union).size).toBe(union.length);
+  });
+
+  it("C242-02 refuses a compute block BY NAME instead of routing it into Select", () => {
+    const source = sourceNode();
+    const arithmetic: BoardNode = {
+      id: "arithmetic-1",
+      kind: "arithmetic",
+      data: { title: "Arithmetic 1" },
+    };
+    const nodes = [source, arithmetic];
+    const edges: BoardEdge[] = [{
+      source: source.id,
+      target: arithmetic.id,
+      sourceHandle: FLOW_OUT,
+      targetHandle: FLOW_IN,
+    }];
+
+    // It is a VALID block. Its run path is the job path, not SELECT.
+    expect(boardProblems(nodes, edges)).toEqual([]);
+
+    let thrown: unknown = null;
+    try {
+      serialiseGraph("definition_a", "entity_a", nodes, edges);
+    } catch (error) {
+      thrown = error;
+    }
+    const message = String(thrown);
+    expect(message).toContain("arithmetic-1");
+    expect(message).toContain("kind arithmetic");
+    expect(message).toContain("cannot be saved as a transformation");
+  });
+
+  it("C242-03 the wrong-branch negative control: no compute block ever emits an empty projection", () => {
+    const source = sourceNode();
+    const nodes: BoardNode[] = [source];
+    const edges: BoardEdge[] = [];
+
+    for (const kind of [...COMPUTE_BOARD_NODE_KINDS, ...LOOP_BOARD_NODE_KINDS]) {
+      const node: BoardNode = {
+        id: kind + "-1",
+        kind,
+        data: { title: kind, maxIterations: 3, budgetMs: 1000 },
+      };
+      const board = [source, node];
+      const wiring: BoardEdge[] = [{
+        source: source.id,
+        target: node.id,
+        sourceHandle: FLOW_OUT,
+        targetHandle: FLOW_IN,
+      }];
+
+      let thrown: unknown = null;
+      try {
+        serialiseGraph("definition_a", "entity_a", board, wiring);
+      } catch (error) {
+        thrown = error;
+      }
+      expect(String(thrown), kind + " must refuse by name").toContain(node.id);
+      expect(String(thrown), kind + " must not borrow Select's branch")
+        .toContain("cannot be saved as a transformation");
+    }
+
+    // The relational board itself is untouched by any of that.
+    expect(serialiseGraph("definition_a", "entity_a", nodes, edges).tables)
+      .toEqual(["source_a"]);
+  });
+
+  it("C242-04 refuses a bounded while with no finite iteration bound", () => {
+    const source = sourceNode();
+    const loop: BoardNode = {
+      id: "while-1",
+      kind: "while-bounded",
+      data: { title: "While 1", budgetMs: 1000 },
+    };
+    const edges: BoardEdge[] = [{
+      source: source.id, target: loop.id,
+      sourceHandle: FLOW_OUT, targetHandle: FLOW_IN,
+    }];
+    expect(blockProblem(loop, [source, loop], edges))
+      .toContain("no finite iteration bound");
+  });
+
+  it("C242-05 refuses a bounded while with no runtime budget", () => {
+    const source = sourceNode();
+    const loop: BoardNode = {
+      id: "while-2",
+      kind: "while-bounded",
+      data: { title: "While 2", maxIterations: 10 },
+    };
+    const edges: BoardEdge[] = [{
+      source: source.id, target: loop.id,
+      sourceHandle: FLOW_OUT, targetHandle: FLOW_IN,
+    }];
+    expect(blockProblem(loop, [source, loop], edges))
+      .toContain("no runtime budget");
+  });
+
+  it("C242-06 accepts a bounded while that declares both, and RepeatN that declares a count", () => {
+    const source = sourceNode();
+    const loop: BoardNode = {
+      id: "while-3",
+      kind: "while-bounded",
+      data: { title: "While 3", maxIterations: 10, budgetMs: 1000 },
+    };
+    const repeat: BoardNode = {
+      id: "repeat-1",
+      kind: "repeat-n",
+      data: { title: "Repeat 1", maxIterations: 5 },
+    };
+    const edges: BoardEdge[] = [
+      { source: source.id, target: loop.id, sourceHandle: FLOW_OUT, targetHandle: FLOW_IN },
+      { source: loop.id, target: repeat.id, sourceHandle: FLOW_OUT, targetHandle: FLOW_IN },
+    ];
+    const nodes = [source, loop, repeat];
+    expect(blockProblem(loop, nodes, edges)).toBeNull();
+    expect(blockProblem(repeat, nodes, edges)).toBeNull();
+  });
+
+  it("C242-07 a zero or fractional iteration count is not a bound", () => {
+    const source = sourceNode();
+    for (const value of [0, -1, 2.5, "", "abc"]) {
+      const repeat: BoardNode = {
+        id: "repeat-x",
+        kind: "repeat-n",
+        data: { title: "Repeat X", maxIterations: value },
+      };
+      const edges: BoardEdge[] = [{
+        source: source.id, target: repeat.id,
+        sourceHandle: FLOW_OUT, targetHandle: FLOW_IN,
+      }];
+      expect(blockProblem(repeat, [source, repeat], edges), String(value))
+        .toContain("no finite iteration bound");
+    }
+  });
+
+  it("C242-08 ForEach declares no count and no budget, and is not refused for lacking them", () => {
+    const source = sourceNode();
+    const forEach: BoardNode = {
+      id: "for-each-1",
+      kind: "for-each",
+      data: { title: "For each 1" },
+    };
+    const edges: BoardEdge[] = [{
+      source: source.id, target: forEach.id,
+      sourceHandle: FLOW_OUT, targetHandle: FLOW_IN,
+    }];
+    expect(blockProblem(forEach, [source, forEach], edges)).toBeNull();
+  });
+
+  it("C242-09 an extended kind still requires its dataset input", () => {
+    const source = sourceNode();
+    const aggregate: BoardNode = {
+      id: "aggregate-1",
+      kind: "aggregate",
+      data: { title: "Aggregate 1" },
+    };
+    expect(blockProblem(aggregate, [source, aggregate], []))
+      .toContain("dataset input is not connected");
+  });
+
 
   it("a valid source-only graph remains serialisable", () => {
     const graph = serialiseGraph("definition_a", "entity_a", [sourceNode()], []);
