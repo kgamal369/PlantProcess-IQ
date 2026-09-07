@@ -644,6 +644,71 @@ export function orderedBlocks(nodes: BoardNode[], edges: BoardEdge[]): BoardNode
  * missing one of its filters is worse than one that does not compile at all.
  * The shell calls boardProblems first and never reaches the throw.
  */
+// ============================================================================
+// T-242 Stage 3. A REFUSAL IS NOT AN EXCEPTION, AND NEITHER IS A BUG.
+//
+// Three different things can go wrong when a board becomes a definition, and
+// collapsing them into one another is how an author ends up staring at a dead
+// Run button:
+//
+//   1. the board is INVALID                     - a governed refusal;
+//   2. the board is UNREPRESENTABLE here        - also a governed refusal;
+//   3. the code is WRONG                        - a defect, which must stay loud.
+//
+// The shell used to catch all three and return null. The board then reported
+// Valid while producing nothing, because a compute block is legitimately valid
+// and simply cannot be carried by this representation. Governed refusals now
+// travel as a typed error carrying the offending block and kind; anything else
+// is rethrown untouched so it reaches the console and the error boundary
+// instead of being disguised as an ordinary authoring problem.
+// ============================================================================
+
+export type SerialisationRefusalCode = "BOARD_INVALID" | "REPRESENTATION_UNSUPPORTED";
+
+export interface SerialisationRefusal {
+  readonly code: SerialisationRefusalCode;
+  readonly blockId?: string;
+  readonly blockKind?: BoardNodeKind;
+  readonly message: string;
+}
+
+/** Carries a GOVERNED refusal. An error that is not one of these is a defect. */
+export class BoardRefusalError extends Error {
+  readonly refusal: SerialisationRefusal;
+
+  constructor(refusal: SerialisationRefusal) {
+    super(refusal.message);
+    this.name = "BoardRefusalError";
+    this.refusal = refusal;
+    // Keeps instanceof working through a down-level class emit.
+    Object.setPrototypeOf(this, BoardRefusalError.prototype);
+  }
+}
+
+export type SerialisationOutcome =
+  | { readonly ok: true; readonly graph: MapperGraph }
+  | { readonly ok: false; readonly refusal: SerialisationRefusal };
+
+/**
+ * The one call a surface should make. It never returns null, and it never
+ * hides a defect: a governed refusal comes back as DATA naming the block that
+ * caused it, and anything unexpected is rethrown.
+ */
+export function serialisationOutcome(
+  name: string,
+  targetEntity: string,
+  nodes: BoardNode[],
+  edges: BoardEdge[],
+): SerialisationOutcome {
+  try {
+    return { ok: true, graph: serialiseGraph(name, targetEntity, nodes, edges) };
+  } catch (error) {
+    if (error instanceof BoardRefusalError) {
+      return { ok: false, refusal: error.refusal };
+    }
+    throw error;
+  }
+}
 export function serialiseGraph(
   name: string,
   targetEntity: string,
@@ -651,7 +716,9 @@ export function serialiseGraph(
   edges: BoardEdge[],
 ): MapperGraph {
   const problems = boardProblems(nodes, edges);
-  if (problems.length > 0) { throw new Error(problems[0]); }
+  if (problems.length > 0) {
+    throw new BoardRefusalError({ code: "BOARD_INVALID", message: problems[0] });
+  }
 
   const tables = nodes.filter((n) => n.kind === "dataset").map((n) => n.id);
 
@@ -726,7 +793,12 @@ export function serialiseGraph(
       case "for-each":
       case "repeat-n":
       case "while-bounded": {
-        throw new Error(unrepresentableInTransformation(b));
+        throw new BoardRefusalError({
+          code: "REPRESENTATION_UNSUPPORTED",
+          blockId: b.id,
+          blockKind: b.kind,
+          message: unrepresentableInTransformation(b),
+        });
       }
       default: {
         assertUnreachableKind(b.kind);

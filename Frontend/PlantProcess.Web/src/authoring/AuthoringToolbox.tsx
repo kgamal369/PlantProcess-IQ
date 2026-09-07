@@ -12,7 +12,9 @@
 
 import { useMemo, useState } from "react";
 import { StandardP2Button, StandardP2Input } from "@/components/standard/StandardP2Controls";
-import { blocksInGroup, groupsForPalette, type BlockDefinition } from "./blockRegistry";
+import {
+  blocksInGroup, groupsForPalette, isPaletteEligible, type BlockDefinition,
+} from "./blockRegistry";
 
 export interface AuthoringToolboxProps {
   /** Group ids this purpose presents, from the purpose registry. */
@@ -32,7 +34,10 @@ export interface AuthoringToolboxProps {
 export function AuthoringToolbox({
   paletteGroups, unavailableReason, addableBlockIds = [], onAddBlock,
 }: AuthoringToolboxProps) {
-  const canAdd = (b: BlockDefinition) => b.available && addableBlockIds.indexOf(b.id) >= 0;
+  // T-242 Stage 3. Eligibility is DERIVED from what the product can actually
+  // do with the block - implemented and persistable - rather than read from a
+  // stored flag that has to be remembered and flipped by hand.
+  const canAdd = (b: BlockDefinition) => isPaletteEligible(b) && addableBlockIds.indexOf(b.id) >= 0;
   const [search, setSearch] = useState("");
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
 

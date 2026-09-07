@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest";
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 
+import { paletteEligibleBlocks, type BlockDefinition } from "./blockRegistry";
+import { isExecutableBoardNodeKind } from "./graphSemantics";
+
 function read(rel: string): string {
   return readFileSync(join(process.cwd(), rel), "utf8");
 }
@@ -55,11 +58,53 @@ describe("T-241 Canvas architecture guards", () => {
     expect(shell).not.toMatch(/\b(CanvasV2|ProductionCanvas|NewCanvas)\b/);
   });
 
-  it("registry availability is compile-time coupled to BoardNodeKind", () => {
+  it("palette eligibility is compile-time bound to a valid BoardNodeKind", () => {
+    // AMENDED UNDER T-242. This control used to assert that the registry
+    // SOURCE contained the literal "available: true;". That tests the spelling
+    // of an implementation, not the invariant behind it, so the authorised
+    // successor design broke the test without breaking the rule.
+    //
+    // T-241's actual requirement, restated and proven here: a block the
+    // product will OFFER must be bound at compile time to a board kind the
+    // graph knows how to validate, so a toolbox can never present something
+    // that looks executable and has no behaviour. T-242 replaced stored
+    // availability with derived capability; the binding survives untouched.
     const registry = read("src/authoring/blockRegistry.ts");
     expect(registry).toContain('import type { BoardNodeKind } from "./graphSemantics";');
-    expect(registry).toContain("available: true;");
     expect(registry).toContain("boardKind: BoardNodeKind;");
+
+    // The RUNTIME half: everything eligible names a kind the graph executes.
+    const eligible = paletteEligibleBlocks();
+    expect(eligible.length).toBeGreaterThan(0);
+    for (const block of eligible) {
+      expect(block.boardKind, block.id).toBeDefined();
+      expect(isExecutableBoardNodeKind(block.boardKind as string), block.id).toBe(true);
+    }
+  });
+
+  it("a placeable block cannot be declared without a valid board kind", () => {
+    // The COMPILE-TIME half, as a negative fixture. Each declaration below is
+    // rejected by the type contract, and @ts-expect-error fails the BUILD if
+    // any of them ever starts compiling - which is the regression this guard
+    // exists to catch. A runtime assertion could not prove this at all.
+    // The COMPILE-TIME half, as a negative fixture. Both declarations below
+    // are rejected by the type contract, and @ts-expect-error fails the BUILD
+    // if either ever starts compiling - which is the regression this guard
+    // exists to catch. A runtime assertion cannot prove this at all.
+    //
+    // Each declaration is ONE LINE on purpose: @ts-expect-error suppresses the
+    // next line only, and an assignability error inside a multi-line literal
+    // is reported at the offending PROPERTY, which the directive would miss.
+    const base = { id: "x", label: "x", group: "relational", inputs: "-", outputs: "-" };
+
+    // @ts-expect-error an implemented block must declare a boardKind and a seed
+    const missingKind: BlockDefinition = { ...base, implemented: true, capabilities: { evaluable: false, persistable: true } };
+
+    // @ts-expect-error "not-a-kind" is outside the executable vocabulary
+    const invalidKind: BlockDefinition = { ...base, implemented: true, boardKind: "not-a-kind", seed: () => ({}), capabilities: { evaluable: false, persistable: true } };
+
+    void missingKind;
+    void invalidKind;
   });
 
   it("graph validation owns a runtime-checkable executable kind set", () => {

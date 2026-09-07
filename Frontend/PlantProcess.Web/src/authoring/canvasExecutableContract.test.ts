@@ -13,7 +13,10 @@ import {
   type BoardEdge,
   type BoardNode,
 } from "./graphSemantics";
-import { BLOCK_REGISTRY } from "./blockRegistry";
+import {
+  BLOCK_REGISTRY, blockById, isPaletteEligible, paletteEligibleBlocks,
+  type BlockDefinition,
+} from "./blockRegistry";
 import { portsCompatible } from "../canvas/ports";
 
 function sourceNode(): BoardNode {
@@ -118,26 +121,49 @@ describe("T-241 executable Canvas contract", () => {
     expect(boardProblems(nodes, edges)).toEqual(boardProblems(nodes, edges));
   });
 
-  it("C241-10 every available board block declares an executable BoardNode kind", () => {
-    const available = BLOCK_REGISTRY.filter(
-      (b) => b.placement === "board" && b.available,
-    );
-    expect(available.map((b) => b.id)).toEqual([
+  it("C241-10 every palette-eligible block declares an executable BoardNode kind", () => {
+    // Amended under T-242 Stage 3. The control used to enumerate a stored
+    // available flag; eligibility is now DERIVED from capability, so the
+    // control asserts the law instead of the list. Its invariant is unchanged:
+    // nothing reaches a palette without a kind the graph can execute.
+    const eligible = paletteEligibleBlocks();
+    expect(eligible.map((b) => b.id)).toEqual([
       "filter", "select-columns", "derived-column",
     ]);
-    for (const block of available) {
+    for (const block of eligible) {
       expect(block.boardKind).toBeDefined();
       expect(EXECUTABLE_BOARD_NODE_KINDS).toContain(block.boardKind);
     }
   });
 
-  it("does not make Group by executable merely because it exists in the palette", () => {
-    const groupBy = BLOCK_REGISTRY.find((b) => b.id === "group-by");
-    expect(groupBy).toBeDefined();
-    expect(groupBy?.available).toBe(false);
-    expect(groupBy?.boardKind).toBeUndefined();
+  it("C241-10b a block is eligible only when it is implemented AND persistable", () => {
+    for (const block of BLOCK_REGISTRY) {
+      if (isPaletteEligible(block)) {
+        expect(block.implemented, block.id).toBe(true);
+        expect(block.capabilities.persistable, block.id).toBe(true);
+      }
+    }
+    // The compute and loop families are implemented and evaluable, and are
+    // deliberately NOT eligible: the canonical representation cannot carry
+    // them yet, and a block you can place but never save is a dead end.
+    for (const id of ["expr-arithmetic", "expr-comparison", "expr-logic",
+                      "expr-conditional", "loop-for-each", "loop-repeat-n",
+                      "loop-while-bounded"]) {
+      const block = blockById(id);
+      expect(block, id).not.toBeNull();
+      expect(block?.implemented, id).toBe(true);
+      expect(block?.capabilities.evaluable, id).toBe(true);
+      expect(block?.capabilities.persistable, id).toBe(false);
+      expect(isPaletteEligible(block as BlockDefinition), id).toBe(false);
+    }
   });
 
+  it("does not make Group by executable merely because it exists in the palette", () => {
+    const groupBy = blockById("group-by");
+    expect(groupBy).not.toBeNull();
+    expect(groupBy?.implemented).toBe(false);
+    expect(groupBy?.boardKind).toBeUndefined();
+  });
   // ==========================================================================
   // T-242 STAGE 1. THE VOCABULARY IS EXTENDED AND THE SERIALISER IS EXHAUSTIVE.
   // ==========================================================================
