@@ -10,7 +10,7 @@
 // All API calls match the existing productApi methods exactly.
 // ============================================================
 
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import {
   Boxes,
   Cloud,
@@ -351,8 +351,8 @@ function ConnectionProfileList({
         </thead>
         <tbody>
           {connections.map((conn) => (
-            <>
-              <tr key={conn.id}>
+            <Fragment key={conn.id}>
+              <tr>
                 <td>
                   <strong>{conn.connectionProfileName}</strong>
                 </td>
@@ -423,7 +423,7 @@ function ConnectionProfileList({
                   </td>
                 </tr>
               ) : null}
-            </>
+            </Fragment>
           ))}
         </tbody>
       </StandardPageTable>

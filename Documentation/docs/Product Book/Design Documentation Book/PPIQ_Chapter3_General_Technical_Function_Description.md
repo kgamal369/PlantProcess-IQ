@@ -1,6 +1,10 @@
 # PlantProcess IQ - Master Design Document
 
-**Version 4.10 | Author: Karim, SOU Industrial Software, Dusseldorf** | **MASTER DESIGN FREEZE CANDIDATE**
+**Version 4.10.2 | Author: Karim, SOU Industrial Software, Dusseldorf** | **MASTER DESIGN FREEZE CANDIDATE**
+
+> **Change log — Catalogue Evidence-Grade, Canonical-Fact Lifecycle and Physical-Naming Hardening (4 September 2026, v4.10.2).** No product capability or release scope changes. The v4.10.1 physical-catalogue contract is tightened after review of the first generated catalogue: `GENERATED_INFERENCE` is explicitly draft-only and cannot satisfy lifecycle/family/owner/design-clause release certification; canonical plant fact families are authoritative plant history even when their names end in `_events`; source-script banner text is not accepted as a table purpose; the catalogue distinguishes source-declared/origin schema from governed target/effective schema and live-observed schema so pre-convergence `public` declarations cannot masquerade as compliant runtime topology; and new physical table/view names may not encode schema generations with `_v1`, `_v2`, etc. Existing version-suffixed names remain grandfathered until an owned compatibility-safe convergence. Chapters 1, 2, 4, 5 and 6 remain unchanged.
+
+> **Change log — Schema Authority, Physical Dictionary and Execution-Binding Consistency Correction (4 September 2026, v4.10.1).** No product capability is added and no release is redefined. Four governance gaps exposed by the 04-Sep implementation/database reconciliation are integrated into the owning technical contract: (1) the three persistent environment databases and disposable-probe lifecycle are given explicit purposes so development, fresh-install certification and historical-presentation evidence cannot be confused; (2) every physical product table is assigned a lifecycle class and logical subsystem family, and a generated physical database catalogue becomes mandatory so no table or column can exist without an owner, purpose and relation graph; (3) a forward naming standard is defined for new database objects without forcing unsafe mass renames of existing compatibility names; and (4) declared dimensions and workspace filters are bound through one canonical execution contract — definition/registry member → relationship path → Analysis Subject — with typed refusal on missing or ambiguous authority. Existing single-reference resolution is an interim implementation, not the target contract. Chapters 1, 2, 4, 5 and 6 are unchanged by this consistency correction.
 
 > **Change log — Two-Release Production Roadmap and Day-1 Workbench Constitution (23 August 2026, v4.10).** v4.10 replaces retired internal programme codes with exactly two product releases: **M2 — Release 1, 30 September 2026**, for genuine early production and first-week customer work; and **M3 — Release 2, 30 October 2026**, for heavy production, higher data volume, more users and advanced intelligence. Each release uses only **P1, P2, P3, P4 and P5**. Release 1 makes DB Link/data onboarding, Canvas/data preparation, Jobs, enterprise BI reliability, read-only production OPC UA, governed References/Reconciliation/Assistant and minimum production hardening first-class release gates. Release 2 owns scale, advanced BI/authoring, deep enterprise administration, InsightBoard composition, multi-objective optimisation, customer-grade ROI convergence and heavy-production certification. Design and backlog are required to be one-to-one traceable: every designed product outcome has an execution owner and acceptance path, and every backlog task maps to an owning design contract.
 
@@ -15,7 +19,7 @@
 
 ---
 
-> **CURRENT AUTHORITY — Master Design v4.10.** PlantProcess IQ has exactly six current design-authority chapters and one current execution-authority backlog workbook. No other file may define, amend, override, supplement or reinterpret current product design or implementation scope. A design change edits the owning chapter directly; a scope change edits the backlog directly. Transitional reviews, amendment packs, ledgers, mandates and prior revisions are historical evidence only after their accepted content is integrated. Validation scripts are code/enforcement instruments, not design documentation.
+> **CURRENT AUTHORITY — Master Design v4.10.2.** PlantProcess IQ has exactly six current design-authority chapters and one current execution-authority backlog workbook. No other file may define, amend, override, supplement or reinterpret current product design or implementation scope. A design change edits the owning chapter directly; a scope change edits the backlog directly. Transitional reviews, amendment packs, ledgers, mandates and prior revisions are historical evidence only after their accepted content is integrated. Validation scripts are code/enforcement instruments, not design documentation.
 
 
 # CHAPTER 3 - GENERAL SOFTWARE PRODUCT TECHNICAL FUNCTION DESCRIPTION
@@ -2222,6 +2226,24 @@ The **role** of `ppiq_meta` is already decided and is not open: it holds product
 
 What is deferred to M2 is narrower and should be stated as such: **the migration of the current metadata persistence into the final `ppiq_meta` topology.** Deferring a migration is not deferring a decision.
 
+
+### 4.5.2b Environment database purpose and certification authority — v4.10.1
+
+The schema topology is one product contract, but local engineering uses more than one **database instance** for different evidence purposes. Those instances are not interchangeable.
+
+| Database role | Canonical local name | Purpose | May contain customer/demo plant rows? | May close fresh-install / M2 product acceptance? | Lifecycle |
+|---|---|---|---|---|---|
+| PostgreSQL maintenance database | `postgres` | Server maintenance and administrative connection target | No product meaning | No | PostgreSQL-owned, permanent |
+| Daily development database | `ppiq_app` | Long-lived developer runtime, upgraded in place and allowed to contain test/development plant data | Yes | **No by itself**; it proves upgrade/runtime behaviour only | Permanent development asset |
+| Fresh-install certification database | `ppiq_acceptance_empty` or an equivalently recreated disposable database | Proves canonical replay, Rule-2 empty customer knowledge, schema topology and first-install behaviour | Starts with zero customer plant knowledge; only declared product metadata prefill is allowed | **Yes** for fresh-install evidence | Recreated/refreshable certification asset |
+| Historical presentation/regression database | `ppiq_presentation` | Frozen populated historical presentation and regression oracle | Yes | **Never closes M2 generic-product acceptance** | Permanent historical baseline while useful |
+| Probe / scratch / backup database | generated bounded name | One test, falsification, migration, rollback or clean-room proof | Only what the owning proof needs | No | **Disposable: creator owns DROP in `finally`, on success and failure** |
+| Legacy database | e.g. historical `plantprocessiq` | Pre-authority historical residue | Unknown | No | Archive and retire only after zero runtime/profile dependency is proven |
+
+**Non-substitution rule.** A green result on one role is never silently reported as evidence for another. In particular, a populated `ppiq_app` is not a fresh-install defect, and a historical `ppiq_presentation` result is not generic M2 evidence.
+
+**Disposable-database invariant.** Every pack or test that creates a database records the created name, destroys it in an unconditional cleanup/finally path, and proves the PID/session/database no longer exists. An intentionally retained backup must be explicitly declared with owner, retention reason and expiry.
+
 ### 4.5.3 `ppiq_staging` - transit
 
 **`import_batches`** - one row per push. The unit of lineage and retry.
@@ -2481,6 +2503,33 @@ A job definition without a target is a scheduler with nothing to schedule. **Eve
 **Version policy behaviour.** `current_published` means the job runs whatever version is currently published, so republishing a corrected definition takes effect at the next run - the normal case. `pinned` means the job runs one specific version until a human changes it, which is what a regulated installation uses to keep a result reproducible across a definition change. **The version actually executed is recorded on every run**, so a result is explainable regardless of the policy.
 
 **Refusals.** `JB01` a target-requiring class saved with no target, naming the class; `JB02` a target whose surface does not match the class, naming both; `JB03` a pinned version that is not published or has been superseded; `JB04` deleting a definition that a job targets, naming the jobs.
+
+
+### 4.5.5b Physical metadata lifecycle and logical subsystem family — v4.10.1
+
+A large metadata schema is acceptable; an **unclassified** metadata schema is not. Table count is not a quality metric. Every physical table in `ppiq_meta`, `ppiq_plant` and `ppiq_staging` is listed in the generated physical database catalogue of 4.5.20 and carries exactly one lifecycle class and one logical subsystem family.
+
+**Lifecycle classes**
+
+| Class | Meaning | Release rule |
+|---|---|---|
+| `PERMANENT_AUTHORITY` | Current authoritative product state or definition | May be written only by its owning service/job; backed up and migrated |
+| `COMPATIBILITY_PROJECTION` | Temporary compatibility name/read model over a permanent authority | Must name its replacement and retirement owner/date; may not become a second writer authority |
+| `OPERATIONAL_EVIDENCE_LOG` | Append-only or bounded-retention runtime evidence | Retention/partition policy required; never treated as configuration authority |
+| `INSTALLATION_GRAMMAR` | Product-supplied lookup/grammar/bootstrap metadata that is generic across customers | May be prefilled on a fresh install only under the Rule-2 prefill contract |
+| `HISTORICAL_RETIRED` | Historical object retained only for migration/replay evidence | No runtime writer; not created on the canonical fresh path unless required for bounded migration |
+| `FIXTURE_ONLY` | Test/presentation/emulation state | Forbidden from generic runtime authority |
+| `DISPOSABLE` | Probe/scratch/transient object | Must self-clean and is never part of backup/restore or customer schema contract |
+
+**Logical subsystem families.** The catalogue uses a stable family code independent of physical name: `AUTHORING_DEFINITION`, `BI_PRESENTATION`, `CANVAS`, `JOB_RUNTIME`, `SOURCE_INTEGRATION`, `MAPPING_RELATIONSHIP`, `IDENTITY_SECURITY`, `LICENCE_ENTITLEMENT`, `ASSISTANT`, `ML_GOVERNANCE`, `OBSERVABILITY_AUDIT`, `RETENTION_ROUTING`, `REPORTING_I18N`, `VALUE_GOVERNANCE`, `CANONICAL_STRUCTURE`, `CANONICAL_PROCESS`, `QUALITY_DOWNTIME`, `INTELLIGENCE_RESULTS`, `PREDICTION_PRACTICE`, `STAGING_TRANSIT`, `PLATFORM_INFRASTRUCTURE`.
+
+A table that cannot be assigned a lifecycle class, family, owner and design clause is a **governance defect**. It is not deleted automatically; it is quarantined for adjudication.
+
+**Certification-grade classification.** `GENERATED_INFERENCE` is a draft-catalogue evidence grade, never a release-certification authority for a table's lifecycle class, logical family, owning subsystem or design clause. Before a fresh-install gate may pass, those four fields are supported by `DESIGN_EXPLICIT` or `SOURCE_EXPLICIT` evidence; `REVIEW_REQUIRED` and unresolved `GENERATED_INFERENCE` both fail the gate. A generated hint may remain on descriptive non-authority fields while visibly marked as such.
+
+**Canonical-fact rule.** Tables whose governed family is `CANONICAL_STRUCTURE`, `CANONICAL_PROCESS` or `QUALITY_DOWNTIME` hold customer plant truth and are `PERMANENT_AUTHORITY` unless the owning design clause explicitly states another lifecycle. A name ending in `_events` does **not** make a canonical plant fact an operational log. `plant_data_log` is different because 4.5.15 explicitly defines it as bounded-retention logging evidence.
+
+**Forward physical naming standard.** New objects use lower-case `snake_case`, no customer/industry noun, and a stable semantic name. Within a governed schema the redundant `ppiq_` prefix is not introduced for new objects unless an external interoperability contract requires it. New non-core metadata tables should use a recognisable family stem where that improves discoverability, for example `canvas_*`, `job_*`, `source_*`, `mapping_*`, `registry_*`, `assistant_*`, `auth_*`, `sso_*`, `scim_*`, `licence_*`, `log_*`, `audit_*`, `retention_*`, `alert_*`, `ml_*`. **A new physical table or view name does not encode schema generations with a terminal version suffix such as `_v1`, `_v2` or `_v3`; version belongs in immutable rows, definition/model versions and migration history, not in the relation name.** An external compatibility contract is the only exception. Existing prefixes and version-suffixed names are **grandfathered** until a separately owned compatibility-safe convergence is justified; this section does not authorise a mass rename.
 
 ### 4.5.10 The plant relationship model
 
@@ -2953,6 +3002,26 @@ Every aggregate over a time interval returns an **interval-coverage contract** i
 
 `coverage_fraction` is **not optional metadata**. An aggregate over 0.40 coverage is a different evidential claim from one over 0.99 coverage. Widgets, tables, Assistant tools and exported reports must expose low coverage according to the governed presentation threshold; they may not present materially different coverage identically. A method may additionally refuse below its declared minimum coverage, but it may never silently fill the gap simply to obtain a number.
 
+
+### 4.5.13b Declared-dimension and workspace-filter execution binding — v4.10.1
+
+There is exactly **one** execution contract for a customer-authored dimension, whether it is used by a widget, the associative workspace, a page/global filter, a bookmark or an Assistant-created governed investigation plan. No surface owns a second positional vocabulary.
+
+Execution resolves in this order:
+
+1. **Declared code.** Resolve the requested dimension/filter code to one active published definition/registry row for the tenant.
+2. **Canonical member.** Resolve that row to a governed canonical or intelligence relation and member. A customer physical source column never crosses this boundary.
+3. **Analysis Subject / grain.** Resolve the current page/widget subject and grain. No implicit `material`, `coil`, batch or other universal grain is supplied.
+4. **Relationship path.** Resolve a unique allowed path through the published plant relationship model from the dimension's entity/grain to the Analysis Subject. The interim implementation may support only a direct single mapped reference; the target contract is the governed path resolver of 4.5.10.
+5. **Predicate compilation.** Compile the keyed selection into the same safe query grammar used by the widget execution path. Selection values remain values; they never become identifiers or raw SQL.
+6. **Evidence.** The executed query records the definition version, relationship/path identity, Analysis Subject, selection state and data-as-of identity used to produce the result.
+
+**Typed refusal, never fallback.** Missing definition, inactive definition, unmapped member, wrong data type, no relationship path, multiple equally valid paths, grain mismatch, unsafe member or unsupported aggregation returns a named refusal. The engine never falls back to a compiled word such as `defectType`, `riskClass` or `shiftCode`.
+
+**Legacy route compatibility.** A legacy API may temporarily accept named query parameters, but the adapter must translate them into the keyed declared-dimension set before execution and must have a retirement owner. A legacy parameter is never itself semantic authority.
+
+**Acceptance.** The same newly-authored foreign/customer-shaped dimension, with no source-code change, filters at least one persisted widget and the workspace/global surface; both resolve through the same definition/member/path identity and produce the same typed refusal when the path is removed or made ambiguous.
+
 ### 4.5.14 Projection validation and the quarantine
 
 **`ppiq_staging.projection_quarantine`**
@@ -3291,6 +3360,30 @@ flowchart LR
 **`ppiq_meta.data_dictionary_entries`** - `entry_scope varchar(20) NOT NULL` CHECK IN (`entity`,`column`,`dimension`,`measure`,`intelligence_source`); `physical_relation varchar(200)`; `physical_column varchar(200)`; `registry_code varchar(100)`; `business_name varchar(200) NOT NULL`; `definition text NOT NULL`; `unit_of_measure varchar(50)`; `direction_of_goodness varchar(10)`; `calculation_note text`; `source_lineage text` (which source system and column it derives from); `example_value varchar(200)`; `owner_role varchar(50)`; `language_code varchar(10) NOT NULL DEFAULT 'en'`; `is_customer_visible boolean NOT NULL DEFAULT true`; `reviewed_at_utc`, `reviewed_by`. UNIQUE `(entry_scope, coalesce(physical_relation,''), coalesce(physical_column,''), coalesce(registry_code,''), language_code)`.
 
 **Generation and obligation.** Product entities and columns ship prefilled entries that pass the genericity lint. **Customer-derived registry dimensions and measures generate an entry at derivation time with the business name and lineage populated and the definition blank**, and an unreviewed entry is surfaced on the translation and settings surfaces as an outstanding commissioning task. Export includes the dictionary, so a report or an extract is self-describing. `GET /api/dictionary?scope=&search=`, `PUT /api/dictionary/{id}`.
+
+
+#### 4.5.20a Complete physical database catalogue and relation graph — v4.10.1
+
+`data_dictionary_entries` remains the customer/business dictionary. In addition, engineering maintains a **generated physical database catalogue** for every supported release. It is a generated reference artifact, not a competing design authority.
+
+The catalogue contains every base table and view in `ppiq_meta`, `ppiq_plant`, `ppiq_staging` and permitted `public` infrastructure, and every column of every table. Required fields are:
+
+- source-declared/origin schema, governed target/effective schema, and live-observed schema where runtime evidence exists; table/view and column; ordinal; PostgreSQL type; nullability; default/generated expression;
+- primary key, unique key, foreign key target, delete/update action and check constraints;
+- logical subsystem family and lifecycle class from 4.5.5b;
+- one-sentence table purpose and one-sentence column meaning. Divider banners, file headers, ownership metadata and comment separators are not purposes; if no semantic sentence can be extracted from design/source authority, the field is `REVIEW_REQUIRED`;
+- owning product subsystem/service/job; authoritative writers and expected readers;
+- creating canonical migration/script and current migration order;
+- design clause and backlog owner;
+- retention/partition/RLS policy where applicable;
+- current-name conformance and any approved compatibility/rename target;
+- evidence grade: `DESIGN_EXPLICIT`, `SOURCE_EXPLICIT`, `GENERATED_INFERENCE`, or `REVIEW_REQUIRED`.
+
+The relation sheet is generated from PK/FK constraints plus the governed semantic relationship model and explicitly distinguishes **physical referential integrity** from **semantic plant relationships**.
+
+**Zero-unknown gate.** A fresh canonical database is not release-certified while any product table or column is absent from the catalogue; while any table has no lifecycle class, logical family, owning subsystem or design clause; while any of those four authority fields remains `GENERATED_INFERENCE` or `REVIEW_REQUIRED`; while a table purpose is only banner/header noise; or while a product/business relation is live in `public`. `public` may contain only platform infrastructure already permitted by 4.5. A source-history script may declare an old `public` object for bounded upgrade compatibility, but the catalogue must show its governed target/effective schema and a fresh canonical replay must not leave it as product authority in `public`. A long-lived development database may contain historical residue, but every extra object must be classified as compatibility, historical, fixture or retirement candidate rather than silently accepted.
+
+**Change rule.** A migration that creates, drops or changes a table/column updates the generated catalogue in the same change. The catalogue is regenerated from executable schema authority; it is never hand-maintained as a parallel DDL source.
 
 ### 4.5.21 The error-code catalogue
 
