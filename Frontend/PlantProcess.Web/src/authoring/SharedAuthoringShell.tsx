@@ -41,9 +41,13 @@ import { CanvasDebugLog, useDebugLog } from "@/pages/Prep/CanvasDebugLog";
 import { AUTHORING_NODE_TYPES } from "./BlockNodes";
 import {
   FLOW_OUT, arrangeBoard, blockProblem, boardProblems, fieldsVisibleAt,
-  serialiseGraph, wiringRefusal,
+  serialisationOutcome, wiringRefusal,
   type BoardEdge, type BoardNode, type BoardNodeKind, type ProposedWire,
 } from "./graphSemantics";
+import { authoringReadiness, readinessBlockedMessage } from "./authoringReadiness";
+import {
+  blockById, paletteEligibleBlocks, seedForKind, titleForKind,
+} from "./blockRegistry";
 import {
   SCHEMA_DRAG_MIME, datasetForDrop, decodeSchemaDrag, toggleColumn,
   type ColumnSelection,
@@ -71,22 +75,15 @@ import "./authoring-shell.css";
 
 const nodeTypes = { dataset: DatasetNode, ...AUTHORING_NODE_TYPES };
 
-// T-033. The three block ids THIS surface can put on its board. Every other
-// block stays declared and unavailable in the registry, which is the toolbox
-// telling the truth about what the design has rather than hiding it.
-const ADDABLE_BLOCK_IDS = ["filter", "select-columns", "derived-column"];
+// T-242 Stage 3a/3b. THE CATALOGUE IS THE REGISTRY, AND ONLY THE REGISTRY.
+//
+// This file used to keep three parallel maps - which block ids are addable,
+// which id becomes which board kind, and which kind carries which title - plus
+// a seed ternary inside addBlock. Four places to edit for one new family, any
+// of which could quietly disagree with blockRegistry or with each other. They
+// are gone. What a surface may offer is derived from capability; what a placed
+// block is called, and what it starts with, comes from its catalogue row.
 
-const BLOCK_KIND_OF: Record<string, BoardNodeKind> = {
-  "filter": "filter",
-  "select-columns": "select",
-  "derived-column": "derived",
-};
-
-const BLOCK_TITLE_OF: Record<string, string> = {
-  filter: "Filter",
-  select: "Select columns",
-  derived: "Derived column",
-};
 
 export interface SharedAuthoringShellProps {
   purpose: AuthoringPurpose;
@@ -352,27 +349,33 @@ export function SharedAuthoringShell({
   }), [nodes, boardNodes, boardEdges, setNodeField, toggleSelectField]);
 
   const addBlock = useCallback((blockId: string) => {
-    const kind = BLOCK_KIND_OF[blockId];
-    if (!kind) { return; }
+    // The catalogue answers all three questions at once: is this block real,
+    // what kind of node does it become, and what does it start with. A block
+    // the product has not implemented is not placed at all, rather than placed
+    // empty and left for the author to discover.
+    const block = blockById(blockId);
+    if (!block || !block.implemented) { return; }
+    const kind = block.boardKind;
     setNodes((ns) => {
       // The number is the first free one, so deleting a block and adding
       // another cannot produce two nodes with the same id.
       let next = 1;
       while (ns.some((x) => x.id === kind + "-" + next)) { next = next + 1; }
-      const seed = kind === "filter"
-        ? { fieldRef: "", op: "", value: "" }
-        : kind === "derived"
-          ? { alias: "", leftRef: "", op: "", rightRef: "", constant: "" }
-          : { chosen: [] as string[] };
       return ns.concat({
         id: kind + "-" + next,
         type: kind,
         position: { x: 460 + ns.length * 30, y: 320 + (ns.length % 3) * 70 },
-        data: { title: BLOCK_TITLE_OF[kind] + " " + next, fields: [], problem: null, ...seed },
+        data: {
+          title: titleForKind(kind) + " " + next,
+          fields: [],
+          problem: null,
+          ...(seedForKind(kind) ?? {}),
+        },
       });
     });
     logSuccess(blockId, "Block added. Wire a dataset into its left port to give it columns.");
   }, [setNodes, logSuccess]);
+
 
   // T-033 item 7, ruling 6. CanvasShell already deletes with Backspace and
   // Delete. This is the VISIBLE AFFORDANCE FOR THAT SAME MECHANISM: the
@@ -404,16 +407,20 @@ export function SharedAuthoringShell({
 
   // T-033 item 6. GRAPH-OWNED SERIALISATION. The board is the only source of
   // the definition - no side form, and no second place a filter can come from.
-  // serialiseGraph REFUSES rather than emitting a partial definition, so this
-  // is null exactly when the board cannot run, which is the same condition the
-  // validity chip reports.
-  const graph = useMemo((): MapperGraph | null => {
-    try {
-      return serialiseGraph(name, "MaterialUnit", boardNodes, boardEdges);
-    } catch {
-      return null;
-    }
-  }, [name, boardNodes, boardEdges]);
+  //
+  // T-242 Stage 3b. This was try/catch/return null, which collapsed three
+  // different outcomes into one indistinguishable value: a governed refusal
+  // naming the block that caused it, a board that is merely incomplete, and an
+  // outright defect. serialisationOutcome keeps them apart - a refusal comes
+  // back as DATA, and anything unexpected is rethrown so it reaches the error
+  // boundary instead of being mistaken for an ordinary authoring problem.
+  const serialisation = useMemo(
+    () => serialisationOutcome(name, "MaterialUnit", boardNodes, boardEdges),
+    [name, boardNodes, boardEdges],
+  );
+  const graph = serialisation.ok ? serialisation.graph : null;
+  const serialisationRefusal = serialisation.ok ? null : serialisation.refusal.message;
+
 
   // Section 5.2.6: a GLOBAL VALIDITY INDICATOR sits beside Run, always visible,
   // so the author never has to hunt for whether the graph can run. Section
@@ -424,6 +431,15 @@ export function SharedAuthoringShell({
   // stranded tables AND every invalid block, each with its own sentence.
   const problems = useMemo(() => boardProblems(boardNodes, boardEdges), [boardNodes, boardEdges]);
   const invalidReason = problems.length > 0 ? problems[0] : null;
+
+  // TWO QUESTIONS, TWO ANSWERS. A board can be semantically sound and still be
+  // unable to cross the save boundary. Reporting that as "Invalid" would send
+  // the author hunting for a broken block that does not exist, so the decision
+  // lives in authoringReadiness where it is proven rather than buried in JSX.
+  const readiness = authoringReadiness(invalidReason, serialisationRefusal);
+
+  // What this surface may offer is DERIVED from capability, not listed here.
+  const addableBlockIds = useMemo(() => paletteEligibleBlocks().map((b) => b.id), []);
 
   const ensureSession = async () => {
     if (sessionId) { return sessionId; }
@@ -444,8 +460,7 @@ export function SharedAuthoringShell({
 
       const startedAt = performance.now();
       if (!graph) {
-        logError(name, "The board cannot be turned into a definition yet. "
-          + (invalidReason ?? "Check the blocks that are marked with an error."));
+        logError(name, readinessBlockedMessage(readiness));
         return;
       }
       // RUN START: clear the stale failure, then mark the real operation.
@@ -486,8 +501,7 @@ export function SharedAuthoringShell({
   const doPublish = async () => {
     try {
       if (!graph) {
-        logError(name, "There is nothing publishable on the board yet. "
-          + (invalidReason ?? "Check the blocks that are marked with an error."));
+        logError(name, readinessBlockedMessage(readiness));
         return;
       }
       const sid = await ensureSession();
@@ -841,19 +855,21 @@ export function SharedAuthoringShell({
         {!isQueryPurpose && (
           <>
           <span
-            className={"canvas-modebar__validity" + (invalidReason ? " canvas-modebar__validity--bad" : " canvas-modebar__validity--ok")}
+            className={"canvas-modebar__validity" + (readiness.canRun ? " canvas-modebar__validity--ok" : " canvas-modebar__validity--bad")}
             data-testid="authoring-validity"
-            title={invalidReason ?? "Every block has what it needs to run."}
+            data-readiness={readiness.state}
+            title={readiness.detail}
           >
-            {invalidReason ? "Invalid" : "Valid flow"}
+            {readiness.label}
           </span>
 
-          <StandardP2Button variant="primary" onClick={doPreview} disabled={Boolean(invalidReason)}>
+          <StandardP2Button variant="primary" onClick={doPreview} disabled={!readiness.canRun}>
             Run
           </StandardP2Button>
-          <StandardP2Button variant="secondary" onClick={doPublish} disabled={Boolean(invalidReason)}>
+          <StandardP2Button variant="secondary" onClick={doPublish} disabled={!readiness.canRun}>
             Publish version
           </StandardP2Button>
+
 
           <span className="canvas-modebar__spacer" />
           <span className="canvas-modebar__hint">
@@ -1125,7 +1141,7 @@ export function SharedAuthoringShell({
               unavailableReason={definition.showsStagingCatalogue
                 ? "Filter, Select columns and Derived column are on the board. The rest are declared here and arrive with the later grammar."
                 : "Blocks are declared here and become available with this purpose's own board grammar."}
-              addableBlockIds={definition.showsStagingCatalogue ? ADDABLE_BLOCK_IDS : []}
+              addableBlockIds={definition.showsStagingCatalogue ? addableBlockIds : []}
               onAddBlock={addBlock}
             />
             {preview && preview.rows?.length > 0 && (
