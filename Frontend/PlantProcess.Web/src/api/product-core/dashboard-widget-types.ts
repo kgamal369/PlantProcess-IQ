@@ -3,6 +3,8 @@
 // Runtime API behavior remains in productCoreApiClient.implementation.ts.
 
 import type { PagedResult, ReferenceItem, SortDirection } from "./shared-types";
+import type { DeclaredDimensionFilter, DeclaredDimensionReference } from "./declared-dimension-types";
+export type { DeclaredDimensionFilter, DeclaredDimensionReference } from "./declared-dimension-types";
 
 export interface DashboardFilters {
   siteId?: string;
@@ -11,12 +13,12 @@ export interface DashboardFilters {
   materialCode?: string;
   materialUnitType?: string;
   sourceSystem?: string;
-  defectType?: string;
-  riskClass?: string;
   fromUtc?: string;
   toUtc?: string;
-  shiftCode?: string;
   parameterCode?: string;
+  /** T-094. Filters on customer-PUBLISHED dimensions, keyed by declared code.
+   *  Declaring a dimension adds an entry here, never a property. */
+  dimensionFilters?: DeclaredDimensionFilter[];
   linkMode?: "SameMaterial" | "DownstreamChildren" | "UpstreamParents" | "FullGenealogy";
   genealogyDepth?: number;
   bins?: number;
@@ -33,10 +35,10 @@ export interface DashboardReferenceData {
   areas: ReferenceItem[];
   equipment: ReferenceItem[];
   sourceSystems: ReferenceItem[];
-  defects: ReferenceItem[];
   parameters: ReferenceItem[];
-  riskClasses: ReferenceItem[];
-  shifts: ReferenceItem[];
+  /** T-094. Published declarations for this tenant. An EMPTY array is a valid,
+   *  successful answer meaning nothing is declared yet; it is not a failure. */
+  declaredDimensions: DeclaredDimensionReference[];
 }
 
 export interface DashboardMaterialRow {
@@ -267,12 +269,11 @@ export interface DashboardWidgetFilters {
   materialCode?: string | null;
   materialUnitType?: string | null;
   sourceSystem?: string | null;
-  defectType?: string | null;
-  riskClass?: string | null;
-  shiftCode?: string | null;
   parameterCode?: string | null;
   fromUtc?: string | null;
   toUtc?: string | null;
+  /** T-094. Keyed declared-dimension filters, identical to the workspace shape. */
+  dimensionFilters?: DeclaredDimensionFilter[] | null;
 }
 
 export interface DashboardWidgetQueryOptions {

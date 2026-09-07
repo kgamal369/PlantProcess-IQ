@@ -1,5 +1,5 @@
 import { ExtraChart, isExtraChartType } from "./ChartExtras";
-import { dimensionToFilterField, isTemporalDimension } from "@/state/widgetSelectionMap";
+import { structuralFilterFieldFor, isTemporalDimension } from "@/state/widgetSelectionMap";
 import { MetricCard } from "@/components/MetricCard";
 import { BarChart3 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -56,6 +56,8 @@ import { resolveAuthoringState, type AuthoringStateFacts } from "@/authoring/aut
 
 import { StandardP2Table } from "@/components/standard/StandardP2Controls";
 import { useDashboardFilters } from "../../state/DashboardFilterContext";
+import { composeEffectiveFilters, toRequestFilters } from "../../state/effectiveQueryFilters";
+import type { DeclaredDimensionFilter } from "../../api/productApiClient";
 import { useDashboardSelection } from "../../state/DashboardSelectionContext";
 interface SavedDashboardWidgetProps {
   dashboardDefinitionId: string;
@@ -86,29 +88,37 @@ interface SavedDashboardWidgetProps {
   const [running, setRunning] = useState<boolean>(true);
   // Captured with the result it describes, so the two can never disagree.
   const [snapshot, setSnapshot] = useState<WidgetExecutionSnapshot | null>(null);
-  const { filters: globalFilters } = useDashboardFilters();
+  const { filters: globalFilters, declaredFilters: globalDeclaredFilters } = useDashboardFilters();
   const { getWidgetState } = useDashboardSelection();
   const widgetState = getWidgetState(("saved-" + widget.id) as never);
   const activeChartType = widgetState.chartType ?? widget.chartType;
 
   const filters = useMemo(() => {
+    // Permanent widget scope and workspace scope are composed once. A saved
+    // legacy key remains present and is therefore refused by DB10 on the
+    // backend; it is never silently translated or dropped.
+    let saved: Record<string, unknown> = {};
     try {
-      const base: Record<string, unknown> = widget.filterJson
-        ? JSON.parse(widget.filterJson)
-        : {};
-      const g = (globalFilters ?? {}) as Record<string, unknown>;
-      for (const k of [
-        "siteId", "areaId", "equipmentId", "materialCode", "materialUnitType", "sourceSystem",
-        "defectType", "riskClass", "shiftCode", "parameterCode", "fromUtc", "toUtc",
-      ]) {
-        const v = g[k];
-        if (v !== undefined && v !== null && v !== "") { base[k] = v; }
-      }
-      return base;
+      saved = widget.filterJson ? JSON.parse(widget.filterJson) : {};
     } catch {
-      return {};
+      saved = {};
     }
-  }, [widget.filterJson, globalFilters]);
+
+    const savedDeclared = Array.isArray(saved.dimensionFilters)
+      ? (saved.dimensionFilters as DeclaredDimensionFilter[])
+      : [];
+    delete saved.dimensionFilters;
+
+    const structural = { ...saved, ...(globalFilters as Record<string, unknown>) };
+    const declaredByCode = new Map<string, DeclaredDimensionFilter>();
+    [...savedDeclared, ...globalDeclaredFilters].forEach((item) => {
+      if (item?.code && item?.value) declaredByCode.set(item.code, item);
+    });
+
+    return toRequestFilters(composeEffectiveFilters(
+      structural, Array.from(declaredByCode.values()),
+    ));
+  }, [widget.filterJson, globalFilters, globalDeclaredFilters]);
 
   const displayOptions = useMemo(() => {
     try {
@@ -452,7 +462,7 @@ interface SavedDashboardWidgetProps {
           // itself and look plausible. HistogramChart binds every role by name.
           <HistogramChart rows={rows as Record<string, unknown>[]} />
         ) : isExtraChartType(activeChartType) ? (
-          <ExtraChart type={String(activeChartType)} rows={rows as Record<string, unknown>[]} categoryKey={categoryKey} labelKey={displayKey} valueKey={valueKey} field={dimensionToFilterField(widget.dimensionCode)} timeDimension={isTemporalDimension(widget.dimensionCode) ? widget.dimensionCode : null} />
+          <ExtraChart type={String(activeChartType)} rows={rows as Record<string, unknown>[]} categoryKey={categoryKey} labelKey={displayKey} valueKey={valueKey} field={structuralFilterFieldFor(widget.dimensionCode)} declaredCode={structuralFilterFieldFor(widget.dimensionCode) || isTemporalDimension(widget.dimensionCode) ? null : widget.dimensionCode} timeDimension={isTemporalDimension(widget.dimensionCode) ? widget.dimensionCode : null} />
         ) : activeChartType === "line" || activeChartType === "area" ? (
           <InteractiveLineChart
             data={rows}
@@ -461,7 +471,8 @@ interface SavedDashboardWidgetProps {
             area={activeChartType === "area"}
             selection={{
               type: "generic",
-              field: dimensionToFilterField(widget.dimensionCode),
+              field: structuralFilterFieldFor(widget.dimensionCode),
+              declaredCode: structuralFilterFieldFor(widget.dimensionCode) || isTemporalDimension(widget.dimensionCode) ? null : widget.dimensionCode,
               timeDimension: isTemporalDimension(widget.dimensionCode) ? widget.dimensionCode : null,
               sourceWidget: widget.widgetTitle,
               valueKey: categoryKey,
@@ -476,7 +487,8 @@ interface SavedDashboardWidgetProps {
             donut={activeChartType === "donut"}
             selection={{
               type: "generic",
-              field: dimensionToFilterField(widget.dimensionCode),
+              field: structuralFilterFieldFor(widget.dimensionCode),
+              declaredCode: structuralFilterFieldFor(widget.dimensionCode) || isTemporalDimension(widget.dimensionCode) ? null : widget.dimensionCode,
               timeDimension: isTemporalDimension(widget.dimensionCode) ? widget.dimensionCode : null,
               sourceWidget: widget.widgetTitle,
               valueKey: categoryKey,
@@ -492,7 +504,8 @@ interface SavedDashboardWidgetProps {
             valueKey={valueKey}
             selection={{
               type: "generic",
-              field: dimensionToFilterField(widget.dimensionCode),
+              field: structuralFilterFieldFor(widget.dimensionCode),
+              declaredCode: structuralFilterFieldFor(widget.dimensionCode) || isTemporalDimension(widget.dimensionCode) ? null : widget.dimensionCode,
               timeDimension: isTemporalDimension(widget.dimensionCode) ? widget.dimensionCode : null,
               sourceWidget: widget.widgetTitle,
               valueKey: categoryKey,

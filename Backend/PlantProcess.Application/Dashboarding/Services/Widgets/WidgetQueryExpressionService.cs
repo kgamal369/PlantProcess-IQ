@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 using PlantProcess.Application.Common.Results;
 using PlantProcess.Application.Dashboarding.Contracts;
 using PlantProcess.Application.Dashboarding.Interfaces;
+using PlantProcess.Application.Dashboarding.Services.Dimensions;
 
 namespace PlantProcess.Application.Dashboarding.Services.Widgets;
 
@@ -32,12 +33,6 @@ public sealed class WidgetQueryExpressionService : IWidgetQueryExpressionService
         "materialType",
         "materialUnitType",
         "sourceSystem",
-        "defect",
-        "defectType",
-        "risk",
-        "riskClass",
-        "shift",
-        "shiftCode",
         "from",
         "fromUtc",
         "to",
@@ -60,6 +55,8 @@ public sealed class WidgetQueryExpressionService : IWidgetQueryExpressionService
 
     public ApplicationResult<DashboardWidgetQueryDto> Parse(WidgetQueryExpressionRequest request)
     {
+        DeclaredDimensionFilterQueryParser.RejectUnsupported(request.Filters?.UnsupportedFilters);
+
         if (IsCompiledGrammarEnabled())
         {
             var compiled = Compile(request);
@@ -91,6 +88,14 @@ public sealed class WidgetQueryExpressionService : IWidgetQueryExpressionService
         }
 
         var tokens = ParseTokens(request.Expression);
+        var retiredKeys = tokens.Keys.Where(IsRetiredLegacyFilterKey).ToArray();
+        if (retiredKeys.Length > 0)
+        {
+            return ApplicationResult<CompiledWidgetQueryExpression>.Failure(
+                ApplicationError.BusinessRule(
+                    DimensionBindingRefusalCodes.LegacyFilterUnsupported +
+                    ": retired widget filter token(s): " + string.Join(", ", retiredKeys)));
+        }
         var unknownKeys = tokens.Keys.Where(key => !IsAllowedKey(key)).ToArray();
 
         if (unknownKeys.Length > 0)
@@ -169,6 +174,15 @@ public sealed class WidgetQueryExpressionService : IWidgetQueryExpressionService
         }
 
         var tokens = ParseTokens(request.Expression);
+
+        var retiredKeys = tokens.Keys.Where(IsRetiredLegacyFilterKey).ToArray();
+        if (retiredKeys.Length > 0)
+        {
+            return ApplicationResult<DashboardWidgetQueryDto>.Failure(
+                ApplicationError.BusinessRule(
+                    DimensionBindingRefusalCodes.LegacyFilterUnsupported +
+                    ": retired widget filter token(s): " + string.Join(", ", retiredKeys)));
+        }
 
         var unknownKeys = tokens.Keys
             .Where(key => !IsAllowedKey(key))
@@ -298,6 +312,24 @@ public sealed class WidgetQueryExpressionService : IWidgetQueryExpressionService
         return tokens;
     }
 
+    private static bool IsRetiredLegacyFilterKey(string key)
+    {
+        if (string.IsNullOrWhiteSpace(key)) return false;
+
+        var normalized = key.StartsWith("filter.", StringComparison.OrdinalIgnoreCase) ||
+                         key.StartsWith("where.", StringComparison.OrdinalIgnoreCase)
+            ? key.Substring(key.IndexOf('.') + 1)
+            : key;
+
+        if (DirectAllowedKeys.Contains(normalized)) return false;
+
+        // Retirement is recognized by the old named-filter grammar shape, not by
+        // a compiled list of plant/customer vocabulary.
+        return normalized.EndsWith("Type", StringComparison.OrdinalIgnoreCase) ||
+               normalized.EndsWith("Class", StringComparison.OrdinalIgnoreCase) ||
+               normalized.EndsWith("Code", StringComparison.OrdinalIgnoreCase);
+    }
+
     private static bool IsAllowedKey(string key)
     {
         if (DirectAllowedKeys.Contains(key))
@@ -336,12 +368,10 @@ public sealed class WidgetQueryExpressionService : IWidgetQueryExpressionService
             MaterialCode: ReadAnyNullable(tokens, "material", "materialCode") ?? existing?.MaterialCode,
             MaterialUnitType: ReadAnyNullable(tokens, "materialType", "materialUnitType") ?? existing?.MaterialUnitType,
             SourceSystem: ReadAnyNullable(tokens, "source", "sourceSystem") ?? existing?.SourceSystem,
-            DefectType: ReadAnyNullable(tokens, "defect", "defectType") ?? existing?.DefectType,
-            RiskClass: ReadAnyNullable(tokens, "risk", "riskClass") ?? existing?.RiskClass,
-            ShiftCode: ReadAnyNullable(tokens, "shift", "shiftCode") ?? existing?.ShiftCode,
             ParameterCode: ReadAnyNullable(tokens, "parameter", "parameterCode") ?? existing?.ParameterCode,
             FromUtc: ReadDateAny(tokens, existing?.FromUtc, "from", "fromUtc"),
-            ToUtc: ReadDateAny(tokens, existing?.ToUtc, "to", "toUtc"));
+            ToUtc: ReadDateAny(tokens, existing?.ToUtc, "to", "toUtc"),
+            DimensionFilters: existing?.DimensionFilters);
     }
 
     private static DashboardWidgetQueryOptionsDto? MergeOptions(

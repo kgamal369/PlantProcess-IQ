@@ -3,6 +3,7 @@ import { apiClient } from "../api/http";
 import { useDashboardFilters } from "./DashboardFilterContext";
 import { productApi } from "../api/productApiClient";
 import { buildAssociativeFields, type AssocField } from "./associativeFields";
+import { composeEffectiveFilters, toRequestFilters } from "./effectiveQueryFilters";
 
 /** M2-37 associative engine (Qlik spec S0), client-orchestrated:
  * possible-set per field = the existing, registry-validated widget query for
@@ -42,11 +43,6 @@ export const useAssociative = () => {
   return c;
 };
 
-/** PPIQ-SCENE5678: never forward pagination or sort params into a dimension
- *  enumeration - they are not filters and they change nothing about which values
- *  are still possible. */
-const PAGINATION_KEYS = ["page", "pageSize", "sortBy", "sortDirection"];
-
 type QueryRow = Record<string, unknown>;
 async function dimensionValues(dimension: string, measureCode: string, filters: Record<string, unknown>): Promise<string[] | null> {
   try {
@@ -79,7 +75,7 @@ async function dimensionValues(dimension: string, measureCode: string, filters: 
 }
 
 export function AssociativeProvider({ children }: { children: ReactNode }) {
-  const { filters, setFilter } = useDashboardFilters();
+  const { filters, declaredFilters, setFilter, setDeclaredFilter } = useDashboardFilters();
   const [enabled, setEnabled] = useState(false);
   // T-048. Derived once from the published dimension catalogue. Until it
   // arrives the set is empty and the panel shows nothing, which is honest: a
@@ -90,15 +86,18 @@ export function AssociativeProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
     (async () => {
       try {
-        const metadata = await productApi.getDashboardMetadata();
+        const [metadata, reference] = await Promise.all([
+          productApi.getDashboardMetadata(),
+          productApi.getDashboardReferenceData(filters),
+        ]);
         if (cancelled) { return; }
-        setAssocFields(buildAssociativeFields(metadata?.dimensions));
+        setAssocFields(buildAssociativeFields(metadata?.dimensions, reference?.declaredDimensions));
       } catch {
         if (!cancelled) { setAssocFields([]); }
       }
     })();
     return () => { cancelled = true; };
-  }, []);
+  }, [filters.siteId]);
 
   const [allSets, setAllSets] = useState<Record<string, string[] | null>>({});
   const [possibleSets, setPossibleSets] = useState<Record<string, string[] | null>>({});
@@ -140,19 +139,21 @@ export function AssociativeProvider({ children }: { children: ReactNode }) {
       // own selection. The previous version copied only the eight associative
       // keys, so a time-range selection (fromUtc/toUtc) narrowed the widgets but
       // not the panel - the chips and the charts then disagreed on screen.
-      const minusOwn: Record<string, unknown> = {};
-      for (const k of Object.keys(g)) {
-        if (k === f.key) continue;
-        if (PAGINATION_KEYS.indexOf(k) >= 0) continue;
-        const v = g[k];
-        if (v !== undefined && v !== null && v !== "") minusOwn[k] = v;
-      }
-      const vals = await dimensionValues(f.dimension, f.measureCode, minusOwn);
+      const effective = composeEffectiveFilters(
+        g,
+        declaredFilters,
+        f.kind === "declared"
+          ? { omitDeclaredCode: f.dimension }
+          : { omitStructuralKey: f.key },
+      );
+      const vals = await dimensionValues(
+        f.dimension, f.measureCode, toRequestFilters(effective),
+      );
       if (generation.current !== gen) return; // stale
       setPossibleSets((s) => ({ ...s, [f.key]: vals }));
       setLoading((l) => ({ ...l, [f.key]: false }));
     });
-  }, [filters, allSets, assocFields]);
+  }, [filters, declaredFilters, allSets, assocFields]);
 
   useEffect(() => {
     if (!enabled) return;
@@ -166,7 +167,9 @@ export function AssociativeProvider({ children }: { children: ReactNode }) {
     return assocFields.map((f) => {
       const all = allSets[f.key];
       const possible = possibleSets[f.key];
-      const selectedVal = g[f.key] !== undefined && g[f.key] !== null && g[f.key] !== "" ? String(g[f.key]) : null;
+      const selectedVal = f.kind === "declared"
+        ? (declaredFilters.find((x) => x.code === f.dimension)?.value ?? null)
+        : (g[f.key] !== undefined && g[f.key] !== null && g[f.key] !== "" ? String(g[f.key]) : null);
       const states = new Map<string, ValueState>();
       if (all) {
         const poss = new Set(possible ?? all);
@@ -196,14 +199,22 @@ export function AssociativeProvider({ children }: { children: ReactNode }) {
         possibleCount: (possible ?? all ?? []).length,
       };
     });
-  }, [filters, allSets, possibleSets, loading, assocFields]);
+  }, [filters, declaredFilters, allSets, possibleSets, loading, assocFields]);
 
   const toggleValue = useCallback((fieldKey: string, value: string) => {
+    const field = assocFields.find((x) => x.key === fieldKey);
+    if (!field) return;
+
+    if (field.kind === "declared") {
+      const current = declaredFilters.find((x) => x.code === field.dimension)?.value ?? null;
+      setDeclaredFilter(field.dimension, current === value ? undefined : value);
+      return;
+    }
+
     const g = (filters ?? {}) as Record<string, unknown>;
     const current = g[fieldKey] !== undefined && g[fieldKey] !== null ? String(g[fieldKey]) : null;
-    // Qlik semantic: clicking an excluded value is allowed - the state pivots.
     setFilter(fieldKey as never, (current === value ? undefined : value) as never);
-  }, [filters, setFilter]);
+  }, [assocFields, declaredFilters, filters, setDeclaredFilter, setFilter]);
 
   const value = useMemo(() => ({ enabled, setEnabled, fields, toggleValue }), [enabled, fields, toggleValue]);
   return <AssociativeCtx.Provider value={value}>{children}</AssociativeCtx.Provider>;

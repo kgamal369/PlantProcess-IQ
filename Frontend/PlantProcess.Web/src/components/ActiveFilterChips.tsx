@@ -3,19 +3,19 @@ import { useDashboardFilters } from "../state/DashboardFilterContext";
 import type { DashboardFilters } from "../api/productApiClient";
 import { StandardButton } from "@/components/standard";
 
-const labels: Record<keyof DashboardFilters, string> = {
+// T-094. Labels for the STRUCTURAL filters the product owns. A declared
+// dimension is not listed here. The chip uses the published code as its
+// canonical identity; display labels remain catalogue data and are not compiled.
+const labels: Partial<Record<keyof DashboardFilters, string>> = {
   siteId: "Site",
   areaId: "Area",
   equipmentId: "Equipment",
   materialCode: "Material",
   materialUnitType: "Material type",
   sourceSystem: "Source",
-  defectType: "Defect",
   parameterCode: "Parameter",
-  riskClass: "Risk",
   fromUtc: "From",
   toUtc: "To",
-  shiftCode: "Shift",
   linkMode: "Genealogy",
   genealogyDepth: "Depth",
   bins: "Bins",
@@ -29,13 +29,15 @@ const labels: Record<keyof DashboardFilters, string> = {
 };
 
 export function ActiveFilterChips() {
-  const { filters, clearFilter } = useDashboardFilters();
+  const { filters, clearFilter, declaredFilters, clearDeclaredFilter } = useDashboardFilters();
 
   const entries = Object.entries(filters).filter(
-    ([, value]) => value !== undefined && value !== null && value !== ""
+    ([key, value]) =>
+      labels[key as keyof DashboardFilters] !== undefined &&
+      value !== undefined && value !== null && value !== ""
   ) as [keyof DashboardFilters, string | number][];
 
-  if (entries.length === 0) {
+  if (entries.length === 0 && declaredFilters.length === 0) {
     return (
       <div className="chip-row muted">
         No active filters. The dashboard is showing the full imported dataset.
@@ -53,6 +55,17 @@ export function ActiveFilterChips() {
           title="Remove filter"
         >
           <strong>{labels[key]}:</strong> {formatValue(key, value)}
+          <X size={13} />
+        </StandardButton>
+      ))}
+      {declaredFilters.map((filter) => (
+        <StandardButton
+          key={"declared:" + filter.code}
+          className="filter-chip"
+          onClick={() => clearDeclaredFilter(filter.code)}
+          title="Remove filter"
+        >
+          <strong>{filter.code}:</strong> {filter.value}
           <X size={13} />
         </StandardButton>
       ))}

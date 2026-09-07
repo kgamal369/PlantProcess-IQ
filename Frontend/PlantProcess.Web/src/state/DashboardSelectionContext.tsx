@@ -28,9 +28,12 @@ import type { ReactNode } from "react";
 import type { DashboardFilters } from "../api/productApiClient";
 import { useDashboardFilters } from "./DashboardFilterContext";
 
+// T-094. The product's own selection categories, plus ONE for everything a
+// customer declares. A published dimension is not given a compiled category of
+// its own: it is "declared", and its identity is the published code it carries.
 export type DashboardSelectionType =
   | "site" | "area" | "equipment" | "sourceSystem"
-  | "material" | "defect" | "riskClass" | "shift"
+  | "material" | "declared"
   | "parameter" | "dateRange" | "generic";
 
 export type DashboardChartType =
@@ -52,11 +55,24 @@ export type DashboardWidgetId =
 export interface DashboardSelection {
   id: string;
   type: DashboardSelectionType;
-  field: keyof DashboardFilters;
+  /** The structural filter field, when the selection is on a product-owned
+   *  dimension. Omitted for a declared dimension, which carries declaredCode. */
+  field?: keyof DashboardFilters;
+  /** T-094. The published code, when the selection is on a customer-declared
+   *  dimension. Exactly one of field / declaredCode is set. */
+  declaredCode?: string;
   value: string | number;
   label: string;
   sourceWidget: string;
   createdAtUtc: string;
+}
+
+/** The identity a selection filters on, whichever contract it belongs to. */
+function selectionIdentity(selection: {
+  field?: keyof DashboardFilters;
+  declaredCode?: string;
+}): string {
+  return selection.declaredCode ?? String(selection.field ?? "");
 }
 
 import type { WidgetExecutionSnapshot } from "./drilldownExecutionSnapshot";
@@ -172,7 +188,8 @@ export function DashboardSelectionProvider({
 }: {
   children: ReactNode;
 }) {
-  const { mergeFilters, clearFilter } = useDashboardFilters();
+  const { mergeFilters, clearFilter, setDeclaredFilter, clearDeclaredFilter } =
+    useDashboardFilters();
 
   const [selections, setSelections] = useState<DashboardSelection[]>([]);
   const [layout, setLayout] = useState<DashboardLayoutState>(() =>
@@ -195,12 +212,16 @@ export function DashboardSelectionProvider({
       setSelections((current) => [...current, nextSelection]);
 
       // Always reset to page 1 so users see filtered results from the start.
-      mergeFilters({
-        [selection.field]: selection.value,
-        page: 1,
-      } as Partial<DashboardFilters>);
+      if (nextSelection.declaredCode) {
+        setDeclaredFilter(nextSelection.declaredCode, String(nextSelection.value));
+      } else if (nextSelection.field) {
+        mergeFilters({
+          [nextSelection.field]: nextSelection.value,
+          page: 1,
+        } as Partial<DashboardFilters>);
+      }
     },
-    [mergeFilters]
+    [mergeFilters, setDeclaredFilter]
   );
 
   const undoSelection = useCallback(() => {
@@ -211,20 +232,27 @@ export function DashboardSelectionProvider({
       const remaining = current.slice(0, -1);
       const previousForSameField = [...remaining]
         .reverse()
-        .find((item) => item.field === last.field);
+        .find((item) => selectionIdentity(item) === selectionIdentity(last));
 
-      if (previousForSameField) {
-        mergeFilters({
-          [last.field]: previousForSameField.value,
-          page: 1,
-        } as Partial<DashboardFilters>);
-      } else {
-        clearFilter(last.field);
+      if (last.declaredCode) {
+        setDeclaredFilter(
+          last.declaredCode,
+          previousForSameField ? String(previousForSameField.value) : undefined
+        );
+      } else if (last.field) {
+        if (previousForSameField) {
+          mergeFilters({
+            [last.field]: previousForSameField.value,
+            page: 1,
+          } as Partial<DashboardFilters>);
+        } else {
+          clearFilter(last.field);
+        }
       }
 
       return remaining;
     });
-  }, [clearFilter, mergeFilters]);
+  }, [clearFilter, mergeFilters, setDeclaredFilter]);
 
   // T-043. Chapter 4 5.1.13: "Chip x in the selections bar removes that one
   // selection." undoSelection reaches only the LAST selection, so with three
@@ -242,26 +270,36 @@ export function DashboardSelectionProvider({
       const remaining = selections.filter((item) => item.id !== selectionId);
       const previousForSameField = [...remaining]
         .reverse()
-        .find((item) => item.field === target.field);
+        .find((item) => selectionIdentity(item) === selectionIdentity(target));
 
-      if (previousForSameField) {
-        mergeFilters({
-          [target.field]: previousForSameField.value,
-          page: 1,
-        } as Partial<DashboardFilters>);
-      } else {
-        clearFilter(target.field);
+      if (target.declaredCode) {
+        setDeclaredFilter(
+          target.declaredCode,
+          previousForSameField ? String(previousForSameField.value) : undefined
+        );
+      } else if (target.field) {
+        if (previousForSameField) {
+          mergeFilters({
+            [target.field]: previousForSameField.value,
+            page: 1,
+          } as Partial<DashboardFilters>);
+        } else {
+          clearFilter(target.field);
+        }
       }
 
       setSelections(remaining);
     },
-    [clearFilter, mergeFilters, selections]
+    [clearFilter, mergeFilters, setDeclaredFilter, selections]
   );
 
   const clearSelections = useCallback(() => {
-    selections.forEach((selection) => clearFilter(selection.field));
+    selections.forEach((selection) => {
+      if (selection.declaredCode) clearDeclaredFilter(selection.declaredCode);
+      else if (selection.field) clearFilter(selection.field);
+    });
     setSelections([]);
-  }, [clearFilter, selections]);
+  }, [clearFilter, clearDeclaredFilter, selections]);
 
   const openDrilldown = useCallback(
     (state: Omit<DrilldownState, "isOpen">) => {

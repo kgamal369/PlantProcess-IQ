@@ -79,6 +79,7 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
         DashboardWidgetQueryDto query,
         CancellationToken cancellationToken)
     {
+        DeclaredDimensionFilterQueryParser.RejectUnsupported(query.Filters?.UnsupportedFilters);
         var validation = _validationService.Validate(query);
 
         if (!validation.IsSuccess)
@@ -536,8 +537,6 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
             SiteId = x.SiteId,
             MaterialCode = x.MaterialCode,
             MaterialUnitType = x.MaterialUnitType,
-            ProductFamily = x.ProductFamily,
-            GradeOrRecipe = x.GradeOrRecipe,
             SourceSystem = x.SourceSystem,
             EventTimeUtc = x.ProductionStartUtc,
             Value = 1m
@@ -594,10 +593,7 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
                     SiteId = material.SiteId,
                     MaterialCode = material.MaterialCode,
                     MaterialUnitType = material.MaterialUnitType,
-                    ProductFamily = material.ProductFamily,
-                    GradeOrRecipe = material.GradeOrRecipe,
                     SourceSystem = material.SourceSystem,
-                    DefectType = defect != null ? defect.DefectCode : qualityEvent.EventType,
                     EventTimeUtc = qualityEvent.EventAtUtc,
                     Value = 1m
                 };
@@ -660,8 +656,6 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
                 SiteId = material.SiteId,
                 MaterialCode = material.MaterialCode,
                 MaterialUnitType = material.MaterialUnitType,
-                ProductFamily = material.ProductFamily,
-                GradeOrRecipe = material.GradeOrRecipe,
                 SourceSystem = material.SourceSystem,
                 EventTimeUtc = material.ProductionStartUtc,
                 Value = _dbContext.QualityEvents
@@ -736,8 +730,6 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
                 EquipmentId = observation.EquipmentId,
                 MaterialCode = material.MaterialCode,
                 MaterialUnitType = material.MaterialUnitType,
-                ProductFamily = material.ProductFamily,
-                GradeOrRecipe = material.GradeOrRecipe,
                 SourceSystem = material.SourceSystem,
                 ParameterCode = parameter.ParameterCode,
                 EventTimeUtc = observation.ObservedAtUtc,
@@ -883,8 +875,6 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
                     EquipmentId = observation.EquipmentId,
                     MaterialCode = material.MaterialCode,
                     MaterialUnitType = material.MaterialUnitType,
-                    ProductFamily = material.ProductFamily,
-                    GradeOrRecipe = material.GradeOrRecipe,
                     SourceSystem = material.SourceSystem,
                     ParameterCode = parameter.ParameterCode,
                     EventTimeUtc = observation.ObservedAtUtc,
@@ -949,12 +939,7 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
                     downtime.EquipmentId,
                     material != null ? material.MaterialCode : null,
                     material != null ? material.MaterialUnitType : null,
-                    material != null ? material.ProductFamily : null,
-                    material != null ? material.GradeOrRecipe : null,
                     downtime.SourceSystem,
-                    null,
-                    null,
-                    null,
                     null,
                     downtime.StartedAtUtc,
                     // T-044, ruled 10-Aug: downtimeMinutes MEANS the recorded
@@ -997,13 +982,8 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
                     null,
                     material.MaterialCode,
                     material.MaterialUnitType,
-                    material.ProductFamily,
-                    material.GradeOrRecipe,
                     material.SourceSystem,
                     null,
-                    null,
-                    null,
-                    risk.RiskClass,
                     risk.ScoredAtUtc,
                     risk.Score))
             .Take(resolved.RawRowLimit + 1)
@@ -1049,12 +1029,7 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
                     step.EquipmentId,
                     material.MaterialCode,
                     material.MaterialUnitType,
-                    material.ProductFamily,
-                    material.GradeOrRecipe,
                     material.SourceSystem,
-                    step.CrewCode,
-                    null,
-                    null,
                     null,
                     step.StartedAtUtc,
                     (decimal)Math.Max(0, (step.EndedAtUtc!.Value - step.StartedAtUtc).TotalMinutes)))
@@ -1095,12 +1070,7 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
                 null,
                 null,
                 null,
-                null,
-                null,
                 x.SourceSystem,
-                null,
-                x.IssueType,
-                null,
                 null,
                 x.CreatedAtUtc,
                 1m))
@@ -1145,7 +1115,7 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
 
         // T-094. Declared-dimension filters, keyed by published code. A declaration
         // published against the subject entity restricts this population directly. One
-        // published against a related canonical entity is reached through the single
+        // published against a related canonical entity is resolved through the single
         // mapped reference that entity carries to the subject, and intersected below -
         // the same shape the compiled slots used, decided by the model rather than by a
         // name. Absent or ambiguous references are typed refusals, never a guess.
@@ -1238,51 +1208,6 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
                 .ToListAsync(cancellationToken);
 
             result.IntersectWith(equipmentMaterialIds);
-        }
-
-        if (!string.IsNullOrWhiteSpace(filters?.ShiftCode))
-        {
-            var shiftMaterialIds = await _dbContext.ProcessStepExecutions
-                .AsNoTracking()
-                .Where(x => !x.IsDeleted && x.CrewCode == filters.ShiftCode)
-                .Select(x => x.MaterialUnitId)
-                .Distinct()
-                .ToListAsync(cancellationToken);
-
-            result.IntersectWith(shiftMaterialIds);
-        }
-
-        if (!string.IsNullOrWhiteSpace(filters?.RiskClass))
-        {
-            var riskMaterialIds = await _dbContext.RiskScores
-                .AsNoTracking()
-                .Where(x => !x.IsDeleted && x.RiskClass == filters.RiskClass)
-                .Select(x => x.MaterialUnitId)
-                .Distinct()
-                .ToListAsync(cancellationToken);
-
-            result.IntersectWith(riskMaterialIds);
-        }
-
-        if (!string.IsNullOrWhiteSpace(filters?.DefectType))
-        {
-            var defectMaterialIds = await (
-                    from qualityEvent in _dbContext.QualityEvents.AsNoTracking()
-                    join defect in _dbContext.DefectCatalogs.AsNoTracking()
-                        on qualityEvent.DefectCatalogId equals defect.Id into defectJoin
-                    from defect in defectJoin.DefaultIfEmpty()
-                    where
-                        !qualityEvent.IsDeleted &&
-                        (
-                            qualityEvent.EventType == filters.DefectType ||
-                            defect != null && defect.DefectCode == filters.DefectType ||
-                            defect != null && defect.DefectName == filters.DefectType
-                        )
-                    select qualityEvent.MaterialUnitId)
-                .Distinct()
-                .ToListAsync(cancellationToken);
-
-            result.IntersectWith(defectMaterialIds);
         }
 
         return result;

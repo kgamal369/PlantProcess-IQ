@@ -1,29 +1,37 @@
 import type { DashboardFilters } from "@/api/productApiClient";
 
-/** Maps a rendered dashboard dimension to its real workspace filter.
- * Dimensions without an honest filter counterpart return null: they may
- * open drilldown evidence, but they must never fabricate materialCode. */
-export type SelectionFilterField = keyof DashboardFilters;
+/** T-094. STRUCTURAL ROUTING ONLY - NOT A DIMENSION AUTHORITY.
+ *
+ * These are the dimensions the PRODUCT itself owns: identity, provenance and
+ * calendar. They route to a typed workspace filter field because the product
+ * defines both sides of that contract.
+ *
+ * A customer-declared dimension is NOT here and must never be added here. It
+ * travels as a keyed dimensionFilters entry resolved through published
+ * metadata. The name of this map says STRUCTURAL so a later reader cannot
+ * mistake it for the list of dimensions a user may filter on.
+ */
+export type StructuralFilterField = keyof DashboardFilters;
 
-const DIMENSION_TO_FILTER: Record<string, SelectionFilterField> = {
+const STRUCTURAL_DIMENSION_TO_FILTER_FIELD: Record<string, StructuralFilterField> = {
   site: "siteId",
   area: "areaId",
   equipment: "equipmentId",
   sourceSystem: "sourceSystem",
   materialUnitType: "materialUnitType",
-  shiftCode: "shiftCode",
-  defectType: "defectType",
   parameterCode: "parameterCode",
-  riskClass: "riskClass",
 };
 
-export function dimensionToFilterField(dimensionCode?: string | null): SelectionFilterField | null {
+/** The structural filter field for a product-owned dimension, or null when the
+ *  dimension is not structural. Null is not "unfilterable": a declared
+ *  dimension filters through the keyed contract instead. */
+export function structuralFilterFieldFor(dimensionCode?: string | null): StructuralFilterField | null {
   if (!dimensionCode) return null;
-  return DIMENSION_TO_FILTER[dimensionCode] ?? null;
+  return STRUCTURAL_DIMENSION_TO_FILTER_FIELD[dimensionCode] ?? null;
 }
 
-/** Dimensions that genuinely drive a workspace filter. */
-export const FILTERABLE_DIMENSIONS = Object.keys(DIMENSION_TO_FILTER);
+/** The product-owned dimensions that route to a typed structural filter. */
+export const STRUCTURAL_FILTER_DIMENSIONS = Object.keys(STRUCTURAL_DIMENSION_TO_FILTER_FIELD);
 
 /** PPIQ-WIDGETFIX: temporal dimensions have no single filter key - they map to
  * the fromUtc/toUtc range instead. A click on a day, week or month therefore

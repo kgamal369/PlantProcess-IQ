@@ -16,7 +16,8 @@ import { mapErrorToFriendly } from "@/utils/errorMapping";
 // the noLegacyApiGrowth architecture guard remains meaningful.
 // ============================================================
 
-export type PrimitiveQueryValue = string | number | boolean | null | undefined;
+export type PrimitiveQueryScalar = string | number | boolean | null | undefined;
+export type PrimitiveQueryValue = PrimitiveQueryScalar | readonly PrimitiveQueryScalar[];
 export type QueryParams = Record<string, PrimitiveQueryValue>;
 
 type LegacyHttpMethod =
@@ -62,6 +63,13 @@ export function buildQuery(params?: QueryParams): string {
   const searchParams = new URLSearchParams();
 
   Object.entries(params).forEach(([key, value]) => {
+    if (Array.isArray(value)) {
+      value.forEach((entry) => {
+        if (entry === undefined || entry === null || entry === "") return;
+        searchParams.append(key, String(entry));
+      });
+      return;
+    }
     if (value === undefined || value === null || value === "") return;
     searchParams.set(key, String(value));
   });

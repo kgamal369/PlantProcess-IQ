@@ -49,6 +49,8 @@ export type {
   DashboardDimensionMetadata,
   DashboardFilterMetadata,
   DashboardFilters,
+  DeclaredDimensionFilter,
+  DeclaredDimensionReference,
   DashboardMaterialRow,
   DashboardMeasureMetadata,
   DashboardMetadata,

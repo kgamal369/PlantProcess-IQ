@@ -30,7 +30,7 @@ public sealed class ParameterRelationshipNpgsqlTests : AuthenticatedApiTestBase
             ParameterCode: x,
             Filters: y is null
                 ? null
-                : new DashboardWidgetFiltersDto(null, null, null, null, null, null, null, null, null, y, null, null),
+                : new DashboardWidgetFiltersDto(null, null, null, null, null, null, y, null, null),
             Options: null);
     }
 

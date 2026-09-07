@@ -1,4 +1,4 @@
-﻿namespace PlantProcess.Application.Dashboarding.Contracts;
+namespace PlantProcess.Application.Dashboarding.Contracts;
 
 // ============================================================================
 // Phase 8 / 9 - Shared Dashboard Query Model
@@ -10,17 +10,17 @@ public sealed record DashboardQueryDto(
     Guid? EquipmentId,
     string? MaterialCode,
     string? SourceSystem,
-    string? DefectType,
-    string? RiskClass,
     DateTime? FromUtc,
     DateTime? ToUtc,
-    string? ShiftCode,
     int Page,
     int PageSize,
     string? SortBy,
     string? SortDirection,
     IReadOnlyList<DeclaredDimensionFilterDto>? DimensionFilters = null)
 {
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.Dictionary<string, System.Text.Json.JsonElement>? UnsupportedFilters { get; init; }
+
     public int SafePage => Page <= 0 ? 1 : Page;
     public int SafePageSize => Math.Clamp(PageSize <= 0 ? 25 : PageSize, 1, 200);
     public string SafeSortDirection =>
@@ -51,10 +51,7 @@ public sealed record DashboardReferenceDataDto(
     IReadOnlyList<DashboardReferenceItemDto> Areas,
     IReadOnlyList<DashboardReferenceItemDto> Equipment,
     IReadOnlyList<DashboardReferenceItemDto> SourceSystems,
-    IReadOnlyList<DashboardReferenceItemDto> Defects,
     IReadOnlyList<DashboardReferenceItemDto> Parameters,
-    IReadOnlyList<DashboardReferenceItemDto> RiskClasses,
-    IReadOnlyList<DashboardReferenceItemDto> Shifts,
     IReadOnlyList<DashboardReferenceDeclaredDimensionDto>? DeclaredDimensions = null);
 
 /// <summary>

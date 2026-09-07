@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text.Json;
 using PlantProcess.Application.Dashboarding.Contracts;
 using PlantProcess.Application.Dashboarding.Services.Dimensions;
 using Xunit;
@@ -58,12 +59,11 @@ public sealed class WorkspaceDeclaredDimensionContractTests
     }
 
     [Fact]
-    public void A_posted_body_is_normalised_the_same_way()
+    public void A_posted_body_is_normalised_and_malformed_entries_fail_closed()
     {
         var normalised = DeclaredDimensionFilterQueryParser.Normalise(new List<DeclaredDimensionFilterDto>
         {
             new(" code ", " v "),
-            new("", "dropped"),
         });
 
         var single = Assert.Single(normalised!);
@@ -71,20 +71,73 @@ public sealed class WorkspaceDeclaredDimensionContractTests
         Assert.Equal("v", single.Value);
         Assert.Null(DeclaredDimensionFilterQueryParser.Normalise(null));
         Assert.Null(DeclaredDimensionFilterQueryParser.Normalise(new List<DeclaredDimensionFilterDto>()));
+
+        var refusal = Assert.Throws<DimensionBindingRefusalException>(() =>
+            DeclaredDimensionFilterQueryParser.Normalise(new List<DeclaredDimensionFilterDto>
+            {
+                new("", "must-not-disappear"),
+            }));
+        Assert.Equal(DimensionBindingRefusalCodes.FilterMalformed, refusal.RefusalCode);
     }
 
     [Fact]
-    public void The_workspace_query_contract_carries_the_keyed_set()
+    public void The_workspace_query_contract_carries_the_keyed_set_without_legacy_slots()
     {
         var query = new DashboardQueryDto(
-            null, null, null, null, null, null, null, null, null, null, 1, 25, null, null,
-            new[] { new DeclaredDimensionFilterDto("code", "value") });
+            SiteId: null, AreaId: null, EquipmentId: null, MaterialCode: null, SourceSystem: null,
+            FromUtc: null, ToUtc: null, Page: 1, PageSize: 25, SortBy: null, SortDirection: null,
+            DimensionFilters: new[] { new DeclaredDimensionFilterDto("code", "value") });
 
         Assert.Single(query.DimensionFilters!);
 
-        // Existing fourteen-argument construction still compiles and carries no filters.
-        var legacy = new DashboardQueryDto(null, null, null, null, null, null, null, null, null, null, 1, 25, null, null);
-        Assert.Null(legacy.DimensionFilters);
+        var plain = new DashboardQueryDto(
+            null, null, null, null, null, null, null, 1, 25, null, null);
+        Assert.Null(plain.DimensionFilters);
+    }
+
+    [Theory]
+    [InlineData("defectType")]
+    [InlineData("riskClass")]
+    [InlineData("shiftCode")]
+    public void Retired_legacy_query_keys_are_DB10_refusals_never_ignored(string key)
+    {
+        var refusal = Assert.Throws<DimensionBindingRefusalException>(() =>
+            DeclaredDimensionFilterQueryParser.RejectLegacyQueryKeys(new[] { key }));
+
+        Assert.Equal(DimensionBindingRefusalCodes.LegacyFilterUnsupported, refusal.RefusalCode);
+        Assert.Equal(key, refusal.DimensionCode);
+    }
+
+    [Theory]
+    [InlineData("defectType")]
+    [InlineData("riskClass")]
+    [InlineData("shiftCode")]
+    public void Retired_legacy_posted_filter_members_are_DB10_refusals(string key)
+    {
+        var unsupported = new Dictionary<string, JsonElement>
+        {
+            [key] = JsonSerializer.SerializeToElement("legacy-value")
+        };
+
+        var refusal = Assert.Throws<DimensionBindingRefusalException>(() =>
+            DeclaredDimensionFilterQueryParser.RejectUnsupported(unsupported));
+
+        Assert.Equal(DimensionBindingRefusalCodes.LegacyFilterUnsupported, refusal.RefusalCode);
+        Assert.Equal(key, refusal.DimensionCode);
+    }
+
+    [Fact]
+    public void Unknown_posted_filter_member_is_DB09_not_silently_ignored()
+    {
+        var unsupported = new Dictionary<string, JsonElement>
+        {
+            ["unknownFilter"] = JsonSerializer.SerializeToElement("x")
+        };
+
+        var refusal = Assert.Throws<DimensionBindingRefusalException>(() =>
+            DeclaredDimensionFilterQueryParser.RejectUnsupported(unsupported));
+
+        Assert.Equal(DimensionBindingRefusalCodes.FilterMalformed, refusal.RefusalCode);
     }
 
     [Fact]

@@ -7,8 +7,8 @@ import {
 const A: WidgetExecutionSnapshot = {
   kind: "catalogue",
   widgetType: "chart", chartType: "bar",
-  dimensionCode: "shift", measureCode: "defectRate", parameterCode: null,
-  filters: { shiftCode: "A" } as never,
+  dimensionCode: "customerConcept", measureCode: "defectRate", parameterCode: null,
+  filters: { dimensionFilters: [{ code: "customerConcept", value: "A" }] } as never,
   options: { maxRows: 100, includeWarnings: true },
   identity: { pageCode: "PRODUCTION_OVERVIEW", widgetCode: "PO_BAR", widgetDefinitionId: "w-1" },
   rowPopulations: [{ rowIndex: 0 } as never],
@@ -36,14 +36,14 @@ describe("T-050 execution snapshot", () => {
   });
 
   it("re-executes the CAPTURED context, not whatever the filters are now", async () => {
-    // The point was rendered under shift A. The page has since moved to B.
+    // The point was rendered under the declared value A. The page has moved on.
     // The evidence request must still be A.
     const catalogue = vi.fn().mockResolvedValue({ rows: [] });
     await executeWithEvidence(A, catalogue, vi.fn());
 
     const sent = catalogue.mock.calls[0][0] as Record<string, unknown>;
-    expect(sent.filters).toEqual({ shiftCode: "A" });
-    expect(sent.dimensionCode).toBe("shift");
+    expect(sent.filters).toEqual({ dimensionFilters: [{ code: "customerConcept", value: "A" }] });
+    expect(sent.dimensionCode).toBe("customerConcept");
     expect(sent.measureCode).toBe("defectRate");
   });
 

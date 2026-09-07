@@ -24,26 +24,28 @@ describe("ActiveFilterChips", () => {
     ).toBeInTheDocument();
   });
 
-  it("renders active filters from the URL search params", () => {
+  it("renders structural and declared filters from the URL search params", () => {
+    // T-094. The declared filter travels as dimensionFilter=<code>:<value> and
+    // its chip is labelled by the published code, not by product vocabulary.
     renderWithFilters(
-      "/dashboard?materialCode=COIL-001&riskClass=High&sourceSystem=MES"
+      "/dashboard?materialCode=COIL-001&sourceSystem=MES&dimensionFilter=customerConcept:High"
     );
 
     expect(screen.getByText(/Material:/i)).toBeInTheDocument();
     expect(screen.getByText(/COIL-001/i)).toBeInTheDocument();
 
-    expect(screen.getByText(/Risk:/i)).toBeInTheDocument();
-    expect(screen.getByText(/High/i)).toBeInTheDocument();
-
     expect(screen.getByText(/Source:/i)).toBeInTheDocument();
     expect(screen.getByText(/MES/i)).toBeInTheDocument();
+
+    expect(screen.getByText(/customerConcept:/i)).toBeInTheDocument();
+    expect(screen.getByText(/High/i)).toBeInTheDocument();
   });
 
   it("removes one active filter when its chip is clicked", async () => {
     const user = userEvent.setup();
 
     renderWithFilters(
-      "/dashboard?materialCode=COIL-001&riskClass=High"
+      "/dashboard?materialCode=COIL-001&dimensionFilter=customerConcept:High"
     );
 
     expect(screen.getByText(/COIL-001/i)).toBeInTheDocument();

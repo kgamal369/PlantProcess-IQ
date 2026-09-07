@@ -27,6 +27,13 @@ public static class DashboardEndpoints
         {
             try
             {
+                // T-094 final cutover. Minimal API silently ignores unknown query
+                // keys unless we say otherwise. The three retired generic slots
+                // are therefore rejected before model binding rather than being
+                // dropped and widening the population.
+                DeclaredDimensionFilterQueryParser.RejectLegacyQueryKeys(
+                    invocation.HttpContext.Request.Query.Keys);
+
                 return await next(invocation);
             }
             catch (DimensionBindingRefusalException refusal)
@@ -166,17 +173,14 @@ public static class DashboardEndpoints
         Guid? equipmentId,
         string? materialCode,
         string? sourceSystem,
-        string? defectType,
-        string? riskClass,
         DateTime? fromUtc,
         DateTime? toUtc,
-        string? shiftCode,
         [Microsoft.AspNetCore.Mvc.FromQuery(Name = DeclaredDimensionFilterQueryParser.ParameterName)] string[]? dimensionFilter,
         [Microsoft.AspNetCore.Mvc.FromServices] IDashboardQueryService service,
         CancellationToken cancellationToken)
     {
         var result = await service.GetOverviewAsync(
-            BuildQuery(siteId, areaId, equipmentId, materialCode, sourceSystem, defectType, riskClass, fromUtc, toUtc, shiftCode, 1, 25, null, null, dimensionFilter),
+            BuildQuery(siteId, areaId, equipmentId, materialCode, sourceSystem, fromUtc, toUtc, 1, 25, null, null, dimensionFilter),
             cancellationToken);
 
         return result.ToHttpResult(value => Results.Ok(value));
@@ -188,17 +192,14 @@ public static class DashboardEndpoints
         Guid? equipmentId,
         string? materialCode,
         string? sourceSystem,
-        string? defectType,
-        string? riskClass,
         DateTime? fromUtc,
         DateTime? toUtc,
-        string? shiftCode,
         [Microsoft.AspNetCore.Mvc.FromQuery(Name = DeclaredDimensionFilterQueryParser.ParameterName)] string[]? dimensionFilter,
         [Microsoft.AspNetCore.Mvc.FromServices] IDashboardQueryService service,
         CancellationToken cancellationToken)
     {
         var result = await service.GetQualityDashboardAsync(
-            BuildQuery(siteId, areaId, equipmentId, materialCode, sourceSystem, defectType, riskClass, fromUtc, toUtc, shiftCode, 1, 25, null, null, dimensionFilter),
+            BuildQuery(siteId, areaId, equipmentId, materialCode, sourceSystem, fromUtc, toUtc, 1, 25, null, null, dimensionFilter),
             cancellationToken);
 
         return result.ToHttpResult(value => Results.Ok(value));
@@ -210,18 +211,15 @@ public static class DashboardEndpoints
         Guid? equipmentId,
         string? materialCode,
         string? sourceSystem,
-        string? defectType,
-        string? riskClass,
         DateTime? fromUtc,
         DateTime? toUtc,
-        string? shiftCode,
         int? highRiskTake,
         [Microsoft.AspNetCore.Mvc.FromQuery(Name = DeclaredDimensionFilterQueryParser.ParameterName)] string[]? dimensionFilter,
         [Microsoft.AspNetCore.Mvc.FromServices] IDashboardQueryService service,
         CancellationToken cancellationToken)
     {
         var result = await service.GetRiskDashboardAsync(
-            BuildQuery(siteId, areaId, equipmentId, materialCode, sourceSystem, defectType, riskClass, fromUtc, toUtc, shiftCode, 1, highRiskTake ?? 25, null, null, dimensionFilter),
+            BuildQuery(siteId, areaId, equipmentId, materialCode, sourceSystem, fromUtc, toUtc, 1, highRiskTake ?? 25, null, null, dimensionFilter),
             cancellationToken);
 
         return result.ToHttpResult(value => Results.Ok(value));
@@ -233,17 +231,14 @@ public static class DashboardEndpoints
         Guid? equipmentId,
         string? materialCode,
         string? sourceSystem,
-        string? defectType,
-        string? riskClass,
         DateTime? fromUtc,
         DateTime? toUtc,
-        string? shiftCode,
         [Microsoft.AspNetCore.Mvc.FromQuery(Name = DeclaredDimensionFilterQueryParser.ParameterName)] string[]? dimensionFilter,
         [Microsoft.AspNetCore.Mvc.FromServices] IDashboardQueryService service,
         CancellationToken cancellationToken)
     {
         var result = await service.GetDataQualityDashboardAsync(
-            BuildQuery(siteId, areaId, equipmentId, materialCode, sourceSystem, defectType, riskClass, fromUtc, toUtc, shiftCode, 1, 25, null, null, dimensionFilter),
+            BuildQuery(siteId, areaId, equipmentId, materialCode, sourceSystem, fromUtc, toUtc, 1, 25, null, null, dimensionFilter),
             cancellationToken);
 
         return result.ToHttpResult(value => Results.Ok(value));
@@ -255,11 +250,8 @@ public static class DashboardEndpoints
         Guid? equipmentId,
         string? materialCode,
         string? sourceSystem,
-        string? defectType,
-        string? riskClass,
         DateTime? fromUtc,
         DateTime? toUtc,
-        string? shiftCode,
         int? page,
         int? pageSize,
         string? sortBy,
@@ -269,7 +261,7 @@ public static class DashboardEndpoints
         CancellationToken cancellationToken)
     {
         var result = await service.SearchMaterialsAsync(
-            BuildQuery(siteId, areaId, equipmentId, materialCode, sourceSystem, defectType, riskClass, fromUtc, toUtc, shiftCode, page ?? 1, pageSize ?? 25, sortBy, sortDirection, dimensionFilter),
+            BuildQuery(siteId, areaId, equipmentId, materialCode, sourceSystem, fromUtc, toUtc, page ?? 1, pageSize ?? 25, sortBy, sortDirection, dimensionFilter),
             cancellationToken);
 
         return result.ToHttpResult(value => Results.Ok(value));
@@ -352,17 +344,6 @@ public static class DashboardEndpoints
                 0))
             .ToListAsync(cancellationToken);
 
-        var defects = await dbContext.DefectCatalogs
-            .AsNoTracking()
-            .OrderBy(x => x.DefectCode)
-            .Select(x => new DashboardReferenceItemDto(
-                x.DefectCode,
-                x.DefectCode,
-                x.DefectName,
-                x.DefectCategory,
-                0))
-            .ToListAsync(cancellationToken);
-
         var parameters = await dbContext.ParameterDefinitions
             .AsNoTracking()
             .OrderBy(x => x.ParameterCode)
@@ -373,50 +354,6 @@ public static class DashboardEndpoints
                 x.ParameterCategory,
                 0))
             .ToListAsync(cancellationToken);
-
-        var riskClassRows = await dbContext.RiskScores
-            .AsNoTracking()
-            .Where(x => !x.IsDeleted)
-            .Where(x => x.RiskClass != null && x.RiskClass != "")
-            .GroupBy(x => x.RiskClass)
-            .Select(x => new
-            {
-                Code = x.Key!,
-                Count = x.Count()
-            })
-            .OrderBy(x => x.Code)
-            .ToListAsync(cancellationToken);
-
-        var riskClasses = riskClassRows
-            .Select(x => new DashboardReferenceItemDto(
-                x.Code,
-                x.Code,
-                x.Code,
-                "RiskClass",
-                x.Count))
-            .ToList();
-
-        var shiftRows = await dbContext.ProcessStepExecutions
-            .AsNoTracking()
-            .Where(x => !x.IsDeleted)
-            .Where(x => x.CrewCode != null && x.CrewCode != "")
-            .GroupBy(x => x.CrewCode)
-            .Select(x => new
-            {
-                Code = x.Key!,
-                Count = x.Count()
-            })
-            .OrderBy(x => x.Code)
-            .ToListAsync(cancellationToken);
-
-        var shifts = shiftRows
-            .Select(x => new DashboardReferenceItemDto(
-                x.Code,
-                x.Code,
-                x.Code,
-                "Crew/Shift",
-                x.Count))
-            .ToList();
 
         var declared = new List<DashboardReferenceDeclaredDimensionDto>();
         if (tenantResolved)
@@ -439,10 +376,7 @@ public static class DashboardEndpoints
             areas,
             equipmentItems,
             sourceSystems,
-            defects,
             parameters,
-            riskClasses,
-            shifts,
             declared);
 
         cache.Set(cacheKey, result, TimeSpan.FromMinutes(10));
@@ -699,11 +633,8 @@ public static class DashboardEndpoints
         Guid? equipmentId,
         string? materialCode,
         string? sourceSystem,
-        string? defectType,
-        string? riskClass,
         DateTime? fromUtc,
         DateTime? toUtc,
-        string? shiftCode,
         int page,
         int pageSize,
         string? sortBy,
@@ -716,11 +647,8 @@ public static class DashboardEndpoints
             equipmentId,
             materialCode,
             sourceSystem,
-            defectType,
-            riskClass,
             fromUtc,
             toUtc,
-            shiftCode,
             page,
             pageSize,
             sortBy,

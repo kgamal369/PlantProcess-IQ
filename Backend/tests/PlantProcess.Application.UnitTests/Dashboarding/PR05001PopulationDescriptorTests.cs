@@ -1,4 +1,4 @@
-﻿using PlantProcess.Application.Dashboarding.Contracts;
+using PlantProcess.Application.Dashboarding.Contracts;
 using PlantProcess.Application.Dashboarding.Services.Queries;
 using Xunit;
 
@@ -41,13 +41,13 @@ public sealed class PR05001PopulationDescriptorTests
         // evidence identity an Assistant reindex already wrote for it.
         Assert.Equal("{}", DashboardPopulationDescriptor.CanonicaliseFilterContext(null));
         Assert.Equal("{}", DashboardPopulationDescriptor.CanonicaliseFilterContext(
-            new DashboardWidgetFiltersDto(null, null, null, null, null, null, null, null, null, null, null, null)));
+            new DashboardWidgetFiltersDto(null, null, null, null, null, null, null, null, null)));
     }
 
     [Fact]
     public void Blank_and_whitespace_filter_values_are_not_filters()
     {
-        var blank = new DashboardWidgetFiltersDto(null, null, null, "   ", null, null, null, null, null, null, null, null);
+        var blank = new DashboardWidgetFiltersDto(null, null, null, "   ", null, null, null, null, null);
         Assert.Equal("{}", DashboardPopulationDescriptor.CanonicaliseFilterContext(blank));
     }
 
@@ -57,8 +57,8 @@ public sealed class PR05001PopulationDescriptorTests
         var site = Guid.NewGuid();
         var from = new DateTime(2026, 1, 1, 6, 0, 0, DateTimeKind.Utc);
 
-        var a = new DashboardWidgetFiltersDto(site, null, null, "MAT-1", null, null, null, null, "B", null, from, null);
-        var b = new DashboardWidgetFiltersDto(site, null, null, "MAT-1", null, null, null, null, "B", null, from, null);
+        var a = new DashboardWidgetFiltersDto(site, null, null, "MAT-1", null, null, "B", from, null);
+        var b = new DashboardWidgetFiltersDto(site, null, null, "MAT-1", null, null, "B", from, null);
 
         Assert.Equal(
             DashboardPopulationDescriptor.CanonicaliseFilterContext(a),
@@ -66,10 +66,25 @@ public sealed class PR05001PopulationDescriptorTests
     }
 
     [Fact]
+    public void Declared_dimension_values_are_part_of_the_evidence_identity()
+    {
+        var a = new DashboardWidgetFiltersDto(
+            null, null, null, null, null, null, null, null, null,
+            new[] { new DeclaredDimensionFilterDto("customerConcept", "A") });
+        var b = new DashboardWidgetFiltersDto(
+            null, null, null, null, null, null, null, null, null,
+            new[] { new DeclaredDimensionFilterDto("customerConcept", "B") });
+
+        Assert.NotEqual(
+            DashboardPopulationDescriptor.CanonicaliseFilterContext(a),
+            DashboardPopulationDescriptor.CanonicaliseFilterContext(b));
+    }
+
+    [Fact]
     public void A_changed_filter_changes_the_context_and_therefore_the_evidence_identity()
     {
-        var a = new DashboardWidgetFiltersDto(null, null, null, "MAT-1", null, null, null, null, null, null, null, null);
-        var b = new DashboardWidgetFiltersDto(null, null, null, "MAT-2", null, null, null, null, null, null, null, null);
+        var a = new DashboardWidgetFiltersDto(null, null, null, "MAT-1", null, null, null, null, null);
+        var b = new DashboardWidgetFiltersDto(null, null, null, "MAT-2", null, null, null, null, null);
 
         Assert.NotEqual(
             DashboardPopulationDescriptor.CanonicaliseFilterContext(a),

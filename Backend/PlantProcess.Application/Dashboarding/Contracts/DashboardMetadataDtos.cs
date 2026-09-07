@@ -137,13 +137,14 @@ public sealed record DashboardWidgetFiltersDto(
     string? MaterialCode,
     string? MaterialUnitType,
     string? SourceSystem,
-    string? DefectType,
-    string? RiskClass,
-    string? ShiftCode,
     string? ParameterCode,
     DateTime? FromUtc,
     DateTime? ToUtc,
-    IReadOnlyList<DeclaredDimensionFilterDto>? DimensionFilters = null);
+    IReadOnlyList<DeclaredDimensionFilterDto>? DimensionFilters = null)
+{
+    [System.Text.Json.Serialization.JsonExtensionData]
+    public System.Collections.Generic.Dictionary<string, System.Text.Json.JsonElement>? UnsupportedFilters { get; init; }
+}
 
 /// <summary>
 /// T-094. A filter on a customer-declared dimension, keyed by its published code.

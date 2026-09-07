@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
@@ -228,6 +228,13 @@ public static class DashboardPopulationDescriptor
                 return moment.ToUniversalTime().ToString("O", CultureInfo.InvariantCulture);
             case Guid id:
                 return id.ToString("D", CultureInfo.InvariantCulture);
+            case IEnumerable<DeclaredDimensionFilterDto> declared:
+                var entries = declared
+                    .Where(x => x is not null && !string.IsNullOrWhiteSpace(x.Code) && !string.IsNullOrWhiteSpace(x.Value))
+                    .Select(x => x.Code.Trim() + "=" + x.Value.Trim())
+                    .OrderBy(x => x, StringComparer.Ordinal)
+                    .ToArray();
+                return entries.Length == 0 ? null : string.Join("|", entries);
             case IFormattable formattable:
                 return formattable.ToString(null, CultureInfo.InvariantCulture);
             default:

@@ -39,6 +39,8 @@ export interface ChartRow {
 interface SelectionConfig {
   type: DashboardSelectionType;
   field: keyof DashboardFilters | null;
+  /** T-094. Published code when the selection is customer-declared. */
+  declaredCode?: string | null;
   /** 
 PPIQ-WIDGETFIX
 : day/week/month have no single filter key; they narrow the
@@ -110,6 +112,14 @@ export function InteractiveBarChart({
         label: String(label ?? value),
         sourceWidget: selection.sourceWidget,
       });
+    } else if (selection.declaredCode) {
+      applySelection({
+        type: "declared",
+        declaredCode: selection.declaredCode,
+        value,
+        label: String(label ?? value),
+        sourceWidget: selection.sourceWidget,
+      });
     }
 
     openDrilldown({
@@ -173,6 +183,14 @@ export function InteractivePieChart({
       applySelection({
         type: selection.type,
         field: selection.field,
+        value,
+        label: String(label ?? value),
+        sourceWidget: selection.sourceWidget,
+      });
+    } else if (selection.declaredCode) {
+      applySelection({
+        type: "declared",
+        declaredCode: selection.declaredCode,
         value,
         label: String(label ?? value),
         sourceWidget: selection.sourceWidget,
@@ -247,6 +265,14 @@ export function InteractiveLineChart({
       applySelection({
         type: selection.type,
         field: selection.field,
+        value,
+        label: String(label ?? value),
+        sourceWidget: selection.sourceWidget,
+      });
+    } else if (selection.declaredCode) {
+      applySelection({
+        type: "declared",
+        declaredCode: selection.declaredCode,
         value,
         label: String(label ?? value),
         sourceWidget: selection.sourceWidget,
@@ -358,6 +384,14 @@ export function InteractiveScatterChart({
         label: String(label ?? value),
         sourceWidget: selection.sourceWidget,
       });
+    } else if (selection.declaredCode) {
+      applySelection({
+        type: "declared",
+        declaredCode: selection.declaredCode,
+        value,
+        label: String(label ?? value),
+        sourceWidget: selection.sourceWidget,
+      });
     }
 
     openDrilldown({
@@ -440,6 +474,14 @@ export function InteractiveHeatmap({
       applySelection({
         type: selection.type,
         field: selection.field,
+        value,
+        label: String(label ?? value),
+        sourceWidget: selection.sourceWidget,
+      });
+    } else if (selection.declaredCode) {
+      applySelection({
+        type: "declared",
+        declaredCode: selection.declaredCode,
         value,
         label: String(label ?? value),
         sourceWidget: selection.sourceWidget,

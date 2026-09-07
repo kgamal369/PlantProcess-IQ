@@ -37,6 +37,8 @@ export type {
   DashboardDimensionMetadata,
   DashboardFilterMetadata,
   DashboardFilters,
+  DeclaredDimensionFilter,
+  DeclaredDimensionReference,
   DashboardMaterialRow,
   DashboardMeasureMetadata,
   DashboardMetadata,
@@ -124,6 +126,8 @@ import type {
   UpdateSchemaViewDefinitionRequest,
 } from "./product-core/types";
 
+import { formatDeclaredFilterParam } from "./product-core/declared-dimension-types";
+
 
 function dashboardQuery(filters: DashboardFilters): QueryParams {
   return {
@@ -132,11 +136,9 @@ function dashboardQuery(filters: DashboardFilters): QueryParams {
     equipmentId: filters.equipmentId,
     materialCode: filters.materialCode,
     sourceSystem: filters.sourceSystem,
-    defectType: filters.defectType,
-    riskClass: filters.riskClass,
     fromUtc: filters.fromUtc,
     toUtc: filters.toUtc,
-    shiftCode: filters.shiftCode,
+    dimensionFilter: filters.dimensionFilters?.map(formatDeclaredFilterParam),
     page: filters.page ?? 1,
     pageSize: filters.pageSize ?? 25,
     sortBy: filters.sortBy,
@@ -151,11 +153,9 @@ function dashboardBody(filters: DashboardFilters) {
     equipmentId: filters.equipmentId || null,
     materialCode: filters.materialCode || null,
     sourceSystem: filters.sourceSystem || null,
-    defectType: filters.defectType || null,
-    riskClass: filters.riskClass || null,
     fromUtc: filters.fromUtc || null,
     toUtc: filters.toUtc || null,
-    shiftCode: filters.shiftCode || null,
+    dimensionFilters: filters.dimensionFilters ?? null,
     page: filters.page ?? 1,
     pageSize: filters.pageSize ?? 25,
     sortBy: filters.sortBy || null,
@@ -291,7 +291,7 @@ export const productApi = {
   getInvestigationPdfUrl: (materialUnitId: string) =>
     `${API_BASE_URL}/reports/materials/${materialUnitId}/investigation/pdf`,
 
-  getGenealogyAwareCorrelation: (filters: DashboardFilters) =>
+  getGenealogyAwareCorrelation: (filters: DashboardFilters & { defectType?: string }) =>
     getJson<GenealogyAwareCorrelationResult>(
       "/analytics/correlations/parameter-defect/genealogy-aware",
       {

@@ -45,10 +45,10 @@ const GREEN = "#2ce6a2";
 // T-044 D7. labelKey is OPTIONAL and defaults to categoryKey, so every
 // existing caller keeps its current behaviour. cat stays the canonical
 // identity that reaches setFilter; label is only ever displayed.
-type P = { type: string; rows: ExtraRow[]; categoryKey: string; labelKey?: string | null; valueKey: string; field?: string | null; timeDimension?: string | null };
+type P = { type: string; rows: ExtraRow[]; categoryKey: string; labelKey?: string | null; valueKey: string; field?: string | null; declaredCode?: string | null; timeDimension?: string | null };
 
-export function ExtraChart({ type, rows, categoryKey, labelKey = null, valueKey, field = null, timeDimension = null }: P) {
-  const { filters, setFilter, mergeFilters } = useDashboardFilters();
+export function ExtraChart({ type, rows, categoryKey, labelKey = null, valueKey, field = null, declaredCode = null, timeDimension = null }: P) {
+  const { filters, setFilter, mergeFilters, declaredFilters, setDeclaredFilter } = useDashboardFilters();
   const data = useMemo(
     () =>
       rows.map((r) => ({
@@ -65,10 +65,14 @@ export function ExtraChart({ type, rows, categoryKey, labelKey = null, valueKey,
       mergeFilters({ fromUtc: timeRange.fromUtc, toUtc: timeRange.toUtc, page: 1 });
       return;
     }
-    if (!field) return;
-    const g = (filters ?? {}) as Record<string, unknown>;
-    const cur = g[field] !== undefined && g[field] !== null ? String(g[field]) : null;
-    setFilter(field as never, (cur === cat ? undefined : cat) as never);
+    if (field) {
+      const g = (filters ?? {}) as Record<string, unknown>;
+      const cur = g[field] !== undefined && g[field] !== null ? String(g[field]) : null;
+      setFilter(field as never, (cur === cat ? undefined : cat) as never);
+    } else if (declaredCode) {
+      const cur = declaredFilters.find((x) => x.code === declaredCode)?.value ?? null;
+      setDeclaredFilter(declaredCode, cur === cat ? undefined : cat);
+    }
   };
   /** recharts hands back its own point types; read our cat safely. */
   const catOf = (d: unknown): string | null => {

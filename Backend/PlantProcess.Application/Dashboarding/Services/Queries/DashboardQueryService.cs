@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using PlantProcess.Application.Dashboarding.Contracts;
 using PlantProcess.Application.Common.Persistence;
 using PlantProcess.Application.Common.Results;
@@ -114,13 +114,6 @@ public sealed class DashboardQueryService : IDashboardQueryService
             .GroupBy(x => x.MaterialUnitId)
             .Select(x => x.OrderByDescending(r => r.Score).First())
             .ToList();
-
-        if (!string.IsNullOrWhiteSpace(normalized.RiskClass))
-        {
-            latestRisks = latestRisks
-                .Where(x => string.Equals(x.RiskClass, normalized.RiskClass, StringComparison.OrdinalIgnoreCase))
-                .ToList();
-        }
 
         var highRiskMaterials = latestRisks
             .Count(x => x.Score >= 0.70m || string.Equals(x.RiskClass, "High", StringComparison.OrdinalIgnoreCase) || string.Equals(x.RiskClass, "Critical", StringComparison.OrdinalIgnoreCase));
@@ -242,14 +235,6 @@ public sealed class DashboardQueryService : IDashboardQueryService
         if (!string.IsNullOrWhiteSpace(normalized.SourceSystem))
             eventsQuery = eventsQuery.Where(x => x.SourceSystem == normalized.SourceSystem);
 
-        if (!string.IsNullOrWhiteSpace(normalized.DefectType))
-        {
-            eventsQuery = eventsQuery.Where(x =>
-                x.EventType == normalized.DefectType ||
-                x.DefectCode == normalized.DefectType ||
-                x.DefectName == normalized.DefectType);
-        }
-
         var eventsRaw = await eventsQuery.ToListAsync(cancellationToken);
         var defects = eventsRaw.Where(x => IsDefectEvent(x.EventType)).ToList();
 
@@ -303,9 +288,6 @@ public sealed class DashboardQueryService : IDashboardQueryService
 
         if (!string.IsNullOrWhiteSpace(normalized.SourceSystem))
             riskScoresQuery = riskScoresQuery.Where(x => x.SourceSystem == normalized.SourceSystem);
-
-        if (!string.IsNullOrWhiteSpace(normalized.RiskClass))
-            riskScoresQuery = riskScoresQuery.Where(x => x.RiskClass == normalized.RiskClass);
 
         var riskScores = await riskScoresQuery
             .Select(x => new
@@ -641,50 +623,6 @@ public sealed class DashboardQueryService : IDashboardQueryService
             materialSet.IntersectWith(stepMaterialIds);
         }
 
-        if (!string.IsNullOrWhiteSpace(normalized.ShiftCode))
-        {
-            var shiftMaterialIds = await _dbContext.ProcessStepExecutions
-                .AsNoTracking()
-                .Where(x => x.CrewCode == normalized.ShiftCode)
-                .Select(x => x.MaterialUnitId)
-                .Distinct()
-                .ToListAsync(cancellationToken);
-
-            materialSet.IntersectWith(shiftMaterialIds);
-        }
-
-        if (!string.IsNullOrWhiteSpace(normalized.DefectType))
-        {
-            var defectMaterialIds = await (
-                from qualityEvent in _dbContext.QualityEvents.AsNoTracking()
-                join defect in _dbContext.DefectCatalogs.AsNoTracking()
-                    on qualityEvent.DefectCatalogId equals defect.Id into defectJoin
-                from defect in defectJoin.DefaultIfEmpty()
-                where
-                    qualityEvent.EventType == normalized.DefectType ||
-                    qualityEvent.EventType == "Defect" && defect != null && defect.DefectCode == normalized.DefectType ||
-                    qualityEvent.EventType == "Defect" && defect != null && defect.DefectName == normalized.DefectType ||
-                    defect != null && defect.DefectCode == normalized.DefectType ||
-                    defect != null && defect.DefectName == normalized.DefectType
-                select qualityEvent.MaterialUnitId)
-                .Distinct()
-                .ToListAsync(cancellationToken);
-
-            materialSet.IntersectWith(defectMaterialIds);
-        }
-
-        if (!string.IsNullOrWhiteSpace(normalized.RiskClass))
-        {
-            var riskMaterialIds = await _dbContext.RiskScores
-                .AsNoTracking()
-                .Where(x => x.RiskClass == normalized.RiskClass)
-                .Select(x => x.MaterialUnitId)
-                .Distinct()
-                .ToListAsync(cancellationToken);
-
-            materialSet.IntersectWith(riskMaterialIds);
-        }
-
         return materialSet.ToList();
     }
 
@@ -790,13 +728,12 @@ public sealed class DashboardQueryService : IDashboardQueryService
 
     private static DashboardQueryDto NormalizeQuery(DashboardQueryDto query)
     {
+        DeclaredDimensionFilterQueryParser.RejectUnsupported(query.UnsupportedFilters);
+
         return query with
         {
             MaterialCode = NormalizeText(query.MaterialCode),
             SourceSystem = NormalizeText(query.SourceSystem),
-            DefectType = NormalizeText(query.DefectType),
-            RiskClass = NormalizeText(query.RiskClass),
-            ShiftCode = NormalizeText(query.ShiftCode),
             DimensionFilters = DeclaredDimensionFilterQueryParser.Normalise(query.DimensionFilters),
             Page = query.SafePage,
             PageSize = query.SafePageSize,

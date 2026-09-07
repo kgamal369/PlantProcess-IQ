@@ -60,13 +60,13 @@ internal sealed record WidgetFact
     public Guid? EquipmentId { get; init; }
     public string? MaterialCode { get; init; }
     public string? MaterialUnitType { get; init; }
-    public string? ProductFamily { get; init; }
-    public string? GradeOrRecipe { get; init; }
+
+
     public string? SourceSystem { get; init; }
-    public string? ShiftCode { get; init; }
-    public string? DefectType { get; init; }
+
+
     public string? ParameterCode { get; init; }
-    public string? RiskClass { get; init; }
+
     public DateTime? EventTimeUtc { get; init; }
     public decimal Value { get; init; }
 
@@ -87,13 +87,13 @@ internal sealed record WidgetFact
         Guid? equipmentId,
         string? materialCode,
         string? materialUnitType,
-        string? productFamily,
-        string? gradeOrRecipe,
+
+
         string? sourceSystem,
-        string? shiftCode,
-        string? defectType,
+
+
         string? parameterCode,
-        string? riskClass,
+
         DateTime? eventTimeUtc,
         decimal value)
     {
@@ -103,13 +103,13 @@ internal sealed record WidgetFact
         EquipmentId = equipmentId;
         MaterialCode = materialCode;
         MaterialUnitType = materialUnitType;
-        ProductFamily = productFamily;
-        GradeOrRecipe = gradeOrRecipe;
+
+
         SourceSystem = sourceSystem;
-        ShiftCode = shiftCode;
-        DefectType = defectType;
+
+
         ParameterCode = parameterCode;
-        RiskClass = riskClass;
+
         EventTimeUtc = eventTimeUtc;
         Value = value;
     }

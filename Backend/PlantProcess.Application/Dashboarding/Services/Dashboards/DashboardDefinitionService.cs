@@ -7,6 +7,7 @@ using PlantProcess.Application.Dashboarding.Interfaces;
 using PlantProcess.Domain.Entities.Dashboarding;
 using System.Text.Json;
 using PlantProcess.Application.Definitions;
+using PlantProcess.Application.Dashboarding.Services.Dimensions;
 
 namespace PlantProcess.Application.Dashboarding.Services.Dashboards;
 
@@ -930,9 +931,6 @@ private static string BuildWidgetLayout(int index)
                     MaterialCode: null,
                     MaterialUnitType: null,
                     SourceSystem: null,
-                    DefectType: null,
-                    RiskClass: null,
-                    ShiftCode: null,
                     ParameterCode: parameterCode,
                     FromUtc: null,
                     ToUtc: null);
@@ -947,6 +945,11 @@ private static string BuildWidgetLayout(int index)
                     PropertyNameCaseInsensitive = true
                 });
 
+            if (filters is not null)
+            {
+                DeclaredDimensionFilterQueryParser.RejectUnsupported(filters.UnsupportedFilters);
+            }
+
             if (filters is null)
             {
                 return parameterCode is null
@@ -958,10 +961,7 @@ private static string BuildWidgetLayout(int index)
                         MaterialCode: null,
                         MaterialUnitType: null,
                         SourceSystem: null,
-                        DefectType: null,
-                        RiskClass: null,
-                        ShiftCode: null,
-                        ParameterCode: parameterCode,
+                                    ParameterCode: parameterCode,
                         FromUtc: null,
                         ToUtc: null);
             }
@@ -977,6 +977,10 @@ private static string BuildWidgetLayout(int index)
 
             return filters;
         }
+        catch (DimensionBindingRefusalException)
+        {
+            throw;
+        }
         catch
         {
             return parameterCode is null
@@ -988,9 +992,6 @@ private static string BuildWidgetLayout(int index)
                     MaterialCode: null,
                     MaterialUnitType: null,
                     SourceSystem: null,
-                    DefectType: null,
-                    RiskClass: null,
-                    ShiftCode: null,
                     ParameterCode: parameterCode,
                     FromUtc: null,
                     ToUtc: null);

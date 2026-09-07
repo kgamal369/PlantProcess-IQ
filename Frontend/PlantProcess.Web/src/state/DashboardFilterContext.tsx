@@ -1,14 +1,18 @@
 // ============================================================
-// TASK 7 — Validate filter interaction
 // FILE: Frontend/PlantProcess.Web/src/state/DashboardFilterContext.tsx
 //
-// CHANGES vs current version:
-//  1. activeFilterCount excludes pagination and sort params (page,
-//     pageSize, sortBy, sortDirection) — these are not user filters.
-//  2. clearAllFilters preserves sort/pagination params when clearing.
-//  3. setFilter now resets page to 1 automatically so users always
-//     see the first page after applying a new filter.
-//  4. Numeric filter keys list separated clearly for clarity.
+// T-094. TWO CONTRACTS, ONE URL.
+//
+//  * Structural filters and transport controls are typed keys the product owns
+//    and are written as themselves: ?siteId=...&page=2
+//  * A customer-DECLARED dimension is not a key of this contract. It travels as
+//    a repeatable ?dimensionFilter=<published-code>:<value>, which is exactly
+//    the shape the backend accepts on both the widget and workspace surfaces.
+//
+// The old defectType / riskClass / shiftCode keys are gone. They are not
+// translated here or anywhere: a request that still carries them is refused by
+// the backend with DB10 rather than silently ignored, because an ignored filter
+// widens the population and reports the wider number as the answer.
 // ============================================================
 
 import {
@@ -19,29 +23,38 @@ import {
 } from "react";
 import type { ReactNode } from "react";
 import { useSearchParams } from "react-router-dom";
-import type { DashboardFilters } from "../api/productApiClient";
+import type { DashboardFilters, DeclaredDimensionFilter } from "../api/productApiClient";
+import {
+  DECLARED_FILTER_PARAM,
+  formatDeclaredFilterParam,
+  parseDeclaredFilterParam,
+} from "../api/product-core/declared-dimension-types";
 
 interface DashboardFilterContextValue {
   filters: DashboardFilters;
+  /** Keyed filters on published declarations, in stable code order. */
+  declaredFilters: DeclaredDimensionFilter[];
   setFilter: <K extends keyof DashboardFilters>(
     key: K,
     value: DashboardFilters[K] | undefined
   ) => void;
+  setDeclaredFilter: (code: string, value: string | undefined) => void;
   mergeFilters: (patch: Partial<DashboardFilters>) => void;
   clearFilter: (key: keyof DashboardFilters) => void;
+  clearDeclaredFilter: (code: string) => void;
   clearAllFilters: () => void;
-  /** Count of user-facing filters (excludes pagination/sort). */
+  /** Count of user-facing filters, structural and declared (excludes pagination/sort). */
   activeFilterCount: number;
 }
 
 const DashboardFilterContext =
   createContext<DashboardFilterContextValue | null>(null);
 
-// All filter keys that map to URL search params.
+// Structural filters and transport controls that map to URL search params.
 const filterKeys: (keyof DashboardFilters)[] = [
   "siteId", "areaId", "equipmentId", "materialCode", "materialUnitType",
-  "sourceSystem", "defectType", "parameterCode", "riskClass",
-  "fromUtc", "toUtc", "shiftCode", "linkMode",
+  "sourceSystem", "parameterCode",
+  "fromUtc", "toUtc", "linkMode",
   "genealogyDepth", "bins", "minimumObservationsPerBin",
   "page", "pageSize", "sortBy", "sortDirection",
 ];
@@ -75,13 +88,30 @@ function parseFilters(searchParams: URLSearchParams): DashboardFilters {
   return filters;
 }
 
-function writeFiltersToSearchParams(filters: DashboardFilters): URLSearchParams {
+/** FAIL CLOSED. A malformed URL selection must never disappear and widen the
+ *  population. The shared parser throws DB09 vocabulary before a request runs. */
+function parseDeclared(searchParams: URLSearchParams): DeclaredDimensionFilter[] {
+  return searchParams
+    .getAll(DECLARED_FILTER_PARAM)
+    .map(parseDeclaredFilterParam)
+    .sort((left, right) => left.code.localeCompare(right.code));
+}
+
+function writeSearchParams(
+  filters: DashboardFilters,
+  declared: DeclaredDimensionFilter[]
+): URLSearchParams {
   const next = new URLSearchParams();
 
   for (const key of filterKeys) {
     const value = (filters as Record<string, unknown>)[String(key)];
     if (value === undefined || value === null || value === "") continue;
     next.set(String(key), String(value));
+  }
+
+  for (const filter of declared) {
+    if (!filter.code || !filter.value) continue;
+    next.append(DECLARED_FILTER_PARAM, formatDeclaredFilterParam(filter));
   }
 
   return next;
@@ -91,9 +121,14 @@ export function DashboardFilterProvider({ children }: { children: ReactNode }) {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const filters = useMemo(() => parseFilters(searchParams), [searchParams]);
+  const declaredFilters = useMemo(() => parseDeclared(searchParams), [searchParams]);
 
   const update = useCallback(
-    (patch: Partial<DashboardFilters>, replace = false) => {
+    (
+      patch: Partial<DashboardFilters>,
+      declared: DeclaredDimensionFilter[],
+      replace = false
+    ) => {
       const nextFilters = replace ? patch : { ...filters, ...patch };
 
       // Purge undefined / null / empty values.
@@ -108,7 +143,7 @@ export function DashboardFilterProvider({ children }: { children: ReactNode }) {
         }
       });
 
-      setSearchParams(writeFiltersToSearchParams(nextFilters), {
+      setSearchParams(writeSearchParams(nextFilters, declared), {
         replace: false,
       });
     },
@@ -121,40 +156,68 @@ export function DashboardFilterProvider({ children }: { children: ReactNode }) {
       value: DashboardFilters[K] | undefined
     ) => {
       // Reset to page 1 whenever a filter changes.
-      update({ [String(key)]: value, page: 1 } as Partial<DashboardFilters>);
+      update({ [String(key)]: value, page: 1 } as Partial<DashboardFilters>, declaredFilters);
     },
-    [update]
+    [update, declaredFilters]
+  );
+
+  const setDeclaredFilter = useCallback(
+    (code: string, value: string | undefined) => {
+      const trimmedCode = code.trim();
+      if (!trimmedCode) return;
+
+      const remaining = declaredFilters.filter((filter) => filter.code !== trimmedCode);
+      const trimmedValue = (value ?? "").trim();
+      const next = trimmedValue
+        ? [...remaining, { code: trimmedCode, value: trimmedValue }]
+        : remaining;
+
+      update({ page: 1 } as Partial<DashboardFilters>, next);
+    },
+    [declaredFilters, update]
   );
 
   const mergeFilters = useCallback(
     (patch: Partial<DashboardFilters>) => {
-      update(patch);
+      update(patch, declaredFilters);
     },
-    [update]
+    [update, declaredFilters]
   );
 
   const clearFilter = useCallback(
     (key: keyof DashboardFilters) => {
       const next = { ...filters };
       delete (next as Record<string, unknown>)[String(key)];
-      update(next, true);
+      update(next, declaredFilters, true);
     },
-    [filters, update]
+    [filters, declaredFilters, update]
+  );
+
+  const clearDeclaredFilter = useCallback(
+    (code: string) => {
+      update(
+        { page: 1 } as Partial<DashboardFilters>,
+        declaredFilters.filter((filter) => filter.code !== code)
+      );
+    },
+    [declaredFilters, update]
   );
 
   const clearAllFilters = useCallback(() => {
     // Preserve pagination state when clearing filters so the user stays
-    // on page 1 (reset page too) with their sort preference intact.
+    // on page 1 (reset page too) with their sort preference intact. Declared
+    // filters are cleared with everything else.
     const preserved: Partial<DashboardFilters> = {
       page: 1,
       ...(filters.pageSize ? { pageSize: filters.pageSize } : {}),
       ...(filters.sortBy ? { sortBy: filters.sortBy } : {}),
       ...(filters.sortDirection ? { sortDirection: filters.sortDirection } : {}),
     };
-    setSearchParams(writeFiltersToSearchParams(preserved), { replace: false });
+    setSearchParams(writeSearchParams(preserved, []), { replace: false });
   }, [filters, setSearchParams]);
 
-  // Only count real user-facing filters, not pagination/sort.
+  // Only count real user-facing filters, not pagination/sort. A declared filter
+  // counts exactly as much as a structural one: it is a selection the user made.
   const activeFilterCount = useMemo(
     () =>
       Object.entries(filters).filter(
@@ -163,20 +226,27 @@ export function DashboardFilterProvider({ children }: { children: ReactNode }) {
           value !== undefined &&
           value !== null &&
           value !== ""
-      ).length,
-    [filters]
+      ).length + declaredFilters.length,
+    [filters, declaredFilters]
   );
 
   const value = useMemo<DashboardFilterContextValue>(
     () => ({
       filters,
+      declaredFilters,
       setFilter,
+      setDeclaredFilter,
       mergeFilters,
       clearFilter,
+      clearDeclaredFilter,
       clearAllFilters,
       activeFilterCount,
     }),
-    [filters, setFilter, mergeFilters, clearFilter, clearAllFilters, activeFilterCount]
+    [
+      filters, declaredFilters,
+      setFilter, setDeclaredFilter, mergeFilters,
+      clearFilter, clearDeclaredFilter, clearAllFilters, activeFilterCount,
+    ]
   );
 
   return (

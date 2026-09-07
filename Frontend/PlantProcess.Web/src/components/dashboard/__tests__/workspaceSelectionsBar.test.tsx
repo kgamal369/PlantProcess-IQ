@@ -17,10 +17,12 @@ import { StandardButton } from "@/components/standard";
 // browser row; what a component test can prove honestly is that ONE selection
 // can be removed on its own, which is what the product could not do before.
 
+// T-094. Two structural selections and one on a customer-DECLARED dimension,
+// so the bar is proved to remove either kind on its own.
 const SEEDS = [
-  { field: "materialCode", value: "M-1", label: "M-1", widget: "Material explorer" },
-  { field: "riskClass", value: "High", label: "High", widget: "Risk distribution" },
-  { field: "shiftCode", value: "A", label: "A", widget: "Shift breakdown" },
+  { key: "materialCode", field: "materialCode", value: "M-1", label: "M-1", widget: "Material explorer" },
+  { key: "sourceSystem", field: "sourceSystem", value: "MES", label: "MES", widget: "Source contribution" },
+  { key: "customerConcept", declaredCode: "customerConcept", value: "A", label: "A", widget: "Customer breakdown" },
 ] as const;
 
 function Seeder() {
@@ -29,19 +31,29 @@ function Seeder() {
     <>
       {SEEDS.map((seed) => (
         <StandardButton
-          key={seed.field}
+          key={seed.key}
           type="button"
           onClick={() =>
-            applySelection({
-              type: "generic",
-              field: seed.field,
-              value: seed.value,
-              label: seed.label,
-              sourceWidget: seed.widget,
-            })
+            applySelection(
+              "declaredCode" in seed
+                ? {
+                    type: "declared",
+                    declaredCode: seed.declaredCode,
+                    value: seed.value,
+                    label: seed.label,
+                    sourceWidget: seed.widget,
+                  }
+                : {
+                    type: "generic",
+                    field: seed.field,
+                    value: seed.value,
+                    label: seed.label,
+                    sourceWidget: seed.widget,
+                  }
+            )
           }
         >
-          {"seed " + seed.field}
+          {"seed " + seed.key}
         </StandardButton>
       ))}
     </>
@@ -65,7 +77,7 @@ function renderBar() {
 
 async function seedAll(user: ReturnType<typeof userEvent.setup>) {
   for (const seed of SEEDS) {
-    await user.click(screen.getByRole("button", { name: "seed " + seed.field }));
+    await user.click(screen.getByRole("button", { name: "seed " + seed.key }));
   }
 }
 
