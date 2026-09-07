@@ -41,6 +41,20 @@ public static class DimensionBindingRefusalCodes
     /// widens the population and reports the wider number as the answer.
     /// </summary>
     public const string FilterMalformed = "DB09_dimension_filter_malformed";
+
+    /// <summary>
+    /// T-094 stage 2B. A retired generic filter parameter was supplied.
+    ///
+    /// DECLARED IN 2B-i, RAISED IN 2B-ii. The constant exists now so the cutover
+    /// commit can wire the retirement guard without also introducing a new code
+    /// in the same change. Nothing raises it while the current frontend still
+    /// legitimately sends the legacy parameters.
+    ///
+    /// When it is wired, the guard recognises the old key ONLY to refuse it.
+    /// Translating it would preserve a second semantic authority, and ignoring it
+    /// would widen the population and report the wider number as a valid answer.
+    /// </summary>
+    public const string LegacyFilterUnsupported = "DB10_legacy_dimension_filter_unsupported";
 }
 
 public sealed class DimensionBindingRefusalException : Exception
