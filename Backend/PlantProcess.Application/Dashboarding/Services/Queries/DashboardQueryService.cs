@@ -3,6 +3,8 @@ using PlantProcess.Application.Dashboarding.Contracts;
 using PlantProcess.Application.Common.Persistence;
 using PlantProcess.Application.Common.Results;
 using PlantProcess.Application.Dashboarding.Interfaces;
+using PlantProcess.Application.Dashboarding.Services.Dimensions;
+using PlantProcess.Application.Security.Tenancy;
 
 
 namespace PlantProcess.Application.Dashboarding.Services.Queries;
@@ -10,10 +12,20 @@ namespace PlantProcess.Application.Dashboarding.Services.Queries;
 public sealed class DashboardQueryService : IDashboardQueryService
 {
     private readonly IPlantProcessDbContext _dbContext;
+    private readonly IDeclaredDimensionCatalog? _declaredDimensions;
+    private readonly IDeclaredDimensionSubjectLinkResolver? _subjectLinkResolver;
+    private readonly ITenantAccessor? _tenantAccessor;
 
-    public DashboardQueryService(IPlantProcessDbContext dbContext)
+    public DashboardQueryService(
+        IPlantProcessDbContext dbContext,
+        IDeclaredDimensionCatalog? declaredDimensions = null,
+        IDeclaredDimensionSubjectLinkResolver? subjectLinkResolver = null,
+        ITenantAccessor? tenantAccessor = null)
     {
         _dbContext = dbContext;
+        _declaredDimensions = declaredDimensions;
+        _subjectLinkResolver = subjectLinkResolver;
+        _tenantAccessor = tenantAccessor;
     }
 
     public async Task<ApplicationResult<DashboardWorkspaceDto>> GetWorkspaceAsync(
@@ -555,11 +567,49 @@ public sealed class DashboardQueryService : IDashboardQueryService
         if (!string.IsNullOrWhiteSpace(normalized.SourceSystem))
             materialsQuery = materialsQuery.Where(x => x.SourceSystem == normalized.SourceSystem);
 
+        // T-094. Keyed declared-dimension filters on the workspace surface, through the
+        // same contract the widget surface uses. A declaration on the subject entity
+        // restricts this population directly; one on a related entity is reached through
+        // the single mapped reference to the subject and intersected below. Refusals are
+        // typed and surface unchanged; nothing here falls back to a compiled word.
+        var subjectEntityType = materialsQuery.ElementType;
+        var relatedDeclaredFilters = new List<(DeclaredDimension Declared, string Value)>();
+
+        if (normalized.DimensionFilters is { Count: > 0 })
+        {
+            foreach (var dimensionFilter in normalized.DimensionFilters)
+            {
+                var declaredFilter = await RequireDeclaredDimensionAsync(dimensionFilter.Code, cancellationToken);
+
+                if (DeclaredDimensionProjection.BindsToSubject(declaredFilter, subjectEntityType))
+                    materialsQuery = DeclaredDimensionProjection.WhereDeclaredEquals(materialsQuery, declaredFilter, dimensionFilter.Value);
+                else
+                    relatedDeclaredFilters.Add((declaredFilter, dimensionFilter.Value));
+            }
+        }
+
         var materialIds = await materialsQuery
             .Select(x => x.Id)
             .ToListAsync(cancellationToken);
 
         var materialSet = materialIds.ToHashSet();
+
+        foreach (var relatedFilter in relatedDeclaredFilters)
+        {
+            if (_subjectLinkResolver is null)
+            {
+                throw new DimensionBindingRefusalException(
+                    DimensionBindingRefusalCodes.SubjectLinkUnavailable,
+                    relatedFilter.Declared.Code,
+                    "Declared dimension '" + relatedFilter.Declared.Code + "' is published against a related " +
+                    "entity, and this composition carries no subject-link resolver to reach it.");
+            }
+
+            var linkedKeys = await _subjectLinkResolver.SubjectKeysWhereDeclaredEqualsAsync(
+                relatedFilter.Declared, subjectEntityType, relatedFilter.Value, cancellationToken);
+
+            materialSet.IntersectWith(linkedKeys);
+        }
 
         if (normalized.AreaId.HasValue)
         {
@@ -747,10 +797,34 @@ public sealed class DashboardQueryService : IDashboardQueryService
             DefectType = NormalizeText(query.DefectType),
             RiskClass = NormalizeText(query.RiskClass),
             ShiftCode = NormalizeText(query.ShiftCode),
+            DimensionFilters = DeclaredDimensionFilterQueryParser.Normalise(query.DimensionFilters),
             Page = query.SafePage,
             PageSize = query.SafePageSize,
             SortDirection = query.SafeSortDirection
         };
+    }
+
+    private async Task<DeclaredDimension> RequireDeclaredDimensionAsync(string dimensionCode, CancellationToken cancellationToken)
+    {
+        if (_declaredDimensions is null || _tenantAccessor is null || !_tenantAccessor.TryGetTenantId(out var tenantId))
+        {
+            throw new DimensionBindingRefusalException(
+                DimensionBindingRefusalCodes.TenantUnresolved,
+                dimensionCode,
+                "Declared dimension '" + dimensionCode + "' cannot be resolved without a tenant-scoped declaration catalogue.");
+        }
+
+        var declared = await _declaredDimensions.FindAsync(tenantId, dimensionCode, cancellationToken);
+
+        if (declared is null)
+        {
+            throw new DimensionBindingRefusalException(
+                DimensionBindingRefusalCodes.Undeclared,
+                dimensionCode,
+                "Dimension '" + dimensionCode + "' is neither a structural dimension nor a published declaration for this tenant.");
+        }
+
+        return declared;
     }
 
     private static string? NormalizeText(string? value)

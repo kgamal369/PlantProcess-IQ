@@ -34,6 +34,13 @@ public static class DimensionBindingRefusalCodes
     /// reach a related entity. A capability that is absent is reported as absent.
     /// </summary>
     public const string SubjectLinkUnavailable = "DB08_subject_link_unavailable";
+
+    /// <summary>
+    /// A keyed filter arrived on the wire in a shape that names no code or no
+    /// value. It is refused as itself, never silently dropped: a dropped filter
+    /// widens the population and reports the wider number as the answer.
+    /// </summary>
+    public const string FilterMalformed = "DB09_dimension_filter_malformed";
 }
 
 public sealed class DimensionBindingRefusalException : Exception

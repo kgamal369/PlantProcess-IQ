@@ -18,7 +18,8 @@ public sealed record DashboardQueryDto(
     int Page,
     int PageSize,
     string? SortBy,
-    string? SortDirection)
+    string? SortDirection,
+    IReadOnlyList<DeclaredDimensionFilterDto>? DimensionFilters = null)
 {
     public int SafePage => Page <= 0 ? 1 : Page;
     public int SafePageSize => Math.Clamp(PageSize <= 0 ? 25 : PageSize, 1, 200);
@@ -53,7 +54,22 @@ public sealed record DashboardReferenceDataDto(
     IReadOnlyList<DashboardReferenceItemDto> Defects,
     IReadOnlyList<DashboardReferenceItemDto> Parameters,
     IReadOnlyList<DashboardReferenceItemDto> RiskClasses,
-    IReadOnlyList<DashboardReferenceItemDto> Shifts);
+    IReadOnlyList<DashboardReferenceItemDto> Shifts,
+    IReadOnlyList<DashboardReferenceDeclaredDimensionDto>? DeclaredDimensions = null);
+
+/// <summary>
+/// T-094. A dimension the tenant has PUBLISHED, offered to a consumer so it can
+/// render what the registry declares rather than what the product compiled.
+/// Values are not enumerated here; a consumer enumerates them through the
+/// widget-query surface, which already groups by any declared code.
+/// </summary>
+public sealed record DashboardReferenceDeclaredDimensionDto(
+    string Code,
+    string Label,
+    string DataType,
+    string GrainCode,
+    bool IsExecutable,
+    string? RefusalCode);
 
 public sealed record DashboardReferenceItemDto(
     string Id,

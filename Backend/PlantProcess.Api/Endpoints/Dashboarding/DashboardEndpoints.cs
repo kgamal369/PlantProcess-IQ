@@ -6,6 +6,10 @@ using PlantProcess.Application.Dashboarding.Interfaces;
 using PlantProcess.Infrastructure.Persistence;
 using PlantProcess.Application.Licensing.Contracts;
 using PlantProcess.Application.Licensing.Interfaces;
+using PlantProcess.Application.Common.Results;
+using PlantProcess.Application.Dashboarding.Services.Dimensions;
+using PlantProcess.Application.Security.Tenancy;
+using System.Security.Claims;
 
 namespace PlantProcess.Api.Endpoints.Dashboarding;
 
@@ -15,6 +19,23 @@ public static class DashboardEndpoints
     {
         var group = app.MapGroup("/analytics/dashboard")
             .WithTags("Dashboard");
+
+        // T-094. A declared-dimension refusal raised on the workspace surface becomes
+        // the same typed BusinessRule failure the widget surface already returns, so a
+        // consumer sees one refusal vocabulary whichever route it asked.
+        group.AddEndpointFilter(async (invocation, next) =>
+        {
+            try
+            {
+                return await next(invocation);
+            }
+            catch (DimensionBindingRefusalException refusal)
+            {
+                return ApplicationResult<object>
+                    .Failure(ApplicationError.BusinessRule(refusal.RefusalCode + ": " + refusal.Message))
+                    .ToHttpResult(_ => Results.Ok());
+            }
+        });
 
         // Existing-friendly GET endpoints, now accepting full filter query.
         group.MapGet("/overview", GetOverviewAsync);
@@ -150,11 +171,12 @@ public static class DashboardEndpoints
         DateTime? fromUtc,
         DateTime? toUtc,
         string? shiftCode,
+        [Microsoft.AspNetCore.Mvc.FromQuery(Name = DeclaredDimensionFilterQueryParser.ParameterName)] string[]? dimensionFilter,
         [Microsoft.AspNetCore.Mvc.FromServices] IDashboardQueryService service,
         CancellationToken cancellationToken)
     {
         var result = await service.GetOverviewAsync(
-            BuildQuery(siteId, areaId, equipmentId, materialCode, sourceSystem, defectType, riskClass, fromUtc, toUtc, shiftCode, 1, 25, null, null),
+            BuildQuery(siteId, areaId, equipmentId, materialCode, sourceSystem, defectType, riskClass, fromUtc, toUtc, shiftCode, 1, 25, null, null, dimensionFilter),
             cancellationToken);
 
         return result.ToHttpResult(value => Results.Ok(value));
@@ -171,11 +193,12 @@ public static class DashboardEndpoints
         DateTime? fromUtc,
         DateTime? toUtc,
         string? shiftCode,
+        [Microsoft.AspNetCore.Mvc.FromQuery(Name = DeclaredDimensionFilterQueryParser.ParameterName)] string[]? dimensionFilter,
         [Microsoft.AspNetCore.Mvc.FromServices] IDashboardQueryService service,
         CancellationToken cancellationToken)
     {
         var result = await service.GetQualityDashboardAsync(
-            BuildQuery(siteId, areaId, equipmentId, materialCode, sourceSystem, defectType, riskClass, fromUtc, toUtc, shiftCode, 1, 25, null, null),
+            BuildQuery(siteId, areaId, equipmentId, materialCode, sourceSystem, defectType, riskClass, fromUtc, toUtc, shiftCode, 1, 25, null, null, dimensionFilter),
             cancellationToken);
 
         return result.ToHttpResult(value => Results.Ok(value));
@@ -193,11 +216,12 @@ public static class DashboardEndpoints
         DateTime? toUtc,
         string? shiftCode,
         int? highRiskTake,
+        [Microsoft.AspNetCore.Mvc.FromQuery(Name = DeclaredDimensionFilterQueryParser.ParameterName)] string[]? dimensionFilter,
         [Microsoft.AspNetCore.Mvc.FromServices] IDashboardQueryService service,
         CancellationToken cancellationToken)
     {
         var result = await service.GetRiskDashboardAsync(
-            BuildQuery(siteId, areaId, equipmentId, materialCode, sourceSystem, defectType, riskClass, fromUtc, toUtc, shiftCode, 1, highRiskTake ?? 25, null, null),
+            BuildQuery(siteId, areaId, equipmentId, materialCode, sourceSystem, defectType, riskClass, fromUtc, toUtc, shiftCode, 1, highRiskTake ?? 25, null, null, dimensionFilter),
             cancellationToken);
 
         return result.ToHttpResult(value => Results.Ok(value));
@@ -214,11 +238,12 @@ public static class DashboardEndpoints
         DateTime? fromUtc,
         DateTime? toUtc,
         string? shiftCode,
+        [Microsoft.AspNetCore.Mvc.FromQuery(Name = DeclaredDimensionFilterQueryParser.ParameterName)] string[]? dimensionFilter,
         [Microsoft.AspNetCore.Mvc.FromServices] IDashboardQueryService service,
         CancellationToken cancellationToken)
     {
         var result = await service.GetDataQualityDashboardAsync(
-            BuildQuery(siteId, areaId, equipmentId, materialCode, sourceSystem, defectType, riskClass, fromUtc, toUtc, shiftCode, 1, 25, null, null),
+            BuildQuery(siteId, areaId, equipmentId, materialCode, sourceSystem, defectType, riskClass, fromUtc, toUtc, shiftCode, 1, 25, null, null, dimensionFilter),
             cancellationToken);
 
         return result.ToHttpResult(value => Results.Ok(value));
@@ -239,11 +264,12 @@ public static class DashboardEndpoints
         int? pageSize,
         string? sortBy,
         string? sortDirection,
+        [Microsoft.AspNetCore.Mvc.FromQuery(Name = DeclaredDimensionFilterQueryParser.ParameterName)] string[]? dimensionFilter,
         [Microsoft.AspNetCore.Mvc.FromServices] IDashboardQueryService service,
         CancellationToken cancellationToken)
     {
         var result = await service.SearchMaterialsAsync(
-            BuildQuery(siteId, areaId, equipmentId, materialCode, sourceSystem, defectType, riskClass, fromUtc, toUtc, shiftCode, page ?? 1, pageSize ?? 25, sortBy, sortDirection),
+            BuildQuery(siteId, areaId, equipmentId, materialCode, sourceSystem, defectType, riskClass, fromUtc, toUtc, shiftCode, page ?? 1, pageSize ?? 25, sortBy, sortDirection, dimensionFilter),
             cancellationToken);
 
         return result.ToHttpResult(value => Results.Ok(value));
@@ -251,11 +277,16 @@ public static class DashboardEndpoints
 
     private static async Task<IResult> GetReferenceDataAsync(
         Guid? siteId,
+        ClaimsPrincipal user,
         IMemoryCache cache,
         PlantProcessDbContext dbContext,
+        [Microsoft.AspNetCore.Mvc.FromServices] IDeclaredDimensionCatalog declaredDimensions,
         CancellationToken cancellationToken)
     {
-        var cacheKey = $"dashboard-reference-data:{siteId?.ToString() ?? "all"}";
+        // T-094. Declared dimensions are tenant-scoped, so the cache is too.
+        var tenantResolved = TenantClaims.TryResolve(user, out var tenantId) && tenantId != Guid.Empty;
+        var tenantKey = tenantResolved ? tenantId.ToString("D") : "none";
+        var cacheKey = $"dashboard-reference-data:{siteId?.ToString() ?? "all"}:{tenantKey}";
 
         if (cache.TryGetValue(cacheKey, out DashboardReferenceDataDto? cached) && cached is not null)
             return Results.Ok(cached);
@@ -387,6 +418,21 @@ public static class DashboardEndpoints
                 x.Count))
             .ToList();
 
+        var declared = new List<DashboardReferenceDeclaredDimensionDto>();
+        if (tenantResolved)
+        {
+            foreach (var dimension in await declaredDimensions.GetPublishedAsync(tenantId, cancellationToken))
+            {
+                declared.Add(new DashboardReferenceDeclaredDimensionDto(
+                    dimension.Code,
+                    dimension.Label,
+                    dimension.DataType,
+                    dimension.GrainCode,
+                    dimension.IsBindable,
+                    dimension.BindingRefusalCode));
+            }
+        }
+
         var result = new DashboardReferenceDataDto(
             DateTime.UtcNow,
             sites,
@@ -396,7 +442,8 @@ public static class DashboardEndpoints
             defects,
             parameters,
             riskClasses,
-            shifts);
+            shifts,
+            declared);
 
         cache.Set(cacheKey, result, TimeSpan.FromMinutes(10));
 
@@ -660,7 +707,8 @@ public static class DashboardEndpoints
         int page,
         int pageSize,
         string? sortBy,
-        string? sortDirection)
+        string? sortDirection,
+        string[]? dimensionFilter = null)
     {
         return new DashboardQueryDto(
             siteId,
@@ -676,7 +724,8 @@ public static class DashboardEndpoints
             page,
             pageSize,
             sortBy,
-            sortDirection);
+            sortDirection,
+            DeclaredDimensionFilterQueryParser.Parse(dimensionFilter));
     }
 
     private static async Task<IResult> RepairSystemDashboardTemplatesAsync(
