@@ -81,6 +81,13 @@
 .blk-node__checklist { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; }
 .blk-node__chip { justify-content: flex-start; text-align: start; }
 .blk-node__empty { color: #8ea7c1; font-size: 11px; line-height: 1.35; max-width: 240px; }
+.ppiq-family-port--1-0 { top: 50%; }
+.ppiq-family-port--2-0 { top: 33%; }
+.ppiq-family-port--2-1 { top: 67%; }
+.ppiq-family-port--3-0 { top: 25%; }
+.ppiq-family-port--3-1 { top: 50%; }
+.ppiq-family-port--3-2 { top: 75%; }
+
 /* PPIQ T-033. Board-editing controls live in the canvas toolbar (section
    5.2.6), so they are sized to sit beside zoom and zoom-fit rather than to
    look like lifecycle actions. */

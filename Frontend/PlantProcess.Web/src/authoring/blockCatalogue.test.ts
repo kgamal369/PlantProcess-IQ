@@ -124,7 +124,12 @@ describe("T-242 serialisation reports, never swallows", () => {
 
   it("C242-44 an unrepresentable block names itself and its kind", () => {
     const source = sourceNode();
-    const arithmetic: BoardNode = { id: "arithmetic-1", kind: "arithmetic", data: { title: "Arithmetic 1" } };
+    // Valid by its parameter contract, so the refusal under test is the
+    // SERIALISATION one and not a validity problem standing in for it.
+    const arithmetic: BoardNode = {
+      id: "arithmetic-1", kind: "arithmetic",
+      data: { title: "Arithmetic 1", operator: "add" },
+    };
     const outcome = serialisationOutcome(
       "definition_a", "entity_a", [source, arithmetic], [wire(source.id, arithmetic.id)],
     );

@@ -27,7 +27,12 @@
 import { Handle, Position, type Node, type NodeProps } from "@xyflow/react";
 import { StandardP2Button, StandardP2Input, StandardP2Select } from "@/components/standard/StandardP2Controls";
 import { FILTER_OPERATORS, MATH_OPERATORS, isUnaryFilterOperator } from "./operatorContract";
-import { FLOW_IN, FLOW_OUT, type BoardField } from "./graphSemantics";
+import { FLOW_IN, FLOW_OUT, type BoardField, type BoardNodeKind } from "./graphSemantics";
+import {
+  describePortType, describeSignature,
+  type ParameterSpec, type PortSpec, type PortTypeRef,
+} from "./blockParameters";
+import { BLOCK_REGISTRY, contractForKind, titleForKind } from "./blockRegistry";
 
 /** What every board block carries. `problem` is the sentence, or null. */
 export interface BlockCommonData {
@@ -244,9 +249,141 @@ export function SelectNode({ id, data }: NodeProps<SelectNodeType>) {
   );
 }
 
-/** The node type map the shell registers with the board. */
+// ============================================================================
+// T-242 Stage 4. ONE NODE FOR EVERY EXECUTABLE FAMILY.
+//
+// The three blocks above are bespoke because each is genuinely different: they
+// are fed from LIVE SCHEMA, so their controls are dropdowns of the real columns
+// an upstream dataset happens to expose. Nothing about that generalises.
+//
+// The executable families are the opposite. Each is fully described by its
+// contract - the parameters it requires and the typed ports it exposes - so
+// nine bespoke components would be nine copies of one component with a
+// different literal in each, and nine places for a signature to drift. One
+// renderer reads the contract. A new family is a registry row and a schema,
+// not another component here.
+// ============================================================================
+
+function portTypeClass(ref: PortTypeRef): string {
+  // A type variable has no single concrete colour. The neutral key colour is
+  // used until wiring resolves the variable; the typed title still states the
+  // accepted semantic type.
+  const type = "concrete" in ref ? ref.concrete : "key";
+  return "ppiq-port--" + type;
+}
+
+function portSlotClass(index: number, total: number): string {
+  // Stage 4 families expose at most three inputs. Position belongs in the
+  // stylesheet, not in an inline React style object: the authoring shell's
+  // conformance ratchet deliberately keeps inline styling at zero.
+  return "ppiq-family-port--" + String(total) + "-" + String(index);
+}
+
+function FamilyPort({ spec, index, total, side }: {
+  spec: PortSpec; index: number; total: number; side: "in" | "out";
+}) {
+  return (
+    <Handle
+      type={side === "in" ? "target" : "source"}
+      position={side === "in" ? Position.Left : Position.Right}
+      id={spec.id}
+      className={"ppiq-port " + portTypeClass(spec.type) + " " + portSlotClass(index, total)}
+      title={spec.label + ": " + describePortType(spec.type)}
+    />
+  );
+}
+
+function FamilyParameter({ nodeId, spec, value, onChange }: {
+  nodeId: string;
+  spec: ParameterSpec;
+  value: unknown;
+  onChange?: (nodeId: string, key: string, value: string) => void;
+}) {
+  const current = value === undefined || value === null ? "" : String(value);
+  if (spec.control.kind === "choice") {
+    return (
+      <StandardP2Select
+        className="blk-node__field"
+        aria-label={spec.label}
+        value={current}
+        onChange={(e) => onChange?.(nodeId, spec.key, e.target.value)}
+      >
+        {/* The empty option is not a default. Nothing is chosen until the
+            author chooses it, and the block stays invalid until then. */}
+        <option value="">choose {spec.label.toLowerCase()}</option>
+        {spec.control.options.map((o) => <option key={o} value={o}>{o}</option>)}
+      </StandardP2Select>
+    );
+  }
+  return (
+    <StandardP2Input
+      className="blk-node__field"
+      aria-label={spec.label}
+      value={current}
+      onChange={(e) => onChange?.(nodeId, spec.key, e.target.value)}
+    />
+  );
+}
+
+export type FamilyNodeData = BlockCommonData;
+type FamilyNodeType = Node<FamilyNodeData, string>;
+
+export function FamilyNode({ id, type, data }: NodeProps<FamilyNodeType>) {
+  const kind = (type ?? "") as BoardNodeKind;
+  const contract = contractForKind(kind);
+  const signature = contract ? contract.ports(data) : null;
+  const inputs = signature ? signature.inputs : [];
+
+  return (
+    <div className={shellClass(data.problem)} data-testid={"family-node-" + id} data-kind={kind}>
+      {inputs.map((spec, i) => (
+        <FamilyPort key={spec.id} spec={spec} index={i} total={inputs.length} side="in" />
+      ))}
+
+      <div className="blk-node__kind">{titleForKind(kind)}</div>
+      <div className="blk-node__title">{data.title}</div>
+
+      {/* DERIVED from the ports rendered above it, so the node cannot describe
+          something its contract does not actually do. */}
+      {signature ? (
+        <div className="blk-node__signature" data-testid={"family-signature-" + id}>
+          Takes {describeSignature(signature)}.
+        </div>
+      ) : null}
+
+      {contract ? contract.parameters.map((spec) => (
+        <FamilyParameter
+          key={spec.key}
+          nodeId={id}
+          spec={spec}
+          value={data[spec.key]}
+          onChange={data.onChange}
+        />
+      )) : null}
+
+      <NodeStatus problem={data.problem} testId={"family-status-" + id} />
+
+      {signature && signature.output ? (
+        <FamilyPort spec={signature.output} index={0} total={1} side="out" />
+      ) : null}
+    </div>
+  );
+}
+
+/**
+ * The node type map the shell registers with the board. The executable
+ * families come FROM THE CATALOGUE, so a family that declares a contract is
+ * renderable without anyone remembering to add a line here.
+ */
+const FAMILY_NODE_TYPES: Record<string, typeof FamilyNode> = Object.fromEntries(
+  BLOCK_REGISTRY
+    .filter((b) => b.implemented && b.contract !== undefined)
+    .map((b) => [b.boardKind as string, FamilyNode]),
+);
+
 export const AUTHORING_NODE_TYPES = {
   filter: FilterNode,
   derived: DerivedNode,
   select: SelectNode,
+  ...FAMILY_NODE_TYPES,
 };

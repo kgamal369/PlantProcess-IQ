@@ -180,10 +180,15 @@ describe("T-241 executable Canvas contract", () => {
 
   it("C242-02 refuses a compute block BY NAME instead of routing it into Select", () => {
     const source = sourceNode();
+    // T-242 Stage 4. The operator is DECLARED here now. Board validity reads
+    // the family's parameter contract, so an arithmetic block with no operator
+    // is invalid before serialisation is ever reached - which is the point of
+    // C242-54 below. This control is about the block being VALID and still
+    // unrepresentable, so it must actually be valid.
     const arithmetic: BoardNode = {
       id: "arithmetic-1",
       kind: "arithmetic",
-      data: { title: "Arithmetic 1" },
+      data: { title: "Arithmetic 1", operator: "add" },
     };
     const nodes = [source, arithmetic];
     const edges: BoardEdge[] = [{
@@ -213,11 +218,22 @@ describe("T-241 executable Canvas contract", () => {
     const nodes: BoardNode[] = [source];
     const edges: BoardEdge[] = [];
 
+    const operatorFor: Record<string, string> = {
+      arithmetic: "add", comparison: "equals", logic: "and",
+    };
     for (const kind of [...COMPUTE_BOARD_NODE_KINDS, ...LOOP_BOARD_NODE_KINDS]) {
       const node: BoardNode = {
         id: kind + "-1",
         kind,
-        data: { title: kind, maxIterations: 3, budgetMs: 1000 },
+        // Every parameter every family requires, declared, so each block is
+        // VALID and the control proves what it claims: a valid compute block
+        // is refused by the SERIALISER, by name, not by validation.
+        data: {
+          title: kind,
+          operator: operatorFor[kind] ?? "",
+          maxIterations: 3,
+          budgetMs: 1000,
+        },
       };
       const board = [source, node];
       const wiring: BoardEdge[] = [{

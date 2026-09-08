@@ -1,4 +1,9 @@
 import type { BoardNodeKind } from "./graphSemantics";
+import {
+  arithmeticContract, boundedWhileContract, comparisonContract, conditionalContract,
+  forEachContract, logicContract, repeatContract,
+  type BlockFamilyContract,
+} from "./blockParameters";
 
 // PPIQ T-032. Chapter 4 section 5.2.5 - the toolbox is grouped, searchable and
 // drag-and-drop onto the board, and "GROUPS ARE EXTENDED BY REGISTRY ENTRY,
@@ -62,6 +67,15 @@ export type BlockDefinition =
       boardKind: BoardNodeKind;
       seed: () => BlockSeed;
       capabilities: BlockCapabilities;
+      /**
+       * T-242 Stage 4. The family's semantic contract - required parameters
+       * and TYPED PORTS - BY REFERENCE to a reusable schema. The registry
+       * names the schema; it never restates it, so a signature is written in
+       * exactly one place. The relational families carry none: their meaning
+       * is a SELECT the server runs, and their bespoke nodes are fed from
+       * live schema rather than from a declared port list.
+       */
+      contract?: BlockFamilyContract;
     })
   | (BlockDefinitionBase & {
       implemented: false;
@@ -144,29 +158,29 @@ export const BLOCK_REGISTRY: readonly BlockDefinition[] = [
   // purpose - a block that quietly defaulted to "add" would be choosing a
   // semantic on the author's behalf.
   { id: "expr-arithmetic", label: "Arithmetic", group: "expression", inputs: "two numbers", outputs: "number",
-    boardKind: "arithmetic", seed: () => ({ operator: "" }),
+    boardKind: "arithmetic", contract: arithmeticContract, seed: () => ({ operator: "" }),
     implemented: true, capabilities: { evaluable: true, persistable: false } },
   { id: "expr-comparison", label: "Comparison", group: "expression", inputs: "two values", outputs: "boolean",
-    boardKind: "comparison", seed: () => ({ operator: "" }),
+    boardKind: "comparison", contract: comparisonContract, seed: () => ({ operator: "" }),
     implemented: true, capabilities: { evaluable: true, persistable: false } },
   { id: "expr-logic", label: "Logic", group: "expression", inputs: "booleans", outputs: "boolean",
-    boardKind: "logic", seed: () => ({ operator: "" }),
+    boardKind: "logic", contract: logicContract, seed: () => ({ operator: "" }),
     implemented: true, capabilities: { evaluable: true, persistable: false } },
   { id: "expr-conditional", label: "If / else", group: "expression", inputs: "condition, two values", outputs: "value",
-    boardKind: "conditional", seed: NO_SEED,
+    boardKind: "conditional", contract: conditionalContract, seed: NO_SEED,
     implemented: true, capabilities: { evaluable: true, persistable: false } },
 
   // Group 4 - loops and control flow. Three families and no fourth. Every
   // bound seeds EMPTY, so a freshly placed loop is invalid until the author
   // declares how it stops. That is the loop law, not an oversight.
   { id: "loop-for-each", label: "For each", group: "control-flow", inputs: "collection", outputs: "value",
-    boardKind: "for-each", seed: NO_SEED,
+    boardKind: "for-each", contract: forEachContract, seed: NO_SEED,
     implemented: true, capabilities: { evaluable: true, persistable: false } },
   { id: "loop-repeat-n", label: "Repeat", group: "control-flow", inputs: "iteration count", outputs: "value",
-    boardKind: "repeat-n", seed: NO_SEED,
+    boardKind: "repeat-n", contract: repeatContract, seed: NO_SEED,
     implemented: true, capabilities: { evaluable: true, persistable: false } },
   { id: "loop-while-bounded", label: "Bounded while", group: "control-flow", inputs: "condition, count, budget", outputs: "value",
-    boardKind: "while-bounded", seed: NO_SEED,
+    boardKind: "while-bounded", contract: boundedWhileContract, seed: NO_SEED,
     implemented: true, capabilities: { evaluable: true, persistable: false } },
 
   // Group 5 - statistics and correlation. The governed aggregate and window
@@ -254,4 +268,45 @@ export function seedForKind(kind: BoardNodeKind): BlockSeed | null {
 /** Every block a palette may offer, derived from capability alone. */
 export function paletteEligibleBlocks(): BlockDefinition[] {
   return BLOCK_REGISTRY.filter(isPaletteEligible);
+}
+
+/** The declared semantic contract for a graph kind, or null if it has none. */
+export function contractForKind(kind: BoardNodeKind): BlockFamilyContract | null {
+  const block = blockForKind(kind);
+  if (!block || !block.implemented || !block.contract) { return null; }
+  return block.contract;
+}
+
+/**
+ * WHY A BLOCK CANNOT BE PLACED, in words derived from its capability state.
+ * No task name, no milestone and no date appears here: the product describes
+ * what is true now, and a sentence promising a future release would be a
+ * schedule leaking into runtime copy. Returns null when the block CAN be
+ * placed, so the caller has nothing to explain.
+ */
+export function blockUnavailableReason(block: BlockDefinition): string | null {
+  if (isPaletteEligible(block)) { return null; }
+  if (!block.implemented) {
+    return "Declared in the catalogue. Its behaviour is not built yet.";
+  }
+  return "Built and validated, but it cannot be placed here yet: this surface"
+    + " cannot save a definition that contains it.";
+}
+
+/**
+ * The sentence at the head of the toolbox, assembled from the catalogue rather
+ * than typed by hand, so it stays true the moment a family's capabilities
+ * change and nobody has to remember to edit copy.
+ */
+export function paletteSummary(): string {
+  const labels = paletteEligibleBlocks().map((b) => b.label);
+  if (labels.length === 0) {
+    return "Nothing can be placed on this surface yet. Every block below is declared here"
+      + " and says why it is unavailable.";
+  }
+  const list = labels.length === 1
+    ? labels[0]
+    : labels.slice(0, -1).join(", ") + " and " + labels[labels.length - 1];
+  return list + " can be placed on the board. The rest are declared here and each says why"
+    + " it cannot be placed yet.";
 }

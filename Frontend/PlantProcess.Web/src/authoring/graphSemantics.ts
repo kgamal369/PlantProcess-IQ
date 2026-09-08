@@ -29,6 +29,8 @@ import type {
 // Port typing lives in the canvas layer and is pure, so the refusal set can
 // use it without pulling any React into this module.
 import { inferPortType, portsCompatible, type PortType } from "@/canvas/ports";
+import { parameterValueProblem } from "./blockParameters";
+import { contractForKind } from "./blockRegistry";
 
 /**
  * A field as the BOARD sees it.
@@ -188,6 +190,20 @@ function numberFrom(node: BoardNode, key: string): number {
  * wrote down is not a governed loop. ForEach is bounded by the collection it
  * walks and declares neither.
  */
+/**
+ * The first undeclared or invalid parameter a block's contract requires, said
+ * as the contract says it. Returns null when everything required is declared.
+ */
+export function declaredParameterProblem(node: BoardNode): string | null {
+  const contract = contractForKind(node.kind);
+  if (!contract) { return null; }
+  for (const spec of contract.parameters) {
+    const problem = parameterValueProblem(spec, node.data[spec.key]);
+    if (problem) { return titleOf(node) + " " + problem; }
+  }
+  return null;
+}
+
 export function loopBoundProblem(node: BoardNode): string | null {
   const title = titleOf(node);
   if (node.kind === "repeat-n" || node.kind === "while-bounded") {
@@ -558,11 +574,14 @@ export function blockProblem(node: BoardNode, nodes: BoardNode[], edges: BoardEd
   // their run path is the governed job path, not SELECT. What is refused here
   // is only what is genuinely undeclared - the loop bound. The REPRESENTATION
   // refusal belongs to serialiseGraph and names itself there.
-  if (isLoopBoardNodeKind(node.kind)) {
-    return loopBoundProblem(node);
-  }
-  if (isComputeBoardNodeKind(node.kind)) {
-    return null;
+  if (isLoopBoardNodeKind(node.kind) || isComputeBoardNodeKind(node.kind)) {
+    // T-242 Stage 4. VALIDITY IS READ FROM THE DECLARED CONTRACT, not from a
+    // branch per family. Every required parameter a family declares is checked
+    // the same way, so a new family becomes valid-or-not by declaring its
+    // schema rather than by adding another arm to this function. That is why
+    // the loop bound is no longer special-cased here: an iteration count is
+    // just a required parameter, and it is declared as one.
+    return declaredParameterProblem(node);
   }
 
 

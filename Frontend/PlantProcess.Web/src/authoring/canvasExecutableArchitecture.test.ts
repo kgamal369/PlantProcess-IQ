@@ -107,6 +107,74 @@ describe("T-241 Canvas architecture guards", () => {
     void invalidKind;
   });
 
+  it("the parameter schema module never becomes a second block catalogue", () => {
+    // T-242 Stage 4. blockParameters holds reusable SHAPES. The moment it also
+    // maps a block id to a title, a kind or an availability, two files answer
+    // the same question and can disagree - which is the duplication Stage 3
+    // removed from the shell. It may not contain a block id at all.
+    const schemas = read("src/authoring/blockParameters.ts");
+    const registry = read("src/authoring/blockRegistry.ts");
+    for (const blockId of ["expr-arithmetic", "expr-comparison", "expr-logic",
+                           "expr-conditional", "loop-for-each", "loop-repeat-n",
+                           "loop-while-bounded", "select-columns", "derived-column"]) {
+      expect(schemas, blockId + " belongs to the catalogue, not the schemas")
+        .not.toContain('"' + blockId + '"');
+      expect(registry).toContain('"' + blockId + '"');
+    }
+    expect(schemas).not.toContain("BLOCK_REGISTRY");
+    expect(schemas).not.toContain("isPaletteEligible");
+    expect(schemas).not.toContain("implemented:");
+  });
+
+  it("the schema module cannot create a runtime import cycle", () => {
+    // graphSemantics and blockSemantics both READ blockParameters at runtime,
+    // so a runtime import back the other way would be a cycle. Type-only
+    // imports are erased and are fine; a value import is not.
+    const schemas = read("src/authoring/blockParameters.ts");
+    const valueImports = schemas
+      .split("\n")
+      .filter((l) => l.trim().startsWith("import ") && !l.trim().startsWith("import type"));
+    for (const line of valueImports) {
+      expect(line, "blockParameters may not import a value from the graph or the catalogue")
+        .not.toMatch(/graphSemantics|blockRegistry|blockSemantics|BlockNodes/);
+    }
+  });
+
+  it("there is one node component for every executable family, not one each", () => {
+    // A per-family switch or a component per family would rebuild, in JSX,
+    // exactly the duplication the catalogue exists to prevent.
+    const nodes = read("src/authoring/BlockNodes.tsx");
+    for (const kind of ["arithmetic", "comparison", "logic", "conditional",
+                        "for-each", "repeat-n", "while-bounded"]) {
+      expect(nodes, kind + " must not have its own component")
+        .not.toMatch(new RegExp("function\\s+\\w*" + kind.replace("-", "") + "\\w*Node", "i"));
+    }
+    expect(nodes).toContain("export function FamilyNode");
+    expect(nodes).toContain("contractForKind");
+    // The registered families are derived from the catalogue, not listed here.
+    expect(nodes).toContain("BLOCK_REGISTRY");
+  });
+
+  it("the rendered port sentence has no authority of its own", () => {
+    // Comment-stripped, because a guard that scans raw text fires on prose
+    // explaining the rule and proves nothing about the code that follows it.
+    const codeOnly = (text: string) => text
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .split("\n")
+      .map((l) => { const i = l.indexOf("//"); return i >= 0 ? l.slice(0, i) : l; })
+      .join("\n");
+    // If the node ever hard-codes a phrase like "two numbers", the contract
+    // and the prose become two authorities and one of them will go stale.
+    const nodes = read("src/authoring/BlockNodes.tsx");
+    const semantics = read("src/authoring/blockSemantics.ts");
+    expect(nodes).toContain("describeSignature");
+    expect(semantics).toContain("describeSignature");
+    for (const source of [codeOnly(nodes), codeOnly(semantics)]) {
+      expect(source).not.toContain("two numbers and produces");
+      expect(source).not.toContain("FAMILY_SIGNATURES");
+    }
+  });
+
   it("graph validation owns a runtime-checkable executable kind set", () => {
     const graph = read("src/authoring/graphSemantics.ts");
     expect(graph).toContain("EXECUTABLE_BOARD_NODE_KINDS");

@@ -46,7 +46,7 @@ import {
 } from "./graphSemantics";
 import { authoringReadiness, readinessBlockedMessage } from "./authoringReadiness";
 import {
-  blockById, paletteEligibleBlocks, seedForKind, titleForKind,
+  blockById, paletteEligibleBlocks, paletteSummary, seedForKind, titleForKind,
 } from "./blockRegistry";
 import {
   SCHEMA_DRAG_MIME, datasetForDrop, decodeSchemaDrag, toggleColumn,
@@ -1138,8 +1138,11 @@ export function SharedAuthoringShell({
             <h4>Toolbox</h4>
             <AuthoringToolbox
               paletteGroups={definition.paletteGroups}
+              // T-242 Stage 4. Derived from the catalogue. The old copy named
+              // three blocks by hand, so it would have started lying the first
+              // time a family's capabilities changed and nobody edited it.
               unavailableReason={definition.showsStagingCatalogue
-                ? "Filter, Select columns and Derived column are on the board. The rest are declared here and arrive with the later grammar."
+                ? paletteSummary()
                 : "Blocks are declared here and become available with this purpose's own board grammar."}
               addableBlockIds={definition.showsStagingCatalogue ? addableBlockIds : []}
               onAddBlock={addBlock}

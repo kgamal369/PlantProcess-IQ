@@ -13,7 +13,8 @@
 import { useMemo, useState } from "react";
 import { StandardP2Button, StandardP2Input } from "@/components/standard/StandardP2Controls";
 import {
-  blocksInGroup, groupsForPalette, isPaletteEligible, type BlockDefinition,
+  blockUnavailableReason, blocksInGroup, groupsForPalette, isPaletteEligible,
+  type BlockDefinition,
 } from "./blockRegistry";
 
 export interface AuthoringToolboxProps {
@@ -84,7 +85,10 @@ export function AuthoringToolbox({
                 className="authoring-toolbox__block"
                 disabled={!canAdd(b)}
                 aria-disabled={!canAdd(b)}
-                title={b.inputs + " -> " + b.outputs}
+                // T-242 Stage 4. A disabled block says WHY, in words derived
+                // from its own capability state rather than from one sentence
+                // at the top of the region that has to describe every case.
+                title={blockUnavailableReason(b) ?? (b.inputs + " -> " + b.outputs)}
                 onClick={() => onAddBlock?.(b.id)}
               >
                 <span className="authoring-toolbox__blocklabel">{b.label}</span>

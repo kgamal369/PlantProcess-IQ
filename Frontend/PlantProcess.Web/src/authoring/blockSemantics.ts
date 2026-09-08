@@ -29,6 +29,13 @@
 
 import { portsCompatible, type PortType } from "@/canvas/ports";
 import {
+  ARITHMETIC_OPERATORS as ARITHMETIC, COMPARISON_OPERATORS as COMPARISON,
+  LOGIC_OPERATORS as LOGIC, describeSignature,
+  type ArithmeticOperator as ArithmeticOp, type ComparisonOperator as ComparisonOp,
+  type LogicOperator as LogicOp,
+} from "./blockParameters";
+import { contractForKind } from "./blockRegistry";
+import {
   isComputeBoardNodeKind,
   isLoopBoardNodeKind,
   loopBoundProblem,
@@ -114,36 +121,42 @@ function refuse(node: BoardNode, code: BlockRefusalCode, message: string): Block
 // rather than twenty.
 // ============================================================================
 
-export const ARITHMETIC_OPERATORS = ["add", "subtract", "multiply", "divide"] as const;
-export const COMPARISON_OPERATORS = [
-  "equals", "not-equals", "greater-than", "greater-or-equal", "less-than", "less-or-equal",
-] as const;
-export const LOGIC_OPERATORS = ["and", "or", "not"] as const;
+// T-242 Stage 4. The operator lists now live with the parameter schemas, and
+// are re-exported here so every existing importer keeps working unchanged.
+export {
+  ARITHMETIC_OPERATORS, COMPARISON_OPERATORS, LOGIC_OPERATORS,
+} from "./blockParameters";
+export type {
+  ArithmeticOperator, ComparisonOperator, LogicOperator,
+} from "./blockParameters";
 
-export type ArithmeticOperator = (typeof ARITHMETIC_OPERATORS)[number];
-export type ComparisonOperator = (typeof COMPARISON_OPERATORS)[number];
-export type LogicOperator = (typeof LOGIC_OPERATORS)[number];
-
-/** The port signature of each family, in words, for use inside refusals. */
-export const FAMILY_SIGNATURES: Record<string, string> = {
-  arithmetic: "two numbers and produces a number",
-  comparison: "two values of the same type and produces a boolean",
-  logic: "booleans and produces a boolean",
-  conditional: "a boolean condition and two values of the same type",
-  "for-each": "a collection",
-  "repeat-n": "a declared iteration count",
-  "while-bounded": "a condition, an iteration count and a runtime budget",
-};
+/**
+ * THE SIGNATURE IS DERIVED, NEVER WRITTEN TWICE.
+ *
+ * Stage 2 kept a hand-written sentence per family - "two numbers and produces
+ * a number" - beside the real port checks. Two authorities for one fact, and
+ * the prose would have drifted the first time a signature changed. The
+ * sentence is now assembled from the SAME typed ports that validation reads,
+ * so it cannot describe something the contract does not do.
+ */
+export function familySignature(node: BoardNode): string {
+  const contract = contractForKind(node.kind);
+  return contract ? describeSignature(contract.ports(node.data)) : "no declared port signature";
+}
 
 export function operatorOf(node: BoardNode): string {
   const raw = node.data.operator;
   return typeof raw === "string" ? raw.trim() : "";
 }
 
+/**
+ * Arity is READ FROM THE PORTS, not restated. A logic block configured as
+ * "not" has one input because its contract says so, and there is no second
+ * place that fact can be written down differently.
+ */
 function arityOf(node: BoardNode): number {
-  if (node.kind === "logic") { return operatorOf(node) === "not" ? 1 : 2; }
-  if (node.kind === "conditional") { return 3; }
-  return 2;
+  const contract = contractForKind(node.kind);
+  return contract ? contract.ports(node.data).inputs.length : 0;
 }
 
 // ============================================================================
@@ -179,7 +192,7 @@ export function validateBlockPorts(node: BoardNode, inputs: readonly PortType[])
   const expected = arityOf(node);
   if (inputs.length !== expected) {
     return asRefusal("BLOCK_ARITY",
-      "expects " + expected + " input(s) and was given " + inputs.length + ". It takes " + FAMILY_SIGNATURES[kind] + ".");
+      "expects " + expected + " input(s) and was given " + inputs.length + ". It takes " + familySignature(node) + ".");
   }
   for (const port of inputs) {
     if (port === "flow") {
@@ -188,20 +201,20 @@ export function validateBlockPorts(node: BoardNode, inputs: readonly PortType[])
   }
 
   if (kind === "arithmetic") {
-    if (ARITHMETIC_OPERATORS.indexOf(operator as ArithmeticOperator) < 0) {
-      return asRefusal("BLOCK_OPERATOR", "has no declared arithmetic operator. Choose one of: " + ARITHMETIC_OPERATORS.join(", ") + ".");
+    if (ARITHMETIC.indexOf(operator as ArithmeticOp) < 0) {
+      return asRefusal("BLOCK_OPERATOR", "has no declared arithmetic operator. Choose one of: " + ARITHMETIC.join(", ") + ".");
     }
     for (const port of inputs) {
       if (port !== "number") {
-        return asRefusal("BLOCK_TYPE", "takes " + FAMILY_SIGNATURES[kind] + ", and one input is " + port + ".");
+        return asRefusal("BLOCK_TYPE", "takes " + familySignature(node) + ", and one input is " + port + ".");
       }
     }
     return null;
   }
 
   if (kind === "comparison") {
-    if (COMPARISON_OPERATORS.indexOf(operator as ComparisonOperator) < 0) {
-      return asRefusal("BLOCK_OPERATOR", "has no declared comparison operator. Choose one of: " + COMPARISON_OPERATORS.join(", ") + ".");
+    if (COMPARISON.indexOf(operator as ComparisonOp) < 0) {
+      return asRefusal("BLOCK_OPERATOR", "has no declared comparison operator. Choose one of: " + COMPARISON.join(", ") + ".");
     }
     for (const port of inputs) {
       if (COMPARABLE.indexOf(port) < 0) {
@@ -215,12 +228,12 @@ export function validateBlockPorts(node: BoardNode, inputs: readonly PortType[])
   }
 
   if (kind === "logic") {
-    if (LOGIC_OPERATORS.indexOf(operator as LogicOperator) < 0) {
-      return asRefusal("BLOCK_OPERATOR", "has no declared logic operator. Choose one of: " + LOGIC_OPERATORS.join(", ") + ".");
+    if (LOGIC.indexOf(operator as LogicOp) < 0) {
+      return asRefusal("BLOCK_OPERATOR", "has no declared logic operator. Choose one of: " + LOGIC.join(", ") + ".");
     }
     for (const port of inputs) {
       if (port !== "boolean") {
-        return asRefusal("BLOCK_TYPE", "takes " + FAMILY_SIGNATURES[kind] + ", and one input is " + port + ".");
+        return asRefusal("BLOCK_TYPE", "takes " + familySignature(node) + ", and one input is " + port + ".");
       }
     }
     return null;
@@ -250,7 +263,7 @@ export function evaluateBlock(node: BoardNode, inputs: readonly BlockValue[]): B
   if (node.kind === "arithmetic") {
     const left = inputs[0].value as number;
     const right = inputs[1].value as number;
-    switch (operator as ArithmeticOperator) {
+    switch (operator as ArithmeticOp) {
       case "add": return { ok: true, value: numberValue(left + right) };
       case "subtract": return { ok: true, value: numberValue(left - right) };
       case "multiply": return { ok: true, value: numberValue(left * right) };
@@ -270,7 +283,7 @@ export function evaluateBlock(node: BoardNode, inputs: readonly BlockValue[]): B
   if (node.kind === "comparison") {
     const a = inputs[0].value;
     const b = inputs[1].value;
-    switch (operator as ComparisonOperator) {
+    switch (operator as ComparisonOp) {
       case "equals": return { ok: true, value: booleanValue(a === b) };
       case "not-equals": return { ok: true, value: booleanValue(a !== b) };
       case "greater-than": return { ok: true, value: booleanValue(a > b) };
@@ -282,7 +295,7 @@ export function evaluateBlock(node: BoardNode, inputs: readonly BlockValue[]): B
 
   if (node.kind === "logic") {
     const a = inputs[0].value as boolean;
-    switch (operator as LogicOperator) {
+    switch (operator as LogicOp) {
       case "not": return { ok: true, value: booleanValue(!a) };
       case "and": return { ok: true, value: booleanValue(a && (inputs[1].value as boolean)) };
       case "or": return { ok: true, value: booleanValue(a || (inputs[1].value as boolean)) };
