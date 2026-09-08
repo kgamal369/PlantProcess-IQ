@@ -233,6 +233,12 @@ describe("T-241 executable Canvas contract", () => {
           operator: operatorFor[kind] ?? "",
           maxIterations: 3,
           budgetMs: 1000,
+          // Stage 5 adds governed validation contracts for aggregate/window.
+          // C242-03 is a SERIALISER negative control, so every required
+          // parameter must be explicit before the serialiser is exercised.
+          measureCode: "customer.measure",
+          aggregation: "Delta",
+          windowCode: "rolling_30d",
         },
       };
       const board = [source, node];

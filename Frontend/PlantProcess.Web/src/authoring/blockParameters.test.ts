@@ -2,9 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import {
   ARITHMETIC_OPERATORS, COMPARISON_OPERATORS, LOGIC_OPERATORS,
-  arithmeticContract, boundedWhileContract, comparisonContract, conditionalContract,
+  aggregateContract, arithmeticContract, boundedWhileContract, comparisonContract, conditionalContract,
   describePortType, describeSignature, forEachContract, logicContract,
-  parameterValueProblem, repeatContract,
+  parameterValueProblem, repeatContract, windowContract,
 } from "./blockParameters";
 import { BLOCK_REGISTRY, contractForKind } from "./blockRegistry";
 import { blockProblem, FLOW_IN, FLOW_OUT, type BoardEdge, type BoardNode } from "./graphSemantics";
@@ -37,7 +37,7 @@ describe("T-242 typed ports are a real contract", () => {
         expect(p.label.length, block.id).toBeGreaterThan(0);
       }
     }
-    expect(counted).toBe(7);
+    expect(counted).toBe(9);
   });
 
   it("C242-55 the declared port types are the real ones, not a description", () => {
@@ -55,6 +55,18 @@ describe("T-242 typed ports are a real contract", () => {
 
     expect(conditionalContract.ports({}).inputs[0].type).toEqual({ concrete: "boolean" });
     expect(boundedWhileContract.ports({}).inputs[0].type).toEqual({ concrete: "boolean" });
+
+    // PortType has no separate "dataset" primitive. Stage 4 deliberately
+    // represents a dataset edge as the concrete "key" type, and the derived
+    // presentation layer renders that type as "dataset". Assert the real
+    // runtime type here rather than inventing a ninth PortType value in a test.
+    const aggregate = aggregateContract.ports({});
+    expect(aggregate.inputs.map((p) => p.type)).toEqual([{ concrete: "key" }]);
+    expect(aggregate.output?.type).toEqual({ concrete: "number" });
+
+    const window = windowContract.ports({});
+    expect(window.inputs.map((p) => p.type)).toEqual([{ concrete: "key" }]);
+    expect(window.output?.type).toEqual({ concrete: "key" });
   });
 
   it("C242-56 ports are a function of the declared parameters", () => {
@@ -154,9 +166,11 @@ describe("T-242 the schema module is not a second registry", () => {
   it("C242-67 a kind resolves to its contract through the catalogue alone", () => {
     expect(contractForKind("arithmetic")).toBe(arithmeticContract);
     expect(contractForKind("while-bounded")).toBe(boundedWhileContract);
-    // Relational and unimplemented kinds have none, and say so rather than
-    // returning an empty contract that would silently validate anything.
+    // Relational and genuinely unsupported kinds have none. Governed
+    // aggregate/window are implemented validation contracts even though their
+    // mathematics remains server-owned and they are not yet persistable.
     expect(contractForKind("filter")).toBeNull();
-    expect(contractForKind("aggregate")).toBeNull();
+    expect(contractForKind("aggregate")).toBe(aggregateContract);
+    expect(contractForKind("window")).toBe(windowContract);
   });
 });

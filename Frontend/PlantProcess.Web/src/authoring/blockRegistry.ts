@@ -1,7 +1,7 @@
 import type { BoardNodeKind } from "./graphSemantics";
 import {
-  arithmeticContract, boundedWhileContract, comparisonContract, conditionalContract,
-  forEachContract, logicContract, repeatContract,
+  aggregateContract, arithmeticContract, boundedWhileContract, comparisonContract, conditionalContract,
+  forEachContract, logicContract, repeatContract, windowContract,
   type BlockFamilyContract,
 } from "./blockParameters";
 
@@ -183,15 +183,17 @@ export const BLOCK_REGISTRY: readonly BlockDefinition[] = [
     boardKind: "while-bounded", contract: boundedWhileContract, seed: NO_SEED,
     implemented: true, capabilities: { evaluable: true, persistable: false } },
 
-  // Group 5 - statistics and correlation. The governed aggregate and window
-  // take their meaning from the canonical aggregation authority, so they are
-  // declared here and NOT implemented until that binding exists.
+  // Group 5 - statistics and correlation. Aggregate and window now have real
+  // validation/binding contracts, but their mathematics still belongs to the
+  // governed backend and their persistence arrives with the canonical Canvas
+  // round-trip. Therefore they are implemented, not locally evaluable, and
+  // still not palette-placeable until persistence can represent them.
   { id: "aggregate", label: "Aggregate", group: "statistics", inputs: "dataset", outputs: "value",
-    boardKind: "aggregate",
-    implemented: false, capabilities: { evaluable: false, persistable: false } },
+    boardKind: "aggregate", contract: aggregateContract, seed: NO_SEED,
+    implemented: true, capabilities: { evaluable: false, persistable: false } },
   { id: "window", label: "Window", group: "statistics", inputs: "dataset", outputs: "dataset",
-    boardKind: "window",
-    implemented: false, capabilities: { evaluable: false, persistable: false } },
+    boardKind: "window", contract: windowContract, seed: NO_SEED,
+    implemented: true, capabilities: { evaluable: false, persistable: false } },
   { id: "stat-correlation", label: "Correlation", group: "statistics", inputs: "dataset", outputs: "result",
     implemented: false, capabilities: { evaluable: false, persistable: false } },
   { id: "stat-distribution", label: "Distribution", group: "statistics", inputs: "dataset", outputs: "result",

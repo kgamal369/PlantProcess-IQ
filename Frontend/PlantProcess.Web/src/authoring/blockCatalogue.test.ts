@@ -82,9 +82,13 @@ describe("T-242 the registry is the only block catalogue", () => {
     }
   });
 
-  it("C242-39 an unimplemented block yields no seed rather than an invented shape", () => {
-    expect(seedForKind("aggregate")).toBeNull();
-    expect(seedForKind("window")).toBeNull();
+  it("C242-39 governed aggregate/window seed no semantic guess; unsupported blocks remain unavailable", () => {
+    expect(seedForKind("aggregate")).toEqual({});
+    expect(seedForKind("window")).toEqual({});
+    expect(blockById("aggregate")?.implemented).toBe(true);
+    expect(blockById("window")?.implemented).toBe(true);
+    expect(blockById("aggregate")?.capabilities.persistable).toBe(false);
+    expect(blockById("window")?.capabilities.persistable).toBe(false);
     expect(blockById("group-by")?.implemented).toBe(false);
   });
 

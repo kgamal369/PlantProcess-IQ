@@ -39,6 +39,7 @@ export type LogicOperator = (typeof LOGIC_OPERATORS)[number];
 
 export type ParameterControl =
   | { readonly kind: "choice"; readonly options: readonly string[] }
+  | { readonly kind: "text" }
   | { readonly kind: "integer"; readonly min: number }
   | { readonly kind: "milliseconds"; readonly min: number };
 
@@ -60,6 +61,10 @@ export function parameterValueProblem(spec: ParameterSpec, raw: unknown): string
   if (control.kind === "choice") {
     const value = typeof raw === "string" ? raw.trim() : "";
     return control.options.indexOf(value) >= 0 ? null : spec.missing;
+  }
+  if (control.kind === "text") {
+    const value = typeof raw === "string" ? raw.trim() : "";
+    return value.length > 0 ? null : spec.missing;
   }
   const n = typeof raw === "number"
     ? raw
@@ -159,6 +164,27 @@ export const runtimeBudgetParameter: ParameterSpec = {
     + " cancelled rather than left running.",
 };
 
+export const governedMeasureParameter: ParameterSpec = {
+  key: "measureCode",
+  label: "Governed measure",
+  control: { kind: "text" },
+  missing: "has no governed measure binding. Choose a published measure from canonical registry metadata.",
+};
+
+export const governedAggregationParameter: ParameterSpec = {
+  key: "aggregation",
+  label: "Aggregation",
+  control: { kind: "text" },
+  missing: "AG01 aggregation_semantics_undeclared: the selected measure has no published aggregation semantics.",
+};
+
+export const governedWindowParameter: ParameterSpec = {
+  key: "windowCode",
+  label: "Governed window",
+  control: { kind: "text" },
+  missing: "has no governed window binding. Choose a declared window; no default window is assumed.",
+};
+
 // ---- family contracts -----------------------------------------------------
 
 export const arithmeticContract: BlockFamilyContract = {
@@ -217,6 +243,29 @@ export const boundedWhileContract: BlockFamilyContract = {
   ports: () => ({
     inputs: [port("condition", "Condition", BOOLEAN)],
     output: port("value", "Result", ANY_VALUE),
+  }),
+};
+
+
+/**
+ * Aggregate and window are validated here but never computed here.
+ * Their mathematics remains owned by the governed backend contracts.
+ * The parameters are values bound from canonical authorities, not a local
+ * aggregation/window catalogue and never a guessed default.
+ */
+export const aggregateContract: BlockFamilyContract = {
+  parameters: [governedMeasureParameter, governedAggregationParameter],
+  ports: () => ({
+    inputs: [port("dataset", "Dataset", DATASET)],
+    output: port("value", "Value", NUMBER),
+  }),
+};
+
+export const windowContract: BlockFamilyContract = {
+  parameters: [governedWindowParameter],
+  ports: () => ({
+    inputs: [port("dataset", "Dataset", DATASET)],
+    output: port("dataset", "Dataset", DATASET),
   }),
 };
 
