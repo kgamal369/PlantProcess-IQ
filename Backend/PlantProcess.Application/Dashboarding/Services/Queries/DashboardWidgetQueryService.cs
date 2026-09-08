@@ -2,6 +2,7 @@ using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using PlantProcess.Application.Analytics.Advanced;
 using PlantProcess.Application.Dashboarding.Services.Dimensions;
+using PlantProcess.Application.Relationships;
 using PlantProcess.Domain.Entities.Materials;
 using PlantProcess.Domain.Entities.Process;
 using PlantProcess.Application.Dashboarding.Contracts;
@@ -34,7 +35,7 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
     private readonly ITenantAccessor? _tenantAccessor;
     private readonly IWidgetResultEvidenceWriter? _evidenceWriter;
     private readonly IDeclaredDimensionCatalog? _declaredDimensions;
-    private readonly IDeclaredDimensionSubjectLinkResolver? _subjectLinkResolver;
+    private readonly IRelatedDeclaredDimensionBinder? _relatedDeclaredDimensions;
 
     public DashboardWidgetQueryService(
         IPlantProcessDbContext dbContext,
@@ -44,14 +45,14 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
         ITenantAccessor? tenantAccessor = null,
         IWidgetResultEvidenceWriter? evidenceWriter = null,
         IDeclaredDimensionCatalog? declaredDimensions = null,
-        IDeclaredDimensionSubjectLinkResolver? subjectLinkResolver = null)
+        IRelatedDeclaredDimensionBinder? relatedDeclaredDimensions = null)
     {
         _dbContext = dbContext;
         _validationService = validationService;
         _tenantAccessor = tenantAccessor;
         _evidenceWriter = evidenceWriter;
         _declaredDimensions = declaredDimensions;
-        _subjectLinkResolver = subjectLinkResolver;
+        _relatedDeclaredDimensions = relatedDeclaredDimensions;
 
         var sources = new IWidgetResultSource[]
         {
@@ -1159,22 +1160,24 @@ public sealed class DashboardWidgetQueryService : IDashboardWidgetQueryService
 
         foreach (var relatedFilter in relatedDeclaredFilters)
         {
-            if (_subjectLinkResolver is null)
+            // A related declaration is reached through the relationship authority and
+            // nothing else. Page/widget execution is an automated consumer, so an
+            // unproven relationship refuses here by contract (RL02) until validated.
+            if (_relatedDeclaredDimensions is null)
             {
-                throw new DimensionBindingRefusalException(
-                    DimensionBindingRefusalCodes.SubjectLinkUnavailable,
-                    relatedFilter.Declared.Code,
-                    "Declared dimension '" + relatedFilter.Declared.Code + "' is published against a related " +
-                    "entity, and this composition carries no subject-link resolver to reach it.");
+                throw new InvalidOperationException(
+                    "Declared dimension '" + relatedFilter.Declared.Code + "' is published against a related entity, " +
+                    "and this service was composed without the relationship binder. That is a composition defect, not a data refusal.");
             }
 
-            var linkedKeys = await _subjectLinkResolver.SubjectKeysWhereDeclaredEqualsAsync(
+            var linked = await _relatedDeclaredDimensions.SubjectKeysWhereDeclaredEqualsAsync(
                 relatedFilter.Declared,
                 subjectEntityType,
                 relatedFilter.Value,
+                RelationshipConsumerPurposes.QueryCompiler,
                 cancellationToken);
 
-            result.IntersectWith(linkedKeys);
+            result.IntersectWith(linked.Keys);
         }
 
         if (filters?.AreaId.HasValue == true)

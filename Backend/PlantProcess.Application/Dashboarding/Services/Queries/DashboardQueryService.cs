@@ -7,24 +7,26 @@ using PlantProcess.Application.Dashboarding.Services.Dimensions;
 using PlantProcess.Application.Security.Tenancy;
 
 
+using PlantProcess.Application.Relationships;
+
 namespace PlantProcess.Application.Dashboarding.Services.Queries;
 
 public sealed class DashboardQueryService : IDashboardQueryService
 {
     private readonly IPlantProcessDbContext _dbContext;
     private readonly IDeclaredDimensionCatalog? _declaredDimensions;
-    private readonly IDeclaredDimensionSubjectLinkResolver? _subjectLinkResolver;
+    private readonly IRelatedDeclaredDimensionBinder? _relatedDeclaredDimensions;
     private readonly ITenantAccessor? _tenantAccessor;
 
     public DashboardQueryService(
         IPlantProcessDbContext dbContext,
         IDeclaredDimensionCatalog? declaredDimensions = null,
-        IDeclaredDimensionSubjectLinkResolver? subjectLinkResolver = null,
+        IRelatedDeclaredDimensionBinder? relatedDeclaredDimensions = null,
         ITenantAccessor? tenantAccessor = null)
     {
         _dbContext = dbContext;
         _declaredDimensions = declaredDimensions;
-        _subjectLinkResolver = subjectLinkResolver;
+        _relatedDeclaredDimensions = relatedDeclaredDimensions;
         _tenantAccessor = tenantAccessor;
     }
 
@@ -578,19 +580,20 @@ public sealed class DashboardQueryService : IDashboardQueryService
 
         foreach (var relatedFilter in relatedDeclaredFilters)
         {
-            if (_subjectLinkResolver is null)
+            // Through the relationship authority only. Workspace execution is automated,
+            // so an unproven relationship refuses here (RL02) until it is validated.
+            if (_relatedDeclaredDimensions is null)
             {
-                throw new DimensionBindingRefusalException(
-                    DimensionBindingRefusalCodes.SubjectLinkUnavailable,
-                    relatedFilter.Declared.Code,
-                    "Declared dimension '" + relatedFilter.Declared.Code + "' is published against a related " +
-                    "entity, and this composition carries no subject-link resolver to reach it.");
+                throw new InvalidOperationException(
+                    "Declared dimension '" + relatedFilter.Declared.Code + "' is published against a related entity, " +
+                    "and this service was composed without the relationship binder. That is a composition defect, not a data refusal.");
             }
 
-            var linkedKeys = await _subjectLinkResolver.SubjectKeysWhereDeclaredEqualsAsync(
-                relatedFilter.Declared, subjectEntityType, relatedFilter.Value, cancellationToken);
+            var linked = await _relatedDeclaredDimensions.SubjectKeysWhereDeclaredEqualsAsync(
+                relatedFilter.Declared, subjectEntityType, relatedFilter.Value,
+                RelationshipConsumerPurposes.QueryCompiler, cancellationToken);
 
-            materialSet.IntersectWith(linkedKeys);
+            materialSet.IntersectWith(linked.Keys);
         }
 
         if (normalized.AreaId.HasValue)

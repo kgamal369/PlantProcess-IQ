@@ -190,8 +190,8 @@ public static class DependencyInjection
         // canonical entity is reached through the single mapped reference that entity
         // carries to the subject of the population. Composed here because this project
         // owns model metadata; the decision itself stays in the Application contract.
-        services.AddScoped<PlantProcess.Application.Dashboarding.Services.Dimensions.IDeclaredDimensionSubjectLinkResolver,
-            PlantProcess.Infrastructure.Dashboarding.Dimensions.DeclaredDimensionSubjectLinkResolver>();
+        services.AddScoped<PlantProcess.Application.Common.Canonical.ICanonicalEntityCatalog, PlantProcess.Infrastructure.Canonical.CanonicalEntityCatalog>();
+        services.AddScoped<PlantProcess.Application.Dashboarding.Services.Dimensions.IRelationshipPlanSubjectKeyExecutor, PlantProcess.Infrastructure.Dashboarding.Dimensions.RelationshipPlanSubjectKeyExecutor>();
 
         //Oracle 
         services.AddScoped<IDataSourceConnector, OracleConnector>();

@@ -111,8 +111,8 @@ public static class DependencyInjection
         // Data quality and analytics
         services.AddScoped<IDataQualityService, DataQualityService>();
         services.AddScoped<IRiskScoreService, RiskScoreService>();
-        services.AddScoped<IDashboardQueryService, DashboardQueryService>();
-        services.AddScoped<IDashboardMetadataService, DashboardMetadataService>();
+        services.AddScoped<Dashboarding.Services.Dimensions.IRelatedDeclaredDimensionBinder, Dashboarding.Services.Dimensions.RelatedDeclaredDimensionBinder>();
+        services.AddScoped<IDashboardQueryService, DashboardQueryService>();        services.AddScoped<IDashboardMetadataService, DashboardMetadataService>();
         services.AddScoped<IDashboardWidgetValidationService, DashboardWidgetValidationService>();
         services.AddScoped<IDashboardWidgetQueryService, DashboardWidgetQueryService>();
         services.AddScoped<IDashboardDefinitionService, DashboardDefinitionService>();

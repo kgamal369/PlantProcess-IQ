@@ -48,14 +48,27 @@ public interface IRelationshipPublicationService
 }
 
 /// <summary>
+/// The validation seam: the only supported way an unproven relationship becomes
+/// validated.
+///
+/// Publishing proves nothing and must not claim to. Automated consumers refuse an
+/// unproven relationship (RL02) by contract, so without this seam a published model
+/// would be usable only by manual exploration, forever. Validation runs the declared
+/// members against real canonical rows and derives the state from what it finds.
+/// The caller supplies an identity and nothing else - a request that could carry the
+/// desired state would be a way to assert proof without producing it.
+/// </summary>
+public interface IRelationshipValidationService
+{
+    Task<ApplicationResult<RelationshipValidationResultDto>> ValidateAsync(Guid id, CancellationToken cancellationToken);
+}
+
+/// <summary>
 /// T-057. The persistence port.
 ///
-/// M1 satisfies this with compatibility persistence whose physical shape is an
-/// implementation detail and is named NOWHERE outside the adapter that owns it.
-/// T-095 replaces the adapter with the canonical ppiq_meta tables. Nothing above
-/// this interface - service, endpoints, tests, consumers - changes when it does.
-/// That is the whole point of the seam, and the reason no test in this task may
-/// contain a table name.
+/// The canonical ppiq_meta tables sit behind this; nothing above it - service,
+/// endpoints, resolver, consumers - names a table. That is the whole point of the
+/// seam.
 /// </summary>
 public interface IRelationshipStore
 {
@@ -75,4 +88,12 @@ public interface IRelationshipStore
 
     Task<int> RetireByDefinitionAsync(
         Guid tenantId, Guid sourceDefinitionId, DateTime retiredAtUtc, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Records a validation outcome on one live relationship. State and detail are
+    /// written together or not at all. Returns false when no live relationship with
+    /// that identity exists for the tenant.
+    /// </summary>
+    Task<bool> RecordValidationAsync(
+        Guid tenantId, Guid id, string validationState, string validationDetailJson, CancellationToken cancellationToken);
 }

@@ -18,8 +18,9 @@ namespace PlantProcess.Application.Dashboarding.Services.Dimensions;
 /// spelled in C#.
 ///
 /// A source projection of one canonical entity can only bind a dimension declared
-/// against that same entity. Anything else is a typed refusal, not an ad-hoc join:
-/// relationship and grain traversal belong to the path resolver that follows this task.
+/// against that same entity. A declaration against a DIFFERENT entity is reached
+/// through the relationship authority - resolver, planner, executor - and never by
+/// this class inspecting how two entities happen to be connected.
 /// </summary>
 public static class DeclaredDimensionProjection
 {
@@ -118,47 +119,11 @@ public static class DeclaredDimensionProjection
         declared.SourceEntityType == subjectEntityType;
 
     /// <summary>
-    /// Choose the single reference that links a source entity to the subject entity of
-    /// a population. The decision is arithmetic over what the model declares: one
-    /// candidate is the link, none is a refusal, several is a refusal. No name is
-    /// compared, so a customer concept published against any related entity resolves by
-    /// the same rule that resolves every other one.
-    ///
-    /// The candidates are supplied by the caller. Reading them is model knowledge and
-    /// belongs to the persistence layer; deciding what they mean is a contract and
-    /// belongs here, where it can be falsified without a database.
-    /// </summary>
-    public static string SelectSubjectLinkField(string dimensionCode, IReadOnlyList<string> candidateFields)
-    {
-        ArgumentNullException.ThrowIfNull(candidateFields);
-
-        if (candidateFields.Count == 0)
-        {
-            throw new DimensionBindingRefusalException(
-                DimensionBindingRefusalCodes.SubjectLinkAbsent,
-                dimensionCode,
-                "Declared dimension '" + dimensionCode + "' is published against an entity that carries no " +
-                "mapped reference to the subject of this population. No relationship is inferred.");
-        }
-
-        if (candidateFields.Count > 1)
-        {
-            throw new DimensionBindingRefusalException(
-                DimensionBindingRefusalCodes.SubjectLinkAmbiguous,
-                dimensionCode,
-                "Declared dimension '" + dimensionCode + "' is published against an entity that references the " +
-                "subject of this population through " + candidateFields.Count + " mapped references. " +
-                "The declaration must state which one it means.");
-        }
-
-        return candidateFields[0];
-    }
-
-    /// <summary>
     /// The subject keys whose related row carries the declared value: restrict the
-    /// related population by the declared field, then project its reference to the
-    /// subject. This is the generic form of the shape the compiled slots used, and it
-    /// spells no entity, no column and no concept.
+    /// related population by the declared field, then project the member the caller
+    /// names. The caller is handed that member by a governed plan; this class never
+    /// works out which member it should be. It spells no entity, no column and no
+    /// concept.
     /// </summary>
     public static IQueryable<Guid> SubjectKeys<TSource>(
         IQueryable<TSource> source,

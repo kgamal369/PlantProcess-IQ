@@ -73,6 +73,17 @@ public sealed class RelationshipContractTests
             }
             return Task.FromResult(count);
         }
+
+        public Task<bool> RecordValidationAsync(Guid tenantId, Guid id, string validationState, string detailJson, CancellationToken ct)
+        {
+            for (var i = 0; i < _rows.Count; i++)
+            {
+                if (_rows[i].Id != id || _rows[i].RetiredAtUtc is not null) continue;
+                _rows[i] = _rows[i] with { ValidationState = validationState };
+                return Task.FromResult(true);
+            }
+            return Task.FromResult(false);
+        }
     }
 
     private static RelationshipService Service(Guid? tenant = null) =>

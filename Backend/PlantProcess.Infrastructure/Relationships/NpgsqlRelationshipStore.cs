@@ -164,6 +164,27 @@ public sealed class NpgsqlRelationshipStore : IRelationshipStore
         return await cmd.ExecuteNonQueryAsync(cancellationToken);
     }
 
+    public async Task<bool> RecordValidationAsync(
+        Guid tenantId, Guid id, string validationState, string validationDetailJson, CancellationToken cancellationToken)
+    {
+        await using var conn = await _dataSource.OpenConnectionAsync(cancellationToken);
+        await using var cmd = conn.CreateCommand();
+
+        // State and detail are one statement, so they cannot disagree. A retired
+        // relationship is not updated: it is history, and history does not change
+        // because someone ran a check against it later.
+        cmd.CommandText =
+            "UPDATE ppiq_meta.plant_relationships " +
+            "SET validation_state = @state, validation_detail = @detail::jsonb " +
+            "WHERE tenant_id = @tenant AND id = @id AND retired_at_utc IS NULL";
+        cmd.Parameters.AddWithValue("tenant", tenantId);
+        cmd.Parameters.AddWithValue("id", id);
+        cmd.Parameters.AddWithValue("state", validationState);
+        cmd.Parameters.Add("detail", NpgsqlDbType.Text).Value = validationDetailJson;
+
+        return await cmd.ExecuteNonQueryAsync(cancellationToken) == 1;
+    }
+
     private const string SelectColumns =
         "SELECT r.id, r.relationship_code, r.left_entity, r.right_entity, r.join_type, r.cardinality, " +
         "       r.grain_left, r.grain_right, r.is_grain_converting, r.attribution_rule, r.attribution_expression, " +

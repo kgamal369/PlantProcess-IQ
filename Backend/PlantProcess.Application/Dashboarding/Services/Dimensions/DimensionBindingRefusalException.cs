@@ -15,25 +15,16 @@ public static class DimensionBindingRefusalCodes
     public const string MeasureUnsupported = "DB04_measure_not_declared_capable";
     public const string TenantUnresolved = "DB05_tenant_unresolved";
 
-    /// <summary>
-    /// The declaration binds to a canonical entity that carries no mapped single-column
-    /// reference to the subject entity of this population. There is no path, so there is
-    /// no answer; inventing a join would invent a number.
-    /// </summary>
-    public const string SubjectLinkAbsent = "DB06_subject_link_absent";
-
-    /// <summary>
-    /// The declaration's entity references the subject entity through more than one
-    /// mapped reference. Choosing one would be a guess about meaning, so the engine
-    /// refuses and the declaration must state which relationship it means.
-    /// </summary>
-    public const string SubjectLinkAmbiguous = "DB07_subject_link_ambiguous";
-
-    /// <summary>
-    /// The declaration is executable but this composition carries no resolver able to
-    /// reach a related entity. A capability that is absent is reported as absent.
-    /// </summary>
-    public const string SubjectLinkUnavailable = "DB08_subject_link_unavailable";
+    // DB06, DB07 and DB08 are retired.
+    //
+    // DB06 (no subject link) and DB07 (ambiguous subject link) existed because the
+    // interim T-094 path chose a cross-entity link itself by counting mapped
+    // references. That choice now belongs to the relationship authority, whose own
+    // codes name the same events: no governed path is RL03 and an ungoverned choice
+    // between paths is RL01. Keeping DB06/DB07 would keep a second vocabulary for one
+    // event. DB08 named a composition without a resolver; that composition is no
+    // longer a lawful production state, and a missing required service is a
+    // construction defect rather than a customer refusal.
 
     /// <summary>
     /// A keyed filter arrived on the wire in a shape that names no code or no

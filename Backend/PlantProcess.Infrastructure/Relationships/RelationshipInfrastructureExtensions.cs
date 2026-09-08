@@ -17,6 +17,8 @@ public static class RelationshipInfrastructureExtensions
         services.AddScoped<RelationshipService>();
         services.AddScoped<IRelationshipService>(sp => sp.GetRequiredService<RelationshipService>());
         services.AddScoped<IRelationshipPublicationService>(sp => sp.GetRequiredService<RelationshipService>());
+        services.AddScoped<IRelationshipValidationService>(sp => sp.GetRequiredService<RelationshipService>());
+        services.AddScoped<IRelationshipValidationEvidenceReader, RelationshipValidationEvidenceReader>();
 
         // T-058. The resolver reads the published model through the service, and
         // the planner reads the model only through the resolver. Neither ever

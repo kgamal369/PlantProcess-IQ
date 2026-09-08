@@ -1,4 +1,5 @@
-﻿using PlantProcess.Application.Common.Results;
+﻿using System.Text.Json;
+using PlantProcess.Application.Common.Results;
 using PlantProcess.Application.Security.Tenancy;
 
 namespace PlantProcess.Application.Relationships;
@@ -10,15 +11,92 @@ namespace PlantProcess.Application.Relationships;
 /// that decides what a relationship MEANS lives here, so replacing the storage
 /// in T-095 cannot change a single rule.
 /// </summary>
-public sealed class RelationshipService : IRelationshipService, IRelationshipPublicationService
+public sealed class RelationshipService : IRelationshipService, IRelationshipPublicationService, IRelationshipValidationService
 {
+    private static readonly JsonSerializerOptions DetailJson = new(JsonSerializerDefaults.Web);
+
     private readonly IRelationshipStore _store;
     private readonly ITenantAccessor _tenantAccessor;
+    private readonly IRelationshipValidationEvidenceReader? _evidence;
 
-    public RelationshipService(IRelationshipStore store, ITenantAccessor tenantAccessor)
+    public RelationshipService(
+        IRelationshipStore store,
+        ITenantAccessor tenantAccessor,
+        IRelationshipValidationEvidenceReader? evidence = null)
     {
         _store = store;
         _tenantAccessor = tenantAccessor;
+        _evidence = evidence;
+    }
+
+    /// <summary>
+    /// Derives validation state from real evidence and persists it. The states mean
+    /// exactly what the design says they mean:
+    ///
+    ///   validated  - populated on both sides, rows matched, declared cardinality not
+    ///                contradicted by any observed fan-out;
+    ///   failed     - populated on both sides and either nothing matched, or the
+    ///                observed fan-out contradicts the declared cardinality;
+    ///   unproven   - a side is empty, so there is nothing to prove against; the detail
+    ///                says which.
+    ///
+    /// An evidence read that throws is NOT persisted as anything. A relationship that
+    /// could not be evaluated is unevaluated, and writing 'failed' for it would turn an
+    /// infrastructure fault into a statement about the plant's data.
+    /// </summary>
+    public async Task<ApplicationResult<RelationshipValidationResultDto>> ValidateAsync(Guid id, CancellationToken cancellationToken)
+    {
+        if (!_tenantAccessor.TryGetTenantId(out var tenantId))
+            return ApplicationResult<RelationshipValidationResultDto>.Failure(
+                ApplicationError.Validation("No tenant on the caller; the relationship model is tenant-scoped."));
+
+        if (_evidence is null)
+            return ApplicationResult<RelationshipValidationResultDto>.Failure(
+                ApplicationError.Validation("This composition carries no validation evidence reader. That is a configuration defect, not a property of the relationship."));
+
+        var relationship = await _store.ReadByIdAsync(tenantId, id, cancellationToken);
+        if (relationship is null)
+            return ApplicationResult<RelationshipValidationResultDto>.Failure(
+                ApplicationError.NotFound("No published relationship with that identity."));
+
+        var evidence = await _evidence.ReadAsync(relationship, cancellationToken);
+
+        string state;
+        string reason;
+        if (evidence.LeftPopulation == 0 || evidence.RightPopulation == 0)
+        {
+            state = RelationshipValidationStates.Unproven;
+            reason = "Insufficient evidence: '" +
+                     (evidence.LeftPopulation == 0 ? relationship.LeftEntity : relationship.RightEntity) +
+                     "' has no rows, so the declared members cannot be exercised.";
+        }
+        else if (evidence.LeftMatched == 0 && evidence.RightMatched == 0)
+        {
+            state = RelationshipValidationStates.Failed;
+            reason = "Both sides are populated and the declared members match no rows.";
+        }
+        else if (evidence.CardinalityContradicted)
+        {
+            state = RelationshipValidationStates.Failed;
+            reason = "Declared cardinality '" + evidence.DeclaredCardinality + "' is contradicted by observed '" +
+                     evidence.ObservedCardinality + "'.";
+        }
+        else
+        {
+            state = RelationshipValidationStates.Validated;
+            reason = "Declared members matched real rows and the observed cardinality '" +
+                     evidence.ObservedCardinality + "' does not contradict the declaration.";
+        }
+
+        var detail = JsonSerializer.Serialize(new { state, reason, evidence }, DetailJson);
+
+        var recorded = await _store.RecordValidationAsync(tenantId, id, state, detail, cancellationToken);
+        if (!recorded)
+            return ApplicationResult<RelationshipValidationResultDto>.Failure(
+                ApplicationError.NotFound("The relationship was retired before its validation could be recorded."));
+
+        return ApplicationResult<RelationshipValidationResultDto>.Success(
+            new RelationshipValidationResultDto(relationship.Id, relationship.RelationshipCode, state, reason, evidence));
     }
 
     public async Task<ApplicationResult<IReadOnlyList<RelationshipDto>>> GetPublishedAsync(
@@ -177,6 +255,13 @@ public sealed class RelationshipService : IRelationshipService, IRelationshipPub
         {
             if (string.IsNullOrWhiteSpace(member.LeftColumn) || string.IsNullOrWhiteSpace(member.RightColumn))
                 return $"{RelationshipPublicationCodes.MembersOutOfOrderOrIncomplete}: key member {member.MemberOrder} is missing a column on one side.";
+
+            // The canonical executor runs equality members. A comparison it cannot run
+            // must not be publishable: a relationship the product accepts and its only
+            // executor then refuses is a promise the product cannot keep.
+            if (!string.IsNullOrWhiteSpace(member.Comparison)
+                && !string.Equals(member.Comparison.Trim(), "=", StringComparison.Ordinal))
+                return $"{RelationshipPublicationCodes.UnknownVocabulary}: key member {member.MemberOrder} compares with '{member.Comparison}'. The canonical relationship key contract is equality.";
         }
 
         return null;
