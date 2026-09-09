@@ -39,7 +39,7 @@ public sealed class CanvasBoardRoundTripTests
         Assert.NotNull(board);
         Assert.Equal("S1", board!["purpose"]!.GetValue<string>());
         Assert.Equal(2, board["nodes"]!.AsArray().Count);
-        Assert.Equal(1, board["edges"]!.AsArray().Count);
+        Assert.Single(board["edges"]!.AsArray());
     }
 
     [Fact]

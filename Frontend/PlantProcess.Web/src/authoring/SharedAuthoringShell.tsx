@@ -37,7 +37,7 @@ import {
   // runs or is stored. There is no client path that skips it.
   runAuthoredSql, saveSqlVersion,
   type StagedDataset, type DryRunResult, type MapperGraph, type RunSqlResult,
-  type AuthoredBoard, type CanvasVersionSummary,
+  type AuthoredBoard, type CanvasVersionSummary, type CanvasDefinitionResponse,
 } from "@/api/canvasApi";
 import { CanvasDebugLog, useDebugLog } from "@/pages/Prep/CanvasDebugLog";
 import { AUTHORING_NODE_TYPES } from "./BlockNodes";
@@ -102,10 +102,17 @@ export interface SharedAuthoringShellProps {
   existingWidget?: WidgetDefinitionRecord | null;
   onSaved?: () => void | Promise<void>;
   onClose?: () => void;
+  /**
+   * T-243. The canonical code of a definition that already exists, for opening one
+   * that was saved in an earlier session. It is the SAME tenant-scoped handle the
+   * server issues at publish - not a second identity, and not a browser cache key.
+   * Absent means a new definition, which is how every caller behaved before this.
+   */
+  initialDefinitionCode?: string;
 }
 
 export function SharedAuthoringShell({
-  purpose, dashboardDefinitionId, existingWidget, onSaved, onClose,
+  purpose, dashboardDefinitionId, existingWidget, onSaved, onClose, initialDefinitionCode,
 }: SharedAuthoringShellProps) {
   const definition = purposeDefinition(purpose);
 
@@ -260,54 +267,120 @@ export function SharedAuthoringShell({
   // else - no local cache, no browser copy, no reconstruction from the compiled query.
   // A version stored before boards were persisted has none, and that is reported as the
   // fact it is rather than approximated into blocks nobody authored.
+  // T-243 CLOSURE. ONE APPLICATION FUNCTION, TWO ENTRY POINTS.
+  //
+  // Opening the current version on mount and choosing an older one from history are
+  // the same act - take a canonical response and become it - so they must not be two
+  // pieces of restoration code that can drift apart. This is that one function; both
+  // callers below are thin.
+  //
+  // PURPOSE IS AN ENTRY CONTRACT, NOT RESTORED STATE. The palette, the schema tree
+  // and the validator are all parameterised by the purpose this shell was MOUNTED
+  // for, so silently adopting a stored purpose would leave a board authored for one
+  // purpose sitting under another one's rules. The canonical purpose is therefore
+  // CHECKED and a mismatch is said out loud, never quietly applied.
+  const applyReopenedDefinition = useCallback((r: CanvasDefinitionResponse) => {
+    if (r.representation !== "graph") {
+      logWarning(name,
+        "Version " + r.versionNumber + " was authored as SQL, so there is no board to restore."
+        + " Its statement is the definition.");
+      setOpenVersion(r.versionNumber);
+      return;
+    }
+
+    if (!r.board) {
+      logWarning(name,
+        "Version " + r.versionNumber + " was saved before boards were kept, so it carries a"
+        + " query and no blocks. Nothing was reconstructed, because a board nobody authored"
+        + " would be a guess.");
+      setOpenVersion(r.versionNumber);
+      return;
+    }
+
+    if (r.board.purpose && r.board.purpose !== purpose) {
+      logWarning(name,
+        "Version " + r.versionNumber + " was authored under purpose " + r.board.purpose
+        + " and this surface is open as " + purpose + ". It was not loaded: a board shown"
+        + " under another purpose would be judged by the wrong palette and the wrong rules."
+        + " Open it from its own authoring surface.");
+      return;
+    }
+
+    setNodes(r.board.nodes.map((n) => ({
+      id: n.id,
+      type: n.kind,
+      position: { x: n.position.x, y: n.position.y },
+      data: n.data,
+    })) as Node[]);
+
+    setEdges(r.board.edges.map((e, i) => ({
+      id: "reopened-" + i,
+      source: e.source,
+      target: e.target,
+      sourceHandle: e.sourceHandle ?? undefined,
+      targetHandle: e.targetHandle ?? undefined,
+    })) as Edge[]);
+
+    if (r.graph?.name) { setName(r.graph.name); }
+    if (r.outputTarget) { setOutputTarget(r.outputTarget); }
+    setOpenVersion(r.versionNumber);
+
+    logSuccess(name,
+      "Reopened version " + r.versionNumber + ".",
+      r.board.nodes.length + " block(s), " + r.board.edges.length + " connection(s), target "
+      + (r.outputTarget ?? "none") + ", hash " + r.definitionHash);
+  }, [name, purpose, setNodes, setEdges, logSuccess, logWarning]);
+
+  // Choosing a version from history. READ-ONLY: it restores what was authored and
+  // never rewrites it. Publishing after reopening an older version creates a NEW
+  // version through the canonical lifecycle - rollback forward, never in place.
   const doReopen = useCallback(async (code: string, version: number) => {
     try {
-      const r = await reopenDefinition(code, version);
-
-      if (r.representation !== "graph") {
-        logWarning(name,
-          "Version " + version + " was authored as SQL, so there is no board to restore."
-          + " Its statement is the definition.");
-        setOpenVersion(version);
-        return;
-      }
-
-      if (!r.board) {
-        logWarning(name,
-          "Version " + version + " was saved before boards were kept, so it carries a query"
-          + " and no blocks. Nothing was reconstructed, because a board nobody authored"
-          + " would be a guess.");
-        setOpenVersion(version);
-        return;
-      }
-
-      setNodes(r.board.nodes.map((n) => ({
-        id: n.id,
-        type: n.kind,
-        position: { x: n.position.x, y: n.position.y },
-        data: n.data,
-      })) as Node[]);
-
-      setEdges(r.board.edges.map((e, i) => ({
-        id: "reopened-" + i,
-        source: e.source,
-        target: e.target,
-        sourceHandle: e.sourceHandle ?? undefined,
-        targetHandle: e.targetHandle ?? undefined,
-      })) as Edge[]);
-
-      if (r.graph?.name) { setName(r.graph.name); }
-      if (r.outputTarget) { setOutputTarget(r.outputTarget); }
-      setOpenVersion(version);
-
-      logSuccess(name,
-        "Reopened version " + version + ".",
-        r.board.nodes.length + " block(s), " + r.board.edges.length + " connection(s), target "
-        + (r.outputTarget ?? "none") + ", hash " + r.definitionHash);
+      applyReopenedDefinition(await reopenDefinition(code, version));
     } catch (e) {
       logError(name, describeThrownAction(e));
     }
-  }, [name, setNodes, setEdges, logError, logSuccess, logWarning]);
+  }, [name, applyReopenedDefinition, logError]);
+
+  // T-243 CLOSURE. SAVE, CLOSE, COME BACK TOMORROW.
+  //
+  // Before this the shell only learned its canonical code as a by-product of
+  // publishing, so history existed for the session that created it and vanished with
+  // the tab. Opening with an existing code is the other half of persistence: the
+  // definition is fetched from the canonical store and nothing else - no localStorage,
+  // no cached board, no reconstruction from the compiled query.
+  // ONCE PER DEFINITION, NOT ONCE PER RENDER IDENTITY.
+  //
+  // The first version of this effect depended on applyReopenedDefinition, which is a
+  // useCallback over name. Restoring a definition SETS name, so the callback got a new
+  // identity, the effect re-ran, and it reopened the current version - silently undoing
+  // a historical version the author had just chosen. The board snapped back to current
+  // and looked like the picker had done nothing.
+  //
+  // A ref keyed on the code fixes it and states the intent: opening an existing
+  // definition happens once, and after that the author owns the board.
+  const openedDefinitionRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!initialDefinitionCode) { return; }
+    if (openedDefinitionRef.current === initialDefinitionCode) { return; }
+    openedDefinitionRef.current = initialDefinitionCode;
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        const current = await reopenDefinition(initialDefinitionCode);
+        if (cancelled) { return; }
+        setDefinitionCode(initialDefinitionCode);
+        applyReopenedDefinition(current);
+        await refreshVersions(initialDefinitionCode);
+      } catch (e) {
+        if (!cancelled) { logError(initialDefinitionCode, describeThrownAction(e)); }
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [initialDefinitionCode, applyReopenedDefinition, refreshVersions, logError]);
 
   // Section 5.2.4: two groups on S1 ONLY. S2 to S5 read the canonical model,
   // and the staged catalogue is deliberately NOT fetched for them - showing an
