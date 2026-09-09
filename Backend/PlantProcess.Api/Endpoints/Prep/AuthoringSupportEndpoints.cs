@@ -61,6 +61,16 @@ public static class AuthoringSupportEndpoints
         // "/api/analysis/methods/" WITH a trailing slash, which a GET to
         // "/api/analysis/methods" does not match. That is a 404 that looks
         // like a missing endpoint and is a routing mistake.
+        // T-253. The governed output targets an authoring surface may offer. It is a
+        // projection of ICanonicalEntityCatalog and holds no list of its own, so it
+        // cannot become the second registry this task exists to undo. It lives in the
+        // existing authoring surface area; no new API domain.
+        var authoring = app.MapGroup("/api/prep/authoring")
+            .WithTags("Prep - authoring support")
+            .RequireAuthorization();
+
+        authoring.MapGet("/output-targets", GetOutputTargets);
+
         var analysis = app.MapGroup("/api/analysis")
             .WithTags("Analysis - method catalogue")
             .RequireAuthorization();
@@ -247,12 +257,19 @@ public static class AuthoringSupportEndpoints
     // is not a definition, and storing one would mean a published version that
     // fails the first time somebody opens it.
 
+    /// <summary>
+    /// T-253. OutputTarget is the governed canonical identity. CanonicalEntity stays for
+    /// the legacy execution projection and is NOT a substitute for it: a client sending
+    /// only the old field is refused by name rather than quietly targeting whatever
+    /// that field happened to contain.
+    /// </summary>
     public sealed record SaveSqlVersionRequest(
         string? Code,
         string? DisplayName,
         string? CanonicalEntity,
         string? Sql,
-        System.Text.Json.JsonElement? ForkedFromGraph);
+        System.Text.Json.JsonElement? ForkedFromGraph,
+        string? OutputTarget);
 
     public sealed record SaveSqlVersionResponse(
         bool Saved, int VersionNumber, string? Id, string Message, string? ErrorCode);
@@ -292,7 +309,8 @@ public static class AuthoringSupportEndpoints
                 request.DisplayName ?? code,
                 request.CanonicalEntity,
                 request.Sql ?? string.Empty,
-                request.ForkedFromGraph?.GetRawText()),
+                request.ForkedFromGraph?.GetRawText(),
+                request.OutputTarget),
             ct);
 
         if (saved.IsFailure)
@@ -323,6 +341,21 @@ public static class AuthoringSupportEndpoints
             "Published version " + published.Value.VersionNumber + " of " + code
             + ". Canonical definition " + published.Value.DefinitionId + "; immutable; the forked graph travels inside it.",
             null));
+    }
+
+    /// <summary>
+    /// T-253. Read-only. The catalogue answers from the mapped model and the Domain
+    /// projection-target marker, so this endpoint gains nothing by reshaping it.
+    /// </summary>
+    private static IResult GetOutputTargets(
+        [FromServices] PlantProcess.Application.Common.Canonical.ICanonicalEntityCatalog catalog)
+    {
+        return Results.Ok(new
+        {
+            source = "canonical-model",
+            note = "Canonical entities marked as projection targets. Not a list maintained in product source.",
+            targets = catalog.ProjectionTargetNames(),
+        });
     }
 
     public sealed record MethodDto(

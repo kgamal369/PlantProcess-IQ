@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Npgsql;
 using NpgsqlTypes;
+using PlantProcess.Application.Common.Canonical;
 using PlantProcess.Application.Common.Results;
 using PlantProcess.Application.Definitions;
 using PlantProcess.Application.Definitions.Canvas;
@@ -35,18 +36,28 @@ public sealed class CanvasDefinitionLifecycleService : ICanvasDefinitionLifecycl
     private const string SqlProjectionStatus = "Published";
     private const string TransformationProjectionMode = "declared";
 
+    // T-253. The typed refusal vocabulary for the governed output target. The codes are
+    // stable strings because a browser branches on them; the sentence beside each one is
+    // what a person reads and may be reworded freely.
+    private const string TargetRequiredCode = "OUTPUT_TARGET_REQUIRED";
+    private const string TargetNotCanonicalCode = "OUTPUT_TARGET_NOT_CANONICAL";
+    private const string TargetMismatchCode = "OUTPUT_TARGET_MISMATCH";
+
     private readonly PlantProcessDbContext _db;
     private readonly ICanonicalDefinitionWriter _writer;
     private readonly ICanvasCompatibilityProjection _projection;
+    private readonly ICanonicalEntityCatalog _canonicalEntities;
 
     public CanvasDefinitionLifecycleService(
         PlantProcessDbContext db,
         ICanonicalDefinitionWriter writer,
-        ICanvasCompatibilityProjection projection)
+        ICanvasCompatibilityProjection projection,
+        ICanonicalEntityCatalog canonicalEntities)
     {
         _db = db ?? throw new ArgumentNullException(nameof(db));
         _writer = writer ?? throw new ArgumentNullException(nameof(writer));
         _projection = projection ?? throw new ArgumentNullException(nameof(projection));
+        _canonicalEntities = canonicalEntities ?? throw new ArgumentNullException(nameof(canonicalEntities));
     }
 
     // ------------------------------------------------------------------ SAVE
@@ -59,10 +70,26 @@ public sealed class CanvasDefinitionLifecycleService : ICanvasDefinitionLifecycl
         var identity = ValidateIdentity(save.TenantId, save.OwnerId, save.DefinitionCode);
         if (identity is not null) { return Refuse(identity); }
 
+        // T-253. Checked against the canonical projection-target set BEFORE the content
+        // is built, so what a client receives carries a code it can branch on rather
+        // than a serialisation exception message.
+        var targetRefusal = RefuseTargetOrNull(save.OutputTarget);
+        if (targetRefusal is not null) { return targetRefusal; }
+
+        var declaredInGraph = CanvasDefinitionContent.TryReadGraphTargetEntity(save.GraphJson);
+        if (declaredInGraph is not null
+            && !string.Equals(declaredInGraph, save.OutputTarget!.Trim(), StringComparison.Ordinal))
+        {
+            return RefuseTyped(
+                TargetMismatchCode,
+                "The graph names '" + declaredInGraph + "' as its target entity while the governed output target is '"
+                + save.OutputTarget!.Trim() + "'. One definition cannot carry two output identities.");
+        }
+
         string content;
         try
         {
-            content = CanvasDefinitionContent.ForGraph(save.GraphJson);
+            content = CanvasDefinitionContent.ForGraph(save.GraphJson, save.OutputTarget!);
         }
         catch (ArgumentException ex)
         {
@@ -86,6 +113,11 @@ public sealed class CanvasDefinitionLifecycleService : ICanvasDefinitionLifecycl
             return Refuse("Authored SQL is required.");
         }
 
+        // T-253. Checked before the validator runs, so an author who has not chosen a
+        // target is told that, and not handed a SQL verdict about a different problem.
+        var sqlTargetRefusal = RefuseTargetOrNull(save.OutputTarget);
+        if (sqlTargetRefusal is not null) { return sqlTargetRefusal; }
+
         // The server's own safety authority decides. Same function the run
         // path uses, same rules, no second validator - and nothing is written
         // until it has answered.
@@ -103,7 +135,8 @@ public sealed class CanvasDefinitionLifecycleService : ICanvasDefinitionLifecycl
         string content;
         try
         {
-            content = CanvasDefinitionContent.ForSql(verdict.NormalizedSql, save.ForkedFromGraphJson);
+            content = CanvasDefinitionContent.ForSql(
+                verdict.NormalizedSql, save.ForkedFromGraphJson, save.OutputTarget!);
         }
         catch (ArgumentException ex)
         {
@@ -309,6 +342,42 @@ public sealed class CanvasDefinitionLifecycleService : ICanvasDefinitionLifecycl
 
     private static ApplicationResult<CanvasDefinitionVersion> Refuse(string message) =>
         ApplicationResult<CanvasDefinitionVersion>.Failure(ApplicationError.Validation(message));
+
+    private static ApplicationResult<CanvasDefinitionVersion> RefuseTyped(string code, string message) =>
+        ApplicationResult<CanvasDefinitionVersion>.Failure(ApplicationError.Validation(
+            message,
+            new Dictionary<string, string[]>(StringComparer.Ordinal)
+            {
+                ["errorCode"] = new[] { code },
+            }));
+
+    /// <summary>
+    /// T-253. The governed output target, or a typed refusal. Null means it is good.
+    ///
+    /// The catalogue is the authority and it answers from the mapped model plus the
+    /// Domain projection-target marker, so this refuses a name the product cannot
+    /// resolve AND a mapped entity that is not something a plant authors output into.
+    /// It never substitutes a default and never falls back to a physical relation.
+    /// </summary>
+    private ApplicationResult<CanvasDefinitionVersion>? RefuseTargetOrNull(string? outputTarget)
+    {
+        if (string.IsNullOrWhiteSpace(outputTarget))
+        {
+            return RefuseTyped(
+                TargetRequiredCode,
+                "This definition has no governed output target. Choose one before saving; it is never defaulted.");
+        }
+
+        var target = outputTarget.Trim();
+        if (!_canonicalEntities.IsProjectionTarget(target))
+        {
+            return RefuseTyped(
+                TargetNotCanonicalCode,
+                "'" + target + "' is not a governed output target in this model, so a definition cannot write to it.");
+        }
+
+        return null;
+    }
 
     private async Task<int> CurrentVersionNumberAsync(Guid definitionId, CancellationToken cancellationToken)
     {

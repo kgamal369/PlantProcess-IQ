@@ -2,7 +2,7 @@ using PlantProcess.Domain.Common;
 
 namespace PlantProcess.Domain.Entities.Quality;
 
-public class QualityEvent : BaseEntity
+public class QualityEvent : BaseEntity, ICanonicalProjectionTarget
 {
     public Guid MaterialUnitId { get; private set; }
 

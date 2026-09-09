@@ -262,9 +262,17 @@ WHERE n.nspname = $1 AND c.relkind IN ('r', 'p', 'm', 'v');";
             var resolved = await CanvasDefinitionEndpoints.ResolveIdentityAsync(ctx.User, identity, ct);
             if (resolved is null) return Results.Forbid();
 
+            // T-253. The governed output target is the one the AUTHOR declared in the
+            // graph they saved, read back from that graph and carried forward exactly.
+            // Not defaulted here, not taken from page context, never inferred. The
+            // lifecycle then validates it against the canonical projection-target set
+            // and refuses by typed code when it is missing or ineligible.
+            var graphTarget = PlantProcess.Application.Definitions.Canvas.CanvasDefinitionContent
+                .TryReadGraphTargetEntity(graphJson);
+
             var saved = await lifecycle.SaveGraphAsync(
                 new PlantProcess.Application.Definitions.Canvas.CanvasGraphSave(
-                    resolved.Value.TenantId, resolved.Value.OwnerId, sourceCode, sourceCode, graphJson),
+                    resolved.Value.TenantId, resolved.Value.OwnerId, sourceCode, sourceCode, graphJson, graphTarget),
                 ct);
             if (saved.IsFailure) return CanvasDefinitionEndpoints.Refusal(saved.Error!);
 

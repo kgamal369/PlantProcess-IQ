@@ -1,8 +1,8 @@
-﻿using PlantProcess.Domain.Common;
+using PlantProcess.Domain.Common;
 
 namespace PlantProcess.Domain.Entities.Process;
 
-public class ParameterDefinition : BaseEntity
+public class ParameterDefinition : BaseEntity, ICanonicalProjectionTarget
 {
     public string ParameterCode { get; private set; } = null!;
 

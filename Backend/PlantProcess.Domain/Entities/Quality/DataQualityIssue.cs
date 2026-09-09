@@ -1,8 +1,8 @@
-﻿using PlantProcess.Domain.Common;
+using PlantProcess.Domain.Common;
 
 namespace PlantProcess.Domain.Entities.Quality;
 
-public class DataQualityIssue : BaseEntity
+public class DataQualityIssue : BaseEntity, ICanonicalProjectionTarget
 {
     private static readonly HashSet<string> AllowedSeveritiesSet = new(StringComparer.OrdinalIgnoreCase)
     {

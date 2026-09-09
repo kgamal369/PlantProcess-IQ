@@ -2,7 +2,7 @@ using PlantProcess.Domain.Common;
 
 namespace PlantProcess.Domain.Entities.Process;
 
-public class DowntimeEvent : BaseEntity
+public class DowntimeEvent : BaseEntity, ICanonicalProjectionTarget
 {
     public Guid? MaterialUnitId { get; private set; }
 

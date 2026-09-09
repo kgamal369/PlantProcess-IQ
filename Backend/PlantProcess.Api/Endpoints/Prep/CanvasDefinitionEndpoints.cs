@@ -36,6 +36,10 @@ public static class CanvasDefinitionEndpoints
         return app;
     }
 
+    /// <summary>
+    /// T-253. OutputTarget is nullable because a legacy SQL definition genuinely has
+    /// none. The browser must show that absence and ask, never fill it in.
+    /// </summary>
     public sealed record CanvasDefinitionResponse(
         Guid DefinitionId,
         Guid VersionId,
@@ -46,7 +50,8 @@ public static class CanvasDefinitionEndpoints
         string Representation,
         JsonElement? Graph,
         string? Sql,
-        JsonElement? ForkedFromGraph);
+        JsonElement? ForkedFromGraph,
+        string? OutputTarget);
 
     public static CanvasDefinitionResponse ToResponse(CanvasDefinitionVersion version)
     {
@@ -61,7 +66,8 @@ public static class CanvasDefinitionEndpoints
             representation.Representation,
             ParseOrNull(representation.GraphJson),
             representation.Sql,
-            ParseOrNull(representation.ForkedFromGraphJson));
+            ParseOrNull(representation.ForkedFromGraphJson),
+            representation.OutputTarget);
     }
 
     private static Task<IResult> ReopenAsync(

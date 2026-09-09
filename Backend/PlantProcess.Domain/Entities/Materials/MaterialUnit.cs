@@ -1,8 +1,8 @@
-﻿using PlantProcess.Domain.Common;
+using PlantProcess.Domain.Common;
 
 namespace PlantProcess.Domain.Entities.Materials;
 
-public class MaterialUnit : BaseEntity
+public class MaterialUnit : BaseEntity, ICanonicalProjectionTarget
 {
     public string MaterialCode { get; private set; } = null!;
 

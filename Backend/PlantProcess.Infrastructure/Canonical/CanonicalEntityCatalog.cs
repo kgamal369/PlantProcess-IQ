@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using PlantProcess.Application.Common.Canonical;
+using PlantProcess.Domain.Common;
 using PlantProcess.Infrastructure.Persistence;
 
 namespace PlantProcess.Infrastructure.Canonical;
@@ -31,6 +32,13 @@ public sealed class CanonicalEntityCatalog : ICanonicalEntityCatalog
     private readonly Dictionary<string, Type> _typeByName;
     private readonly Dictionary<Type, string?> _keyByType;
 
+    /// <summary>
+    /// T-253. The subset that declares itself an authoring output target. Built here
+    /// from the same enumeration, so it can never name an entity the model does not map
+    /// and can never omit one that the model maps and the Domain marks.
+    /// </summary>
+    private readonly SortedSet<string> _projectionTargets;
+
     public CanonicalEntityCatalog(PlantProcessDbContext db)
     {
         ArgumentNullException.ThrowIfNull(db);
@@ -38,6 +46,7 @@ public sealed class CanonicalEntityCatalog : ICanonicalEntityCatalog
         _nameByType = new Dictionary<Type, string>();
         _typeByName = new Dictionary<string, Type>(StringComparer.Ordinal);
         _keyByType = new Dictionary<Type, string?>();
+        _projectionTargets = new SortedSet<string>(StringComparer.Ordinal);
 
         foreach (var entity in db.Model.GetEntityTypes())
         {
@@ -68,12 +77,31 @@ public sealed class CanonicalEntityCatalog : ICanonicalEntityCatalog
             _nameByType[clrType] = name;
             _typeByName[name] = clrType;
 
+            // T-253. Declared by the Domain, read here. A mapped entity is NOT a
+            // projection target unless it says so, so adding an entity to the model
+            // does not silently widen what an author may write into.
+            if (typeof(ICanonicalProjectionTarget).IsAssignableFrom(clrType))
+            {
+                _projectionTargets.Add(name);
+            }
+
             var key = entity.FindPrimaryKey();
             _keyByType[clrType] = key is not null && key.Properties.Count == 1
                 ? key.Properties[0].Name
                 : null;
         }
     }
+
+    /// <summary>
+    /// T-253. Ordinal ordering, because names are matched ordinally everywhere else in
+    /// this class and a picker whose order changed with the host culture would be a
+    /// different list on a different machine.
+    /// </summary>
+    public IReadOnlyList<string> ProjectionTargetNames() => _projectionTargets.ToArray();
+
+    public bool IsProjectionTarget(string canonicalEntityName) =>
+        !string.IsNullOrWhiteSpace(canonicalEntityName)
+        && _projectionTargets.Contains(canonicalEntityName.Trim());
 
     public string? NameOf(Type mappedEntityType)
     {

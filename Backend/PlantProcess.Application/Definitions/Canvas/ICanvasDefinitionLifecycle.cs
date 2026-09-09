@@ -64,12 +64,18 @@ public interface ICanvasDefinitionLifecycle
         CancellationToken cancellationToken);
 }
 
+/// <summary>
+/// T-253. OutputTarget is the governed canonical entity name this definition writes to.
+/// It is nullable ON THE WIRE so a caller that omits it is refused BY NAME with a typed
+/// code, rather than rejected by a model binder before the refusal can be worded.
+/// </summary>
 public sealed record CanvasGraphSave(
     Guid TenantId,
     Guid OwnerId,
     string DefinitionCode,
     string DisplayName,
-    string GraphJson);
+    string GraphJson,
+    string? OutputTarget);
 
 /// <summary>
 /// The legacy keys the execution projection still needs at publish time.
@@ -82,6 +88,11 @@ public sealed record CanvasProjectionHandles(
     string? CanonicalEntity,
     string? PublishedBy);
 
+/// <summary>
+/// T-253. CanonicalEntity remains ONLY the legacy projection handle it always was.
+/// OutputTarget is the canonical identity, and the two are not interchangeable: the
+/// handle is not hashed, does not survive a version and is not returned by reopen.
+/// </summary>
 public sealed record CanvasSqlSave(
     Guid TenantId,
     Guid OwnerId,
@@ -89,7 +100,8 @@ public sealed record CanvasSqlSave(
     string DisplayName,
     string? CanonicalEntity,
     string Sql,
-    string? ForkedFromGraphJson);
+    string? ForkedFromGraphJson,
+    string? OutputTarget);
 
 /// <summary>
 /// The canonical identity a Canvas caller receives. DefinitionId is

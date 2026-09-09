@@ -27,11 +27,11 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { addEdge, useEdgesState, useNodesState, type Connection, type Edge, type EdgeChange, type Node, type NodeChange } from "@xyflow/react";
-import { StandardP2Button, StandardP2Input, StandardP2Table, StandardP2TextArea } from "@/components/standard/StandardP2Controls";
+import { StandardP2Button, StandardP2Input, StandardP2Select, StandardP2Table, StandardP2TextArea } from "@/components/standard/StandardP2Controls";
 import { CanvasShell } from "@/canvas/CanvasShell";
 import { DatasetNode, type DatasetNodeData } from "@/canvas/nodes/DatasetNode";
 import {
-  listStagedDatasets, createSession, saveGraph, runDryRun, publishVersion,
+  listStagedDatasets, createSession, saveGraph, runDryRun, publishVersion, listOutputTargets,
   // Both go through public.ppiq_resolve_safe_sql on the server before anything
   // runs or is stored. There is no client path that skips it.
   runAuthoredSql, saveSqlVersion,
@@ -183,6 +183,34 @@ export function SharedAuthoringShell({
   // a dependency array - it would re-run the effect on its own output. The
   // mutators are individually stable, so the effect depends on one of those.
   const { error: logError, warning: logWarning, success: logSuccess } = log;
+
+  // T-253. THE GOVERNED OUTPUT TARGET.
+  //
+  // PLACED HERE, BELOW THE LOG MUTATORS, ON PURPOSE. The effect below depends on
+  // logError, and a const is not hoisted: declaring this above the destructuring
+  // above compiles to "used before declaration". The state has to sit after the
+  // thing its effect needs.
+  //
+  // Before this, the shell wrote "MaterialUnit" into every graph and
+  // "canonical_material_units" into every saved statement - two namespaces for one
+  // idea, and one plant's world compiled into a product surface. The target is now
+  // AUTHORED. The empty string means the author has not chosen one, which is a real
+  // state the surface reports; it is never quietly replaced by a plausible default.
+  const [outputTarget, setOutputTarget] = useState<string>("");
+  const [outputTargets, setOutputTargets] = useState<string[]>([]);
+
+  useEffect(() => {
+    listOutputTargets()
+      .then((r) => setOutputTargets(r.targets ?? []))
+      .catch(() => logError("output targets",
+        "The governed output targets did not answer, so this definition cannot state what it writes to."
+        + " Check that /api/prep/authoring/output-targets is reachable, then reopen this page."));
+  }, [logError]);
+
+  // A sentence, not a boolean, because the author has to know what to do about it.
+  const outputTargetRefusal = outputTarget
+    ? null
+    : "This definition has no governed output target. Choose one before saving or publishing.";
 
   // Section 5.2.4: two groups on S1 ONLY. S2 to S5 read the canonical model,
   // and the staged catalogue is deliberately NOT fetched for them - showing an
@@ -415,8 +443,8 @@ export function SharedAuthoringShell({
   // back as DATA, and anything unexpected is rethrown so it reaches the error
   // boundary instead of being mistaken for an ordinary authoring problem.
   const serialisation = useMemo(
-    () => serialisationOutcome(name, "MaterialUnit", boardNodes, boardEdges),
-    [name, boardNodes, boardEdges],
+    () => serialisationOutcome(name, outputTarget, boardNodes, boardEdges),
+    [name, outputTarget, boardNodes, boardEdges],
   );
   const graph = serialisation.ok ? serialisation.graph : null;
   const serialisationRefusal = serialisation.ok ? null : serialisation.refusal.message;
@@ -502,6 +530,12 @@ export function SharedAuthoringShell({
     try {
       if (!graph) {
         logError(name, readinessBlockedMessage(readiness));
+        return;
+      }
+      // T-253. The server refuses this too, by typed code. Refusing here as well means
+      // the author is told before a round trip, and the two refusals say the same thing.
+      if (outputTargetRefusal) {
+        logError(name, outputTargetRefusal);
         return;
       }
       const sid = await ensureSession();
@@ -612,17 +646,24 @@ export function SharedAuthoringShell({
 
   const doSaveSql = useCallback(async () => {
     try {
+      // T-253. The statement carries the SAME governed identity the board does. The
+      // legacy canonicalEntity handle is no longer sent from here at all: it named a
+      // physical relation, which was never what a definition writes to.
+      if (outputTargetRefusal) {
+        logError(name, outputTargetRefusal);
+        return;
+      }
       const r = await saveSqlVersion({
         code: name.replace(/[^A-Za-z0-9_]+/g, "_").toLowerCase() || "sql_definition",
         displayName: name,
-        canonicalEntity: "canonical_material_units",
+        outputTarget,
         sql: sqlText,
         forkedFromGraph: forkedGraph,
       });
       if (r.saved) { logSuccess(name, r.message, "version " + r.versionNumber); }
       else { logError(name, r.message); }
     } catch (e) { logError(name, describeThrownAction(e)); }
-  }, [name, sqlText, forkedGraph, logError, logSuccess]);
+  }, [name, sqlText, forkedGraph, outputTarget, outputTargetRefusal, logError, logSuccess]);
 
   // T-038 pack 03a. THE SAVE. It compiles through the model rather than
   // building a payload here, so what this shell stores is byte-comparable with
@@ -826,6 +867,24 @@ export function SharedAuthoringShell({
           }}
           aria-label="Definition name"
         />
+
+        {/* T-253. One control, one governed vocabulary. The options are the canonical
+            projection targets the server enumerates - the shell compiles no list, and
+            the empty option is a real state rather than a placeholder that resolves to
+            a default. */}
+        <StandardP2Select
+          className="canvas-modebar__target"
+          data-testid="authoring-output-target"
+          value={outputTarget}
+          onChange={(e) => setOutputTarget(e.target.value)}
+          aria-label="Governed output target"
+          title={outputTargetRefusal ?? "This definition writes to " + outputTarget + "."}
+        >
+          <option value="">Choose an output target</option>
+          {outputTargets.map((t) => (
+            <option key={t} value={t}>{t}</option>
+          ))}
+        </StandardP2Select>
 
         {isQueryPurpose && (
           <>

@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 using PlantProcess.Application.Common.Canonical;
 using PlantProcess.Application.Common.Results;
 using PlantProcess.Application.Dashboarding.Services.Dimensions;
@@ -27,6 +27,10 @@ public sealed class RelationshipConsumerConvergenceTests
     private sealed class RecordingCatalog : ICanonicalEntityCatalog
     {
         public List<Type> Asked { get; } = new();
+        // T-253. This fake exists for relationship consumer convergence, where nothing
+        // is an authoring output target. It says so rather than pretending otherwise.
+        public IReadOnlyList<string> ProjectionTargetNames() => Array.Empty<string>();
+        public bool IsProjectionTarget(string n) => false;
         public string? NameOf(Type t) { Asked.Add(t); return t == typeof(Left) ? "Left" : t == typeof(Subject) ? "Subject" : null; }
         public Type? FindType(string n) => n == "Left" ? typeof(Left) : n == "Subject" ? typeof(Subject) : null;
         public string? PrimaryKeyMemberOf(Type t) => "Id";

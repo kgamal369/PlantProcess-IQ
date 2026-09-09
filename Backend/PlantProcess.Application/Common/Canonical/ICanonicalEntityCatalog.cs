@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace PlantProcess.Application.Common.Canonical;
 
@@ -21,6 +22,26 @@ namespace PlantProcess.Application.Common.Canonical;
 /// </summary>
 public interface ICanonicalEntityCatalog
 {
+    /// <summary>
+    /// T-253. The canonical entity names an authoring surface may legally target,
+    /// ordinal-sorted.
+    ///
+    /// THIS IS NOT THE SET OF MAPPED ENTITIES, and the distinction is the whole point.
+    /// An import batch, a job run and a dashboard widget definition are all mapped
+    /// canonical entities and none of them is something a plant authors output into.
+    /// Eligibility is declared by the Domain marker ICanonicalProjectionTarget, so the
+    /// answer is a property of the model rather than a list maintained in this layer.
+    /// An empty result is an answer: the caller refuses rather than offering everything.
+    /// </summary>
+    IReadOnlyList<string> ProjectionTargetNames();
+
+    /// <summary>
+    /// T-253. Whether a canonical entity name is a legal authoring output target. The
+    /// same predicate the enumeration above is built from, so a server validating a
+    /// submitted target and a picker offering one cannot disagree.
+    /// </summary>
+    bool IsProjectionTarget(string canonicalEntityName);
+
     /// <summary>
     /// The canonical entity name for a mapped CLR entity type, or null when the type is
     /// not a mapped canonical entity. Null is an answer: the caller refuses on it.

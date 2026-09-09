@@ -50,21 +50,30 @@ public sealed class CanvasDefinitionLifecycleTests : IAsyncLifetime
 
     private static string Code(string suffix) => Prefix + suffix;
 
-    private const string GraphA = """{"name":"a","targetEntity":"","tables":["t0"],"joins":[],"filters":[{"table":"t0","column":"quantity","op":">","value":"10"}]}""";
-    private const string GraphAReordered = """{"tables":["t0"],"filters":[{"value":"10","op":">","column":"quantity","table":"t0"}],"joins":[],"targetEntity":"","name":"a"}""";
-    private const string GraphB = """{"name":"a","targetEntity":"","tables":["t0"],"joins":[],"filters":[{"table":"t0","column":"quantity","op":">","value":"20"}]}""";
+    // T-253. These declared targetEntity "" - the ABSENCE of a target, which the
+    // pre-T-253 shell never had to fill in because it hardcoded one. They now name a
+    // real governed projection target, because a target is required to save at all.
+    private const string TestTarget = "QualityEvent";
+
+    private const string GraphA = """{"name":"a","targetEntity":"QualityEvent","tables":["t0"],"joins":[],"filters":[{"table":"t0","column":"quantity","op":">","value":"10"}]}""";
+    private const string GraphAReordered = """{"tables":["t0"],"filters":[{"value":"10","op":">","column":"quantity","table":"t0"}],"joins":[],"targetEntity":"QualityEvent","name":"a"}""";
+    private const string GraphB = """{"name":"a","targetEntity":"QualityEvent","tables":["t0"],"joins":[],"filters":[{"table":"t0","column":"quantity","op":">","value":"20"}]}""";
 
     private CanvasDefinitionLifecycleService Service(ICanvasCompatibilityProjection? projection = null)
     {
         var db = _fixture.NewContext();
-        return new CanvasDefinitionLifecycleService(db, new CanonicalDefinitionWriter(db), projection ?? new CanvasCompatibilityProjection());
+        return new CanvasDefinitionLifecycleService(
+            db,
+            new CanonicalDefinitionWriter(db),
+            projection ?? new CanvasCompatibilityProjection(),
+            new PlantProcess.Infrastructure.Canonical.CanonicalEntityCatalog(db));
     }
 
-    private CanvasGraphSave Graph(string suffix, string graph) =>
-        new(_fixture.TenantId, _fixture.OwnerId, Code(suffix), "Canvas " + suffix, graph);
+    private CanvasGraphSave Graph(string suffix, string graph, string? target = TestTarget) =>
+        new(_fixture.TenantId, _fixture.OwnerId, Code(suffix), "Canvas " + suffix, graph, target);
 
-    private CanvasSqlSave Sql(string suffix, string sql, string? forked = null) =>
-        new(_fixture.TenantId, _fixture.OwnerId, Code(suffix), "SQL " + suffix, null, sql, forked);
+    private CanvasSqlSave Sql(string suffix, string sql, string? forked = null, string? target = TestTarget) =>
+        new(_fixture.TenantId, _fixture.OwnerId, Code(suffix), "SQL " + suffix, null, sql, forked, target);
 
     private static CanvasProjectionHandles GraphHandles(Guid sessionId) => new(sessionId, null, null, "test");
 

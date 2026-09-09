@@ -2,7 +2,7 @@ using PlantProcess.Domain.Common;
 
 namespace PlantProcess.Domain.Entities.Materials;
 
-public class GenealogyEdge : BaseEntity
+public class GenealogyEdge : BaseEntity, ICanonicalProjectionTarget
 {
     public Guid ParentMaterialUnitId { get; private set; }
 

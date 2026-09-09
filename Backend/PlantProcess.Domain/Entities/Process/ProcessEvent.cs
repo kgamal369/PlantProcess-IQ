@@ -1,8 +1,8 @@
-﻿using PlantProcess.Domain.Common;
+using PlantProcess.Domain.Common;
 
 namespace PlantProcess.Domain.Entities.Process;
 
-public class ProcessEvent : BaseEntity
+public class ProcessEvent : BaseEntity, ICanonicalProjectionTarget
 {
     public Guid? MaterialUnitId { get; private set; }
 

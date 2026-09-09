@@ -68,10 +68,26 @@ export type SaveSqlVersionResult = {
 };
 export const runAuthoredSql = (sql: string, rowLimit = 100) =>
   apiClient.post<RunSqlResult>("/api/prep/sql/run", { sql, rowLimit });
+// T-253. THE GOVERNED OUTPUT TARGET.
+//
+// outputTarget is the canonical identity a definition writes to and it is REQUIRED.
+// canonicalEntity survives only as the legacy execution-projection handle; it is not
+// an alternative way to say the same thing, and the shell no longer sends it.
 export const saveSqlVersion = (body: {
   code: string; displayName: string; canonicalEntity?: string | null;
+  outputTarget: string;
   sql: string; forkedFromGraph: unknown;
 }) => apiClient.post<SaveSqlVersionResult>("/api/prep/sql/versions", body);
+
+export type OutputTargetsResult = {
+  source: string; note?: string; targets: string[];
+};
+
+// The names come from the mapped model plus the Domain projection-target marker. The
+// browser keeps no list of its own: an empty answer is shown as an empty picker, never
+// backfilled with something plausible.
+export const listOutputTargets = () =>
+  apiClient.get<OutputTargetsResult>("/api/prep/authoring/output-targets");
 export const publishVersion = (sessionId: string) =>
   apiClient.post<{ versionId: string; versionNumber: number; definitionId?: string; definitionCode?: string }>(`${BASE}/sessions/${sessionId}/publish`, {});
 
@@ -82,6 +98,9 @@ export type CanvasDefinitionResponse = {
   definitionId: string; versionId: string; definitionCode: string; versionNumber: number;
   status: string; definitionHash: string; representation: "graph" | "sql";
   graph?: MapperGraph | null; sql?: string | null; forkedFromGraph?: MapperGraph | null;
+  // T-253. Null for a legacy SQL definition, which genuinely declared none. The surface
+  // that reopens one must ask rather than fill it in. T-243 owns that reopen surface.
+  outputTarget?: string | null;
 };
 export const reopenDefinition = (code: string, version?: number) =>
   apiClient.get<CanvasDefinitionResponse>(

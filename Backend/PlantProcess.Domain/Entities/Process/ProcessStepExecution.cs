@@ -1,8 +1,8 @@
-﻿using PlantProcess.Domain.Common;
+using PlantProcess.Domain.Common;
 
 namespace PlantProcess.Domain.Entities.Process;
 
-public class ProcessStepExecution : BaseEntity
+public class ProcessStepExecution : BaseEntity, ICanonicalProjectionTarget
 {
     private static readonly HashSet<string> AllowedStatusesSet = new(StringComparer.OrdinalIgnoreCase)
     {

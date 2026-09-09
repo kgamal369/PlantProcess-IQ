@@ -16,6 +16,9 @@ vi.mock("@/canvas/CanvasShell", () => ({
 }));
 
 vi.mock("@/api/canvasApi", () => ({
+  // T-253. The shell asks the server what it may write to. A mock that omits this
+  // would fail at render for a reason unrelated to what the test is about.
+  listOutputTargets: () => Promise.resolve({ source: "test", targets: ["QualityEvent", "ProcessEvent"] }),
   listStagedDatasets: () => Promise.resolve([
     {
       table: "source_a", source: "staging_one", approxRowCount: 12,

@@ -1,8 +1,8 @@
-﻿using PlantProcess.Domain.Common;
+using PlantProcess.Domain.Common;
 
 namespace PlantProcess.Domain.Entities.Analytics;
 
-public class RiskScore : BaseEntity
+public class RiskScore : BaseEntity, ICanonicalProjectionTarget
 {
     public Guid MaterialUnitId { get; private set; }
 

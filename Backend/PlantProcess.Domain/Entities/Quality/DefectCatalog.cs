@@ -2,7 +2,7 @@ using PlantProcess.Domain.Common;
 
 namespace PlantProcess.Domain.Entities.Quality;
 
-public class DefectCatalog : BaseEntity
+public class DefectCatalog : BaseEntity, ICanonicalProjectionTarget
 {
     private readonly List<QualityEvent> _qualityEvents = new();
 
