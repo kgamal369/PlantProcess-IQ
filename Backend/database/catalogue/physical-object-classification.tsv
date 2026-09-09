@@ -1,0 +1,21 @@
+# PPIQ EXPLICIT PHYSICAL OBJECT CLASSIFICATION
+#
+# One line per object that a human has adjudicated. An explicit line beats every
+# pattern rule in classification-rules.tsv. This is the file that turns the
+# census red into governed green, and every line in it is a decision somebody
+# made on purpose.
+#
+# FORMAT: schema<TAB>object<TAB>logical_family<TAB>lifecycle<TAB>owner<TAB>purpose<TAB>retention<TAB>compatibility_state
+#   lifecycle           : current | compatibility | retiring | platform
+#   retention           : permanent | operational | transient | evidence
+#   compatibility_state : none | bounded:<retirement owner or task> | retired
+#
+# Purpose is prose and may contain spaces; it must not contain a tab.
+#
+# The generator prints an UNCLASSIFIED list after every run. That list is the
+# work queue for this file. Do not classify from the object name alone - read the
+# creator script the census names in the creator_authority column, because the
+# script that made an object is the best available statement of why it exists.
+#
+# ---- adjudications ----
+# (empty on first install - the first census tells you exactly what belongs here)

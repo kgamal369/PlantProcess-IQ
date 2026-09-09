@@ -1,0 +1,108 @@
+schema,object,kind,logical_family,lifecycle,owner,purpose,creator_authority,primary_key,retention,rls,rls_forced,policy_count,naming,compatibility_state,classified_by
+dump_store,src_caster_oracle_shape_cast_pieces,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (piece_id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+dump_store,src_caster_oracle_shape_cast_sequence,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (sequence_no),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+dump_store,src_hsm_oracle_shape_hsm_coils,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (coil_id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+dump_store,src_hsm_oracle_shape_hsm_pass_measurements,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (measurement_id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+dump_store,src_inspection_mysql_shape_downtime_events,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (downtime_id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+dump_store,src_inspection_mysql_shape_parsytec_surface_defects,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (defect_row_id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+dump_store,src_meltshop_pg_heats,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (heat_no),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+dump_store,src_meltshop_pg_lf_treatment,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (treatment_id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+dump_store,src_pkl_mssql_shape_pickle_orders,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (order_id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+dump_store,src_pkl_mssql_shape_qa_lab_results,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (lab_result_id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,__EFMigrationsHistory,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (migration_id),UNCLASSIFIED,off,not_forced,0,nonconforming,none,none
+public,areas,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,audit_log_entries,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,canonical_schema_view_audit,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,Backend/database/scripts/120_phase02_canonical_schema_mapping_engine.sql,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,canonical_schema_views,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,Backend/database/scripts/120_phase02_canonical_schema_mapping_engine.sql,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,connection_profiles,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,correlation_results,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,dashboard_definitions,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,dashboard_widget_definitions,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,dashboard_widget_expression_audit,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,Backend/database/scripts/117_phase8_widget_script_layer_entity_mapping.sql,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,data_quality_issues,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,defect_catalogs,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,demo_genealogy_acceptance_spine,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (material_code),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,demo_language_truth_rules,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,Backend/database/scripts/116_phase2_operation_analytics_pilot_foundation.sql,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,demo_source_connection_presets,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (preset_code),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,downtime_events,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,equipment,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,genealogy_edges,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,import_batches,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,industry_templates,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,inspection_jobs,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,Backend/database/scripts/116_phase2_operation_analytics_pilot_foundation.sql,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,job_definitions,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,job_run_histories,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,kpi_definitions,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,kpi_parameter_bindings,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,Backend/database/scripts/116_phase2_operation_analytics_pilot_foundation.sql,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,long_operation_progress,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,Backend/database/scripts/116_phase2_operation_analytics_pilot_foundation.sql,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,mapping_definitions,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,material_aliases,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,material_unit_type_definitions,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,material_units,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,ml_correlation_compute_runs,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,Backend/database/scripts/200_phase02_ml_foundation_feature_store_pgvector.sql,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,ml_correlation_results_v2,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,Backend/database/scripts/200_phase02_ml_foundation_feature_store_pgvector.sql,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,ml_feature_definitions,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,Backend/database/scripts/200_phase02_ml_foundation_feature_store_pgvector.sql,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,ml_feature_store_refresh_runs,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,Backend/database/scripts/200_phase02_ml_foundation_feature_store_pgvector.sql,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,ml_feature_values,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,Backend/database/scripts/200_phase02_ml_foundation_feature_store_pgvector.sql,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,ml_job_lifecycle_states,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,Backend/database/scripts/116_phase2_operation_analytics_pilot_foundation.sql,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,ml_knowledge_base_items,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,Backend/database/scripts/200_phase02_ml_foundation_feature_store_pgvector.sql,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,ml_learning_job_catalog_v1,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,Backend/database/scripts/204_phase04_phase05_ml_learning_core.sql,PRIMARY KEY (job_code),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,ml_learning_observations_v1,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,Backend/database/scripts/204_phase04_phase05_ml_learning_core.sql,PRIMARY KEY (observation_id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,ml_learning_results_v1,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,Backend/database/scripts/204_phase04_phase05_ml_learning_core.sql,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,ml_learning_runs_v1,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,Backend/database/scripts/204_phase04_phase05_ml_learning_core.sql,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,ml_outcome_definitions,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,Backend/database/scripts/200_phase02_ml_foundation_feature_store_pgvector.sql,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,ml_outcome_values,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,Backend/database/scripts/200_phase02_ml_foundation_feature_store_pgvector.sql,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,model_registries,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,mv_dashboard_defect_breakdown,matview,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,,UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,mv_dashboard_material_summary,matview,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,,UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,mv_dashboard_quality_daily,matview,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,,UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,operation_definitions,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,page_definition_audit,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,Backend/database/scripts/141_phase03_page_builder_foundation.sql,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,page_definition_shares,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,Backend/database/scripts/141_phase03_page_builder_foundation.sql,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,page_definitions,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,Backend/database/scripts/141_phase03_page_builder_foundation.sql,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,parameter_definitions,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,parameter_observations,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,ppiq_demo_canonical_layout,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (layout_code),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,ppiq_demo_genealogy_spine,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (coil_id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,ppiq_demo_source_presets,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (source_code),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,process_events,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,process_step_executions,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,quality_events,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,risk_scores,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,route_steps,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,routes,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,schema_mapping_executions,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,Backend/database/scripts/120_phase02_canonical_schema_mapping_engine.sql,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,schema_migrations,table,platform,platform,Worker 1,"Post-EF SQL ledger. Migration machinery, not product data.",Backend/database/scripts/000_schema_migrations_watermark.sql,PRIMARY KEY (script_name),permanent,off,not_forced,0,conforming,none,public-allowlist
+public,schema_view_definitions,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,sites,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,source_dataset_definitions,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,source_field_definitions,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,source_system_definitions,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,source_table_dump_registry,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,staging_records,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,tenant_isolation_decisions,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,Backend/database/scripts/116_phase2_operation_analytics_pilot_foundation.sql,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,two_stage_import_runs,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,two_stage_processed_watermarks,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,v_phase1_kpi_quality_temperature_window,view,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,,UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,v_phase1_material_genealogy_join,view,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,,UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,v_phase1_surface_defect_join,view,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,,UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,v_phase3_dump_kpi_quality_temperature_window,view,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,,UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,v_phase3_dump_material_genealogy_join,view,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,,UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,v_phase3_dump_surface_defect_join,view,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,,UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,v_ppiq_demo_genealogy_spine,view,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,,UNCLASSIFIED,off,not_forced,0,conforming,none,none
+public,v_ppiq_phase02_phase03_acceptance,view,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,,UNCLASSIFIED,off,not_forced,0,conforming,none,none
+src_caster_oracle_shape,cast_pieces,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (piece_id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+src_caster_oracle_shape,cast_sequence,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (sequence_no),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+src_hsm_oracle_shape,hsm_coils,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (coil_id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+src_hsm_oracle_shape,hsm_pass_measurements,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (measurement_id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+src_hsm_oracle_shape,hsm_pass_measurements_measurement_id_seq,sequence,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,,UNCLASSIFIED,off,not_forced,0,conforming,none,none
+src_inspection_mysql_shape,downtime_events,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (downtime_id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+src_inspection_mysql_shape,downtime_events_downtime_id_seq,sequence,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,,UNCLASSIFIED,off,not_forced,0,conforming,none,none
+src_inspection_mysql_shape,parsytec_surface_defects,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (defect_row_id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+src_inspection_mysql_shape,parsytec_surface_defects_defect_row_id_seq,sequence,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,,UNCLASSIFIED,off,not_forced,0,conforming,none,none
+src_meltshop_pg,heats,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (heat_no),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+src_meltshop_pg,lf_treatment,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (treatment_id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+src_meltshop_pg,lf_treatment_treatment_id_seq,sequence,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,,UNCLASSIFIED,off,not_forced,0,conforming,none,none
+src_pkl_mssql_shape,pickle_orders,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (order_id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+src_pkl_mssql_shape,qa_lab_results,table,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,PRIMARY KEY (lab_result_id),UNCLASSIFIED,off,not_forced,0,conforming,none,none
+src_pkl_mssql_shape,qa_lab_results_lab_result_id_seq,sequence,UNCLASSIFIED,UNCLASSIFIED,UNCLASSIFIED,,UNKNOWN,,UNCLASSIFIED,off,not_forced,0,conforming,none,none

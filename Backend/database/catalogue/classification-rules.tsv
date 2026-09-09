@@ -1,0 +1,48 @@
+# PPIQ PHYSICAL OBJECT CLASSIFICATION RULES
+#
+# Pattern rules, applied only where `physical-object-classification.tsv` has no
+# explicit line for the object. Rules are data on purpose: classifying a family
+# of objects is then a reviewed diff, not a source edit.
+#
+# FORMAT: schema<TAB>name_pattern<TAB>kind<TAB>logical_family<TAB>lifecycle<TAB>owner<TAB>retention
+#   schema        : exact schema name, or * for any
+#   name_pattern  : PowerShell -like pattern (use * as wildcard), matched case-sensitively
+#   kind          : table | view | matview | *
+#   logical_family: the product family this object belongs to
+#   lifecycle     : current | compatibility | retiring | platform
+#   owner         : the worker or role accountable for it
+#   retention     : permanent | operational | transient | evidence
+#
+# ORDER MATTERS: the first matching rule wins, so put specific patterns above
+# general ones. A rule that matches nothing is reported by the generator, because
+# a dead rule is a rule somebody believes is protecting something.
+#
+# ---- product configuration and grammar (ppiq_meta) ----
+ppiq_meta	definition_*	*	definition-authority	current	Worker 1	permanent
+ppiq_meta	*_definitions	*	definition-authority	current	Worker 1	permanent
+ppiq_meta	industry_templates	table	product-grammar	current	Worker 1	permanent
+ppiq_meta	job_log	table	observability	current	Worker 1	operational
+ppiq_meta	job_run_*	*	job-execution	current	Worker 1	operational
+ppiq_meta	licen*	*	licensing	current	Worker 1	permanent
+ppiq_meta	*_registry	*	registry-authority	current	Worker 1	permanent
+ppiq_meta	*_relationships	*	relationship-authority	current	Worker 1	permanent
+#
+# ---- canonical plant data (ppiq_plant) ----
+ppiq_plant	vw_*	view	read-model	current	Worker 1	permanent
+ppiq_plant	canonical_*	table	canonical-plant-data	current	Worker 1	permanent
+ppiq_plant	*_events	table	canonical-plant-data	current	Worker 1	permanent
+ppiq_plant	*_observations	table	canonical-plant-data	current	Worker 1	permanent
+ppiq_plant	correlation_*	table	analysis-result	current	Worker 1	operational
+ppiq_plant	risk_*	table	analysis-result	current	Worker 1	operational
+ppiq_plant	feature_*	table	analysis-result	current	Worker 1	operational
+#
+# ---- ingestion staging (ppiq_staging) ----
+ppiq_staging	*	*	ingestion-staging	current	Worker 1	transient
+#
+# NOTE ON DELIBERATE INCOMPLETENESS
+# This file does not attempt to classify every object in the database. It covers
+# the families whose membership is derivable from a naming convention that the
+# product already enforces. Everything else is left UNCLASSIFIED on purpose, so
+# that the first census reports the true size of the adjudication rather than
+# hiding it behind a catch-all rule. A trailing `*  *  *` rule would make this
+# gate green and meaningless; do not add one.

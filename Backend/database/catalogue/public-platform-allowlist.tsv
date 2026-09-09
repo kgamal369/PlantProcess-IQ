@@ -1,0 +1,25 @@
+# PPIQ PUBLIC-SCHEMA PLATFORM ALLOWLIST
+#
+# Product persistence belongs in ppiq_meta, ppiq_plant or ppiq_staging.
+# `public` is platform infrastructure or an explicitly governed bounded
+# compatibility object - nothing else. Every line here is a deliberate,
+# reviewed exception with an owner and a lifecycle.
+#
+# FORMAT: object_name<TAB>kind<TAB>lifecycle<TAB>owner<TAB>reason
+#   kind      : table | view | matview | function | extension | sequence
+#   lifecycle : platform | compatibility | retiring
+#
+# A `public` object that is not listed here is reported as OUT_OF_PLACE and the
+# catalogue gate goes red. Adding a line is how it stops being red, and adding a
+# line is a decision somebody signs.
+#
+# ---- platform bookkeeping ----
+schema_migrations	table	platform	Worker 1	Post-EF SQL ledger. Migration machinery, not product data.
+#
+# ---- extensions and their owned objects ----
+# (list extension-provided objects here if the census reports them)
+#
+# ---- bounded compatibility ----
+# Every line below must also carry a retirement owner in
+# physical-object-classification.tsv. A compatibility object with no retirement
+# state is a permanent object wearing a temporary label.

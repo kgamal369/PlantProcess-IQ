@@ -1,0 +1,16 @@
+PPIQ physical database catalogue - run receipt
+generated_at_utc : 2026-09-09T06:24:06Z
+head_sha         : aa57a503411abeeff38ef346ba8801c7742c7926
+head_subject     : T-242 close governed aggregate and window block contracts
+acceptance_db    : ppiq_acceptance_empty   verdict RED
+app_db           : ppiq_app   verdict RED
+determinism      : PROVEN
+negative_control : PASSED
+dotnet_gates     : EXECUTED
+
+artifact hashes (timestamp-free, determinism-relevant)
+  5408B3FDEF360BAA95621DAEEA40738F1D8E09E254007BC061EEEBD229360F60  ppiq_acceptance_empty.tables.csv
+  ECE99450F332C9B5C8169C28ECE21CD5A3C8E6F98977B199F9854937DAD69739  ppiq_acceptance_empty.columns.csv
+  A24B09D59236F17607C52D24DB16A0B80C5029E0FFC32FCC86E38DE78174AB98  ppiq_acceptance_empty.relations.csv
+  6D000D257AA48D1639A72EE301DFD7830D8ABE40020563CFB2C2B335AE5EC09E  ppiq_acceptance_empty.relation-graph.dot
+  B00BBB966C8B75F0E7BEF493FEF49E9EEDE215F91995075660D039703E734102  ppiq_acceptance_empty.summary.md
