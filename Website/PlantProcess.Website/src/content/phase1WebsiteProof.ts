@@ -167,7 +167,18 @@ export const provenAtScale = [
   { value: "11,997", label: "Material units unified into one canonical model" },
   { value: "1,993", label: "Quality events linked to materials and process steps" },
   { value: "5,688", label: "Genealogy links walked in both directions" },
-  { value: "6", label: "Live source systems across 4 database engines" },
 ];
+
+// T-254. THE "6 LIVE SOURCE SYSTEMS" ROW IS GONE, AND NOT REPLACED BY A SMALLER
+// NUMBER.
+//
+// This is a static site. It cannot see whether a connector is reachable, certified or
+// lagging - the product knows that, in ppiq_v_connector_runtime_truth_state, and the
+// website has no read path to it and should not grow one. A count printed here would
+// be a number that was true on the day someone typed it.
+//
+// The three figures above are measurements of unified data and stay as they are. What
+// the site may honestly say about connectors is which KINDS it supports, which is
+// capability language and lives beside the product copy, not in a proof counter.
 
 export const requestDemoMail = "info@souindustrial.com";

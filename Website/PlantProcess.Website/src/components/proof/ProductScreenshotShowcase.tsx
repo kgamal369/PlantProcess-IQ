@@ -40,7 +40,11 @@ export function ProductScreenshotShowcase() {
         </div>
         <div>
           <strong>Shown in data</strong>
-          <span>11,997 material units, 1,993 quality events, and 5,688 genealogy links unified from 6 live source systems.</span>
+          {/* T-254. The three figures are measured data and are unchanged. The clause
+              that followed them claimed a live connector count this static page cannot
+              know, so it now names the KINDS of source supported rather than asserting
+              how many are connected right now. */}
+          <span>11,997 material units, 1,993 quality events, and 5,688 genealogy links unified from database and file source systems.</span>
         </div>
         <div>
           <strong>Shown in message</strong>

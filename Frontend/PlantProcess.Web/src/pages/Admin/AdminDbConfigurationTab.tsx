@@ -94,17 +94,17 @@ const PROVIDER_ICON: Record<string, React.ElementType> = {
   OpcUaHistorian: RadioTower,
 };
 
-const PROVIDER_DETAIL: Record<string, string> = {
-  Csv: "Point at a folder of CSV exports. Each file is read into the staging layer, then mapped to the plant model. No agent is installed on your systems.",
-  Excel: "Reads Excel workbooks and named sheets into the staging layer, then maps them to the plant model. Useful for lab, QA and yard files kept in Excel.",
-  PostgreSql: "Read-only DB link to a PostgreSQL database. Browses schemas and tables, imports the delta each cycle using a watermark column, and never writes to the source.",
-  SqlServer: "Read-only DB link to Microsoft SQL Server. Browses schemas and tables, imports the delta each cycle using a watermark column, and never writes to the source.",
-  MySql: "Read-only DB link to MySQL. Browses schemas and tables, imports the delta each cycle using a watermark column, and never writes to the source.",
-  Oracle: "Read-only DB link to Oracle. Browses schemas and tables, imports the delta each cycle using a watermark column, and never writes to the source.",
-  Sap: "Planned: read-only access to SAP source systems. Not available yet - SAP data can be onboarded today via file or database snapshot.",
-  RestApi: "Planned: reads snapshots from REST endpoints into the staging layer.",
-  OpcUaHistorian: "Planned: read-only gateway for OPC-UA historians. Browses tags and points and takes bounded sample reads for mapping.",
-};
+// T-254. THE PROVIDER DESCRIPTION MAP THAT USED TO LIVE HERE IS GONE.
+//
+// It held nine descriptions keyed by provider, and three of them stated availability:
+// "Planned: ... Not available yet". That is a claim the browser has no standing to
+// make. The backend decides it, in ProviderAvailability, and the card already renders
+// pt.isAvailableNow beside pt.description - so the map was a SECOND truth that would
+// have kept saying "not available yet" the day the first one changed its mind.
+//
+// The icon map above survives on purpose: a glyph is presentation, it asserts no
+// capability, and it falls back to a generic database icon for a provider it has never
+// heard of. That is the difference between decorating truth and inventing it.
 export function DbConfigurationTab({
   data,
   onRefresh,
@@ -213,12 +213,11 @@ export function DbConfigurationTab({
         <div className="admin-provider-grid">
           {providerTypes.map((pt) => {
             const Icon = PROVIDER_ICON[pt.providerType] ?? Database;
-            const detail = PROVIDER_DETAIL[pt.providerType] ?? pt.description;
             return (
               <div
                 key={pt.providerType}
                 className={`admin-provider-card ${pt.isAvailableNow ? "available" : ""}`}
-                title={detail}
+                title={pt.description}
               >
                 <div className="admin-provider-card__head">
                   <span className="admin-provider-card__icon" aria-hidden="true">
