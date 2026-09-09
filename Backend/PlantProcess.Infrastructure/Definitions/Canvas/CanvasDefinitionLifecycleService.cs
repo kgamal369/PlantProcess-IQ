@@ -319,6 +319,70 @@ public sealed class CanvasDefinitionLifecycleService : ICanvasDefinitionLifecycl
         }
     }
 
+    // ------------------------------------------------------------- T-243 HISTORY
+
+    public async Task<ApplicationResult<IReadOnlyList<CanvasVersionSummary>>> ListVersionsAsync(
+        Guid tenantId,
+        string definitionCode,
+        CancellationToken cancellationToken)
+    {
+        if (tenantId == Guid.Empty)
+        {
+            return ApplicationResult<IReadOnlyList<CanvasVersionSummary>>.Failure(
+                ApplicationError.Validation("A tenant is required."));
+        }
+        if (string.IsNullOrWhiteSpace(definitionCode))
+        {
+            return ApplicationResult<IReadOnlyList<CanvasVersionSummary>>.Failure(
+                ApplicationError.Validation("A definition code is required."));
+        }
+
+        var found = await _writer.FindByCodeAsync(tenantId, definitionCode.Trim(), cancellationToken);
+        if (found.IsFailure)
+        {
+            return ApplicationResult<IReadOnlyList<CanvasVersionSummary>>.Failure(found.Error!);
+        }
+        if (found.Value is null)
+        {
+            return ApplicationResult<IReadOnlyList<CanvasVersionSummary>>.Failure(
+                ApplicationError.NotFound("No definition with code '" + definitionCode + "' exists for this tenant."));
+        }
+
+        var definitionId = found.Value.Value;
+        var current = await CurrentVersionNumberAsync(definitionId, cancellationToken);
+
+        var connection = (NpgsqlConnection)_db.Database.GetDbConnection();
+        if (connection.State != ConnectionState.Open) { await connection.OpenAsync(cancellationToken); }
+
+        // Tenant is in the predicate as well as the definition id. A definition id that
+        // resolved under this tenant cannot carry another tenant's versions, but the
+        // predicate says so rather than relying on that being true.
+        await using var command = new NpgsqlCommand(
+            "SELECT version_number, status, definition_hash, created_at_utc "
+            + "FROM ppiq_meta.definition_versions "
+            + "WHERE definition_id = @id AND tenant_id = @t AND is_deleted = false "
+            + "ORDER BY version_number DESC;", connection);
+        command.Parameters.Add(new NpgsqlParameter("id", NpgsqlDbType.Uuid) { Value = definitionId });
+        command.Parameters.Add(new NpgsqlParameter("t", NpgsqlDbType.Uuid) { Value = tenantId });
+
+        var versions = new List<CanvasVersionSummary>();
+        await using (var reader = await command.ExecuteReaderAsync(cancellationToken))
+        {
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                var number = reader.GetInt32(0);
+                versions.Add(new CanvasVersionSummary(
+                    number,
+                    reader.IsDBNull(1) ? "unknown" : reader.GetString(1),
+                    reader.IsDBNull(2) ? string.Empty : reader.GetString(2),
+                    reader.IsDBNull(3) ? DateTime.MinValue : reader.GetDateTime(3),
+                    number == current));
+            }
+        }
+
+        return ApplicationResult<IReadOnlyList<CanvasVersionSummary>>.Success(versions);
+    }
+
     // --------------------------------------------------------------- HELPERS
 
     private static string? ValidateIdentity(Guid tenantId, Guid ownerId, string definitionCode)

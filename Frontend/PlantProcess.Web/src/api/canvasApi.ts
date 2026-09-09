@@ -28,9 +28,26 @@ export type DerivedSpec = {
 // SELECT *; an EMPTY array means a Select block with nothing chosen, which the
 // server refuses by name rather than defaulting.
 export type SelectSpec = { table: string; column: string };
+// T-243. THE AUTHORED BOARD. Everything below is what a person arranged, as opposed
+// to what it compiled to. Positions are integers on purpose: the content is hashed, so
+// sub-pixel drift from a drag would otherwise read as a new decision.
+export type AuthoredNode = {
+  id: string; kind: string; position: { x: number; y: number };
+  data: Record<string, unknown>;
+};
+export type AuthoredEdge = {
+  source: string; target: string; sourceHandle: string | null; targetHandle: string | null;
+};
+export type AuthoredBoard = {
+  purpose: string; nodes: AuthoredNode[]; edges: AuthoredEdge[];
+};
+
 export type MapperGraph = {
   name: string; targetEntity: string; tables: string[]; joins: JoinSpec[];
   filters?: FilterSpec[]; derived?: DerivedSpec[]; selects?: SelectSpec[];
+  // Rides with the graph because the session draft is one blob. The server lifts it
+  // out at publish so the stored graph stays the clean execution shape.
+  board?: AuthoredBoard;
 };
 export type DryRunResult = {
   dryRunId: string; status: string; rowCount: number;
@@ -98,6 +115,9 @@ export type CanvasDefinitionResponse = {
   definitionId: string; versionId: string; definitionCode: string; versionNumber: number;
   status: string; definitionHash: string; representation: "graph" | "sql";
   graph?: MapperGraph | null; sql?: string | null; forkedFromGraph?: MapperGraph | null;
+  // Null for a version saved before boards were persisted. Such a version reopens as
+  // the query it always was; the surface says so instead of inventing a layout.
+  board?: AuthoredBoard | null;
   // T-253. Null for a legacy SQL definition, which genuinely declared none. The surface
   // that reopens one must ask rather than fill it in. T-243 owns that reopen surface.
   outputTarget?: string | null;
@@ -107,3 +127,13 @@ export const reopenDefinition = (code: string, version?: number) =>
     version === undefined
       ? `/api/prep/definitions/${encodeURIComponent(code)}`
       : `/api/prep/definitions/${encodeURIComponent(code)}/versions/${version}`);
+
+// T-243. The versions that exist, newest first. Reopen already took a number; nothing
+// said which numbers were real, so history could be requested but not offered.
+export type CanvasVersionSummary = {
+  versionNumber: number; status: string; definitionHash: string;
+  createdAtUtc: string; isCurrent: boolean;
+};
+export const listDefinitionVersions = (code: string) =>
+  apiClient.get<{ definitionCode: string; versions: CanvasVersionSummary[] }>(
+    `/api/prep/definitions/${encodeURIComponent(code)}/versions`);

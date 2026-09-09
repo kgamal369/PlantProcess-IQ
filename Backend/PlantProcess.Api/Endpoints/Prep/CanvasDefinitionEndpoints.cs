@@ -31,6 +31,7 @@ public static class CanvasDefinitionEndpoints
             .RequireAuthorization();
 
         group.MapGet("/{code}", ReopenAsync);
+        group.MapGet("/{code}/versions", ListVersionsAsync);
         group.MapGet("/{code}/versions/{version:int}", ReopenVersionAsync);
 
         return app;
@@ -51,7 +52,10 @@ public static class CanvasDefinitionEndpoints
         JsonElement? Graph,
         string? Sql,
         JsonElement? ForkedFromGraph,
-        string? OutputTarget);
+        string? OutputTarget,
+        // T-243. Null for a version saved before boards were persisted. The surface
+        // states that rather than fabricating a layout for it.
+        JsonElement? Board);
 
     public static CanvasDefinitionResponse ToResponse(CanvasDefinitionVersion version)
     {
@@ -67,7 +71,32 @@ public static class CanvasDefinitionEndpoints
             ParseOrNull(representation.GraphJson),
             representation.Sql,
             ParseOrNull(representation.ForkedFromGraphJson),
-            representation.OutputTarget);
+            representation.OutputTarget,
+            ParseOrNull(representation.BoardJson));
+    }
+
+    /// <summary>
+    /// T-243. Read-only history. It answers which versions exist so a person can choose
+    /// one; choosing is the whole of rollback under the canonical lifecycle, which
+    /// republishes an existing governed version and never rewrites an old one.
+    /// </summary>
+    private static async Task<IResult> ListVersionsAsync(
+        string code,
+        ClaimsPrincipal user,
+        [FromServices] ICanonicalIdentityResolver identity,
+        [FromServices] ICanvasDefinitionLifecycle lifecycle,
+        CancellationToken cancellationToken)
+    {
+        var tenantId = await ResolveTenantAsync(user, identity, cancellationToken);
+        if (tenantId is null)
+        {
+            return Results.Forbid();
+        }
+
+        var listed = await lifecycle.ListVersionsAsync(tenantId.Value, code, cancellationToken);
+        return listed.IsFailure
+            ? Refusal(listed.Error!)
+            : Results.Ok(new { definitionCode = code, versions = listed.Value });
     }
 
     private static Task<IResult> ReopenAsync(

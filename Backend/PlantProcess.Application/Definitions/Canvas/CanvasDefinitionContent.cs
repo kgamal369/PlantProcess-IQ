@@ -46,6 +46,27 @@ public static class CanvasDefinitionContent
     /// </summary>
     public const string GraphTargetEntity = "targetEntity";
 
+    /// <summary>
+    /// T-243. THE AUTHORED BOARD, BESIDE THE COMPILED GRAPH.
+    ///
+    /// Until now a saved definition kept only what it COMPILED TO: tables, joins,
+    /// filters, derived columns, a projection. That is enough to run and nowhere near
+    /// enough to reopen. The blocks a person dragged out, where they put them, how they
+    /// wired them and which purpose they were authoring under all existed in the browser
+    /// and nowhere else, so closing the tab destroyed the document and left the query.
+    ///
+    /// The board therefore travels at the ROOT of the content, as a sibling of graph
+    /// rather than a field inside it. The graph stays exactly what the execution path
+    /// consumes; the board is what a person edits. One definition, two faces, one store.
+    ///
+    /// IT IS HASHED, like everything else here, and that has a consequence worth stating
+    /// rather than discovering: moving a block and saving produces a NEW IMMUTABLE
+    /// VERSION. Position is part of what was authored, the writer hashes the whole
+    /// content, and there is no unhashed sibling to hide layout in. Saving an untouched
+    /// board still reuses its version, because the bytes are identical.
+    /// </summary>
+    public const string RootBoard = "board";
+
     private static readonly JsonSerializerOptions Compact = new()
     {
         WriteIndented = false,
@@ -71,6 +92,17 @@ public static class CanvasDefinitionContent
         var declared = TrimmedOrNull(graph[GraphTargetEntity]);
         var target = outputTarget.Trim();
 
+        // T-243. The browser sends the board INSIDE the graph payload, because that is
+        // the one blob the existing session draft carries and this task introduces no
+        // second transport. It is lifted out here so the stored graph stays the clean
+        // execution shape the SQL generator reads, and the board stands on its own.
+        JsonNode? board = null;
+        if (graph[RootBoard] is JsonNode authored)
+        {
+            board = authored.DeepClone();
+            graph.Remove(RootBoard);
+        }
+
         if (declared is not null && !string.Equals(declared, target, StringComparison.Ordinal))
         {
             throw new ArgumentException(
@@ -85,6 +117,11 @@ public static class CanvasDefinitionContent
             [RootOutputTarget] = target,
             ["representation"] = RepresentationGraph,
         };
+
+        if (board is not null)
+        {
+            root[RootBoard] = Canonicalise(board);
+        }
 
         return Serialise(root);
     }
@@ -140,12 +177,16 @@ public static class CanvasDefinitionContent
             // does carry graph.targetEntity, which the author chose. Reading it back is
             // recovery of a stated fact, not fabrication, and the old version is never
             // rewritten - re-saving produces a new immutable version, which is correct.
+            // T-243. BoardJson is null for every version saved before this task. That is
+            // not a defect and it is not repaired by inventing a layout: such a version
+            // reopens as the query it always was, and the surface says so.
             RepresentationGraph => new CanvasDefinitionRepresentation(
                 RepresentationGraph,
                 GraphJson: root["graph"]?.ToJsonString(Compact),
                 Sql: null,
                 ForkedFromGraphJson: null,
-                OutputTarget: storedTarget ?? TrimmedOrNull(root["graph"]?[GraphTargetEntity])),
+                OutputTarget: storedTarget ?? TrimmedOrNull(root["graph"]?[GraphTargetEntity]),
+                BoardJson: root[RootBoard]?.ToJsonString(Compact)),
 
             // T-253 LEGACY SQL. There is nothing authored to recover: the old target was
             // a projection handle, and a handle is not identity. It reopens as null and
@@ -156,7 +197,8 @@ public static class CanvasDefinitionContent
                 GraphJson: null,
                 Sql: root["sql"]?.GetValue<string>(),
                 ForkedFromGraphJson: root["forkedFromGraph"]?.ToJsonString(Compact),
-                OutputTarget: storedTarget),
+                OutputTarget: storedTarget,
+                BoardJson: null),
 
             _ => throw new InvalidOperationException(
                 "Canonical content carries no recognised representation. It cannot be reopened as a Canvas definition."),
@@ -280,4 +322,5 @@ public sealed record CanvasDefinitionRepresentation(
     string? GraphJson,
     string? Sql,
     string? ForkedFromGraphJson,
-    string? OutputTarget);
+    string? OutputTarget,
+    string? BoardJson = null);

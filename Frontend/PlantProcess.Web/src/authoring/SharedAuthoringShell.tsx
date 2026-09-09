@@ -32,10 +32,12 @@ import { CanvasShell } from "@/canvas/CanvasShell";
 import { DatasetNode, type DatasetNodeData } from "@/canvas/nodes/DatasetNode";
 import {
   listStagedDatasets, createSession, saveGraph, runDryRun, publishVersion, listOutputTargets,
+  reopenDefinition, listDefinitionVersions,
   // Both go through public.ppiq_resolve_safe_sql on the server before anything
   // runs or is stored. There is no client path that skips it.
   runAuthoredSql, saveSqlVersion,
   type StagedDataset, type DryRunResult, type MapperGraph, type RunSqlResult,
+  type AuthoredBoard, type CanvasVersionSummary,
 } from "@/api/canvasApi";
 import { CanvasDebugLog, useDebugLog } from "@/pages/Prep/CanvasDebugLog";
 import { AUTHORING_NODE_TYPES } from "./BlockNodes";
@@ -211,6 +213,101 @@ export function SharedAuthoringShell({
   const outputTargetRefusal = outputTarget
     ? null
     : "This definition has no governed output target. Choose one before saving or publishing.";
+
+  // T-243. THE AUTHORED BOARD, AS A DOCUMENT.
+  //
+  // serialisationOutcome compiles the board to a query. That is what RUNS, and it is
+  // the wrong thing to keep if the point is to open this again tomorrow: it has no
+  // blocks, no positions, no wiring and no purpose. This is the other half - what was
+  // authored rather than what it compiled to - and it is what reopen restores.
+  //
+  // Positions are rounded because the content is hashed. A drag that ends half a pixel
+  // from where it started is not a decision, and rounding is what stops it looking like
+  // one.
+  const boardPayload = useMemo((): AuthoredBoard => ({
+    purpose,
+    nodes: nodes.map((n) => ({
+      id: n.id,
+      kind: (n.type ?? "dataset"),
+      position: { x: Math.round(n.position.x), y: Math.round(n.position.y) },
+      data: (n.data ?? {}) as Record<string, unknown>,
+    })),
+    edges: edges.map((e) => ({
+      source: e.source,
+      target: e.target,
+      sourceHandle: e.sourceHandle ?? null,
+      targetHandle: e.targetHandle ?? null,
+    })),
+  }), [purpose, nodes, edges]);
+
+  // The canonical handle this definition is stored under. It is learned from the
+  // server at publish; the browser never invents one, because a code it made up would
+  // not resolve for anyone else.
+  const [definitionCode, setDefinitionCode] = useState<string | null>(null);
+  const [versions, setVersions] = useState<CanvasVersionSummary[]>([]);
+  const [openVersion, setOpenVersion] = useState<number | null>(null);
+
+  const refreshVersions = useCallback(async (code: string) => {
+    try {
+      const r = await listDefinitionVersions(code);
+      setVersions(r.versions ?? []);
+    } catch (e) {
+      logError(name, "The version history did not answer. " + describeThrownAction(e));
+    }
+  }, [name, logError]);
+
+  // T-243. REOPEN. The board is rebuilt from what the server returned and from nothing
+  // else - no local cache, no browser copy, no reconstruction from the compiled query.
+  // A version stored before boards were persisted has none, and that is reported as the
+  // fact it is rather than approximated into blocks nobody authored.
+  const doReopen = useCallback(async (code: string, version: number) => {
+    try {
+      const r = await reopenDefinition(code, version);
+
+      if (r.representation !== "graph") {
+        logWarning(name,
+          "Version " + version + " was authored as SQL, so there is no board to restore."
+          + " Its statement is the definition.");
+        setOpenVersion(version);
+        return;
+      }
+
+      if (!r.board) {
+        logWarning(name,
+          "Version " + version + " was saved before boards were kept, so it carries a query"
+          + " and no blocks. Nothing was reconstructed, because a board nobody authored"
+          + " would be a guess.");
+        setOpenVersion(version);
+        return;
+      }
+
+      setNodes(r.board.nodes.map((n) => ({
+        id: n.id,
+        type: n.kind,
+        position: { x: n.position.x, y: n.position.y },
+        data: n.data,
+      })) as Node[]);
+
+      setEdges(r.board.edges.map((e, i) => ({
+        id: "reopened-" + i,
+        source: e.source,
+        target: e.target,
+        sourceHandle: e.sourceHandle ?? undefined,
+        targetHandle: e.targetHandle ?? undefined,
+      })) as Edge[]);
+
+      if (r.graph?.name) { setName(r.graph.name); }
+      if (r.outputTarget) { setOutputTarget(r.outputTarget); }
+      setOpenVersion(version);
+
+      logSuccess(name,
+        "Reopened version " + version + ".",
+        r.board.nodes.length + " block(s), " + r.board.edges.length + " connection(s), target "
+        + (r.outputTarget ?? "none") + ", hash " + r.definitionHash);
+    } catch (e) {
+      logError(name, describeThrownAction(e));
+    }
+  }, [name, setNodes, setEdges, logError, logSuccess, logWarning]);
 
   // Section 5.2.4: two groups on S1 ONLY. S2 to S5 read the canonical model,
   // and the staged catalogue is deliberately NOT fetched for them - showing an
@@ -539,10 +636,22 @@ export function SharedAuthoringShell({
         return;
       }
       const sid = await ensureSession();
-      await saveGraph(sid, graph);
+      // T-243. The board travels with the graph. Without this line a published version
+      // keeps only what it compiled to, which is exactly the state this task exists to
+      // end: a document that runs and cannot be opened.
+      await saveGraph(sid, { ...graph, board: boardPayload });
       const v = await publishVersion(sid);
       logSuccess(name, "Published version " + v.versionNumber + ".",
         "immutable, with a rollback pointer");
+
+      // The canonical code comes from the server. From here the definition has a
+      // history a person can open, which is the difference between a saved file and a
+      // published document.
+      if (v.definitionCode) {
+        setDefinitionCode(v.definitionCode);
+        setOpenVersion(v.versionNumber);
+        await refreshVersions(v.definitionCode);
+      }
     } catch (e) { logError(name, describeThrownAction(e)); }
   };
 
@@ -885,6 +994,29 @@ export function SharedAuthoringShell({
             <option key={t} value={t}>{t}</option>
           ))}
         </StandardP2Select>
+
+        {/* T-243. History, and only once there IS one. An empty picker on an unsaved
+            definition would be a control that promises something it cannot do. */}
+        {definitionCode && versions.length > 0 && (
+          <StandardP2Select
+            className="canvas-modebar__version"
+            data-testid="authoring-version-picker"
+            value={openVersion === null ? "" : String(openVersion)}
+            onChange={(e) => {
+              const chosen = Number(e.target.value);
+              if (Number.isFinite(chosen) && chosen > 0) { void doReopen(definitionCode, chosen); }
+            }}
+            aria-label="Version history"
+            title={"Reopening a version restores what was authored. It never rewrites it."}
+          >
+            <option value="">Version history</option>
+            {versions.map((v) => (
+              <option key={v.versionNumber} value={v.versionNumber}>
+                {"v" + v.versionNumber + (v.isCurrent ? " (current)" : "") + " - " + v.status}
+              </option>
+            ))}
+          </StandardP2Select>
+        )}
 
         {isQueryPurpose && (
           <>

@@ -62,7 +62,32 @@ public interface ICanvasDefinitionLifecycle
         string definitionCode,
         int? versionNumber,
         CancellationToken cancellationToken);
+
+    /// <summary>
+    /// T-243. The versions a definition actually has, newest first.
+    ///
+    /// Reopen already accepts a version number; nothing told the browser WHICH numbers
+    /// exist, so history could be asked for but not offered. This is that list and
+    /// nothing more: it reads, it creates no version registry, and it is the same
+    /// canonical store every other call here uses.
+    /// </summary>
+    Task<ApplicationResult<IReadOnlyList<CanvasVersionSummary>>> ListVersionsAsync(
+        Guid tenantId,
+        string definitionCode,
+        CancellationToken cancellationToken);
 }
+
+/// <summary>
+/// T-243. What a version IS, for the purpose of choosing one. The hash is included
+/// because it is how immutability is proven: an old version that reopens with the hash
+/// it was written with has not been rewritten.
+/// </summary>
+public sealed record CanvasVersionSummary(
+    int VersionNumber,
+    string Status,
+    string DefinitionHash,
+    DateTime CreatedAtUtc,
+    bool IsCurrent);
 
 /// <summary>
 /// T-253. OutputTarget is the governed canonical entity name this definition writes to.

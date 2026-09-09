@@ -15,6 +15,14 @@ vi.mock("@/canvas/CanvasShell", () => ({
 }));
 
 vi.mock("@/api/canvasApi", () => ({
+  // T-243. The shell can now reopen a version and list history. A mock without these
+  // fails at render for a reason that has nothing to do with what the test asserts.
+  listDefinitionVersions: () => Promise.resolve({ definitionCode: "d", versions: [] }),
+  reopenDefinition: () => Promise.resolve({
+    definitionId: "d", versionId: "v", definitionCode: "d", versionNumber: 1,
+    status: "published", definitionHash: "h", representation: "graph",
+    graph: null, sql: null, forkedFromGraph: null, outputTarget: null, board: null,
+  }),
   listOutputTargets: () => Promise.resolve({ source: "test", targets: ["ProcessEvent", "QualityEvent"] }),
   listStagedDatasets: () => Promise.resolve([]),
   createSession: () => Promise.resolve({ sessionId: "s" }),

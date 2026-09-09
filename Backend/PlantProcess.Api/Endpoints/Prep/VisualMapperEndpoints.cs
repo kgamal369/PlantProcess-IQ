@@ -34,9 +34,16 @@ public static class VisualMapperEndpoints
 
     // Filters, Derived and Selects default to null so every earlier graph
     // deserialises unchanged and compiles to byte-identical SQL.
+    // T-243. Board is the AUTHORED representation - blocks, positions, wiring, purpose.
+    // It rides on this record because the session draft is one jsonb blob and this task
+    // introduces no second transport; the endpoint that binds this record re-serialises
+    // it, so a property it does not declare would be silently dropped. Nothing in the
+    // SQL generator reads it. CanvasDefinitionContent lifts it to the content root at
+    // publish, which is where it becomes canonical.
     public record MapperGraph(string Name, string TargetEntity, string[] Tables, JoinSpec[] Joins,
                               FilterSpec[]? Filters = null, DerivedSpec[]? Derived = null,
-                              SelectSpec[]? Selects = null);
+                              SelectSpec[]? Selects = null,
+                              System.Text.Json.Nodes.JsonNode? Board = null);
 
     public static IEndpointRouteBuilder MapVisualMapperEndpoints(this IEndpointRouteBuilder app)
     {
