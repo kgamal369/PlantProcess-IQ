@@ -1,16 +1,14 @@
 // PPIQ physical catalogue governance.
 //
 // The catalogue is only worth trusting if it cannot drift from the database it
-// claims to describe. So this test does not read the catalogue and believe it:
-// it re-queries pg_catalog and cross-checks. A catalogue generated last week
-// against a database that has moved since fails here, which is the entire point.
+// claims to describe, so these tests do not read the catalogue and believe it:
+// they re-query pg_catalog and cross-check. A catalogue generated against a
+// database that has moved since fails here, which is the point.
 //
-// It also reads the SAME authority files the generator reads, so the test and
-// the generator cannot disagree about what "classified" means.
-//
-// Skips unless PPIQ_ACCEPTANCE_EMPTY_CONNECTION is set, following the pattern
-// already established by Rule2EmptyStartTests in this project: a bare laptop
-// without the acceptance database does not fail the suite, and CI sets it.
+// PPIQ_CATALOGUE_DATABASE selects which generated catalogue to check, so the
+// same tests run against a candidate before promotion and against the promoted
+// database afterwards. PPIQ_ACCEPTANCE_EMPTY_CONNECTION supplies the
+// connection for the live cross-check.
 using FluentAssertions;
 using Npgsql;
 using Xunit;
@@ -20,7 +18,12 @@ namespace PlantProcess.Api.IntegrationTests.Acceptance;
 public sealed class PhysicalCatalogueGovernanceTests
 {
     private const string ConnectionVariable = "PPIQ_ACCEPTANCE_EMPTY_CONNECTION";
-    private const string DatabaseName = "ppiq_acceptance_empty";
+    private const string DatabaseVariable = "PPIQ_CATALOGUE_DATABASE";
+
+    private static string CatalogueName() =>
+        Environment.GetEnvironmentVariable(DatabaseVariable) is { Length: > 0 } name
+            ? name
+            : "ppiq_acceptance_empty";
 
     private static string RepoRoot()
     {
@@ -40,9 +43,12 @@ public sealed class PhysicalCatalogueGovernanceTests
 
     private static string CatalogueDir() => Path.Combine(RepoRoot(), "Backend", "database", "catalogue");
 
+    private static string TablesCsv() =>
+        Path.Combine(CatalogueDir(), "generated", CatalogueName() + ".tables.csv");
+
     private static IReadOnlyList<string[]> ReadCsv(string path)
     {
-        File.Exists(path).Should().BeTrue($"the generated catalogue must exist at {path}. Run tools/db/New-PhysicalDatabaseCatalogue.ps1.");
+        File.Exists(path).Should().BeTrue($"the generated catalogue must exist at {path}");
 
         var rows = new List<string[]>();
         var lines = File.ReadAllLines(path);
@@ -82,8 +88,14 @@ public sealed class PhysicalCatalogueGovernanceTests
         return cells.ToArray();
     }
 
-    private static async Task<HashSet<string>> LiveObjectsAsync(string connectionString)
+    [SkippableFact]
+    public async Task Catalogue_matches_the_live_database_exactly()
     {
+        var connectionString = Environment.GetEnvironmentVariable(ConnectionVariable);
+        Skip.If(
+            string.IsNullOrWhiteSpace(connectionString),
+            $"{ConnectionVariable} is not set. The catalogue runner sets it; a bare laptop without the database does not fail the suite.");
+
         const string Sql = @"
 SELECT n.nspname || '.' || c.relname
 FROM pg_class c
@@ -94,51 +106,29 @@ WHERE c.relkind IN ('r','p','v','m','S')
   AND n.nspname NOT LIKE 'pg_toast%';";
 
         var live = new HashSet<string>(StringComparer.Ordinal);
-        await using var connection = new NpgsqlConnection(connectionString);
-        await connection.OpenAsync();
-        await using var command = new NpgsqlCommand(Sql, connection);
-        await using var reader = await command.ExecuteReaderAsync();
-        while (await reader.ReadAsync())
+        await using (var connection = new NpgsqlConnection(connectionString!))
         {
-            live.Add(reader.GetString(0));
+            await connection.OpenAsync();
+            await using var command = new NpgsqlCommand(Sql, connection);
+            await using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync()) { live.Add(reader.GetString(0)); }
         }
 
-        return live;
-    }
-
-    [SkippableFact]
-    public async Task Catalogue_covers_every_live_object_and_nothing_it_invented()
-    {
-        var connectionString = Environment.GetEnvironmentVariable(ConnectionVariable);
-        Skip.If(
-            string.IsNullOrWhiteSpace(connectionString),
-            $"{ConnectionVariable} is not set. Build the acceptance database with " +
-            "scripts/db/New-AcceptanceEmptyDb.ps1 -Execute and set the variable to run this locally.");
-
-        var rows = ReadCsv(Path.Combine(CatalogueDir(), "generated", $"{DatabaseName}.tables.csv"));
+        var rows = ReadCsv(TablesCsv());
         rows.Should().NotBeEmpty("an empty catalogue would make this test meaningless");
-
         var catalogued = new HashSet<string>(rows.Select(r => $"{r[0]}.{r[1]}"), StringComparer.Ordinal);
-        var live = await LiveObjectsAsync(connectionString!);
 
         var missing = live.Except(catalogued, StringComparer.Ordinal).OrderBy(x => x, StringComparer.Ordinal).ToList();
         var invented = catalogued.Except(live, StringComparer.Ordinal).OrderBy(x => x, StringComparer.Ordinal).ToList();
 
-        missing.Should().BeEmpty(
-            "every object in the database must appear in the catalogue. A missing object means the " +
-            "catalogue is stale or the generator filtered something it should not have. Regenerate with " +
-            "tools/db/New-PhysicalDatabaseCatalogue.ps1.");
-
-        invented.Should().BeEmpty(
-            "the catalogue must not name objects the database does not have. This means the catalogue " +
-            "was generated against a different database or an object was dropped after generation.");
+        missing.Should().BeEmpty("every object in the database must appear in the catalogue; a missing one means the catalogue is stale");
+        invented.Should().BeEmpty("the catalogue must not name objects the database does not have");
     }
 
     [Fact]
-    public void Every_catalogued_object_carries_family_lifecycle_and_owner()
+    public void Every_object_carries_family_lifecycle_owner_and_a_resolved_creator()
     {
-        var path = Path.Combine(CatalogueDir(), "generated", $"{DatabaseName}.tables.csv");
-        var rows = ReadCsv(path);
+        var rows = ReadCsv(TablesCsv());
         rows.Should().NotBeEmpty();
 
         var unclassified = rows
@@ -148,84 +138,74 @@ WHERE c.relkind IN ('r','p','v','m','S')
             .ToList();
 
         unclassified.Should().BeEmpty(
-            "zero-unknown is the whole contract of the physical catalogue. Each object listed here needs " +
-            "one adjudicated row in Backend/database/catalogue/physical-object-classification.tsv, or a " +
-            "reviewed pattern in classification-rules.tsv. Do not add a catch-all rule to clear this list.");
+            "zero-unknown is the contract of the physical catalogue. Classification derives from the governed " +
+            "schema and the measured creator; an object here means neither resolved it.");
+
+        var unresolved = rows
+            .Where(r => r[7] == "UNRESOLVED")
+            .Select(r => $"{r[0]}.{r[1]}")
+            .OrderBy(x => x, StringComparer.Ordinal)
+            .ToList();
+
+        unresolved.Should().BeEmpty(
+            "an object whose creating script cannot be identified is ungoverned by definition. Trace it to a " +
+            "migration, a canonical script or an offPath script before this can be green.");
     }
 
     [Fact]
-    public void Public_schema_holds_only_allowlisted_platform_objects()
+    public void Public_holds_only_platform_or_explicitly_bounded_compatibility()
     {
-        var path = Path.Combine(CatalogueDir(), "generated", $"{DatabaseName}.tables.csv");
-        var offenders = ReadCsv(path)
+        var offenders = ReadCsv(TablesCsv())
             .Where(r => r[0] == "public")
-            .Where(r => r[15] != "public-allowlist" && r[15] != "explicit")
+            .Where(r => r[16] != "platform-allowlist" && r[16] != "explicit" && r[16] != "creator-authority")
             .Select(r => $"{r[0]}.{r[1]}")
             .OrderBy(x => x, StringComparer.Ordinal)
             .ToList();
 
         offenders.Should().BeEmpty(
-            "product persistence belongs in ppiq_meta, ppiq_plant or ppiq_staging. A public object is " +
-            "either platform infrastructure listed in public-platform-allowlist.tsv, or an explicitly " +
-            "adjudicated bounded compatibility object. Anything else is a product object out of place.");
+            "a public object is either platform infrastructure on the allowlist, or bounded compatibility with a " +
+            "measured creator and a retirement owner. Nothing may sit there unaccounted for.");
     }
 
     [Fact]
-    public void Every_bounded_compatibility_object_names_a_retirement_owner()
+    public void Every_compatibility_object_names_a_retirement_owner()
     {
-        var path = Path.Combine(CatalogueDir(), "generated", $"{DatabaseName}.tables.csv");
-        var unbounded = ReadCsv(path)
+        var unbounded = ReadCsv(TablesCsv())
             .Where(r => r[4] == "compatibility")
-            .Where(r => !r[14].StartsWith("bounded:", StringComparison.Ordinal) || r[14] == "bounded:unstated")
+            .Where(r => !r[15].StartsWith("bounded:", StringComparison.Ordinal))
             .Select(r => $"{r[0]}.{r[1]}")
             .OrderBy(x => x, StringComparer.Ordinal)
             .ToList();
 
         unbounded.Should().BeEmpty(
-            "a compatibility object with no named retirement owner is a permanent object wearing a " +
-            "temporary label. Set compatibility_state to bounded:<owner or task> in " +
-            "physical-object-classification.tsv.");
+            "a compatibility object with no named retirement owner is a permanent object wearing a temporary label");
     }
 
     [Fact]
-    public void Authority_files_are_present_and_parse()
+    public void Classification_rules_are_schema_scoped_and_carry_no_catch_all()
     {
-        foreach (var name in new[]
-                 {
-                     "physical-object-classification.tsv",
-                     "classification-rules.tsv",
-                     "public-platform-allowlist.tsv"
-                 })
+        foreach (var name in new[] { "physical-object-classification.tsv", "classification-rules.tsv", "public-platform-allowlist.tsv" })
         {
-            var path = Path.Combine(CatalogueDir(), name);
-            File.Exists(path).Should().BeTrue($"{name} is a catalogue authority file and must exist");
+            File.Exists(Path.Combine(CatalogueDir(), name)).Should().BeTrue($"{name} is a catalogue authority file");
         }
 
         var rules = File.ReadAllLines(Path.Combine(CatalogueDir(), "classification-rules.tsv"))
             .Where(l => l.Trim().Length > 0 && !l.TrimStart().StartsWith("#", StringComparison.Ordinal))
             .ToList();
 
-        rules.Should().NotBeEmpty("an empty rule file would push every object into the manual queue silently");
+        rules.Should().NotBeEmpty("an empty rule file would push every governed object into the manual queue");
 
-        // Deliberately not FluentAssertions' OnlyContain/NotContain here. Those take an
-        // Expression<Func<T,bool>>, and an expression tree may not contain a call that
-        // uses optional arguments - which string.Split(char, StringSplitOptions = None)
-        // does. Materialising the offenders keeps the failure message better anyway: it
-        // names the bad lines instead of asserting that some line is bad.
         var malformed = rules
-            .Where(l => l.Split(new[] { '\t' }, StringSplitOptions.None).Length < 7)
+            .Where(l => l.Split(new[] { '\t' }, StringSplitOptions.None).Length < 5)
             .OrderBy(l => l, StringComparer.Ordinal)
             .ToList();
 
-        malformed.Should().BeEmpty(
-            "every rule needs schema, pattern, kind, family, lifecycle, owner and retention, " +
-            "tab-separated. A short line silently classifies nothing.");
+        malformed.Should().BeEmpty("every rule needs schema, family, lifecycle, owner and retention, tab-separated");
 
-        var catchAll = rules
-            .Where(l => l.StartsWith("*\t*\t*\t", StringComparison.Ordinal))
+        var wildcard = rules
+            .Where(l => l.StartsWith("*", StringComparison.Ordinal))
             .ToList();
 
-        catchAll.Should().BeEmpty(
-            "a catch-all rule would make the zero-unknown gate green and meaningless");
+        wildcard.Should().BeEmpty("a catch-all rule would make the zero-unknown gate green and meaningless");
     }
 }

@@ -1,8 +1,8 @@
 {
     "artifact":  "canonical-migration-order",
     "purpose":  "The single ordered path that builds a database from zero. A script outside this path is never replayed as part of a build.",
-    "generatedAtUtc":  "2026-08-28T08:32:38Z",
-    "baselineCommit":  "babb47a82460c751f9de05432e4817d0c0691079",
+    "generatedAtUtc":  "2026-09-09T21:20:11Z",
+    "baselineCommit":  "f8a35725c9b0d7fb5a0515c0103a72807a704a97",
     "dispositions":  [
                          "Canonical",
                          "HistoricalRepair",
@@ -25,8 +25,8 @@
                   "Product tables live in ppiq_meta, ppiq_plant or ppiq_staging. A single terminal convergence file relocates them after every historical creator has run; no migration and no historical script moves a table."
               ],
     "summary":  {
-                    "totalFiles":  148,
-                    "canonicalPath":  102,
+                    "totalFiles":  154,
+                    "canonicalPath":  105,
                     "distinctTables":  173,
                     "governedDuplicates":  7,
                     "ungovernedDuplicates":  0,
@@ -35,7 +35,7 @@
                     "canonicalViews":  1,
                     "declaredViews":  4,
                     "declaredViewsMissing":  0,
-                    "freshBuildTables":  208
+                    "freshBuildTables":  232
                 },
     "storageTopology":  {
                             "note":  "Physical placement of product tables. The model half is StorageTopologyMap; the physical half is the terminal convergence file. Both are generated from one frozen assignment.",
@@ -90,7 +90,7 @@
     "canonicalViews":  [
                            {
                                "path":  "Backend/database/views/006_dashboard_dataset_views.sql",
-                               "order":  103,
+                               "order":  105,
                                "sha256":  "729D127FA772E1E100A8AD1A6CEAF6B2BABBA5A3FED9991EB8EB62960D3D6865",
                                "note":  "Read-model view authority. Applied after every schema script and after topology convergence, before the probe database is dropped."
                            }
@@ -1257,6 +1257,30 @@
                           },
                           {
                               "position":  103,
+                              "ordinal":  837,
+                              "path":  "Backend/database/scripts/837_forensics_audit_sequence_default_repair.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "EADD29B543F782250C4125540FFB0F52F663E81EF5EF281F32BAEA27FBA06069",
+                              "createsTables":  [
+
+                                                ],
+                              "reason":  "Repairs the broken forensic audit default contract before the first canonical post-forensics DROP operation in 836. Restores the owned sequence and nextval default that the 750 live-catalog capture lost. 750 is unchanged historical authority."
+                          },
+                          {
+                              "position":  104,
+                              "ordinal":  836,
+                              "path":  "Backend/database/scripts/836_plant_relationship_canonical_authority.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "3FE6495BD8AF4DFD282868D446B671B7A2EBEFA55062F8F8394588C74EEAD5BE",
+                              "createsTables":  [
+                                                    "ppiq_meta.plant_relationships",
+                                                    "ppiq_meta.plant_relationship_members",
+                                                    "ppiq_meta.plant_relationship_paths"
+                                                ],
+                              "reason":  "Canonical plant relationship authority in ppiq_meta. Requires definition_store and the governed schemas produced by topology convergence, and retires script 827\u0027s public compatibility relationship tables."
+                          },
+                          {
+                              "position":  105,
                               "ordinal":  6,
                               "path":  "Backend/database/views/006_dashboard_dataset_views.sql",
                               "disposition":  "Canonical",

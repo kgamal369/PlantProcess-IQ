@@ -1,21 +1,21 @@
 # PPIQ EXPLICIT PHYSICAL OBJECT CLASSIFICATION
 #
-# One line per object that a human has adjudicated. An explicit line beats every
-# pattern rule in classification-rules.tsv. This is the file that turns the
-# census red into governed green, and every line in it is a decision somebody
-# made on purpose.
+# One line per object deliberately adjudicated from measured historical evidence.
+# An explicit line beats schema rules and may also supply provenance when the
+# creating SQL was dynamic or has been retired from the current repository path.
 #
-# FORMAT: schema<TAB>object<TAB>logical_family<TAB>lifecycle<TAB>owner<TAB>purpose<TAB>retention<TAB>compatibility_state
-#   lifecycle           : current | compatibility | retiring | platform
+# FORMAT: schema<TAB>object<TAB>logical_family<TAB>lifecycle<TAB>owner<TAB>purpose<TAB>retention<TAB>compatibility_state<TAB>creator_authority<TAB>creator_disposition
+#   lifecycle           : current | compatibility | platform | retiring
 #   retention           : permanent | operational | transient | evidence
-#   compatibility_state : none | bounded:<retirement owner or task> | retired
-#
-# Purpose is prose and may contain spaces; it must not contain a tab.
-#
-# The generator prints an UNCLASSIFIED list after every run. That list is the
-# work queue for this file. Do not classify from the object name alone - read the
-# creator script the census names in the creator_authority column, because the
-# script that made an object is the best available statement of why it exists.
-#
-# ---- adjudications ----
-# (empty on first install - the first census tells you exactly what belongs here)
+#   compatibility_state : none | bounded:<owner or task> | retired
+ppiq_meta	ppiq_bk_norm_rules	historical business-key normalization residue	retiring	T-256	Pre-canonical non-canonical table; T-087 classifies it as retiredScriptResidue and the repository census proves no canonical creator.	transient	bounded:T-256	historical:T-087-retired-script-residue	RetiredScriptResidue
+ppiq_staging	src_caster_oracle_shape_cast_pieces	historical demo staging residue	retiring	T-256	Dynamic dump-copy created by the legacy two-stage import from the 110 FixtureOnly Caster source shape; current canonical build does not replay it.	transient	bounded:T-256	Backend/database/scripts/130_phase03_two_stage_delta_import_architecture.sql	DeferredWithReason
+ppiq_staging	src_caster_oracle_shape_cast_sequence	historical demo staging residue	retiring	T-256	Dynamic dump-copy created by the legacy two-stage import from the 110 FixtureOnly Caster source shape; current canonical build does not replay it.	transient	bounded:T-256	Backend/database/scripts/130_phase03_two_stage_delta_import_architecture.sql	DeferredWithReason
+ppiq_staging	src_hsm_oracle_shape_hsm_coils	historical demo staging residue	retiring	T-256	Dynamic dump-copy created by the legacy two-stage import from the 110 FixtureOnly HSM source shape; current canonical build does not replay it.	transient	bounded:T-256	Backend/database/scripts/130_phase03_two_stage_delta_import_architecture.sql	DeferredWithReason
+ppiq_staging	src_hsm_oracle_shape_hsm_pass_measurements	historical demo staging residue	retiring	T-256	Dynamic dump-copy created by the legacy two-stage import from the 110 FixtureOnly HSM source shape; current canonical build does not replay it.	transient	bounded:T-256	Backend/database/scripts/130_phase03_two_stage_delta_import_architecture.sql	DeferredWithReason
+ppiq_staging	src_inspection_mysql_shape_downtime_events	historical demo staging residue	retiring	T-256	Dynamic dump-copy created by the legacy two-stage import from the 110 FixtureOnly Inspection source shape; current canonical build does not replay it.	transient	bounded:T-256	Backend/database/scripts/130_phase03_two_stage_delta_import_architecture.sql	DeferredWithReason
+ppiq_staging	src_inspection_mysql_shape_parsytec_surface_defects	historical demo staging residue	retiring	T-256	Dynamic dump-copy created by the legacy two-stage import from the 110 FixtureOnly Inspection source shape; current canonical build does not replay it.	transient	bounded:T-256	Backend/database/scripts/130_phase03_two_stage_delta_import_architecture.sql	DeferredWithReason
+ppiq_staging	src_meltshop_pg_heats	historical demo staging residue	retiring	T-256	Dynamic dump-copy created by the legacy two-stage import from the 110 FixtureOnly MeltShop source shape; current canonical build does not replay it.	transient	bounded:T-256	Backend/database/scripts/130_phase03_two_stage_delta_import_architecture.sql	DeferredWithReason
+ppiq_staging	src_meltshop_pg_lf_treatment	historical demo staging residue	retiring	T-256	Dynamic dump-copy created by the legacy two-stage import from the 110 FixtureOnly MeltShop source shape; current canonical build does not replay it.	transient	bounded:T-256	Backend/database/scripts/130_phase03_two_stage_delta_import_architecture.sql	DeferredWithReason
+ppiq_staging	src_pkl_mssql_shape_pickle_orders	historical demo staging residue	retiring	T-256	Dynamic dump-copy created by the legacy two-stage import from the 110 FixtureOnly Pickling source shape; current canonical build does not replay it.	transient	bounded:T-256	Backend/database/scripts/130_phase03_two_stage_delta_import_architecture.sql	DeferredWithReason
+ppiq_staging	src_pkl_mssql_shape_qa_lab_results	historical demo staging residue	retiring	T-256	Dynamic dump-copy created by the legacy two-stage import from the 110 FixtureOnly Pickling source shape; current canonical build does not replay it.	transient	bounded:T-256	Backend/database/scripts/130_phase03_two_stage_delta_import_architecture.sql	DeferredWithReason

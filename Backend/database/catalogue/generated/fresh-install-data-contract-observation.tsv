@@ -1,0 +1,61 @@
+schema	table	row_count	creator_authority	creator_disposition	rule2_treatment	structural_lifecycle	candidate_install_state	downstream_owner
+ppiq_plant	ml_learning_results_v1	607	Backend/database/scripts/204_phase04_phase05_ml_learning_core.sql	Canonical	not_allowlisted	current		T-260
+ppiq_staging	ppiq_connector_runtime_readings	484	Backend/database/scripts/670_pack_b4_connector_runtime_certification.sql	Canonical	not_allowlisted	current		T-260
+ppiq_plant	ml_correlation_results_v2	229	Backend/database/scripts/200_phase02_ml_foundation_feature_store_pgvector.sql	Canonical	not_allowlisted	current		T-260
+ppiq_plant	ml_learning_observations_v1	120	Backend/database/scripts/204_phase04_phase05_ml_learning_core.sql	Canonical	not_allowlisted	current		T-260
+ppiq_meta	signal_aggregation_compatibility	45	Backend/database/scripts/834_signal_aggregation_semantics.sql	Canonical	not_allowlisted	current		T-260
+ppiq_meta	ppiq_license_feature_defaults	39	Backend/database/scripts/300_p01_p02_security_access_control_spine.sql	Canonical	not_allowlisted	current		T-260
+ppiq_meta	ppiq_role_permission_defaults	36	Backend/database/scripts/300_p01_p02_security_access_control_spine.sql	Canonical	not_allowlisted	current		T-260
+ppiq_meta	ppiq_i18n_translations	24	Backend/database/scripts/420_p3_value_evidence_hmi.sql	Canonical	not_allowlisted	current		T-260
+ppiq_meta	ppiq_closure_runtime_probe_results	17	Backend/database/scripts/665_pack_b35_mostly_green_task_closure.sql	Canonical	not_allowlisted	current		T-260
+ppiq_meta	ppiq_mostly_green_task_closure	17	Backend/database/scripts/665_pack_b35_mostly_green_task_closure.sql	Canonical	not_allowlisted	current		T-260
+ppiq_meta	ml_narrative_safety_audit_v1	16	Backend/database/scripts/205_phase04_phase05_completion_governance_jobs_tests.sql	Canonical	not_allowlisted	current		T-260
+ppiq_meta	ml_correlation_compute_runs	13	Backend/database/scripts/200_phase02_ml_foundation_feature_store_pgvector.sql	Canonical	not_allowlisted	current		T-260
+ppiq_meta	ml_learning_runs_v1	13	Backend/database/scripts/204_phase04_phase05_ml_learning_core.sql	Canonical	not_allowlisted	current		T-260
+ppiq_meta	ml_feature_definitions	12	Backend/database/scripts/200_phase02_ml_foundation_feature_store_pgvector.sql	Canonical	not_allowlisted	current		T-260
+ppiq_meta	aggregation_kinds	11	Backend/database/scripts/834_signal_aggregation_semantics.sql	Canonical	not_allowlisted	current		T-260
+ppiq_meta	ml_learning_golden_test_results_v1	11	Backend/database/scripts/205_phase04_phase05_completion_governance_jobs_tests.sql	Canonical	not_allowlisted	current		T-260
+ppiq_meta	signal_kinds	10	Backend/database/scripts/834_signal_aggregation_semantics.sql	Canonical	not_allowlisted	current		T-260
+ppiq_meta	ppiq_sensitive_data_catalog	9	Backend/database/scripts/640_remaining_sensitive_data_catalog.sql	Canonical	not_allowlisted	current		T-260
+ppiq_meta	ppiq_i18n_string_keys	8	Backend/database/scripts/420_p3_value_evidence_hmi.sql	Canonical	not_allowlisted	current		T-260
+ppiq_meta	outcome_details	7	Backend/database/scripts/832_definition_contract_convergence.sql	Canonical	not_allowlisted	current		T-260
+ppiq_meta	ppiq_control_evidence_matrix	5	Backend/database/scripts/630_v5_p14_compliance_refactor_controls.sql	Canonical	not_allowlisted	current		T-260
+ppiq_meta	job_definitions	4	efMigrationBaseline	Canonical	not_allowlisted	current	PREFILLED_EXACT	T-260
+ppiq_meta	ml_ai_provider_catalog_v1	4	Backend/database/scripts/205_phase04_phase05_completion_governance_jobs_tests.sql	Canonical	not_allowlisted	current		T-260
+ppiq_meta	ml_learning_job_catalog_v1	4	Backend/database/scripts/204_phase04_phase05_ml_learning_core.sql	Canonical	not_allowlisted	current		T-260
+ppiq_meta	ppiq_mobile_readiness_checks	4	Backend/database/scripts/610_v5_p12_i18n_rtl_mobile.sql	Canonical	not_allowlisted	current		T-260
+ppiq_meta	ppiq_sso_role_mappings	4	Backend/database/scripts/580_v5_p09_enterprise_identity_sso_scim.sql	Canonical	not_allowlisted	current		T-260
+ppiq_meta	sampling_bases	4	Backend/database/scripts/834_signal_aggregation_semantics.sql	Canonical	not_allowlisted	current		T-260
+public	ppiq_correlation_run_timeout_config	4	Backend/database/scripts/725_v1_correlation_run_timeout_and_result_proof.sql	Canonical	not_allowlisted	compatibility		T-260
+ppiq_forensics	wipe_audit	3	Backend/database/scripts/750_forensics_audit_subsystem.sql	Canonical	not_allowlisted	compatibility		T-260
+ppiq_meta	demo_language_truth_rules	3	Backend/database/scripts/116_phase2_operation_analytics_pilot_foundation.sql	Canonical	not_allowlisted	current		T-260
+ppiq_meta	ppiq_i18n_locales	3	Backend/database/scripts/610_v5_p12_i18n_rtl_mobile.sql	Canonical	not_allowlisted	current		T-260
+ppiq_meta	ppiq_model_eval_golden_cases	3	Backend/database/scripts/680_pack_b5_private_model_gateway_ciso_controls.sql	Canonical	not_allowlisted	current		T-260
+ppiq_meta	ppiq_retention_policies	3	Backend/database/scripts/630_v5_p14_compliance_refactor_controls.sql	Canonical	not_allowlisted	current		T-260
+ppiq_meta	ppiq_visual_mapper_templates	3	Backend/database/scripts/540_v5_p05_visual_mapper_foundation.sql	Canonical	not_allowlisted	current		T-260
+ppiq_meta	assistant_eval_case	2	Backend/database/scripts/430_p4_production_assistant.sql	Canonical	not_allowlisted	current		T-260
+ppiq_meta	ml_learning_backoff_audit_v1	2	Backend/database/scripts/205_phase04_phase05_completion_governance_jobs_tests.sql	Canonical	not_allowlisted	current		T-260
+ppiq_meta	ppiq_notification_channels	2	Backend/database/scripts/600_v5_p11_outbound_notifications_leads.sql	Canonical	not_allowlisted	current		T-260
+ppiq_meta	ppiq_notification_preferences	2	Backend/database/scripts/600_v5_p11_outbound_notifications_leads.sql	Canonical	not_allowlisted	current		T-260
+ppiq_meta	ppiq_sso_provider_configs	2	Backend/database/scripts/580_v5_p09_enterprise_identity_sso_scim.sql	Canonical	not_allowlisted	current		T-260
+ppiq_meta	definition_store	1	Backend/database/scripts/831_definition_store.sql	Canonical	not_allowlisted	current	EMPTY_REQUIRED	T-260
+ppiq_meta	definition_versions	1	Backend/database/scripts/831_definition_store.sql	Canonical	not_allowlisted	current	EMPTY_REQUIRED	T-260
+ppiq_meta	page_definitions	1	Backend/database/scripts/141_phase03_page_builder_foundation.sql	Canonical	not_allowlisted	current		T-260
+ppiq_meta	ppiq_assistant_model_pins	1	Backend/database/scripts/530_v5_p04_assistant_model_gateway_boundary.sql	Canonical	not_allowlisted	current		T-260
+ppiq_meta	ppiq_assistant_provider_configs	1	Backend/database/scripts/530_v5_p04_assistant_model_gateway_boundary.sql	Canonical	not_allowlisted	current		T-260
+ppiq_meta	ppiq_assistant_redaction_policies	1	Backend/database/scripts/530_v5_p04_assistant_model_gateway_boundary.sql	Canonical	not_allowlisted	current		T-260
+ppiq_meta	ppiq_business_key_rules	1	Backend/database/scripts/320_p3_business_key_reconciliation.sql	Canonical	not_allowlisted	current		T-260
+ppiq_meta	ppiq_connector_runtime_events	1	Backend/database/scripts/670_pack_b4_connector_runtime_certification.sql	Canonical	not_allowlisted	current		T-260
+ppiq_meta	ppiq_connector_runtime_sources	1	Backend/database/scripts/670_pack_b4_connector_runtime_certification.sql	Canonical	not_allowlisted	current		T-260
+ppiq_meta	ppiq_deployment_airgap_bundles	1	Backend/database/scripts/620_v5_p13_deployment_dr_portability.sql	Canonical	not_allowlisted	current		T-260
+ppiq_meta	ppiq_deployment_dr_drills	1	Backend/database/scripts/620_v5_p13_deployment_dr_portability.sql	Canonical	not_allowlisted	current		T-260
+ppiq_meta	ppiq_identity_policy	1	Backend/database/scripts/570_v5_p08_enterprise_identity_mfa_sessions.sql	Canonical	not_allowlisted	current		T-260
+ppiq_meta	ppiq_open_format_export_bundles	1	Backend/database/scripts/620_v5_p13_deployment_dr_portability.sql	Canonical	not_allowlisted	current		T-260
+ppiq_meta	ppiq_private_model_endpoint_configs	1	Backend/database/scripts/680_pack_b5_private_model_gateway_ciso_controls.sql	Canonical	not_allowlisted	current		T-260
+ppiq_meta	ppiq_scim_bearer_tokens	1	Backend/database/scripts/580_v5_p09_enterprise_identity_sso_scim.sql	Canonical	not_allowlisted	current		T-260
+ppiq_meta	ppiq_source_code_escrow_records	1	Backend/database/scripts/620_v5_p13_deployment_dr_portability.sql	Canonical	not_allowlisted	current		T-260
+ppiq_meta	ppiq_tenants	1	Backend/database/scripts/300_p01_p02_security_access_control_spine.sql	Canonical	not_allowlisted	current	PREFILLED_EXACT	T-260
+ppiq_meta	ppiq_time_series_capabilities	1	Backend/database/scripts/520_v5_p03_timeseries_foundation.sql	Canonical	not_allowlisted	current		T-260
+ppiq_meta	ppiq_time_series_policy	1	Backend/database/scripts/520_v5_p03_timeseries_foundation.sql	Canonical	not_allowlisted	current		T-260
+ppiq_meta	tenant_isolation_decisions	1	Backend/database/scripts/116_phase2_operation_analytics_pilot_foundation.sql	Canonical	not_allowlisted	current		T-260
+ppiq_meta	tenants	1	Backend/database/scripts/301_p01_p02_authstore_compatibility_bridge.sql	Canonical	not_allowlisted	current	PREFILLED_EXACT	T-260
