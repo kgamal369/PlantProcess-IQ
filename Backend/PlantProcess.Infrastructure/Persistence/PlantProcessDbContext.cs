@@ -53,6 +53,7 @@ public class PlantProcessDbContext : DbContext, IPlantProcessDbContext
     public DbSet<KpiDefinition> KpiDefinitions => Set<KpiDefinition>();
     public DbSet<JobDefinition> JobDefinitions => Set<JobDefinition>();
     public DbSet<JobRunHistory> JobRunHistories => Set<JobRunHistory>();
+    public DbSet<JobDependency> JobDependencies => Set<JobDependency>();
     // ----------------------------
     // Materials / Genealogy
     // ----------------------------

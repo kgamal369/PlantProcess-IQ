@@ -25,8 +25,8 @@
                   "Product tables live in ppiq_meta, ppiq_plant or ppiq_staging. A single terminal convergence file relocates them after every historical creator has run; no migration and no historical script moves a table."
               ],
     "summary":  {
-                    "totalFiles":  154,
-                    "canonicalPath":  105,
+                    "totalFiles":  155,
+                    "canonicalPath":  106,
                     "distinctTables":  173,
                     "governedDuplicates":  7,
                     "ungovernedDuplicates":  0,
@@ -90,7 +90,7 @@
     "canonicalViews":  [
                            {
                                "path":  "Backend/database/views/006_dashboard_dataset_views.sql",
-                               "order":  105,
+                               "order":  106,
                                "sha256":  "729D127FA772E1E100A8AD1A6CEAF6B2BABBA5A3FED9991EB8EB62960D3D6865",
                                "note":  "Read-model view authority. Applied after every schema script and after topology convergence, before the probe database is dropped."
                            }
@@ -1281,6 +1281,17 @@
                           },
                           {
                               "position":  105,
+                              "ordinal":  838,
+                              "path":  "Backend/database/scripts/838_job_orchestration_convergence.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "EA140FD9EB174EE153CC1D44ED5D610B31D398E9800C5C4AA670C9C2A87E5C09",
+                              "createsTables":  [
+                                                    "ppiq_meta.job_dependencies"
+                                                ],
+                              "reason":  "T-106 physical convergence of the T-064 job target onto the canonical definition store, plus the one canonical job dependency graph. Requires 831 and the governed schemas produced by topology convergence."
+                          },
+                          {
+                              "position":  106,
                               "ordinal":  6,
                               "path":  "Backend/database/views/006_dashboard_dataset_views.sql",
                               "disposition":  "Canonical",

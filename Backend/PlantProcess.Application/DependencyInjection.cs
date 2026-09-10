@@ -1,4 +1,4 @@
-﻿// ============================================================
+// ============================================================
 // FILE: Backend/PlantProcess.Application/DependencyInjection.cs
 // FIX: Removed duplicate using directives for
 //      PlantProcess.Application.Analytics.Interfaces
@@ -91,6 +91,9 @@ public static class DependencyInjection
         services.AddScoped<IJobDefinitionService, JobDefinitionService>();
         services.AddScoped<IJobRegistrationService, JobRegistrationService>();
         services.AddScoped<IJobRuntimeService, JobRuntimeService>();
+        services.AddScoped<Jobs.Execution.IJobExecutionCapabilityAuthority, Jobs.Execution.JobExecutionCapabilityAuthority>();
+        services.AddScoped<Jobs.Execution.IRunnableJobLookup, Jobs.Execution.RunnableJobLookup>();
+        services.AddScoped<Jobs.Dependencies.IJobDependencyService, Jobs.Dependencies.JobDependencyService>();
         services.AddScoped<IJobRunOrchestratorService, JobRunOrchestratorService>();
         services.AddScoped<IIncrementalSyncStateService, IncrementalSyncStateService>();
         services.AddScoped<IDeltaImportExecutionService, DeltaImportExecutionService>();

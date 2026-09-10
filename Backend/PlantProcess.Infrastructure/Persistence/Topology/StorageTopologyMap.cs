@@ -69,6 +69,7 @@ public static class StorageTopologyMap
         { "industry_templates", "ppiq_meta" },
         { "inspection_jobs", "ppiq_meta" },
         { "job_definitions", "ppiq_meta" },
+        { "job_dependencies", "ppiq_meta" },
         { "job_log", "ppiq_meta" },
         { "job_run_histories", "ppiq_meta" },
         { "kpi_definitions", "ppiq_meta" },

@@ -1,38 +1,50 @@
-﻿using PlantProcess.Application.Analytics.Contracts;
+using PlantProcess.Application.Analytics.Contracts;
 using System.Text.Json;
-using Microsoft.EntityFrameworkCore;
 using PlantProcess.Application.Analytics.Interfaces;
-using PlantProcess.Application.Common.Persistence;
 using PlantProcess.Application.Common.Results;
+using PlantProcess.Application.Definitions;
 using PlantProcess.Application.Integration.Contracts.Jobs;
 using PlantProcess.Application.Integration.Services.Jobs;
 using PlantProcess.Application.Integration.Interfaces.Import;
 using PlantProcess.Application.Integration.Interfaces.Jobs;
+using PlantProcess.Application.Jobs.Dependencies;
+using PlantProcess.Application.Jobs.Execution;
+using PlantProcess.Application.Jobs.Targeting;
 using PlantProcess.Application.Services.DataQuality;
+using PlantProcess.Domain.Entities.Integration;
 using PlantProcess.Domain.Enums.Integration;
 
 namespace PlantProcess.Application.Integration.Services.Jobs;
 
 public sealed class JobRunOrchestratorService : IJobRunOrchestratorService
 {
-    private readonly IPlantProcessDbContext _dbContext;
+    private readonly IRunnableJobLookup _jobs;
     private readonly IJobRuntimeService _jobRuntimeService;
     private readonly IImportBatchQueueProcessorService _importBatchQueueProcessorService;
     private readonly IDataQualityService _dataQualityService;
     private readonly IRiskScoreService _riskScoreService;
+    private readonly IJobExecutionCapabilityAuthority _capability;
+    private readonly IJobTargetResolver _targetResolver;
+    private readonly IJobDependencyService _dependencies;
 
     public JobRunOrchestratorService(
-        IPlantProcessDbContext dbContext,
+        IRunnableJobLookup jobs,
         IJobRuntimeService jobRuntimeService,
         IImportBatchQueueProcessorService importBatchQueueProcessorService,
         IDataQualityService dataQualityService,
-        IRiskScoreService riskScoreService)
+        IRiskScoreService riskScoreService,
+        IJobExecutionCapabilityAuthority capability,
+        IJobTargetResolver targetResolver,
+        IJobDependencyService dependencies)
     {
-        _dbContext = dbContext;
+        _jobs = jobs;
         _jobRuntimeService = jobRuntimeService;
         _importBatchQueueProcessorService = importBatchQueueProcessorService;
         _dataQualityService = dataQualityService;
         _riskScoreService = riskScoreService;
+        _capability = capability;
+        _targetResolver = targetResolver;
+        _dependencies = dependencies;
     }
 
     public async Task<ApplicationResult<JobActionResponseDto>> RunNowAsync(
@@ -41,15 +53,24 @@ public sealed class JobRunOrchestratorService : IJobRunOrchestratorService
         string? correlationId,
         CancellationToken cancellationToken)
     {
-        var job = await _dbContext.JobDefinitions
-            .AsNoTracking()
-            .FirstOrDefaultAsync(x => !x.IsDeleted && x.Id == jobDefinitionId, cancellationToken);
+        JobDefinition? job = await _jobs.FindAsync(jobDefinitionId, cancellationToken);
 
         if (job is null)
             return ApplicationResult<JobActionResponseDto>.Failure(ApplicationError.NotFound("Job definition was not found."));
 
-        if (!job.IsEnabled)
-            return ApplicationResult<JobActionResponseDto>.Failure(ApplicationError.BusinessRule("Paused jobs cannot be executed. Resume the job first."));
+        // ADMISSION BEFORE ANY RUN RECORD EXISTS. Paused state and executor
+        // capability are both answered here, so an unsupported family never
+        // opens a JobRunHistory row it can only close as failed.
+        ApplicationResult admitted = JobRunAdmission.Admit(job, _capability);
+        if (admitted.IsFailure)
+            return ApplicationResult<JobActionResponseDto>.Failure(admitted.Error!);
+
+        // The declared target is resolved through the canonical definition
+        // authority BEFORE execution, so a job that cannot say which immutable
+        // version it runs never runs at all.
+        ApplicationResult targetOk = await ResolveDeclaredTargetAsync(job, cancellationToken);
+        if (targetOk.IsFailure)
+            return ApplicationResult<JobActionResponseDto>.Failure(targetOk.Error!);
 
         var run = await _jobRuntimeService.StartAsync(
             job.JobCode,
@@ -104,6 +125,95 @@ public sealed class JobRunOrchestratorService : IJobRunOrchestratorService
             return ApplicationResult<JobActionResponseDto>.Failure(
                 ApplicationError.Unexpected($"Run Now failed: {ex.Message}"));
         }
+    }
+
+    public async Task<ApplicationResult<IReadOnlyList<JobActionResponseDto>>> RunWithDependenciesAsync(
+        Guid jobDefinitionId,
+        string? requestedBy,
+        string? correlationId,
+        CancellationToken cancellationToken)
+    {
+        ApplicationResult<IReadOnlyList<Guid>> order =
+            await _dependencies.ResolveExecutionOrderAsync(jobDefinitionId, cancellationToken);
+
+        if (order.IsFailure || order.Value is null)
+            return ApplicationResult<IReadOnlyList<JobActionResponseDto>>.Failure(order.Error!);
+
+        string chainCorrelation = correlationId ?? Guid.NewGuid().ToString("N");
+        var executed = new List<JobActionResponseDto>();
+
+        foreach (Guid id in order.Value)
+        {
+            ApplicationResult<JobActionResponseDto> step =
+                await RunNowAsync(id, requestedBy, chainCorrelation, cancellationToken);
+
+            if (step.IsFailure || step.Value is null)
+                return ApplicationResult<IReadOnlyList<JobActionResponseDto>>.Failure(step.Error!);
+
+            executed.Add(step.Value);
+
+            // A predecessor that ran and failed still stops the chain. Run Now
+            // reports a failed run as a successful REQUEST, which is the right
+            // answer for one job and the wrong one for an ordered chain.
+            if (step.Value.Status != JobRunStatus.Ok)
+            {
+                return ApplicationResult<IReadOnlyList<JobActionResponseDto>>.Failure(
+                    ApplicationError.BusinessRule(
+                        "Job " + step.Value.JobCode + " did not complete successfully, so the jobs that depend on it "
+                        + "were not started. " + step.Value.Message));
+            }
+        }
+
+        return ApplicationResult<IReadOnlyList<JobActionResponseDto>>.Success(executed);
+    }
+
+    private async Task<ApplicationResult> ResolveDeclaredTargetAsync(
+        JobDefinition job,
+        CancellationToken cancellationToken)
+    {
+        if (!job.TargetDefinitionId.HasValue)
+        {
+            ApplicationResult<JobTargetResolution> none =
+                await _targetResolver.ResolveAsync(job.JobType, null, cancellationToken);
+
+            return none.IsFailure
+                ? ApplicationResult.Failure(none.Error!)
+                : ApplicationResult.Success();
+        }
+
+        if (string.IsNullOrWhiteSpace(job.TargetDefinitionKind) || !job.TargetVersionPolicy.HasValue)
+        {
+            return ApplicationResult.Failure(
+                ApplicationError.Validation(
+                    "Job " + job.JobCode + " declares a target identity without a kind or a version policy, "
+                    + "so nothing can say which definition version it would run."));
+        }
+
+        DefinitionKind kind;
+        if (!Enum.TryParse(job.TargetDefinitionKind, false, out kind)
+            || !Enum.IsDefined(typeof(DefinitionKind), kind))
+        {
+            return ApplicationResult.Failure(
+                ApplicationError.Validation(
+                    "Job " + job.JobCode + " declares target kind '" + job.TargetDefinitionKind
+                    + "', which is not a canonical definition kind."));
+        }
+
+        var reference = new JobTargetReference
+        {
+            Kind = kind,
+            DefinitionId = job.TargetDefinitionId.Value,
+            VersionPolicy = job.TargetVersionPolicy.Value,
+            PinnedVersion = job.TargetDefinitionVersion,
+            ParametersJson = job.TargetParametersJson
+        };
+
+        ApplicationResult<JobTargetResolution> resolved =
+            await _targetResolver.ResolveAsync(job.JobType, reference, cancellationToken);
+
+        return resolved.IsFailure
+            ? ApplicationResult.Failure(resolved.Error!)
+            : ApplicationResult.Success();
     }
 
     private async Task<RunNowExecutionResult> ExecuteJobAsync(
@@ -173,13 +283,15 @@ public sealed class JobRunOrchestratorService : IJobRunOrchestratorService
                     JsonSerializer.Serialize(result.Value));
             }
 
-            case JobDefinitionType.Custom:
-                return RunNowExecutionResult.Failed(
-                    "This custom/continuous job has no manual executor. Continuous jobs are monitored by the Worker runtime.");
-
             default:
-                return RunNowExecutionResult.Failed(
-                    $"Run Now executor is not implemented yet for job type '{jobType}'.");
+                // Unreachable by contract. Admission has already asked the one
+                // capability authority, so arriving here means the authority
+                // and this switch disagree about what the runtime can execute.
+                // A loud contradiction is the point: the alternative is the
+                // defect this task exists to close.
+                throw new InvalidOperationException(
+                    "Job family " + jobType + " passed capability admission but has no executor here. "
+                    + "The capability authority and the executor disagree.");
         }
     }
 
@@ -199,7 +311,3 @@ public sealed class JobRunOrchestratorService : IJobRunOrchestratorService
         }
     }
 }
-
-
-
-

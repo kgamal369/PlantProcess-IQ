@@ -37,6 +37,7 @@ public interface IPlantProcessDbContext
     DbSet<KpiDefinition> KpiDefinitions { get; }
     DbSet<JobDefinition> JobDefinitions { get; }
     DbSet<JobRunHistory> JobRunHistories { get; }
+    DbSet<JobDependency> JobDependencies { get; }
 
     DbSet<MaterialUnit> MaterialUnits { get; }
     DbSet<MaterialAlias> MaterialAliases { get; }
