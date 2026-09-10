@@ -1,0 +1,23 @@
+{
+  "contract_version": "1.0",
+  "task_id": "T-252",
+  "gate_id": "database-acceptance",
+  "suite_id": "",
+  "environment": "local-sqlserver",
+  "profile": "acceptance",
+  "started_at": "2026-09-09T07:12:04+02:00",
+  "completed_at": "2026-09-09T07:19:41+02:00",
+  "total_count": 17,
+  "executed_count": 17,
+  "passed_count": 17,
+  "failed_count": 0,
+  "skipped_count": 0,
+  "unapproved_skip_count": 0,
+  "skip_reasons": [],
+  "commit_sha": "4f2b9c1e7a3d5081b6ce24f7093ad5182bc6e40f",
+  "evidence_paths": [
+    "Backend/database/acceptance/reports/database-acceptance-summary.txt",
+    "Backend/database/acceptance/reports/database-acceptance-detail.log"
+  ],
+  "verdict": "GREEN"
+}

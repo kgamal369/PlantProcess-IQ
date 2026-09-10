@@ -1,0 +1,29 @@
+{
+  "contract_version": "1.0",
+  "task_id": "T-252",
+  "gate_id": "database-acceptance",
+  "suite_id": "",
+  "environment": "local-sqlserver",
+  "profile": "acceptance",
+  "started_at": "2026-09-09T07:12:04+02:00",
+  "completed_at": "2026-09-09T07:19:41+02:00",
+  "total_count": 5,
+  "executed_count": 3,
+  "passed_count": 3,
+  "failed_count": 0,
+  "skipped_count": 5,
+  "unapproved_skip_count": 0,
+  "skip_reasons": [
+    {
+      "reason_code": "ENVIRONMENT_NOT_AVAILABLE",
+      "count": 5,
+      "approved": true,
+      "reason": "Approved as not applicable on this host."
+    }
+  ],
+  "commit_sha": "4f2b9c1e7a3d5081b6ce24f7093ad5182bc6e40f",
+  "evidence_paths": [
+    "Backend/database/acceptance/reports/database-acceptance-summary.txt"
+  ],
+  "verdict": "RED"
+}

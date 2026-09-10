@@ -1,0 +1,35 @@
+{
+  "contract_version": "1.0",
+  "task_id": "T-257",
+  "gate_id": "",
+  "suite_id": "frontend-global-suite",
+  "environment": "local-node",
+  "profile": "ci",
+  "started_at": "2026-09-09T09:11:00+02:00",
+  "completed_at": "2026-09-09T09:11:07+02:00",
+  "total_count": 5,
+  "executed_count": 0,
+  "passed_count": 0,
+  "failed_count": 0,
+  "skipped_count": 5,
+  "unapproved_skip_count": 0,
+  "skip_reasons": [
+    {
+      "reason_code": "ENVIRONMENT_NOT_AVAILABLE",
+      "count": 3,
+      "approved": true,
+      "reason": "No browser engine is installed on this host; the rows are approved as not applicable here."
+    },
+    {
+      "reason_code": "GATE_NOT_APPLICABLE",
+      "count": 2,
+      "approved": true,
+      "reason": "These rows certify a surface this profile does not build."
+    }
+  ],
+  "commit_sha": "9a17d3c50be82f461d7c093ab5e2740fc8163d9e",
+  "evidence_paths": [
+    "Frontend/reports/frontend-suite-summary.json"
+  ],
+  "verdict": "GREEN"
+}
