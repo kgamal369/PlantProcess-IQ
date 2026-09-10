@@ -30,7 +30,7 @@
                     "distinctTables":  173,
                     "governedDuplicates":  7,
                     "ungovernedDuplicates":  0,
-                    "efMigrations":  8,
+                    "efMigrations":  9,
                     "freshBuild":  "EXECUTED",
                     "canonicalViews":  1,
                     "declaredViews":  4,
@@ -84,6 +84,10 @@
                                                    {
                                                        "name":  "20260828083224_StorageTopologyCheckpoint",
                                                        "sha256":  "E7940BE2BE27C2D7F28395C50D888C278AE9BD6A796C65492FE0A8E3E59238BA"
+                                                   },
+                                                   {
+                                                       "name":  "20260910104823_JobExecutionContractSqlOwnedParity",
+                                                       "sha256":  "0BB6C60A732EB4AE7D98DE3B92CAE29853CAEFE4D33B9A22899EF9DDEC145434"
                                                    }
                                                ]
                             },
