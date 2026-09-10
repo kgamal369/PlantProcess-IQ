@@ -45,7 +45,6 @@ public sealed class JobRunAdmissionTests
             new[]
             {
                 JobDefinitionType.DbLinkImport,
-                JobDefinitionType.CanonicalRefresh,
                 JobDefinitionType.DataQualityScan,
                 JobDefinitionType.RiskScoring
             },
@@ -60,7 +59,6 @@ public sealed class JobRunAdmissionTests
 
     [Theory]
     [InlineData(JobDefinitionType.DbLinkImport)]
-    [InlineData(JobDefinitionType.CanonicalRefresh)]
     [InlineData(JobDefinitionType.DataQualityScan)]
     [InlineData(JobDefinitionType.RiskScoring)]
     public void A_supported_family_is_admitted(JobDefinitionType jobType)
@@ -71,6 +69,7 @@ public sealed class JobRunAdmissionTests
     }
 
     [Theory]
+    [InlineData(JobDefinitionType.CanonicalRefresh)]
     [InlineData(JobDefinitionType.MlParamsVsDefects)]
     [InlineData(JobDefinitionType.MlParamsVsDowntime)]
     [InlineData(JobDefinitionType.MlParamsVsKpis)]

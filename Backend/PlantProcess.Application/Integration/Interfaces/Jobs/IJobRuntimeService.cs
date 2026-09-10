@@ -22,6 +22,20 @@ public interface IJobRuntimeService
         string? resultSummaryJson,
         CancellationToken cancellationToken);
 
+    /// <summary>
+    /// T-106. Records an attempt that was admitted into orchestration and then
+    /// prevented from computing. It is NOT StartAsync followed by a completion:
+    /// claiming a run started when admission refused compute would be the same
+    /// class of falsehood the corrective removes elsewhere.
+    /// </summary>
+    Task<ApplicationResult<JobRunHistoryDto>> RecordBlockedAsync(
+        Guid jobDefinitionId,
+        string triggerSource,
+        string? triggeredBy,
+        string? correlationId,
+        string reason,
+        CancellationToken cancellationToken);
+
     Task<ApplicationResult<IReadOnlyList<JobRunHistoryDto>>> GetHistoryAsync(
         Guid jobDefinitionId,
         int take,

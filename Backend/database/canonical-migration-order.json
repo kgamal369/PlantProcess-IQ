@@ -25,8 +25,8 @@
                   "Product tables live in ppiq_meta, ppiq_plant or ppiq_staging. A single terminal convergence file relocates them after every historical creator has run; no migration and no historical script moves a table."
               ],
     "summary":  {
-                    "totalFiles":  155,
-                    "canonicalPath":  106,
+                    "totalFiles":  156,
+                    "canonicalPath":  107,
                     "distinctTables":  173,
                     "governedDuplicates":  7,
                     "ungovernedDuplicates":  0,
@@ -90,7 +90,7 @@
     "canonicalViews":  [
                            {
                                "path":  "Backend/database/views/006_dashboard_dataset_views.sql",
-                               "order":  106,
+                               "order":  107,
                                "sha256":  "729D127FA772E1E100A8AD1A6CEAF6B2BABBA5A3FED9991EB8EB62960D3D6865",
                                "note":  "Read-model view authority. Applied after every schema script and after topology convergence, before the probe database is dropped."
                            }
@@ -1292,6 +1292,17 @@
                           },
                           {
                               "position":  106,
+                              "ordinal":  839,
+                              "path":  "Backend/database/scripts/839_job_execution_contract_completion.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "88879C81B19777B3348C6BDE0FF90303EFDC9C68AC58A6FF1D25BB34BBEC52F8",
+                              "createsTables":  [
+                                                    "ppiq_meta.job_run_dependencies"
+                                                ],
+                              "reason":  "Completes the governed job execution contract: target kind/surface integrity, dependency edge metadata and reconstructable run-level dependency evidence."
+                          },
+                          {
+                              "position":  107,
                               "ordinal":  6,
                               "path":  "Backend/database/views/006_dashboard_dataset_views.sql",
                               "disposition":  "Canonical",

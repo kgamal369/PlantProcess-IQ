@@ -43,6 +43,11 @@ public sealed class JobChainExecutionTests
         Assert.True(result.IsSuccess);
         Assert.Equal(new[] { "PROBE_A", "PROBE_B", "PROBE_C" }, world.Runtime.StartedJobCodes.ToArray());
         Assert.Equal(3, result.Value!.Count);
+        Assert.Equal(2, world.Dependencies.RecordedOutcomes.Count);
+        Assert.Equal(JobDependencyResolution.Satisfied, world.Dependencies.RecordedOutcomes[0].Resolution);
+        Assert.Equal(JobDependencyResolution.Satisfied, world.Dependencies.RecordedOutcomes[1].Resolution);
+        Assert.True(world.Dependencies.RecordedOutcomes[0].DependsOnRunId.HasValue);
+        Assert.True(world.Dependencies.RecordedOutcomes[1].DependsOnRunId.HasValue);
     }
 
     [Fact]
@@ -72,6 +77,13 @@ public sealed class JobChainExecutionTests
         Assert.True(result.IsFailure);
         Assert.Equal(new[] { "PROBE_A", "PROBE_B" }, world.Runtime.StartedJobCodes.ToArray());
         Assert.DoesNotContain("PROBE_C", world.Runtime.StartedJobCodes);
+        Assert.Contains(world.JobC.Id, world.Runtime.BlockedJobIds);
+        Assert.True(world.Dependencies.RecordedOutcomes.Count >= 2);
+        JobDependencyOutcome finalOutcome = world.Dependencies.RecordedOutcomes[world.Dependencies.RecordedOutcomes.Count - 1];
+        Assert.Equal(world.JobB.Id, finalOutcome.DependsOnJobDefinitionId);
+        Assert.Equal(JobDependencyResolution.FailedUpstream, finalOutcome.Resolution);
+        Assert.True(finalOutcome.BlocksDownstream);
+        Assert.True(finalOutcome.DependsOnRunId.HasValue);
     }
 
     [Fact]
@@ -165,6 +177,7 @@ public sealed class JobChainExecutionTests
     {
         public List<string> StartedJobCodes { get; } = new();
         public List<string> Correlations { get; } = new();
+        public List<Guid> BlockedJobIds { get; } = new();
 
         public Task<ApplicationResult<JobRunHistoryDto>> StartAsync(
             string jobCode, string triggerSource, string? triggeredBy, string? correlationId, CancellationToken cancellationToken)
@@ -177,6 +190,23 @@ public sealed class JobChainExecutionTests
                     Guid.NewGuid(), Guid.NewGuid(), jobCode, jobCode, JobDefinitionType.DataQualityScan,
                     JobRunStatus.Running, DateTime.UtcNow, null, null, triggerSource, triggeredBy,
                     correlationId, null, null, null)));
+        }
+
+        public Task<ApplicationResult<JobRunHistoryDto>> RecordBlockedAsync(
+            Guid jobDefinitionId,
+            string triggerSource,
+            string? triggeredBy,
+            string? correlationId,
+            string reason,
+            CancellationToken cancellationToken)
+        {
+            BlockedJobIds.Add(jobDefinitionId);
+
+            return Task.FromResult(ApplicationResult<JobRunHistoryDto>.Success(
+                new JobRunHistoryDto(
+                    Guid.NewGuid(), jobDefinitionId, "BLOCKED", "BLOCKED", JobDefinitionType.DataQualityScan,
+                    JobRunStatus.Blocked, DateTime.UtcNow, DateTime.UtcNow, 0, triggerSource, triggeredBy,
+                    correlationId, reason, reason, null)));
         }
 
         public Task<ApplicationResult<JobRunHistoryDto>> CompleteAsync(
@@ -278,7 +308,17 @@ public sealed class JobChainExecutionTests
             _order = order;
         }
 
-        public Task<ApplicationResult> AddDependencyAsync(Guid jobDefinitionId, Guid dependsOnJobDefinitionId, CancellationToken cancellationToken)
+        public List<JobDependencyOutcome> RecordedOutcomes { get; } = new();
+        public List<Guid> RecordedRunIds { get; } = new();
+
+        public Task<ApplicationResult> AddDependencyAsync(
+            Guid jobDefinitionId,
+            Guid dependsOnJobDefinitionId,
+            JobDependencyKind dependencyKind,
+            bool isRequired,
+            int? dependsOnVersion,
+            int? stalenessToleranceMinutes,
+            CancellationToken cancellationToken)
         {
             throw new NotSupportedException("The chain tests do not write edges.");
         }
@@ -297,6 +337,59 @@ public sealed class JobChainExecutionTests
             Guid jobDefinitionId, CancellationToken cancellationToken)
         {
             return Task.FromResult(ApplicationResult<IReadOnlyList<Guid>>.Success(_order));
+        }
+
+        public Task<ApplicationResult<IReadOnlyList<JobDependencyOutcome>>> EvaluateAsync(
+            Guid jobDefinitionId,
+            IReadOnlyDictionary<Guid, JobRunSnapshot> chainRuns,
+            CancellationToken cancellationToken)
+        {
+            int index = -1;
+            for (int i = 0; i < _order.Count; i++)
+            {
+                if (_order[i] == jobDefinitionId)
+                {
+                    index = i;
+                    break;
+                }
+            }
+
+            if (index <= 0)
+            {
+                return Task.FromResult(
+                    ApplicationResult<IReadOnlyList<JobDependencyOutcome>>.Success(
+                        Array.Empty<JobDependencyOutcome>()));
+            }
+
+            Guid predecessorId = _order[index - 1];
+            chainRuns.TryGetValue(predecessorId, out JobRunSnapshot? predecessor);
+
+            JobDependencyOutcome outcome = JobDependencyEvaluator.Evaluate(
+                predecessorId,
+                isRequired: true,
+                pinnedVersion: null,
+                upstreamRunId: predecessor?.RunId,
+                upstreamStatus: predecessor?.Status,
+                upstreamVersion: predecessor?.TargetDefinitionVersion);
+
+            return Task.FromResult(
+                ApplicationResult<IReadOnlyList<JobDependencyOutcome>>.Success(
+                    new[] { outcome }));
+        }
+
+        public Task<ApplicationResult> RecordResolutionsAsync(
+            Guid runId,
+            Guid jobDefinitionId,
+            IReadOnlyList<JobDependencyOutcome> outcomes,
+            CancellationToken cancellationToken)
+        {
+            RecordedRunIds.Add(runId);
+            foreach (JobDependencyOutcome outcome in outcomes)
+            {
+                RecordedOutcomes.Add(outcome);
+            }
+
+            return Task.FromResult(ApplicationResult.Success());
         }
     }
 }

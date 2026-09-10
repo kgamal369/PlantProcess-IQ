@@ -235,6 +235,27 @@ public class JobDefinition : BaseEntity
         MarkAsUpdated();
     }
 
+    /// <summary>
+    /// T-106. The last-run truth after an attempt that was refused before
+    /// compute. Without this the monitor would keep reporting the previous
+    /// outcome while a blocked run sat in history, which is the same absence
+    /// the corrective exists to remove.
+    /// </summary>
+    public void MarkBlocked(string reason, DateTime? blockedAtUtc = null)
+    {
+        var blocked = blockedAtUtc ?? DateTime.UtcNow;
+
+        LastRunStartedAtUtc = blocked;
+        LastRunCompletedAtUtc = blocked;
+        LastRunDurationMs = 0;
+        LastRunStatus = JobRunStatus.Blocked;
+        LastFailureReason = string.IsNullOrWhiteSpace(reason)
+            ? "The run was blocked before compute started."
+            : reason.Trim();
+
+        MarkAsUpdated();
+    }
+
     public void MarkTimedOut(string failureReason, long? durationMs = null, DateTime? completedAtUtc = null)
     {
         var completed = completedAtUtc ?? DateTime.UtcNow;

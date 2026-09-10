@@ -74,7 +74,7 @@ public static class DependencyInjection
         services.AddScoped<IMappingDefinitionService, MappingDefinitionService>();
         services.AddScoped<IStagingRecordService, StagingRecordService>();
         services.AddScoped<IMappingExecutionService, MappingExecutionService>();
-        services.AddScoped<Jobs.Targeting.IJobTargetClassPolicy, Jobs.Targeting.DeclaredJobTargetClassPolicy>();
+        services.AddScoped<Jobs.Targeting.IJobTargetClassPolicy, Jobs.Targeting.CapabilityJobTargetClassPolicy>();
         // T-065 bridge. The IJobTargetLookup registration moved to Infrastructure,
         // where the composite that also reads the analysis-job compatibility store
         // lives. Application must not name an Infrastructure type, and a second

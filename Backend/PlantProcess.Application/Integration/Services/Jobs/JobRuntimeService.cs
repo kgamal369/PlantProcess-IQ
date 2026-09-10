@@ -60,6 +60,47 @@ public sealed class JobRuntimeService : IJobRuntimeService
         return ApplicationResult<JobRunHistoryDto>.Success(ToDto(history));
     }
 
+    public async Task<ApplicationResult<JobRunHistoryDto>> RecordBlockedAsync(
+        Guid jobDefinitionId,
+        string triggerSource,
+        string? triggeredBy,
+        string? correlationId,
+        string reason,
+        CancellationToken cancellationToken)
+    {
+        if (jobDefinitionId == Guid.Empty)
+            return ApplicationResult<JobRunHistoryDto>.Failure(ApplicationError.Validation("Job definition ID is required."));
+
+        var job = await _dbContext.JobDefinitions
+            .FirstOrDefaultAsync(x => !x.IsDeleted && x.Id == jobDefinitionId, cancellationToken);
+
+        if (job is null)
+            return ApplicationResult<JobRunHistoryDto>.Failure(ApplicationError.NotFound("Job definition was not found."));
+
+        var history = new JobRunHistory(
+            jobDefinitionId: job.Id,
+            jobCode: job.JobCode,
+            jobName: job.JobName,
+            jobType: job.JobType,
+            triggerSource: triggerSource,
+            triggeredBy: triggeredBy,
+            correlationId: correlationId,
+            isSynthetic: false,
+            sourceSystem: "PlantProcessIQ.JobRuntime",
+            sourceRecordId: null);
+
+        // Born terminal. There is no SaveChanges between construction and this
+        // call, so no observer ever sees the transient Running state.
+        history.MarkBlocked(reason);
+        job.MarkBlocked(reason, history.CompletedAtUtc);
+
+        _dbContext.JobRunHistories.Add(history);
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return ApplicationResult<JobRunHistoryDto>.Success(ToDto(history));
+    }
+
     public async Task<ApplicationResult<JobRunHistoryDto>> CompleteAsync(
         Guid jobRunHistoryId,
         JobRunStatus finalStatus,

@@ -134,6 +134,26 @@ public class JobRunHistory : BaseEntity
         MarkAsUpdated();
     }
 
+    /// <summary>
+    /// T-106. THE ATTEMPT EXISTS AND COMPUTE NEVER STARTED.
+    ///
+    /// Called before the row is first persisted, so the run is born terminal:
+    /// the database never observes Running for a blocked attempt. Duration is
+    /// deliberately zero rather than null - the attempt was evaluated and
+    /// refused, which took no compute, and null would read as unknown.
+    /// </summary>
+    public void MarkBlocked(string reason)
+    {
+        CompletedAtUtc = DateTime.UtcNow;
+        DurationMs = 0;
+        Status = JobRunStatus.Blocked;
+        FailureReason = string.IsNullOrWhiteSpace(reason)
+            ? "The run was blocked before compute started."
+            : reason.Trim();
+        RunMessage = FailureReason;
+        MarkAsUpdated();
+    }
+
     public void MarkTimedOut(string failureReason, string? resultSummaryJson = null)
     {
         CompletedAtUtc = DateTime.UtcNow;

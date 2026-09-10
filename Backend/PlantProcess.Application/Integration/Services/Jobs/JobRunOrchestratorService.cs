@@ -58,16 +58,14 @@ public sealed class JobRunOrchestratorService : IJobRunOrchestratorService
         if (job is null)
             return ApplicationResult<JobActionResponseDto>.Failure(ApplicationError.NotFound("Job definition was not found."));
 
-        // ADMISSION BEFORE ANY RUN RECORD EXISTS. Paused state and executor
-        // capability are both answered here, so an unsupported family never
-        // opens a JobRunHistory row it can only close as failed.
+        // CAPABILITY FIRST, AND NOTHING BEFORE IT. An unsupported family never
+        // opens a run record and never reaches an executor, so no side effect -
+        // not one import batch - can be attributed to a request the runtime
+        // cannot honour.
         ApplicationResult admitted = JobRunAdmission.Admit(job, _capability);
         if (admitted.IsFailure)
             return ApplicationResult<JobActionResponseDto>.Failure(admitted.Error!);
 
-        // The declared target is resolved through the canonical definition
-        // authority BEFORE execution, so a job that cannot say which immutable
-        // version it runs never runs at all.
         ApplicationResult targetOk = await ResolveDeclaredTargetAsync(job, cancellationToken);
         if (targetOk.IsFailure)
             return ApplicationResult<JobActionResponseDto>.Failure(targetOk.Error!);
@@ -86,41 +84,25 @@ public sealed class JobRunOrchestratorService : IJobRunOrchestratorService
         {
             var executionResult = await ExecuteJobAsync(job.JobType, cancellationToken);
 
-            var finalStatus = executionResult.IsSuccess
-                ? JobRunStatus.Ok
-                : JobRunStatus.Failed;
+            var finalStatus = executionResult.IsSuccess ? JobRunStatus.Ok : JobRunStatus.Failed;
 
             var completed = await _jobRuntimeService.CompleteAsync(
-                run.Value.Id,
-                finalStatus,
-                executionResult.Message,
+                run.Value.Id, finalStatus, executionResult.Message,
                 executionResult.IsSuccess ? null : executionResult.Message,
-                executionResult.ResultSummaryJson,
-                cancellationToken);
+                executionResult.ResultSummaryJson, cancellationToken);
 
             if (completed.IsFailure)
                 return ApplicationResult<JobActionResponseDto>.Failure(completed.Error!);
 
             return ApplicationResult<JobActionResponseDto>.Success(
                 new JobActionResponseDto(
-                    job.Id,
-                    job.JobCode,
-                    job.JobName,
-                    job.JobType,
-                    finalStatus,
-                    executionResult.Message,
-                    run.Value.Id,
-                    DateTime.UtcNow));
+                    job.Id, job.JobCode, job.JobName, job.JobType, finalStatus,
+                    executionResult.Message, run.Value.Id, DateTime.UtcNow));
         }
         catch (Exception ex)
         {
             await _jobRuntimeService.CompleteAsync(
-                run.Value.Id,
-                JobRunStatus.Failed,
-                ex.Message,
-                ex.Message,
-                null,
-                CancellationToken.None);
+                run.Value.Id, JobRunStatus.Failed, ex.Message, ex.Message, null, CancellationToken.None);
 
             return ApplicationResult<JobActionResponseDto>.Failure(
                 ApplicationError.Unexpected($"Run Now failed: {ex.Message}"));
@@ -141,9 +123,48 @@ public sealed class JobRunOrchestratorService : IJobRunOrchestratorService
 
         string chainCorrelation = correlationId ?? Guid.NewGuid().ToString("N");
         var executed = new List<JobActionResponseDto>();
+        var chainRuns = new Dictionary<Guid, JobRunSnapshot>();
 
         foreach (Guid id in order.Value)
         {
+            ApplicationResult<IReadOnlyList<JobDependencyOutcome>> evaluation =
+                await _dependencies.EvaluateAsync(id, chainRuns, cancellationToken);
+
+            if (evaluation.IsFailure || evaluation.Value is null)
+                return ApplicationResult<IReadOnlyList<JobActionResponseDto>>.Failure(evaluation.Error!);
+
+            IReadOnlyList<JobDependencyOutcome> outcomes = evaluation.Value;
+
+            bool blocked = false;
+            foreach (JobDependencyOutcome outcome in outcomes)
+            {
+                if (outcome.BlocksDownstream) { blocked = true; }
+            }
+
+            if (blocked)
+            {
+                // THE ATTEMPT IS REAL. A blocked child is recorded as a terminal
+                // Blocked run with a genuine history identity, so the dependency
+                // evidence below references a run that exists rather than an
+                // invented id, and the monitor stops reporting a stale outcome.
+                string reason = FirstBlockingReason(outcomes);
+
+                var blockedRun = await _jobRuntimeService.RecordBlockedAsync(
+                    id, "ManualRunNow", requestedBy ?? "Admin", chainCorrelation, reason, cancellationToken);
+
+                if (blockedRun.IsFailure || blockedRun.Value is null)
+                    return ApplicationResult<IReadOnlyList<JobActionResponseDto>>.Failure(blockedRun.Error!);
+
+                ApplicationResult recorded = await _dependencies.RecordResolutionsAsync(
+                    blockedRun.Value.Id, id, outcomes, cancellationToken);
+
+                if (recorded.IsFailure)
+                    return ApplicationResult<IReadOnlyList<JobActionResponseDto>>.Failure(recorded.Error!);
+
+                return ApplicationResult<IReadOnlyList<JobActionResponseDto>>.Failure(
+                    ApplicationError.BusinessRule(reason));
+            }
+
             ApplicationResult<JobActionResponseDto> step =
                 await RunNowAsync(id, requestedBy, chainCorrelation, cancellationToken);
 
@@ -152,51 +173,65 @@ public sealed class JobRunOrchestratorService : IJobRunOrchestratorService
 
             executed.Add(step.Value);
 
-            // A predecessor that ran and failed still stops the chain. Run Now
-            // reports a failed run as a successful REQUEST, which is the right
-            // answer for one job and the wrong one for an ordered chain.
-            if (step.Value.Status != JobRunStatus.Ok)
+            if (step.Value.JobRunHistoryId.HasValue && outcomes.Count > 0)
             {
-                return ApplicationResult<IReadOnlyList<JobActionResponseDto>>.Failure(
-                    ApplicationError.BusinessRule(
-                        "Job " + step.Value.JobCode + " did not complete successfully, so the jobs that depend on it "
-                        + "were not started. " + step.Value.Message));
+                ApplicationResult recorded = await _dependencies.RecordResolutionsAsync(
+                    step.Value.JobRunHistoryId.Value, id, outcomes, cancellationToken);
+
+                if (recorded.IsFailure)
+                    return ApplicationResult<IReadOnlyList<JobActionResponseDto>>.Failure(recorded.Error!);
             }
+
+            if (step.Value.JobRunHistoryId.HasValue)
+            {
+                chainRuns[id] = new JobRunSnapshot(step.Value.JobRunHistoryId.Value, step.Value.Status, null);
+            }
+
+            // Do not return here. A failed predecessor must remain in chainRuns so
+            // the next dependent can evaluate it, create its own REAL Blocked run
+            // and persist failed_upstream evidence. Returning at this point was the
+            // exact absence the corrective is intended to remove. Optional dependents
+            // are also allowed to continue and record skipped_optional honestly.
         }
 
         return ApplicationResult<IReadOnlyList<JobActionResponseDto>>.Success(executed);
     }
 
+    private static string FirstBlockingReason(IReadOnlyList<JobDependencyOutcome> outcomes)
+    {
+        foreach (JobDependencyOutcome outcome in outcomes)
+        {
+            if (outcome.BlocksDownstream) { return outcome.Reason; }
+        }
+
+        return "The run was blocked before compute started.";
+    }
+
     private async Task<ApplicationResult> ResolveDeclaredTargetAsync(
-        JobDefinition job,
-        CancellationToken cancellationToken)
+        JobDefinition job, CancellationToken cancellationToken)
     {
         if (!job.TargetDefinitionId.HasValue)
         {
             ApplicationResult<JobTargetResolution> none =
                 await _targetResolver.ResolveAsync(job.JobType, null, cancellationToken);
 
-            return none.IsFailure
-                ? ApplicationResult.Failure(none.Error!)
-                : ApplicationResult.Success();
+            return none.IsFailure ? ApplicationResult.Failure(none.Error!) : ApplicationResult.Success();
         }
 
         if (string.IsNullOrWhiteSpace(job.TargetDefinitionKind) || !job.TargetVersionPolicy.HasValue)
         {
-            return ApplicationResult.Failure(
-                ApplicationError.Validation(
-                    "Job " + job.JobCode + " declares a target identity without a kind or a version policy, "
-                    + "so nothing can say which definition version it would run."));
+            return ApplicationResult.Failure(ApplicationError.Validation(
+                "Job " + job.JobCode + " declares a target identity without a kind or a version policy, "
+                + "so nothing can say which definition version it would run."));
         }
 
         DefinitionKind kind;
         if (!Enum.TryParse(job.TargetDefinitionKind, false, out kind)
             || !Enum.IsDefined(typeof(DefinitionKind), kind))
         {
-            return ApplicationResult.Failure(
-                ApplicationError.Validation(
-                    "Job " + job.JobCode + " declares target kind '" + job.TargetDefinitionKind
-                    + "', which is not a canonical definition kind."));
+            return ApplicationResult.Failure(ApplicationError.Validation(
+                "Job " + job.JobCode + " declares target kind '" + job.TargetDefinitionKind
+                + "', which is not a canonical definition kind."));
         }
 
         var reference = new JobTargetReference
@@ -211,26 +246,24 @@ public sealed class JobRunOrchestratorService : IJobRunOrchestratorService
         ApplicationResult<JobTargetResolution> resolved =
             await _targetResolver.ResolveAsync(job.JobType, reference, cancellationToken);
 
-        return resolved.IsFailure
-            ? ApplicationResult.Failure(resolved.Error!)
-            : ApplicationResult.Success();
+        return resolved.IsFailure ? ApplicationResult.Failure(resolved.Error!) : ApplicationResult.Success();
     }
 
     private async Task<RunNowExecutionResult> ExecuteJobAsync(
-        JobDefinitionType jobType,
-        CancellationToken cancellationToken)
+        JobDefinitionType jobType, CancellationToken cancellationToken)
     {
         switch (jobType)
         {
+            // CanonicalRefresh is deliberately absent. Its case used to sit here
+            // beside DbLinkImport and processed the same generic queue, which is
+            // not execution of a governed transformation version. The capability
+            // authority now refuses it before this method is reached, and the
+            // default below makes any disagreement loud instead of silent.
             case JobDefinitionType.DbLinkImport:
-            case JobDefinitionType.CanonicalRefresh:
             {
                 var result = await _importBatchQueueProcessorService.ProcessPendingBatchesAsync(
-                    maxBatches: 10,
-                    rowsPerBatch: 5000,
-                    stopOnFirstError: false,
-                    runDataQualityScan: false,
-                    cancellationToken);
+                    maxBatches: 10, rowsPerBatch: 5000, stopOnFirstError: false,
+                    runDataQualityScan: false, cancellationToken);
 
                 if (result.IsFailure || result.Value is null)
                 {
@@ -246,8 +279,7 @@ public sealed class JobRunOrchestratorService : IJobRunOrchestratorService
             case JobDefinitionType.DataQualityScan:
             {
                 var result = await _dataQualityService.RunFullScanAsync(
-                    maxCandidatesPerRule: 500,
-                    cancellationToken);
+                    maxCandidatesPerRule: 500, cancellationToken);
 
                 if (result.IsFailure || result.Value is null)
                 {
@@ -264,11 +296,8 @@ public sealed class JobRunOrchestratorService : IJobRunOrchestratorService
             {
                 var result = await _riskScoreService.CalculateBatchAsync(
                     new CalculateRiskScoresBatchCommand(
-                        SiteId: null,
-                        RiskType: "QualityRisk",
-                        MaxMaterials: 100,
-                        StoreResult: true,
-                        RequestedBy: "AdminRunNow",
+                        SiteId: null, RiskType: "QualityRisk", MaxMaterials: 100,
+                        StoreResult: true, RequestedBy: "AdminRunNow",
                         CorrelationId: Guid.NewGuid().ToString("N")),
                     cancellationToken);
 
@@ -284,21 +313,13 @@ public sealed class JobRunOrchestratorService : IJobRunOrchestratorService
             }
 
             default:
-                // Unreachable by contract. Admission has already asked the one
-                // capability authority, so arriving here means the authority
-                // and this switch disagree about what the runtime can execute.
-                // A loud contradiction is the point: the alternative is the
-                // defect this task exists to close.
                 throw new InvalidOperationException(
                     "Job family " + jobType + " passed capability admission but has no executor here. "
                     + "The capability authority and the executor disagree.");
         }
     }
 
-    private sealed record RunNowExecutionResult(
-        bool IsSuccess,
-        string Message,
-        string? ResultSummaryJson)
+    private sealed record RunNowExecutionResult(bool IsSuccess, string Message, string? ResultSummaryJson)
     {
         public static RunNowExecutionResult Ok(string message, string? resultSummaryJson)
         {

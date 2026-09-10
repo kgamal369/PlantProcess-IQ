@@ -12,6 +12,7 @@ using PlantProcess.Application.Definitions;
 using PlantProcess.Application.Definitions.Contracts;
 using PlantProcess.Application.Definitions.Interfaces;
 using PlantProcess.Application.Jobs.Targeting;
+using PlantProcess.Application.Jobs.Execution;
 using PlantProcess.Domain.Entities.Integration;
 using PlantProcess.Domain.Enums.Integration;
 using Xunit;
@@ -25,30 +26,52 @@ public sealed class JobTargetResolverTests
     // --- the class policy ---------------------------------------------------
 
     [Fact]
-    public void The_declared_class_policy_is_total_over_the_job_class_enum()
+    public void The_capability_derived_class_policy_is_total_over_the_job_class_enum()
     {
-        DeclaredJobTargetClassPolicy policy = new();
+        IJobTargetClassPolicy policy = new CapabilityJobTargetClassPolicy(
+            new JobExecutionCapabilityAuthority());
 
         foreach (JobDefinitionType jobClass in Enum.GetValues<JobDefinitionType>())
         {
             JobTargetClassRule rule = policy.RuleFor(jobClass);
             Assert.NotNull(rule);
-            Assert.Contains(jobClass, DeclaredJobTargetClassPolicy.DeclaredClasses);
         }
     }
 
     [Fact]
-    public void No_job_class_currently_declares_a_target_requirement()
+    public void Governed_target_requirements_are_derived_from_the_single_capability_authority()
     {
-        // A measured statement about today, pinned so that declaring one later is
-        // a deliberate change with a failing test beside it rather than a drift.
-        DeclaredJobTargetClassPolicy policy = new();
+        IJobTargetClassPolicy policy = new CapabilityJobTargetClassPolicy(
+            new JobExecutionCapabilityAuthority());
 
         foreach (JobDefinitionType jobClass in Enum.GetValues<JobDefinitionType>())
         {
             JobTargetClassRule rule = policy.RuleFor(jobClass);
-            Assert.False(rule.RequiresTarget);
-            Assert.Null(rule.PermittedKinds);
+
+            switch (jobClass)
+            {
+                case JobDefinitionType.CanonicalRefresh:
+                    Assert.True(rule.RequiresTarget);
+                    Assert.NotNull(rule.PermittedKinds);
+                    Assert.Single(rule.PermittedKinds!);
+                    Assert.Equal(DefinitionKind.Transformation, rule.PermittedKinds![0]);
+                    break;
+
+                case JobDefinitionType.MlParamsVsDefects:
+                case JobDefinitionType.MlParamsVsDowntime:
+                case JobDefinitionType.MlParamsVsKpis:
+                case JobDefinitionType.MlWeeklyFull:
+                    Assert.True(rule.RequiresTarget);
+                    Assert.NotNull(rule.PermittedKinds);
+                    Assert.Single(rule.PermittedKinds!);
+                    Assert.Equal(DefinitionKind.Model, rule.PermittedKinds![0]);
+                    break;
+
+                default:
+                    Assert.False(rule.RequiresTarget);
+                    Assert.Null(rule.PermittedKinds);
+                    break;
+            }
         }
     }
 
@@ -311,7 +334,7 @@ public sealed class JobTargetResolverTests
         // claim a governed meaning the specification did not give it.
         JobTargetResolver resolver = new(
             new RefusingDefinitionService("no version adapter for this kind"),
-            new DeclaredJobTargetClassPolicy(),
+            new CapabilityJobTargetClassPolicy(new JobExecutionCapabilityAuthority()),
             new StubLookup());
 
         ApplicationResult<JobTargetResolution> result = await resolver.ResolveAsync(
@@ -357,7 +380,7 @@ public sealed class JobTargetResolverTests
     {
         CountingDefinitionService counting = new();
         JobTargetResolver resolver = new(
-            counting, new DeclaredJobTargetClassPolicy(), new StubLookup());
+            counting, new CapabilityJobTargetClassPolicy(new JobExecutionCapabilityAuthority()), new StubLookup());
 
         ApplicationResult<JobTargetResolution> result = await resolver.ResolveAsync(
             JobDefinitionType.Custom,
@@ -380,7 +403,7 @@ public sealed class JobTargetResolverTests
     {
         JobTargetResolver resolver = new(
             new StubDefinitionService(Array.Empty<DefinitionVersionSummary>()),
-            new DeclaredJobTargetClassPolicy(),
+            new CapabilityJobTargetClassPolicy(new JobExecutionCapabilityAuthority()),
             new StubLookup("NIGHTLY_LEARNING", "WEEKLY_FULL"));
 
         ApplicationResult result = await resolver.AssertNotTargetedByJobsAsync(
@@ -397,7 +420,7 @@ public sealed class JobTargetResolverTests
     {
         JobTargetResolver resolver = new(
             new StubDefinitionService(Array.Empty<DefinitionVersionSummary>()),
-            new DeclaredJobTargetClassPolicy(),
+            new CapabilityJobTargetClassPolicy(new JobExecutionCapabilityAuthority()),
             new StubLookup());
 
         ApplicationResult result = await resolver.AssertNotTargetedByJobsAsync(
@@ -668,7 +691,7 @@ public sealed class JobTargetResolverTests
     private static JobTargetResolver ResolverWith(params DefinitionVersionSummary[] versions)
     {
         return new JobTargetResolver(
-            new StubDefinitionService(versions), new DeclaredJobTargetClassPolicy(), new StubLookup());
+            new StubDefinitionService(versions), new CapabilityJobTargetClassPolicy(new JobExecutionCapabilityAuthority()), new StubLookup());
     }
 
     private static JobTargetResolver ResolverWith(

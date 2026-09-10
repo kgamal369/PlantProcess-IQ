@@ -1,4 +1,5 @@
 using PlantProcess.Application.Definitions;
+using PlantProcess.Application.Jobs.Execution;
 using PlantProcess.Domain.Enums.Integration;
 
 namespace PlantProcess.Application.Jobs.Targeting;
@@ -26,52 +27,41 @@ public interface IJobTargetClassPolicy
 }
 
 /// <summary>
-/// T-064. THE DECLARED POLICY, AND WHAT IT DELIBERATELY DOES NOT CLAIM.
+/// T-106. A THIN ADAPTER, NOT A SECOND DICTIONARY.
 ///
-/// JB01 and JB02 exist because some job classes require a target and constrain
-/// which kind of definition they may run. WHICH classes those are is a product
-/// ruling, and no such declaration exists anywhere in this repository today:
-/// JobDefinitionType carries nine members and not one of them has ever held a
-/// governed target.
+/// The class policy this replaces carried its own table of nine families, every
+/// one of them Unconstrained, with a comment admitting that no declaration
+/// existed anywhere in the repository. That made JB01 and JB02 mechanisms with
+/// nothing to fire on, and it made the target contract a second record of a fact
+/// the capability authority also holds.
 ///
-/// So this table is total over those nine and every one of them is currently
-/// Unconstrained. That is a measured statement about today, not a claim that no
-/// class will ever require a target. Declaring one is a one-line change here,
-/// and the mechanism that turns the declaration into a JB01 or a JB02 refusal is
-/// implemented and falsified by tests using an explicit policy.
-///
-/// Inventing the declarations instead would have produced a table that reads
-/// like specification and is guesswork.
+/// The rule is now DERIVED. One family descriptor answers both questions, so the
+/// two can never disagree, and T-064's resolver, its JB vocabulary and its codec
+/// are untouched - they simply start receiving real answers.
 /// </summary>
-public sealed class DeclaredJobTargetClassPolicy : IJobTargetClassPolicy
+public sealed class CapabilityJobTargetClassPolicy : IJobTargetClassPolicy
 {
-    private static readonly Dictionary<JobDefinitionType, JobTargetClassRule> Rules = new()
+    private readonly IJobExecutionCapabilityAuthority _capabilities;
+
+    public CapabilityJobTargetClassPolicy(IJobExecutionCapabilityAuthority capabilities)
     {
-        [JobDefinitionType.DbLinkImport] = JobTargetClassRule.Unconstrained,
-        [JobDefinitionType.CanonicalRefresh] = JobTargetClassRule.Unconstrained,
-        [JobDefinitionType.MlParamsVsDefects] = JobTargetClassRule.Unconstrained,
-        [JobDefinitionType.MlParamsVsDowntime] = JobTargetClassRule.Unconstrained,
-        [JobDefinitionType.MlParamsVsKpis] = JobTargetClassRule.Unconstrained,
-        [JobDefinitionType.MlWeeklyFull] = JobTargetClassRule.Unconstrained,
-        [JobDefinitionType.DataQualityScan] = JobTargetClassRule.Unconstrained,
-        [JobDefinitionType.RiskScoring] = JobTargetClassRule.Unconstrained,
-        [JobDefinitionType.Custom] = JobTargetClassRule.Unconstrained
-    };
+        _capabilities = capabilities;
+    }
 
     public JobTargetClassRule RuleFor(JobDefinitionType jobClass)
     {
-        if (!Rules.TryGetValue(jobClass, out JobTargetClassRule? rule))
+        JobExecutionCapability capability = _capabilities.Describe(jobClass);
+
+        if (capability.TargetRequirement != JobTargetRequirement.Required
+            || capability.CanonicalTargetKind is null)
         {
-            // A member added to the enum without a rule here is a gap, and a gap
-            // that answers "unconstrained" is a gap nobody finds.
-            throw new InvalidOperationException(
-                "Job class " + jobClass + " has no declared target rule. Every member of "
-                + "JobDefinitionType must be declared in DeclaredJobTargetClassPolicy.");
+            return JobTargetClassRule.Unconstrained;
         }
 
-        return rule;
+        return new JobTargetClassRule
+        {
+            RequiresTarget = true,
+            PermittedKinds = new[] { capability.CanonicalTargetKind.Value }
+        };
     }
-
-    /// <summary>Exposed so a test can prove the table is total over the enum.</summary>
-    public static IReadOnlyCollection<JobDefinitionType> DeclaredClasses => Rules.Keys;
 }

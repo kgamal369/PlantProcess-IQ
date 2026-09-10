@@ -2,19 +2,22 @@ using Microsoft.EntityFrameworkCore;
 using PlantProcess.Application.Common.Persistence;
 using PlantProcess.Application.Common.Results;
 using PlantProcess.Domain.Entities.Integration;
+using PlantProcess.Domain.Enums.Integration;
 
 namespace PlantProcess.Application.Jobs.Dependencies;
 
-/// <summary>
-/// T-106. The one canonical dependency graph, read and written in one place.
-/// There is no second scheduler and no second registry: this reads the same
-/// job_definitions rows the orchestrator runs.
-/// </summary>
+/// <summary>T-106. What one job's run produced, for edges that point at it.</summary>
+public sealed record JobRunSnapshot(Guid RunId, JobRunStatus Status, int? TargetDefinitionVersion);
+
 public interface IJobDependencyService
 {
     Task<ApplicationResult> AddDependencyAsync(
         Guid jobDefinitionId,
         Guid dependsOnJobDefinitionId,
+        JobDependencyKind dependencyKind,
+        bool isRequired,
+        int? dependsOnVersion,
+        int? stalenessToleranceMinutes,
         CancellationToken cancellationToken);
 
     Task<ApplicationResult> RemoveDependencyAsync(
@@ -25,12 +28,24 @@ public interface IJobDependencyService
     Task<ApplicationResult<IReadOnlyList<JobDependencyEdge>>> ListEdgesAsync(
         CancellationToken cancellationToken);
 
-    /// <summary>
-    /// The jobs that must run, predecessors first, for the given job to run
-    /// lawfully. The given job is the last element on success.
-    /// </summary>
     Task<ApplicationResult<IReadOnlyList<Guid>>> ResolveExecutionOrderAsync(
         Guid jobDefinitionId,
+        CancellationToken cancellationToken);
+
+    /// <summary>
+    /// T-106. Resolves every edge pointing out of one job, using the runs this
+    /// chain has already produced first and the persisted history otherwise.
+    /// </summary>
+    Task<ApplicationResult<IReadOnlyList<JobDependencyOutcome>>> EvaluateAsync(
+        Guid jobDefinitionId,
+        IReadOnlyDictionary<Guid, JobRunSnapshot> chainRuns,
+        CancellationToken cancellationToken);
+
+    /// <summary>Persists the evidence against a REAL downstream run identity.</summary>
+    Task<ApplicationResult> RecordResolutionsAsync(
+        Guid runId,
+        Guid jobDefinitionId,
+        IReadOnlyList<JobDependencyOutcome> outcomes,
         CancellationToken cancellationToken);
 }
 
@@ -46,43 +61,34 @@ public sealed class JobDependencyService : IJobDependencyService
     public async Task<ApplicationResult> AddDependencyAsync(
         Guid jobDefinitionId,
         Guid dependsOnJobDefinitionId,
+        JobDependencyKind dependencyKind,
+        bool isRequired,
+        int? dependsOnVersion,
+        int? stalenessToleranceMinutes,
         CancellationToken cancellationToken)
     {
         ApplicationResult dependent = await AssertJobExistsAsync(jobDefinitionId, cancellationToken);
-        if (dependent.IsFailure)
-        {
-            return dependent;
-        }
+        if (dependent.IsFailure) { return dependent; }
 
         ApplicationResult predecessor = await AssertJobExistsAsync(dependsOnJobDefinitionId, cancellationToken);
-        if (predecessor.IsFailure)
-        {
-            return predecessor;
-        }
+        if (predecessor.IsFailure) { return predecessor; }
 
         IReadOnlyList<JobDependencyEdge> existing = await LoadEdgesAsync(cancellationToken);
-
         var candidate = new JobDependencyEdge(jobDefinitionId, dependsOnJobDefinitionId);
 
-        // Refused HERE, at save time. The database trigger says the same thing
-        // for a writer that is not this application; neither is the other's
-        // fallback, and both refuse before anything is scheduled.
         ApplicationResult lawful = JobDependencyGraph.ValidateNewEdge(candidate, existing);
-        if (lawful.IsFailure)
-        {
-            return lawful;
-        }
+        if (lawful.IsFailure) { return lawful; }
 
-        _dbContext.JobDependencies.Add(new JobDependency(jobDefinitionId, dependsOnJobDefinitionId));
+        _dbContext.JobDependencies.Add(new JobDependency(
+            jobDefinitionId, dependsOnJobDefinitionId, dependencyKind,
+            isRequired, dependsOnVersion, stalenessToleranceMinutes));
+
         await _dbContext.SaveChangesAsync(cancellationToken);
-
         return ApplicationResult.Success();
     }
 
     public async Task<ApplicationResult> RemoveDependencyAsync(
-        Guid jobDefinitionId,
-        Guid dependsOnJobDefinitionId,
-        CancellationToken cancellationToken)
+        Guid jobDefinitionId, Guid dependsOnJobDefinitionId, CancellationToken cancellationToken)
     {
         JobDependency? row = await _dbContext.JobDependencies
             .FirstOrDefaultAsync(
@@ -93,14 +99,12 @@ public sealed class JobDependencyService : IJobDependencyService
 
         if (row is null)
         {
-            return ApplicationResult.Failure(
-                ApplicationError.NotFound(
-                    "Job " + jobDefinitionId + " does not depend on job " + dependsOnJobDefinitionId + "."));
+            return ApplicationResult.Failure(ApplicationError.NotFound(
+                "Job " + jobDefinitionId + " does not depend on job " + dependsOnJobDefinitionId + "."));
         }
 
         row.SoftDelete("Dependency removed.");
         await _dbContext.SaveChangesAsync(cancellationToken);
-
         return ApplicationResult.Success();
     }
 
@@ -112,8 +116,7 @@ public sealed class JobDependencyService : IJobDependencyService
     }
 
     public async Task<ApplicationResult<IReadOnlyList<Guid>>> ResolveExecutionOrderAsync(
-        Guid jobDefinitionId,
-        CancellationToken cancellationToken)
+        Guid jobDefinitionId, CancellationToken cancellationToken)
     {
         ApplicationResult exists = await AssertJobExistsAsync(jobDefinitionId, cancellationToken);
         if (exists.IsFailure)
@@ -127,32 +130,115 @@ public sealed class JobDependencyService : IJobDependencyService
         return JobDependencyGraph.TopologicalOrder(closure, edges);
     }
 
+    public async Task<ApplicationResult<IReadOnlyList<JobDependencyOutcome>>> EvaluateAsync(
+        Guid jobDefinitionId,
+        IReadOnlyDictionary<Guid, JobRunSnapshot> chainRuns,
+        CancellationToken cancellationToken)
+    {
+        List<JobDependency> edges = await _dbContext.JobDependencies
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted && x.JobDefinitionId == jobDefinitionId)
+            .OrderBy(x => x.DependsOnJobDefinitionId)
+            .ToListAsync(cancellationToken);
+
+        var outcomes = new List<JobDependencyOutcome>();
+
+        foreach (JobDependency edge in edges)
+        {
+            JobRunSnapshot? upstream = null;
+
+            if (chainRuns.TryGetValue(edge.DependsOnJobDefinitionId, out JobRunSnapshot? fromChain))
+            {
+                // The action DTO intentionally does not duplicate the resolved target
+                // version. Recover it from the real run-history identity rather than
+                // filling the snapshot with null and accidentally turning every pinned
+                // dependency into a mismatch.
+                int? actualVersion = await _dbContext.JobRunHistories
+                    .AsNoTracking()
+                    .Where(x => !x.IsDeleted && x.Id == fromChain.RunId)
+                    .Select(x => x.TargetDefinitionVersion)
+                    .FirstOrDefaultAsync(cancellationToken);
+
+                upstream = fromChain with { TargetDefinitionVersion = actualVersion };
+            }
+            else
+            {
+                upstream = await LatestRunAsync(edge.DependsOnJobDefinitionId, cancellationToken);
+            }
+
+            outcomes.Add(JobDependencyEvaluator.Evaluate(
+                edge.DependsOnJobDefinitionId,
+                edge.IsRequired,
+                edge.DependsOnVersion,
+                upstream?.RunId,
+                upstream?.Status,
+                upstream?.TargetDefinitionVersion));
+        }
+
+        return ApplicationResult<IReadOnlyList<JobDependencyOutcome>>.Success(outcomes);
+    }
+
+    public async Task<ApplicationResult> RecordResolutionsAsync(
+        Guid runId,
+        Guid jobDefinitionId,
+        IReadOnlyList<JobDependencyOutcome> outcomes,
+        CancellationToken cancellationToken)
+    {
+        if (runId == Guid.Empty)
+        {
+            return ApplicationResult.Failure(ApplicationError.Validation(
+                "Dependency evidence requires a real downstream run identity."));
+        }
+
+        foreach (JobDependencyOutcome outcome in outcomes)
+        {
+            _dbContext.JobRunDependencies.Add(new JobRunDependency(
+                runId,
+                outcome.DependsOnRunId,
+                jobDefinitionId,
+                outcome.DependsOnJobDefinitionId,
+                outcome.Resolution,
+                outcome.ExpectedVersion,
+                outcome.ActualVersion,
+                outcome.Reason));
+        }
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return ApplicationResult.Success();
+    }
+
+    private async Task<JobRunSnapshot?> LatestRunAsync(Guid jobDefinitionId, CancellationToken cancellationToken)
+    {
+        JobRunHistory? latest = await _dbContext.JobRunHistories
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted && x.JobDefinitionId == jobDefinitionId)
+            .OrderByDescending(x => x.StartedAtUtc)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return latest is null
+            ? null
+            : new JobRunSnapshot(latest.Id, latest.Status, latest.TargetDefinitionVersion);
+    }
+
     private async Task<IReadOnlyList<JobDependencyEdge>> LoadEdgesAsync(CancellationToken cancellationToken)
     {
-        List<JobDependencyEdge> edges = await _dbContext.JobDependencies
+        return await _dbContext.JobDependencies
             .AsNoTracking()
             .Where(x => !x.IsDeleted)
             .OrderBy(x => x.JobDefinitionId)
             .ThenBy(x => x.DependsOnJobDefinitionId)
             .Select(x => new JobDependencyEdge(x.JobDefinitionId, x.DependsOnJobDefinitionId))
             .ToListAsync(cancellationToken);
-
-        return edges;
     }
 
-    private async Task<ApplicationResult> AssertJobExistsAsync(
-        Guid jobDefinitionId,
-        CancellationToken cancellationToken)
+    private async Task<ApplicationResult> AssertJobExistsAsync(Guid jobDefinitionId, CancellationToken cancellationToken)
     {
         bool present = await _dbContext.JobDefinitions
             .AsNoTracking()
             .AnyAsync(x => !x.IsDeleted && x.Id == jobDefinitionId, cancellationToken);
 
-        if (!present)
-        {
-            return ApplicationResult.Failure(JobDependencyErrors.UnknownJobInDependency(jobDefinitionId));
-        }
-
-        return ApplicationResult.Success();
+        return present
+            ? ApplicationResult.Success()
+            : ApplicationResult.Failure(JobDependencyErrors.UnknownJobInDependency(jobDefinitionId));
     }
 }
