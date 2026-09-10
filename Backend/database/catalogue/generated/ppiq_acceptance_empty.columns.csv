@@ -572,6 +572,21 @@ ppiq_meta,job_definitions,6,target_type,character varying(120),nullable,
 ppiq_meta,job_definitions,7,schedule_expression,character varying(250),not_null,
 ppiq_meta,job_definitions,8,is_enabled,boolean,not_null,
 ppiq_meta,job_definitions,9,last_run_started_at_utc,timestamp with time zone,nullable,
+ppiq_meta,job_dependencies,1,id,uuid,not_null,gen_random_uuid()
+ppiq_meta,job_dependencies,10,deleted_at_utc,timestamp with time zone,nullable,
+ppiq_meta,job_dependencies,11,deleted_reason,character varying(500),nullable,
+ppiq_meta,job_dependencies,12,dependency_kind,character varying(20),not_null,'data'::character varying
+ppiq_meta,job_dependencies,13,is_required,boolean,not_null,true
+ppiq_meta,job_dependencies,14,depends_on_version,integer,nullable,
+ppiq_meta,job_dependencies,15,staleness_tolerance_minutes,integer,nullable,
+ppiq_meta,job_dependencies,2,job_definition_id,uuid,not_null,
+ppiq_meta,job_dependencies,3,depends_on_job_definition_id,uuid,not_null,
+ppiq_meta,job_dependencies,4,created_at_utc,timestamp with time zone,not_null,now()
+ppiq_meta,job_dependencies,5,updated_at_utc,timestamp with time zone,nullable,
+ppiq_meta,job_dependencies,6,is_synthetic,boolean,not_null,false
+ppiq_meta,job_dependencies,7,source_system,character varying(100),nullable,
+ppiq_meta,job_dependencies,8,source_record_id,character varying(100),nullable,
+ppiq_meta,job_dependencies,9,is_deleted,boolean,not_null,false
 ppiq_meta,job_log,1,id,uuid,not_null,gen_random_uuid()
 ppiq_meta,job_log,2,occurred_at_utc,timestamp with time zone,not_null,now()
 ppiq_meta,job_log,3,job_type,text,not_null,
@@ -581,6 +596,25 @@ ppiq_meta,job_log,6,severity,text,not_null,
 ppiq_meta,job_log,7,message,text,not_null,
 ppiq_meta,job_log,8,context,jsonb,not_null,'{}'::jsonb
 ppiq_meta,job_log,9,site_code,text,nullable,
+ppiq_meta,job_run_dependencies,1,id,uuid,not_null,gen_random_uuid()
+ppiq_meta,job_run_dependencies,10,reason,text,nullable,
+ppiq_meta,job_run_dependencies,11,watermark_inherited,text,nullable,
+ppiq_meta,job_run_dependencies,12,created_at_utc,timestamp with time zone,not_null,now()
+ppiq_meta,job_run_dependencies,13,updated_at_utc,timestamp with time zone,nullable,
+ppiq_meta,job_run_dependencies,14,is_synthetic,boolean,not_null,false
+ppiq_meta,job_run_dependencies,15,source_system,character varying(100),nullable,
+ppiq_meta,job_run_dependencies,16,source_record_id,character varying(100),nullable,
+ppiq_meta,job_run_dependencies,17,is_deleted,boolean,not_null,false
+ppiq_meta,job_run_dependencies,18,deleted_at_utc,timestamp with time zone,nullable,
+ppiq_meta,job_run_dependencies,19,deleted_reason,character varying(500),nullable,
+ppiq_meta,job_run_dependencies,2,run_id,uuid,not_null,
+ppiq_meta,job_run_dependencies,3,depends_on_run_id,uuid,nullable,
+ppiq_meta,job_run_dependencies,4,job_definition_id,uuid,not_null,
+ppiq_meta,job_run_dependencies,5,depends_on_job_definition_id,uuid,not_null,
+ppiq_meta,job_run_dependencies,6,resolution,character varying(20),not_null,
+ppiq_meta,job_run_dependencies,7,resolved_at_utc,timestamp with time zone,not_null,now()
+ppiq_meta,job_run_dependencies,8,expected_version,integer,nullable,
+ppiq_meta,job_run_dependencies,9,actual_version,integer,nullable,
 ppiq_meta,job_run_histories,1,id,uuid,not_null,
 ppiq_meta,job_run_histories,10,trigger_source,character varying(120),not_null,
 ppiq_meta,job_run_histories,11,triggered_by,character varying(200),nullable,

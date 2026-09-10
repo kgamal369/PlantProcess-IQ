@@ -14,6 +14,12 @@ ppiq_meta,definition_dependencies,fk_definition_dependencies_to,ppiq_meta,defini
 ppiq_meta,definition_export_artifacts,fk_definition_export_artifacts_version,ppiq_meta,definition_versions,FOREIGN KEY (definition_version_id) REFERENCES ppiq_meta.definition_versions(id) ON DELETE CASCADE
 ppiq_meta,definition_versions,fk_definition_versions_store,ppiq_meta,definition_store,FOREIGN KEY (definition_id) REFERENCES ppiq_meta.definition_store(id) ON DELETE RESTRICT
 ppiq_meta,feature_set_details,fk_feature_set_details_version,ppiq_meta,definition_versions,FOREIGN KEY (definition_version_id) REFERENCES ppiq_meta.definition_versions(id) ON DELETE CASCADE
+ppiq_meta,inspection_jobs,fk_inspection_jobs_target_definition,ppiq_meta,definition_store,FOREIGN KEY (target_definition_id) REFERENCES ppiq_meta.definition_store(id) ON DELETE RESTRICT
+ppiq_meta,job_definitions,fk_job_definitions_target_definition,ppiq_meta,definition_store,FOREIGN KEY (target_definition_id) REFERENCES ppiq_meta.definition_store(id) ON DELETE RESTRICT
+ppiq_meta,job_dependencies,fk_job_dependencies_from,ppiq_meta,job_definitions,FOREIGN KEY (job_definition_id) REFERENCES ppiq_meta.job_definitions(id) ON DELETE RESTRICT
+ppiq_meta,job_dependencies,fk_job_dependencies_to,ppiq_meta,job_definitions,FOREIGN KEY (depends_on_job_definition_id) REFERENCES ppiq_meta.job_definitions(id) ON DELETE RESTRICT
+ppiq_meta,job_run_dependencies,fk_job_run_dependencies_run,ppiq_meta,job_run_histories,FOREIGN KEY (run_id) REFERENCES ppiq_meta.job_run_histories(id) ON DELETE RESTRICT
+ppiq_meta,job_run_dependencies,fk_job_run_dependencies_upstream_run,ppiq_meta,job_run_histories,FOREIGN KEY (depends_on_run_id) REFERENCES ppiq_meta.job_run_histories(id) ON DELETE RESTRICT
 ppiq_meta,job_run_histories,fk_job_run_histories_job_definitions_job_definition_id,ppiq_meta,job_definitions,FOREIGN KEY (job_definition_id) REFERENCES ppiq_meta.job_definitions(id) ON DELETE CASCADE
 ppiq_meta,kpi_definitions,fk_kpi_definitions_schema_view_definitions_schema_view_definit,ppiq_meta,schema_view_definitions,FOREIGN KEY (schema_view_definition_id) REFERENCES ppiq_meta.schema_view_definitions(id) ON DELETE SET NULL
 ppiq_meta,kpi_parameter_bindings,fk_kpi_parameter_bindings_aggregation_override,ppiq_meta,aggregation_kinds,FOREIGN KEY (aggregation_kind_override) REFERENCES ppiq_meta.aggregation_kinds(aggregation_kind)

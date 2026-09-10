@@ -15,6 +15,12 @@ digraph physical_relations {
   "ppiq_meta.definition_export_artifacts" -> "ppiq_meta.definition_versions";
   "ppiq_meta.definition_versions" -> "ppiq_meta.definition_store";
   "ppiq_meta.feature_set_details" -> "ppiq_meta.definition_versions";
+  "ppiq_meta.inspection_jobs" -> "ppiq_meta.definition_store";
+  "ppiq_meta.job_definitions" -> "ppiq_meta.definition_store";
+  "ppiq_meta.job_dependencies" -> "ppiq_meta.job_definitions";
+  "ppiq_meta.job_dependencies" -> "ppiq_meta.job_definitions";
+  "ppiq_meta.job_run_dependencies" -> "ppiq_meta.job_run_histories";
+  "ppiq_meta.job_run_dependencies" -> "ppiq_meta.job_run_histories";
   "ppiq_meta.job_run_histories" -> "ppiq_meta.job_definitions";
   "ppiq_meta.kpi_definitions" -> "ppiq_meta.schema_view_definitions";
   "ppiq_meta.kpi_parameter_bindings" -> "ppiq_meta.aggregation_kinds";
