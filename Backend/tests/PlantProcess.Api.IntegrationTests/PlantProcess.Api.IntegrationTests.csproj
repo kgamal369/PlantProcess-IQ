@@ -32,6 +32,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="..\_shared\TestDatabaseTarget.cs" Link="TestDatabaseTarget.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="appsettings.Test.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

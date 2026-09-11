@@ -53,11 +53,9 @@ namespace PlantProcess.Infrastructure.IntegrationTests.Analytics;
 /// </summary>
 public sealed class DowntimeMinutesMeasureExecutionTests
 {
+    // PPIQ T-252. No shared-database fallback: this test mutates its target.
     private static string ConnectionString =>
-        Environment.GetEnvironmentVariable("PPIQ_TEST_PG_CONNSTRING")
-        ?? Environment.GetEnvironmentVariable("PPIQ_TEST_CONNECTION_STRING")
-        ?? Environment.GetEnvironmentVariable("ConnectionStrings__PlantProcessDb")
-        ?? "Host=localhost;Port=5432;Database=ppiq_app;Username=ppiq_dev;Password=ppiq_dev_local_only";
+        PlantProcess.TestSupport.TestDatabaseTarget.RequireIntegration();
 
     private static PlantProcessDbContext NewContext()
     {

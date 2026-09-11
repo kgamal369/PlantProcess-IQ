@@ -31,14 +31,10 @@ public sealed class DefinitionStoreFixture : IAsyncLifetime
 
     public async Task InitializeAsync()
     {
-        var host = Environment.GetEnvironmentVariable("PPIQ_TEST_PGHOST") ?? "localhost";
-        var port = Environment.GetEnvironmentVariable("PPIQ_TEST_PGPORT") ?? "5432";
-        var database = Environment.GetEnvironmentVariable("PPIQ_TEST_PGDATABASE") ?? "ppiq_app";
-        var user = Environment.GetEnvironmentVariable("PPIQ_TEST_PGUSER") ?? "ppiq_dev";
-        var password = Environment.GetEnvironmentVariable("PPIQ_TEST_PGPASSWORD") ?? "ppiq_dev_local_only";
-
-        _connectionString =
-            $"Host={host};Port={port};Database={database};Username={user};Password={password};Include Error Detail=true";
+        // PPIQ T-252. The component-wise build defaulted its database to ppiq_app,
+        // which made every fixture in this suite a mutation of the developer runtime
+        // whenever PPIQ_TEST_PGDATABASE was unset. The runner supplies the target.
+        _connectionString = PlantProcess.TestSupport.TestDatabaseTarget.RequireIntegration();
 
         await using var db = NewContext();
         var resolver = new CanonicalIdentityResolver(db);

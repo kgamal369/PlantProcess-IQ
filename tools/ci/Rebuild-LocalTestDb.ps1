@@ -22,7 +22,17 @@ $PgHost = if ($env:PPIQ_PG_HOST)     { $env:PPIQ_PG_HOST }     else { '127.0.0.1
 $PgPort = if ($env:PPIQ_PG_PORT)     { $env:PPIQ_PG_PORT }     else { '5432' }
 $PgUser = if ($env:PPIQ_PG_USER)     { $env:PPIQ_PG_USER }     else { 'plantprocess' }
 $PgPass = if ($env:PPIQ_PG_PASSWORD) { $env:PPIQ_PG_PASSWORD } else { 'ppiq_dev_local_only' }
-$Db     = if ($env:PPIQ_PG_DB)       { $env:PPIQ_PG_DB }       else { 'plantprocessiq' }
+# PPIQ T-252. The implicit 'plantprocessiq' target is removed. This script has
+# four textual references and zero executable callers; it is a developer
+# utility, not an integration entry point, and it must never become the new
+# shared test database under any name.
+if (-not $env:PPIQ_PG_DB) {
+    throw 'PPIQ_PG_DB is not set. This utility no longer defaults to a database; name the developer database explicitly.'
+}
+$Db = $env:PPIQ_PG_DB
+foreach ($protectedDb in @('postgres', 'ppiq_app', 'ppiq_presentation', 'ppiq_acceptance_empty', 'plantprocessiq')) {
+    if ($Db -eq $protectedDb) { throw ("Refusing to rebuild the protected database '" + $Db + "'.") }
+}
 
 if (-not (Get-Command psql -ErrorAction SilentlyContinue)) { throw 'psql not found in PATH.' }
 $env:PGPASSWORD = $PgPass

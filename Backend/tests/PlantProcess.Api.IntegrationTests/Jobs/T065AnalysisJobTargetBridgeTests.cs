@@ -9,7 +9,7 @@ using Xunit;
 namespace PlantProcess.Api.IntegrationTests.Jobs;
 
 /// <summary>
-/// T-065 bridge, proven against ppiq_presentation.
+/// T-065 bridge, proven against the runner-supplied disposable integration database.
 ///
 /// The retirement guard is the reason this task exists in its current shape. It
 /// is proved here against BOTH stores at once, because the failure this design
@@ -30,7 +30,16 @@ public sealed class T065AnalysisJobTargetBridgeTests : AuthenticatedApiTestBase
         var dataSource = NpgsqlDataSource.Create(ResolveIntegrationTestConnectionString());
         await using (var conn = await dataSource.OpenConnectionAsync())
         {
-            Assert.Equal("ppiq_presentation", conn.Database);
+            // PPIQ T-252. The subject is cross-store target and retirement behavior.
+            // This test seeds inspection_jobs and job_definitions itself, so it needs
+            // the schema, not the presentation dataset.
+            Assert.False(
+                PlantProcess.TestSupport.TestDatabaseTarget.IsProtected(conn.Database),
+                "T-065 mutates its target; a protected database is never a lawful target.");
+            Assert.Equal(
+                PlantProcess.TestSupport.TestDatabaseTarget.DatabaseNameOf(
+                    PlantProcess.TestSupport.TestDatabaseTarget.RequireIntegration()),
+                conn.Database);
 
             await using var cmd = conn.CreateCommand();
             cmd.CommandText =

@@ -20,10 +20,11 @@
 //   class is SKIPPED (not failed), so `dotnet test` stays green in
 //   environments without a configured database (e.g. CI, a fresh laptop).
 //
-//   To actually run them, set the connection string and apply script 096:
-//     PPIQ_AUDIT_TRIGGER_TEST_CONNECTION
-//   Example value:
-//     Host=localhost;Port=5432;Database=plantprocessiq;Username=plantprocess;Password=YOUR_PASSWORD
+//   To actually run them, let the T-252 runner supply the disposable target it
+//   owns, or set PPIQ_T252_INTEGRATION_CONNECTION yourself to a database you
+//   created for the purpose. There is deliberately no example naming a
+//   long-lived database: the old example named one, and an example is the
+//   shortest path from documentation to a mutated developer runtime.
 //
 // Expected SQLSTATE when a mutation is correctly blocked:
 //   P0001 = blocked by prevent_audit_log_mutation trigger.
@@ -241,11 +242,13 @@ public sealed class AuditLogDatabaseFixture
         // opt-in audit-immutability tests are skipped (see Skip.IfNot in the
         // test methods). Throwing would surface as test FAILURES instead of
         // skips and would break `dotnet test` in CI and on fresh machines.
+        // PPIQ T-252. Still no throw - an absent fixture is a skip, not a failure.
+        // What changed is that there is no longer a shared-database fallback to
+        // land on, so a laptop without the runner skips instead of mutating.
         ConnectionString =
-            Environment.GetEnvironmentVariable(ConnectionStringEnvironmentVariable)
-                ?? Environment.GetEnvironmentVariable("PPIQ_TEST_CONNECTION_STRING")
-                ?? Environment.GetEnvironmentVariable("ConnectionStrings__PlantProcessDb")
-                ?? "Host=localhost;Port=5432;Database=ppiq_app;Username=ppiq_dev;Password=ppiq_dev_local_only";
+            PlantProcess.TestSupport.TestDatabaseTarget.TryIntegration(out var resolved, out _)
+                ? resolved
+                : null;
     }
 
     public string? ConnectionString { get; }

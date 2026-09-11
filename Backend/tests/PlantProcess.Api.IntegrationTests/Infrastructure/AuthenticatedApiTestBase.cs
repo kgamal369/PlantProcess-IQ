@@ -212,24 +212,45 @@ public abstract class AuthenticatedApiTestBase : IClassFixture<WebApplicationFac
     {
         var candidates = new[]
         {
+            // PPIQ T-252. The runner-owned disposable database is asked for first.
+            // The hardcoded ppiq_app terminal that used to close this list is gone:
+            // an absent fixture is now a precise skip, never silent permission to
+            // mutate a shared database.
+            Environment.GetEnvironmentVariable(PlantProcess.TestSupport.TestDatabaseTarget.IntegrationVariable),
             Environment.GetEnvironmentVariable("PPIQ_TEST_CONNECTION_STRING"),
             Environment.GetEnvironmentVariable("PLANTPROCESS_TEST_CONNECTION_STRING"),
-            Environment.GetEnvironmentVariable("ConnectionStrings__PlantProcessDb"),
-            "Host=127.0.0.1;Port=5432;Database=ppiq_app;Username=ppiq_dev;Password=ppiq_dev_local_only"
+            Environment.GetEnvironmentVariable("ConnectionStrings__PlantProcessDb")
         };
 
         foreach (var candidate in candidates)
         {
             if (!string.IsNullOrWhiteSpace(candidate))
             {
-                return candidate.Trim().Trim('"')
+                var resolved = candidate.Trim().Trim('"')
                     .Replace("Host=postgres", "Host=127.0.0.1", StringComparison.OrdinalIgnoreCase)
                     .Replace("Server=postgres", "Server=127.0.0.1", StringComparison.OrdinalIgnoreCase)
                     .Replace("Data Source=postgres", "Data Source=127.0.0.1", StringComparison.OrdinalIgnoreCase);
+
+                // PPIQ T-252. A mutating API integration test never runs against a
+                // long-lived database. Refusing here rather than at each call site
+                // means an inherited ConnectionStrings__PlantProcessDb pointing at
+                // ppiq_app becomes a precise skip, not a silent mutation.
+                var database = PlantProcess.TestSupport.TestDatabaseTarget.DatabaseNameOf(resolved);
+                if (PlantProcess.TestSupport.TestDatabaseTarget.IsProtected(database))
+                {
+                    throw new InvalidOperationException(
+                        "The resolved integration database '" + database + "' is protected and cannot be the target of automated mutation. " +
+                        "Set " + PlantProcess.TestSupport.TestDatabaseTarget.IntegrationVariable + " to a runner-owned disposable database.");
+                }
+
+                return resolved;
             }
         }
 
-        throw new InvalidOperationException("No integration-test connection string could be resolved.");
+        throw new InvalidOperationException(
+            "No integration-test connection string could be resolved. Set " +
+            PlantProcess.TestSupport.TestDatabaseTarget.IntegrationVariable +
+            " to a disposable database owned by the runner. There is deliberately no shared-database fallback.");
     }
 
     private static void Set(string key, string value)

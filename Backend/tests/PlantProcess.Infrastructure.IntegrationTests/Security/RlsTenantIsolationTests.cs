@@ -21,11 +21,9 @@ namespace PlantProcess.Infrastructure.IntegrationTests.Security;
 [Trait("Task", "T-013")]
 public sealed class RlsTenantIsolationTests
 {
+    // PPIQ T-252. No shared-database fallback: this test mutates its target.
     private static string ConnString =>
-        Environment.GetEnvironmentVariable("PPIQ_RLS_TEST_CONNECTION_STRING")
-        ?? Environment.GetEnvironmentVariable("PPIQ_TEST_CONNECTION_STRING")
-        ?? Environment.GetEnvironmentVariable("ConnectionStrings__PlantProcessDb")
-        ?? "Host=localhost;Port=5432;Database=ppiq_app;Username=ppiq_dev;Password=ppiq_dev_local_only";
+        PlantProcess.TestSupport.TestDatabaseTarget.RequireIntegration();
 
     [SkippableFact]
     public async Task Forced_rls_isolates_rows_by_app_current_tenant()

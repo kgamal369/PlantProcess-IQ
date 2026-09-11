@@ -25,9 +25,15 @@ namespace PlantProcess.Infrastructure.IntegrationTests.Analytics;
 /// </summary>
 public sealed class GenericAggregateEngineTests
 {
+    // PPIQ T-252. POPULATED HISTORICAL REGRESSION LANE.
+    // These tests calculate over an existing observation population and skip when
+    // it is zero, so they cannot run on an empty canonical install without being
+    // turned into a different test. They run against a disposable clone whose
+    // source is ppiq_presentation, which is read throughout and never written.
+    // Evidence from this lane is historical regression evidence; its provenance
+    // is the presentation oracle, so it never closes generic acceptance.
     private static string ConnectionString =>
-        Environment.GetEnvironmentVariable("PPIQ_TEST_PG_CONNSTRING")
-        ?? "Host=127.0.0.1;Port=5432;Database=ppiq_presentation;Username=ppiq_dev;Password=ppiq_dev_local_only";
+        PlantProcess.TestSupport.TestDatabaseTarget.RequireRegression();
 
     private static PlantProcessDbContext NewContext()
     {

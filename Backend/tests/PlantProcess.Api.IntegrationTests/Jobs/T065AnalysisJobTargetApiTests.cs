@@ -10,7 +10,7 @@ namespace PlantProcess.Api.IntegrationTests.Jobs;
 
 /// <summary>
 /// T-065 Pack B. The analysis-job target contract, proven through the real HTTP
-/// surface against ppiq_presentation.
+/// surface against the runner-supplied disposable integration database.
 ///
 /// The distinction this file exists to hold: a REQUESTED target is what the
 /// definition stores, and an EXECUTED target is what a run actually resolved.
@@ -41,7 +41,17 @@ public sealed class T065AnalysisJobTargetApiTests : AuthenticatedApiTestBase
         var dataSource = NpgsqlDataSource.Create(ResolveIntegrationTestConnectionString());
         await using (var conn = await dataSource.OpenConnectionAsync())
         {
-            Assert.Equal("ppiq_presentation", conn.Database);
+            // PPIQ T-252. This test creates every row it asserts on, so it needs the
+            // canonical schema and lawful identity, not the populated presentation
+            // plant. What must be true is that the target is the runner-supplied
+            // disposable database and not a protected one.
+            Assert.False(
+                PlantProcess.TestSupport.TestDatabaseTarget.IsProtected(conn.Database),
+                "T-065 mutates its target; a protected database is never a lawful target.");
+            Assert.Equal(
+                PlantProcess.TestSupport.TestDatabaseTarget.DatabaseNameOf(
+                    PlantProcess.TestSupport.TestDatabaseTarget.RequireIntegration()),
+                conn.Database);
         }
 
         return dataSource;
