@@ -49,6 +49,16 @@ function response(version: number, board: unknown, name: string) {
     status: "published", definitionHash: "hash-v" + version, representation: "graph",
     graph: { name, targetEntity: "QualityEvent", tables: ["t0"], joins: [] },
     sql: null, forkedFromGraph: null, outputTarget: "QualityEvent", board,
+    // T-262. A version written after the projection contract declares which canonical
+    // fields it writes. Without one it reopens fine and refuses to publish, which is
+    // the new law - so the fixture states one rather than the journey being rewritten
+    // to expect a refusal it was never about.
+    projection: {
+      targetEntity: "QualityEvent",
+      fieldBindings: [
+        { targetField: "Severity", sourceKind: "column", sourceTable: "t0", sourceField: "sev" },
+      ],
+    },
   };
 }
 

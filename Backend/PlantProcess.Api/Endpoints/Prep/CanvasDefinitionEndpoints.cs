@@ -53,6 +53,9 @@ public static class CanvasDefinitionEndpoints
         string? Sql,
         JsonElement? ForkedFromGraph,
         string? OutputTarget,
+        // T-262. Null for a version written before the declaration existed. The surface
+        // states that and asks for an upgrade; it never fabricates a mapping.
+        JsonElement? Projection,
         // T-243. Null for a version saved before boards were persisted. The surface
         // states that rather than fabricating a layout for it.
         JsonElement? Board);
@@ -72,6 +75,7 @@ public static class CanvasDefinitionEndpoints
             representation.Sql,
             ParseOrNull(representation.ForkedFromGraphJson),
             representation.OutputTarget,
+            ParseOrNull(representation.ProjectionJson),
             ParseOrNull(representation.BoardJson));
     }
 

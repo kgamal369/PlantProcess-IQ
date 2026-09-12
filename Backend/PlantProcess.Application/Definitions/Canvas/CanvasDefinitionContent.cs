@@ -67,6 +67,29 @@ public static class CanvasDefinitionContent
     /// </summary>
     public const string RootBoard = "board";
 
+    /// <summary>
+    /// T-262. THE GOVERNED PROJECTION DECLARATION.
+    ///
+    /// outputTarget said WHERE a definition writes. It never said WHAT. Between the two
+    /// sat an assumption nobody had written down, and an executor that filled it in
+    /// would have been choosing the product's projection semantics inside a job.
+    ///
+    /// The declaration names the target entity and, for each canonical business field
+    /// it writes, exactly where the value comes from. Nothing is matched by position,
+    /// by type or by resembling a name. A surface may SUGGEST an identical name; only
+    /// an accepted binding is persisted, because a suggestion the author never looked
+    /// at is not a decision they made.
+    ///
+    /// It is representation-independent and it is HASHED. Changing a binding changes
+    /// what the definition means, so it is a new immutable version - the same law that
+    /// already governs outputTarget and board.
+    ///
+    /// Identity, provenance and reprocessing are absent on purpose. They are PPIQ
+    /// invariants, not author choices, and a declaration that could set them would let
+    /// one definition write rows another definition could never reconcile with.
+    /// </summary>
+    public const string RootProjection = "projection";
+
     private static readonly JsonSerializerOptions Compact = new()
     {
         WriteIndented = false,
@@ -111,6 +134,17 @@ public static class CanvasDefinitionContent
                 nameof(outputTarget));
         }
 
+        // T-262. The declaration rides inside the graph payload for the same reason the
+        // board does: the session draft is one blob and this task introduces no second
+        // transport. It is lifted to the root so the stored graph stays the clean
+        // execution shape, and the declaration stands beside it as its own fact.
+        JsonNode? projection = null;
+        if (graph[RootProjection] is JsonNode declared2)
+        {
+            projection = declared2.DeepClone();
+            graph.Remove(RootProjection);
+        }
+
         var root = new JsonObject
         {
             ["graph"] = Canonicalise(graph),
@@ -123,6 +157,11 @@ public static class CanvasDefinitionContent
             root[RootBoard] = Canonicalise(board);
         }
 
+        if (projection is not null)
+        {
+            root[RootProjection] = Canonicalise(projection);
+        }
+
         return Serialise(root);
     }
 
@@ -131,7 +170,11 @@ public static class CanvasDefinitionContent
     /// travels inside the content: the acceptance line that the graph is still
     /// retrievable afterwards is satisfied by the artifact, not by memory.
     /// </summary>
-    public static string ForSql(string normalisedSql, string? forkedFromGraphJson, string outputTarget)
+    public static string ForSql(
+        string normalisedSql,
+        string? forkedFromGraphJson,
+        string outputTarget,
+        string? projectionDeclarationJson = null)
     {
         if (string.IsNullOrWhiteSpace(normalisedSql))
         {
@@ -160,6 +203,15 @@ public static class CanvasDefinitionContent
             root["forkedFromGraph"] = Canonicalise(ParseObject(forkedFromGraphJson, "forkedFromGraph"));
         }
 
+        // T-262. Both representations carry the SAME declaration semantics. A definition
+        // forked from blocks to SQL keeps what it writes and where each value comes
+        // from; only the way the value is produced changed.
+        if (!string.IsNullOrWhiteSpace(projectionDeclarationJson))
+        {
+            root[RootProjection] = Canonicalise(
+                ParseObject(projectionDeclarationJson!, "projection"));
+        }
+
         return Serialise(root);
     }
 
@@ -170,6 +222,12 @@ public static class CanvasDefinitionContent
         var representation = root["representation"]?.GetValue<string>();
 
         var storedTarget = TrimmedOrNull(root[RootOutputTarget]);
+
+        // T-262. Null for every version written before this task. That is not a defect
+        // and no migration invents one: such a version reopens exactly as it was saved
+        // and is refused governed execution until an author saves a new version that
+        // declares what it writes.
+        var storedProjection = root[RootProjection]?.ToJsonString(Compact);
 
         return representation switch
         {
@@ -186,7 +244,8 @@ public static class CanvasDefinitionContent
                 Sql: null,
                 ForkedFromGraphJson: null,
                 OutputTarget: storedTarget ?? TrimmedOrNull(root["graph"]?[GraphTargetEntity]),
-                BoardJson: root[RootBoard]?.ToJsonString(Compact)),
+                BoardJson: root[RootBoard]?.ToJsonString(Compact),
+                ProjectionJson: storedProjection),
 
             // T-253 LEGACY SQL. There is nothing authored to recover: the old target was
             // a projection handle, and a handle is not identity. It reopens as null and
@@ -198,7 +257,8 @@ public static class CanvasDefinitionContent
                 Sql: root["sql"]?.GetValue<string>(),
                 ForkedFromGraphJson: root["forkedFromGraph"]?.ToJsonString(Compact),
                 OutputTarget: storedTarget,
-                BoardJson: null),
+                BoardJson: null,
+                ProjectionJson: storedProjection),
 
             _ => throw new InvalidOperationException(
                 "Canonical content carries no recognised representation. It cannot be reopened as a Canvas definition."),
@@ -323,4 +383,7 @@ public sealed record CanvasDefinitionRepresentation(
     string? Sql,
     string? ForkedFromGraphJson,
     string? OutputTarget,
-    string? BoardJson = null);
+    string? BoardJson = null,
+    // T-262. Null means the version declares no projection. It is readable, reopenable
+    // and never rewritten; it is simply not executable as a governed projection.
+    string? ProjectionJson = null);

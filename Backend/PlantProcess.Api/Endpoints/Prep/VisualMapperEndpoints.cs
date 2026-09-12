@@ -40,10 +40,16 @@ public static class VisualMapperEndpoints
     // it, so a property it does not declare would be silently dropped. Nothing in the
     // SQL generator reads it. CanvasDefinitionContent lifts it to the content root at
     // publish, which is where it becomes canonical.
+    // T-262. Projection is the authored business-field declaration. It rides here for
+    // the same reason Board does - the session draft is one jsonb blob and a property
+    // this record does not declare is silently dropped when the endpoint re-serialises.
+    // Nothing in the SQL generator reads it; CanvasDefinitionContent lifts it to the
+    // content root at save, which is where it becomes canonical.
     public record MapperGraph(string Name, string TargetEntity, string[] Tables, JoinSpec[] Joins,
                               FilterSpec[]? Filters = null, DerivedSpec[]? Derived = null,
                               SelectSpec[]? Selects = null,
-                              System.Text.Json.Nodes.JsonNode? Board = null);
+                              System.Text.Json.Nodes.JsonNode? Board = null,
+                              System.Text.Json.Nodes.JsonNode? Projection = null);
 
     public static IEndpointRouteBuilder MapVisualMapperEndpoints(this IEndpointRouteBuilder app)
     {

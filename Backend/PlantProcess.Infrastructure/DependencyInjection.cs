@@ -171,6 +171,12 @@ public static class DependencyInjection
         // kind, no second validator.
         services.AddScoped<PlantProcess.Infrastructure.Definitions.Canvas.ICanvasCompatibilityProjection,
             PlantProcess.Infrastructure.Definitions.Canvas.CanvasCompatibilityProjection>();
+        // T-262. The configuration key is read HERE, where configuration already lives,
+        // and the lifecycle receives the answer. Same key the dataset catalogue uses, so
+        // a save cannot type a binding against a different schema than the author browsed.
+        services.AddScoped<PlantProcess.Application.Definitions.Canvas.ICanvasStagingSchema>(
+            _ => new PlantProcess.Application.Definitions.Canvas.CanvasStagingSchema(
+                configuration["Prep:StagingSchema"]));
         services.AddScoped<PlantProcess.Application.Definitions.Canvas.ICanvasDefinitionLifecycle,
             PlantProcess.Infrastructure.Definitions.Canvas.CanvasDefinitionLifecycleService>();
 

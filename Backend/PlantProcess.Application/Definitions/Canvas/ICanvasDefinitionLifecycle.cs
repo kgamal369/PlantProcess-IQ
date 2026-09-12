@@ -94,13 +94,19 @@ public sealed record CanvasVersionSummary(
 /// It is nullable ON THE WIRE so a caller that omits it is refused BY NAME with a typed
 /// code, rather than rejected by a model binder before the refusal can be worded.
 /// </summary>
+/// <summary>
+/// T-262. ProjectionDeclarationJson is the authored business-field contract. It is
+/// nullable on the wire so a caller that omits it is refused BY NAME with a typed code
+/// rather than rejected by a binder before the refusal can be worded.
+/// </summary>
 public sealed record CanvasGraphSave(
     Guid TenantId,
     Guid OwnerId,
     string DefinitionCode,
     string DisplayName,
     string GraphJson,
-    string? OutputTarget);
+    string? OutputTarget,
+    string? ProjectionDeclarationJson = null);
 
 /// <summary>
 /// The legacy keys the execution projection still needs at publish time.
@@ -126,7 +132,10 @@ public sealed record CanvasSqlSave(
     string? CanonicalEntity,
     string Sql,
     string? ForkedFromGraphJson,
-    string? OutputTarget);
+    string? OutputTarget,
+    // T-262. Graph and SQL carry the SAME declaration semantics. A definition forked
+    // from blocks to a statement keeps what it writes and where each value comes from.
+    string? ProjectionDeclarationJson = null);
 
 /// <summary>
 /// The canonical identity a Canvas caller receives. DefinitionId is

@@ -61,4 +61,40 @@ public interface ICanonicalEntityCatalog
     /// shape this catalogue cannot summarise, and the caller decides what that means.
     /// </summary>
     string? PrimaryKeyMemberOf(Type mappedEntityType);
+
+    /// <summary>
+    /// T-262. The fields of a canonical projection target, read from the mapped model.
+    ///
+    /// There is no list of field names here for the same reason there is no list of
+    /// entity names: a list would have to be written by someone, would put a plant's
+    /// vocabulary in product source, and would drift from the model the day either
+    /// changed. The model answers.
+    ///
+    /// An empty result is an answer. A name that is not a legal projection target
+    /// returns nothing rather than the fields of something else.
+    /// </summary>
+    IReadOnlyList<CanonicalProjectionField> ProjectionFieldsOf(string canonicalEntityName);
+}
+
+/// <summary>
+/// T-262. ONE FIELD OF A CANONICAL PROJECTION TARGET.
+///
+/// IsSystemOwned is decided STRUCTURALLY, never by a maintained list: a property whose
+/// declaring type is BaseEntity is platform bookkeeping - identity, provenance,
+/// creation and deletion state - and PPIQ owns it. An author declares business meaning;
+/// persistence mechanics are not theirs to choose, and hiding the field in a browser
+/// would not be a rule, only a habit.
+///
+/// IsRequired reports what the model says about nullability. It is the basis of the
+/// refusal when a declaration leaves a required business field unbound, which is a
+/// different failure from binding one incorrectly and gets a different sentence.
+/// </summary>
+public sealed record CanonicalProjectionField(
+    string Name,
+    string ClrTypeName,
+    bool IsRequired,
+    bool IsSystemOwned)
+{
+    /// <summary>Only a non-system field may carry an authored binding.</summary>
+    public bool IsAuthorWritable => !IsSystemOwned;
 }

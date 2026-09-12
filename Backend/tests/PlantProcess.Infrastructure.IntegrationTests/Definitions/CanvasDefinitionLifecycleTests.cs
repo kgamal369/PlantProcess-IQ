@@ -62,11 +62,15 @@ public sealed class CanvasDefinitionLifecycleTests : IAsyncLifetime
     private CanvasDefinitionLifecycleService Service(ICanvasCompatibilityProjection? projection = null)
     {
         var db = _fixture.NewContext();
+        // T-262. The staged schema arrives as a fact, so this suite constructs the
+        // service without a configuration host - which is the whole reason the service
+        // does not read a key itself.
         return new CanvasDefinitionLifecycleService(
             db,
             new CanonicalDefinitionWriter(db),
             projection ?? new CanvasCompatibilityProjection(),
-            new PlantProcess.Infrastructure.Canonical.CanonicalEntityCatalog(db));
+            new PlantProcess.Infrastructure.Canonical.CanonicalEntityCatalog(db),
+            new PlantProcess.Application.Definitions.Canvas.CanvasStagingSchema("ppiq_staging"));
     }
 
     private CanvasGraphSave Graph(string suffix, string graph, string? target = TestTarget) =>

@@ -33,6 +33,13 @@ public sealed class CanonicalEntityCatalog : ICanonicalEntityCatalog
     private readonly Dictionary<Type, string?> _keyByType;
 
     /// <summary>
+    /// T-262. Fields per projection target, built once with the rest of the model read.
+    /// Only projection targets get an entry: asking for the fields of something that is
+    /// not a legal target should answer nothing rather than answer usefully.
+    /// </summary>
+    private readonly Dictionary<string, IReadOnlyList<CanonicalProjectionField>> _fieldsByTarget;
+
+    /// <summary>
     /// T-253. The subset that declares itself an authoring output target. Built here
     /// from the same enumeration, so it can never name an entity the model does not map
     /// and can never omit one that the model maps and the Domain marks.
@@ -47,6 +54,7 @@ public sealed class CanonicalEntityCatalog : ICanonicalEntityCatalog
         _typeByName = new Dictionary<string, Type>(StringComparer.Ordinal);
         _keyByType = new Dictionary<Type, string?>();
         _projectionTargets = new SortedSet<string>(StringComparer.Ordinal);
+        _fieldsByTarget = new Dictionary<string, IReadOnlyList<CanonicalProjectionField>>(StringComparer.Ordinal);
 
         foreach (var entity in db.Model.GetEntityTypes())
         {
@@ -83,6 +91,29 @@ public sealed class CanonicalEntityCatalog : ICanonicalEntityCatalog
             if (typeof(ICanonicalProjectionTarget).IsAssignableFrom(clrType))
             {
                 _projectionTargets.Add(name);
+
+                // T-262. Read here, from the same entity the name came from, so the
+                // fields offered to an author and the fields a server validates
+                // against are one answer rather than two that agree today.
+                var fields = new List<CanonicalProjectionField>();
+                foreach (var property in entity.GetProperties())
+                {
+                    // Shadow properties have no CLR member and therefore no declaring
+                    // type to judge; they are infrastructure by definition.
+                    var member = property.PropertyInfo;
+                    bool systemOwned = member is null
+                        || member.DeclaringType == typeof(BaseEntity);
+
+                    fields.Add(new CanonicalProjectionField(
+                        property.Name,
+                        property.ClrType.Name,
+                        !property.IsNullable,
+                        systemOwned));
+                }
+
+                _fieldsByTarget[name] = fields
+                    .OrderBy(f => f.Name, StringComparer.Ordinal)
+                    .ToArray();
             }
 
             var key = entity.FindPrimaryKey();
@@ -113,6 +144,18 @@ public sealed class CanonicalEntityCatalog : ICanonicalEntityCatalog
     {
         if (string.IsNullOrWhiteSpace(canonicalEntityName)) return null;
         return _typeByName.TryGetValue(canonicalEntityName, out var type) ? type : null;
+    }
+
+    public IReadOnlyList<CanonicalProjectionField> ProjectionFieldsOf(string canonicalEntityName)
+    {
+        if (string.IsNullOrWhiteSpace(canonicalEntityName))
+        {
+            return Array.Empty<CanonicalProjectionField>();
+        }
+
+        return _fieldsByTarget.TryGetValue(canonicalEntityName.Trim(), out var fields)
+            ? fields
+            : Array.Empty<CanonicalProjectionField>();
     }
 
     public string? PrimaryKeyMemberOf(Type mappedEntityType)

@@ -70,6 +70,7 @@ public static class AuthoringSupportEndpoints
             .RequireAuthorization();
 
         authoring.MapGet("/output-targets", GetOutputTargets);
+        authoring.MapGet("/output-targets/{entity}/fields", GetOutputTargetFields);
 
         var analysis = app.MapGroup("/api/analysis")
             .WithTags("Analysis - method catalogue")
@@ -269,7 +270,10 @@ public static class AuthoringSupportEndpoints
         string? CanonicalEntity,
         string? Sql,
         System.Text.Json.JsonElement? ForkedFromGraph,
-        string? OutputTarget);
+        string? OutputTarget,
+        // T-262. The authored business-field declaration. Absent is refused by name at
+        // the lifecycle rather than rejected by the binder before a sentence exists.
+        System.Text.Json.JsonElement? Projection);
 
     public sealed record SaveSqlVersionResponse(
         bool Saved, int VersionNumber, string? Id, string Message, string? ErrorCode);
@@ -310,7 +314,8 @@ public static class AuthoringSupportEndpoints
                 request.CanonicalEntity,
                 request.Sql ?? string.Empty,
                 request.ForkedFromGraph?.GetRawText(),
-                request.OutputTarget),
+                request.OutputTarget,
+                request.Projection?.GetRawText()),
             ct);
 
         if (saved.IsFailure)
@@ -347,6 +352,41 @@ public static class AuthoringSupportEndpoints
     /// T-253. Read-only. The catalogue answers from the mapped model and the Domain
     /// projection-target marker, so this endpoint gains nothing by reshaping it.
     /// </summary>
+    /// <summary>
+    /// T-262. The writable business fields of a governed output target, and the
+    /// system-owned ones marked as such so a surface can show why they are not offered.
+    /// The browser keeps no field list: an unknown entity answers empty rather than
+    /// answering about something else.
+    /// </summary>
+    private static IResult GetOutputTargetFields(
+        string entity,
+        [FromServices] PlantProcess.Application.Common.Canonical.ICanonicalEntityCatalog catalog)
+    {
+        if (!catalog.IsProjectionTarget(entity))
+        {
+            return Results.NotFound(new
+            {
+                entity,
+                message = "'" + entity + "' is not a governed output target in this model.",
+            });
+        }
+
+        var fields = catalog.ProjectionFieldsOf(entity);
+        return Results.Ok(new
+        {
+            entity,
+            source = "canonical-model",
+            fields = fields.Select(f => new
+            {
+                name = f.Name,
+                clrType = f.ClrTypeName,
+                isRequired = f.IsRequired,
+                isSystemOwned = f.IsSystemOwned,
+                isAuthorWritable = f.IsAuthorWritable,
+            }),
+        });
+    }
+
     private static IResult GetOutputTargets(
         [FromServices] PlantProcess.Application.Common.Canonical.ICanonicalEntityCatalog catalog)
     {

@@ -30,6 +30,10 @@ public sealed class RelationshipConsumerConvergenceTests
         // T-253. This fake exists for relationship consumer convergence, where nothing
         // is an authoring output target. It says so rather than pretending otherwise.
         public IReadOnlyList<string> ProjectionTargetNames() => Array.Empty<string>();
+        // T-262. Nothing here is a projection target, so nothing here has projection
+        // fields. Answering empty is the truth, not a stub.
+        public IReadOnlyList<CanonicalProjectionField> ProjectionFieldsOf(string n) =>
+            Array.Empty<CanonicalProjectionField>();
         public bool IsProjectionTarget(string n) => false;
         public string? NameOf(Type t) { Asked.Add(t); return t == typeof(Left) ? "Left" : t == typeof(Subject) ? "Subject" : null; }
         public Type? FindType(string n) => n == "Left" ? typeof(Left) : n == "Subject" ? typeof(Subject) : null;

@@ -43,21 +43,48 @@ public sealed class CanvasDefinitionLifecycleService : ICanvasDefinitionLifecycl
     private const string TargetNotCanonicalCode = "OUTPUT_TARGET_NOT_CANONICAL";
     private const string TargetMismatchCode = "OUTPUT_TARGET_MISMATCH";
 
+    // T-262. The projection-declaration refusals. Each names the field it is refusing
+    // about, because a code with no sentence beside it is not something an author can
+    // act on. projection_mode is persisted as "declared", so a version that declares
+    // nothing is a version whose own detail row contradicts it.
+    private const string ProjectionRequiredCode = "PROJECTION_DECLARATION_REQUIRED";
+    private const string ProjectionTargetMismatchCode = "PROJECTION_TARGET_MISMATCH";
+    private const string ProjectionFieldUnknownCode = "PROJECTION_FIELD_UNKNOWN";
+    private const string ProjectionFieldSystemOwnedCode = "PROJECTION_TARGET_FIELD_SYSTEM_OWNED";
+    private const string ProjectionFieldUnboundCode = "PROJECTION_REQUIRED_FIELD_UNBOUND";
+    private const string ProjectionFieldDuplicateCode = "PROJECTION_FIELD_DUPLICATE";
+    private const string ProjectionTypeIncompatibleCode = "PROJECTION_TYPE_INCOMPATIBLE";
+    private const string ProjectionSourceAmbiguousCode = "PROJECTION_OUTPUT_NAME_AMBIGUOUS";
+    private const string ProjectionSourceTypeUnknownCode = "PROJECTION_SOURCE_TYPE_UNKNOWN";
+
     private readonly PlantProcessDbContext _db;
     private readonly ICanonicalDefinitionWriter _writer;
     private readonly ICanvasCompatibilityProjection _projection;
     private readonly ICanonicalEntityCatalog _canonicalEntities;
 
+    /// <summary>
+    /// T-262. The staged schema whose column metadata types a graph binding. It reaches
+    /// this service as a FACT rather than as a configuration lookup: a lifecycle that
+    /// reads configuration keys is a lifecycle no test can construct without a host, and
+    /// the integration suite proved that by failing to reference the package at all.
+    /// Composition reads the key; this reads the answer.
+    /// </summary>
+    private readonly string _stagingSchema;
+
     public CanvasDefinitionLifecycleService(
         PlantProcessDbContext db,
         ICanonicalDefinitionWriter writer,
         ICanvasCompatibilityProjection projection,
-        ICanonicalEntityCatalog canonicalEntities)
+        ICanonicalEntityCatalog canonicalEntities,
+        ICanvasStagingSchema stagingSchema)
     {
         _db = db ?? throw new ArgumentNullException(nameof(db));
         _writer = writer ?? throw new ArgumentNullException(nameof(writer));
         _projection = projection ?? throw new ArgumentNullException(nameof(projection));
         _canonicalEntities = canonicalEntities ?? throw new ArgumentNullException(nameof(canonicalEntities));
+
+        ArgumentNullException.ThrowIfNull(stagingSchema);
+        _stagingSchema = stagingSchema.Name;
     }
 
     // ------------------------------------------------------------------ SAVE
@@ -86,10 +113,20 @@ public sealed class CanvasDefinitionLifecycleService : ICanvasDefinitionLifecycl
                 + save.OutputTarget!.Trim() + "'. One definition cannot carry two output identities.");
         }
 
+        // T-262. The declaration is validated against the canonical catalogue BEFORE
+        // content is built, so a refusal names the field rather than surfacing as a
+        // serialisation error about JSON.
+        var graphSources = await ProjectionSourceTypes.ForGraphAsync(
+            save.GraphJson, _db, _stagingSchema, cancellationToken);
+        var declarationRefusal = RefuseDeclarationOrNull(
+            save.ProjectionDeclarationJson, save.OutputTarget!, graphSources);
+        if (declarationRefusal is not null) { return declarationRefusal; }
+
         string content;
         try
         {
-            content = CanvasDefinitionContent.ForGraph(save.GraphJson, save.OutputTarget!);
+            content = CanvasDefinitionContent.ForGraph(
+                MergeDeclaration(save.GraphJson, save.ProjectionDeclarationJson), save.OutputTarget!);
         }
         catch (ArgumentException ex)
         {
@@ -97,7 +134,8 @@ public sealed class CanvasDefinitionLifecycleService : ICanvasDefinitionLifecycl
         }
 
         return await WriteDraftAsync(
-            save.TenantId, save.OwnerId, save.DefinitionCode, save.DisplayName, content, cancellationToken);
+            save.TenantId, save.OwnerId, save.DefinitionCode, save.DisplayName, content,
+            save.OutputTarget!, save.ProjectionDeclarationJson, cancellationToken);
     }
 
     public async Task<ApplicationResult<CanvasDefinitionVersion>> SaveSqlAsync(
@@ -132,11 +170,18 @@ public sealed class CanvasDefinitionLifecycleService : ICanvasDefinitionLifecycl
                 }));
         }
 
+        var sqlSources = await ProjectionSourceTypes.ForSqlAsync(
+            verdict.NormalizedSql, _db, cancellationToken);
+        var sqlDeclarationRefusal = RefuseDeclarationOrNull(
+            save.ProjectionDeclarationJson, save.OutputTarget!, sqlSources);
+        if (sqlDeclarationRefusal is not null) { return sqlDeclarationRefusal; }
+
         string content;
         try
         {
             content = CanvasDefinitionContent.ForSql(
-                verdict.NormalizedSql, save.ForkedFromGraphJson, save.OutputTarget!);
+                verdict.NormalizedSql, save.ForkedFromGraphJson, save.OutputTarget!,
+                save.ProjectionDeclarationJson);
         }
         catch (ArgumentException ex)
         {
@@ -144,7 +189,8 @@ public sealed class CanvasDefinitionLifecycleService : ICanvasDefinitionLifecycl
         }
 
         return await WriteDraftAsync(
-            save.TenantId, save.OwnerId, save.DefinitionCode, save.DisplayName, content, cancellationToken);
+            save.TenantId, save.OwnerId, save.DefinitionCode, save.DisplayName, content,
+            save.OutputTarget!, save.ProjectionDeclarationJson, cancellationToken);
     }
 
     private async Task<ApplicationResult<CanvasDefinitionVersion>> WriteDraftAsync(
@@ -153,8 +199,19 @@ public sealed class CanvasDefinitionLifecycleService : ICanvasDefinitionLifecycl
         string definitionCode,
         string displayName,
         string content,
+        string outputTarget,
+        string? projectionDeclarationJson,
         CancellationToken cancellationToken)
     {
+        // T-262. THE DETAIL ROW IS A PROJECTION, NOT A SECOND AUTHORITY.
+        //
+        // The hashed content decides what the definition means; target_entities exists
+        // so the same fact can be queried without parsing every version's content. It
+        // is derived here from the declaration that was just validated, so the two
+        // cannot be authored independently and cannot disagree.
+        var targetEntities = CanvasProjectionDeclaration.ToDetailProjection(
+            projectionDeclarationJson, outputTarget);
+
         var write = new CanonicalDefinitionWrite(
             DefinitionKind.Transformation,
             tenantId,
@@ -166,6 +223,7 @@ public sealed class CanvasDefinitionLifecycleService : ICanvasDefinitionLifecycl
             new Dictionary<string, object?>(StringComparer.Ordinal)
             {
                 ["projection_mode"] = TransformationProjectionMode,
+                ["target_entities"] = targetEntities,
             });
 
         await using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
@@ -384,6 +442,140 @@ public sealed class CanvasDefinitionLifecycleService : ICanvasDefinitionLifecycl
     }
 
     // --------------------------------------------------------------- HELPERS
+
+    /// <summary>
+    /// T-262. The declaration, or a typed refusal. Null means it is good.
+    ///
+    /// Everything here is checked against the canonical catalogue, which reads the
+    /// mapped model. Nothing is matched by position, by type or by resembling a name -
+    /// a surface may suggest an identical name, but only the accepted binding arrives
+    /// here, and only what arrives is persisted.
+    /// </summary>
+    private ApplicationResult<CanvasDefinitionVersion>? RefuseDeclarationOrNull(
+        string? declarationJson, string outputTarget, ProjectionSourceTypes sources)
+    {
+        var parsed = CanvasProjectionDeclaration.TryParse(declarationJson, out var declaration);
+        if (parsed is not null)
+        {
+            return RefuseTyped(ProjectionRequiredCode, parsed);
+        }
+
+        if (declaration is null)
+        {
+            return RefuseTyped(
+                ProjectionRequiredCode,
+                "This definition declares projection_mode 'declared' and declares no projection. "
+                + "State which canonical fields it writes and where each value comes from.");
+        }
+
+        var target = outputTarget.Trim();
+        if (!string.Equals(declaration.TargetEntity, target, StringComparison.Ordinal))
+        {
+            return RefuseTyped(
+                ProjectionTargetMismatchCode,
+                "The projection declares target '" + declaration.TargetEntity
+                + "' while the governed output target is '" + target
+                + "'. One definition cannot write to two entities.");
+        }
+
+        var fields = _canonicalEntities.ProjectionFieldsOf(target);
+        if (fields.Count == 0)
+        {
+            return RefuseTyped(
+                ProjectionTargetMismatchCode,
+                "'" + target + "' exposes no projection fields, so nothing can be bound to it.");
+        }
+
+        var byName = new Dictionary<string, CanonicalProjectionField>(StringComparer.Ordinal);
+        foreach (var f in fields) { byName[f.Name] = f; }
+
+        var bound = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var binding in declaration.FieldBindings)
+        {
+            if (!byName.TryGetValue(binding.TargetField, out var field))
+            {
+                return RefuseTyped(
+                    ProjectionFieldUnknownCode,
+                    "'" + target + "' has no field named '" + binding.TargetField + "'.");
+            }
+
+            if (field.IsSystemOwned)
+            {
+                // Hiding it in a browser would be a habit. This is the rule.
+                return RefuseTyped(
+                    ProjectionFieldSystemOwnedCode,
+                    "'" + binding.TargetField + "' is owned by the platform. Identity, provenance "
+                    + "and lifecycle are not authored mappings; declare the business fields only.");
+            }
+
+            if (!bound.Add(binding.TargetField))
+            {
+                return RefuseTyped(
+                    ProjectionFieldDuplicateCode,
+                    "'" + binding.TargetField + "' is bound more than once. One canonical field "
+                    + "takes one value.");
+            }
+
+            // T-262. THE SERVER RESOLVES THE TYPE. A browser-supplied type would be a
+            // claim the author could edit; the source metadata is the authority, and a
+            // source whose type the authority cannot determine is refused rather than
+            // assumed or deferred to execution.
+            var sourceType = sources.Resolve(binding);
+            if (sourceType is null)
+            {
+                return RefuseTyped(
+                    ProjectionSourceTypeUnknownCode,
+                    ProjectionTypeCompatibility.Explain(
+                        binding.TargetField, binding.SourceField, null, field.ClrTypeName));
+            }
+
+            if (!ProjectionTypeCompatibility.IsCompatible(sourceType, field.ClrTypeName))
+            {
+                return RefuseTyped(
+                    ProjectionTypeIncompatibleCode,
+                    ProjectionTypeCompatibility.Explain(
+                        binding.TargetField, binding.SourceField, sourceType, field.ClrTypeName));
+            }
+        }
+
+        var ambiguous = CanvasProjectionDeclaration.FirstAmbiguousSource(declaration);
+        if (ambiguous is not null)
+        {
+            return RefuseTyped(
+                ProjectionSourceAmbiguousCode,
+                "Output name '" + ambiguous + "' appears more than once, so a binding to it does not "
+                + "identify one value. Make the output unambiguous before publishing.");
+        }
+
+        foreach (var field in fields)
+        {
+            if (field.IsSystemOwned || !field.IsRequired) { continue; }
+            if (!bound.Contains(field.Name))
+            {
+                return RefuseTyped(
+                    ProjectionFieldUnboundCode,
+                    "'" + target + "." + field.Name + "' is required and nothing is bound to it. "
+                    + "A row that cannot supply it cannot be written.");
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// T-262. The declaration rides inside the graph payload, like the board, because
+    /// the session draft is one blob. The content reader lifts it to the root.
+    /// </summary>
+    private static string MergeDeclaration(string graphJson, string? declarationJson)
+    {
+        if (string.IsNullOrWhiteSpace(declarationJson)) { return graphJson; }
+
+        var graph = JsonNode.Parse(graphJson) as JsonObject;
+        if (graph is null) { return graphJson; }
+
+        graph[CanvasDefinitionContent.RootProjection] = JsonNode.Parse(declarationJson!);
+        return graph.ToJsonString();
+    }
 
     private static string? ValidateIdentity(Guid tenantId, Guid ownerId, string definitionCode)
     {

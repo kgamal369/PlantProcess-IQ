@@ -42,12 +42,56 @@ export type AuthoredBoard = {
   purpose: string; nodes: AuthoredNode[]; edges: AuthoredEdge[];
 };
 
+// T-262. THE GOVERNED PROJECTION DECLARATION, MIRRORED.
+//
+// sourceKind is the vocabulary of AUTHORED outputs, not of storage. A column is a
+// selected source field identified by table and column - T-033 rules that a Select
+// projects and does not rename, so the pair IS the identity and there is no alias. A
+// derived output is named by its author. A sql output is named by the validated
+// statement.
+//
+// There is deliberately NO source type here. The type is metadata the SERVER resolves
+// from the staged catalogue, the operator grammar or the statement's own row
+// description; a type sent from a browser would be a claim the author could edit.
+export type ProjectionSourceKind = "column" | "derived" | "sql";
+
+export type ProjectionFieldBinding = {
+  targetField: string;
+  sourceKind: ProjectionSourceKind;
+  sourceTable?: string | null;
+  sourceField: string;
+};
+
+export type CanvasProjectionDeclaration = {
+  targetEntity: string;
+  fieldBindings: ProjectionFieldBinding[];
+};
+
+// What a canonical target will accept. isSystemOwned is decided by the model, not by
+// this file: identity, provenance and lifecycle are platform-owned and an author never
+// maps them, which is why the picker cannot offer them and the server refuses them.
+export type CanonicalProjectionField = {
+  name: string;
+  clrType: string;
+  isRequired: boolean;
+  isSystemOwned: boolean;
+  isAuthorWritable: boolean;
+};
+
+export type ProjectionValidationResult = {
+  ok: boolean;
+  code?: string | null;
+  message?: string | null;
+};
+
 export type MapperGraph = {
   name: string; targetEntity: string; tables: string[]; joins: JoinSpec[];
   filters?: FilterSpec[]; derived?: DerivedSpec[]; selects?: SelectSpec[];
   // Rides with the graph because the session draft is one blob. The server lifts it
   // out at publish so the stored graph stays the clean execution shape.
   board?: AuthoredBoard;
+  // T-262. Same carriage as the board, same reason, and the same lift at save.
+  projection?: CanvasProjectionDeclaration;
 };
 export type DryRunResult = {
   dryRunId: string; status: string; rowCount: number;
@@ -94,6 +138,9 @@ export const saveSqlVersion = (body: {
   code: string; displayName: string; canonicalEntity?: string | null;
   outputTarget: string;
   sql: string; forkedFromGraph: unknown;
+  // T-262. A statement declares what it writes exactly as a board does. Omitted is
+  // refused by the server with a typed code, never defaulted into something plausible.
+  projection?: CanvasProjectionDeclaration | null;
 }) => apiClient.post<SaveSqlVersionResult>("/api/prep/sql/versions", body);
 
 export type OutputTargetsResult = {
@@ -121,6 +168,10 @@ export type CanvasDefinitionResponse = {
   // T-253. Null for a legacy SQL definition, which genuinely declared none. The surface
   // that reopens one must ask rather than fill it in. T-243 owns that reopen surface.
   outputTarget?: string | null;
+  // T-262. Null for every version saved before the declaration existed. Such a version
+  // reopens exactly as it was written and cannot execute as a governed projection until
+  // an author saves a new one. Nothing is inferred on its behalf.
+  projection?: CanvasProjectionDeclaration | null;
 };
 export const reopenDefinition = (code: string, version?: number) =>
   apiClient.get<CanvasDefinitionResponse>(

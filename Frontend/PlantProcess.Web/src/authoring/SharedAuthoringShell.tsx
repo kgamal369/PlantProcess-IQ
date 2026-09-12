@@ -40,6 +40,8 @@ import {
   type AuthoredBoard, type CanvasVersionSummary, type CanvasDefinitionResponse,
 } from "@/api/canvasApi";
 import { CanvasDebugLog, useDebugLog } from "@/pages/Prep/CanvasDebugLog";
+import { OutputMappingInspector, type AuthoredOutput } from "./OutputMappingInspector";
+import type { CanvasProjectionDeclaration } from "@/api/canvasApi";
 import { AUTHORING_NODE_TYPES } from "./BlockNodes";
 import {
   FLOW_OUT, arrangeBoard, blockProblem, boardProblems, fieldsVisibleAt,
@@ -221,6 +223,33 @@ export function SharedAuthoringShell({
     ? null
     : "This definition has no governed output target. Choose one before saving or publishing.";
 
+  // T-262. WHAT THIS DEFINITION WRITES, AS OPPOSED TO WHERE.
+  //
+  // Null means nothing is declared yet, which is a real state and not an empty one: a
+  // legacy version genuinely declares none, and a new definition has not said yet.
+  const [projection, setProjection] = useState<CanvasProjectionDeclaration | null>(null);
+  const [projectionRefusal, setProjectionRefusal] = useState<string | null>(null);
+  const [reopenedWithoutProjection, setReopenedWithoutProjection] = useState(false);
+
+  // CHANGING THE TARGET DOES NOT REMAP. Bindings name fields of the entity they were
+  // authored against; carrying them to another entity would silently reinterpret the
+  // author's decisions. They are dropped, and the inspector asks again.
+  useEffect(() => {
+    setProjection((current) =>
+      current === null || current.targetEntity === outputTarget ? current : null);
+    setProjectionRefusal(null);
+  }, [outputTarget]);
+
+  // T-262 SEPARATE FACTS. A board can be structurally executable and not yet
+  // publishable. boardProblems is deliberately NOT taught about mapping - board
+  // semantics and canonical projection semantics are different authorities - so Preview
+  // stays available while the mapping is still being authored and only Publish waits.
+  const projectionReady = projection !== null && projection.fieldBindings.length > 0;
+  const projectionBlocked = projectionReady
+    ? null
+    : "This definition does not say which canonical fields it writes. Map at least one"
+      + " field in Output mapping before publishing.";
+
   // T-243. THE AUTHORED BOARD, AS A DOCUMENT.
   //
   // serialisationOutcome compiles the board to a query. That is what RUNS, and it is
@@ -323,6 +352,14 @@ export function SharedAuthoringShell({
 
     if (r.graph?.name) { setName(r.graph.name); }
     if (r.outputTarget) { setOutputTarget(r.outputTarget); }
+
+    // T-262. Restored EXACTLY, or recorded as absent. A version written before
+    // declarations existed carries none, and nothing is reconstructed for it: the
+    // inspector says so and the author maps it into a new version.
+    setProjection(r.projection ?? null);
+    setReopenedWithoutProjection(!r.projection);
+    setProjectionRefusal(null);
+
     setOpenVersion(r.versionNumber);
 
     logSuccess(name,
@@ -617,6 +654,28 @@ export function SharedAuthoringShell({
     [name, outputTarget, boardNodes, boardEdges],
   );
   const graph = serialisation.ok ? serialisation.graph : null;
+
+  // T-262. The outputs this definition actually produces, named exactly as the server
+  // will see them. In block mode a Select projects table and column and a Derived block
+  // names its own alias; in authored SQL the statement's returned columns are the
+  // outputs. Nothing here invents a name the compiler would not emit.
+  const authoredOutputs = useMemo((): AuthoredOutput[] => {
+    if (mode === "sql" && sqlState === "authoring") {
+      return (sqlResult?.columns ?? []).map((c): AuthoredOutput => ({ kind: "sql", name: c }));
+    }
+
+    // Annotated, not inferred. Without this TypeScript narrows the first array to the
+    // column shape alone and then refuses the derived outputs on concat - which is
+    // correct of it: the union is the intent, so the union is declared.
+    const fromSelects: AuthoredOutput[] = (graph?.selects ?? []).map((s) => ({
+      kind: "column", table: s.table, name: s.column,
+    }));
+    const fromDerived: AuthoredOutput[] = (graph?.derived ?? []).map((d) => ({
+      kind: "derived", name: d.alias,
+    }));
+
+    return fromSelects.concat(fromDerived);
+  }, [mode, sqlState, sqlResult, graph]);
   const serialisationRefusal = serialisation.ok ? null : serialisation.refusal.message;
 
 
@@ -708,11 +767,21 @@ export function SharedAuthoringShell({
         logError(name, outputTargetRefusal);
         return;
       }
+      // T-262. PUBLISH WAITS FOR THE MAPPING; PREVIEW NEVER DID. Exploring the data
+      // while the mapping is still being authored is the normal way round, so the
+      // refusal lives here and not on Run.
+      if (projectionBlocked) {
+        setProjectionRefusal(projectionBlocked);
+        logError(name, projectionBlocked);
+        return;
+      }
       const sid = await ensureSession();
       // T-243. The board travels with the graph. Without this line a published version
       // keeps only what it compiled to, which is exactly the state this task exists to
       // end: a document that runs and cannot be opened.
-      await saveGraph(sid, { ...graph, board: boardPayload });
+      // T-262. The declaration travels the same way, and the server lifts it to the
+      // content root where it is hashed with everything else.
+      await saveGraph(sid, { ...graph, board: boardPayload, projection: projection ?? undefined });
       const v = await publishVersion(sid);
       logSuccess(name, "Published version " + v.versionNumber + ".",
         "immutable, with a rollback pointer");
@@ -835,12 +904,20 @@ export function SharedAuthoringShell({
         logError(name, outputTargetRefusal);
         return;
       }
+      // T-262. Saving a governed version is the same boundary Publish is. Run SQL
+      // remains open while the mapping is being authored.
+      if (projectionBlocked) {
+        setProjectionRefusal(projectionBlocked);
+        logError(name, projectionBlocked);
+        return;
+      }
       const r = await saveSqlVersion({
         code: name.replace(/[^A-Za-z0-9_]+/g, "_").toLowerCase() || "sql_definition",
         displayName: name,
         outputTarget,
         sql: sqlText,
         forkedFromGraph: forkedGraph,
+        projection,
       });
       if (r.saved) { logSuccess(name, r.message, "version " + r.versionNumber); }
       else { logError(name, r.message); }
@@ -1397,6 +1474,25 @@ export function SharedAuthoringShell({
 
         {/* INLINE-END - section 5.2.3: the toolbox is HIDDEN ENTIRELY in SQL
             mode, not disabled. A disabled palette invites clicking. */}
+        {/* T-262. INLINE-END, not a fifth region. The inspector stays visible in SQL
+            authoring because a statement declares what it writes exactly as a board
+            does; the TOOLBOX itself is still gone in SQL mode, which is the T-032 and
+            T-036 rule and is why its test id moved onto the block-mode group rather
+            than onto this aside. A query purpose gets neither: S2 authors a widget
+            expression and has no canonical projection. */}
+        {!isQueryPurpose && (
+          <aside className="canvas-side" data-testid="authoring-inline-end">
+            <OutputMappingInspector
+              outputTarget={outputTarget}
+              outputs={authoredOutputs}
+              declaration={projection}
+              onChange={setProjection}
+              legacyWithoutDeclaration={reopenedWithoutProjection}
+              refusal={projectionRefusal}
+            />
+          </aside>
+        )}
+
         {mode === "block" && (
           <aside className="canvas-side" data-testid="authoring-toolbox-region">
             <h4>Toolbox</h4>
