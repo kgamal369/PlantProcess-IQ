@@ -28,7 +28,7 @@ public sealed class PostgresAnalysisFindingSink : IAnalysisFindingSink
         {
             runCmd.Transaction = tx;
             runCmd.CommandText = @"
-                INSERT INTO public.ml_correlation_compute_runs
+                INSERT INTO ppiq_meta.ml_correlation_compute_runs
                     (id, engine_key, target_outcome_key, grain, window_days, status, completed_at_utc, duration_ms, message, request_json)
                 VALUES
                     (@id, @engine, @outcome, @grain, @window, @status, now(), 0, @message,
@@ -48,7 +48,7 @@ public sealed class PostgresAnalysisFindingSink : IAnalysisFindingSink
             await using var cmd = conn.CreateCommand();
             cmd.Transaction = tx;
             cmd.CommandText = @"
-                INSERT INTO public.ml_correlation_results_v2
+                INSERT INTO ppiq_plant.ml_correlation_results_v2
                     (compute_run_id, feature_key, feature_grain, outcome_key, outcome_type, method,
                      coefficient, effect_size, effect_size_type, p_value, q_value,
                      ci_low, ci_high, sample_size, effective_n, stability_score, is_stable, evidence_json)

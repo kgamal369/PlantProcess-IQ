@@ -1,6 +1,7 @@
 ﻿using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using PlantProcess.Application.Common.Canonical;
 using PlantProcess.Application.Common.Persistence;
 using PlantProcess.Application.Common.Results;
 using PlantProcess.Application.Integration.Contracts.Mapping;
@@ -11,36 +12,33 @@ namespace PlantProcess.Application.Integration.Services.Mapping;
 
 public sealed class MappingDefinitionService : IMappingDefinitionService
 {
-    // ── Allowed canonical target entities ─────────────────────────────────────
-    // This list must stay in sync with the actual domain entities registered in
-    // IPlantProcessDbContext. Any new canonical entity must be added here before
-    // a mapping definition can target it.
-    private static readonly HashSet<string> AllowedTargetEntities = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "MaterialUnit",
-        "MaterialAlias",
-        "GenealogyEdge",
-        "ProcessStepExecution",
-        "ParameterDefinition",
-        "ParameterObservation",
-        "ProcessEvent",
-        "DowntimeEvent",
-        "DefectCatalog",
-        "QualityEvent",
-        "RiskScore",
-        "DataQualityIssue"
-    };
+    // PPIQ T-256. THE PROJECTION-TARGET AUTHORITY IS NOT OURS TO HOLD.
+    //
+    // This class used to carry its own HashSet of twelve entity names. It agreed
+    // with the canonical catalogue on every one of them, which is exactly why it
+    // was dangerous: two lists that agree today diverge silently tomorrow. Marking
+    // a thirteenth entity ICanonicalProjectionTarget would have widened what
+    // authoring offers while mapping went on refusing it, and nothing would have
+    // reported the disagreement.
+    //
+    // Eligibility is declared by the Domain marker and read through
+    // ICanonicalEntityCatalog.IsProjectionTarget - the same predicate the Canvas
+    // lifecycle and the authoring picker already use. One predicate, so a server
+    // validating a submitted target and a picker offering one cannot disagree.
 
     // ── Dependencies ──────────────────────────────────────────────────────────
     private readonly IPlantProcessDbContext _dbContext;
+    private readonly ICanonicalEntityCatalog _canonicalEntities;
     private readonly ILogger<MappingDefinitionService> _logger;
 
     // ── Constructor ───────────────────────────────────────────────────────────
     public MappingDefinitionService(
         IPlantProcessDbContext dbContext,
+        ICanonicalEntityCatalog canonicalEntities,
         ILogger<MappingDefinitionService> logger)
     {
         _dbContext = dbContext;
+        _canonicalEntities = canonicalEntities;
         _logger = logger;
     }
 
@@ -83,11 +81,11 @@ public sealed class MappingDefinitionService : IMappingDefinitionService
             return ApplicationResult<Guid>.Failure(
                 ApplicationError.Validation("Target entity name is required."));
 
-        if (!AllowedTargetEntities.Contains(command.TargetEntityName.Trim()))
+        if (!_canonicalEntities.IsProjectionTarget(command.TargetEntityName.Trim()))
             return ApplicationResult<Guid>.Failure(
                 ApplicationError.Validation(
-                    $"Target entity '{command.TargetEntityName}' is not a supported canonical entity. " +
-                    $"Allowed values: {string.Join(", ", AllowedTargetEntities)}."));
+                    $"Target entity '{command.TargetEntityName}' is not a legal authoring output target. " +
+                    $"Allowed values: {string.Join(", ", _canonicalEntities.ProjectionTargetNames())}."));
 
         // ── Guard: mapping JSON must be present and valid JSON ─────────────
         if (string.IsNullOrWhiteSpace(command.MappingJson))

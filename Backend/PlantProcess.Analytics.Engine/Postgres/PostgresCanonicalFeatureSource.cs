@@ -48,7 +48,7 @@ public sealed class PostgresCanonicalFeatureSource : ICanonicalFeatureSource
                        avg(o.numeric_value)   AS v,
                        max(o.heat_id)         AS heat,
                        max(o.observed_at_utc) AS obs
-                FROM public.ml_outcome_values o
+                FROM ppiq_plant.ml_outcome_values o
                 WHERE lower(o.outcome_key) = lower(@outcomeKey)
                   AND (@grain = 'generic' OR o.grain = @grain)
                   AND o.numeric_value IS NOT NULL
@@ -93,8 +93,8 @@ public sealed class PostgresCanonicalFeatureSource : ICanonicalFeatureSource
                        f.effective_sample_key   AS k,
                        avg(f.numeric_value)     AS num,
                        bool_or(f.boolean_value) AS bln
-                FROM public.ml_feature_values f
-                JOIN public.ml_feature_definitions fd
+                FROM ppiq_plant.ml_feature_values f
+                JOIN ppiq_meta.ml_feature_definitions fd
                   ON lower(fd.feature_key) = lower(f.feature_key) AND fd.is_deleted = false
                 WHERE (@grain = 'generic' OR f.grain = @grain)
                   AND fd.value_type IN ('numeric','boolean')

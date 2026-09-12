@@ -1,7 +1,5 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 using PlantProcess.Domain.Common;
 using PlantProcess.Infrastructure.Canonical;
@@ -117,38 +115,6 @@ public sealed class CanonicalProjectionTargetTests
                 catalogue.FindType(name) is not null,
                 name + " declares itself a projection target but the model does not map it.");
         }
-    }
-
-    /// <summary>
-    /// TEMPORARY, AND IT SAYS SO. Two representations of one idea coexist during the
-    /// transition: this marker set, and the historical hardcoded list inside
-    /// MappingDefinitionService. T-253 may not edit that list, so this proves the two
-    /// have not drifted apart while both exist.
-    ///
-    /// It is a drift detector, NOT a third authority. T-256 removes the list and retires
-    /// this test with it. Comparison is exact and ordinal: legacy case behaviour is
-    /// T-256's census, not this task's.
-    /// </summary>
-    [Fact]
-    [Trait("Lifetime", "TemporaryUntilT256")]
-    public void The_marker_set_still_equals_the_historical_mapping_definition_list()
-    {
-        var catalogue = new CanonicalEntityCatalog(BuildContext());
-
-        var serviceType = typeof(PlantProcess.Application.Integration.Services.Mapping.MappingDefinitionService);
-        var field = serviceType.GetField(
-            "AllowedTargetEntities", BindingFlags.NonPublic | BindingFlags.Static);
-
-        Assert.True(
-            field is not null,
-            "AllowedTargetEntities no longer exists on MappingDefinitionService. If T-256 removed it, "
-            + "delete this temporary equivalence test with it.");
-
-        var historical = ((IEnumerable<string>)field!.GetValue(null)!)
-            .OrderBy(n => n, StringComparer.Ordinal)
-            .ToArray();
-
-        Assert.Equal(historical, catalogue.ProjectionTargetNames().ToArray());
     }
 
     private static PlantProcessDbContext BuildContext()
