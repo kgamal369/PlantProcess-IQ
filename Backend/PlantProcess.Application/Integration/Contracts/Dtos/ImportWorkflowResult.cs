@@ -21,7 +21,9 @@ public sealed record ImportWorkflowResult(
     DateTime FinishedAtUtc,
     TimeSpan Duration,
     string? ErrorMessage,
-    IReadOnlyCollection<MappingExecutionRowResult> MappingRows);
+    IReadOnlyCollection<MappingExecutionRowResult> MappingRows,
+    // T-099. A quarantined row is typed evidence, not an execution failure.
+    int MappingQuarantinedRows = 0);
 
 public sealed record ImportQueueProcessingSummary(
     DateTime StartedAtUtc,
@@ -44,7 +46,8 @@ public sealed record ImportQueueProcessingItem(
     int ProcessedRows,
     int MappedRows,
     int FailedRows,
-    string? Message);
+    string? Message,
+    int QuarantinedRows = 0);
 
 
 

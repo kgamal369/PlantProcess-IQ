@@ -1,4 +1,5 @@
 using PlantProcess.Api.TestMode;
+using PlantProcess.Api.Endpoints.Quarantine;
 using PlantProcess.Api.Endpoints.Licensing;
 using PlantProcess.Api.Endpoints.Security;
 using PlantProcess.Application.Connectors.Certification;
@@ -1012,6 +1013,9 @@ app.MapMlProviderEndpoints();
 
 
     app.MapWorkflowEndpoints();
+
+    // T-099. Bounded quarantine reprocessing.
+    app.MapQuarantineEndpoints();
 
     app.MapValidationEndpoints();
 

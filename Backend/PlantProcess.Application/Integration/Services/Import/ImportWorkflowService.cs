@@ -179,6 +179,9 @@ public sealed class ImportWorkflowService : IImportWorkflowService
                 }
             }
 
+            // T-099. QuarantinedRows alone never fails the batch: a refused row
+            // is typed evidence beside a successful import, not a broken run.
+            // FailedRows remains genuine execution failure.
             if (mappingResult.FailedRows > 0)
             {
                 batch.MarkFailed($"Mapping completed with {mappingResult.FailedRows} failed row(s). Review staging row ProcessingError values.");
@@ -203,6 +206,7 @@ public sealed class ImportWorkflowService : IImportWorkflowService
                 MappingMappedRows: mappingResult.MappedRows,
                 MappingSkippedRows: mappingResult.SkippedRows,
                 MappingFailedRows: mappingResult.FailedRows,
+                MappingQuarantinedRows: mappingResult.QuarantinedRows,
                 DataQualityCandidatesFound: dqSummary?.CandidatesFound ?? 0,
                 DataQualityNewIssuesPersisted: dqSummary?.NewIssuesPersisted ?? 0,
                 DataQualityExistingIssuesSkipped: dqSummary?.ExistingIssuesSkipped ?? 0,
@@ -252,6 +256,7 @@ public sealed class ImportWorkflowService : IImportWorkflowService
                 MappingMappedRows: mappingResult?.MappedRows ?? 0,
                 MappingSkippedRows: mappingResult?.SkippedRows ?? 0,
                 MappingFailedRows: mappingResult?.FailedRows ?? 0,
+                MappingQuarantinedRows: mappingResult?.QuarantinedRows ?? 0,
                 DataQualityCandidatesFound: dqSummary?.CandidatesFound ?? 0,
                 DataQualityNewIssuesPersisted: dqSummary?.NewIssuesPersisted ?? 0,
                 DataQualityExistingIssuesSkipped: dqSummary?.ExistingIssuesSkipped ?? 0,

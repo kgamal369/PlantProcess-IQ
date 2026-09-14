@@ -46,6 +46,9 @@ public class PlantProcessDbContext : DbContext, IPlantProcessDbContext
     public DbSet<ImportBatch> ImportBatches => Set<ImportBatch>();
     public DbSet<MappingDefinition> MappingDefinitions => Set<MappingDefinition>();
     public DbSet<StagingRecord> StagingRecords => Set<StagingRecord>();
+
+    // T-099. Schema placement comes from StorageTopologyMap, not from here.
+    public DbSet<ProjectionQuarantineRecord> ProjectionQuarantineRecords => Set<ProjectionQuarantineRecord>();
     public DbSet<ConnectionProfile> ConnectionProfiles => Set<ConnectionProfile>();
     public DbSet<SourceDatasetDefinition> SourceDatasetDefinitions => Set<SourceDatasetDefinition>();
     public DbSet<SourceFieldDefinition> SourceFieldDefinitions => Set<SourceFieldDefinition>();

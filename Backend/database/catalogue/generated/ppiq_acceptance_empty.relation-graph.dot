@@ -120,5 +120,9 @@ digraph physical_relations {
   "ppiq_staging.ppiq_connector_runtime_readings" -> "ppiq_meta.ppiq_connector_runtime_sources";
   "ppiq_staging.ppiq_connector_sync_checkpoints" -> "ppiq_meta.ppiq_plant_connectors";
   "ppiq_staging.ppiq_connector_telemetry_samples" -> "ppiq_meta.ppiq_plant_connectors";
+  "ppiq_staging.projection_quarantine" -> "ppiq_meta.mapping_definitions";
+  "ppiq_staging.projection_quarantine" -> "ppiq_meta.tenants";
+  "ppiq_staging.projection_quarantine" -> "ppiq_staging.import_batches";
+  "ppiq_staging.projection_quarantine" -> "ppiq_staging.staging_records";
   "ppiq_staging.staging_records" -> "ppiq_staging.import_batches";
 }

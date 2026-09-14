@@ -220,6 +220,7 @@ public static class StorageTopologyMap
         { "process_events", "ppiq_plant" },
         { "process_step_executions", "ppiq_plant" },
         { "product_specifications", "ppiq_meta" },
+        { "projection_quarantine", "ppiq_staging" },
         { "quality_events", "ppiq_plant" },
         { "read_model_refresh_runs", "ppiq_meta" },
         { "risk_scores", "ppiq_plant" },

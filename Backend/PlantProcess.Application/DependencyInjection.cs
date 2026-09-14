@@ -74,6 +74,10 @@ public static class DependencyInjection
         services.AddScoped<IMappingDefinitionService, MappingDefinitionService>();
         services.AddScoped<IStagingRecordService, StagingRecordService>();
         services.AddScoped<IMappingExecutionService, MappingExecutionService>();
+        // T-099. The shared single-row seam, and the bounded reprocess that
+        // consumes it. Both are scoped beside the executor they share.
+        services.AddScoped<IMappingRowProjector, MappingRowProjector>();
+        services.AddScoped<IProjectionQuarantineReprocessService, ProjectionQuarantineReprocessService>();
         services.AddScoped<Jobs.Targeting.IJobTargetClassPolicy, Jobs.Targeting.CapabilityJobTargetClassPolicy>();
         // T-065 bridge. The IJobTargetLookup registration moved to Infrastructure,
         // where the composite that also reads the analysis-job compatibility store

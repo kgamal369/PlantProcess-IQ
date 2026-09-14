@@ -3028,6 +3028,32 @@ ppiq_staging,ppiq_telemetry_ingestion_checkpoints,5,last_observed_at_utc,timesta
 ppiq_staging,ppiq_telemetry_ingestion_checkpoints,6,last_source_offset,text,nullable,
 ppiq_staging,ppiq_telemetry_ingestion_checkpoints,7,rows_ingested,bigint,not_null,0
 ppiq_staging,ppiq_telemetry_ingestion_checkpoints,8,updated_at_utc,timestamp with time zone,not_null,now()
+ppiq_staging,projection_quarantine,1,id,uuid,not_null,gen_random_uuid()
+ppiq_staging,projection_quarantine,10,validation_code,character varying(8),not_null,
+ppiq_staging,projection_quarantine,11,detail,text,not_null,
+ppiq_staging,projection_quarantine,12,offending_value,text,nullable,
+ppiq_staging,projection_quarantine,13,suggested_correction,text,not_null,
+ppiq_staging,projection_quarantine,14,import_batch_id,uuid,not_null,
+ppiq_staging,projection_quarantine,15,staging_record_id,uuid,not_null,
+ppiq_staging,projection_quarantine,16,staging_row_number,integer,not_null,
+ppiq_staging,projection_quarantine,17,source_object_name,character varying(200),not_null,
+ppiq_staging,projection_quarantine,18,mapping_definition_id,uuid,not_null,
+ppiq_staging,projection_quarantine,19,mapping_version,character varying(50),not_null,
+ppiq_staging,projection_quarantine,2,created_at_utc,timestamp with time zone,not_null,now()
+ppiq_staging,projection_quarantine,20,target_entity_name,character varying(100),not_null,
+ppiq_staging,projection_quarantine,21,tenant_id,uuid,not_null,
+ppiq_staging,projection_quarantine,22,state,character varying(20),not_null,'Open'::character varying
+ppiq_staging,projection_quarantine,23,attempt_count,integer,not_null,1
+ppiq_staging,projection_quarantine,24,last_attempt_at_utc,timestamp with time zone,not_null,now()
+ppiq_staging,projection_quarantine,25,resolved_at_utc,timestamp with time zone,nullable,
+ppiq_staging,projection_quarantine,26,resolved_canonical_id,uuid,nullable,
+ppiq_staging,projection_quarantine,3,updated_at_utc,timestamp with time zone,nullable,
+ppiq_staging,projection_quarantine,4,is_synthetic,boolean,not_null,false
+ppiq_staging,projection_quarantine,5,source_system,character varying(100),nullable,
+ppiq_staging,projection_quarantine,6,source_record_id,character varying(100),nullable,
+ppiq_staging,projection_quarantine,7,is_deleted,boolean,not_null,false
+ppiq_staging,projection_quarantine,8,deleted_at_utc,timestamp with time zone,nullable,
+ppiq_staging,projection_quarantine,9,deleted_reason,text,nullable,
 ppiq_staging,staging_records,1,id,uuid,not_null,
 ppiq_staging,staging_records,10,canonical_entity_id,uuid,nullable,
 ppiq_staging,staging_records,11,canonical_entity_name,character varying(200),nullable,

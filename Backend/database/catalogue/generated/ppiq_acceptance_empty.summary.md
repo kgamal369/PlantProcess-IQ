@@ -1,6 +1,6 @@
 # Physical catalogue - ppiq_acceptance_empty
 
-Objects: 276   Columns: 3306   FK relations: 121
+Objects: 277   Columns: 3332   FK relations: 125
 
 ## Objects by schema
 
@@ -8,7 +8,7 @@ Objects: 276   Columns: 3306   FK relations: 121
 - ppiq_forensics: 2   <- outside the governed three and outside public
 - ppiq_meta: 190
 - ppiq_plant: 38
-- ppiq_staging: 9
+- ppiq_staging: 10
 - public: 32
 
 ## Verdict

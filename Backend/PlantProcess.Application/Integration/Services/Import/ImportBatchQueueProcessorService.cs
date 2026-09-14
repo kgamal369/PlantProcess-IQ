@@ -100,6 +100,8 @@ public sealed class ImportBatchQueueProcessorService : IImportBatchQueueProcesso
 
                 var mappingResult = result.Value;
 
+                // T-099. Quarantine does not fail the batch. Only genuine
+                // execution failure does.
                 if (mappingResult.FailedRows > 0)
                     batch.MarkFailed($"Mapping finished with {mappingResult.FailedRows} failed row(s).");
                 else
@@ -120,7 +122,8 @@ public sealed class ImportBatchQueueProcessorService : IImportBatchQueueProcesso
                     mappingResult.ProcessedRows,
                     mappingResult.MappedRows,
                     mappingResult.FailedRows,
-                    batch.ErrorMessage));
+                    batch.ErrorMessage,
+                    mappingResult.QuarantinedRows));
             }
             catch (Exception ex)
             {

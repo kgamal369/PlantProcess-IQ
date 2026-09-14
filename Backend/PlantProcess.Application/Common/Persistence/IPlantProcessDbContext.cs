@@ -30,6 +30,10 @@ public interface IPlantProcessDbContext
     DbSet<ImportBatch> ImportBatches { get; }
     DbSet<MappingDefinition> MappingDefinitions { get; }
     DbSet<StagingRecord> StagingRecords { get; }
+
+    // T-099. Typed projection quarantine. Evidence for a staged row that could
+    // not lawfully become canonical, and the input to bounded reprocessing.
+    DbSet<ProjectionQuarantineRecord> ProjectionQuarantineRecords { get; }
     DbSet<ConnectionProfile> ConnectionProfiles { get; }
     DbSet<SourceDatasetDefinition> SourceDatasetDefinitions { get; }
     DbSet<SourceFieldDefinition> SourceFieldDefinitions { get; }

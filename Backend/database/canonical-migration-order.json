@@ -25,9 +25,9 @@
                   "Product tables live in ppiq_meta, ppiq_plant or ppiq_staging. A single terminal convergence file relocates them after every historical creator has run; no migration and no historical script moves a table."
               ],
     "summary":  {
-                    "totalFiles":  156,
-                    "canonicalPath":  107,
-                    "distinctTables":  173,
+                    "totalFiles":  158,
+                    "canonicalPath":  109,
+                    "distinctTables":  174,
                     "governedDuplicates":  7,
                     "ungovernedDuplicates":  0,
                     "efMigrations":  9,
@@ -1307,6 +1307,28 @@
                           },
                           {
                               "position":  107,
+                              "ordinal":  840,
+                              "path":  "Backend/database/scripts/840_projection_quarantine.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "B393C9A284244373B6B81DDB8D7B381F5DC8946FBAB01A5E367724EBED09836B",
+                              "createsTables":  [
+                                                    "ppiq_staging.projection_quarantine"
+                                                ],
+                              "reason":  "T-099. Typed projection quarantine: a staged row that cannot lawfully become canonical becomes exact evidence with a PV01..PV08 code instead of an untyped failure, and stays reprocessable."
+                          },
+                          {
+                              "position":  108,
+                              "ordinal":  841,
+                              "path":  "Backend/database/scripts/841_genealogy_edge_weight_guard_topology_parity.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "A9F5DF32B340D7BE3C37AD111F229894834924F789E8AEA7AFE6BFAAE0FCBC9F",
+                              "createsTables":  [
+
+                                                ],
+                              "reason":  "T-099 (CENTRAL ruling 13-Sep-2026, option b). Topology parity for the 550 weight guard: the deferred constraint trigger followed genealogy_edges into ppiq_plant but its function body still read public.genealogy_edges, so every edge write on a canonical build failed at commit. The function now resolves the relation through TG_TABLE_SCHEMA/TG_TABLE_NAME. No DDL on any table."
+                          },
+                          {
+                              "position":  109,
                               "ordinal":  6,
                               "path":  "Backend/database/views/006_dashboard_dataset_views.sql",
                               "disposition":  "Canonical",
