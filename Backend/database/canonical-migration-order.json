@@ -1,7 +1,7 @@
 {
     "artifact":  "canonical-migration-order",
     "purpose":  "The single ordered path that builds a database from zero. A script outside this path is never replayed as part of a build.",
-    "generatedAtUtc":  "2026-09-15T11:50:34Z",
+    "generatedAtUtc":  "2026-09-15T12:26:12Z",
     "baselineCommit":  "4e0f1219ddbac3163bafe7ce510b62520683a77c",
     "dispositions":  [
                          "Canonical",
@@ -25,8 +25,8 @@
                   "Product tables live in ppiq_meta, ppiq_plant or ppiq_staging. A single terminal convergence file relocates them after every historical creator has run; no migration and no historical script moves a table."
               ],
     "summary":  {
-                    "totalFiles":  159,
-                    "canonicalPath":  110,
+                    "totalFiles":  160,
+                    "canonicalPath":  111,
                     "distinctTables":  174,
                     "governedDuplicates":  7,
                     "ungovernedDuplicates":  0,
@@ -94,7 +94,7 @@
     "canonicalViews":  [
                            {
                                "path":  "Backend/database/views/006_dashboard_dataset_views.sql",
-                               "order":  110,
+                               "order":  111,
                                "sha256":  "729D127FA772E1E100A8AD1A6CEAF6B2BABBA5A3FED9991EB8EB62960D3D6865",
                                "note":  "Read-model view authority. Applied after every schema script and after topology convergence, before the probe database is dropped."
                            }
@@ -1340,6 +1340,17 @@
                           },
                           {
                               "position":  110,
+                              "ordinal":  843,
+                              "path":  "Backend/database/scripts/843_job_scheduling_and_freshness_contract.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "65B8FCCFD46A092506229D796C2CFA5DBBD2DF9492FDC44FD0550602E41F0162",
+                              "createsTables":  [
+
+                                                ],
+                              "reason":  "T-106 integration slice B1. Persistence for the accepted Phase-A kernels at 1b120f22: schedule kind, time zone, misfire policy and jitter on job_definitions; allow_stale_reuse on job_dependencies, the permission whose absence is why the runtime refuses to produce stale_accepted; measured age and tolerance evidence on job_run_dependencies; occurrence identity on job_run_histories with a partial unique index that prevents one occurrence running twice. Additive and idempotent; creates no table."
+                          },
+                          {
+                              "position":  111,
                               "ordinal":  6,
                               "path":  "Backend/database/views/006_dashboard_dataset_views.sql",
                               "disposition":  "Canonical",
