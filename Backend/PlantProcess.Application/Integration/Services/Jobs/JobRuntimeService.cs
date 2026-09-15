@@ -170,6 +170,82 @@ public sealed class JobRuntimeService : IJobRuntimeService
         return ApplicationResult<JobRunHistoryDto>.Success(ToDto(history));
     }
 
+    /// <summary>
+    /// T-106 B2.4. The operator's request, persisted. The run keeps running: a request is
+    /// not a terminal state and this method never pretends otherwise.
+    /// </summary>
+    public async Task<ApplicationResult<JobRunHistoryDto>> RequestCancellationAsync(
+        Guid jobDefinitionId,
+        Guid jobRunHistoryId,
+        string? requestedBy,
+        string? reason,
+        CancellationToken cancellationToken)
+    {
+        if (jobRunHistoryId == Guid.Empty)
+            return ApplicationResult<JobRunHistoryDto>.Failure(ApplicationError.Validation("Job run history ID is required."));
+
+        var history = await _dbContext.JobRunHistories
+            .FirstOrDefaultAsync(x => !x.IsDeleted && x.Id == jobRunHistoryId, cancellationToken);
+
+        if (history is null)
+            return ApplicationResult<JobRunHistoryDto>.Failure(ApplicationError.NotFound("Job run history record was not found."));
+
+        // The run must belong to the job the caller named. Cancelling by run id alone would
+        // let a caller stop a run on a job they never addressed.
+        if (jobDefinitionId != Guid.Empty && history.JobDefinitionId != jobDefinitionId)
+            return ApplicationResult<JobRunHistoryDto>.Failure(ApplicationError.NotFound("That run does not belong to this job."));
+
+        if (history.Status != JobRunStatus.Running)
+            return ApplicationResult<JobRunHistoryDto>.Failure(ApplicationError.BusinessRule(
+                "Only a running run can be cancelled; this run is " + history.Status + "."));
+
+        history.RequestCancellation(requestedBy, reason);
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return ApplicationResult<JobRunHistoryDto>.Success(ToDto(history));
+    }
+
+    /// <summary>
+    /// T-106 B2.4. The executor acknowledging: the work stopped, so the run becomes
+    /// terminally Cancelled through the entity's own state machine.
+    /// </summary>
+    public async Task<ApplicationResult<JobRunHistoryDto>> AcknowledgeCancellationAsync(
+        Guid jobRunHistoryId,
+        string? message,
+        CancellationToken cancellationToken)
+    {
+        if (jobRunHistoryId == Guid.Empty)
+            return ApplicationResult<JobRunHistoryDto>.Failure(ApplicationError.Validation("Job run history ID is required."));
+
+        var history = await _dbContext.JobRunHistories
+            .FirstOrDefaultAsync(x => !x.IsDeleted && x.Id == jobRunHistoryId, cancellationToken);
+
+        if (history is null)
+            return ApplicationResult<JobRunHistoryDto>.Failure(ApplicationError.NotFound("Job run history record was not found."));
+
+        if (history.CancellationRequestedAtUtc is null)
+            return ApplicationResult<JobRunHistoryDto>.Failure(ApplicationError.BusinessRule(
+                "There is no cancellation request on this run to acknowledge."));
+
+        var job = await _dbContext.JobDefinitions
+            .FirstOrDefaultAsync(x => !x.IsDeleted && x.Id == history.JobDefinitionId, cancellationToken);
+
+        history.AcknowledgeCancellation();
+        history.MarkCancelled(message);
+
+        if (job is not null)
+        {
+            // Cancelled, not Failed: the monitor must not show a red run for work an
+            // operator called off. The overload also takes duration before the instant.
+            job.MarkCancelled(history.DurationMs, history.CompletedAtUtc);
+        }
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return ApplicationResult<JobRunHistoryDto>.Success(ToDto(history));
+    }
+
     public async Task<ApplicationResult<JobRunHistoryDto>> CompleteAsync(
         Guid jobRunHistoryId,
         JobRunStatus finalStatus,
@@ -192,6 +268,18 @@ public sealed class JobRuntimeService : IJobRuntimeService
 
         if (job is null)
             return ApplicationResult<JobRunHistoryDto>.Failure(ApplicationError.NotFound("Job definition was not found."));
+
+        // T-106 B2.4. A run that already reached Cancelled does not get overwritten by a
+        // late completion arriving from work that was already stopped. One guard, the
+        // accepted one, at the only place a terminal status is written.
+        try
+        {
+            PlantProcess.Application.Jobs.Execution.JobRunStatusConvergence.EnsureNoLateSuccess(history.Status, finalStatus);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return ApplicationResult<JobRunHistoryDto>.Failure(ApplicationError.Conflict(ex.Message));
+        }
 
         switch (finalStatus)
         {

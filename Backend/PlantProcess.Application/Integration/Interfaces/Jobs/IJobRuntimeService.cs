@@ -60,6 +60,35 @@ public interface IJobRuntimeService
         Guid jobDefinitionId,
         int take,
         CancellationToken cancellationToken);
+
+    /// <summary>
+    /// T-106 B2.4. Records an operator's request that a run stop. It does not stop the run
+    /// and does not change its status: only the executor can answer it. Repeating the
+    /// request is a no-op that keeps the original requester and time.
+    ///
+    /// The default body FAILS CLOSED, so a runtime that has not implemented the request
+    /// path cannot pretend to have accepted one.
+    /// </summary>
+    Task<ApplicationResult<JobRunHistoryDto>> RequestCancellationAsync(
+        Guid jobDefinitionId,
+        Guid jobRunHistoryId,
+        string? requestedBy,
+        string? reason,
+        CancellationToken cancellationToken)
+        => Task.FromResult(ApplicationResult<JobRunHistoryDto>.Failure(ApplicationError.BusinessRule(
+            "This job runtime does not implement run cancellation requests.")));
+
+    /// <summary>
+    /// T-106 B2.4. The executor answering a request: it stopped cooperatively, so the run
+    /// converges to the terminal Cancelled state. T-261 owns propagating the request into
+    /// the real executor; this is the seam it will call.
+    /// </summary>
+    Task<ApplicationResult<JobRunHistoryDto>> AcknowledgeCancellationAsync(
+        Guid jobRunHistoryId,
+        string? message,
+        CancellationToken cancellationToken)
+        => Task.FromResult(ApplicationResult<JobRunHistoryDto>.Failure(ApplicationError.BusinessRule(
+            "This job runtime does not implement cancellation acknowledgement.")));
 }
 
 

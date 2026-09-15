@@ -236,6 +236,23 @@ public class JobDefinition : BaseEntity
     }
 
     /// <summary>
+    /// T-106 B2.4. The last-run truth after a run an operator stopped. Cancelled is not
+    /// Failed: nothing went wrong, the work was called off, and the monitor should say so
+    /// rather than leaving a red mark nobody can explain.
+    /// </summary>
+    public void MarkCancelled(long? durationMs = null, DateTime? cancelledAtUtc = null)
+    {
+        var completed = cancelledAtUtc ?? DateTime.UtcNow;
+
+        LastRunCompletedAtUtc = completed;
+        LastRunDurationMs = durationMs ?? CalculateDurationMs(completed);
+        LastRunStatus = JobRunStatus.Cancelled;
+        LastFailureReason = null;
+
+        MarkAsUpdated();
+    }
+
+    /// <summary>
     /// T-106. The last-run truth after an attempt that was refused before
     /// compute. Without this the monitor would keep reporting the previous
     /// outcome while a blocked run sat in history, which is the same absence

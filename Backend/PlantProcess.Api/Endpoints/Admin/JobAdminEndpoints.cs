@@ -40,6 +40,10 @@ public static class JobAdminEndpoints
             .WithSummary("Get job run history")
             .WithDescription("Returns the latest job run history records.");
 
+        group.MapPost("/{jobId:guid}/runs/{runId:guid}/cancel", RequestRunCancellationAsync)
+            .WithSummary("Request cancellation of a running job run")
+            .WithDescription("Records an operator request against one real run. It does not stop the run: the executor acknowledges, and only then is the run Cancelled.");
+
         group.MapPatch("/connection-profiles/{connectionProfileId:guid}/schedule", UpdateConnectionScheduleAsync)
             .WithSummary("Update DB Link import schedule")
             .WithDescription("Stores import schedule on ConnectionProfile and upserts a DbLinkImport JobDefinition.");
@@ -201,6 +205,28 @@ public static class JobAdminEndpoints
         var result = await jobRuntimeService.GetHistoryAsync(
             jobId,
             take ?? 20,
+            cancellationToken);
+
+        return result.IsSuccess
+            ? Results.Ok(result.Value)
+            : ToProblem(result.Error!.Message, result.Error.Type.ToString());
+    }
+
+    private static async Task<IResult> RequestRunCancellationAsync(
+        Guid jobId,
+        Guid runId,
+        CancelJobRunRequest request,
+        IJobRuntimeService jobRuntimeService,
+        CancellationToken cancellationToken)
+    {
+        // T-106 B2.4. The route addresses a real run of a named job, and the runtime
+        // verifies the run belongs to that job. There is deliberately no route that marks
+        // a run Cancelled directly: that state is earned by an acknowledged request.
+        var result = await jobRuntimeService.RequestCancellationAsync(
+            jobId,
+            runId,
+            request.RequestedBy,
+            request.Reason,
             cancellationToken);
 
         return result.IsSuccess

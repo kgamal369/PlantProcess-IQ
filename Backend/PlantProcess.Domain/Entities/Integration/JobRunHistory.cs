@@ -83,6 +83,23 @@ public class JobRunHistory : BaseEntity
     /// <summary>The nominal scheduled instant, never the poll instant that noticed it.</summary>
     public DateTime? NominalAtUtc { get; private set; }
 
+    /// <summary>
+    /// T-106 B2.4. When an operator asked this run to stop. A request is not a terminal
+    /// state and never becomes one on its own: the executor has to answer it first.
+    /// </summary>
+    public DateTime? CancellationRequestedAtUtc { get; private set; }
+
+    public string? CancellationRequestedBy { get; private set; }
+
+    public string? CancellationReason { get; private set; }
+
+    /// <summary>When the executor acknowledged and stopped cooperatively.</summary>
+    public DateTime? CancellationAcknowledgedAtUtc { get; private set; }
+
+    /// <summary>The run is running and has an unanswered cancellation request.</summary>
+    public bool HasPendingCancellation
+        => CancellationRequestedAtUtc.HasValue && !CancellationAcknowledgedAtUtc.HasValue;
+
     public JobRunHistory(
         Guid jobDefinitionId,
         string jobCode,
@@ -144,6 +161,71 @@ public class JobRunHistory : BaseEntity
         FailureReason = null;
         RunMessage = Clean(message) ?? "Job completed successfully.";
         ResultSummaryJson = CleanJson(resultSummaryJson);
+        MarkAsUpdated();
+    }
+
+    /// <summary>
+    /// T-106 B2.4. Records the operator's request. It does not stop anything and it does
+    /// not change Status: only the executor can answer it. Repeating the request keeps the
+    /// first one, so a nervous operator cannot rewrite who asked and when.
+    /// </summary>
+    public void RequestCancellation(string? requestedBy, string? reason)
+    {
+        if (Status != JobRunStatus.Running)
+        {
+            throw new InvalidOperationException(
+                "Only a running run can be asked to cancel; this run is " + Status + ".");
+        }
+
+        if (CancellationRequestedAtUtc.HasValue)
+        {
+            return;
+        }
+
+        CancellationRequestedAtUtc = DateTime.UtcNow;
+        CancellationRequestedBy = Clean(requestedBy);
+        CancellationReason = Clean(reason);
+        MarkAsUpdated();
+    }
+
+    /// <summary>
+    /// T-106 B2.4. The executor answering the request. Still not a terminal state: it
+    /// records that the work actually stopped, which MarkCancelled then makes terminal.
+    /// </summary>
+    public void AcknowledgeCancellation()
+    {
+        if (!CancellationRequestedAtUtc.HasValue)
+        {
+            throw new InvalidOperationException(
+                "There is no cancellation request on this run to acknowledge.");
+        }
+
+        if (CancellationAcknowledgedAtUtc.HasValue)
+        {
+            return;
+        }
+
+        CancellationAcknowledgedAtUtc = DateTime.UtcNow;
+        MarkAsUpdated();
+    }
+
+    /// <summary>
+    /// T-106 B2.4. Terminal Cancelled, and only after an acknowledged request. A run that
+    /// nobody asked to stop, or that the executor never acknowledged, cannot claim it.
+    /// </summary>
+    public void MarkCancelled(string? message = null)
+    {
+        if (!CancellationRequestedAtUtc.HasValue || !CancellationAcknowledgedAtUtc.HasValue)
+        {
+            throw new InvalidOperationException(
+                "A run becomes Cancelled only after a cancellation request the executor acknowledged.");
+        }
+
+        CompletedAtUtc = DateTime.UtcNow;
+        DurationMs = CalculateDurationMs(CompletedAtUtc.Value);
+        Status = JobRunStatus.Cancelled;
+        FailureReason = null;
+        RunMessage = Clean(message) ?? "Run cancelled at the operator's request.";
         MarkAsUpdated();
     }
 
