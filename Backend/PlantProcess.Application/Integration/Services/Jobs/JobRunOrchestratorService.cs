@@ -271,8 +271,22 @@ public sealed class JobRunOrchestratorService : IJobRunOrchestratorService
                         result.Error?.Message ?? "Import queue processing failed.");
                 }
 
+                // T-106 B2.5: the enclosing run reports what the batches actually did.
+                var terminal = PlantProcess.Application.Jobs.Execution.JobRunStatusConvergence.Resolve(
+                    new PlantProcess.Application.Jobs.Execution.JobUnitCounts(
+                        result.Value.BatchesProcessed,
+                        result.Value.BatchesCompleted,
+                        result.Value.BatchesFailed,
+                        result.Value.BatchesSkipped,
+                        false));
+
+                if (!terminal.IsSuccessfulTerminal)
+                {
+                    return RunNowExecutionResult.Failed(terminal.Message);
+                }
+
                 return RunNowExecutionResult.Ok(
-                    $"Import queue completed. Scanned={result.Value.BatchesScanned}, Completed={result.Value.BatchesCompleted}, Failed={result.Value.BatchesFailed}.",
+                    terminal.Message,
                     JsonSerializer.Serialize(result.Value));
             }
 

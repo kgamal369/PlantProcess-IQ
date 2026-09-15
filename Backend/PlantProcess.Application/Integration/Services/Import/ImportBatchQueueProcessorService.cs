@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using PlantProcess.Application.Common.Persistence;
 using PlantProcess.Application.Common.Results;
@@ -165,6 +165,22 @@ public sealed class ImportBatchQueueProcessorService : IImportBatchQueueProcesso
             summary.BatchesFailed,
             summary.BatchesSkipped,
             (long)summary.Duration.TotalMilliseconds);
+
+        // T-106 B2.5: a failed batch never disappears inside a successful result.
+        // The shape of the run is decided once, by the frozen aggregation kernel.
+        var terminal = PlantProcess.Application.Jobs.Execution.JobRunStatusConvergence.Resolve(
+            new PlantProcess.Application.Jobs.Execution.JobUnitCounts(
+                summary.BatchesProcessed,
+                summary.BatchesCompleted,
+                summary.BatchesFailed,
+                summary.BatchesSkipped,
+                false));
+
+        if (!terminal.IsSuccessfulTerminal)
+        {
+            return ApplicationResult<ImportQueueProcessingSummary>.Failure(
+                ApplicationError.Conflict(terminal.Message));
+        }
 
         return ApplicationResult<ImportQueueProcessingSummary>.Success(summary);
     }

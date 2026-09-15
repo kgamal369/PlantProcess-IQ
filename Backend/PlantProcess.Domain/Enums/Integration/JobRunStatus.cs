@@ -27,5 +27,8 @@ public enum JobRunStatus
     Timeout = 4,
 
     /// <summary>The attempt exists and compute never started.</summary>
-    Blocked = 5
+    Blocked = 5,
+
+    /// <summary>Cancellation was requested and the executor acknowledged it. Work stopped; it did not finish.</summary>
+    Cancelled = 6
 }
