@@ -37,7 +37,40 @@ public static class JobDependencyEvaluator
         Guid? upstreamRunId,
         JobRunStatus? upstreamStatus,
         int? upstreamVersion)
+        => Evaluate(
+            dependsOnJobDefinitionId,
+            isRequired,
+            pinnedVersion,
+            upstreamRunId,
+            upstreamStatus,
+            upstreamVersion,
+            upstreamRanInCurrentCycle: true,
+            upstreamCompletedAtUtc: null,
+            evaluatedAtUtc: null,
+            stalenessToleranceMinutes: null,
+            allowStaleReuse: false);
+
+    /// <summary>
+    /// T-106 B2.2. The same edge semantics, now with the measured inputs Chapter 5.3.6
+    /// needs to decide freshness: when the upstream result was produced, what the edge
+    /// tolerates, and whether the edge permits reusing a result from an earlier cycle.
+    /// The decision itself belongs to DependencyFreshnessPolicy; this method maps its
+    /// answer onto the edge vocabulary and adds no second rule.
+    /// </summary>
+    public static JobDependencyOutcome Evaluate(
+        Guid dependsOnJobDefinitionId,
+        bool isRequired,
+        int? pinnedVersion,
+        Guid? upstreamRunId,
+        JobRunStatus? upstreamStatus,
+        int? upstreamVersion,
+        bool upstreamRanInCurrentCycle,
+        DateTime? upstreamCompletedAtUtc,
+        DateTime? evaluatedAtUtc,
+        int? stalenessToleranceMinutes,
+        bool allowStaleReuse)
     {
+
         // Upstream never ran. The only state in the design with no upstream run
         // identity at all, and the only one where the persisted evidence carries
         // a NULL rather than a fabricated id.
@@ -82,12 +115,45 @@ public static class JobDependencyEvaluator
                     + (upstreamVersion.HasValue ? upstreamVersion.Value.ToString() : "none") + ".");
         }
 
-        // stale_accepted would be produced here, and is not. The edge declares a
-        // staleness tolerance but the design declares no authority that permits
-        // accepting a stale upstream, so this runtime never claims that state.
+        // The upstream succeeded. Whether that success is fresh enough to use is one
+        // decision, taken once, by the accepted freshness authority. stale_accepted is
+        // now reachable, and only through an edge that explicitly permits reuse inside
+        // its declared tolerance.
+        double? ageMinutes = null;
+        if (upstreamCompletedAtUtc.HasValue)
+        {
+            var evaluatedAt = evaluatedAtUtc ?? DateTime.UtcNow;
+            ageMinutes = (evaluatedAt - upstreamCompletedAtUtc.Value).TotalMinutes;
+        }
+
+        var freshness = DependencyFreshnessPolicy.Evaluate(
+            new FreshnessInput(
+                isRequired,
+                upstreamRanInCurrentCycle,
+                ageMinutes,
+                stalenessToleranceMinutes,
+                allowStaleReuse));
+
+        var resolution = freshness.Resolution switch
+        {
+            FreshnessResolution.Satisfied => JobDependencyResolution.Satisfied,
+            FreshnessResolution.StaleAccepted => JobDependencyResolution.StaleAccepted,
+            FreshnessResolution.SkippedOptional => JobDependencyResolution.SkippedOptional,
+            FreshnessResolution.Blocked => JobDependencyResolution.Blocked,
+            _ => throw new ArgumentOutOfRangeException(nameof(freshness), freshness.Resolution, "Unknown freshness resolution.")
+        };
+
+        var reason = resolution == JobDependencyResolution.Satisfied && upstreamRanInCurrentCycle
+            ? "Upstream job " + dependsOnJobDefinitionId + " completed successfully."
+            : "Upstream job " + dependsOnJobDefinitionId + ": " + freshness.Reason;
+
         return new JobDependencyOutcome(
-            dependsOnJobDefinitionId, upstreamRunId, JobDependencyResolution.Satisfied, false,
-            pinnedVersion, upstreamVersion,
-            "Upstream job " + dependsOnJobDefinitionId + " completed successfully.");
+            dependsOnJobDefinitionId,
+            upstreamRunId,
+            resolution,
+            resolution == JobDependencyResolution.Blocked,
+            pinnedVersion,
+            upstreamVersion,
+            reason);
     }
 }

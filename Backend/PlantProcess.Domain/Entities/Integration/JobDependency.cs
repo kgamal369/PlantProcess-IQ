@@ -43,6 +43,12 @@ public class JobDependency : BaseEntity
     /// <summary>Null means no tolerance is declared for this edge.</summary>
     public int? StalenessToleranceMinutes { get; private set; }
 
+    /// <summary>
+    /// T-106 B2.2. Explicit permission to reuse a prior-cycle upstream result inside the
+    /// declared tolerance. False by default: a tolerance alone permits nothing.
+    /// </summary>
+    public bool AllowStaleReuse { get; private set; }
+
     private JobDependency()
     {
     }
@@ -53,7 +59,8 @@ public class JobDependency : BaseEntity
         JobDependencyKind dependencyKind = JobDependencyKind.Data,
         bool isRequired = true,
         int? dependsOnVersion = null,
-        int? stalenessToleranceMinutes = null)
+        int? stalenessToleranceMinutes = null,
+        bool allowStaleReuse = false)
     {
         if (jobDefinitionId == Guid.Empty)
         {
@@ -88,5 +95,6 @@ public class JobDependency : BaseEntity
         IsRequired = isRequired;
         DependsOnVersion = dependsOnVersion;
         StalenessToleranceMinutes = stalenessToleranceMinutes;
+        AllowStaleReuse = allowStaleReuse;
     }
 }

@@ -40,6 +40,11 @@ public sealed class JobDependencyConfiguration : IEntityTypeConfiguration<JobDep
         builder.Property(x => x.StalenessToleranceMinutes)
             .HasColumnName("staleness_tolerance_minutes");
 
+        builder.Property(x => x.AllowStaleReuse)
+            .HasColumnName("allow_stale_reuse")
+            .HasDefaultValue(false)
+            .IsRequired();
+
         builder.Property(x => x.CreatedAtUtc).HasColumnType("timestamp with time zone");
         builder.Property(x => x.UpdatedAtUtc).HasColumnType("timestamp with time zone");
         builder.Property(x => x.DeletedAtUtc).HasColumnType("timestamp with time zone");

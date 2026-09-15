@@ -64,6 +64,12 @@ public class JobRunDependency : BaseEntity
     /// <summary>Chapter 5.3.6 watermark propagation. Not produced by this task.</summary>
     public string? WatermarkInherited { get; private set; }
 
+    /// <summary>T-106 B2.2. Measured age of the upstream result at resolution time.</summary>
+    public double? UpstreamAgeMinutes { get; private set; }
+
+    /// <summary>T-106 B2.2. The tolerance that age was compared against, copied at resolution time.</summary>
+    public int? ToleranceMinutes { get; private set; }
+
     private JobRunDependency()
     {
     }
@@ -76,7 +82,9 @@ public class JobRunDependency : BaseEntity
         JobDependencyResolution resolution,
         int? expectedVersion,
         int? actualVersion,
-        string? reason)
+        string? reason,
+        double? upstreamAgeMinutes = null,
+        int? toleranceMinutes = null)
     {
         if (runId == Guid.Empty)
         {
@@ -90,13 +98,25 @@ public class JobRunDependency : BaseEntity
                 "An upstream run identity is either real or absent; it is never empty.", nameof(dependsOnRunId));
         }
 
+        // T-106 B2.2. stale_accepted is now producible, and only against evidence: the
+        // measured age of the reused result and the tolerance it was compared with. A
+        // claim of accepted staleness without those two numbers, or outside the
+        // tolerance, is not a claim this runtime will persist.
         if (resolution == JobDependencyResolution.StaleAccepted)
         {
-            throw new ArgumentOutOfRangeException(
-                nameof(resolution), resolution,
-                "stale_accepted is representable in the schema and is not produced by this runtime: "
-                    + "the declared edge contract exposes a staleness tolerance but no authority that "
-                    + "permits accepting a stale upstream.");
+            if (upstreamAgeMinutes is null || toleranceMinutes is null)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(resolution), resolution,
+                    "stale_accepted must carry the measured upstream age and the tolerance it was compared with.");
+            }
+
+            if (upstreamAgeMinutes.Value < 0 || upstreamAgeMinutes.Value > toleranceMinutes.Value)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(upstreamAgeMinutes), upstreamAgeMinutes,
+                    "stale_accepted cannot record an age outside the declared tolerance.");
+            }
         }
 
         RunId = runId;
@@ -108,5 +128,7 @@ public class JobRunDependency : BaseEntity
         ExpectedVersion = expectedVersion;
         ActualVersion = actualVersion;
         Reason = string.IsNullOrWhiteSpace(reason) ? null : reason.Trim();
+        UpstreamAgeMinutes = upstreamAgeMinutes;
+        ToleranceMinutes = toleranceMinutes;
     }
 }
