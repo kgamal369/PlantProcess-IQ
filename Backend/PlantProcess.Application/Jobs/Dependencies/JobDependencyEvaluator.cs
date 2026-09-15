@@ -15,7 +15,9 @@ public sealed record JobDependencyOutcome(
     bool BlocksDownstream,
     int? ExpectedVersion,
     int? ActualVersion,
-    string Reason);
+    string Reason,
+    double? UpstreamAgeMinutes = null,
+    int? ToleranceMinutes = null);
 
 /// <summary>
 /// T-106. THE EDGE SEMANTICS OF CHAPTER 5.3.6, AS A PURE FUNCTION.
@@ -154,6 +156,8 @@ public static class JobDependencyEvaluator
             resolution == JobDependencyResolution.Blocked,
             pinnedVersion,
             upstreamVersion,
-            reason);
+            reason,
+            freshness.UpstreamAgeMinutes,
+            freshness.ToleranceMinutes);
     }
 }
