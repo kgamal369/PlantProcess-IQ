@@ -1,8 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using PlantProcess.Application.Common.Persistence;
 using PlantProcess.Application.Common.Results;
 using PlantProcess.Application.Integration.Contracts.Jobs;
 using PlantProcess.Application.Integration.Interfaces.Jobs;
+using PlantProcess.Application.Jobs.Scheduling;
 using PlantProcess.Domain.Entities.Integration;
 using PlantProcess.Domain.Enums.Integration;
 
@@ -22,6 +23,38 @@ public sealed class JobRegistrationService : IJobRegistrationService
     {
        var jobs = new[]
 {
+        // T-106 B2.3b census convergence. The Worker dispatches four job codes; two of them
+        // had no JobDefinition authority at all, so nothing could schedule, disable, monitor
+        // or audit them. They are registered here, in the one canonical catalogue, with the
+        // schedules the Worker already runs them on by default.
+        // JobType for both is DbLinkImport, the executable import family the orchestrator
+        // already commissions for this work. Confirm that classification.
+        new UpsertJobDefinitionRequest(
+            JobCode: "SYSTEM_IMPORT_QUEUE_PROCESSOR",
+            JobName: "Import Queue Processor Worker",
+            JobType: JobDefinitionType.DbLinkImport,
+            TargetId: null,
+            TargetType: "SystemWorker",
+            ScheduleExpression: "Every 2 minutes",
+            IsEnabled: true,
+            Description: "Processes pending import batches from the staging queue. Dispatched by the Worker host.",
+            IsSynthetic: false,
+            SourceSystem: "PlantProcessIQ.System",
+            SourceRecordId: "SYSTEM_IMPORT_QUEUE_PROCESSOR"),
+
+        new UpsertJobDefinitionRequest(
+            JobCode: "SYSTEM_DELTA_IMPORT_JOB",
+            JobName: "Delta Import Worker",
+            JobType: JobDefinitionType.DbLinkImport,
+            TargetId: null,
+            TargetType: "SystemWorker",
+            ScheduleExpression: "Every 5 minutes",
+            IsEnabled: true,
+            Description: "Reads incremental source rows since the recorded cursor into staging. Dispatched by the Worker host.",
+            IsSynthetic: false,
+            SourceSystem: "PlantProcessIQ.System",
+            SourceRecordId: "SYSTEM_DELTA_IMPORT_JOB"),
+
         new UpsertJobDefinitionRequest(
             JobCode: "SYSTEM_SOURCE_SNAPSHOT",
             JobName: "Source Snapshot Worker",
@@ -160,8 +193,11 @@ public sealed class JobRegistrationService : IJobRegistrationService
         if (string.IsNullOrWhiteSpace(request.JobName))
             return ApplicationResult<JobDefinitionDto>.Failure(ApplicationError.Validation("Job name is required."));
 
-        if (string.IsNullOrWhiteSpace(request.ScheduleExpression))
-            return ApplicationResult<JobDefinitionDto>.Failure(ApplicationError.Validation("Schedule expression is required."));
+        // T-106 B2.3b. System registration is a write path like any other: it cannot
+        // write a schedule the scheduler could never execute.
+        ApplicationError? scheduleError = JobScheduleWriteValidation.Validate(request.ScheduleExpression);
+        if (scheduleError is not null)
+            return ApplicationResult<JobDefinitionDto>.Failure(scheduleError);
 
         var jobCode = NormalizeCode(request.JobCode);
         var nowUtc = DateTime.UtcNow;

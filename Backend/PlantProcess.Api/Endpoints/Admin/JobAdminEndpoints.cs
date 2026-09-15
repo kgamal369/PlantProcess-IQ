@@ -234,6 +234,16 @@ public static class JobAdminEndpoints
         if (connection is null)
             return ApplicationProblems.NotFound("Connection profile was not found.");
 
+        // T-106 B2.3b. The schedule is validated BEFORE the connection is mutated. The
+        // previous order saved the connection schedule and only then upserted the job, so
+        // a refused job schedule could leave a persisted connection schedule behind. A
+        // refusal is now atomic from the caller's point of view.
+        PlantProcess.Application.Common.Results.ApplicationError? scheduleError =
+            PlantProcess.Application.Jobs.Scheduling.JobScheduleWriteValidation.Validate(request.ScheduleExpression);
+
+        if (scheduleError is not null)
+            return ToProblem(scheduleError.Message, "Validation");
+
         connection.UpdateImportSchedule(
             request.ScheduleExpression,
             request.ImportIntervalMinutes);
@@ -291,6 +301,13 @@ public static class JobAdminEndpoints
 
         if (mapping is null)
             return ApplicationProblems.NotFound("Mapping definition was not found.");
+
+        // T-106 B2.3b. Same authority, same position: refuse before anything is written.
+        PlantProcess.Application.Common.Results.ApplicationError? mappingScheduleError =
+            PlantProcess.Application.Jobs.Scheduling.JobScheduleWriteValidation.Validate(request.ScheduleExpression);
+
+        if (mappingScheduleError is not null)
+            return ToProblem(mappingScheduleError.Message, "Validation");
 
         var jobCode = $"CANONICAL_REFRESH_{mapping.MappingCode}";
 

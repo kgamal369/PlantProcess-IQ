@@ -1,9 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using PlantProcess.Application.Common.Persistence;
 using PlantProcess.Application.Common.Results;
 using PlantProcess.Application.Integration.Contracts.Jobs;
 using PlantProcess.Application.Integration.Services.Jobs;
 using PlantProcess.Application.Integration.Interfaces.Jobs;
+using PlantProcess.Application.Jobs.Scheduling;
 using PlantProcess.Domain.Entities.Integration;
 using PlantProcess.Domain.Enums.Integration;
 
@@ -280,10 +281,9 @@ public sealed class JobDefinitionService : IJobDefinitionService
         if (string.IsNullOrWhiteSpace(request.JobName))
             return ApplicationError.Validation("Job name is required.");
 
-        if (string.IsNullOrWhiteSpace(request.ScheduleExpression))
-            return ApplicationError.Validation("Schedule expression is required.");
-
-        return null;
+        // T-106 B2.3b. One schedule authority for every write path: a string that nothing
+        // can execute produces a job that can never become due, so it is refused at save.
+        return JobScheduleWriteValidation.Validate(request.ScheduleExpression);
     }
 
     private static ApplicationError? ValidateUpdateRequest(UpdateJobDefinitionRequest request)
@@ -291,10 +291,7 @@ public sealed class JobDefinitionService : IJobDefinitionService
         if (string.IsNullOrWhiteSpace(request.JobName))
             return ApplicationError.Validation("Job name is required.");
 
-        if (string.IsNullOrWhiteSpace(request.ScheduleExpression))
-            return ApplicationError.Validation("Schedule expression is required.");
-
-        return null;
+        return JobScheduleWriteValidation.Validate(request.ScheduleExpression);
     }
 
     private static JobDefinitionDto ToDto(JobDefinition job)
