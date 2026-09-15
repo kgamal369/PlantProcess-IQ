@@ -1,6 +1,10 @@
 # PlantProcess IQ - Master Design Document
 
-**Version 4.10.2 | Author: Karim, SOU Industrial Software, Dusseldorf** | **MASTER DESIGN FREEZE CANDIDATE**
+**Version 4.10.3 | Author: Karim, SOU Industrial Software, Dusseldorf** | **MASTER DESIGN FREEZE CANDIDATE**
+
+> **Package revision — 14 September 2026, v4.10.3.** Owner-authorised correction of cursor total-order safety, machine scheduling and dependency freshness is integrated in Chapters 3 and 4. The release-allocation note below records the approved M2/M3 split; the full target is preserved. Other chapter bodies are retained, not rewritten. The derived UI material is integrated into Chapters 3 and 4, including their illustrated Word editions; no standalone UI companion belongs in the controlled book. Visual material cannot override functional rules. See `PPIQ_Definition.md` for the complete fourteen-file register.
+
+> **Current planning basis (supersedes historical dates only).** M2 targets approximately one month from the owner's September planning checkpoint; M3 targets 45 days after M2 completion. No new absolute delivery date is asserted here. Historical change-log dates remain historical; Backlog v2.23.0 governs the current execution allocation.
 
 > **Change log — Catalogue Evidence-Grade, Canonical-Fact Lifecycle and Physical-Naming Hardening (4 September 2026, v4.10.2).** No product capability or release scope changes. The v4.10.1 physical-catalogue contract is tightened after review of the first generated catalogue: `GENERATED_INFERENCE` is explicitly draft-only and cannot satisfy lifecycle/family/owner/design-clause release certification; canonical plant fact families are authoritative plant history even when their names end in `_events`; source-script banner text is not accepted as a table purpose; the catalogue distinguishes source-declared/origin schema from governed target/effective schema and live-observed schema so pre-convergence `public` declarations cannot masquerade as compliant runtime topology; and new physical table/view names may not encode schema generations with `_v1`, `_v2`, etc. Existing version-suffixed names remain grandfathered until an owned compatibility-safe convergence. Chapters 1, 2, 4, 5 and 6 remain unchanged.
 
@@ -19,7 +23,7 @@
 
 ---
 
-> **CURRENT AUTHORITY — Master Design v4.10.2.** PlantProcess IQ has exactly six current design-authority chapters and one current execution-authority backlog workbook. No other file may define, amend, override, supplement or reinterpret current product design or implementation scope. A design change edits the owning chapter directly; a scope change edits the backlog directly. Transitional reviews, amendment packs, ledgers, mandates and prior revisions are historical evidence only after their accepted content is integrated. Validation scripts are code/enforcement instruments, not design documentation.
+> **CURRENT AUTHORITY — Master Design v4.10.3.** PlantProcess IQ has exactly six current design-authority chapters and one current execution-authority backlog workbook. No other file may define, amend, override, supplement or reinterpret current product design or implementation scope. A design change edits the owning chapter directly; a scope change edits the backlog directly. Transitional reviews, amendment packs, ledgers, mandates and prior revisions are historical evidence only after their accepted content is integrated. Validation scripts are code/enforcement instruments, not design documentation.
 
 
 # CHAPTER 3 - GENERAL SOFTWARE PRODUCT TECHNICAL FUNCTION DESCRIPTION
@@ -242,9 +246,9 @@ Fifteen technical steps, DF1 to DF15, mapped to the canonical user journey J1 to
 **SEQUENCE.**
 1. The scheduler admits the run through the `import` pool, after jitter and the skip-if-running policy.
 2. The reader evaluates the budget **before touching the source**; an over-budget read is refused before the source sees a statement.
-3. Rows are read as `WHERE watermark > :last AND watermark <= :now`, bounded by the row cap.
+3. Rows are read after the last committed **total-order cursor position**, bounded by the declared source-native upper watermark captured for this acquisition window and by row/byte/time caps. The ordering and continuation predicate use the same typed tuple: `(watermark, ordered stable tie-break members)`. A scalar watermark is permitted only when its uniqueness and stability are declared and verified. See the cursor contract below.
 4. Rows land in the staging table with the staging envelope: batch id, load timestamp, source watermark, row number, raw payload.
-5. The cursor advances **to the last row actually read**. A batch that hit the cap reports itself partial and the next cycle continues rather than restarting.
+5. The cursor advances **to the full cursor tuple of the last durably staged row**, in the same atomic unit as its rows and receipt. A cap-limited batch reports itself partial and continues from that exact tuple; it is not released to DF5 until terminal-successful. A rolled-back write advances no cursor.
 6. Progress streams per the protocol of Chapter 4 5.3.7: rows read, stage, heartbeat.
 7. The batch reaches a terminal state and, on success, raises the projection dependency for DF5.
 
@@ -272,6 +276,16 @@ Fifteen technical steps, DF1 to DF15, mapped to the canonical user journey J1 to
 **ACCEPTANCE.** Batches and staging rows grow; a second run with no new source rows completes with a small or zero delta, proving the cursor; one row inserted in the source propagates as exactly one staging row; a stopped source fails cleanly and opens its breaker; an over-budget read is refused with the rule named and the source shows no statement.
 
 ---
+
+#### DF3 cursor total-order, source-consistency and replay contract — v4.10.3
+
+A source position is an ordered tuple `P = (w, k1, ..., kn)`. The continuation predicate is lexicographic `P > P_last`, using the same provider-native typed ordering, collation and precision as `ORDER BY w, k1, ..., kn`; the declared upper watermark bounds the acquisition window. This is a semantic contract, not PostgreSQL-only SQL. A timestamp is never compared as a machine-local string, and a numeric cursor is never interpreted as a date.
+
+The Data Engineer confirms the tie-break from ordered imported business-key members or a source-stable unique key. Inference may suggest candidates, never select them silently. A missing, nullable, non-orderable or non-unique effective position is refused before incremental scheduling, with the field and remedy named. A source without a provable incremental contract uses the already governed full-scan/backfill mode and its cadence floor; refusal does not delete its dataset.
+
+A retry may read records again, but durable staging has idempotent effects using a tenant/dataset/source-identity/source-version receipt. Do not deduplicate only by business key: a later legitimate update to the same source row is a different source version. Cursor, staged records and their receipt commit together; failed or cancelled uncommitted work advances nothing. Late/out-of-order changes and deletes require an explicitly supported source revision/CDC or overlap-and-reconciliation policy; a timestamp tie-break alone does not make these changes discoverable. Existing scalar checkpoints are migrated only after their source ordering can be validated; otherwise pause and require a governed backfill/reconciliation, never invent tie-break values.
+
+Acceptance: more equal-watermark records than one page fit are all staged without loss; repeat over at least three pages and after restart. Test numeric, timestamp, text and composite positions, provider-native collation/precision, invariant serialization, null/refused keys, an update to an existing source identity, concurrent readers, failure before/after commit and a no-change rerun. No real customer incident is inferred from these tests.
 
 ### DF4 - Transformation authoring and relationship publication
 
@@ -1869,6 +1883,8 @@ Changing a pool or a weight is confirmed **because it changes what the executor 
 **EMPTY-INSTALL.** The premade Supervisor weekly definition and the retention cleanup definition, with no dependencies.
 **A11Y + RTL.** The DAG has an equivalent nested-list rendering giving each job its upstream and downstream lists; required and optional are text as well as line style; pool utilisation is text plus bar; confirmations are dialogs with focus trapping.
 
+> **v4.10.3 F4 binding.** Schedule controls use the one grammar and occurrence preview in Ch4 5.3.2a. Dependency controls expose current-cycle versus explicitly permitted previous-success reuse and its age ceiling per Ch4 5.3.6. Run now, cancel and schedule actions cannot bypass those authorities. The visual companion specifies the corresponding dialogs without owning their semantics.
+
 ### F5 Logging and Audit - `/admin/logs`
 
 **AIM.** Investigate what the **platform** did, across every log family, and export what was read.
@@ -2281,7 +2297,7 @@ Keys: UNIQUE `(import_batch_id, row_number)`. Indexes: partial `(import_batch_id
 
 *`ON DELETE RESTRICT` twice is deliberate: a batch cannot be deleted while its rows exist, and a dataset cannot be deleted while its batches exist, because either would orphan the lineage every canonical row depends on.*
 
-**`cursor_watermarks`** - one row per dataset. `source_dataset_definition_id` UNIQUE FK; `watermark_column`, `watermark_type`, `watermark_value text`, `last_advanced_at_utc`, `dirty boolean NOT NULL DEFAULT false`.
+**`cursor_watermarks`** - one tenant-scoped row per dataset. `source_dataset_definition_id` UNIQUE FK; `watermark_column`, `watermark_type`, `watermark_value text`, `tie_break_members jsonb` (ordered references to the dataset's declared stable source/business-key members), `tie_break_values jsonb` (typed values in that same order), `window_upper_watermark text`, `cursor_contract_version integer NOT NULL`, `last_advanced_at_utc`, `dirty boolean NOT NULL DEFAULT false`. The watermark and tie-break are one position, never independently advanced. A uniqueness-proven scalar cursor has empty tie-break arrays; a non-unique watermark must have a complete stable unique tie-break. Runtime state stays in this existing cursor authority; no independent last-cursor authority is introduced.
 
 **`schema_drift_events`** - `source_dataset_definition_id` FK; `detected_at_utc`; `change_type` CHECK IN (`ColumnAdded`,`ColumnRemoved`,`TypeChanged`,`ObjectMissing`); `column_name`, `old_type`, `new_type`; `acknowledged_at_utc`, `acknowledged_by`. Index `(source_dataset_definition_id, detected_at_utc DESC)`.
 
@@ -2435,7 +2451,7 @@ Each table declares its install state. **Every prefilled row passes the generici
 | `business_key_definitions` / `business_key_members` | `key_code`, ordered members | Empty |
 | `definition_store` / `definition_versions` / `definition_dependencies` | 4.5.11 | Empty |
 | `plant_relationships` / `_members` / `_paths` | 4.5.10 | Empty |
-| `job_definitions` | `job_code` UNIQUE, `job_class`, **`target_definition_id` FK -> `definition_store(id)`**, **`target_definition_version` integer NULL**, **`target_version_policy`**, `schedule_expression`, `pool_code`, `compute_weight`, `is_enabled`. See 4.5.5a | **Prefilled**: the Supervisor weekly definition and the retention cleanup definition only |
+| `job_definitions` | `job_code` UNIQUE, `job_class`, **`target_definition_id` FK -> `definition_store(id)`**, **`target_definition_version` integer NULL**, **`target_version_policy`**, `schedule_kind`, `schedule_expression`, `schedule_time_zone_id`, derived `next_run_at_utc`, `pool_code`, `compute_weight`, `is_enabled`. Scheduling grammar and occurrence identity: Ch4 5.3.2a. Target binding: 4.5.5a | **Prefilled**: the Supervisor weekly definition and the retention cleanup definition only |
 | `job_dependencies` | UNIQUE `(job_definition_id, depends_on_job_definition_id)` | Empty |
 | `job_run_history` | `(job_definition_id, started_at_utc)` | Empty |
 | `registry_dimensions` / `registry_measures` / `registry_hierarchies` | `code` UNIQUE | **Derived, never prefilled** - 4.5.13 |
@@ -3569,3 +3585,1135 @@ Senior software engineer and technical lead. Precise, complete, reproducible. Ev
 ---
 
 *End of Chapter 3.*
+
+## 4.9 Integrated visual reference and named-dialog catalogue
+
+**Book consolidation, 14 September 2026 — no functional scope change.** The former standalone UI/Figma companion is absorbed here. The preceding DF and page contracts remain the functional requirements. This section preserves its visual tokens, page/frame index and 87 named dialog/drawer arrangements; the actual figures are embedded in this chapter's Word edition. The original source-line numbers below refer to the pre-consolidation v4.10.3 source. Stable page and section IDs govern navigation.
+
+These are the existing illustrative wireframes, not an accepted T-265/T-266 depth pass, not runtime screenshots, and not a published native Figma prototype. No sample value becomes a backend default. Refer to the latest Backlog's UI Coverage, UI Controls and UI Delivery sheets for unfinished work and acceptance. A repeated source-derived contract here does not introduce a second authority.
+
+### Tokens and components
+
+| Token | Value | Basis |
+|---|---|---|
+| canvas | `#061120` | Derived neutral/feedback implementation token; review contrast in final platform rendering |
+| panel | `#0B1730` | Source named color; Ch4 5.1/5.2 |
+| input | `#102A43` | Source named color; Ch4 5.1/5.2 |
+| line | `#264460` | Derived neutral/feedback implementation token; review contrast in final platform rendering |
+| text | `#EAF6FF` | Source named color; Ch4 5.1/5.2 |
+| muted | `#8EA7C1` | Source named color; Ch4 5.1/5.2 |
+| cyan | `#00D4FF` | Source named color; Ch4 5.1/5.2 |
+| blue | `#0A84FF` | Source named color; Ch4 5.1/5.2 |
+| green | `#2CE6A2` | Source named color; Ch4 5.1/5.2 |
+| amber | `#FFB020` | Source named color; Ch4 5.1/5.2 |
+| red | `#FF5C75` | Derived neutral/feedback implementation token; review contrast in final platform rendering |
+| purple | `#B48CFF` | Source named color; Ch4 5.1/5.2 |
+| steel | `#7AA7C7` | Source named color; Ch4 5.1/5.2 |
+| report | `#F4F6F8` | Source named color; Ch4 5.1/5.2 |
+
+Body: Inter/Segoe UI sans-serif; SQL: **IBM Plex Mono** as required by Ch4 5.2.12. No font binaries are included. Typography roles: page title 28, section 18, body 14, label 12, metadata 11 px.
+
+### Reusable component variants
+
+Buttons: primary/secondary/destructive/ghost, enabled/disabled/pending/focus. Inputs/selects: empty/filled/read-only/invalid/disabled/loading. Table: sortable header, loading, zero, filtered-zero, populated, row-expanded, error. Pills: state text + icon, never color alone. Associative values: selected, possible, excluded (clickable pivot). Dialogs: default/validation/submitting/refusal/failure; drawers retain parent page context. Toasts announce outcome and correlation without replacing durable log evidence.
+
+### Responsive and RTL contract
+
+Desktop keeps the source-defined inline-start/centre/inline-end relationships. At narrower sizes, rail collapses, secondary detail panels become drawers, tables scroll horizontally, and the Canvas/SQL minimum working area is preserved rather than clipped. RTL mirrors navigation, panel order and control alignment; SQL, source identifiers and numeric expressions remain LTR islands. The source requires keyboard/accessibility and RTL behavior; exact breakpoints are visual implementation choices to be validated against the target device envelope.
+
+### Dialog and keyboard contract
+
+Modal open moves focus to its title/first meaningful field; focus is contained and returns to the trigger on close. Escape cancels non-destructive dialogs unless saving requires an explicit wait/cancel decision. Destructive operations state affected identity, version/scope and consequence, and require the canonical permission. Failed requests keep entered data and show a retryable error. Illegal wire creation is specifically **not** a modal: reject the wire, name the issue in the debug log, and focus that diagnostic (Ch4 5.2.7).
+
+### Coverage ledger
+
+| Page | Route | Default frame | Dialog/drawer IDs |
+|---|---|---|---|
+| A1 — Login | `/login` | `A1--populated` | DLG-A1-mfa, DLG-A1-session |
+| A2 — Home |  | `A2--populated` |  |
+| B1 — Connections | `/data-integration/connections` | `B1--populated` | DLG-B1-create, DLG-B1-test, DLG-B1-deactivate, DLG-B1-credential |
+| B2 — Dataset Registry | `/data-integration/registry` | `B2--populated` | DLG-B2-register, DLG-B2-preview |
+| B3 — Prepare Import | `/data-integration/prepare` | `B3--populated` | DLG-B3-key, DLG-B3-cursor, DLG-B3-fullscan |
+| B4 — Importing | `/data-integration/importing` | `B4--populated` | DLG-B4-rerun, DLG-B4-backfill, DLG-B4-detail |
+| B5 — Jobs Monitor | `/data-integration/jobs` | `B5--populated` | DLG-B5-cancel, DLG-B5-pause, DLG-B5-run, DLG-B5-history |
+| B6 — Connector Truth | `/data-integration/connector-truth` | `B6--populated` | DLG-B6-export |
+| C1 — Transformation Studio | `/prep/canvas` | `C1--populated` | DLG-C1-publish, DLG-C1-impact, DLG-C1-fork, DLG-C1-rollback, DLG-C1-import, DLG-C1-mode, DLG-C1-dirty, DLG-C1-conflict, DLG-C1-sqlerror, DLG-C1-expression, DLG-C1-mapping |
+| C2 — Mapping Health | `/mapping-health` | `C2--populated` | DLG-C2-drift, DLG-C2-reprocess |
+| C3 — Data Quality | `/data-quality` | `C3--populated` | DLG-C3-quarantine |
+| C4 — Plant Model Explorer | `/plant-model` | `C4--populated` | DLG-C4-entity |
+| C5 — Genealogy Explorer | `/materials`, `/materials/{id}` | `C5--populated` | DLG-C5-genealogy |
+| C6 — Relationship Browser | `/relationships` | `C6--populated` | DLG-C6-validate, DLG-C6-path |
+| D1 — Interactive Workspace | `/workspace/:dashboardCode` | `D1--populated` | DLG-D1-selection, DLG-D1-bookmark, DLG-D1-export |
+| D2 — Page Builder | `/page-builder` | `D2--populated` | DLG-D2-page, DLG-D2-widget, DLG-D2-filter, DLG-D2-delete |
+| D3 — Analysis Toolbox | `/analysis/toolbox` | `D3--populated` | DLG-D3-readiness |
+| D4 — Findings | `/correlations` | `D4--populated` | DLG-D4-evidence |
+| D5 — Risk Dashboard | `/risk` | `D5--populated` | DLG-D5-risk |
+| D6 — Suggestions | `/suggestions` | `D6--populated` | DLG-D6-decision, DLG-D6-defer |
+| D7 — Value Dashboard | `/value` | `D7--populated` | DLG-D7-assumptions, DLG-D7-value |
+| D8 — ML Readiness and Models | `/ml-readiness` | `D8--populated` | DLG-D8-activate, DLG-D8-retire |
+| D9 — Early Warning | `/early-warning` | `D9--populated` | DLG-D9-remediation |
+| D10 — Practice Insights | `/practice-insights` | `D10--populated` | DLG-D10-practice |
+| D11 — Scenario Simulation | `/scenarios` | `D11--populated` | DLG-D11-save, DLG-D11-compare |
+| D12 — Benchmarking | `/benchmarking` | `D12--populated` | DLG-D12-comparison |
+| E2 — Assistant Configuration | `/assistant-config` | `E2--populated` | DLG-E2-reset, DLG-E2-reindex |
+| E3 — Plant Data Log | `/data-integration/alerting` | `E3--populated` | DLG-E3-rule, DLG-E3-ack |
+| E4 — Supervisor | `/supervisor` | `E4--populated` | DLG-E4-proposal, DLG-E4-reject |
+| E5 — Reports | `/reports` | `E5--populated` | DLG-E5-definition, DLG-E5-output |
+| E6 — Alert Routing and Escalation | `/alert-routing` | `E6--populated` | DLG-E6-routing, DLG-E6-delivery |
+| F1 — Users and Roles | `/admin/users` | `F1--populated` | DLG-F1-user, DLG-F1-role, DLG-F1-disable |
+| F2 — Licence and Entitlement | `/admin/license` | `F2--populated` | DLG-F2-license |
+| F3 — Authoring Quota and Limits | `/admin/quota` | `F3--populated` | DLG-F3-quota |
+| F4 — Jobs Administration | `/admin/jobs` | `F4--populated` | DLG-F4-job, DLG-F4-schedule, DLG-F4-dependency |
+| F5 — Logging and Audit | `/admin/logs` | `F5--populated` | DLG-F5-filter |
+| F6 — Log Channel Configuration | `/admin/log-channels` | `F6--populated` | DLG-F6-channel |
+| F7 — System Settings | `/admin/settings` | `F7--populated` | DLG-F7-timezone, DLG-F7-egress |
+| F8 — Translation and Language | `/admin/translation` | `F8--populated` | DLG-F8-language |
+| F9 — Log Retention and Archival | `/admin/log-retention` | `F9--populated` | DLG-F9-retention, DLG-F9-hold, DLG-F9-cleanup |
+
+## Complete named dialog / drawer catalogue
+
+Presentation type below is a derived visual choice unless the source explicitly mandates modal/inline behavior. This catalogue does not convert every inline form or wire diagnostic into a dialog. All corresponding parent-page controls are retained above.
+
+### DLG-A1-mfa — Verify administrator access
+
+**Parent / kind:** A1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §A1.
+
+**Frames:** [default — frame `DLG-A1-mfa--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-A1-mfa--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Verification code
+
+**Primary action:** Verify. Secondary: Cancel/Close. **Guard:** No authenticated page until required verification succeeds.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-A1-session — Session expired
+
+**Parent / kind:** A1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §A1.
+
+**Frames:** [default — frame `DLG-A1-session--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-A1-session--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Confirmation of the named action; no additional data entry.
+
+**Primary action:** Sign in again. Secondary: Cancel/Close. **Guard:** Explain expiry; never silently discard a dirty authored draft.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-B1-create — Connection profile
+
+**Parent / kind:** B1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §B1.
+
+**Frames:** [default — frame `DLG-B1-create--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-B1-create--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Name → Provider → Host → Port → Database → Schema → Credential reference → Read-only posture → Allowed window → Row cap → Timeout → Rate cap
+
+**Primary action:** Save profile. Secondary: Cancel/Close. **Guard:** Do not display a stored secret; only a credential reference is returned.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-B1-test — Test source connection
+
+**Parent / kind:** B1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §B1.
+
+**Frames:** [default — frame `DLG-B1-test--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-B1-test--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Connection identity → Provider identity → Read-only evidence → Measured source budget
+
+**Primary action:** Test connection. Secondary: Cancel/Close. **Guard:** Read-only proof and source-budget check, not just reachability.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-B1-deactivate — Deactivate connection
+
+**Parent / kind:** B1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §B1.
+
+**Frames:** [default — frame `DLG-B1-deactivate--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-B1-deactivate--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Affected datasets → Affected jobs → Reason
+
+**Primary action:** Deactivate. Secondary: Cancel/Close. **Guard:** Show dependency impact; no deletion of source history.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-B1-credential — Replace credential reference
+
+**Parent / kind:** B1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §B1.
+
+**Frames:** [default — frame `DLG-B1-credential--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-B1-credential--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Current reference (masked label) → New protected reference → Reason
+
+**Primary action:** Replace reference. Secondary: Cancel/Close. **Guard:** No plaintext secret persisted in options or returned by read-back.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-B2-register — Register dataset
+
+**Parent / kind:** B2 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §B2.
+
+**Frames:** [default — frame `DLG-B2-register--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-B2-register--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Connection → Schema → Source object → Included columns → Taxonomy source
+
+**Primary action:** Register. Secondary: Cancel/Close. **Guard:** Author confirms source metadata; suggestions are not declarations.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-B2-preview — Source preview
+
+**Parent / kind:** B2 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §B2.
+
+**Frames:** [default — frame `DLG-B2-preview--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-B2-preview--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Source identity → Column names and types → Bounded sample → Rows and elapsed time
+
+**Primary action:** Close. Secondary: Cancel/Close. **Guard:** Read under the effective source budget.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-B3-key — Business-key members
+
+**Parent / kind:** B3 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §B3.
+
+**Frames:** [default — frame `DLG-B3-key--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-B3-key--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Ordered source fields → Member order → Uniqueness evidence
+
+**Primary action:** Save key. Secondary: Cancel/Close. **Guard:** All selected key members belong to imported columns.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-B3-cursor — Incremental cursor
+
+**Parent / kind:** B3 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §B3.
+
+**Frames:** [default — frame `DLG-B3-cursor--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-B3-cursor--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Watermark field → Watermark type → Stable tie-break members → Initial position → Source upper bound
+
+**Primary action:** Save cursor. Secondary: Cancel/Close. **Guard:** v4.10.3 total-order contract; no guessed type or tie-break.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-B3-fullscan — No watermark: daily floor
+
+**Parent / kind:** B3 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §B3.
+
+**Frames:** [default — frame `DLG-B3-fullscan--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-B3-fullscan--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Source object → Forced daily minimum → Expected scan budget
+
+**Primary action:** Confirm full-scan mode. Secondary: Cancel/Close. **Guard:** Not eligible for fast cadence without a safe incremental contract.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-B4-rerun — Re-run import batch
+
+**Parent / kind:** B4 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §B4.
+
+**Frames:** [default — frame `DLG-B4-rerun--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-B4-rerun--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Batch identity → Persisted cursor range → Failure reason → Replay policy
+
+**Primary action:** Re-run batch. Secondary: Cancel/Close. **Guard:** Replay produces idempotent accepted effects, not duplicate staging.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-B4-backfill — Historical backfill
+
+**Parent / kind:** B4 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §B4.
+
+**Frames:** [default — frame `DLG-B4-backfill--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-B4-backfill--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Dataset → From / to → Row and byte cap → Checkpoint → Source window
+
+**Primary action:** Start backfill. Secondary: Cancel/Close. **Guard:** Bounded, pausable/resumable; does not starve cadence work.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-B4-detail — Import batch detail
+
+**Parent / kind:** B4 / drawer. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §B4.
+
+**Frames:** [default — frame `DLG-B4-detail--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-B4-detail--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Status → Watermark from / to → Rows read / staged → Failed rows → Source lineage → Run log
+
+**Primary action:** Close. Secondary: Cancel/Close. **Guard:** Failed rows cannot be hidden inside a green aggregate run.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-B5-cancel — Cancel running job
+
+**Parent / kind:** B5 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §B5.
+
+**Frames:** [default — frame `DLG-B5-cancel--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-B5-cancel--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Job identity → Run identity → Committed work → Reason
+
+**Primary action:** Request cancellation. Secondary: Cancel/Close. **Guard:** A cancellation request is not an acknowledged terminal state.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-B5-pause — Pause scheduled job
+
+**Parent / kind:** B5 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §B5.
+
+**Frames:** [default — frame `DLG-B5-pause--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-B5-pause--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Schedule → Next occurrence → Reason
+
+**Primary action:** Pause schedule. Secondary: Cancel/Close. **Guard:** Pauses future admission; separately cancel any current run.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-B5-run — Run job now
+
+**Parent / kind:** B5 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §B5.
+
+**Frames:** [default — frame `DLG-B5-run--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-B5-run--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Definition version → Dependency verdict → Budget verdict → Parameters
+
+**Primary action:** Run now. Secondary: Cancel/Close. **Guard:** Target pinned at admission; unsupported families refuse before execution.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-B5-history — Run evidence
+
+**Parent / kind:** B5 / drawer. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §B5.
+
+**Frames:** [default — frame `DLG-B5-history--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-B5-history--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Run identity → Resolved version → Counts → Duration → Upstream evidence → Failure / refusal
+
+**Primary action:** Close. Secondary: Cancel/Close. **Guard:** Historical identities remain immutable and tenant-scoped.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-B6-export — Export capability truth
+
+**Parent / kind:** B6 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §B6.
+
+**Frames:** [default — frame `DLG-B6-export--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-B6-export--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Provider set → State filter → Evidence date
+
+**Primary action:** Export. Secondary: Cancel/Close. **Guard:** Read-only representation of server capability truth.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-C1-publish — Publish Transformation
+
+**Parent / kind:** C1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §C1.
+
+**Frames:** [default — frame `DLG-C1-publish--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-C1-publish--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Definition name → Version / hash → Output target → Relationship emission → Downstream impact
+
+**Primary action:** Publish immutable version. Secondary: Cancel/Close. **Guard:** Definition and relationship publication must not partially commit.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-C1-impact — Downstream impact
+
+**Parent / kind:** C1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §C1.
+
+**Frames:** [default — frame `DLG-C1-impact--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-C1-impact--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Definitions → Pages → Analyses → Models → Relationships → Required action
+
+**Primary action:** Close. Secondary: Cancel/Close. **Guard:** No implicit deletion or widening of existing contracts.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-C1-fork — Edit published definition
+
+**Parent / kind:** C1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §C1.
+
+**Frames:** [default — frame `DLG-C1-fork--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-C1-fork--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Published version → Next draft → Reason
+
+**Primary action:** Create draft. Secondary: Cancel/Close. **Guard:** Never mutate the existing immutable version.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-C1-rollback — Select prior version
+
+**Parent / kind:** C1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §C1.
+
+**Frames:** [default — frame `DLG-C1-rollback--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-C1-rollback--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Version history → Current pointer → Downstream impact → Reason
+
+**Primary action:** Select version. Secondary: Cancel/Close. **Guard:** Preserve later historical versions and explain the pointer change.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-C1-import — Import definition
+
+**Parent / kind:** C1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §C1.
+
+**Frames:** [default — frame `DLG-C1-import--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-C1-import--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Artifact → Source schema bindings → Target catalog → Validation diagnostics
+
+**Primary action:** Validate import. Secondary: Cancel/Close. **Guard:** No authored file bypasses the canonical lifecycle.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-C1-mode — Switch authoring representation
+
+**Parent / kind:** C1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §C1.
+
+**Frames:** [default — frame `DLG-C1-mode--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-C1-mode--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Current representation → Reconstructability → Preserved SQL → Diagram consequence
+
+**Primary action:** Confirm switch. Secondary: Cancel/Close. **Guard:** Do not claim a SQL diagram is reconstructable when it is not.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-C1-dirty — Unsaved definition changes
+
+**Parent / kind:** C1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §C1.
+
+**Frames:** [default — frame `DLG-C1-dirty--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-C1-dirty--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Changed fields → Last persisted version
+
+**Primary action:** Save draft. Secondary: Cancel/Close. **Guard:** Actions: save, discard with confirmation, stay. Never silently lose edits.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-C1-conflict — Concurrent edit conflict
+
+**Parent / kind:** C1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §C1.
+
+**Frames:** [default — frame `DLG-C1-conflict--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-C1-conflict--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Base version → Server version → Local changes → Rebase / save-as
+
+**Primary action:** Review conflict. Secondary: Cancel/Close. **Guard:** No last-write-wins overwrite of a published version.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-C1-sqlerror — SQL validation details
+
+**Parent / kind:** C1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §C1.
+
+**Frames:** [default — frame `DLG-C1-sqlerror--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-C1-sqlerror--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Message → Offending fragment → Token / line / column → Suggested correction
+
+**Primary action:** Return to editor. Secondary: Cancel/Close. **Guard:** Message + echoed fragment + in-place token highlight.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-C1-expression — Expression editor
+
+**Parent / kind:** C1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §C1.
+
+**Frames:** [default — frame `DLG-C1-expression--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-C1-expression--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Typed fields → Operators → Expression → Declared result type → Validation → Test sample
+
+**Primary action:** Apply expression. Secondary: Cancel/Close. **Guard:** Single row context; no free control-flow board. Accept is one undo step.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-C1-mapping — Canonical field mapping
+
+**Parent / kind:** C1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §C1.
+
+**Frames:** [default — frame `DLG-C1-mapping--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-C1-mapping--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Target entity → Required business fields → Source output binding → Type verdict → System provenance (read-only)
+
+**Primary action:** Apply mapping. Secondary: Cancel/Close. **Guard:** No inference by ordinal/name resemblance; unknown source type refuses.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-C2-drift — Schema drift event
+
+**Parent / kind:** C2 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §C2.
+
+**Frames:** [default — frame `DLG-C2-drift--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-C2-drift--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Dataset → Changed field → Old / new type → Affected mappings → State
+
+**Primary action:** Acknowledge. Secondary: Cancel/Close. **Guard:** Acknowledgement is not automatic repair or reactivation.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-C2-reprocess — Reprocess corrected rows
+
+**Parent / kind:** C2 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §C2.
+
+**Frames:** [default — frame `DLG-C2-reprocess--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-C2-reprocess--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Batch → Quarantine code → Corrected definition version → Estimated scope
+
+**Primary action:** Reprocess. Secondary: Cancel/Close. **Guard:** Preserve original rejection and exact selected correction version.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-C3-quarantine — Quarantine row detail
+
+**Parent / kind:** C3 / drawer. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §C3.
+
+**Frames:** [default — frame `DLG-C3-quarantine--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-C3-quarantine--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Validation code → Offending field → Staging row → Source provenance → Correction hint
+
+**Primary action:** Close. Secondary: Cancel/Close. **Guard:** Actual failure evidence, not invented successful output.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-C4-entity — Canonical entity detail
+
+**Parent / kind:** C4 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §C4.
+
+**Frames:** [default — frame `DLG-C4-entity--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-C4-entity--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Entity type → Registered dimensions → Relationships → Evidence
+
+**Primary action:** Close. Secondary: Cancel/Close. **Guard:** Generic registry vocabulary; no customer-specific hardcoding.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-C5-genealogy — Genealogy contribution
+
+**Parent / kind:** C5 / drawer. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §C5.
+
+**Frames:** [default — frame `DLG-C5-genealogy--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-C5-genealogy--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Parent / child identities → Ordered key → Weight → Grain → Source definition
+
+**Primary action:** Open source evidence. Secondary: Cancel/Close. **Guard:** Weights and direction are evidence-bearing, never decorative lines.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-C6-validate — Validate relationship
+
+**Parent / kind:** C6 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §C6.
+
+**Frames:** [default — frame `DLG-C6-validate--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-C6-validate--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Relationship version → Ordered members → Cardinality → Grain conversion → Attribution → Evidence
+
+**Primary action:** Validate. Secondary: Cancel/Close. **Guard:** Server measures validation state; user cannot assert proven=true.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-C6-path — Preferred relationship path
+
+**Parent / kind:** C6 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §C6.
+
+**Frames:** [default — frame `DLG-C6-path--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-C6-path--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Source / destination → Candidate paths → Ambiguity → Declared preference
+
+**Primary action:** Save preference. Secondary: Cancel/Close. **Guard:** No guessed path when more than one lawful route exists.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-D1-selection — Selection state
+
+**Parent / kind:** D1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §D1.
+
+**Frames:** [default — frame `DLG-D1-selection--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-D1-selection--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Selected → Possible → Excluded → Clear one / all
+
+**Primary action:** Apply selection. Secondary: Cancel/Close. **Guard:** Excluded values remain clickable to pivot; color is not the sole signal.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-D1-bookmark — Save current view
+
+**Parent / kind:** D1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §D1.
+
+**Frames:** [default — frame `DLG-D1-bookmark--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-D1-bookmark--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Name → Selection state → Layout version → Visibility
+
+**Primary action:** Save view. Secondary: Cancel/Close. **Guard:** Persist through governed definitions; no layout authority in localStorage.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-D1-export — Export current state
+
+**Parent / kind:** D1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §D1.
+
+**Frames:** [default — frame `DLG-D1-export--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-D1-export--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Format → Current filters → Period → Evidence inclusion → Scope
+
+**Primary action:** Export. Secondary: Cancel/Close. **Guard:** Export the displayed state and label incomplete/unavailable evidence.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-D2-page — Page definition
+
+**Parent / kind:** D2 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §D2.
+
+**Frames:** [default — frame `DLG-D2-page--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-D2-page--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Title → Description → Visibility → Layout → Default selection
+
+**Primary action:** Save draft. Secondary: Cancel/Close. **Guard:** Reuse page lifecycle, not a separate dashboard engine.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-D2-widget — Widget binding
+
+**Parent / kind:** D2 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §D2.
+
+**Frames:** [default — frame `DLG-D2-widget--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-D2-widget--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Source class → Source identity → Grain → Dimensions → Measures → Chart → Evidence handles
+
+**Primary action:** Preview binding. Secondary: Cancel/Close. **Guard:** Keep native-grain rich sources intact; refuse invalid joins/roles.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-D2-filter — Filter definition
+
+**Parent / kind:** D2 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §D2.
+
+**Frames:** [default — frame `DLG-D2-filter--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-D2-filter--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Name → Scope → Registered field → Filter kind → Default → Version
+
+**Primary action:** Save filter. Secondary: Cancel/Close. **Guard:** Page/global/widget scopes stay distinct; stale bindings are visible.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-D2-delete — Remove widget
+
+**Parent / kind:** D2 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §D2.
+
+**Frames:** [default — frame `DLG-D2-delete--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-D2-delete--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Widget identity → Page version → Unsaved changes
+
+**Primary action:** Remove from draft. Secondary: Cancel/Close. **Guard:** Removal changes the draft only; saved history retained.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-D3-readiness — Analysis readiness
+
+**Parent / kind:** D3 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §D3.
+
+**Frames:** [default — frame `DLG-D3-readiness--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-D3-readiness--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Population → Grain → Method → Measured values → Thresholds → Refusal reasons
+
+**Primary action:** Return to analysis. Secondary: Cancel/Close. **Guard:** A refusal cannot be bypassed by enabling a UI checkbox.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-D4-evidence — Finding evidence
+
+**Parent / kind:** D4 / drawer. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §D4.
+
+**Frames:** [default — frame `DLG-D4-evidence--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-D4-evidence--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Claim class → Method → Population → Effect / uncertainty → q-value → Source handles
+
+**Primary action:** Open evidence. Secondary: Cancel/Close. **Guard:** A statistical association is not upgraded to a causal claim.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-D5-risk — Risk record
+
+**Parent / kind:** D5 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §D5.
+
+**Frames:** [default — frame `DLG-D5-risk--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-D5-risk--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Subject identity → Risk band → Drivers → Model / engine version → Evidence
+
+**Primary action:** Open investigation. Secondary: Cancel/Close. **Guard:** No certainty claim; source and model states remain explicit.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-D6-decision — Suggestion decision
+
+**Parent / kind:** D6 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §D6.
+
+**Frames:** [default — frame `DLG-D6-decision--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-D6-decision--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Suggestion → Evidence → Reason code → Decision → Actor
+
+**Primary action:** Record decision. Secondary: Cancel/Close. **Guard:** Server can_accept/permission authority gates action; no plant control write.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-D6-defer — Defer suggestion
+
+**Parent / kind:** D6 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §D6.
+
+**Frames:** [default — frame `DLG-D6-defer--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-D6-defer--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Reason code → Review time → Evidence
+
+**Primary action:** Defer. Secondary: Cancel/Close. **Guard:** Record actor/time; do not fabricate an action or outcome.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-D7-assumptions — Cost assumptions
+
+**Parent / kind:** D7 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §D7.
+
+**Frames:** [default — frame `DLG-D7-assumptions--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-D7-assumptions--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Measure → Unit / currency → Effective period → Assumption value → Source → Reason
+
+**Primary action:** Save assumptions. Secondary: Cancel/Close. **Guard:** No monetary claim without declared basis and audit.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-D7-value — Value derivation
+
+**Parent / kind:** D7 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §D7.
+
+**Frames:** [default — frame `DLG-D7-value--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-D7-value--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Potential / realised class → Assumptions → Counterfactual → Uncertainty → Evidence
+
+**Primary action:** Close. Secondary: Cancel/Close. **Guard:** Do not combine unsupported realised value with a modeled potential figure.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-D8-activate — Activate model version
+
+**Parent / kind:** D8 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §D8.
+
+**Frames:** [default — frame `DLG-D8-activate--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-D8-activate--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Candidate → Serving identity → Gate results → Snapshot / manifest → Warm-up → Fallback
+
+**Primary action:** Activate. Secondary: Cancel/Close. **Guard:** Only approved gates and held-out evidence permit activation.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-D8-retire — Retire model version
+
+**Parent / kind:** D8 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §D8.
+
+**Frames:** [default — frame `DLG-D8-retire--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-D8-retire--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Version → Dependent consumers → Fallback → Reason
+
+**Primary action:** Retire. Secondary: Cancel/Close. **Guard:** Never erase provenance of historical predictions.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-D9-remediation — Remediation eligibility
+
+**Parent / kind:** D9 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §D9.
+
+**Frames:** [default — frame `DLG-D9-remediation--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-D9-remediation--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Prediction → Deadline → Candidate → Nine check results → Expected effect → Evidence
+
+**Primary action:** Review decision. Secondary: Cancel/Close. **Guard:** No accept action after deadline or any failed mandatory gate.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-D10-practice — Practice evidence
+
+**Parent / kind:** D10 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §D10.
+
+**Frames:** [default — frame `DLG-D10-practice--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-D10-practice--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Comparable context → Support → Outcome → Confidence → Sensitivity → Benchmark status
+
+**Primary action:** Open evidence. Secondary: Cancel/Close. **Guard:** Observed practice is not automatically a proven benchmark.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-D11-save — Save scenario
+
+**Parent / kind:** D11 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §D11.
+
+**Frames:** [default — frame `DLG-D11-save--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-D11-save--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Name → Baseline → Variable changes → Fixed assumptions → Model version → Uncertainty
+
+**Primary action:** Save scenario. Secondary: Cancel/Close. **Guard:** Simulation label permanent; no plant write path.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-D11-compare — Compare scenarios
+
+**Parent / kind:** D11 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §D11.
+
+**Frames:** [default — frame `DLG-D11-compare--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-D11-compare--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Saved versions → Common baseline → Variables → Result intervals
+
+**Primary action:** Compare. Secondary: Cancel/Close. **Guard:** All models/bases/assumptions explicit; incomparable cases refuse.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-D12-comparison — Benchmark population evidence
+
+**Parent / kind:** D12 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §D12.
+
+**Frames:** [default — frame `DLG-D12-comparison--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-D12-comparison--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Both populations → Measure direction → Normalization → Support → Reference
+
+**Primary action:** Close. Secondary: Cancel/Close. **Guard:** BM01 support and BM02 direction-of-goodness guards are visible.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-E2-reset — Reset Assistant configuration
+
+**Parent / kind:** E2 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §E2.
+
+**Frames:** [default — frame `DLG-E2-reset--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-E2-reset--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Current policies → Default policies → Impact → Reason
+
+**Primary action:** Reset. Secondary: Cancel/Close. **Guard:** Cannot weaken grounding or evidence rules.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-E2-reindex — Reindex knowledge
+
+**Parent / kind:** E2 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §E2.
+
+**Frames:** [default — frame `DLG-E2-reindex--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-E2-reindex--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Allowed source families → Current index → Expected bounded work
+
+**Primary action:** Reindex. Secondary: Cancel/Close. **Guard:** Tenant and permission scope preserved.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-E3-rule — Plant data log rule
+
+**Parent / kind:** E3 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §E3.
+
+**Frames:** [default — frame `DLG-E3-rule--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-E3-rule--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Rule name → Parameter → Comparator → Limit → Severity
+
+**Primary action:** Save rule. Secondary: Cancel/Close. **Guard:** Comparator whitelist enforced both server and persistence.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-E3-ack — Acknowledge log entry
+
+**Parent / kind:** E3 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §E3.
+
+**Frames:** [default — frame `DLG-E3-ack--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-E3-ack--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Entry → Rule → Source subject → Actor → Note
+
+**Primary action:** Acknowledge. Secondary: Cancel/Close. **Guard:** No acknowledgment rewrites the observed measurement.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-E4-proposal — Review Supervisor proposal
+
+**Parent / kind:** E4 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §E4.
+
+**Frames:** [default — frame `DLG-E4-proposal--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-E4-proposal--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Target → Before / after → Reason → Evidence → Shadow comparison
+
+**Primary action:** Approve proposal. Secondary: Cancel/Close. **Guard:** Forbidden authority targets remain unwriteable by construction.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-E4-reject — Reject Supervisor proposal
+
+**Parent / kind:** E4 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §E4.
+
+**Frames:** [default — frame `DLG-E4-reject--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-E4-reject--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Proposal → Reason
+
+**Primary action:** Reject. Secondary: Cancel/Close. **Guard:** Preserve proposal and evidence history.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-E5-definition — Report definition
+
+**Parent / kind:** E5 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §E5.
+
+**Frames:** [default — frame `DLG-E5-definition--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-E5-definition--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Title → Sections → Period → Recipients → Schedule → Delivery target
+
+**Primary action:** Save report. Secondary: Cancel/Close. **Guard:** One report definition and platform Job scheduler.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-E5-output — Generated report output
+
+**Parent / kind:** E5 / drawer. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §E5.
+
+**Frames:** [default — frame `DLG-E5-output--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-E5-output--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Period → Filter state → Generation run → Sections → Evidence → Delivery status
+
+**Primary action:** Download. Secondary: Cancel/Close. **Guard:** All-empty sections refuse generation; report uses light surface.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-E6-routing — Alert routing rule
+
+**Parent / kind:** E6 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §E6.
+
+**Frames:** [default — frame `DLG-E6-routing--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-E6-routing--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Channel / severity → Recipients → Delivery channels → Quiet hours → Dedupe → Rate → Escalation
+
+**Primary action:** Save routing rule. Secondary: Cancel/Close. **Guard:** Recipient and escalation validity checked before save.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-E6-delivery — Delivery attempt
+
+**Parent / kind:** E6 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §E6.
+
+**Frames:** [default — frame `DLG-E6-delivery--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-E6-delivery--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Recipient → Channel → Attempts → Reason → Next retry
+
+**Primary action:** Retry delivery. Secondary: Cancel/Close. **Guard:** Retry without duplicate external delivery where receipt exists.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-F1-user — Create user
+
+**Parent / kind:** F1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §F1.
+
+**Frames:** [default — frame `DLG-F1-user--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-F1-user--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Name → Email → Role
+
+**Primary action:** Create user. Secondary: Cancel/Close. **Guard:** Authorised admin; permission matrix derives from approved role contract.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-F1-role — Role / user permission override
+
+**Parent / kind:** F1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §F1.
+
+**Frames:** [default — frame `DLG-F1-role--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-F1-role--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Principal → Role inheritance → Surface × action → Overrides → Reason
+
+**Primary action:** Save permissions. Secondary: Cancel/Close. **Guard:** Show inherited versus overridden grants; fail-closed at API too.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-F1-disable — Disable user
+
+**Parent / kind:** F1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §F1.
+
+**Frames:** [default — frame `DLG-F1-disable--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-F1-disable--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** User → Active sessions → Reason
+
+**Primary action:** Disable. Secondary: Cancel/Close. **Guard:** Audit; revoke active access according to session policy.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-F2-license — Activate signed licence
+
+**Parent / kind:** F2 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §F2.
+
+**Frames:** [default — frame `DLG-F2-license--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-F2-license--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Signed artifact → Tenant → Instance → Tier → Validity → Verification result
+
+**Primary action:** Verify and activate. Secondary: Cancel/Close. **Guard:** Customer verifies vendor-signed artifact; no production self-signing.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-F3-quota — Role or user quota
+
+**Parent / kind:** F3 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §F3.
+
+**Frames:** [default — frame `DLG-F3-quota--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-F3-quota--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Principal / role → Object type → Inherited limit → Override → Current use
+
+**Primary action:** Save quota. Secondary: Cancel/Close. **Guard:** 80% warning, 100% creation guard; never discard existing draft.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-F4-job — Job definition
+
+**Parent / kind:** F4 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §F4.
+
+**Frames:** [default — frame `DLG-F4-job--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-F4-job--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Name → Family → Target identity → Version policy → Parameters → Schedule → Pool / weight
+
+**Primary action:** Save job. Secondary: Cancel/Close. **Guard:** One scheduler authority; unsupported family refused as unavailable.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-F4-schedule — Schedule editor
+
+**Parent / kind:** F4 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §F4.
+
+**Frames:** [default — frame `DLG-F4-schedule--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-F4-schedule--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Kind → Canonical expression → Time zone → Next occurrences → Jitter → Missed-tick policy
+
+**Primary action:** Save schedule. Secondary: Cancel/Close. **Guard:** v4.10.3 machine grammar; UI words never executable source text.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-F4-dependency — Dependency policy
+
+**Parent / kind:** F4 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §F4.
+
+**Frames:** [default — frame `DLG-F4-dependency--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-F4-dependency--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Upstream job → Required / optional → Pinned version → Allow prior-success reuse → Age ceiling → Cycle impact
+
+**Primary action:** Save dependency. Secondary: Cancel/Close. **Guard:** Default reuse=false; no beyond-limit acceptance; negative cases named.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-F5-filter — Log search / export
+
+**Parent / kind:** F5 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §F5.
+
+**Frames:** [default — frame `DLG-F5-filter--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-F5-filter--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Family → Severity → Actor → Run id → From / to → Export format
+
+**Primary action:** Apply filters. Secondary: Cancel/Close. **Guard:** Permission and tenant scope retained in export.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-F6-channel — Log channel
+
+**Parent / kind:** F6 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §F6.
+
+**Frames:** [default — frame `DLG-F6-channel--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-F6-channel--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Name → Family → Severity policy → Retention policy → Enabled
+
+**Primary action:** Save channel. Secondary: Cancel/Close. **Guard:** Cannot redirect customer entries into protected audit authority.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-F7-timezone — Change plant time zone
+
+**Parent / kind:** F7 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §F7.
+
+**Frames:** [default — frame `DLG-F7-timezone--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-F7-timezone--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Current zone → New zone → Shift-analysis impact → Next schedule previews
+
+**Primary action:** Confirm zone change. Secondary: Cancel/Close. **Guard:** Does not rewrite historical source timestamps; audit setting revision.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-F7-egress — Change data egress policy
+
+**Parent / kind:** F7 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §F7.
+
+**Frames:** [default — frame `DLG-F7-egress--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-F7-egress--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Current policy → New policy → Affected tools → Reason
+
+**Primary action:** Confirm policy. Secondary: Cancel/Close. **Guard:** No-egress state reaches every external model/tool boundary.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-F8-language — Import language pack
+
+**Parent / kind:** F8 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §F8.
+
+**Frames:** [default — frame `DLG-F8-language--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-F8-language--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Language → Pack version → Changed labels → Fallback → Review state
+
+**Primary action:** Import pack. Secondary: Cancel/Close. **Guard:** Keep technical identifiers unchanged; translation does not redefine semantics.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-F9-retention — Retention impact preview
+
+**Parent / kind:** F9 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §F9.
+
+**Frames:** [default — frame `DLG-F9-retention--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-F9-retention--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Channel → Cutoff → Rows / storage → Archive destination → Legal hold → Preview receipt
+
+**Primary action:** Save policy. Secondary: Cancel/Close. **Guard:** No destructive save without preview; failed archive -> zero deletions.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-F9-hold — Place or remove legal hold
+
+**Parent / kind:** F9 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §F9.
+
+**Frames:** [default — frame `DLG-F9-hold--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-F9-hold--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Channel → Current hold → Actor → Reason
+
+**Primary action:** Confirm hold change. Secondary: Cancel/Close. **Guard:** Authorised audited action; held data cannot be purged.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-F9-cleanup — Run retention cleanup
+
+**Parent / kind:** F9 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §F9.
+
+**Frames:** [default — frame `DLG-F9-cleanup--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-F9-cleanup--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Channels → Exact cutoff → Archive status → Expected count → Preview identity
+
+**Primary action:** Run cleanup. Secondary: Cancel/Close. **Guard:** Abort deletion on archive failure; persist actual terminal summary.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-G1-citations — Assistant citations
+
+**Parent / kind:** G1 / drawer. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §G1.
+
+**Frames:** [default — frame `DLG-G1-citations--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-G1-citations--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Answer claim → Evidence handles → Source identity → Permission scope
+
+**Primary action:** Open evidence. Secondary: Cancel/Close. **Guard:** Context is not evidence; unresolved evidence cannot be upgraded.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-G3-commands — Global command palette
+
+**Parent / kind:** G3 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §G3.
+
+**Frames:** [default — frame `DLG-G3-commands--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-G3-commands--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Search → Permitted pages → Definitions → Fields → Findings → Commands
+
+**Primary action:** Open selected. Secondary: Cancel/Close. **Guard:** Only permitted search results/actions; keyboard focus returns to trigger.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.
+
+### DLG-G6-activity — Activity tray
+
+**Parent / kind:** G6 / drawer. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §G6.
+
+**Frames:** [default — frame `DLG-G6-activity--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-G6-activity--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+
+**Fields / evidence regions:** Running jobs → Stage / counts → Last heartbeat → Outcome → Evidence
+
+**Primary action:** Open run. Secondary: Cancel/Close. **Guard:** No fabricated percent; poll fallback explicitly visible.
+
+**State behavior:** field-level validation prevents submission; submitting disables duplicate action; refusal preserves the draft and shows code/reason/next step; transport failure remains visibly distinct and retryable; success closes or updates the parent from the server response, never an optimistic fabricated result.

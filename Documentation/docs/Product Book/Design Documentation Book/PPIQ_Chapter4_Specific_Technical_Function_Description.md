@@ -1,6 +1,10 @@
 # PlantProcess IQ - Master Design Document
 
-**Version 4.10 | Author: Karim, SOU Industrial Software, Dusseldorf** | **MASTER DESIGN FREEZE CANDIDATE**
+**Version 4.10.3 | Author: Karim, SOU Industrial Software, Dusseldorf** | **MASTER DESIGN FREEZE CANDIDATE**
+
+> **Package revision — 14 September 2026, v4.10.3.** Owner-authorised correction of cursor total-order safety, machine scheduling and dependency freshness is integrated in Chapters 3 and 4. The release-allocation note below records the approved M2/M3 split; the full target is preserved. Other chapter bodies are retained, not rewritten. The derived UI material is integrated into Chapters 3 and 4, including their illustrated Word editions; no standalone UI companion belongs in the controlled book. Visual material cannot override functional rules. See `PPIQ_Definition.md` for the complete fourteen-file register.
+
+> **Current planning basis (supersedes historical dates only).** M2 targets approximately one month from the owner's September planning checkpoint; M3 targets 45 days after M2 completion. No new absolute delivery date is asserted here. Historical change-log dates remain historical; Backlog v2.23.0 governs the current execution allocation.
 
 > **Change log — Two-Release Production Roadmap and Day-1 Workbench Constitution (23 August 2026, v4.10).** v4.10 replaces retired internal programme codes with exactly two product releases: **M2 — Release 1, 30 September 2026**, for genuine early production and first-week customer work; and **M3 — Release 2, 30 October 2026**, for heavy production, higher data volume, more users and advanced intelligence. Each release uses only **P1, P2, P3, P4 and P5**. Release 1 makes DB Link/data onboarding, Canvas/data preparation, Jobs, enterprise BI reliability, read-only production OPC UA, governed References/Reconciliation/Assistant and minimum production hardening first-class release gates. Release 2 owns scale, advanced BI/authoring, deep enterprise administration, InsightBoard composition, multi-objective optimisation, customer-grade ROI convergence and heavy-production certification. Design and backlog are required to be one-to-one traceable: every designed product outcome has an execution owner and acceptance path, and every backlog task maps to an owning design contract.
 
@@ -11,7 +15,7 @@
 
 ---
 
-> **CURRENT AUTHORITY — Master Design v4.10.** PlantProcess IQ has exactly six current design-authority chapters and one current execution-authority backlog workbook. No other file may define, amend, override, supplement or reinterpret current product design or implementation scope. A design change edits the owning chapter directly; a scope change edits the backlog directly. Transitional reviews, amendment packs, ledgers, mandates and prior revisions are historical evidence only after their accepted content is integrated. Validation scripts are code/enforcement instruments, not design documentation.
+> **CURRENT AUTHORITY — Master Design v4.10.3.** PlantProcess IQ has exactly six current design-authority chapters and one current execution-authority backlog workbook. No other file may define, amend, override, supplement or reinterpret current product design or implementation scope. A design change edits the owning chapter directly; a scope change edits the backlog directly. Transitional reviews, amendment packs, ledgers, mandates and prior revisions are historical evidence only after their accepted content is integrated. Validation scripts are code/enforcement instruments, not design documentation.
 
 
 # CHAPTER 4 - SPECIFIC SOFTWARE PRODUCT TECHNICAL FUNCTION DESCRIPTION
@@ -1088,7 +1092,7 @@ Nine mechanisms, layered. Each one alone is insufficient; together they make the
 
 ### Mechanism 1 - Incremental acquisition
 
-Per dataset: a watermark column, a stored cursor, and a read of `WHERE watermark > :last AND watermark <= :now` bounded by the row cap. A batch that hits the cap **advances the cursor to the last row it actually read** and reports itself as partial, so the next cycle continues rather than restarting.
+Per dataset: the total-order typed cursor and bounded window of Chapter 3 DF3. Continue lexicographically after the last durably staged `(watermark, ordered stable tie-break)` position, using the identical provider-native ordering in the continuation predicate and `ORDER BY`. A uniqueness-proven scalar watermark is the special case. Row/byte/time caps never permit losing equal-watermark rows. Cursor advancement and durable staging/receipt are atomic; a cap-limited batch remains partial until safely completed.
 
 Where a source has no usable watermark, the dataset is marked full-scan and its **minimum cadence is forced to daily**, because a full scan on a 3-minute cadence is not a configuration a plant should be able to create by accident.
 
@@ -1218,6 +1222,29 @@ When the system is overloaded it **degrades in a stated order**, visibly, rather
 
 **Every level is announced.** A product that quietly stops doing analysis is worse than one that says it is behind.
 
+### 5.3.2a Canonical schedule contract and occurrence identity — v4.10.3
+
+One platform schedule authority validates and normalises the persisted machine schedule, calculates nominal occurrences and derives `next_run_at_utc`. The same authority serves create/edit, preview, Run Due, worker restart and report/retention scheduling. Human-readable labels such as "Every 5 minutes" are presentation only and never a second executable grammar.
+
+| Canonical field | Contract |
+|---|---|
+| `schedule_kind` | `manual`, `cron`, `event`, `micro_batch` |
+| `schedule_expression` | The one machine specification. The appendix name `schedule_spec` is a semantic alias only, not a second stored authority. |
+| `schedule_time_zone_id` | Explicit installation-supported time-zone identity for wall-clock schedules; never inferred from server locale. UTC is explicit, not a silent fallback. |
+| `next_run_at_utc` | Derived scheduler state, not a separately authored source of truth. |
+| schedule revision | Any schedule edit has an auditable revision/hash, and prior run occurrences retain their original revision. |
+
+`manual` has a null expression and no automatic occurrence. `cron` uses the canonical five fields `minute hour day-of-month month day-of-week`; numeric ranges are minute 0–59, hour 0–23, day 1–31, month 1–12, weekday 0–6 (Sunday 0). Supported syntax is `*`, an integer, a comma list, an ascending `a-b` range, and positive `/step` on a wildcard or range. Aliases, seconds/year fields and engine-specific extensions are rejected. To avoid dialect-dependent day matching, day-of-month and day-of-week may not both be restricted. The UI offers plain-language controls and previews the next occurrences with their zone/UTC values.
+
+`micro_batch` uses an ISO-8601 elapsed duration restricted to positive whole hours/minutes/seconds (`PT5M`, `PT1H30M`), normalised by the server; month/year/calendar durations are rejected. It uses a persisted UTC anchor, not completion-time drift. `event` names a registered, versioned trigger contract; delivery/retry uses its idempotent event identity. Uncommissioned trigger kinds are refused by capability truth, not accepted as inert text.
+
+Daylight-saving policy is deterministic: nonexistent local times are skipped with a recorded reason; an ambiguous local occurrence runs once at the earlier UTC instant. UI preview states this policy. Scheduling after downtime coalesces missed periodic occurrences to one bounded due request and records the skipped/coalesced count; it does not unleash an unbounded catch-up burst. Manual/event paths are not silently subjected to periodic coalescing. Jitter uses a stable job-identity hash and cannot change the occurrence identity or invent extra runs.
+
+A due occurrence is claimed atomically by tenant/job/schedule-revision/nominal-occurrence identity, then passes the existing capability, dependency and admission authorities. Multiple workers cannot admit two runs for one occurrence. Attempts and blocked/skipped reasons remain observable; a durable run and a successful result are not inferred just because a timer fired. Cancellation is idempotent, permission-scoped and cooperative; a cancel request is not a terminal success. Committed chunks are retained with receipts, uncommitted effects roll back, and exactly one terminal outcome is persisted after the executor acknowledges the final state.
+
+Acceptance: invalid grammar/zone/duration refused at save; UI/server next-run parity; machine-locale independence; DST gap/fold; downtime catch-up; two workers racing one due occurrence; schedule edit during a queued occurrence; unsupported family; bounded cancellation; no-work success distinct in counts; mixed/all-failed import counts never reported as `Ok`.
+
+
 ## 5.3.3 The capacity model
 
 The formula that connects the drivers to the machine, and therefore to the licence envelope (Chapter 1.7.1).
@@ -1260,15 +1287,15 @@ Per run: queued at, admitted at, started at, finished at, wait time, duration, r
 
 "Jobs feed each other" becomes a real directed acyclic graph.
 
-**`ppiq_meta.job_dependencies`**: `job_definition_id FK`, `depends_on_job_definition_id FK`, `dependency_kind varchar(20) NOT NULL` CHECK IN (`data`,`schedule`,`resource`), `is_required boolean NOT NULL DEFAULT true`, `depends_on_version integer NULL`, `staleness_tolerance_minutes integer`. UNIQUE `(job_definition_id, depends_on_job_definition_id)`; CHECK self-reference forbidden; **a trigger refuses an insert that would close a cycle.**
+**`ppiq_meta.job_dependencies`**: `job_definition_id FK`, `depends_on_job_definition_id FK`, `dependency_kind varchar(20) NOT NULL` CHECK IN (`data`,`schedule`,`resource`), `is_required boolean NOT NULL DEFAULT true`, `depends_on_version integer NULL`, `staleness_tolerance_minutes integer`, `allow_stale_reuse boolean NOT NULL DEFAULT false`. The tolerance is a non-negative maximum reusable age; reuse requires an explicit positive limit. UNIQUE `(job_definition_id, depends_on_job_definition_id)`; CHECK self-reference forbidden; **a trigger refuses an insert that would close a cycle.**
 
-**`ppiq_meta.job_run_dependencies`** - the run-level instances: `run_id`, `depends_on_run_id`, `resolution varchar(20)` CHECK IN (`satisfied`,`stale_accepted`,`blocked`,`skipped_optional`,`failed_upstream`), `resolved_at_utc`, `watermark_inherited text`.
+**`ppiq_meta.job_run_dependencies`** - the run-level instances: `run_id`, `depends_on_run_id`, `resolution varchar(20)` CHECK IN (`satisfied`,`stale_accepted`,`blocked`,`skipped_optional`,`failed_upstream`), `resolved_at_utc`, `watermark_inherited text`, `dependency_cycle_id`, `upstream_completed_at_utc`, `upstream_age_minutes`, `tolerance_minutes`, `allow_stale_reuse_at_resolution`, dependency-policy revision/hash. These are recorded resolution facts, not independently authored policies.
 
 | Concern | Design |
 |---|---|
 | **Required versus optional** | A required dependency unsatisfied **blocks**; an optional one is skipped and recorded as skipped, and the downstream run states that it ran without it |
 | **Dependency version** | A dependency may pin a definition version; a version mismatch is `blocked` with both versions named |
-| **Conditions** | `satisfied` upstream succeeded within tolerance; `stale_accepted` upstream succeeded but older than tolerance and the dependency permits it; `blocked` upstream failed or never ran; `failed_upstream` upstream failed this cycle |
+| **Conditions** | `satisfied`: an eligible successful upstream of the current dependency cycle, inside any configured age ceiling. `stale_accepted`: no eligible current-cycle result, an earlier successful result is explicitly reusable (`allow_stale_reuse=true`), and its age is within the non-null positive tolerance. Missing permission, unknown age, exceeded age, or an incompatible version never becomes satisfaction. Required unsatisfied edges block; optional unsatisfied edges record `skipped_optional`; failure in the current cycle records `failed_upstream` and is not silently hidden by older success. |
 | **Fan-in and fan-out** | A run waits for all required parents; a completed run releases all children in one admission pass, subject to pool capacity |
 | **Retry and skip** | A blocked child retries on the next tick up to a ceiling, then reports blocked with the upstream named. It never runs on stale data outside tolerance |
 | **Cycle prevention** | At definition time by the trigger, and at admission time by a topological check, because a dependency added concurrently could otherwise slip through |
@@ -1278,6 +1305,16 @@ Per run: queued at, admitted at, started at, finished at, wait time, duration, r
 | **Visual DAG** | On F4 Jobs Administration: nodes as job definitions coloured by last outcome, edges by dependency kind, required edges solid and optional dashed, with the critical path highlighted and pool utilisation shown per node |
 
 **Endpoints.** `GET`/`POST`/`DELETE /api/jobs/{id}/dependencies`; `GET /api/jobs/graph`; `GET /api/jobs/{id}/impact`; `GET /api/runs/{runId}/dependencies`.
+
+#### Freshness boundary, default and proof — v4.10.3
+
+The scheduler records one dependency-cycle identity and one UTC resolution instant for the admission attempt; all parent ages use that instant. Cycle membership is a recorded causal/occurrence relationship, not guessed from the calendar date. An earlier success can never be labelled current-cycle success merely because its completion time is recent. Version compatibility is checked before reuse; an older run from the wrong pinned version remains blocked even when fresh.
+
+`allow_stale_reuse=false` is the default. A null tolerance means no age-based cross-cycle reuse is configured, not unlimited reuse; it cannot coexist with `allow_stale_reuse=true`. A current-cycle dependency with a configured ceiling must satisfy that ceiling too. Boundary equality is accepted (`age <= limit`); negative/future completion ages or an absent required timestamp cause a typed refusal/invalid-evidence result rather than a guessed success. Rounding for display does not affect the exact elapsed-time comparison.
+
+Freshness here measures completion age for dependency reuse. Source-data freshness remains a separate readiness/watermark contract; a recent upstream run over old source data does not prove recent observations. The UI shows the chosen upstream run, cycle, version, measured age, limit, permission and inherited watermark. Editing the permission is an authorised audited dependency-policy change, not a run-time checkbox to bypass a failed parent.
+
+Acceptance: current-cycle success; missing/failed parent; earlier success with permission off/on; exact age boundary; age exceeded; null limit; future timestamp; wrong pinned version; optional skip; concurrent edge edit; and a persisted decision row that explains the exact result. No child is released by a parent whose final aggregate outcome contains unaccepted failed work.
 
 ## 5.3.7 The progress and streaming protocol
 
@@ -5350,7 +5387,7 @@ Eleven concurrent runs are eleven identities, eleven progress states, eleven lin
 | `analysis_definition_id` / `analysis_definition_version` | |
 | `job_kind` | enum: analysis, training, scoring, evaluation, supervisor |
 | `schedule_kind` | enum: manual, cron, event, micro_batch |
-| `schedule_spec` | text |
+| `schedule_spec` | Semantic alias of canonical `schedule_expression`, governed by 5.3.2a; not a second column/authority |
 | `scope` | jsonb: tenant, site, population filter, window policy |
 | `priority_class` | enum: interactive, standard, background |
 | `pool_class` | enum: import, projection, analysis, ml, report |
@@ -5862,3 +5899,1241 @@ Section 29.2 clause 4 states the two paths: **Path A evidence modality**, retrie
 Admission is by both predicates of section 38.1, using `compute_weight`. Job workers use a **separate pooler identity** from the interactive path, so batch work physically cannot exhaust interface connections. The canonical five-level degradation ladder governs, and **every level is announced**.
 
 **Deployment.** `ppiq-worker` carries import, projection, analysis, report and `ml.batch_scoring`. `ppiq-ml-train` carries `ml.training`, GPU-capable and pre-emptible. **`ppiq-ml-online` carries `ml.online_scoring` only**, with the warm model cache, no training imports and no batch admission (amendment C6-1).
+
+# Integrated visual reference — authoring modes, toolbox and property inspectors
+
+**Book consolidation, 14 September 2026 — no functional scope change.** This appendix absorbs the authoring portion of the former standalone UI/Figma companion. The original Chapter 4 body is retained in full. Shared tokens, page layouts and named-dialog arrangements are in Chapter 3; authoring mode figures, expression-editor figures, 82 toolbox records and 16 detailed inspectors are embedded in this chapter's Word edition. Stable IDs are preserved; legacy source-line references describe the original export rather than a new current line number.
+
+The appendix preserves existing visual material; it does not claim that missing interaction depth has been completed. T-265/T-266/T-267 and their acceptance remain in the Backlog. A target diagram cannot enable an unavailable runtime family or override source, permission, grain, field-binding or refusal rules.
+
+## Shared Canvas and SQL editor — all five purposes
+
+One shell serves S1 Transformation, S2 Widget/query, S3 Analysis, S4 Model/features and S5 Rule/alert. Each purpose has a Block and SQL frame. S1 sees staging shapes plus canonical targets; S2–S5 use canonical/registered intelligence context. SQL mode hides the toolbox completely but retains schema tree and debug/result area. New FOR/WHILE-style control-flow authority belongs to Jobs; existing historical representations are preserved through explicit compatibility handling, not silent loss.
+
+### Authoring states and actions
+
+Draft, validated, published/locked, dirty, incompatible import, source drift/paused, concurrent edit, unsupported representation and execution refusal must be visually distinct. Save draft is not Publish. Publish is not Run. The run records the exact immutable target/version and authored block IDs. Code editors show line numbers, schema-derived completions, folding, deterministic format, comment/uncomment, one safe statement, bound parameters and result types/counts/duration. Errors include a sentence, offending fragment and highlighted token. The SQL statement in an illustrative frame is schematic and is not a runnable customer query.
+
+| Purpose | Block frame | SQL frame |
+|---|---|---|
+| S1 | [Block — frame `S1-Block`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx) | [SQL — frame `S1-SQL`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx) |
+| S2 | [Block — frame `S2-Block`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx) | [SQL — frame `S2-SQL`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx) |
+| S3 | [Block — frame `S3-Block`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx) | [SQL — frame `S3-SQL`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx) |
+| S4 | [Block — frame `S4-Block`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx) | [SQL — frame `S4-SQL`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx) |
+| S5 | [Block — frame `S5-Block`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx) | [SQL — frame `S5-SQL`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx) |
+
+## Complete toolbox catalogue and per-block evidence
+
+All explicitly tabulated block rows from the current Chapter 4 catalogue appear below. Group 3 expression operators are inside the owning block, not new board nodes. Group C discipline entries are always applied and inspectable, not optional removable steps. Availability is runtime/entitlement-driven; a target design frame does not declare an unimplemented engine executable.
+
+### TB-001 — Source table
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §Group 1 - Source and output line 626. **Frame:** [inspector — frame `TB-001`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** -
+
+**Outputs:** dataset
+
+### TB-002 — Output to canonical entity
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §Group 1 - Source and output line 627. **Frame:** [inspector — frame `TB-002`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** dataset
+
+**Outputs:** -
+
+### TB-003 — Output to named dataset
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §Group 1 - Source and output line 628. **Frame:** [inspector — frame `TB-003`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** dataset
+
+**Outputs:** -
+
+### TB-004 — Join
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §Group 2 - Relational line 634. **Frame:** [inspector — frame `TB-004`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** two datasets
+
+**Outputs:** dataset
+
+**Configuration:** type (inner, left, right, full), key pairs from live schema
+
+### TB-005 — Filter
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §Group 2 - Relational line 635. **Frame:** [inspector — frame `TB-005`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** dataset
+
+**Outputs:** dataset
+
+**Configuration:** expression editor (double-click)
+
+### TB-006 — Select columns
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §Group 2 - Relational line 636. **Frame:** [inspector — frame `TB-006`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** dataset
+
+**Outputs:** dataset
+
+**Configuration:** column checklist
+
+### TB-007 — Rename / alias
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §Group 2 - Relational line 637. **Frame:** [inspector — frame `TB-007`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** dataset
+
+**Outputs:** dataset
+
+**Configuration:** name pairs
+
+### TB-008 — Group by
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §Group 2 - Relational line 638. **Frame:** [inspector — frame `TB-008`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** dataset
+
+**Outputs:** dataset
+
+**Configuration:** group keys, aggregate list
+
+### TB-009 — Sort
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §Group 2 - Relational line 639. **Frame:** [inspector — frame `TB-009`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** dataset
+
+**Outputs:** dataset
+
+**Configuration:** column, direction
+
+### TB-010 — Union
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §Group 2 - Relational line 640. **Frame:** [inspector — frame `TB-010`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** two datasets
+
+**Outputs:** dataset
+
+**Configuration:** column alignment
+
+### TB-011 — Distinct
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §Group 2 - Relational line 641. **Frame:** [inspector — frame `TB-011`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** dataset
+
+**Outputs:** dataset
+
+**Configuration:** -
+
+### TB-012 — Limit
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §Group 2 - Relational line 642. **Frame:** [inspector — frame `TB-012`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** dataset
+
+**Outputs:** dataset
+
+**Configuration:** n
+
+### TB-013 — Pivot / unpivot
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §Group 2 - Relational line 643. **Frame:** [inspector — frame `TB-013`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** dataset
+
+**Outputs:** dataset
+
+**Configuration:** key column, value column
+
+### TB-014 — Derived column
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §Group 2 - Relational line 644. **Frame:** [inspector — frame `TB-014`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** dataset
+
+**Outputs:** dataset
+
+**Configuration:** expression editor
+
+### TB-015 — Cast
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §Group 2 - Relational line 645. **Frame:** [inspector — frame `TB-015`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** dataset
+
+**Outputs:** dataset
+
+**Configuration:** column, target type
+
+### TB-016 — Lookup
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §Group 2 - Relational line 646. **Frame:** [inspector — frame `TB-016`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** dataset + dataset
+
+**Outputs:** dataset
+
+**Configuration:** key, returned columns
+
+### TB-017 — Summary statistics
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.5.2 Group A - Descriptive line 1950. **Frame:** [inspector — frame `TB-017`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** dataset
+
+**Config:** measure column
+
+**Outputs:** table: n, mean, median, sd, min, p25, p75, max, nulls
+
+**Validates:** Column is numeric. *"`<col>` is text; Summary statistics needs a number."*
+
+**Best chart:** **Table**; box plot as alternative
+
+### TB-018 — Distribution
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.5.2 Group A - Descriptive line 1951. **Frame:** [inspector — frame `TB-018`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** dataset
+
+**Config:** measure, bin count or auto
+
+**Outputs:** dataset: bin, count
+
+**Validates:** Numeric; bins >= 2
+
+**Best chart:** **Histogram**; box plot
+
+### TB-019 — Category counts
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.5.2 Group A - Descriptive line 1952. **Frame:** [inspector — frame `TB-019`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** dataset
+
+**Config:** dimension, optional measure
+
+**Outputs:** dataset: category, count or aggregate
+
+**Validates:** Cardinality <= 500 else warn *"`<col>` has `<n>` distinct values; the chart will be unreadable. Group them first."*
+
+**Best chart:** **Bar**; pareto when the tail is long
+
+### TB-020 — Time series
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.5.2 Group A - Descriptive line 1953. **Frame:** [inspector — frame `TB-020`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** dataset
+
+**Config:** time column, measure, aggregation, bucket
+
+**Outputs:** dataset: bucket, value
+
+**Validates:** Time column is a date type; bucket >= source resolution
+
+**Best chart:** **Line**; area for cumulative
+
+### TB-021 — Cross-tabulation
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.5.2 Group A - Descriptive line 1954. **Frame:** [inspector — frame `TB-021`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** dataset
+
+**Config:** two dimensions, measure
+
+**Outputs:** matrix
+
+**Validates:** Both cardinalities <= 50
+
+**Best chart:** **Heatmap**; pivot table
+
+### TB-022 — Outlier detection (IQR / z-score)
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.5.2 Group A - Descriptive line 1955. **Frame:** [inspector — frame `TB-022`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** dataset
+
+**Config:** measure, method, threshold
+
+**Outputs:** dataset with `is_outlier` flag
+
+**Validates:** n >= 20
+
+**Best chart:** **Box plot**; scatter with outliers highlighted
+
+### TB-023 — Missingness profile
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.5.2 Group A - Descriptive line 1956. **Frame:** [inspector — frame `TB-023`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** dataset
+
+**Config:** -
+
+**Outputs:** dataset: column, null count, null percent
+
+**Validates:** -
+
+**Best chart:** **Bar**, descending
+
+### TB-024 — Pearson correlation
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.5.3 Group B - Association and correlation line 1964. **Frame:** [inspector — frame `TB-024`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** dataset
+
+**Config:** two measures, or one measure against a measure set
+
+**Outputs:** r, p, n, confidence interval
+
+**Validates:** Both numeric; n >= 30; **warns on strong non-linearity** *"The relationship looks non-linear; Spearman may fit better."*
+
+**Best chart:** **Scatter** with fitted line; heatmap for a matrix
+
+### TB-025 — Spearman rank correlation
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.5.3 Group B - Association and correlation line 1965. **Frame:** [inspector — frame `TB-025`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** dataset
+
+**Config:** two measures
+
+**Outputs:** rho, p, n
+
+**Validates:** Both ordinal or numeric; n >= 30
+
+**Best chart:** **Scatter** of ranks; heatmap for a matrix
+
+### TB-026 — Correlation matrix
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.5.3 Group B - Association and correlation line 1966. **Frame:** [inspector — frame `TB-026`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** dataset
+
+**Config:** measure set, method
+
+**Outputs:** matrix of coefficients with q-values
+
+**Validates:** Set size <= 200; **all pairs pass through false-discovery control**
+
+**Best chart:** **Heatmap**, diverging palette centred on zero
+
+### TB-027 — Chi-square independence
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.5.3 Group B - Association and correlation line 1967. **Frame:** [inspector — frame `TB-027`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** dataset
+
+**Config:** two dimensions
+
+**Outputs:** chi2, p, degrees of freedom, Cramer's V, contingency table
+
+**Validates:** Every expected cell >= 5, else *"`<n>` cells have an expected count below 5. Merge categories or widen the window."*
+
+**Best chart:** **Heatmap** of standardised residuals; stacked bar
+
+### TB-028 — ANOVA / Kruskal-Wallis
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.5.3 Group B - Association and correlation line 1968. **Frame:** [inspector — frame `TB-028`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** dataset
+
+**Config:** dimension (groups), measure
+
+**Outputs:** F or H, p, eta-squared, per-group means
+
+**Validates:** >= 2 groups, each n >= 10; normality checked and the non-parametric alternative substituted with a note
+
+**Best chart:** **Box plot** per group; bar of group means with error bars
+
+### TB-029 — Odds ratio / relative risk
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.5.3 Group B - Association and correlation line 1969. **Frame:** [inspector — frame `TB-029`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** dataset
+
+**Config:** binary outcome, binary or binned exposure
+
+**Outputs:** OR, confidence interval, p, 2x2 table
+
+**Validates:** Every cell >= 5
+
+**Best chart:** **Forest plot**; bar with confidence intervals
+
+### TB-030 — Point-biserial
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.5.3 Group B - Association and correlation line 1970. **Frame:** [inspector — frame `TB-030`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** dataset
+
+**Config:** binary outcome, measure
+
+**Outputs:** r, p, n
+
+**Validates:** Outcome exactly two values
+
+**Best chart:** **Box plot** by outcome class
+
+### TB-031 — Lagged correlation
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.5.3 Group B - Association and correlation line 1971. **Frame:** [inspector — frame `TB-031`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** dataset
+
+**Config:** parameter, outcome, lag range
+
+**Outputs:** coefficient per lag with the best lag marked
+
+**Validates:** Time column present; lag range within the window
+
+**Best chart:** **Line** of coefficient against lag
+
+### TB-032 — Genealogy-attributed correlation
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.5.3 Group B - Association and correlation line 1972. **Frame:** [inspector — frame `TB-032`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** dataset
+
+**Config:** parent-grain parameter, child-grain outcome
+
+**Outputs:** coefficient weighted by contribution weight, effective n
+
+**Validates:** **Weights per child must sum to 1.0**; else *"Attribution weights for `<n>` units do not sum to 1. Fix the genealogy mapping before correlating across grain."*
+
+**Best chart:** **Scatter** with point size by weight
+
+### TB-033 — False-discovery control
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.5.4 Group C - Discipline (always applied, never optional) line 1980. **Frame:** [inspector — frame `TB-033`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** p-value set
+
+**Config:** q threshold (default 0.05)
+
+**Outputs:** q-values, significance flags
+
+**Validates:** Set size >= 2
+
+**Best chart:** **Table** with significance; volcano plot
+
+### TB-034 — Effect-size ranking
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.5.4 Group C - Discipline (always applied, never optional) line 1981. **Frame:** [inspector — frame `TB-034`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** results set
+
+**Config:** -
+
+**Outputs:** ordered by absolute effect, p as tie-break only
+
+**Validates:** **Refuses to order by p-value**
+
+**Best chart:** **Bar** of effect size, descending
+
+### TB-035 — Stratification
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.5.4 Group C - Discipline (always applied, never optional) line 1982. **Frame:** [inspector — frame `TB-035`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** dataset, results set
+
+**Config:** stratification dimensions
+
+**Outputs:** per-stratum effect, survival verdict, reason
+
+**Validates:** Each stratum n >= 15, else the stratum is reported as under-powered rather than dropped silently
+
+**Best chart:** **Forest plot** by stratum
+
+### TB-036 — Bootstrap stability
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.5.4 Group C - Discipline (always applied, never optional) line 1983. **Frame:** [inspector — frame `TB-036`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** dataset, results set
+
+**Config:** resamples (default 1000)
+
+**Outputs:** point estimate, lower, upper, sign consistency, stable flag
+
+**Validates:** n >= 30
+
+**Best chart:** **Interval plot**; histogram of resampled estimates
+
+### TB-037 — Confounder check
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.5.4 Group C - Discipline (always applied, never optional) line 1984. **Frame:** [inspector — frame `TB-037`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** dataset, candidate confounders
+
+**Config:** -
+
+**Outputs:** effect before and after adjustment, delta
+
+**Validates:** Confounders registered dimensions
+
+**Best chart:** **Slope chart** before to after
+
+### TB-038 — Control chart
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.5.5 Group D - Process and quality specific line 1992. **Frame:** [inspector — frame `TB-038`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** dataset
+
+**Config:** measure, subgroup, chart kind
+
+**Outputs:** centre line, control limits, violations by rule
+
+**Validates:** n >= 25 subgroups
+
+**Best chart:** **Control chart** (line with limit bands)
+
+### TB-039 — Capability
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.5.5 Group D - Process and quality specific line 1993. **Frame:** [inspector — frame `TB-039`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** dataset
+
+**Config:** measure, specification limits
+
+**Outputs:** Cp, Cpk, Pp, Ppk
+
+**Validates:** Specification limits present; approximate normality checked
+
+**Best chart:** **Histogram** with specification limits
+
+### TB-040 — Pareto of causes
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.5.5 Group D - Process and quality specific line 1994. **Frame:** [inspector — frame `TB-040`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** dataset
+
+**Config:** cause dimension, measure
+
+**Outputs:** descending contribution with cumulative percentage
+
+**Validates:** -
+
+**Best chart:** **Pareto**
+
+### TB-041 — Yield decomposition
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.5.5 Group D - Process and quality specific line 1995. **Frame:** [inspector — frame `TB-041`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** dataset
+
+**Config:** stage dimension, good and total measures
+
+**Outputs:** yield per stage, cumulative
+
+**Validates:** Stages ordered
+
+**Best chart:** **Waterfall**
+
+### TB-042 — Downtime impact split
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.5.5 Group D - Process and quality specific line 1996. **Frame:** [inspector — frame `TB-042`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** downtime dataset
+
+**Config:** -
+
+**Outputs:** stopped minutes and **production-impact minutes** side by side per cause
+
+**Validates:** **Both quantities present**; else *"This dataset has no production-impact minutes. Impact cannot be computed from stopped minutes alone."*
+
+**Best chart:** **Grouped bar**, two series
+
+### TB-043 — Transition analysis
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.5.5 Group D - Process and quality specific line 1997. **Frame:** [inspector — frame `TB-043`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** dataset with genealogy
+
+**Config:** -
+
+**Outputs:** outcome rates for transition versus non-transition units
+
+**Validates:** `is_transition` present
+
+**Best chart:** **Bar** with confidence intervals
+
+### TB-044 — Window comparison
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.5.5 Group D - Process and quality specific line 1998. **Frame:** [inspector — frame `TB-044`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** dataset
+
+**Config:** two windows, measure
+
+**Outputs:** difference, confidence interval, significance
+
+**Validates:** Both windows non-empty
+
+**Best chart:** **Bar** with intervals; slope chart
+
+### TB-045 — Feature assembly
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.6.2 Group E - Feature engineering blocks line 2031. **Frame:** [inspector — frame `TB-045`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** canonical dataset
+
+**Config:** grain, window, feature list from the registry
+
+**Outputs:** feature matrix: unit, features, label
+
+**Validates:** Every feature registered; grain declared
+
+**Best chart:** **Table**; heatmap of feature coverage
+
+### TB-046 — Genealogy roll-up
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.6.2 Group E - Feature engineering blocks line 2032. **Frame:** [inspector — frame `TB-046`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** parent-grain features
+
+**Config:** aggregation (weighted mean, min, max, sum)
+
+**Outputs:** features at child grain
+
+**Validates:** Weights sum to 1.0 per child
+
+**Best chart:** **Bar** of contribution per parent
+
+### TB-047 — Lag feature
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.6.2 Group E - Feature engineering blocks line 2033. **Frame:** [inspector — frame `TB-047`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** time series
+
+**Config:** lag steps
+
+**Outputs:** lagged columns
+
+**Validates:** Time column present
+
+**Best chart:** **Line** with lagged overlay
+
+### TB-048 — Rolling window feature
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.6.2 Group E - Feature engineering blocks line 2034. **Frame:** [inspector — frame `TB-048`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** time series
+
+**Config:** window, statistic
+
+**Outputs:** rolling column
+
+**Validates:** Window <= series length
+
+**Best chart:** **Line** with band
+
+### TB-049 — Binning
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.6.2 Group E - Feature engineering blocks line 2035. **Frame:** [inspector — frame `TB-049`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** measure
+
+**Config:** bin strategy, count
+
+**Outputs:** ordinal column
+
+**Validates:** Numeric
+
+**Best chart:** **Histogram** with bin edges
+
+### TB-050 — Encoding
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.6.2 Group E - Feature engineering blocks line 2036. **Frame:** [inspector — frame `TB-050`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** dimension
+
+**Config:** one-hot or ordinal
+
+**Outputs:** encoded columns
+
+**Validates:** Cardinality <= 50 for one-hot
+
+**Best chart:** **Bar** of category frequency
+
+### TB-051 — Missing-value policy
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.6.2 Group E - Feature engineering blocks line 2037. **Frame:** [inspector — frame `TB-051`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** feature matrix
+
+**Config:** drop, impute mean/median, flag
+
+**Outputs:** matrix plus indicator columns
+
+**Validates:** **Refuses silent imputation**: the policy is explicit and recorded with the model
+
+**Best chart:** **Bar** of missingness before and after
+
+### TB-052 — Scaling
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.6.2 Group E - Feature engineering blocks line 2038. **Frame:** [inspector — frame `TB-052`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** feature matrix
+
+**Config:** standard or min-max
+
+**Outputs:** scaled matrix plus stored parameters
+
+**Validates:** Parameters stored with the model so scoring reuses them
+
+**Best chart:** **Box plot** before and after
+
+### TB-053 — Train/validation split
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.6.3 Group F - Model blocks line 2046. **Frame:** [inspector — frame `TB-053`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** feature matrix
+
+**Config:** strategy: **time-based** (default) or stratified random; ratio
+
+**Outputs:** two matrices
+
+**Validates:** **Time-based is the default and random is warned**: *"Random splitting leaks future information in a process dataset. Time-based split recommended."*
+
+**Best chart:** **Timeline** of the split
+
+### TB-054 — Classification model
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.6.3 Group F - Model blocks line 2047. **Frame:** [inspector — frame `TB-054`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** training matrix
+
+**Config:** algorithm, hyperparameters
+
+**Outputs:** model artifact, metrics
+
+**Validates:** Minority class >= 3 percent; n >= gate minimum
+
+**Best chart:** **ROC curve** and **confusion matrix**
+
+### TB-055 — Regression model
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.6.3 Group F - Model blocks line 2048. **Frame:** [inspector — frame `TB-055`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** training matrix
+
+**Config:** algorithm, hyperparameters
+
+**Outputs:** model artifact, metrics
+
+**Validates:** n >= gate minimum
+
+**Best chart:** **Predicted-versus-actual scatter**; residual plot
+
+### TB-056 — Anomaly detection
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.6.3 Group F - Model blocks line 2049. **Frame:** [inspector — frame `TB-056`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** matrix
+
+**Config:** method, contamination
+
+**Outputs:** anomaly score per unit
+
+**Validates:** n >= 100
+
+**Best chart:** **Scatter** with anomalies highlighted; time series with markers
+
+### TB-057 — Clustering
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.6.3 Group F - Model blocks line 2050. **Frame:** [inspector — frame `TB-057`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** matrix
+
+**Config:** method, k or auto
+
+**Outputs:** cluster label, silhouette
+
+**Validates:** n >= 50
+
+**Best chart:** **Scatter** on two components, coloured by cluster
+
+### TB-058 — Feature importance
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.6.3 Group F - Model blocks line 2051. **Frame:** [inspector — frame `TB-058`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** trained model
+
+**Config:** method (permutation preferred)
+
+**Outputs:** importance per feature with confidence
+
+**Validates:** Model trained; **permutation importance preferred over impurity**, which is biased toward high-cardinality features
+
+**Best chart:** **Bar**, descending, with intervals
+
+### TB-059 — Partial dependence
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.6.3 Group F - Model blocks line 2052. **Frame:** [inspector — frame `TB-059`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** trained model, feature
+
+**Config:** grid resolution
+
+**Outputs:** response curve
+
+**Validates:** Feature in the model
+
+**Best chart:** **Line** with confidence band
+
+### TB-060 — Model evaluation
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.6.3 Group F - Model blocks line 2053. **Frame:** [inspector — frame `TB-060`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** model, validation matrix
+
+**Config:** metric set
+
+**Outputs:** accuracy, precision, recall, F1, AUC, or RMSE, MAE, R-squared
+
+**Validates:** Validation set untouched by training
+
+**Best chart:** **ROC**, **precision-recall**, **calibration plot**
+
+### TB-061 — Calibration
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.6.3 Group F - Model blocks line 2054. **Frame:** [inspector — frame `TB-061`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** model, validation matrix
+
+**Config:** method
+
+**Outputs:** calibrated model
+
+**Validates:** Classification only
+
+**Best chart:** **Calibration plot**
+
+### TB-062 — Scoring
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.6.3 Group F - Model blocks line 2055. **Frame:** [inspector — frame `TB-062`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** model, live matrix
+
+**Config:** -
+
+**Outputs:** score, class, drivers per unit
+
+**Validates:** Feature schema matches training exactly, else *"The model was trained on `<n>` features; this dataset provides `<m>`. Retrain or align."*
+
+**Best chart:** **Distribution** of scores; **table** of top-risk units
+
+### TB-063 — Early-stage risk score
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.6.4 Group G - Prediction and recommendation line 2063. **Frame:** [inspector — frame `TB-063`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** scoring output at an early grain
+
+**Config:** horizon, threshold
+
+**Outputs:** risk score and class per unit, with drivers
+
+**Validates:** Unit has not yet reached the outcome stage
+
+**Best chart:** **Table** of at-risk units; **distribution** of scores
+
+### TB-064 — Downstream remediation search
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.6.4 Group G - Prediction and recommendation line 2064. **Frame:** [inspector — frame `TB-064`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** risk output, historical practice dataset
+
+**Config:** candidate later-stage practice set
+
+**Outputs:** ranked practices with historical outcome rates and support
+
+**Validates:** **Each candidate needs >= 20 historical cases**, else it is reported as insufficient support rather than recommended
+
+**Best chart:** **Bar** of outcome rate by practice, with support shown
+
+### TB-065 — Practice comparison
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.6.4 Group G - Prediction and recommendation line 2065. **Frame:** [inspector — frame `TB-065`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** historical dataset
+
+**Config:** practice dimension, outcome
+
+**Outputs:** outcome rate per practice with confidence
+
+**Validates:** Every practice n >= 20
+
+**Best chart:** **Forest plot**
+
+### TB-066 — Suggestion generation
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.6.4 Group G - Prediction and recommendation line 2066. **Frame:** [inspector — frame `TB-066`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** risk output, remediation output
+
+**Config:** thresholds
+
+**Outputs:** suggestions with evidence handles and expected effect
+
+**Validates:** **Every suggestion carries resolvable evidence**; one without is not emitted
+
+**Best chart:** **Card list** with evidence links
+
+### TB-067 — Value attachment
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.6.4 Group G - Prediction and recommendation line 2067. **Frame:** [inspector — frame `TB-067`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** suggestion, cost assumptions
+
+**Config:** -
+
+**Outputs:** bounded euro range
+
+**Validates:** Cost inputs present, else `InsufficientBasis`
+
+**Best chart:** **Interval bar**
+
+### TB-068 — Practice reconstruction
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.6.4a Practice authoring blocks - Group G2 (guideline 1.3.b) line 2082. **Frame:** [inspector — frame `TB-068`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** canonical dataset
+
+**Config:** context (grade family, route), parameter set, period bucketing
+
+**Outputs:** practice signature per period: the parameter combination and sequence in force
+
+**Validates:** Parameters registered; periods non-overlapping
+
+**Best chart:** **Table** of signatures; timeline
+
+### TB-069 — Practice-outcome linkage
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.6.4a Practice authoring blocks - Group G2 (guideline 1.3.b) line 2083. **Frame:** [inspector — frame `TB-069`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** practice signatures, outcome dataset
+
+**Config:** outcome (productivity measure, downtime, defect class)
+
+**Outputs:** outcome rate per practice with support count and confidence
+
+**Validates:** **Support >= 20 periods per practice**, else reported observed-but-unproven
+
+**Best chart:** **Forest plot**; bar with intervals
+
+### TB-070 — Best-practice benchmark
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.6.4a Practice authoring blocks - Group G2 (guideline 1.3.b) line 2084. **Frame:** [inspector — frame `TB-070`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** linkage output
+
+**Config:** -
+
+**Outputs:** best demonstrated practice per context, with evidence
+
+**Validates:** Ranked by outcome with confidence, never by point estimate alone
+
+**Best chart:** **Card** with support; slope versus current
+
+### TB-071 — Failure-practice linkage
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.6.4a Practice authoring blocks - Group G2 (guideline 1.3.b) line 2085. **Frame:** [inspector — frame `TB-071`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** practice signatures, downtime and failure dataset
+
+**Config:** -
+
+**Outputs:** practices that preceded downtime and failures, with lead time
+
+**Validates:** Same support rule
+
+**Best chart:** **Pareto** of failure-associated practices
+
+### TB-072 — Drift detection
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.6.4a Practice authoring blocks - Group G2 (guideline 1.3.b) line 2086. **Frame:** [inspector — frame `TB-072`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inputs:** current operation, benchmark
+
+**Config:** tolerance per parameter
+
+**Outputs:** drift per parameter against own best practice
+
+**Validates:** Benchmark exists
+
+**Best chart:** **Slope chart**; control-chart style band
+
+### TB-073 — Correlation
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §36.4 Naming discipline, ruled line 5327. **Frame:** [inspector — frame `TB-073`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**`engine_kind`:** `statistical`
+
+**What it actually is:** A method from the DF9 registry. No model, no training
+
+### TB-074 — Statistics
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §36.4 Naming discipline, ruled line 5328. **Frame:** [inspector — frame `TB-074`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**`engine_kind`:** `statistical`
+
+**What it actually is:** Same
+
+### TB-075 — Deep analysis
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §36.4 Naming discipline, ruled line 5329. **Frame:** [inspector — frame `TB-075`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**`engine_kind`:** `orchestration`
+
+**What it actually is:** **Composes several engines and returns a combined evidence set.** It is a plan, not an algorithm
+
+### TB-076 — Anomaly
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §36.4 Naming discipline, ruled line 5330. **Frame:** [inspector — frame `TB-076`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**`engine_kind`:** `learned`
+
+**What it actually is:** Consumes MF-03
+
+### TB-077 — Similarity / fingerprint
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §36.4 Naming discipline, ruled line 5331. **Frame:** [inspector — frame `TB-077`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**`engine_kind`:** `retrieval`
+
+**What it actually is:** Consumes the encoder and the index. Retrieval, not inference
+
+### TB-078 — Supervised prediction
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §36.4 Naming discipline, ruled line 5332. **Frame:** [inspector — frame `TB-078`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**`engine_kind`:** `learned`
+
+**What it actually is:** Consumes a trained MF-04 model from the active model version
+
+### TB-079 — Practice learning
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §36.4 Naming discipline, ruled line 5333. **Frame:** [inspector — frame `TB-079`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**`engine_kind`:** `statistical` with a learned component
+
+**What it actually is:** MF-07
+
+### TB-080 — Remediation search
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §36.4 Naming discipline, ruled line 5334. **Frame:** [inspector — frame `TB-080`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**`engine_kind`:** `governance` plus `statistical`
+
+**What it actually is:** The nine-check evaluation over candidates
+
+### TB-081 — Scenario
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §36.4 Naming discipline, ruled line 5335. **Frame:** [inspector — frame `TB-081`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**`engine_kind`:** `learned`
+
+**What it actually is:** Inference on a pinned model
+
+### TB-082 — Value
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §36.4 Naming discipline, ruled line 5336. **Frame:** [inspector — frame `TB-082`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**`engine_kind`:** `projection`
+
+**What it actually is:** Arithmetic over a declared assumption contract. **Never a model**
+
+## Detailed property inspector contracts
+
+### INS-01 — Source
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.2.17 Per-block property inspectors. **Frame:** [open — frame `INS-01`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inspector fields:** Schema, table (typed pickers), row estimate, column checklist with types, sample toggle
+
+**Validation:** Table must be registered; at least one column
+
+**Preview:** First 20 rows
+
+**Help:** What a staged table is, and why the tree shows two groups on S1
+
+### INS-02 — Join
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.2.17 Per-block property inspectors. **Frame:** [open — frame `INS-02`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inspector fields:** Type (inner/left/right/full), **ordered key-pair rows** with add and reorder, grain on both sides, cardinality (declared, then observed after preview), **attribution rule when grain converts**, weight expression
+
+**Validation:** `TR08` incomplete or unordered members; `TR09` conversion without attribution; `TR10` weights cannot sum to one; observed cardinality contradicting declared is a warning
+
+**Preview:** Row counts in, out and expansion factor; **a fan-out warning when output exceeds either input**
+
+**Help:** Why the join is declared once and what a preferred path means
+
+### INS-03 — Filter
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.2.17 Per-block property inspectors. **Frame:** [open — frame `INS-03`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inspector fields:** Expression (opens 5.2.16), null handling, case sensitivity
+
+**Validation:** Return type must be boolean
+
+**Preview:** Rows in, rows out, percentage removed; a warning above 95 percent removal
+
+**Help:** Why a filter here is not the same as a page filter
+
+### INS-04 — Select columns
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.2.17 Per-block property inspectors. **Frame:** [open — frame `INS-04`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inspector fields:** Column checklist, rename pairs, output order
+
+**Validation:** At least one column; no duplicate output name
+
+**Preview:** Output schema
+
+**Help:** -
+
+### INS-05 — Group by
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.2.17 Per-block property inspectors. **Frame:** [open — frame `INS-05`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inspector fields:** Group keys (multi), aggregate rows: function, column, alias
+
+**Validation:** An aggregate over a grouped key; a non-aggregated column not in the keys
+
+**Preview:** Group count and the largest group size
+
+**Help:** Why an aggregate outside a group is refused
+
+### INS-06 — Derived column
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.2.17 Per-block property inspectors. **Frame:** [open — frame `INS-06`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inspector fields:** Name, expression (opens 5.2.16), declared type, unit
+
+**Validation:** Name collision; type mismatch; unit mismatch inside arithmetic
+
+**Preview:** The column beside its inputs
+
+**Help:** Null propagation
+
+### INS-07 — Sort / Limit
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.2.17 Per-block property inspectors. **Frame:** [open — frame `INS-07`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inspector fields:** Column, direction, n
+
+**Validation:** n within the absolute cap
+
+**Preview:** -
+
+**Help:** Why a limit is not a filter
+
+### INS-08 — Union
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.2.17 Per-block property inspectors. **Frame:** [open — frame `INS-08`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inspector fields:** Second input, column alignment map
+
+**Validation:** Arity and type compatibility per aligned pair
+
+**Preview:** Combined count
+
+**Help:** -
+
+### INS-09 — Output to canonical
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.2.17 Per-block property inspectors. **Frame:** [open — frame `INS-09`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inspector fields:** Target entity (typed picker), field map rows, `const:` literals, provenance columns (read-only, shown)
+
+**Validation:** Required target field unmapped; type mismatch; the fifteen `PV` classes previewed
+
+**Preview:** **The projected error profile from the pre-flight sample**, grouped by code
+
+**Help:** What quarantine will do with a bad row
+
+### INS-10 — Statistical method
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.2.17 Per-block property inspectors. **Frame:** [open — frame `INS-10`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inspector fields:** Method, outcome, factor set, window, stratification dimensions, method-auto toggle
+
+**Validation:** `ST01` to `ST06`; sample-size precondition checked before run
+
+**Preview:** Population size, and the readiness verdict inline
+
+**Help:** What the discipline chain will apply, and that it cannot be switched off
+
+### INS-11 — Model
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.2.17 Per-block property inspectors. **Frame:** [open — frame `INS-11`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inspector fields:** Algorithm, feature set version, split strategy, missing-value policy, scaling, hyperparameters, acceptance floor
+
+**Validation:** `ML01` to `ML07`; a random split on time-ordered data warns
+
+**Preview:** Train and validation row counts, and the overlap count which must be zero
+
+**Help:** Why time-based splitting is the default
+
+### INS-12 — Scoring
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.2.17 Per-block property inspectors. **Frame:** [open — frame `INS-12`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inspector fields:** Model version, scope rule, batch size, latency budget, trigger kind
+
+**Validation:** `PD01` schema mismatch with counts; `PD02` no active model
+
+**Preview:** Units in scope, and an estimated duration range
+
+**Help:** Why a schema mismatch refuses rather than coerces
+
+### INS-13 — Prediction
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.2.17 Per-block property inspectors. **Frame:** [open — frame `INS-13`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inspector fields:** Outcome, horizon stage, risk banding thresholds, confidence display
+
+**Validation:** Horizon stage must exist on the route; banding must be monotonic
+
+**Preview:** Distribution of scores on a sample
+
+**Help:** What a horizon means and what it does not promise
+
+### INS-14 — Remediation
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.2.17 Per-block property inspectors. **Frame:** [open — frame `INS-14`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inspector fields:** Comparable-condition rule, candidate practice set, **minimum support**, expected-effect measure, limitations text
+
+**Validation:** Minimum support below the floor is refused; a proposed stage after the horizon is refused
+
+**Preview:** Candidate count, and how many pass support
+
+**Help:** Why support of twenty is the floor
+
+### INS-15 — Alert condition
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.2.17 Per-block property inspectors. **Frame:** [open — frame `INS-15`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inspector fields:** Parameter, comparator, limit or limit source (specification or operating limit), severity, message template with tokens
+
+**Validation:** Comparator outside the set; a template token that does not resolve
+
+**Preview:** The message rendered with sample values
+
+**Help:** Why a rule reads a limit rather than embedding one
+
+### INS-16 — Action
+
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.2.17 Per-block property inspectors. **Frame:** [open — frame `INS-16`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+
+**Inspector fields:** Action kind (log, notify, route), channel, recipients, dedup window
+
+**Validation:** `AR01` no recipient
+
+**Preview:** Rendered notification
+
+**Help:** Why the product never writes to the plant

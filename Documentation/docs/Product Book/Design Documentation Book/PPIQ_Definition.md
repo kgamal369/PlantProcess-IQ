@@ -1,0 +1,322 @@
+# PlantProcess IQ — Definition and controlled design book
+
+**Functional Design v4.10.3 | Execution Backlog v2.23.0 | Consolidated 14 September 2026**
+
+## One book: twelve document families, fourteen files
+
+The owner-approved book contains exactly the fourteen files below. Chapters 3 and 4 each have an MD edition and an illustrated Word edition; they are two representations of the same chapter, not four independent authorities. No extra folders, README, START_HERE, standalone UI/Figma specification, atlas, JSON register, validation report, handover message, amendment pack or separate dashboard is part of this book. A ZIP may be used solely as a transport wrapper.
+
+| Document | Exact file | Purpose |
+|---|---|---|
+| Definition and book control | [PPIQ_Definition.md](PPIQ_Definition.md) | Book organisation and authority register; original product brief preserved below. |
+| Chapter 1 | [PPIQ_Chapter1_Marketing_and_Sales_v4.10.3.md](PPIQ_Chapter1_Marketing_and_Sales_v4.10.3.md) | Functional design v4.10.3; full body retained. |
+| Chapter 2 | [PPIQ_Chapter2_Technical_Overview_v4.10.3.md](PPIQ_Chapter2_Technical_Overview_v4.10.3.md) | Functional design v4.10.3; full body retained. |
+| Chapter 3 | [PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md) | Functional design v4.10.3; full body retained. |
+| Chapter 3 — illustrated Word | [PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) | Same functional chapter; embedded existing diagrams, not a separate authority. |
+| Chapter 4 | [PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md) | Functional design v4.10.3; full body retained. |
+| Chapter 4 — illustrated Word | [PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx) | Same functional chapter; embedded existing diagrams, not a separate authority. |
+| Chapter 5 | [PPIQ_Chapter5_Tutorial_User_Journey_v4.10.3.md](PPIQ_Chapter5_Tutorial_User_Journey_v4.10.3.md) | Functional design v4.10.3; full body retained. |
+| Chapter 6 | [PPIQ_Chapter6_Infrastructure_Website_Administration_v4.10.3.md](PPIQ_Chapter6_Infrastructure_Website_Administration_v4.10.3.md) | Functional design v4.10.3; full body retained. |
+| Database design/dictionary | [PPIQ_Database_Architecture_and_Data_Dictionary.xlsx](PPIQ_Database_Architecture_and_Data_Dictionary.xlsx) | Existing supplied database dictionary; preserved without a new physical-schema certification. |
+| Database naming standard | [PPIQ_Database_Architecture_and_Naming_Standard.md](PPIQ_Database_Architecture_and_Naming_Standard.md) | Existing database architecture and naming rules. |
+| Identity and topology | [PPIQ_Identity_and_Topology_v5_28Aug2026.md](PPIQ_Identity_and_Topology_v5_28Aug2026.md) | Controlled environment identities, credentials/secret references, ports and topology. |
+| Evaluation standard | [PPIQ_Product_Analysis_and_Evaluation_Standard_v1.1.md](PPIQ_Product_Analysis_and_Evaluation_Standard_v1.1.md) | Method, capability checklist and integrated semantic UI acceptance clarifications. |
+| Latest backlog | [PPIQ_Backlog_v2.23.0_14Sep2026.xlsx](PPIQ_Backlog_v2.23.0_14Sep2026.xlsx) | Single execution, evidence, validation, issue, coverage and change-history workbook. |
+
+## Where new information belongs
+
+| Information | Its sole document home |
+|---|---|
+| File register, precedence, reading order and book-maintenance rules | This definition file |
+| Product problem, positioning, customer and commercial story | Chapter 1 |
+| Architecture, shared terminology, release boundary and the canonical journey | Chapter 2 |
+| Pages, dialogs, windows, controls, screen states and their workflows | Chapter 3 MD, with figures embedded in Chapter 3 Word |
+| Canvas, SQL, expressions, toolboxes, inspectors, engine and execution mechanics | Chapter 4 MD, with figures embedded in Chapter 4 Word |
+| Step-by-step user tutorials across screens | Chapter 5 |
+| Administration, deployment, operational/security behaviour and infrastructure | Chapter 6 |
+| Database objects, relations and schema dictionary | Database Architecture and Data Dictionary workbook |
+| Database naming/placement conventions | Database Architecture and Naming Standard |
+| Environment usernames, controlled credentials/references, ports and topology summary | Identity and Topology file; do not copy secrets into functional chapters or audit sheets |
+| Evaluation methodology, evidence grades, capability checklist and UI semantic acceptance | Product Analysis and Evaluation Standard |
+| Tasks, dependencies, owners, accepted scope, commits, findings, coverage, estimates, validation and handoffs | Latest Backlog workbook, using its existing sheets or an appropriate in-workbook section |
+
+A concern spanning documents is owned once and cross-referenced. It is not copied into a new parallel authority. Implementation scripts, runtime logs and design-generation tooling belong in their repository/evidence locations, not in the standard-design book; the useful conclusions and source identifiers belong in the owning chapter or Backlog. Existing library attachments are not deleted by this delivery.
+
+## Authority and version policy
+
+The six chapters remain the functional target; the repository remains implementation reality; the latest Backlog is the execution and closure record. Database standards and dictionary own their declared database disciplines without introducing a parallel product lifecycle. This definition file controls book organisation.
+
+The MD editions carry the editable functional text. The Word editions preserve that text with illustrations. A Word visual choice cannot silently amend a functional clause. A genuine contradiction requires an explicit correction in the owning MD and regeneration of its Word edition. The additional integrated MD visual catalogues mirror material already present in the illustrated Word editions; they do not authorise a new feature.
+
+Only one current copy of each registered file belongs in the working book. A later approved version replaces its predecessor, rather than accumulating `_new`, `_final`, `_corrected` or duplicate workbook branches. Meaningful task/scope changes may require a new Backlog version; file organisation, clarified references and other small governance corrections alone do not. This consolidation therefore retains Design v4.10.3 and Backlog v2.23.0.
+
+## Consolidation performed
+
+The useful visual companion content is merged into Chapters 3 and 4: shared foundations, page/frame index and 87 named dialog records in Chapter 3; S1–S5 authoring-mode reference, 82 toolbox records and 16 inspector records in Chapter 4. All 607 existing illustrations remain embedded in the two Word editions (497 in Chapter 3; 110 in Chapter 4). External SVG/atlas/plugin folders are not required to read this book. Standalone legacy companion names on a reused Word cover describe provenance, not an additional required document.
+
+The supplied illustrated Word files and database dictionary are preserved byte-for-byte. No new UI design, new Figma run, full audit rerun, physical-database verification or product acceptance is claimed here. The illustrative baseline still requires the depth work tracked by T-265/T-266/T-267.
+
+The Backlog is based on the actual Library copy named v2.23.0, not reconstructed from the user report and not based on the divergent v2.22.1 branch. This pass changes documentation references and embeds book governance/validation only. Task identities, estimates, completion dependencies, states and commits are retained. T-265 contract handoffs from T-262 and T-101 already exist and are preserved. The secondary-capability simplification suggestion is recorded as pending review rather than silently changing task ownership.
+
+## Current release and evidence boundary
+
+M2 remains the real, bounded Day-1 production release. M3 remains the later heavy-production/advanced release. The planning basis remains approximately one month from the owner's planning checkpoint for M2, then 45 days after M2 completion for M3; no new absolute date is introduced.
+
+T-099 remains CLOSED GREEN / COMMITTED at `ca02b40ea1b69050a45cb35a3e1d64f15b1f66af`, with parent `86e1b677212195f191697ecdca7e9441b3dbde33`. Its evidence basis remains owner-reported and distinct from release-wide GREEN. Current status and counts must be read from the Backlog, not inferred from target diagrams or this preserved source brief.
+
+## Confidentiality
+
+This private book contains the Identity and Topology document. Treat the complete ZIP as confidential; do not publish or send an unrestricted copy as a sales handout. No credential is newly invented, rotated, verified or propagated to another document by consolidation.
+
+## Original owner definition — preserved source brief
+
+The original product-definition text is preserved below so the first document includes the owner's actual aim, not only an index. Its original wording and examples are unchanged. Later accepted chapter requirements and the current Backlog govern conflicts, release dates and execution state; this preserved brief is not a mechanism for reviving superseded work.
+
+1. Chapter1 : Marketing and sales
+1.1. what is the problem existing in the plant 
+a.  repeated Quality defects happen  don't know the source and need alot of troubleshooting until solve , repeated down time happening for unkow root cause  , equipement or operation repeated failures happens , not could KPI (productivity , ....)not know how to enhance , and also wast time in troubleshooting until may be partially enhance or need a very high cost expert to make short time consulation to make some fixation and leave  
+b.  every large industry plant which have several stagging as food industry , mineral water , steel industry , paper industry , tyres industry , pharmacy industry have serveral phase and product pass through several machines and several inspection device and inspector  
+c.  normally each machine  and each inspection device store what happend during his proccess into data base or excel sheet or log file  
+d.  plant need a very experince person to know by experince and link process parameters with each other through the massive large plant , 
+    3.1. quality issuse : plant always seek for high experince person to know for example the reason of certain defect happend recently and this high experince person who know by experince or  go through all logs and all data then may be the reason become high temperature or low speed in an early beggging stage . 
+    3.2. KPI : all plant what to increase productivity or less down time happen due process failures or production failures or equipment failures
+
+e. normally each production unit and inspection device had one hmi or front end page which display it's own data only 
+
+
+1.2. what is the aim of our software product : the in house expert person who learn and well know your exact plant fingerprint and give you online and day per day a very advanced suggestion and recommendation with AI and Machine learning knowldge and experince based on all customer data bases which customer dont really well use it on max benefit  we can train our model based on it and make the magic using connect it beside each other as a puzzle from our locations of the plant to get the best benefit 
+1.3. how it solve this problem using  : 
+                                       a. link defects and equipemenst and operation failures with the all process parameter and operation parameters from the whole plants and make correlation and track parameters and can defects and variation so may be slight change in early begining stage and early begining production unit lead to repeated failure or quality issuse produced in late production unit and at the last stage of production 
+									   b. based on the learning of production pratices based on data existing on data base along several months can know what was the practices to make max productivity without failures where he know the practices which lead to down time and failures and start to make linke between them so increase productivity									   
+									   c. if a piece had a bad practices or extra addtivit or this amount of (raw material + this high speed) this combination always lead to problem  in early stage he can predicte and make predication that this piece based on history data set will had the same story and this bad , but can make suggestion that in later stage make some practices which will solve this issuse based on history of practices 
+									   d. get the benefit of AI + ML and deep data analysis function which will make the in house expert who learn and well know your exact your plant fingerprint
+1.4. Target audience CEO of big industry and plant and Purchasing Departement of plant  speak as marketing and sales person
+
+2. General rules and concept of designing 
+	What my product solution Provide : 
+
+a. Able to connect and collect data from all kind of DB and data source then link all data togther 
+b. provide 5 layer of helping 
+ 2.1. normal dashboard and widget where all data from all production unit are togther beside each in colorful beautiful widgets , tables  and charts or heat map with some interactive filter can help normal eye to detect easy information easily
+ 2.2. create more advanced statistics function and correlation jobs (between all proccess parameters with each other and with defect and quality issuses through whole plant and all production unit and inspection devices ) which generate information from data then display those in colorful beautiful widgets, tables  and charts or heat map with some interactive filter can help normal eye to detect hard information easily
+ 2.3. create jobs of AI+ML  which deep dive into data and learn it  ,which define pattern and learn which can easily get the reason of any quality issuse or define bottle neck of increasing productivity , or define the reason of reppeated failure which increase down time which is loss in equipment and material and down time as well which is high loss 
+ 2.4. / 2.5  (point 4, 5 are prediction / suggestion)   
+  for example some material can had some higher temperature in early production unit , my system can predicte based on pattern that this material will had a quality issuse later one based on his learning
+      after prediction suggest what to do in later production unit  to don't get this quality defect 
+  for example operator driving with high temperature and high speed , can be prediction a operation failure could happne  and suggestion what to do 
+   
+d. so over all data collection from all production unit through all the plant  and reading and learning over all the plant 
+ d.1.  enhance quality by define what is the root cause through all the plant and production unit , and may be predicte an up comming defect and suggest how to avoid it   
+ d.2.  enhance Kpi , less down time , more productivity from data analysis 
+
+e. had chat pot as GPT with LLM so may not everyone easily configure job and create dashboard and filter and go through chart so chat pot as gpt can chat until get all info 
+f. had feature of return of Value embedded  into every susgetion or prediction or  statistics  , as if you do my susgetion you will gain that amount , if you avoid that down time you will save this amount of money as proven of my effect
+ 
+ 
+ 
+2.1. rules of generic to fit any user any customer plant data set ......
+1. my software product should be standard generic for all indutries and plants 
+2. it should never ever be demo or have a single line or single word regarding any demo ,or not even single line or certain page or any component define or preperapared for specific data set 
+3. I only define and prepared  an emulation or demo external data set to test my software product as emulation when I will setup my software product in the customer side and my  software product will connect to customer side DB and read his data and start to give the customer the analysis and suggestion and prediction .  
+that why I create a data set which emulate the customer data set which will read it as input 
+So I need to eumalte my system input to test the system ,and show in any presentation that my system is tested 
+
+for example 
+start empty even for defect table 
+where flat steel defect are different than paper defect different than mineral water defect 
+each plant has it's own defect 
+even each production unit had it's own defect , so every semi product has it's own defect , 
+and even each inspection device can detect different type of defect , 
+so still defect table need to start empty and the user who will configure on the UI/UX low code page need to make and configure this link , with the tables of his data bases  which contain the definition of those defect to import them 
+
+
+
+generic had more deep concept , it mean that this software product should match the need of any customer with any specification and be felixibale enough 
+1. my classes where the customer data will be imported should  be generic , so those classes should be able to import data of pharmacy industry and food industry and steel industry 
+2. Data base types , Data base structures and differnet tables 
+3. my workflow should be generic  , different Proccess and different and unqiue worklows
+4.  Inpsection devices which generate different defect type and different structure 
+5. different Proccess and different and unqiue worklows
+6. every CEO and process engnieer in every plant have different focus and want to monitor different process parameter and different KPI and different type of correlation 
+
+
+2.2. rule of being a high standard ( speed , UI/UX , design , no error , being a big high budget product talking to big company , accurate data)
+2.3. All others rules and concept and all our golden rules , other wise may we will design with several concept or several point of view
+2.4. .....
+
+
+3. Chapter 2 : Technical overview
+3.1. general  Concept and idea of software 
+3.2. General technical features and aim key and add values of our software product 
+3.3. workflows and data flows  and technical flow 
+3.4. General  and list of all our pages technical data pages and  overview about each of them 
+3.5. general adminstration features of our  software products (user/role , logging , jobs Monitors and logs , license configuration , creating some pages limited per user ,setting , translation , configure new logs , limitation of pages creation.....)
+3.6. list of of pages of adminstration features and technical overview about each of them 
+3.7. target audience Mid Manager and operation engineers or Quality Engineers or process engineers 
+3.8. Speak as senior product owner
+
+
+4. Chapter 3: General software product techincal Function Description 
+4.1. List of steps of data flows steps by steps  every step and each step
+4.2. Deep deep detailed advanced proffesional description technical detailed for every step and each step from concept of the steps up description to the details of  all related and required api and endpoint levels
+4.3. List of UI pages 
+4.4. Deep deep detailed advanced proffesional description technical detailed of each and every page from concept and aim and functionality to the UI/UX design and and oritentation of componentto button level and design and style and location and oritentation  and every hook and and every call  
+4.5. DB schemas and tables and pk , fk and joins 
+4.6. Credential and Topolgy  all user name and credinatial and Ip addresses of DB and login and every thing 
+4.7. Target audience advanced IT and software from customer and our developer for hand over and helping in further developing phases 
+4.8. speak as senior product owner or senior software engineer or tech lead 
+
+
+5. Chapter 4 Sepecific software product techincal Function Description  
+5.1. Qlik sense style Analysis Page :  feature , component , widget , style , standard , UI/UX . filter , Dynamic interaction , Add page , Add widget , Edit widget Query , link data to widget , charts type and chart style , Page Layout , KPI
+5.2. UI/UX no code low code : features , fucntionalities , layout , UI/UX , schemas Table bar , Tool box drage drop design , wiring diagram debugging and saving and transfer it to code and joining and use it in data analysis  , sql editor debugging and running and save it and use it   , predefined tool box and and advanced tools 
+5.3. Deep detailed advanced proffesional Design of Multi threading and load balancing of jobs, how to don't make our server crash of hundreds of jobs running every 2 or 3 min which will load 10 M of data , one  work around will be  make the dump import from customer data bases to use will be data incremental so don't import everything but all other job will remain huge  
+5.4. Deep detailed advanced proffesional Design of Gate and engine , : rules and validation ,  how will enhance and adjust the coeffient of whole system with increasing of learning curves , how chat pot will get data from it , how will be the hub of all data analysis and AI and Machine learning data and jobs 
+5.5. Deep detailed advanced proffesional Design of Statitics and Correlation and data analysis functionality , all blocks of them which will be used the UI/UX no code wiring diagrams and which charts best chart which will display everyfunction , which data input to those function which data output to validated the block diagrams
+5.6. Deep detailed advanced proffesional Desing of AI+ML functionalities all blocks of them which will be used the UI/UX no code wiring diagrams and which charts best chart which will display everyfunction , which data input to those function which data output to validated the block diagrams
+5.7. Deep detailed advanced proffesional Design of ChatPOT LLM  "AI Assitant" which bring the data from Engine it should be a chat box which appear down right which remain always with me in all pages 
+5.8. Target audience advanced IT and software from customer and our developer for hand over and helping in further developing phases 
+5.9. speak as senior product owner or senior software engineer or tech lead 
+
+
+ 
+6.Chapter 5: Tutorial User Journey step by step starting what to do and how to do and which button to press 
+6.1.make Deep detailed advanced proffesional Tutorial from junior user who don't have any engineering backgroud.
+6.2. I want to make the single step break down it into at least 15 steps , step by step 
+6.3. for example :select on right main menu bar this button ,which will open this page , then click on top bar this button , then you will find this drop down menu select this option then press save. 
+6.4. user journey which :
+6.4.1. Create and Configure DB link get Data from customer Data sources and database and select the table and the coloumn which user want to import 
+6.4.2. create and configure and scheuele the jobs which will bring run those import data function and use those db link and import those data to dump database with incremental way  then montior those jobs 
+6.4.3. create and configure the data preparation (linking , joining, filter , ETL , grouping ,.....) for the data in the dump store to fit and able to insert in our plant data  using UI/UX no code low the   page (wiring diagram / or SQL editor)
+6.4.4. create and configure and scheuele the jobs which will bring run based on those Data preparation to load and import data from dump store to our plant data schema
+6.4.5. create and configure empty pages for analysis base on the raw data store on the plant data schema , drag drop from add widget tool box ( filter , widget , charts, KPI label ) and start link and configure and edit each  widget after drop into the page to the data base on the same UI/UX no code low code (wiring diagram / or SQL Editor)
+6.4.6. Create and configure some file which had some deep analysis or advanced data analysis function or advanced correlation and staticitcs or some AI+ML functions on UI/UX no code low code (wiring diagram / or SQL Editor) then save that into file 
+6.4.7. create and configure a job and then link the staticitcs correlation or AI+ML file to this job , which will schedule and montioring the runing of this function 
+6.4.8. create and configure an empty page and add to this page some widgets and link the widget to the data generate from this function 
+6.5. Target audience the user how will configure and use this software may be he had low software knowldge and may be he don't have at all
+6.6. speak as senior product owner
+
+ 
+
+7. Infrasturcture and hosting 
+7.1. jenkins 
+7.2. docker 
+7.3. deployement 
+7.4. Testing Unit test and e2e all other test 
+7.5. my backlog standard 
+7.6. to run this software and his database what will need as server the forumla between amount of (number of DB-Links , amount of imported data , number of running jobs , number of users , limitation of pages creation  ) vs (server requirement and data base and limitation ) (
+7.7. Target audience QA Engineer and infrasturcure engineer 
+7.8. speak as Senior  QA Engineer and Senior infrasturcure engineer 
+
+
+8. website : as first saler and marketing person 
+8.1. Company 
+8.2. all other software products
+8.3. PPIQ product : overview functionality
+8.4. Target audience : CEO of Customer and purchasing person of customer which gonna see this website in order to buy or products 
+8.5. Speak as Senior UI/UX and Senior Frontend Web developer and product owner 
+
+
+9. Admistration and sales :
+9.1. license cost function : price /feature   
+9.2. calculation the cost  forumla based  (number of DB-Links , amount of imported data , number of running jobs , number of users , limitation of pages creation  ) vs (server requirement and data base and limitation ) 
+9.3. user spliting :  deep detailed advanced proffesional deisgn how  and in techincal way how to split the visulation and control access authorization  per user which user can see what and can't see what in  UI/UX and developing as well 
+9.4. license spliting :  deep detailed advanced proffesional deisgn how  and in techincal way how to split the visulation and control access authorization  per license level  which license level can see what and can't see what in  UI/UX and developing as well 
+9.5. logging 
+
+
+
+
+بص كده المفروض كده يكون عندي 
+2 tracks 
+
+1. 1st track Presentation ( Demo - Prototype) Milestone 1 
+
+Target for ready : in  20th August 
+Target :
+
+1. Database and Schema & Data flow  : 
+
+1.1.ppiq_presentation.SRC_XXX  schemas prefilled with data to Emulate customer data sources in DB_LINK create and configuration Page  
+1.2.ppiq_presentation.dump_store prefilled with data to emulate to dumpstore in  Canvas (UI/UX no code low code - Wiring Diagram / SQL Editor)
+1.3.PPiq_presentation.Meta_Data : prefilled with data  of configuration data of pages , Front end , jobs data , linking and wiring , User /Role ,logs ......
+1.4.PPiq_presentation.Plantdata (canonical data tables ) : prefilled with data to be displayed in charts and dashboard  and used in chatbot
+1.5.PPiq_presentation.Plantdata (analytics data tables ) : prefilled with data to be displayed in charts and dashboard  and used in chatbot
+
+2.  BI Layer  :
+2.1.  dashboard , Page Layout , Widget , Chart , Dynamic filter : 
+to be ready 95% based on  Enterprise level standard as QLIK , PowerBI and tableau only few configuration to be done in milestone 2 to for source of data 
+
+2.2. Canvas (UI/UX no code low code - Wiring Diagram / SQL Editor): 
+to be ready 85% only more testing with more dataset and more use cases and more complex query  to be really  on  Enterprise level standard 
+
+2.3. Wdiget chart Edit SQL , Add new  Widget to page , add new Page :
+to be ready 95% based on  Enterprise level standard as QLIK , PowerBI and tableau only few configuration to be done in milestone 2 to for source of data 
+
+
+2.4. Jobs Monitor and Configuration 
+- to be ready 95% based on  Enterprise level standard as QLIK , PowerBI and tableau only few configuration to be done in milestone 2 to for source of data 
+- able to create a job based on Canvas (UI/UX no code low code - Wiring Diagram / SQL Editor) and run it on schedule base and check the logs
+- able to create a import data job  , which import to incremental import data from   ppiq_presentation.SRC_XXX to ppiq_presentation.dump_store and montior successful the run 
+- able to create and configure and montior running successful job which import data from ppiq_presentation.dump_store  to PPiq_presentation.Plantdata (canonical data tables ) based on linking and wiring and data preparation mentioned in the save UI/UX canvas
+
+
+2.5. few pre prepared dashboards and analytics pages full of charts from cancocial tables and analytics tables to present the functionality : is  ready 100%
+2.6. all configuration pages and 100% in Advanced proffesional Enterprise level existing (jobs , DbLink , Logs ,canvas,  .........)
+2.7. all Admin pages are existing in 100% frontend , without backend or no functionality ( User , Role , Lincese Control , ......)
+
+
+3. AI/ML  engine :  had prouve of concept ready  I can run a job based on canonical data tables and data stored on analytics data tables and display this data on charts 
+3.1.the most basic ang ground   3 or 4 models running and connected to make just a prouve of concept that it can take data and prouve the workflow and data flow not important the result it self 
+3.2. the chatbot : need when I ask him a question it can reply based on PPiq_presentation.Plantdata (canonical data tables  + analytics data tables) which meaningful  answer in the same context not need an accurate data or precise answer 
+
+4. the over all journey in healthy for  presentation 
+
+
+
+
+2. First Release to be installed in customer side : Milestone 2 
+Target for ready : 30 Sep
+
+1. Database and Schema & Data flow  : 
+1.1. Emulation data source : tested based on seperated data bases 
+1.2. ppiq_app.dump_store : start empty and tested to be filled by the import jobs only generic databased where we don't what will be the data of source of customer
+1.3. ppiq_app.Meta_Data :  well define structure  and well defined generic schema, some empty tables as jobs and logs will be filled during runtime ,and some prefilled as some hmi strucuture , or admin user in user tables , (acquistion & canon) should be part of meta data schema
+1.4. ppiq_app.Plantdata (canonical data tables +analytics data tables ): well define structure  and well defined generic schema  start empty and tested to be filled by the  jobs only generic databased where we don't what will be the data of source of customer
+
+2.  BI Layer  : 100% with Advanced proffesional Enterprise level as QLik sense 
+3.  Jobs : 100% with Advanced proffesional Enterprise level as QLik sense  tested mutlithreading and load balancing and optimzation technique to make running smmoothe to be able to run hundreds of job on the same time with Mega of tables 
+4.  no premade or pre prepared dashboards and analytics pages will be done by each user 
+5. all configuration pages and 100% in Advanced proffesional Enterprise level existing (jobs , DbLink , Logs ,canvas,  .........)
+6. all Admin pages are existing in 100% frontend , without backend or no functionality ( User , Role , Lincese Control , ......) , 
+	6.1.user can define an dashboards and analytics pages only to be see for him or for specific role 
+	6.2.some role can't access configure widget or edit widget or see canvas page or edit jobs ...........
+	6.3. lincese is per month so I can control it by time or remotely 
+	6.4. each lincese tier is function of ( number of pages , number of users , number of jobs , number of important data , number of ML Models available , chatbot) so all that  should be controlled on/ off based on lincese tier which user can downgrade or upgrade anytime 
+7. the 18 ML Models are 100%  with Advanced proffesional Enterprise level working 
+| # | المكوّن | الطبقة | الدور | التاسك | الحالة |
+|---|---|---|---|---|---|
+| 1 | **MF-01** Process Encoder | Layer B | يحوّل process sequences لـembeddings تستهلكها باقي العائلات. PyTorch. optional — ما يشحنش غير لو أثبت إنه يستاهل تكلفته | T-172 + T-176 | isolated |
+| 2 | **MF-02** VectorSimilarityIndex | Layer B | "ده شبه إيه في التاريخ؟" — Exact Flat هو الـbenchmark الدائم، HNSW/IVF-PQ/FAISS مرشحين بس | T-173 | isolated |
+| 3 | **MF-03** Novelty / Anomaly | Layer B | يكتشف اللي مالوش نظير. simple baseline الأول، isolation/density بعده | T-174 | isolated |
+| 4 | **MF-04** Supervised Outcome | Layer B | التنبؤ بالنتيجة (binary/multiclass/ordinal/continuous). baseline بسيط إجباري ثم LightGBM | T-175 + T-176 | isolated |
+| 5 | **MF-05 / MF-06** Statistical engines | **Layer A** | ارتباط وإحصاء: Num×Num، Bin×Num، Cat×Cat، Num×Cat (ANOVA + Kruskal-Wallis) مع effect size و p/q-FDR | T-177 → T-146/T-147 | kernel جاهز، cutover بعد M1 freeze |
+| 6 | **MF-07** Practice Engine | Layer A | استخلاص الممارسة الفعلية من تاريخ المصنع نفسه (D10) | T-131..T-133 + T-136 | بعد M2a-P2 |
+| 7 | **Supervisor** | فوق الاتنين | job واحدة premade، ليلية/أسبوعية، تعدّل coefficients كل الـjobs من فهم الـdataset كله. كل تعديل بسببه + قابل للتراجع + before/after + يقدر يمتنع | Schema Contract v2 §E | مش مبني |
+| 8 | **Tool Planner** | Assistant | يقرر أي أداة تتنادى — **الـLLM لا يختار الأدوات** | T-179 | isolated |
+| 9 | **Retrieval + Evidence Packer** | Assistant | يجيب الأدلة بحدود صلاحيات المستخدم أولًا ويحزمها بميزانية tokens | T-180 | isolated |
+| 10 | **ModelServingRuntime + gateway** | Assistant | تشغيل الموديل: self-hosted/private/BYOM، أضيق payload، provider identity، no unapproved fallback | T-137 ✅ `56a2c37c` | isolated، runtime ما بدأش |
+| 11 | **Answer Verifier** | Assistant | بعد الـLLM: كل رقم مقابل evidence handle، يمنع correlation→causation، يمنع محو الـrefusal. **ده اللي يمنع "1000 kg"** | T-181 | isolated |
+| 12 | **Job Protocol** | machinery | `JobSpec.json → ResultManifest.json` بين C# وPython | T-168 | مبني |
+| 13 | **Columnar / Sequence artifacts** | machinery | Parquet/Arrow IPC + chunked loader محدود الذاكرة | T-169 / T-170 | مبني |
+| 14 | **Capability Profiler** | machinery | هل الداتا تكفي أصلًا؟ eligibility + refusal | T-171 | مبني |
+| 15 | **Snapshot Materialiser** | machinery | يختم الحالة في artifacts مغلقة — الطريق الوحيد لـPython | T-184 | مش مبني |
+| 16 | **Promotion kernel** | machinery | calibration + explanation stability + ترقية ثلاثية الأبعاد. **C# يقرر، Python يبلّغ بس** | T-176 | isolated |
+| 17 | **Benchmark harness B-01..B-09** | machinery | آلة القياس نفسها، مش القيم | T-182 ✅ `74470524` | isolated، 9/9 smoke |
+| 18 | **Cutover** | — | T-138 (Assistant runtime) + T-187 (snapshots → ML lanes → registry) | T-138 / T-187 | **مش مبدوء** |
+
+8. the chatbot can answer on any question , ask her to descript any chart , make suggestion , predecation , correlation , descript the process , be a really in House Expert how to know the plant  all that is based on that the engine become really powerful 
+
+9. the over all journey in healthy for first day on customer side 	
+	
+

@@ -1,6 +1,10 @@
 # PlantProcess IQ - Master Design Document
 
-**Version 4.10 | Author: Karim, SOU Industrial Software, Dusseldorf**
+**Version 4.10.3 | Author: Karim, SOU Industrial Software, Dusseldorf**
+
+> **Package revision — 14 September 2026, v4.10.3.** Owner-authorised correction of cursor total-order safety, machine scheduling and dependency freshness is integrated in Chapters 3 and 4. The release-allocation note below records the approved M2/M3 split; the full target is preserved. Other chapter bodies are retained, not rewritten. The derived UI material is integrated into Chapters 3 and 4, including their illustrated Word editions; no standalone UI companion belongs in the controlled book. Visual material cannot override functional rules. See `PPIQ_Definition.md` for the complete fourteen-file register.
+
+> **Current planning basis (supersedes historical dates only).** M2 targets approximately one month from the owner's September planning checkpoint; M3 targets 45 days after M2 completion. No new absolute delivery date is asserted here. Historical change-log dates remain historical; Backlog v2.23.0 governs the current execution allocation.
 
 > **Change log — Two-Release Production Roadmap and Day-1 Workbench Constitution (23 August 2026, v4.10).** v4.10 replaces retired internal programme codes with exactly two product releases: **M2 — Release 1, 30 September 2026**, for genuine early production and first-week customer work; and **M3 — Release 2, 30 October 2026**, for heavy production, higher data volume, more users and advanced intelligence. Each release uses only **P1, P2, P3, P4 and P5**. Release 1 makes DB Link/data onboarding, Canvas/data preparation, Jobs, enterprise BI reliability, read-only production OPC UA, governed References/Reconciliation/Assistant and minimum production hardening first-class release gates. Release 2 owns scale, advanced BI/authoring, deep enterprise administration, InsightBoard composition, multi-objective optimisation, customer-grade ROI convergence and heavy-production certification. Design and backlog are required to be one-to-one traceable: every designed product outcome has an execution owner and acceptance path, and every backlog task maps to an owning design contract.
 
@@ -9,7 +13,7 @@
 
 ---
 
-> **CURRENT AUTHORITY — Master Design v4.10.** PlantProcess IQ has exactly six current design-authority chapters and one current execution-authority backlog workbook. No other file may define, amend, override, supplement or reinterpret current product design or implementation scope. A design change edits the owning chapter directly; a scope change edits the backlog directly. Transitional reviews, amendment packs, ledgers, mandates and prior revisions are historical evidence only after their accepted content is integrated. Validation scripts are code/enforcement instruments, not design documentation.
+> **CURRENT AUTHORITY — Master Design v4.10.3.** PlantProcess IQ has exactly six current design-authority chapters and one current execution-authority backlog workbook. No other file may define, amend, override, supplement or reinterpret current product design or implementation scope. A design change edits the owning chapter directly; a scope change edits the backlog directly. Transitional reviews, amendment packs, ledgers, mandates and prior revisions are historical evidence only after their accepted content is integrated. Validation scripts are code/enforcement instruments, not design documentation.
 
 
 # CHAPTER 2 - TECHNICAL OVERVIEW
@@ -21,8 +25,18 @@ PlantProcess IQ uses **two current product releases only**. Only `M2`, `M3` and 
 
 | Release | Date | Product meaning | P1 | P2 | P3 | P4 | P5 |
 |---|---|---|---|---|---|---|---|
-| **M2 — Release 1** | **30 Sep 2026** | Genuine early production. A customer can start work in week 1 without developer intervention. | Product foundation & Release Truth | Day-1 Data Workbench: DB Link, Canvas, Jobs, OPC and onboarding | Enterprise BI & customer experience | Industrial intelligence: References, reconciliation, governed Assistant | Release hardening & week-1 production acceptance |
-| **M3 — Release 2** | **30 Oct 2026** | Heavy production: more users, larger volumes, sustained runtime and deeper product use. | Scale & OT resilience | Multi-user enterprise operations | Advanced BI, authoring & Insight Boards | Advanced ML/optimisation/value | Heavy-production certification |
+| **M2 — Release 1** | **Approximately one month from the owner planning checkpoint; exact date uncommitted** | Genuine early production. A customer can start work in week 1 without developer intervention. | Product foundation & Release Truth | Day-1 Data Workbench: DB Link, Canvas, Jobs, OPC and onboarding | Enterprise BI & customer experience | Industrial intelligence: References, reconciliation, governed Assistant | Release hardening & week-1 production acceptance |
+| **M3 — Release 2** | **45 days after M2 completion** | Heavy production: more users, larger volumes, sustained runtime and deeper product use. | Scale & OT resilience | Multi-user enterprise operations | Advanced BI, authoring & Insight Boards | Advanced ML/optimisation/value | Heavy-production certification |
+
+### v4.10.3 approved release allocation and bounded operating envelope
+
+M2 remains a real customer production release: read-only DB Link and OPC acquisition, safe incremental ingestion, immutable Transformation authoring/publication, exact-version execution, job scheduling/monitoring/cancellation, governed BI/evidence and essential production safeguards. No customer-specific product code is permitted.
+
+The owner-approved backlog revision keeps end-to-end delta **correctness** in M2 (T-108/T-109) and schedules the advanced T-110 chunk-manifest/checkpoint/resume/deterministic-merge and calibrated scan-amplification work in M3. The minimum M2 implementation must still bound rows, bytes, duration, concurrency and source impact; expose partial/failure states; recover without corruption or duplicates; and refuse a workload outside its declared tested envelope. An unfinished scale mechanism is not permission for an unbounded full scan or an uninterruptible customer operation. Existing DF3 pausable/resumable backfill outcomes remain requirements; their implementation need not be the full M3 chunk-parallelism engine.
+
+T-246 governed model/intelligence block invocation moves to M3 with the production model-registry/runtime dependencies. Relational authoring and the currently commissioned analytical families remain M2. Unavailable model families refuse truthfully; no mock model execution satisfies M2 acceptance. Reports (T-263) and internal benchmarking (T-264) receive explicit M3 owners. These allocations change delivery sequencing, not the final product target.
+
+The minimum M2 test envelope is a recorded release input (provider versions, permitted job families, supported source volumes, concurrency, row/byte/time limits and recovery procedure), not a number inferred from task hours. The final release gate proves the actual deployed profile. M3 adds the full advanced mechanisms and sustained capacity certification in Chapter 6.
 
 ### Release-1 Day-1 law
 
