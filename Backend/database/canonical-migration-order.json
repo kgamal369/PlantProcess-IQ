@@ -1,7 +1,7 @@
 {
     "artifact":  "canonical-migration-order",
     "purpose":  "The single ordered path that builds a database from zero. A script outside this path is never replayed as part of a build.",
-    "generatedAtUtc":  "2026-09-15T12:26:12Z",
+    "generatedAtUtc":  "2026-09-15T20:12:02Z",
     "baselineCommit":  "4e0f1219ddbac3163bafe7ce510b62520683a77c",
     "dispositions":  [
                          "Canonical",
@@ -25,8 +25,8 @@
                   "Product tables live in ppiq_meta, ppiq_plant or ppiq_staging. A single terminal convergence file relocates them after every historical creator has run; no migration and no historical script moves a table."
               ],
     "summary":  {
-                    "totalFiles":  160,
-                    "canonicalPath":  111,
+                    "totalFiles":  161,
+                    "canonicalPath":  112,
                     "distinctTables":  174,
                     "governedDuplicates":  7,
                     "ungovernedDuplicates":  0,
@@ -94,7 +94,7 @@
     "canonicalViews":  [
                            {
                                "path":  "Backend/database/views/006_dashboard_dataset_views.sql",
-                               "order":  111,
+                               "order":  112,
                                "sha256":  "729D127FA772E1E100A8AD1A6CEAF6B2BABBA5A3FED9991EB8EB62960D3D6865",
                                "note":  "Read-model view authority. Applied after every schema script and after topology convergence, before the probe database is dropped."
                            }
@@ -1351,6 +1351,17 @@
                           },
                           {
                               "position":  111,
+                              "ordinal":  844,
+                              "path":  "Backend/database/scripts/844_job_cancellation_request_contract.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "BEB7909E27E0A70180376578B290307F2E50868ED07B2D0F32452E3DE97876CC",
+                              "createsTables":  [
+
+                                                ],
+                              "reason":  "T-106 B2.4a. Persisted cancellation request contract on job_run_histories: requested-at, requested-by, reason and acknowledged-at, with checks that an acknowledgement requires a request and cannot precede it, and a partial index for runs with an unacknowledged request. Additive and idempotent; creates no table."
+                          },
+                          {
+                              "position":  112,
                               "ordinal":  6,
                               "path":  "Backend/database/views/006_dashboard_dataset_views.sql",
                               "disposition":  "Canonical",
