@@ -1,8 +1,10 @@
-﻿using PlantProcess.Application.Analytics.Contracts;
+using PlantProcess.Application.Analytics.Contracts;
 using PlantProcess.Application.Analytics.Interfaces;
 using PlantProcess.Application.Analytics.Services;
 using PlantProcess.Application.Integration.Interfaces.Import;
+using PlantProcess.Application.Common.Persistence;
 using PlantProcess.Application.Integration.Interfaces.Jobs;
+using PlantProcess.Application.Jobs.Scheduling;
 using PlantProcess.Application.Services.DataQuality;
 using PlantProcess.Domain.Enums.Integration;
 
@@ -43,69 +45,32 @@ public class Worker : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _logger.LogInformation(
-            "PlantProcess IQ Worker started. Jobs: ImportQueueProcessorJob, DataQualityScanJob, RiskScoringJob, DeltaImportJob.");
+            "PlantProcess IQ Worker started. It polls the governed schedule dispatcher; it owns no schedule semantics.");
 
-        // ── ImportQueueProcessor ──────────────────────────────────────────────
-        var importEnabled = _configuration.GetValue("PlantProcess:Workers:EnableImportQueueProcessorJob", true);
-        var importIntervalSeconds = Math.Max(30, _configuration.GetValue("PlantProcess:Workers:ImportQueueProcessorIntervalSeconds", 120));
-        var importMaxBatches = Math.Clamp(_configuration.GetValue("PlantProcess:Workers:ImportQueueProcessorMaxBatches", 5), 1, 100);
-        var importRowsPerBatch = Math.Clamp(_configuration.GetValue("PlantProcess:Workers:ImportQueueProcessorRowsPerBatch", 5000), 1, 50000);
-
-        // ── DataQualityScan ───────────────────────────────────────────────────
-        var scanEnabled = _configuration.GetValue("PlantProcess:Workers:EnableDataQualityScanJob", true);
-        var scanIntervalSeconds = Math.Max(60, _configuration.GetValue("PlantProcess:Workers:DataQualityScanIntervalSeconds", 3600));
-        var scanMaxCandidatesPerRule = Math.Clamp(_configuration.GetValue("PlantProcess:Workers:DataQualityMaxCandidatesPerRule", 500), 1, 5000);
-
-        // ── RiskScoring ───────────────────────────────────────────────────────
-        var riskEnabled = _configuration.GetValue("PlantProcess:Workers:EnableRiskScoringJob", true);
-        var riskIntervalSeconds = Math.Max(300, _configuration.GetValue("PlantProcess:Workers:RiskScoringIntervalSeconds", 7200));
-        var riskMaxMaterials = Math.Clamp(_configuration.GetValue("PlantProcess:Workers:RiskScoringMaxMaterials", 100), 1, 5000);
-        var riskType = _configuration.GetValue("PlantProcess:Workers:RiskScoringRiskType", RiskScoreService.DefaultRiskType)
-            ?? RiskScoreService.DefaultRiskType;
-
-        // ── DeltaImport (NEW) ─────────────────────────────────────────────────
-        var deltaEnabled = _configuration.GetValue("PlantProcess:Workers:EnableDeltaImportJob", true);
-        var deltaIntervalSeconds = Math.Max(60, _configuration.GetValue("PlantProcess:Workers:DeltaImportIntervalSeconds", 300));
-        var deltaMaxDatasets = Math.Clamp(_configuration.GetValue("PlantProcess:Workers:DeltaImportMaxDatasets", 20), 1, 100);
-        var deltaMaxRowsPerDataset = Math.Clamp(_configuration.GetValue("PlantProcess:Workers:DeltaImportMaxRowsPerDataset", 5000), 1, 50000);
-
-        // ── Initial delays (stagger jobs to avoid startup burst) ──────────────
-        var nextImportRun = DateTimeOffset.UtcNow.AddSeconds(10);
-        var nextScanRun   = DateTimeOffset.UtcNow.AddSeconds(30);
-        var nextRiskRun   = DateTimeOffset.UtcNow.AddSeconds(60);
-        var nextDeltaRun  = DateTimeOffset.UtcNow.AddSeconds(15);   // ← NEW
+        // T-106 B2.3c. The four "UtcNow + configured interval" timers that used to BE the
+        // schedule are gone. A job runs because its saved governed schedule says it is due,
+        // and the poll instant never becomes the occurrence identity.
+        var pollSeconds = Math.Clamp(
+            _configuration.GetValue("PlantProcess:Workers:GovernedSchedulePollSeconds", 5), 1, 60);
 
         while (!stoppingToken.IsCancellationRequested)
         {
-            var now = DateTimeOffset.UtcNow;
-
-            if (importEnabled && now >= nextImportRun)
+            try
             {
-                await RunImportQueueProcessorJobAsync(importMaxBatches, importRowsPerBatch, stoppingToken);
-                nextImportRun = DateTimeOffset.UtcNow.AddSeconds(importIntervalSeconds);
+                await DispatchGovernedSchedulesAsync(stoppingToken);
+            }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                // Host shutdown. This is not an operator cancelling a run and is never
+                // recorded as one: run-level cancellation is the T-106 request path.
+                break;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Governed schedule dispatch failed on this poll; the next poll retries.");
             }
 
-            if (scanEnabled && now >= nextScanRun)
-            {
-                await RunDataQualityScanJobAsync(scanMaxCandidatesPerRule, stoppingToken);
-                nextScanRun = DateTimeOffset.UtcNow.AddSeconds(scanIntervalSeconds);
-            }
-
-            if (riskEnabled && now >= nextRiskRun)
-            {
-                await RunRiskScoringJobAsync(riskType, riskMaxMaterials, stoppingToken);
-                nextRiskRun = DateTimeOffset.UtcNow.AddSeconds(riskIntervalSeconds);
-            }
-
-            // ── NEW ────────────────────────────────────────────────────────────
-            if (deltaEnabled && now >= nextDeltaRun)
-            {
-                await RunDeltaImportJobAsync(deltaMaxDatasets, deltaMaxRowsPerDataset, stoppingToken);
-                nextDeltaRun = DateTimeOffset.UtcNow.AddSeconds(deltaIntervalSeconds);
-            }
-            // ──────────────────────────────────────────────────────────────────
-
-            await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+            await Task.Delay(TimeSpan.FromSeconds(pollSeconds), stoppingToken);
         }
 
         _logger.LogInformation("PlantProcess IQ Worker stopping.");
@@ -478,6 +443,38 @@ public class Worker : BackgroundService
                 ex.Message,
                 null,
                 CancellationToken.None);
+        }
+    }
+
+    /// <summary>
+    /// T-106 B2.3c. One poll: ask the governed dispatcher what is due and let it execute
+    /// through the accepted orchestration and admission path. The dispatcher is built
+    /// inside the scope rather than registered, because the shared composition root is
+    /// currently owned by another lane and this Worker is its only consumer.
+    /// </summary>
+    private async Task DispatchGovernedSchedulesAsync(CancellationToken cancellationToken)
+    {
+        await using var scope = _scopeFactory.CreateAsyncScope();
+
+        var dbContext = scope.ServiceProvider.GetRequiredService<IPlantProcessDbContext>();
+        var orchestrator = scope.ServiceProvider.GetRequiredService<IJobRunOrchestratorService>();
+
+        var dispatcher = new GovernedScheduleDispatcher(dbContext, orchestrator);
+
+        DispatchReport report = await dispatcher.DispatchDueAsync(DateTime.UtcNow, cancellationToken);
+
+        if (report.OccurrencesDue == 0)
+        {
+            return;
+        }
+
+        _logger.LogInformation(
+            "Governed schedule poll: considered={Considered}, due={Due}, dispatched={Dispatched}, claimed={Claimed}, refused={Refused}",
+            report.JobsConsidered, report.OccurrencesDue, report.Dispatched, report.AlreadyClaimed, report.Refused);
+
+        foreach (string note in report.Notes)
+        {
+            _logger.LogWarning("Governed schedule refusal: {Note}", note);
         }
     }
 }

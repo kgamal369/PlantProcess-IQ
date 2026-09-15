@@ -47,8 +47,40 @@ public sealed class JobRunOrchestratorService : IJobRunOrchestratorService
         _dependencies = dependencies;
     }
 
-    public async Task<ApplicationResult<JobActionResponseDto>> RunNowAsync(
+    public Task<ApplicationResult<JobActionResponseDto>> RunNowAsync(
         Guid jobDefinitionId,
+        string? requestedBy,
+        string? correlationId,
+        CancellationToken cancellationToken)
+        => RunCoreAsync(jobDefinitionId, null, null, "ManualRunNow", requestedBy, correlationId, cancellationToken);
+
+    /// <summary>
+    /// T-106 B2.3c. One governed occurrence, through the same authorities as Run Now. The
+    /// occurrence identity reaches the run row, and the database decides a race.
+    /// </summary>
+    public Task<ApplicationResult<JobActionResponseDto>> RunScheduledAsync(
+        Guid jobDefinitionId,
+        string occurrenceKey,
+        DateTime nominalAtUtc,
+        string? triggeredBy,
+        string? correlationId,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(occurrenceKey))
+        {
+            return Task.FromResult(ApplicationResult<JobActionResponseDto>.Failure(
+                ApplicationError.Validation("A scheduled run requires a governed occurrence identity.")));
+        }
+
+        return RunCoreAsync(
+            jobDefinitionId, occurrenceKey, nominalAtUtc, "GovernedSchedule", triggeredBy, correlationId, cancellationToken);
+    }
+
+    private async Task<ApplicationResult<JobActionResponseDto>> RunCoreAsync(
+        Guid jobDefinitionId,
+        string? occurrenceKey,
+        DateTime? nominalAtUtc,
+        string triggerSource,
         string? requestedBy,
         string? correlationId,
         CancellationToken cancellationToken)
@@ -70,12 +102,24 @@ public sealed class JobRunOrchestratorService : IJobRunOrchestratorService
         if (targetOk.IsFailure)
             return ApplicationResult<JobActionResponseDto>.Failure(targetOk.Error!);
 
-        var run = await _jobRuntimeService.StartAsync(
-            job.JobCode,
-            triggerSource: "ManualRunNow",
-            triggeredBy: requestedBy ?? "Admin",
-            correlationId: correlationId ?? Guid.NewGuid().ToString("N"),
-            cancellationToken);
+        // Admission, capability and target resolution have already spoken. Only now is a
+        // run created, and a scheduled request creates it with its occurrence identity so
+        // the INSERT itself is the claim.
+        var run = occurrenceKey is null
+            ? await _jobRuntimeService.StartAsync(
+                job.JobCode,
+                triggerSource: triggerSource,
+                triggeredBy: requestedBy ?? "Admin",
+                correlationId: correlationId ?? Guid.NewGuid().ToString("N"),
+                cancellationToken)
+            : await _jobRuntimeService.StartScheduledAsync(
+                job.JobCode,
+                occurrenceKey,
+                nominalAtUtc ?? DateTime.UtcNow,
+                triggerSource: triggerSource,
+                triggeredBy: requestedBy ?? "GovernedScheduleDispatcher",
+                correlationId: correlationId ?? Guid.NewGuid().ToString("N"),
+                cancellationToken);
 
         if (run.IsFailure || run.Value is null)
             return ApplicationResult<JobActionResponseDto>.Failure(run.Error!);
@@ -105,7 +149,7 @@ public sealed class JobRunOrchestratorService : IJobRunOrchestratorService
                 run.Value.Id, JobRunStatus.Failed, ex.Message, ex.Message, null, CancellationToken.None);
 
             return ApplicationResult<JobActionResponseDto>.Failure(
-                ApplicationError.Unexpected($"Run Now failed: {ex.Message}"));
+                ApplicationError.Unexpected($"{triggerSource} failed: {ex.Message}"));
         }
     }
 

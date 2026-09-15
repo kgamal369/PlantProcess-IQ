@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using PlantProcess.Application.Common.Persistence;
 using PlantProcess.Application.Common.Results;
 using PlantProcess.Application.Integration.Contracts.Jobs;
@@ -18,8 +18,45 @@ public sealed class JobRuntimeService : IJobRuntimeService
         _dbContext = dbContext;
     }
 
-    public async Task<ApplicationResult<JobRunHistoryDto>> StartAsync(
+    /// <summary>T-106 B2.3c. Manual start: no occurrence identity, exactly as before.</summary>
+    public Task<ApplicationResult<JobRunHistoryDto>> StartAsync(
         string jobCode,
+        string triggerSource,
+        string? triggeredBy,
+        string? correlationId,
+        CancellationToken cancellationToken)
+        => StartCoreAsync(jobCode, null, null, triggerSource, triggeredBy, correlationId, cancellationToken);
+
+    /// <summary>
+    /// T-106 B2.3c. Scheduled start: the same creation core, carrying the governed
+    /// occurrence identity so the insert itself is the claim.
+    /// </summary>
+    public Task<ApplicationResult<JobRunHistoryDto>> StartScheduledAsync(
+        string jobCode,
+        string occurrenceKey,
+        DateTime nominalAtUtc,
+        string triggerSource,
+        string? triggeredBy,
+        string? correlationId,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(occurrenceKey))
+        {
+            return Task.FromResult(ApplicationResult<JobRunHistoryDto>.Failure(
+                ApplicationError.Validation("A scheduled run requires a governed occurrence identity.")));
+        }
+
+        return StartCoreAsync(jobCode, occurrenceKey, nominalAtUtc, triggerSource, triggeredBy, correlationId, cancellationToken);
+    }
+
+    /// <summary>
+    /// The one place a JobRunHistory row is created. Manual and scheduled differ by the
+    /// occurrence they carry and by nothing else.
+    /// </summary>
+    private async Task<ApplicationResult<JobRunHistoryDto>> StartCoreAsync(
+        string jobCode,
+        string? occurrenceKey,
+        DateTime? nominalAtUtc,
         string triggerSource,
         string? triggeredBy,
         string? correlationId,
@@ -51,13 +88,45 @@ public sealed class JobRuntimeService : IJobRuntimeService
             correlationId: correlationId,
             isSynthetic: false,
             sourceSystem: "PlantProcessIQ.JobRuntime",
-            sourceRecordId: Guid.NewGuid().ToString("N"));
+            sourceRecordId: Guid.NewGuid().ToString("N"),
+            occurrenceKey: occurrenceKey,
+            nominalAtUtc: nominalAtUtc);
 
         _dbContext.JobRunHistories.Add(history);
 
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (Exception ex) when (occurrenceKey is not null && IsOccurrenceAlreadyClaimed(ex))
+        {
+            // Exactly one meaning: another dispatcher already claimed this occurrence. It is
+            // not an infrastructure failure, not a failed run, and it writes no second row.
+            // Only the known occurrence index is read this way; any other unique violation
+            // keeps its own meaning and propagates.
+            return ApplicationResult<JobRunHistoryDto>.Failure(ApplicationError.Conflict(
+                JobOccurrenceAlreadyClaimed + " Occurrence '" + occurrenceKey + "' is already claimed."));
+        }
 
         return ApplicationResult<JobRunHistoryDto>.Success(ToDto(history));
+    }
+
+    /// <summary>The claim message other layers match on, so nobody re-invents the wording.</summary>
+    public const string JobOccurrenceAlreadyClaimed = "OCCURRENCE ALREADY CLAIMED.";
+
+    private const string OccurrenceIndexName = "ux_job_run_histories_occurrence_key";
+
+    private static bool IsOccurrenceAlreadyClaimed(Exception exception)
+    {
+        for (Exception? current = exception; current is not null; current = current.InnerException)
+        {
+            if (current.Message.Contains(OccurrenceIndexName, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public async Task<ApplicationResult<JobRunHistoryDto>> RecordBlockedAsync(

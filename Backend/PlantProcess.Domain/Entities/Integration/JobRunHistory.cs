@@ -72,6 +72,17 @@ public class JobRunHistory : BaseEntity
     {
     }
 
+    /// <summary>
+    /// T-106 B2.3c. The identity of the scheduled occurrence this run belongs to, or NULL
+    /// for a manual run. Migration 843 puts a partial unique index on this column, and that
+    /// index is the concurrency authority: two dispatchers racing on the same occurrence
+    /// race on the database, not on a read-then-write in application code.
+    /// </summary>
+    public string? OccurrenceKey { get; private set; }
+
+    /// <summary>The nominal scheduled instant, never the poll instant that noticed it.</summary>
+    public DateTime? NominalAtUtc { get; private set; }
+
     public JobRunHistory(
         Guid jobDefinitionId,
         string jobCode,
@@ -82,7 +93,9 @@ public class JobRunHistory : BaseEntity
         string? correlationId,
         bool isSynthetic,
         string? sourceSystem,
-        string? sourceRecordId)
+        string? sourceRecordId,
+        string? occurrenceKey = null,
+        DateTime? nominalAtUtc = null)
     {
         if (jobDefinitionId == Guid.Empty)
             throw new ArgumentException("Job definition ID is required.", nameof(jobDefinitionId));
@@ -108,6 +121,19 @@ public class JobRunHistory : BaseEntity
         IsSynthetic = isSynthetic;
         SourceSystem = Clean(sourceSystem);
         SourceRecordId = Clean(sourceRecordId);
+
+        // An occurrence is either a real scheduled identity with its nominal instant, or it
+        // is absent. Half of one would make the unique index meaningless.
+        var occurrence = Clean(occurrenceKey);
+        if (occurrence is null != nominalAtUtc is null)
+        {
+            throw new ArgumentException(
+                "A scheduled run carries both an occurrence key and its nominal instant; a manual run carries neither.",
+                nameof(occurrenceKey));
+        }
+
+        OccurrenceKey = occurrence;
+        NominalAtUtc = nominalAtUtc;
     }
 
     public void MarkSucceeded(string? message = null, string? resultSummaryJson = null)
