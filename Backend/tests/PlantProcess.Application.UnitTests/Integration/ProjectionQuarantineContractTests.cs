@@ -11,25 +11,25 @@ namespace PlantProcess.Application.UnitTests.Integration;
 ///
 /// The completeness ratchet exists because a member that is declared but never
 /// implemented lets the taxonomy look finished while a class classifies nothing.
-/// So the first test is literally that the enum is exactly PV01..PV08.
+/// The completed ratchet requires the enum and fixture estate to be exactly PV01..PV15.
 /// </summary>
 public class ProjectionQuarantineContractTests
 {
     [Fact]
-    public void Taxonomy_is_exactly_PV01_to_PV08_in_T099()
+    public void Taxonomy_is_exactly_PV01_to_PV15_after_completion()
     {
         var names = Enum.GetNames(typeof(ProjectionValidationCode)).OrderBy(x => x, StringComparer.Ordinal).ToArray();
 
         Assert.Equal(
-            new[] { "PV01", "PV02", "PV03", "PV04", "PV05", "PV06", "PV07", "PV08" },
+            new[] { "PV01", "PV02", "PV03", "PV04", "PV05", "PV06", "PV07", "PV08", "PV09", "PV10", "PV11", "PV12", "PV13", "PV14", "PV15" },
             names);
     }
 
     [Fact]
-    public void Taxonomy_does_not_declare_PV09_before_T100()
+    public void Taxonomy_does_not_invent_PV16_outside_the_design_contract()
     {
-        Assert.False(Enum.IsDefined(typeof(ProjectionValidationCode), 9));
-        Assert.DoesNotContain("PV09", Enum.GetNames(typeof(ProjectionValidationCode)));
+        Assert.False(Enum.IsDefined(typeof(ProjectionValidationCode), 16));
+        Assert.DoesNotContain("PV16", Enum.GetNames(typeof(ProjectionValidationCode)));
     }
 
     [Fact]
@@ -46,7 +46,7 @@ public class ProjectionQuarantineContractTests
     public void An_undeclared_code_has_no_correction_and_is_not_invented()
     {
         Assert.Throws<ArgumentOutOfRangeException>(() =>
-            ProjectionValidationCorrection.For((ProjectionValidationCode)9));
+            ProjectionValidationCorrection.For((ProjectionValidationCode)16));
     }
 
     [Fact]

@@ -41,10 +41,19 @@ public sealed class MappingRowProjector : IMappingRowProjector
     };
 
     private readonly IPlantProcessDbContext _dbContext;
+    private readonly ProjectionRowValidationService _advancedValidation;
 
     public MappingRowProjector(IPlantProcessDbContext dbContext)
+        : this(dbContext, new ProjectionRowValidationService(dbContext))
+    {
+    }
+
+    public MappingRowProjector(
+        IPlantProcessDbContext dbContext,
+        ProjectionRowValidationService advancedValidation)
     {
         _dbContext = dbContext;
+        _advancedValidation = advancedValidation;
     }
 
     // ------------------------------------------------------------------
@@ -123,7 +132,7 @@ public sealed class MappingRowProjector : IMappingRowProjector
             "ProcessStepExecution" => await MapProcessStepExecutionAsync(mapping, reader, stagingRecord, executionContext, previewOnly, cancellationToken),
             "ParameterObservation" => await MapParameterObservationAsync(mapping, reader, stagingRecord, executionContext, previewOnly, cancellationToken),
             "QualityEvent" => await MapQualityEventAsync(mapping, reader, stagingRecord, executionContext, previewOnly, cancellationToken),
-            "GenealogyEdge" => await MapGenealogyEdgeAsync(mapping, reader, stagingRecord, executionContext, previewOnly, cancellationToken),
+            "GenealogyEdge" => await MapGenealogyEdgeAsync(mapping, fieldMap, reader, stagingRecord, executionContext, previewOnly, cancellationToken),
             "DefectCatalog" => await MapDefectCatalogAsync(mapping, reader, stagingRecord, executionContext, previewOnly, cancellationToken),
             "ParameterDefinition" => await MapParameterDefinitionAsync(mapping, reader, stagingRecord, executionContext, previewOnly, cancellationToken),
 
@@ -360,6 +369,16 @@ public sealed class MappingRowProjector : IMappingRowProjector
         if (unitRefusal is not null)
             return RowProjectionOutcome.Quarantined(unitRefusal);
 
+        var rangeRefusal = await _advancedValidation.ValidateParameterObservationRangeAsync(
+            materialId!.Value,
+            parameterDefinitionId.Value,
+            observedAtUtc!.Value,
+            numericValue,
+            cancellationToken);
+
+        if (rangeRefusal is not null)
+            return RowProjectionOutcome.Quarantined(rangeRefusal);
+
         var duplicate = context.ClaimBusinessKey(
             $"ParameterObservation|{materialId}|{parameterDefinitionId}|{observedAtUtc!.Value:O}", stagingRecord.RowNumber);
         if (duplicate.HasValue)
@@ -446,56 +465,102 @@ public sealed class MappingRowProjector : IMappingRowProjector
 
     private async Task<RowProjectionOutcome> MapGenealogyEdgeAsync(
         MappingDefinition mapping,
+        IReadOnlyDictionary<string, string> fieldMap,
         RowReader reader,
         StagingRecord stagingRecord,
         MappingExecutionContext context,
         bool previewOnly,
         CancellationToken cancellationToken)
     {
-        var parentId = await ResolveMaterialIdAsync(reader, cancellationToken, "ParentMaterialUnitId", "ParentMaterialCode", "ParentAliasCode");
+        var parentId = await ResolveGenealogyMaterialIdAsync(
+            reader,
+            cancellationToken,
+            "ParentMaterialUnitId",
+            "ParentMaterialCode",
+            "ParentAliasCode");
+
         if (reader.Failed)
             return Refused(reader);
 
-        var childId = await ResolveMaterialIdAsync(reader, cancellationToken, "ChildMaterialUnitId", "ChildMaterialCode", "ChildAliasCode");
+        var childId = await ResolveGenealogyMaterialIdAsync(
+            reader,
+            cancellationToken,
+            "ChildMaterialUnitId",
+            "ChildMaterialCode",
+            "ChildAliasCode");
+
         if (reader.Failed)
             return Refused(reader);
 
         var relationshipType = reader.RequiredString("RelationshipType");
+        var relationshipCode = reader.OptionalString("RelationshipCode");
+        var contributionWeight = reader.OptionalDecimal("ContributionWeight") ?? 1m;
+        var isTransition = reader.OptionalBool("IsTransition") ?? false;
+        var provenanceConfidence = reader.OptionalDecimal("ProvenanceConfidence") ?? 1m;
         var effectiveFrom = reader.OptionalDateTime("EffectiveFromUtc");
         var effectiveTo = reader.OptionalDateTime("EffectiveToUtc");
+
         if (reader.Failed)
             return Refused(reader);
 
-        var duplicate = context.ClaimBusinessKey($"GenealogyEdge|{parentId}|{childId}|{relationshipType}", stagingRecord.RowNumber);
-        if (duplicate.HasValue)
-            return RowProjectionOutcome.Quarantined(DuplicateInExecution("GenealogyEdge", relationshipType!, duplicate.Value));
+        var duplicate = context.ClaimBusinessKey(
+            $"GenealogyEdge|{parentId}|{childId}|{relationshipType}",
+            stagingRecord.RowNumber);
 
-        // PV04. GenealogyEdge has no existing lawful-idempotency contract: an
-        // identical persisted edge is a conflict with canonical truth, not a
-        // re-projection the product already knows how to absorb.
+        if (duplicate.HasValue)
+        {
+            return RowProjectionOutcome.Quarantined(
+                DuplicateInExecution(
+                    "GenealogyEdge",
+                    relationshipType!,
+                    duplicate.Value));
+        }
+
         var alreadyPersisted = await _dbContext.GenealogyEdges
             .AsNoTracking()
             .AnyAsync(
-                x => x.ParentMaterialUnitId == parentId &&
-                     x.ChildMaterialUnitId == childId &&
-                     x.RelationshipType == relationshipType,
+                x =>
+                    x.ParentMaterialUnitId == parentId &&
+                    x.ChildMaterialUnitId == childId &&
+                    x.RelationshipType == relationshipType,
                 cancellationToken);
 
         if (alreadyPersisted)
         {
-            return RowProjectionOutcome.Quarantined(new RowValidationRefusal(
-                ProjectionValidationCode.PV04,
-                $"A GenealogyEdge with this parent, child and relationship type already exists in canonical truth.",
-                relationshipType));
+            return RowProjectionOutcome.Quarantined(
+                new RowValidationRefusal(
+                    ProjectionValidationCode.PV04,
+                    "A GenealogyEdge with this parent, child and relationship type already exists in canonical truth.",
+                    relationshipType));
         }
 
+        var advancedRefusal =
+            await _advancedValidation.ValidateGenealogyAsync(
+                mapping,
+                fieldMap,
+                stagingRecord,
+                context.TenantId,
+                parentId!.Value,
+                childId!.Value,
+                relationshipType!,
+                relationshipCode,
+                contributionWeight,
+                isTransition,
+                cancellationToken);
+
+        if (advancedRefusal is not null)
+            return RowProjectionOutcome.Quarantined(advancedRefusal);
+
         var edge = new GenealogyEdge(
-            parentMaterialUnitId: parentId!.Value,
-            childMaterialUnitId: childId!.Value,
+            parentMaterialUnitId: parentId.Value,
+            childMaterialUnitId: childId.Value,
             relationshipType: relationshipType!,
             isSynthetic: stagingRecord.IsSynthetic,
             sourceSystem: stagingRecord.SourceSystem ?? mapping.SourceSystem,
-            sourceRecordId: stagingRecord.SourceRecordId);
+            sourceRecordId: stagingRecord.SourceRecordId,
+            contributionWeight: contributionWeight,
+            isTransition: isTransition,
+            provenanceConfidence: provenanceConfidence);
 
         edge.SetEffectiveWindow(effectiveFrom, effectiveTo);
 
@@ -692,6 +757,86 @@ public sealed class MappingRowProjector : IMappingRowProjector
     // ==================================================================
     // GOVERNED REFERENCE RESOLUTION. Unresolvable SUPPLIED reference is PV06.
     // ==================================================================
+    private async Task<Guid?> ResolveGenealogyMaterialIdAsync(
+        RowReader reader,
+        CancellationToken cancellationToken,
+        string materialIdField,
+        string materialCodeField,
+        string aliasCodeField)
+    {
+        if (reader.Failed)
+            return null;
+
+        var materialId = reader.OptionalGuid(materialIdField);
+
+        if (reader.Failed)
+            return null;
+
+        if (materialId.HasValue)
+        {
+            var exists =
+                await _dbContext.MaterialUnits.AnyAsync(
+                    x => x.Id == materialId.Value,
+                    cancellationToken);
+
+            if (exists)
+                return materialId.Value;
+
+            reader.Refuse(
+                ProjectionValidationCode.PV15,
+                $"Referenced material '{materialId.Value}' is not canonical yet and may arrive in another batch.",
+                materialId.Value.ToString());
+
+            return null;
+        }
+
+        var materialCode = reader.OptionalString(materialCodeField);
+
+        if (!string.IsNullOrWhiteSpace(materialCode))
+        {
+            var byCode = await _dbContext.MaterialUnits
+                .AsNoTracking()
+                .Where(x => x.MaterialCode == materialCode)
+                .Select(x => x.Id)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (byCode != Guid.Empty)
+                return byCode;
+        }
+
+        var aliasCode = reader.OptionalString(aliasCodeField);
+
+        if (!string.IsNullOrWhiteSpace(aliasCode))
+        {
+            var byAlias = await _dbContext.MaterialAliases
+                .AsNoTracking()
+                .Where(x => x.AliasCode == aliasCode)
+                .Select(x => x.MaterialUnitId)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (byAlias != Guid.Empty)
+                return byAlias;
+        }
+
+        if (string.IsNullOrWhiteSpace(materialCode) &&
+            string.IsNullOrWhiteSpace(aliasCode))
+        {
+            reader.Refuse(
+                ProjectionValidationCode.PV01,
+                $"No material identity was supplied through {materialIdField}, {materialCodeField} or {aliasCodeField}.",
+                null);
+
+            return null;
+        }
+
+        reader.Refuse(
+            ProjectionValidationCode.PV15,
+            "Referenced material is not canonical yet and may arrive in another batch.",
+            materialCode ?? aliasCode);
+
+        return null;
+    }
+
     private async Task<Guid?> ResolveMaterialIdAsync(
         RowReader reader,
         CancellationToken cancellationToken,

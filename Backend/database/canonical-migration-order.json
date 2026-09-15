@@ -1,8 +1,8 @@
 {
     "artifact":  "canonical-migration-order",
     "purpose":  "The single ordered path that builds a database from zero. A script outside this path is never replayed as part of a build.",
-    "generatedAtUtc":  "2026-09-09T21:20:11Z",
-    "baselineCommit":  "f8a35725c9b0d7fb5a0515c0103a72807a704a97",
+    "generatedAtUtc":  "2026-09-15T11:50:34Z",
+    "baselineCommit":  "4e0f1219ddbac3163bafe7ce510b62520683a77c",
     "dispositions":  [
                          "Canonical",
                          "HistoricalRepair",
@@ -25,8 +25,8 @@
                   "Product tables live in ppiq_meta, ppiq_plant or ppiq_staging. A single terminal convergence file relocates them after every historical creator has run; no migration and no historical script moves a table."
               ],
     "summary":  {
-                    "totalFiles":  158,
-                    "canonicalPath":  109,
+                    "totalFiles":  159,
+                    "canonicalPath":  110,
                     "distinctTables":  174,
                     "governedDuplicates":  7,
                     "ungovernedDuplicates":  0,
@@ -35,7 +35,7 @@
                     "canonicalViews":  1,
                     "declaredViews":  4,
                     "declaredViewsMissing":  0,
-                    "freshBuildTables":  232
+                    "freshBuildTables":  264
                 },
     "storageTopology":  {
                             "note":  "Physical placement of product tables. The model half is StorageTopologyMap; the physical half is the terminal convergence file. Both are generated from one frozen assignment.",
@@ -94,7 +94,7 @@
     "canonicalViews":  [
                            {
                                "path":  "Backend/database/views/006_dashboard_dataset_views.sql",
-                               "order":  107,
+                               "order":  110,
                                "sha256":  "729D127FA772E1E100A8AD1A6CEAF6B2BABBA5A3FED9991EB8EB62960D3D6865",
                                "note":  "Read-model view authority. Applied after every schema script and after topology convergence, before the probe database is dropped."
                            }
@@ -1329,6 +1329,17 @@
                           },
                           {
                               "position":  109,
+                              "ordinal":  842,
+                              "path":  "Backend/database/scripts/842_projection_quarantine_validation_taxonomy.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "768AE60D38D4E5FE7CB5088874EE4A12E5020FE9CC4D7658E58167B40B5F45C1",
+                              "createsTables":  [
+
+                                                ],
+                              "reason":  "Completes the governed projection quarantine validation taxonomy to the exact PV01..PV15 set."
+                          },
+                          {
+                              "position":  110,
                               "ordinal":  6,
                               "path":  "Backend/database/views/006_dashboard_dataset_views.sql",
                               "disposition":  "Canonical",

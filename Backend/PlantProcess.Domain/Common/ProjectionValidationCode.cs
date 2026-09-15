@@ -1,50 +1,28 @@
 namespace PlantProcess.Domain.Common;
 
 /// <summary>
-/// PPIQ T-099. THE TYPED REASONS A STAGED ROW CANNOT BECOME CANONICAL.
-///
-/// Chapter 3 DF5 declares fifteen validation classes. T-099 implements the first
-/// eight; T-100 adds PV09 to PV15. There are deliberately no placeholders here:
-/// a member that exists without an implementation and a fixture would let the
-/// taxonomy look complete while a class silently classified nothing, which is
-/// the one failure mode the completeness ratchet exists to prevent.
-///
-/// THE CODE IS THE FACT. A queue groups, counts and routes on the code; the
-/// sentence beside it only explains the same fact to a person. Nothing here is
-/// derived from a message, and no code is inferred from an exception type.
+/// Typed reasons a staged row cannot lawfully become canonical.
+/// Chapter 3 DF5 / 4.5.14 defines the complete PV01..PV15 set.
 /// </summary>
 public enum ProjectionValidationCode
 {
-    /// <summary>An expected mapped source column is absent from the staged payload.</summary>
     PV01 = 1,
-
-    /// <summary>A supplied value cannot become the required target type.</summary>
     PV02 = 2,
-
-    /// <summary>The source field exists but a required canonical value is null or empty.</summary>
     PV03 = 3,
-
-    /// <summary>The resulting canonical business key conflicts with existing canonical truth.</summary>
     PV04 = 4,
-
-    /// <summary>Two staged rows in this execution declare the same governed business key.</summary>
     PV05 = 5,
-
-    /// <summary>A supplied referenced canonical or taxonomy object cannot be resolved.</summary>
     PV06 = 6,
-
-    /// <summary>The submitted taxonomy value is not registered in the governed catalogue.</summary>
     PV07 = 7,
-
-    /// <summary>The supplied unit is not permitted for the governed parameter or definition.</summary>
-    PV08 = 8
+    PV08 = 8,
+    PV09 = 9,
+    PV10 = 10,
+    PV11 = 11,
+    PV12 = 12,
+    PV13 = 13,
+    PV14 = 14,
+    PV15 = 15
 }
 
-/// <summary>
-/// The deterministic correction hint for a code. Modest and fixed on purpose:
-/// the contract asks for a suggested correction derived from the code, not for
-/// generated prose about a particular row.
-/// </summary>
 public static class ProjectionValidationCorrection
 {
     public static string For(ProjectionValidationCode code) => code switch
@@ -57,7 +35,13 @@ public static class ProjectionValidationCorrection
         ProjectionValidationCode.PV06 => "Import or fix the referenced object.",
         ProjectionValidationCode.PV07 => "Use a registered taxonomy value.",
         ProjectionValidationCode.PV08 => "Use the governed unit for the parameter.",
-        _ => throw new ArgumentOutOfRangeException(
-                 nameof(code), code, "No correction is declared for this validation code.")
+        ProjectionValidationCode.PV09 => "Correct the value or the governed range/specification before reprocessing.",
+        ProjectionValidationCode.PV10 => "Correct the relationship members so the declared cardinality is satisfied.",
+        ProjectionValidationCode.PV11 => "Map the edge at the grains declared by the governed relationship.",
+        ProjectionValidationCode.PV12 => "Remove or redirect the edge that would create a genealogy cycle.",
+        ProjectionValidationCode.PV13 => "Correct the child attribution weights so the governed total equals 1.0.",
+        ProjectionValidationCode.PV14 => "Publish one preferred relationship path, then reprocess the row.",
+        ProjectionValidationCode.PV15 => "Load the referenced object from the other batch, then reprocess this quarantined row.",
+        _ => throw new ArgumentOutOfRangeException(nameof(code), code, "No correction is declared for this validation code.")
     };
 }
