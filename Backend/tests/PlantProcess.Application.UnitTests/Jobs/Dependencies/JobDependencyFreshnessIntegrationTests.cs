@@ -44,17 +44,25 @@ public sealed class JobDependencyFreshnessIntegrationTests
     }
 
     [Fact]
-    public void A_stale_result_without_permission_blocks()
+    public void A_prior_result_inside_tolerance_is_satisfied_without_permission()
     {
         var outcome = Evaluate(false, 10, 60, false);
+        Assert.Equal(JobDependencyResolution.Satisfied, outcome.Resolution);
+        Assert.False(outcome.BlocksDownstream);
+    }
+
+    [Fact]
+    public void A_result_beyond_tolerance_without_permission_blocks()
+    {
+        var outcome = Evaluate(false, 900, 60, false);
         Assert.Equal(JobDependencyResolution.Blocked, outcome.Resolution);
         Assert.True(outcome.BlocksDownstream);
     }
 
     [Fact]
-    public void A_stale_result_with_permission_inside_tolerance_is_accepted()
+    public void A_result_beyond_tolerance_with_permission_is_stale_accepted()
     {
-        var outcome = Evaluate(false, 45, 60, true);
+        var outcome = Evaluate(false, 900, 60, true);
         Assert.Equal(JobDependencyResolution.StaleAccepted, outcome.Resolution);
         Assert.False(outcome.BlocksDownstream);
     }
@@ -62,20 +70,21 @@ public sealed class JobDependencyFreshnessIntegrationTests
     [Fact]
     public void The_tolerance_boundary_is_deterministic()
     {
-        Assert.Equal(JobDependencyResolution.StaleAccepted, Evaluate(false, 60, 60, true).Resolution);
-        Assert.Equal(JobDependencyResolution.Blocked, Evaluate(false, 60.5, 60, true).Resolution);
+        Assert.Equal(JobDependencyResolution.Satisfied, Evaluate(false, 60, 60, false).Resolution);
+        Assert.Equal(JobDependencyResolution.StaleAccepted, Evaluate(false, 60.5, 60, true).Resolution);
+        Assert.Equal(JobDependencyResolution.Blocked, Evaluate(false, 60.5, 60, false).Resolution);
     }
 
     [Fact]
-    public void Permission_without_a_declared_tolerance_accepts_nothing()
+    public void No_declared_tolerance_means_no_freshness_ceiling()
     {
-        Assert.Equal(JobDependencyResolution.Blocked, Evaluate(false, 1, null, true).Resolution);
+        Assert.Equal(JobDependencyResolution.Satisfied, Evaluate(false, 100000, null, false).Resolution);
     }
 
     [Fact]
     public void An_optional_stale_edge_is_skipped_not_blocked()
     {
-        var outcome = Evaluate(false, 900, 60, true, required: false);
+        var outcome = Evaluate(false, 900, 60, false, required: false);
         Assert.Equal(JobDependencyResolution.SkippedOptional, outcome.Resolution);
         Assert.False(outcome.BlocksDownstream);
     }
@@ -114,17 +123,18 @@ public sealed class JobDependencyFreshnessIntegrationTests
         Assert.Throws<ArgumentOutOfRangeException>(() => new JobRunDependency(
             DownstreamRun, Run, Job, Upstream, JobDependencyResolution.StaleAccepted, null, null, "reused"));
 
+        // An age inside the tolerance is Satisfied, never a stale claim.
         Assert.Throws<ArgumentOutOfRangeException>(() => new JobRunDependency(
-            DownstreamRun, Run, Job, Upstream, JobDependencyResolution.StaleAccepted, null, null, "reused", 90, 60));
+            DownstreamRun, Run, Job, Upstream, JobDependencyResolution.StaleAccepted, null, null, "reused", 30, 60));
     }
 
     [Fact]
     public void Stale_accepted_persists_the_measured_age_and_tolerance()
     {
         var edge = new JobRunDependency(
-            DownstreamRun, Run, Job, Upstream, JobDependencyResolution.StaleAccepted, null, null, "reused", 45, 60);
+            DownstreamRun, Run, Job, Upstream, JobDependencyResolution.StaleAccepted, null, null, "reused", 900, 60);
         Assert.Equal(JobDependencyResolution.StaleAccepted, edge.Resolution);
-        Assert.Equal(45, edge.UpstreamAgeMinutes);
+        Assert.Equal(900, edge.UpstreamAgeMinutes);
         Assert.Equal(60, edge.ToleranceMinutes);
     }
 

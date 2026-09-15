@@ -31,9 +31,11 @@ public sealed record FreshnessOutcome(
     string Reason);
 
 /// <summary>
-/// One rule, stated once: a current-cycle success satisfies; otherwise a prior success may be
-/// reused only when the edge opts in and its age is inside the declared tolerance; everything
-/// else blocks a required edge and skips an optional one. Nothing is inferred from a comment.
+/// One rule, stated once. A current-cycle success satisfies. A prior-cycle success satisfies
+/// while it is inside the declared tolerance, and also when no tolerance was declared at all.
+/// Past that ceiling the edge must explicitly permit stale reuse to get stale_accepted;
+/// otherwise a required edge blocks and an optional edge is skipped. Nothing is inferred
+/// from a comment.
 /// </summary>
 public static class DependencyFreshnessPolicy
 {
@@ -53,30 +55,38 @@ public static class DependencyFreshnessPolicy
             return Refuse(input, "Upstream has no successful result to reuse.");
         }
 
-        if (!input.AllowStaleReuse)
-        {
-            return Refuse(input, "Upstream result is from an earlier cycle and this edge does not permit stale reuse.");
-        }
-
-        if (input.StalenessToleranceMinutes is null)
-        {
-            return Refuse(input, "Stale reuse is permitted but no staleness tolerance is declared, so no age is acceptable.");
-        }
-
         if (input.PriorSuccessAgeMinutes.Value < 0)
         {
             return Refuse(input, "Upstream completion is in the future; the age is not usable.");
         }
 
-        // The boundary is inclusive: an age exactly equal to the tolerance is inside it.
+        // No declared tolerance is no declared freshness ceiling. A successful upstream
+        // satisfies the edge however old it is, because nobody said otherwise.
+        if (input.StalenessToleranceMinutes is null)
+        {
+            return new FreshnessOutcome(
+                FreshnessResolution.Satisfied, input.PriorSuccessAgeMinutes, null,
+                "Prior upstream success reused: the edge declares no freshness tolerance.");
+        }
+
+        // Inside the declared ceiling the result is simply fresh enough. Permission is not
+        // consulted here: allow_stale_reuse permits going BEYOND the ceiling, it is not a
+        // permission to reuse a prior cycle at all.
         if (input.PriorSuccessAgeMinutes.Value <= input.StalenessToleranceMinutes.Value)
         {
             return new FreshnessOutcome(
-                FreshnessResolution.StaleAccepted, input.PriorSuccessAgeMinutes, input.StalenessToleranceMinutes,
-                "Prior upstream success reused: age is inside the declared tolerance and the edge permits reuse.");
+                FreshnessResolution.Satisfied, input.PriorSuccessAgeMinutes, input.StalenessToleranceMinutes,
+                "Prior upstream success is inside the declared tolerance.");
         }
 
-        return Refuse(input, "Prior upstream success is older than the declared staleness tolerance.");
+        if (!input.AllowStaleReuse)
+        {
+            return Refuse(input, "Prior upstream success is older than the declared tolerance and this edge does not permit stale reuse.");
+        }
+
+        return new FreshnessOutcome(
+            FreshnessResolution.StaleAccepted, input.PriorSuccessAgeMinutes, input.StalenessToleranceMinutes,
+            "Prior upstream success is older than the declared tolerance and the edge permits stale reuse.");
     }
 
     private static FreshnessOutcome Refuse(FreshnessInput input, string reason)

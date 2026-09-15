@@ -98,10 +98,10 @@ public class JobRunDependency : BaseEntity
                 "An upstream run identity is either real or absent; it is never empty.", nameof(dependsOnRunId));
         }
 
-        // T-106 B2.2. stale_accepted is now producible, and only against evidence: the
-        // measured age of the reused result and the tolerance it was compared with. A
-        // claim of accepted staleness without those two numbers, or outside the
-        // tolerance, is not a claim this runtime will persist.
+        // T-106 B2.2, corrected in B2.3c to the ruled matrix. stale_accepted records reuse
+        // BEYOND the declared tolerance, with the edge's permission. Inside the tolerance the
+        // result is simply Satisfied, so an age at or under the ceiling is not a stale claim.
+        // Either way the two numbers must be present: a claim without evidence is not one.
         if (resolution == JobDependencyResolution.StaleAccepted)
         {
             if (upstreamAgeMinutes is null || toleranceMinutes is null)
@@ -111,11 +111,18 @@ public class JobRunDependency : BaseEntity
                     "stale_accepted must carry the measured upstream age and the tolerance it was compared with.");
             }
 
-            if (upstreamAgeMinutes.Value < 0 || upstreamAgeMinutes.Value > toleranceMinutes.Value)
+            if (upstreamAgeMinutes.Value < 0)
             {
                 throw new ArgumentOutOfRangeException(
                     nameof(upstreamAgeMinutes), upstreamAgeMinutes,
-                    "stale_accepted cannot record an age outside the declared tolerance.");
+                    "An upstream age cannot be negative.");
+            }
+
+            if (upstreamAgeMinutes.Value <= toleranceMinutes.Value)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(upstreamAgeMinutes), upstreamAgeMinutes,
+                    "stale_accepted records reuse beyond the declared tolerance; an age inside the tolerance is satisfied, not stale.");
             }
         }
 

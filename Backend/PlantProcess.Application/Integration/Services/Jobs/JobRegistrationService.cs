@@ -32,7 +32,10 @@ public sealed class JobRegistrationService : IJobRegistrationService
         new UpsertJobDefinitionRequest(
             JobCode: "SYSTEM_IMPORT_QUEUE_PROCESSOR",
             JobName: "Import Queue Processor Worker",
-            JobType: JobDefinitionType.DbLinkImport,
+            // CENTRAL ruling: this job maps staged batches into canonical records. It is not a
+            // raw source reader, so it belongs to the CanonicalRefresh family, matching the
+            // historical canonical seed. Corrected forward from b212406b, not rewritten.
+            JobType: JobDefinitionType.CanonicalRefresh,
             TargetId: null,
             TargetType: "SystemWorker",
             ScheduleExpression: "Every 2 minutes",

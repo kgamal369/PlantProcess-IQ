@@ -43,16 +43,16 @@ public sealed class JobDependencyFreshnessEvidenceTests
     [Fact]
     public void An_accepted_reuse_reports_the_age_it_measured_and_the_tolerance_it_used()
     {
-        var outcome = Evaluate(false, 45, 60, true);
+        var outcome = Evaluate(false, 900, 60, true);
         Assert.Equal(JobDependencyResolution.StaleAccepted, outcome.Resolution);
-        Assert.Equal(45, outcome.UpstreamAgeMinutes);
+        Assert.Equal(900, outcome.UpstreamAgeMinutes);
         Assert.Equal(60, outcome.ToleranceMinutes);
     }
 
     [Fact]
     public void A_refusal_also_reports_what_it_measured()
     {
-        var outcome = Evaluate(false, 900, 60, true);
+        var outcome = Evaluate(false, 900, 60, false);
         Assert.Equal(JobDependencyResolution.Blocked, outcome.Resolution);
         Assert.Equal(900, outcome.UpstreamAgeMinutes);
         Assert.Equal(60, outcome.ToleranceMinutes);
@@ -71,7 +71,7 @@ public sealed class JobDependencyFreshnessEvidenceTests
     [Fact]
     public void The_evidence_row_stores_exactly_what_the_outcome_measured()
     {
-        var outcome = Evaluate(false, 45, 60, true);
+        var outcome = Evaluate(false, 900, 60, true);
 
         var row = new JobRunDependency(
             Downstream,
@@ -86,7 +86,7 @@ public sealed class JobDependencyFreshnessEvidenceTests
             outcome.ToleranceMinutes);
 
         Assert.Equal(JobDependencyResolution.StaleAccepted, row.Resolution);
-        Assert.Equal(45, row.UpstreamAgeMinutes);
+        Assert.Equal(900, row.UpstreamAgeMinutes);
         Assert.Equal(60, row.ToleranceMinutes);
         Assert.Equal(Run, row.DependsOnRunId);
     }
@@ -110,7 +110,7 @@ public sealed class JobDependencyFreshnessEvidenceTests
     [Fact]
     public void One_evaluation_instant_makes_the_boundary_reproducible()
     {
-        Assert.Equal(JobDependencyResolution.StaleAccepted, Evaluate(false, 60, 60, true).Resolution);
-        Assert.Equal(JobDependencyResolution.Blocked, Evaluate(false, 60.0001, 60, true).Resolution);
+        Assert.Equal(JobDependencyResolution.Satisfied, Evaluate(false, 60, 60, false).Resolution);
+        Assert.Equal(JobDependencyResolution.StaleAccepted, Evaluate(false, 60.0001, 60, true).Resolution);
     }
 }

@@ -230,9 +230,9 @@ public sealed class JobDependencyService : IJobDependencyService
                 upstream = await LatestRunAsync(edge.DependsOnJobDefinitionId, cancellationToken);
             }
 
-            // An edge that declares no tolerance declares no freshness requirement, so it
-            // keeps the accepted behaviour exactly: a successful upstream satisfies it.
-            bool treatAsCurrentCycle = ranInThisChain || edge.StalenessToleranceMinutes is null;
+            // No carve-out here: the freshness authority itself rules that an edge with no
+            // declared tolerance has no ceiling. The service only reports what it measured.
+            bool treatAsCurrentCycle = ranInThisChain;
 
             outcomes.Add(JobDependencyEvaluator.Evaluate(
                 edge.DependsOnJobDefinitionId,

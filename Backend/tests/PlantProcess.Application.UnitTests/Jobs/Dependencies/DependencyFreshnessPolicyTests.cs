@@ -22,35 +22,48 @@ public sealed class DependencyFreshnessPolicyTests
     }
 
     [Fact]
-    public void Stale_reuse_is_refused_unless_the_edge_opts_in()
+    public void A_prior_success_inside_tolerance_is_satisfied_without_any_permission()
     {
+        // CENTRAL ruling: allow_stale_reuse permits going BEYOND the declared ceiling.
+        // It is not permission to reuse a prior cycle at all.
         var outcome = DependencyFreshnessPolicy.Evaluate(new FreshnessInput(true, false, 5, 60, false));
-        Assert.Equal(FreshnessResolution.Blocked, outcome.Resolution);
+        Assert.Equal(FreshnessResolution.Satisfied, outcome.Resolution);
         Assert.Equal(5, outcome.UpstreamAgeMinutes);
         Assert.Equal(60, outcome.ToleranceMinutes);
     }
 
     [Fact]
-    public void Opted_in_edge_reuses_a_prior_success_inside_tolerance()
+    public void Permission_does_not_change_a_result_that_is_already_fresh_enough()
     {
         var outcome = DependencyFreshnessPolicy.Evaluate(new FreshnessInput(true, false, 45, 60, true));
-        Assert.Equal(FreshnessResolution.StaleAccepted, outcome.Resolution);
+        Assert.Equal(FreshnessResolution.Satisfied, outcome.Resolution);
     }
 
     [Fact]
-    public void The_tolerance_boundary_is_inclusive()
+    public void Beyond_the_ceiling_permission_is_what_produces_stale_accepted()
     {
         Assert.Equal(FreshnessResolution.StaleAccepted,
-            DependencyFreshnessPolicy.Evaluate(new FreshnessInput(true, false, 60, 60, true)).Resolution);
+            DependencyFreshnessPolicy.Evaluate(new FreshnessInput(true, false, 900, 60, true)).Resolution);
         Assert.Equal(FreshnessResolution.Blocked,
-            DependencyFreshnessPolicy.Evaluate(new FreshnessInput(true, false, 60.5, 60, true)).Resolution);
+            DependencyFreshnessPolicy.Evaluate(new FreshnessInput(true, false, 900, 60, false)).Resolution);
     }
 
     [Fact]
-    public void Opt_in_without_a_declared_tolerance_accepts_no_age()
+    public void The_tolerance_boundary_is_inclusive_and_satisfied()
     {
-        var outcome = DependencyFreshnessPolicy.Evaluate(new FreshnessInput(true, false, 1, null, true));
-        Assert.Equal(FreshnessResolution.Blocked, outcome.Resolution);
+        Assert.Equal(FreshnessResolution.Satisfied,
+            DependencyFreshnessPolicy.Evaluate(new FreshnessInput(true, false, 60, 60, false)).Resolution);
+        Assert.Equal(FreshnessResolution.StaleAccepted,
+            DependencyFreshnessPolicy.Evaluate(new FreshnessInput(true, false, 60.5, 60, true)).Resolution);
+        Assert.Equal(FreshnessResolution.Blocked,
+            DependencyFreshnessPolicy.Evaluate(new FreshnessInput(true, false, 60.5, 60, false)).Resolution);
+    }
+
+    [Fact]
+    public void No_declared_tolerance_is_no_declared_ceiling()
+    {
+        Assert.Equal(FreshnessResolution.Satisfied,
+            DependencyFreshnessPolicy.Evaluate(new FreshnessInput(true, false, 100000, null, false)).Resolution);
     }
 
     [Fact]
@@ -63,7 +76,7 @@ public sealed class DependencyFreshnessPolicyTests
     [Fact]
     public void An_optional_edge_is_skipped_where_a_required_edge_blocks()
     {
-        var outcome = DependencyFreshnessPolicy.Evaluate(new FreshnessInput(false, false, 900, 60, true));
+        var outcome = DependencyFreshnessPolicy.Evaluate(new FreshnessInput(false, false, 900, 60, false));
         Assert.Equal(FreshnessResolution.SkippedOptional, outcome.Resolution);
     }
 }
