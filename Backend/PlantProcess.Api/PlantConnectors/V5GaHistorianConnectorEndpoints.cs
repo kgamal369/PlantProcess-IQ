@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 
 namespace PlantProcess.Api.PlantConnectors;
 
@@ -73,27 +73,16 @@ public static class HistorianConnectorCapabilities
     public const string Subscription = "subscription";
     public const string LiveVendorHandshake = "liveVendorHandshake";
 
-    public static readonly IReadOnlyList<ConnectorCapability> All = new[]
-    {
-        new ConnectorCapability(
-            ConfigurationValidation, true,
-            "The /test-connection route validates the supplied endpoint and read-only posture and returns no measurement."),
-        new ConnectorCapability(
-            MappingHintsFromSuppliedTagPaths, true,
-            "The /mapping-hints route classifies tag paths the caller supplied. It never supplies tag paths of its own."),
-        new ConnectorCapability(
-            TagBrowse, false,
-            "Real OPC UA namespace browse is not yet implemented."),
-        new ConnectorCapability(
-            BoundedRead, false,
-            "Real OPC UA value acquisition is not yet implemented."),
-        new ConnectorCapability(
-            Subscription, false,
-            "Real OPC UA monitored items and subscriptions are not yet implemented."),
-        new ConnectorCapability(
-            LiveVendorHandshake, false,
-            "Real OPC UA session security, certificate and trust handling is not yet implemented.")
-    };
+    /// <summary>
+    /// T-207 corrective. The facts now live in
+    /// PlantProcess.Application.Integration.Connectors.HistorianCapabilityRegistry, which the
+    /// infrastructure connector can also read. This projects them for the HTTP surface and
+    /// declares nothing of its own, so metadata and routes cannot disagree again.
+    /// </summary>
+    public static readonly IReadOnlyList<ConnectorCapability> All =
+        PlantProcess.Application.Integration.Connectors.HistorianCapabilityRegistry.All
+            .Select(capability => new ConnectorCapability(capability.Name, capability.Executable, capability.Evidence))
+            .ToArray();
 
     public static bool IsExecutable(string name)
     {

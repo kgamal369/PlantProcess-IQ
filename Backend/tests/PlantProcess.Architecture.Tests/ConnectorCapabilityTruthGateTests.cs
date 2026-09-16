@@ -1,4 +1,4 @@
-﻿using System.Text.RegularExpressions;
+using System.Text.RegularExpressions;
 using Xunit;
 
 namespace PlantProcess.Architecture.Tests;
@@ -36,7 +36,12 @@ public sealed class ConnectorCapabilityTruthGateTests
         "LiveVendorHandshake"
     };
 
+    private const string RegistryRelativePath =
+        "Backend/PlantProcess.Application/Integration/Connectors/HistorianCapabilityRegistry.cs";
+
     private static string Source() => ConnectorSourceText.Read(ConnectorRelativePath);
+
+    private static string RegistrySource() => ConnectorSourceText.Read(RegistryRelativePath);
 
     [Fact]
     public void Connector_never_advertises_a_capability_as_a_literal()
@@ -60,10 +65,10 @@ public sealed class ConnectorCapabilityTruthGateTests
     public void Capabilities_without_an_implementation_are_registered_as_not_executable(string capability)
     {
         var registration = new Regex(
-            @"new\s+ConnectorCapability\s*\(\s*" + Regex.Escape(capability) + @"\s*,\s*(true|false)\b",
+            @"new\s+HistorianCapability\s*\(\s*" + Regex.Escape(capability) + @"\s*,\s*(true|false)\b",
             RegexOptions.Singleline);
 
-        var match = registration.Match(Source());
+        var match = registration.Match(RegistrySource());
 
         Assert.True(
             match.Success,
@@ -116,8 +121,8 @@ public sealed class ConnectorCapabilityTruthGateTests
     public void Every_registered_capability_carries_evidence()
     {
         var registrations = Regex.Matches(
-            Source(),
-            @"new\s+ConnectorCapability\s*\(\s*\w+\s*,\s*(?:true|false)\s*,\s*""?",
+            RegistrySource(),
+            @"new\s+HistorianCapability\s*\(\s*\w+\s*,\s*(?:true|false)\s*,\s*""?",
             RegexOptions.Singleline);
 
         Assert.True(

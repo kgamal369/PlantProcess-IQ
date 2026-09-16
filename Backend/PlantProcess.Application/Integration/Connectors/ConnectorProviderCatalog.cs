@@ -5,6 +5,21 @@ namespace PlantProcess.Application.Integration.Connectors;
 
 public static class ConnectorProviderCatalog
 {
+    /// <summary>
+    /// T-207 corrective. Which providers this build can actually open. A provider may be
+    /// listed for the roadmap and still be un-creatable: advertising one a customer can
+    /// select and nothing can open is worse than not listing it. The architecture gate
+    /// holds this set against the connector factory, so the two cannot drift apart.
+    /// </summary>
+    public static readonly IReadOnlySet<string> ImplementedProviderTypes =
+        new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "Csv", "Excel", "PostgreSql", "SqlServer", "MySql", "Oracle", "OpcUaHistorian"
+        };
+
+    public static bool HasRuntimeImplementation(string? providerType)
+        => !string.IsNullOrWhiteSpace(providerType) && ImplementedProviderTypes.Contains(providerType.Trim());
+
     public static IReadOnlyList<ProviderTypeDto> GetProviderTypes()
     {
         return new[]

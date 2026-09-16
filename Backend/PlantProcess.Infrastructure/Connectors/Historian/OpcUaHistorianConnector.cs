@@ -57,9 +57,12 @@ public sealed class OpcUaHistorianConnector : IDataSourceConnector
                 ["endpointUrl"] = endpointUrl,
                 ["namespaceUri"] = namespaceUri,
                 ["readOnly"] = readOnly.ToString(CultureInfo.InvariantCulture),
-                ["supportsTagBrowse"] = "true",
-                ["supportsBoundedRead"] = "true",
-                ["supportsMappingHints"] = "true",
+                ["supportsTagBrowse"] = PlantProcess.Application.Integration.Connectors.HistorianCapabilityRegistry
+                    .DeclaredValue(PlantProcess.Application.Integration.Connectors.HistorianCapabilityRegistry.TagBrowse),
+                ["supportsBoundedRead"] = PlantProcess.Application.Integration.Connectors.HistorianCapabilityRegistry
+                    .DeclaredValue(PlantProcess.Application.Integration.Connectors.HistorianCapabilityRegistry.BoundedRead),
+                ["supportsMappingHints"] = PlantProcess.Application.Integration.Connectors.HistorianCapabilityRegistry
+                    .DeclaredValue(PlantProcess.Application.Integration.Connectors.HistorianCapabilityRegistry.MappingHintsFromSuppliedTagPaths),
                 ["liveHandshake"] = "environment-specific"
             };
 
