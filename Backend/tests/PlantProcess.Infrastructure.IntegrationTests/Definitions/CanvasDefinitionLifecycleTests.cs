@@ -59,7 +59,24 @@ public sealed class CanvasDefinitionLifecycleTests : IAsyncLifetime
     private const string GraphAReordered = """{"tables":["t0"],"filters":[{"value":"10","op":">","column":"quantity","table":"t0"}],"joins":[],"targetEntity":"QualityEvent","name":"a"}""";
     private const string GraphB = """{"name":"a","targetEntity":"QualityEvent","tables":["t0"],"joins":[],"filters":[{"table":"t0","column":"quantity","op":">","value":"20"}]}""";
 
-    private CanvasDefinitionLifecycleService Service(ICanvasCompatibilityProjection? projection = null)
+    private sealed class NullRelationshipPublication : PlantProcess.Application.Relationships.IRelationshipPublicationService
+    {
+        public static readonly NullRelationshipPublication Instance = new();
+
+        public Task<PlantProcess.Application.Common.Results.ApplicationResult<IReadOnlyList<PlantProcess.Application.Relationships.RelationshipDto>>> PublishAsync(
+            PlantProcess.Application.Relationships.RelationshipPublicationRequest request, CancellationToken cancellationToken)
+        {
+            throw new InvalidOperationException(
+                "This suite publishes declaration-free versions. A call here means a join was promoted into a relationship.");
+        }
+
+        public Task<PlantProcess.Application.Common.Results.ApplicationResult<int>> RetireByDefinitionAsync(
+            Guid sourceDefinitionId, CancellationToken cancellationToken)
+        {
+            return Task.FromResult(PlantProcess.Application.Common.Results.ApplicationResult<int>.Success(0));
+        }
+    }
+    private CanvasDefinitionLifecycleService Service(ICanvasCompatibilityProjection? projection = null, PlantProcess.Application.Relationships.IRelationshipPublicationService? relationships = null)
     {
         var db = _fixture.NewContext();
         // T-262. The staged schema arrives as a fact, so this suite constructs the
@@ -70,7 +87,8 @@ public sealed class CanvasDefinitionLifecycleTests : IAsyncLifetime
             new CanonicalDefinitionWriter(db),
             projection ?? new CanvasCompatibilityProjection(),
             new PlantProcess.Infrastructure.Canonical.CanonicalEntityCatalog(db),
-            new PlantProcess.Application.Definitions.Canvas.CanvasStagingSchema("ppiq_staging"));
+            new PlantProcess.Application.Definitions.Canvas.CanvasStagingSchema("ppiq_staging"),
+            relationships ?? NullRelationshipPublication.Instance);
     }
 
     private CanvasGraphSave Graph(string suffix, string graph, string? target = TestTarget) =>

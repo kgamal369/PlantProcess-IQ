@@ -8,6 +8,7 @@ using PlantProcess.Application.Common.Canonical;
 using PlantProcess.Application.Common.Results;
 using PlantProcess.Application.Definitions;
 using PlantProcess.Application.Definitions.Canvas;
+using PlantProcess.Application.Relationships;
 using PlantProcess.Infrastructure.Persistence;
 
 namespace PlantProcess.Infrastructure.Definitions.Canvas;
@@ -61,6 +62,7 @@ public sealed class CanvasDefinitionLifecycleService : ICanvasDefinitionLifecycl
     private readonly ICanonicalDefinitionWriter _writer;
     private readonly ICanvasCompatibilityProjection _projection;
     private readonly ICanonicalEntityCatalog _canonicalEntities;
+    private readonly IRelationshipPublicationService _relationships;
 
     /// <summary>
     /// T-262. The staged schema whose column metadata types a graph binding. It reaches
@@ -76,7 +78,8 @@ public sealed class CanvasDefinitionLifecycleService : ICanvasDefinitionLifecycl
         ICanonicalDefinitionWriter writer,
         ICanvasCompatibilityProjection projection,
         ICanonicalEntityCatalog canonicalEntities,
-        ICanvasStagingSchema stagingSchema)
+        ICanvasStagingSchema stagingSchema,
+        IRelationshipPublicationService relationships)
     {
         _db = db ?? throw new ArgumentNullException(nameof(db));
         _writer = writer ?? throw new ArgumentNullException(nameof(writer));
@@ -85,6 +88,7 @@ public sealed class CanvasDefinitionLifecycleService : ICanvasDefinitionLifecycl
 
         ArgumentNullException.ThrowIfNull(stagingSchema);
         _stagingSchema = stagingSchema.Name;
+        _relationships = relationships ?? throw new ArgumentNullException(nameof(relationships));
     }
 
     // ------------------------------------------------------------------ SAVE
@@ -333,6 +337,30 @@ public sealed class CanvasDefinitionLifecycleService : ICanvasDefinitionLifecycl
                 "Published nothing. The execution projection failed and the canonical publish was rolled back with it: " + ex.Message));
         }
 
+        var declaredRelationships = CanvasRelationshipDeclarations.Read(
+            representation.GraphJson, out var relationshipRefusal);
+
+        if (relationshipRefusal is not null)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            return ApplicationResult<CanvasDefinitionVersion>.Failure(
+                new ApplicationError(relationshipRefusal,
+                    "A declared relationship is incomplete, so nothing was published.",
+                    ApplicationErrorType.BusinessRule));
+        }
+
+        if (declaredRelationships.Count > 0)
+        {
+            var relationshipResult = await _relationships.PublishAsync(
+                new RelationshipPublicationRequest(definitionId, version.VersionNumber, declaredRelationships),
+                cancellationToken);
+
+            if (relationshipResult.IsFailure)
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                return ApplicationResult<CanvasDefinitionVersion>.Failure(relationshipResult.Error!);
+            }
+        }
         await transaction.CommitAsync(cancellationToken);
         return ApplicationResult<CanvasDefinitionVersion>.Success(ToCanvasVersion(version));
     }
