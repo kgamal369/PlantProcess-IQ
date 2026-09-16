@@ -35,6 +35,9 @@ public sealed class CanvasDefinitionLifecycleTests : IAsyncLifetime
     private const string Prefix = FixturePrefix + "canvas_";
 
     private readonly DefinitionStoreFixture _fixture;
+    private CanvasProjectionTestFixture? _projectionFixture;
+    private CanvasProjectionTestFixture ProjectionFixture =>
+        _projectionFixture ?? throw new InvalidOperationException("Projection fixture is not initialised.");
 
     public CanvasDefinitionLifecycleTests(DefinitionStoreFixture fixture) => _fixture = fixture;
 
@@ -42,9 +45,18 @@ public sealed class CanvasDefinitionLifecycleTests : IAsyncLifetime
     {
         await _fixture.ResetAsync();
         await ClearProjectionsAsync();
+        _projectionFixture = await CanvasProjectionTestFixture.CreateAsync(_fixture, TestTarget);
     }
 
-    public Task DisposeAsync() => ClearProjectionsAsync();
+    public async Task DisposeAsync()
+    {
+        await ClearProjectionsAsync();
+        if (_projectionFixture is not null)
+        {
+            await _projectionFixture.DisposeAsync();
+            _projectionFixture = null;
+        }
+    }
 
     // ------------------------------------------------------------- fixtures
 
@@ -92,10 +104,13 @@ public sealed class CanvasDefinitionLifecycleTests : IAsyncLifetime
     }
 
     private CanvasGraphSave Graph(string suffix, string graph, string? target = TestTarget) =>
-        new(_fixture.TenantId, _fixture.OwnerId, Code(suffix), "Canvas " + suffix, graph, target);
+        new(_fixture.TenantId, _fixture.OwnerId, Code(suffix), "Canvas " + suffix, graph, target,
+            string.Equals(target, TestTarget, StringComparison.Ordinal) ? ProjectionFixture.GraphDeclarationJson : null);
 
     private CanvasSqlSave Sql(string suffix, string sql, string? forked = null, string? target = TestTarget) =>
-        new(_fixture.TenantId, _fixture.OwnerId, Code(suffix), "SQL " + suffix, null, sql, forked, target);
+        new(_fixture.TenantId, _fixture.OwnerId, Code(suffix), "SQL " + suffix, null,
+            ProjectionFixture.SqlFor(sql), forked, target,
+            string.Equals(target, TestTarget, StringComparison.Ordinal) ? ProjectionFixture.SqlDeclarationJson : null);
 
     private static CanvasProjectionHandles GraphHandles(Guid sessionId) => new(sessionId, null, null, "test");
 
