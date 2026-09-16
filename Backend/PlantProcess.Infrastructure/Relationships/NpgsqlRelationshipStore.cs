@@ -1,4 +1,6 @@
 ﻿using System.Data;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Npgsql;
 using NpgsqlTypes;
 using PlantProcess.Application.Relationships;
@@ -23,9 +25,88 @@ public sealed class NpgsqlRelationshipStore : IRelationshipStore
 {
     private readonly NpgsqlDataSource _dataSource;
 
+    private readonly PlantProcess.Infrastructure.Persistence.PlantProcessDbContext? _db;
+
+    // Standalone callers remain supported. DI selects the two-argument constructor
+    // when the scoped context is registered; the closure proof checks this explicitly.
     public NpgsqlRelationshipStore(NpgsqlDataSource dataSource)
     {
-        _dataSource = dataSource;
+        _dataSource = dataSource ?? throw new ArgumentNullException(nameof(dataSource));
+    }
+
+    public NpgsqlRelationshipStore(
+        NpgsqlDataSource dataSource,
+        PlantProcess.Infrastructure.Persistence.PlantProcessDbContext db) : this(dataSource)
+    {
+        _db = db ?? throw new ArgumentNullException(nameof(db));
+    }
+
+    private async Task<ConnectionScope> AcquireAsync(bool mutation, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var ambient = _db?.Database.CurrentTransaction;
+        if (ambient is not null)
+        {
+            if (_db!.Database.GetDbConnection() is not NpgsqlConnection connection ||
+                ambient.GetDbTransaction() is not NpgsqlTransaction transaction ||
+                !ReferenceEquals(transaction.Connection, connection) ||
+                connection.State != ConnectionState.Open)
+            {
+                // Do not reopen a broken connection or silently escape to a new one.
+                throw new InvalidOperationException("The relationship store requires the caller's open Npgsql connection and its own active transaction.");
+            }
+
+            return new ConnectionScope(connection, transaction, ownsResources: false);
+        }
+
+        var owned = await _dataSource.OpenConnectionAsync(cancellationToken);
+        try
+        {
+            var transaction = mutation ? await owned.BeginTransactionAsync(cancellationToken) : null;
+            return new ConnectionScope(owned, transaction, ownsResources: true);
+        }
+        catch
+        {
+            await owned.DisposeAsync();
+            throw;
+        }
+    }
+
+    private sealed class ConnectionScope : IAsyncDisposable
+    {
+        private readonly bool _ownsResources;
+        private bool _disposed;
+
+        public ConnectionScope(NpgsqlConnection connection, NpgsqlTransaction? transaction, bool ownsResources)
+        {
+            Connection = connection;
+            Transaction = transaction;
+            _ownsResources = ownsResources;
+        }
+
+        public NpgsqlConnection Connection { get; }
+        public NpgsqlTransaction? Transaction { get; }
+
+        public async Task CommitOwnedAsync(CancellationToken cancellationToken)
+        {
+            if (_ownsResources && Transaction is not null)
+                await Transaction.CommitAsync(cancellationToken);
+        }
+
+        public async ValueTask DisposeAsync()
+        {
+            if (_disposed) return;
+            _disposed = true;
+            if (!_ownsResources) return;
+            try
+            {
+                if (Transaction is not null) await Transaction.DisposeAsync();
+            }
+            finally
+            {
+                await Connection.DisposeAsync();
+            }
+        }
     }
 
     public async Task<Guid> UpsertAsync(
@@ -36,8 +117,9 @@ public sealed class NpgsqlRelationshipStore : IRelationshipStore
         DateTime effectiveFromUtc,
         CancellationToken cancellationToken)
     {
-        await using var conn = await _dataSource.OpenConnectionAsync(cancellationToken);
-        await using var tx = await conn.BeginTransactionAsync(cancellationToken);
+        await using var scope = await AcquireAsync(true, cancellationToken);
+        var conn = scope.Connection;
+        var tx = scope.Transaction;
 
         Guid id;
         await using (var insert = conn.CreateCommand())
@@ -94,18 +176,20 @@ public sealed class NpgsqlRelationshipStore : IRelationshipStore
             await memberCmd.ExecuteNonQueryAsync(cancellationToken);
         }
 
-        await tx.CommitAsync(cancellationToken);
+        await scope.CommitOwnedAsync(cancellationToken);
         return id;
     }
 
     public async Task<IReadOnlyList<RelationshipDto>> ReadPublishedAsync(
         Guid tenantId, string? entity, CancellationToken cancellationToken)
     {
-        await using var conn = await _dataSource.OpenConnectionAsync(cancellationToken);
+        await using var scope = await AcquireAsync(false, cancellationToken);
+        var conn = scope.Connection;
 
         var rows = new List<RelationshipRow>();
         await using (var cmd = conn.CreateCommand())
         {
+            cmd.Transaction = scope.Transaction;
             cmd.CommandText =
                 SelectColumns +
                 "WHERE r.tenant_id = @tenant AND r.retired_at_utc IS NULL " +
@@ -123,17 +207,19 @@ public sealed class NpgsqlRelationshipStore : IRelationshipStore
             while (await reader.ReadAsync(cancellationToken)) rows.Add(Read(reader));
         }
 
-        return await AttachMembersAsync(conn, rows, cancellationToken);
+        return await AttachMembersAsync(conn, scope.Transaction, rows, cancellationToken);
     }
 
     public async Task<RelationshipDto?> ReadByIdAsync(
         Guid tenantId, Guid id, CancellationToken cancellationToken)
     {
-        await using var conn = await _dataSource.OpenConnectionAsync(cancellationToken);
+        await using var scope = await AcquireAsync(false, cancellationToken);
+        var conn = scope.Connection;
 
         var rows = new List<RelationshipRow>();
         await using (var cmd = conn.CreateCommand())
         {
+            cmd.Transaction = scope.Transaction;
             cmd.CommandText = SelectColumns + "WHERE r.tenant_id = @tenant AND r.id = @id AND r.retired_at_utc IS NULL";
             cmd.Parameters.AddWithValue("tenant", tenantId);
             cmd.Parameters.AddWithValue("id", id);
@@ -142,15 +228,16 @@ public sealed class NpgsqlRelationshipStore : IRelationshipStore
             while (await reader.ReadAsync(cancellationToken)) rows.Add(Read(reader));
         }
 
-        var withMembers = await AttachMembersAsync(conn, rows, cancellationToken);
+        var withMembers = await AttachMembersAsync(conn, scope.Transaction, rows, cancellationToken);
         return withMembers.Count == 0 ? null : withMembers[0];
     }
 
     public async Task<int> RetireByDefinitionAsync(
         Guid tenantId, Guid sourceDefinitionId, DateTime retiredAtUtc, CancellationToken cancellationToken)
     {
-        await using var conn = await _dataSource.OpenConnectionAsync(cancellationToken);
-        await using var cmd = conn.CreateCommand();
+        await using var scope = await AcquireAsync(true, cancellationToken);
+        await using var cmd = scope.Connection.CreateCommand();
+        cmd.Transaction = scope.Transaction;
 
         // Deactivated, never deleted: a finding computed under this relationship
         // must stay explainable after the model moves on.
@@ -161,14 +248,17 @@ public sealed class NpgsqlRelationshipStore : IRelationshipStore
         cmd.Parameters.AddWithValue("defId", sourceDefinitionId);
         cmd.Parameters.AddWithValue("retired", retiredAtUtc);
 
-        return await cmd.ExecuteNonQueryAsync(cancellationToken);
+        var affected = await cmd.ExecuteNonQueryAsync(cancellationToken);
+        await scope.CommitOwnedAsync(cancellationToken);
+        return affected;
     }
 
     public async Task<bool> RecordValidationAsync(
         Guid tenantId, Guid id, string validationState, string validationDetailJson, CancellationToken cancellationToken)
     {
-        await using var conn = await _dataSource.OpenConnectionAsync(cancellationToken);
-        await using var cmd = conn.CreateCommand();
+        await using var scope = await AcquireAsync(true, cancellationToken);
+        await using var cmd = scope.Connection.CreateCommand();
+        cmd.Transaction = scope.Transaction;
 
         // State and detail are one statement, so they cannot disagree. A retired
         // relationship is not updated: it is history, and history does not change
@@ -182,7 +272,9 @@ public sealed class NpgsqlRelationshipStore : IRelationshipStore
         cmd.Parameters.AddWithValue("state", validationState);
         cmd.Parameters.Add("detail", NpgsqlDbType.Text).Value = validationDetailJson;
 
-        return await cmd.ExecuteNonQueryAsync(cancellationToken) == 1;
+        var affected = await cmd.ExecuteNonQueryAsync(cancellationToken);
+        await scope.CommitOwnedAsync(cancellationToken);
+        return affected == 1;
     }
 
     private const string SelectColumns =
@@ -209,13 +301,14 @@ public sealed class NpgsqlRelationshipStore : IRelationshipStore
         reader.IsDBNull(17) ? null : reader.GetDateTime(17));
 
     private static async Task<IReadOnlyList<RelationshipDto>> AttachMembersAsync(
-        NpgsqlConnection conn, List<RelationshipRow> rows, CancellationToken cancellationToken)
+        NpgsqlConnection conn, NpgsqlTransaction? transaction, List<RelationshipRow> rows, CancellationToken cancellationToken)
     {
         if (rows.Count == 0) return Array.Empty<RelationshipDto>();
 
         var members = new Dictionary<Guid, List<RelationshipMemberDto>>();
         await using (var cmd = conn.CreateCommand())
         {
+            cmd.Transaction = transaction;
             cmd.CommandText =
                 "SELECT relationship_id, left_column, right_column, member_order, comparison " +
                 "FROM ppiq_meta.plant_relationship_members " +
