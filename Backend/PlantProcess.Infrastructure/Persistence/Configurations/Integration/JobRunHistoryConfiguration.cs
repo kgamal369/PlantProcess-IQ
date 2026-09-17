@@ -115,6 +115,16 @@ public sealed class JobRunHistoryConfiguration : IEntityTypeConfiguration<JobRun
             .HasMaxLength(20)
             .HasConversion(VersionPolicyConverter);
 
+        // SQL 843/844 are the DDL authority for these already-shipped job fields.
+        // Pin only their relational store facets here so EF metadata cannot drift from
+        // the committed canonical SQL contract. No job behavior is changed.
+        builder.Property(x => x.NominalAtUtc).HasColumnType("timestamp with time zone");
+        builder.Property(x => x.OccurrenceKey).HasColumnType("character varying(80)");
+        builder.Property(x => x.CancellationRequestedAtUtc).HasColumnType("timestamp with time zone");
+        builder.Property(x => x.CancellationRequestedBy).HasColumnType("character varying(200)");
+        builder.Property(x => x.CancellationReason).HasColumnType("character varying(500)");
+        builder.Property(x => x.CancellationAcknowledgedAtUtc).HasColumnType("timestamp with time zone");
+
         builder.HasIndex(x => x.JobDefinitionId);
         builder.HasIndex(x => x.JobCode);
         builder.HasIndex(x => x.Status);

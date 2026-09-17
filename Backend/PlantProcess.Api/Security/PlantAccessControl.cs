@@ -228,6 +228,7 @@ public sealed class AccessControlMiddleware
         // authenticated user. analysis.execute matches the sibling
         // /api/prep/visual-mapper, which is the same act on the same surface.
         ("/api/prep/sql", All(), "analysis.execute", false),
+        ("/api/source-time", All(), "source.configure", false), // Source Time Authority declarations are source configuration; deny-by-default would refuse every POST.
         // T-025: the risk-scoring group. The middleware is deny-by-default, so
         // without this line POST /risk-scores/calculate-all is refused 403
         // ("not mapped in the P01/P02 permission matrix") even for an

@@ -1,7 +1,7 @@
 {
     "artifact":  "canonical-migration-order",
     "purpose":  "The single ordered path that builds a database from zero. A script outside this path is never replayed as part of a build.",
-    "generatedAtUtc":  "2026-09-15T20:12:02Z",
+    "generatedAtUtc":  "2026-09-17T08:51:08Z",
     "baselineCommit":  "4e0f1219ddbac3163bafe7ce510b62520683a77c",
     "dispositions":  [
                          "Canonical",
@@ -25,17 +25,17 @@
                   "Product tables live in ppiq_meta, ppiq_plant or ppiq_staging. A single terminal convergence file relocates them after every historical creator has run; no migration and no historical script moves a table."
               ],
     "summary":  {
-                    "totalFiles":  161,
-                    "canonicalPath":  112,
-                    "distinctTables":  174,
+                    "totalFiles":  162,
+                    "canonicalPath":  113,
+                    "distinctTables":  175,
                     "governedDuplicates":  7,
                     "ungovernedDuplicates":  0,
-                    "efMigrations":  9,
+                    "efMigrations":  10,
                     "freshBuild":  "EXECUTED",
                     "canonicalViews":  1,
                     "declaredViews":  4,
                     "declaredViewsMissing":  0,
-                    "freshBuildTables":  264
+                    "freshBuildTables":  265
                 },
     "storageTopology":  {
                             "note":  "Physical placement of product tables. The model half is StorageTopologyMap; the physical half is the terminal convergence file. Both are generated from one frozen assignment.",
@@ -88,13 +88,17 @@
                                                    {
                                                        "name":  "20260910104823_JobExecutionContractSqlOwnedParity",
                                                        "sha256":  "0BB6C60A732EB4AE7D98DE3B92CAE29853CAEFE4D33B9A22899EF9DDEC145434"
-                                                   }
+                                                   },
+                                                  {
+                                                      "name":  "20260917085040_SourceTimeProvenanceSqlOwnedParity",
+                                                      "sha256":  "5CDD467226D423CA0339E780AAFF6C0A4896AB5CF171B6B3CE50AABD12B72404"
+                                                  }
                                                ]
                             },
     "canonicalViews":  [
                            {
                                "path":  "Backend/database/views/006_dashboard_dataset_views.sql",
-                               "order":  112,
+                               "order":  113,
                                "sha256":  "729D127FA772E1E100A8AD1A6CEAF6B2BABBA5A3FED9991EB8EB62960D3D6865",
                                "note":  "Read-model view authority. Applied after every schema script and after topology convergence, before the probe database is dropped."
                            }
@@ -1362,6 +1366,17 @@
                           },
                           {
                               "position":  112,
+                              "ordinal":  845,
+                              "path":  "Backend/database/scripts/845_source_time_authority_persistence.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "C68D7F10CCB46E65CDAA1759A9CE9DEE93B7037188AC07479FA8C1F0B7F0D23A",
+                              "createsTables":  [
+                                                  "ppiq_meta.source_time_authorities"
+                                              ],
+                              "reason":  "Persists the frozen per-signal Source Time Authority contract, tenant-scoped and effective-dated, and adds source, server and receipt time provenance to parameter observations."
+                          },
+                          {
+                              "position":  113,
                               "ordinal":  6,
                               "path":  "Backend/database/views/006_dashboard_dataset_views.sql",
                               "disposition":  "Canonical",

@@ -28,6 +28,18 @@ public class ParameterObservationConfiguration : IEntityTypeConfiguration<Parame
         builder.Property(x => x.UnitOfMeasure).HasMaxLength(50);
         builder.Property(x => x.QualityFlag).IsRequired().HasMaxLength(50);
         builder.Property(x => x.RawValue).HasMaxLength(500);
+
+        // Source time provenance. The governed source-time SQL migration is the single DDL authority; the parity
+        // migration carries no operations.
+        builder.Property(x => x.SourceTimestampUtc).HasColumnType("timestamp with time zone");
+        builder.Property(x => x.ServerTimestampUtc).HasColumnType("timestamp with time zone");
+
+        // Platform-owned receipt time. A shadow property on purpose: it has no CLR
+        // member, so the canonical projection catalogue classifies it as system-owned
+        // and no author is ever asked to bind it.
+        builder.Property<DateTime>("IngestedAtUtc")
+            .HasColumnType("timestamp with time zone")
+            .HasDefaultValueSql("now()");
         builder.Property(x => x.SourceSystem).HasMaxLength(100);
         builder.Property(x => x.SourceRecordId).HasMaxLength(100);
         builder.Property(x => x.DeletedReason).HasMaxLength(500);

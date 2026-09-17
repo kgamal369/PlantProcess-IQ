@@ -1,6 +1,8 @@
 using System.Globalization;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using PlantProcess.Analytics.Core.Kernel;
+using PlantProcess.Application.Temporal;
 using PlantProcess.Application.Common.Persistence;
 using PlantProcess.Application.Common.Results;
 using PlantProcess.Application.Integration.Contracts.Mapping;
@@ -41,6 +43,16 @@ public sealed class MappingRowProjector : IMappingRowProjector
     };
 
     private readonly IPlantProcessDbContext _dbContext;
+    private readonly ISourceTimeAuthorityRegistryProvider _sourceTimeAuthority = null!;
+
+    public MappingRowProjector(
+        IPlantProcessDbContext dbContext,
+        ISourceTimeAuthorityRegistryProvider sourceTimeAuthority)
+        : this(dbContext)
+    {
+        _sourceTimeAuthority = sourceTimeAuthority ?? throw new ArgumentNullException(nameof(sourceTimeAuthority));
+    }
+
     private readonly ProjectionRowValidationService _advancedValidation;
 
     public MappingRowProjector(IPlantProcessDbContext dbContext)
@@ -352,7 +364,12 @@ public sealed class MappingRowProjector : IMappingRowProjector
         var equipmentRaw = reader.OptionalString("EquipmentId") ?? reader.OptionalString("EquipmentCode");
         var equipmentId = await ResolveOptionalEquipmentIdAsync(reader, equipmentRaw, cancellationToken);
         var stepId = reader.OptionalGuid("ProcessStepExecutionId");
-        var observedAtUtc = reader.RequiredDateTime("ObservedAtUtc");
+        var observedRaw = reader.RequiredString("ObservedAtUtc");
+        var observedSignal = reader.SourceFieldName("ObservedAtUtc");
+        var sourceRaw = reader.OptionalString("SourceTimestampUtc");
+        var sourceSignal = reader.SourceFieldName("SourceTimestampUtc");
+        var serverRaw = reader.OptionalString("ServerTimestampUtc");
+        var serverSignal = reader.SourceFieldName("ServerTimestampUtc");
         var numericValue = reader.OptionalDecimal("NumericValue");
         var textValue = reader.OptionalString("TextValue");
         var booleanValue = reader.OptionalBool("BooleanValue");
@@ -364,6 +381,43 @@ public sealed class MappingRowProjector : IMappingRowProjector
         if (reader.Failed)
             return Refused(reader);
 
+        var sourceKey = await ResolveSourceTimeSourceKeyAsync(mapping, cancellationToken);
+        if (string.IsNullOrWhiteSpace(sourceKey) || string.IsNullOrWhiteSpace(observedSignal))
+        {
+            reader.Refuse(ProjectionValidationCode.PV02, SourceTimeCodes.SignalNotDeclared + ": the mapping has no governed source/signal identity for ObservedAtUtc.", observedRaw);
+            return Refused(reader);
+        }
+        if (_sourceTimeAuthority is null)
+        {
+            reader.Refuse(ProjectionValidationCode.PV02, SourceTimeCodes.SignalNotDeclared + ": source time authority provider is not configured for this execution.", observedRaw);
+            return Refused(reader);
+        }
+        var registry = await _sourceTimeAuthority.LoadRegistryAsync(context.TenantId, stagingRecord.CreatedAtUtc, cancellationToken);
+        var observedResolution = SourceTimeRuntimeResolver.Resolve(registry, sourceKey, observedSignal, observedRaw, TimeRole.Effective);
+        if (!observedResolution.IsResolved)
+        {
+            var detail = observedResolution.IsSyntaxFailure ? observedResolution.Detail : observedResolution.Code + ": " + observedResolution.Detail;
+            reader.Refuse(ProjectionValidationCode.PV02, detail, observedRaw);
+            return Refused(reader);
+        }
+        DateTime? sourceTimestampUtc = null;
+        if (!string.IsNullOrWhiteSpace(sourceRaw))
+        {
+            if (string.IsNullOrWhiteSpace(sourceSignal)) { reader.Refuse(ProjectionValidationCode.PV02, SourceTimeCodes.SignalNotDeclared + ": SourceTimestampUtc has no governed source signal.", sourceRaw); return Refused(reader); }
+            var resolved = SourceTimeRuntimeResolver.Resolve(registry, sourceKey, sourceSignal, sourceRaw);
+            if (!resolved.IsResolved) { reader.Refuse(ProjectionValidationCode.PV02, resolved.IsSyntaxFailure ? resolved.Detail : resolved.Code + ": " + resolved.Detail, sourceRaw); return Refused(reader); }
+            sourceTimestampUtc = resolved.UtcValue;
+        }
+        DateTime? serverTimestampUtc = null;
+        if (!string.IsNullOrWhiteSpace(serverRaw))
+        {
+            if (string.IsNullOrWhiteSpace(serverSignal)) { reader.Refuse(ProjectionValidationCode.PV02, SourceTimeCodes.SignalNotDeclared + ": ServerTimestampUtc has no governed source signal.", serverRaw); return Refused(reader); }
+            var resolved = SourceTimeRuntimeResolver.Resolve(registry, sourceKey, serverSignal, serverRaw);
+            if (!resolved.IsResolved) { reader.Refuse(ProjectionValidationCode.PV02, resolved.IsSyntaxFailure ? resolved.Detail : resolved.Code + ": " + resolved.Detail, serverRaw); return Refused(reader); }
+            serverTimestampUtc = resolved.UtcValue;
+        }
+        var observedAtUtc = observedResolution.UtcValue!.Value;
+
         // PV08 against the governed parameter definition, never a unit list here.
         var unitRefusal = await ClassifyUnitOfMeasureAsync(parameterDefinitionId!.Value, unitOfMeasure, cancellationToken);
         if (unitRefusal is not null)
@@ -372,7 +426,7 @@ public sealed class MappingRowProjector : IMappingRowProjector
         var rangeRefusal = await _advancedValidation.ValidateParameterObservationRangeAsync(
             materialId!.Value,
             parameterDefinitionId.Value,
-            observedAtUtc!.Value,
+            observedAtUtc,
             numericValue,
             cancellationToken);
 
@@ -380,14 +434,14 @@ public sealed class MappingRowProjector : IMappingRowProjector
             return RowProjectionOutcome.Quarantined(rangeRefusal);
 
         var duplicate = context.ClaimBusinessKey(
-            $"ParameterObservation|{materialId}|{parameterDefinitionId}|{observedAtUtc!.Value:O}", stagingRecord.RowNumber);
+            $"ParameterObservation|{materialId}|{parameterDefinitionId}|{observedAtUtc:O}", stagingRecord.RowNumber);
         if (duplicate.HasValue)
-            return RowProjectionOutcome.Quarantined(DuplicateInExecution("ParameterObservation", observedAtUtc.Value.ToString("O"), duplicate.Value));
+            return RowProjectionOutcome.Quarantined(DuplicateInExecution("ParameterObservation", observedAtUtc.ToString("O"), duplicate.Value));
 
         var observation = new ParameterObservation(
             materialUnitId: materialId!.Value,
             parameterDefinitionId: parameterDefinitionId.Value,
-            observedAtUtc: observedAtUtc.Value,
+            observedAtUtc: observedAtUtc,
             isSynthetic: stagingRecord.IsSynthetic,
             numericValue: numericValue,
             textValue: textValue,
@@ -400,7 +454,9 @@ public sealed class MappingRowProjector : IMappingRowProjector
             sourceSystem: stagingRecord.SourceSystem ?? mapping.SourceSystem,
             sourceRecordId: stagingRecord.SourceRecordId,
             plantTimeZoneId: timeZoneId ?? "UTC",
-            plantUtcOffsetMinutes: offsetMinutes ?? 0);
+            plantUtcOffsetMinutes: offsetMinutes ?? 0,
+            sourceTimestampUtc: sourceTimestampUtc,
+            serverTimestampUtc: serverTimestampUtc);
 
         if (!previewOnly)
         {
@@ -1050,6 +1106,14 @@ public sealed class MappingRowProjector : IMappingRowProjector
         return byCode;
     }
 
+    private async Task<string?> ResolveSourceTimeSourceKeyAsync(MappingDefinition mapping, CancellationToken cancellationToken)
+    {
+        return await _dbContext.SourceSystemDefinitions.AsNoTracking()
+            .Where(x => x.Id == mapping.SourceSystemDefinitionId)
+            .Select(x => x.SourceSystemCode)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
     private static RowProjectionOutcome Refused(RowReader reader) =>
         RowProjectionOutcome.Quarantined(reader.Refusal!);
 
@@ -1151,6 +1215,12 @@ public sealed class MappingRowProjector : IMappingRowProjector
 
             var read = ReadRaw(targetField);
             return read.State == FieldReadState.PresentValid ? read.Value : null;
+        }
+
+        public string? SourceFieldName(string targetField)
+        {
+            if (!_fieldMap.TryGetValue(targetField, out var sourceField) || string.IsNullOrWhiteSpace(sourceField)) return null;
+            return sourceField.StartsWith("const:", StringComparison.Ordinal) ? null : sourceField.Trim();
         }
 
         public Guid? OptionalGuid(string targetField) =>

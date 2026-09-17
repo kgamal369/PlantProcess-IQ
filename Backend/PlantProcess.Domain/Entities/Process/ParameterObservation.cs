@@ -33,6 +33,12 @@ public class ParameterObservation : BaseEntity, ICanonicalProjectionTarget
 
     public string? RawValue { get; private set; }
 
+    /// <summary>Timestamp the source or device produced, when it supplied one.</summary>
+    public DateTime? SourceTimestampUtc { get; private set; }
+
+    /// <summary>Timestamp a historian or server produced, when distinct from the source's.</summary>
+    public DateTime? ServerTimestampUtc { get; private set; }
+
     private ParameterObservation()
     {
     }
@@ -53,7 +59,9 @@ public class ParameterObservation : BaseEntity, ICanonicalProjectionTarget
         string? sourceSystem = null,
         string? sourceRecordId = null,
         string plantTimeZoneId = "Europe/Berlin",
-        int plantUtcOffsetMinutes = 60)
+        int plantUtcOffsetMinutes = 60,
+        DateTime? sourceTimestampUtc = null,
+        DateTime? serverTimestampUtc = null)
     {
         if (materialUnitId == Guid.Empty)
             throw new ArgumentException("Material unit ID is required.", nameof(materialUnitId));
@@ -82,6 +90,8 @@ public class ParameterObservation : BaseEntity, ICanonicalProjectionTarget
         EquipmentId = equipmentId;
         QualityFlag = string.IsNullOrWhiteSpace(qualityFlag) ? "Valid" : qualityFlag.Trim();
         RawValue = rawValue?.Trim();
+        SourceTimestampUtc = EnsureUtcOrNull(sourceTimestampUtc);
+        ServerTimestampUtc = EnsureUtcOrNull(serverTimestampUtc);
 
         IsSynthetic = isSynthetic;
         SourceSystem = sourceSystem?.Trim();
@@ -102,6 +112,11 @@ public class ParameterObservation : BaseEntity, ICanonicalProjectionTarget
         UnitOfMeasure = newUnitOfMeasure.Trim();
         QualityFlag = "Converted";
         MarkAsUpdated();
+    }
+
+    private static DateTime? EnsureUtcOrNull(DateTime? value)
+    {
+        return value.HasValue ? EnsureUtc(value.Value) : null;
     }
 
     private static DateTime EnsureUtc(DateTime value)

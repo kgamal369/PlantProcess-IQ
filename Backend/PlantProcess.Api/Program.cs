@@ -1119,6 +1119,7 @@ app.MapAuthoringSupportEndpoints();
 app.MapCanvasDefinitionEndpoints();
 PlantProcess.Api.Endpoints.CustomerAssessmentEndpoints.MapCustomerAssessmentEndpoints(app);
 PlantProcess.Api.Endpoints.AnalysisSubjects.AnalysisSubjectEndpoints.MapAnalysisSubjectEndpoints(app);
+PlantProcess.Api.Endpoints.SourceTime.SourceTimeAuthorityEndpoints.MapSourceTimeAuthorityEndpoints(app);
 PlantProcess.Api.Endpoints.Registry.RegistryEndpoints.MapRegistryEndpoints(app);
 
 app.MapV5BlendedProvenanceEndpoints();

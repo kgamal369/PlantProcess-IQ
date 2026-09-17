@@ -45,7 +45,10 @@ public sealed class JobRunDependencyConfiguration : IEntityTypeConfiguration<Job
 
         builder.Property(x => x.ExpectedVersion).HasColumnName("expected_version");
         builder.Property(x => x.ActualVersion).HasColumnName("actual_version");
-        builder.Property(x => x.UpstreamAgeMinutes).HasColumnName("upstream_age_minutes");
+        builder.Property(x => x.UpstreamAgeMinutes)
+            .HasColumnName("upstream_age_minutes")
+            .HasConversion<decimal>()
+            .HasColumnType("numeric(18,3)");
         builder.Property(x => x.ToleranceMinutes).HasColumnName("tolerance_minutes");
         builder.Property(x => x.Reason).HasColumnName("reason");
         builder.Property(x => x.WatermarkInherited).HasColumnName("watermark_inherited");

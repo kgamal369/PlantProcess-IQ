@@ -69,6 +69,7 @@ public static class DependencyInjection
             provider => provider.GetRequiredService<PlantProcessDbContext>());
 
         services.AddSingleton(_ => NpgsqlDataSource.Create(connectionString));
+        services.AddScoped<PlantProcess.Application.Temporal.ISourceTimeAuthorityRegistryProvider, PlantProcess.Infrastructure.Temporal.SourceTimeAuthorityStore>();
 
         // T-065 bridge. ONE IJobTargetLookup authority, composed here because
         // this project owns the Npgsql boundary and inspection_jobs has no EF
