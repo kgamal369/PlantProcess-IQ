@@ -32,9 +32,14 @@ public sealed class ConnectorCapabilityTruthGateTests
     {
         "TagBrowse",
         "BoundedRead",
-        "Subscription",
-        "LiveVendorHandshake"
+        "Subscription"
     };
+
+    private const string CollectorRuntimePath =
+        "Backend/PlantProcess.Collector/OpcUa/OpcUaCollectorSessionRuntime.cs";
+
+    private const string CollectorAcceptancePath =
+        "Backend/tests/PlantProcess.Collector.Tests/OpcUaCollectorSessionRuntimeTests.cs";
 
     private const string RegistryRelativePath =
         "Backend/PlantProcess.Application/Integration/Connectors/HistorianCapabilityRegistry.cs";
@@ -61,7 +66,6 @@ public sealed class ConnectorCapabilityTruthGateTests
     [InlineData("TagBrowse")]
     [InlineData("BoundedRead")]
     [InlineData("Subscription")]
-    [InlineData("LiveVendorHandshake")]
     public void Capabilities_without_an_implementation_are_registered_as_not_executable(string capability)
     {
         var registration = new Regex(
@@ -97,6 +101,73 @@ public sealed class ConnectorCapabilityTruthGateTests
             "NotExecutable",
             handler,
             StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void The_live_vendor_handshake_is_executable_only_because_a_session_runtime_earns_it()
+    {
+        var registration = new Regex(
+            @"new\s+HistorianCapability\s*\(\s*LiveVendorHandshake\s*,\s*(true|false)\b",
+            RegexOptions.Singleline);
+
+        var match = registration.Match(RegistrySource());
+
+        Assert.True(match.Success, "PPIQ-T207: the live vendor handshake must stay registered.");
+        Assert.True(
+            match.Groups[1].Value == "true",
+            "The customer-side collector session runtime earns this capability. If the runtime is removed, " +
+            "the flag goes back to false in the same change.");
+
+        var runtime = ConnectorSourceText.Read(CollectorRuntimePath);
+
+        Assert.Contains("DefaultSessionFactory", runtime, StringComparison.Ordinal);
+        Assert.Contains("SessionReconnectHandler", runtime, StringComparison.Ordinal);
+        Assert.Contains("CertificateValidation", runtime, StringComparison.Ordinal);
+
+        var acceptance = ConnectorSourceText.Read(CollectorAcceptancePath);
+
+        Assert.Contains("Trusted_server_yields_a_session", acceptance, StringComparison.Ordinal);
+        Assert.Contains("Untrusted_server_certificate_is_refused", acceptance, StringComparison.Ordinal);
+        Assert.Contains("A_server_restart_is_recovered_by_reconnect", acceptance, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void The_live_handshake_route_refuses_at_its_boundary_without_claiming_the_capability_is_unimplemented()
+    {
+        var source = Source();
+
+        Assert.Contains("NotExecutableHere", source, StringComparison.Ordinal);
+        Assert.Contains("ExecutedOutsideCoreCode", source, StringComparison.Ordinal);
+
+        var index = source.IndexOf("IResult NotExecutableHere", StringComparison.Ordinal);
+        Assert.True(index >= 0, "PPIQ-T207: the route-boundary refusal is missing.");
+
+        var body = source.Substring(index, Math.Min(900, source.Length - index));
+
+        Assert.DoesNotContain("errorCode = NotExecutableCode", body, StringComparison.Ordinal);
+        Assert.Contains("executedByCore = false", body, StringComparison.Ordinal);
+        Assert.Contains("capabilityExecutable", body, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Session_capability_never_implies_browse_read_or_subscribe()
+    {
+        var registry = RegistrySource();
+
+        foreach (var capability in CapabilitiesWithoutImplementation)
+        {
+            var registration = new Regex(
+                @"new\s+HistorianCapability\s*\(\s*" + Regex.Escape(capability) + @"\s*,\s*(true|false)\b",
+                RegexOptions.Singleline);
+
+            var match = registration.Match(registry);
+
+            Assert.True(match.Success, "PPIQ-T207: capability '" + capability + "' must stay registered.");
+            Assert.True(
+                match.Groups[1].Value == "false",
+                "An established session is one operation fact. Capability '" + capability + "' needs its own " +
+                "implementation and its own executed gate before it may be advertised.");
+        }
     }
 
     [Fact]

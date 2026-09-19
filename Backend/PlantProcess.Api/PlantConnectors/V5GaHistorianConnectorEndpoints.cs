@@ -131,6 +131,42 @@ public static class HistorianConnectorCapabilities
             },
             statusCode: StatusCodes.Status501NotImplemented);
     }
+
+    /// <summary>The route-boundary code. It never means unimplemented.</summary>
+    public const string ExecutedOutsideCoreCode = "OT02";
+
+    public const string ExecutionBoundary = "customer-side-collector";
+
+    public const string ExecutedOutsideCoreMessage =
+        "This operation is executed inside the customer-side collector boundary, never by the core API. " +
+        "Core holds no plant route and no source credential.";
+
+    /// <summary>
+    /// The route-boundary refusal for an operation the product executes, but never from
+    /// core. It is a different fact from OT01: the capability exists and is executable,
+    /// and the execution boundary is the customer-side collector, which owns the plant
+    /// route and the credential. This API opens no plant session. The two codes must
+    /// never be mixed, because one says the operation is unimplemented and the other says
+    /// it is implemented somewhere core does not reach.
+    /// </summary>
+    public static IResult NotExecutableHere(string capabilityName)
+    {
+        var capability = Get(capabilityName);
+
+        return Results.Json(
+            new
+            {
+                errorCode = ExecutedOutsideCoreCode,
+                capability = capability.Name,
+                capabilityExecutable = capability.Executable,
+                executionBoundary = ExecutionBoundary,
+                executedByCore = false,
+                message = ExecutedOutsideCoreMessage,
+                evidence = capability.Evidence,
+                providerType = "OpcUaHistorian"
+            },
+            statusCode: StatusCodes.Status501NotImplemented);
+    }
 }
 
 public static class V5GaHistorianConnectorEndpoints
@@ -207,7 +243,7 @@ public static class V5GaHistorianConnectorEndpoints
 
             if (requireLiveHandshake)
             {
-                return HistorianConnectorCapabilities.NotExecutable(
+                return HistorianConnectorCapabilities.NotExecutableHere(
                     HistorianConnectorCapabilities.LiveVendorHandshake);
             }
 

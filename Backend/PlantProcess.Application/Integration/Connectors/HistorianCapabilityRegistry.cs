@@ -25,7 +25,10 @@ public static class HistorianCapabilityRegistry
 
     /// <summary>
     /// A capability flips to Executable only together with an implementation a contract
-    /// test can prove. T-224, T-225 and T-226 earn the currently-false ones.
+    /// test can prove. The live vendor handshake is executable because the customer-side
+    /// collector session runtime exists and its acceptance suite runs against a real SDK
+    /// server. Tag browse, bounded read and subscription stay false until the tasks that
+    /// own those operations deliver them. A session fact never implies them.
     /// </summary>
     public static readonly IReadOnlyList<HistorianCapability> All = new[]
     {
@@ -45,8 +48,11 @@ public static class HistorianCapabilityRegistry
             Subscription, false,
             "Real OPC UA monitored items and subscriptions are not yet implemented."),
         new HistorianCapability(
-            LiveVendorHandshake, false,
-            "Real OPC UA session security, certificate and trust handling is not yet implemented.")
+            LiveVendorHandshake, true,
+            "The customer-side collector establishes a real OPC UA session: endpoint discovery with exact " +
+            "security policy and message security mode, application certificate, explicit server trust, " +
+            "user identity and reconnect. Proven by the collector session acceptance suite against an SDK " +
+            "server. Core opens no session, holds no plant credential and executes this operation nowhere.")
     };
 
     public static bool IsExecutable(string name)

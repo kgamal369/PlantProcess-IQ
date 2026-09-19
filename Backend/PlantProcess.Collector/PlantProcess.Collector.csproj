@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Customer-side collector runtime. This assembly runs inside the customer boundary,
+    reads plant sources and never references a core project, a database client or a
+    write-capable acquisition surface.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>PlantProcess.Collector</RootNamespace>
+  </PropertyGroup>
+
+  <!-- OPC Foundation UA .NET Standard stack, OPC Foundation MIT License 1.00. Pinned. -->
+  <ItemGroup>
+    <PackageReference Include="OPCFoundation.NetStandard.Opc.Ua.Client" Version="1.5.378.176" />
+    <PackageReference Include="OPCFoundation.NetStandard.Opc.Ua.Configuration" Version="1.5.378.176" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="PlantProcess.Collector.Tests" />
+  </ItemGroup>
+
+</Project>
