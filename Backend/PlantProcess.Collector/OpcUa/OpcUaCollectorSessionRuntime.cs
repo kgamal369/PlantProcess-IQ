@@ -321,6 +321,34 @@ public sealed class OpcUaCollectorSessionRuntime : IAsyncDisposable
         }
     }
 
+    /// <summary>
+    /// Runs one source operation against the live session. The session itself never leaves
+    /// this runtime: a caller receives the operation result and nothing else, so the
+    /// read-only boundary stays a property of the collector and not of its callers.
+    /// </summary>
+    internal async Task<TResult> WithSessionAsync<TResult>(
+        Func<ISession, CancellationToken, Task<TResult>> operation,
+        Func<TResult> whenNotConnected,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(operation);
+        ArgumentNullException.ThrowIfNull(whenNotConnected);
+        ObjectDisposedException.ThrowIf(_disposed, this);
+
+        ISession? session;
+        lock (_gate)
+        {
+            session = _session;
+        }
+
+        if (session is null || !session.Connected)
+        {
+            return whenNotConnected();
+        }
+
+        return await operation(session, cancellationToken).ConfigureAwait(false);
+    }
+
     public async ValueTask DisposeAsync()
     {
         if (_disposed)
@@ -555,7 +583,8 @@ public sealed class OpcUaCollectorSessionRuntime : IAsyncDisposable
     private static IReadOnlyList<OpcUaCollectorOperationFact> Operations(OpcUaCollectorOperationStatus sessionStatus, string sessionEvidence)
     {
         const string NotExecutableEvidence =
-            "Not executable in this collector build. A session fact never implies this operation.";
+            "Not executed by this connect attempt. Browse, bounded read and subscribe are separate " +
+            "operations with their own receipts, their own gates and their own capability flags.";
 
         return new[]
         {

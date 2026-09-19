@@ -264,10 +264,10 @@ public static class V5GaHistorianConnectorEndpoints
         });
 
         group.MapPost("/browse-tags", ([FromBody] HistorianBrowseTagsRequest request) =>
-            HistorianConnectorCapabilities.NotExecutable(HistorianConnectorCapabilities.TagBrowse));
+            HistorianConnectorCapabilities.NotExecutableHere(HistorianConnectorCapabilities.TagBrowse));
 
         group.MapPost("/read-window", ([FromBody] HistorianReadWindowRequest request) =>
-            HistorianConnectorCapabilities.NotExecutable(HistorianConnectorCapabilities.BoundedRead));
+            HistorianConnectorCapabilities.NotExecutableHere(HistorianConnectorCapabilities.BoundedRead));
 
         group.MapPost("/mapping-hints", ([FromBody] HistorianMappingHintsRequest request) =>
         {

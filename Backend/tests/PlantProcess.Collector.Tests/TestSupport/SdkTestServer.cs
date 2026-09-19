@@ -16,6 +16,15 @@ internal sealed class CredentialCheckingTestServer : StandardServer
     internal const string AcceptedUser = "collector-reader";
     internal const string AcceptedPassword = "reader-secret-8431";
 
+    internal CredentialCheckingTestServer(bool withFillerNamespace = false)
+    {
+        SourceNodes = new PpiqSourceNodeManagerFactory(withFillerNamespace);
+        AddNodeManager(SourceNodes);
+    }
+
+    /// <summary>The source address space of this test server.</summary>
+    internal PpiqSourceNodeManagerFactory SourceNodes { get; }
+
     protected override void OnServerStarted(IServerInternal server)
     {
         base.OnServerStarted(server);
@@ -84,7 +93,16 @@ internal sealed class SdkTestServerHost : IAsyncDisposable
 
     internal int SessionCount => _server.CurrentInstance.SessionManager.GetSessions().Count;
 
-    internal static async Task<SdkTestServerHost> StartAsync(string pkiRoot, int port, ITelemetryContext telemetry)
+    private bool _withFillerNamespace;
+
+    /// <summary>The node manager of the test source, once the server has started.</summary>
+    internal PpiqSourceNodeManager? SourceNodes => _server.SourceNodes.Instance;
+
+    internal static async Task<SdkTestServerHost> StartAsync(
+        string pkiRoot,
+        int port,
+        ITelemetryContext telemetry,
+        bool withFillerNamespace = false)
     {
         Directory.CreateDirectory(pkiRoot);
 
@@ -130,10 +148,12 @@ internal sealed class SdkTestServerHost : IAsyncDisposable
             throw new InvalidOperationException("The test server certificate could not be created.");
         }
 
-        var server = new CredentialCheckingTestServer();
+        var server = new CredentialCheckingTestServer(withFillerNamespace);
         await instance.StartAsync(server).ConfigureAwait(false);
 
-        return new SdkTestServerHost(instance, server, configuration, port);
+        var host = new SdkTestServerHost(instance, server, configuration, port);
+        host._withFillerNamespace = withFillerNamespace;
+        return host;
     }
 
     internal async Task StopAsync()
@@ -147,7 +167,13 @@ internal sealed class SdkTestServerHost : IAsyncDisposable
         _running = false;
     }
 
-    internal async Task RestartAsync()
+    internal Task RestartAsync() => RestartAsync(_withFillerNamespace);
+
+    /// <summary>
+    /// Restarts the server, optionally with an extra namespace in front of the source
+    /// namespace, so the source namespace lands on a different index.
+    /// </summary>
+    internal async Task RestartAsync(bool withFillerNamespace)
     {
         if (_running)
         {
@@ -156,7 +182,8 @@ internal sealed class SdkTestServerHost : IAsyncDisposable
 
         await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
 
-        _server = new CredentialCheckingTestServer();
+        _withFillerNamespace = withFillerNamespace;
+        _server = new CredentialCheckingTestServer(withFillerNamespace);
         await _instance.StartAsync(_server).ConfigureAwait(false);
         _running = true;
     }

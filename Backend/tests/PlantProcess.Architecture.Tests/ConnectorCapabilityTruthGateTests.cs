@@ -28,11 +28,14 @@ public sealed class ConnectorCapabilityTruthGateTests
     private const string ValueFabrication  = "Deterministic" + "Value";
     private const string FallbackTagArray  = "Default" + "Tags";
 
-    private static readonly string[] CapabilitiesWithoutImplementation =
+    private static readonly string[] RegisteredCapabilities =
     {
+        "ConfigurationValidation",
+        "MappingHintsFromSuppliedTagPaths",
         "TagBrowse",
         "BoundedRead",
-        "Subscription"
+        "Subscription",
+        "LiveVendorHandshake"
     };
 
     private const string CollectorRuntimePath =
@@ -40,6 +43,18 @@ public sealed class ConnectorCapabilityTruthGateTests
 
     private const string CollectorAcceptancePath =
         "Backend/tests/PlantProcess.Collector.Tests/OpcUaCollectorSessionRuntimeTests.cs";
+
+    private const string CollectorBrowsePath =
+        "Backend/PlantProcess.Collector/OpcUa/OpcUaCollectorBrowse.cs";
+
+    private const string CollectorBoundedReadPath =
+        "Backend/PlantProcess.Collector/OpcUa/OpcUaCollectorBoundedRead.cs";
+
+    private const string CollectorSubscriptionPath =
+        "Backend/PlantProcess.Collector/OpcUa/OpcUaCollectorSubscription.cs";
+
+    private const string CollectorFieldAcceptancePath =
+        "Backend/tests/PlantProcess.Collector.Tests/OpcUaCollectorFieldAcquisitionTests.cs";
 
     private const string RegistryRelativePath =
         "Backend/PlantProcess.Application/Integration/Connectors/HistorianCapabilityRegistry.cs";
@@ -63,10 +78,13 @@ public sealed class ConnectorCapabilityTruthGateTests
     }
 
     [Theory]
+    [InlineData("ConfigurationValidation")]
+    [InlineData("MappingHintsFromSuppliedTagPaths")]
     [InlineData("TagBrowse")]
     [InlineData("BoundedRead")]
     [InlineData("Subscription")]
-    public void Capabilities_without_an_implementation_are_registered_as_not_executable(string capability)
+    [InlineData("LiveVendorHandshake")]
+    public void Every_capability_is_registered_with_an_explicit_flag(string capability)
     {
         var registration = new Regex(
             @"new\s+HistorianCapability\s*\(\s*" + Regex.Escape(capability) + @"\s*,\s*(true|false)\b",
@@ -77,12 +95,72 @@ public sealed class ConnectorCapabilityTruthGateTests
         Assert.True(
             match.Success,
             "PPIQ-T207: capability '" + capability + "' must be registered in HistorianConnectorCapabilities.All.");
+    }
 
+    [Theory]
+    [InlineData("TagBrowse", "Browse_returns_bounded_nodes_with_identity_and_governance_metadata")]
+    [InlineData("BoundedRead", "Bounded_read_returns_value_quality_and_both_timestamps")]
+    [InlineData("Subscription", "Subscription_records_requested_and_server_revised_values_separately")]
+    public void An_executable_source_operation_is_bound_to_its_own_implementation_and_its_own_gate(
+        string capability,
+        string acceptanceTest)
+    {
+        var registration = new Regex(
+            @"new\s+HistorianCapability\s*\(\s*" + Regex.Escape(capability) + @"\s*,\s*(true|false)\b",
+            RegexOptions.Singleline);
+
+        var match = registration.Match(RegistrySource());
+
+        Assert.True(match.Success, "PPIQ-T207: capability '" + capability + "' must stay registered.");
         Assert.True(
-            match.Groups[1].Value == "false",
-            "PPIQ-T207: capability '" + capability + "' is registered as executable. It may only be flipped to true " +
-            "together with an implementation, and this gate must be extended to prove that implementation runs. " +
-            "T-224 to T-226 own that work. Flipping the flag alone recreates the defect T-207 closed.");
+            match.Groups[1].Value == "true",
+            "PPIQ-T207: capability '" + capability + "' is advertised as not executable while its collector " +
+            "implementation and its acceptance test exist. A flag and its implementation move together.");
+
+        var implementation = capability switch
+        {
+            "TagBrowse" => ConnectorSourceText.Read(CollectorBrowsePath),
+            "BoundedRead" => ConnectorSourceText.Read(CollectorBoundedReadPath),
+            _ => ConnectorSourceText.Read(CollectorSubscriptionPath)
+        };
+
+        Assert.False(string.IsNullOrWhiteSpace(implementation));
+
+        Assert.Contains(
+            acceptanceTest,
+            ConnectorSourceText.Read(CollectorFieldAcceptancePath),
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Each_source_operation_keeps_its_own_gate_and_is_never_inferred_from_another()
+    {
+        var browse = ConnectorSourceText.Read(CollectorBrowsePath);
+        var read = ConnectorSourceText.Read(CollectorBoundedReadPath);
+        var subscription = ConnectorSourceText.Read(CollectorSubscriptionPath);
+
+        Assert.Contains("OpcUaCollectorOperations.Browse", browse, StringComparison.Ordinal);
+        Assert.Contains("OpcUaCollectorOperations.BoundedRead", read, StringComparison.Ordinal);
+        Assert.Contains("OpcUaCollectorOperations.Subscribe", subscription, StringComparison.Ordinal);
+
+        Assert.DoesNotContain("OpcUaCollectorOperations.BoundedRead", subscription, StringComparison.Ordinal);
+        Assert.DoesNotContain("OpcUaCollectorOperations.Subscribe", read, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void The_field_identity_is_the_namespace_uri_and_never_the_namespace_index()
+    {
+        var identity = ConnectorSourceText.Read(
+            "Backend/PlantProcess.Collector/OpcUa/OpcUaProviderFieldIdentity.cs");
+
+        Assert.Contains("NamespaceUri", identity, StringComparison.Ordinal);
+        Assert.Contains("TryResolve", identity, StringComparison.Ordinal);
+
+        var canonical = new Regex(@"public string Canonical\(\)[\s\S]{0,600}?;", RegexOptions.Singleline)
+            .Match(identity);
+
+        Assert.True(canonical.Success, "PPIQ-T225: the identity must expose a canonical rendering.");
+        Assert.DoesNotContain("NamespaceIndex", canonical.Value, StringComparison.Ordinal);
     }
 
     [Theory]
@@ -150,27 +228,6 @@ public sealed class ConnectorCapabilityTruthGateTests
     }
 
     [Fact]
-    public void Session_capability_never_implies_browse_read_or_subscribe()
-    {
-        var registry = RegistrySource();
-
-        foreach (var capability in CapabilitiesWithoutImplementation)
-        {
-            var registration = new Regex(
-                @"new\s+HistorianCapability\s*\(\s*" + Regex.Escape(capability) + @"\s*,\s*(true|false)\b",
-                RegexOptions.Singleline);
-
-            var match = registration.Match(registry);
-
-            Assert.True(match.Success, "PPIQ-T207: capability '" + capability + "' must stay registered.");
-            Assert.True(
-                match.Groups[1].Value == "false",
-                "An established session is one operation fact. Capability '" + capability + "' needs its own " +
-                "implementation and its own executed gate before it may be advertised.");
-        }
-    }
-
-    [Fact]
     public void Typed_code_is_declared_once_and_used_by_the_failure_shape()
     {
         Assert.Contains(NotExecutableCode, Source(), StringComparison.Ordinal);
@@ -197,7 +254,7 @@ public sealed class ConnectorCapabilityTruthGateTests
             RegexOptions.Singleline);
 
         Assert.True(
-            registrations.Count >= CapabilitiesWithoutImplementation.Length,
+            registrations.Count >= RegisteredCapabilities.Length,
             "PPIQ-T207: every capability must be registered with an evidence string saying why it is or is not " +
             "executable. An unexplained flag is not a truth claim.");
     }

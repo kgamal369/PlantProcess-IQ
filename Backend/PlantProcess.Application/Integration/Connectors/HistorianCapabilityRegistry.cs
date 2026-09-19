@@ -25,10 +25,11 @@ public static class HistorianCapabilityRegistry
 
     /// <summary>
     /// A capability flips to Executable only together with an implementation a contract
-    /// test can prove. The live vendor handshake is executable because the customer-side
-    /// collector session runtime exists and its acceptance suite runs against a real SDK
-    /// server. Tag browse, bounded read and subscription stay false until the tasks that
-    /// own those operations deliver them. A session fact never implies them.
+    /// test can prove, and each operation earns its own flag from its own executed gate.
+    /// The session, browse, bounded read and subscription capabilities are each bound to a
+    /// customer-side collector implementation and to acceptance tests that run against a
+    /// real SDK server. Core opens no session and executes none of these operations; the
+    /// routes that expose them refuse at the boundary and say where execution happens.
     /// </summary>
     public static readonly IReadOnlyList<HistorianCapability> All = new[]
     {
@@ -39,14 +40,20 @@ public static class HistorianCapabilityRegistry
             MappingHintsFromSuppliedTagPaths, true,
             "The mapping-hints route classifies tag paths the caller supplied. It never supplies tag paths of its own."),
         new HistorianCapability(
-            TagBrowse, false,
-            "Real OPC UA namespace browse is not yet implemented."),
+            TagBrowse, true,
+            "The customer-side collector performs a bounded OPC UA browse with continuation handling, " +
+            "emits a stable provider field identity built from namespace URI and identifier, and records " +
+            "typed refusals for nodes it cannot reach. Proven by the collector field-acquisition suite."),
         new HistorianCapability(
-            BoundedRead, false,
-            "Real OPC UA value acquisition is not yet implemented."),
+            BoundedRead, true,
+            "The customer-side collector reads bounded field sets and preserves value, status code, " +
+            "source timestamp and server timestamp per field, with requested and achieved scope recorded " +
+            "separately. It is never a controller-atomic snapshot. Proven by its own executed gate."),
         new HistorianCapability(
-            Subscription, false,
-            "Real OPC UA monitored items and subscriptions are not yet implemented."),
+            Subscription, true,
+            "The customer-side collector creates monitored items, keeps requested and server-revised " +
+            "sampling, publishing, queue and filter values apart, resubscribes after an outage and keeps " +
+            "the gap as evidence instead of fabricating samples. Proven by its own executed gate."),
         new HistorianCapability(
             LiveVendorHandshake, true,
             "The customer-side collector establishes a real OPC UA session: endpoint discovery with exact " +

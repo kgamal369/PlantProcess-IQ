@@ -94,7 +94,7 @@ public sealed class ConnectorProviderImplementationGateTests
     }
 
     [Fact]
-    public void Browse_and_bounded_read_stay_declared_not_executable_until_they_are_implemented()
+    public void Browse_bounded_read_and_subscription_are_declared_executable_only_with_a_collector_runtime()
     {
         var registry = Read(RegistryPath);
 
@@ -102,7 +102,19 @@ public sealed class ConnectorProviderImplementationGateTests
         {
             var match = Regex.Match(registry, capability + @",\s*(true|false)");
             Assert.True(match.Success, "The registry no longer declares " + capability + ".");
-            Assert.Equal("false", match.Groups[1].Value);
+            Assert.Equal("true", match.Groups[1].Value);
+        }
+
+        foreach (var implementation in new[]
+        {
+            "Backend/PlantProcess.Collector/OpcUa/OpcUaCollectorBrowse.cs",
+            "Backend/PlantProcess.Collector/OpcUa/OpcUaCollectorBoundedRead.cs",
+            "Backend/PlantProcess.Collector/OpcUa/OpcUaCollectorSubscription.cs"
+        })
+        {
+            Assert.False(
+                string.IsNullOrWhiteSpace(Read(implementation)),
+                "The declared capability needs its collector implementation: " + implementation);
         }
     }
 

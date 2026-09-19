@@ -40,7 +40,10 @@ internal sealed class CollectorTestHarness : IAsyncDisposable
 
     internal InMemorySecrets Secrets { get; } = new();
 
-    internal static async Task<CollectorTestHarness> StartAsync(bool trustServerCertificate, int? port = null)
+    internal static async Task<CollectorTestHarness> StartAsync(
+        bool trustServerCertificate,
+        int? port = null,
+        bool withFillerNamespace = false)
     {
         string root = Path.Combine(Path.GetTempPath(), "ppiq-collector-acceptance", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(root);
@@ -50,7 +53,11 @@ internal sealed class CollectorTestHarness : IAsyncDisposable
             builder.AddProvider(logs).SetMinimumLevel(LogLevel.Debug));
 
         SdkTestServerHost server = await SdkTestServerHost
-            .StartAsync(Path.Combine(root, "server-pki"), port ?? SdkTestServerHost.GetFreePort(), telemetry)
+            .StartAsync(
+                Path.Combine(root, "server-pki"),
+                port ?? SdkTestServerHost.GetFreePort(),
+                telemetry,
+                withFillerNamespace)
             .ConfigureAwait(false);
 
         OpcUaCollectorApplication application = await OpcUaCollectorApplicationFactory
