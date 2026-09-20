@@ -1,6 +1,7 @@
 using PlantProcess.Application.Common.Results;
 using PlantProcess.Application.Integration.Contracts.Jobs;
 using PlantProcess.Application.Integration.Services.Jobs;
+using PlantProcess.Application.Jobs.Targeting;
 using PlantProcess.Domain.Enums.Integration;
 
 namespace PlantProcess.Application.Integration.Interfaces.Jobs;
@@ -33,6 +34,28 @@ public interface IJobRuntimeService
         CancellationToken cancellationToken)
         => Task.FromResult(ApplicationResult<JobRunHistoryDto>.Failure(ApplicationError.BusinessRule(
             "This job runtime does not implement governed scheduled admission, so it cannot start a scheduled occurrence.")));
+
+    /// <summary>
+    /// T-261. Creates the run for a governed execution, carrying the exact definition
+    /// version that pre-admission resolved, so the run row states what it executes from
+    /// the moment it exists.
+    ///
+    /// DECLARED, NOT DEFAULTED. A new execution semantic is compile-time visible: an
+    /// implementation of this contract must decide what a governed start means rather
+    /// than inheriting a body that quietly loses the resolved target.
+    ///
+    /// occurrenceKey is null for a manual run and carries the governed occurrence
+    /// identity for a scheduled one, exactly as StartScheduledAsync does.
+    /// </summary>
+    Task<ApplicationResult<JobRunHistoryDto>> StartForTargetAsync(
+        string jobCode,
+        string? occurrenceKey,
+        DateTime? nominalAtUtc,
+        string triggerSource,
+        string? triggeredBy,
+        string? correlationId,
+        ResolvedJobTarget target,
+        CancellationToken cancellationToken);
 
     Task<ApplicationResult<JobRunHistoryDto>> CompleteAsync(
         Guid jobRunHistoryId,

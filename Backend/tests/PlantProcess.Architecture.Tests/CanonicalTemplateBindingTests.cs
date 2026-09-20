@@ -22,16 +22,12 @@ public sealed class CanonicalTemplateBindingTests
     }
 
     [Fact]
-    public void Risk_by_class_declares_a_chart_that_survives_one_category()
+    public void Retired_risk_template_is_not_reintroduced_as_product_vocabulary()
     {
-        var match = Regex.Match(
-            Source(),
-            @"TemplateWidget\(\s*""RISK_BY_CLASS""\s*,\s*""[^""]*""\s*,\s*""([a-z]+)""",
-            RegexOptions.Singleline);
-
-        Assert.True(match.Success, "RISK_BY_CLASS is no longer seeded by the canonical authority.");
-
-        Assert.Equal("bar", match.Groups[1].Value);
+        // T-094 retired the plant-vocabulary default. The generic chart grammar has its
+        // own positive/negative cardinality tests, so this file guards only the template
+        // authority decision and does not duplicate the chart semantic oracle.
+        Assert.DoesNotContain("RISK_BY_CLASS", Source(), StringComparison.Ordinal);
     }
 
     [Fact]

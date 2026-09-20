@@ -46,7 +46,8 @@ public sealed class JobRunAdmissionTests
             {
                 JobDefinitionType.DbLinkImport,
                 JobDefinitionType.DataQualityScan,
-                JobDefinitionType.RiskScoring
+                JobDefinitionType.RiskScoring,
+                JobDefinitionType.CanonicalRefresh
             },
             Authority.ExecutableFamilies.ToArray());
 
@@ -61,6 +62,7 @@ public sealed class JobRunAdmissionTests
     [InlineData(JobDefinitionType.DbLinkImport)]
     [InlineData(JobDefinitionType.DataQualityScan)]
     [InlineData(JobDefinitionType.RiskScoring)]
+    [InlineData(JobDefinitionType.CanonicalRefresh)]
     public void A_supported_family_is_admitted(JobDefinitionType jobType)
     {
         var result = JobRunAdmission.Admit(Job(jobType), Authority);
@@ -69,7 +71,6 @@ public sealed class JobRunAdmissionTests
     }
 
     [Theory]
-    [InlineData(JobDefinitionType.CanonicalRefresh)]
     [InlineData(JobDefinitionType.MlParamsVsDefects)]
     [InlineData(JobDefinitionType.MlParamsVsDowntime)]
     [InlineData(JobDefinitionType.MlParamsVsKpis)]

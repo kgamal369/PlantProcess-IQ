@@ -25,9 +25,9 @@
                   "Product tables live in ppiq_meta, ppiq_plant or ppiq_staging. A single terminal convergence file relocates them after every historical creator has run; no migration and no historical script moves a table."
               ],
     "summary":  {
-                    "totalFiles":  162,
-                    "canonicalPath":  113,
-                    "distinctTables":  175,
+                    "totalFiles":  163,
+                    "canonicalPath":  114,
+                    "distinctTables":  176,
                     "governedDuplicates":  7,
                     "ungovernedDuplicates":  0,
                     "efMigrations":  10,
@@ -98,7 +98,7 @@
     "canonicalViews":  [
                            {
                                "path":  "Backend/database/views/006_dashboard_dataset_views.sql",
-                               "order":  113,
+                               "order":  114,
                                "sha256":  "729D127FA772E1E100A8AD1A6CEAF6B2BABBA5A3FED9991EB8EB62960D3D6865",
                                "note":  "Read-model view authority. Applied after every schema script and after topology convergence, before the probe database is dropped."
                            }
@@ -1377,6 +1377,17 @@
                           },
                           {
                               "position":  113,
+                              "ordinal":  846,
+                              "path":  "Backend/database/scripts/846_job_run_block_evidence.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "06780E166D70ECE932DA8AD300BAA4CAE9C3ED40822F629BD7581140DD6171A6",
+                              "createsTables":  [
+                                                  "ppiq_meta.job_run_block_evidence"
+                                              ],
+                              "reason":  "T-261. Per-block runtime evidence for a governed job run: stable authored block id, deterministic execution ordinal, measured row counts and a typed diagnostic for every non-successful outcome. Additive and idempotent; the EF entity is excluded from migrations so this script is the single DDL authority."
+                          },
+                          {
+                              "position":  114,
                               "ordinal":  6,
                               "path":  "Backend/database/views/006_dashboard_dataset_views.sql",
                               "disposition":  "Canonical",

@@ -4,6 +4,7 @@ using PlantProcess.Application.Common.Results;
 using PlantProcess.Application.Integration.Contracts.Jobs;
 using PlantProcess.Application.Integration.Services.Jobs;
 using PlantProcess.Application.Integration.Interfaces.Jobs;
+using PlantProcess.Application.Jobs.Targeting;
 using PlantProcess.Domain.Entities.Integration;
 using PlantProcess.Domain.Enums.Integration;
 
@@ -25,7 +26,42 @@ public sealed class JobRuntimeService : IJobRuntimeService
         string? triggeredBy,
         string? correlationId,
         CancellationToken cancellationToken)
-        => StartCoreAsync(jobCode, null, null, triggerSource, triggeredBy, correlationId, cancellationToken);
+        => StartCoreAsync(jobCode, null, null, triggerSource, triggeredBy, correlationId, null, cancellationToken);
+
+    /// <summary>
+    /// T-261. Governed start: the same creation core, carrying the exact resolved target
+    /// so the run row and its evidence name one version. The resolved target reaches the
+    /// row in the SAME insert that creates it, because a run that exists for an instant
+    /// without saying what it executes is a run a monitor can misread.
+    /// </summary>
+    public Task<ApplicationResult<JobRunHistoryDto>> StartForTargetAsync(
+        string jobCode,
+        string? occurrenceKey,
+        DateTime? nominalAtUtc,
+        string triggerSource,
+        string? triggeredBy,
+        string? correlationId,
+        ResolvedJobTarget target,
+        CancellationToken cancellationToken)
+    {
+        if (target is null)
+        {
+            return Task.FromResult(ApplicationResult<JobRunHistoryDto>.Failure(
+                ApplicationError.Validation("A governed run requires the exact target its admission resolved.")));
+        }
+
+        string? occurrence = string.IsNullOrWhiteSpace(occurrenceKey) ? null : occurrenceKey;
+
+        return StartCoreAsync(
+            jobCode,
+            occurrence,
+            occurrence is null ? null : nominalAtUtc ?? DateTime.UtcNow,
+            triggerSource,
+            triggeredBy,
+            correlationId,
+            target,
+            cancellationToken);
+    }
 
     /// <summary>
     /// T-106 B2.3c. Scheduled start: the same creation core, carrying the governed
@@ -46,7 +82,7 @@ public sealed class JobRuntimeService : IJobRuntimeService
                 ApplicationError.Validation("A scheduled run requires a governed occurrence identity.")));
         }
 
-        return StartCoreAsync(jobCode, occurrenceKey, nominalAtUtc, triggerSource, triggeredBy, correlationId, cancellationToken);
+        return StartCoreAsync(jobCode, occurrenceKey, nominalAtUtc, triggerSource, triggeredBy, correlationId, null, cancellationToken);
     }
 
     /// <summary>
@@ -60,6 +96,7 @@ public sealed class JobRuntimeService : IJobRuntimeService
         string triggerSource,
         string? triggeredBy,
         string? correlationId,
+        ResolvedJobTarget? target,
         CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(jobCode))
@@ -91,6 +128,19 @@ public sealed class JobRuntimeService : IJobRuntimeService
             sourceRecordId: Guid.NewGuid().ToString("N"),
             occurrenceKey: occurrenceKey,
             nominalAtUtc: nominalAtUtc);
+
+        if (target is not null)
+        {
+            // T-106 left RecordResolvedTarget with no production caller because nothing
+            // executed a governed target yet. This is that caller, and it records before
+            // the insert so the run never exists without its executed identity.
+            history.RecordResolvedTarget(
+                target.Kind.ToString(),
+                target.DefinitionId,
+                target.ResolvedVersion,
+                target.PolicyApplied,
+                target.ParametersJson);
+        }
 
         _dbContext.JobRunHistories.Add(history);
 
@@ -224,6 +274,12 @@ public sealed class JobRuntimeService : IJobRuntimeService
         if (history is null)
             return ApplicationResult<JobRunHistoryDto>.Failure(ApplicationError.NotFound("Job run history record was not found."));
 
+        // THE REQUEST WAS WRITTEN BY ANOTHER CONTEXT. An operator cancels through a
+        // different scope than the one executing, so the tracked copy of this row can be
+        // older than the database. Reloading is what makes the request visible at all,
+        // and it also refreshes the concurrency token this save depends on.
+        await _dbContext.JobRunHistories.Entry(history).ReloadAsync(cancellationToken);
+
         if (history.CancellationRequestedAtUtc is null)
             return ApplicationResult<JobRunHistoryDto>.Failure(ApplicationError.BusinessRule(
                 "There is no cancellation request on this run to acknowledge."));
@@ -262,6 +318,11 @@ public sealed class JobRuntimeService : IJobRuntimeService
 
         if (history is null)
             return ApplicationResult<JobRunHistoryDto>.Failure(ApplicationError.NotFound("Job run history record was not found."));
+
+        // Same reason as the acknowledgement path: a cancellation request written by
+        // another context moved this row, and completing against a stale copy would fail
+        // on the concurrency token rather than converge the run.
+        await _dbContext.JobRunHistories.Entry(history).ReloadAsync(cancellationToken);
 
         var job = await _dbContext.JobDefinitions
             .FirstOrDefaultAsync(x => !x.IsDeleted && x.Id == history.JobDefinitionId, cancellationToken);

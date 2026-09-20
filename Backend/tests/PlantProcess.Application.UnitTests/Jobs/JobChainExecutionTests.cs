@@ -126,7 +126,8 @@ public sealed class JobChainExecutionTests
                 new NeverCalledRiskScoreService(),
                 new JobExecutionCapabilityAuthority(),
                 new NoTargetResolver(),
-                Dependencies);
+                Dependencies,
+                new JobExecutorResolver(Array.Empty<IJobExecutor>()));
         }
 
         public JobDefinition JobA { get; }
@@ -188,6 +189,23 @@ public sealed class JobChainExecutionTests
             return Task.FromResult(ApplicationResult<JobRunHistoryDto>.Success(
                 new JobRunHistoryDto(
                     Guid.NewGuid(), Guid.NewGuid(), jobCode, jobCode, JobDefinitionType.DataQualityScan,
+                    JobRunStatus.Running, DateTime.UtcNow, null, null, triggerSource, triggeredBy,
+                    correlationId, null, null, null)));
+        }
+
+        public Task<ApplicationResult<JobRunHistoryDto>> StartForTargetAsync(
+            string jobCode, string? occurrenceKey, DateTime? nominalAtUtc, string triggerSource,
+            string? triggeredBy, string? correlationId,
+            PlantProcess.Application.Jobs.Targeting.ResolvedJobTarget target, CancellationToken cancellationToken)
+        {
+            // T-261. These chains register no executor, so a governed start is never taken.
+            // It is implemented rather than defaulted so the semantic stays compile-time visible.
+            StartedJobCodes.Add(jobCode);
+            Correlations.Add(correlationId ?? string.Empty);
+
+            return Task.FromResult(ApplicationResult<JobRunHistoryDto>.Success(
+                new JobRunHistoryDto(
+                    Guid.NewGuid(), Guid.NewGuid(), jobCode, jobCode, JobDefinitionType.CanonicalRefresh,
                     JobRunStatus.Running, DateTime.UtcNow, null, null, triggerSource, triggeredBy,
                     correlationId, null, null, null)));
         }

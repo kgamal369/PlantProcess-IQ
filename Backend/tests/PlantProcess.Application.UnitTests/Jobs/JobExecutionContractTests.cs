@@ -82,11 +82,14 @@ public sealed class JobExecutionContractTests
     }
 
     [Fact]
-    public void Canonical_refresh_is_not_advertised_as_executable_but_keeps_its_target_semantics()
+    public void Canonical_refresh_is_commissioned_and_keeps_its_target_semantics()
     {
+        // T-261. The family is executable because a governed executor now exists for it.
+        // What it may execute is unchanged: an exact Transformation version, and the
+        // executor's own admission still refuses anything it cannot prove.
         JobExecutionCapability answer = Authority.Describe(JobDefinitionType.CanonicalRefresh);
 
-        Assert.False(answer.IsExecutableByRuntime);
+        Assert.True(answer.IsExecutableByRuntime);
         Assert.Equal(JobTargetRequirement.Required, answer.TargetRequirement);
         Assert.Equal(DefinitionKind.Transformation, answer.CanonicalTargetKind);
         Assert.True(answer.VersionPolicyApplies);
@@ -239,15 +242,18 @@ public sealed class JobExecutionContractTests
 
     // ------------------------------------------------------ orchestration ---
     [Fact]
-    public async Task Canonical_refresh_run_now_refuses_with_JX01_and_processes_no_batches()
+    public async Task Canonical_refresh_without_a_registered_executor_refuses_before_any_run()
     {
+        // T-261. The family is commissioned, so the refusal is no longer JX01: this world
+        // registers no executor, and a commissioned family with nothing to execute it must
+        // fail closed before a run record exists rather than open one and fail late.
         var world = new World(JobDefinitionType.CanonicalRefresh);
 
         var result = await world.Orchestrator.RunNowAsync(
             world.Job.Id, "tester", null, CancellationToken.None);
 
         Assert.True(result.IsFailure);
-        Assert.Equal(JobExecutionErrorCodes.NoExecutorForJobFamily, result.Error!.Code);
+        Assert.Equal(JobExecutionDiagnosticCodes.ExecutorMissing, result.Error!.Code);
         Assert.Empty(world.Runtime.StartedJobCodes);
         Assert.Equal(0, world.Import.Calls);
         Assert.Empty(world.Runtime.BlockedJobIds);
@@ -278,7 +284,8 @@ public sealed class JobExecutionContractTests
 
             Orchestrator = new JobRunOrchestratorService(
                 new SingleJobLookup(Job), Runtime, Import, Quality, new UnusedRisk(),
-                new JobExecutionCapabilityAuthority(), new NoTargetResolver(), new EmptyDependencies());
+                new JobExecutionCapabilityAuthority(), new NoTargetResolver(), new EmptyDependencies(),
+                new JobExecutorResolver(Array.Empty<IJobExecutor>()));
         }
 
         public JobDefinition Job { get; }
@@ -307,6 +314,17 @@ public sealed class JobExecutionContractTests
         public Task<ApplicationResult<JobRunHistoryDto>> StartAsync(
             string jobCode, string triggerSource, string? triggeredBy, string? correlationId, CancellationToken ct)
         {
+            StartedJobCodes.Add(jobCode);
+            return Task.FromResult(ApplicationResult<JobRunHistoryDto>.Success(Dto(JobRunStatus.Running, correlationId)));
+        }
+
+        public Task<ApplicationResult<JobRunHistoryDto>> StartForTargetAsync(
+            string jobCode, string? occurrenceKey, DateTime? nominalAtUtc, string triggerSource,
+            string? triggeredBy, string? correlationId,
+            PlantProcess.Application.Jobs.Targeting.ResolvedJobTarget target, CancellationToken ct)
+        {
+            // T-261. Recorded like any other start so a test that expected no run can still
+            // prove none happened; these worlds register no executor, so it is never called.
             StartedJobCodes.Add(jobCode);
             return Task.FromResult(ApplicationResult<JobRunHistoryDto>.Success(Dto(JobRunStatus.Running, correlationId)));
         }

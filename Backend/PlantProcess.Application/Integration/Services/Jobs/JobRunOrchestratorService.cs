@@ -26,6 +26,7 @@ public sealed class JobRunOrchestratorService : IJobRunOrchestratorService
     private readonly IJobExecutionCapabilityAuthority _capability;
     private readonly IJobTargetResolver _targetResolver;
     private readonly IJobDependencyService _dependencies;
+    private readonly IJobExecutorResolver _executors;
 
     public JobRunOrchestratorService(
         IRunnableJobLookup jobs,
@@ -35,7 +36,8 @@ public sealed class JobRunOrchestratorService : IJobRunOrchestratorService
         IRiskScoreService riskScoreService,
         IJobExecutionCapabilityAuthority capability,
         IJobTargetResolver targetResolver,
-        IJobDependencyService dependencies)
+        IJobDependencyService dependencies,
+        IJobExecutorResolver executors)
     {
         _jobs = jobs;
         _jobRuntimeService = jobRuntimeService;
@@ -45,6 +47,7 @@ public sealed class JobRunOrchestratorService : IJobRunOrchestratorService
         _capability = capability;
         _targetResolver = targetResolver;
         _dependencies = dependencies;
+        _executors = executors;
     }
 
     public Task<ApplicationResult<JobActionResponseDto>> RunNowAsync(
@@ -98,19 +101,73 @@ public sealed class JobRunOrchestratorService : IJobRunOrchestratorService
         if (admitted.IsFailure)
             return ApplicationResult<JobActionResponseDto>.Failure(admitted.Error!);
 
-        ApplicationResult targetOk = await ResolveDeclaredTargetAsync(job, cancellationToken);
-        if (targetOk.IsFailure)
+        ApplicationResult<JobTargetResolution> targetOk = await ResolveDeclaredTargetAsync(job, cancellationToken);
+        if (targetOk.IsFailure || targetOk.Value is null)
             return ApplicationResult<JobActionResponseDto>.Failure(targetOk.Error!);
 
-        // Admission, capability and target resolution have already spoken. Only now is a
-        // run created, and a scheduled request creates it with its occurrence identity so
-        // the INSERT itself is the claim.
-        var run = occurrenceKey is null
+        // T-261. THE GOVERNED PLAN IS PROVEN BEFORE A RUN EXISTS.
+        //
+        // A family that declares a canonical target executes a definition version, so
+        // everything that can be known about that version is proven here: that an executor
+        // exists, that the exact version reads and compiles, that its source identity and
+        // canonical target are lawful. A request that fails any of those must never leave
+        // a run record behind for an operator to interpret.
+        JobExecutionCapability family = _capability.Describe(job.JobType);
+        IJobExecutor? governed = null;
+        JobExecutionPlan? plan = null;
+
+        if (family.TargetRequirement == JobTargetRequirement.Required)
+        {
+            governed = _executors.Resolve(job.JobType);
+
+            if (governed is null)
+            {
+                return ApplicationResult<JobActionResponseDto>.Failure(new ApplicationError(
+                    JobExecutionDiagnosticCodes.ExecutorMissing,
+                    "Job family " + job.JobType + " is commissioned but no executor is registered for it.",
+                    ApplicationErrorType.BusinessRule));
+            }
+
+            ResolvedJobTarget? resolvedTarget = targetOk.Value.Target;
+
+            if (resolvedTarget is null)
+            {
+                return ApplicationResult<JobActionResponseDto>.Failure(new ApplicationError(
+                    JobExecutionDiagnosticCodes.ExactVersionRequired,
+                    "Job " + job.JobCode + " declares no definition version this runtime could execute.",
+                    ApplicationErrorType.BusinessRule));
+            }
+
+            ApplicationResult<JobExecutionPlan> admittedPlan =
+                await governed.AdmitAsync(resolvedTarget, cancellationToken);
+
+            if (admittedPlan.IsFailure || admittedPlan.Value is null)
+                return ApplicationResult<JobActionResponseDto>.Failure(admittedPlan.Error!);
+
+            plan = admittedPlan.Value;
+        }
+
+        string runCorrelation = correlationId ?? Guid.NewGuid().ToString("N");
+
+        // Admission, capability, target resolution and governed plan admission have already
+        // spoken. Only now is a run created, and a scheduled request creates it with its
+        // occurrence identity so the INSERT itself is the claim.
+        var run = plan is not null
+            ? await _jobRuntimeService.StartForTargetAsync(
+                job.JobCode,
+                occurrenceKey,
+                occurrenceKey is null ? null : nominalAtUtc ?? DateTime.UtcNow,
+                triggerSource: triggerSource,
+                triggeredBy: requestedBy ?? (occurrenceKey is null ? "Admin" : "GovernedScheduleDispatcher"),
+                correlationId: runCorrelation,
+                target: plan.Target,
+                cancellationToken)
+            : occurrenceKey is null
             ? await _jobRuntimeService.StartAsync(
                 job.JobCode,
                 triggerSource: triggerSource,
                 triggeredBy: requestedBy ?? "Admin",
-                correlationId: correlationId ?? Guid.NewGuid().ToString("N"),
+                correlationId: runCorrelation,
                 cancellationToken)
             : await _jobRuntimeService.StartScheduledAsync(
                 job.JobCode,
@@ -118,7 +175,7 @@ public sealed class JobRunOrchestratorService : IJobRunOrchestratorService
                 nominalAtUtc ?? DateTime.UtcNow,
                 triggerSource: triggerSource,
                 triggeredBy: requestedBy ?? "GovernedScheduleDispatcher",
-                correlationId: correlationId ?? Guid.NewGuid().ToString("N"),
+                correlationId: runCorrelation,
                 cancellationToken);
 
         if (run.IsFailure || run.Value is null)
@@ -126,6 +183,12 @@ public sealed class JobRunOrchestratorService : IJobRunOrchestratorService
 
         try
         {
+            if (governed is not null && plan is not null)
+            {
+                return await RunGovernedAsync(
+                    job, governed, plan, run.Value.Id, runCorrelation, cancellationToken);
+            }
+
             var executionResult = await ExecuteJobAsync(job.JobType, cancellationToken);
 
             var finalStatus = executionResult.IsSuccess ? JobRunStatus.Ok : JobRunStatus.Failed;
@@ -151,6 +214,78 @@ public sealed class JobRunOrchestratorService : IJobRunOrchestratorService
             return ApplicationResult<JobActionResponseDto>.Failure(
                 ApplicationError.Unexpected($"{triggerSource} failed: {ex.Message}"));
         }
+    }
+
+    /// <summary>
+    /// T-261. THE GOVERNED EXECUTION OF AN ALREADY ADMITTED PLAN.
+    ///
+    /// The plan is not re-resolved and the version is not looked up again: this run owns
+    /// the exact version its own evidence names. A cooperative stop converges through
+    /// acknowledgement rather than a completion, because a cancelled run is not a failed
+    /// one and is certainly not a successful one.
+    /// </summary>
+    private async Task<ApplicationResult<JobActionResponseDto>> RunGovernedAsync(
+        JobDefinition job,
+        IJobExecutor executor,
+        JobExecutionPlan plan,
+        Guid runId,
+        string correlationId,
+        CancellationToken cancellationToken)
+    {
+        var context = new JobExecutionContext(
+            job.Id, job.JobCode, job.JobType, runId, plan, correlationId);
+
+        ApplicationResult<JobExecutionOutcome> executed =
+            await executor.ExecuteAsync(context, cancellationToken);
+
+        if (executed.IsFailure || executed.Value is null)
+        {
+            string refusal = (executed.Error?.Code ?? JobExecutionDiagnosticCodes.BlockFailed)
+                + ": " + (executed.Error?.Message ?? "Governed execution produced no outcome.");
+
+            var refused = await _jobRuntimeService.CompleteAsync(
+                runId, JobRunStatus.Failed, refusal, refusal, null, cancellationToken);
+
+            if (refused.IsFailure)
+                return ApplicationResult<JobActionResponseDto>.Failure(refused.Error!);
+
+            return ApplicationResult<JobActionResponseDto>.Success(new JobActionResponseDto(
+                job.Id, job.JobCode, job.JobName, job.JobType, JobRunStatus.Failed,
+                refusal, runId, DateTime.UtcNow));
+        }
+
+        JobExecutionOutcome outcome = executed.Value;
+        string summary = JsonSerializer.Serialize(outcome);
+
+        if (outcome.Cancelled)
+        {
+            var acknowledged = await _jobRuntimeService.AcknowledgeCancellationAsync(
+                runId, outcome.Message, cancellationToken);
+
+            if (acknowledged.IsFailure)
+                return ApplicationResult<JobActionResponseDto>.Failure(acknowledged.Error!);
+
+            return ApplicationResult<JobActionResponseDto>.Success(new JobActionResponseDto(
+                job.Id, job.JobCode, job.JobName, job.JobType, JobRunStatus.Cancelled,
+                outcome.Message, runId, DateTime.UtcNow));
+        }
+
+        JobRunStatus finalStatus = outcome.Succeeded ? JobRunStatus.Ok : JobRunStatus.Failed;
+
+        string message = outcome.Succeeded
+            ? outcome.Message
+            : (outcome.DiagnosticCode ?? JobExecutionDiagnosticCodes.BlockFailed)
+                + ": " + (outcome.DiagnosticDetail ?? outcome.Message);
+
+        var completedRun = await _jobRuntimeService.CompleteAsync(
+            runId, finalStatus, message, outcome.Succeeded ? null : message, summary, cancellationToken);
+
+        if (completedRun.IsFailure)
+            return ApplicationResult<JobActionResponseDto>.Failure(completedRun.Error!);
+
+        return ApplicationResult<JobActionResponseDto>.Success(new JobActionResponseDto(
+            job.Id, job.JobCode, job.JobName, job.JobType, finalStatus,
+            message, runId, DateTime.UtcNow));
     }
 
     public async Task<ApplicationResult<IReadOnlyList<JobActionResponseDto>>> RunWithDependenciesAsync(
@@ -251,7 +386,7 @@ public sealed class JobRunOrchestratorService : IJobRunOrchestratorService
         return "The run was blocked before compute started.";
     }
 
-    private async Task<ApplicationResult> ResolveDeclaredTargetAsync(
+    private async Task<ApplicationResult<JobTargetResolution>> ResolveDeclaredTargetAsync(
         JobDefinition job, CancellationToken cancellationToken)
     {
         if (!job.TargetDefinitionId.HasValue)
@@ -259,12 +394,12 @@ public sealed class JobRunOrchestratorService : IJobRunOrchestratorService
             ApplicationResult<JobTargetResolution> none =
                 await _targetResolver.ResolveAsync(job.JobType, null, cancellationToken);
 
-            return none.IsFailure ? ApplicationResult.Failure(none.Error!) : ApplicationResult.Success();
+            return none;
         }
 
         if (string.IsNullOrWhiteSpace(job.TargetDefinitionKind) || !job.TargetVersionPolicy.HasValue)
         {
-            return ApplicationResult.Failure(ApplicationError.Validation(
+            return ApplicationResult<JobTargetResolution>.Failure(ApplicationError.Validation(
                 "Job " + job.JobCode + " declares a target identity without a kind or a version policy, "
                 + "so nothing can say which definition version it would run."));
         }
@@ -273,7 +408,7 @@ public sealed class JobRunOrchestratorService : IJobRunOrchestratorService
         if (!Enum.TryParse(job.TargetDefinitionKind, false, out kind)
             || !Enum.IsDefined(typeof(DefinitionKind), kind))
         {
-            return ApplicationResult.Failure(ApplicationError.Validation(
+            return ApplicationResult<JobTargetResolution>.Failure(ApplicationError.Validation(
                 "Job " + job.JobCode + " declares target kind '" + job.TargetDefinitionKind
                 + "', which is not a canonical definition kind."));
         }
@@ -290,7 +425,7 @@ public sealed class JobRunOrchestratorService : IJobRunOrchestratorService
         ApplicationResult<JobTargetResolution> resolved =
             await _targetResolver.ResolveAsync(job.JobType, reference, cancellationToken);
 
-        return resolved.IsFailure ? ApplicationResult.Failure(resolved.Error!) : ApplicationResult.Success();
+        return resolved;
     }
 
     private async Task<RunNowExecutionResult> ExecuteJobAsync(

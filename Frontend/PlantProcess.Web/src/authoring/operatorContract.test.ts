@@ -2,7 +2,7 @@
 //
 // T-033's validation asks for exactly this test. It does not compare the
 // interface list against a second hand-written copy - it PARSES
-// VisualMapperEndpoints.cs and compares against what BuildSafeSelect actually
+// the Application compiler authority and compares against what BuildSafeSelect actually
 // enforces. A copy of a copy proves nothing; this fails the build the moment
 // either side drifts.
 
@@ -11,9 +11,9 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { FILTER_OPERATORS, MATH_OPERATORS, UNARY_FILTER_OPERATORS } from "./operatorContract";
 
-const ENDPOINTS = join(
+const COMPILER = join(
   process.cwd(), "..", "..",
-  "Backend", "PlantProcess.Api", "Endpoints", "Prep", "VisualMapperEndpoints.cs",
+  "Backend", "PlantProcess.Application", "Definitions", "Transformations", "TransformationCompiler.cs",
 );
 
 function serverArray(source: string, fieldName: string): string[] {
@@ -37,7 +37,7 @@ function serverArray(source: string, fieldName: string): string[] {
 }
 
 describe("T-033: the interface operator lists equal the server whitelist", () => {
-  const source = readFileSync(ENDPOINTS, "utf8");
+  const source = readFileSync(COMPILER, "utf8");
 
   it("filter operators match BuildSafeSelect's FilterOps, in order", () => {
     expect(FILTER_OPERATORS.slice()).toEqual(serverArray(source, "FilterOps"));

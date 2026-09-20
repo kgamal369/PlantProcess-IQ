@@ -202,8 +202,8 @@ public sealed class MappingRowProjector : IMappingRowProjector
             return RowProjectionOutcome.Skipped(existing, "MaterialUnit", $"MaterialUnit already exists: {materialCode}.");
         }
 
-        var productFamily = reader.OptionalString("ProductFamily");
-        var gradeOrRecipe = reader.OptionalString("GradeOrRecipe");
+        var productFamily = reader.OptionalString(nameof(MaterialUnit.ProductFamily));
+        var gradeOrRecipe = reader.OptionalString(nameof(MaterialUnit.GradeOrRecipe));
         var sourceRecordId = reader.OptionalString("SourceRecordId");
         var startUtc = reader.OptionalDateTime("ProductionStartUtc");
         var endUtc = reader.OptionalDateTime("ProductionEndUtc");

@@ -181,6 +181,16 @@ public static class DependencyInjection
         services.AddScoped<PlantProcess.Application.Definitions.Canvas.ICanvasDefinitionLifecycle,
             PlantProcess.Infrastructure.Definitions.Canvas.CanvasDefinitionLifecycleService>();
 
+        // T-261. The persistence half of governed Transformation execution: the staged
+        // read, the commissioned canonical write and the per-block evidence store. The
+        // executor itself is composed in AddApplication and names none of these types.
+        services.AddScoped<PlantProcess.Application.Jobs.Execution.Transformations.ITransformationSourceReader,
+            PlantProcess.Infrastructure.Jobs.Transformations.NpgsqlTransformationSourceReader>();
+        services.AddScoped<PlantProcess.Application.Jobs.Execution.Transformations.ITransformationCanonicalWriter,
+            PlantProcess.Infrastructure.Jobs.Transformations.MaterialUnitTransformationWriter>();
+        services.AddScoped<PlantProcess.Application.Jobs.Execution.IJobRunBlockEvidenceStore,
+            PlantProcess.Infrastructure.Jobs.JobRunBlockEvidenceStore>();
+
         // T-210. Signal and aggregation semantics: one resolver over the
         // parameter and KPI-binding authorities. No second registry.
         services.AddScoped<PlantProcess.Application.Definitions.Semantics.ISignalSemanticsResolver,

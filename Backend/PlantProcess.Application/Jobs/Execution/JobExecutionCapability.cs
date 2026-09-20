@@ -79,7 +79,8 @@ public sealed class JobExecutionCapabilityAuthority : IJobExecutionCapabilityAut
     {
         JobDefinitionType.DbLinkImport,
         JobDefinitionType.DataQualityScan,
-        JobDefinitionType.RiskScoring
+        JobDefinitionType.RiskScoring,
+        JobDefinitionType.CanonicalRefresh
     };
 
     public IReadOnlyList<JobDefinitionType> ExecutableFamilies => Executable;
@@ -108,11 +109,13 @@ public sealed class JobExecutionCapabilityAuthority : IJobExecutionCapabilityAut
 
             case JobDefinitionType.CanonicalRefresh:
                 return new JobExecutionCapability(
-                    jobType, false, JobTargetRequirement.Required, DefinitionKind.Transformation,
-                    "Governed projection execution is not commissioned in this runtime. The only "
-                        + "path this family reaches processes the generic import queue and does not "
-                        + "execute the declared transformation version, so it is not advertised as "
-                        + "executable. Existing schedules and history remain readable.");
+                    jobType, true, JobTargetRequirement.Required, DefinitionKind.Transformation,
+                    "Governed projection execution is commissioned for the exact resolved graph "
+                        + "Transformation version. The executor's own admission still refuses, before "
+                        + "any run exists, a request whose exact version, projection declaration, "
+                        + "source identity, canonical target or authored blocks it cannot prove. A "
+                        + "job of this family that declares no target is still refused, and the "
+                        + "generic import queue is not an execution path for it.");
 
             case JobDefinitionType.MlParamsVsDefects:
             case JobDefinitionType.MlParamsVsDowntime:

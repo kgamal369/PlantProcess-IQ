@@ -106,7 +106,7 @@ public sealed class CanonicalEntityCatalog : ICanonicalEntityCatalog
 
                     fields.Add(new CanonicalProjectionField(
                         property.Name,
-                        property.ClrType.Name,
+                        (Nullable.GetUnderlyingType(property.ClrType) ?? property.ClrType).Name,
                         !property.IsNullable,
                         systemOwned));
                 }

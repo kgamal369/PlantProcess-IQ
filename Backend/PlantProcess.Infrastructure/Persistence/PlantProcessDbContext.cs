@@ -58,6 +58,10 @@ public class PlantProcessDbContext : DbContext, IPlantProcessDbContext
     public DbSet<JobRunHistory> JobRunHistories => Set<JobRunHistory>();
     public DbSet<JobDependency> JobDependencies => Set<JobDependency>();
     public DbSet<JobRunDependency> JobRunDependencies => Set<JobRunDependency>();
+
+    // T-261. Per-block runtime evidence. Script 846 owns the DDL; placement comes from
+    // StorageTopologyMap, exactly as the quarantine table above does.
+    public DbSet<JobRunBlockEvidence> JobRunBlockEvidences => Set<JobRunBlockEvidence>();
     // ----------------------------
     // Materials / Genealogy
     // ----------------------------

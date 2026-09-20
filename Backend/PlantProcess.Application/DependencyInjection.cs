@@ -100,6 +100,16 @@ public static class DependencyInjection
         services.AddScoped<Jobs.Execution.IRunnableJobLookup, Jobs.Execution.RunnableJobLookup>();
         services.AddScoped<Jobs.Dependencies.IJobDependencyService, Jobs.Dependencies.JobDependencyService>();
         services.AddScoped<IJobRunOrchestratorService, JobRunOrchestratorService>();
+
+        // T-261. Governed Transformation projection execution. ONE executor per family,
+        // resolved by dispatch only: the capability authority above remains the single
+        // place that answers whether a family is supported. The canonical write, the
+        // staged read and the block-evidence store are Infrastructure ports composed in
+        // AddInfrastructure; nothing here reaches into persistence.
+        services.AddScoped<Jobs.Execution.IJobExecutor,
+            Jobs.Execution.Transformations.TransformationProjectionJobExecutor>();
+        services.AddScoped<Jobs.Execution.IJobExecutorResolver, Jobs.Execution.JobExecutorResolver>();
+        services.AddScoped<Jobs.Execution.IJobRunCancellationProbe, Jobs.Execution.JobRunCancellationProbe>();
         services.AddScoped<IIncrementalSyncStateService, IncrementalSyncStateService>();
         services.AddScoped<IDeltaImportExecutionService, DeltaImportExecutionService>();
         services.AddScoped<IBackfillExecutionService, BackfillExecutionService>();
