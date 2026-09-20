@@ -59,7 +59,7 @@ public static class CanvasJobEndpoints
         string code,
         int? version,
         HttpContext context,
-        ICanvasJobBindingService canvasJobs,
+        [Microsoft.AspNetCore.Mvc.FromServices] ICanvasJobBindingService canvasJobs,
         ICanonicalIdentityResolver identity,
         CancellationToken cancellationToken)
     {
@@ -76,7 +76,7 @@ public static class CanvasJobEndpoints
         string code,
         BindCanvasJobRequest request,
         HttpContext context,
-        ICanvasJobBindingService canvasJobs,
+        [Microsoft.AspNetCore.Mvc.FromServices] ICanvasJobBindingService canvasJobs,
         ICanonicalIdentityResolver identity,
         CancellationToken cancellationToken)
     {
@@ -95,7 +95,7 @@ public static class CanvasJobEndpoints
     private static async Task<IResult> GetBindingAsync(
         string code,
         HttpContext context,
-        ICanvasJobBindingService canvasJobs,
+        [Microsoft.AspNetCore.Mvc.FromServices] ICanvasJobBindingService canvasJobs,
         ICanonicalIdentityResolver identity,
         CancellationToken cancellationToken)
     {
@@ -119,7 +119,7 @@ public static class CanvasJobEndpoints
         string code,
         LaunchCanvasRunRequest request,
         HttpContext context,
-        ICanvasJobBindingService canvasJobs,
+        [Microsoft.AspNetCore.Mvc.FromServices] ICanvasJobBindingService canvasJobs,
         ICanonicalIdentityResolver identity,
         IJobRunOrchestratorService orchestrator,
         IHostApplicationLifetime lifetime)
@@ -165,7 +165,7 @@ public static class CanvasJobEndpoints
         string code,
         string correlationId,
         HttpContext context,
-        ICanvasJobBindingService canvasJobs,
+        [Microsoft.AspNetCore.Mvc.FromServices] ICanvasJobBindingService canvasJobs,
         ICanonicalIdentityResolver identity,
         CancellationToken cancellationToken)
     {
@@ -187,7 +187,7 @@ public static class CanvasJobEndpoints
         string code,
         Guid runId,
         HttpContext context,
-        ICanvasJobBindingService canvasJobs,
+        [Microsoft.AspNetCore.Mvc.FromServices] ICanvasJobBindingService canvasJobs,
         ICanonicalIdentityResolver identity,
         CancellationToken cancellationToken)
     {

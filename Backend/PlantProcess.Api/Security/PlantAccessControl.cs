@@ -288,6 +288,26 @@ public sealed class AccessControlMiddleware
                 path.StartsWith(x.Prefix, StringComparison.OrdinalIgnoreCase) &&
                 x.Methods.Contains(method, StringComparer.OrdinalIgnoreCase));
 
+        // Canvas job operations use the existing job permission, including GET evidence.
+        // Match complete route shapes, never the whole definition-authoring prefix.
+        var canvasParts = path.TrimEnd('/').Split('/');
+        var canvasJobRoute = canvasParts.Length >= 6 &&
+            string.Equals(canvasParts[1], "api", StringComparison.OrdinalIgnoreCase) &&
+            string.Equals(canvasParts[2], "prep", StringComparison.OrdinalIgnoreCase) &&
+            string.Equals(canvasParts[3], "definitions", StringComparison.OrdinalIgnoreCase) &&
+            !string.IsNullOrWhiteSpace(canvasParts[4]) &&
+            ((canvasParts.Length == 6 &&
+                ((string.Equals(canvasParts[5], "job-binding", StringComparison.OrdinalIgnoreCase) &&
+                    (method == "GET" || method == "POST")) ||
+                 (string.Equals(canvasParts[5], "execution-capability", StringComparison.OrdinalIgnoreCase) && method == "GET") ||
+                 (string.Equals(canvasParts[5], "runs", StringComparison.OrdinalIgnoreCase) &&
+                    (method == "GET" || method == "POST")))) ||
+             (canvasParts.Length == 7 &&
+                string.Equals(canvasParts[5], "runs", StringComparison.OrdinalIgnoreCase) &&
+                Guid.TryParse(canvasParts[6], out _) && method == "GET"));
+        if (canvasJobRoute)
+            entry = ("/api/prep/definitions/{code}/jobs", new[] { method }, "job.manage", false);
+
         if (entry.Prefix is null)
         {
             _logger.LogWarning("Deny-by-default RBAC block for unmapped endpoint {Method} {Path}", method, path);
