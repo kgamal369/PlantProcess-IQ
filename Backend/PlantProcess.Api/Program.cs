@@ -1117,6 +1117,7 @@ app.MapV5VisualMapperEndpoints();
 app.MapVisualMapperEndpoints();
 app.MapAuthoringSupportEndpoints();
 app.MapCanvasDefinitionEndpoints();
+app.MapCanvasJobEndpoints();
 PlantProcess.Api.Endpoints.CustomerAssessmentEndpoints.MapCustomerAssessmentEndpoints(app);
 PlantProcess.Api.Endpoints.AnalysisSubjects.AnalysisSubjectEndpoints.MapAnalysisSubjectEndpoints(app);
 PlantProcess.Api.Endpoints.SourceTime.SourceTimeAuthorityEndpoints.MapSourceTimeAuthorityEndpoints(app);

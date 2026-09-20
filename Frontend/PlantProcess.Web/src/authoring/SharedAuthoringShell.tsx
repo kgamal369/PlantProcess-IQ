@@ -41,6 +41,7 @@ import {
 } from "@/api/canvasApi";
 import { CanvasDebugLog, useDebugLog } from "@/pages/Prep/CanvasDebugLog";
 import { OutputMappingInspector, type AuthoredOutput } from "./OutputMappingInspector";
+import { CanvasRunPanel } from "./CanvasRunPanel";
 import type { CanvasProjectionDeclaration } from "@/api/canvasApi";
 import { AUTHORING_NODE_TYPES } from "./BlockNodes";
 import {
@@ -1210,6 +1211,13 @@ export function SharedAuthoringShell({
           <StandardP2Button variant="secondary" onClick={doPublish} disabled={!readiness.canRun}>
             Publish version
           </StandardP2Button>
+
+          {/* T-245. The governed run surface for THIS definition. It appears once a
+              version exists, because a definition that was never published has nothing
+              a job could be bound to. The panel owns no execution of its own: it binds,
+              launches through the normal job API and reads back what the server
+              recorded. */}
+          <CanvasRunPanel definitionCode={definitionCode} publishedVersion={openVersion} />
 
 
           <span className="canvas-modebar__spacer" />

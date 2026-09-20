@@ -4,6 +4,7 @@ using PlantProcess.Application.Common.Results;
 using PlantProcess.Application.Integration.Contracts.Jobs;
 using PlantProcess.Application.Integration.Services.Jobs;
 using PlantProcess.Application.Integration.Interfaces.Jobs;
+using PlantProcess.Application.Jobs.Canvas;
 using PlantProcess.Application.Jobs.Scheduling;
 using PlantProcess.Domain.Entities.Integration;
 using PlantProcess.Domain.Enums.Integration;
@@ -125,6 +126,119 @@ public sealed class JobDefinitionService : IJobDefinitionService
         await _dbContext.SaveChangesAsync(cancellationToken);
 
         return ApplicationResult<JobDefinitionDto>.Success(ToDto(job));
+    }
+
+    public async Task<ApplicationResult<GovernedJobBindingResult>> BindGovernedTargetAsync(
+        GovernedJobBindingRequest request,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        ApplicationError? invalid = ValidateBinding(request);
+
+        if (invalid is not null)
+            return ApplicationResult<GovernedJobBindingResult>.Failure(invalid);
+
+        JobDefinition? job = await _dbContext.JobDefinitions
+            .FirstOrDefaultAsync(x => !x.IsDeleted && x.JobCode == request.JobCode, cancellationToken);
+
+        if (job is not null)
+            return await RebindAsync(job, request, created: false, cancellationToken);
+
+        var created = new JobDefinition(
+            request.JobCode,
+            request.JobName,
+            request.JobType,
+            scheduleExpression: "Manual",
+            isSynthetic: false);
+
+        created.AssignTargetDefinition(
+            request.TargetDefinitionKind,
+            request.TargetDefinitionId,
+            request.VersionPolicy,
+            request.PinnedVersion,
+            request.ParametersJson);
+
+        _dbContext.JobDefinitions.Add(created);
+
+        try
+        {
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException)
+        {
+            // ANOTHER REQUEST WON THE RACE. The unique job code is the arbiter, so the
+            // loser adopts the row that exists instead of creating a rival job.
+            _dbContext.JobDefinitions.Entry(created).State = EntityState.Detached;
+
+            JobDefinition? winner = await _dbContext.JobDefinitions
+                .FirstOrDefaultAsync(x => !x.IsDeleted && x.JobCode == request.JobCode, cancellationToken);
+
+            if (winner is null)
+                return ApplicationResult<GovernedJobBindingResult>.Failure(ApplicationError.Unexpected(
+                    "The job binding was refused by the database and no job with that code exists."));
+
+            return await RebindAsync(winner, request, created: false, cancellationToken);
+        }
+
+        return ApplicationResult<GovernedJobBindingResult>.Success(
+            new GovernedJobBindingResult(ToDto(created), true));
+    }
+
+    private async Task<ApplicationResult<GovernedJobBindingResult>> RebindAsync(
+        JobDefinition job,
+        GovernedJobBindingRequest request,
+        bool created,
+        CancellationToken cancellationToken)
+    {
+        // A JOB OF ANOTHER FAMILY IS NOT THIS BINDING'S TO RETARGET. Silently converting
+        // one would point an unrelated schedule at a definition its author never chose.
+        if (job.JobType != request.JobType)
+        {
+            return ApplicationResult<GovernedJobBindingResult>.Failure(ApplicationError.Conflict(
+                "Job " + job.JobCode + " is a " + job.JobType + " job and cannot be retargeted by a "
+                + request.JobType + " binding."));
+        }
+
+        job.AssignTargetDefinition(
+            request.TargetDefinitionKind,
+            request.TargetDefinitionId,
+            request.VersionPolicy,
+            request.PinnedVersion,
+            request.ParametersJson);
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return ApplicationResult<GovernedJobBindingResult>.Success(
+            new GovernedJobBindingResult(ToDto(job), created));
+    }
+
+    private static ApplicationError? ValidateBinding(GovernedJobBindingRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.JobCode))
+            return ApplicationError.Validation("A governed binding requires a job code.");
+
+        if (string.IsNullOrWhiteSpace(request.JobName))
+            return ApplicationError.Validation("A governed binding requires a job name.");
+
+        if (string.IsNullOrWhiteSpace(request.TargetDefinitionKind))
+            return ApplicationError.Validation("A governed binding requires the kind of definition it targets.");
+
+        if (request.TargetDefinitionId == Guid.Empty)
+            return ApplicationError.Validation("A governed binding requires the definition it targets.");
+
+        // THE POLICY AND THE VERSION MUST AGREE. Pinned without a version would silently
+        // become "latest", which is a different promise from the one an author made.
+        if (request.VersionPolicy == JobTargetVersionPolicy.Pinned
+            && (!request.PinnedVersion.HasValue || request.PinnedVersion.Value <= 0))
+        {
+            return ApplicationError.Validation("A pinned binding requires the exact published version number.");
+        }
+
+        if (request.VersionPolicy != JobTargetVersionPolicy.Pinned && request.PinnedVersion.HasValue)
+            return ApplicationError.Validation("Only a pinned binding carries a version number.");
+
+        return null;
     }
 
     public async Task<ApplicationResult<JobDefinitionDto>> EnableJobAsync(

@@ -101,6 +101,12 @@ public static class DependencyInjection
         services.AddScoped<Jobs.Dependencies.IJobDependencyService, Jobs.Dependencies.JobDependencyService>();
         services.AddScoped<IJobRunOrchestratorService, JobRunOrchestratorService>();
 
+        // T-245. The Canvas consumer of the governed job model. It owns binding, launch
+        // attachment and evidence reads; it owns no scheduler, no executor and no run
+        // store, and every one of those it uses is registered above.
+        services.AddScoped<Jobs.Canvas.ICanvasJobBindingService, Jobs.Canvas.CanvasJobBindingService>();
+        services.AddScoped<Jobs.Canvas.ICanvasJobReadModel, Jobs.Canvas.CanvasJobReadModel>();
+
         // T-261. Governed Transformation projection execution. ONE executor per family,
         // resolved by dispatch only: the capability authority above remains the single
         // place that answers whether a family is supported. The canonical write, the
