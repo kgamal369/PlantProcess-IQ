@@ -1,10 +1,12 @@
 # PlantProcess IQ - Master Design Document
 
-**Version 4.10.3 | Author: Karim, SOU Industrial Software, Dusseldorf** | **MASTER DESIGN FREEZE CANDIDATE**
+**Version 4.11.1 | Author: Karim, SOU Industrial Software, Dusseldorf** | **MASTER DESIGN FREEZE CANDIDATE**
 
+> **Package revision — 16 September 2026, v4.11.1.** OPC/Industrial Integration screen-and-runtime contract completion. v4.11.0 established the capability and execution owners; v4.11.1 expands the exact acquisition state machines, OPC semantics, durability, capture consistency, fencing, continuous Job behavior and downstream batch-release rules. No new capability or task family is introduced; this is the owning technical-detail completion. The existing read-only collector, three-schema platform, immutable definitions, Source Time Authority, canonical Job authority and projection path remain the foundations. This revision adds one provider-aware source-configuration model, stable field/layout identity, Time / Value change / Trigger-counter recording policies, finite accepted-batch semantics for continuous acquisition, a governed logical Dump Store contract, acquisition-specific retention/capacity admission and exact capability/qualification truth. OPC UA remains the Release-1 OT transport priority; native PLC transports are optional separately qualified adapters, not an implicit requirement. No universal millisecond, lossless, atomic-snapshot or unlimited-retention promise is created.
+>
 > **Package revision — 14 September 2026, v4.10.3.** Owner-authorised correction of cursor total-order safety, machine scheduling and dependency freshness is integrated in Chapters 3 and 4. The release-allocation note below records the approved M2/M3 split; the full target is preserved. Other chapter bodies are retained, not rewritten. The derived UI material is integrated into Chapters 3 and 4, including their illustrated Word editions; no standalone UI companion belongs in the controlled book. Visual material cannot override functional rules. See `PPIQ_Definition.md` for the complete fourteen-file register.
 
-> **Current planning basis (supersedes historical dates only).** M2 targets approximately one month from the owner's September planning checkpoint; M3 targets 45 days after M2 completion. No new absolute delivery date is asserted here. Historical change-log dates remain historical; Backlog v2.23.0 governs the current execution allocation.
+> **Current planning basis (supersedes historical dates only).** M2 targets approximately one month from the owner's September planning checkpoint; M3 targets 45 days after M2 completion. No new absolute delivery date is asserted here. Historical change-log dates remain historical; Backlog v2.24.0 governs the current execution allocation.
 
 > **Change log — Two-Release Production Roadmap and Day-1 Workbench Constitution (23 August 2026, v4.10).** v4.10 replaces retired internal programme codes with exactly two product releases: **M2 — Release 1, 30 September 2026**, for genuine early production and first-week customer work; and **M3 — Release 2, 30 October 2026**, for heavy production, higher data volume, more users and advanced intelligence. Each release uses only **P1, P2, P3, P4 and P5**. Release 1 makes DB Link/data onboarding, Canvas/data preparation, Jobs, enterprise BI reliability, read-only production OPC UA, governed References/Reconciliation/Assistant and minimum production hardening first-class release gates. Release 2 owns scale, advanced BI/authoring, deep enterprise administration, InsightBoard composition, multi-objective optimisation, customer-grade ROI convergence and heavy-production certification. Design and backlog are required to be one-to-one traceable: every designed product outcome has an execution owner and acceptance path, and every backlog task maps to an owning design contract.
 
@@ -15,7 +17,7 @@
 
 ---
 
-> **CURRENT AUTHORITY — Master Design v4.10.3.** PlantProcess IQ has exactly six current design-authority chapters and one current execution-authority backlog workbook. No other file may define, amend, override, supplement or reinterpret current product design or implementation scope. A design change edits the owning chapter directly; a scope change edits the backlog directly. Transitional reviews, amendment packs, ledgers, mandates and prior revisions are historical evidence only after their accepted content is integrated. Validation scripts are code/enforcement instruments, not design documentation.
+> **CURRENT AUTHORITY — Master Design v4.11.1.** PlantProcess IQ has exactly six current design-authority chapters and one current execution-authority backlog workbook. No other file may define, amend, override, supplement or reinterpret current product design or implementation scope. A design change edits the owning chapter directly; a scope change edits the backlog directly. Transitional reviews, amendment packs, ledgers, mandates and prior revisions are historical evidence only after their accepted content is integrated. Validation scripts are code/enforcement instruments, not design documentation.
 
 
 # CHAPTER 4 - SPECIFIC SOFTWARE PRODUCT TECHNICAL FUNCTION DESCRIPTION
@@ -1590,6 +1592,248 @@ Chunks complete out of order and in parallel. **The merged result must be identi
 13. A chunk never spans a partition boundary, asserted on the executed plan.
 14. A run reading more than its declared scan budget **aborts and raises the amplification finding**, rather than completing slowly.
 15. **Scan Amplification Ratio stays inside its certified band** for every job family under the C2 profile load (Chapter 6 6.1.5.8, 6.1.12.2a).
+
+
+
+## 5.3.10 Industrial acquisition execution — OPC/interface rules, recording state machines and continuous Job authority
+
+Industrial acquisition uses the **existing Job definition, admission, dependency, progress, cancellation and history authorities**. It does not create a private edge scheduler, browser timer, connector-local Job model or one Job/run row per sample. The browser authors and observes; the source-side collector executes the exact published configuration version.
+
+### 5.3.10.1 Execution identities and the one-runtime rule
+
+The runtime identity is:
+
+`tenant + site + connection + dataset + acquisition_configuration_version + recording_group + owner_generation`.
+
+A Job binds to the exact published acquisition configuration version. That configuration references stable field IDs and layout version; runtime effective/negotiated settings are evidence attached to the activation/session, not silent mutations of the authored version.
+
+There is one canonical Job/session authority. OPC callbacks, database readers and file watchers report to it. No provider creates a hidden scheduler or independent lifecycle table whose state can disagree with B5 Jobs Monitor.
+
+### 5.3.10.2 Execution kinds
+
+A Job definition declares an execution kind compatible with its family:
+
+| Kind | Lifetime | Output boundary | Typical source |
+|---|---|---|---|
+| **FiniteImport** | one bounded run | terminal successful import batch | SQL/file incremental read |
+| **ContinuousAcquisition** | long-lived activation/session | many finite sealed batches/windows | OPC subscriptions, approved polling/watch streams |
+| **BoundedReplay** | finite declared recovery range | replay batch with original identities | local spool / retained source history |
+| **Backfill** | finite declared historical range | completed backfill chunks/batches | DB/historian/file archive |
+
+A continuous session remains Running while finite batches independently reach Completed, CompletedWithGap, Failed or Cancelled. Downstream dependencies bind to sealed batch/window identity, **never to the eventual end of a continuous session**.
+
+### 5.3.10.3 Source mechanics versus recording semantics
+
+Source acquisition mechanics and PPIQ recording semantics are separate dimensions.
+
+**Source mechanics** include requested/effective sampling, publishing/reporting interval, OPC monitored-item queue/filter, database page/cursor/CDC, file arrival/watch semantics and source read windows.
+
+**Recording semantics** are exactly the three product-facing modes below. A connector may push a filter to the source only when the semantics are proven equivalent to the authored PPIQ rule and the activation evidence records what the source actually accepted.
+
+#### A. PERIODIC / Time
+
+State machine:
+
+`Inactive → Armed → TickDue → CaptureRequested → Capturing → Durable | Gap | Refused → Armed`.
+
+Rules:
+1. The phase anchor is fixed. Next due time is derived from the anchor and occurrence index, not `last completion + interval`.
+2. Every admitted occurrence creates one record for the declared member set even when values are unchanged.
+3. The configuration states whether capture requires a new bounded read or permits a validated cached observation with maximum age.
+4. A Job waking at 12:00:00 does not by itself prove the value was freshly read at 12:00:00.
+5. Missed occurrences are gap/history evidence or are recovered from genuine retained source history. The current value is never copied backward into missing ticks.
+6. Source/Server timestamp may legitimately remain old on an unchanged value; capture/scheduled/ingest time are separate facts.
+
+#### B. ON_CHANGE / Value change
+
+State machine:
+
+`NoBaseline → BaselineEstablished → Observing → QualifiedChange → CaptureRequested → Durable → Observing` with `ContinuityLost → RebaselineRequired`.
+
+Rules:
+1. Supported primary band forms are None, Absolute and Percent where a valid engineering range/reference exists.
+2. The comparison reference is declared: source-notification semantics or PPIQ durable-record baseline. They are never described as identical without proof.
+3. Under PPIQ durable-baseline mode the comparison baseline advances atomically with durable acceptance of the record it represents. Storage/ack failure cannot advance the baseline.
+4. Quality/StatusCode transitions are handled by the authored quality policy and remain observable even when a bad measurement is excluded from analytical use.
+5. Optional maximum recording interval may force a periodic evidence record even without a qualified change; this is explicit hybrid behavior, not hidden compression.
+6. A source-side deadband is used only when its rules, units and reference baseline satisfy the authored contract.
+
+#### C. TRIGGERED / Trigger-counter
+
+State machine:
+
+`NoBaseline → Armed → TriggerObserved → CaptureIntentDurable → CaptureMembers → Durable | FailedGap → Rearm`.
+
+Rules:
+1. Trigger predicate is explicit: change, rising edge, falling edge, equality/condition or counter advance.
+2. First observation establishes baseline unless the policy explicitly defines startup firing. Restart/reconnect after continuity loss never invents an edge from an already-active level.
+3. Trigger field may be trigger-only; member fields may be unchanged and are still captured for that occurrence.
+4. Debounce, holdoff and re-arm semantics are explicit.
+5. Counter policy declares width, expected increment/delta, reset/wrap/epoch rule and plausible advance. A jump can prove a missing occurrence count only where the contract allows; it never reconstructs missing payloads.
+6. If source records/history retain missing events they may be read as a bounded replay. Otherwise the runtime records a gap.
+
+### 5.3.10.4 Capture strategy and consistency truth
+
+The recording policy declares the minimum required capture consistency. Runtime records the **achieved** class separately:
+
+| Class | Meaning |
+|---|---|
+| `IndependentObservations` | members may have been observed independently; no coherent-snapshot claim |
+| `BoundedReadWindow` | members read inside a measured client read window |
+| `TemporallyAligned` | member observation times satisfy the declared skew/tolerance rule |
+| `SourceVersionVerified` | source supplies a common version/sequence/record identity verified for members |
+| `SourceLatchedRecord` | source/gateway exposes one latched/atomic record/event payload |
+
+`ValidatedCacheAtTrigger`, `ReadAfterTrigger`, source-event record and source-latched record are distinct capture strategies. An OPC multi-read or a PostgreSQL transaction around writes does **not** upgrade the source observation to `SourceLatchedRecord`.
+
+If a downstream requirement needs a stronger class than achieved, the capture is Refused/FailedGap according to policy; the runtime never relabels weak evidence.
+
+### 5.3.10.5 OPC UA runtime contract
+
+Release-1 OPC UA is **client/collector capability**, not a new OPC server. The target path supports, when executable in the build and qualified for the source profile:
+
+1. endpoint discovery/selection and exact endpoint identity;
+2. application certificate/trust management and explicit security policy/mode;
+3. authenticated session lifecycle and reconnect;
+4. namespace browse with namespace URI + identifier persistence;
+5. bounded reads and subscriptions/monitored items;
+6. requested and server-revised sampling/publishing/queue/filter settings;
+7. StatusCode/quality, source timestamp and server timestamp preservation;
+8. monitored-item sequence/overflow/gap evidence where available;
+9. source-side store-and-forward/replay integration;
+10. strictly read-only behavior — no write, setpoint, control, acknowledgement that mutates plant state, or silent security downgrade.
+
+A successful session proves only the operations actually executed. It does not prove a requested 1 ms rate, DataBlock layout correctness, atomic snapshots, site workload capacity or store-and-forward endurance.
+
+### 5.3.10.6 Raw DataBlock/message decode execution
+
+Raw layout decoding consumes the immutable layout revision from Chapter 3. The decoder is declarative and bounded: offset, bit, width, signedness, byte/word order, encoding, arrays/structures and source evidence. It performs integer-overflow and buffer-bound checks before reading.
+
+Rules:
+- a manually entered address cannot create a source capability that the adapter does not expose;
+- typed OPC nodes are not decoded again through raw byte-order rules;
+- unsupported codec/type refuses before accepted-record creation;
+- arbitrary customer executable decoder code is prohibited;
+- one batch/record carries the exact layout version; an activation boundary prevents silent mixed-layout interpretation.
+
+### 5.3.10.7 Record identity, idempotency and durability boundary
+
+Every accepted occurrence has an immutable `record_id` scoped by tenant and authorised stream identity. Retry semantics are content-aware:
+
+- same identity + same integrity/content hash → idempotent same receipt;
+- same identity + different content → conflict/refusal and incident evidence;
+- different identity + equal values/timestamps → different legitimate occurrence when the source/event contract says so.
+
+Do not deduplicate only by business key, timestamp or value.
+
+The **core durable acceptance boundary** occurs only after accepted record(s), receipt/idempotency evidence and committed source/checkpoint state are durable in the same governed unit. An edge journal acknowledgement is edge durability, not core acceptance. A core response loss after commit is resolved by retrying the identity and receiving the same receipt.
+
+### 5.3.10.8 One owner, offline capture and fencing
+
+At most one capture owner generation is authorised per tenant/site/source/recording-group. Ownership is fenced by immutable generation/token plus the configured disconnected-capture allowance.
+
+Heartbeat loss by the central core **does not** prove the collector stopped capturing. A replacement may activate only after the takeover rule explicitly expires/revokes the old capture authority. A superseded collector may return in **replay-only** mode for records already made durable under the old generation; it cannot capture new occurrences for that generation.
+
+Negative acceptance: disconnect the core while the collector remains inside its lawful offline window and prove no duplicate owner begins capture.
+
+### 5.3.10.9 Finite batch/window sealing and downstream readiness
+
+Continuous acquisition cuts accepted work into finite windows/batches by configured time, record count, byte count, source boundary or another governed bounded rule.
+
+A batch becomes projection-ready only when:
+1. every included accepted record is durable;
+2. receipts/idempotency entries are durable;
+3. committed source/checkpoint position is durable;
+4. the batch is sealed and its counts/bytes/time/consistency/gap summary is final.
+
+An `Open` or `Sealing` batch is never visible to canonical projection. `CompletedWithGap` is eligible only where the consuming policy explicitly permits gap-bearing input and carries that evidence forward.
+
+### 5.3.10.10 Backpressure, bounded queues, spool and replay
+
+Every SDK queue, callback buffer, local journal/spool, delivery batch and core ingest queue is finite and observable.
+
+The collector keeps diagnostic reserve separate from ordinary payload capacity so disk-full/near-full still permits truthful fault/gap evidence where feasible.
+
+Sizing conditions include:
+
+`required_spool_bytes >= sustained_accepted_bytes_per_second × certified_disconnected_seconds + reserve_bytes`
+
+and catch-up requires:
+
+`replay_drain_rate > ongoing_live_accepted_rate`
+
+for the certified profile. Live capture owns reserved capacity so replay/backfill cannot starve current collection. If these conditions are not measured/qualified, the product does not claim the requested outage horizon.
+
+### 5.3.10.11 Pause, cancellation and terminal truth
+
+Pause/Cancel is a governed request → acknowledgement → safe-boundary transition. It is not an immediate UI label rewrite.
+
+At the safe boundary the runtime seals or fails the in-flight finite batch truthfully, persists final baseline/checkpoint/capture state, releases/fences ownership as required, then reports canonical terminal state. Already durable records remain durable; uncommitted work advances no baseline/checkpoint.
+
+B5 distinguishes `CancelRequested`, `Stopping` and terminal `Cancelled`/`Failed`/`Stopped`.
+
+### 5.3.10.12 Logical Dataset / Dump Store consumer contract
+
+Preview, Canvas schema tree, safe SQL and published transformation execution consume one tenant-scoped typed **logical Dataset** contract, not the collector journal representation.
+
+A Dataset exposes stable field IDs/keys/types plus accepted finite batches. Physical storage may evolve among a generic envelope, typed segments/partitions or immutable original-source artifacts when justified by measured workload, but consumers do not depend on that layout.
+
+One authoritative accepted payload placement exists per record. A JSONB representation is not called byte-for-byte source preservation. Exact original file/message bytes, where required, are immutable artifacts referenced by hash/identity and retention policy.
+
+### 5.3.10.13 Retention and deletion guards
+
+Source-data retention is distinct from application/log retention. Reclamation cannot remove authoritative input that is:
+
+- unprojected/unprocessed according to its required consumer policy;
+- required by replay/evidence/lineage floor;
+- under legal/operational hold;
+- not yet verified in the configured archive target;
+- still needed to reconcile an unresolved gap/receipt conflict.
+
+Archive-before-delete verifies content identity/integrity and the restore/replay path. Expiry is policy-driven, observable and audited.
+
+### 5.3.10.14 Callback safety and forbidden work
+
+A source notification callback may perform only bounded parse/decode, minimal validation, identity creation and append/journal/enqueue work required for safe handoff. It does not execute:
+
+- canonical transformation/projection;
+- arbitrary user SQL/expression graphs;
+- BI queries or chart rendering;
+- statistics/ML/Assistant work;
+- blocking remote calls outside the bounded SDK/runtime contract.
+
+This prevents source client liveness from being coupled to analytical workload.
+
+### 5.3.10.15 Acceptance matrix
+
+Release acceptance includes at least:
+
+1. all three recording state machines with known-answer and negative-control cases;
+2. Time mode records unchanged values and preserves phase after slow capture;
+3. missed periodic occurrences become gaps or genuine historical replay, never cloned current values;
+4. ON_CHANGE durable baseline does not move on failed acceptance;
+5. absolute/percent/no-band semantics and quality changes;
+6. trigger rising/falling/change/equality and counter advance, including startup/reconnect/rearm;
+7. constant capture members on trigger;
+8. counter reset/wrap/jump and missing-payload refusal;
+9. source consistency falsification — ordinary multi-read cannot claim source-latched snapshot;
+10. OPC trusted/rejected session, browse, bounded read, subscription, server-revised settings, quality/timestamps and reconnect;
+11. namespace-index change with stable URI identity;
+12. queue overflow / sequence gap / disk-full / source outage / core outage;
+13. crash after receive, after edge journal, during core DB transaction, after commit-before-response, during batch seal and during checkpoint;
+14. same-id same-content retry and same-id different-content conflict;
+15. one-owner race, lawful offline window, takeover fencing and replay-only superseded owner;
+16. browser/API restart while edge capture continues lawfully;
+17. continuous session produces multiple finite completed batches that unblock downstream projection while session remains Running;
+18. live + replay load with live reservation and measured catch-up;
+19. pause/cancel at each safe boundary;
+20. retention/archive restore/replay and deletion guards;
+21. provider/source profile capability truth remains false until the exact operation/profile is executed and qualified;
+22. no write/control source operation exists or can be enabled by configuration.
+
+No configured interval, SDK support claim, simulator or successful connection alone satisfies this acceptance.
+
+
 
 ## 5.4 THE GATE AND THE ENGINE
 
@@ -5928,7 +6172,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-001 — Source table
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §Group 1 - Source and output line 626. **Frame:** [inspector — frame `TB-001`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §Group 1 - Source and output line 626. **Frame:** [inspector — frame `TB-001`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** -
 
@@ -5936,7 +6180,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-002 — Output to canonical entity
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §Group 1 - Source and output line 627. **Frame:** [inspector — frame `TB-002`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §Group 1 - Source and output line 627. **Frame:** [inspector — frame `TB-002`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** dataset
 
@@ -5944,7 +6188,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-003 — Output to named dataset
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §Group 1 - Source and output line 628. **Frame:** [inspector — frame `TB-003`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §Group 1 - Source and output line 628. **Frame:** [inspector — frame `TB-003`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** dataset
 
@@ -5952,7 +6196,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-004 — Join
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §Group 2 - Relational line 634. **Frame:** [inspector — frame `TB-004`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §Group 2 - Relational line 634. **Frame:** [inspector — frame `TB-004`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** two datasets
 
@@ -5962,7 +6206,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-005 — Filter
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §Group 2 - Relational line 635. **Frame:** [inspector — frame `TB-005`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §Group 2 - Relational line 635. **Frame:** [inspector — frame `TB-005`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** dataset
 
@@ -5972,7 +6216,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-006 — Select columns
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §Group 2 - Relational line 636. **Frame:** [inspector — frame `TB-006`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §Group 2 - Relational line 636. **Frame:** [inspector — frame `TB-006`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** dataset
 
@@ -5982,7 +6226,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-007 — Rename / alias
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §Group 2 - Relational line 637. **Frame:** [inspector — frame `TB-007`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §Group 2 - Relational line 637. **Frame:** [inspector — frame `TB-007`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** dataset
 
@@ -5992,7 +6236,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-008 — Group by
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §Group 2 - Relational line 638. **Frame:** [inspector — frame `TB-008`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §Group 2 - Relational line 638. **Frame:** [inspector — frame `TB-008`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** dataset
 
@@ -6002,7 +6246,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-009 — Sort
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §Group 2 - Relational line 639. **Frame:** [inspector — frame `TB-009`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §Group 2 - Relational line 639. **Frame:** [inspector — frame `TB-009`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** dataset
 
@@ -6012,7 +6256,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-010 — Union
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §Group 2 - Relational line 640. **Frame:** [inspector — frame `TB-010`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §Group 2 - Relational line 640. **Frame:** [inspector — frame `TB-010`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** two datasets
 
@@ -6022,7 +6266,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-011 — Distinct
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §Group 2 - Relational line 641. **Frame:** [inspector — frame `TB-011`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §Group 2 - Relational line 641. **Frame:** [inspector — frame `TB-011`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** dataset
 
@@ -6032,7 +6276,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-012 — Limit
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §Group 2 - Relational line 642. **Frame:** [inspector — frame `TB-012`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §Group 2 - Relational line 642. **Frame:** [inspector — frame `TB-012`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** dataset
 
@@ -6042,7 +6286,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-013 — Pivot / unpivot
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §Group 2 - Relational line 643. **Frame:** [inspector — frame `TB-013`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §Group 2 - Relational line 643. **Frame:** [inspector — frame `TB-013`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** dataset
 
@@ -6052,7 +6296,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-014 — Derived column
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §Group 2 - Relational line 644. **Frame:** [inspector — frame `TB-014`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §Group 2 - Relational line 644. **Frame:** [inspector — frame `TB-014`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** dataset
 
@@ -6062,7 +6306,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-015 — Cast
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §Group 2 - Relational line 645. **Frame:** [inspector — frame `TB-015`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §Group 2 - Relational line 645. **Frame:** [inspector — frame `TB-015`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** dataset
 
@@ -6072,7 +6316,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-016 — Lookup
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §Group 2 - Relational line 646. **Frame:** [inspector — frame `TB-016`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §Group 2 - Relational line 646. **Frame:** [inspector — frame `TB-016`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** dataset + dataset
 
@@ -6082,7 +6326,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-017 — Summary statistics
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.5.2 Group A - Descriptive line 1950. **Frame:** [inspector — frame `TB-017`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.5.2 Group A - Descriptive line 1950. **Frame:** [inspector — frame `TB-017`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** dataset
 
@@ -6096,7 +6340,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-018 — Distribution
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.5.2 Group A - Descriptive line 1951. **Frame:** [inspector — frame `TB-018`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.5.2 Group A - Descriptive line 1951. **Frame:** [inspector — frame `TB-018`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** dataset
 
@@ -6110,7 +6354,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-019 — Category counts
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.5.2 Group A - Descriptive line 1952. **Frame:** [inspector — frame `TB-019`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.5.2 Group A - Descriptive line 1952. **Frame:** [inspector — frame `TB-019`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** dataset
 
@@ -6124,7 +6368,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-020 — Time series
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.5.2 Group A - Descriptive line 1953. **Frame:** [inspector — frame `TB-020`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.5.2 Group A - Descriptive line 1953. **Frame:** [inspector — frame `TB-020`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** dataset
 
@@ -6138,7 +6382,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-021 — Cross-tabulation
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.5.2 Group A - Descriptive line 1954. **Frame:** [inspector — frame `TB-021`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.5.2 Group A - Descriptive line 1954. **Frame:** [inspector — frame `TB-021`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** dataset
 
@@ -6152,7 +6396,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-022 — Outlier detection (IQR / z-score)
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.5.2 Group A - Descriptive line 1955. **Frame:** [inspector — frame `TB-022`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.5.2 Group A - Descriptive line 1955. **Frame:** [inspector — frame `TB-022`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** dataset
 
@@ -6166,7 +6410,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-023 — Missingness profile
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.5.2 Group A - Descriptive line 1956. **Frame:** [inspector — frame `TB-023`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.5.2 Group A - Descriptive line 1956. **Frame:** [inspector — frame `TB-023`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** dataset
 
@@ -6180,7 +6424,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-024 — Pearson correlation
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.5.3 Group B - Association and correlation line 1964. **Frame:** [inspector — frame `TB-024`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.5.3 Group B - Association and correlation line 1964. **Frame:** [inspector — frame `TB-024`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** dataset
 
@@ -6194,7 +6438,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-025 — Spearman rank correlation
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.5.3 Group B - Association and correlation line 1965. **Frame:** [inspector — frame `TB-025`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.5.3 Group B - Association and correlation line 1965. **Frame:** [inspector — frame `TB-025`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** dataset
 
@@ -6208,7 +6452,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-026 — Correlation matrix
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.5.3 Group B - Association and correlation line 1966. **Frame:** [inspector — frame `TB-026`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.5.3 Group B - Association and correlation line 1966. **Frame:** [inspector — frame `TB-026`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** dataset
 
@@ -6222,7 +6466,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-027 — Chi-square independence
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.5.3 Group B - Association and correlation line 1967. **Frame:** [inspector — frame `TB-027`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.5.3 Group B - Association and correlation line 1967. **Frame:** [inspector — frame `TB-027`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** dataset
 
@@ -6236,7 +6480,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-028 — ANOVA / Kruskal-Wallis
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.5.3 Group B - Association and correlation line 1968. **Frame:** [inspector — frame `TB-028`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.5.3 Group B - Association and correlation line 1968. **Frame:** [inspector — frame `TB-028`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** dataset
 
@@ -6250,7 +6494,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-029 — Odds ratio / relative risk
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.5.3 Group B - Association and correlation line 1969. **Frame:** [inspector — frame `TB-029`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.5.3 Group B - Association and correlation line 1969. **Frame:** [inspector — frame `TB-029`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** dataset
 
@@ -6264,7 +6508,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-030 — Point-biserial
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.5.3 Group B - Association and correlation line 1970. **Frame:** [inspector — frame `TB-030`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.5.3 Group B - Association and correlation line 1970. **Frame:** [inspector — frame `TB-030`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** dataset
 
@@ -6278,7 +6522,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-031 — Lagged correlation
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.5.3 Group B - Association and correlation line 1971. **Frame:** [inspector — frame `TB-031`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.5.3 Group B - Association and correlation line 1971. **Frame:** [inspector — frame `TB-031`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** dataset
 
@@ -6292,7 +6536,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-032 — Genealogy-attributed correlation
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.5.3 Group B - Association and correlation line 1972. **Frame:** [inspector — frame `TB-032`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.5.3 Group B - Association and correlation line 1972. **Frame:** [inspector — frame `TB-032`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** dataset
 
@@ -6306,7 +6550,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-033 — False-discovery control
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.5.4 Group C - Discipline (always applied, never optional) line 1980. **Frame:** [inspector — frame `TB-033`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.5.4 Group C - Discipline (always applied, never optional) line 1980. **Frame:** [inspector — frame `TB-033`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** p-value set
 
@@ -6320,7 +6564,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-034 — Effect-size ranking
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.5.4 Group C - Discipline (always applied, never optional) line 1981. **Frame:** [inspector — frame `TB-034`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.5.4 Group C - Discipline (always applied, never optional) line 1981. **Frame:** [inspector — frame `TB-034`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** results set
 
@@ -6334,7 +6578,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-035 — Stratification
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.5.4 Group C - Discipline (always applied, never optional) line 1982. **Frame:** [inspector — frame `TB-035`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.5.4 Group C - Discipline (always applied, never optional) line 1982. **Frame:** [inspector — frame `TB-035`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** dataset, results set
 
@@ -6348,7 +6592,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-036 — Bootstrap stability
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.5.4 Group C - Discipline (always applied, never optional) line 1983. **Frame:** [inspector — frame `TB-036`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.5.4 Group C - Discipline (always applied, never optional) line 1983. **Frame:** [inspector — frame `TB-036`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** dataset, results set
 
@@ -6362,7 +6606,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-037 — Confounder check
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.5.4 Group C - Discipline (always applied, never optional) line 1984. **Frame:** [inspector — frame `TB-037`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.5.4 Group C - Discipline (always applied, never optional) line 1984. **Frame:** [inspector — frame `TB-037`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** dataset, candidate confounders
 
@@ -6376,7 +6620,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-038 — Control chart
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.5.5 Group D - Process and quality specific line 1992. **Frame:** [inspector — frame `TB-038`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.5.5 Group D - Process and quality specific line 1992. **Frame:** [inspector — frame `TB-038`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** dataset
 
@@ -6390,7 +6634,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-039 — Capability
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.5.5 Group D - Process and quality specific line 1993. **Frame:** [inspector — frame `TB-039`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.5.5 Group D - Process and quality specific line 1993. **Frame:** [inspector — frame `TB-039`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** dataset
 
@@ -6404,7 +6648,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-040 — Pareto of causes
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.5.5 Group D - Process and quality specific line 1994. **Frame:** [inspector — frame `TB-040`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.5.5 Group D - Process and quality specific line 1994. **Frame:** [inspector — frame `TB-040`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** dataset
 
@@ -6418,7 +6662,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-041 — Yield decomposition
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.5.5 Group D - Process and quality specific line 1995. **Frame:** [inspector — frame `TB-041`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.5.5 Group D - Process and quality specific line 1995. **Frame:** [inspector — frame `TB-041`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** dataset
 
@@ -6432,7 +6676,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-042 — Downtime impact split
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.5.5 Group D - Process and quality specific line 1996. **Frame:** [inspector — frame `TB-042`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.5.5 Group D - Process and quality specific line 1996. **Frame:** [inspector — frame `TB-042`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** downtime dataset
 
@@ -6446,7 +6690,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-043 — Transition analysis
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.5.5 Group D - Process and quality specific line 1997. **Frame:** [inspector — frame `TB-043`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.5.5 Group D - Process and quality specific line 1997. **Frame:** [inspector — frame `TB-043`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** dataset with genealogy
 
@@ -6460,7 +6704,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-044 — Window comparison
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.5.5 Group D - Process and quality specific line 1998. **Frame:** [inspector — frame `TB-044`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.5.5 Group D - Process and quality specific line 1998. **Frame:** [inspector — frame `TB-044`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** dataset
 
@@ -6474,7 +6718,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-045 — Feature assembly
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.6.2 Group E - Feature engineering blocks line 2031. **Frame:** [inspector — frame `TB-045`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.6.2 Group E - Feature engineering blocks line 2031. **Frame:** [inspector — frame `TB-045`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** canonical dataset
 
@@ -6488,7 +6732,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-046 — Genealogy roll-up
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.6.2 Group E - Feature engineering blocks line 2032. **Frame:** [inspector — frame `TB-046`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.6.2 Group E - Feature engineering blocks line 2032. **Frame:** [inspector — frame `TB-046`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** parent-grain features
 
@@ -6502,7 +6746,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-047 — Lag feature
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.6.2 Group E - Feature engineering blocks line 2033. **Frame:** [inspector — frame `TB-047`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.6.2 Group E - Feature engineering blocks line 2033. **Frame:** [inspector — frame `TB-047`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** time series
 
@@ -6516,7 +6760,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-048 — Rolling window feature
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.6.2 Group E - Feature engineering blocks line 2034. **Frame:** [inspector — frame `TB-048`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.6.2 Group E - Feature engineering blocks line 2034. **Frame:** [inspector — frame `TB-048`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** time series
 
@@ -6530,7 +6774,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-049 — Binning
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.6.2 Group E - Feature engineering blocks line 2035. **Frame:** [inspector — frame `TB-049`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.6.2 Group E - Feature engineering blocks line 2035. **Frame:** [inspector — frame `TB-049`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** measure
 
@@ -6544,7 +6788,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-050 — Encoding
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.6.2 Group E - Feature engineering blocks line 2036. **Frame:** [inspector — frame `TB-050`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.6.2 Group E - Feature engineering blocks line 2036. **Frame:** [inspector — frame `TB-050`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** dimension
 
@@ -6558,7 +6802,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-051 — Missing-value policy
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.6.2 Group E - Feature engineering blocks line 2037. **Frame:** [inspector — frame `TB-051`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.6.2 Group E - Feature engineering blocks line 2037. **Frame:** [inspector — frame `TB-051`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** feature matrix
 
@@ -6572,7 +6816,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-052 — Scaling
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.6.2 Group E - Feature engineering blocks line 2038. **Frame:** [inspector — frame `TB-052`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.6.2 Group E - Feature engineering blocks line 2038. **Frame:** [inspector — frame `TB-052`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** feature matrix
 
@@ -6586,7 +6830,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-053 — Train/validation split
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.6.3 Group F - Model blocks line 2046. **Frame:** [inspector — frame `TB-053`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.6.3 Group F - Model blocks line 2046. **Frame:** [inspector — frame `TB-053`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** feature matrix
 
@@ -6600,7 +6844,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-054 — Classification model
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.6.3 Group F - Model blocks line 2047. **Frame:** [inspector — frame `TB-054`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.6.3 Group F - Model blocks line 2047. **Frame:** [inspector — frame `TB-054`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** training matrix
 
@@ -6614,7 +6858,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-055 — Regression model
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.6.3 Group F - Model blocks line 2048. **Frame:** [inspector — frame `TB-055`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.6.3 Group F - Model blocks line 2048. **Frame:** [inspector — frame `TB-055`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** training matrix
 
@@ -6628,7 +6872,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-056 — Anomaly detection
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.6.3 Group F - Model blocks line 2049. **Frame:** [inspector — frame `TB-056`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.6.3 Group F - Model blocks line 2049. **Frame:** [inspector — frame `TB-056`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** matrix
 
@@ -6642,7 +6886,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-057 — Clustering
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.6.3 Group F - Model blocks line 2050. **Frame:** [inspector — frame `TB-057`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.6.3 Group F - Model blocks line 2050. **Frame:** [inspector — frame `TB-057`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** matrix
 
@@ -6656,7 +6900,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-058 — Feature importance
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.6.3 Group F - Model blocks line 2051. **Frame:** [inspector — frame `TB-058`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.6.3 Group F - Model blocks line 2051. **Frame:** [inspector — frame `TB-058`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** trained model
 
@@ -6670,7 +6914,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-059 — Partial dependence
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.6.3 Group F - Model blocks line 2052. **Frame:** [inspector — frame `TB-059`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.6.3 Group F - Model blocks line 2052. **Frame:** [inspector — frame `TB-059`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** trained model, feature
 
@@ -6684,7 +6928,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-060 — Model evaluation
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.6.3 Group F - Model blocks line 2053. **Frame:** [inspector — frame `TB-060`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.6.3 Group F - Model blocks line 2053. **Frame:** [inspector — frame `TB-060`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** model, validation matrix
 
@@ -6698,7 +6942,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-061 — Calibration
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.6.3 Group F - Model blocks line 2054. **Frame:** [inspector — frame `TB-061`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.6.3 Group F - Model blocks line 2054. **Frame:** [inspector — frame `TB-061`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** model, validation matrix
 
@@ -6712,7 +6956,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-062 — Scoring
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.6.3 Group F - Model blocks line 2055. **Frame:** [inspector — frame `TB-062`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.6.3 Group F - Model blocks line 2055. **Frame:** [inspector — frame `TB-062`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** model, live matrix
 
@@ -6726,7 +6970,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-063 — Early-stage risk score
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.6.4 Group G - Prediction and recommendation line 2063. **Frame:** [inspector — frame `TB-063`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.6.4 Group G - Prediction and recommendation line 2063. **Frame:** [inspector — frame `TB-063`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** scoring output at an early grain
 
@@ -6740,7 +6984,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-064 — Downstream remediation search
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.6.4 Group G - Prediction and recommendation line 2064. **Frame:** [inspector — frame `TB-064`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.6.4 Group G - Prediction and recommendation line 2064. **Frame:** [inspector — frame `TB-064`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** risk output, historical practice dataset
 
@@ -6754,7 +6998,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-065 — Practice comparison
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.6.4 Group G - Prediction and recommendation line 2065. **Frame:** [inspector — frame `TB-065`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.6.4 Group G - Prediction and recommendation line 2065. **Frame:** [inspector — frame `TB-065`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** historical dataset
 
@@ -6768,7 +7012,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-066 — Suggestion generation
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.6.4 Group G - Prediction and recommendation line 2066. **Frame:** [inspector — frame `TB-066`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.6.4 Group G - Prediction and recommendation line 2066. **Frame:** [inspector — frame `TB-066`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** risk output, remediation output
 
@@ -6782,7 +7026,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-067 — Value attachment
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.6.4 Group G - Prediction and recommendation line 2067. **Frame:** [inspector — frame `TB-067`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.6.4 Group G - Prediction and recommendation line 2067. **Frame:** [inspector — frame `TB-067`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** suggestion, cost assumptions
 
@@ -6796,7 +7040,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-068 — Practice reconstruction
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.6.4a Practice authoring blocks - Group G2 (guideline 1.3.b) line 2082. **Frame:** [inspector — frame `TB-068`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.6.4a Practice authoring blocks - Group G2 (guideline 1.3.b) line 2082. **Frame:** [inspector — frame `TB-068`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** canonical dataset
 
@@ -6810,7 +7054,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-069 — Practice-outcome linkage
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.6.4a Practice authoring blocks - Group G2 (guideline 1.3.b) line 2083. **Frame:** [inspector — frame `TB-069`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.6.4a Practice authoring blocks - Group G2 (guideline 1.3.b) line 2083. **Frame:** [inspector — frame `TB-069`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** practice signatures, outcome dataset
 
@@ -6824,7 +7068,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-070 — Best-practice benchmark
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.6.4a Practice authoring blocks - Group G2 (guideline 1.3.b) line 2084. **Frame:** [inspector — frame `TB-070`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.6.4a Practice authoring blocks - Group G2 (guideline 1.3.b) line 2084. **Frame:** [inspector — frame `TB-070`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** linkage output
 
@@ -6838,7 +7082,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-071 — Failure-practice linkage
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.6.4a Practice authoring blocks - Group G2 (guideline 1.3.b) line 2085. **Frame:** [inspector — frame `TB-071`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.6.4a Practice authoring blocks - Group G2 (guideline 1.3.b) line 2085. **Frame:** [inspector — frame `TB-071`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** practice signatures, downtime and failure dataset
 
@@ -6852,7 +7096,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-072 — Drift detection
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.6.4a Practice authoring blocks - Group G2 (guideline 1.3.b) line 2086. **Frame:** [inspector — frame `TB-072`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.6.4a Practice authoring blocks - Group G2 (guideline 1.3.b) line 2086. **Frame:** [inspector — frame `TB-072`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inputs:** current operation, benchmark
 
@@ -6866,7 +7110,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-073 — Correlation
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §36.4 Naming discipline, ruled line 5327. **Frame:** [inspector — frame `TB-073`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §36.4 Naming discipline, ruled line 5327. **Frame:** [inspector — frame `TB-073`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **`engine_kind`:** `statistical`
 
@@ -6874,7 +7118,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-074 — Statistics
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §36.4 Naming discipline, ruled line 5328. **Frame:** [inspector — frame `TB-074`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §36.4 Naming discipline, ruled line 5328. **Frame:** [inspector — frame `TB-074`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **`engine_kind`:** `statistical`
 
@@ -6882,7 +7126,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-075 — Deep analysis
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §36.4 Naming discipline, ruled line 5329. **Frame:** [inspector — frame `TB-075`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §36.4 Naming discipline, ruled line 5329. **Frame:** [inspector — frame `TB-075`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **`engine_kind`:** `orchestration`
 
@@ -6890,7 +7134,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-076 — Anomaly
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §36.4 Naming discipline, ruled line 5330. **Frame:** [inspector — frame `TB-076`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §36.4 Naming discipline, ruled line 5330. **Frame:** [inspector — frame `TB-076`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **`engine_kind`:** `learned`
 
@@ -6898,7 +7142,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-077 — Similarity / fingerprint
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §36.4 Naming discipline, ruled line 5331. **Frame:** [inspector — frame `TB-077`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §36.4 Naming discipline, ruled line 5331. **Frame:** [inspector — frame `TB-077`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **`engine_kind`:** `retrieval`
 
@@ -6906,7 +7150,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-078 — Supervised prediction
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §36.4 Naming discipline, ruled line 5332. **Frame:** [inspector — frame `TB-078`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §36.4 Naming discipline, ruled line 5332. **Frame:** [inspector — frame `TB-078`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **`engine_kind`:** `learned`
 
@@ -6914,7 +7158,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-079 — Practice learning
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §36.4 Naming discipline, ruled line 5333. **Frame:** [inspector — frame `TB-079`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §36.4 Naming discipline, ruled line 5333. **Frame:** [inspector — frame `TB-079`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **`engine_kind`:** `statistical` with a learned component
 
@@ -6922,7 +7166,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-080 — Remediation search
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §36.4 Naming discipline, ruled line 5334. **Frame:** [inspector — frame `TB-080`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §36.4 Naming discipline, ruled line 5334. **Frame:** [inspector — frame `TB-080`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **`engine_kind`:** `governance` plus `statistical`
 
@@ -6930,7 +7174,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-081 — Scenario
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §36.4 Naming discipline, ruled line 5335. **Frame:** [inspector — frame `TB-081`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §36.4 Naming discipline, ruled line 5335. **Frame:** [inspector — frame `TB-081`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **`engine_kind`:** `learned`
 
@@ -6938,7 +7182,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### TB-082 — Value
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §36.4 Naming discipline, ruled line 5336. **Frame:** [inspector — frame `TB-082`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §36.4 Naming discipline, ruled line 5336. **Frame:** [inspector — frame `TB-082`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **`engine_kind`:** `projection`
 
@@ -6948,7 +7192,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### INS-01 — Source
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.2.17 Per-block property inspectors. **Frame:** [open — frame `INS-01`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.2.17 Per-block property inspectors. **Frame:** [open — frame `INS-01`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inspector fields:** Schema, table (typed pickers), row estimate, column checklist with types, sample toggle
 
@@ -6960,7 +7204,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### INS-02 — Join
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.2.17 Per-block property inspectors. **Frame:** [open — frame `INS-02`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.2.17 Per-block property inspectors. **Frame:** [open — frame `INS-02`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inspector fields:** Type (inner/left/right/full), **ordered key-pair rows** with add and reorder, grain on both sides, cardinality (declared, then observed after preview), **attribution rule when grain converts**, weight expression
 
@@ -6972,7 +7216,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### INS-03 — Filter
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.2.17 Per-block property inspectors. **Frame:** [open — frame `INS-03`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.2.17 Per-block property inspectors. **Frame:** [open — frame `INS-03`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inspector fields:** Expression (opens 5.2.16), null handling, case sensitivity
 
@@ -6984,7 +7228,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### INS-04 — Select columns
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.2.17 Per-block property inspectors. **Frame:** [open — frame `INS-04`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.2.17 Per-block property inspectors. **Frame:** [open — frame `INS-04`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inspector fields:** Column checklist, rename pairs, output order
 
@@ -6996,7 +7240,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### INS-05 — Group by
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.2.17 Per-block property inspectors. **Frame:** [open — frame `INS-05`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.2.17 Per-block property inspectors. **Frame:** [open — frame `INS-05`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inspector fields:** Group keys (multi), aggregate rows: function, column, alias
 
@@ -7008,7 +7252,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### INS-06 — Derived column
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.2.17 Per-block property inspectors. **Frame:** [open — frame `INS-06`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.2.17 Per-block property inspectors. **Frame:** [open — frame `INS-06`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inspector fields:** Name, expression (opens 5.2.16), declared type, unit
 
@@ -7020,7 +7264,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### INS-07 — Sort / Limit
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.2.17 Per-block property inspectors. **Frame:** [open — frame `INS-07`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.2.17 Per-block property inspectors. **Frame:** [open — frame `INS-07`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inspector fields:** Column, direction, n
 
@@ -7032,7 +7276,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### INS-08 — Union
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.2.17 Per-block property inspectors. **Frame:** [open — frame `INS-08`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.2.17 Per-block property inspectors. **Frame:** [open — frame `INS-08`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inspector fields:** Second input, column alignment map
 
@@ -7044,7 +7288,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### INS-09 — Output to canonical
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.2.17 Per-block property inspectors. **Frame:** [open — frame `INS-09`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.2.17 Per-block property inspectors. **Frame:** [open — frame `INS-09`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inspector fields:** Target entity (typed picker), field map rows, `const:` literals, provenance columns (read-only, shown)
 
@@ -7056,7 +7300,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### INS-10 — Statistical method
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.2.17 Per-block property inspectors. **Frame:** [open — frame `INS-10`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.2.17 Per-block property inspectors. **Frame:** [open — frame `INS-10`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inspector fields:** Method, outcome, factor set, window, stratification dimensions, method-auto toggle
 
@@ -7068,7 +7312,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### INS-11 — Model
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.2.17 Per-block property inspectors. **Frame:** [open — frame `INS-11`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.2.17 Per-block property inspectors. **Frame:** [open — frame `INS-11`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inspector fields:** Algorithm, feature set version, split strategy, missing-value policy, scaling, hyperparameters, acceptance floor
 
@@ -7080,7 +7324,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### INS-12 — Scoring
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.2.17 Per-block property inspectors. **Frame:** [open — frame `INS-12`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.2.17 Per-block property inspectors. **Frame:** [open — frame `INS-12`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inspector fields:** Model version, scope rule, batch size, latency budget, trigger kind
 
@@ -7092,7 +7336,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### INS-13 — Prediction
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.2.17 Per-block property inspectors. **Frame:** [open — frame `INS-13`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.2.17 Per-block property inspectors. **Frame:** [open — frame `INS-13`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inspector fields:** Outcome, horizon stage, risk banding thresholds, confidence display
 
@@ -7104,7 +7348,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### INS-14 — Remediation
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.2.17 Per-block property inspectors. **Frame:** [open — frame `INS-14`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.2.17 Per-block property inspectors. **Frame:** [open — frame `INS-14`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inspector fields:** Comparable-condition rule, candidate practice set, **minimum support**, expected-effect measure, limitations text
 
@@ -7116,7 +7360,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### INS-15 — Alert condition
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.2.17 Per-block property inspectors. **Frame:** [open — frame `INS-15`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.2.17 Per-block property inspectors. **Frame:** [open — frame `INS-15`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inspector fields:** Parameter, comparator, limit or limit source (specification or operating limit), severity, message template with tokens
 
@@ -7128,7 +7372,7 @@ All explicitly tabulated block rows from the current Chapter 4 catalogue appear 
 
 ### INS-16 — Action
 
-**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.md §5.2.17 Per-block property inspectors. **Frame:** [open — frame `INS-16`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
+**Source:** PPIQ_Chapter4_Specific_Technical_Function_Description_v4.11.1.md §5.2.17 Per-block property inspectors. **Frame:** [open — frame `INS-16`](PPIQ_Chapter4_Specific_Technical_Function_Description_v4.10.3.docx).
 
 **Inspector fields:** Action kind (log, notify, route), channel, recipients, dedup window
 

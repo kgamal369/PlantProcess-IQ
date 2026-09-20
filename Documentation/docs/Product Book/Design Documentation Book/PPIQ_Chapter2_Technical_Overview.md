@@ -1,19 +1,19 @@
 # PlantProcess IQ - Master Design Document
 
-**Version 4.10.3 | Author: Karim, SOU Industrial Software, Dusseldorf**
+**Version 4.11.1 | Author: Karim, SOU Industrial Software, Dusseldorf**
 
-> **Package revision — 14 September 2026, v4.10.3.** Owner-authorised correction of cursor total-order safety, machine scheduling and dependency freshness is integrated in Chapters 3 and 4. The release-allocation note below records the approved M2/M3 split; the full target is preserved. Other chapter bodies are retained, not rewritten. The derived UI material is integrated into Chapters 3 and 4, including their illustrated Word editions; no standalone UI companion belongs in the controlled book. Visual material cannot override functional rules. See `PPIQ_Definition.md` for the complete fourteen-file register.
+> **Package revision — 17 September 2026, v4.11.1.** Industrial Integration is now integrated across all six functional chapters. Chapter 2 owns the Release-1 naming/boundary and B1–B6 inventory; Chapter 3 owns page/API/data-flow contracts; Chapter 4 owns execution semantics; Chapter 5 teaches the unified acquisition workflow; Chapter 6 owns acquisition sizing, retention, spool/replay and qualification operating envelopes. This revision also removes the B1/B4 scheduling contradiction and freezes exact service-route families. Backlog v2.24.0 remains the execution authority; this documentation correction does not create a new task family or reopen valid closures.
 
-> **Current planning basis (supersedes historical dates only).** M2 targets approximately one month from the owner's September planning checkpoint; M3 targets 45 days after M2 completion. No new absolute delivery date is asserted here. Historical change-log dates remain historical; Backlog v2.23.0 governs the current execution allocation.
+> **Current planning basis.** M2 remains the owner's Release-1 scope and approximately-one-month planning intent, **not a forecast**, until the currently unestimated/re-estimate-required tasks are calibrated from current source. M3 remains 45 days after M2 completion. No new absolute delivery date is asserted. Backlog v2.24.0 governs execution.
 
-> **Change log — Two-Release Production Roadmap and Day-1 Workbench Constitution (23 August 2026, v4.10).** v4.10 replaces retired internal programme codes with exactly two product releases: **M2 — Release 1, 30 September 2026**, for genuine early production and first-week customer work; and **M3 — Release 2, 30 October 2026**, for heavy production, higher data volume, more users and advanced intelligence. Each release uses only **P1, P2, P3, P4 and P5**. Release 1 makes DB Link/data onboarding, Canvas/data preparation, Jobs, enterprise BI reliability, read-only production OPC UA, governed References/Reconciliation/Assistant and minimum production hardening first-class release gates. Release 2 owns scale, advanced BI/authoring, deep enterprise administration, InsightBoard composition, multi-objective optimisation, customer-grade ROI convergence and heavy-production certification. Design and backlog are required to be one-to-one traceable: every designed product outcome has an execution owner and acceptance path, and every backlog task maps to an owning design contract.
+> **Change log — Two-Release Production Roadmap and Day-1 Workbench Constitution (23 August 2026, v4.10).** v4.10 replaces retired internal programme codes with exactly two product releases: **M2 — Release 1, 30 September 2026**, for genuine early production and first-week customer work; and **M3 — Release 2, 30 October 2026**, for heavy production, higher data volume, more users and advanced intelligence. Each release uses only **P1, P2, P3, P4 and P5**. Release 1 makes DB Link/data onboarding, Canvas/data preparation, Jobs, enterprise BI reliability, read-only production industrial acquisition with OPC UA as the Release-1 OT priority, governed References/Reconciliation/Assistant and minimum production hardening first-class release gates. Release 2 owns scale, advanced BI/authoring, deep enterprise administration, InsightBoard composition, multi-objective optimisation, customer-grade ROI convergence and heavy-production certification. Design and backlog are required to be one-to-one traceable: every designed product outcome has an execution owner and acceptance path, and every backlog task maps to an owning design contract.
 
 > **Change log — Operational-Regime, Multi-Objective Practice and Period-Driver Hardening (22 August 2026, v4.9).** v4.9 closes the two generic gaps exposed by the first oil-plant requirement review without introducing oil-specific vocabulary: process transitions/changeovers and stabilisation become first-class governed context so statistics cannot mix distinct operating regimes; practice learning gains customer-declared multi-objective objective sets with Pareto/non-dominance and explicit preference resolution rather than silently choosing one KPI; exact period-to-period operational driver decomposition is added so the Assistant can explain changes in cost/productivity drivers from Layer-A facts before the monetary Value Engine is available. The release also binds the September checkpoint/fallback to the single v2.13 execution workbook. The six chapters remain the only design authority.
 
 
 ---
 
-> **CURRENT AUTHORITY — Master Design v4.10.3.** PlantProcess IQ has exactly six current design-authority chapters and one current execution-authority backlog workbook. No other file may define, amend, override, supplement or reinterpret current product design or implementation scope. A design change edits the owning chapter directly; a scope change edits the backlog directly. Transitional reviews, amendment packs, ledgers, mandates and prior revisions are historical evidence only after their accepted content is integrated. Validation scripts are code/enforcement instruments, not design documentation.
+> **CURRENT AUTHORITY — Master Design v4.11.1.** PlantProcess IQ has exactly six current design-authority chapters and one current execution-authority backlog workbook. No other file may define, amend, override, supplement or reinterpret current product design or implementation scope. A design change edits the owning chapter directly; a scope change edits the backlog directly. Transitional reviews, amendment packs, ledgers, mandates and prior revisions are historical evidence only after their accepted content is integrated. Validation scripts are code/enforcement instruments, not design documentation.
 
 
 # CHAPTER 2 - TECHNICAL OVERVIEW
@@ -246,10 +246,10 @@ Full statement of the rule, with the review checklist it imposes on every capabi
 | **J2** | Activate the licence | Tier capabilities and the capacity envelope become visible | F2 Licence and Entitlement |
 | **J3** | Create users and roles | The people who will use the system exist, with scoped permissions | F1 Users and Roles; F3 Quota |
 | **J4** | Declare read-only connections | Each source database or file share is reachable and proven read-only | B1 Connections |
-| **J5** | Register datasets | The tables, views and files that will enter the product are chosen, with their watermarks | B2 Dataset Registry; B3 Prepare Import |
-| **J6** | First incremental import | The customer's rows arrive in staging with batch lineage | B4 Importing; B5 Jobs Monitor |
+| **J5** | Register datasets and fields | Source objects/nodes and stable field/layout identities are governed | B2 Dataset Registry; B3 Prepare Acquisition |
+| **J6** | First accepted acquisition/import | Source-shaped records arrive in the governed Dump Store with session/batch/receipt lineage | B4 Acquisition Runs; B5 Jobs Monitor |
 | **J7** | Author the transformation and publish the relationship model | The plant's own model of itself exists: joins, keys, aliases, grain | C1 Transformation Studio; C6 Relationship Browser |
-| **J8** | Project to canonical, with validation | Staged rows become canonical plant data; invalid rows are quarantined with reasons, not silently accepted | B4 Importing; C2 Mapping Health; C3 Data Quality |
+| **J8** | Project to canonical, with validation | Accepted source-shaped rows become canonical plant data; invalid rows are quarantined with reasons, not silently accepted | B4 Acquisition Runs; C2 Mapping Health; C3 Data Quality |
 | **J9** | Walk the genealogy | Any unit is traceable backward and forward on the plant's own keys | C5 Genealogy Explorer; C4 Plant Model Explorer |
 | **J10** | Build pages, widgets and filters | Analysis surfaces exist, authored without code | D2 Page Builder |
 | **J11** | Explore associatively | Clicking any value narrows everything and shows what is possible and excluded | D1 Interactive Workspace |
@@ -370,17 +370,17 @@ Every page publishes the page contract of Chapter 3, 4.7 and is specified contro
 
 #### Group B - Connect and import (6)
 
-**B1 Connections** - `/data-integration/connections`. Where read-only links are created, tested, scheduled and budgeted. The only door for plant data, carrying the read-only promise permanently on screen, plus the connector catalogue with honest availability so a buyer sees what is proven and what is planned without asking.
+**B1 Connections** - `/data-integration/connections`. Where read-only links are created, trust/security tested and source budgets configured. **Scheduling is not owned here.** The only door for plant data, carrying the read-only promise permanently on screen, plus the connector catalogue with honest availability so a buyer sees what is proven and what is planned without asking.
 
 **B2 Dataset Registry** - `/data-integration/registry`. Where the customer chooses which source objects enter the product, by browsing the live source, so the engineer sees his own table and column names. Registration is what makes a dataset due for import.
 
-**B3 Prepare Import** - `/data-integration/prepare`. Where each dataset gets its imported columns, business key and watermark column. This page is where a plant decides how cheap or expensive its imports will be.
+**B3 Prepare Acquisition** - `/data-integration/prepare`. The single Fields, Layout, Acquisition & Recording editor. It retains database key/watermark preparation and adds stable field/layout revisions plus Time / Value change / Trigger-counter policy, Requested/Effective/Qualified source settings and storage/retention/capacity controls.
 
-**B4 Importing** - `/data-integration/importing`. Where imports run and are watched: batches with counts, watermark ranges and outcomes, projection results with mapped and quarantined counts, and the per-definition projection schedule.
+**B4 Acquisition Runs** - `/data-integration/importing`. Operational data-plane truth for finite imports and continuous sessions. It separates long-lived sessions from finite sealed batches, shows buffering/gaps/replay/receipts and **does not edit schedules or dependencies**.
 
-**B5 Jobs Monitor** - `/data-integration/jobs`. One monitor for every job family: import, projection, feature refresh, analysis, model, practice, prediction, supervisor, alert evaluation, retention. It **watches**; it does not configure. A refused or blocked run appears here as a real run with its named reason.
+**B5 Jobs Monitor** - `/data-integration/jobs`. One monitor for every job family, including `ContinuousAcquisition`: import/acquisition, projection, feature refresh, analysis, model, practice, prediction, supervisor, alert evaluation and retention. It **watches**; it does not configure. A refused or blocked run appears here as a real run with its named reason.
 
-**B6 Connector Truth** - `/data-integration/connector-truth`. The capability matrix per connector: what is proven, what is certified read-only, what is planned. It exists because a catalogue row is not a connector. No mutating control exists on this page.
+**B6 Connector Truth** - `/data-integration/connector-truth`. Operation/profile/site qualification truth per connector: configured, executable, requested/effective and measured/qualified facts are distinct. It exists because a catalogue row is not a connector. No mutating control exists on this page.
 
 #### Group C - Model the plant (6)
 
@@ -613,7 +613,7 @@ Current classification of the capabilities most often questioned:
 | Signal / aggregation semantics | **Core** | A product may not emit a plausible aggregate whose mathematical meaning is undeclared |
 | Performance Reference - declared half | **Core** | Customer standards/targets/envelopes are exact governed facts |
 | Operational Evidence Reconciliation | **Advanced** | Requires overlapping independent evidence and established temporal authority; full design is Core architecture, activation is data-maturity gated |
-| Production OPC UA edge acquisition | **Advanced** | Connector family capability; the read-only collector architecture is Core, live protocol support is certified per customer environment |
+| Production industrial acquisition / OPC UA edge path | **Core** | Release-1 capability. OPC UA is the OT priority; individual operations and site/rate profiles remain separately certified and truthfully unavailable until executed |
 | Insight Board Composer | **Advanced** | Governed investigation composition; grounded Assistant Q&A remains independently usable |
 | Any write path to a plant system | **Excluded** | Violates the read-only boundary; no design will be produced |
 | Autonomous application of a model or threshold change | **Excluded** | Violates governed review; human approval is structural |
@@ -1029,7 +1029,16 @@ Enforced in three layers: the Layer B database role holds grants on Plant Data a
 
 
 
-### 2.1 Generic Analysis Subject law
+#
+### 2.0.12 Release-1 Industrial Integration constitution
+
+Release 1 uses one **control plane** (connections, Dataset/field/layout versions, recording policies, Jobs, retention/capacity), one **data plane** (provider adapters, bounded acquisition, durable acceptance, gaps/replay, finite batch sealing) and one **semantic plane** (Source Time, stable field identity, quality/consistency and canonical projection). Provider-specific mechanics remain behind that common contract.
+
+The user workflow is fixed as: **Connection → Dataset → Fields/Layout → Recording Policy → Storage/Retention → Job → Validate/Activate**. Recording choices are Time, Value change and Trigger/counter. Source monitoring/sampling/publishing is not the same event as a durable PPIQ record. Continuous sessions are not infinite batches: they emit finite sealed batches/windows for downstream work.
+
+The five relevant clocks are source time, server/provider time, scheduled/trigger time, edge receive/durable time and core ingest/acceptance time. Requested, effective/negotiated and qualified/measured settings are never collapsed into one number.
+
+## 2.1 Generic Analysis Subject law
 
 Layer B receives `analysis_subject_id + grain_code`, not an industry identity. An Analysis Subject may resolve to a material unit, batch, campaign, equipment interval, process window, flow interval or customer extension. `material_unit_id` may exist in canonical discrete-manufacturing data but is **not** a mandatory key in Layer-B feature, prediction or evidence contracts.
 

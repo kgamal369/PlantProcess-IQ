@@ -1,10 +1,16 @@
 # PlantProcess IQ - Master Design Document
 
-**Version 4.10.3 | Author: Karim, SOU Industrial Software, Dusseldorf** | **MASTER DESIGN FREEZE CANDIDATE**
+**Version 4.11.1 | Author: Karim, SOU Industrial Software, Dusseldorf**
 
+> **Package revision — 17 September 2026, v4.11.1.** OPC/Industrial Integration screen-and-runtime contract completion. v4.11.0 established the capability and execution ownership; v4.11.1 integrates the missing page-specific controls, states, calls, validation and execution semantics directly into Chapter 3 and expands the matching Chapter 4 runtime rules. No new product capability, release, task family or closed-task reopening is created by this correction.
+>
+> **v4.11.0 foundation retained.** Owner-approved Industrial Integration Contract integrated across Chapters 1–6; Chapters 1, 2, 5 and 6 are synchronized in this 17-Sep package. The existing read-only collector, three-schema platform, immutable definitions, Source Time Authority, canonical Job authority and projection path remain the foundations. This revision adds one provider-aware source-configuration model, stable field/layout identity, Time / Value change / Trigger-counter recording policies, finite accepted-batch semantics for continuous acquisition, a governed logical Dump Store contract, acquisition-specific retention/capacity admission and exact capability/qualification truth. OPC UA remains the Release-1 OT transport priority; native PLC transports are optional separately qualified adapters, not an implicit requirement. No universal millisecond, lossless, atomic-snapshot or unlimited-retention promise is created.
+>
 > **Package revision — 14 September 2026, v4.10.3.** Owner-authorised correction of cursor total-order safety, machine scheduling and dependency freshness is integrated in Chapters 3 and 4. The release-allocation note below records the approved M2/M3 split; the full target is preserved. Other chapter bodies are retained, not rewritten. The derived UI material is integrated into Chapters 3 and 4, including their illustrated Word editions; no standalone UI companion belongs in the controlled book. Visual material cannot override functional rules. See `PPIQ_Definition.md` for the complete fourteen-file register.
 
-> **Current planning basis (supersedes historical dates only).** M2 targets approximately one month from the owner's September planning checkpoint; M3 targets 45 days after M2 completion. No new absolute delivery date is asserted here. Historical change-log dates remain historical; Backlog v2.23.0 governs the current execution allocation.
+> **Illustrated Word note.** Frame links below name the derived v4.11.1 illustrated edition expected from T-265/T-266. This Markdown is the current functional authority; the package does not claim the regenerated Word file already exists.
+>
+> **Current planning basis (supersedes historical dates only).** M2 targets approximately one month from the owner's September planning checkpoint; M3 targets 45 days after M2 completion. No new absolute delivery date is asserted here. Historical change-log dates remain historical; Backlog v2.24.0 governs the current execution allocation.
 
 > **Change log — Catalogue Evidence-Grade, Canonical-Fact Lifecycle and Physical-Naming Hardening (4 September 2026, v4.10.2).** No product capability or release scope changes. The v4.10.1 physical-catalogue contract is tightened after review of the first generated catalogue: `GENERATED_INFERENCE` is explicitly draft-only and cannot satisfy lifecycle/family/owner/design-clause release certification; canonical plant fact families are authoritative plant history even when their names end in `_events`; source-script banner text is not accepted as a table purpose; the catalogue distinguishes source-declared/origin schema from governed target/effective schema and live-observed schema so pre-convergence `public` declarations cannot masquerade as compliant runtime topology; and new physical table/view names may not encode schema generations with `_v1`, `_v2`, etc. Existing version-suffixed names remain grandfathered until an owned compatibility-safe convergence. Chapters 1, 2, 4, 5 and 6 remain unchanged.
 
@@ -23,7 +29,7 @@
 
 ---
 
-> **CURRENT AUTHORITY — Master Design v4.10.3.** PlantProcess IQ has exactly six current design-authority chapters and one current execution-authority backlog workbook. No other file may define, amend, override, supplement or reinterpret current product design or implementation scope. A design change edits the owning chapter directly; a scope change edits the backlog directly. Transitional reviews, amendment packs, ledgers, mandates and prior revisions are historical evidence only after their accepted content is integrated. Validation scripts are code/enforcement instruments, not design documentation.
+> **CURRENT AUTHORITY — Master Design v4.11.1.** PlantProcess IQ has exactly six current design-authority chapters and one current execution-authority backlog workbook. No other file may define, amend, override, supplement or reinterpret current product design or implementation scope. A design change edits the owning chapter directly; a scope change edits the backlog directly. Transitional reviews, amendment packs, ledgers, mandates and prior revisions are historical evidence only after their accepted content is integrated. Validation scripts are code/enforcement instruments, not design documentation.
 
 
 # CHAPTER 3 - GENERAL SOFTWARE PRODUCT TECHNICAL FUNCTION DESCRIPTION
@@ -137,7 +143,7 @@ Fifteen technical steps, DF1 to DF15, mapped to the canonical user journey J1 to
 
 ### DF1 - Source connection and read-only proof
 
-**CONCEPT.** Establish a read-only path to one customer database or file share, prove it is read-only, and record how it may be used: schedule window and load budget. This is the only door for plant data.
+**CONCEPT.** Establish a read-only path to one customer source, prove it is read-only, and record the source-access/load-budget envelope. Scheduling belongs only to the governed Job authority; B1 never owns a page-local schedule. This is the only door for plant data.
 
 **ACTOR.** Administrator or Data Engineer.
 
@@ -150,7 +156,7 @@ Fifteen technical steps, DF1 to DF15, mapped to the canonical user journey J1 to
 2. **New Connection Profile** switches the panel to form mode.
 3. The author enters name, provider type, host, port, database, schema, credentials, and for file providers the path. Provider-dependent fields appear and disappear on provider change.
 4. The author sets the **source system tag** (MES, level 2, historian, LIMS, ERP, inspection) - lineage only, never a behaviour branch.
-5. The author sets the **load budget**: max rows per read, statement timeout, requests per minute, approved window.
+5. The author sets the **load budget/source-access window**: max rows per read, statement timeout, requests per minute and the approved source-access window. This is a source-protection budget, not a Job schedule.
 6. **Test connection** proves reachability, authentication, permission and **read-only status**.
 7. **Save** persists the profile; credentials go to the vault and the row stores only a vault reference.
 
@@ -164,8 +170,7 @@ Fifteen technical steps, DF1 to DF15, mapped to the canonical user journey J1 to
 | `PUT /api/connections/{id}` | Update; credentials only by explicit re-entry |
 | `POST /api/connections/{id}/test` | Reachability, authentication, permission, read-only verification |
 | `POST /api/connections/{id}/activate` / `/deactivate` | Availability for scheduling |
-| `PUT /api/connections/{id}/budget` | Load budget |
-| `PUT /api/connections/{id}/schedule` | Approved window |
+| `PUT /api/connections/{id}/budget` | Load budget including approved source-access window |
 
 **PAYLOAD.** Request: `{ name, code?, providerType, host, port, database, schema, username, secretRef, filePath?, sourceSystemTag, budget { maxRowsPerRead, statementTimeoutSeconds, requestsPerMinute, approvedWindow { from, to, daysOfWeek } } }`. Test response: `{ success, reachedAt, latencyMs, serverVersion?, readOnlyVerified, failedLayer? }`.
 
@@ -197,13 +202,13 @@ Fifteen technical steps, DF1 to DF15, mapped to the canonical user journey J1 to
 
 **PRECONDITION.** DF1 profile active and tested.
 
-**SURFACE.** B2 Dataset Registry `/data-integration/registry`; B3 Prepare Import `/data-integration/prepare`.
+**SURFACE.** B2 Dataset Registry `/data-integration/registry`; B3 Prepare Acquisition `/data-integration/prepare`.
 
 **SEQUENCE.**
 1. Select a connection. A live browse loads the schema tree, then tables, then columns with observed types and row estimates, all under the load budget.
 2. Select a table. The discovery service marks likely keys and likely timestamps as **suggestions the author confirms**, never as decisions.
 3. **Register** creates the dataset with its staging target name.
-4. On Prepare Import: choose imported columns; choose the business key columns and their order; choose the watermark column and its type. Save.
+4. On Prepare Acquisition: choose imported columns; choose the business key columns and their order; choose the watermark column and its type. Save.
 5. Register the taxonomy sources first, because canonical projection resolves vocabulary before it resolves facts.
 
 **CALLS.**
@@ -241,7 +246,7 @@ Fifteen technical steps, DF1 to DF15, mapped to the canonical user journey J1 to
 
 **PRECONDITION.** DF2 complete for the dataset.
 
-**SURFACE.** B4 Importing `/data-integration/importing`; B5 Jobs Monitor `/data-integration/jobs`; progress also visible in G6 the activity tray from any page.
+**SURFACE.** B4 Acquisition Runs `/data-integration/importing`; B5 Jobs Monitor `/data-integration/jobs`; progress also visible in G6 the activity tray from any page.
 
 **SEQUENCE.**
 1. The scheduler admits the run through the `import` pool, after jitter and the skip-if-running policy.
@@ -286,6 +291,126 @@ The Data Engineer confirms the tie-break from ordered imported business-key memb
 A retry may read records again, but durable staging has idempotent effects using a tenant/dataset/source-identity/source-version receipt. Do not deduplicate only by business key: a later legitimate update to the same source row is a different source version. Cursor, staged records and their receipt commit together; failed or cancelled uncommitted work advances nothing. Late/out-of-order changes and deletes require an explicitly supported source revision/CDC or overlap-and-reconciliation policy; a timestamp tie-break alone does not make these changes discoverable. Existing scalar checkpoints are migrated only after their source ordering can be validated; otherwise pause and require a governed backfill/reconciliation, never invent tie-break values.
 
 Acceptance: more equal-watermark records than one page fit are all staged without loss; repeat over at least three pages and after restart. Test numeric, timestamp, text and composite positions, provider-native collation/precision, invariant serialization, null/refused keys, an update to an existing source identity, concurrent readers, failure before/after commit and a no-change rerun. No real customer incident is inferred from these tests.
+
+
+#### DF1–DF3 Industrial Acquisition Contract — v4.11.0
+
+This contract **extends the existing DF1, DF2 and DF3 authorities; it does not create DF16, a second source registry or a second scheduler.** Database/file incremental import and live industrial acquisition share the same governed identities and downstream staging/projection boundary while preserving source-specific execution mechanics.
+
+##### A. Configuration identity and lifecycle
+
+A published acquisition configuration resolves, by immutable version, at least:
+
+- tenant/site and approved collector binding;
+- connection profile and provider/source profile;
+- dataset identity and selected source object(s);
+- stable field identities and optional immutable raw-layout revision;
+- one or more recording groups, each with its member field IDs and record shape;
+- one recording policy: `PERIODIC`, `ON_CHANGE` or `TRIGGERED`;
+- Source Time Authority reference, quality policy and conversion-version references;
+- retention/capacity profile and governed Job binding;
+- source-operation capability requirements and activation boundary.
+
+Draft save, connection/source test, validation, publication and runtime activation are distinct operations. Runtime-negotiated settings and health evidence are **not** written back into the immutable authored configuration as if they were the requested policy.
+
+##### B. Stable field and layout contract
+
+Every selected field has:
+
+| Element | Contract |
+|---|---|
+| `field_id` | Durable PPIQ identity referenced by groups, triggers, mapping and lineage. Label-only edits never regenerate it. |
+| `source_locator` | Provider-specific physical identity: database column/path, OPC namespace URI + identifier/attribute/index range, or approved raw address/member path. |
+| `field_key` | Stable technical key unique inside the dataset revision. |
+| `display_name` | Localisable human label; never a decoder or source locator. |
+| `declared_type` | Source/decoded type including width/shape where applicable. |
+| `source_unit` | Original engineering unit when declared. |
+| `roles` | Payload, trigger, event identity, quality/time/key role as explicitly declared. |
+
+A raw DataBlock/message layout is versioned and bounded. It declares base/read region, absolute-versus-relative offsets, bit offset, width or bounded variable-length rule, signedness, byte/word order, string encoding, arrays/structures and the evidence/provenance by which the layout was approved. The decoder rejects out-of-bounds members, unsupported types/codecs, ambiguous overlaps, invalid bit coordinates and resource-limit violations before it produces accepted values. Arbitrary customer executable decoder code is not accepted.
+
+An OPC typed node is not decoded a second time as raw bytes. A manually typed PLC address does not make an OPC server expose that address.
+
+##### C. Recording policies
+
+**PERIODIC.** Every admitted scheduled occurrence creates one result for the declared member set, including unchanged values. The schedule is phase anchored; it is not `previous completion + interval`. Missed periods become explicit missed/gap evidence or are recovered from genuine source history. Reading the current value after an outage and assigning it retrospectively to earlier ticks is prohibited.
+
+The policy declares whether the capture is a new bounded read or a verified cached observation. A requested fresh read cannot be claimed merely because the Job woke up at that time.
+
+**ON_CHANGE.** The policy declares comparison source and qualification. Supported baseline forms are no numeric band, absolute band or percent band where a valid engineering range exists. Source-side filtering may be used only when its semantics are proven equivalent to the authored PPIQ policy and the activation receipt records the effective filter. Otherwise PPIQ evaluates the rule on sufficiently complete observed inputs.
+
+For a PPIQ durable-record baseline, comparison state advances only with the record whose durable acceptance it represents; a storage failure cannot move the baseline ahead of persisted evidence. Quality/status transitions follow the declared quality policy and remain observable even if a bad measurement is excluded from analytics.
+
+**TRIGGERED.** One or more stable trigger fields/predicates create a capture occurrence. Predicates may include change, rising edge, falling edge, equality or declared counter advance. The first observation establishes baseline unless the authored policy says otherwise; restart/reconnect after invalid continuity re-baselines with explicit discontinuity rather than inventing an edge.
+
+Trigger members may be constant and are still captured. `ReadAfterTrigger`, `ValidatedCacheAtTrigger`, `SourceVersionVerified` and `SourceLatchedRecord` are distinct capture strategies/consistency claims. Reading several tags in one OPC request or committing them in one SQL transaction is not evidence of one PLC scan.
+
+A counter contract includes width, expected increment/delta, reset/wrap/epoch behavior and plausible advance. A jump may prove missing occurrences only under that contract; it never supplies missing payloads. PPIQ retrieves actual retained source records or records a gap.
+
+##### D. Timing, quality and consistency
+
+Each accepted member preserves the available source timestamp, server timestamp, raw quality/StatusCode and original typed value. A record additionally carries scheduled/trigger time, capture start/end, edge receive, durable edge time and core ingest/acceptance time as applicable.
+
+Requested sampling/monitoring, source-revised/effective sampling, publishing/reporting and measured accepted-record rates are distinct. An old source-change timestamp on an unchanged value is not by itself proof that a fresh verification did not occur.
+
+The achieved consistency class is recorded separately from the requirement: `IndependentObservations`, `BoundedReadWindow`, `TemporallyAligned`, `SourceVersionVerified` or `SourceLatchedRecord`. A workflow requiring a stronger class refuses or records a failed capture when the class is not achieved; it does not relabel weaker evidence.
+
+##### E. Continuous session and finite batch boundary
+
+A continuous acquisition Job creates a long-lived session/activation identity plus finite, monotonically identified **completed batches/windows**. Source callbacks and polling lanes write/journal bounded occurrences; batch sealing creates the downstream release boundary. A never-ending session is never treated as one never-ending import batch.
+
+For each finite accepted batch the receiving path authenticates collector/tenant/site/source scope, validates exact configuration/layout versions, size and identity, persists accepted source-shaped records plus idempotency receipts and committed position atomically, then returns a durable receipt. A receipt proves accepted staging durability, **not canonical projection success**.
+
+Same accepted-record identity plus same content is idempotent. Same identity plus different content is an integrity conflict. Equal value, equal timestamp or equal business key alone is not a deduplication key.
+
+##### F. Dump Store logical contract
+
+"Dump Store" is the user-facing name for the governed source-shaped landing model in `ppiq_staging`. It is not a fourth functional schema. A Dataset appears as one logical relation to preview, Canvas and safe SQL even when the measured physical implementation uses generic envelopes, typed segments, partitions or approved artifact storage.
+
+One accepted payload representation is authoritative for each record. A typed projection/index/cache may accelerate access but cannot become an independently mutable second raw truth. When exact original bytes are required, they are stored/referenced as an immutable source artifact with content hash and lifecycle policy; PostgreSQL `jsonb` is not described as byte-for-byte preservation.
+
+A minimum accepted record envelope includes tenant/site, dataset, configuration/layout/policy versions, immutable record ID, source epoch/occurrence/revision when available, batch/session identities, stable field identities, typed values/original units, source/server/capture/ingest times, raw quality, achieved consistency, conversion version and integrity hash.
+
+##### G. Capacity, retention and activation refusal
+
+Activation evaluates source budget, requested operations, selected fields/record shape, expected and worst-case rate where knowable, serialized bytes, collector memory/disk reserve, disconnected-capture window, replay drain capacity, existing site/tenant load, hot retention and archive/recovery obligations. Unknown event rate or payload size remains **unknown**, never zero.
+
+Source-data retention is independent from log retention. PPIQ refuses a retention/reclamation operation that would delete unprojected/unreconciled authoritative input, violate an evidence/replay floor or remove the only retained source revision needed by a dependent definition. Archive-before-delete is valid only after archive verification.
+
+No design number, vendor default or negotiated interval is advertised as a production throughput guarantee without measured qualification for the actual source/deployment profile.
+
+##### H. Provider-specific source mechanics behind the common contract
+
+- Relational databases retain provider-native typed ordering, total-order cursor, source revision/CDC/overlap policy and source-load budgets; successful login does not imply CDC.
+- Excel retains workbook/sheet/table/range, parser/type/date/formula policy, file identity/replacement semantics and deterministic parser version.
+- CSV retains path/object identity, encoding, delimiter, quote/escape/header/null rules, append/replacement policy and deterministic parser version.
+- OPC UA retains namespace URI-based identity, endpoint/security/trust/session, supported browse/read/subscription operations, revised monitored-item settings, StatusCode and source/server time. OPC subscription semantics are not silently promoted into a PPIQ business record or atomic PLC snapshot.
+
+Native PLC transports, if later approved, must emit the same accepted acquisition contract; OPC-UA-first does not automatically authorize an S7/Modbus driver.
+
+##### I. Endpoint/service extensions
+
+The route families are frozen here so implementation does not invent a parallel API. Existing connection/import/Job endpoints remain valid; the industrial extensions are:
+
+| Contract | Route family | Owner |
+|---|---|---|
+| Fields / stable identities | `GET/PUT /api/datasets/{datasetId}/fields` | T-268 |
+| Layout revisions | `GET/POST /api/datasets/{datasetId}/layouts` and `GET /api/datasets/{datasetId}/layouts/{revision}` | T-268/T-269 |
+| Acquisition configuration versions | `GET/POST /api/datasets/{datasetId}/acquisition-configurations`; `GET /api/datasets/{datasetId}/acquisition-configurations/{version}` | T-268 |
+| Validate / qualify / activate | `POST .../{version}/validate`; `POST .../{version}/activate`; receipts returned as immutable evidence references | T-268/T-273/T-275 |
+| Continuous sessions | `GET /api/acquisition/sessions`; `GET /api/acquisition/sessions/{sessionId}` | T-275 |
+| Session control | `POST /api/acquisition/sessions/{sessionId}/pause|resume|cancel` routed through canonical Job authority | T-275 |
+| Finite batches / gaps | `GET /api/acquisition/batches`; `GET /api/acquisition/batches/{batchId}`; `GET /api/acquisition/gaps` | T-272/T-275 |
+| Capacity preview | `GET /api/datasets/{datasetId}/capacity-preview` | T-273 |
+| Retention policy | `GET/PUT /api/datasets/{datasetId}/retention-policy` | T-273 |
+| Logical accepted Dataset preview | `GET /api/datasets/{datasetId}/records/preview` | T-272 |
+
+Routes are tenant/site scoped, permission checked and version explicit. A frontend adapter may wrap them but may not change their authority or synthesize unsupported operations.
+
+##### J. Acceptance
+
+Release acceptance must include, at minimum: constant periodic values; change-band baseline correctness; quality transition; startup/restart edge behavior; counter reset/wrap/jump; source-consistency falsification under concurrent source update; requested-versus-revised interval; lossless supported integer/type decoding; namespace-index change; core-commit/response-loss retry; edge/core outage separation; disk-full/overload/gap evidence; mixed-source DB/file/OPC retry; retention refusal; and a full source-to-canonical trace under exact configuration/layout/transformation versions.
+
 
 ### DF4 - Transformation authoring and relationship publication
 
@@ -363,7 +488,7 @@ Acceptance: more equal-watermark records than one page fit are all staged withou
 
 **PRECONDITION.** DF4 published; DF3 batch terminal-successful.
 
-**SURFACE.** B4 Importing for the run; C2 Mapping Health for coverage, drift and **the quarantine queue**; C3 Data Quality for the standing issue list.
+**SURFACE.** B4 Acquisition Runs for the run; C2 Mapping Health for coverage, drift and **the quarantine queue**; C3 Data Quality for the standing issue list.
 
 **SEQUENCE.**
 1. **Pre-flight.** On the first projection of a new definition version, a bounded sample dry-run reports the projected error profile, so the author fixes a type fault on two hundred rows rather than two million.
@@ -992,8 +1117,8 @@ Driver: `{ featureCode, displayName, contribution, direction, currentValue, norm
 | A2 | Home | `/` | J1 |
 | B1 | Connections | `/data-integration/connections` | J4 |
 | B2 | Dataset Registry | `/data-integration/registry` | J5 |
-| B3 | Prepare Import | `/data-integration/prepare` | J5 |
-| B4 | Importing | `/data-integration/importing` | J6, J8 |
+| B3 | Prepare Acquisition | `/data-integration/prepare` | J5 |
+| B4 | Acquisition Runs | `/data-integration/importing` | J6, J8 |
 | B5 | Jobs Monitor | `/data-integration/jobs` | J6, J8, J12 |
 | B6 | Connector Truth | `/data-integration/connector-truth` | J4 |
 | C1 | Transformation Studio | `/prep/canvas` | J7 |
@@ -1093,6 +1218,22 @@ Every entry uses the ten-field contract of 4.0.3.
 
 ### B1 Connections - `/data-integration/connections`
 
+
+> **v4.11.1 Industrial Integration page contract — B1 Connections.** B1 is the access/security boundary, not the place where tags are recorded. It owns provider/source family, collector binding, endpoint/location, secret/trust references, source profile and connection test. It never stores the recording policy, DataBlock field list or a page-local schedule.
+>
+> **Additional layout.** The existing connection list/form gains a provider-aware **Industrial source** region beneath the provider selector. For OPC UA it contains Endpoint URL, Application identity/certificate reference, User identity mode, Security policy, Message security mode, Collector binding and **Test trust/session**. For database providers it contains only their lawful connection fields. A source family not executable in the current backend truth is rendered read-only with the exact unavailable reason.
+>
+> **Additional controls.** `Test connection` renders four separately named facts: `Reachability`, `Authentication/Trust`, `Read-only posture`, and `Executable operations`. For OPC the operation facts are `Session`, `Browse`, `BoundedRead`, `Subscribe`. `Continue to Select Data` opens B2 with the connection selected. No operation becomes executable because a profile was merely saved.
+>
+> **Additional calls.** `GET /api/connections/catalog` supplies provider schemas and executable capability truth. `POST /api/connections/{id}/test` performs the lawful provider-specific probe. OPC session/trust testing returns requested/effective security and the failed layer without exposing credential material.
+>
+> **Additional states.** `Configured not tested`, `Trust pending`, `Rejected certificate`, `Authenticated read-only`, `Authenticated but unsupported operation`, `Unavailable provider`, and `Disconnected`. These are not collapsed into one socket result.
+>
+> **Validation/refusal.** Unsupported security policy, missing collector binding, plaintext-secret persistence, write-capable database identity, unavailable OPC operation or a requested native-PLC transport not implemented by this build is a typed refusal. A successful OPC session does **not** certify tag browse, subscription, recording, DataBlock decoding or the requested workload.
+>
+> **Acceptance extension.** Re-open the profile and prove secrets remain masked; change one backend capability fixture and prove B1 changes without a frontend capability list; reject an untrusted OPC certificate; prove the core has no direct OT route and no write/setpoint verb.
+
+
 **AIM.** Create and prove a read-only path to one customer source, and record how it may be used.
 **ROLES.** Administrator and Data Engineer act. Engineer reads. Viewer denied.
 **LAYOUT.** `DataIntegrationLayout` header: title "Data Integration", subtitle "Connect plant sources, map them to the canonical model, run imports and watch every job.", **Refresh** button inline-end, and the permanent line "Connections are read-only toward your source systems at all times." Then two stacked `StandardCard` panels: "DB Link Configuration" (subtitle "Connection profiles to customer source databases and files"), then "Supported Connectors" (subtitle "Available and planned data source provider types"). In FORM mode panel 1 expands and panel 2 collapses.
@@ -1115,13 +1256,29 @@ Every entry uses the ten-field contract of 4.0.3.
 
 Provider-dependent fields show and hide on provider change. **Oracle and MySQL do not ask identical questions.**
 **HOOKS.** `useDataIntegration` owns the layout load and the Refresh fan-out. `useApiResource` per panel for failure isolation. `useOptimisticSave` shows the row immediately and reverts with a named error on failure. `useInlineFormValidation` refuses empty required fields with no network call. `useStandardToast` for the auto-dismissing success toast. `useEntitlements` hides tier-locked provider cards.
-**CALLS.** Mount, parallel: `getConnectionProfiles(includeSecrets)` -> `GET /api/connections`; `getProviderTypes()` -> `GET /api/connections/catalog`. Actions: `createConnectionProfile`, `updateConnectionProfile`, `testConnectionProfile`, `activateConnectionProfile`, `deactivateConnectionProfile`, `updateConnectionImportSchedule`.
+**CALLS.** Mount, parallel: `getConnectionProfiles(includeSecrets)` -> `GET /api/connections`; `getProviderTypes()` -> `GET /api/connections/catalog`. Actions: `createConnectionProfile`, `updateConnectionProfile`, `testConnectionProfile`, `activateConnectionProfile`, `deactivateConnectionProfile`. Scheduling is owned only by the governed Job administration authority.
 **STATES.** Empty: "No connections yet. Create the first read-only link to a plant database." with the primary action inline. Error: contained card naming the layer - network, authentication or permission. **Refused:** a write-capable credential fails the test with the read-only verification named.
 **SELECTIONS.** None.
 **EMPTY-INSTALL.** Empty profile list; full provider catalogue with availability badges, unavailable providers dimmed and badged Planned.
 **A11Y + RTL.** Tab follows the form grid; Escape leaves FORM mode; Enter submits. Panels use inline-start and inline-end only.
 
 ### B2 Dataset Registry - `/data-integration/registry`
+
+
+> **v4.11.1 Industrial Integration page contract — B2 Dataset Registry.** B2 owns **what source data exists as a governed Dataset**, not how often it is recorded. One connection may expose many datasets. A Dataset may represent a relational object, file sheet/range, OPC node set, DataBlock/message layout, or another explicitly supported source selection.
+>
+> **Additional layout.** The source tree becomes provider-aware. Database providers keep schema/table/view/column browsing. Excel/CSV show artifact → sheet/table/range or parser preview. OPC shows namespace/browser tree plus a **Selected source items** panel. Raw PLC/DataBlock-capable profiles add **Create layout** / **Import layout**; this proposes fields but does not prove the source exposes them.
+>
+> **Additional controls.** `Register dataset`, `Add selected fields`, `Create layout`, `Import field list`, `Preview source metadata`, and `Open Fields & Layout` (B3). Bulk selection is supported; selecting many fields never silently chooses a sampling rate or recording mode.
+>
+> **Field identity.** Every registered member receives or resolves a durable `field_id`. The UI shows Source locator, Technical key, Display name, Source type, Unit, Roles and Layout revision. Renaming Display name is visibly different from changing Source locator/type.
+>
+> **Additional calls.** Discovery endpoints return provider-specific source identities and observed types; registration returns Dataset identity plus stable field identities. OPC identities persist namespace URI + identifier/attribute/index range rather than transient namespace index alone.
+>
+> **States.** `Discovered`, `Selected`, `Registered`, `Drifted`, `Source item missing`, `Unsupported type`, `Layout unverified`. A stale/missing node or column is shown as drift, never silently dropped.
+>
+> **Acceptance extension.** Register two datasets under one connection; rename one field label without changing `field_id`; reconnect to an OPC server with changed namespace index and prove the URI-based binding survives; remove a source member and prove the Dataset becomes drifted rather than rebinding to another field.
+
 
 **AIM.** Choose which source objects enter the product.
 **ROLES.** Data Engineer acts; Engineer reads; Viewer denied.
@@ -1143,7 +1300,30 @@ Provider-dependent fields show and hide on provider change. **Oracle and MySQL d
 **EMPTY-INSTALL.** No connections, so the selector states so and links to B1.
 **A11Y + RTL.** The tree is a treegrid with full keyboard traversal; column type is announced with the name.
 
-### B3 Prepare Import - `/data-integration/prepare`
+### B3 Prepare Acquisition - `/data-integration/prepare`
+
+
+> **v4.11.1 Industrial Integration page contract — B3 Prepare Acquisition.** B3 expands from database import preparation into the **single Fields, Layout, Acquisition & Recording editor**. It still owns database business key/watermark preparation; for live industrial sources it additionally owns field/layout revision and the three user-facing recording choices.
+>
+> **Layout extension.** Four sections under the selected Dataset: **Fields & Layout**, **Acquire**, **Record when**, **Storage & Retention**. Provider-inapplicable sections hide rather than render fake controls. Effective values are shown beside inherited group defaults and per-field overrides.
+>
+> **Fields & Layout controls.** Grid columns: Include, `field_id` (read-only), Source locator, Technical key, Display name, Source type, PPIQ declared type, Unit, Payload/Trigger/Event-ID role, Layout revision. Raw layouts additionally expose byte offset, bit offset, width, signedness, byte/word order, string encoding, array count/stride and source-layout evidence. Typed OPC nodes do not expose byte-order controls.
+>
+> **Acquire controls.** `Monitor / read every`, provider read strategy (`BoundedRead`, `Subscription`, `FileArrival`, `IncrementalCursor`, approved provider-specific mode), queue/request bounds and requested source settings. The page always distinguishes **Requested**, **Effective/negotiated**, and **Qualified/measured** values.
+>
+> **Record when** offers exactly one primary mode per recording group:
+> - **Time** — Period, phase/window, Fresh read vs validated-cache capture, missed-tick policy. Unchanged values remain records for admitted periodic occurrences.
+> - **Value change** — Monitored fields, None / Absolute / Percent band, unit/basis, optional maximum recording interval, quality-change behavior, initial baseline rule. Percent band is enabled only when a valid range/reference exists.
+> - **Trigger / counter** — Trigger field, condition (change/rising/falling/equality/counter advance), monitoring rate, capture members, capture strategy, debounce/holdoff/re-arm, counter width/increment/reset/wrap/epoch rule and required consistency class. Trigger-only fields do not automatically gain a full history stream.
+>
+> **Storage & Retention controls.** Hot retention, archive policy reference, required replay/evidence floor, local outage coverage target, capacity profile and estimated/worst-case accepted rates/bytes. Unknown event rate remains `unknown`, not `0`.
+>
+> **Actions.** `Validate configuration`, `Preview source impact`, `Publish version`, `Activate` and `Open Job`. Draft save never starts acquisition. Activate is disabled until the exact configuration version has a compatible Job/collector/capacity profile and every required source operation is executable.
+>
+> **Validation/refusal examples.** Raw field extends outside read region; duplicate technical key; unsupported codec/type; percent deadband without valid range; trigger field excluded from acquisition; counter policy missing reset/wrap semantics; requested interval outside the qualified profile; retention shorter than unprocessed/replay floor; required consistency stronger than the source strategy can achieve. Each refusal names field/group and remedy.
+>
+> **Acceptance extension.** Save/reopen each recording mode; bulk import a layout, rename display labels and prove source bindings remain; edit a locator/type and prove a new revision/impact review; prove Requested ≠ Effective ≠ Qualified; prove a Time policy records unchanged values, a Value-change policy does not move its durable baseline on failed acceptance, and a Trigger policy captures unchanged member fields on a valid event.
+
 
 **AIM.** Declare, per dataset, the imported columns, the business key and the watermark.
 **ROLES.** Data Engineer acts.
@@ -1165,30 +1345,62 @@ Provider-dependent fields show and hide on provider change. **Oracle and MySQL d
 **EMPTY-INSTALL.** "No datasets registered yet", linking to B2.
 **A11Y + RTL.** Select-all is a labelled checkbox with an indeterminate state; groups are fieldsets.
 
-### B4 Importing - `/data-integration/importing`
+### B4 Acquisition Runs - `/data-integration/importing`
 
-**AIM.** Run imports, watch batches, and schedule the projection per mapping.
+
+> **v4.11.1 Industrial Integration page contract — B4 Acquisition Runs.** B4 is the operational data-plane view for both finite imports and continuous acquisition. It shows **sessions and finite completed batches separately** so a continuous source can run for months while projection consumes sealed batches every minute/hour/window.
+>
+> **Layout extension.** Summary cards: Active sessions, Buffering, Gap/Degraded, Replay backlog, Last sealed batch. Main table toggles **Sessions** / **Batches**. A session row expands to owner generation, collector, config version, requested/effective settings, last heartbeat, local spool bytes/time coverage, last source position and replay state. A batch row expands to record/value counts, bytes, source/capture time range, consistency class, gaps, receipt/checkpoint and downstream projection state.
+>
+> **Controls.** `Run finite import`, `Activate continuous acquisition` (through the Job authority), `Pause request`, `Cancel request`, `Open Job`, `Open accepted Dataset`, `Replay bounded range` where explicitly supported. B4 does not edit schedule/dependencies; that remains the Job administration authority.
+>
+> **States.** Session: `Starting`, `Running`, `Buffering`, `Degraded`, `GapDetected`, `Replay`, `Paused`, `Stopping`, `Stopped`, `Failed`, `Fenced/Superseded`. Batch: `Open`, `Sealing`, `Completed`, `CompletedWithGap`, `Failed`, `Cancelled`. A session may be Running while multiple batches are Completed.
+>
+> **Durability rule visible in UI.** `Accepted` means the core durable boundary completed and a receipt exists. `Received by edge` or `Sent` is not shown as core-accepted. Retry after response loss resolves by record identity/receipt, not by inserting another record.
+>
+> **Failure rendering.** Disk-full, reporting-queue overflow, source sequence discontinuity, source-position expiry, collector takeover, retention block and capacity block each have distinct codes and evidence. Missing events produce gap evidence; PPIQ never creates retroactive samples/payloads from the current value.
+>
+> **Acceptance extension.** Close the browser while collection continues; disconnect core network and prove lawful source-side buffering within the configured window; restore and drain replay while live capture retains reserved capacity; prove same-record retry is idempotent; prove one session produces multiple projection-ready finite batches.
+
+
+**AIM.** Run finite imports or observe continuous acquisition; inspect sessions, finite batches, receipts, gaps and replay without creating a second scheduler.
 **ROLES.** Data Engineer acts; Engineer reads.
-**LAYOUT.** Layout header. Block-start: batch table. Block-end: the mapping refresh schedule card.
+**LAYOUT.** Layout header. Summary cards show Active sessions, Buffering, Gap/Degraded, Replay backlog and Last sealed batch. Main table toggles **Sessions** / **Batches**; an accepted-Dataset summary is inline-end. No schedule card appears on B4.
 **CONTROLS.**
 
 | Control | Type | Token | Position | Enabled when |
 |---|---|---|---|---|
-| Run due imports | primary | Electric Blue | batch card header | at least one dataset is due |
-| Batch row expander | disclosure | Muted Steel | batch table | always |
-| Re-run batch | secondary | Corporate Blue | expanded row | batch is terminal |
-| Mapping selector | `StandardSelect` | Industrial Blue | schedule card | mappings exist |
-| Interval minutes | `StandardInput` numeric, default 15 | Industrial Blue | schedule card | mapping selected |
-| Save schedule | primary | Electric Blue | schedule card footer | interval valid |
+| Run finite import | primary | Electric Blue | header | a finite Dataset is due |
+| Session / Batch toggle | segmented | Industrial Blue | table header | always |
+| Row expander | disclosure | Muted Steel | table | always |
+| Re-run finite batch | secondary | Corporate Blue | batch detail | batch terminal and provider permits replay |
+| Pause request / Cancel request | secondary / danger-confirmed | Corporate Blue / controlled red | session detail | canonical Job permits request |
+| Open Job | secondary | Corporate Blue | session detail | Job identity exists |
+| Open accepted Dataset | secondary | Corporate Blue | session/batch detail | durable receipt exists |
+| Replay bounded range | secondary | Corporate Blue | gap/batch detail | provider/profile explicitly supports replay |
 
-**HOOKS.** `useApiResource` per card. `useLatestOnlyPolling` for live batch progress. `useStandardToast`.
-**CALLS.** `getImportBatches()` -> `GET /api/imports/batches`; `runDueSourceImports()` -> `POST /api/imports/run-due`; `getStagingSummary()`; `updateMappingRefreshSchedule(mappingId, { scheduleExpression, refreshIntervalMinutes })` -> `PUT /api/transformations/{id}/schedule`. Toast: "Canonical refresh schedule saved and JobDefinition updated".
+**HOOKS.** `useApiResource` per table; `useLatestOnlyPolling` for status only; `useStandardToast`. No browser timer implements acquisition semantics.
+**CALLS.** `GET /api/acquisition/sessions`; `GET /api/acquisition/sessions/{sessionId}`; `GET /api/acquisition/batches`; `GET /api/acquisition/batches/{batchId}`; `GET /api/acquisition/gaps`; `POST /api/imports/run-due` for finite import; pause/resume/cancel route only through the canonical Job runtime. B4 has **no** `PUT .../schedule` call.
 **STATES.** Batch failed: the message in the row, never an exception page. Progress: streamed counts, not a spinner.
 **SELECTIONS.** None.
 **EMPTY-INSTALL.** "No import batches yet. Register a dataset and run the first import."
 **A11Y + RTL.** Row expansion is a disclosure button with expanded state announced.
 
 ### B5 Jobs Monitor - `/data-integration/jobs`
+
+
+> **v4.11.1 Industrial Integration page contract — B5 Jobs Monitor.** B5 remains the **single Job runtime monitor**. Industrial acquisition introduces `ContinuousAcquisition` as an execution kind, not a second scheduler or one run per sample.
+>
+> **Additional columns/filters.** Execution kind (Finite / Continuous / Replay), Target Dataset/Group, Config version, Owner generation, Session state, Last sealed batch, Live accepted rate, Replay backlog, Gap count, Last heartbeat. Finite import/projection/analysis rows keep their existing semantics.
+>
+> **Run-now semantics.** For a continuous definition the action is **Activate** when inactive, not repeated `Run now`. A second activation while the current owner is lawful is refused. Pause/Cancel are requests with acknowledgement and canonical terminal state; the UI distinguishes `Cancel requested` from `Cancelled`.
+>
+> **Ownership/fencing.** Heartbeat loss alone does not authorize takeover while an offline-capture allowance is valid. A lawful replacement gets a new fence generation. A superseded collector may replay records already durable under the old generation but is visibly `Replay-only` and cannot capture new events.
+>
+> **Progress semantics.** No fabricated percentage for a continuous Job. Show stage/state, records/values/bytes accepted, queue/spool level, last sealed batch, gaps, replay lag and heartbeat. Progress history references exact session/batch/config identities.
+>
+> **Acceptance extension.** Two workers race to activate one source/group: exactly one wins; central heartbeat disappears within offline allowance without duplicate owner; lawful takeover fences old capture; old owner reconnects replay-only; cancellation at receive/journal/seal boundaries leaves truthful records/checkpoints and no silent loss.
+
 
 **AIM.** One surface answering what ran, what is running, what failed and why, across every job family.
 **ROLES.** Operator and above read. Data Engineer and Administrator may act.
@@ -1213,6 +1425,18 @@ Columns: Job, Type, Target, Status, Last Run, Duration, Runtime, Actions.
 
 ### B6 Connector Truth - `/data-integration/connector-truth`
 
+
+> **v4.11.1 Industrial Integration page contract — B6 Connector Truth.** B6 expands from a flat connector matrix to exact **operation/profile/qualification truth**. It remains read-only and never certifies itself from configuration or mockups.
+>
+> **Matrix axes.** Provider/adapter build × supported source profile/version/security × operation: Connect/Test, Browse/Discover, Bounded Read, Subscription/Monitor, Incremental Cursor, Source Revision/CDC, File Parse, Raw Layout Decode, Store-and-forward, Replay. Each cell is `Executable`, `Unavailable`, `Requires source commissioning`, or `Not applicable`.
+>
+> **Qualification drawer.** Shows requested/effective/qualified intervals/rates, tested field/tag count, payload range, outage duration, replay drain, queue/spool bounds, tested source/server version and evidence timestamp. A capability can be executable yet **not qualified for the requested workload**.
+>
+> **Customer/site truth.** Site certification is separate from product build capability. A product may support OPC UA subscriptions generally while one customer's endpoint remains untrusted/uncommissioned. The page displays both without conflation.
+>
+> **Acceptance extension.** Backend capability change propagates to B1/B2/B3/B6 with no independent frontend list; configuration test alone cannot turn a cell `Executable`; unsupported SAP/REST/native PLC families remain unavailable unless a real adapter + executed contract test exists.
+
+
 **AIM.** State honestly, per connector, what is proven.
 **ROLES.** All read; nobody acts.
 **LAYOUT.** Layout header. A matrix: connector down, capability across (discover, read, incremental, taxonomy view, read-only certified, load budget honoured).
@@ -1223,6 +1447,22 @@ Columns: Job, Type, Target, Status, Last Run, Duration, Runtime, Actions.
 **SELECTIONS.** None.
 **EMPTY-INSTALL.** Fully populated; this page describes the product, not the customer's data.
 **A11Y + RTL.** Matrix is a table with row and column headers; state is text plus icon.
+
+
+### B-group Industrial Integration handoff — v4.11.1
+
+The B pages form one connected workflow while retaining one owner per concern:
+
+| Page | Owns | Does not own | Primary exit |
+|---|---|---|---|
+| B1 Connections | access, trust, secrets, provider/source capability probe | field selection, recording policy, scheduling | tested/saved connection |
+| B2 Dataset Registry | source selection, stable Dataset/field identities, layout proposal | runtime recording | registered Dataset + fields |
+| B3 Prepare Acquisition | field/layout version, recording policy, storage/retention/capacity request | live runtime | published/validated acquisition configuration |
+| B4 Acquisition Runs | session/batch operational truth, receipts, gaps, replay view | schedule/dependency editing | completed accepted batch/window |
+| B5 Jobs Monitor | canonical Job/session activation, ownership, pause/cancel/history | source semantics | governed runtime state/history |
+| B6 Connector Truth | executable/profile/site qualification truth | mutation/configuration | honest capability evidence |
+
+A customer can move forward/back between these surfaces without creating duplicate configuration. Each page reopens the same stable identities and immutable versions.
 
 ---
 
@@ -3633,8 +3873,8 @@ Modal open moves focus to its title/first meaningful field; focus is contained a
 | A2 — Home |  | `A2--populated` |  |
 | B1 — Connections | `/data-integration/connections` | `B1--populated` | DLG-B1-create, DLG-B1-test, DLG-B1-deactivate, DLG-B1-credential |
 | B2 — Dataset Registry | `/data-integration/registry` | `B2--populated` | DLG-B2-register, DLG-B2-preview |
-| B3 — Prepare Import | `/data-integration/prepare` | `B3--populated` | DLG-B3-key, DLG-B3-cursor, DLG-B3-fullscan |
-| B4 — Importing | `/data-integration/importing` | `B4--populated` | DLG-B4-rerun, DLG-B4-backfill, DLG-B4-detail |
+| B3 — Prepare Acquisition | `/data-integration/prepare` | `B3--populated` | DLG-B3-key, DLG-B3-cursor, DLG-B3-fullscan |
+| B4 — Acquisition Runs | `/data-integration/importing` | `B4--populated` | DLG-B4-rerun, DLG-B4-backfill, DLG-B4-detail |
 | B5 — Jobs Monitor | `/data-integration/jobs` | `B5--populated` | DLG-B5-cancel, DLG-B5-pause, DLG-B5-run, DLG-B5-history |
 | B6 — Connector Truth | `/data-integration/connector-truth` | `B6--populated` | DLG-B6-export |
 | C1 — Transformation Studio | `/prep/canvas` | `C1--populated` | DLG-C1-publish, DLG-C1-impact, DLG-C1-fork, DLG-C1-rollback, DLG-C1-import, DLG-C1-mode, DLG-C1-dirty, DLG-C1-conflict, DLG-C1-sqlerror, DLG-C1-expression, DLG-C1-mapping |
@@ -3676,9 +3916,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-A1-mfa — Verify administrator access
 
-**Parent / kind:** A1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §A1.
+**Parent / kind:** A1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §A1.
 
-**Frames:** [default — frame `DLG-A1-mfa--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-A1-mfa--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-A1-mfa--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-A1-mfa--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Verification code
 
@@ -3688,9 +3928,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-A1-session — Session expired
 
-**Parent / kind:** A1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §A1.
+**Parent / kind:** A1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §A1.
 
-**Frames:** [default — frame `DLG-A1-session--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-A1-session--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-A1-session--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-A1-session--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Confirmation of the named action; no additional data entry.
 
@@ -3700,9 +3940,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-B1-create — Connection profile
 
-**Parent / kind:** B1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §B1.
+**Parent / kind:** B1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §B1.
 
-**Frames:** [default — frame `DLG-B1-create--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-B1-create--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-B1-create--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-B1-create--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Name → Provider → Host → Port → Database → Schema → Credential reference → Read-only posture → Allowed window → Row cap → Timeout → Rate cap
 
@@ -3712,9 +3952,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-B1-test — Test source connection
 
-**Parent / kind:** B1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §B1.
+**Parent / kind:** B1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §B1.
 
-**Frames:** [default — frame `DLG-B1-test--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-B1-test--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-B1-test--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-B1-test--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Connection identity → Provider identity → Read-only evidence → Measured source budget
 
@@ -3724,9 +3964,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-B1-deactivate — Deactivate connection
 
-**Parent / kind:** B1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §B1.
+**Parent / kind:** B1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §B1.
 
-**Frames:** [default — frame `DLG-B1-deactivate--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-B1-deactivate--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-B1-deactivate--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-B1-deactivate--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Affected datasets → Affected jobs → Reason
 
@@ -3736,9 +3976,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-B1-credential — Replace credential reference
 
-**Parent / kind:** B1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §B1.
+**Parent / kind:** B1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §B1.
 
-**Frames:** [default — frame `DLG-B1-credential--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-B1-credential--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-B1-credential--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-B1-credential--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Current reference (masked label) → New protected reference → Reason
 
@@ -3748,9 +3988,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-B2-register — Register dataset
 
-**Parent / kind:** B2 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §B2.
+**Parent / kind:** B2 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §B2.
 
-**Frames:** [default — frame `DLG-B2-register--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-B2-register--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-B2-register--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-B2-register--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Connection → Schema → Source object → Included columns → Taxonomy source
 
@@ -3760,9 +4000,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-B2-preview — Source preview
 
-**Parent / kind:** B2 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §B2.
+**Parent / kind:** B2 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §B2.
 
-**Frames:** [default — frame `DLG-B2-preview--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-B2-preview--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-B2-preview--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-B2-preview--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Source identity → Column names and types → Bounded sample → Rows and elapsed time
 
@@ -3772,9 +4012,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-B3-key — Business-key members
 
-**Parent / kind:** B3 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §B3.
+**Parent / kind:** B3 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §B3.
 
-**Frames:** [default — frame `DLG-B3-key--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-B3-key--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-B3-key--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-B3-key--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Ordered source fields → Member order → Uniqueness evidence
 
@@ -3784,9 +4024,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-B3-cursor — Incremental cursor
 
-**Parent / kind:** B3 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §B3.
+**Parent / kind:** B3 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §B3.
 
-**Frames:** [default — frame `DLG-B3-cursor--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-B3-cursor--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-B3-cursor--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-B3-cursor--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Watermark field → Watermark type → Stable tie-break members → Initial position → Source upper bound
 
@@ -3796,9 +4036,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-B3-fullscan — No watermark: daily floor
 
-**Parent / kind:** B3 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §B3.
+**Parent / kind:** B3 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §B3.
 
-**Frames:** [default — frame `DLG-B3-fullscan--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-B3-fullscan--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-B3-fullscan--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-B3-fullscan--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Source object → Forced daily minimum → Expected scan budget
 
@@ -3808,9 +4048,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-B4-rerun — Re-run import batch
 
-**Parent / kind:** B4 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §B4.
+**Parent / kind:** B4 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §B4.
 
-**Frames:** [default — frame `DLG-B4-rerun--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-B4-rerun--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-B4-rerun--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-B4-rerun--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Batch identity → Persisted cursor range → Failure reason → Replay policy
 
@@ -3820,9 +4060,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-B4-backfill — Historical backfill
 
-**Parent / kind:** B4 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §B4.
+**Parent / kind:** B4 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §B4.
 
-**Frames:** [default — frame `DLG-B4-backfill--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-B4-backfill--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-B4-backfill--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-B4-backfill--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Dataset → From / to → Row and byte cap → Checkpoint → Source window
 
@@ -3832,9 +4072,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-B4-detail — Import batch detail
 
-**Parent / kind:** B4 / drawer. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §B4.
+**Parent / kind:** B4 / drawer. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §B4.
 
-**Frames:** [default — frame `DLG-B4-detail--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-B4-detail--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-B4-detail--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-B4-detail--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Status → Watermark from / to → Rows read / staged → Failed rows → Source lineage → Run log
 
@@ -3844,9 +4084,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-B5-cancel — Cancel running job
 
-**Parent / kind:** B5 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §B5.
+**Parent / kind:** B5 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §B5.
 
-**Frames:** [default — frame `DLG-B5-cancel--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-B5-cancel--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-B5-cancel--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-B5-cancel--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Job identity → Run identity → Committed work → Reason
 
@@ -3856,9 +4096,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-B5-pause — Pause scheduled job
 
-**Parent / kind:** B5 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §B5.
+**Parent / kind:** B5 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §B5.
 
-**Frames:** [default — frame `DLG-B5-pause--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-B5-pause--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-B5-pause--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-B5-pause--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Schedule → Next occurrence → Reason
 
@@ -3868,9 +4108,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-B5-run — Run job now
 
-**Parent / kind:** B5 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §B5.
+**Parent / kind:** B5 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §B5.
 
-**Frames:** [default — frame `DLG-B5-run--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-B5-run--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-B5-run--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-B5-run--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Definition version → Dependency verdict → Budget verdict → Parameters
 
@@ -3880,9 +4120,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-B5-history — Run evidence
 
-**Parent / kind:** B5 / drawer. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §B5.
+**Parent / kind:** B5 / drawer. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §B5.
 
-**Frames:** [default — frame `DLG-B5-history--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-B5-history--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-B5-history--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-B5-history--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Run identity → Resolved version → Counts → Duration → Upstream evidence → Failure / refusal
 
@@ -3892,9 +4132,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-B6-export — Export capability truth
 
-**Parent / kind:** B6 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §B6.
+**Parent / kind:** B6 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §B6.
 
-**Frames:** [default — frame `DLG-B6-export--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-B6-export--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-B6-export--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-B6-export--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Provider set → State filter → Evidence date
 
@@ -3904,9 +4144,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-C1-publish — Publish Transformation
 
-**Parent / kind:** C1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §C1.
+**Parent / kind:** C1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §C1.
 
-**Frames:** [default — frame `DLG-C1-publish--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-C1-publish--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-C1-publish--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-C1-publish--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Definition name → Version / hash → Output target → Relationship emission → Downstream impact
 
@@ -3916,9 +4156,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-C1-impact — Downstream impact
 
-**Parent / kind:** C1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §C1.
+**Parent / kind:** C1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §C1.
 
-**Frames:** [default — frame `DLG-C1-impact--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-C1-impact--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-C1-impact--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-C1-impact--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Definitions → Pages → Analyses → Models → Relationships → Required action
 
@@ -3928,9 +4168,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-C1-fork — Edit published definition
 
-**Parent / kind:** C1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §C1.
+**Parent / kind:** C1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §C1.
 
-**Frames:** [default — frame `DLG-C1-fork--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-C1-fork--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-C1-fork--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-C1-fork--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Published version → Next draft → Reason
 
@@ -3940,9 +4180,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-C1-rollback — Select prior version
 
-**Parent / kind:** C1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §C1.
+**Parent / kind:** C1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §C1.
 
-**Frames:** [default — frame `DLG-C1-rollback--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-C1-rollback--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-C1-rollback--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-C1-rollback--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Version history → Current pointer → Downstream impact → Reason
 
@@ -3952,9 +4192,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-C1-import — Import definition
 
-**Parent / kind:** C1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §C1.
+**Parent / kind:** C1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §C1.
 
-**Frames:** [default — frame `DLG-C1-import--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-C1-import--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-C1-import--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-C1-import--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Artifact → Source schema bindings → Target catalog → Validation diagnostics
 
@@ -3964,9 +4204,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-C1-mode — Switch authoring representation
 
-**Parent / kind:** C1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §C1.
+**Parent / kind:** C1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §C1.
 
-**Frames:** [default — frame `DLG-C1-mode--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-C1-mode--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-C1-mode--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-C1-mode--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Current representation → Reconstructability → Preserved SQL → Diagram consequence
 
@@ -3976,9 +4216,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-C1-dirty — Unsaved definition changes
 
-**Parent / kind:** C1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §C1.
+**Parent / kind:** C1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §C1.
 
-**Frames:** [default — frame `DLG-C1-dirty--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-C1-dirty--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-C1-dirty--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-C1-dirty--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Changed fields → Last persisted version
 
@@ -3988,9 +4228,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-C1-conflict — Concurrent edit conflict
 
-**Parent / kind:** C1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §C1.
+**Parent / kind:** C1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §C1.
 
-**Frames:** [default — frame `DLG-C1-conflict--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-C1-conflict--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-C1-conflict--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-C1-conflict--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Base version → Server version → Local changes → Rebase / save-as
 
@@ -4000,9 +4240,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-C1-sqlerror — SQL validation details
 
-**Parent / kind:** C1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §C1.
+**Parent / kind:** C1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §C1.
 
-**Frames:** [default — frame `DLG-C1-sqlerror--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-C1-sqlerror--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-C1-sqlerror--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-C1-sqlerror--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Message → Offending fragment → Token / line / column → Suggested correction
 
@@ -4012,9 +4252,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-C1-expression — Expression editor
 
-**Parent / kind:** C1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §C1.
+**Parent / kind:** C1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §C1.
 
-**Frames:** [default — frame `DLG-C1-expression--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-C1-expression--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-C1-expression--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-C1-expression--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Typed fields → Operators → Expression → Declared result type → Validation → Test sample
 
@@ -4024,9 +4264,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-C1-mapping — Canonical field mapping
 
-**Parent / kind:** C1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §C1.
+**Parent / kind:** C1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §C1.
 
-**Frames:** [default — frame `DLG-C1-mapping--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-C1-mapping--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-C1-mapping--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-C1-mapping--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Target entity → Required business fields → Source output binding → Type verdict → System provenance (read-only)
 
@@ -4036,9 +4276,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-C2-drift — Schema drift event
 
-**Parent / kind:** C2 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §C2.
+**Parent / kind:** C2 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §C2.
 
-**Frames:** [default — frame `DLG-C2-drift--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-C2-drift--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-C2-drift--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-C2-drift--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Dataset → Changed field → Old / new type → Affected mappings → State
 
@@ -4048,9 +4288,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-C2-reprocess — Reprocess corrected rows
 
-**Parent / kind:** C2 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §C2.
+**Parent / kind:** C2 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §C2.
 
-**Frames:** [default — frame `DLG-C2-reprocess--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-C2-reprocess--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-C2-reprocess--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-C2-reprocess--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Batch → Quarantine code → Corrected definition version → Estimated scope
 
@@ -4060,9 +4300,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-C3-quarantine — Quarantine row detail
 
-**Parent / kind:** C3 / drawer. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §C3.
+**Parent / kind:** C3 / drawer. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §C3.
 
-**Frames:** [default — frame `DLG-C3-quarantine--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-C3-quarantine--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-C3-quarantine--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-C3-quarantine--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Validation code → Offending field → Staging row → Source provenance → Correction hint
 
@@ -4072,9 +4312,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-C4-entity — Canonical entity detail
 
-**Parent / kind:** C4 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §C4.
+**Parent / kind:** C4 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §C4.
 
-**Frames:** [default — frame `DLG-C4-entity--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-C4-entity--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-C4-entity--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-C4-entity--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Entity type → Registered dimensions → Relationships → Evidence
 
@@ -4084,9 +4324,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-C5-genealogy — Genealogy contribution
 
-**Parent / kind:** C5 / drawer. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §C5.
+**Parent / kind:** C5 / drawer. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §C5.
 
-**Frames:** [default — frame `DLG-C5-genealogy--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-C5-genealogy--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-C5-genealogy--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-C5-genealogy--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Parent / child identities → Ordered key → Weight → Grain → Source definition
 
@@ -4096,9 +4336,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-C6-validate — Validate relationship
 
-**Parent / kind:** C6 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §C6.
+**Parent / kind:** C6 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §C6.
 
-**Frames:** [default — frame `DLG-C6-validate--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-C6-validate--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-C6-validate--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-C6-validate--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Relationship version → Ordered members → Cardinality → Grain conversion → Attribution → Evidence
 
@@ -4108,9 +4348,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-C6-path — Preferred relationship path
 
-**Parent / kind:** C6 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §C6.
+**Parent / kind:** C6 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §C6.
 
-**Frames:** [default — frame `DLG-C6-path--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-C6-path--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-C6-path--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-C6-path--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Source / destination → Candidate paths → Ambiguity → Declared preference
 
@@ -4120,9 +4360,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-D1-selection — Selection state
 
-**Parent / kind:** D1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §D1.
+**Parent / kind:** D1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §D1.
 
-**Frames:** [default — frame `DLG-D1-selection--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-D1-selection--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-D1-selection--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-D1-selection--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Selected → Possible → Excluded → Clear one / all
 
@@ -4132,9 +4372,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-D1-bookmark — Save current view
 
-**Parent / kind:** D1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §D1.
+**Parent / kind:** D1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §D1.
 
-**Frames:** [default — frame `DLG-D1-bookmark--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-D1-bookmark--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-D1-bookmark--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-D1-bookmark--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Name → Selection state → Layout version → Visibility
 
@@ -4144,9 +4384,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-D1-export — Export current state
 
-**Parent / kind:** D1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §D1.
+**Parent / kind:** D1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §D1.
 
-**Frames:** [default — frame `DLG-D1-export--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-D1-export--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-D1-export--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-D1-export--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Format → Current filters → Period → Evidence inclusion → Scope
 
@@ -4156,9 +4396,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-D2-page — Page definition
 
-**Parent / kind:** D2 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §D2.
+**Parent / kind:** D2 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §D2.
 
-**Frames:** [default — frame `DLG-D2-page--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-D2-page--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-D2-page--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-D2-page--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Title → Description → Visibility → Layout → Default selection
 
@@ -4168,9 +4408,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-D2-widget — Widget binding
 
-**Parent / kind:** D2 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §D2.
+**Parent / kind:** D2 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §D2.
 
-**Frames:** [default — frame `DLG-D2-widget--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-D2-widget--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-D2-widget--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-D2-widget--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Source class → Source identity → Grain → Dimensions → Measures → Chart → Evidence handles
 
@@ -4180,9 +4420,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-D2-filter — Filter definition
 
-**Parent / kind:** D2 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §D2.
+**Parent / kind:** D2 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §D2.
 
-**Frames:** [default — frame `DLG-D2-filter--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-D2-filter--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-D2-filter--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-D2-filter--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Name → Scope → Registered field → Filter kind → Default → Version
 
@@ -4192,9 +4432,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-D2-delete — Remove widget
 
-**Parent / kind:** D2 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §D2.
+**Parent / kind:** D2 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §D2.
 
-**Frames:** [default — frame `DLG-D2-delete--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-D2-delete--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-D2-delete--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-D2-delete--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Widget identity → Page version → Unsaved changes
 
@@ -4204,9 +4444,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-D3-readiness — Analysis readiness
 
-**Parent / kind:** D3 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §D3.
+**Parent / kind:** D3 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §D3.
 
-**Frames:** [default — frame `DLG-D3-readiness--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-D3-readiness--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-D3-readiness--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-D3-readiness--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Population → Grain → Method → Measured values → Thresholds → Refusal reasons
 
@@ -4216,9 +4456,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-D4-evidence — Finding evidence
 
-**Parent / kind:** D4 / drawer. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §D4.
+**Parent / kind:** D4 / drawer. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §D4.
 
-**Frames:** [default — frame `DLG-D4-evidence--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-D4-evidence--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-D4-evidence--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-D4-evidence--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Claim class → Method → Population → Effect / uncertainty → q-value → Source handles
 
@@ -4228,9 +4468,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-D5-risk — Risk record
 
-**Parent / kind:** D5 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §D5.
+**Parent / kind:** D5 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §D5.
 
-**Frames:** [default — frame `DLG-D5-risk--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-D5-risk--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-D5-risk--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-D5-risk--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Subject identity → Risk band → Drivers → Model / engine version → Evidence
 
@@ -4240,9 +4480,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-D6-decision — Suggestion decision
 
-**Parent / kind:** D6 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §D6.
+**Parent / kind:** D6 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §D6.
 
-**Frames:** [default — frame `DLG-D6-decision--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-D6-decision--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-D6-decision--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-D6-decision--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Suggestion → Evidence → Reason code → Decision → Actor
 
@@ -4252,9 +4492,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-D6-defer — Defer suggestion
 
-**Parent / kind:** D6 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §D6.
+**Parent / kind:** D6 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §D6.
 
-**Frames:** [default — frame `DLG-D6-defer--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-D6-defer--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-D6-defer--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-D6-defer--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Reason code → Review time → Evidence
 
@@ -4264,9 +4504,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-D7-assumptions — Cost assumptions
 
-**Parent / kind:** D7 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §D7.
+**Parent / kind:** D7 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §D7.
 
-**Frames:** [default — frame `DLG-D7-assumptions--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-D7-assumptions--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-D7-assumptions--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-D7-assumptions--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Measure → Unit / currency → Effective period → Assumption value → Source → Reason
 
@@ -4276,9 +4516,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-D7-value — Value derivation
 
-**Parent / kind:** D7 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §D7.
+**Parent / kind:** D7 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §D7.
 
-**Frames:** [default — frame `DLG-D7-value--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-D7-value--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-D7-value--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-D7-value--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Potential / realised class → Assumptions → Counterfactual → Uncertainty → Evidence
 
@@ -4288,9 +4528,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-D8-activate — Activate model version
 
-**Parent / kind:** D8 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §D8.
+**Parent / kind:** D8 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §D8.
 
-**Frames:** [default — frame `DLG-D8-activate--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-D8-activate--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-D8-activate--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-D8-activate--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Candidate → Serving identity → Gate results → Snapshot / manifest → Warm-up → Fallback
 
@@ -4300,9 +4540,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-D8-retire — Retire model version
 
-**Parent / kind:** D8 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §D8.
+**Parent / kind:** D8 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §D8.
 
-**Frames:** [default — frame `DLG-D8-retire--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-D8-retire--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-D8-retire--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-D8-retire--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Version → Dependent consumers → Fallback → Reason
 
@@ -4312,9 +4552,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-D9-remediation — Remediation eligibility
 
-**Parent / kind:** D9 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §D9.
+**Parent / kind:** D9 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §D9.
 
-**Frames:** [default — frame `DLG-D9-remediation--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-D9-remediation--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-D9-remediation--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-D9-remediation--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Prediction → Deadline → Candidate → Nine check results → Expected effect → Evidence
 
@@ -4324,9 +4564,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-D10-practice — Practice evidence
 
-**Parent / kind:** D10 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §D10.
+**Parent / kind:** D10 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §D10.
 
-**Frames:** [default — frame `DLG-D10-practice--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-D10-practice--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-D10-practice--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-D10-practice--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Comparable context → Support → Outcome → Confidence → Sensitivity → Benchmark status
 
@@ -4336,9 +4576,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-D11-save — Save scenario
 
-**Parent / kind:** D11 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §D11.
+**Parent / kind:** D11 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §D11.
 
-**Frames:** [default — frame `DLG-D11-save--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-D11-save--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-D11-save--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-D11-save--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Name → Baseline → Variable changes → Fixed assumptions → Model version → Uncertainty
 
@@ -4348,9 +4588,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-D11-compare — Compare scenarios
 
-**Parent / kind:** D11 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §D11.
+**Parent / kind:** D11 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §D11.
 
-**Frames:** [default — frame `DLG-D11-compare--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-D11-compare--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-D11-compare--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-D11-compare--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Saved versions → Common baseline → Variables → Result intervals
 
@@ -4360,9 +4600,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-D12-comparison — Benchmark population evidence
 
-**Parent / kind:** D12 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §D12.
+**Parent / kind:** D12 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §D12.
 
-**Frames:** [default — frame `DLG-D12-comparison--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-D12-comparison--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-D12-comparison--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-D12-comparison--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Both populations → Measure direction → Normalization → Support → Reference
 
@@ -4372,9 +4612,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-E2-reset — Reset Assistant configuration
 
-**Parent / kind:** E2 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §E2.
+**Parent / kind:** E2 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §E2.
 
-**Frames:** [default — frame `DLG-E2-reset--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-E2-reset--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-E2-reset--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-E2-reset--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Current policies → Default policies → Impact → Reason
 
@@ -4384,9 +4624,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-E2-reindex — Reindex knowledge
 
-**Parent / kind:** E2 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §E2.
+**Parent / kind:** E2 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §E2.
 
-**Frames:** [default — frame `DLG-E2-reindex--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-E2-reindex--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-E2-reindex--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-E2-reindex--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Allowed source families → Current index → Expected bounded work
 
@@ -4396,9 +4636,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-E3-rule — Plant data log rule
 
-**Parent / kind:** E3 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §E3.
+**Parent / kind:** E3 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §E3.
 
-**Frames:** [default — frame `DLG-E3-rule--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-E3-rule--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-E3-rule--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-E3-rule--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Rule name → Parameter → Comparator → Limit → Severity
 
@@ -4408,9 +4648,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-E3-ack — Acknowledge log entry
 
-**Parent / kind:** E3 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §E3.
+**Parent / kind:** E3 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §E3.
 
-**Frames:** [default — frame `DLG-E3-ack--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-E3-ack--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-E3-ack--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-E3-ack--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Entry → Rule → Source subject → Actor → Note
 
@@ -4420,9 +4660,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-E4-proposal — Review Supervisor proposal
 
-**Parent / kind:** E4 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §E4.
+**Parent / kind:** E4 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §E4.
 
-**Frames:** [default — frame `DLG-E4-proposal--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-E4-proposal--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-E4-proposal--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-E4-proposal--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Target → Before / after → Reason → Evidence → Shadow comparison
 
@@ -4432,9 +4672,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-E4-reject — Reject Supervisor proposal
 
-**Parent / kind:** E4 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §E4.
+**Parent / kind:** E4 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §E4.
 
-**Frames:** [default — frame `DLG-E4-reject--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-E4-reject--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-E4-reject--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-E4-reject--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Proposal → Reason
 
@@ -4444,9 +4684,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-E5-definition — Report definition
 
-**Parent / kind:** E5 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §E5.
+**Parent / kind:** E5 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §E5.
 
-**Frames:** [default — frame `DLG-E5-definition--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-E5-definition--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-E5-definition--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-E5-definition--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Title → Sections → Period → Recipients → Schedule → Delivery target
 
@@ -4456,9 +4696,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-E5-output — Generated report output
 
-**Parent / kind:** E5 / drawer. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §E5.
+**Parent / kind:** E5 / drawer. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §E5.
 
-**Frames:** [default — frame `DLG-E5-output--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-E5-output--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-E5-output--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-E5-output--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Period → Filter state → Generation run → Sections → Evidence → Delivery status
 
@@ -4468,9 +4708,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-E6-routing — Alert routing rule
 
-**Parent / kind:** E6 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §E6.
+**Parent / kind:** E6 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §E6.
 
-**Frames:** [default — frame `DLG-E6-routing--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-E6-routing--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-E6-routing--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-E6-routing--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Channel / severity → Recipients → Delivery channels → Quiet hours → Dedupe → Rate → Escalation
 
@@ -4480,9 +4720,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-E6-delivery — Delivery attempt
 
-**Parent / kind:** E6 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §E6.
+**Parent / kind:** E6 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §E6.
 
-**Frames:** [default — frame `DLG-E6-delivery--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-E6-delivery--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-E6-delivery--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-E6-delivery--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Recipient → Channel → Attempts → Reason → Next retry
 
@@ -4492,9 +4732,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-F1-user — Create user
 
-**Parent / kind:** F1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §F1.
+**Parent / kind:** F1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §F1.
 
-**Frames:** [default — frame `DLG-F1-user--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-F1-user--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-F1-user--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-F1-user--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Name → Email → Role
 
@@ -4504,9 +4744,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-F1-role — Role / user permission override
 
-**Parent / kind:** F1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §F1.
+**Parent / kind:** F1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §F1.
 
-**Frames:** [default — frame `DLG-F1-role--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-F1-role--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-F1-role--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-F1-role--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Principal → Role inheritance → Surface × action → Overrides → Reason
 
@@ -4516,9 +4756,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-F1-disable — Disable user
 
-**Parent / kind:** F1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §F1.
+**Parent / kind:** F1 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §F1.
 
-**Frames:** [default — frame `DLG-F1-disable--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-F1-disable--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-F1-disable--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-F1-disable--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** User → Active sessions → Reason
 
@@ -4528,9 +4768,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-F2-license — Activate signed licence
 
-**Parent / kind:** F2 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §F2.
+**Parent / kind:** F2 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §F2.
 
-**Frames:** [default — frame `DLG-F2-license--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-F2-license--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-F2-license--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-F2-license--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Signed artifact → Tenant → Instance → Tier → Validity → Verification result
 
@@ -4540,9 +4780,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-F3-quota — Role or user quota
 
-**Parent / kind:** F3 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §F3.
+**Parent / kind:** F3 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §F3.
 
-**Frames:** [default — frame `DLG-F3-quota--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-F3-quota--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-F3-quota--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-F3-quota--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Principal / role → Object type → Inherited limit → Override → Current use
 
@@ -4552,9 +4792,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-F4-job — Job definition
 
-**Parent / kind:** F4 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §F4.
+**Parent / kind:** F4 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §F4.
 
-**Frames:** [default — frame `DLG-F4-job--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-F4-job--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-F4-job--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-F4-job--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Name → Family → Target identity → Version policy → Parameters → Schedule → Pool / weight
 
@@ -4564,9 +4804,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-F4-schedule — Schedule editor
 
-**Parent / kind:** F4 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §F4.
+**Parent / kind:** F4 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §F4.
 
-**Frames:** [default — frame `DLG-F4-schedule--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-F4-schedule--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-F4-schedule--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-F4-schedule--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Kind → Canonical expression → Time zone → Next occurrences → Jitter → Missed-tick policy
 
@@ -4576,9 +4816,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-F4-dependency — Dependency policy
 
-**Parent / kind:** F4 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §F4.
+**Parent / kind:** F4 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §F4.
 
-**Frames:** [default — frame `DLG-F4-dependency--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-F4-dependency--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-F4-dependency--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-F4-dependency--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Upstream job → Required / optional → Pinned version → Allow prior-success reuse → Age ceiling → Cycle impact
 
@@ -4588,9 +4828,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-F5-filter — Log search / export
 
-**Parent / kind:** F5 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §F5.
+**Parent / kind:** F5 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §F5.
 
-**Frames:** [default — frame `DLG-F5-filter--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-F5-filter--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-F5-filter--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-F5-filter--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Family → Severity → Actor → Run id → From / to → Export format
 
@@ -4600,9 +4840,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-F6-channel — Log channel
 
-**Parent / kind:** F6 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §F6.
+**Parent / kind:** F6 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §F6.
 
-**Frames:** [default — frame `DLG-F6-channel--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-F6-channel--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-F6-channel--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-F6-channel--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Name → Family → Severity policy → Retention policy → Enabled
 
@@ -4612,9 +4852,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-F7-timezone — Change plant time zone
 
-**Parent / kind:** F7 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §F7.
+**Parent / kind:** F7 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §F7.
 
-**Frames:** [default — frame `DLG-F7-timezone--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-F7-timezone--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-F7-timezone--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-F7-timezone--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Current zone → New zone → Shift-analysis impact → Next schedule previews
 
@@ -4624,9 +4864,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-F7-egress — Change data egress policy
 
-**Parent / kind:** F7 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §F7.
+**Parent / kind:** F7 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §F7.
 
-**Frames:** [default — frame `DLG-F7-egress--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-F7-egress--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-F7-egress--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-F7-egress--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Current policy → New policy → Affected tools → Reason
 
@@ -4636,9 +4876,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-F8-language — Import language pack
 
-**Parent / kind:** F8 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §F8.
+**Parent / kind:** F8 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §F8.
 
-**Frames:** [default — frame `DLG-F8-language--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-F8-language--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-F8-language--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-F8-language--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Language → Pack version → Changed labels → Fallback → Review state
 
@@ -4648,9 +4888,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-F9-retention — Retention impact preview
 
-**Parent / kind:** F9 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §F9.
+**Parent / kind:** F9 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §F9.
 
-**Frames:** [default — frame `DLG-F9-retention--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-F9-retention--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-F9-retention--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-F9-retention--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Channel → Cutoff → Rows / storage → Archive destination → Legal hold → Preview receipt
 
@@ -4660,9 +4900,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-F9-hold — Place or remove legal hold
 
-**Parent / kind:** F9 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §F9.
+**Parent / kind:** F9 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §F9.
 
-**Frames:** [default — frame `DLG-F9-hold--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-F9-hold--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-F9-hold--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-F9-hold--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Channel → Current hold → Actor → Reason
 
@@ -4672,9 +4912,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-F9-cleanup — Run retention cleanup
 
-**Parent / kind:** F9 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §F9.
+**Parent / kind:** F9 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §F9.
 
-**Frames:** [default — frame `DLG-F9-cleanup--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-F9-cleanup--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-F9-cleanup--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-F9-cleanup--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Channels → Exact cutoff → Archive status → Expected count → Preview identity
 
@@ -4684,9 +4924,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-G1-citations — Assistant citations
 
-**Parent / kind:** G1 / drawer. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §G1.
+**Parent / kind:** G1 / drawer. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §G1.
 
-**Frames:** [default — frame `DLG-G1-citations--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-G1-citations--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-G1-citations--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-G1-citations--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Answer claim → Evidence handles → Source identity → Permission scope
 
@@ -4696,9 +4936,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-G3-commands — Global command palette
 
-**Parent / kind:** G3 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §G3.
+**Parent / kind:** G3 / dialog. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §G3.
 
-**Frames:** [default — frame `DLG-G3-commands--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-G3-commands--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-G3-commands--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-G3-commands--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Search → Permitted pages → Definitions → Fields → Findings → Commands
 
@@ -4708,9 +4948,9 @@ Presentation type below is a derived visual choice unless the source explicitly 
 
 ### DLG-G6-activity — Activity tray
 
-**Parent / kind:** G6 / drawer. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.md §G6.
+**Parent / kind:** G6 / drawer. **Source:** PPIQ_Chapter3_General_Technical_Function_Description_v4.11.1.md §G6.
 
-**Frames:** [default — frame `DLG-G6-activity--default`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx) · [validation — frame `DLG-G6-activity--invalid`](PPIQ_Chapter3_General_Technical_Function_Description_v4.10.3.docx).
+**Frames:** default — frame `DLG-G6-activity--default` *(illustrated derivative pending T-265/T-266)* · validation — frame `DLG-G6-activity--invalid` *(illustrated derivative pending T-265/T-266)*.
 
 **Fields / evidence regions:** Running jobs → Stage / counts → Last heartbeat → Outcome → Evidence
 
