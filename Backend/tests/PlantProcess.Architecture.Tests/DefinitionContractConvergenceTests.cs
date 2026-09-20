@@ -10,11 +10,14 @@ namespace PlantProcess.Architecture.Tests;
 /// <summary>
 /// PPIQ T-090 static authority gates.
 ///
-/// MIGRATION OWNERSHIP IS EXPLICIT HERE. Script 831 owns the canonical
-/// definition-kind CHECK and the version status contract. Script 832 owns the
-/// detail tables, their fields and their column types. No assertion in this
-/// file says "the schema" - each names the migration that actually owns the
-/// fact it checks.
+/// MIGRATION OWNERSHIP IS EXPLICIT HERE. Script 831 created the canonical
+/// definition-kind CHECK and owns the version status contract. The CURRENT kind
+/// CHECK is owned by the latest canonical migration that supersedes it, found on
+/// the canonical path rather than assumed. Script 832 owns the ten original
+/// detail tables; a later canonical migration may add a detail table for an
+/// additive kind, and the detail gates read every canonical script that creates
+/// one. No assertion in this file says "the schema" - each names the migration
+/// that actually owns the fact it checks.
 ///
 /// EVERY SCAN PROVES IT SCANNED. A gate that reports zero without proving it
 /// read anything is a broken scan reporting success, which is how a reference
@@ -37,36 +40,107 @@ public sealed class DefinitionContractConvergenceTests
 
     private static string DetailSql() => Read("Backend/database/scripts/832_definition_contract_convergence.sql");
 
+    private const string KindCheckPattern = @"ck_definition_store_kind CHECK \(definition_kind IN \((?<body>.*?)\)\)";
+
+    /// <summary>The seventeen current kinds: sixteen historic ones plus one additive kind.</summary>
+    private const int CurrentKindCount = 17;
+
+    /// <summary>
+    /// Every canonical script, in path position order, as (relative path, text).
+    /// The canonical path is the authority for what builds a database.
+    /// </summary>
+    private static IReadOnlyList<(string Path, string Text)> CanonicalScripts()
+    {
+        using var manifest = JsonDocument.Parse(Read("Backend/database/canonical-migration-order.json"));
+        var scripts = new List<(int Position, string Path)>();
+        foreach (var step in manifest.RootElement.GetProperty("canonicalPath").EnumerateArray())
+        {
+            var path = step.GetProperty("path").GetString() ?? string.Empty;
+            if (path.StartsWith("Backend/database/scripts/", StringComparison.Ordinal))
+            {
+                scripts.Add((step.GetProperty("position").GetInt32(), path));
+            }
+        }
+
+        Assert.True(scripts.Count > 50, "The canonical path lists too few scripts; the scan would be vacuous.");
+        return scripts.OrderBy(s => s.Position).Select(s => (s.Path, Read(s.Path))).ToList();
+    }
+
+    private static HashSet<string> KindsIn(string sql, string owner)
+    {
+        var check = Regex.Match(sql, KindCheckPattern, RegexOptions.Singleline);
+        Assert.True(check.Success, owner + " no longer declares ck_definition_store_kind in a readable form.");
+        return Regex.Matches(check.Groups["body"].Value, @"'(?<kind>[a-z_]+)'")
+            .Select(m => m.Groups["kind"].Value)
+            .ToHashSet(StringComparer.Ordinal);
+    }
+
+    /// <summary>
+    /// Every detail table any canonical script creates, merged. A table created by
+    /// two scripts is a conflict, not a merge.
+    /// </summary>
+    private static Dictionary<string, Dictionary<string, DefinitionKindRegistry.StorageType>> AllDetailTables()
+    {
+        var merged = new Dictionary<string, Dictionary<string, DefinitionKindRegistry.StorageType>>(StringComparer.Ordinal);
+        foreach (var (path, text) in CanonicalScripts())
+        {
+            foreach (var pair in ParseDetailTables(text))
+            {
+                Assert.False(merged.ContainsKey(pair.Key), pair.Key + " is created by more than one canonical script (" + path + ").");
+                merged[pair.Key] = pair.Value;
+            }
+        }
+
+        return merged;
+    }
+
     // ------------------------------------------------------------ KIND_AUTHORITY
 
     /// <summary>
-    /// The enum, the registry and script 831's CHECK are three records of one
-    /// fact. Two records of one fact is the defect that cost T-089 two runs;
-    /// three records without a gate would be worse.
+    /// Historic compatibility: script 831 still declares exactly the sixteen kinds
+    /// it shipped with. It is history and is never edited.
+    /// </summary>
+    [Fact]
+    [Trait("Gate", "KIND_AUTHORITY_HISTORIC")]
+    public void Script_831_still_declares_the_sixteen_historic_kinds()
+    {
+        var historic = KindsIn(DefinitionStoreSql(), "Script 831");
+        Assert.Equal(16, historic.Count);
+        Assert.DoesNotContain("acquisition_configuration", historic);
+    }
+
+    /// <summary>
+    /// Current authority: the enum, the registry and the CURRENT database CHECK are
+    /// three records of one fact. The current CHECK is the one declared by the last
+    /// canonical script that declares it.
     /// </summary>
     [Fact]
     [Trait("Gate", "KIND_AUTHORITY")]
-    public void The_enum_the_registry_and_script_831_declare_the_same_sixteen_kinds()
+    public void The_enum_the_registry_and_the_current_kind_check_declare_the_same_kinds()
     {
-        var sql = DefinitionStoreSql();
-        var check = Regex.Match(sql, @"ck_definition_store_kind CHECK \(definition_kind IN \((?<body>.*?)\)\)",
-            RegexOptions.Singleline);
-        Assert.True(check.Success, "Script 831 no longer declares ck_definition_store_kind in a readable form.");
+        var owners = CanonicalScripts()
+            .Where(s => Regex.IsMatch(s.Text, KindCheckPattern, RegexOptions.Singleline))
+            .ToList();
+        Assert.True(owners.Count >= 2, "The kind CHECK should be declared by 831 and superseded by a later canonical script.");
+        Assert.EndsWith("831_definition_store.sql", owners[0].Path, StringComparison.Ordinal);
 
-        var declared = Regex.Matches(check.Groups["body"].Value, @"'(?<kind>[a-z_]+)'")
-            .Select(m => m.Groups["kind"].Value)
-            .ToHashSet(StringComparer.Ordinal);
+        var current = owners[^1];
+        Assert.EndsWith("_industrial_acquisition_configuration.sql", current.Path, StringComparison.Ordinal);
+        Assert.Contains("DROP CONSTRAINT IF EXISTS ck_definition_store_kind", current.Text, StringComparison.Ordinal);
 
-        Assert.Equal(16, declared.Count);
+        var declared = KindsIn(current.Text, current.Path);
+        Assert.Equal(CurrentKindCount, declared.Count);
+        Assert.True(KindsIn(DefinitionStoreSql(), "Script 831").IsSubsetOf(declared),
+            "The superseding CHECK dropped a historic kind.");
 
         var registry = DefinitionKindRegistry.Contracts.Select(c => c.StorageKind).ToHashSet(StringComparer.Ordinal);
-        Assert.Equal(16, registry.Count);
+        Assert.Equal(CurrentKindCount, registry.Count);
         Assert.True(declared.SetEquals(registry),
-            "Registry and script 831 disagree: " + string.Join(", ", declared.Except(registry).Concat(registry.Except(declared))));
+            "Registry and the current CHECK disagree: " + string.Join(", ", declared.Except(registry).Concat(registry.Except(declared))));
 
         var enumNames = Enum.GetValues<DefinitionKind>().ToHashSet();
-        Assert.Equal(16, enumNames.Count);
-        Assert.Equal(16, DefinitionKindRegistry.Contracts.Select(c => c.Kind).Distinct().Count());
+        Assert.Equal(CurrentKindCount, enumNames.Count);
+        Assert.Equal(CurrentKindCount, DefinitionKindRegistry.Contracts.Select(c => c.Kind).Distinct().Count());
     }
 
     /// <summary>
@@ -97,8 +171,22 @@ public sealed class DefinitionContractConvergenceTests
             .OrderBy(v => v)
             .ToList();
 
-        Assert.Equal(new[] { 12, 13, 14, 15, 16 }, added);
-        Assert.Equal(16, Enum.GetValues<DefinitionKind>().Select(k => (int)k).Distinct().Count());
+        // 12..16 are the existing additive members and keep their values; 17 is the
+        // only addition since, and it is AcquisitionConfiguration.
+        var existingAdditive = new Dictionary<string, int>(StringComparer.Ordinal)
+        {
+            ["SavedQuery"] = 12, ["FeatureSet"] = 13, ["Practice"] = 14, ["Report"] = 15, ["Scenario"] = 16,
+        };
+
+        foreach (var (name, value) in existingAdditive)
+        {
+            Assert.True(Enum.TryParse<DefinitionKind>(name, out var parsed), $"{name} disappeared from DefinitionKind.");
+            Assert.Equal(value, (int)parsed);
+        }
+
+        Assert.Equal(new[] { 12, 13, 14, 15, 16, 17 }, added);
+        Assert.Equal(17, (int)DefinitionKind.AcquisitionConfiguration);
+        Assert.Equal(17, Enum.GetValues<DefinitionKind>().Select(k => (int)k).Distinct().Count());
     }
 
     [Fact]
@@ -109,7 +197,8 @@ public sealed class DefinitionContractConvergenceTests
             .GroupBy(c => c.Surface)
             .ToDictionary(g => g.Key, g => g.Count(), StringComparer.Ordinal);
 
-        Assert.Equal(1, counts["S1"]);
+        Assert.Equal(2, counts["S1"]);
+        Assert.Equal("S1", DefinitionKindRegistry.SurfaceOf(DefinitionKind.AcquisitionConfiguration));
         Assert.Equal(9, counts["S2"]);
         Assert.Equal(4, counts["S3"]);
         Assert.Equal(1, counts["S4"]);
@@ -122,24 +211,23 @@ public sealed class DefinitionContractConvergenceTests
     // ------------------------------------------------------- DETAIL_SCHEMA_DRIFT
 
     /// <summary>
-    /// Bidirectional. A registry field that script 832 does not create is a
-    /// write that will fail at runtime; a column 832 creates that the registry
-    /// does not declare would become writable by accident if the physical
-    /// catalogue were ever consulted instead.
+    /// Bidirectional. A registry field that no canonical detail migration creates is a
+    /// write that will fail at runtime; a physical field absent from the registry would
+    /// become writable by accident if the physical catalogue were ever consulted instead.
     /// </summary>
     [Fact]
     [Trait("Gate", "DETAIL_SCHEMA_DRIFT")]
-    public void Registry_detail_fields_and_script_832_agree_in_both_directions()
+    public void Registry_detail_fields_and_canonical_detail_migrations_agree_in_both_directions()
     {
-        var tables = ParseDetailTables(DetailSql());
-        Assert.True(tables.Count >= 11, $"Expected at least eleven detail tables in script 832, found {tables.Count}.");
+        Assert.True(ParseDetailTables(DetailSql()).Count >= 11, "Expected at least eleven detail tables in script 832.");
+        var tables = AllDetailTables();
 
         var checkedTables = 0;
 
         foreach (var contract in DefinitionKindRegistry.Contracts.Where(c => c.DetailTable is not null))
         {
             Assert.True(tables.ContainsKey(contract.DetailTable!),
-                $"Registry declares {contract.DetailTable} but script 832 does not create it.");
+                $"Registry declares {contract.DetailTable} but no canonical detail migration creates it.");
 
             var physical = tables[contract.DetailTable!]
                 .Where(c => !DefinitionKindRegistry.InfrastructureColumns.Contains(c.Key, StringComparer.Ordinal))
@@ -155,14 +243,14 @@ public sealed class DefinitionContractConvergenceTests
             checkedTables++;
         }
 
-        Assert.Equal(10, checkedTables);
+        Assert.Equal(DefinitionKindRegistry.Contracts.Count(c => c.DetailTable is not null), checkedTables);
     }
 
     [Fact]
     [Trait("Gate", "PERSISTENCE_TYPE_DRIFT")]
     public void Declared_storage_types_match_script_832_column_types()
     {
-        var tables = ParseDetailTables(DetailSql());
+        var tables = AllDetailTables();
         var compared = 0;
 
         foreach (var contract in DefinitionKindRegistry.Contracts.Where(c => c.DetailTable is not null))
@@ -170,7 +258,7 @@ public sealed class DefinitionContractConvergenceTests
             foreach (var field in contract.WritableFields)
             {
                 Assert.True(tables[contract.DetailTable!].TryGetValue(field.Name, out var physical),
-                    $"{contract.DetailTable}.{field.Name} is declared by the registry and absent from script 832.");
+                    $"{contract.DetailTable}.{field.Name} is declared by the registry and absent from canonical detail migrations.");
 
                 Assert.Equal(field.Storage, physical);
                 compared++;

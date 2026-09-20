@@ -25,8 +25,8 @@
                   "Product tables live in ppiq_meta, ppiq_plant or ppiq_staging. A single terminal convergence file relocates them after every historical creator has run; no migration and no historical script moves a table."
               ],
     "summary":  {
-                    "totalFiles":  163,
-                    "canonicalPath":  114,
+                    "totalFiles":  164,
+                    "canonicalPath":  115,
                     "distinctTables":  176,
                     "governedDuplicates":  7,
                     "ungovernedDuplicates":  0,
@@ -98,7 +98,7 @@
     "canonicalViews":  [
                            {
                                "path":  "Backend/database/views/006_dashboard_dataset_views.sql",
-                               "order":  114,
+                               "order":  115,
                                "sha256":  "729D127FA772E1E100A8AD1A6CEAF6B2BABBA5A3FED9991EB8EB62960D3D6865",
                                "note":  "Read-model view authority. Applied after every schema script and after topology convergence, before the probe database is dropped."
                            }
@@ -1388,6 +1388,21 @@
                           },
                           {
                               "position":  114,
+                              "ordinal":  847,
+                              "path":  "Backend/database/scripts/847_industrial_acquisition_configuration.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "42835A068BFE16ECA4CEF69B8F9DCA0512CD62893A1ED544A588CD8606F9781F",
+                              "createsTables":  [
+                                                  "ppiq_meta.acquisition_configuration_details",
+                                                  "ppiq_meta.source_dataset_governance",
+                                                  "ppiq_meta.source_field_identities",
+                                                  "ppiq_meta.source_field_revisions",
+                                                  "ppiq_meta.source_layout_revisions"
+                                              ],
+                              "reason":  "Adds the acquisition configuration definition kind and its typed detail projection, explicit tenant governance of a legacy source dataset, stable provider-neutral field identities with immutable revisions, and immutable declarative raw layout revisions."
+                          },
+                          {
+                              "position":  115,
                               "ordinal":  6,
                               "path":  "Backend/database/views/006_dashboard_dataset_views.sql",
                               "disposition":  "Canonical",

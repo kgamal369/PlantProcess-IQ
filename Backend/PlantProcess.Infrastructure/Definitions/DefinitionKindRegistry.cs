@@ -115,6 +115,8 @@ public static class DefinitionKindRegistry
             new DeclaredField[] { new("algorithm_code", StorageType.Text), new("hyperparameters", StorageType.Json), new("split_strategy", StorageType.Json), new("acceptance_floor", StorageType.Json) }),
         new(DefinitionKind.LogRule, "log_rule", "S5", "log_rule_details",
             new DeclaredField[] { new("condition_expression", StorageType.Text), new("severity", StorageType.Text), new("message_template", StorageType.Text), new("scope_declaration", StorageType.Json) }),
+        new(DefinitionKind.AcquisitionConfiguration, "acquisition_configuration", "S1", "acquisition_configuration_details",
+            new DeclaredField[] { new("dataset_governance_id", StorageType.Uuid), new("provider_type", StorageType.Text), new("layout_revision", StorageType.Integer), new("field_references", StorageType.Json), new("recording_groups", StorageType.Json), new("source_requirements", StorageType.Json), new("source_time_reference", StorageType.Json), new("storage_references", StorageType.Json), new("accepted_record_contract", StorageType.Json) }),
     };
 
     private static readonly Dictionary<DefinitionKind, KindContract> ByKind =

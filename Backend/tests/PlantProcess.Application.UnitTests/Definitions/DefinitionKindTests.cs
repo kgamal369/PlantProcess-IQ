@@ -3,13 +3,35 @@ using PlantProcess.Application.Definitions;
 namespace PlantProcess.Application.UnitTests.Definitions;
 
 /// <summary>
-/// PPIQ T-039. The frozen validation's second half: the kind enum carries all
-/// eleven members. This is not a formality - the task exists because the
-/// contract has to be final in M1, and a member added in M2a would break every
-/// caller that switched on it.
+/// PPIQ T-039, corrected as the kind authority grew.
+///
+/// WHAT THIS PROTECTS, AND WHAT IT NEVER PROTECTED. The original assertion was a
+/// COUNT of eleven, written when eleven was all there was. A count is not the
+/// invariant: T-090 added 12..16 and the Industrial Integration configuration
+/// authority adds 17, and each addition made the count assertion fail without
+/// telling anyone anything about the property that actually matters.
+///
+/// The property that matters is that a PERSISTED numeric value never changes
+/// meaning. Every historic member keeps its number, zero stays unused, and any
+/// new member is additive and named here deliberately.
 /// </summary>
 public class DefinitionKindTests
 {
+    /// <summary>The eleven M1 members and their frozen numbers.</summary>
+    private static readonly Dictionary<string, int> FrozenM1 = new(StringComparer.Ordinal)
+    {
+        ["Transformation"] = 1, ["Page"] = 2, ["Widget"] = 3, ["Analysis"] = 4,
+        ["Model"] = 5, ["LogRule"] = 6, ["MasterDimension"] = 7, ["MasterMeasure"] = 8,
+        ["Filter"] = 9, ["Hierarchy"] = 10, ["Bookmark"] = 11,
+    };
+
+    /// <summary>Everything added since, with the numbers already persisted for it.</summary>
+    private static readonly Dictionary<string, int> AdditiveSinceM1 = new(StringComparer.Ordinal)
+    {
+        ["SavedQuery"] = 12, ["FeatureSet"] = 13, ["Practice"] = 14, ["Report"] = 15,
+        ["Scenario"] = 16, ["AcquisitionConfiguration"] = 17,
+    };
+
     private static readonly DefinitionKind[] Required =
     {
         // The five authoring purposes.
@@ -28,15 +50,52 @@ public class DefinitionKindTests
     };
 
     [Fact]
-    public void Kind_enum_carries_exactly_the_eleven_declared_members()
+    public void Kind_enum_still_carries_every_M1_member()
     {
         var declared = Enum.GetValues<DefinitionKind>();
 
-        Assert.Equal(11, declared.Length);
         foreach (var required in Required)
         {
             Assert.Contains(required, declared);
         }
+    }
+
+    /// <summary>
+    /// Numbers, not a count. A renumbered member reinterprets every row that
+    /// persisted it, which is invisible until the data is read back.
+    /// </summary>
+    [Fact]
+    public void Historic_kind_numbers_never_move()
+    {
+        foreach (var (name, value) in FrozenM1)
+        {
+            Assert.True(Enum.TryParse<DefinitionKind>(name, out var parsed), name + " disappeared from DefinitionKind.");
+            Assert.Equal(value, (int)parsed);
+        }
+    }
+
+    /// <summary>
+    /// Every member beyond M1 is additive and declared here on purpose.
+    /// AcquisitionConfiguration = 17 is the Industrial Integration addition; a
+    /// member that appears without being named here fails this test.
+    /// </summary>
+    [Fact]
+    public void Every_member_beyond_M1_is_a_declared_additive_member()
+    {
+        foreach (var (name, value) in AdditiveSinceM1)
+        {
+            Assert.True(Enum.TryParse<DefinitionKind>(name, out var parsed), name + " disappeared from DefinitionKind.");
+            Assert.Equal(value, (int)parsed);
+        }
+
+        var undeclared = Enum.GetNames<DefinitionKind>()
+            .Where(name => !FrozenM1.ContainsKey(name) && !AdditiveSinceM1.ContainsKey(name))
+            .OrderBy(name => name, StringComparer.Ordinal)
+            .ToArray();
+
+        Assert.True(undeclared.Length == 0, "Undeclared definition kind(s): " + string.Join(", ", undeclared));
+        Assert.Equal(17, (int)DefinitionKind.AcquisitionConfiguration);
+        Assert.Equal(FrozenM1.Count + AdditiveSinceM1.Count, Enum.GetValues<DefinitionKind>().Length);
     }
 
     [Fact]

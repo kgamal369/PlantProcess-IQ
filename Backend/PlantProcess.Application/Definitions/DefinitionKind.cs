@@ -68,4 +68,10 @@ public enum DefinitionKind
 
     /// <summary>Surface S3, stored as 'scenario'. Added by T-090.</summary>
     Scenario = 16,
+    /// <summary>
+    /// Surface S1, stored as 'acquisition_configuration'. The additive Industrial
+    /// Integration kind: requested acquisition intent, versioned by the same store.
+    /// Members 1..16 keep their values; nothing existing moves.
+    /// </summary>
+    AcquisitionConfiguration = 17,
 }
