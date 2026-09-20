@@ -45,6 +45,20 @@ public sealed class MappingRowProjector : IMappingRowProjector
     private readonly IPlantProcessDbContext _dbContext;
     private readonly ISourceTimeAuthorityRegistryProvider _sourceTimeAuthority = null!;
 
+    // Production composition supplies both source-time authority and row validation.
+    // Keep the compatibility overloads for existing explicitly composed callers.
+    public MappingRowProjector(
+        IPlantProcessDbContext dbContext,
+        ISourceTimeAuthorityRegistryProvider sourceTimeAuthority,
+        ProjectionRowValidationService advancedValidation)
+        : this(
+            dbContext ?? throw new ArgumentNullException(nameof(dbContext)),
+            advancedValidation ?? throw new ArgumentNullException(nameof(advancedValidation)))
+    {
+        _sourceTimeAuthority = sourceTimeAuthority
+            ?? throw new ArgumentNullException(nameof(sourceTimeAuthority));
+    }
+
     public MappingRowProjector(
         IPlantProcessDbContext dbContext,
         ISourceTimeAuthorityRegistryProvider sourceTimeAuthority)
