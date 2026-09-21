@@ -448,18 +448,14 @@ public class Worker : BackgroundService
 
     /// <summary>
     /// T-106 B2.3c. One poll: ask the governed dispatcher what is due and let it execute
-    /// through the accepted orchestration and admission path. The dispatcher is built
-    /// inside the scope rather than registered, because the shared composition root is
-    /// currently owned by another lane and this Worker is its only consumer.
+    /// through the registered dispatcher. Each execution gets its own scope; overlapping
+    /// polls share the same process admission and dispatch bounds.
     /// </summary>
     private async Task DispatchGovernedSchedulesAsync(CancellationToken cancellationToken)
     {
         await using var scope = _scopeFactory.CreateAsyncScope();
 
-        var dbContext = scope.ServiceProvider.GetRequiredService<IPlantProcessDbContext>();
-        var orchestrator = scope.ServiceProvider.GetRequiredService<IJobRunOrchestratorService>();
-
-        var dispatcher = new GovernedScheduleDispatcher(dbContext, orchestrator);
+        var dispatcher = scope.ServiceProvider.GetRequiredService<GovernedScheduleDispatcher>();
 
         DispatchReport report = await dispatcher.DispatchDueAsync(DateTime.UtcNow, cancellationToken);
 

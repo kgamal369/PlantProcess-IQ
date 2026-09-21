@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Configuration;
 // ============================================================
 // FILE: Backend/PlantProcess.Application/DependencyInjection.cs
 // FIX: Removed duplicate using directives for
@@ -115,11 +116,23 @@ public static class DependencyInjection
         services.AddScoped<Jobs.Execution.IJobExecutor,
             Jobs.Execution.Transformations.TransformationProjectionJobExecutor>();
         services.AddScoped<Jobs.Execution.IJobExecutorResolver, Jobs.Execution.JobExecutorResolver>();
+        services.AddSingleton<Jobs.Admission.JobAdmissionOptionsConfigurationProvider>(provider =>
+        {
+            var options = new Jobs.Admission.JobAdmissionOptions();
+            provider.GetRequiredService<IConfiguration>().GetSection(Jobs.Admission.JobAdmissionOptions.SectionName).Bind(options);
+            return new Jobs.Admission.JobAdmissionOptionsConfigurationProvider(options);
+        });
+        services.AddSingleton<Jobs.Admission.IJobAdmissionConfigurationProvider>(provider =>
+            provider.GetRequiredService<Jobs.Admission.JobAdmissionOptionsConfigurationProvider>());
+        services.AddSingleton<Jobs.Admission.IJobAdmissionController, Jobs.Admission.JobAdmissionController>();
+        services.AddSingleton<Jobs.Admission.BoundedJobDispatcher>(provider => new(
+            provider.GetRequiredService<Jobs.Admission.JobAdmissionOptionsConfigurationProvider>().MaxOutstandingDispatches,
+            provider.GetRequiredService<Microsoft.Extensions.Logging.ILogger<Jobs.Admission.BoundedJobDispatcher>>()));
+        services.AddScoped<Jobs.Scheduling.GovernedScheduleDispatcher>();
         services.AddScoped<Jobs.Execution.IJobRunCancellationProbe, Jobs.Execution.JobRunCancellationProbe>();
         services.AddScoped<IIncrementalSyncStateService, IncrementalSyncStateService>();
         services.AddScoped<IDeltaImportExecutionService, DeltaImportExecutionService>();
         services.AddScoped<IBackfillExecutionService, BackfillExecutionService>();
-
         // Canonical material and genealogy workflow
         services.AddScoped<IMaterialService, MaterialService>();
         services.AddScoped<IGenealogyService, GenealogyService>();

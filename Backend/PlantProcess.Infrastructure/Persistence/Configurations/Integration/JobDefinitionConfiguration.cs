@@ -119,6 +119,9 @@ public sealed class JobDefinitionConfiguration : IEntityTypeConfiguration<JobDef
             .HasColumnName("target_parameters")
             .HasColumnType("jsonb");
 
+        builder.Property(x => x.PoolCode).HasColumnName("pool_code").HasMaxLength(64);
+        builder.Property(x => x.ComputeWeight).HasColumnName("compute_weight").IsRequired();
+        builder.HasIndex(x => x.PoolCode);
         builder.HasIndex(x => new { x.TargetDefinitionKind, x.TargetDefinitionId });
 
         builder.HasIndex(x => x.JobType);

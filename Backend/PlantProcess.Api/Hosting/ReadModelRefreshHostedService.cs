@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -55,6 +55,7 @@ public sealed class ReadModelRefreshHostedService : BackgroundService
                 scheduleExpression: "every-15-minutes",
                 isSynthetic: false,
                 description: "Refreshes mv_dashboard_* materialized views (T-028).");
+            PlantProcess.Application.Jobs.Admission.JobLaneAssignment.Initialize(def);
             db.JobDefinitions.Add(def);
             try
             {

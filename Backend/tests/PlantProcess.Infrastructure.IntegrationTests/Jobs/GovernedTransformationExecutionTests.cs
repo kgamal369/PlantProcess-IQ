@@ -1,3 +1,4 @@
+using PlantProcess.Application.Jobs.Admission;
 using System.Globalization;
 using System.Text.Json;
 using Npgsql;
@@ -225,10 +226,10 @@ public sealed class GovernedTransformationExecutionTests : IAsyncLifetime
     private async Task<Guid> JobForAsync(Guid definitionId, int? pinnedVersion)
     {
         await using var db = _fixture.NewContext();
-
         var job = new JobDefinition(
             "TXEXEC_" + Guid.NewGuid().ToString("N").Substring(0, 10),
             "Governed transformation probe", JobDefinitionType.CanonicalRefresh, "Manual", false);
+        JobLaneAssignment.Initialize(job);
 
         job.AssignTargetDefinition(
             DefinitionKind.Transformation.ToString(), definitionId,
@@ -356,7 +357,8 @@ public sealed class GovernedTransformationExecutionTests : IAsyncLifetime
             authority,
             new JobTargetResolver(new DefinitionService(db), new CapabilityJobTargetClassPolicy(authority), new JobTargetLookup(db)),
             new JobDependencyService(db),
-            new JobExecutorResolver(new IJobExecutor[] { executor }));
+            new JobExecutorResolver(new IJobExecutor[] { executor }),
+                new JobAdmissionController(new JobAdmissionOptionsConfigurationProvider(new JobAdmissionOptions()), Microsoft.Extensions.Logging.Abstractions.NullLogger<JobAdmissionController>.Instance));
     }
 
     private async Task<List<MaterialUnit>> UnitsAsync()
@@ -720,15 +722,14 @@ public sealed class GovernedTransformationExecutionTests : IAsyncLifetime
     public async Task The_background_import_queue_path_is_untouched_by_the_commissioning()
     {
         await using var db = _fixture.NewContext();
-
         var importJob = new JobDefinition(
             "TXEXEC_IMPORT_" + Guid.NewGuid().ToString("N").Substring(0, 8),
             "Import queue probe", JobDefinitionType.DbLinkImport, "Manual", false);
+        JobLaneAssignment.Initialize(importJob);
 
         db.JobDefinitions.Add(importJob);
         await db.SaveChangesAsync();
         _jobs.Add(importJob.Id);
-
         var import = new CountingImport();
         var result = await Orchestrator(db, import).RunNowAsync(importJob.Id, "tester", null, CancellationToken.None);
 
@@ -743,15 +744,14 @@ public sealed class GovernedTransformationExecutionTests : IAsyncLifetime
     public async Task A_targetless_canonical_refresh_job_still_refuses_and_never_reaches_the_import_queue()
     {
         await using var db = _fixture.NewContext();
-
         var targetless = new JobDefinition(
             "TXEXEC_TARGETLESS_" + Guid.NewGuid().ToString("N").Substring(0, 8),
             "Targetless refresh probe", JobDefinitionType.CanonicalRefresh, "Manual", false);
+        JobLaneAssignment.Initialize(targetless);
 
         db.JobDefinitions.Add(targetless);
         await db.SaveChangesAsync();
         _jobs.Add(targetless.Id);
-
         var import = new CountingImport();
         var result = await Orchestrator(db, import).RunNowAsync(targetless.Id, "tester", null, CancellationToken.None);
 

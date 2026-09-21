@@ -1,3 +1,4 @@
+using PlantProcess.Application.Jobs.Admission;
 using Microsoft.EntityFrameworkCore;
 using PlantProcess.Application.Common.Persistence;
 using PlantProcess.Application.Common.Results;
@@ -228,12 +229,15 @@ public sealed class JobRegistrationService : IJobRegistrationService
          * ExecuteUpdateAsync performs a direct database update and avoids the
          * stale tracked-entity concurrency problem for idempotent registration.
          */
+        var expectedPool = JobLaneAssignment.DefaultFor(request.JobType);
         var updatedRows = await _dbContext.JobDefinitions
-            .Where(x => !x.IsDeleted && x.JobCode == jobCode)
+            .Where(x => !x.IsDeleted && x.JobCode == jobCode
+                && (expectedPool == null || x.PoolCode == null || x.PoolCode == expectedPool))
             .ExecuteUpdateAsync(
                 setters => setters
                     .SetProperty(x => x.JobName, request.JobName.Trim())
                     .SetProperty(x => x.JobType, request.JobType)
+                    .SetProperty(x => x.PoolCode, x => x.PoolCode ?? expectedPool)
                     .SetProperty(x => x.TargetId, request.TargetId)
                     .SetProperty(x => x.TargetType, targetType)
                     .SetProperty(x => x.ScheduleExpression, request.ScheduleExpression.Trim())
@@ -253,6 +257,10 @@ public sealed class JobRegistrationService : IJobRegistrationService
                 : ApplicationResult<JobDefinitionDto>.Success(ToDto(updated));
         }
 
+        if (await _dbContext.JobDefinitions.AnyAsync(x => !x.IsDeleted && x.JobCode == jobCode, cancellationToken))
+            return ApplicationResult<JobDefinitionDto>.Failure(ApplicationError.Validation(
+                "Registration cannot change an explicitly assigned incompatible execution pool."));
+
         var job = new JobDefinition(
             jobCode: jobCode,
             jobName: request.JobName,
@@ -266,6 +274,7 @@ public sealed class JobRegistrationService : IJobRegistrationService
             sourceSystem: request.SourceSystem,
             sourceRecordId: request.SourceRecordId);
 
+        JobLaneAssignment.Initialize(job);
         _dbContext.JobDefinitions.Add(job);
 
         try

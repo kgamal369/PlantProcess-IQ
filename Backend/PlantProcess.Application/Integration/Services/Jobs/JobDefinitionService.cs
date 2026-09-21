@@ -1,3 +1,4 @@
+using PlantProcess.Application.Jobs.Admission;
 using Microsoft.EntityFrameworkCore;
 using PlantProcess.Application.Common.Persistence;
 using PlantProcess.Application.Common.Results;
@@ -92,6 +93,7 @@ public sealed class JobDefinitionService : IJobDefinitionService
             sourceSystem: request.SourceSystem,
             sourceRecordId: request.SourceRecordId);
 
+        JobLaneAssignment.Initialize(job);
         _dbContext.JobDefinitions.Add(job);
         await _dbContext.SaveChangesAsync(cancellationToken);
 
@@ -110,9 +112,11 @@ public sealed class JobDefinitionService : IJobDefinitionService
 
         var job = await _dbContext.JobDefinitions
             .FirstOrDefaultAsync(x => !x.IsDeleted && x.Id == id, cancellationToken);
-
         if (job is null)
             return ApplicationResult<JobDefinitionDto>.Failure(ApplicationError.NotFound("Job definition not found."));
+
+        var poolError = JobLaneAssignment.ValidateChange(job, request.JobType);
+        if (poolError is not null) return ApplicationResult<JobDefinitionDto>.Failure(poolError);
 
         job.UpdateDefinition(
             jobName: request.JobName,
@@ -122,6 +126,7 @@ public sealed class JobDefinitionService : IJobDefinitionService
             targetType: request.TargetType,
             isEnabled: request.IsEnabled,
             description: request.Description);
+        JobLaneAssignment.CompleteFamilyChange(job);
 
         await _dbContext.SaveChangesAsync(cancellationToken);
 
@@ -152,6 +157,7 @@ public sealed class JobDefinitionService : IJobDefinitionService
             scheduleExpression: "Manual",
             isSynthetic: false);
 
+        JobLaneAssignment.Initialize(created);
         created.AssignTargetDefinition(
             request.TargetDefinitionKind,
             request.TargetDefinitionId,
@@ -379,7 +385,8 @@ public sealed class JobDefinitionService : IJobDefinitionService
                 sourceSystem: "PlantProcessIQ.System",
                 sourceRecordId: seed.JobCode);
 
-            _dbContext.JobDefinitions.Add(job);
+            JobLaneAssignment.Initialize(job);
+        _dbContext.JobDefinitions.Add(job);
         }
 
         await _dbContext.SaveChangesAsync(cancellationToken);

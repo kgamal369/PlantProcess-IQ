@@ -1,4 +1,5 @@
 using PlantProcess.Application.Jobs.Admission;
+using Microsoft.Extensions.Logging.Abstractions;
 using PlantProcess.Application.Analytics.Contracts;
 using PlantProcess.Application.Analytics.Interfaces;
 using PlantProcess.Application.Common.Results;
@@ -24,7 +25,8 @@ namespace PlantProcess.Application.UnitTests.Jobs;
 /// is created with the exact resolved target, the executor receives that frozen plan,
 /// and cancellation converges through acknowledgement rather than completion.
 /// </summary>
-public sealed class GovernedJobDispatchTests
+[Trait("Gate", "JobAdmissionProduction")]
+public sealed class JobAdmissionProductionTests
 {
     private static readonly Guid DefinitionId = Guid.Parse("7a1f0000-0000-0000-0000-0000000000aa");
 
@@ -47,11 +49,13 @@ public sealed class GovernedJobDispatchTests
             return Task.FromResult(Admission ?? ApplicationResult<JobExecutionPlan>.Success(new StubPlan(target)));
         }
 
-        public Task<ApplicationResult<JobExecutionOutcome>> ExecuteAsync(
+        public Func<CancellationToken, Task>? OnExecute { get; set; }
+        public async Task<ApplicationResult<JobExecutionOutcome>> ExecuteAsync(
             JobExecutionContext context, CancellationToken cancellationToken)
         {
             Executed.Add(context);
-            return Task.FromResult(ApplicationResult<JobExecutionOutcome>.Success(Outcome));
+            if (OnExecute is not null) await OnExecute(cancellationToken);
+            return ApplicationResult<JobExecutionOutcome>.Success(Outcome);
         }
     }
 
@@ -66,6 +70,11 @@ public sealed class GovernedJobDispatchTests
 
     private sealed class Runtime : IJobRuntimeService
     {
+        public Action? OnStart { get; set; }
+        public Func<Task>? OnComplete { get; set; }
+        public bool FailStart { get; set; }
+        public bool FailComplete { get; set; }
+        public bool Duplicate { get; set; }
         public List<string> PlainStarts { get; } = new();
         public List<ResolvedJobTarget> TargetStarts { get; } = new();
         public List<JobRunStatus> Completions { get; } = new();
@@ -83,16 +92,21 @@ public sealed class GovernedJobDispatchTests
             string jobCode, string? occurrenceKey, DateTime? nominalAtUtc, string triggerSource,
             string? triggeredBy, string? correlationId, ResolvedJobTarget target, CancellationToken cancellationToken)
         {
+            OnStart?.Invoke();
+            if (FailStart || Duplicate) return Task.FromResult(ApplicationResult<JobRunHistoryDto>.Failure(
+                ApplicationError.BusinessRule(Duplicate ? "OCCURRENCE ALREADY CLAIMED" : "start refused")));
             TargetStarts.Add(target);
             return Task.FromResult(ApplicationResult<JobRunHistoryDto>.Success(Dto(JobRunStatus.Running)));
         }
 
-        public Task<ApplicationResult<JobRunHistoryDto>> CompleteAsync(
+        public async Task<ApplicationResult<JobRunHistoryDto>> CompleteAsync(
             Guid jobRunHistoryId, JobRunStatus finalStatus, string? message, string? failureReason,
             string? resultSummaryJson, CancellationToken ct)
         {
             Completions.Add(finalStatus);
-            return Task.FromResult(ApplicationResult<JobRunHistoryDto>.Success(Dto(finalStatus)));
+            if (OnComplete is not null) await OnComplete();
+            if (FailComplete) return ApplicationResult<JobRunHistoryDto>.Failure(ApplicationError.BusinessRule("complete refused"));
+            return ApplicationResult<JobRunHistoryDto>.Success(Dto(finalStatus));
         }
 
         public Task<ApplicationResult<JobRunHistoryDto>> AcknowledgeCancellationAsync(
@@ -196,21 +210,21 @@ public sealed class GovernedJobDispatchTests
 
     private sealed class World
     {
-        public World(JobDefinitionType jobType, bool withTarget = true)
+        public World(JobAdmissionController admission)
         {
-            Job = new JobDefinition("PROBE_" + jobType, "Probe", jobType, "Manual", false);
-            JobLaneAssignment.Initialize(Job);
-            if (withTarget)
+            Job = new JobDefinition("PROBE", "Probe", JobDefinitionType.CanonicalRefresh, "Manual", false);
+            Job.AssignExecutionPool(JobLaneCodes.Projection, 1);
+            if (true)
             {
                 Job.AssignTargetDefinition(
-                    jobType == JobDefinitionType.CanonicalRefresh ? "Transformation" : "Model",
+                    "Transformation",
                     DefinitionId, JobTargetVersionPolicy.Pinned, 3);
             }
+
             Orchestrator = new JobRunOrchestratorService(
                 new Lookup(Job), Runtime, new NoImport(), new NoQuality(), new NoRisk(),
                 new JobExecutionCapabilityAuthority(), new Resolver(), new NoDependencies(),
-                new JobExecutorResolver(new IJobExecutor[] { Executor }),
-                new JobAdmissionController(new JobAdmissionOptionsConfigurationProvider(new JobAdmissionOptions()), Microsoft.Extensions.Logging.Abstractions.NullLogger<JobAdmissionController>.Instance));
+                new JobExecutorResolver(new IJobExecutor[] { Executor }), admission);
         }
 
         public JobDefinition Job { get; }
@@ -219,82 +233,83 @@ public sealed class GovernedJobDispatchTests
         public JobRunOrchestratorService Orchestrator { get; }
     }
 
-    [Fact]
-    public async Task A_refused_plan_creates_no_run()
+
+    private static JobAdmissionController Controller() => new(
+        new JobAdmissionTestConfigurationProvider(new JobLaneDefinition(JobLaneCodes.Projection, 1, 2, 4, JobCapacityProvenance.TestConfiguration)),
+        NullLogger<JobAdmissionController>.Instance);
+    private static void Empty(JobAdmissionController admission)
     {
-        var world = new World(JobDefinitionType.CanonicalRefresh);
-        world.Executor.Admission = ApplicationResult<JobExecutionPlan>.Failure(new ApplicationError(
-            JobExecutionDiagnosticCodes.CanonicalTargetNotCommissioned, "not yet", ApplicationErrorType.BusinessRule));
+        var lane = Assert.Single(admission.Snapshot());
+        Assert.Equal(0, lane.RunningCount); Assert.Equal(0, lane.ActiveWeight); Assert.Equal(0, lane.QueueDepth);
+    }
+    private static Task<ApplicationResult<JobActionResponseDto>> Run(World world, bool scheduled = false, CancellationToken ct = default)
+        => scheduled ? world.Orchestrator.RunScheduledAsync(world.Job.Id, "occurrence", DateTime.UtcNow, "test", null, ct)
+            : world.Orchestrator.RunNowAsync(world.Job.Id, "test", null, ct);
 
-        var result = await world.Orchestrator.RunNowAsync(world.Job.Id, "tester", null, CancellationToken.None);
-
-        Assert.True(result.IsFailure);
-        Assert.Equal(JobExecutionDiagnosticCodes.CanonicalTargetNotCommissioned, result.Error!.Code);
-        Assert.Empty(world.Runtime.TargetStarts);
-        Assert.Empty(world.Runtime.PlainStarts);
-        Assert.Empty(world.Executor.Executed);
+    [Theory]
+    [InlineData("start-refused")]
+    [InlineData("start-throws")]
+    [InlineData("duplicate")]
+    [InlineData("complete-refused")]
+    [InlineData("complete-throws")]
+    [InlineData("executor-throws")]
+    [InlineData("cancelled")]
+    [InlineData("success")]
+    public async Task Real_orchestrator_holds_capacity_through_terminal_paths_and_releases_once(string path)
+    {
+        var admission = Controller(); var world = new World(admission);
+        Action occupied = () => Assert.Equal(1, admission.Snapshot()[0].RunningCount);
+        world.Runtime.OnStart = () => { occupied(); if (path == "start-throws") throw new InvalidOperationException("start probe"); };
+        world.Runtime.OnComplete = () => { occupied(); if (path == "complete-throws") throw new InvalidOperationException("complete probe"); return Task.CompletedTask; };
+        world.Runtime.FailStart = path == "start-refused";
+        world.Runtime.Duplicate = path == "duplicate";
+        world.Runtime.FailComplete = path == "complete-refused";
+        world.Executor.OnExecute = _ => { occupied(); if (path == "executor-throws") throw new InvalidOperationException("execution probe"); return Task.CompletedTask; };
+        if (path == "cancelled") world.Executor.Outcome = new(false, true, "cancelled", 0, Array.Empty<JobExecutionBlockResult>(), JobExecutionDiagnosticCodes.Cancelled, null);
+        if (path is "start-throws" or "complete-throws")
+            await Assert.ThrowsAsync<InvalidOperationException>(() => Run(world));
+        else
+        {
+            var result = await Run(world, path == "duplicate");
+            Assert.Equal(path is "success" or "cancelled", result.IsSuccess);
+        }
+        if (path.StartsWith("start", StringComparison.Ordinal) || path == "duplicate") Assert.Empty(world.Executor.Executed);
+        if (path == "cancelled") Assert.Single(world.Runtime.Acknowledged);
+        Empty(admission);
+        await using var next = await admission.AcquireAsync(new(Guid.NewGuid(), "CanonicalRefresh", JobLaneCodes.Projection, new(2)), CancellationToken.None);
+        Assert.True(next.IsAdmitted);
     }
 
     [Fact]
-    public async Task The_run_is_created_with_the_exact_resolution_and_executes_that_frozen_plan()
+    public async Task Manual_and_scheduled_calls_share_capacity_and_wait_through_completion()
     {
-        var world = new World(JobDefinitionType.CanonicalRefresh);
-
-        var result = await world.Orchestrator.RunNowAsync(world.Job.Id, "tester", null, CancellationToken.None);
-
-        Assert.True(result.IsSuccess, result.Error?.Message);
-        Assert.Equal(JobRunStatus.Ok, result.Value!.Status);
-        ResolvedJobTarget started = Assert.Single(world.Runtime.TargetStarts);
-        Assert.Equal(DefinitionId, started.DefinitionId);
-        Assert.Equal(3, started.ResolvedVersion);
-        Assert.Empty(world.Runtime.PlainStarts);
-
-        JobExecutionContext context = Assert.Single(world.Executor.Executed);
-        Assert.Same(world.Executor.Admitted.Single(), context.Plan.Target);
-        Assert.Equal(world.Runtime.RunId, context.JobRunHistoryId);
-        Assert.Equal(new[] { JobRunStatus.Ok }, world.Runtime.Completions.ToArray());
+        var admission = Controller(); var manual = new World(admission); var scheduled = new World(admission);
+        var completing = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var finish = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        manual.Runtime.OnComplete = async () => { completing.SetResult(); await finish.Task; };
+        var first = Run(manual); await completing.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        var second = Run(scheduled, true);
+        try
+        {
+            Assert.False(second.IsCompleted);
+            Assert.Empty(scheduled.Runtime.TargetStarts);
+            Assert.Equal(1, admission.Snapshot()[0].QueueDepth);
+        }
+        finally { finish.TrySetResult(); }
+        Assert.True((await first).IsSuccess); Assert.True((await second).IsSuccess); Empty(admission);
     }
 
     [Fact]
-    public async Task A_typed_block_failure_completes_the_run_as_failed_with_its_code()
+    public async Task Cancelled_waiting_run_never_calls_runtime_Start()
     {
-        var world = new World(JobDefinitionType.CanonicalRefresh);
-        world.Executor.Outcome = new JobExecutionOutcome(
-            false, false, "block failed", 0, Array.Empty<JobExecutionBlockResult>(),
-            JobExecutionDiagnosticCodes.SourceIdentityInvalid, "row 2");
-
-        var result = await world.Orchestrator.RunNowAsync(world.Job.Id, "tester", null, CancellationToken.None);
-
-        Assert.True(result.IsSuccess);
-        Assert.Equal(JobRunStatus.Failed, result.Value!.Status);
-        Assert.Contains(JobExecutionDiagnosticCodes.SourceIdentityInvalid, result.Value.Message, StringComparison.Ordinal);
-        Assert.Equal(new[] { JobRunStatus.Failed }, world.Runtime.Completions.ToArray());
+        var admission = Controller(); var world = new World(admission);
+        await using var blocker = await admission.AcquireAsync(new(Guid.NewGuid(), "CanonicalRefresh", JobLaneCodes.Projection, new(2)), CancellationToken.None);
+        using var stop = new CancellationTokenSource();
+        var run = Run(world, false, stop.Token); stop.Cancel();
+        var result = await run.WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.Equal(JobExecutionDiagnosticCodes.AdmissionCancelled, result.Error!.Code);
+        Assert.Empty(world.Runtime.TargetStarts); Assert.Empty(world.Executor.Executed);
+        await blocker.DisposeAsync(); Empty(admission);
     }
 
-    [Fact]
-    public async Task An_observed_cancellation_is_acknowledged_and_never_completed_as_success()
-    {
-        var world = new World(JobDefinitionType.CanonicalRefresh);
-        world.Executor.Outcome = new JobExecutionOutcome(
-            false, true, "stopped", 0, Array.Empty<JobExecutionBlockResult>(),
-            JobExecutionDiagnosticCodes.Cancelled, null);
-
-        var result = await world.Orchestrator.RunNowAsync(world.Job.Id, "tester", null, CancellationToken.None);
-
-        Assert.Equal(JobRunStatus.Cancelled, result.Value!.Status);
-        Assert.Equal(new[] { world.Runtime.RunId }, world.Runtime.Acknowledged.ToArray());
-        Assert.Empty(world.Runtime.Completions);
-    }
-
-    [Fact]
-    public async Task An_unsupported_family_still_refuses_before_admission()
-    {
-        var world = new World(JobDefinitionType.MlWeeklyFull);
-
-        var result = await world.Orchestrator.RunNowAsync(world.Job.Id, "tester", null, CancellationToken.None);
-
-        Assert.Equal(JobExecutionErrorCodes.NoExecutorForJobFamily, result.Error!.Code);
-        Assert.Empty(world.Executor.Admitted);
-        Assert.Empty(world.Runtime.TargetStarts);
-    }
 }

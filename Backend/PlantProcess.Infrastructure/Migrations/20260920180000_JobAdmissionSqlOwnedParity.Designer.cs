@@ -10,10 +10,11 @@ using PlantProcess.Infrastructure.Persistence;
 
 namespace PlantProcess.Infrastructure.Migrations
 {
+    [Microsoft.EntityFrameworkCore.Migrations.Migration("20260920180000_JobAdmissionSqlOwnedParity")]
     [DbContext(typeof(PlantProcessDbContext))]
-    partial class PlantProcessDbContextModelSnapshot : ModelSnapshot
+    public partial class JobAdmissionSqlOwnedParity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

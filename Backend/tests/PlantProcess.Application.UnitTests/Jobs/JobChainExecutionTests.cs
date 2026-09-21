@@ -1,3 +1,4 @@
+using PlantProcess.Application.Jobs.Admission;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -112,6 +113,7 @@ public sealed class JobChainExecutionTests
             JobB = new JobDefinition("PROBE_B", "Probe B", JobDefinitionType.DataQualityScan, "Manual", false);
             JobC = new JobDefinition("PROBE_C", "Probe C", JobDefinitionType.DataQualityScan, "Manual", false);
 
+            foreach (var job in new[] { JobA, JobB, JobC }) JobLaneAssignment.Initialize(job);
             Lookup = new FakeRunnableJobLookup(JobA, JobB, JobC);
             Runtime = new RecordingJobRuntimeService();
             Quality = new RecordingDataQualityService();
@@ -127,7 +129,8 @@ public sealed class JobChainExecutionTests
                 new JobExecutionCapabilityAuthority(),
                 new NoTargetResolver(),
                 Dependencies,
-                new JobExecutorResolver(Array.Empty<IJobExecutor>()));
+                new JobExecutorResolver(Array.Empty<IJobExecutor>()),
+                new JobAdmissionController(new JobAdmissionOptionsConfigurationProvider(new JobAdmissionOptions()), Microsoft.Extensions.Logging.Abstractions.NullLogger<JobAdmissionController>.Instance));
         }
 
         public JobDefinition JobA { get; }

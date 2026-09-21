@@ -1,3 +1,4 @@
+using PlantProcess.Application.Jobs.Admission;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -278,6 +279,7 @@ public sealed class JobExecutionContractTests
         public World(JobDefinitionType jobType)
         {
             Job = new JobDefinition("PROBE_" + jobType, "Probe", jobType, "Manual", false);
+            JobLaneAssignment.Initialize(Job);
             Runtime = new RecordingRuntime();
             Import = new CountingImport();
             Quality = new CountingQuality();
@@ -285,7 +287,8 @@ public sealed class JobExecutionContractTests
             Orchestrator = new JobRunOrchestratorService(
                 new SingleJobLookup(Job), Runtime, Import, Quality, new UnusedRisk(),
                 new JobExecutionCapabilityAuthority(), new NoTargetResolver(), new EmptyDependencies(),
-                new JobExecutorResolver(Array.Empty<IJobExecutor>()));
+                new JobExecutorResolver(Array.Empty<IJobExecutor>()),
+                new JobAdmissionController(new JobAdmissionOptionsConfigurationProvider(new JobAdmissionOptions()), Microsoft.Extensions.Logging.Abstractions.NullLogger<JobAdmissionController>.Instance));
         }
 
         public JobDefinition Job { get; }

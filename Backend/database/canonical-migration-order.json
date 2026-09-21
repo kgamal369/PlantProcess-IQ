@@ -25,12 +25,12 @@
                   "Product tables live in ppiq_meta, ppiq_plant or ppiq_staging. A single terminal convergence file relocates them after every historical creator has run; no migration and no historical script moves a table."
               ],
     "summary":  {
-                    "totalFiles":  164,
-                    "canonicalPath":  115,
+                    "totalFiles":  165,
+                    "canonicalPath":  116,
                     "distinctTables":  176,
                     "governedDuplicates":  7,
                     "ungovernedDuplicates":  0,
-                    "efMigrations":  10,
+                    "efMigrations":  11,
                     "freshBuild":  "EXECUTED",
                     "canonicalViews":  1,
                     "declaredViews":  4,
@@ -89,16 +89,20 @@
                                                        "name":  "20260910104823_JobExecutionContractSqlOwnedParity",
                                                        "sha256":  "0BB6C60A732EB4AE7D98DE3B92CAE29853CAEFE4D33B9A22899EF9DDEC145434"
                                                    },
-                                                  {
-                                                      "name":  "20260917085040_SourceTimeProvenanceSqlOwnedParity",
-                                                      "sha256":  "5CDD467226D423CA0339E780AAFF6C0A4896AB5CF171B6B3CE50AABD12B72404"
-                                                  }
+                                                   {
+                                                       "name":  "20260917085040_SourceTimeProvenanceSqlOwnedParity",
+                                                       "sha256":  "5CDD467226D423CA0339E780AAFF6C0A4896AB5CF171B6B3CE50AABD12B72404"
+                                                   },
+                                                   {
+                                                       "name":  "20260920180000_JobAdmissionSqlOwnedParity",
+                                                       "sha256":  "407D527A7643433F2A41547B314902F5453E42C950E1E93DDC386AB2A5142341"
+                                                   }
                                                ]
                             },
     "canonicalViews":  [
                            {
                                "path":  "Backend/database/views/006_dashboard_dataset_views.sql",
-                               "order":  115,
+                               "order":  116,
                                "sha256":  "729D127FA772E1E100A8AD1A6CEAF6B2BABBA5A3FED9991EB8EB62960D3D6865",
                                "note":  "Read-model view authority. Applied after every schema script and after topology convergence, before the probe database is dropped."
                            }
@@ -1371,8 +1375,8 @@
                               "disposition":  "Canonical",
                               "sha256":  "C68D7F10CCB46E65CDAA1759A9CE9DEE93B7037188AC07479FA8C1F0B7F0D23A",
                               "createsTables":  [
-                                                  "ppiq_meta.source_time_authorities"
-                                              ],
+                                                    "ppiq_meta.source_time_authorities"
+                                                ],
                               "reason":  "Persists the frozen per-signal Source Time Authority contract, tenant-scoped and effective-dated, and adds source, server and receipt time provenance to parameter observations."
                           },
                           {
@@ -1382,8 +1386,8 @@
                               "disposition":  "Canonical",
                               "sha256":  "06780E166D70ECE932DA8AD300BAA4CAE9C3ED40822F629BD7581140DD6171A6",
                               "createsTables":  [
-                                                  "ppiq_meta.job_run_block_evidence"
-                                              ],
+                                                    "ppiq_meta.job_run_block_evidence"
+                                                ],
                               "reason":  "T-261. Per-block runtime evidence for a governed job run: stable authored block id, deterministic execution ordinal, measured row counts and a typed diagnostic for every non-successful outcome. Additive and idempotent; the EF entity is excluded from migrations so this script is the single DDL authority."
                           },
                           {
@@ -1393,16 +1397,27 @@
                               "disposition":  "Canonical",
                               "sha256":  "42835A068BFE16ECA4CEF69B8F9DCA0512CD62893A1ED544A588CD8606F9781F",
                               "createsTables":  [
-                                                  "ppiq_meta.acquisition_configuration_details",
-                                                  "ppiq_meta.source_dataset_governance",
-                                                  "ppiq_meta.source_field_identities",
-                                                  "ppiq_meta.source_field_revisions",
-                                                  "ppiq_meta.source_layout_revisions"
-                                              ],
+                                                    "ppiq_meta.acquisition_configuration_details",
+                                                    "ppiq_meta.source_dataset_governance",
+                                                    "ppiq_meta.source_field_identities",
+                                                    "ppiq_meta.source_field_revisions",
+                                                    "ppiq_meta.source_layout_revisions"
+                                                ],
                               "reason":  "Adds the acquisition configuration definition kind and its typed detail projection, explicit tenant governance of a legacy source dataset, stable provider-neutral field identities with immutable revisions, and immutable declarative raw layout revisions."
                           },
                           {
                               "position":  115,
+                              "ordinal":  848,
+                              "path":  "Backend/database/scripts/848_job_admission_pool_and_weight.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "79D42DFD6F902DE5F5FC4ECD72DBB74A4C8F386C695BF581F7822E1DE1E8B8E0",
+                              "createsTables":  [
+
+                                                ],
+                              "reason":  "Adds persisted job admission pool and finite positive compute weight; canonical SQL owns the DDL."
+                          },
+                          {
+                              "position":  116,
                               "ordinal":  6,
                               "path":  "Backend/database/views/006_dashboard_dataset_views.sql",
                               "disposition":  "Canonical",

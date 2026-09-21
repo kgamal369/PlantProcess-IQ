@@ -1,3 +1,4 @@
+using PlantProcess.Application.Jobs.Admission;
 using PlantProcess.Application.Analytics.Contracts;
 using System.Text.Json;
 using PlantProcess.Application.Analytics.Interfaces;
@@ -27,6 +28,7 @@ public sealed class JobRunOrchestratorService : IJobRunOrchestratorService
     private readonly IJobTargetResolver _targetResolver;
     private readonly IJobDependencyService _dependencies;
     private readonly IJobExecutorResolver _executors;
+    private readonly IJobAdmissionController _admission;
 
     public JobRunOrchestratorService(
         IRunnableJobLookup jobs,
@@ -37,7 +39,8 @@ public sealed class JobRunOrchestratorService : IJobRunOrchestratorService
         IJobExecutionCapabilityAuthority capability,
         IJobTargetResolver targetResolver,
         IJobDependencyService dependencies,
-        IJobExecutorResolver executors)
+        IJobExecutorResolver executors,
+        IJobAdmissionController admission)
     {
         _jobs = jobs;
         _jobRuntimeService = jobRuntimeService;
@@ -48,6 +51,7 @@ public sealed class JobRunOrchestratorService : IJobRunOrchestratorService
         _targetResolver = targetResolver;
         _dependencies = dependencies;
         _executors = executors;
+        _admission = admission;
     }
 
     public Task<ApplicationResult<JobActionResponseDto>> RunNowAsync(
@@ -146,6 +150,14 @@ public sealed class JobRunOrchestratorService : IJobRunOrchestratorService
 
             plan = admittedPlan.Value;
         }
+
+        // The reservation covers Start, execution, and terminal persistence, including
+        // refused duplicate occurrences, failed starts, exceptions, and cancellation.
+        await using JobAdmissionDecision resource = await _admission.AcquireAsync(
+            JobAdmissionRequests.ForJob(job, correlationId), cancellationToken);
+        if (!resource.IsAdmitted)
+            return ApplicationResult<JobActionResponseDto>.Failure(JobAdmissionErrors.Refused(resource));
+        cancellationToken.ThrowIfCancellationRequested();
 
         string runCorrelation = correlationId ?? Guid.NewGuid().ToString("N");
 

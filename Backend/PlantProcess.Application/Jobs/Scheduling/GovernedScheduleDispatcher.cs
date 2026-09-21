@@ -1,3 +1,5 @@
+using Microsoft.Extensions.DependencyInjection;
+using PlantProcess.Application.Jobs.Admission;
 // T-106 B2.3c. The governed schedule dispatcher.
 //
 // It owns one question: given this poll instant, which enabled jobs have a nominal
@@ -33,16 +35,18 @@ public sealed record DispatchReport(
     int AlreadyClaimed,
     int Refused,
     IReadOnlyList<string> Notes);
-
 public sealed class GovernedScheduleDispatcher
 {
     private readonly IPlantProcessDbContext _dbContext;
-    private readonly IJobRunOrchestratorService _orchestrator;
+    private readonly IServiceScopeFactory _scopes;
+    private readonly BoundedJobDispatcher _dispatch;
 
-    public GovernedScheduleDispatcher(IPlantProcessDbContext dbContext, IJobRunOrchestratorService orchestrator)
+    public GovernedScheduleDispatcher(IPlantProcessDbContext dbContext,
+        IServiceScopeFactory scopes, BoundedJobDispatcher dispatch)
     {
         _dbContext = dbContext;
-        _orchestrator = orchestrator;
+        _scopes = scopes;
+        _dispatch = dispatch;
     }
 
     /// <summary>
@@ -99,42 +103,52 @@ public sealed class GovernedScheduleDispatcher
 
         IReadOnlyList<DueOccurrence> due = DueAt(jobs, pollAtUtc, job => job.LastRunStartedAtUtc);
 
-        var notes = new List<string>();
-        int dispatched = 0;
-        int alreadyClaimed = 0;
-        int refused = 0;
-
+        var notes = new System.Collections.Concurrent.ConcurrentQueue<string>();
+        int dispatched = 0, claimed = 0, refused = 0;
+        // At most the shared bound of incomplete tasks is retained. A rejected occurrence
+        // is unstarted, not queued for an invented retry; DueAt retains SkipToNext authority.
+        var pending = new List<Task>(_dispatch.MaxOutstanding);
         foreach (DueOccurrence occurrence in due)
         {
-            if (cancellationToken.IsCancellationRequested) { break; }
-
-            var result = await _orchestrator.RunScheduledAsync(
-                occurrence.JobDefinitionId,
-                occurrence.OccurrenceKey,
-                occurrence.NominalAtUtc,
-                triggeredBy: "GovernedScheduleDispatcher",
-                correlationId: occurrence.OccurrenceKey,
-                cancellationToken);
-
-            if (result.IsSuccess)
+            pending.RemoveAll(task => task.IsCompleted);
+            if (!_dispatch.TryDispatch(occurrence.OccurrenceKey, async token =>
             {
-                dispatched++;
-                continue;
-            }
-
-            string message = result.Error?.Message ?? string.Empty;
-
-            if (message.Contains("OCCURRENCE ALREADY CLAIMED", StringComparison.OrdinalIgnoreCase))
+                try
+                {
+                    await using var scope = _scopes.CreateAsyncScope();
+                    var orchestrator = scope.ServiceProvider.GetRequiredService<IJobRunOrchestratorService>();
+                    var result = await orchestrator.RunScheduledAsync(
+                        occurrence.JobDefinitionId, occurrence.OccurrenceKey, occurrence.NominalAtUtc,
+                        "GovernedScheduleDispatcher", occurrence.OccurrenceKey, token);
+                    if (result.IsSuccess) Interlocked.Increment(ref dispatched);
+                    else if ((result.Error?.Message ?? "").Contains("OCCURRENCE ALREADY CLAIMED", StringComparison.OrdinalIgnoreCase))
+                        Interlocked.Increment(ref claimed);
+                    else
+                    {
+                        Interlocked.Increment(ref refused);
+                        notes.Enqueue(occurrence.JobCode + ": " + result.Error?.Message);
+                    }
+                }
+                catch (OperationCanceledException) when (token.IsCancellationRequested)
+                {
+                    Interlocked.Increment(ref refused);
+                    notes.Enqueue(occurrence.JobCode + ": dispatch cancelled; no success claimed.");
+                }
+                catch (Exception ex)
+                {
+                    Interlocked.Increment(ref refused);
+                    notes.Enqueue(occurrence.JobCode + ": " + ex.Message);
+                    throw;
+                }
+            }, cancellationToken, out Task completion))
             {
-                // Someone else won the race. That is the system working, not a failure.
-                alreadyClaimed++;
-                continue;
+                Interlocked.Increment(ref refused);
+                notes.Enqueue(occurrence.JobCode + ": unstarted (cancelled, already in flight, or shared dispatch bound reached). No retry identity reserved.");
             }
-
-            refused++;
-            notes.Add(occurrence.JobCode + ": " + message);
+            else pending.Add(completion);
         }
-
-        return new DispatchReport(jobs.Count, due.Count, dispatched, alreadyClaimed, refused, notes);
+        // Bounded set only. Cooperative cancellation does not abandon a task or its scope.
+        foreach (Task completion in pending) await completion.ConfigureAwait(false);
+        return new DispatchReport(jobs.Count, due.Count, dispatched, claimed, refused, notes.ToArray());
     }
 }

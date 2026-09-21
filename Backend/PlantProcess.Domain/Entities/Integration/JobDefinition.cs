@@ -20,10 +20,24 @@ namespace PlantProcess.Domain.Entities.Integration;
 public class JobDefinition : BaseEntity
 {
     public string JobCode { get; private set; } = null!;
-
     public string JobName { get; private set; } = null!;
 
     public JobDefinitionType JobType { get; private set; }
+
+    public string? PoolCode { get; private set; }
+    public double ComputeWeight { get; private set; } = 1;
+
+    public void AssignExecutionPool(string? poolCode, double computeWeight)
+    {
+        if (!double.IsFinite(computeWeight) || computeWeight <= 0)
+            throw new ArgumentOutOfRangeException(nameof(computeWeight), "Compute weight must be positive and finite.");
+        var normalized = string.IsNullOrWhiteSpace(poolCode) ? null : poolCode.Trim();
+        if (normalized?.Length > 64)
+            throw new ArgumentException("Pool code exceeds 64 characters.", nameof(poolCode));
+        PoolCode = normalized;
+        ComputeWeight = computeWeight;
+        MarkAsUpdated();
+    }
 
     /// <summary>
     /// Optional business target.

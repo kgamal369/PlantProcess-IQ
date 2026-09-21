@@ -17,6 +17,14 @@ namespace PlantProcess.Application.Jobs.Execution;
 /// </summary>
 public static class JobExecutionDiagnosticCodes
 {
+    public const string AdmissionUnknownLane = "JOB_EXEC_ADMISSION_UNKNOWN_LANE";
+    public const string AdmissionInvalidRequest = "JOB_EXEC_ADMISSION_INVALID_REQUEST";
+    public const string AdmissionLaneNotPermitted = "JOB_EXEC_ADMISSION_LANE_NOT_PERMITTED";
+    public const string AdmissionDemandExceedsLaneCapacity = "JOB_EXEC_ADMISSION_DEMAND_EXCEEDS_LANE_CAPACITY";
+    public const string AdmissionQueueFull = "JOB_EXEC_ADMISSION_QUEUE_FULL";
+    public const string AdmissionCancelled = "JOB_EXEC_ADMISSION_CANCELLED";
+    public const string AdmissionWaitExpired = "JOB_EXEC_ADMISSION_WAIT_EXPIRED";
+
     /// <summary>Capability admitted the family and no executor resolved for it.</summary>
     public const string ExecutorMissing = "JOB_EXEC_EXECUTOR_MISSING";
 

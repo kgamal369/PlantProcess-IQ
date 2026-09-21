@@ -39,8 +39,10 @@ public sealed class DefinitionStoreFixture : IAsyncLifetime
         await using var db = NewContext();
         var resolver = new CanonicalIdentityResolver(db);
 
-        var tenant = await resolver.ResolveTenantAsync(null, CancellationToken.None);
-        var owner = await resolver.ResolveOwnerAsync(null, CancellationToken.None);
+        var tenantCode = Environment.GetEnvironmentVariable("PPIQ_DEFINITION_TEST_TENANT_CODE");
+        var ownerName = Environment.GetEnvironmentVariable("PPIQ_DEFINITION_TEST_OWNER_NAME");
+        var tenant = await resolver.ResolveTenantAsync(tenantCode, CancellationToken.None);
+        var owner = await resolver.ResolveOwnerAsync(ownerName, CancellationToken.None);
 
         Assert.True(tenant.HasValue,
             "No tenant could be resolved. These tests require a provisioned database; they do not invent identity.");
