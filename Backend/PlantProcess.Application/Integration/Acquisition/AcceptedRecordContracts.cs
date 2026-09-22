@@ -51,7 +51,7 @@ public interface ISessionFencingAuthority
 public interface IOriginalBytesPreservationAuthority
 {
     Task<AcquisitionRefusal?> ValidateAsync(
-        Guid tenantId, JsonElement envelope, CancellationToken cancellationToken);
+        AcceptedOriginalBytesRequirement requirement, CancellationToken cancellationToken);
 }
 
 public sealed class UnavailableSessionFencingAuthority : ISessionFencingAuthority
@@ -63,7 +63,7 @@ public sealed class UnavailableSessionFencingAuthority : ISessionFencingAuthorit
 
 public sealed class UnavailableOriginalBytesPreservationAuthority : IOriginalBytesPreservationAuthority
 {
-    public Task<AcquisitionRefusal?> ValidateAsync(Guid tenantId, JsonElement envelope,
+    public Task<AcquisitionRefusal?> ValidateAsync(AcceptedOriginalBytesRequirement requirement,
         CancellationToken cancellationToken) => Task.FromResult<AcquisitionRefusal?>(
             new("AR14", "The immutable original-byte preservation authority is unavailable."));
 }
@@ -75,3 +75,28 @@ public interface IAcceptedRecordStore
     Task<AcquisitionOutcome<AcceptedBatchView>> SealAsync(AcceptedBatchSeal request, CancellationToken cancellationToken);
     Task<AcquisitionOutcome<AcceptedBatchView>> GetAsync(Guid tenantId, Guid batchId, CancellationToken cancellationToken);
 }
+
+/// <summary>Immutable evidence of missing source occurrences. A gap never supplies invented values.</summary>
+public sealed record AcceptedGapRequest(Guid TenantId, Guid BatchId, Guid SessionId, long Generation,
+    Guid GapId, string Reason, string? FromPosition, string? ToPosition, long? MissingCount);
+
+public interface IAcceptedGapStore
+{
+    Task<AcquisitionOutcome<Guid>> RecordGapAsync(AcceptedGapRequest request, CancellationToken cancellationToken);
+}
+
+/// <summary>Exact source bytes are a separate immutable artifact, never the JSONB payload's byte image.</summary>
+public sealed record AcceptedSourceArtifact(Guid ArtifactId, string Sha256, int Length, string MediaType);
+
+public interface IAcceptedSourceArtifactStore
+{
+    Task<AcquisitionOutcome<AcceptedSourceArtifact>> PutAsync(Guid tenantId, Guid artifactId,
+        byte[] bytes, string mediaType, string expectedSha256, CancellationToken cancellationToken);
+}
+
+/// <summary>Exact consumer context for the separate retention-policy producer. The producer must
+/// install a tenant/batch/record/artifact-bound durable admission in the same transaction;
+/// returning null alone cannot bypass database admission. Runtime role has no table write grant.</summary>
+public sealed record AcceptedOriginalBytesRequirement(Guid TenantId, Guid DatasetGovernanceId,
+    Guid BatchId, string RecordId, Guid ConfigurationId, int ConfigurationVersion,
+    string PolicyReference, JsonElement Envelope);

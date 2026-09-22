@@ -15,7 +15,7 @@ namespace PlantProcess.Infrastructure.Integration.Acquisition;
 /// authority must share this scoped DbContext and hold its authoritative lock until
 /// commit. Missing authorities refuse; no client-provided proof bit is accepted.
 /// </summary>
-public sealed class AcceptedRecordStore : IAcceptedRecordStore
+public sealed class AcceptedRecordStore : IAcceptedRecordStore, IAcceptedGapStore, IAcceptedSourceArtifactStore
 {
     private readonly PlantProcessDbContext _db;
     private readonly ISessionFencingAuthority _fencing;
@@ -61,9 +61,9 @@ public sealed class AcceptedRecordStore : IAcceptedRecordStore
             var refusal = await _fencing.ValidateAsync(r.TenantId, scope.Value.Dataset,
                 scope.Value.Stream, r.SessionId, r.Generation, ct);
             if (refusal is not null) return AcquisitionOutcome<AcceptedRecordReceipt>.Refuse(refusal);
-            if (scope.Value.PreservationRequired)
+            if (scope.Value.PreservationRequired && !await HasReceiptAsync(r.TenantId, r.BatchId, r.RecordId, ct))
             {
-                refusal = await _preservation.ValidateAsync(r.TenantId, r.Envelope, ct);
+                refusal = await _preservation.ValidateAsync(new(r.TenantId, scope.Value.Dataset, r.BatchId, r.RecordId, scope.Value.Configuration, scope.Value.Version, scope.Value.Policy!, r.Envelope), ct);
                 if (refusal is not null) return AcquisitionOutcome<AcceptedRecordReceipt>.Refuse(refusal);
             }
             if (r.Envelope.ValueKind != JsonValueKind.Object)
@@ -104,6 +104,38 @@ public sealed class AcceptedRecordStore : IAcceptedRecordStore
     public Task<AcquisitionOutcome<AcceptedBatchView>> GetAsync(Guid tenantId, Guid batchId, CancellationToken ct) =>
         InTransactionAsync(tenantId, () => ReadBatchAsync(tenantId, batchId, ct), ct);
 
+    public Task<AcquisitionOutcome<Guid>> RecordGapAsync(AcceptedGapRequest r, CancellationToken ct) =>
+        InTransactionAsync(r.TenantId, async () =>
+        {
+            if (r.GapId == Guid.Empty || string.IsNullOrWhiteSpace(r.Reason) || r.Reason.Length > 200 || r.MissingCount < 0)
+                return AcquisitionOutcome<Guid>.Refuse("AR11", "A bounded immutable gap identity and reason are required.");
+            var scope = await BatchScopeAsync(r.TenantId, r.BatchId, ct);
+            if (scope is null) return AcquisitionOutcome<Guid>.Refuse("AR02", "Batch not found.");
+            var refusal = await _fencing.ValidateAsync(r.TenantId, scope.Value.Dataset, scope.Value.Stream, r.SessionId, r.Generation, ct);
+            if (refusal is not null) return AcquisitionOutcome<Guid>.Refuse(refusal);
+            await using var command = Command("SELECT ppiq_staging.accepted_record_gap(@tenant,@batch,@session,@generation,@id,@why,@lo,@hi,@n)");
+            AddIdentity(command,r.TenantId,r.BatchId,r.SessionId,r.Generation);
+            Add(command,"id",NpgsqlDbType.Uuid,r.GapId);Add(command,"why",NpgsqlDbType.Text,r.Reason);
+            Add(command,"lo",NpgsqlDbType.Text,r.FromPosition);Add(command,"hi",NpgsqlDbType.Text,r.ToPosition);
+            Add(command,"n",NpgsqlDbType.Bigint,r.MissingCount);
+            return AcquisitionOutcome<Guid>.Accept((Guid)(await command.ExecuteScalarAsync(ct))!);
+        }, ct);
+
+    public Task<AcquisitionOutcome<AcceptedSourceArtifact>> PutAsync(Guid tenantId, Guid artifactId,
+        byte[] bytes, string mediaType, string expectedSha256, CancellationToken ct) =>
+        InTransactionAsync(tenantId, async () =>
+        {
+            if (artifactId == Guid.Empty || bytes is null || bytes.Length < 1 || bytes.Length > 16777216 ||
+                string.IsNullOrWhiteSpace(mediaType) || mediaType.Length > 200 || expectedSha256 is null || expectedSha256.Length != 64)
+                return AcquisitionOutcome<AcceptedSourceArtifact>.Refuse("AR14", "A bounded artifact with exact integrity metadata is required.");
+            await using var command = Command("SELECT ppiq_staging.accepted_put_artifact(@t,@id,@bytes,@media,@hash)");
+            Add(command,"t",NpgsqlDbType.Uuid,tenantId);Add(command,"id",NpgsqlDbType.Uuid,artifactId);
+            Add(command,"bytes",NpgsqlDbType.Bytea,bytes);Add(command,"media",NpgsqlDbType.Text,mediaType);
+            Add(command,"hash",NpgsqlDbType.Text,expectedSha256);
+            var hash = (string)(await command.ExecuteScalarAsync(ct))!;
+            return AcquisitionOutcome<AcceptedSourceArtifact>.Accept(new(artifactId,hash,bytes.Length,mediaType));
+        }, ct);
+
     private async Task<AcquisitionOutcome<AcceptedBatchView>> ReadBatchAsync(Guid tenant, Guid batch, CancellationToken ct)
     {
         await using var command = Command("SELECT b.batch_id,b.dataset_governance_id,b.configuration_id,b.configuration_version,b.state,b.relation_name,b.record_count,b.payload_bytes,f.committed_ordinal "
@@ -118,13 +150,13 @@ public sealed class AcceptedRecordStore : IAcceptedRecordStore
             reader.GetInt64(6), reader.GetInt64(7), reader.GetInt64(8)));
     }
 
-    private async Task<(Guid Dataset, string Stream, bool PreservationRequired)?> BatchScopeAsync(Guid tenant, Guid batch, CancellationToken ct)
+    private async Task<(Guid Dataset, string Stream, bool PreservationRequired, Guid Configuration, int Version, string? Policy)?> BatchScopeAsync(Guid tenant, Guid batch, CancellationToken ct)
     {
-        await using var command = Command("SELECT dataset_governance_id,stream_key,preservation_required FROM ppiq_staging.accepted_batches WHERE tenant_id=@tenant AND batch_id=@batch");
+        await using var command = Command("SELECT dataset_governance_id,stream_key,preservation_required,configuration_id,configuration_version,configuration_snapshot->'storage'->>'retentionPolicyRef' FROM ppiq_staging.accepted_batches WHERE tenant_id=@tenant AND batch_id=@batch");
         Add(command, "tenant", NpgsqlDbType.Uuid, tenant);
         Add(command, "batch", NpgsqlDbType.Uuid, batch);
         await using var reader = await command.ExecuteReaderAsync(ct);
-        return await reader.ReadAsync(ct) ? (reader.GetGuid(0), reader.GetString(1), reader.GetBoolean(2)) : null;
+        return await reader.ReadAsync(ct) ? (reader.GetGuid(0), reader.GetString(1), reader.GetBoolean(2),reader.GetGuid(3),reader.GetInt32(4),reader.IsDBNull(5)?null:reader.GetString(5)) : null;
     }
 
     private async Task<AcquisitionOutcome<T>> InTransactionAsync<T>(Guid tenant,
@@ -163,6 +195,13 @@ public sealed class AcceptedRecordStore : IAcceptedRecordStore
             var code = ex.MessageText.Split(' ', 2)[0];
             return AcquisitionOutcome<T>.Refuse(code, ex.MessageText);
         }
+    }
+
+    private async Task<bool> HasReceiptAsync(Guid tenant,Guid batch,string record,CancellationToken ct)
+    {
+        await using var command=Command("SELECT ppiq_staging.accepted_has_receipt(@t,@b,@r)");
+        Add(command,"t",NpgsqlDbType.Uuid,tenant);Add(command,"b",NpgsqlDbType.Uuid,batch);Add(command,"r",NpgsqlDbType.Text,record);
+        return (bool)(await command.ExecuteScalarAsync(ct))!;
     }
 
     private NpgsqlCommand Command(string sql) => new(sql,

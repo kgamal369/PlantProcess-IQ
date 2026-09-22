@@ -33,7 +33,7 @@ internal sealed class AcceptedRecordFixture
     internal AcceptedRecordStore Store(PlantProcessDbContext db) =>
         new(db, new TransactionalFenceFixture(db), new UnavailableOriginalBytesPreservationAuthority());
 
-    internal async Task InitializeAsync(IReadOnlyDictionary<string,string> fields, bool retentionRequired = false)
+    internal async Task InitializeAsync(IReadOnlyDictionary<string,string> fields, bool retentionRequired = false, JsonElement? typeShape = null)
     {
         await using var db = Db();
         Assert.Contains("acceptance", db.Database.GetDbConnection().Database, StringComparison.Ordinal);
@@ -48,7 +48,7 @@ internal sealed class AcceptedRecordFixture
         var governed = await service.GovernAsync(Tenant,dataset.Id,null,CancellationToken.None);
         Assert.True(governed.IsAccepted,governed.Refusal?.Detail);
         Dataset=governed.Value!.GovernanceId;
-        var requests = fields.Select(f => new FieldDeclarationRequest(null,f.Key,f.Key,f.Value,null,null,
+        var requests = fields.Select(f => new FieldDeclarationRequest(null,f.Key,f.Key,f.Value,typeShape,null,
             new[]{"payload"},JsonSerializer.SerializeToElement(new {kind="file_column",column=f.Key}),null,null)).ToArray();
         var declared = await service.DeclareFieldsAsync(Tenant,dataset.Id,requests,null,CancellationToken.None);
         Assert.True(declared.IsAccepted,declared.Refusal?.Detail);

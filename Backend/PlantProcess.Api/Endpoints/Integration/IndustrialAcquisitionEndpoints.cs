@@ -49,6 +49,15 @@ public static class IndustrialAcquisitionEndpoints
         group.MapPost("/acquisition-configurations/{version:int}/validate", ValidateAsync);
         group.MapPost("/acquisition-configurations/{version:int}/activate", ActivateAsync);
 
+        var accepted=app.MapGroup("/api/acquisition").WithTags(Tag).RequireAuthorization();
+        accepted.MapGet("/batches", async (Guid datasetId,int? take,int? skip,HttpContext h,PlantProcessDbContext db,CancellationToken ct) =>
+            Answer(await new AcceptedDatasetCatalogue(db).BatchesAsync(TenantClaims.Resolve(h.User),datasetId,take??25,skip??0,ct)));
+        accepted.MapGet("/batches/{batchId:guid}", async (Guid batchId,HttpContext h,PlantProcessDbContext db,CancellationToken ct) =>
+            Answer(await new AcceptedDatasetCatalogue(db).BatchAsync(TenantClaims.Resolve(h.User),batchId,ct)));
+        accepted.MapGet("/gaps", async (Guid datasetId,int? take,int? skip,HttpContext h,PlantProcessDbContext db,CancellationToken ct) =>
+            Answer(await new AcceptedDatasetCatalogue(db).GapsAsync(TenantClaims.Resolve(h.User),datasetId,take??25,skip??0,ct)));
+        group.MapGet("/records/relations", async (Guid datasetId,int? take,int? skip,HttpContext h,PlantProcessDbContext db,CancellationToken ct) =>
+            Answer(await new AcceptedDatasetCatalogue(db).RelationsAsync(TenantClaims.Resolve(h.User),datasetId,take??25,skip??0,ct)));
         return app;
     }
 

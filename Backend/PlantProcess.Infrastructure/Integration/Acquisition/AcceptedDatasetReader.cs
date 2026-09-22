@@ -38,7 +38,7 @@ public sealed class AcceptedDatasetReader(PlantProcessDbContext db)
         }
         if(relation!="accepted_batch_"+batchId.ToString("N"))
             throw new InvalidOperationException("The stored batch relation identity is inconsistent.");
-        await using var rows=new NpgsqlCommand("SELECT * FROM ppiq_staging.\""+relation+"\" ORDER BY source_record_id LIMIT $1",connection,native);
+        await using var rows=new NpgsqlCommand("SELECT row_to_json(v)::text FROM ppiq_staging.\""+relation+"\" v ORDER BY source_record_id LIMIT $1",connection,native);
         rows.Parameters.AddWithValue(take);
         var records=new List<IReadOnlyDictionary<string,object?>>();
         await using(var reader=await rows.ExecuteReaderAsync(ct))
@@ -46,7 +46,8 @@ public sealed class AcceptedDatasetReader(PlantProcessDbContext db)
             while(await reader.ReadAsync(ct))
             {
                 var record=new Dictionary<string,object?>(StringComparer.Ordinal);
-                for(var i=0;i<reader.FieldCount;i++)record.Add(reader.GetName(i),reader.IsDBNull(i)?null:reader.GetValue(i));
+                using var document=JsonDocument.Parse(reader.GetString(0));
+                foreach(var property in document.RootElement.EnumerateObject()) record.Add(property.Name,property.Value.Clone());
                 records.Add(record);
             }
         }

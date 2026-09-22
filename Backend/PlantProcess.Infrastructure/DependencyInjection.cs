@@ -192,6 +192,11 @@ public static class DependencyInjection
             PlantProcess.Application.Integration.Acquisition.UnavailableOriginalBytesPreservationAuthority>(services);
         services.AddScoped<PlantProcess.Application.Integration.Acquisition.IAcceptedRecordStore,
             PlantProcess.Infrastructure.Integration.Acquisition.AcceptedRecordStore>();
+        services.AddScoped<PlantProcess.Application.Integration.Acquisition.IAcceptedGapStore>(p =>
+            (PlantProcess.Infrastructure.Integration.Acquisition.AcceptedRecordStore)p.GetRequiredService<PlantProcess.Application.Integration.Acquisition.IAcceptedRecordStore>());
+        services.AddScoped<PlantProcess.Application.Integration.Acquisition.IAcceptedSourceArtifactStore>(p =>
+            (PlantProcess.Infrastructure.Integration.Acquisition.AcceptedRecordStore)p.GetRequiredService<PlantProcess.Application.Integration.Acquisition.IAcceptedRecordStore>());
+
 
         services.AddScoped<PlantProcess.Application.Jobs.Execution.Transformations.ITransformationSourceReader,
             PlantProcess.Infrastructure.Jobs.Transformations.NpgsqlTransformationSourceReader>();

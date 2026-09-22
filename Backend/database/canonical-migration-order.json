@@ -25,8 +25,8 @@
                   "Product tables live in ppiq_meta, ppiq_plant or ppiq_staging. A single terminal convergence file relocates them after every historical creator has run; no migration and no historical script moves a table."
               ],
     "summary":  {
-                    "totalFiles":  166,
-                    "canonicalPath":  117,
+                    "totalFiles":  167,
+                    "canonicalPath":  118,
                     "distinctTables":  176,
                     "governedDuplicates":  7,
                     "ungovernedDuplicates":  0,
@@ -102,7 +102,7 @@
     "canonicalViews":  [
                            {
                                "path":  "Backend/database/views/006_dashboard_dataset_views.sql",
-                               "order":  117,
+                               "order":  118,
                                "sha256":  "729D127FA772E1E100A8AD1A6CEAF6B2BABBA5A3FED9991EB8EB62960D3D6865",
                                "note":  "Read-model view authority. Applied after every schema script and after topology convergence, before the probe database is dropped."
                            }
@@ -1432,6 +1432,19 @@
                           },
                           {
                               "position":  117,
+                              "ordinal":  850,
+                              "path":  "Backend/database/scripts/850_accepted_dataset_contract.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "7BFECAF75A268C03A211D29947E86FE35AC87384140F340E3CEF8C65EC10C50F",
+                              "createsTables":  [
+                                                    "ppiq_staging.accepted_source_artifacts",
+                                                    "ppiq_staging.accepted_artifact_admissions",
+                                                    "ppiq_staging.accepted_gaps"
+                                                ],
+                              "reason":  "Completes typed accepted Dataset contracts, immutable original artifacts and policy admission references, gap evidence and sealed logical relations; canonical SQL owns DDL."
+                          },
+                          {
+                              "position":  118,
                               "ordinal":  6,
                               "path":  "Backend/database/views/006_dashboard_dataset_views.sql",
                               "disposition":  "Canonical",
