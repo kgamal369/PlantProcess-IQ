@@ -184,6 +184,15 @@ public static class DependencyInjection
         // T-261. The persistence half of governed Transformation execution: the staged
         // read, the commissioned canonical write and the per-block evidence store. The
         // executor itself is composed in AddApplication and names none of these types.
+        Microsoft.Extensions.DependencyInjection.Extensions.ServiceCollectionDescriptorExtensions.TryAddScoped<
+            PlantProcess.Application.Integration.Acquisition.ISessionFencingAuthority,
+            PlantProcess.Application.Integration.Acquisition.UnavailableSessionFencingAuthority>(services);
+        Microsoft.Extensions.DependencyInjection.Extensions.ServiceCollectionDescriptorExtensions.TryAddScoped<
+            PlantProcess.Application.Integration.Acquisition.IOriginalBytesPreservationAuthority,
+            PlantProcess.Application.Integration.Acquisition.UnavailableOriginalBytesPreservationAuthority>(services);
+        services.AddScoped<PlantProcess.Application.Integration.Acquisition.IAcceptedRecordStore,
+            PlantProcess.Infrastructure.Integration.Acquisition.AcceptedRecordStore>();
+
         services.AddScoped<PlantProcess.Application.Jobs.Execution.Transformations.ITransformationSourceReader,
             PlantProcess.Infrastructure.Jobs.Transformations.NpgsqlTransformationSourceReader>();
         services.AddScoped<PlantProcess.Application.Jobs.Execution.Transformations.ITransformationCanonicalWriter,
@@ -220,5 +229,3 @@ public static class DependencyInjection
         return services;
     }
 }
-
-

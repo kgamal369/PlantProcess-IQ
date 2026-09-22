@@ -14,13 +14,67 @@ namespace PlantProcess.Infrastructure.Jobs.Transformations;
 /// governed provenance contract. Identifiers are checked with the compiler's own rule
 /// before anything is composed; values are always bound.
 /// </summary>
-public sealed class NpgsqlTransformationSourceReader : ITransformationSourceReader
+public sealed class NpgsqlTransformationSourceReader : ITransformationSourceReader, IDefinitionScopedTransformationSourceReader
 {
     private readonly PlantProcessDbContext _db;
 
     public NpgsqlTransformationSourceReader(PlantProcessDbContext db)
     {
         _db = db;
+    }
+
+    public async Task<IAsyncDisposable> BindDefinitionAsync(Guid definitionId, int version, CancellationToken ct)
+    {
+        var connection = (NpgsqlConnection)_db.Database.GetDbConnection();
+        bool opened = connection.State != ConnectionState.Open;
+        if (opened) await _db.Database.OpenConnectionAsync(ct);
+        string previous = string.Empty;
+        bool changed = false;
+        try
+        {
+            await using var identity = new NpgsqlCommand(
+                "SELECT d.tenant_id FROM ppiq_meta.definition_store d JOIN ppiq_meta.definition_versions v ON v.definition_id=d.id AND v.tenant_id=d.tenant_id "
+                + "WHERE d.id=$1 AND v.version_number=$2 AND d.definition_kind='transformation' AND NOT d.is_deleted AND NOT v.is_deleted", connection, Ambient());
+            identity.Parameters.AddWithValue(definitionId);
+            identity.Parameters.AddWithValue(version);
+            var tenant = await identity.ExecuteScalarAsync(ct);
+            if (tenant is not Guid tenantId || tenantId == Guid.Empty)
+                throw new InvalidOperationException("The exact transformation has no authoritative tenant.");
+            await using var old = new NpgsqlCommand("SELECT coalesce(current_setting('app.current_tenant',true),'')",connection,Ambient());
+            previous = (string)(await old.ExecuteScalarAsync(ct))!;
+            await using var bind = new NpgsqlCommand("SELECT set_config('app.current_tenant',$1,false)",connection,Ambient());
+            bind.Parameters.AddWithValue(tenantId.ToString("D"));
+            await bind.ExecuteScalarAsync(ct);
+            changed = true;
+            return new DefinitionTenantScope(_db, connection, previous, opened);
+        }
+        catch
+        {
+            if (changed) NpgsqlConnection.ClearPool(connection);
+            if (opened) await _db.Database.CloseConnectionAsync();
+            throw;
+        }
+    }
+
+    private sealed class DefinitionTenantScope(PlantProcessDbContext db, NpgsqlConnection connection,
+        string previous, bool opened) : IAsyncDisposable
+    {
+        public async ValueTask DisposeAsync()
+        {
+            try
+            {
+                await using var restore = new NpgsqlCommand("SELECT set_config('app.current_tenant',$1,false)",connection,
+                    db.Database.CurrentTransaction is null ? null : (NpgsqlTransaction)db.Database.CurrentTransaction.GetDbTransaction());
+                restore.Parameters.AddWithValue(previous);
+                await restore.ExecuteScalarAsync(CancellationToken.None);
+            }
+            catch
+            {
+                NpgsqlConnection.ClearPool(connection);
+                throw;
+            }
+            finally { if (opened) await db.Database.CloseConnectionAsync(); }
+        }
     }
 
     public async Task<IReadOnlyList<string>> ProvenanceCapableRelationsAsync(

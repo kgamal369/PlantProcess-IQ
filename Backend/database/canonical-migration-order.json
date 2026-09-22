@@ -25,8 +25,8 @@
                   "Product tables live in ppiq_meta, ppiq_plant or ppiq_staging. A single terminal convergence file relocates them after every historical creator has run; no migration and no historical script moves a table."
               ],
     "summary":  {
-                    "totalFiles":  165,
-                    "canonicalPath":  116,
+                    "totalFiles":  166,
+                    "canonicalPath":  117,
                     "distinctTables":  176,
                     "governedDuplicates":  7,
                     "ungovernedDuplicates":  0,
@@ -102,7 +102,7 @@
     "canonicalViews":  [
                            {
                                "path":  "Backend/database/views/006_dashboard_dataset_views.sql",
-                               "order":  116,
+                               "order":  117,
                                "sha256":  "729D127FA772E1E100A8AD1A6CEAF6B2BABBA5A3FED9991EB8EB62960D3D6865",
                                "note":  "Read-model view authority. Applied after every schema script and after topology convergence, before the probe database is dropped."
                            }
@@ -1418,6 +1418,20 @@
                           },
                           {
                               "position":  116,
+                              "ordinal":  849,
+                              "path":  "Backend/database/scripts/849_accepted_record_store.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "8DA4E618D3DF32F9D6E66BB54EC4CEE984FEE391E2099026E3A2EE383FBDF3B3",
+                              "createsTables":  [
+                                                    "ppiq_staging.accepted_capture_fences",
+                                                    "ppiq_staging.accepted_batches",
+                                                    "ppiq_staging.accepted_records",
+                                                    "ppiq_staging.accepted_integrity_conflicts"
+                                                ],
+                              "reason":  "Adds governed durable accepted records, receipts, finite sealed batches, checkpoint and typed consumer relations; canonical SQL owns DDL."
+                          },
+                          {
+                              "position":  117,
                               "ordinal":  6,
                               "path":  "Backend/database/views/006_dashboard_dataset_views.sql",
                               "disposition":  "Canonical",

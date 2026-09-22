@@ -38,6 +38,7 @@ public static class IndustrialAcquisitionEndpoints
 
         group.MapPost("/governance", GovernAsync);
         group.MapGet("/fields", ListFieldsAsync);
+        group.MapGet("/records/preview", PreviewAcceptedAsync);
         group.MapPut("/fields", DeclareFieldsAsync);
         group.MapGet("/layouts", ListLayoutsAsync);
         group.MapPost("/layouts", DeclareLayoutAsync);
@@ -49,6 +50,14 @@ public static class IndustrialAcquisitionEndpoints
         group.MapPost("/acquisition-configurations/{version:int}/activate", ActivateAsync);
 
         return app;
+    }
+
+    private static async Task<IResult> PreviewAcceptedAsync(Guid datasetId, Guid batchId, int? take,
+        HttpContext httpContext, PlantProcessDbContext db, CancellationToken cancellationToken)
+    {
+        var tenantId = TenantClaims.Resolve(httpContext.User);
+        var result = await new AcceptedDatasetReader(db).PreviewAsync(tenantId, datasetId, batchId, take ?? 25, cancellationToken);
+        return Answer(result);
     }
 
     private static async Task<IResult> GovernAsync(
@@ -182,7 +191,7 @@ public static class IndustrialAcquisitionEndpoints
         var body = new { code = refusal.Code, detail = refusal.Detail };
         return code switch
         {
-            "IAG01" or "IAG03" or "IAF06" or "IAL02" or "IAC06" => Results.NotFound(body),
+            "IAG01" or "IAG03" or "IAF06" or "IAL02" or "IAC06" or "AR02" => Results.NotFound(body),
             "IAG02" or "IAF02" or "IAF03" or "IAF04" or "IAF05" or "IAC03" or "IAC07" => Results.Conflict(body),
             _ => Results.BadRequest(body)
         };

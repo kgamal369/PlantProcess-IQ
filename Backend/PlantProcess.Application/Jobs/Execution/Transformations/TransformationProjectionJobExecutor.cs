@@ -230,6 +230,10 @@ public sealed class TransformationProjectionJobExecutor : IJobExecutor
             return Refuse(blockCode, blockDetail ?? "The authored blocks cannot be planned.");
         }
 
+        await using var sourceScope = _reader is IDefinitionScopedTransformationSourceReader scoped
+            ? await scoped.BindDefinitionAsync(target.DefinitionId, target.ResolvedVersion, cancellationToken)
+            : null;
+
         string schema = _stagingSchema.Name;
         IReadOnlyList<string> capable =
             await _reader.ProvenanceCapableRelationsAsync(schema, authored.Tables, cancellationToken);
@@ -525,6 +529,10 @@ public sealed class TransformationProjectionJobExecutor : IJobExecutor
                 "The execution context does not carry an admitted plan for an exact Transformation version.",
                 ApplicationErrorType.BusinessRule));
         }
+
+        await using var sourceScope = _reader is IDefinitionScopedTransformationSourceReader scoped
+            ? await scoped.BindDefinitionAsync(context.TargetDefinitionId, context.ResolvedVersion, cancellationToken)
+            : null;
 
         Guid runId = context.JobRunHistoryId;
         var evidence = plan.Blocks
