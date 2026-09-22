@@ -25,4 +25,8 @@ public sealed record DefinitionVersionSummary(
     int VersionNumber,
     DateTime CreatedAtUtc,
     string? CreatedBy,
-    bool IsPublished);
+    bool IsPublished)
+{
+    /// <summary>Previously published and now superseded; eligible only for an explicit pinned target.</summary>
+    public bool IsSuperseded { get; init; }
+}

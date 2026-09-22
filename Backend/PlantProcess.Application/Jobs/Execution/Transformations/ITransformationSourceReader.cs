@@ -34,6 +34,16 @@ public interface ITransformationSourceReader
         IReadOnlyList<object> parameters,
         int expectedColumnCount,
         CancellationToken cancellationToken);
+
+    /// <summary>
+    /// The accepted-lineage columns, among TransformationLineageColumns.All, that one
+    /// staged relation exposes, in ordinal order. A relation that carries governed
+    /// identity but no accepted lineage answers with an empty list.
+    /// </summary>
+    Task<IReadOnlyList<string>> LineageColumnsAsync(
+        string schema,
+        string relation,
+        CancellationToken cancellationToken);
 }
 
 /// <summary>
@@ -46,4 +56,17 @@ public static class TransformationProvenanceColumns
     public const string SourceSystem = "source_system";
 
     public const string SourceRecordId = "source_record_id";
+}
+
+/// <summary>
+/// The accepted-record lineage an accepted batch or Dataset relation exposes beside its
+/// governed identity. Read when present and never inferred when absent.
+/// </summary>
+public static class TransformationLineageColumns
+{
+    public const string BatchId = "batch_id";
+
+    public const string AcceptedMetadata = "accepted_metadata";
+
+    public static readonly IReadOnlyList<string> All = new[] { AcceptedMetadata, BatchId };
 }

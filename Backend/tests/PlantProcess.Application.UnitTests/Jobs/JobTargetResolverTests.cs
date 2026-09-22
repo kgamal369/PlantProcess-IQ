@@ -247,6 +247,37 @@ public sealed class JobTargetResolverTests
         Assert.True(result.IsSuccess, result.Error?.Message);
     }
 
+    [Fact]
+    public async Task A_previously_published_superseded_version_is_allowed_for_a_pinned_target()
+    {
+        var result = await ResolverWith(Version(1, published: false) with { IsSuperseded = true },
+            Version(2, published: true)).ResolveAsync(JobDefinitionType.Custom,
+                JobTargetReference.Pinned(DefinitionKind.Analysis, TargetId, 1), CancellationToken.None);
+        Assert.True(result.IsSuccess, result.Error?.Message);
+        Assert.Equal(1, result.Value!.Target!.ResolvedVersion);
+        Assert.Equal(JobTargetVersionPolicy.Pinned, result.Value.Target.PolicyApplied);
+    }
+
+    [Fact]
+    public async Task A_superseded_version_is_not_a_current_published_candidate()
+    {
+        var result = await ResolverWith(Version(1, published: false) with { IsSuperseded = true })
+            .ResolveAsync(JobDefinitionType.Custom,
+                JobTargetReference.CurrentPublished(DefinitionKind.Analysis, TargetId), CancellationToken.None);
+        Assert.True(result.IsFailure);
+        Assert.Equal(JobTargetErrorCodes.PinnedVersionNotPublishedOrSuperseded, result.Error!.Code);
+    }
+
+    [Fact]
+    public async Task Current_publication_ignores_superseded_history()
+    {
+        var result = await ResolverWith(Version(1, published: false) with { IsSuperseded = true },
+            Version(2, published: true)).ResolveAsync(JobDefinitionType.Custom,
+                JobTargetReference.CurrentPublished(DefinitionKind.Analysis, TargetId), CancellationToken.None);
+        Assert.True(result.IsSuccess, result.Error?.Message);
+        Assert.Equal(2, result.Value!.Target!.ResolvedVersion);
+    }
+
     // --- D and E. JB03 -------------------------------------------------------
 
     [Fact]

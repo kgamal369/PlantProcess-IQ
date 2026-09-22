@@ -25,9 +25,9 @@
                   "Product tables live in ppiq_meta, ppiq_plant or ppiq_staging. A single terminal convergence file relocates them after every historical creator has run; no migration and no historical script moves a table."
               ],
     "summary":  {
-                    "totalFiles":  167,
-                    "canonicalPath":  118,
-                    "distinctTables":  176,
+                    "totalFiles":  168,
+                    "canonicalPath":  119,
+                    "distinctTables":  177,
                     "governedDuplicates":  7,
                     "ungovernedDuplicates":  0,
                     "efMigrations":  11,
@@ -102,7 +102,7 @@
     "canonicalViews":  [
                            {
                                "path":  "Backend/database/views/006_dashboard_dataset_views.sql",
-                               "order":  118,
+                               "order":  119,
                                "sha256":  "729D127FA772E1E100A8AD1A6CEAF6B2BABBA5A3FED9991EB8EB62960D3D6865",
                                "note":  "Read-model view authority. Applied after every schema script and after topology convergence, before the probe database is dropped."
                            }
@@ -1445,6 +1445,17 @@
                           },
                           {
                               "position":  118,
+                              "ordinal":  851,
+                              "path":  "Backend/database/scripts/851_projection_effect_lineage.sql",
+                              "disposition":  "Canonical",
+                              "sha256":  "0C9C974D46AA835884A8DE04454DFB44F9B519390B30EDF2AC6BECDE9294DBF9",
+                              "createsTables":  [
+                                                    "ppiq_plant.canonical_projection_effects"
+                                                ],
+                              "reason":  "Adds the canonical projection effect lineage: exact definition, version and hash, run, projection generation, effect digest and accepted source lineage per evaluation, one current evaluation per governed identity, tenant-forced RLS and the current-lineage view; canonical SQL owns DDL."
+                          },
+                          {
+                              "position":  119,
                               "ordinal":  6,
                               "path":  "Backend/database/views/006_dashboard_dataset_views.sql",
                               "disposition":  "Canonical",

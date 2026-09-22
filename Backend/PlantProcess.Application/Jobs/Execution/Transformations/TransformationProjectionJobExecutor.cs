@@ -31,7 +31,9 @@ public sealed record TransformationAdmittedPlan(
     string StagingSchema,
     string ProvenanceRelation,
     IReadOnlyList<ProjectionFieldBinding> Bindings,
-    IReadOnlyList<TransformationBlock> Blocks) : JobExecutionPlan(AdmittedTarget);
+    IReadOnlyList<TransformationBlock> Blocks,
+    CanonicalProjectionMode Mode = CanonicalProjectionMode.Ordinary,
+    IReadOnlyList<string>? LineageColumns = null) : JobExecutionPlan(AdmittedTarget);
 
 /// <summary>
 /// THE GOVERNED TRANSFORMATION EXECUTOR.
@@ -55,6 +57,12 @@ public sealed record TransformationAdmittedPlan(
 /// statement and measures nothing it did not measure, and the final block executes the
 /// statement and the canonical write, recording rows read and rows accepted. The
 /// cancellation request is observed before every block and before the write.
+///
+/// PROVENANCE (T-104). The run reserves its projection generation before it reads its
+/// source, passes the exact version and immutable hash admission proved, and carries the
+/// accepted source lineage of every row when the provenance relation exposes it. Whether
+/// the run may replace an existing canonical effect is read once, at admission, from the
+/// job's own target parameters, and is frozen into the plan like everything else.
 /// </summary>
 public sealed class TransformationProjectionJobExecutor : IJobExecutor
 {
@@ -115,6 +123,13 @@ public sealed class TransformationProjectionJobExecutor : IJobExecutor
             return Refuse(JobExecutionDiagnosticCodes.ExactVersionRequired,
                 "Governed projection execution needs one exact immutable Transformation version, "
                 + "and the resolution supplied does not name one.");
+        }
+
+        CanonicalProjectionMode mode;
+        string? parameterProblem = CanonicalProjectionParameters.TryRead(target.ParametersJson, out mode);
+        if (parameterProblem is not null)
+        {
+            return Refuse(JobExecutionDiagnosticCodes.ProjectionParametersInvalid, parameterProblem);
         }
 
         ApplicationResult<CanonicalDefinitionVersion> exact =
@@ -254,9 +269,20 @@ public sealed class TransformationProjectionJobExecutor : IJobExecutor
         }
 
         string provenanceRelation = capable[0];
+
+        // Accepted lineage is read only when the relation exposes the complete accepted
+        // contract. A lone batch_id column on a source-shaped relation is an author
+        // column, not lineage, and is never interpreted as one.
+        IReadOnlyList<string> lineageFound =
+            await _reader.LineageColumnsAsync(schema, provenanceRelation, cancellationToken);
+        IReadOnlyList<string> lineage =
+            TransformationLineageColumns.All.All(c => lineageFound.Contains(c, StringComparer.Ordinal))
+                ? TransformationLineageColumns.All
+                : Array.Empty<string>();
+
         MapperGraph execution = authored with
         {
-            Selects = ExecutionSelects(bindings, provenanceRelation).ToArray(),
+            Selects = ExecutionSelects(bindings, provenanceRelation, lineage).ToArray(),
             Board = null,
             Projection = null,
         };
@@ -276,7 +302,9 @@ public sealed class TransformationProjectionJobExecutor : IJobExecutor
             schema,
             provenanceRelation,
             bindings,
-            blocks));
+            blocks,
+            mode,
+            lineage));
     }
 
     /// <summary>
@@ -357,7 +385,8 @@ public sealed class TransformationProjectionJobExecutor : IJobExecutor
 
     private static IEnumerable<SelectSpec> ExecutionSelects(
         IReadOnlyList<ProjectionFieldBinding> bindings,
-        string provenanceRelation)
+        string provenanceRelation,
+        IReadOnlyList<string> lineageColumns)
     {
         var seen = new HashSet<string>(StringComparer.Ordinal);
         foreach (ProjectionFieldBinding b in bindings)
@@ -370,6 +399,14 @@ public sealed class TransformationProjectionJobExecutor : IJobExecutor
         }
 
         foreach (string column in new[] { TransformationProvenanceColumns.SourceSystem, TransformationProvenanceColumns.SourceRecordId })
+        {
+            if (seen.Add(provenanceRelation + "\u001f" + column))
+            {
+                yield return new SelectSpec(provenanceRelation, column);
+            }
+        }
+
+        foreach (string column in lineageColumns)
         {
             if (seen.Add(provenanceRelation + "\u001f" + column))
             {
@@ -603,12 +640,15 @@ public sealed class TransformationProjectionJobExecutor : IJobExecutor
 
                 string message = string.Format(
                     CultureInfo.InvariantCulture,
-                    "Transformation {0} version {1} executed into {2}: {3} rows read, {4} inserted, {5} unchanged.",
+                    "Transformation {0} version {1} executed into {2}: {3} rows read, {4} inserted, {5} unchanged, "
+                    + "{6} superseded, {7} reattributed (projection {8}, generation {9}).",
                     plan.Target.DefinitionId, plan.Target.ResolvedVersion, plan.OutputTarget,
-                    terminal.RowsRead, terminal.Written.RowsInserted, terminal.Written.RowsUnchanged);
+                    terminal.RowsRead, terminal.Written.RowsInserted, terminal.Written.RowsUnchanged,
+                    terminal.Written.RowsSuperseded, terminal.Written.RowsReattributed,
+                    plan.Mode, terminal.Generation);
 
                 return ApplicationResult<JobExecutionOutcome>.Success(new JobExecutionOutcome(
-                    true, false, message, terminal.Written.RowsInserted, results, null, null));
+                    true, false, message, terminal.Written.RowsEffected, results, null, null));
             }
 
             return ApplicationResult<JobExecutionOutcome>.Failure(new ApplicationError(
@@ -666,7 +706,8 @@ public sealed class TransformationProjectionJobExecutor : IJobExecutor
         string? Code,
         string? Detail,
         int RowsRead,
-        CanonicalWriteResult? Written);
+        CanonicalWriteResult? Written,
+        long Generation = 0);
 
     private async Task<TerminalOutcome> ExecuteTerminalAsync(
         TransformationAdmittedPlan plan,
@@ -693,6 +734,20 @@ public sealed class TransformationProjectionJobExecutor : IJobExecutor
 
         int systemOrdinal = ordinals[plan.ProvenanceRelation + "\u001f" + TransformationProvenanceColumns.SourceSystem];
         int recordOrdinal = ordinals[plan.ProvenanceRelation + "\u001f" + TransformationProvenanceColumns.SourceRecordId];
+
+        IReadOnlyList<string> lineageColumns = plan.LineageColumns ?? Array.Empty<string>();
+        int batchOrdinal = -1;
+        int metadataOrdinal = -1;
+        if (lineageColumns.Count > 0)
+        {
+            batchOrdinal = ordinals[plan.ProvenanceRelation + "\u001f" + TransformationLineageColumns.BatchId];
+            metadataOrdinal = ordinals[plan.ProvenanceRelation + "\u001f" + TransformationLineageColumns.AcceptedMetadata];
+        }
+
+        // THE GENERATION IS RESERVED BEFORE THE SOURCE IS READ. A run that read its source
+        // earlier therefore always holds the lower generation, whatever order the writes
+        // arrive in, and the writer can refuse a delayed run without consulting a clock.
+        long generation = await _writer.ReserveProjectionGenerationAsync(cancellationToken);
 
         IReadOnlyList<object?[]> rows;
         try
@@ -748,12 +803,25 @@ public sealed class TransformationProjectionJobExecutor : IJobExecutor
                 fields[b.TargetField] = value is DBNull ? null : value;
             }
 
-            writeRows.Add(new CanonicalWriteRow(system, record, fields));
+            CanonicalSourceLineage? lineage = null;
+            if (lineageColumns.Count > 0)
+            {
+                string? lineageProblem = ReadLineage(row[batchOrdinal], row[metadataOrdinal], out lineage);
+                if (lineageProblem is not null)
+                {
+                    return new TerminalOutcome(false, JobExecutionDiagnosticCodes.SourceIdentityInvalid,
+                        "Output row " + (r + 1) + " (" + system + " / " + record + ") carries unreadable accepted lineage: "
+                        + lineageProblem + " Nothing was written.",
+                        rows.Count, null, generation);
+                }
+            }
+
+            writeRows.Add(new CanonicalWriteRow(system, record, fields, lineage));
         }
 
         if (await _cancellation.IsRequestedAsync(context.JobRunHistoryId, cancellationToken))
         {
-            return new TerminalOutcome(true, null, null, rows.Count, null);
+            return new TerminalOutcome(true, null, null, rows.Count, null, generation);
         }
 
         ApplicationResult<CanonicalWriteResult> written = await _writer.WriteAsync(
@@ -761,7 +829,10 @@ public sealed class TransformationProjectionJobExecutor : IJobExecutor
                 plan.OutputTarget,
                 plan.Target.DefinitionId,
                 plan.Target.ResolvedVersion,
+                plan.DefinitionHash,
                 context.JobRunHistoryId,
+                plan.Mode,
+                generation,
                 writeRows),
             cancellationToken);
 
@@ -770,10 +841,96 @@ public sealed class TransformationProjectionJobExecutor : IJobExecutor
             return new TerminalOutcome(false,
                 written.Error?.Code ?? JobExecutionDiagnosticCodes.CanonicalWriteFailed,
                 written.Error?.Message ?? "The canonical write returned no result.",
-                rows.Count, null);
+                rows.Count, null, generation);
         }
 
-        return new TerminalOutcome(false, null, null, rows.Count, written.Value);
+        return new TerminalOutcome(false, null, null, rows.Count, written.Value, generation);
+    }
+
+    /// <summary>
+    /// Reads the accepted lineage of one row: the sealed batch identity and the accepted
+    /// record's receipt, content hash, dataset governance and tenant. Every value comes from
+    /// the accepted-record authority's own metadata; none is inferred.
+    /// </summary>
+    public static string? ReadLineage(object? batchValue, object? metadataValue, out CanonicalSourceLineage? lineage)
+    {
+        lineage = null;
+
+        Guid? batch = batchValue switch
+        {
+            null => null,
+            DBNull => null,
+            Guid g => g,
+            string text when Guid.TryParse(text, out Guid batchParsed) => batchParsed,
+            _ => null,
+        };
+
+        if (!batch.HasValue)
+        {
+            return "the accepted batch identity is absent.";
+        }
+
+        string? json = metadataValue switch
+        {
+            null => null,
+            DBNull => null,
+            string text => text,
+            JsonDocument document => document.RootElement.GetRawText(),
+            JsonElement element => element.GetRawText(),
+            _ => Convert.ToString(metadataValue, CultureInfo.InvariantCulture),
+        };
+
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return "the accepted metadata is absent.";
+        }
+
+        try
+        {
+            using JsonDocument parsed = JsonDocument.Parse(json);
+            JsonElement root = parsed.RootElement;
+            if (root.ValueKind != JsonValueKind.Object)
+            {
+                return "the accepted metadata is not an object.";
+            }
+
+            Guid? receipt = GuidMember(root, "receiptId");
+            Guid? dataset = GuidMember(root, "datasetGovernanceId");
+            Guid? tenant = GuidMember(root, "tenantId");
+            Guid? metadataBatch = GuidMember(root, "batchId");
+            string? contentHash = root.TryGetProperty("contentHash", out JsonElement hash) && hash.ValueKind == JsonValueKind.String
+                ? hash.GetString()
+                : null;
+
+            if (!receipt.HasValue || !dataset.HasValue || !tenant.HasValue || string.IsNullOrWhiteSpace(contentHash))
+            {
+                return "the accepted metadata does not name its receipt, content hash, dataset and tenant.";
+            }
+
+            if (metadataBatch.HasValue && metadataBatch.Value != batch.Value)
+            {
+                return "the accepted metadata names a different batch from the relation.";
+            }
+
+            lineage = new CanonicalSourceLineage(batch, receipt, contentHash, dataset, tenant);
+            return null;
+        }
+        catch (JsonException ex)
+        {
+            return "the accepted metadata cannot be read: " + ex.Message;
+        }
+    }
+
+    private static Guid? GuidMember(JsonElement root, string name)
+    {
+        if (root.TryGetProperty(name, out JsonElement value)
+            && value.ValueKind == JsonValueKind.String
+            && Guid.TryParse(value.GetString(), out Guid parsed))
+        {
+            return parsed;
+        }
+
+        return null;
     }
 
     private async Task<ApplicationResult<JobExecutionOutcome>> StopForCancellationAsync(

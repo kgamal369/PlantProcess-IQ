@@ -101,6 +101,36 @@ public class MaterialUnit : BaseEntity, ICanonicalProjectionTarget
         MarkAsUpdated();
     }
 
+    /// <summary>
+    /// Replaces this row's projected business effect with the effect a validated
+    /// candidate carries. Used only by an admitted reprojection of the same governed
+    /// source identity: the canonical Id, the source identity, the synthetic flag, the
+    /// aliases and the audit fields are never touched. The candidate was built through
+    /// this type's own constructor and production-window method, so every invariant
+    /// already holds for the values copied here.
+    /// </summary>
+    public void ApplyProjectedEffect(MaterialUnit effect)
+    {
+        ArgumentNullException.ThrowIfNull(effect);
+
+        if (ReferenceEquals(effect, this))
+            return;
+
+        MaterialCode = effect.MaterialCode;
+        MaterialUnitType = effect.MaterialUnitType;
+        SiteId = effect.SiteId;
+        ProductFamily = effect.ProductFamily;
+        GradeOrRecipe = effect.GradeOrRecipe;
+        ProductionStartUtc = effect.ProductionStartUtc;
+        ProductionEndUtc = effect.ProductionEndUtc;
+        ProductionStartLocal = effect.ProductionStartLocal;
+        ProductionEndLocal = effect.ProductionEndLocal;
+        PlantTimeZoneId = effect.PlantTimeZoneId;
+        PlantUtcOffsetMinutes = effect.PlantUtcOffsetMinutes;
+
+        MarkAsUpdated();
+    }
+
     public void AddAlias(string aliasCode, string sourceSystem, string? aliasType = null)
     {
         if (string.IsNullOrWhiteSpace(aliasCode))

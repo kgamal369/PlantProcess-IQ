@@ -51,6 +51,16 @@ public sealed class TransformationProjectionExecutorTests
         public string? Unwritable { get; set; }
         public ApplicationResult<CanonicalWriteResult>? Answer { get; set; }
         public List<CanonicalWriteRequest> Requests { get; } = new();
+        public List<string> Calls { get; set; } = new();
+        public long NextGeneration { get; set; } = 41;
+
+        public Task<long> ReserveProjectionGenerationAsync(CancellationToken cancellationToken)
+        {
+            Calls.Add("reserve");
+            long generation = NextGeneration;
+            NextGeneration = NextGeneration + 1;
+            return Task.FromResult(generation);
+        }
 
         public bool IsCommissioned(string targetEntity) =>
             string.Equals(targetEntity, Commissioned, StringComparison.Ordinal);
@@ -61,6 +71,7 @@ public sealed class TransformationProjectionExecutorTests
             CanonicalWriteRequest request, CancellationToken cancellationToken)
         {
             Requests.Add(request);
+            Calls.Add("write");
             return Task.FromResult(Answer ?? ApplicationResult<CanonicalWriteResult>.Success(
                 new CanonicalWriteResult(request.Rows.Count, 0)));
         }
@@ -113,6 +124,12 @@ public sealed class TransformationProjectionExecutorTests
         public List<object?[]> Rows { get; set; } = new();
         public bool FailQuery { get; set; }
         public List<string> Statements { get; } = new();
+        public List<string> Lineage { get; set; } = new();
+        public List<string>? CallLog { get; set; }
+
+        public Task<IReadOnlyList<string>> LineageColumnsAsync(
+            string schema, string relation, CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyList<string>>(Lineage.OrderBy(x => x, StringComparer.Ordinal).ToList());
 
         public Task<IReadOnlyList<string>> ProvenanceCapableRelationsAsync(
             string schema, IReadOnlyList<string> relations, CancellationToken cancellationToken) =>
@@ -125,6 +142,7 @@ public sealed class TransformationProjectionExecutorTests
             string sql, IReadOnlyList<object> parameters, int expectedColumnCount, CancellationToken cancellationToken)
         {
             Statements.Add(sql);
+            CallLog?.Add("read");
             if (FailQuery) { throw new InvalidOperationException("relation vanished"); }
             Assert.All(Rows, r => Assert.Equal(expectedColumnCount, r.Length));
             return Task.FromResult<IReadOnlyList<object?[]>>(Rows);
@@ -222,6 +240,15 @@ public sealed class TransformationProjectionExecutorTests
         Assert.True(admitted.IsSuccess, admitted.Error?.Code + " " + admitted.Error?.Message);
         return Assert.IsType<TransformationAdmittedPlan>(admitted.Value);
     }
+
+    private static ResolvedJobTarget ResolvedWith(string? parametersJson, int version = 1) => new()
+    {
+        Kind = DefinitionKind.Transformation,
+        DefinitionId = DefinitionId,
+        ResolvedVersion = version,
+        PolicyApplied = JobTargetVersionPolicy.Pinned,
+        ParametersJson = parametersJson,
+    };
 
     private static JobExecutionContext ContextFor(JobExecutionPlan plan) =>
         new(Guid.NewGuid(), "SYNTHETIC", JobDefinitionType.CanonicalRefresh, Guid.NewGuid(), plan, "corr");
@@ -580,5 +607,146 @@ public sealed class TransformationProjectionExecutorTests
 
         Assert.NotNull(refusal);
         Assert.Empty(order);
+    }
+
+    // ------------------------------------------------ provenance and reprojection --
+
+    [Theory]
+    [InlineData(null, CanonicalProjectionMode.Ordinary)]
+    [InlineData("", CanonicalProjectionMode.Ordinary)]
+    [InlineData("{}", CanonicalProjectionMode.Ordinary)]
+    [InlineData("{\"projection\":\"ordinary\"}", CanonicalProjectionMode.Ordinary)]
+    [InlineData("{\"projection\":\"reproject\"}", CanonicalProjectionMode.Reproject)]
+    public void The_canonical_refresh_vocabulary_reads_only_its_own_key(string? json, CanonicalProjectionMode expected)
+    {
+        Assert.Null(CanonicalProjectionParameters.TryRead(json, out CanonicalProjectionMode mode));
+        Assert.Equal(expected, mode);
+    }
+
+    [Theory]
+    [InlineData("{\"projection\":\"Reproject\"}")]
+    [InlineData("{\"projection\":true}")]
+    [InlineData("{\"window_days\":7}")]
+    [InlineData("{\"projection\":\"reproject\",\"projection\":\"reproject\"}")]
+    [InlineData("[\"reproject\"]")]
+    [InlineData("{broken")]
+    public void Anything_outside_the_vocabulary_is_refused_and_never_read_as_authority(string json)
+    {
+        Assert.NotNull(CanonicalProjectionParameters.TryRead(json, out CanonicalProjectionMode mode));
+        Assert.Equal(CanonicalProjectionMode.Ordinary, mode);
+    }
+
+    [Fact]
+    public async Task Invalid_parameters_are_refused_with_their_own_code_before_the_version_is_read()
+    {
+        var world = new World();
+        world.Definitions.Missing = true;
+
+        var admitted = await world.Executor.AdmitAsync(ResolvedWith("{\"window_days\":7}"), CancellationToken.None);
+
+        Assert.True(admitted.IsFailure);
+        Assert.Equal(JobExecutionDiagnosticCodes.ProjectionParametersInvalid, admitted.Error!.Code);
+        Assert.Empty(world.Reader.Statements);
+    }
+
+    [Fact]
+    public async Task An_ordinary_run_carries_exact_version_hash_mode_and_a_generation_reserved_before_the_read()
+    {
+        var world = new World();
+        world.Definitions.ContentJson = Content();
+        world.Reader.CallLog = world.Writer.Calls;
+        world.Reader.Rows = new List<object?[]> { new object?[] { "A-1", "sys", "r1" } };
+
+        TransformationAdmittedPlan plan = await AdmitAsync(world);
+        Assert.Equal(CanonicalProjectionMode.Ordinary, plan.Mode);
+        Assert.Empty(plan.LineageColumns ?? Array.Empty<string>());
+
+        var result = await world.Executor.ExecuteAsync(ContextFor(plan), CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.True(result.Value!.Succeeded);
+        CanonicalWriteRequest request = Assert.Single(world.Writer.Requests);
+        Assert.Equal("hash-1", request.DefinitionHash);
+        Assert.Equal(1, request.ResolvedVersion);
+        Assert.Equal(CanonicalProjectionMode.Ordinary, request.Mode);
+        Assert.Equal(41, request.ProjectionGeneration);
+        Assert.Null(request.Rows[0].Lineage);
+        Assert.Equal(new[] { "reserve", "read", "write" }, world.Writer.Calls.ToArray());
+    }
+
+    [Fact]
+    public async Task A_reproject_authority_is_frozen_into_the_plan_and_reaches_the_writer()
+    {
+        var world = new World();
+        world.Definitions.ContentJson = Content();
+        world.Reader.Rows = new List<object?[]> { new object?[] { "A-1", "sys", "r1" } };
+
+        var admitted = await world.Executor.AdmitAsync(ResolvedWith("{\"projection\":\"reproject\"}"), CancellationToken.None);
+        TransformationAdmittedPlan plan = Assert.IsType<TransformationAdmittedPlan>(admitted.Value);
+        Assert.Equal(CanonicalProjectionMode.Reproject, plan.Mode);
+
+        await world.Executor.ExecuteAsync(ContextFor(plan), CancellationToken.None);
+
+        Assert.Equal(CanonicalProjectionMode.Reproject, Assert.Single(world.Writer.Requests).Mode);
+    }
+
+    [Fact]
+    public async Task Accepted_lineage_is_selected_and_carried_per_row_when_the_relation_exposes_it()
+    {
+        var world = new World();
+        world.Definitions.ContentJson = Content();
+        world.Reader.Lineage = new List<string> { "batch_id", "accepted_metadata" };
+        Guid batch = Guid.NewGuid();
+        Guid receipt = Guid.NewGuid();
+        Guid dataset = Guid.NewGuid();
+        Guid tenant = Guid.NewGuid();
+        string metadata = "{\"tenantId\":\"" + tenant + "\",\"datasetGovernanceId\":\"" + dataset + "\",\"batchId\":\""
+            + batch + "\",\"receiptId\":\"" + receipt + "\",\"contentHash\":\"" + new string('a', 64) + "\"}";
+        world.Reader.Rows = new List<object?[]> { new object?[] { "A-1", "sys", "r1", metadata, batch } };
+
+        TransformationAdmittedPlan plan = await AdmitAsync(world);
+        Assert.Equal(
+            new[] { "code", "source_system", "source_record_id", "accepted_metadata", "batch_id" },
+            plan.ExecutionGraph.Selects!.Select(s => s.Column).ToArray());
+
+        var result = await world.Executor.ExecuteAsync(ContextFor(plan), CancellationToken.None);
+
+        Assert.True(result.Value!.Succeeded, result.Value.Message);
+        CanonicalSourceLineage lineage = Assert.Single(world.Writer.Requests).Rows[0].Lineage!;
+        Assert.Equal(batch, lineage.BatchId);
+        Assert.Equal(receipt, lineage.ReceiptId);
+        Assert.Equal(dataset, lineage.DatasetGovernanceId);
+        Assert.Equal(tenant, lineage.TenantId);
+        Assert.Equal(new string('a', 64), lineage.ContentHash);
+    }
+
+    [Fact]
+    public async Task A_lone_batch_column_is_an_author_column_and_never_read_as_lineage()
+    {
+        var world = new World();
+        world.Definitions.ContentJson = Content();
+        world.Reader.Lineage = new List<string> { "batch_id" };
+
+        TransformationAdmittedPlan plan = await AdmitAsync(world);
+
+        Assert.Empty(plan.LineageColumns ?? Array.Empty<string>());
+        Assert.Equal(
+            new[] { "code", "source_system", "source_record_id" },
+            plan.ExecutionGraph.Selects!.Select(s => s.Column).ToArray());
+    }
+
+    [Fact]
+    public void Unreadable_or_inconsistent_lineage_is_refused_rather_than_guessed()
+    {
+        Guid batch = Guid.NewGuid();
+        string complete = "{\"tenantId\":\"" + Guid.NewGuid() + "\",\"datasetGovernanceId\":\"" + Guid.NewGuid()
+            + "\",\"receiptId\":\"" + Guid.NewGuid() + "\",\"contentHash\":\"abc\",\"batchId\":\"" + batch + "\"}";
+
+        Assert.Null(TransformationProjectionJobExecutor.ReadLineage(batch, complete, out CanonicalSourceLineage? ok));
+        Assert.NotNull(ok);
+        Assert.NotNull(TransformationProjectionJobExecutor.ReadLineage(Guid.NewGuid(), complete, out _));
+        Assert.NotNull(TransformationProjectionJobExecutor.ReadLineage(null, complete, out _));
+        Assert.NotNull(TransformationProjectionJobExecutor.ReadLineage(batch, "{\"tenantId\":\"x\"}", out _));
+        Assert.NotNull(TransformationProjectionJobExecutor.ReadLineage(batch, "not json", out _));
     }
 }

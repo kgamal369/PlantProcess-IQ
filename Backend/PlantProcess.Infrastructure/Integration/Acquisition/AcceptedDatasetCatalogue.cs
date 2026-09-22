@@ -40,7 +40,7 @@ public sealed class AcceptedDatasetCatalogue(PlantProcessDbContext db)
     public Task<AcquisitionOutcome<JsonElement>> RelationsAsync(Guid tenant, Guid dataset, int take, int skip, CancellationToken ct) =>
         ReadAsync(tenant,take,skip,"SELECT coalesce(jsonb_agg(to_jsonb(x)),'[]'::jsonb)::text FROM ("+
             "SELECT DISTINCT b.configuration_id,b.configuration_version,b.recording_group_key,b.field_shape,"+
-            "'ppiq_staging'::text AS schema_name,'accepted_dataset_'||substr(encode(public.digest(convert_to(b.tenant_id::text||'/'||b.dataset_governance_id::text||'/'||b.configuration_version_id::text||'/'||b.recording_group_key,'UTF8'),'sha256'),'hex'),1,40) AS relation_name "+
+            "'ppiq_staging'::text AS schema_name,'accepted_dataset_'||substr(encode(pg_catalog.sha256(convert_to(b.tenant_id::text||'/'||b.dataset_governance_id::text||'/'||b.configuration_version_id::text||'/'||b.recording_group_key,'UTF8')),'hex'),1,40) AS relation_name "+
             "FROM ppiq_staging.accepted_batches b JOIN ppiq_meta.source_dataset_governance g ON g.tenant_id=b.tenant_id AND g.id=b.dataset_governance_id "+
             "WHERE b.tenant_id=@t AND g.source_dataset_definition_id=@id AND b.state='Sealed' "+
             "ORDER BY b.configuration_id,b.configuration_version,b.recording_group_key,b.field_shape LIMIT @take OFFSET @skip) x",dataset,ct);

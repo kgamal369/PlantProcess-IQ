@@ -83,6 +83,7 @@ public static class StorageTopologyMap
         { "material_aliases", "ppiq_plant" },
         { "material_unit_type_definitions", "ppiq_meta" },
         { "material_units", "ppiq_plant" },
+        { "canonical_projection_effects", "ppiq_plant" },
         { "ml_ai_provider_catalog_v1", "ppiq_meta" },
         { "ml_correlation_compute_runs", "ppiq_meta" },
         { "ml_correlation_results_v2", "ppiq_plant" },

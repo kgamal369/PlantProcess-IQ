@@ -52,6 +52,18 @@ public static class JobExecutionDiagnosticCodes
     /// <summary>A governed source identity already holds a different canonical effect.</summary>
     public const string CanonicalIdentityConflict = "JOB_EXEC_CANONICAL_IDENTITY_CONFLICT";
 
+    /// <summary>
+    /// The job's target parameters are outside the canonical refresh vocabulary, so no
+    /// projection authority can be read from them.
+    /// </summary>
+    public const string ProjectionParametersInvalid = "JOB_EXEC_PROJECTION_PARAMETERS_INVALID";
+
+    /// <summary>
+    /// A run would replace a canonical effect recorded by a newer projection generation,
+    /// or lost a concurrent race for the same identity. Nothing was written.
+    /// </summary>
+    public const string ProjectionEffectStale = "JOB_EXEC_PROJECTION_EFFECT_STALE";
+
     /// <summary>The compiled statement failed at the database.</summary>
     public const string QueryFailed = "JOB_EXEC_QUERY_FAILED";
 

@@ -113,6 +113,36 @@ public sealed class NpgsqlTransformationSourceReader : ITransformationSourceRead
         return found.OrderBy(x => x, StringComparer.Ordinal).ToArray();
     }
 
+    public async Task<IReadOnlyList<string>> LineageColumnsAsync(
+        string schema,
+        string relation,
+        CancellationToken cancellationToken)
+    {
+        NpgsqlConnection connection = await OpenAsync(cancellationToken);
+
+        await using var command = new NpgsqlCommand(
+            "SELECT c.column_name FROM information_schema.columns c "
+            + "WHERE c.table_schema = $1 AND c.table_name = $2 AND c.column_name = ANY($3) "
+            + "ORDER BY c.column_name",
+            connection,
+            Ambient());
+
+        command.Parameters.Add(new NpgsqlParameter { Value = schema });
+        command.Parameters.Add(new NpgsqlParameter { Value = relation });
+        command.Parameters.Add(new NpgsqlParameter { Value = TransformationLineageColumns.All.ToArray() });
+
+        var found = new List<string>();
+        await using (var reader = await command.ExecuteReaderAsync(cancellationToken))
+        {
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                found.Add(reader.GetString(0));
+            }
+        }
+
+        return found.OrderBy(x => x, StringComparer.Ordinal).ToArray();
+    }
+
     public async Task<long> CountRowsAsync(
         string schema,
         string relation,

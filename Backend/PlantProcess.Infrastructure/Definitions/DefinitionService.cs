@@ -234,7 +234,11 @@ public sealed class DefinitionService : IDefinitionService
 
         return ApplicationResult<IReadOnlyList<DefinitionVersionSummary>>.Success(
             versions.Select(v => new DefinitionVersionSummary(
-                v.VersionNumber, v.CreatedAtUtc, v.CreatedBy?.ToString(), v.IsPublished)).ToList());
+                v.VersionNumber, v.CreatedAtUtc, v.CreatedBy?.ToString(), v.IsPublished)
+            {
+                IsSuperseded = string.Equals(v.Status, "superseded", StringComparison.Ordinal)
+                    && v.PublishedAtUtc.HasValue
+            }).ToList());
     }
 
     public Task<ApplicationResult<DefinitionSnapshot>> PublishAsync(

@@ -69,12 +69,12 @@ public interface IJobTargetResolver
 /// change.
 ///
 /// One reading of 4.5.5a is stated here rather than buried, because it decides
-/// behaviour: a pinned version that still exists and is still published KEEPS
+/// behaviour: a pinned version that is published, or was published and is now superseded, KEEPS
 /// resolving after a later version is published. Refusing it as "superseded"
 /// would make pinning meaningless and would contradict the reproducibility rule
 /// that a later publication must not silently retarget a pinned job. JB03 is
 /// therefore raised when the pinned version is absent from history, or is
-/// present and not published.
+/// present but neither published nor demonstrably superseded after publication.
 /// </summary>
 public sealed class JobTargetResolver : IJobTargetResolver
 {
@@ -170,7 +170,7 @@ public sealed class JobTargetResolver : IJobTargetResolver
                         "that version is not in the definition's history."));
             }
 
-            if (!match.IsPublished)
+            if (!match.IsPublished && !match.IsSuperseded)
             {
                 return ApplicationResult<JobTargetResolution>.Failure(
                     JobTargetErrors.PinnedVersionNotPublishedOrSuperseded(
